@@ -1,0 +1,21 @@
+{
+  "name": "the-react-starter",
+  "version": "0.0.1",
+  "description": "The one react boilerplate",
+  "scripts": {
+    "start": "parcel modules/login/index.html modules/transaction/index.html",
+    "make": "gulp -LL create"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^12.7.8",
+    "gulp": "^4.0.2",
+    "shelljs": "^0.8.3",
+    "typescript": "^3.6.3"
+  },
+  "dependencies": {
+    "@types/react": "^16.9.4",
+    "react": "^16.10.1",
+    "react-dom": "^16.10.1"
+  }
+}
