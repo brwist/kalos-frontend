@@ -65,20 +65,12 @@ function start() {
 }
 function build() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, modules, flags, err_1;
+        var target, flags, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 4, , 5]);
-                    return [4 /*yield*/, textPrompt('Target module: ')];
-                case 1:
-                    target = _a.sent();
-                    return [4 /*yield*/, getModulesList()];
-                case 2:
-                    modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
-                    if (!modules.includes(target.toLowerCase())) {
-                        throw "module " + target + " could not be found";
-                    }
+                    _a.trys.push([0, 2, , 3]);
+                    target = titleCase(process.argv[4].replace(/-/g, ''));
                     flags = [
                         '--experimental-scope-hoisting',
                         "--out-dir build/" + target,
@@ -88,14 +80,14 @@ function build() {
                     ];
                     info("Bundling modules/" + target + "/main.tsx to dist/" + target + ".main.tsx");
                     return [4 /*yield*/, sh.exec("NODE_ENV=production parcel build modules/" + target + "/main.tsx " + flags.join(' '), { silent: false })];
-                case 3:
+                case 1:
                     _a.sent();
                     return [2 /*return*/, true];
-                case 4:
+                case 2:
                     err_1 = _a.sent();
                     error(err_1);
                     return [2 /*return*/, false];
-                case 5: return [2 /*return*/];
+                case 3: return [2 /*return*/];
             }
         });
     });
