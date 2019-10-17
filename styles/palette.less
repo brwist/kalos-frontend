@@ -1,0 +1,97 @@
+@import 'constants';
+
+.primary {
+  color: @primary;
+
+  &-bg {
+    background-color: @primary;
+    color: @primary-sm-text;
+
+    &.subtitle-text,
+    &.title-text {
+      color: @primary-lg-text;
+    }
+  }
+
+  &-light {
+    color: @primary-light;
+
+    &-bg {
+      background-color: @primary-light;
+      color: black;
+
+      &.subtitle-text,
+      &.title-text {
+        color: @primary-light-lg-text;
+      }
+    }
+  }
+
+  &-dark {
+    color: @primary-dark;
+
+    &-bg {
+      background-color: @primary-dark;
+      color: @primary-sm-text;
+    }
+
+    &.subtitle-text,
+    &.title-text {
+      color: @primary-dark-lg-text;
+    }
+  }
+}
+
+.secondary {
+  color: @secondary;
+
+  &-bg {
+    background-color: @secondary;
+    color: @secondary-sm-text;
+
+    &.subtitle-text,
+    &.title-text {
+      color: @secondary-lg-text;
+    }
+  }
+
+  &-light {
+    color: @secondary-light;
+
+    &-bg {
+      background-color: @secondary-light;
+      color: @secondary-light-sm-text;
+
+      &.subtitle-text,
+      &.title-text {
+        color: @secondary-light-lg-text;
+      }
+    }
+  }
+
+  &-dark {
+    color: @secondary-dark;
+
+    &-bg {
+      background-color: @secondary-dark;
+      color: white;
+
+      &.subtitle-text,
+      &.title-text {
+        color: @secondary-dark-lg-text;
+      }
+    }
+  }
+}
+
+.inherit-bg {
+  background-color: inherit;
+}
+
+.lg-primary-sm-dark {
+  background-color: @primary;
+
+  @media screen and (max-width: 769px) {
+    background-color: @primary-dark;
+  }
+}

@@ -3,19 +3,40 @@
   "version": "0.0.1",
   "description": "The one react boilerplate",
   "scripts": {
-    "start": "parcel modules/login/index.html modules/transaction/index.html",
-    "make": "gulp -LL create"
+    "start": "gulp -LL start",
+    "build": "gulp -LL build",
+    "make": "gulp -LL create",
+    "less": "lessc styles/index.less styles/main.css"
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/google-protobuf": "^3.7.2",
     "@types/node": "^12.7.8",
+    "@types/react": "^16.9.4",
+    "@types/react-dom": "^16.9.1",
+    "google-protobuf": "^3.9.2",
     "gulp": "^4.0.2",
-    "shelljs": "^0.8.3",
-    "typescript": "^3.6.3"
+    "less": "^3.10.3",
+    "rollup": "^1.22.0",
+    "rollup-plugin-cleanup": "^3.1.1",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-peer-deps-external": "^2.2.0",
+    "rollup-plugin-replace": "^2.2.0",
+    "rollup-plugin-terser": "^5.1.2",
+    "rollup-plugin-typescript2": "^0.24.3",
+    "shelljs": "^0.8.3"
   },
   "dependencies": {
-    "@types/react": "^16.9.4",
+    "@blueprintjs/core": "^3.18.1",
+    "@blueprintjs/datetime": "^3.13.0",
+    "@blueprintjs/select": "^3.11.0",
+    "@blueprintjs/table": "^3.7.1",
+    "@kalos-core/kalos-rpc": "^2.0.0",
+    "@material-ui/core": "^4.5.1",
+    "@material-ui/icons": "^4.5.1",
     "react": "^16.10.1",
-    "react-dom": "^16.10.1"
+    "react-dom": "^16.10.1",
+    "typescript": "^3.7.0-beta"
   }
 }

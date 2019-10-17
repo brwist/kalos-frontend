@@ -1,0 +1,105 @@
+@import './constants';
+
+// These selectors are permissable because
+// they safely change the sizing behavior of all
+// boxes. Read about the box model and the box
+// sizing property to learn more.
+
+.ReactModal__Overlay {
+  z-index: 9999;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+html {
+  box-sizing: border-box;
+  font-size: 65%;
+}
+
+body {
+  background-color: @secondary;
+  color: @secondary-sm-text;
+  flex-direction: column;
+  font-family: @body-font;
+  font-size: @sm-text;
+  margin: 0;
+}
+
+// The following two selectors effectively disable bounce scrolling on most browsers
+//html,
+//body {
+//  height: 100%;
+//  overflow: hidden;
+//}
+
+//body > #wrapper {
+// position: absolute;
+//  top: 0;
+//  bottom: 0;
+//  left: 0;
+//  right: 0;
+//  overflow: auto;
+//}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: @title-font;
+  font-weight: 500;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
+/*input[type='button'],
+input[type='submit'],
+input[type='reset'],
+input[type='file']::-webkit-file-upload-button,
+button {
+  border: none;
+  padding: 0;
+}
+
+select {
+  border: none;
+  cursor: pointer;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+
+  /*&.a-btn {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 20px;
+    background-image: url(../images/down-arrow.png);
+    background-repeat: no-repeat;
+    background-position: 95% 50%;
+    background-size: 10px;
+  }
+  &:after {
+    font-family: 'Font Awesome 5 Free';
+    content: '\f0d7';
+    display: inline-block;
+    vertical-align: middle;
+    font-weight: 900;
+    margin-left: 1rem;
+  }
+}
+
+a:-webkit-any-link {
+  cursor: pointer;
+  text-decoration: none;
+}
+*/
+.ReactModal__Overlay {
+  z-index: 9999;
+}
