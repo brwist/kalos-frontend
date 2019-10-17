@@ -1,5 +1,8 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { Gallery } from './main'
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Gallery } from './main';
 
-ReactDOM.render(<Gallery/>, document.getElementById('root'))
+ReactDOM.render(
+  <Gallery title="test" fileList={[]} />,
+  document.getElementById('root'),
+);
