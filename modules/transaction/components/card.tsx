@@ -5,7 +5,11 @@ import {
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
+import {
+  TransactionDocumentClient,
+  TransactionDocument,
+} from '@kalos-core/kalos-rpc/TransactionDocument';
+import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { DepartmentDropdown, AccountDropdown } from '../../Dropdown/main';
 import Card from '@material-ui/core/Card';
 import Button from '@material-ui/core/Button';
@@ -21,21 +25,25 @@ interface props {
 
 interface state {
   txn: Transaction.AsObject;
+  files: FileObject.AsObject[];
 }
 
 export class TxnCard extends React.PureComponent<props, state> {
   TxnClient: TransactionClient;
   DocsClient: TransactionDocumentClient;
+  S3Client: S3Client;
   FileInput: React.RefObject<HTMLInputElement>;
 
   constructor(props: props) {
     super(props);
     this.state = {
       txn: props.txn,
+      files: [],
     };
 
     this.TxnClient = new TransactionClient();
     this.DocsClient = new TransactionDocumentClient();
+    this.S3Client = new S3Client();
 
     this.FileInput = React.createRef();
 
@@ -44,15 +52,15 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.updateCostCenter = this.updateCostCenter.bind(this);
     this.updateDepartment = this.updateDepartment.bind(this);
     this.handleFile = this.handleFile.bind(this);
+    this.fetchFiles = this.fetchFiles.bind(this);
+    this.fetchFile = this.fetchFile.bind(this);
   }
 
   updateTransaction<K extends keyof Transaction.AsObject>(prop: K) {
     return async (value: Transaction.AsObject[K]) => {
       try {
         const reqObj = new Transaction();
-        const upperCaseProp = `${(prop as string)[0].toLocaleUpperCase()}${(prop as string).slice(
-          1,
-        )}`;
+        const upperCaseProp = `${prop[0].toLocaleUpperCase()}${prop.slice(1)}`;
         const methodName = `set${upperCaseProp}`;
         reqObj.setId(this.state.txn.id);
         //@ts-ignore
@@ -96,22 +104,64 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.FileInput.current && this.FileInput.current.click();
   }
 
-  handleFile(e: React.SyntheticEvent<HTMLInputElement>) {
+  handleFile() {
     const fr = new FileReader();
     fr.onload = async () => {
-      console.log(fr.result);
-      const doc = await this.DocsClient.upload(
+      await this.DocsClient.upload(
         this.state.txn.id,
         this.FileInput.current!.files![0].name,
         new Uint8Array(fr.result as ArrayBuffer),
       );
-      console.log(doc);
-      alert('upload complete');
+      await this.refresh();
     };
     if (this.FileInput.current && this.FileInput.current.files) {
-      console.log(this.FileInput.current.files[0]);
       fr.readAsArrayBuffer(this.FileInput.current.files[0]);
     }
+  }
+
+  refresh() {
+    return new Promise(async resolve => {
+      try {
+        const req = new Transaction();
+        req.setId(this.state.txn.id);
+        const refreshTxn = await this.TxnClient.Get(req);
+        this.setState(
+          {
+            txn: refreshTxn,
+          },
+          async () => {
+            await this.fetchFiles();
+            resolve(true);
+          },
+        );
+      } catch (err) {
+        alert(
+          'Network error, displayed information may be incorrect. Refresh is advised',
+        );
+        console.log(err);
+      }
+    });
+  }
+
+  fetchFile(doc: TransactionDocument.AsObject) {
+    const fileObj = new FileObject();
+    fileObj.setBucket('kalos-transactions');
+    fileObj.setKey(`${this.state.txn.id}-${doc.reference}`);
+    return this.S3Client.Get(fileObj);
+  }
+
+  async fetchFiles() {
+    const promiseArr = this.state.txn.documentsList
+      .filter(d => d.reference)
+      .map(this.fetchFile);
+    const files = await Promise.all(promiseArr);
+    this.setState({
+      files,
+    });
+  }
+
+  async componentDidMount() {
+    await this.fetchFiles();
   }
 
   render() {
