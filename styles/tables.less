@@ -1,0 +1,285 @@
+@import 'constants';
+
+@media screen and (max-width: 768px) {
+  table.responsive-table {
+    display: block;
+
+    & table,
+    & thead,
+    & tbody,
+    & th,
+    & tr {
+      display: block;
+    }
+
+    & td {
+      display: flex;
+      min-height: 4.4rem;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0px 10px;
+    }
+
+    & thead tr {
+      .hide();
+    }
+
+    & td:before {
+      font-weight: 700;
+    }
+  }
+  table.dashboardServiceTable {
+    & td {
+      &:nth-of-type(1):before {
+        content: 'Number';
+      }
+
+      &:nth-of-type(2):before {
+        content: 'Time';
+      }
+
+      &:nth-of-type(3):before {
+        content: 'Technician(s)';
+      }
+
+      &:nth-of-type(4):before {
+        content: 'Customer Name';
+      }
+
+      &:nth-of-type(5):before {
+        content: 'Address';
+      }
+
+      &:nth-of-type(6):before {
+        content: 'Type / Sub Type';
+      }
+
+      &:nth-of-type(7) {
+        border-bottom: 1px solid @secondary-light;
+
+        &:before {
+          content: 'Status';
+        }
+      }
+    }
+  }
+  table.employeeListTable {
+    & td {
+      &:nth-of-type(1):before {
+        content: 'Name';
+      }
+      &:nth-of-type(2) {
+        border-bottom: 1px solid @secondary-light;
+      }
+    }
+  }
+  table.propertyListTable {
+    & td {
+      &:nth-of-type(1):before {
+        content: 'Address';
+      }
+      &:nth-of-type(2):before {
+        content: 'Subdivision';
+      }
+      &:nth-of-type(3):before {
+        content: 'City';
+      }
+      &:nth-of-type(4):before {
+        content: 'Zip';
+      }
+      &:nth-of-type(5) {
+        border-bottom: 1px solid @secondary-light;
+      }
+    }
+  }
+  table.customerListTable {
+    & td {
+      &:nth-of-type(1):before {
+        content: 'Last Name';
+      }
+      &:nth-of-type(2):before {
+        content: 'First Name';
+      }
+      &:nth-of-type(3):before {
+        content: 'Business Name';
+      }
+      &:nth-of-type(4):before {
+        content: 'Primary Phone';
+      }
+      &:nth-of-type(5):before {
+        content: 'Alt Phone';
+      }
+      &:nth-of-type(6) {
+        border-bottom: 1px solid @secondary-light;
+      }
+    }
+  }
+  table.contractListTable {
+    & td {
+      &:nth-of-type(1):before {
+        content: 'Contract #';
+      }
+      &:nth-of-type(2):before {
+        content: 'Last Name';
+      }
+      &:nth-of-type(3):before {
+        content: 'Business Name';
+      }
+      &:nth-of-type(4):before {
+        content: 'Start Date';
+      }
+      &:nth-of-type(5):before {
+        content: 'End Date';
+      }
+      &:nth-of-type(6) {
+        border-bottom: 1px solid @secondary-light;
+      }
+    }
+  }
+  table.vendorListTable {
+    & td {
+      &:nth-of-type(1):before {
+        content: 'Type';
+      }
+      &:nth-of-type(2):before {
+        content: 'Name';
+      }
+      &:nth-of-type(3) {
+        border-bottom: 1px solid @secondary-light;
+      }
+    }
+  }
+  table.documentListTable {
+    & td {
+      &:nth-of-type(1):before {
+        content: 'Doc Type';
+      }
+      &:nth-of-type(2):before {
+        content: 'Description';
+      }
+      &:nth-of-type(3):before {
+        content: 'Added';
+      }
+      &:nth-of-type(4):before {
+        content: 'Modified';
+      }
+      &:nth-of-type(5) {
+        border-bottom: 1px solid @secondary-light;
+      }
+    }
+  }
+  table.transactionTable {
+    & td {
+      justify-content: space-between;
+
+      &:nth-of-type(1):before {
+        content: 'Job No';
+      }
+      &:nth-of-type(2):before {
+        content: 'Vendor';
+      }
+      &:nth-of-type(3):before {
+        content: 'Department';
+      }
+      &:nth-of-type(4):before {
+        content: 'Purchaser';
+      }
+      &:nth-of-type(5):before {
+        content: 'Description';
+      }
+      &:nth-of-type(6):before {
+        content: 'Amount';
+      }
+      &:nth-of-type(7):before {
+        content: 'Date';
+      }
+      &:nth-of-type(8) {
+        justify-content: center;
+        border-bottom: 1px solid @secondary-light;
+      }
+    }
+  }
+  table.serviceCallTable {
+    & td {
+      &:nth-of-type(1):before {
+        content: 'Date of Call';
+      }
+      &:nth-of-type(2):before {
+        content: 'Customer Name';
+      }
+      &:nth-of-type(3):before {
+        content: 'Business Name';
+      }
+      &:nth-of-type(4):before {
+        content: 'Address';
+      }
+      &:nth-of-type(5):before {
+        content: 'City';
+      }
+      &:nth-of-type(6):before {
+        content: 'Zip';
+      }
+      &:nth-of-type(7):before {
+        content: 'Phone';
+      }
+      &:nth-of-type(8):before {
+        content: 'Job Number';
+      }
+      &:nth-of-type(9):before {
+        content: 'Type / Subtype';
+      }
+      &:nth-of-type(10):before {
+        content: 'Status';
+      }
+      &:nth-of-type(11) {
+        border-bottom: 1px solid @secondary-light;
+      }
+    }
+  }
+}
+
+.flex-table {
+  display: flex;
+  flex-direction: column;
+
+  & tbody {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+  }
+
+  & tr {
+    display: flex;
+    align-self: stretch;
+    justify-content: space-evenly;
+    flex-direction: row;
+
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+
+  & td {
+    flex: 1;
+    align-self: stretch;
+    flex-direction: column;
+    margin: 0.5rem;
+  }
+}
+
+table.padLeft {
+  & td {
+    &:nth-of-type(1) {
+      padding-left: 1rem;
+    }
+  }
+}
+table.padRight {
+  & td {
+    &:last-of-type {
+      padding-right: 1rem;
+    }
+  }
+}

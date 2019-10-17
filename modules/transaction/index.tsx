@@ -1,13 +1,5 @@
-import React from "react";
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import { Transaction } from './main';
 
-interface props {}
-interface state {}
-
-export class Transaction extends React.PureComponent<props, state> {
-  constructor(props: props) {
-    super(props);
-  }
-  render() {
-    return <h1>Transaction!</h1>;
-  }
-}
+ReactDOM.render(<Transaction userId={8418} />, document.getElementById('root'));

@@ -1,0 +1,412 @@
+@import 'constants';
+
+@height-width-range: range(5, 100, 5);
+@margin-padding-range: range(5, 40, 5);
+@border-range: range(1, 3);
+@flex-basis-range: range(1, 100);
+@border-styles: double, groove, ridge, inset, outset;
+
+.hide-on-sm {
+  @media screen and (max-width: 768px) {
+    .hide();
+  }
+}
+
+.hide-on-lg {
+  @media screen and (min-width: 768px) {
+    .hide();
+  }
+}
+
+body {
+  @media screen and (max-width: 768px) {
+    zoom: 2;
+  }
+}
+
+.loader {
+  height: 56px;
+  width: 56px;
+  border-radius: 28px;
+  margin-left: -28px;
+  margin-top: -28px;
+  border-width: 0px;
+  background-color: @primary-light;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+each(@flex-basis-range, {
+  .basis-@{value} {
+    flex-basis: percentage(@value / 100);
+  }
+})
+
+each(@height-width-range, {
+  .w-@{value} {
+    width: percentage(@value / 100);
+
+    &-sm {
+      @media screen and (max-width: 768px) {
+        width: percentage(@value / 100);
+      }
+    }
+
+    &-lg {
+      @media screen and (min-width: 768px) {
+        width: percentage(@value / 100);
+      }
+    }
+  }
+})
+
+each(@height-width-range, {
+  .h-@{value} {
+    height: percentage(@value / 100);
+
+    &-sm {
+      @media screen and (max-width: 768px) {
+        height: percentage(@value / 100);
+      }
+    }
+
+    &-lg {
+      @media screen and (min-width: 768px) {
+        height: percentage(@value / 100);
+      }
+    }
+  }
+})
+
+each(@border-range, {
+  .b- {
+    &@{value} {
+      border: @value * 1px solid @secondary-dark;
+      &-groove {
+        border: @value * 1px groove @secondary-dark;
+      }
+      &-ridge {
+        border: @value * 1px ridge @secondary-dark;
+      }
+      &-inset {
+        border: @value * 1px inset @secondary-dark;
+      }
+      &-outset {
+        border: @value * 1px outset @secondary-dark;
+      }
+      &-double {
+        border: @value * 1px double @secondary-dark;
+      }
+    }
+    &t- {
+      &@{value} {
+        border-top: @value * 1px solid @secondary-dark;
+        &-groove {
+          border-top: @value * 1px groove @secondary-dark;
+        }
+        &-ridge {
+          border-top: @value * 1px ridge @secondary-dark;
+        }
+        &-inset {
+          border-top: @value * 1px inset @secondary-dark;
+        }
+        &-outset {
+          border-top: @value * 1px outset @secondary-dark;
+        }
+        &-double {
+          border-top: @value * 1px double @secondary-dark;
+        }
+      }
+    }
+    &b- {
+      &@{value} {
+        border-bottom: @value * 1px solid @secondary-dark;
+        &-groove {
+          border-bottom: @value * 1px groove @secondary-dark;
+        }
+        &-ridge {
+          border-bottom: @value * 1px ridge @secondary-dark;
+        }
+        &-inset {
+          border-bottom: @value * 1px inset @secondary-dark;
+        }
+        &-outset {
+          border-bottom: @value * 1px outset @secondary-dark;
+        }
+        &-double {
+          border-bottom: @value * 1px double @secondary-dark;
+        }
+      }
+    }
+    &l- {
+      &@{value} {
+        border-left: @value * 1px solid @secondary-dark;
+        &-groove {
+          border-left: @value * 1px groove @secondary-dark;
+        }
+        &-ridge {
+          border-left: @value * 1px ridge @secondary-dark;
+        }
+        &-inset {
+          border-left: @value * 1px inset @secondary-dark;
+        }
+        &-outset {
+          border-left: @value * 1px outset @secondary-dark;
+        }
+        &-double {
+          border-left: @value * 1px double @secondary-dark;
+        }
+      }
+    }
+    &r- {
+      &@{value} {
+        border-right: @value * 1px solid @secondary-dark;
+        &-groove {
+          border-right: @value * 1px groove @secondary-dark;
+        }
+        &-ridge {
+          border-right: @value * 1px ridge @secondary-dark;
+        }
+        &-inset {
+          border-right: @value * 1px inset @secondary-dark;
+        }
+        &-outset {
+          border-right: @value * 1px outset @secondary-dark;
+        }
+        &-double {
+          border-right: @value * 1px double @secondary-dark;
+        }
+      }
+    }
+  }
+});
+
+each(@margin-padding-range, {
+  .p- {
+    &@{value} {
+      padding: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          padding: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          padding: @value / 10rem;
+        }
+      }
+    }
+    &v-@{value} {
+      padding-top: @value / 10rem;
+      padding-bottom: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          padding-top: @value / 10rem;
+          padding-bottom: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          padding-top: @value / 10rem;
+          padding-bottom: @value / 10rem;
+        }
+      }
+    }
+    &h-@{value}{
+      padding-left: @value / 10rem;
+      padding-right: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          padding-left: @value / 10rem;
+          padding-right: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          padding-left: @value / 10rem;
+          padding-right: @value / 10rem;
+        }
+      }
+    }
+    &t-@{value} {
+      padding-top: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          padding-top: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          padding-top: @value / 10rem;
+        }
+      }
+    }
+    &b-@{value} {
+      padding-bottom: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          padding-bottom: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          padding-bottom: @value / 10rem;
+        }
+      }
+    }
+    &l-@{value} {
+      padding-left: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          padding-left: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          padding-left: @value / 10rem;
+        }
+      }
+    }
+    &r-@{value} {
+      padding-right: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          padding-right: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          padding-right: @value / 10rem;
+        }
+      }
+    }
+  }
+  .m- {
+    &@{value} {
+      margin: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          margin: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          margin: @value / 10rem;
+        }
+      }
+    }
+    &v-@{value} {
+      margin-top: @value / 10rem;
+      margin-bottom: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          margin-top: @value / 10rem;
+          margin-bottom: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          margin-top: @value / 10rem;
+          margin-bottom: @value / 10rem;
+        }
+      }
+    }
+    &h-@{value} {
+      margin-left: @value / 10rem;
+      margin-right: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          margin-left: @value / 10rem;
+          margin-right: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          margin-left: @value / 10rem;
+          margin-right: @value / 10rem;
+        }
+      }
+    } 
+    &t-@{value} {
+      margin-top: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          margin-top: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          margin-top: @value / 10rem;
+        }
+      }
+    }
+    &b-@{value} {
+      margin-bottom: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          margin-bottom: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          margin-bottom: @value / 10rem;
+        }
+      }
+    }
+    &l-@{value} {
+      margin-left: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          margin-left: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          margin-left: @value / 10rem;
+        }
+      }
+    }
+    &r-@{value} {
+      margin-right: @value / 10rem;
+
+      &-sm {
+        @media screen and (max-width: 768px) {
+          margin-right: @value / 10rem;
+        }
+      }
+
+      &-lg {
+        @media screen and (min-width: 768px) {
+          margin-right: @value / 10rem;
+        }
+      }
+    }
+  }
+})

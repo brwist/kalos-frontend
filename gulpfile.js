@@ -34,12 +34,18 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-// This file has been composed in TypeScript, but is exposed as a compiled javascript file.
-// This file should not be edited directly
-var task = require("gulp").task;
-var sh = require("shelljs");
-var readline = require("readline");
-var fs = require("fs");
+var task = require('gulp').task;
+var sh = require('shelljs');
+var readline = require('readline');
+var fs = require('fs');
+var rollup = require('rollup');
+var typescript = require('rollup-plugin-typescript2');
+var resolve = require('rollup-plugin-node-resolve');
+var commonjs = require('rollup-plugin-commonjs');
+var peerDependencies = require('rollup-plugin-peer-deps-external');
+var replace = require('rollup-plugin-replace');
+var cleanup = require('rollup-plugin-cleanup');
+var terser = require('rollup-plugin-terser').terser;
 function start() {
     return __awaiter(this, void 0, void 0, function () {
         var modules, entrypoints;
@@ -49,7 +55,7 @@ function start() {
                 case 1:
                     modules = _a.sent();
                     entrypoints = modules.map(function (m) { return "modules/" + m + "/index.html"; });
-                    return [4 /*yield*/, sh.exec("parcel " + entrypoints.join(" "))];
+                    return [4 /*yield*/, sh.exec("parcel " + entrypoints.join(' '))];
                 case 2:
                     _a.sent();
                     return [2 /*return*/];
@@ -57,14 +63,49 @@ function start() {
         });
     });
 }
-function create() {
+function build() {
     return __awaiter(this, void 0, void 0, function () {
-        var name, html, js;
+        var target, modules, flags, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    checkBranch();
-                    return [4 /*yield*/, textPrompt("module name: ")];
+                    _a.trys.push([0, 4, , 5]);
+                    return [4 /*yield*/, textPrompt('Target module: ')];
+                case 1:
+                    target = _a.sent();
+                    return [4 /*yield*/, getModulesList()];
+                case 2:
+                    modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
+                    if (!modules.includes(target.toLowerCase())) {
+                        throw "module " + target + " could not be found";
+                    }
+                    flags = [
+                        '--experimental-scope-hoisting',
+                        "--out-dir build/" + target,
+                        '--target browser',
+                        '--detailed-report',
+                        "--global " + target,
+                    ];
+                    info("Bundling modules/" + target + "/main.tsx to dist/" + target + ".main.tsx");
+                    return [4 /*yield*/, sh.exec("NODE_ENV=production parcel build modules/" + target + "/main.tsx " + flags.join(' '), { silent: false })];
+                case 3:
+                    _a.sent();
+                    return [2 /*return*/, true];
+                case 4:
+                    err_1 = _a.sent();
+                    error(err_1);
+                    return [2 /*return*/, false];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+function create() {
+    return __awaiter(this, void 0, void 0, function () {
+        var name, html, mainJS, indexJS;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, textPrompt('Module name: ')];
                 case 1:
                     name = _a.sent();
                     return [4 /*yield*/, sh.mkdir("modules/" + name)];
@@ -73,16 +114,21 @@ function create() {
                     return [4 /*yield*/, sh.cd("modules/" + name)];
                 case 3:
                     _a.sent();
-                    return [4 /*yield*/, sh.touch("index.html")];
+                    return [4 /*yield*/, sh.touch('index.html')];
                 case 4:
                     _a.sent();
-                    return [4 /*yield*/, sh.touch("index.tsx")];
+                    return [4 /*yield*/, sh.touch('index.tsx')];
                 case 5:
                     _a.sent();
+                    return [4 /*yield*/, sh.touch('main.tsx')];
+                case 6:
+                    _a.sent();
                     html = new sh.ShellString(htmlTemplate(name));
-                    js = new sh.ShellString(jsTemplate(name));
-                    html.to("index.html");
-                    js.to("index.tsx");
+                    mainJS = new sh.ShellString(mainTemplate(name));
+                    indexJS = new sh.ShellString(indexTemplate(name));
+                    html.to('index.html');
+                    indexJS.to('index.tsx');
+                    mainJS.to('main.tsx');
                     return [2 /*return*/];
             }
         });
@@ -94,7 +140,7 @@ function textPrompt(question) {
         output: process.stdout
     });
     return new Promise(function (resolve) {
-        rl.question(question, function (answer) {
+        rl.question("[\u001B[2m" + timestamp() + "\u001B[0m] " + question, function (answer) {
             rl.close();
             resolve(answer);
         });
@@ -104,51 +150,73 @@ function getModulesList() {
     return __awaiter(this, void 0, void 0, function () {
         var list;
         return __generator(this, function (_a) {
-            sh.cd("./modules");
-            list = sh.ls().stdout.split("\n");
-            sh.cd("..");
+            sh.cd('./modules');
+            list = sh.ls().stdout.split('\n');
+            sh.cd('..');
             return [2 /*return*/, list.filter(function (l) { return l; })];
         });
     });
 }
-// parseArgs checks process.argv for passed command line arguments, and reduces them into a javascript
-// object. Arguments must be passed as flags e.g. --myFlag. Arguments can be assigned a value using =
-// e.g. --myFlag=test. Arguments without values are assumed to have a literal true value. parseArgs
-// can allow for any gulp task to accept command line flags, altering their behavior.
 function parseArgs() {
     var args = process.argv.slice(3);
     if (args.length === 0) {
-        return args;
+        return {};
     }
     else {
         try {
             return args.reduce(function (argObject, arg) {
-                var _a = arg.split("="), key = _a[0], value = _a[1];
-                argObject[key.replace(/-/g, "")] = value || true;
+                var _a = arg.split('='), key = _a[0], value = _a[1];
+                argObject[key.replace(/-/g, '')] = value || true;
                 return argObject;
             }, {});
         }
         catch (err) {
-            console.log(err);
+            error(err);
             sh.exit(1);
         }
     }
 }
+function info(msg) {
+    log('\x1b[2m')(msg);
+}
+function warn(msg) {
+    log('\x1b[33m')(msg);
+}
+function error(msg) {
+    log('\x1b[31m')(msg);
+}
+function timestamp() {
+    return new Date()
+        .toLocaleTimeString('en-US', { hour12: false })
+        .replace(/\s\w\w/, '');
+}
+function log(color) {
+    return function (msg) {
+        console.log("[" + color + timestamp() + "\u001B[0m] " + msg);
+    };
+}
 task(start);
+task(build);
 task(create);
 function htmlTemplate(title) {
-    return "<!DOCTYPE html>\n<html>\n  <head>\n    <title>" + title + "</title>\n  </head>\n  <body>\n    <script src=\"index.tsx\"></script>\n  </body>\n</html>";
+    return ("\n<!DOCTYPE html>\n<html>\n  <head>\n    <title>" + title + "</title>\n  </head>\n  <body>\n    <div id=\"root\"></div>\n    <script src=\"index.tsx\"></script>\n  </body>\n</html>").replace('\n', '');
+    // this removes the first instance of a new line from the output string
+    // which allows the document to be written cleanly at the correct tab level
 }
-function jsTemplate(title) {
+function mainTemplate(title) {
     title = titleCase(title);
-    return "import React from \"react\";\n\ninterface props {}\ninterface state {}\n\nexport class " + title + " extends React.PureComponent<props, state> {\n  constructor(props: props) {\n    super(props);\n  }\n  render() {\n    return <h1>" + title + "!</h1>;\n  }\n}";
+    return ("\nimport React from \"react\";\n\ninterface props {\n  userId: number;\n}\n\ninterface state {}\n\nexport class " + title + " extends React.PureComponent<props, state> {\n  constructor(props: props) {\n    super(props);\n  }\n  render() {\n    return <h1>" + title + "!</h1>;\n  }\n}").replace('\n', '');
+}
+function indexTemplate(title) {
+    title = titleCase(title);
+    return ("\nimport React from 'react'\nimport ReactDOM from 'react-dom'\nimport { " + title + " } from './main'\n\nReactDOM.render(<" + title + "/>, document.getElementById('root'))\n").replace('\n', '');
 }
 function titleCase(str) {
     return "" + str[0].toUpperCase() + str.slice(1);
 }
 function getBranch() {
     return new Promise(function (resolve) {
-        sh.exec("git rev-parse --abbrev-ref HEAD", function (code, output) {
+        sh.exec('git rev-parse --abbrev-ref HEAD', { silent: true }, function (code, output) {
             resolve(output);
         });
     });
@@ -160,14 +228,73 @@ function checkBranch() {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getBranch()];
                 case 1:
-                    branch = _a.sent();
-                    console.log(branch);
-                    if (branch === "master") {
-                        console.log("Checkout a new branch please!");
-                        sh.exit(1);
+                    branch = (_a.sent()).replace(/\n/g, '');
+                    if (branch === 'master') {
+                        error("Don't make commits to master! Want to make a new branch?");
+                        return [2 /*return*/, true];
+                    }
+                    else {
+                        return [2 /*return*/, false];
                     }
                     return [2 /*return*/];
             }
         });
     });
 }
+function rollupBuild() {
+    return __awaiter(this, void 0, void 0, function () {
+        var target, modules, bundle, globals;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, textPrompt('Target module: ')];
+                case 1:
+                    target = _a.sent();
+                    return [4 /*yield*/, getModulesList()];
+                case 2:
+                    modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
+                    if (!modules.includes(target.toLowerCase())) {
+                        throw "module " + target + " could not be found";
+                    }
+                    return [4 /*yield*/, rollup.rollup({
+                            input: "modules/" + target + "/main.tsx",
+                            plugins: [
+                                typescript(),
+                                peerDependencies(),
+                                resolve(),
+                                commonjs({
+                                    namedExports: {
+                                        'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.js': [
+                                            'grpc',
+                                        ]
+                                    }
+                                }),
+                                replace({
+                                    'process.env.NODE_ENV': JSON.stringify('production')
+                                }),
+                                cleanup({
+                                    comments: 'all',
+                                    sourcemap: true
+                                }),
+                                terser(),
+                            ]
+                        })];
+                case 3:
+                    bundle = _a.sent();
+                    globals = {
+                        react: 'React',
+                        'react-dom': 'ReactDOM'
+                    };
+                    return [4 /*yield*/, bundle.write({
+                            file: "build/" + target + "/main.js",
+                            name: titleCase(target),
+                            format: 'umd',
+                            globals: globals
+                        })];
+                case 4:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+task('bundle', rollupBuild);
