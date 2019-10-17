@@ -54,3 +54,17 @@ import { Transaction, TransactionClient } from '@kalos-core/kalos-rpc/
 ```
 
 By allowing imports of specific files, we can avoid including large unused files and signficantly keep bundle size down.
+
+This project also includes ['@blueprintjs'](https://github.com/palantir/blueprint). This library is excellent for admin UI development, but currently does not support code splitting so care should be taken when using it.
+
+## Releasing a Module
+
+To build your module simply run:
+
+```
+yarn build MODULE_NAME
+```
+
+This can take as long as two minutes depending on the size and complexity of your module and it's dependencies. Your module will be bundled and output to `build/MODULE_NAME/main.js`.
+
+UNDER CONSTRUCTION
