@@ -12,7 +12,6 @@ import { TxnCard } from './card';
 interface props {
   userId: number;
   departmentId: number;
-  accountList: TransactionAccount.AsObject[];
 }
 
 interface state {
@@ -122,7 +121,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <>
+      <div className="flex-col align-self-stretch">
         {this.state.transactions.map(t => (
           <TxnCard
             txn={t}
@@ -130,7 +129,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
             userDepartmentID={this.props.departmentId}
           />
         ))}
-      </>
+      </div>
     );
   }
 }

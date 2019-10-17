@@ -11,10 +11,10 @@ import {
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { DepartmentDropdown, AccountDropdown } from '../../Dropdown/main';
+import { Gallery, IFile } from '../../Gallery/main';
 import Card from '@material-ui/core/Card';
 import Button from '@material-ui/core/Button';
 import CloudUploadTwoTone from '@material-ui/icons/CloudUploadTwoTone';
-import PageviewTwoTone from '@material-ui/icons/PageviewTwoTone';
 import SendTwoTone from '@material-ui/icons/SendTwoTone';
 import InfoSharp from '@material-ui/icons/InfoSharp';
 
@@ -25,7 +25,7 @@ interface props {
 
 interface state {
   txn: Transaction.AsObject;
-  files: FileObject.AsObject[];
+  files: IFile[];
 }
 
 export class TxnCard extends React.PureComponent<props, state> {
@@ -151,10 +151,29 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   async fetchFiles() {
+    const filesList = this.state.txn.documentsList
+      .filter(d => d.reference)
+      .map(d => {
+        return {
+          name: d.reference,
+          mimeType: getMimeType(d.reference.split('.')[1]),
+          data: '',
+        };
+      });
     const promiseArr = this.state.txn.documentsList
       .filter(d => d.reference)
       .map(this.fetchFile);
-    const files = await Promise.all(promiseArr);
+    const fileObjects = await Promise.all(promiseArr);
+    const files = filesList.map(f => {
+      const fileObj = fileObjects.find(
+        obj => obj.key.split(/\d{1,}-/)[1] === f.name,
+      );
+      if (fileObj) {
+        f.data = fileObj.data as string;
+      }
+      return f;
+    });
+
     this.setState({
       files,
     });
@@ -170,7 +189,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       <>
         <Card
           elevation={3}
-          className="m-h-10 m-t-10 p-b-10"
+          className="m-h-10 m-b-10 flex-col align-stretch"
           key={`${t.id}`}
           id={`${t.id}`}
         >
@@ -222,15 +241,11 @@ export class TxnCard extends React.PureComponent<props, state> {
               >
                 Add Receipt Photo
               </Button>
-              <Button
-                startIcon={<PageviewTwoTone />}
-                variant="contained"
-                size="large"
-                style={{ height: 44, marginBottom: 5 }}
-                className="m-b-5"
-              >
-                View Receipt Photos
-              </Button>
+              <Gallery
+                title="Receipt Photo(s)"
+                text="View Receipt Photo(s)"
+                fileList={this.state.files}
+              />
               <Button
                 startIcon={<SendTwoTone />}
                 variant="contained"
@@ -251,5 +266,15 @@ export class TxnCard extends React.PureComponent<props, state> {
         />
       </>
     );
+  }
+}
+
+function getMimeType(fileType: string) {
+  if (fileType === 'png' || fileType === 'jpg' || fileType === 'jpeg') {
+    return `image/${fileType}`;
+  } else if (fileType === 'pdf') {
+    return `application/${fileType}`;
+  } else {
+    return fileType;
   }
 }

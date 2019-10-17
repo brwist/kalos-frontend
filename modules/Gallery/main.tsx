@@ -4,9 +4,10 @@ import Backdrop from '@material-ui/core/Backdrop';
 import Fade from '@material-ui/core/Fade';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
-import PhotoAlbumTwoTone from '@material-ui/icons/PhotoAlbumTwoTone';
+import PageViewTwoTone from '@material-ui/icons/PageViewTwoTone';
 import ChevronLeftTwoTone from '@material-ui/icons/ChevronLeftTwoTone';
 import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
+import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles(theme => ({
@@ -19,21 +20,27 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.background.paper,
     border: '2px solid #000',
     boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 4, 3),
   },
 }));
 
 interface props {
-  fileList: string[];
+  fileList: IFile[];
   title: string;
+  text: string;
 }
 
-interface state {}
+export interface IFile {
+  name: string;
+  mimeType?: string;
+  data?: string;
+  uri?: string;
+}
 
-export function Gallery({ title, fileList }: props) {
+export function Gallery({ title, text, fileList }: props) {
   const classes = useStyles();
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
+  const [maxHeight, setHeight] = React.useState(window.innerHeight * 0.75);
 
   const toggleOpen = () => {
     setOpen(!isOpen);
@@ -51,42 +58,105 @@ export function Gallery({ title, fileList }: props) {
     }
   };
 
-  return (
-    <div>
-      <Button
-        variant="contained"
-        startIcon={<PhotoAlbumTwoTone />}
-        onClick={toggleOpen}
-      >
-        {title}
-      </Button>
-      <Modal
-        aria-labelledby="transition-modal-title"
-        className={classes.modal}
-        open={isOpen}
-        onClose={toggleOpen}
-        closeAfterTransition
-        BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
-      >
-        <Fade in={isOpen}>
-          <div className={classes.paper}>
-            <h2 id="transition-modal-title">Receipt Photos</h2>
-            <img src={fileList[activeImage]} />
-            <IconButton onClick={prevImage} disabled={activeImage === 0}>
-              <ChevronLeftTwoTone />
-            </IconButton>
-            <IconButton
-              onClick={nextImage}
-              disabled={activeImage === fileList.length - 1}
-            >
-              <ChevronRightTwoTone />
-            </IconButton>
-          </div>
-        </Fade>
-      </Modal>
-    </div>
-  );
+  document.addEventListener('resize', () => {
+    setHeight(window.innerHeight * 0.75);
+  });
+
+  const getSource = (img: IFile) => {
+    if (img) {
+      if (img.uri) {
+        return img.uri;
+      } else if (img.mimeType && img.data) {
+        return `data:${img.mimeType};base64,${img.data}`;
+      } else {
+        return img.data;
+      }
+    }
+  };
+
+  if (fileList[activeImage]) {
+    return (
+      <div className="w-100">
+        <Button
+          variant="contained"
+          size="large"
+          style={{ height: 44, marginBottom: 5 }}
+          className="m-b-5 w-100"
+          startIcon={<PageViewTwoTone />}
+          onClick={toggleOpen}
+        >
+          {text}
+        </Button>
+        <Modal
+          aria-labelledby="transition-modal-title"
+          className={`${classes.modal}`}
+          open={isOpen}
+          onClose={toggleOpen}
+          closeAfterTransition
+          BackdropComponent={Backdrop}
+          BackdropProps={{
+            timeout: 500,
+          }}
+        >
+          <Fade in={isOpen}>
+            <div className={`${classes.paper} flex-col`}>
+              <div className="flex-row justify-evenly align-center">
+                <span className="title-text" id="transition-modal-title">
+                  {title}
+                </span>
+                <span className="title-text">
+                  {activeImage + 1} of {fileList.length}
+                </span>
+                <Button
+                  onClick={toggleOpen}
+                  size="large"
+                  className="title-text"
+                  style={{ height: 44 }}
+                  endIcon={<CloseTwoTone />}
+                >
+                  Close
+                </Button>
+              </div>
+              <div className="flex-row justify-center">
+                {fileList[activeImage].mimeType === 'application/pdf' && (
+                  <iframe
+                    src={getSource(fileList[activeImage])}
+                    width="100%"
+                  ></iframe>
+                )}
+                {fileList[activeImage].mimeType !== 'application/pdf' && (
+                  <img
+                    src={getSource(fileList[activeImage])}
+                    className="w-70 h-70"
+                  />
+                )}
+              </div>
+              <div className="flex-row justify-evenly">
+                <Button
+                  onClick={prevImage}
+                  disabled={activeImage === 0}
+                  size="large"
+                  className="title-text"
+                  style={{ height: 44 }}
+                  startIcon={<ChevronLeftTwoTone />}
+                >
+                  Prev
+                </Button>
+                <Button
+                  onClick={nextImage}
+                  disabled={activeImage === fileList.length - 1}
+                  size="large"
+                  className="title-text"
+                  style={{ height: 44 }}
+                  endIcon={<ChevronRightTwoTone />}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </Fade>
+        </Modal>
+      </div>
+    );
+  } else return null;
 }

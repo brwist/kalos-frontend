@@ -271,7 +271,7 @@ table.padRight td:last-of-type {
   color: #262626;
 }
 .icon-font i {
-  font-size: 2.4rem;
+  font-size: 26px;
   text-decoration: none;
 }
 .icon-font.secondary-dark:hover {
@@ -615,13 +615,13 @@ table.padRight td:last-of-type {
   }
 }
 .body-text {
-  font-size: 1.4rem;
+  font-size: 14px;
 }
 .subtitle-text {
-  font-size: 2.2rem;
+  font-size: 22px;
 }
 .title-text {
-  font-size: 2.4rem;
+  font-size: 26px;
 }
 .underline {
   text-decoration: underline;
@@ -636,15 +636,18 @@ table.padRight td:last-of-type {
 }
 html {
   box-sizing: border-box;
-  font-size: 65%;
 }
 body {
   background-color: #bfbfbf;
   color: #303030;
   flex-direction: column;
   font-family: 'Open Sans';
-  font-size: 1.4rem;
+  font-size: 14px;
   margin: 0;
+  display: flex;
+}
+div {
+  display: flex;
 }
 h1,
 h2,
@@ -3427,8 +3430,4 @@ a:-webkit-any-link {
   justify-content: space-evenly;
   align-self: stretch;
   margin-bottom: 10px;
-}
-
-.pt-popover {
-  width: 100%;
 }
