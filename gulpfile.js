@@ -97,23 +97,27 @@ function create() {
         var name, html, mainJS, indexJS;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, textPrompt('Module name: ')];
+                case 0:
+                    name = titleCase(process.argv[4].replace(/-/g, ''));
+                    if (!!name) return [3 /*break*/, 2];
+                    return [4 /*yield*/, textPrompt('Module name: ')];
                 case 1:
                     name = _a.sent();
-                    return [4 /*yield*/, sh.mkdir("modules/" + name)];
-                case 2:
-                    _a.sent();
-                    return [4 /*yield*/, sh.cd("modules/" + name)];
+                    _a.label = 2;
+                case 2: return [4 /*yield*/, sh.mkdir("modules/" + name)];
                 case 3:
                     _a.sent();
-                    return [4 /*yield*/, sh.touch('index.html')];
+                    return [4 /*yield*/, sh.cd("modules/" + name)];
                 case 4:
                     _a.sent();
-                    return [4 /*yield*/, sh.touch('index.tsx')];
+                    return [4 /*yield*/, sh.touch('index.html')];
                 case 5:
                     _a.sent();
-                    return [4 /*yield*/, sh.touch('main.tsx')];
+                    return [4 /*yield*/, sh.touch('index.tsx')];
                 case 6:
+                    _a.sent();
+                    return [4 /*yield*/, sh.touch('main.tsx')];
+                case 7:
                     _a.sent();
                     html = new sh.ShellString(htmlTemplate(name));
                     mainJS = new sh.ShellString(mainTemplate(name));
