@@ -14,6 +14,7 @@ import { DepartmentDropdown } from '../../Dropdown/main';
 import { TextList } from '../../List/main';
 import { Gallery, IFile } from '../../Gallery/main';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
+import { DepartmentPicker } from '../../Pickers/Department';
 import Card from '@material-ui/core/Card';
 import Button from '@material-ui/core/Button';
 import CloudUploadTwoTone from '@material-ui/icons/CloudUploadTwoTone';
@@ -245,12 +246,16 @@ export class TxnCard extends React.PureComponent<props, state> {
                 onSelect={this.updateCostCenter}
                 selected={t.costCenterId}
               />
-              <DepartmentDropdown
+              <DepartmentPicker
+                onSelect={this.updateDepartment}
+                selected={t.departmentId || this.props.userDepartmentID}
+              />
+              {/*<DepartmentDropdown
                 isDisabled
                 onSelect={this.updateDepartmentID}
                 selected={t.departmentId || this.props.userDepartmentID}
                 className="m-b-5"
-              />
+              />*/}
             </div>
             <div className="flex-col justify-evenly">
               <Button
