@@ -12,6 +12,7 @@
   "devDependencies": {
     "@types/google-protobuf": "^3.7.2",
     "@types/node": "^12.7.8",
+    "@types/react-dom": "^16.9.2",
     "google-protobuf": "^3.9.2",
     "gulp": "^4.0.2",
     "less": "^3.10.3",
