@@ -1,13 +1,14 @@
 import React, { RefObject, KeyboardEvent } from 'react';
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import {
-  ActivityLogClient,
-  AuthData,
   ActivityLog,
-  UserClient,
-  User,
-} from '@kalos-core/kalos-rpc';
+  ActivityLogClient,
+} from '@kalos-core/kalos-rpc/ActivityLog';
 
-interface props {}
+interface props {
+  onSuccess?(): void;
+}
+
 interface state {
   inputs: {
     [key: string]: string;
@@ -77,20 +78,21 @@ export class Login extends React.PureComponent<props, state> {
 
   async handleLogin() {
     try {
-      const authData = new AuthData();
       const userData = new User();
-      authData.setUsername(this.state.inputs.username);
-      authData.setPassword(this.state.inputs.password);
-      console.log(authData.toObject());
       userData.setLogin(this.state.inputs.username);
       userData.setPwd(this.state.inputs.password);
-      await this.LogClient.GetToken(authData);
+      await this.LogClient.GetToken(
+        this.state.inputs.username,
+        this.state.inputs.password,
+      );
       const user = await this.UserClient.Get(userData);
       const log = new ActivityLog();
-      log.setActivityName('robbie succesfully tested login');
+      log.setActivityName(`${user.firstname} ${user.lastname} authenticated`);
       log.setUserId(user.id);
       await this.LogClient.Create(log);
-      this.redirect();
+      if (this.props.onSuccess) {
+        this.props.onSuccess();
+      }
     } catch (err) {
       console.log(err);
     }
