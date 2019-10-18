@@ -10,9 +10,10 @@ import {
   TransactionDocument,
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { DepartmentDropdown, AccountDropdown } from '../../Dropdown/main';
+import { DepartmentDropdown } from '../../Dropdown/main';
+import { TextList } from '../../List/main';
 import { Gallery, IFile } from '../../Gallery/main';
-import { CostCenterPicker } from '../../Picker/main';
+import { CostCenterPicker } from '../../Pickers/CostCenter';
 import Card from '@material-ui/core/Card';
 import Button from '@material-ui/core/Button';
 import CloudUploadTwoTone from '@material-ui/icons/CloudUploadTwoTone';
@@ -194,10 +195,29 @@ export class TxnCard extends React.PureComponent<props, state> {
           key={`${t.id}`}
           id={`${t.id}`}
         >
-          <div className="flex-col justify-between">
+          <div className="flex-row justify-evenly">
             {this.deriveCallout(t)}
-            <div className="flex-col p-h-10">
-              <ul className="bp3-list bp3-list-unstyled">
+            <div className="flex-col">
+              <TextList
+                title="Receipt Info"
+                contents={[
+                  {
+                    primary: 'Purchase Date:',
+                    secondary: new Date(t.timestamp).toLocaleDateString(
+                      'en-US',
+                    ),
+                  },
+                  {
+                    primary: 'Description:',
+                    secondary: t.description,
+                  },
+                  {
+                    primary: 'Amount',
+                    secondary: `$${t.amount}`,
+                  },
+                ]}
+              />
+              {/*<ul className="bp3-list bp3-list-unstyled">
                 <li className="flex-row justify-between">
                   <strong>Purchase Date: </strong>
                   {new Date(t.timestamp).toLocaleDateString('en-US')}
@@ -218,9 +238,9 @@ export class TxnCard extends React.PureComponent<props, state> {
                     value={t.notes}
                   />
                 </li>
-              </ul>
+              </ul>*/}
             </div>
-            <div className="flex-col p-h-10 justify-evenly">
+            <div className="flex-col justify-evenly">
               <CostCenterPicker
                 onSelect={this.updateCostCenter}
                 selected={t.costCenterId}
@@ -231,6 +251,8 @@ export class TxnCard extends React.PureComponent<props, state> {
                 selected={t.departmentId || this.props.userDepartmentID}
                 className="m-b-5"
               />
+            </div>
+            <div className="flex-col justify-evenly">
               <Button
                 onClick={this.openFilePrompt}
                 startIcon={<CloudUploadTwoTone />}

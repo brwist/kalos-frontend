@@ -1,16 +1,37 @@
-import React from "react";
-
+import React from 'react';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import { ListItemText } from '@material-ui/core';
 interface props {
-  userId: number;
+  title?: string;
+  contents: { primary: string; secondary?: string }[];
 }
 
 interface state {}
 
-export class List extends React.PureComponent<props, state> {
+export class TextList extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
   }
   render() {
-    return <h1>List!</h1>;
+    const { title, contents } = this.props;
+    return (
+      <div className="flex-col">
+        {title && <Typography variant="h6">{title}</Typography>}
+        <List>
+          {contents.map(c => (
+            <ListItem key={c.primary}>
+              <ListItemText
+                style={{ display: 'block' }}
+                primary={c.primary}
+                secondary={c.secondary}
+              />
+            </ListItem>
+          ))}
+        </List>
+      </div>
+    );
   }
 }
