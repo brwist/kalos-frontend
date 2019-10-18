@@ -15,6 +15,7 @@ import { TextList } from '../../List/main';
 import { Gallery, IFile } from '../../Gallery/main';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { DepartmentPicker } from '../../Pickers/Department';
+import TextField from '@material-ui/core/TextField';
 import Card from '@material-ui/core/Card';
 import Button from '@material-ui/core/Button';
 import CloudUploadTwoTone from '@material-ui/icons/CloudUploadTwoTone';
@@ -196,11 +197,10 @@ export class TxnCard extends React.PureComponent<props, state> {
           key={`${t.id}`}
           id={`${t.id}`}
         >
-          <div className="flex-row justify-evenly">
+          <div className="flex-row justify-around">
             {this.deriveCallout(t)}
             <div className="flex-col">
               <TextList
-                title="Receipt Info"
                 contents={[
                   {
                     primary: 'Purchase Date:',
@@ -218,50 +218,29 @@ export class TxnCard extends React.PureComponent<props, state> {
                   },
                 ]}
               />
-              {/*<ul className="bp3-list bp3-list-unstyled">
-                <li className="flex-row justify-between">
-                  <strong>Purchase Date: </strong>
-                  {new Date(t.timestamp).toLocaleDateString('en-US')}
-                </li>
-                <li className="flex-row justify-between">
-                  <strong>Description: </strong>
-                  {t.description}
-                </li>
-                <li className="flex-row justify-between">
-                  <strong>Amount: </strong>${t.amount}
-                </li>
-                <li className="flex-row justify-between">
-                  <strong className="m-b-5">Notes: </strong>
-                  <input
-                    type="text"
-                    onChange={e => this.updateNotes(e.currentTarget.value)}
-                    className="w-100 m-v-10"
-                    value={t.notes}
-                  />
-                </li>
-              </ul>*/}
             </div>
             <div className="flex-col justify-evenly">
               <CostCenterPicker
                 onSelect={this.updateCostCenter}
                 selected={t.costCenterId}
               />
+              <TextField
+                label="Notes"
+                value={t.notes}
+                onChange={e => this.updateNotes(e.currentTarget.value)}
+              />
               <DepartmentPicker
                 onSelect={this.updateDepartment}
                 selected={t.departmentId || this.props.userDepartmentID}
               />
-              {/*<DepartmentDropdown
-                isDisabled
-                onSelect={this.updateDepartmentID}
-                selected={t.departmentId || this.props.userDepartmentID}
-                className="m-b-5"
-              />*/}
             </div>
-            <div className="flex-col justify-evenly">
+          </div>
+          <div className="flex-row justify-center">
+            <div className="flex-col w-75 justify-evenly">
               <Button
                 onClick={this.openFilePrompt}
                 startIcon={<CloudUploadTwoTone />}
-                variant="contained"
+                variant="outlined"
                 size="large"
                 style={{ height: 44, marginBottom: 5 }}
                 className="m-b-5"
@@ -275,7 +254,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               />
               <Button
                 startIcon={<SendTwoTone />}
-                variant="contained"
+                variant="outlined"
                 size="large"
                 style={{ height: 44, marginBottom: 5 }}
                 className="m-b-5"

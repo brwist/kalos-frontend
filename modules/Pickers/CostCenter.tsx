@@ -60,12 +60,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <FormControl
-        style={{
-          margin: 5,
-          minWidth: 120,
-        }}
-      >
+      <FormControl>
         <InputLabel htmlFor="cost-center-picker">Cost Center</InputLabel>
         <NativeSelect
           value={this.props.selected}
