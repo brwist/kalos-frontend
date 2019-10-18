@@ -17,10 +17,7 @@ interface state {
   accountList: TransactionAccount.AsObject[];
 }
 
-export default class CostCenterPicker extends React.PureComponent<
-  props,
-  state
-> {
+export class CostCenterPicker extends React.PureComponent<props, state> {
   AccClient: TransactionAccountClient;
   constructor(props: props) {
     super(props);
