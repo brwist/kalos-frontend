@@ -78,7 +78,7 @@ export function Gallery({ title, text, fileList }: props) {
     return (
       <div className="w-100">
         <Button
-          variant="contained"
+          variant="outlined"
           size="large"
           style={{ height: 44, marginBottom: 5 }}
           className="m-b-5 w-100"
