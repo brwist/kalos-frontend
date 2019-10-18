@@ -12,6 +12,7 @@ import {
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { DepartmentDropdown, AccountDropdown } from '../../Dropdown/main';
 import { Gallery, IFile } from '../../Gallery/main';
+import { CostCenterPicker } from '../../Picker/main';
 import Card from '@material-ui/core/Card';
 import Button from '@material-ui/core/Button';
 import CloudUploadTwoTone from '@material-ui/icons/CloudUploadTwoTone';
@@ -220,10 +221,9 @@ export class TxnCard extends React.PureComponent<props, state> {
               </ul>
             </div>
             <div className="flex-col p-h-10 justify-evenly">
-              <AccountDropdown
-                onSelect={this.updateCostCenterID}
+              <CostCenterPicker
+                onSelect={this.updateCostCenter}
                 selected={t.costCenterId}
-                className="m-b-5"
               />
               <DepartmentDropdown
                 isDisabled
