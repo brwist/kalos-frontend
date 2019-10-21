@@ -9,6 +9,10 @@ import {
   TransactionDocumentClient,
   TransactionDocument,
 } from '@kalos-core/kalos-rpc/TransactionDocument';
+import {
+  TransactionActivity,
+  TransactionActivityClient,
+} from '@kalos-core/kalos-rpc/TransactionActivity';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { TextList } from '../../List/main';
 import { Gallery, IFile } from '../../Gallery/main';
@@ -50,6 +54,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.S3Client = new S3Client();
 
     this.FileInput = React.createRef();
+    this.NotesInput = React.createRef();
 
     this.updateTransaction = this.updateTransaction.bind(this);
     this.openFilePrompt = this.openFilePrompt.bind(this);
@@ -58,6 +63,10 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.handleFile = this.handleFile.bind(this);
     this.fetchFiles = this.fetchFiles.bind(this);
     this.fetchFile = this.fetchFile.bind(this);
+  }
+
+  makeLog() {
+    const log = new TransactionActivity();
   }
 
   updateTransaction<K extends keyof Transaction.AsObject>(prop: K) {
@@ -123,28 +132,20 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
-  refresh() {
-    return new Promise(async resolve => {
-      try {
-        const req = new Transaction();
-        req.setId(this.state.txn.id);
-        const refreshTxn = await this.TxnClient.Get(req);
-        this.setState(
-          {
-            txn: refreshTxn,
-          },
-          async () => {
-            await this.fetchFiles();
-            resolve(true);
-          },
-        );
-      } catch (err) {
-        alert(
-          'Network error, displayed information may be incorrect. Refresh is advised',
-        );
-        console.log(err);
-      }
-    });
+  async refresh() {
+    try {
+      const req = new Transaction();
+      req.setId(this.state.txn.id);
+      const refreshTxn = await this.TxnClient.Get(req);
+      this.setState({
+        txn: refreshTxn,
+      });
+    } catch (err) {
+      alert(
+        'Network error, displayed information may be incorrect. Refresh is advised',
+      );
+      console.log(err);
+    }
   }
 
   fetchFile(doc: TransactionDocument.AsObject) {
@@ -164,9 +165,11 @@ export class TxnCard extends React.PureComponent<props, state> {
           data: '',
         };
       });
+
     const promiseArr = this.state.txn.documentsList
       .filter(d => d.reference)
       .map(this.fetchFile);
+
     const fileObjects = await Promise.all(promiseArr);
     const files = filesList.map(f => {
       const fileObj = fileObjects.find(
@@ -193,7 +196,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       <>
         <Card
           elevation={3}
-          className="m-h-10 m-b-10 flex-col align-stretch"
+          className="m-h-10 m-b-10 p-15 flex-col align-stretch"
           key={`${t.id}`}
           id={`${t.id}`}
         >
@@ -224,17 +227,19 @@ export class TxnCard extends React.PureComponent<props, state> {
                 onSelect={this.updateCostCenter}
                 selected={t.costCenterId}
               />
+              <DepartmentPicker
+                onSelect={this.updateDepartment}
+                selected={t.departmentId || this.props.userDepartmentID}
+              />
               <TextField
                 label="Notes"
                 defaultValue={t.notes}
                 inputRef={this.NotesInput}
-                inputProps={{
-                  onBlur: e => this.updateNotes(e.currentTarget.value),
-                }}
-              />
-              <DepartmentPicker
-                onSelect={this.updateDepartment}
-                selected={t.departmentId || this.props.userDepartmentID}
+                onChange={e => this.updateNotes(e.currentTarget.value)}
+                variant="outlined"
+                margin="none"
+                multiline
+                style={{ marginBottom: 10 }}
               />
             </div>
           </div>
@@ -245,8 +250,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 startIcon={<CloudUploadTwoTone />}
                 variant="outlined"
                 size="large"
-                style={{ height: 44, marginBottom: 5 }}
-                className="m-b-5"
+                style={{ height: 44, marginBottom: 10 }}
               >
                 Add Receipt Photo
               </Button>
@@ -260,8 +264,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 startIcon={<SendTwoTone />}
                 variant="outlined"
                 size="large"
-                style={{ height: 44, marginBottom: 5 }}
-                className="m-b-5"
+                style={{ height: 44, marginBottom: 10 }}
               >
                 Submit For Review
               </Button>
