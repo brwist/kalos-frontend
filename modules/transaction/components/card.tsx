@@ -10,7 +10,6 @@ import {
   TransactionDocument,
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { DepartmentDropdown } from '../../Dropdown/main';
 import { TextList } from '../../List/main';
 import { Gallery, IFile } from '../../Gallery/main';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
@@ -37,6 +36,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   DocsClient: TransactionDocumentClient;
   S3Client: S3Client;
   FileInput: React.RefObject<HTMLInputElement>;
+  NotesInput: React.RefObject<HTMLInputElement>;
 
   constructor(props: props) {
     super(props);
@@ -72,7 +72,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         reqObj.setFieldMaskList([upperCaseProp]);
         const updatedTxn = await this.TxnClient.Update(reqObj);
         console.log(updatedTxn);
-        this.setState({ txn: updatedTxn });
+        this.setState(() => ({ txn: updatedTxn }));
       } catch (err) {
         console.log(err);
       }
@@ -183,9 +183,9 @@ export class TxnCard extends React.PureComponent<props, state> {
     });
   }
 
-  async componentDidMount() {
+  /*async componentDidMount() {
     await this.fetchFiles();
-  }
+  }*/
 
   render() {
     const t = this.state.txn;
@@ -226,8 +226,11 @@ export class TxnCard extends React.PureComponent<props, state> {
               />
               <TextField
                 label="Notes"
-                value={t.notes}
-                onChange={e => this.updateNotes(e.currentTarget.value)}
+                defaultValue={t.notes}
+                inputRef={this.NotesInput}
+                inputProps={{
+                  onBlur: e => this.updateNotes(e.currentTarget.value),
+                }}
               />
               <DepartmentPicker
                 onSelect={this.updateDepartment}
@@ -251,6 +254,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 title="Receipt Photo(s)"
                 text="View Receipt Photo(s)"
                 fileList={this.state.files}
+                onOpen={this.fetchFiles}
               />
               <Button
                 startIcon={<SendTwoTone />}

@@ -1,10 +1,7 @@
 import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import {
-  TransactionAccount,
-  TransactionAccountClient,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
 import { TransactionUserView } from './components/user';
+import { LoginHelper } from '../LoginHelper/main';
 
 interface props {
   userId: number;
@@ -19,7 +16,6 @@ interface state {
 
 export class Transaction extends React.PureComponent<props, state> {
   UserClient: UserClient;
-  TxnAccountClient: TransactionAccountClient;
 
   constructor(props: props) {
     super(props);
@@ -30,7 +26,6 @@ export class Transaction extends React.PureComponent<props, state> {
       userDepartmentID: 0,
     };
     this.UserClient = new UserClient();
-    this.TxnAccountClient = new TransactionAccountClient();
 
     this.getUserData = this.getUserData.bind(this);
   }
@@ -46,7 +41,7 @@ export class Transaction extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    await this.TxnAccountClient.GetToken(
+    await this.UserClient.GetToken(
       'robbie_m',
       'stature shortlist scarecrow glove',
     );
@@ -55,10 +50,13 @@ export class Transaction extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <TransactionUserView
-        userId={this.props.userId}
-        departmentId={this.state.userDepartmentID}
-      />
+      <>
+        <LoginHelper />
+        <TransactionUserView
+          userId={this.props.userId}
+          departmentId={this.state.userDepartmentID}
+        />
+      </>
     );
   }
 }

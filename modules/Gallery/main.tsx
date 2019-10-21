@@ -27,6 +27,7 @@ interface props {
   fileList: IFile[];
   title: string;
   text: string;
+  onOpen?(): void;
 }
 
 export interface IFile {
@@ -36,7 +37,15 @@ export interface IFile {
   uri?: string;
 }
 
-export function Gallery({ title, text, fileList }: props) {
+export function Gallery({ title, text, fileList, onOpen }: props) {
+  if (onOpen) {
+    try {
+      onOpen();
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   const classes = useStyles();
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
@@ -158,5 +167,19 @@ export function Gallery({ title, text, fileList }: props) {
         </Modal>
       </div>
     );
-  } else return null;
+  } else
+    return (
+      <div className="w-100">
+        <Button
+          variant="outlined"
+          size="large"
+          style={{ height: 44, marginBottom: 5 }}
+          className="m-b-5 w-100"
+          startIcon={<PageViewTwoTone />}
+          onClick={toggleOpen}
+        >
+          {text}
+        </Button>
+      </div>
+    );
 }

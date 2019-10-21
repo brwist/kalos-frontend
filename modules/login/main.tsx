@@ -4,6 +4,8 @@ import {
   ActivityLog,
   ActivityLogClient,
 } from '@kalos-core/kalos-rpc/ActivityLog';
+import TextField from '@material-ui/core/TextField';
+import Button from '@material-ui/core/Button';
 
 interface props {
   onSuccess?(): void;
@@ -113,20 +115,26 @@ export class Login extends React.PureComponent<props, state> {
           justifyContent: 'center',
         }}
       >
-        <div style={{ flexDirection: 'column', display: 'flex' }}>
+        <div className='flex-col p-10'>
+          {/*<TextField onKeyDown={this.handleUsernameChange} ref={this.LoginInput} label="Username" />*/}
+          <label htmlFor="username">Username</label>
           <input
             type="text"
+            id="username"
             onKeyDown={this.handleUsernameChange}
-            style={{ width: 250, marginTop: 10 }}
+            className='w-100 m-b-10'
             ref={this.LoginInput}
           />
+          {/*<TextField onKeyDown={this.handlePasswordChange} ref={this.PwdInput} label="Password" />*/}
+          <label htmlFor="password">Password</label>
           <input
             type="password"
+            id="password"
             onKeyDown={this.handlePasswordChange}
-            style={{ width: 250, marginTop: 10 }}
+            className='w-100 m-b-10'
             ref={this.PwdInput}
           />
-          <button style={{ width: 250, marginTop: 10 }}>Login</button>
+          <Button style={{ width: 250, marginTop: 10 }} onClick={this.handleLogin}>Login</button>
         </div>
       </div>
     );
