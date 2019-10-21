@@ -7,9 +7,11 @@ import {
   TransactionAccount,
   TransactionAccountClient,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
+import Divider from '@material-ui/core/Divider';
 
 interface props {
   selected: number;
+  disabled?: boolean;
   onSelect?(acc: TransactionAccount.AsObject): void;
 }
 
@@ -60,9 +62,10 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <FormControl>
+      <FormControl style={{ marginBottom: 10 }}>
         <InputLabel htmlFor="cost-center-picker">Cost Center</InputLabel>
         <NativeSelect
+          disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
           inputProps={{ id: 'cost-center-picker' }}
@@ -77,6 +80,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
         <FormHelperText>
           Assign a purchase category to your receipt
         </FormHelperText>
+        <Divider />
       </FormControl>
     );
   }

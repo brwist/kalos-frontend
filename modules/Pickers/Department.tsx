@@ -7,9 +7,11 @@ import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import Divider from '@material-ui/core/Divider';
 
 interface props {
   selected: number;
+  disabled?: boolean;
   onSelect?(acc: TimesheetDepartment.AsObject): void;
 }
 
@@ -60,9 +62,10 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <FormControl>
+      <FormControl style={{ marginBottom: 10 }}>
         <InputLabel htmlFor="cost-center-picker">Department</InputLabel>
         <NativeSelect
+          disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
           inputProps={{ id: 'cost-center-picker' }}
@@ -77,6 +80,7 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
         <FormHelperText>
           Select the department responsible for this receipt
         </FormHelperText>
+        <Divider />
       </FormControl>
     );
   }

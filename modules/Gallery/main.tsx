@@ -38,14 +38,6 @@ export interface IFile {
 }
 
 export function Gallery({ title, text, fileList, onOpen }: props) {
-  if (onOpen) {
-    try {
-      onOpen();
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
   const classes = useStyles();
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
@@ -53,6 +45,13 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
 
   const toggleOpen = () => {
     setOpen(!isOpen);
+    if (onOpen && !isOpen) {
+      try {
+        onOpen();
+      } catch (err) {
+        console.log(err);
+      }
+    }
   };
 
   const nextImage = () => {
@@ -89,8 +88,8 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
         <Button
           variant="outlined"
           size="large"
-          style={{ height: 44, marginBottom: 5 }}
-          className="m-b-5 w-100"
+          style={{ height: 44, marginBottom: 10 }}
+          fullWidth
           startIcon={<PageViewTwoTone />}
           onClick={toggleOpen}
         >
@@ -173,8 +172,8 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
         <Button
           variant="outlined"
           size="large"
-          style={{ height: 44, marginBottom: 5 }}
-          className="m-b-5 w-100"
+          style={{ height: 44, marginBottom: 10 }}
+          fullWidth
           startIcon={<PageViewTwoTone />}
           onClick={toggleOpen}
         >
