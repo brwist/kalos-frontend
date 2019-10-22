@@ -3,32 +3,23 @@ import {
   Transaction,
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
-import { S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { TransactionActivityClient } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { TxnCard } from './card';
 
 interface props {
-  userId: number;
+  userID: number;
   departmentId: number;
+  userName: string;
 }
 
 interface state {
   page: number;
   isLoading: boolean;
   transactions: Transaction.AsObject[];
-  txnMap: Map<number, Transaction.AsObject>;
-  selectedTransaction: Transaction.AsObject;
   layout: string;
 }
 
 export class TransactionUserView extends React.PureComponent<props, state> {
   TxnClient: TransactionClient;
-  TxnDocClient: TransactionDocumentClient;
-  TxnLogClient: TransactionActivityClient;
-  S3Client: S3Client;
-  FileInput: React.RefObject<HTMLInputElement>;
 
   constructor(props: props) {
     super(props);
@@ -36,19 +27,12 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       page: 0,
       isLoading: false,
       transactions: [],
-      selectedTransaction: new Transaction().toObject(),
-      txnMap: new Map(),
       layout: 'list',
     };
     this.TxnClient = new TransactionClient();
-    this.S3Client = new S3Client();
-    this.TxnDocClient = new TransactionDocumentClient();
-    this.TxnLogClient = new TransactionActivityClient();
-    this.FileInput = React.createRef();
 
     this.changePage = this.changePage.bind(this);
     this.fetchTxns = this.fetchTxns.bind(this);
-    this.openFilePrompt = this.openFilePrompt.bind(this);
   }
 
   changePage(changeAmount: number) {
@@ -70,7 +54,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   async fetchTxns() {
     const reqObj = new Transaction();
-    reqObj.setOwnerId(this.props.userId);
+    reqObj.setOwnerId(this.props.userID);
     reqObj.setPageNumber(this.state.page);
     this.setState(
       { isLoading: true },
@@ -81,38 +65,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
         this.setState({
           transactions: resultsList,
           isLoading: false,
-          txnMap: txnMap(resultsList),
         });
       }),
     );
-  }
-
-  deriveCallout(txn: Transaction.AsObject) {
-    if (txn.documentsList.length === 0) {
-      return (
-        <p style={{ backgroundColor: 'lightred' }}>
-          This transaction record requires a photo of your receipt
-        </p>
-      );
-    }
-  }
-
-  selectTransaction(e: React.SyntheticEvent) {
-    const id = parseInt(e.currentTarget.id);
-    if (this.state.txnMap.has(id)) {
-      const txn = this.state.txnMap.get(id);
-      this.setState({
-        selectedTransaction: txn!,
-      });
-    }
-  }
-
-  openFilePrompt() {
-    this.FileInput.current && this.FileInput.current.click();
-  }
-
-  handleNotesChange(val: string) {
-    console.log(val);
   }
 
   async componentDidMount() {
@@ -120,24 +75,29 @@ export class TransactionUserView extends React.PureComponent<props, state> {
   }
 
   render() {
-    return (
-      <div className="flex-col align-self-stretch">
-        {this.state.transactions.map(t => (
-          <TxnCard
-            txn={t}
-            key={`${t.id}`}
-            userDepartmentID={this.props.departmentId}
-          />
-        ))}
-      </div>
-    );
+    const txns = this.state.transactions.filter(t => t.statusId !== 2);
+    if (txns.length > 0) {
+      return (
+        <div className="flex-col align-self-stretch">
+          {this.state.transactions.map(t => (
+            <TxnCard
+              txn={t}
+              key={`${t.id}`}
+              userID={this.props.userID}
+              userName={this.props.userName}
+              userDepartmentID={this.props.departmentId}
+            />
+          ))}
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex-col align-self-stretch align-center">
+          <span className="title-text">
+            You have no transactions in need of review
+          </span>
+        </div>
+      );
+    }
   }
-}
-
-function txnMap(txnArr: Transaction.AsObject[]) {
-  const res = new Map<number, Transaction.AsObject>();
-  for (const t of txnArr) {
-    res.set(t.id, t);
-  }
-  return res;
 }

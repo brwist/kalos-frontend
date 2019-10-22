@@ -150,7 +150,7 @@ export class AccountDropdown extends React.PureComponent<
     };
     this.Client = new TransactionAccountClient();
 
-    this.addDepartment = this.addDepartment.bind(this);
+    this.addItem = this.addItem.bind(this);
     this.getText = this.getText.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.openMenu = this.openMenu.bind(this);
@@ -158,7 +158,7 @@ export class AccountDropdown extends React.PureComponent<
     this.renderItem = this.renderItem.bind(this);
   }
 
-  addDepartment(acc: TransactionAccount.AsObject) {
+  addItem(acc: TransactionAccount.AsObject) {
     const map = this.state.map;
     map.set(acc.id, acc);
     this.setState(prevState => ({
@@ -167,10 +167,10 @@ export class AccountDropdown extends React.PureComponent<
     }));
   }
 
-  getDepartmentList() {
+  getList() {
     const acc = new TransactionAccount();
     acc.setIsActive(1);
-    this.Client.List(acc, this.addDepartment);
+    this.Client.List(acc, this.addItem);
   }
 
   handleSelect(e: React.SyntheticEvent) {
@@ -200,7 +200,7 @@ export class AccountDropdown extends React.PureComponent<
   }
 
   componentDidMount() {
-    this.getDepartmentList();
+    this.getList();
   }
 
   openMenu(e: React.SyntheticEvent<HTMLButtonElement>) {
