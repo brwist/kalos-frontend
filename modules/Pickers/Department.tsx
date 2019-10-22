@@ -12,7 +12,8 @@ import Divider from '@material-ui/core/Divider';
 interface props {
   selected: number;
   disabled?: boolean;
-  onSelect?(acc: TimesheetDepartment.AsObject): void;
+  onSelect?(id: number): void;
+  test?(item: TimesheetDepartment.AsObject): boolean;
 }
 
 interface state {
@@ -35,13 +36,10 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
   handleSelect(e: React.SyntheticEvent<HTMLSelectElement>) {
     const id = parseInt(e.currentTarget.value);
     if (this.props.onSelect) {
-      const acc = this.state.list.find(a => a.id === id);
-      if (acc) {
-        try {
-          this.props.onSelect(acc);
-        } catch (err) {
-          console.log(err);
-        }
+      try {
+        this.props.onSelect(id);
+      } catch (err) {
+        console.log(err);
       }
     }
   }
@@ -53,7 +51,9 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
   }
 
   async fetchList() {
-    this.Client.List(new TimesheetDepartment(), this.addToList);
+    const dpt = new TimesheetDepartment();
+    dpt.setIsActive(1);
+    this.Client.List(dpt, this.addToList);
   }
 
   componentDidMount() {
@@ -70,7 +70,7 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
           onChange={this.handleSelect}
           inputProps={{ id: 'cost-center-picker' }}
         >
-          <option value={0}>Select Cost Center</option>
+          <option value={0}>Select Department</option>
           {this.state.list.map(item => (
             <option value={item.id} key={`${item.description}-${item.id}`}>
               {item.description}

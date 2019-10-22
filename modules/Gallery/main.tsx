@@ -84,7 +84,7 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
 
   if (fileList[activeImage]) {
     return (
-      <div className="w-100">
+      <>
         <Button
           variant="outlined"
           size="large"
@@ -164,11 +164,11 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
             </div>
           </Fade>
         </Modal>
-      </div>
+      </>
     );
   } else
     return (
-      <div className="w-100">
+      <>
         <Button
           variant="outlined"
           size="large"
@@ -179,6 +179,6 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
         >
           {text}
         </Button>
-      </div>
+      </>
     );
 }

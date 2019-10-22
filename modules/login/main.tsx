@@ -115,14 +115,14 @@ export class Login extends React.PureComponent<props, state> {
           justifyContent: 'center',
         }}
       >
-        <div className='flex-col p-10'>
+        <div className="flex-col p-10">
           {/*<TextField onKeyDown={this.handleUsernameChange} ref={this.LoginInput} label="Username" />*/}
           <label htmlFor="username">Username</label>
           <input
             type="text"
             id="username"
             onKeyDown={this.handleUsernameChange}
-            className='w-100 m-b-10'
+            className="w-100 m-b-10"
             ref={this.LoginInput}
           />
           {/*<TextField onKeyDown={this.handlePasswordChange} ref={this.PwdInput} label="Password" />*/}
@@ -131,10 +131,15 @@ export class Login extends React.PureComponent<props, state> {
             type="password"
             id="password"
             onKeyDown={this.handlePasswordChange}
-            className='w-100 m-b-10'
+            className="w-100 m-b-10"
             ref={this.PwdInput}
           />
-          <Button style={{ width: 250, marginTop: 10 }} onClick={this.handleLogin}>Login</button>
+          <Button
+            style={{ width: 250, marginTop: 10 }}
+            onClick={this.handleLogin}
+          >
+            Login
+          </Button>
         </div>
       </div>
     );

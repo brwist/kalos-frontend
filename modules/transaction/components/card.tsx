@@ -3,8 +3,6 @@ import {
   Transaction,
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import {
   TransactionDocumentClient,
   TransactionDocument,
@@ -20,14 +18,22 @@ import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { DepartmentPicker } from '../../Pickers/Department';
 import TextField from '@material-ui/core/TextField';
 import Card from '@material-ui/core/Card';
+import CardActionArea from '@material-ui/core/CardActionArea';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
+import CardHeader from '@material-ui/core/CardHeader';
 import Button from '@material-ui/core/Button';
 import CloudUploadTwoTone from '@material-ui/icons/CloudUploadTwoTone';
 import SendTwoTone from '@material-ui/icons/SendTwoTone';
 import InfoSharp from '@material-ui/icons/InfoSharp';
+import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import Grid from '@material-ui/core/Grid';
 
 interface props {
   txn: Transaction.AsObject;
   userDepartmentID: number;
+  userName: string;
+  userID: number;
 }
 
 interface state {
@@ -35,9 +41,22 @@ interface state {
   files: IFile[];
 }
 
+const hardcodedList = [
+  601002,
+  674002,
+  674001,
+  673002,
+  601001,
+  51500,
+  68500,
+  62600,
+  643002,
+];
+
 export class TxnCard extends React.PureComponent<props, state> {
   TxnClient: TransactionClient;
   DocsClient: TransactionDocumentClient;
+  LogClient: TransactionActivityClient;
   S3Client: S3Client;
   FileInput: React.RefObject<HTMLInputElement>;
   NotesInput: React.RefObject<HTMLInputElement>;
@@ -51,22 +70,36 @@ export class TxnCard extends React.PureComponent<props, state> {
 
     this.TxnClient = new TransactionClient();
     this.DocsClient = new TransactionDocumentClient();
+    this.LogClient = new TransactionActivityClient();
     this.S3Client = new S3Client();
 
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
 
-    this.updateTransaction = this.updateTransaction.bind(this);
     this.openFilePrompt = this.openFilePrompt.bind(this);
-    this.updateCostCenter = this.updateCostCenter.bind(this);
-    this.updateDepartment = this.updateDepartment.bind(this);
+    this.updateTransaction = this.updateTransaction.bind(this);
     this.handleFile = this.handleFile.bind(this);
     this.fetchFiles = this.fetchFiles.bind(this);
     this.fetchFile = this.fetchFile.bind(this);
+    this.submit = this.submit.bind(this);
   }
 
-  makeLog() {
-    const log = new TransactionActivity();
+  async makeLog<K extends keyof Transaction.AsObject>(
+    prop: K,
+    oldValue: Transaction.AsObject[K],
+    newValue: Transaction.AsObject[K],
+  ) {
+    try {
+      const log = new TransactionActivity();
+      const { userID, userName } = this.props;
+      log.setDescription(
+        `User ${userName} updated txn ${prop}: ${oldValue} changed to ${newValue} `,
+      );
+      log.setUserId(userID);
+      await this.LogClient.Create(log);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   updateTransaction<K extends keyof Transaction.AsObject>(prop: K) {
@@ -75,35 +108,43 @@ export class TxnCard extends React.PureComponent<props, state> {
         const reqObj = new Transaction();
         const upperCaseProp = `${prop[0].toLocaleUpperCase()}${prop.slice(1)}`;
         const methodName = `set${upperCaseProp}`;
+        const oldValue = this.state.txn[prop];
         reqObj.setId(this.state.txn.id);
         //@ts-ignore
         reqObj[methodName](value);
         reqObj.setFieldMaskList([upperCaseProp]);
         const updatedTxn = await this.TxnClient.Update(reqObj);
-        console.log(updatedTxn);
         this.setState(() => ({ txn: updatedTxn }));
+        if (prop !== 'notes') {
+          await this.makeLog(prop, oldValue, value);
+        }
       } catch (err) {
         console.log(err);
       }
     };
   }
-
   updateNotes = this.updateTransaction('notes');
-
   updateVendor = this.updateTransaction('vendor');
-
   updateCostCenterID = this.updateTransaction('costCenterId');
-  updateCostCenter(c: TransactionAccount.AsObject) {
-    this.updateCostCenterID(c.id);
+  updateDepartmentID = this.updateTransaction('departmentId');
+  updateStatus = this.updateTransaction('statusId');
+
+  submit() {
+    const ok = confirm(
+      'Are you sure you want to submit this transaction? You will be unable to edit it again unless it is rejected, so please make sure all information is correct',
+    );
+    if (ok) {
+      this.updateStatus(2);
+    }
   }
 
-  updateDepartmentID = this.updateTransaction('departmentId');
-  updateDepartment(d: TimesheetDepartment.AsObject) {
-    this.updateDepartmentID(d.id);
+  testCostCenter(acc: TransactionAccount.AsObject) {
+    return hardcodedList.includes(acc.id);
   }
 
   deriveCallout(txn: Transaction.AsObject) {
     if (txn.documentsList.length === 0) {
+      //TODO implement receipt photo conditions
       return (
         <span style={{ backgroundColor: 'red', color: 'white', width: '100%' }}>
           <InfoSharp />
@@ -180,15 +221,10 @@ export class TxnCard extends React.PureComponent<props, state> {
       }
       return f;
     });
-
     this.setState({
       files,
     });
   }
-
-  /*async componentDidMount() {
-    await this.fetchFiles();
-  }*/
 
   render() {
     const t = this.state.txn;
@@ -200,35 +236,27 @@ export class TxnCard extends React.PureComponent<props, state> {
           key={`${t.id}`}
           id={`${t.id}`}
         >
-          <div className="flex-row justify-around">
-            {this.deriveCallout(t)}
-            <div className="flex-col">
-              <TextList
-                contents={[
-                  {
-                    primary: 'Purchase Date:',
-                    secondary: new Date(t.timestamp).toLocaleDateString(
-                      'en-US',
-                    ),
-                  },
-                  {
-                    primary: 'Description:',
-                    secondary: t.description,
-                  },
-                  {
-                    primary: 'Amount',
-                    secondary: `$${t.amount}`,
-                  },
-                ]}
-              />
-            </div>
-            <div className="flex-col justify-evenly">
+          <CardHeader
+            title={`${new Date(
+              t.timestamp.split(' ').join('T'),
+            ).toDateString()}`}
+            subheader={`${t.description} - $${t.amount}`}
+          />
+          <Grid container direction="row" wrap="nowrap" spacing={2}>
+            <Grid
+              container
+              item
+              direction="column"
+              justify="space-evenly"
+              alignItems="flex-start"
+            >
               <CostCenterPicker
-                onSelect={this.updateCostCenter}
+                onSelect={this.updateCostCenterID}
                 selected={t.costCenterId}
+                test={this.testCostCenter}
               />
               <DepartmentPicker
-                onSelect={this.updateDepartment}
+                onSelect={this.updateDepartmentID}
                 selected={t.departmentId || this.props.userDepartmentID}
               />
               <TextField
@@ -239,17 +267,23 @@ export class TxnCard extends React.PureComponent<props, state> {
                 variant="outlined"
                 margin="none"
                 multiline
+                fullWidth
                 style={{ marginBottom: 10 }}
               />
-            </div>
-          </div>
-          <div className="flex-row justify-center">
-            <div className="flex-col w-75 justify-evenly">
+            </Grid>
+            <Grid
+              container
+              item
+              direction="column"
+              justify="space-evenly"
+              alignItems="center"
+            >
               <Button
                 onClick={this.openFilePrompt}
                 startIcon={<CloudUploadTwoTone />}
                 variant="outlined"
                 size="large"
+                fullWidth
                 style={{ height: 44, marginBottom: 10 }}
               >
                 Add Receipt Photo
@@ -264,12 +298,14 @@ export class TxnCard extends React.PureComponent<props, state> {
                 startIcon={<SendTwoTone />}
                 variant="outlined"
                 size="large"
+                fullWidth
                 style={{ height: 44, marginBottom: 10 }}
+                onClick={this.submit}
               >
                 Submit For Review
               </Button>
-            </div>
-          </div>
+            </Grid>
+          </Grid>
         </Card>
         <input
           type="file"

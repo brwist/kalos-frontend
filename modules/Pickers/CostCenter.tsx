@@ -12,7 +12,8 @@ import Divider from '@material-ui/core/Divider';
 interface props {
   selected: number;
   disabled?: boolean;
-  onSelect?(acc: TransactionAccount.AsObject): void;
+  onSelect?(id: number): void;
+  test?(item: TransactionAccount.AsObject): boolean;
 }
 
 interface state {
@@ -35,21 +36,26 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   handleSelect(e: React.SyntheticEvent<HTMLSelectElement>) {
     const id = parseInt(e.currentTarget.value);
     if (this.props.onSelect) {
-      const acc = this.state.accountList.find(a => a.id === id);
-      if (acc) {
-        try {
-          this.props.onSelect(acc);
-        } catch (err) {
-          console.log(err);
-        }
+      try {
+        this.props.onSelect(id);
+      } catch (err) {
+        console.log(err);
       }
     }
   }
 
   addAccount(acc: TransactionAccount.AsObject) {
-    this.setState(prevState => ({
-      accountList: prevState.accountList.concat(acc),
-    }));
+    if (this.props.test) {
+      if (this.props.test(acc)) {
+        this.setState(prevState => ({
+          accountList: prevState.accountList.concat(acc),
+        }));
+      }
+    } else {
+      this.setState(prevState => ({
+        accountList: prevState.accountList.concat(acc),
+      }));
+    }
   }
 
   async fetchAccounts() {
@@ -63,14 +69,14 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   render() {
     return (
       <FormControl style={{ marginBottom: 10 }}>
-        <InputLabel htmlFor="cost-center-picker">Cost Center</InputLabel>
+        <InputLabel htmlFor="cost-center-picker">Purchase Type</InputLabel>
         <NativeSelect
           disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
           inputProps={{ id: 'cost-center-picker' }}
         >
-          <option value={0}>Select Cost Center</option>
+          <option value={0}>Select Purchase Type</option>
           {this.state.accountList.map(acc => (
             <option value={acc.id} key={`${acc.description}-${acc.id}`}>
               {acc.description}
