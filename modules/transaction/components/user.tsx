@@ -75,7 +75,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
   }
 
   render() {
-    const txns = this.state.transactions.filter(t => t.statusId !== 2);
+    const txns = this.state.transactions
+      .filter(t => t.statusId !== 2)
+      .sort((a, b) => b.id - a.id);
     if (txns.length > 0) {
       return (
         <>

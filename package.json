@@ -7,6 +7,7 @@
     "build": "gulp -LL build",
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
+    "release": "gulp -LL release",
     "less": "lessc styles/index.less styles/main.css"
   },
   "license": "MIT",
