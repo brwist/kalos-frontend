@@ -47,6 +47,9 @@ var replace = require('rollup-plugin-replace');
 var cleanup = require('rollup-plugin-cleanup');
 var terser = require('rollup-plugin-terser').terser;
 var constants = require('./constants.ts');
+/**
+ * Serves all modules to localhost:1234 via parcel
+ */
 function start() {
     return __awaiter(this, void 0, void 0, function () {
         var modules, entrypoints;
@@ -64,6 +67,9 @@ function start() {
         });
     });
 }
+/**
+ * @deprecated
+ */
 function build() {
     return __awaiter(this, void 0, void 0, function () {
         var target, flags, err_1;
@@ -93,6 +99,11 @@ function build() {
         });
     });
 }
+/**
+ * Creates a new local module, module name should be passed as flag
+ *
+ * e.g. `yarn create --MyModule`
+ */
 function create() {
     return __awaiter(this, void 0, void 0, function () {
         var name, html, mainJS, indexJS;
@@ -131,6 +142,10 @@ function create() {
         });
     });
 }
+/**
+ * Prints `question` in the console and awaits user input. Returns user input as string
+ * @param question
+ */
 function textPrompt(question) {
     var rl = readline.createInterface({
         input: process.stdin,
@@ -367,8 +382,11 @@ function release() {
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
                     }
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + constants.KALOS_ASSETS + "/modules/" + target + ".js")];
+                    return [4 /*yield*/, patchCFC()];
                 case 4:
+                    _a.sent();
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + constants.KALOS_ASSETS + "/modules/" + target + ".js")];
+                case 5:
                     _a.sent();
                     return [2 /*return*/];
             }
