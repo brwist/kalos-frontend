@@ -208,6 +208,42 @@ function indexTemplate(title) {
     title = titleCase(title);
     return ("\nimport React from 'react'\nimport ReactDOM from 'react-dom'\nimport { " + title + " } from './main'\n\nReactDOM.render(<" + title + "/>, document.getElementById('root'))\n").replace('\n', '');
 }
+function cfmTemplate(title) {
+    title = titleCase(title);
+    return ("\n<!DOCTYPE html>\n<html>\n  <body>\n    <div id=\"" + title + "Root\"></div>\n    <script src=\"app/assets/modules/" + title + ".js\"></script>\n    <script>\n      ReactDOM.render(\n        React.createElement(" + title + ", { userID: <cfoutput>#session.user.id#</cfoutput> }),\n        document.getElementById('" + title + "Root'),\n      );\n    </script>\n  </body>\n</html>").replace('\n', '');
+}
+function cfcTemplate(title) {
+    title = title.toLowerCase();
+    return "\n  function " + title + "(rc){\n    rc.title = \"" + titleCase(title) + "\";\n  }\n\n}";
+}
+function patchCFC() {
+    return __awaiter(this, void 0, void 0, function () {
+        var branch, res, cfcFunc, output, cfmFile;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getBranch()];
+                case 1:
+                    branch = (_a.sent()).replace(/\n/g, '');
+                    res = sh.cat('build/common/module.cfc');
+                    cfcFunc = cfcTemplate(branch);
+                    if (!!res.stdout.includes(cfcFunc)) return [3 /*break*/, 4];
+                    output = sh.ShellString(res.stdout.replace(/}$/, cfcFunc));
+                    output.to('build/common/module.cfc');
+                    return [4 /*yield*/, sh.exec("scp build/common/module.cfc " + constants.MODULE_CFC)];
+                case 2:
+                    _a.sent();
+                    cfmFile = sh.ShellString(cfmTemplate(branch));
+                    cfmFile.to("build/modules/" + branch + ".cfm");
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + branch + ".cfm " + constants.MODULE_CFM + "/" + branch.toLowerCase() + ".cfm")];
+                case 3:
+                    _a.sent();
+                    sh.rm("build/modules/" + branch + ".cfm");
+                    _a.label = 4;
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
 function titleCase(str) {
     return "" + str[0].toUpperCase() + str.slice(1);
 }
@@ -342,3 +378,4 @@ function release() {
 task('bundle', rollupBuild);
 task('goog', googBuild);
 task(release);
+task('cfpatch', patchCFC);
