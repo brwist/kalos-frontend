@@ -230,12 +230,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     const t = this.state.txn;
     return (
       <>
-        <Card
-          elevation={3}
-          className="m-h-10 m-b-10 p-15 flex-col align-stretch"
-          key={`${t.id}`}
-          id={`${t.id}`}
-        >
+        <Card elevation={3} className="card" key={`${t.id}`} id={`${t.id}`}>
           <CardHeader
             title={`${new Date(
               t.timestamp.split(' ').join('T'),
@@ -286,11 +281,11 @@ export class TxnCard extends React.PureComponent<props, state> {
                 fullWidth
                 style={{ height: 44, marginBottom: 10 }}
               >
-                Add Receipt Photo
+                Photo
               </Button>
               <Gallery
                 title="Receipt Photo(s)"
-                text="View Receipt Photo(s)"
+                text="Photo(s)"
                 fileList={this.state.files}
                 onOpen={this.fetchFiles}
               />
@@ -302,7 +297,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 style={{ height: 44, marginBottom: 10 }}
                 onClick={this.submit}
               >
-                Submit For Review
+                Submit
               </Button>
             </Grid>
           </Grid>
@@ -310,7 +305,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         <input
           type="file"
           ref={this.FileInput}
-          className="hide"
+          style={{ position: 'absolute', top: 9999 }}
           onChange={this.handleFile}
         />
       </>

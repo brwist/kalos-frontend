@@ -77,9 +77,9 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
             </option>
           ))}
         </NativeSelect>
-        <FormHelperText>
+        {/*<FormHelperText>
           Select the department responsible for this receipt
-        </FormHelperText>
+        </FormHelperText>*/}
         <Divider />
       </FormControl>
     );

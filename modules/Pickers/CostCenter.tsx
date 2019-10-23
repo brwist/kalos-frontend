@@ -83,9 +83,9 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
             </option>
           ))}
         </NativeSelect>
-        <FormHelperText>
+        {/*<FormHelperText>
           Assign a purchase category to your receipt
-        </FormHelperText>
+        </FormHelperText>*/}
         <Divider />
       </FormControl>
     );

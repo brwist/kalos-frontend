@@ -6,6 +6,7 @@ import {
 } from '@kalos-core/kalos-rpc/ActivityLog';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import Grid from '@material-ui/core/Grid';
 
 interface props {
   onSuccess?(): void;
@@ -40,6 +41,19 @@ export class Login extends React.PureComponent<props, state> {
     this.LoginInput = React.createRef();
     this.PwdInput = React.createRef();
   }
+
+  enterListener(target: string) {
+    return (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        if (target === 'username') {
+          this.focusNext();
+        } else {
+          this.handleLogin();
+        }
+      }
+    };
+  }
+
   handleValueChange(target: string) {
     return (e: KeyboardEvent<HTMLInputElement>) => {
       const value = e.key;
@@ -70,23 +84,20 @@ export class Login extends React.PureComponent<props, state> {
     };
   }
 
+  handleUsernameEnter = this.enterListener('username');
   handleUsernameChange = this.handleValueChange('username');
 
+  handlePasswordEnter = this.enterListener('password');
   handlePasswordChange = this.handleValueChange('password');
-
-  redirect() {
-    window.location.href = '/transaction/index.html';
-  }
 
   async handleLogin() {
     try {
       const userData = new User();
-      userData.setLogin(this.state.inputs.username);
-      userData.setPwd(this.state.inputs.password);
-      await this.LogClient.GetToken(
-        this.state.inputs.username,
-        this.state.inputs.password,
-      );
+      const username = this.LoginInput.current!.value;
+      const password = this.PwdInput.current!.value;
+      userData.setLogin(username);
+      userData.setPwd(password);
+      await this.LogClient.GetToken(username, password);
       const user = await this.UserClient.Get(userData);
       const log = new ActivityLog();
       log.setActivityName(`${user.firstname} ${user.lastname} authenticated`);
@@ -99,6 +110,7 @@ export class Login extends React.PureComponent<props, state> {
       console.log(err);
     }
   }
+
   focusNext() {
     this.PwdInput.current && this.PwdInput.current.focus();
   }
@@ -107,41 +119,27 @@ export class Login extends React.PureComponent<props, state> {
   }
   render() {
     return (
-      <div
-        style={{
-          display: 'flex',
-          height: '100%',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div className="flex-col p-10">
-          {/*<TextField onKeyDown={this.handleUsernameChange} ref={this.LoginInput} label="Username" />*/}
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            onKeyDown={this.handleUsernameChange}
-            className="w-100 m-b-10"
-            ref={this.LoginInput}
-          />
-          {/*<TextField onKeyDown={this.handlePasswordChange} ref={this.PwdInput} label="Password" />*/}
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            onKeyDown={this.handlePasswordChange}
-            className="w-100 m-b-10"
-            ref={this.PwdInput}
-          />
-          <Button
-            style={{ width: 250, marginTop: 10 }}
-            onClick={this.handleLogin}
-          >
-            Login
-          </Button>
-        </div>
-      </div>
+      <Grid container direction="column" alignItems="center" justify="center">
+        <TextField
+          inputRef={this.LoginInput}
+          label="Username"
+          inputProps={{ onKeyDown: this.handleUsernameEnter }}
+        />
+        <TextField
+          inputProps={{
+            onKeyDown: this.handlePasswordEnter,
+          }}
+          type="password"
+          inputRef={this.PwdInput}
+          label="Password"
+        />
+        <Button
+          style={{ width: 250, marginTop: 10 }}
+          onClick={this.handleLogin}
+        >
+          Login
+        </Button>
+      </Grid>
     );
   }
 }
