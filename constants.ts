@@ -1,5 +1,7 @@
 const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
 const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
+const MODULE_CFC = `${KALOS_ROOT}/app/admin/controllers/module.cfc`;
+const MODULE_CFM = `${KALOS_ROOT}/app/admin/views/module`;
 const NAMED_EXPORTS = {
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/S3_pb.js': [
@@ -260,4 +262,6 @@ module.exports = {
   KALOS_ROOT,
   KALOS_ASSETS,
   NAMED_EXPORTS,
+  MODULE_CFC,
+  MODULE_CFM,
 };
