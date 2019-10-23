@@ -20,6 +20,7 @@ import PagesSharp from '@material-ui/icons/PagesSharp';
 import MenuSharp from '@material-ui/icons/MenuSharp';
 import EventSharp from '@material-ui/icons/EventSharp';
 import LocationSearchingSharp from '@material-ui/icons/LocationSearchingSharp';
+import CssBaseline from '@material-ui/core/CssBaseline';
 
 interface props {
   userID: number;
@@ -49,6 +50,7 @@ export function SideMenu(props: props) {
   const dispatch = `${baseURL}?action=admin:dispatch.dashboard`;
   return (
     <>
+      <CssBaseline />
       <Hidden mdDown>
         <Button onClick={toggleMenu}>
           <img src={props.imgURL} alt="no img" />
