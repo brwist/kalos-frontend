@@ -9,6 +9,7 @@ import Fade from '@material-ui/core/Fade';
 const useStyles = makeStyles(theme => ({
   modal: {
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -26,11 +27,21 @@ export function LoginHelper() {
     setIsOpen(!isOpen);
   };
 
+  const onSuccess = () => {
+    try {
+      window.location.reload();
+    } catch (err) {
+      toggleModal();
+    }
+  };
+
   const classes = useStyles();
 
   return (
-    <div>
-      <Button onClick={toggleModal}>Login</Button>
+    <>
+      <Button onClick={toggleModal} variant="outlined">
+        Login
+      </Button>
       <Modal
         aria-labelledby="transition-modal-title"
         className={`${classes.modal}`}
@@ -43,11 +54,9 @@ export function LoginHelper() {
         }}
       >
         <Fade in={isOpen}>
-          <div className={`flex-col ${classes.paper}`}>
-            <Login onSuccess={toggleModal} />
-          </div>
+          <Login onSuccess={onSuccess} />
         </Fade>
       </Modal>
-    </div>
+    </>
   );
 }

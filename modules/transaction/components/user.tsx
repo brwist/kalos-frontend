@@ -78,7 +78,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     const txns = this.state.transactions.filter(t => t.statusId !== 2);
     if (txns.length > 0) {
       return (
-        <div className="flex-col align-self-stretch">
+        <>
           {this.state.transactions.map(t => (
             <TxnCard
               txn={t}
@@ -88,7 +88,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
               userDepartmentID={this.props.departmentId}
             />
           ))}
-        </div>
+        </>
       );
     } else {
       return (

@@ -1,9 +1,8 @@
 import React from 'react';
-import Modal from '@material-ui/core/Modal';
-import Backdrop from '@material-ui/core/Backdrop';
-import Fade from '@material-ui/core/Fade';
 import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
+import Grid from '@material-ui/core/Grid';
+import Dialog from '@material-ui/core/Dialog';
+import Typography from '@material-ui/core/Typography';
 import PageViewTwoTone from '@material-ui/icons/PageViewTwoTone';
 import ChevronLeftTwoTone from '@material-ui/icons/ChevronLeftTwoTone';
 import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
@@ -12,6 +11,9 @@ import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles(theme => ({
   modal: {
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -95,75 +97,80 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
         >
           {text}
         </Button>
-        <Modal
+        <Dialog
           aria-labelledby="transition-modal-title"
-          className={`${classes.modal}`}
           open={isOpen}
           onClose={toggleOpen}
-          closeAfterTransition
-          BackdropComponent={Backdrop}
-          BackdropProps={{
-            timeout: 500,
-          }}
+          fullScreen
         >
-          <Fade in={isOpen}>
-            <div className={`${classes.paper} flex-col`}>
-              <div className="flex-row justify-evenly align-center">
-                <span className="title-text" id="transition-modal-title">
-                  {title}
-                </span>
-                <span className="title-text">
-                  {activeImage + 1} of {fileList.length}
-                </span>
-                <Button
-                  onClick={toggleOpen}
-                  size="large"
-                  className="title-text"
-                  style={{ height: 44 }}
-                  endIcon={<CloseTwoTone />}
-                >
-                  Close
-                </Button>
-              </div>
-              <div className="flex-row justify-center">
-                {fileList[activeImage].mimeType === 'application/pdf' && (
-                  <iframe
-                    src={getSource(fileList[activeImage])}
-                    width="100%"
-                  ></iframe>
-                )}
-                {fileList[activeImage].mimeType !== 'application/pdf' && (
-                  <img
-                    src={getSource(fileList[activeImage])}
-                    className="w-70 h-70"
-                  />
-                )}
-              </div>
-              <div className="flex-row justify-evenly">
-                <Button
-                  onClick={prevImage}
-                  disabled={activeImage === 0}
-                  size="large"
-                  className="title-text"
-                  style={{ height: 44 }}
-                  startIcon={<ChevronLeftTwoTone />}
-                >
-                  Prev
-                </Button>
-                <Button
-                  onClick={nextImage}
-                  disabled={activeImage === fileList.length - 1}
-                  size="large"
-                  className="title-text"
-                  style={{ height: 44 }}
-                  endIcon={<ChevronRightTwoTone />}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </Fade>
-        </Modal>
+          <Grid container item direction="column" alignItems="center">
+            <Grid
+              container
+              direction="row"
+              justify="space-evenly"
+              alignItems="center"
+            >
+              <Typography>{title}</Typography>
+              <Typography>
+                {activeImage + 1} of {fileList.length}
+              </Typography>
+              <Button
+                onClick={toggleOpen}
+                size="large"
+                className="title-text"
+                style={{ height: 44 }}
+                endIcon={<CloseTwoTone />}
+              >
+                Close
+              </Button>
+            </Grid>
+            <Grid
+              container
+              item
+              direction="row"
+              justify="center"
+              alignItems="center"
+            >
+              {fileList[activeImage].mimeType === 'application/pdf' && (
+                <iframe
+                  src={getSource(fileList[activeImage])}
+                  width="100%"
+                ></iframe>
+              )}
+              {fileList[activeImage].mimeType !== 'application/pdf' && (
+                <img src={getSource(fileList[activeImage])} />
+              )}
+            </Grid>
+            <Grid
+              container
+              item
+              direction="row"
+              justify="center"
+              alignItems="center"
+            >
+              <Button
+                onClick={prevImage}
+                disabled={activeImage === 0}
+                size="large"
+                className="title-text"
+                style={{ height: 44 }}
+                startIcon={<ChevronLeftTwoTone />}
+              >
+                Prev
+              </Button>
+              <Button
+                onClick={nextImage}
+                disabled={activeImage === fileList.length - 1}
+                size="large"
+                className="title-text"
+                style={{ height: 44 }}
+                endIcon={<ChevronRightTwoTone />}
+              >
+                Next
+              </Button>
+            </Grid>
+          </Grid>
+        </Dialog>
       </>
     );
   } else

@@ -3,6 +3,7 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TransactionUserView } from './components/user';
 import { LoginHelper } from '../LoginHelper/main';
 import Grid from '@material-ui/core/Grid';
+import CssBaseline from '@material-ui/core/CssBaseline';
 
 interface props {
   userID: number;
@@ -51,18 +52,21 @@ export default class Transaction extends React.PureComponent<props, state> {
   render() {
     if (this.state.userName) {
       return (
-        <Grid
-          container
-          direction="column"
-          justify="flex-start"
-          alignItems="center"
-        >
-          <TransactionUserView
-            userID={this.props.userID}
-            userName={this.state.userName}
-            departmentId={this.state.userDepartmentID}
-          />
-        </Grid>
+        <>
+          <CssBaseline />
+          <Grid
+            container
+            direction="column"
+            justify="flex-start"
+            alignItems="center"
+          >
+            <TransactionUserView
+              userID={this.props.userID}
+              userName={this.state.userName}
+              departmentId={this.state.userDepartmentID}
+            />
+          </Grid>
+        </>
       );
     } else {
       return (
