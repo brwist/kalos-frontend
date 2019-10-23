@@ -11,23 +11,22 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
+import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { TextList } from '../../List/main';
 import { Gallery, IFile } from '../../Gallery/main';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { DepartmentPicker } from '../../Pickers/Department';
 import TextField from '@material-ui/core/TextField';
 import Card from '@material-ui/core/Card';
-import CardActionArea from '@material-ui/core/CardActionArea';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
 import Button from '@material-ui/core/Button';
-import CloudUploadTwoTone from '@material-ui/icons/CloudUploadTwoTone';
+import AddAPhotoTwoTone from '@material-ui/icons/AddAPhotoTwoTone';
 import SendTwoTone from '@material-ui/icons/SendTwoTone';
 import InfoSharp from '@material-ui/icons/InfoSharp';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import Grid from '@material-ui/core/Grid';
+import Hidden from '@material-ui/core/Hidden';
+import Typography from '@material-ui/core/Typography';
+import { red, green } from '@material-ui/core/colors';
 
 interface props {
   txn: Transaction.AsObject;
@@ -130,11 +129,25 @@ export class TxnCard extends React.PureComponent<props, state> {
   updateStatus = this.updateTransaction('statusId');
 
   submit() {
-    const ok = confirm(
-      'Are you sure you want to submit this transaction? You will be unable to edit it again unless it is rejected, so please make sure all information is correct',
-    );
-    if (ok) {
-      this.updateStatus(2);
+    const { txn } = this.state;
+    try {
+      const ok = confirm(
+        'Are you sure you want to submit this transaction? You will be unable to edit it again unless it is rejected, so please make sure all information is correct',
+      );
+      if (ok) {
+        if (!txn.costCenter) {
+          throw 'A purchase category must be assigned';
+        } else if (
+          txn.amount > txn.costCenter.thresholdAmount &&
+          txn.documentsList.length === 0
+        ) {
+          throw 'This receipt requires a photo';
+        } else {
+          this.updateStatus(2);
+        }
+      }
+    } catch (err) {
+      alert(err);
     }
   }
 
@@ -143,13 +156,49 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   deriveCallout(txn: Transaction.AsObject) {
-    if (txn.documentsList.length === 0) {
-      //TODO implement receipt photo conditions
+    const style = {
+      backgroundColor: red[900],
+      color: 'white',
+      width: '100%',
+      borderRadius: '3px',
+      padding: '5px',
+    };
+
+    if (!txn.costCenter) {
       return (
-        <span style={{ backgroundColor: 'red', color: 'white', width: '100%' }}>
+        <Grid container direction="row" style={style}>
           <InfoSharp />
-          <p>This transaction record requires a photo of your receipt</p>
-        </span>
+          <Typography>Please select a purchase category</Typography>
+        </Grid>
+      );
+    } else if (
+      txn.amount > txn.costCenter.thresholdAmount &&
+      txn.documentsList.length === 0
+    ) {
+      return (
+        <Grid container direction="row" style={style}>
+          <InfoSharp />
+          <Typography>
+            This transaction record requires a photo of your receipt
+          </Typography>
+        </Grid>
+      );
+    } else if (txn.costCenterId === 601002 && txn.notes === '') {
+      return (
+        <Grid container direction="row" style={style}>
+          <InfoSharp />
+          <Typography>
+            Fuel purchases must include mileage and gallons in the notes
+          </Typography>
+        </Grid>
+      );
+    } else if (txn.statusId === 1) {
+      style.backgroundColor = green[700];
+      return (
+        <Grid container direction="row" style={style}>
+          <InfoSharp />
+          <Typography>This transaction is ready for submission</Typography>
+        </Grid>
       );
     }
   }
@@ -231,6 +280,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     return (
       <>
         <Card elevation={3} className="card" key={`${t.id}`} id={`${t.id}`}>
+          {this.deriveCallout(t)}
           <CardHeader
             title={`${new Date(
               t.timestamp.split(' ').join('T'),
@@ -275,7 +325,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             >
               <Button
                 onClick={this.openFilePrompt}
-                startIcon={<CloudUploadTwoTone />}
+                startIcon={<AddAPhotoTwoTone />}
                 variant="outlined"
                 size="large"
                 fullWidth
@@ -302,12 +352,9 @@ export class TxnCard extends React.PureComponent<props, state> {
             </Grid>
           </Grid>
         </Card>
-        <input
-          type="file"
-          ref={this.FileInput}
-          style={{ position: 'absolute', top: 9999 }}
-          onChange={this.handleFile}
-        />
+        <Hidden xsUp>
+          <input type="file" ref={this.FileInput} onChange={this.handleFile} />
+        </Hidden>
       </>
     );
   }

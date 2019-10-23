@@ -7,6 +7,8 @@ import PageViewTwoTone from '@material-ui/icons/PageViewTwoTone';
 import ChevronLeftTwoTone from '@material-ui/icons/ChevronLeftTwoTone';
 import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
 import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
+import PhotoAlbumTwoTone from '@material-ui/icons/PhotoAlbumTwoTone';
+import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles(theme => ({
@@ -92,7 +94,7 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
           size="large"
           style={{ height: 44, marginBottom: 10 }}
           fullWidth
-          startIcon={<PageViewTwoTone />}
+          startIcon={<ImageSearchTwoTone />}
           onClick={toggleOpen}
         >
           {text}
@@ -103,9 +105,15 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
           onClose={toggleOpen}
           fullScreen
         >
-          <Grid container item direction="column" alignItems="center">
+          <Grid
+            container
+            direction="column"
+            alignItems="center"
+            justify="center"
+          >
             <Grid
               container
+              item
               direction="row"
               justify="space-evenly"
               alignItems="center"
@@ -124,21 +132,19 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
                 Close
               </Button>
             </Grid>
-            <Grid
-              container
-              item
-              direction="row"
-              justify="center"
-              alignItems="center"
-            >
+            <Grid item>
               {fileList[activeImage].mimeType === 'application/pdf' && (
                 <iframe
                   src={getSource(fileList[activeImage])}
                   width="100%"
+                  style={{ maxWidth: '100%', height: 'auto' }}
                 ></iframe>
               )}
               {fileList[activeImage].mimeType !== 'application/pdf' && (
-                <img src={getSource(fileList[activeImage])} />
+                <img
+                  src={getSource(fileList[activeImage])}
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                />
               )}
             </Grid>
             <Grid
@@ -181,7 +187,7 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
           size="large"
           style={{ height: 44, marginBottom: 10 }}
           fullWidth
-          startIcon={<PageViewTwoTone />}
+          startIcon={<ImageSearchTwoTone />}
           onClick={toggleOpen}
         >
           {text}

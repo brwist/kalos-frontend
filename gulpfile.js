@@ -46,7 +46,7 @@ var peerDependencies = require('rollup-plugin-peer-deps-external');
 var replace = require('rollup-plugin-replace');
 var cleanup = require('rollup-plugin-cleanup');
 var terser = require('rollup-plugin-terser').terser;
-var _a = require('./constants'), NAMED_EXPORTS = _a.NAMED_EXPORTS, KALOS_ROOT = _a.KALOS_ROOT, KALOS_ASSETS = _a.KALOS_ASSETS;
+var constants = require('./constants.ts');
 function start() {
     return __awaiter(this, void 0, void 0, function () {
         var modules, entrypoints;
@@ -257,7 +257,7 @@ function rollupBuild() {
                             plugins: [
                                 resolve(),
                                 commonjs({
-                                    namedExports: NAMED_EXPORTS
+                                    namedExports: constants.NAMED_EXPORTS
                                 }),
                                 typescript({
                                     tsconfigOverride: {
@@ -331,7 +331,7 @@ function release() {
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
                     }
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + constants.KALOS_ASSETS + "/modules/" + target + ".js")];
                 case 4:
                     _a.sent();
                     return [2 /*return*/];

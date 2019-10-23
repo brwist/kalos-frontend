@@ -1,7 +1,6 @@
-export const KALOS_ROOT: string =
-  'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
-export const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
-export const NAMED_EXPORTS = {
+const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
+const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
+const NAMED_EXPORTS = {
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/S3_pb.js': [
     'FileObject',
@@ -255,4 +254,10 @@ export const NAMED_EXPORTS = {
   ],
   'node_modules/react-is/index.js': ['ForwardRef'],
   'node_modules/prop-types/index.js': ['elementType'],
+};
+
+module.exports = {
+  KALOS_ROOT,
+  KALOS_ASSETS,
+  NAMED_EXPORTS,
 };
