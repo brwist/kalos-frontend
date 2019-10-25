@@ -20,6 +20,7 @@ import PagesSharp from '@material-ui/icons/PagesSharp';
 import MenuSharp from '@material-ui/icons/MenuSharp';
 import EventSharp from '@material-ui/icons/EventSharp';
 import LocationSearchingSharp from '@material-ui/icons/LocationSearchingSharp';
+import BarChartSharp from '@material-ui/icons/BarChartSharp';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
 interface props {
@@ -48,6 +49,8 @@ export function SideMenu(props: props) {
   const documents = `${baseURL}?action=admin:document`;
   const serviceCalls = `${baseURL}?action=admin:service.calls`;
   const dispatch = `${baseURL}?action=admin:dispatch.dashboard`;
+  const productivity = `${baseURL}?action=admin:service.newmetrics`;
+  const serviceBilling = `${baseURL}?action=admin:service.callsPending`;
   return (
     <>
       <CssBaseline />
@@ -83,12 +86,14 @@ export function SideMenu(props: props) {
             </ListItemIcon>
             <ListItemText primary="Service Calendar" />
           </ListItem>
+
           <ListItem button href={serviceCalls} component="a">
             <ListItemIcon>
               <EventSharp />
             </ListItemIcon>
             <ListItemText primary="Service Call Search" />
           </ListItem>
+
           {props.isAdmin && (
             <ListItem button href={dispatch} component="a">
               <ListItemIcon>
@@ -97,24 +102,28 @@ export function SideMenu(props: props) {
               <ListItemText primary="Dispatch" />
             </ListItem>
           )}
+
           <ListItem button href={spiffLog} component="a">
             <ListItemIcon>
               <MoneySharp />
             </ListItemIcon>
             <ListItemText primary="Spiff Log" />
           </ListItem>
+
           <ListItem button href={toolLog} component="a">
             <ListItemIcon>
               <AttachMoneySharp />
             </ListItemIcon>
             <ListItemText primary="Tool Log" />
           </ListItem>
+
           <ListItem button href={timesheet} component="a">
             <ListItemIcon>
               <CalendarViewDaySharp />
             </ListItemIcon>
             <ListItemText primary="Timesheet" />
           </ListItem>
+
           <Divider />
           <ListItem button href={employees} component="a">
             <ListItemIcon>
@@ -122,12 +131,14 @@ export function SideMenu(props: props) {
             </ListItemIcon>
             <ListItemText primary="Employee Directory" />
           </ListItem>
+
           <ListItem button href={search} component="a">
             <ListItemIcon>
               <SearchSharp />
             </ListItemIcon>
             <ListItemText primary="Customer Directory" />
           </ListItem>
+
           {props.isAdmin && (
             <ListItem button href={reports} component="a">
               <ListItemIcon>
@@ -136,12 +147,31 @@ export function SideMenu(props: props) {
               <ListItemText primary="Reports" />
             </ListItem>
           )}
+
           {props.isAdmin && (
             <ListItem button href={documents} component="a">
               <ListItemIcon>
                 <PagesSharp />
               </ListItemIcon>
               <ListItemText primary="Kalos Documents" />
+            </ListItem>
+          )}
+
+          {props.isAdmin && (
+            <ListItem button href={productivity} component="a">
+              <ListItemIcon>
+                <BarChartSharp />
+              </ListItemIcon>
+              <ListItemText primary="Productivity / Metrics" />
+            </ListItem>
+          )}
+
+          {props.isAdmin && (
+            <ListItem button href={serviceBilling} component="a">
+              <ListItemIcon>
+                <PagesSharp />
+              </ListItemIcon>
+              <ListItemText primary="Service Billing" />
             </ListItem>
           )}
         </List>
