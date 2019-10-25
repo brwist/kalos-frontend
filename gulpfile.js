@@ -333,7 +333,11 @@ function rollupBuild() {
                     return [4 /*yield*/, bundle.write({
                             file: "build/modules/" + target + ".js",
                             name: titleCase(target),
-                            format: 'umd'
+                            format: 'umd',
+                            globals: {
+                                react: 'React',
+                                'react-dom': 'ReactDOM'
+                            }
                         })];
                 case 4:
                     _a.sent();

@@ -51,16 +51,23 @@ export function SideMenu(props: props) {
   return (
     <>
       <CssBaseline />
+
       <Hidden mdDown>
         <Button onClick={toggleMenu}>
-          <img src={props.imgURL} alt="no img" />
+          <img
+            src={props.imgURL}
+            alt="no img"
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
         </Button>
       </Hidden>
+
       <Hidden lgUp>
-        <IconButton onClick={toggleMenu}>
+        <IconButton onClick={toggleMenu} style={{ color: 'white' }}>
           <MenuSharp />
         </IconButton>
       </Hidden>
+
       <Drawer open={state.isOpen} onClose={toggleMenu}>
         <List>
           <ListItem button href={baseURL} component="a">
@@ -69,6 +76,7 @@ export function SideMenu(props: props) {
             </ListItemIcon>
             <ListItemText primary="Dashboard" />
           </ListItem>
+
           <ListItem button href={calendar} component="a">
             <ListItemIcon>
               <CalendarTodaySharp />
