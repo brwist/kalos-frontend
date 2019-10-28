@@ -20,8 +20,11 @@ import PagesSharp from '@material-ui/icons/PagesSharp';
 import MenuSharp from '@material-ui/icons/MenuSharp';
 import EventSharp from '@material-ui/icons/EventSharp';
 import LocationSearchingSharp from '@material-ui/icons/LocationSearchingSharp';
+import AccountCircleIcon from '@material-ui/icons/AccountCircleSharp';
+import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
 import BarChartSharp from '@material-ui/icons/BarChartSharp';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import { cfURL, BASE_URL } from '../../helpers';
 
 interface props {
   userID: number;
@@ -38,19 +41,29 @@ export function SideMenu(props: props) {
     setState({ isOpen: !state.isOpen });
   };
 
-  const baseURL = 'https://app.kalosflorida.com/index.cfm';
-  const spiffLog = `${baseURL}?action=admin:tasks.spiff_tool_logs&rt=all&type=spiff&reportUserId=${props.userID}`;
-  const toolLog = `${baseURL}?action=admin:tasks.spiff_tool_logs&rt=all&type=tool&reportUserId=${props.userID}`;
-  const timesheet = `${baseURL}?action=admin:timesheet.timesheetview&user_id=${props.userID}&timesheetAction=cardview`;
-  const employees = `${baseURL}?action=admin:user.employee`;
-  const search = `${baseURL}?action=admin:search.index`;
-  const calendar = `${baseURL}?action=admin:service.calendar`;
-  const reports = `${baseURL}?action=admin:reports`;
-  const documents = `${baseURL}?action=admin:document`;
-  const serviceCalls = `${baseURL}?action=admin:service.calls`;
-  const dispatch = `${baseURL}?action=admin:dispatch.dashboard`;
-  const productivity = `${baseURL}?action=admin:service.newmetrics`;
-  const serviceBilling = `${baseURL}?action=admin:service.callsPending`;
+  const spiffLog = cfURL(
+    'tasks.spiff_tool_logs',
+    `&rt=all&type=spiff&reportUserId=${props.userID}`,
+  );
+  const toolLog = cfURL(
+    'tasks.spiff_tool_logs',
+    `&rt=all&type=tool&reportUserId=${props.userID}`,
+  );
+  const timesheet = cfURL(
+    'timesheet.timesheetview',
+    `&user_id=${props.userID}&timesheetAction=cardview`,
+  );
+  const employees = cfURL('user.employee');
+  const search = cfURL('search.index');
+  const calendar = cfURL('service.calendar');
+  const reports = cfURL('reports');
+  const documents = cfURL('document');
+  const serviceCalls = cfURL('service.calls');
+  const dispatch = cfURL('dispatch.dashboard');
+  const productivity = cfURL('service.newmetrics');
+  const serviceBilling = cfURL('service.callsPending');
+  const logout = cfURL('account.logout');
+  const profile = cfURL('account.editinformation');
   return (
     <>
       <CssBaseline />
@@ -73,7 +86,7 @@ export function SideMenu(props: props) {
 
       <Drawer open={state.isOpen} onClose={toggleMenu}>
         <List>
-          <ListItem button href={baseURL} component="a">
+          <ListItem button href={BASE_URL} component="a">
             <ListItemIcon>
               <HomeSharp />
             </ListItemIcon>
@@ -125,6 +138,7 @@ export function SideMenu(props: props) {
           </ListItem>
 
           <Divider />
+
           <ListItem button href={employees} component="a">
             <ListItemIcon>
               <PersonSharp />
@@ -174,6 +188,22 @@ export function SideMenu(props: props) {
               <ListItemText primary="Service Billing" />
             </ListItem>
           )}
+
+          <Divider />
+
+          <ListItem button href={profile} component="a">
+            <ListItemIcon>
+              <AccountCircleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Account Info" />
+          </ListItem>
+
+          <ListItem button href={logout} component="a">
+            <ListItemIcon>
+              <ExitToAppIcon />
+            </ListItemIcon>
+            <ListItemText primary="Logout" />
+          </ListItem>
         </List>
       </Drawer>
     </>
