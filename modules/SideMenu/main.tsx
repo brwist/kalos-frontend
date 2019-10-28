@@ -12,19 +12,21 @@ import HomeSharp from '@material-ui/icons/HomeSharp';
 import MoneySharp from '@material-ui/icons/MoneySharp';
 import AttachMoneySharp from '@material-ui/icons/AttachMoneySharp';
 import SearchSharp from '@material-ui/icons/SearchSharp';
-import CalendarViewDaySharp from '@material-ui/icons/CalendarViewDaySharp';
+import MenuBookIcon from '@material-ui/icons/MenuBookSharp';
 import CalendarTodaySharp from '@material-ui/icons/CalendarTodaySharp';
 import PersonSharp from '@material-ui/icons/PersonSharp';
-import ReportSharp from '@material-ui/icons/ReportSharp';
+import PictureAsPdfSharpIcon from '@material-ui/icons/PictureAsPdfSharp';
+import ReceiptSharpIcon from '@material-ui/icons/ReceiptSharp';
 import PagesSharp from '@material-ui/icons/PagesSharp';
 import MenuSharp from '@material-ui/icons/MenuSharp';
 import EventSharp from '@material-ui/icons/EventSharp';
-import LocationSearchingSharp from '@material-ui/icons/LocationSearchingSharp';
+import LocationOnIcon from '@material-ui/icons/LocationOnSharp';
+import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import AccountCircleIcon from '@material-ui/icons/AccountCircleSharp';
 import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
 import BarChartSharp from '@material-ui/icons/BarChartSharp';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import { cfURL, BASE_URL } from '../../helpers';
+import { cfURL } from '../../helpers';
 
 interface props {
   userID: number;
@@ -59,10 +61,9 @@ export function SideMenu(props: props) {
   const reports = cfURL('reports');
   const documents = cfURL('document');
   const serviceCalls = cfURL('service.calls');
-  const dispatch = cfURL('dispatch.dashboard');
+  const dispatch = cfURL('dispatch.newdash');
   const productivity = cfURL('service.newmetrics');
   const serviceBilling = cfURL('service.callsPending');
-  const logout = cfURL('account.logout');
   const profile = cfURL('account.editinformation');
   return (
     <>
@@ -86,7 +87,11 @@ export function SideMenu(props: props) {
 
       <Drawer open={state.isOpen} onClose={toggleMenu}>
         <List>
-          <ListItem button href={BASE_URL} component="a">
+          <ListItem
+            button
+            href="https://app.kalosflorida.com/index.cfm"
+            component="a"
+          >
             <ListItemIcon>
               <HomeSharp />
             </ListItemIcon>
@@ -110,7 +115,7 @@ export function SideMenu(props: props) {
           {props.isAdmin && (
             <ListItem button href={dispatch} component="a">
               <ListItemIcon>
-                <LocationSearchingSharp />
+                <LocationOnIcon />
               </ListItemIcon>
               <ListItemText primary="Dispatch" />
             </ListItem>
@@ -132,7 +137,7 @@ export function SideMenu(props: props) {
 
           <ListItem button href={timesheet} component="a">
             <ListItemIcon>
-              <CalendarViewDaySharp />
+              <AccessTimeIcon />
             </ListItemIcon>
             <ListItemText primary="Timesheet" />
           </ListItem>
@@ -156,7 +161,7 @@ export function SideMenu(props: props) {
           {props.isAdmin && (
             <ListItem button href={reports} component="a">
               <ListItemIcon>
-                <ReportSharp />
+                <MenuBookIcon />
               </ListItemIcon>
               <ListItemText primary="Reports" />
             </ListItem>
@@ -165,7 +170,7 @@ export function SideMenu(props: props) {
           {props.isAdmin && (
             <ListItem button href={documents} component="a">
               <ListItemIcon>
-                <PagesSharp />
+                <PictureAsPdfSharpIcon />
               </ListItemIcon>
               <ListItemText primary="Kalos Documents" />
             </ListItem>
@@ -183,7 +188,7 @@ export function SideMenu(props: props) {
           {props.isAdmin && (
             <ListItem button href={serviceBilling} component="a">
               <ListItemIcon>
-                <PagesSharp />
+                <ReceiptSharpIcon />
               </ListItemIcon>
               <ListItemText primary="Service Billing" />
             </ListItem>
@@ -198,7 +203,11 @@ export function SideMenu(props: props) {
             <ListItemText primary="Account Info" />
           </ListItem>
 
-          <ListItem button href={logout} component="a">
+          <ListItem
+            button
+            href="https://app.kalosflorida.com/index.cfm?action=account.logout"
+            component="a"
+          >
             <ListItemIcon>
               <ExitToAppIcon />
             </ListItemIcon>
