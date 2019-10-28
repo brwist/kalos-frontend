@@ -1,3 +1,4 @@
+const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
 const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
 const MODULE_CFC = `${KALOS_ROOT}/app/admin/controllers/module.cfc`;
