@@ -1,5 +1,8 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { Picker } from './main'
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { JobSubtypePicker } from './JobSubtype';
 
-ReactDOM.render(<Picker/>, document.getElementById('root'))
+ReactDOM.render(
+  <JobSubtypePicker jobTypeID={8} selected={1} />,
+  document.getElementById('root'),
+);

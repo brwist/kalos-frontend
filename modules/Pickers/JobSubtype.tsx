@@ -2,29 +2,37 @@ import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
-import { JobType, JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
+import { JobSubtype, JobSubtypeClient } from '@kalos-core/kalos-rpc/JobSubtype';
+import {
+  JobTypeSubtype,
+  JobTypeSubtypeClient,
+} from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import Divider from '@material-ui/core/Divider';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
 
 interface props {
   selected: number;
+  jobTypeID: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: JobType.AsObject): boolean;
 }
 
 interface state {
-  list: JobType.AsObject[];
+  list: JobSubtype.AsObject[];
+  allowed: number[];
 }
 
-export class JobTypePicker extends React.PureComponent<props, state> {
-  Client: JobTypeClient;
+export class JobSubtypePicker extends React.PureComponent<props, state> {
+  Client: JobSubtypeClient;
+  JobTypeSubtypeClient: JobTypeSubtypeClient;
   constructor(props: props) {
     super(props);
     this.state = {
       list: [],
+      allowed: [],
     };
-    this.Client = new JobTypeClient();
-
+    this.Client = new JobSubtypeClient();
+    this.JobTypeSubtypeClient = new JobTypeSubtypeClient();
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
   }
@@ -40,22 +48,27 @@ export class JobTypePicker extends React.PureComponent<props, state> {
     }
   }
 
-  addItem(item: JobType.AsObject) {
-    if (this.props.test) {
-      if (this.props.test(item)) {
-        this.setState(prevState => ({
-          list: prevState.list.concat(item),
-        }));
-      }
-    } else {
+  addItem(item: JobSubtype.AsObject) {
+    if (this.state.allowed.includes(item.id)) {
       this.setState(prevState => ({
         list: prevState.list.concat(item),
       }));
     }
   }
 
+  fetchSubtypeList() {
+    return new Promise(async resolve => {
+      const jtst = new JobTypeSubtype();
+      jtst.setJobTypeId(this.props.jobTypeID);
+      const res = (await this.JobTypeSubtypeClient.BatchGet(jtst)).toObject();
+      const allowed = res.resultsList.map(st => st.jobSubtypeId);
+      this.setState({ allowed }, () => resolve(true));
+    });
+  }
+
   async fetchAccounts() {
-    this.Client.List(new JobType(), this.addItem);
+    await this.fetchSubtypeList();
+    this.Client.List(new JobSubtype(), this.addItem);
   }
 
   componentDidMount() {
@@ -65,7 +78,7 @@ export class JobTypePicker extends React.PureComponent<props, state> {
   render() {
     return (
       <FormControl style={{ marginBottom: 10 }}>
-        <InputLabel htmlFor="job-type-picker">Job Type</InputLabel>
+        <InputLabel htmlFor="job-type-picker">Subtype</InputLabel>
         <NativeSelect
           disabled={this.props.disabled}
           value={this.props.selected}
