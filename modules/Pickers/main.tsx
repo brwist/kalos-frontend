@@ -3,37 +3,41 @@ import InputLabel from '@material-ui/core/InputLabel';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
-import {
-  TransactionAccount,
-  TransactionAccountClient,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+import { BaseClient } from '@kalos-core/kalos-rpc/BaseClient';
 
-interface props {
+interface props<T, C> {
   selected: number;
-  onSelect?(acc: TransactionAccount.AsObject): void;
+  onSelect?(acc: T): void;
+  client: C;
+  id: string;
+  reqObj: T;
 }
 
-interface state {
-  accountList: TransactionAccount.AsObject[];
+interface state<T> {
+  list: T[];
 }
 
-export class CostCenterPicker extends React.PureComponent<props, state> {
-  AccClient: TransactionAccountClient;
-  constructor(props: props) {
+export class Picker<
+  T extends { id: number; description: string },
+  C extends BaseClient
+> extends React.PureComponent<props<T, C>, state<T>> {
+  Client: C;
+  constructor(props: props<T, C>) {
     super(props);
     this.state = {
-      accountList: [],
+      list: [],
     };
-    this.AccClient = new TransactionAccountClient();
+    //@ts-ignore
+    this.Client = new this.props.client();
 
     this.handleSelect = this.handleSelect.bind(this);
-    this.addAccount = this.addAccount.bind(this);
+    this.addItem = this.addItem.bind(this);
   }
 
   handleSelect(e: React.SyntheticEvent<HTMLSelectElement>) {
     const id = parseInt(e.currentTarget.value);
     if (this.props.onSelect) {
-      const acc = this.state.accountList.find(a => a.id === id);
+      const acc = this.state.list.find(a => a.id === id);
       if (acc) {
         try {
           this.props.onSelect(acc);
@@ -44,18 +48,19 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
     }
   }
 
-  addAccount(acc: TransactionAccount.AsObject) {
+  addItem(item: T) {
     this.setState(prevState => ({
-      accountList: prevState.accountList.concat(acc),
+      list: prevState.list.concat(item),
     }));
   }
 
-  async fetchAccounts() {
-    this.AccClient.List(new TransactionAccount(), this.addAccount);
+  async fetchItems() {
+    //@ts-ignore
+    this.Client.List(new T(), this.addItem);
   }
 
   componentDidMount() {
-    this.fetchAccounts();
+    this.fetchItems();
   }
 
   render() {
@@ -73,15 +78,15 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
           inputProps={{ id: 'cost-center-picker' }}
         >
           <option value={0}>Select Cost Center</option>
-          {this.state.accountList.map(acc => (
-            <option value={acc.id} key={`${acc.description}-${acc.id}`}>
-              {acc.description}
+          {this.state.list.map(item => (
+            <option value={item.id} key={`${item.description}-${item.id}`}>
+              {item.description}
             </option>
           ))}
         </NativeSelect>
-        <FormHelperText>
+        {/*<FormHelperText>
           Assign a purchase category to your receipt
-        </FormHelperText>
+        </FormHelperText>*/}
       </FormControl>
     );
   }
