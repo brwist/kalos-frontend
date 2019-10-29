@@ -386,11 +386,10 @@ function release() {
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
                     }
-                    return [4 /*yield*/, patchCFC()];
-                case 4:
-                    _a.sent();
+                    //await patchCFC();
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + constants.KALOS_ASSETS + "/modules/" + target + ".js")];
-                case 5:
+                case 4:
+                    //await patchCFC();
                     _a.sent();
                     return [2 /*return*/];
             }
