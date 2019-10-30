@@ -1,9 +1,9 @@
-const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
-const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
-const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
-const MODULE_CFC = `${KALOS_ROOT}/app/admin/controllers/module.cfc`;
-const MODULE_CFM = `${KALOS_ROOT}/app/admin/views/module`;
-const NAMED_EXPORTS = {
+export const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
+export const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
+export const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
+export const MODULE_CFC = `${KALOS_ROOT}/app/admin/controllers/module.cfc`;
+export const MODULE_CFM = `${KALOS_ROOT}/app/admin/views/module`;
+export const NAMED_EXPORTS = {
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/S3_pb.js': [
     'FileObject',
@@ -258,6 +258,20 @@ const NAMED_EXPORTS = {
   'node_modules/react-is/index.js': ['ForwardRef'],
   'node_modules/prop-types/index.js': ['elementType'],
 };
+
+export const EVENT_STATUS_LIST = [
+  'Requested',
+  'Confirmed',
+  'Enroute',
+  'On Call',
+  'Delayed',
+  'Incomplete',
+  'Part on Order',
+  'Pend Sched',
+  'Canceled',
+  'Completed',
+  'Admin Review',
+];
 
 module.exports = {
   KALOS_ROOT,
