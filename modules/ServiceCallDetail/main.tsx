@@ -9,6 +9,8 @@ import {
   MaterialUiPickersDate,
   TimePicker
 } from "@material-ui/pickers";
+import { JobTypePicker } from "../Pickers/JobType";
+import { JobSubtypePicker } from "../Pickers/JobSubtype";
 import NativeSelect from "@material-ui/core/NativeSelect";
 import { InputLabel, FormControl, TextField } from "@material-ui/core";
 
@@ -49,6 +51,8 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       this.setState(() => ({ event: updatedEvent }));
     };
   }
+  updateJobType = this.updateEvent("jobTypeId");
+  updateSubType = this.updateEvent("jobSubtypeId");
   updateBriefDescription = this.updateEvent("name");
   updateAmountQuoted = this.updateEvent("amountQuoted");
   updateIsCallback = this.updateEvent("isCallback");
@@ -154,6 +158,15 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   onChange={this.onEndDateChange}
                 />
               </MuiPickersUtilsProvider>
+              <JobTypePicker
+                selected={event.jobTypeId}
+                onSelect={this.updateJobType}
+              />
+              <JobSubtypePicker
+                onSelect={this.updateSubType}
+                selected={event.jobSubtypeId}
+                jobTypeID={event.jobTypeId}
+              />
             </Grid>
             <Grid
               container
