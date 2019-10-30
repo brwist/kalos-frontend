@@ -89,8 +89,8 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
         >
           <option value={0}>Select Job Type</option>
           {this.state.list.map(acc => (
-            <option value={acc.id} key={`${acc.name}-${acc.id}`}>
-              {acc.name}
+            <option value={item.id} key={`${acc.name}-${item.id}`}>
+              {item.name}
             </option>
           ))}
         </NativeSelect>
