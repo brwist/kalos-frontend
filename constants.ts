@@ -273,6 +273,9 @@ export const EVENT_STATUS_LIST = [
   'Admin Review',
 ];
 
+export const DUMMY_USER = 'test';
+export const DUMMY_PWD = 'test';
+
 module.exports = {
   KALOS_ROOT,
   KALOS_ASSETS,
