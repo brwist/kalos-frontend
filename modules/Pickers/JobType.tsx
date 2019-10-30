@@ -1,9 +1,9 @@
-import React from 'react';
-import InputLabel from '@material-ui/core/InputLabel';
-import FormControl from '@material-ui/core/FormControl';
-import NativeSelect from '@material-ui/core/NativeSelect';
-import { JobType, JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
-import Divider from '@material-ui/core/Divider';
+import React from "react";
+import InputLabel from "@material-ui/core/InputLabel";
+import FormControl from "@material-ui/core/FormControl";
+import NativeSelect from "@material-ui/core/NativeSelect";
+import { JobType, JobTypeClient } from "@kalos-core/kalos-rpc/JobType";
+import Divider from "@material-ui/core/Divider";
 
 interface props {
   selected: number;
@@ -21,7 +21,7 @@ export class JobTypePicker extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      list: [],
+      list: []
     };
     this.Client = new JobTypeClient();
 
@@ -44,12 +44,12 @@ export class JobTypePicker extends React.PureComponent<props, state> {
     if (this.props.test) {
       if (this.props.test(item)) {
         this.setState(prevState => ({
-          list: prevState.list.concat(item),
+          list: prevState.list.concat(item)
         }));
       }
     } else {
       this.setState(prevState => ({
-        list: prevState.list.concat(item),
+        list: prevState.list.concat(item)
       }));
     }
   }
@@ -64,13 +64,13 @@ export class JobTypePicker extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <FormControl style={{ marginBottom: 10 }}>
+      <FormControl style={{ marginTop: 10 }}>
         <InputLabel htmlFor="job-type-picker">Job Type</InputLabel>
         <NativeSelect
           disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
-          inputProps={{ id: 'job-type-picker' }}
+          inputProps={{ id: "job-type-picker" }}
           variant="outlined"
           fullWidth
         >
