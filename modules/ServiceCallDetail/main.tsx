@@ -1,16 +1,17 @@
-import React from "react";
-import Button from "@material-ui/core/Button";
-import { Event, EventClient } from "@kalos-core/kalos-rpc/Event";
-import Grid from "@material-ui/core/Grid";
-import DateFnsUtils from "@date-io/date-fns";
+import React from 'react';
+import Button from '@material-ui/core/Button';
+import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
+import Grid from '@material-ui/core/Grid';
+import DateFnsUtils from '@date-io/date-fns';
 import {
   DatePicker,
   MuiPickersUtilsProvider,
   MaterialUiPickersDate,
-  TimePicker
-} from "@material-ui/pickers";
-import NativeSelect from "@material-ui/core/NativeSelect";
-import { InputLabel, FormControl, TextField } from "@material-ui/core";
+  TimePicker,
+} from '@material-ui/pickers';
+import NativeSelect from '@material-ui/core/NativeSelect';
+import { InputLabel, FormControl, TextField } from '@material-ui/core';
+import { EVENT_STATUS_LIST } from '../../constants';
 
 interface props {
   eventID: number;
@@ -25,7 +26,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      event: new Event().toObject()
+      event: new Event().toObject(),
     };
     this.EventClient = new EventClient();
     this.fetchEvent = this.fetchEvent.bind(this);
@@ -49,17 +50,17 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       this.setState(() => ({ event: updatedEvent }));
     };
   }
-  updateBriefDescription = this.updateEvent("name");
-  updateAmountQuoted = this.updateEvent("amountQuoted");
-  updateIsCallback = this.updateEvent("isCallback");
-  updateIsLMPC = this.updateEvent("isLmpc");
-  updateIsDiagnosticQuoted = this.updateEvent("diagnosticQuoted");
-  updateIsResidential = this.updateEvent("isResidential");
-  updateDateStarted = this.updateEvent("dateStarted");
-  updateDateEnded = this.updateEvent("dateEnded");
-  updateNotes = this.updateEvent("notes");
-  updateTimeStarted = this.updateEvent("timeStarted");
-  updateTimeEnded = this.updateEvent("timeEnded");
+  updateBriefDescription = this.updateEvent('name');
+  updateAmountQuoted = this.updateEvent('amountQuoted');
+  updateIsCallback = this.updateEvent('isCallback');
+  updateIsLMPC = this.updateEvent('isLmpc');
+  updateIsDiagnosticQuoted = this.updateEvent('diagnosticQuoted');
+  updateIsResidential = this.updateEvent('isResidential');
+  updateDateStarted = this.updateEvent('dateStarted');
+  updateDateEnded = this.updateEvent('dateEnded');
+  updateNotes = this.updateEvent('notes');
+  updateTimeStarted = this.updateEvent('timeStarted');
+  updateTimeEnded = this.updateEvent('timeEnded');
 
   handleTextInput(fn: (val: string) => Promise<void>) {
     return (e: React.SyntheticEvent<HTMLInputElement>) => {
@@ -87,8 +88,8 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
   onDateChange(fn: (str: string) => Promise<void>) {
     return (date: MaterialUiPickersDate) => {
       if (date) {
-        const monthPrefix = date.getMonth() + 1 < 10 ? "0" : "";
-        const dayPrefix = date.getDate() < 10 ? "0" : "";
+        const monthPrefix = date.getMonth() + 1 < 10 ? '0' : '';
+        const dayPrefix = date.getDate() < 10 ? '0' : '';
         const dateString = `${date.getFullYear()}-${monthPrefix}${date.getMonth() +
           1}-${dayPrefix}${date.getDate()} 00:00:00`;
         fn(dateString);
@@ -102,8 +103,8 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     return (date: MaterialUiPickersDate) => {
       if (date) {
         console.log(date.getHours(), date.getMinutes());
-        const hourPrefix = date.getHours() < 10 ? "0" : "";
-        const minutePrefix = date.getMinutes() < 10 ? "0" : "";
+        const hourPrefix = date.getHours() < 10 ? '0' : '';
+        const minutePrefix = date.getMinutes() < 10 ? '0' : '';
         const dateString = `${hourPrefix}${date.getHours()}:${minutePrefix}${date.getMinutes()}`;
         fn(dateString);
       }
@@ -117,19 +118,19 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     event.setId(this.props.eventID);
     const result = await this.EventClient.Get(event);
     this.setState({
-      event: result
+      event: result,
     });
   }
 
   async componentDidMount() {
-    await this.EventClient.GetToken("gavinorr", "G@vin123");
+    await this.EventClient.GetToken('gavinorr', 'G@vin123');
     this.fetchEvent();
   }
 
   render() {
     const { event } = this.state;
-    const startTime = event.dateStarted.split(" ")[0] + "T" + event.timeStarted;
-    const endTime = event.dateEnded.split(" ")[0] + "T" + event.timeEnded;
+    const startTime = event.dateStarted.split(' ')[0] + 'T' + event.timeStarted;
+    const endTime = event.dateEnded.split(' ')[0] + 'T' + event.timeEnded;
 
     if (event.id) {
       return (
@@ -142,7 +143,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   margin="normal"
                   id="date-picker-inline"
                   label="Date Started"
-                  value={new Date(event.dateStarted.replace(" ", "T"))}
+                  value={new Date(event.dateStarted.replace(' ', 'T'))}
                   onChange={this.onStartDateChange}
                 />
                 <DatePicker
@@ -150,7 +151,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   margin="normal"
                   id="date-picker-inline"
                   label="Date Ended"
-                  value={new Date(event.dateEnded.replace(" ", "T"))}
+                  value={new Date(event.dateEnded.replace(' ', 'T'))}
                   onChange={this.onEndDateChange}
                 />
               </MuiPickersUtilsProvider>
@@ -183,7 +184,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   value={event.isResidential}
                   onChange={this.handleIsResidentialChange}
                   inputProps={{
-                    id: "age-native-helper"
+                    id: 'age-native-helper',
                   }}
                 >
                   <option value={0}>Commercial</option>
@@ -196,7 +197,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   value={event.diagnosticQuoted}
                   onChange={this.handleIsDiagnosticQuoted}
                   inputProps={{
-                    id: "dq-select"
+                    id: 'dq-select',
                   }}
                 >
                   <option value={0}>No</option>
@@ -209,7 +210,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   value={event.isLmpc}
                   onChange={this.handleIsLMPC}
                   inputProps={{
-                    id: "LMPC-select"
+                    id: 'LMPC-select',
                   }}
                 >
                   <option value={0}>No</option>
@@ -222,7 +223,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   value={event.isCallback}
                   onChange={this.handleIsCallback}
                   inputProps={{
-                    id: "IsCallback-select"
+                    id: 'IsCallback-select',
                   }}
                 >
                   <option value={0}>No</option>
