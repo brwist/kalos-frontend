@@ -46,7 +46,7 @@ var peerDependencies = require('rollup-plugin-peer-deps-external');
 var replace = require('rollup-plugin-replace');
 var cleanup = require('rollup-plugin-cleanup');
 var terser = require('rollup-plugin-terser').terser;
-var constants = require('./constants.ts');
+var constants = require('./constants');
 /**
  * Serves all modules to localhost:1234 via parcel
  */
