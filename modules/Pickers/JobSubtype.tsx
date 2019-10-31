@@ -1,14 +1,14 @@
-import React from "react";
-import InputLabel from "@material-ui/core/InputLabel";
-import FormControl from "@material-ui/core/FormControl";
-import NativeSelect from "@material-ui/core/NativeSelect";
-import { JobSubtype, JobSubtypeClient } from "@kalos-core/kalos-rpc/JobSubtype";
+import React from 'react';
+import InputLabel from '@material-ui/core/InputLabel';
+import FormControl from '@material-ui/core/FormControl';
+import NativeSelect from '@material-ui/core/NativeSelect';
+import { JobSubtype, JobSubtypeClient } from '@kalos-core/kalos-rpc/JobSubtype';
 import {
   JobTypeSubtype,
-  JobTypeSubtypeClient
-} from "@kalos-core/kalos-rpc/JobTypeSubtype";
-import Divider from "@material-ui/core/Divider";
-import { JobType } from "@kalos-core/kalos-rpc/JobType";
+  JobTypeSubtypeClient,
+} from '@kalos-core/kalos-rpc/JobTypeSubtype';
+import Divider from '@material-ui/core/Divider';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
 
 interface props {
   selected: number;
@@ -29,7 +29,7 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
     super(props);
     this.state = {
       list: [],
-      allowed: []
+      allowed: [],
     };
     this.Client = new JobSubtypeClient();
     this.JobTypeSubtypeClient = new JobTypeSubtypeClient();
@@ -51,7 +51,7 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
   addItem(item: JobSubtype.AsObject) {
     if (this.state.allowed.includes(item.id)) {
       this.setState(prevState => ({
-        list: prevState.list.concat(item)
+        list: prevState.list.concat(item),
       }));
     }
   }
@@ -83,13 +83,13 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
           disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
-          inputProps={{ id: "job-type-picker" }}
+          inputProps={{ id: 'job-type-picker' }}
           variant="outlined"
           fullWidth
         >
           <option value={0}>Select Job Type</option>
-          {this.state.list.map(acc => (
-            <option value={item.id} key={`${acc.name}-${item.id}`}>
+          {this.state.list.map(item => (
+            <option value={item.id} key={`${item.name}-${item.id}`}>
               {item.name}
             </option>
           ))}
