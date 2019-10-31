@@ -291,6 +291,22 @@ const EVENT_STATUS_LIST = [
   'Completed',
   'Admin Review',
 ];
+const PAYMENT_TYPE_LIST = [
+  'Pre-Paid',
+  'Cash',
+  'Check',
+  'Credit Card',
+  'Paypal',
+  'Billing',
+  'Financing',
+  'AOR Warranty',
+  'Service Warranty',
+  'Extended Warranty',
+  'No Charge',
+  'Account Transer',
+  'Quote',
+  'Charity',
+];
 
 const DUMMY_USER = 'test';
 const DUMMY_PWD = 'test';
@@ -305,4 +321,5 @@ module.exports = {
   EVENT_STATUS_LIST,
   DUMMY_PWD,
   DUMMY_USER,
+  PAYMENT_TYPE_LIST,
 };
