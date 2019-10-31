@@ -46,23 +46,42 @@ var peerDependencies = require('rollup-plugin-peer-deps-external');
 var replace = require('rollup-plugin-replace');
 var cleanup = require('rollup-plugin-cleanup');
 var terser = require('rollup-plugin-terser').terser;
-var constants = require('./constants.ts');
+var c = require('./constants.ts');
 /**
  * Serves all modules to localhost:1234 via parcel
  */
 function start() {
     return __awaiter(this, void 0, void 0, function () {
-        var modules, entrypoints;
+        var target, err_1, branch, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, getModulesList()];
+                case 0:
+                    target = titleCase(process.argv[4].replace(/-/g, ''));
+                    _a.label = 1;
                 case 1:
-                    modules = _a.sent();
-                    entrypoints = modules.map(function (m) { return "modules/" + m + "/index.html"; });
-                    return [4 /*yield*/, sh.exec("parcel " + entrypoints.join(' '))];
+                    _a.trys.push([1, 3, , 9]);
+                    return [4 /*yield*/, sh.exec("parcel modules/" + target + "/index.html")];
                 case 2:
                     _a.sent();
-                    return [2 /*return*/];
+                    return [3 /*break*/, 9];
+                case 3:
+                    err_1 = _a.sent();
+                    _a.label = 4;
+                case 4:
+                    _a.trys.push([4, 7, , 8]);
+                    return [4 /*yield*/, getBranch()];
+                case 5:
+                    branch = (_a.sent()).replace(/\n/g, '');
+                    return [4 /*yield*/, sh.exec("parcel modules/" + branch + "/index.html")];
+                case 6:
+                    _a.sent();
+                    return [3 /*break*/, 8];
+                case 7:
+                    err_2 = _a.sent();
+                    console.log('Failed to determine target from branch or CLI flags');
+                    return [3 /*break*/, 8];
+                case 8: return [3 /*break*/, 9];
+                case 9: return [2 /*return*/];
             }
         });
     });
@@ -72,7 +91,7 @@ function start() {
  */
 function build() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, flags, err_1;
+        var target, flags, err_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -91,8 +110,8 @@ function build() {
                     _a.sent();
                     return [2 /*return*/, true];
                 case 2:
-                    err_1 = _a.sent();
-                    error(err_1);
+                    err_3 = _a.sent();
+                    error(err_3);
                     return [2 /*return*/, false];
                 case 3: return [2 /*return*/];
             }
@@ -244,12 +263,12 @@ function patchCFC() {
                     if (!!res.stdout.includes(cfcFunc)) return [3 /*break*/, 4];
                     output = sh.ShellString(res.stdout.replace(/}$/, cfcFunc));
                     output.to('build/common/module.cfc');
-                    return [4 /*yield*/, sh.exec("scp build/common/module.cfc " + constants.MODULE_CFC)];
+                    return [4 /*yield*/, sh.exec("scp build/common/module.cfc " + c.MODULE_CFC)];
                 case 2:
                     _a.sent();
                     cfmFile = sh.ShellString(cfmTemplate(branch));
                     cfmFile.to("build/modules/" + branch + ".cfm");
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + branch + ".cfm " + constants.MODULE_CFM + "/" + branch.toLowerCase() + ".cfm")];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + branch + ".cfm " + c.MODULE_CFM + "/" + branch.toLowerCase() + ".cfm")];
                 case 3:
                     _a.sent();
                     sh.rm("build/modules/" + branch + ".cfm");
@@ -308,7 +327,7 @@ function rollupBuild() {
                             plugins: [
                                 resolve(),
                                 commonjs({
-                                    namedExports: constants.NAMED_EXPORTS
+                                    namedExports: c.NAMED_EXPORTS
                                 }),
                                 typescript({
                                     tsconfigOverride: {
@@ -387,7 +406,7 @@ function release() {
                         throw "module " + target + " could not be found";
                     }
                     //await patchCFC();
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + constants.KALOS_ASSETS + "/modules/" + target + ".js")];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + c.KALOS_ASSETS + "/modules/" + target + ".js")];
                 case 4:
                     //await patchCFC();
                     _a.sent();
