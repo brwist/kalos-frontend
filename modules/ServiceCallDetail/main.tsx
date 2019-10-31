@@ -20,8 +20,9 @@ import {
   MenuItem,
   Chip,
 } from '@material-ui/core';
-import { EVENT_STATUS_LIST, PAYMENT_TYPE_LIST } from '../../constants';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+const { EVENT_STATUS_LIST, PAYMENT_TYPE_LIST } = require('../../constants');
+
 interface props {
   eventID: number;
 }
@@ -246,7 +247,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                     id: 'Status-select',
                   }}
                 >
-                  {EVENT_STATUS_LIST.map(status => (
+                  {(EVENT_STATUS_LIST as string[]).map(status => (
                     <option value={status} key={status}>
                       {status}
                     </option>
@@ -262,7 +263,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                     id: 'Payment-select',
                   }}
                 >
-                  {PAYMENT_TYPE_LIST.map(type => (
+                  {(PAYMENT_TYPE_LIST as string[]).map(type => (
                     <option value={type} key={type}>
                       {type}
                     </option>
