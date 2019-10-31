@@ -18,7 +18,7 @@ interface state {
   layout: string;
 }
 
-export class TransactionUserView extends React.PureComponent<props, state> {
+export class TransactionAdminView extends React.PureComponent<props, state> {
   TxnClient: TransactionClient;
 
   constructor(props: props) {

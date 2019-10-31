@@ -64,16 +64,27 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     });
   }
 
-  async fetchTechnicians() {
+  async fetchTechnicians(page = 0) {
     const req = new User();
     req.setIsEmployee(1);
     req.setIsActive(1);
     req.setIsOfficeStaff(0);
     req.setIsHvacTech(1);
+    req.setPageNumber(page);
     const result = await this.UserClient.BatchGet(req);
-    this.setState({
-      technicians: result.toObject().resultsList,
-    });
+    this.setState(
+      prevState => ({
+        technicians: prevState.technicians.concat(
+          result.toObject().resultsList,
+        ),
+      }),
+      async () => {
+        if (this.state.technicians.length !== result.getTotalCount()) {
+          page = page + 1;
+          await this.fetchTechnicians(page);
+        }
+      },
+    );
   }
 
   updateEvent<K extends keyof Event.AsObject>(prop: K) {
@@ -138,23 +149,18 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
 
   handleTechnicianSelect(
     e: ChangeEvent<{ name?: string | undefined; value: unknown }>,
-    child: ReactNode,
   ) {
-    const { event } = this.state;
-    let assigned = event.logTechnicianAssigned.split(',');
-    assigned = assigned.filter(a => a !== '0');
-    console.log(assigned);
-    const id = e.currentTarget.name;
-    if (assigned.includes(id!)) {
-      assigned = assigned.filter(a => a !== id);
-    } else {
-      assigned = assigned.concat(id!);
+    let newAssignment = e.target.value as string[];
+    let idStr = '';
+    if (newAssignment.includes('0')) {
+      newAssignment = newAssignment.filter(a => a !== '0');
     }
-    if (assigned.length === 0) {
-      this.updateAssignedTechnician('0');
+    if (newAssignment.length === 0) {
+      idStr = '0';
     } else {
-      this.updateAssignedTechnician(assigned.join(','));
+      idStr = newAssignment.join(',');
     }
+    this.updateAssignedTechnician(idStr);
   }
 
   onDateChange(fn: (str: string) => Promise<void>) {
@@ -195,7 +201,6 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    await this.EventClient.GetToken('gavinorr', 'G@vin123');
     await this.fetchEvent();
     await this.fetchCallbacks();
     await this.fetchTechnicians();

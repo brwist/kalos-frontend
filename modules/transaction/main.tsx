@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TransactionUserView } from './components/user';
+import { TransactionAdminView } from './components/admin';
 import { LoginHelper } from '../LoginHelper/main';
 import Grid from '@material-ui/core/Grid';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -60,11 +61,20 @@ export default class Transaction extends React.PureComponent<props, state> {
             justify="flex-start"
             alignItems="center"
           >
-            <TransactionUserView
-              userID={this.props.userID}
-              userName={this.state.userName}
-              departmentId={this.state.userDepartmentID}
-            />
+            {!this.state.isAdmin && (
+              <TransactionUserView
+                userID={this.props.userID}
+                userName={this.state.userName}
+                departmentId={this.state.userDepartmentID}
+              />
+            )}
+            {this.state.isAdmin && (
+              <TransactionAdminView
+                userID={this.props.userID}
+                userName={this.state.userName}
+                departmentId={this.state.userDepartmentID}
+              />
+            )}
           </Grid>
         </>
       );
