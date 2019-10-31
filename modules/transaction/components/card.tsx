@@ -33,6 +33,7 @@ interface props {
   userDepartmentID: number;
   userName: string;
   userID: number;
+  isAdmin?: boolean;
 }
 
 interface state {
@@ -148,6 +149,22 @@ export class TxnCard extends React.PureComponent<props, state> {
       }
     } catch (err) {
       alert(err);
+    }
+  }
+
+  approve() {
+    const ok = confirm('Are you sure you want to approve this transaction?');
+    if (ok) {
+      this.updateStatus(4);
+    }
+  }
+
+  reject() {
+    const ok = confirm(
+      'Are you sure you want to reject this transaction? Make sure to update the notes with a reason for this rejection before proceeding',
+    );
+    if (ok) {
+      this.updateStatus(5);
     }
   }
 
@@ -275,8 +292,18 @@ export class TxnCard extends React.PureComponent<props, state> {
     });
   }
 
+  componentDidMount() {
+    if (this.state.txn.departmentId === 0) {
+      this.updateDepartmentID(this.props.userDepartmentID);
+    }
+  }
+
   render() {
     const t = this.state.txn;
+    let subheader = `${t.description} - $${t.amount}`;
+    if (this.props.isAdmin) {
+      subheader = `${subheader}\n${t.ownerName}`;
+    }
     return (
       <>
         <Card elevation={3} className="card" key={`${t.id}`} id={`${t.id}`}>
@@ -285,7 +312,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             title={`${new Date(
               t.timestamp.split(' ').join('T'),
             ).toDateString()}`}
-            subheader={`${t.description} - $${t.amount}`}
+            subheader={subheader}
           />
           <Grid container direction="row" wrap="nowrap" spacing={2}>
             <Grid
@@ -323,32 +350,60 @@ export class TxnCard extends React.PureComponent<props, state> {
               justify="space-evenly"
               alignItems="center"
             >
-              <Button
-                onClick={this.openFilePrompt}
-                startIcon={<AddAPhotoTwoTone />}
-                variant="outlined"
-                size="large"
-                fullWidth
-                style={{ height: 44, marginBottom: 10 }}
-              >
-                Photo
-              </Button>
+              {!this.props.isAdmin && (
+                <Button
+                  onClick={this.openFilePrompt}
+                  startIcon={<AddAPhotoTwoTone />}
+                  variant="outlined"
+                  size="large"
+                  fullWidth
+                  style={{ height: 44, marginBottom: 10 }}
+                >
+                  Photo
+                </Button>
+              )}
               <Gallery
                 title="Receipt Photo(s)"
                 text="Photo(s)"
                 fileList={this.state.files}
                 onOpen={this.fetchFiles}
               />
-              <Button
-                startIcon={<SendTwoTone />}
-                variant="outlined"
-                size="large"
-                fullWidth
-                style={{ height: 44, marginBottom: 10 }}
-                onClick={this.submit}
-              >
-                Submit
-              </Button>
+              {!this.props.isAdmin && (
+                <Button
+                  startIcon={<SendTwoTone />}
+                  variant="outlined"
+                  size="large"
+                  fullWidth
+                  style={{ height: 44, marginBottom: 10 }}
+                  onClick={this.submit}
+                >
+                  Submit
+                </Button>
+              )}
+              {this.props.isAdmin && (
+                <Button
+                  startIcon={<SendTwoTone />}
+                  variant="outlined"
+                  size="large"
+                  fullWidth
+                  style={{ height: 44, marginBottom: 10 }}
+                  onClick={this.approve}
+                >
+                  Approve
+                </Button>
+              )}
+              {this.props.isAdmin && (
+                <Button
+                  startIcon={<SendTwoTone />}
+                  variant="outlined"
+                  size="large"
+                  fullWidth
+                  style={{ height: 44, marginBottom: 10 }}
+                  onClick={this.reject}
+                >
+                  Reject
+                </Button>
+              )}
             </Grid>
           </Grid>
         </Card>
