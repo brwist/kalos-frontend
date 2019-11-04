@@ -21,9 +21,8 @@ import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 interface state {
   selectedID: number;
   date: string;
+  defaultDate: string;
   calls: Event.AsObject[];
-  callsPage: number;
-  callTotalCount: number;
   employees: User.AsObject[];
   isLoading: boolean;
 }
@@ -35,10 +34,9 @@ export class CallsByTech extends React.PureComponent<{}, state> {
     super(props);
     this.state = {
       selectedID: 0,
-      date: new Date().toISOString(),
+      date: '',
+      defaultDate: new Date().toISOString(),
       calls: [],
-      callsPage: 0,
-      callTotalCount: 0,
       employees: [],
       isLoading: false,
     };
@@ -87,11 +85,31 @@ export class CallsByTech extends React.PureComponent<{}, state> {
           selectedID: id,
         },
         async () => {
-          await this.clearCalls();
-          await this.fetchCalls();
+          if (this.state.date !== '') {
+            await this.clearCalls();
+            await this.fetchCalls();
+          }
         },
       );
     }
+  }
+
+  renderIndicator() {
+    let message = '';
+    if (this.state.isLoading) {
+      message = 'Loading, please wait...';
+    } else if (this.state.selectedID === 0) {
+      message = 'Select an Employee to continue';
+    } else if (this.state.date === '') {
+      message = 'Select a date';
+    } else if (this.state.calls.length === 0) {
+      message = 'No results';
+    }
+    return (
+      <Typography component="h1" variant="h3" style={{ marginTop: '5%' }}>
+        {message}
+      </Typography>
+    );
   }
 
   getDateString() {
@@ -194,14 +212,13 @@ export class CallsByTech extends React.PureComponent<{}, state> {
               <option value={0}>Select an Employee</option>
               {this.state.employees
                 .sort(
-                  (a, b) =>
-                    a.firstname.charCodeAt(0) - b.firstname.charCodeAt(0),
+                  (a, b) => a.lastname.charCodeAt(0) - b.lastname.charCodeAt(0),
                 )
                 .map(emp => (
                   <option
                     key={`${emp.id}-${emp.lastname}`}
                     value={emp.id}
-                  >{`${emp.firstname} ${emp.lastname}`}</option>
+                  >{`${emp.lastname}, ${emp.firstname}`}</option>
                 ))}
             </NativeSelect>
           </FormControl>
@@ -211,7 +228,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
               margin="normal"
               id="date-picker-inline"
               label="Date Started"
-              value={this.state.date}
+              value={this.state.date || this.state.defaultDate}
               onChange={this.handleDateChange}
             />
           </MuiPickersUtilsProvider>
@@ -239,7 +256,11 @@ export class CallsByTech extends React.PureComponent<{}, state> {
                   hover
                   onClick={() => {
                     if (c.customer) {
-                      window.location.href = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${c.id}&property_id=${c.propertyId}&user_id=${c.customer.id}`;
+                      const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${c.id}&property_id=${c.propertyId}&user_id=${c.customer.id}`;
+                      const win = window.open(url, '_blank');
+                      if (win) {
+                        win.focus();
+                      }
                     }
                   }}
                   key={c.name}
@@ -268,23 +289,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
               ))}
           </TableBody>
         </Table>
-        {this.state.calls.length === 0 &&
-          this.state.selectedID !== 0 &&
-          !this.state.isLoading && (
-            <Typography component="h1" variant="h2" style={{ marginTop: '1%' }}>
-              No results
-            </Typography>
-          )}
-        {this.state.selectedID === 0 && !this.state.isLoading && (
-          <Typography component="h1" variant="h2" style={{ marginTop: '1%' }}>
-            Select an Employee to continue
-          </Typography>
-        )}
-        {this.state.isLoading && (
-          <Typography component="h1" variant="h2" style={{ marginTop: '1%' }}>
-            Loading, please wait...
-          </Typography>
-        )}
+        {this.renderIndicator()}
       </Grid>
     );
   }
