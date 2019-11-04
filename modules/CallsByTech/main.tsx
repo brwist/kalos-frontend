@@ -25,8 +25,7 @@ interface state {
   callsPage: number;
   callTotalCount: number;
   employees: User.AsObject[];
-  employeePage: number;
-  employeeTotalCount: number;
+  isLoading: boolean;
 }
 
 export class CallsByTech extends React.PureComponent<{}, state> {
@@ -41,19 +40,27 @@ export class CallsByTech extends React.PureComponent<{}, state> {
       callsPage: 0,
       callTotalCount: 0,
       employees: [],
-      employeePage: 0,
-      employeeTotalCount: 0,
+      isLoading: false,
     };
     this.EventClient = new EventClient();
     this.UserClient = new UserClient();
 
     this.handleDateChange = this.handleDateChange.bind(this);
-    this.fetchEmployees = this.fetchEmployees.bind(this);
     this.fetchAllEmployees = this.fetchAllEmployees.bind(this);
     this.fetchCalls = this.fetchCalls.bind(this);
-    this.fetchAllCalls = this.fetchAllCalls.bind(this);
     this.getDateString = this.getDateString.bind(this);
     this.handleEmployeeSelect = this.handleEmployeeSelect.bind(this);
+  }
+
+  toggleLoading(): Promise<boolean> {
+    return new Promise(resolve => {
+      this.setState(
+        prevState => ({
+          isLoading: !prevState.isLoading,
+        }),
+        () => resolve(true),
+      );
+    });
   }
 
   handleDateChange(date: MaterialUiPickersDate) {
@@ -65,7 +72,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
         async () => {
           await this.clearCalls();
           if (this.state.selectedID !== 0) {
-            await this.fetchAllCalls();
+            await this.fetchCalls();
           }
         },
       );
@@ -81,7 +88,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
         },
         async () => {
           await this.clearCalls();
-          await this.fetchAllCalls();
+          await this.fetchCalls();
         },
       );
     }
@@ -100,31 +107,25 @@ export class CallsByTech extends React.PureComponent<{}, state> {
     return `${dateObj.getFullYear()}-${month}-${day}`;
   }
 
-  fetchEmployees() {
-    return new Promise(async resolve => {
-      const reqObj = new User();
-      reqObj.setIsEmployee(1);
-      reqObj.setIsActive(1);
-      reqObj.setPageNumber(this.state.employeePage);
-      const res = (await this.UserClient.BatchGet(reqObj)).toObject();
-      this.setState(
-        prevState => ({
-          employees: prevState.employees.concat(res.resultsList),
-          employeePage: prevState.employeePage + 1,
-          employeeTotalCount: res.totalCount,
-        }),
-        resolve,
-      );
-    });
-  }
-
-  async fetchAllEmployees(): Promise<Boolean> {
-    await this.fetchEmployees();
-    if (this.state.employees.length !== this.state.employeeTotalCount) {
-      return this.fetchAllEmployees();
-    } else {
-      return true;
-    }
+  async fetchAllEmployees(page = 0) {
+    const reqObj = new User();
+    reqObj.setIsEmployee(1);
+    reqObj.setIsActive(1);
+    reqObj.setPageNumber(page);
+    const res = (await this.UserClient.BatchGet(reqObj)).toObject();
+    this.setState(
+      prevState => ({
+        employees: prevState.employees.concat(res.resultsList),
+      }),
+      async () => {
+        if (this.state.employees.length !== res.totalCount) {
+          page = page + 1;
+          await this.fetchAllEmployees(page);
+        } else {
+          await this.toggleLoading();
+        }
+      },
+    );
   }
 
   clearCalls() {
@@ -138,48 +139,40 @@ export class CallsByTech extends React.PureComponent<{}, state> {
     });
   }
 
-  fetchCalls() {
-    return new Promise(async resolve => {
-      const reqObj = new Event();
-      reqObj.setDateStarted(`${this.getDateString()}%`);
-      reqObj.setPageNumber(this.state.callsPage);
-      reqObj.setIsActive(1);
-      reqObj.setLogTechnicianAssigned(`%${this.state.selectedID}%`);
-      const res = (await this.EventClient.BatchGet(reqObj)).toObject();
-      this.setState(
-        prevState => ({
-          calls: prevState.calls.concat(res.resultsList),
-          callsPage: prevState.callsPage + 1,
-          callTotalCount: res.totalCount,
-        }),
-        resolve,
-      );
-    });
-  }
-
-  fetchAllCalls(): Promise<boolean> {
-    return new Promise(async resolve => {
-      await this.fetchCalls();
-      if (this.state.calls.length !== this.state.callTotalCount) {
-        return this.fetchAllCalls();
-      } else {
-        this.setState(
-          {
-            callsPage: 0,
-            callTotalCount: 0,
-          },
-          () => resolve(true),
-        );
-      }
-    });
+  async fetchCalls(page = 0) {
+    if (page === 0) {
+      await this.toggleLoading();
+    }
+    const reqObj = new Event();
+    console.log(`${this.getDateString()} 00:00:00`);
+    reqObj.setDateStarted(`${this.getDateString()} 00:00:00`);
+    reqObj.setPageNumber(page);
+    console.log(`%${this.state.selectedID}%`);
+    reqObj.setLogTechnicianAssigned(`%${this.state.selectedID}%`);
+    const res = (await this.EventClient.BatchGet(reqObj)).toObject();
+    this.setState(
+      prevState => ({
+        calls: prevState.calls.concat(res.resultsList),
+      }),
+      async () => {
+        if (this.state.calls.length !== res.totalCount) {
+          page = page + 1;
+          await this.fetchCalls(page);
+        } else {
+          await this.toggleLoading();
+        }
+      },
+    );
   }
 
   async componentDidMount() {
+    await this.toggleLoading();
     await this.UserClient.GetToken('test', 'test');
     await this.fetchAllEmployees();
   }
 
   render() {
+    const sorted = this.state.calls;
     return (
       <Grid container direction="column" alignItems="center">
         <Grid
@@ -196,9 +189,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
               value={this.state.selectedID}
               inputProps={{ id: 'employee-select' }}
               onChange={this.handleEmployeeSelect}
-              disabled={
-                this.state.employeeTotalCount !== this.state.employees.length
-              }
+              disabled={this.state.isLoading}
             >
               <option value={0}>Select an Employee</option>
               {this.state.employees
@@ -241,40 +232,59 @@ export class CallsByTech extends React.PureComponent<{}, state> {
             </TableRow>
           </TableHead>
           <TableBody>
-            {this.state.calls.map(c => (
-              <TableRow
-                hover
-                onClick={() => {
-                  if (c.customer) {
-                    window.location.href = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${c.id}&property_id=${c.propertyId}&user_id=${c.customer.id}`;
-                  }
-                }}
-                key={c.name}
-              >
-                <TableCell>
-                  {c.timeStarted} - {c.timeEnded}
-                </TableCell>
-                <TableCell>
-                  {c.customer
-                    ? `${c.customer.firstname} ${c.customer.lastname}`
-                    : ''}
-                </TableCell>
-                <TableCell>
-                  {c.customer ? c.customer.businessname : ''}
-                </TableCell>
-                <TableCell>{c.property ? c.property.address : ''}</TableCell>
-                <TableCell>{c.property ? c.property.city : ''}</TableCell>
-                <TableCell>{c.property ? c.property.zip : ''}</TableCell>
-                <TableCell>{c.customer ? c.customer.phone : ''}</TableCell>
-                <TableCell>{c.id}</TableCell>
-                <TableCell>
-                  {c.jobType} / {c.jobSubtype}
-                </TableCell>
-                <TableCell>{c.logJobStatus}</TableCell>
-              </TableRow>
-            ))}
+            {this.state.calls
+              .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+              .map(c => (
+                <TableRow
+                  hover
+                  onClick={() => {
+                    if (c.customer) {
+                      window.location.href = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${c.id}&property_id=${c.propertyId}&user_id=${c.customer.id}`;
+                    }
+                  }}
+                  key={c.name}
+                >
+                  <TableCell>
+                    {c.timeStarted} - {c.timeEnded}
+                  </TableCell>
+                  <TableCell>
+                    {c.customer
+                      ? `${c.customer.firstname} ${c.customer.lastname}`
+                      : ''}
+                  </TableCell>
+                  <TableCell>
+                    {c.customer ? c.customer.businessname : ''}
+                  </TableCell>
+                  <TableCell>{c.property ? c.property.address : ''}</TableCell>
+                  <TableCell>{c.property ? c.property.city : ''}</TableCell>
+                  <TableCell>{c.property ? c.property.zip : ''}</TableCell>
+                  <TableCell>{c.customer ? c.customer.phone : ''}</TableCell>
+                  <TableCell>{c.id}</TableCell>
+                  <TableCell>
+                    {c.jobType} / {c.jobSubtype}
+                  </TableCell>
+                  <TableCell>{c.logJobStatus}</TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
+        {this.state.calls.length === 0 &&
+          this.state.selectedID !== 0 &&
+          !this.state.isLoading && (
+            <Typography component="h1" variant="h2" style={{ marginTop: '1%' }}>
+              No results
+            </Typography>
+          )}
+        {this.state.selectedID === 0 && !this.state.isLoading && (
+          <Typography component="h1" variant="h2" style={{ marginTop: '1%' }}>
+            Select an Employee to continue
+          </Typography>
+        )}
+        {this.state.isLoading && (
+          <Typography component="h1" variant="h2" style={{ marginTop: '1%' }}>
+            Loading, please wait...
+          </Typography>
+        )}
       </Grid>
     );
   }
