@@ -4,6 +4,9 @@ import {
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TxnCard } from './card';
+import { Toolbar, NativeSelect } from '@material-ui/core';
+import { DepartmentPicker } from '../../Pickers/Department';
+import { CostCenterPicker } from '../../Pickers/CostCenter';
 
 interface props {
   userID: number;
@@ -16,6 +19,17 @@ interface state {
   isLoading: boolean;
   transactions: Transaction.AsObject[];
   layout: string;
+  filters: IFilter;
+}
+
+interface IFilter {
+  [key: string]: number | string | undefined;
+  userID?: number;
+  dateCreated?: string;
+  dateSubmitted?: string;
+  approvedByID?: number;
+  costCenterID?: number;
+  departmentID?: number;
 }
 
 export class TransactionAdminView extends React.PureComponent<props, state> {
@@ -28,11 +42,13 @@ export class TransactionAdminView extends React.PureComponent<props, state> {
       isLoading: false,
       transactions: [],
       layout: 'list',
+      filters: {},
     };
     this.TxnClient = new TransactionClient();
 
     this.changePage = this.changePage.bind(this);
     this.fetchTxns = this.fetchTxns.bind(this);
+    this.setFilter = this.setFilter.bind(this);
   }
 
   changePage(changeAmount: number) {
@@ -46,6 +62,10 @@ export class TransactionAdminView extends React.PureComponent<props, state> {
         console.log('change page request while loading was ignored');
       }
     };
+  }
+
+  setFilter<T extends keyof IFilter>(key: T, value: IFilter[T]) {
+    this.setState({ filters: { [key]: value } }, this.fetchTxns);
   }
 
   prevPage = this.changePage(-1);
@@ -80,6 +100,39 @@ export class TransactionAdminView extends React.PureComponent<props, state> {
     if (txns.length > 0) {
       return (
         <>
+          <Toolbar>
+            <NativeSelect
+              onChange={e =>
+                this.setFilter('dateCreated', e.currentTarget.value)
+              }
+              inputProps={{ id: 'set-month-select' }}
+            >
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </NativeSelect>
+            <DepartmentPicker
+              selected={this.state.filters.departmentID || 0}
+              onSelect={departmentID =>
+                this.setFilter('departmentID', departmentID)
+              }
+            />
+            <CostCenterPicker
+              selected={this.state.filters.costCenterID || 0}
+              onSelect={costCenterID =>
+                this.setFilter('costCenterID', costCenterID)
+              }
+            />
+          </Toolbar>
           {this.state.transactions.map(t => (
             <TxnCard
               txn={t}
