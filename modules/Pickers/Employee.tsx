@@ -2,34 +2,33 @@ import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
-import {
-  TransactionAccount,
-  TransactionAccountClient,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 
 interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: TransactionAccount.AsObject): boolean;
+  test?(item: User.AsObject): boolean;
+  sort?(a: User.AsObject, b: User.AsObject): number;
+  showInactive?: boolean;
   label?: string;
 }
 
 interface state {
-  accountList: TransactionAccount.AsObject[];
+  list: User.AsObject[];
 }
 
-export class CostCenterPicker extends React.PureComponent<props, state> {
-  AccClient: TransactionAccountClient;
+export class EmployeePicker extends React.PureComponent<props, state> {
+  Client: UserClient;
   constructor(props: props) {
     super(props);
     this.state = {
-      accountList: [],
+      list: [],
     };
-    this.AccClient = new TransactionAccountClient();
+    this.Client = new UserClient();
 
     this.handleSelect = this.handleSelect.bind(this);
-    this.addAccount = this.addAccount.bind(this);
+    this.addItem = this.addItem.bind(this);
   }
 
   handleSelect(e: React.SyntheticEvent<HTMLSelectElement>) {
@@ -43,29 +42,37 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
     }
   }
 
-  addAccount(acc: TransactionAccount.AsObject) {
+  addItem(item: User.AsObject) {
     if (this.props.test) {
-      if (this.props.test(acc)) {
+      if (this.props.test(item)) {
         this.setState(prevState => ({
-          accountList: prevState.accountList.concat(acc),
+          list: prevState.list.concat(item),
         }));
       }
     } else {
       this.setState(prevState => ({
-        accountList: prevState.accountList.concat(acc),
+        list: prevState.list.concat(item),
       }));
     }
   }
 
-  async fetchAccounts() {
-    this.AccClient.List(new TransactionAccount(), this.addAccount);
+  async fetchUsers() {
+    const user = new User();
+    if (!this.props.showInactive) {
+      user.setIsActive(1);
+    }
+    user.setIsEmployee(1);
+    this.Client.List(user, this.addItem);
   }
 
   componentDidMount() {
-    this.fetchAccounts();
+    this.fetchUsers();
   }
 
   render() {
+    const list = this.props.sort
+      ? this.state.list.sort(this.props.sort)
+      : this.state.list.slice();
     return (
       <FormControl style={{ marginBottom: 10 }}>
         <InputLabel htmlFor="cost-center-picker">
@@ -78,9 +85,9 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
           inputProps={{ id: 'cost-center-picker' }}
         >
           <option value={0}>Select Purchase Type</option>
-          {this.state.accountList.map(acc => (
-            <option value={acc.id} key={`${acc.description}-${acc.id}`}>
-              {acc.description}
+          {list.map(item => (
+            <option value={item.id} key={`${item.lastname}-${item.id}`}>
+              {item.lastname}, {item.firstname}
             </option>
           ))}
         </NativeSelect>

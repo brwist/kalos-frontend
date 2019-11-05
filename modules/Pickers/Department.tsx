@@ -14,6 +14,7 @@ interface props {
   disabled?: boolean;
   onSelect?(id: number): void;
   test?(item: TimesheetDepartment.AsObject): boolean;
+  label?: string;
 }
 
 interface state {
@@ -63,7 +64,9 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
   render() {
     return (
       <FormControl style={{ marginBottom: 10 }}>
-        <InputLabel htmlFor="cost-center-picker">Department</InputLabel>
+        <InputLabel htmlFor="cost-center-picker">
+          {this.props.label || 'Department'}
+        </InputLabel>
         <NativeSelect
           disabled={this.props.disabled}
           value={this.props.selected}
@@ -77,10 +80,6 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
             </option>
           ))}
         </NativeSelect>
-        {/*<FormHelperText>
-          Select the department responsible for this receipt
-        </FormHelperText>*/}
-        <Divider />
       </FormControl>
     );
   }
