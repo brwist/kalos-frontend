@@ -59,7 +59,7 @@ export default class Transaction extends React.PureComponent<props, state> {
   }
 
   render() {
-    if (this.state.userName) {
+    if (true) {
       return (
         <>
           <CssBaseline />
