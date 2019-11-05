@@ -119,7 +119,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
       month = `0${month}`;
     }
     let day = `${dateObj.getDate()}`;
-    if (day.length === 0) {
+    if (day.length === 1) {
       day = `0${day}`;
     }
     return `${dateObj.getFullYear()}-${month}-${day}`;
@@ -190,7 +190,6 @@ export class CallsByTech extends React.PureComponent<{}, state> {
   }
 
   render() {
-    const sorted = this.state.calls;
     return (
       <Grid container direction="column" alignItems="center">
         <Grid
