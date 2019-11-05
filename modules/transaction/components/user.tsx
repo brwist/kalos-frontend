@@ -81,7 +81,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     if (txns.length > 0) {
       return (
         <>
-          {this.state.transactions.map(t => (
+          {txns.map(t => (
             <TxnCard
               txn={t}
               key={`${t.id}`}
