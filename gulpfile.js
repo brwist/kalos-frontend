@@ -56,32 +56,30 @@ function start() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    _a.trys.push([0, 2, , 8]);
                     target = titleCase(process.argv[4].replace(/-/g, ''));
-                    _a.label = 1;
-                case 1:
-                    _a.trys.push([1, 3, , 9]);
                     return [4 /*yield*/, sh.exec("parcel modules/" + target + "/index.html")];
-                case 2:
+                case 1:
                     _a.sent();
-                    return [3 /*break*/, 9];
-                case 3:
+                    return [3 /*break*/, 8];
+                case 2:
                     err_1 = _a.sent();
-                    _a.label = 4;
-                case 4:
-                    _a.trys.push([4, 7, , 8]);
+                    _a.label = 3;
+                case 3:
+                    _a.trys.push([3, 6, , 7]);
                     return [4 /*yield*/, getBranch()];
-                case 5:
+                case 4:
                     branch = (_a.sent()).replace(/\n/g, '');
                     return [4 /*yield*/, sh.exec("parcel modules/" + branch + "/index.html")];
-                case 6:
+                case 5:
                     _a.sent();
-                    return [3 /*break*/, 8];
-                case 7:
+                    return [3 /*break*/, 7];
+                case 6:
                     err_2 = _a.sent();
                     console.log('Failed to determine target from branch or CLI flags');
-                    return [3 /*break*/, 8];
-                case 8: return [3 /*break*/, 9];
-                case 9: return [2 /*return*/];
+                    return [3 /*break*/, 7];
+                case 7: return [3 /*break*/, 8];
+                case 8: return [2 /*return*/];
             }
         });
     });

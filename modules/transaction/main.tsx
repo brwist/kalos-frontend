@@ -16,6 +16,7 @@ interface state {
   isManager: boolean;
   userDepartmentID: number;
   userName: string;
+  isSU: boolean;
 }
 
 export default class Transaction extends React.PureComponent<props, state> {
@@ -29,6 +30,7 @@ export default class Transaction extends React.PureComponent<props, state> {
       isManager: false,
       userDepartmentID: 0,
       userName: '',
+      isSU: false,
     };
     this.UserClient = new UserClient();
 
@@ -40,14 +42,20 @@ export default class Transaction extends React.PureComponent<props, state> {
     user.setId(this.props.userID);
     const userData = await this.UserClient.Get(user);
     this.setState({
-      isAdmin: userData.isSu === 1,
+      isAdmin: userData.isAdmin === 1,
+      isSU: userData.isSu === 1,
       userDepartmentID: userData.employeeDepartmentId,
       userName: `${userData.firstname} ${userData.lastname}`,
     });
   }
 
   async componentDidMount() {
-    await this.getUserData();
+    try {
+      await this.getUserData();
+    } catch (error) {
+      await this.UserClient.GetToken('test', 'test');
+      await this.getUserData();
+    }
   }
 
   render() {
@@ -73,6 +81,7 @@ export default class Transaction extends React.PureComponent<props, state> {
                 userID={this.props.userID}
                 userName={this.state.userName}
                 departmentId={this.state.userDepartmentID}
+                isSU={this.state.isSU}
               />
             )}
           </Grid>
