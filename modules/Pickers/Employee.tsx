@@ -70,13 +70,15 @@ export class EmployeePicker extends React.PureComponent<props, state> {
   }
 
   render() {
-    const list = this.props.sort
-      ? this.state.list.sort(this.props.sort)
-      : this.state.list.slice();
+    const list = this.state.list.sort((a, b) =>
+      `${a.lastname} ${a.firstname}`
+        .toLowerCase()
+        .localeCompare(`${b.lastname} ${b.firstname}`.toLowerCase()),
+    );
     return (
       <FormControl style={{ marginBottom: 10 }}>
         <InputLabel htmlFor="cost-center-picker">
-          {this.props.label || 'Purchase Type'}
+          {this.props.label || 'Employee'}
         </InputLabel>
         <NativeSelect
           disabled={this.props.disabled}
@@ -84,7 +86,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
           onChange={this.handleSelect}
           inputProps={{ id: 'cost-center-picker' }}
         >
-          <option value={0}>Select Purchase Type</option>
+          <option value={0}>Select Employee</option>
           {list.map(item => (
             <option value={item.id} key={`${item.lastname}-${item.id}`}>
               {item.lastname}, {item.firstname}
