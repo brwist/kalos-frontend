@@ -19,6 +19,8 @@ import {
   Input,
   MenuItem,
   Chip,
+  FormControlLabel,
+  Switch,
 } from '@material-ui/core';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 const { EVENT_STATUS_LIST, PAYMENT_TYPE_LIST } = require('../../constants');
@@ -31,6 +33,7 @@ interface state {
   technicians: User.AsObject[];
   event: Event.AsObject;
   callbacks: Event.AsObject[];
+  isEditing: boolean;
 }
 
 export class ServiceCallDetail extends React.PureComponent<props, state> {
@@ -43,7 +46,9 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       event: new Event().toObject(),
       callbacks: [],
       technicians: [],
+      isEditing: false,
     };
+    this.toggleEditing = this.toggleEditing.bind(this);
     this.UserClient = new UserClient();
     this.fetchTechnicians = this.fetchTechnicians.bind(this);
     this.fetchCallbacks = this.fetchCallbacks.bind(this);
@@ -86,6 +91,11 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       },
     );
   }
+  toggleEditing() {
+    this.setState(prevState => ({
+      isEditing: !prevState.isEditing,
+    }));
+  }
 
   updateEvent<K extends keyof Event.AsObject>(prop: K) {
     return async (value: Event.AsObject[K]) => {
@@ -103,6 +113,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       this.setState(() => ({ event: updatedEvent }));
     };
   }
+
   updateAssignedTechnician = this.updateEvent('logTechnicianAssigned');
   updateCallBackOriginalId = this.updateEvent('callbackOriginalId');
   updateLogNotes = this.updateEvent('logNotes');
@@ -149,18 +160,24 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
 
   handleTechnicianSelect(
     e: ChangeEvent<{ name?: string | undefined; value: unknown }>,
+    child: ReactNode,
   ) {
-    let newAssignment = e.target.value as string[];
-    let idStr = '';
-    if (newAssignment.includes('0')) {
-      newAssignment = newAssignment.filter(a => a !== '0');
-    }
-    if (newAssignment.length === 0) {
-      idStr = '0';
+    const { event } = this.state;
+    let assigned = event.logTechnicianAssigned.split(',');
+    assigned = assigned.filter(a => a !== '0');
+    console.log(assigned);
+    const id = e.currentTarget.name;
+    if (assigned.includes(id!)) {
+      assigned = assigned.filter(a => a !== id);
     } else {
-      idStr = newAssignment.join(',');
+      assigned = assigned.concat(id!);
     }
-    this.updateAssignedTechnician(idStr);
+    if (assigned.length === 0) {
+      this.updateAssignedTechnician('0');
+    } else {
+      this.updateAssignedTechnician(assigned.join(','));
+    }
+    //this.updateAssignedTechnician(idStr);
   }
 
   onDateChange(fn: (str: string) => Promise<void>) {
@@ -207,13 +224,26 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
   }
 
   render() {
-    const { event } = this.state;
+    const { event, isEditing } = this.state;
     const startTime = event.dateStarted.split(' ')[0] + 'T' + event.timeStarted;
     const endTime = event.dateEnded.split(' ')[0] + 'T' + event.timeEnded;
 
     if (event.id) {
       return (
         <Grid container direction="column" alignItems="center">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={this.state.isEditing}
+                onChange={this.toggleEditing}
+                value="isEditing"
+                color="primary"
+              />
+            }
+            label={
+              this.state.isEditing ? 'Editing Enabled' : 'Editing Disabled'
+            }
+          />
           <Grid container direction="row" justify="space-evenly" wrap="nowrap">
             <Grid container direction="column" style={{ padding: 5 }}>
               <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -224,6 +254,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   label="Date Started"
                   value={new Date(event.dateStarted.replace(' ', 'T'))}
                   onChange={this.onStartDateChange}
+                  disabled={!isEditing}
                 />
                 <DatePicker
                   format="MM/dd/yyyy"
@@ -232,13 +263,16 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   label="Date Ended"
                   value={new Date(event.dateEnded.replace(' ', 'T'))}
                   onChange={this.onEndDateChange}
+                  disabled={!isEditing}
                 />
               </MuiPickersUtilsProvider>
               <JobTypePicker
+                disabled={!isEditing}
                 selected={event.jobTypeId}
                 onSelect={this.updateJobType}
               />
               <JobSubtypePicker
+                disabled={!isEditing}
                 onSelect={this.updateSubType}
                 selected={event.jobSubtypeId}
                 jobTypeID={event.jobTypeId}
@@ -246,6 +280,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               <FormControl style={{ marginTop: 10 }}>
                 <InputLabel htmlFor="Status-select">Job Status</InputLabel>
                 <NativeSelect
+                  disabled={!isEditing}
                   value={event.logJobStatus}
                   onChange={e => this.updateStatus(e.currentTarget.value)}
                   inputProps={{
@@ -262,6 +297,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               <FormControl style={{ marginTop: 10 }}>
                 <InputLabel htmlFor="Payment-select">Payment Type</InputLabel>
                 <NativeSelect
+                  disabled={!isEditing}
                   value={event.logPaymentType}
                   onChange={e => this.updatePaymentType(e.currentTarget.value)}
                   inputProps={{
@@ -276,6 +312,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                 </NativeSelect>
               </FormControl>
               <TextField
+                disabled={!isEditing}
                 onChange={this.handleAmountQuoted}
                 label="Amount Quoted"
                 margin="normal"
@@ -287,6 +324,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   Technician Assigned
                 </InputLabel>
                 <Select
+                  disabled={!isEditing}
                   value={event.logTechnicianAssigned.split(',')}
                   multiple
                   onChange={this.handleTechnicianSelect}
@@ -338,6 +376,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
             >
               <MuiPickersUtilsProvider utils={DateFnsUtils}>
                 <TimePicker
+                  disabled={!isEditing}
                   label="Start Time"
                   margin="normal"
                   value={startTime}
@@ -345,6 +384,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   minutesStep={5}
                 />
                 <TimePicker
+                  disabled={!isEditing}
                   label="End Time"
                   margin="normal"
                   value={endTime}
@@ -355,6 +395,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               <FormControl style={{ marginTop: 10 }}>
                 <InputLabel htmlFor="age-native-helper">Sector</InputLabel>
                 <NativeSelect
+                  disabled={!isEditing}
                   value={event.isResidential}
                   onChange={this.handleIsResidentialChange}
                   inputProps={{
@@ -368,6 +409,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               <FormControl style={{ marginTop: 10 }}>
                 <InputLabel htmlFor="dq-select">Diagnostic Quoted</InputLabel>
                 <NativeSelect
+                  disabled={!isEditing}
                   value={event.diagnosticQuoted}
                   onChange={this.handleIsDiagnosticQuoted}
                   inputProps={{
@@ -381,6 +423,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               <FormControl style={{ marginTop: 10 }}>
                 <InputLabel htmlFor="LMPC-select">Is LMPC?</InputLabel>
                 <NativeSelect
+                  disabled={!isEditing}
                   value={event.isLmpc}
                   onChange={this.handleIsLMPC}
                   inputProps={{
@@ -396,6 +439,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   Is Callback?
                 </InputLabel>
                 <NativeSelect
+                  disabled={!isEditing}
                   value={event.isCallback}
                   onChange={this.handleIsCallback}
                   inputProps={{
@@ -428,6 +472,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               </FormControl>
 
               <TextField
+                disabled={!isEditing}
                 onChange={this.handleBriefDescription}
                 label="Brief Description"
                 margin="normal"
@@ -444,6 +489,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
             wrap="nowrap"
           >
             <TextField
+              disabled={!isEditing}
               onChange={this.handleDescription}
               label="Service Needed"
               margin="normal"
@@ -453,6 +499,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               fullWidth
             />
             <TextField
+              disabled={!isEditing}
               onChange={this.handleNotes}
               label="Service Call Notes"
               margin="normal"
