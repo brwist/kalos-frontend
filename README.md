@@ -27,13 +27,13 @@ yarn global add parcel
 
 Development should occur on only a single module, in a single modules branch. For example, work on `modules/Login` should occur on the `Login` branch. All modules should be title case (each unique word begins with an upper case letter)
 
-To create a new module run `yarn create`:
+To create a new module run `yarn make`:
 
 ```
-yarn create MODULE_NAME
+yarn make --ModuleName
 ```
 
-This will create a new branch, switch to that branch, generate some boilerplate files, and then publish that branch. You can then run `yarn start` and visit `localhost:1234/MODULE_NAME/index.html` in your browser. All changes will be reflected in the browser via hot module replacement.
+This will create a new branch, switch to that branch, generate some boilerplate files, and then publish that branch. You can then run `yarn start --ModuleName` and visit `localhost:1234` in your browser. All changes will be reflected in the browser via hot module replacement.
 
 ## Development Concerns
 
@@ -62,9 +62,9 @@ This project also includes ['@blueprintjs'](https://github.com/palantir/blueprin
 To build your module simply run:
 
 ```
-yarn build MODULE_NAME
+yarn bundle --ModuleName
 ```
 
-This can take as long as two minutes depending on the size and complexity of your module and it's dependencies. Your module will be bundled and output to `build/MODULE_NAME/main.js`.
+This can take as long as two minutes depending on the size and complexity of your module and it's dependencies. Your module will be bundled and output to `build/ModuleName.js`.
 
 UNDER CONSTRUCTION
