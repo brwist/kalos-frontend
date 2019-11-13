@@ -192,7 +192,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
           style={{ paddingBottom: '20px' }}
           container
           alignItems="stretch"
-          justify="flex-start"
+          justify="center"
           direction="column"
         >
           <Grid container direction="row" justify="space-evenly">
