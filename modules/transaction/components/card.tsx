@@ -16,6 +16,7 @@ import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { Gallery, IFile } from '../../Gallery/main';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { DepartmentPicker } from '../../Pickers/Department';
+import { TxnLog } from './log';
 import TextField from '@material-ui/core/TextField';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
@@ -129,7 +130,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   updateDepartmentID = this.updateTransaction('departmentId');
   updateStatus = this.updateTransaction('statusId');
 
-  submit() {
+  async submit() {
     const { txn } = this.state;
     try {
       const ok = confirm(
@@ -144,7 +145,8 @@ export class TxnCard extends React.PureComponent<props, state> {
         ) {
           throw 'This receipt requires a photo';
         } else {
-          this.updateStatus(2);
+          await this.updateStatus(2);
+          await this.makeSubmitLog(2, 'approved');
         }
       }
     } catch (err) {
@@ -152,19 +154,32 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
-  approve() {
+  async makeSubmitLog(status: number, action: string) {
+    const log = new TransactionActivity();
+    log.setUserId(this.props.userID);
+    log.setTransactionId(this.state.txn.id);
+    log.setStatusId(status);
+    log.setDescription(
+      `user ${this.props.userID} - transaction ${this.state.txn.id} - action ${action}`,
+    );
+    await this.LogClient.Create(log);
+  }
+
+  async approve() {
     const ok = confirm('Are you sure you want to approve this transaction?');
     if (ok) {
-      this.updateStatus(4);
+      await this.updateStatus(4);
+      await this.makeSubmitLog(4, 'approved');
     }
   }
 
-  reject() {
+  async reject() {
     const ok = confirm(
       'Are you sure you want to reject this transaction? Make sure to update the notes with a reason for this rejection before proceeding',
     );
     if (ok) {
-      this.updateStatus(5);
+      await this.updateStatus(5);
+      await this.makeSubmitLog(5, 'rejected');
     }
   }
 
@@ -370,6 +385,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 fileList={this.state.files}
                 onOpen={this.fetchFiles}
               />
+              {this.props.isAdmin && <TxnLog txnID={this.state.txn.id} />}
               {!this.props.isAdmin && (
                 <Button
                   startIcon={<SendTwoTone />}

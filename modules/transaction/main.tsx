@@ -60,7 +60,7 @@ export default class Transaction extends React.PureComponent<props, state> {
   }
 
   render() {
-    if (this.state.userName) {
+    if (true) {
       return (
         <>
           <CssBaseline />
@@ -69,6 +69,7 @@ export default class Transaction extends React.PureComponent<props, state> {
             direction="column"
             justify="flex-start"
             alignItems="center"
+            style={{ maxHeight: '100%' }}
           >
             {!this.state.isAdmin && (
               <TransactionUserView
