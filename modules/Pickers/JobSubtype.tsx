@@ -15,6 +15,7 @@ interface props {
   jobTypeID: number;
   disabled?: boolean;
   onSelect?(id: number): void;
+  useDevClient?: boolean;
 }
 
 interface state {
@@ -31,8 +32,13 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
       list: [],
       allowed: [],
     };
-    this.Client = new JobSubtypeClient();
-    this.JobTypeSubtypeClient = new JobTypeSubtypeClient();
+    const endpoint = this.props.useDevClient
+      ? 'https://core-dev.kalosflorida.com:8443'
+      : 'https://core.kalosflorida.com:8443';
+
+    console.log(endpoint);
+    this.Client = new JobSubtypeClient(endpoint);
+    this.JobTypeSubtypeClient = new JobTypeSubtypeClient(endpoint);
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
   }

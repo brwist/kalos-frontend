@@ -12,6 +12,7 @@ interface props {
   sort?(a: User.AsObject, b: User.AsObject): number;
   showInactive?: boolean;
   label?: string;
+  useDevClient?: boolean;
 }
 
 interface state {
@@ -25,7 +26,12 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    this.Client = new UserClient();
+    const endpoint = this.props.useDevClient
+      ? 'https://core-dev.kalosflorida.com:8443'
+      : 'https://core.kalosflorida.com:8443';
+
+    console.log(endpoint);
+    this.Client = new UserClient(endpoint);
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);

@@ -1,15 +1,16 @@
-import React from "react";
-import InputLabel from "@material-ui/core/InputLabel";
-import FormControl from "@material-ui/core/FormControl";
-import NativeSelect from "@material-ui/core/NativeSelect";
-import { JobType, JobTypeClient } from "@kalos-core/kalos-rpc/JobType";
-import Divider from "@material-ui/core/Divider";
+import React from 'react';
+import InputLabel from '@material-ui/core/InputLabel';
+import FormControl from '@material-ui/core/FormControl';
+import NativeSelect from '@material-ui/core/NativeSelect';
+import { JobType, JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
+import Divider from '@material-ui/core/Divider';
 
 interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
   test?(item: JobType.AsObject): boolean;
+  useDevClient?: boolean;
 }
 
 interface state {
@@ -21,9 +22,14 @@ export class JobTypePicker extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      list: []
+      list: [],
     };
-    this.Client = new JobTypeClient();
+    const endpoint = this.props.useDevClient
+      ? 'https://core-dev.kalosflorida.com:8443'
+      : 'https://core.kalosflorida.com:8443';
+
+    console.log(endpoint);
+    this.Client = new JobTypeClient(endpoint);
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
@@ -44,12 +50,12 @@ export class JobTypePicker extends React.PureComponent<props, state> {
     if (this.props.test) {
       if (this.props.test(item)) {
         this.setState(prevState => ({
-          list: prevState.list.concat(item)
+          list: prevState.list.concat(item),
         }));
       }
     } else {
       this.setState(prevState => ({
-        list: prevState.list.concat(item)
+        list: prevState.list.concat(item),
       }));
     }
   }
@@ -70,7 +76,7 @@ export class JobTypePicker extends React.PureComponent<props, state> {
           disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
-          inputProps={{ id: "job-type-picker" }}
+          inputProps={{ id: 'job-type-picker' }}
           variant="outlined"
           fullWidth
         >

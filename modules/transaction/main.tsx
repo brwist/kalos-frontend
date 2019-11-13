@@ -8,6 +8,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 
 interface props {
   userID: number;
+  isProd?: boolean;
 }
 
 interface state {
@@ -32,7 +33,11 @@ export default class Transaction extends React.PureComponent<props, state> {
       userName: '',
       isSU: false,
     };
-    this.UserClient = new UserClient();
+    const endpoint = this.props.isProd
+      ? 'https://core.kalosflorida.com:8443'
+      : 'https://core-dev.kalosflorida.com:8443';
+    console.log(endpoint);
+    this.UserClient = new UserClient(endpoint);
 
     this.getUserData = this.getUserData.bind(this);
   }
@@ -50,12 +55,8 @@ export default class Transaction extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    try {
-      await this.getUserData();
-    } catch (error) {
-      await this.UserClient.GetToken('test', 'test');
-      await this.getUserData();
-    }
+    await this.UserClient.GetToken('test', 'test');
+    await this.getUserData();
   }
 
   render() {
@@ -74,6 +75,7 @@ export default class Transaction extends React.PureComponent<props, state> {
                 userID={this.props.userID}
                 userName={this.state.userName}
                 departmentId={this.state.userDepartmentID}
+                isProd={this.props.isProd}
               />
             )}
             {this.state.isAdmin && (
@@ -82,6 +84,7 @@ export default class Transaction extends React.PureComponent<props, state> {
                 userName={this.state.userName}
                 departmentId={this.state.userDepartmentID}
                 isSU={this.state.isSU}
+                isProd={this.props.isProd}
               />
             )}
           </Grid>
