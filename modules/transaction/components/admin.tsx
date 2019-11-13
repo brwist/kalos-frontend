@@ -21,6 +21,7 @@ import Paper from '@material-ui/core/Paper';
 import { DepartmentPicker } from '../../Pickers/Department';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { EmployeePicker } from '../../Pickers/Employee';
+import { CircularProgress } from '@material-ui/core';
 
 interface props {
   userID: number;
@@ -107,9 +108,30 @@ export class TransactionAdminView extends React.Component<props, state> {
     );
   }
 
+  clearFilters() {
+    this.setState({ filters: {} });
+  }
+
   prevPage = this.changePage(-1);
 
   nextPage = this.changePage(1);
+
+  applyFilters(obj: Transaction) {
+    const { filters } = this.state;
+    if (filters.userID) {
+      obj.setOwnerId(filters.userID);
+    }
+    if (filters.costCenterID) {
+      obj.setCostCenterId(filters.costCenterID);
+    }
+    if (filters.departmentID) {
+      obj.setDepartmentId(filters.departmentID);
+    }
+    if (filters.dateCreated) {
+      obj.setTimestamp(`2019-${filters.dateCreated}%`);
+    }
+    return obj;
+  }
 
   async fetchTxns() {
     const status = this.state.departmentView ? 2 : 5;
@@ -152,17 +174,16 @@ export class TransactionAdminView extends React.Component<props, state> {
   render() {
     const txns = this.state.transactions.sort((a, b) => b.id - a.id);
     return (
-      <>
-        <FormControlLabel
-          control={
-            <Switch
-              onChange={this.toggleView}
-              checked={!this.state.departmentView}
-            />
-          }
-          label="Toggle master view"
-        />
+      <Paper
+        style={{
+          width: '100%',
+          overflowX: 'auto',
+          maxHeight: '100%',
+          height: '100%',
+        }}
+      >
         {this.state.departmentView &&
+          !this.state.isLoading &&
           txns.map(t => (
             <TxnCard
               txn={t}
@@ -174,23 +195,31 @@ export class TransactionAdminView extends React.Component<props, state> {
             />
           ))}
         {!this.state.departmentView && (
-          <Paper style={{ width: '100%', overflowX: 'auto' }}>
-            <TablePagination
-              component="div"
-              style={{ display: 'flex', justifyContent: 'center' }}
-              count={this.state.count}
-              rowsPerPage={25}
-              page={this.state.page}
-              backIconButtonProps={{
-                'aria-label': 'previous page',
-              }}
-              nextIconButtonProps={{
-                'aria-label': 'next page',
-              }}
-              onChangePage={this.altChangePage}
-              rowsPerPageOptions={[25]}
-            />
+          <>
             <Toolbar style={{ justifyContent: 'center' }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    onChange={this.toggleView}
+                    checked={!this.state.departmentView}
+                  />
+                }
+                label="Toggle master view"
+              />
+              <TablePagination
+                component="span"
+                count={this.state.count}
+                rowsPerPage={25}
+                page={this.state.page}
+                backIconButtonProps={{
+                  'aria-label': 'previous page',
+                }}
+                nextIconButtonProps={{
+                  'aria-label': 'next page',
+                }}
+                onChangePage={this.altChangePage}
+                rowsPerPageOptions={[25]}
+              />
               <FormControl style={{ marginBottom: 10 }}>
                 <InputLabel htmlFor="set-month-select">
                   Filter by Month
@@ -239,7 +268,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                 useDevClient
               />
             </Toolbar>
-            <Table>
+            <Table stickyHeader style={{ maxHeight: '88%' }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
@@ -252,11 +281,13 @@ export class TransactionAdminView extends React.Component<props, state> {
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
-                {txns.map(t => (
-                  <TransactionRow txn={t} key={`txnRow-${t.id}`} />
-                ))}
-              </TableBody>
+              {!this.state.isLoading && (
+                <TableBody>
+                  {txns.map(t => (
+                    <TransactionRow txn={t} key={`txnRow-${t.id}`} />
+                  ))}
+                </TableBody>
+              )}
             </Table>
             <TablePagination
               component="div"
@@ -273,16 +304,10 @@ export class TransactionAdminView extends React.Component<props, state> {
               onChangePage={this.altChangePage}
               rowsPerPageOptions={[25]}
             />
-          </Paper>
+          </>
         )}
-        {this.state.transactions.length === 0 && (
-          <div className="flex-col align-self-stretch align-center">
-            <span className="title-text">
-              There are no transactions in need of review
-            </span>
-          </div>
-        )}
-      </>
+        {this.state.isLoading && <CircularProgress />}
+      </Paper>
     );
   }
 }

@@ -36,7 +36,7 @@ export function TransactionRow({ txn }: props) {
       <TableCell>
         {txn.department ? txn.department.description : 'Not Assigned'}
       </TableCell>
-      <TableCell>${txn.amount}</TableCell>
+      <TableCell>{prettyMoney(txn.amount)}</TableCell>
       <TableCell>{txn.description}</TableCell>
       <TableCell>{txn.notes}</TableCell>
       <TableCell>
@@ -114,4 +114,15 @@ function copyToClipboard(text: string): void {
   el.select();
   document.execCommand('copy');
   document.body.removeChild(el);
+}
+
+function prettyMoney(amount: number): string {
+  const [dollars, cents] = amount.toString().split('.');
+  if (!cents) {
+    return `$${dollars}.00`;
+  } else if (cents.length === 1) {
+    return `$${dollars}.${cents}0`;
+  } else {
+    return `$${dollars}.${cents}`;
+  }
 }
