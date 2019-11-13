@@ -15,6 +15,7 @@ interface props {
   onSelect?(id: number): void;
   test?(item: TimesheetDepartment.AsObject): boolean;
   label?: string;
+  useDevClient?: boolean;
 }
 
 interface state {
@@ -28,7 +29,11 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    this.Client = new TimesheetDepartmentClient();
+    const endpoint = this.props.useDevClient
+      ? 'https://core-dev.kalosflorida.com:8443'
+      : 'https://core.kalosflorida.com:8443';
+    console.log(endpoint);
+    this.Client = new TimesheetDepartmentClient(endpoint);
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addToList = this.addToList.bind(this);

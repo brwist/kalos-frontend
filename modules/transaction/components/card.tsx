@@ -326,10 +326,12 @@ export class TxnCard extends React.PureComponent<props, state> {
                 onSelect={this.updateCostCenterID}
                 selected={t.costCenterId}
                 test={this.testCostCenter}
+                useDevClient
               />
               <DepartmentPicker
                 onSelect={this.updateDepartmentID}
                 selected={t.departmentId || this.props.userDepartmentID}
+                useDevClient
               />
               <TextField
                 label="Notes"
@@ -415,7 +417,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 }
 
-function getMimeType(fileType: string) {
+export function getMimeType(fileType: string) {
   if (fileType === 'png' || fileType === 'jpg' || fileType === 'jpeg') {
     return `image/${fileType}`;
   } else if (fileType === 'pdf') {

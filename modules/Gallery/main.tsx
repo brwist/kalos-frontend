@@ -2,12 +2,12 @@ import React from 'react';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Dialog from '@material-ui/core/Dialog';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
-import PageViewTwoTone from '@material-ui/icons/PageViewTwoTone';
 import ChevronLeftTwoTone from '@material-ui/icons/ChevronLeftTwoTone';
 import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
 import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
-import PhotoAlbumTwoTone from '@material-ui/icons/PhotoAlbumTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -32,6 +32,7 @@ interface props {
   title: string;
   text: string;
   onOpen?(): void;
+  iconButton?: boolean;
 }
 
 export interface IFile {
@@ -41,16 +42,17 @@ export interface IFile {
   uri?: string;
 }
 
-export function Gallery({ title, text, fileList, onOpen }: props) {
+export function Gallery({ title, text, fileList, onOpen, iconButton }: props) {
   const classes = useStyles();
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
-  const [maxHeight, setHeight] = React.useState(window.innerHeight * 0.75);
 
   const toggleOpen = () => {
     setOpen(!isOpen);
+    console.log(isOpen);
     if (onOpen && !isOpen) {
       try {
+        console.log('calling on open?');
         onOpen();
       } catch (err) {
         console.log(err);
@@ -70,10 +72,6 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
     }
   };
 
-  document.addEventListener('resize', () => {
-    setHeight(window.innerHeight * 0.75);
-  });
-
   const getSource = (img: IFile) => {
     if (img) {
       if (img.uri) {
@@ -86,19 +84,30 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
     }
   };
 
+  console.log(iconButton);
+  console.log(fileList);
   if (fileList[activeImage]) {
     return (
       <>
-        <Button
-          variant="outlined"
-          size="large"
-          style={{ height: 44, marginBottom: 10 }}
-          fullWidth
-          startIcon={<ImageSearchTwoTone />}
-          onClick={toggleOpen}
-        >
-          {text}
-        </Button>
+        {!iconButton && (
+          <Button
+            variant="outlined"
+            size="large"
+            style={{ height: 44, marginBottom: 10 }}
+            fullWidth
+            startIcon={<ImageSearchTwoTone />}
+            onClick={toggleOpen}
+          >
+            {text}
+          </Button>
+        )}
+        {iconButton && (
+          <Tooltip title={text}>
+            <IconButton onClick={toggleOpen}>
+              <ImageSearchTwoTone />
+            </IconButton>
+          </Tooltip>
+        )}
         <Dialog
           aria-labelledby="transition-modal-title"
           open={isOpen}
@@ -118,7 +127,7 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
               justify="space-evenly"
               alignItems="center"
             >
-              <Typography>{title}</Typography>
+              {title && <Typography>{title}</Typography>}
               <Typography>
                 {activeImage + 1} of {fileList.length}
               </Typography>
@@ -182,16 +191,25 @@ export function Gallery({ title, text, fileList, onOpen }: props) {
   } else
     return (
       <>
-        <Button
-          variant="outlined"
-          size="large"
-          style={{ height: 44, marginBottom: 10 }}
-          fullWidth
-          startIcon={<ImageSearchTwoTone />}
-          onClick={toggleOpen}
-        >
-          {text}
-        </Button>
+        {!iconButton && (
+          <Button
+            variant="outlined"
+            size="large"
+            style={{ height: 44, marginBottom: 10 }}
+            fullWidth
+            startIcon={<ImageSearchTwoTone />}
+            onClick={toggleOpen}
+          >
+            {text}
+          </Button>
+        )}
+        {iconButton && (
+          <Tooltip title={text} placement="top">
+            <IconButton onClick={toggleOpen}>
+              <ImageSearchTwoTone />
+            </IconButton>
+          </Tooltip>
+        )}
       </>
     );
 }

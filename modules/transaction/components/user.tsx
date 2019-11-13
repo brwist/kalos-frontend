@@ -9,6 +9,7 @@ interface props {
   userID: number;
   departmentId: number;
   userName: string;
+  isProd?: boolean;
 }
 
 interface state {
@@ -29,7 +30,11 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       transactions: [],
       layout: 'list',
     };
-    this.TxnClient = new TransactionClient();
+    const endpoint = this.props.isProd
+      ? 'https://core.kalosflorida.com:8443'
+      : 'https://core-dev.kalosflorida.com:8443';
+    console.log(endpoint);
+    this.TxnClient = new TransactionClient(endpoint);
 
     this.changePage = this.changePage.bind(this);
     this.fetchTxns = this.fetchTxns.bind(this);
@@ -59,9 +64,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     this.setState(
       { isLoading: true },
       await (async () => {
-        const { resultsList } = (await this.TxnClient.BatchGet(
-          reqObj,
-        )).toObject();
+        const { resultsList } = (
+          await this.TxnClient.BatchGet(reqObj)
+        ).toObject();
         this.setState({
           transactions: resultsList,
           isLoading: false,
