@@ -75,8 +75,8 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     );
   }
 
-  async componentDidMount() {
-    await this.fetchTxns();
+  componentDidMount() {
+    this.fetchTxns();
   }
 
   render() {

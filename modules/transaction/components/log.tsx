@@ -76,7 +76,7 @@ export class TxnLog extends React.PureComponent<props, state> {
           View Activity Log
         </Button>
         <Modal open={this.state.isOpen} onClose={this.toggleVisibility}>
-          <Paper style={{ width: '100%', overflowX: 'auto' }}>
+          <Paper style={{ width: '100%', overflowX: 'scroll' }}>
             <IconButton onClick={this.toggleVisibility}>
               <CloseIcon />
             </IconButton>

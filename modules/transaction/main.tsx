@@ -5,6 +5,7 @@ import { TransactionAdminView } from './components/admin';
 import { LoginHelper } from '../LoginHelper/main';
 import Grid from '@material-ui/core/Grid';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import { CircularProgress } from '@material-ui/core';
 
 interface props {
   userID: number;
@@ -26,7 +27,7 @@ export default class Transaction extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      isLoading: false,
+      isLoading: true,
       isAdmin: false,
       isManager: false,
       userDepartmentID: 0,
@@ -51,6 +52,7 @@ export default class Transaction extends React.PureComponent<props, state> {
       isSU: userData.isSu === 1,
       userDepartmentID: userData.employeeDepartmentId,
       userName: `${userData.firstname} ${userData.lastname}`,
+      isLoading: false,
     });
   }
 
@@ -60,7 +62,7 @@ export default class Transaction extends React.PureComponent<props, state> {
   }
 
   render() {
-    if (true) {
+    if (!this.state.isLoading) {
       return (
         <>
           <CssBaseline />
@@ -96,10 +98,11 @@ export default class Transaction extends React.PureComponent<props, state> {
         <Grid
           container
           direction="column"
-          justify="flex-start"
+          justify="center"
           alignItems="center"
+          style={{ height: '100%' }}
         >
-          <LoginHelper />
+          <CircularProgress />
         </Grid>
       );
     }

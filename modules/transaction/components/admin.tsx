@@ -4,9 +4,13 @@ import {
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TxnCard } from './card';
-import { TransactionRow } from './row';
+import { TransactionRow, prettyMoney } from './row';
 import TablePagination from '@material-ui/core/TablePagination';
 import Toolbar from '@material-ui/core/Toolbar';
+import CloseIcon from '@material-ui/icons/CloseSharp';
+import CopyIcon from '@material-ui/icons/FileCopySharp';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -21,7 +25,7 @@ import Paper from '@material-ui/core/Paper';
 import { DepartmentPicker } from '../../Pickers/Department';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { EmployeePicker } from '../../Pickers/Employee';
-import { CircularProgress } from '@material-ui/core';
+import { CircularProgress, Typography } from '@material-ui/core';
 
 interface props {
   userID: number;
@@ -49,6 +53,7 @@ interface IFilter {
   approvedByID?: number;
   costCenterID?: number;
   departmentID?: number;
+  statusID?: 1 | 2 | 3 | 4 | 5;
 }
 
 export class TransactionAdminView extends React.Component<props, state> {
@@ -57,7 +62,7 @@ export class TransactionAdminView extends React.Component<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      page: 1,
+      page: 0,
       isLoading: false,
       departmentView: !this.props.isSU,
       transactions: [],
@@ -73,12 +78,42 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.changePage = this.changePage.bind(this);
     this.fetchTxns = this.fetchTxns.bind(this);
     this.setFilter = this.setFilter.bind(this);
+    this.clearFilters = this.clearFilters.bind(this);
+    this.checkFilters = this.checkFilters.bind(this);
     this.toggleView = this.toggleView.bind(this);
     this.altChangePage = this.altChangePage.bind(this);
+    this.copyPage = this.copyPage.bind(this);
   }
 
   toggleView() {
     this.setState(prevState => ({ departmentView: !prevState.departmentView }));
+  }
+
+  copyPage() {
+    const dataStr = this.state.transactions.reduce(
+      (acc: string, curr: Transaction.AsObject) => {
+        if (acc.length === 0) {
+          return `${new Date(
+            curr.timestamp.split(' ').join('T'),
+          ).toLocaleDateString()},${curr.description},${prettyMoney(
+            curr.amount,
+          )}`;
+        } else {
+          return `${acc}\n${new Date(
+            curr.timestamp.split(' ').join('T'),
+          ).toLocaleDateString()},${curr.description},${prettyMoney(
+            curr.amount,
+          )}`;
+        }
+      },
+      '',
+    );
+    const el = document.createElement('textarea');
+    el.value = dataStr;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
   }
 
   changePage(changeAmount: number) {
@@ -95,21 +130,27 @@ export class TransactionAdminView extends React.Component<props, state> {
   }
 
   altChangePage(event: unknown, newPage: number) {
-    console.log(newPage);
     if (!this.state.isLoading) {
       this.setState({ page: newPage }, this.fetchTxns);
     }
   }
 
   setFilter<T extends keyof IFilter>(key: T, value: IFilter[T]) {
+    if (value === 'Select Month') {
+      value = undefined;
+    }
     this.setState(
-      prevState => ({ filters: { ...prevState.filters, [key]: value } }),
+      prevState => ({
+        filters: { ...prevState.filters, [key]: value },
+        count: 0,
+        page: 0,
+      }),
       this.fetchTxns,
     );
   }
 
   clearFilters() {
-    this.setState({ filters: {} });
+    this.setState({ filters: {}, page: 0, count: 0 }, this.fetchTxns);
   }
 
   prevPage = this.changePage(-1);
@@ -133,18 +174,28 @@ export class TransactionAdminView extends React.Component<props, state> {
     return obj;
   }
 
+  checkFilters() {
+    return Object.keys(this.state.filters).reduce((acc, curr) => {
+      if (acc) {
+        return acc;
+      } else {
+        return !!this.state.filters[curr];
+      }
+    }, false);
+  }
+
   async fetchTxns() {
     const status = this.state.departmentView ? 2 : 5;
-    const reqObj = new Transaction();
+    let reqObj = new Transaction();
     //reqObj.setDepartmentId(this.props.departmentId);
     console.log(this.state.page);
     reqObj.setPageNumber(this.state.page);
+    reqObj = this.applyFilters(reqObj);
     //reqObj.setStatusId(status);
     this.setState(
       { isLoading: true },
       await (async () => {
         const res = (await this.TxnClient.BatchGet(reqObj)).toObject();
-        console.log(res);
         this.setState({
           transactions: res.resultsList,
           count: res.totalCount,
@@ -163,9 +214,11 @@ export class TransactionAdminView extends React.Component<props, state> {
     document.body.removeChild(el);
   }
 
+  /*
   shouldComponentUpdate(nextProps: props, nextState: state) {
     return !nextState.isLoading;
   }
+  */
 
   async componentDidMount() {
     await this.fetchTxns();
@@ -177,9 +230,12 @@ export class TransactionAdminView extends React.Component<props, state> {
       <Paper
         style={{
           width: '100%',
-          overflowX: 'auto',
           maxHeight: '100%',
           height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
         }}
       >
         {this.state.departmentView &&
@@ -196,7 +252,7 @@ export class TransactionAdminView extends React.Component<props, state> {
           ))}
         {!this.state.departmentView && (
           <>
-            <Toolbar style={{ justifyContent: 'center' }}>
+            <Toolbar style={{ justifyContent: 'center', position: 'sticky' }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -225,12 +281,13 @@ export class TransactionAdminView extends React.Component<props, state> {
                   Filter by Month
                 </InputLabel>
                 <NativeSelect
+                  disabled={this.state.isLoading}
                   onChange={e =>
                     this.setFilter('dateCreated', e.currentTarget.value)
                   }
                   inputProps={{ id: 'set-month-select' }}
                 >
-                  <option value="00">Select Month</option>
+                  <option>Select Month</option>
                   <option value="01">January</option>
                   <option value="02">February</option>
                   <option value="03">March</option>
@@ -246,6 +303,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                 </NativeSelect>
               </FormControl>
               <DepartmentPicker
+                disabled={this.state.isLoading}
                 selected={this.state.filters.departmentID || 0}
                 onSelect={departmentID =>
                   this.setFilter('departmentID', departmentID)
@@ -254,6 +312,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                 useDevClient
               />
               <CostCenterPicker
+                disabled={this.state.isLoading}
                 selected={this.state.filters.costCenterID || 0}
                 onSelect={costCenterID =>
                   this.setFilter('costCenterID', costCenterID)
@@ -262,13 +321,38 @@ export class TransactionAdminView extends React.Component<props, state> {
                 useDevClient
               />
               <EmployeePicker
+                disabled={this.state.isLoading}
                 selected={this.state.filters.userID || 0}
                 onSelect={userID => this.setFilter('userID', userID)}
                 label="Filter by User"
                 useDevClient
               />
+              <Tooltip
+                title={`Clear filters${
+                  !this.checkFilters() ? '(disabled)' : ''
+                }`}
+              >
+                <span>
+                  <IconButton
+                    onClick={this.clearFilters}
+                    disabled={!this.checkFilters()}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Copy current page as CSV">
+                <span>
+                  <IconButton
+                    onClick={this.copyPage}
+                    disabled={this.state.isLoading}
+                  >
+                    <CopyIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
             </Toolbar>
-            <Table stickyHeader style={{ maxHeight: '88%' }}>
+            <Table stickyHeader style={{ maxHeight: '100%' }} size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
@@ -289,24 +373,22 @@ export class TransactionAdminView extends React.Component<props, state> {
                 </TableBody>
               )}
             </Table>
-            <TablePagination
-              component="div"
-              style={{ display: 'flex', justifyContent: 'center' }}
-              count={this.state.count}
-              rowsPerPage={25}
-              page={this.state.page}
-              backIconButtonProps={{
-                'aria-label': 'previous page',
-              }}
-              nextIconButtonProps={{
-                'aria-label': 'next page',
-              }}
-              onChangePage={this.altChangePage}
-              rowsPerPageOptions={[25]}
-            />
+            {!this.state.isLoading && this.state.count === 0 && (
+              <Typography>0 results</Typography>
+            )}
+            {this.state.isLoading && (
+              <CircularProgress
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  marginLeft: '-20px',
+                  marginTop: '-20px',
+                }}
+              />
+            )}
           </>
         )}
-        {this.state.isLoading && <CircularProgress />}
       </Paper>
     );
   }
