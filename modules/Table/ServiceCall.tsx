@@ -72,7 +72,7 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <Paper style={{ width: '100%', overflowX: 'auto' }}>
+      <Paper style={{ width: '100%', overflowX: 'scroll' }}>
         <Table>
           <TableHead>
             <TableRow>
