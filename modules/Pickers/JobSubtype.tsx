@@ -32,13 +32,12 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
       list: [],
       allowed: [],
     };
-    const endpoint = this.props.useDevClient
-      ? 'https://core-dev.kalosflorida.com:8443'
-      : 'https://core.kalosflorida.com:8443';
-
-    console.log(endpoint);
-    this.Client = new JobSubtypeClient(endpoint);
-    this.JobTypeSubtypeClient = new JobTypeSubtypeClient(endpoint);
+    this.Client = new JobSubtypeClient(
+      'https://core-dev.kalosflorida.com:8443',
+    );
+    this.JobTypeSubtypeClient = new JobTypeSubtypeClient(
+      'https://core-dev.kalosflorida.com:8443',
+    );
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
   }

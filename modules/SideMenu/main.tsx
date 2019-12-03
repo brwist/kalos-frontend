@@ -16,205 +16,254 @@ import MenuBookIcon from '@material-ui/icons/MenuBookSharp';
 import CalendarTodaySharp from '@material-ui/icons/CalendarTodaySharp';
 import PersonSharp from '@material-ui/icons/PersonSharp';
 import PictureAsPdfSharpIcon from '@material-ui/icons/PictureAsPdfSharp';
-import ReceiptSharpIcon from '@material-ui/icons/ReceiptSharp';
-import PagesSharp from '@material-ui/icons/PagesSharp';
+import ReceiptIcon from '@material-ui/icons/ReceiptSharp';
 import MenuSharp from '@material-ui/icons/MenuSharp';
 import EventSharp from '@material-ui/icons/EventSharp';
 import LocationOnIcon from '@material-ui/icons/LocationOnSharp';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import AccountCircleIcon from '@material-ui/icons/AccountCircleSharp';
 import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
+import RoomServiceIcon from '@material-ui/icons/RoomServiceSharp';
 import BarChartSharp from '@material-ui/icons/BarChartSharp';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { cfURL } from '../../helpers';
+import {
+  TimesheetDepartmentClient,
+  TimesheetDepartment,
+} from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 
 interface props {
   userID: number;
-  isAdmin: boolean;
   imgURL: string;
 }
 
-export function SideMenu(props: props) {
-  const [state, setState] = React.useState({
-    isOpen: false,
-  });
+interface state {
+  isManager: boolean;
+  isOpen: boolean;
+  user: User.AsObject;
+}
 
-  const toggleMenu = () => {
-    setState({ isOpen: !state.isOpen });
-  };
+export class SideMenu extends React.PureComponent<props, state> {
+  DeptClient: TimesheetDepartmentClient;
+  UserClient: UserClient;
+  constructor(props: props) {
+    super(props);
+    this.state = {
+      isManager: false,
+      user: new User().toObject(),
+      isOpen: false,
+    };
+    const endpoint = 'https://core-dev.kalosflorida.com:8443';
+    this.UserClient = new UserClient(endpoint);
+    this.DeptClient = new TimesheetDepartmentClient(endpoint);
 
-  const spiffLog = cfURL(
-    'tasks.spiff_tool_logs',
-    `&rt=all&type=spiff&reportUserId=${props.userID}`,
-  );
-  const toolLog = cfURL(
-    'tasks.spiff_tool_logs',
-    `&rt=all&type=tool&reportUserId=${props.userID}`,
-  );
-  const timesheet = cfURL(
-    'timesheet.timesheetview',
-    `&user_id=${props.userID}&timesheetAction=cardview`,
-  );
-  const employees = cfURL('user.employee');
-  const search = cfURL('search.index');
-  const calendar = cfURL('service.calendar');
-  const reports = cfURL('reports');
-  const documents = cfURL('document');
-  const serviceCalls = cfURL('service.calls');
-  const dispatch = cfURL('dispatch.newdash');
-  const productivity = cfURL('service.newmetrics');
-  const serviceBilling = cfURL('service.callsPending');
-  const profile = cfURL('account.editinformation');
-  return (
-    <>
-      <CssBaseline />
+    this.toggleMenu = this.toggleMenu.bind(this);
+    this.getIdentity = this.getIdentity.bind(this);
+    this.userManagerCheck = this.userManagerCheck.bind(this);
+  }
 
-      <Hidden mdDown>
-        <Button onClick={toggleMenu}>
-          <img
-            src={props.imgURL}
-            alt="no img"
-            style={{ maxWidth: '100%', height: 'auto' }}
-          />
-        </Button>
-      </Hidden>
+  toggleMenu() {
+    this.setState(prevState => ({
+      isOpen: !prevState.isOpen,
+    }));
+  }
 
-      <Hidden lgUp>
-        <IconButton onClick={toggleMenu} style={{ color: 'white' }}>
-          <MenuSharp />
-        </IconButton>
-      </Hidden>
+  async getIdentity() {
+    try {
+      const req = new User();
+      req.setId(this.props.userID);
+      const user = await this.UserClient.Get(req);
+      this.setState({ user }, this.userManagerCheck);
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
-      <Drawer open={state.isOpen} onClose={toggleMenu}>
-        <List>
-          <ListItem
-            button
-            href="https://app.kalosflorida.com/index.cfm"
-            component="a"
-          >
-            <ListItemIcon>
-              <HomeSharp />
-            </ListItemIcon>
-            <ListItemText primary="Dashboard" />
-          </ListItem>
+  async userManagerCheck() {
+    try {
+      if (this.state.user.isSu) {
+        this.setState({
+          isManager: true,
+        });
+      } else {
+        const dpt = new TimesheetDepartment();
+        dpt.setManagerId(this.props.userID);
+        const res = await this.DeptClient.Get(dpt);
+        if (res.id !== 0) {
+          this.setState({
+            isManager: true,
+          });
+        }
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
-          <ListItem button href={calendar} component="a">
-            <ListItemIcon>
-              <CalendarTodaySharp />
-            </ListItemIcon>
-            <ListItemText primary="Service Calendar" />
-          </ListItem>
+  async componentDidMount() {
+    await this.getIdentity();
+  }
 
-          <ListItem button href={serviceCalls} component="a">
-            <ListItemIcon>
-              <EventSharp />
-            </ListItemIcon>
-            <ListItemText primary="Service Call Search" />
-          </ListItem>
+  render() {
+    const spiffLog = cfURL(
+      'tasks.spiff_tool_logs',
+      `&rt=all&type=spiff&reportUserId=${this.props.userID}`,
+    );
+    const toolLog = cfURL(
+      'tasks.spiff_tool_logs',
+      `&rt=all&type=tool&reportUserId=${this.props.userID}`,
+    );
+    const timesheet = cfURL(
+      'timesheet.timesheetview',
+      `&user_id=${this.props.userID}&timesheetAction=cardview`,
+    );
+    const employees = cfURL('user.employee');
+    const search = cfURL('search.index');
+    const calendar = cfURL('service.calendar');
+    const reports = cfURL('reports');
+    const documents = cfURL('document');
+    const serviceCalls = cfURL('service.calls');
+    const dispatch = cfURL('dispatch.newdash');
+    const productivity = cfURL('service.newmetrics');
+    const serviceBilling = cfURL('service.callsPending');
+    const profile = cfURL('account.editinformation');
+    const txnAdmin = cfURL('reports.transaction_admin');
 
-          {props.isAdmin && (
-            <ListItem button href={dispatch} component="a">
+    return (
+      <>
+        <CssBaseline />
+        <Hidden mdDown>
+          <Button onClick={this.toggleMenu}>
+            <img
+              src={this.props.imgURL}
+              alt="no img"
+              style={{ maxWidth: '100%', height: 'auto' }}
+            />
+          </Button>
+        </Hidden>
+        <Hidden lgUp>
+          <IconButton onClick={this.toggleMenu} style={{ color: 'white' }}>
+            <MenuSharp />
+          </IconButton>
+        </Hidden>
+        <Drawer open={this.state.isOpen} onClose={this.toggleMenu}>
+          <List>
+            <ListItem
+              button
+              href="https://app.kalosflorida.com/index.cfm"
+              component="a"
+            >
               <ListItemIcon>
-                <LocationOnIcon />
+                <HomeSharp />
               </ListItemIcon>
-              <ListItemText primary="Dispatch" />
+              <ListItemText primary="Dashboard" />
             </ListItem>
-          )}
-
-          <ListItem button href={spiffLog} component="a">
-            <ListItemIcon>
-              <MoneySharp />
-            </ListItemIcon>
-            <ListItemText primary="Spiff Log" />
-          </ListItem>
-
-          <ListItem button href={toolLog} component="a">
-            <ListItemIcon>
-              <AttachMoneySharp />
-            </ListItemIcon>
-            <ListItemText primary="Tool Log" />
-          </ListItem>
-
-          <ListItem button href={timesheet} component="a">
-            <ListItemIcon>
-              <AccessTimeIcon />
-            </ListItemIcon>
-            <ListItemText primary="Timesheet" />
-          </ListItem>
-
-          <Divider />
-
-          <ListItem button href={employees} component="a">
-            <ListItemIcon>
-              <PersonSharp />
-            </ListItemIcon>
-            <ListItemText primary="Employee Directory" />
-          </ListItem>
-
-          <ListItem button href={search} component="a">
-            <ListItemIcon>
-              <SearchSharp />
-            </ListItemIcon>
-            <ListItemText primary="Customer Directory" />
-          </ListItem>
-
-          {props.isAdmin && (
-            <ListItem button href={reports} component="a">
+            <ListItem button href={calendar} component="a">
               <ListItemIcon>
-                <MenuBookIcon />
+                <CalendarTodaySharp />
               </ListItemIcon>
-              <ListItemText primary="Reports" />
+              <ListItemText primary="Service Calendar" />
             </ListItem>
-          )}
-
-          {props.isAdmin && (
-            <ListItem button href={documents} component="a">
+            <ListItem button href={serviceCalls} component="a">
               <ListItemIcon>
-                <PictureAsPdfSharpIcon />
+                <EventSharp />
               </ListItemIcon>
-              <ListItemText primary="Kalos Documents" />
+              <ListItemText primary="Service Call Search" />
             </ListItem>
-          )}
-
-          {props.isAdmin && (
-            <ListItem button href={productivity} component="a">
+            <ListItem button href={spiffLog} component="a">
               <ListItemIcon>
-                <BarChartSharp />
+                <MoneySharp />
               </ListItemIcon>
-              <ListItemText primary="Productivity / Metrics" />
+              <ListItemText primary="Spiff Log" />
             </ListItem>
-          )}
-
-          {props.isAdmin && (
-            <ListItem button href={serviceBilling} component="a">
+            <ListItem button href={toolLog} component="a">
               <ListItemIcon>
-                <ReceiptSharpIcon />
+                <AttachMoneySharp />
               </ListItemIcon>
-              <ListItemText primary="Service Billing" />
+              <ListItemText primary="Tool Log" />
             </ListItem>
-          )}
-
-          <Divider />
-
-          <ListItem button href={profile} component="a">
-            <ListItemIcon>
-              <AccountCircleIcon />
-            </ListItemIcon>
-            <ListItemText primary="Account Info" />
-          </ListItem>
-
-          <ListItem
-            button
-            href="https://app.kalosflorida.com/index.cfm?action=account.logout"
-            component="a"
-          >
-            <ListItemIcon>
-              <ExitToAppIcon />
-            </ListItemIcon>
-            <ListItemText primary="Logout" />
-          </ListItem>
-        </List>
-      </Drawer>
-    </>
-  );
+            <ListItem button href={timesheet} component="a">
+              <ListItemIcon>
+                <AccessTimeIcon />
+              </ListItemIcon>
+              <ListItemText primary="Timesheet" />
+            </ListItem>
+            <Divider />
+            <ListItem button href={employees} component="a">
+              <ListItemIcon>
+                <PersonSharp />
+              </ListItemIcon>
+              <ListItemText primary="Employee Directory" />
+            </ListItem>
+            <ListItem button href={search} component="a">
+              <ListItemIcon>
+                <SearchSharp />
+              </ListItemIcon>
+              <ListItemText primary="Customer Directory" />
+            </ListItem>
+            {this.state.user.isAdmin && (
+              <>
+                <ListItem button href={reports} component="a">
+                  <ListItemIcon>
+                    <MenuBookIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Reports" />
+                </ListItem>
+                <ListItem button href={dispatch} component="a">
+                  <ListItemIcon>
+                    <LocationOnIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Dispatch" />
+                </ListItem>
+                <ListItem button href={documents} component="a">
+                  <ListItemIcon>
+                    <PictureAsPdfSharpIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Kalos Documents" />
+                </ListItem>
+                <ListItem button href={productivity} component="a">
+                  <ListItemIcon>
+                    <BarChartSharp />
+                  </ListItemIcon>
+                  <ListItemText primary="Productivity / Metrics" />
+                </ListItem>
+                <ListItem button href={serviceBilling} component="a">
+                  <ListItemIcon>
+                    <RoomServiceIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Service Billing" />
+                </ListItem>
+              </>
+            )}
+            {this.state.isManager && (
+              <ListItem button href={txnAdmin} component="a">
+                <ListItemIcon>
+                  <ReceiptIcon />
+                </ListItemIcon>
+                <ListItemText primary="Receipt Review" />
+              </ListItem>
+            )}
+            <Divider />
+            <ListItem button href={profile} component="a">
+              <ListItemIcon>
+                <AccountCircleIcon />
+              </ListItemIcon>
+              <ListItemText primary="Account Info" />
+            </ListItem>
+            <ListItem
+              button
+              href="https://app.kalosflorida.com/index.cfm?action=account.logout"
+              component="a"
+            >
+              <ListItemIcon>
+                <ExitToAppIcon />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItem>
+          </List>
+        </Drawer>
+      </>
+    );
+  }
 }

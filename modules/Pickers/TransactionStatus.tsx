@@ -1,35 +1,33 @@
 import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import {
-  TimesheetDepartment,
-  TimesheetDepartmentClient,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import Divider from '@material-ui/core/Divider';
+  TransactionStatus,
+  TransactionStatusClient,
+} from '@kalos-core/kalos-rpc/TransactionStatus';
 
 interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: TimesheetDepartment.AsObject): boolean;
+  test?(item: TransactionStatus.AsObject): boolean;
   label?: string;
   useDevClient?: boolean;
 }
 
 interface state {
-  list: TimesheetDepartment.AsObject[];
+  list: TransactionStatus.AsObject[];
 }
 
-export class DepartmentPicker extends React.PureComponent<props, state> {
-  Client: TimesheetDepartmentClient;
+export class TxnStatusPicker extends React.PureComponent<props, state> {
+  Client: TransactionStatusClient;
   constructor(props: props) {
     super(props);
     this.state = {
       list: [],
     };
-    this.Client = new TimesheetDepartmentClient(
+    this.Client = new TransactionStatusClient(
       'https://core-dev.kalosflorida.com:8443',
     );
 
@@ -48,16 +46,15 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
     }
   }
 
-  addToList(item: TimesheetDepartment.AsObject) {
+  addToList(item: TransactionStatus.AsObject) {
     this.setState(prevState => ({
       list: prevState.list.concat(item),
     }));
   }
 
   async fetchList() {
-    const dpt = new TimesheetDepartment();
-    dpt.setIsActive(1);
-    this.Client.List(dpt, this.addToList);
+    const status = new TransactionStatus();
+    this.Client.List(status, this.addToList);
   }
 
   componentDidMount() {
@@ -67,16 +64,16 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
   render() {
     return (
       <FormControl style={{ marginBottom: 10 }}>
-        <InputLabel htmlFor="cost-center-picker">
-          {this.props.label || 'Department'}
+        <InputLabel htmlFor="txn-status-picker">
+          {this.props.label || 'Status'}
         </InputLabel>
         <NativeSelect
           disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
-          inputProps={{ id: 'cost-center-picker' }}
+          inputProps={{ id: 'txn-status-picker' }}
         >
-          <option value={0}>Select Department</option>
+          <option value={0}>Select Status</option>
           {this.state.list.map(item => (
             <option value={item.id} key={`${item.description}-${item.id}`}>
               {item.description}

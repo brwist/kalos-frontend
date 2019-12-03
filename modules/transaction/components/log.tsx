@@ -13,27 +13,37 @@ import Modal from '@material-ui/core/Modal';
 import Button from '@material-ui/core/Button';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import IconButton from '@material-ui/core/IconButton';
+import ListIcon from '@material-ui/icons/ListSharp';
+import Tooltip from '@material-ui/core/Tooltip';
+import Grid from '@material-ui/core/Grid';
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 
 interface props {
   txnID: number;
+  iconButton?: boolean;
 }
 
 interface state {
   list: TransactionActivity.AsObject[];
+  actorMap: Map<number, string>;
   isOpen: boolean;
 }
 
 export class TxnLog extends React.PureComponent<props, state> {
   LogClient: TransactionActivityClient;
+  UserClient: UserClient;
+
   constructor(props: props) {
     super(props);
 
     this.state = {
       list: [],
       isOpen: false,
+      actorMap: new Map<number, string>(),
     };
 
     this.LogClient = new TransactionActivityClient();
+    this.UserClient = new UserClient();
 
     this.toggleVisibility = this.toggleVisibility.bind(this);
     this.addLog = this.addLog.bind(this);
@@ -43,8 +53,18 @@ export class TxnLog extends React.PureComponent<props, state> {
     this.setState(prevState => ({ isOpen: !prevState.isOpen }));
   }
 
-  addLog(log: TransactionActivity.AsObject) {
-    this.setState(prevState => ({ list: prevState.list.concat(log) }));
+  async addLog(log: TransactionActivity.AsObject) {
+    const user = new User();
+    user.setId(log.userId);
+    const res = await this.UserClient.Get(user);
+    this.setState(prevState => {
+      const map = new Map(prevState.actorMap);
+      map.set(log.id, `${res.firstname} ${res.lastname} ${res.id}`);
+      return {
+        list: prevState.list.concat(log),
+        actorMap: map,
+      };
+    });
   }
 
   componentDidUpdate(prevProps: props, prevState: state) {
@@ -64,19 +84,39 @@ export class TxnLog extends React.PureComponent<props, state> {
   }
 
   render() {
+    const button = this.props.iconButton ? (
+      <Tooltip title="View activity log" placement="top">
+        <IconButton onClick={this.toggleVisibility}>
+          <ListIcon />
+        </IconButton>
+      </Tooltip>
+    ) : (
+      <Button
+        variant="outlined"
+        size="large"
+        fullWidth
+        style={{ height: 44, marginBottom: 10 }}
+        onClick={this.toggleVisibility}
+      >
+        View Activity Log
+      </Button>
+    );
     return (
       <>
-        <Button
-          variant="outlined"
-          size="large"
-          fullWidth
-          style={{ height: 44, marginBottom: 10 }}
-          onClick={this.toggleVisibility}
+        {button}
+        <Modal
+          open={this.state.isOpen}
+          onClose={this.toggleVisibility}
+          style={{
+            position: 'fixed',
+            height: '100%',
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          View Activity Log
-        </Button>
-        <Modal open={this.state.isOpen} onClose={this.toggleVisibility}>
-          <Paper style={{ width: '100%', overflowX: 'scroll' }}>
+          <Paper style={{ width: '60%', overflowX: 'scroll' }}>
             <IconButton onClick={this.toggleVisibility}>
               <CloseIcon />
             </IconButton>
@@ -93,7 +133,9 @@ export class TxnLog extends React.PureComponent<props, state> {
                   <TableRow>
                     <TableCell>{activity.timestamp}</TableCell>
                     <TableCell>{activity.description}</TableCell>
-                    <TableCell>{activity.userId}</TableCell>
+                    <TableCell>
+                      {this.state.actorMap.get(activity.id)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

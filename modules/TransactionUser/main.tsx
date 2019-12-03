@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { TransactionAdminView } from './components/admin';
+import { TransactionUserView } from '../Transaction/components/user';
 import Grid from '@material-ui/core/Grid';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -50,21 +50,6 @@ export default class Transaction extends React.PureComponent<props, state> {
     });
   }
 
-  toggleFlag(flag: keyof state) {
-    return () => {
-      if (typeof this.state[flag] === 'boolean') {
-        //@ts-ignore
-        this.setState(prevState => ({
-          [flag]: !prevState[flag],
-        }));
-      }
-    };
-  }
-  toggleAdmin = this.toggleFlag('isAdmin');
-  toggleManager = this.toggleFlag('isManager');
-  toggleSU = this.toggleFlag('isSU');
-  toggleLoading = this.toggleFlag('isLoading');
-
   async componentDidMount() {
     await this.UserClient.GetToken('test', 'test');
     await this.getUserData();
@@ -80,46 +65,6 @@ export default class Transaction extends React.PureComponent<props, state> {
           justify="flex-start"
         >
           <CssBaseline />
-          {/*<Toolbar>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={this.state.isAdmin}
-                  onChange={this.toggleAdmin}
-                />
-              }
-              label="Toggle Admin"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={this.state.isManager}
-                  onChange={this.toggleManager}
-                />
-              }
-              label="Toggle Manager"
-            />
-            <FormControlLabel
-              control={
-                <Switch checked={this.state.isSU} onChange={this.toggleSU} />
-              }
-              label="Toggle Super User"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={this.state.isLoading}
-                  onChange={this.toggleLoading}
-                />
-              }
-              label="Toggle Loading"
-            />
-            <DepartmentPicker
-              selected={this.state.userDepartmentID}
-              onSelect={id => this.setState({ userDepartmentID: id })}
-              useDevClient
-            />
-            </Toolbar>*/}
           <Grid
             container
             direction="column"
@@ -127,11 +72,10 @@ export default class Transaction extends React.PureComponent<props, state> {
             alignItems="center"
             style={{ maxHeight: '100%' }}
           >
-            <TransactionAdminView
+            <TransactionUserView
               userID={this.props.userID}
               userName={this.state.userName}
               departmentId={this.state.userDepartmentID}
-              isSU={this.state.isSU}
               isProd={this.props.isProd}
             />
           </Grid>
@@ -139,17 +83,15 @@ export default class Transaction extends React.PureComponent<props, state> {
       );
     } else {
       return (
-        <>
-          <Grid
-            container
-            direction="column"
-            justify="center"
-            alignItems="center"
-            style={{ height: '100%' }}
-          >
-            <CircularProgress />
-          </Grid>
-        </>
+        <Grid
+          container
+          direction="column"
+          justify="center"
+          alignItems="center"
+          style={{ height: '100%' }}
+        >
+          <CircularProgress />
+        </Grid>
       );
     }
   }

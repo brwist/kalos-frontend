@@ -26,7 +26,10 @@ export class TextList extends React.PureComponent<props, state> {
               <ListItemText
                 style={{ display: 'block' }}
                 primary={c.primary}
+                primaryTypographyProps={{ variant: 'subtitle1' }}
                 secondary={c.secondary}
+                secondaryTypographyProps={{ variant: 'body1' }}
+                inset
               />
             </ListItem>
           ))}

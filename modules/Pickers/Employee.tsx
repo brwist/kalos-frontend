@@ -26,12 +26,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    const endpoint = this.props.useDevClient
-      ? 'https://core-dev.kalosflorida.com:8443'
-      : 'https://core.kalosflorida.com:8443';
-
-    console.log(endpoint);
-    this.Client = new UserClient(endpoint);
+    this.Client = new UserClient('https://core-dev.kalosflorida.com:8443');
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
@@ -49,7 +44,13 @@ export class EmployeePicker extends React.PureComponent<props, state> {
   }
 
   addItem(item: User.AsObject) {
+    console.log('adding user');
     if (this.props.test) {
+      console.log(
+        'testing employee',
+        this.props.test(item),
+        item.employeeDepartmentId,
+      );
       if (this.props.test(item)) {
         this.setState(prevState => ({
           list: prevState.list.concat(item),
@@ -69,6 +70,20 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     }
     user.setIsEmployee(1);
     this.Client.List(user, this.addItem);
+  }
+
+  componentDidUpdate(prevProps: props) {
+    if (
+      (!prevProps.test && this.props.test) ||
+      (prevProps.test && !this.props.test)
+    ) {
+      this.setState(
+        {
+          list: [],
+        },
+        this.fetchUsers,
+      );
+    }
   }
 
   componentDidMount() {

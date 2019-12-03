@@ -24,12 +24,7 @@ export class JobTypePicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    const endpoint = this.props.useDevClient
-      ? 'https://core-dev.kalosflorida.com:8443'
-      : 'https://core.kalosflorida.com:8443';
-
-    console.log(endpoint);
-    this.Client = new JobTypeClient(endpoint);
+    this.Client = new JobTypeClient('https://core-dev.kalosflorida.com:8443');
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);

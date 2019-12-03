@@ -1,38 +1,22 @@
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
-import Dialog from '@material-ui/core/Dialog';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
-import ChevronLeftTwoTone from '@material-ui/icons/ChevronLeftTwoTone';
-import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
-import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
-import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
-import { makeStyles } from '@material-ui/core/styles';
+import DownloadIcon from '@material-ui/icons/CloudDownloadSharp';
+import ChevronLeftSharp from '@material-ui/icons/ChevronLeftSharp';
+import ChevronRightSharp from '@material-ui/icons/ChevronRightSharp';
+import CloseSharp from '@material-ui/icons/CloseSharp';
+import ImageSearchSharp from '@material-ui/icons/ImageSearchSharp';
+import Popover from '@material-ui/core/Popover';
 import CircularProgress from '@material-ui/core/CircularProgress';
-
-const useStyles = makeStyles(theme => ({
-  modal: {
-    position: 'absolute',
-    height: '100%',
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  paper: {
-    backgroundColor: theme.palette.background.paper,
-    border: '2px solid #000',
-    boxShadow: theme.shadows[5],
-  },
-}));
 
 interface props {
   fileList: IFile[];
   title: string;
   text: string;
-  onOpen?(): void;
+  onOpen?(): Promise<void>;
   iconButton?: boolean;
   disabled?: boolean;
 }
@@ -44,7 +28,7 @@ export interface IFile {
   uri?: string;
 }
 
-export function Gallery({
+export function PopoverGallery({
   title,
   text,
   fileList,
@@ -52,17 +36,18 @@ export function Gallery({
   iconButton,
   disabled,
 }: props) {
-  const classes = useStyles();
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
+    null,
+  );
 
-  const toggleOpen = () => {
+  const toggleOpen = async (event: React.MouseEvent<HTMLButtonElement>) => {
     setOpen(!isOpen);
-    console.log(isOpen);
+    setAnchorEl(event.currentTarget);
     if (onOpen && !isOpen) {
       try {
-        console.log('calling on open?');
-        onOpen();
+        await onOpen();
       } catch (err) {
         console.log(err);
       }
@@ -96,7 +81,6 @@ export function Gallery({
   const downloadImg = () => {
     const img = fileList[activeImage];
     const el = document.createElement('a');
-    const type = img.mimeType ? img.mimeType.split('/')[1] : 'png';
     const src = getSource(img);
     console.log('src: ', src);
     console.log(fileList);
@@ -108,7 +92,7 @@ export function Gallery({
   const button = iconButton ? (
     <Tooltip title={text} placement="top">
       <IconButton onClick={toggleOpen} disabled={disabled}>
-        <ImageSearchTwoTone />
+        <ImageSearchSharp />
       </IconButton>
     </Tooltip>
   ) : (
@@ -117,22 +101,29 @@ export function Gallery({
       size="large"
       style={{ height: 44, marginBottom: 10 }}
       fullWidth
-      startIcon={<ImageSearchTwoTone />}
+      startIcon={<ImageSearchSharp />}
       onClick={toggleOpen}
       disabled={disabled}
     >
       {text}
     </Button>
   );
-  const imgHeight = Math.floor(window.innerHeight * 0.8);
   return (
     <>
       {button}
-      <Dialog
+      <Popover
         aria-labelledby="transition-modal-title"
         open={isOpen}
+        anchorEl={anchorEl}
         onClose={toggleOpen}
-        fullScreen
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
       >
         <Grid
           container
@@ -140,51 +131,69 @@ export function Gallery({
           alignItems="center"
           justify="flex-start"
           wrap="nowrap"
+          style={{ height: 600, width: 600 }}
         >
+          {title && (
+            <Grid
+              item
+              container
+              direction="row"
+              justify="space-evenly"
+              alignItems="center"
+            >
+              <Typography>{title}</Typography>
+            </Grid>
+          )}
           <Grid
-            container
             item
+            container
             direction="row"
             justify="space-evenly"
             alignItems="center"
           >
-            {title && <Typography>{title}</Typography>}
+            <Tooltip title="Download current image" placement="top">
+              <IconButton onClick={downloadImg}>
+                <DownloadIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Previous image" placement="top">
+              <span>
+                <IconButton onClick={prevImage} disabled={activeImage === 0}>
+                  <ChevronLeftSharp />
+                </IconButton>
+              </span>
+            </Tooltip>
             <Typography>
               {activeImage + 1} of {fileList.length}
             </Typography>
-            <Button
-              onClick={toggleOpen}
-              size="large"
-              className="title-text"
-              style={{ height: 44 }}
-              endIcon={<CloseTwoTone />}
-            >
-              Close
-            </Button>
+            <Tooltip title="Next image" placement="top">
+              <span>
+                <IconButton
+                  onClick={nextImage}
+                  disabled={activeImage === fileList.length - 1}
+                >
+                  <ChevronRightSharp />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Close gallery" placement="top">
+              <IconButton onClick={toggleOpen}>
+                <CloseSharp />
+              </IconButton>
+            </Tooltip>
           </Grid>
           {fileList[activeImage] && (
-            <Grid
-              item
-              container
-              direction="column"
-              justify="center"
-              alignItems="center"
-              style={{
-                maxHeight: imgHeight,
-                overflow: 'scroll',
-                height: imgHeight,
-              }}
-            >
+            <Grid item style={{ height: '100%', width: '100%' }}>
               {fileList[activeImage].mimeType === 'application/pdf' && (
                 <iframe
                   src={getSource(fileList[activeImage])}
-                  style={{ maxWidth: '100%', height: 'auto' }}
+                  style={{ width: '100%', height: '100%' }}
                 ></iframe>
               )}
               {fileList[activeImage].mimeType !== 'application/pdf' && (
                 <img
                   src={getSource(fileList[activeImage])}
-                  style={{ maxWidth: '100%', height: 'auto' }}
+                  style={{ width: '100%', height: 'auto' }}
                 />
               )}
             </Grid>
@@ -195,49 +204,13 @@ export function Gallery({
               direction="column"
               justify="center"
               alignItems="center"
-              style={{ height: imgHeight, width: '100%' }}
+              style={{ height: '100%', width: '100%' }}
             >
               <CircularProgress />
             </Grid>
           )}
-          <Grid
-            container
-            item
-            direction="row"
-            justify="center"
-            alignItems="center"
-          >
-            <Button
-              onClick={prevImage}
-              disabled={activeImage === 0}
-              size="large"
-              className="title-text"
-              style={{ height: 44 }}
-              startIcon={<ChevronLeftTwoTone />}
-            >
-              Prev
-            </Button>
-            <Button
-              onClick={downloadImg}
-              size="large"
-              className="title-text"
-              style={{ height: 44 }}
-            >
-              Download
-            </Button>
-            <Button
-              onClick={nextImage}
-              disabled={activeImage === fileList.length - 1}
-              size="large"
-              className="title-text"
-              style={{ height: 44 }}
-              endIcon={<ChevronRightTwoTone />}
-            >
-              Next
-            </Button>
-          </Grid>
         </Grid>
-      </Dialog>
+      </Popover>
     </>
   );
 }

@@ -85,38 +85,6 @@ function start() {
     });
 }
 /**
- * @deprecated
- */
-function build() {
-    return __awaiter(this, void 0, void 0, function () {
-        var target, flags, err_3;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 2, , 3]);
-                    target = titleCase(process.argv[4].replace(/-/g, ''));
-                    flags = [
-                        '--experimental-scope-hoisting',
-                        "--out-dir build/" + target,
-                        '--target browser',
-                        '--detailed-report',
-                        "--global " + target,
-                    ];
-                    info("Bundling modules/" + target + "/main.html to dist/" + target + ".main.tsx");
-                    return [4 /*yield*/, sh.exec("NODE_ENV=production parcel build modules/" + target + "/index.html " + flags.join(' '), { silent: false })];
-                case 1:
-                    _a.sent();
-                    return [2 /*return*/, true];
-                case 2:
-                    err_3 = _a.sent();
-                    error(err_3);
-                    return [2 /*return*/, false];
-                case 3: return [2 /*return*/];
-            }
-        });
-    });
-}
-/**
  * Creates a new local module, module name should be passed as flag
  *
  * e.g. `yarn create --MyModule`
@@ -225,7 +193,6 @@ function log(color) {
     };
 }
 task(start);
-task(build);
 task(create);
 function htmlTemplate(title) {
     return ("\n<!DOCTYPE html>\n<html>\n  <head>\n    <title>" + title + "</title>\n  </head>\n  <body>\n    <div id=\"root\"></div>\n    <script src=\"index.tsx\"></script>\n  </body>\n</html>").replace('\n', '');
@@ -308,14 +275,21 @@ function checkBranch() {
 }
 function rollupBuild() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, modules, bundle;
+        var target, err_3, modules, bundle;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, getBranch()];
+                case 0:
+                    _a.trys.push([0, 1, , 3]);
+                    target = titleCase(process.argv[4].replace(/-/g, ''));
+                    return [3 /*break*/, 3];
                 case 1:
-                    target = (_a.sent()).replace(/\n/g, '');
-                    return [4 /*yield*/, getModulesList()];
+                    err_3 = _a.sent();
+                    return [4 /*yield*/, getBranch()];
                 case 2:
+                    target = target = (_a.sent()).replace(/\n/g, '');
+                    return [3 /*break*/, 3];
+                case 3: return [4 /*yield*/, getModulesList()];
+                case 4:
                     modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
@@ -336,7 +310,8 @@ function rollupBuild() {
                                 }),
                                 peerDependencies(),
                                 replace({
-                                    'process.env.NODE_ENV': JSON.stringify('production')
+                                    'process.env.NODE_ENV': JSON.stringify('production'),
+                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com'
                                 }),
                                 cleanup({
                                     comments: 'all',
@@ -345,7 +320,7 @@ function rollupBuild() {
                                 terser(),
                             ]
                         })];
-                case 3:
+                case 5:
                     bundle = _a.sent();
                     return [4 /*yield*/, bundle.write({
                             file: "build/modules/" + target + ".js",
@@ -356,7 +331,7 @@ function rollupBuild() {
                                 'react-dom': 'ReactDOM'
                             }
                         })];
-                case 4:
+                case 6:
                     _a.sent();
                     return [2 /*return*/];
             }
@@ -388,24 +363,32 @@ function googBuild() {
 }
 function release() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, modules;
+        var target, err_4, modules;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, rollupBuild()];
                 case 1:
                     _a.sent();
-                    return [4 /*yield*/, getBranch()];
+                    _a.label = 2;
                 case 2:
-                    target = (_a.sent()).replace(/\n/g, '');
-                    return [4 /*yield*/, getModulesList()];
+                    _a.trys.push([2, 3, , 5]);
+                    target = titleCase(process.argv[4].replace(/-/g, ''));
+                    return [3 /*break*/, 5];
                 case 3:
+                    err_4 = _a.sent();
+                    return [4 /*yield*/, getBranch()];
+                case 4:
+                    target = target = (_a.sent()).replace(/\n/g, '');
+                    return [3 /*break*/, 5];
+                case 5: return [4 /*yield*/, getModulesList()];
+                case 6:
                     modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
                     }
                     //await patchCFC();
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + c.KALOS_ASSETS + "/modules/" + target + ".js")];
-                case 4:
+                case 7:
                     //await patchCFC();
                     _a.sent();
                     return [2 /*return*/];

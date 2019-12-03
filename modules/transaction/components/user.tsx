@@ -30,14 +30,13 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       transactions: [],
       layout: 'list',
     };
-    const endpoint = this.props.isProd
-      ? 'https://core.kalosflorida.com:8443'
-      : 'https://core-dev.kalosflorida.com:8443';
-    console.log(endpoint);
-    this.TxnClient = new TransactionClient(endpoint);
+    this.TxnClient = new TransactionClient(
+      'https://core-dev.kalosflorida.com:8443',
+    );
 
     this.changePage = this.changePage.bind(this);
     this.fetchTxns = this.fetchTxns.bind(this);
+    this.fetchAllTxns = this.fetchAllTxns.bind(this);
   }
 
   changePage(changeAmount: number) {
@@ -45,7 +44,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       if (!this.state.isLoading) {
         this.setState(
           prevState => ({ page: prevState.page + changeAmount }),
-          this.fetchTxns,
+          this.fetchAllTxns,
         );
       } else {
         console.log('change page request while loading was ignored');
@@ -57,32 +56,41 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   nextPage = this.changePage(1);
 
-  async fetchTxns() {
+  async fetchTxns(statusID: number) {
     const reqObj = new Transaction();
     reqObj.setOwnerId(this.props.userID);
     reqObj.setPageNumber(this.state.page);
+    reqObj.setStatusId(statusID);
+    const res = (await this.TxnClient.BatchGet(reqObj)).toObject();
+    return res.resultsList;
+  }
+
+  async fetchAllTxns() {
     this.setState(
-      { isLoading: true },
+      {
+        isLoading: true,
+      },
       await (async () => {
-        const { resultsList } = (
-          await this.TxnClient.BatchGet(reqObj)
-        ).toObject();
+        const newTxns = await this.fetchTxns(1);
+        const rejectedTxns = await this.fetchTxns(4);
         this.setState({
-          transactions: resultsList,
+          transactions: newTxns.concat(rejectedTxns),
           isLoading: false,
         });
       }),
     );
   }
 
-  componentDidMount() {
-    this.fetchTxns();
+  async componentDidMount() {
+    await this.fetchAllTxns();
   }
 
   render() {
-    const txns = this.state.transactions
-      .filter(t => t.statusId !== 2)
-      .sort((a, b) => b.id - a.id);
+    const txns = this.state.transactions.sort((a, b) => {
+      const dateA = new Date(a.timestamp.split(' ').join('T'));
+      const dateB = new Date(b.timestamp.split(' ').join('T'));
+      return dateA.getTime() - dateB.getTime();
+    });
     if (txns.length > 0) {
       return (
         <>
@@ -93,6 +101,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
               userID={this.props.userID}
               userName={this.props.userName}
               userDepartmentID={this.props.departmentId}
+              fetchFn={this.fetchAllTxns}
             />
           ))}
         </>
