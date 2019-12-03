@@ -1,17 +1,22 @@
-import React, { ChangeEvent } from 'react';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import TextField from '@material-ui/core/TextField';
-import Grid from '@material-ui/core/Grid';
-import Modal from '@material-ui/core/Modal';
-import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
-import Switch from '@material-ui/core/Switch';
-import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import CloseIcon from '@material-ui/icons/CloseSharp';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import Divider from '@material-ui/core/Divider';
+import React, { ChangeEvent } from "react";
+import { User, UserClient } from "@kalos-core/kalos-rpc/User";
+import PermIdentityIcon from "@material-ui/icons/PermIdentity";
+import EditIcon from "@material-ui/icons/Edit";
+import SendIcon from "@material-ui/icons/Send";
+import {
+  TextField,
+  Grid,
+  Modal,
+  Button,
+  Paper,
+  Switch,
+  Typography,
+  Divider,
+  IconButton,
+  FormControlLabel,
+  CssBaseline
+} from "@material-ui/core";
+import CloseIcon from "@material-ui/icons/CloseSharp";
 
 interface props {
   userId: number;
@@ -22,6 +27,7 @@ interface state {
   isModalOpen: boolean;
   isEditing: boolean;
   isLoginModalOpen: boolean;
+  searchString: string;
 }
 
 export class AccountInfo extends React.PureComponent<props, state> {
@@ -40,13 +46,14 @@ export class AccountInfo extends React.PureComponent<props, state> {
       isModalOpen: false,
       isEditing: false,
       isLoginModalOpen: false,
+      searchString: ""
     };
     this.handleUpdateLogin = this.handleUpdateLogin.bind(this);
     this.toggleLoginModal = this.toggleLoginModal.bind(this);
     this.toggleEditing = this.toggleEditing.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.handleUpdatePassword = this.handleUpdatePassword.bind(this);
-    this.UserClient = new UserClient();
+    this.UserClient = new UserClient("https://core-dev.kalosflorida.com:8443");
     this.oldPassword = React.createRef();
     this.newPassword = React.createRef();
     this.reTypePassword = React.createRef();
@@ -61,19 +68,19 @@ export class AccountInfo extends React.PureComponent<props, state> {
 
     const result = await this.UserClient.Get(req);
     this.setState({
-      user: result,
+      user: result
     });
   }
 
   toggleModal() {
     this.setState(prevState => ({
-      isModalOpen: !prevState.isModalOpen,
+      isModalOpen: !prevState.isModalOpen
     }));
   }
 
   toggleLoginModal() {
     this.setState(prevState => ({
-      isLoginModalOpen: !prevState.isLoginModalOpen,
+      isLoginModalOpen: !prevState.isLoginModalOpen
     }));
   }
 
@@ -89,10 +96,10 @@ export class AccountInfo extends React.PureComponent<props, state> {
         const reTypeLogin = this.reTypeLogin.current.value;
 
         if (newLogin !== reTypeLogin) {
-          throw 'Usernames do not match';
+          throw "Usernames do not match";
         }
         if (oldLogin !== this.state.user.login) {
-          throw 'Old Login is incorrect';
+          throw "Old Login is incorrect";
         }
 
         console.log(this.oldLogin.current);
@@ -100,7 +107,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
         const req = new User();
         req.setLogin(newLogin);
         req.setId(this.state.user.id);
-        req.setFieldMaskList(['Login']);
+        req.setFieldMaskList(["Login"]);
         const updatedUser = await this.UserClient.Update(req);
         this.setState({ user: updatedUser });
 
@@ -122,17 +129,17 @@ export class AccountInfo extends React.PureComponent<props, state> {
         const newPassword = this.newPassword.current.value;
         const reTypePassword = this.reTypePassword.current.value;
         if (newPassword.length < 8) {
-          throw 'Password needs to be 8 characters long';
+          throw "Password needs to be 8 characters long";
         }
         if (newPassword !== reTypePassword) {
-          throw 'Passwords do not match';
+          throw "Passwords do not match";
         }
         if (oldPassword !== this.state.user.pwd) {
-          throw 'Old Password is incorrect';
+          throw "Old Password is incorrect";
         }
         const req = new User();
         req.setPwd(newPassword);
-        req.setFieldMaskList(['Pwd']);
+        req.setFieldMaskList(["Pwd"]);
         req.setId(this.state.user.id);
         await this.UserClient.Update(req);
         this.toggleModal();
@@ -144,7 +151,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
 
   toggleEditing() {
     this.setState(prevState => ({
-      isEditing: !prevState.isEditing,
+      isEditing: !prevState.isEditing
     }));
   }
 
@@ -164,19 +171,19 @@ export class AccountInfo extends React.PureComponent<props, state> {
       this.setState(() => ({ user: updatedUser }));
     };
   }
-  updatePassword = this.updateUser('pwd');
-  updateLogin = this.updateUser('login');
-  updateEmail = this.updateUser('email');
-  updateCellPhone = this.updateUser('cellphone');
+  updatePassword = this.updateUser("pwd");
+  updateLogin = this.updateUser("login");
+  updateEmail = this.updateUser("email");
+  updateCellPhone = this.updateUser("cellphone");
 
-  updateZipCode = this.updateUser('zip');
-  updateCity = this.updateUser('city');
-  updateStreetAddress = this.updateUser('address');
-  updateFirstName = this.updateUser('firstname');
-  updateLastName = this.updateUser('lastname');
+  updateZipCode = this.updateUser("zip");
+  updateCity = this.updateUser("city");
+  updateStreetAddress = this.updateUser("address");
+  updateFirstName = this.updateUser("firstname");
+  updateLastName = this.updateUser("lastname");
 
   async componentDidMount() {
-    await this.UserClient.GetToken('test', 'test');
+    await this.UserClient.GetToken("gavinorr", "G@vin123");
     await this.fetchUser();
   }
 
@@ -189,7 +196,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
       <>
         <CssBaseline />
         <Grid
-          style={{ paddingBottom: '20px' }}
+          style={{ paddingBottom: "20px" }}
           container
           alignItems="stretch"
           justify="center"
@@ -198,16 +205,16 @@ export class AccountInfo extends React.PureComponent<props, state> {
           <Grid container direction="row" justify="space-evenly">
             <TextField
               disabled={!isEditing}
-              style={{ marginRight: '10px' }}
+              style={{ marginRight: "10px" }}
               defaultValue={this.state.user.firstname}
               onChange={this.updateFirstName}
-              label={'First Name'}
+              label={"First Name"}
             />
             <TextField
               disabled={!isEditing}
               defaultValue={this.state.user.lastname}
               onChange={this.updateLastName}
-              label={'Last Name'}
+              label={"Last Name"}
             />
             <FormControlLabel
               control={
@@ -219,43 +226,59 @@ export class AccountInfo extends React.PureComponent<props, state> {
                 />
               }
               label={
-                this.state.isEditing ? 'Editing Enabled' : 'Editing Disabled'
+                this.state.isEditing ? "Editing Enabled" : "Editing Disabled"
               }
             />
           </Grid>
 
-          <TextField
-            disabled={!isEditing}
-            defaultValue={this.state.user.address}
-            onChange={this.updateStreetAddress}
-            label={'Street Address'}
-          />
-          <TextField
-            disabled={!isEditing}
-            defaultValue={this.state.user.city}
-            onChange={this.updateCity}
-            label={'City'}
-          />
-          <TextField
-            disabled={!isEditing}
-            defaultValue={this.state.user.zip}
-            onChange={this.updateZipCode}
-            label={'Zip Code'}
-          />
+          <Grid
+            style={{ paddingBottom: "20px", paddingTop: "20px" }}
+            container
+            alignItems="stretch"
+            justify="flex-start"
+            direction="column"
+          >
+            <TextField
+              style={{ paddingBottom: "10px", paddingTop: "10px" }}
+              disabled={!isEditing}
+              defaultValue={this.state.user.address}
+              onChange={this.updateStreetAddress}
+              label={"Street Address"}
+            />
+            <TextField
+              style={{ paddingBottom: "10px", paddingTop: "10px" }}
+              disabled={!isEditing}
+              defaultValue={this.state.user.city}
+              onChange={this.updateCity}
+              label={"City"}
+            />
+            <TextField
+              style={{ paddingBottom: "10px", paddingTop: "10px" }}
+              disabled={!isEditing}
+              defaultValue={this.state.user.zip}
+              onChange={this.updateZipCode}
+              label={"Zip Code"}
+            />
 
-          <TextField
-            disabled={!isEditing}
-            defaultValue={this.state.user.cellphone}
-            onChange={this.updateCellPhone}
-            label={'Phone Number'}
-          />
-          <TextField
-            disabled
-            style={{ paddingRight: 10 }}
-            defaultValue={this.state.user.email}
-            onChange={this.updateEmail}
-            label={'Email'}
-          />
+            <TextField
+              style={{ paddingBottom: "10px", paddingTop: "10px" }}
+              disabled={!isEditing}
+              defaultValue={this.state.user.cellphone}
+              onChange={this.updateCellPhone}
+              label={"Phone Number"}
+            />
+            <TextField
+              style={{
+                paddingBottom: "10px",
+                paddingTop: "10px",
+                paddingRight: 10
+              }}
+              disabled
+              defaultValue={this.state.user.email}
+              onChange={this.updateEmail}
+              label={"Email"}
+            />
+          </Grid>
           <Grid
             container
             direction="row"
@@ -266,7 +289,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
               disabled={!isEditing}
               onClick={this.toggleLoginModal}
               variant="contained"
-              style={{ width: '30%' }}
+              style={{ width: "30%" }}
             >
               Change Login
             </Button>
@@ -274,7 +297,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
               disabled={!isEditing}
               onClick={this.toggleModal}
               variant="contained"
-              style={{ width: '30%' }}
+              style={{ width: "30%" }}
             >
               Change Password
             </Button>
@@ -284,19 +307,19 @@ export class AccountInfo extends React.PureComponent<props, state> {
           open={this.state.isModalOpen}
           onClose={this.toggleModal}
           style={{
-            margin: '10px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+            margin: "10px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
           }}
         >
           <Paper
             style={{
               padding: 20,
-              width: '30%',
+              width: "30%"
             }}
           >
-            <Grid container direction={'column'}>
+            <Grid container direction={"column"}>
               <Grid
                 container
                 direction="row"
@@ -313,32 +336,33 @@ export class AccountInfo extends React.PureComponent<props, state> {
               <Divider />
               <TextField
                 disabled={!isEditing}
-                label={'Old Password'}
+                label={"Old Password"}
                 type="password"
                 inputProps={{ ref: this.oldPassword }}
               />
               <TextField
                 disabled={!isEditing}
-                label={'New Password'}
+                label={"New Password"}
                 type="password"
                 inputProps={{
-                  ref: this.newPassword,
+                  ref: this.newPassword
                 }}
               />
               <TextField
                 disabled={!isEditing}
-                label={'Repeat Password'}
+                label={"Repeat Password"}
                 type="password"
                 inputProps={{
-                  ref: this.reTypePassword,
+                  ref: this.reTypePassword
                 }}
               />
               <Button
+                endIcon={<SendIcon />}
                 variant="contained"
                 style={{ padding: 5, marginTop: 10 }}
                 onClick={this.handleUpdatePassword}
               >
-                Confirm
+                Submit
               </Button>
             </Grid>
           </Paper>
@@ -347,20 +371,20 @@ export class AccountInfo extends React.PureComponent<props, state> {
           open={this.state.isLoginModalOpen}
           onClose={this.toggleLoginModal}
           style={{
-            margin: '10px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+            margin: "10px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
           }}
         >
           <Paper
             style={{
               padding: 20,
-              width: '30%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
+              width: "30%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center"
             }}
           >
             <Grid
@@ -379,32 +403,33 @@ export class AccountInfo extends React.PureComponent<props, state> {
             <Divider />
             <TextField
               fullWidth
-              defaultValue={this.state.user.login}
+              defaultValue={this.state}
               disabled={!isEditing}
-              label={'Old Login'}
+              label={"Old Login"}
               inputProps={{
-                ref: this.oldLogin,
+                ref: this.oldLogin
               }}
             />
             <TextField
               fullWidth
               disabled={!isEditing}
-              label={'New Login'}
+              label={"New Login"}
               inputProps={{
-                ref: this.newLogin,
+                ref: this.newLogin
               }}
             />
             <TextField
               fullWidth
               disabled={!isEditing}
-              label={' ReType Login'}
+              label={" ReType Login"}
               inputProps={{
-                ref: this.reTypeLogin,
+                ref: this.reTypeLogin
               }}
             />
             <Button
+              endIcon={<SendIcon />}
               variant="contained"
-              style={{ padding: 5, marginTop: 10, width: '100%' }}
+              style={{ padding: 5, marginTop: 10, width: "100%" }}
               onClick={this.handleUpdateLogin}
             >
               Confirm
