@@ -260,6 +260,8 @@ const NAMED_EXPORTS = {
     'VendorList',
   ],
   'node_modules/react-is/index.js': ['ForwardRef', 'isFragment'],
+  'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
+  'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js': ['grpc'],
   'prop-types': [
     'array',
     'bool',
