@@ -1,43 +1,39 @@
-import React, { SyntheticEvent, ChangeEvent } from "react";
-import BuildIcon from "@material-ui/icons/BuildSharp";
-import ScheduleIcon from "@material-ui/icons/ScheduleSharp";
-import EditIcon from "@material-ui/icons/EditSharp";
-import { User, UserClient } from "@kalos-core/kalos-rpc/User";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import CloseIcon from "@material-ui/icons/CloseSharp";
-import ReactPDF, { PDFDownloadLink, pdf } from "@react-pdf/renderer";
-import PdfIcon from "@material-ui/icons/PictureAsPdf";
-import { EmployeePDF } from "./pdf"; // use ./ for local imports
-import Tooltip from "@material-ui/core/Tooltip";
-import GroupIcon from "@material-ui/icons/Group";
-import AddIcon from "@material-ui/icons/Add";
-
-import ImportContactsIcon from "@material-ui/icons/ImportContacts";
-import {
-  IconButton,
-  Table,
-  TableCell,
-  TableRow,
-  TableHead,
-  TableBody,
-  ButtonGroup,
-  Grid,
-  Dialog,
-  Divider,
-  Avatar,
-  ListItem,
-  List,
-  ListItemText,
-  TextField,
-  Toolbar,
-  Switch,
-  FormControlLabel
-} from "@material-ui/core";
+import React, { SyntheticEvent, ChangeEvent } from 'react';
+import BuildIcon from '@material-ui/icons/BuildSharp';
+import ScheduleIcon from '@material-ui/icons/ScheduleSharp';
+import EditIcon from '@material-ui/icons/EditSharp';
+import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import CloseIcon from '@material-ui/icons/CloseSharp';
+import PdfIcon from '@material-ui/icons/PictureAsPdf';
+import ReactPDF from '@react-pdf/renderer';
+import { EmployeePDF } from './pdf'; // use ./ for local imports
+import Tooltip from '@material-ui/core/Tooltip';
+import GroupIcon from '@material-ui/icons/Group';
+import AddIcon from '@material-ui/icons/Add';
+import ImportContactsIcon from '@material-ui/icons/ImportContacts';
+import IconButton from '@material-ui/core/IconButton';
+import Table from '@material-ui/core/Table';
+import TableCell from '@material-ui/core/TableCell';
+import TableRow from '@material-ui/core/TableRow';
+import TableHead from '@material-ui/core/TableHead';
+import TableBody from '@material-ui/core/TableBody';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
+import Grid from '@material-ui/core/Grid';
+import Dialog from '@material-ui/core/Dialog';
+import Divider from '@material-ui/core/Divider';
+import Avatar from '@material-ui/core/Avatar';
+import ListItem from '@material-ui/core/ListItem';
+import List from '@material-ui/core/List';
+import ListItemText from '@material-ui/core/ListItemText';
+import TextField from '@material-ui/core/TextField';
+import Toolbar from '@material-ui/core/Toolbar';
+import Switch from '@material-ui/core/Switch';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import {
   TimesheetDepartment,
-  TimesheetDepartmentClient
-} from "@kalos-core/kalos-rpc/TimesheetDepartment";
-import { UserService } from "@kalos-core/kalos-rpc/compiled-protos/user_pb_service";
+  TimesheetDepartmentClient,
+} from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 interface props {
   userId: number;
@@ -66,13 +62,13 @@ export class EmployeeDirectory extends React.Component<props, state> {
       totalUsers: 0,
       isModalOpen: false,
       timeSheetDepartments: [],
-      searchString: "",
-      showInactive: false
+      searchString: '',
+      showInactive: false,
     };
     this.TimesheetDepartmentClient = new TimesheetDepartmentClient(
-      "https://core-dev.kalosflorida.com:8443"
+      'https://core-dev.kalosflorida.com:8443',
     );
-    this.UserClient = new UserClient("https://core-dev.kalosflorida.com:8443");
+    this.UserClient = new UserClient('https://core-dev.kalosflorida.com:8443');
     this.addUser = this.addUser.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.saveAsPDF = this.saveAsPDF.bind(this);
@@ -81,11 +77,11 @@ export class EmployeeDirectory extends React.Component<props, state> {
   }
 
   handleInputChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const searchString = event.currentTarget.value;
     this.setState(() => ({
-      searchString
+      searchString,
     }));
   }; //textfield needs this onchnge handler
 
@@ -93,17 +89,17 @@ export class EmployeeDirectory extends React.Component<props, state> {
     const selectedUserId = parseInt(e.currentTarget.id);
     this.setState(prevState => ({
       isModalOpen: !prevState.isModalOpen,
-      selectedUserId
+      selectedUserId,
     }));
   }
   toggleshowInactive() {
     this.setState(prevState => ({
-      showInactive: !prevState.showInactive
+      showInactive: !prevState.showInactive,
     }));
   }
   addUser(user: User.AsObject) {
     this.setState(prevState => ({
-      users: [...prevState.users, user]
+      users: [...prevState.users, user],
     }));
   }
   //timesheet department
@@ -135,7 +131,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
   }
 
   openLink(url: string) {
-    const tab = window.open(url, "_blank");
+    const tab = window.open(url, '_blank');
     try {
       tab!.focus();
     } catch (err) {
@@ -144,17 +140,19 @@ export class EmployeeDirectory extends React.Component<props, state> {
   }
 
   async saveAsPDF() {
-    const doc = await pdf(<EmployeePDF users={this.state.users} />).toBlob();
-    const link = document.createElement("a");
+    const doc = await ReactPDF.pdf(
+      <EmployeePDF users={this.state.users} />,
+    ).toBlob();
+    const link = document.createElement('a');
     link.href = URL.createObjectURL(doc);
-    link.download = "directory.pdf";
+    link.download = 'directory.pdf';
     document.body.append(link);
     link.click();
     link.remove();
   }
 
   async componentDidMount() {
-    await this.UserClient.GetToken("test", "test");
+    await this.UserClient.GetToken('test', 'test');
     await this.fetchUser();
     await this.fetchDepartment();
     this.fetchUsers();
@@ -167,7 +165,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
       return true;
     }
   }
-  //{this.state.users.length === 0 && <CircularProgress />}
+
   render() {
     const searchUsers = makeSearchUsers(this.state.searchString.toLowerCase());
     let users = this.state.users
@@ -182,7 +180,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
     //  users = users.filter(searchUsers);
     //}
     const selectedUser = this.state.users.find(
-      user => user.id === this.state.selectedUserId
+      user => user.id === this.state.selectedUserId,
     );
 
     let department:
@@ -190,14 +188,14 @@ export class EmployeeDirectory extends React.Component<props, state> {
       | undefined = new TimesheetDepartment().toObject();
     if (selectedUser) {
       department = this.state.timeSheetDepartments.find(
-        dept => dept.id === selectedUser!.employeeDepartmentId
+        dept => dept.id === selectedUser!.employeeDepartmentId,
       );
     }
 
     return (
       <Grid container direction="column" alignItems="center" justify="center">
         {this.state.users.length === 0 && (
-          <CircularProgress style={{ position: "absolute", top: "50%" }} />
+          <CircularProgress style={{ position: 'absolute', top: '50%' }} />
         )}
 
         <Toolbar>
@@ -237,12 +235,12 @@ export class EmployeeDirectory extends React.Component<props, state> {
                 color="primary"
               />
             }
-            label={"Show Inactive"}
+            label={'Show Inactive'}
           />
         </Toolbar>
 
         {this.state.users.length !== 0 && (
-          <Table stickyHeader style={{ width: "80%" }}>
+          <Table stickyHeader style={{ width: '80%' }}>
             <TableHead>
               <TableRow>
                 <TableCell align="center">First Name</TableCell>
@@ -268,7 +266,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
                         <IconButton
                           onClick={() =>
                             this.openLink(
-                              `https://app.kalosflorida.com/index.cfm?action=admin:tasks.spiff_tool_logs&type=tool&rt=all&reportUserId=${user.id}`
+                              `https://app.kalosflorida.com/index.cfm?action=admin:tasks.spiff_tool_logs&type=tool&rt=all&reportUserId=${user.id}`,
                             )
                           }
                         >
@@ -278,7 +276,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
                         <IconButton
                           onClick={() =>
                             this.openLink(
-                              `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetview&timesheetAction=cardview&user_id=${user.id}&search_user_id=${user.id}&timesheetadmin=${this.state.user.isAdmin}`
+                              `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetview&timesheetAction=cardview&user_id=${user.id}&search_user_id=${user.id}&timesheetadmin=${this.state.user.isAdmin}`,
                             )
                           }
                         >
@@ -287,7 +285,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
                         <IconButton
                           onClick={() =>
                             this.openLink(
-                              `https://app.kalosflorida.com/index.cfm?action=admin:user.edit&id=${user.id}`
+                              `https://app.kalosflorida.com/index.cfm?action=admin:user.edit&id=${user.id}`,
                             )
                           }
                         >
@@ -309,7 +307,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
           >
             <Grid container direction="column" alignItems="center">
               <IconButton
-                style={{ alignSelf: "stretch" }}
+                style={{ alignSelf: 'stretch' }}
                 onClick={this.toggleModal}
               >
                 <CloseIcon />
@@ -320,16 +318,16 @@ export class EmployeeDirectory extends React.Component<props, state> {
                 <ListItem>
                   <ListItemText
                     primary="Email"
-                    primaryTypographyProps={{ variant: "h6" }}
-                    secondaryTypographyProps={{ variant: "h4" }}
+                    primaryTypographyProps={{ variant: 'h6' }}
+                    secondaryTypographyProps={{ variant: 'h4' }}
                     secondary={selectedUser.email}
                   />
                 </ListItem>
                 <Divider />
                 <ListItem>
                   <ListItemText
-                    primaryTypographyProps={{ variant: "h6" }}
-                    secondaryTypographyProps={{ variant: "h4" }}
+                    primaryTypographyProps={{ variant: 'h6' }}
+                    secondaryTypographyProps={{ variant: 'h4' }}
                     primary="First Name"
                     secondary={selectedUser.firstname}
                   />
@@ -337,8 +335,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
                 <Divider />
                 <ListItem>
                   <ListItemText
-                    primaryTypographyProps={{ variant: "h6" }}
-                    secondaryTypographyProps={{ variant: "h4" }}
+                    primaryTypographyProps={{ variant: 'h6' }}
+                    secondaryTypographyProps={{ variant: 'h4' }}
                     primary="Last Name"
                     secondary={selectedUser.lastname}
                   />
@@ -346,8 +344,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
                 <Divider />
                 <ListItem>
                   <ListItemText
-                    primaryTypographyProps={{ variant: "h6" }}
-                    secondaryTypographyProps={{ variant: "h4" }}
+                    primaryTypographyProps={{ variant: 'h6' }}
+                    secondaryTypographyProps={{ variant: 'h4' }}
                     primary="Phone Number"
                     secondary={selectedUser.phone}
                   />
@@ -356,8 +354,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
                 <ListItem>
                   <ListItemText
                     primary="Title"
-                    primaryTypographyProps={{ variant: "h6" }}
-                    secondaryTypographyProps={{ variant: "h4" }}
+                    primaryTypographyProps={{ variant: 'h6' }}
+                    secondaryTypographyProps={{ variant: 'h4' }}
                     secondary={selectedUser.empTitle}
                   />
                 </ListItem>
@@ -365,9 +363,9 @@ export class EmployeeDirectory extends React.Component<props, state> {
                 <ListItem>
                   <ListItemText
                     primary="Manager"
-                    primaryTypographyProps={{ variant: "h6" }}
-                    secondaryTypographyProps={{ variant: "h4" }}
-                    secondary={department?.description}
+                    primaryTypographyProps={{ variant: 'h6' }}
+                    secondaryTypographyProps={{ variant: 'h4' }}
+                    secondary={department ? department.description : ''}
                   />
                 </ListItem>
                 <Divider />
@@ -382,7 +380,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
 
 function sortUsers(a: User.AsObject, b: User.AsObject) {
   return `${a.lastname} ${a.firstname}`.localeCompare(
-    `${b.lastname} ${b.firstname}`
+    `${b.lastname} ${b.firstname}`,
   );
 }
 

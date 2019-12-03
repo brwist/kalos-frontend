@@ -294,10 +294,12 @@ function rollupBuild() {
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
                     }
+                    console.log('starting bundler');
                     return [4 /*yield*/, rollup.rollup({
                             input: "modules/" + target + "/main.tsx",
+                            external: ['@react-pdf'],
                             plugins: [
-                                resolve(),
+                                resolve({ preferBuiltins: true }),
                                 commonjs({
                                     namedExports: c.NAMED_EXPORTS
                                 }),
@@ -322,13 +324,15 @@ function rollupBuild() {
                         })];
                 case 5:
                     bundle = _a.sent();
+                    console.log('writing bundle');
                     return [4 /*yield*/, bundle.write({
                             file: "build/modules/" + target + ".js",
                             name: titleCase(target),
                             format: 'umd',
                             globals: {
                                 react: 'React',
-                                'react-dom': 'ReactDOM'
+                                'react-dom': 'ReactDOM',
+                                '@react-pdf': 'ReactPDF'
                             }
                         })];
                 case 6:

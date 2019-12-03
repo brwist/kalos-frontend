@@ -104,7 +104,6 @@ export class SideMenu extends React.PureComponent<props, state> {
   async componentDidMount() {
     await this.getIdentity();
   }
-
   render() {
     const spiffLog = cfURL(
       'tasks.spiff_tool_logs',
@@ -202,7 +201,7 @@ export class SideMenu extends React.PureComponent<props, state> {
               </ListItemIcon>
               <ListItemText primary="Customer Directory" />
             </ListItem>
-            {this.state.user.isAdmin && (
+            {this.state.user.isAdmin === 1 && (
               <>
                 <ListItem button href={reports} component="a">
                   <ListItemIcon>
