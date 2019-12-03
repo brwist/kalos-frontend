@@ -1,5 +1,8 @@
 import React, { ChangeEvent } from "react";
 import { User, UserClient } from "@kalos-core/kalos-rpc/User";
+import PermIdentityIcon from "@material-ui/icons/PermIdentity";
+import EditIcon from "@material-ui/icons/Edit";
+import SendIcon from "@material-ui/icons/Send";
 import {
   TextField,
   Grid,
@@ -31,6 +34,7 @@ interface state {
   isModalOpen: boolean;
   isEditing: boolean;
   isLoginModalOpen: boolean;
+  searchString: string;
 }
 
 export class AccountInfo extends React.PureComponent<props, state> {
@@ -48,14 +52,15 @@ export class AccountInfo extends React.PureComponent<props, state> {
       user: new User().toObject(),
       isModalOpen: false,
       isEditing: false,
-      isLoginModalOpen: false
+      isLoginModalOpen: false,
+      searchString: ""
     };
     this.handleUpdateLogin = this.handleUpdateLogin.bind(this);
     this.toggleLoginModal = this.toggleLoginModal.bind(this);
     this.toggleEditing = this.toggleEditing.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.handleUpdatePassword = this.handleUpdatePassword.bind(this);
-    this.UserClient = new UserClient();
+    this.UserClient = new UserClient("https://core-dev.kalosflorida.com:8443");
     this.oldPassword = React.createRef();
     this.newPassword = React.createRef();
     this.reTypePassword = React.createRef();
@@ -185,6 +190,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
   updateLastName = this.updateUser("lastname");
 
   async componentDidMount() {
+    await this.UserClient.GetToken("gavinorr", "G@vin123");
     await this.fetchUser();
   }
 
@@ -231,38 +237,54 @@ export class AccountInfo extends React.PureComponent<props, state> {
             />
           </Grid>
 
-          <TextField
-            disabled={!isEditing}
-            defaultValue={this.state.user.address}
-            onChange={this.updateStreetAddress}
-            label={"Street Address"}
-          />
-          <TextField
-            disabled={!isEditing}
-            defaultValue={this.state.user.city}
-            onChange={this.updateCity}
-            label={"City"}
-          />
-          <TextField
-            disabled={!isEditing}
-            defaultValue={this.state.user.zip}
-            onChange={this.updateZipCode}
-            label={"Zip Code"}
-          />
+          <Grid
+            style={{ paddingBottom: "20px", paddingTop: "20px" }}
+            container
+            alignItems="stretch"
+            justify="flex-start"
+            direction="column"
+          >
+            <TextField
+              style={{ paddingBottom: "10px", paddingTop: "10px" }}
+              disabled={!isEditing}
+              defaultValue={this.state.user.address}
+              onChange={this.updateStreetAddress}
+              label={"Street Address"}
+            />
+            <TextField
+              style={{ paddingBottom: "10px", paddingTop: "10px" }}
+              disabled={!isEditing}
+              defaultValue={this.state.user.city}
+              onChange={this.updateCity}
+              label={"City"}
+            />
+            <TextField
+              style={{ paddingBottom: "10px", paddingTop: "10px" }}
+              disabled={!isEditing}
+              defaultValue={this.state.user.zip}
+              onChange={this.updateZipCode}
+              label={"Zip Code"}
+            />
 
-          <TextField
-            disabled={!isEditing}
-            defaultValue={this.state.user.cellphone}
-            onChange={this.updateCellPhone}
-            label={"Phone Number"}
-          />
-          <TextField
-            disabled
-            style={{ paddingRight: 10 }}
-            defaultValue={this.state.user.email}
-            onChange={this.updateEmail}
-            label={"Email"}
-          />
+            <TextField
+              style={{ paddingBottom: "10px", paddingTop: "10px" }}
+              disabled={!isEditing}
+              defaultValue={this.state.user.cellphone}
+              onChange={this.updateCellPhone}
+              label={"Phone Number"}
+            />
+            <TextField
+              style={{
+                paddingBottom: "10px",
+                paddingTop: "10px",
+                paddingRight: 10
+              }}
+              disabled
+              defaultValue={this.state.user.email}
+              onChange={this.updateEmail}
+              label={"Email"}
+            />
+          </Grid>
           <Grid
             container
             direction="row"
@@ -341,11 +363,12 @@ export class AccountInfo extends React.PureComponent<props, state> {
                 }}
               />
               <Button
+                endIcon={<SendIcon />}
                 variant="contained"
                 style={{ padding: 5, marginTop: 10 }}
                 onClick={this.handleUpdatePassword}
               >
-                Confirm
+                Submit
               </Button>
             </Grid>
           </Paper>
@@ -386,7 +409,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
             <Divider />
             <TextField
               fullWidth
-              defaultValue={this.state.user.login}
+              defaultValue={this.state}
               disabled={!isEditing}
               label={"Old Login"}
               inputProps={{
@@ -410,6 +433,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
               }}
             />
             <Button
+              endIcon={<SendIcon />}
               variant="contained"
               style={{ padding: 5, marginTop: 10, width: "100%" }}
               onClick={this.handleUpdateLogin}
