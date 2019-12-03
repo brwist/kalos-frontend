@@ -12,16 +12,9 @@ import {
   Switch,
   Typography,
   Divider,
-  IconButton
-} from "@material-ui/core";
-import {
-  InputLabel,
-  FormControl,
-  Select,
-  Input,
-  MenuItem,
-  Chip,
-  FormControlLabel
+  IconButton,
+  FormControlLabel,
+  CssBaseline
 } from "@material-ui/core";
 import CloseIcon from "@material-ui/icons/CloseSharp";
 
@@ -201,11 +194,12 @@ export class AccountInfo extends React.PureComponent<props, state> {
     }
     return (
       <>
+        <CssBaseline />
         <Grid
           style={{ paddingBottom: "20px" }}
           container
           alignItems="stretch"
-          justify="flex-start"
+          justify="center"
           direction="column"
         >
           <Grid container direction="row" justify="space-evenly">
