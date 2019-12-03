@@ -25,9 +25,9 @@ import AddAPhotoTwoTone from '@material-ui/icons/AddAPhotoTwoTone';
 import SendTwoTone from '@material-ui/icons/SendTwoTone';
 import InfoSharp from '@material-ui/icons/InfoSharp';
 import Grid from '@material-ui/core/Grid';
-import Hidden from '@material-ui/core/Hidden';
 import Typography from '@material-ui/core/Typography';
 import { red, green } from '@material-ui/core/colors';
+import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 
 interface props {
   txn: Transaction.AsObject;
@@ -35,6 +35,7 @@ interface props {
   userName: string;
   userID: number;
   isAdmin?: boolean;
+  fetchFn(): void;
 }
 
 interface state {
@@ -58,6 +59,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   TxnClient: TransactionClient;
   DocsClient: TransactionDocumentClient;
   LogClient: TransactionActivityClient;
+  EventClient: EventClient;
   S3Client: S3Client;
   FileInput: React.RefObject<HTMLInputElement>;
   NotesInput: React.RefObject<HTMLInputElement>;
@@ -68,11 +70,12 @@ export class TxnCard extends React.PureComponent<props, state> {
       txn: props.txn,
       files: [],
     };
-
-    this.TxnClient = new TransactionClient();
-    this.DocsClient = new TransactionDocumentClient();
-    this.LogClient = new TransactionActivityClient();
-    this.S3Client = new S3Client();
+    const endpoint = 'https://core-dev.kalosflorida.com:8443';
+    this.TxnClient = new TransactionClient(endpoint);
+    this.DocsClient = new TransactionDocumentClient(endpoint);
+    this.LogClient = new TransactionActivityClient(endpoint);
+    this.S3Client = new S3Client(endpoint);
+    this.EventClient = new EventClient(endpoint);
 
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
@@ -129,6 +132,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   updateCostCenterID = this.updateTransaction('costCenterId');
   updateDepartmentID = this.updateTransaction('departmentId');
   updateStatus = this.updateTransaction('statusId');
+  updateJobNumber = this.updateTransaction('jobId');
 
   async submit() {
     const { txn } = this.state;
@@ -137,16 +141,24 @@ export class TxnCard extends React.PureComponent<props, state> {
         'Are you sure you want to submit this transaction? You will be unable to edit it again unless it is rejected, so please make sure all information is correct',
       );
       if (ok) {
+        if (txn.jobId !== 0) {
+          const job = new Event();
+          job.setId(txn.jobId);
+          const res = await this.EventClient.Get(job);
+          if (!res || res.id === 0) {
+            throw 'The entered job number is invalid';
+          }
+        }
         if (!txn.costCenter) {
           throw 'A purchase category must be assigned';
-        } else if (
-          txn.amount > txn.costCenter.thresholdAmount &&
-          txn.documentsList.length === 0
-        ) {
+        } else if (txn.documentsList.length === 0) {
           throw 'This receipt requires a photo';
+        } else if (txn.notes !== '') {
+          throw 'Please provide a brief description in the notes';
         } else {
           await this.updateStatus(2);
-          await this.makeSubmitLog(2, 'approved');
+          await this.makeSubmitLog(2, 'subtmitted for approval');
+          await this.props.fetchFn();
         }
       }
     } catch (err) {
@@ -159,9 +171,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     log.setUserId(this.props.userID);
     log.setTransactionId(this.state.txn.id);
     log.setStatusId(status);
-    log.setDescription(
-      `user ${this.props.userID} - transaction ${this.state.txn.id} - action ${action}`,
-    );
+    log.setDescription(action);
     await this.LogClient.Create(log);
   }
 
@@ -170,6 +180,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     if (ok) {
       await this.updateStatus(4);
       await this.makeSubmitLog(4, 'approved');
+      await this.props.fetchFn();
     }
   }
 
@@ -180,6 +191,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     if (ok) {
       await this.updateStatus(5);
       await this.makeSubmitLog(5, 'rejected');
+      await this.props.fetchFn();
     }
   }
 
@@ -195,22 +207,21 @@ export class TxnCard extends React.PureComponent<props, state> {
       borderRadius: '3px',
       padding: '5px',
     };
-
-    if (!txn.costCenter) {
+    console.log(txn);
+    if (!txn.costCenter || txn.costCenter.id === 0) {
       return (
         <Grid container direction="row" style={style}>
           <InfoSharp />
-          <Typography>Please select a purchase category</Typography>
+          <Typography style={{ color: 'white' }}>
+            Please select a purchase category
+          </Typography>
         </Grid>
       );
-    } else if (
-      txn.amount > txn.costCenter.thresholdAmount &&
-      txn.documentsList.length === 0
-    ) {
+    } else if (txn.documentsList.length === 0) {
       return (
         <Grid container direction="row" style={style}>
           <InfoSharp />
-          <Typography>
+          <Typography style={{ color: 'white' }}>
             This transaction record requires a photo of your receipt
           </Typography>
         </Grid>
@@ -219,8 +230,17 @@ export class TxnCard extends React.PureComponent<props, state> {
       return (
         <Grid container direction="row" style={style}>
           <InfoSharp />
-          <Typography>
+          <Typography style={{ color: 'white' }}>
             Fuel purchases must include mileage and gallons in the notes
+          </Typography>
+        </Grid>
+      );
+    } else if (txn.notes === '') {
+      return (
+        <Grid container direction="row" style={style}>
+          <InfoSharp />
+          <Typography style={{ color: 'white' }}>
+            Purchases should include a brief description in the notes
           </Typography>
         </Grid>
       );
@@ -229,7 +249,9 @@ export class TxnCard extends React.PureComponent<props, state> {
       return (
         <Grid container direction="row" style={style}>
           <InfoSharp />
-          <Typography>This transaction is ready for submission</Typography>
+          <Typography style={{ color: 'white' }}>
+            This transaction is ready for submission
+          </Typography>
         </Grid>
       );
     }
@@ -295,7 +317,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     const fileObjects = await Promise.all(promiseArr);
     const files = filesList.map(f => {
       const fileObj = fileObjects.find(
-        obj => obj.key.split(/\d{1,}-/)[1] === f.name,
+        obj => obj.key.replace(`${this.state.txn.id}-`, '') === f.name,
       );
       if (fileObj) {
         f.data = fileObj.data as string;
@@ -315,7 +337,7 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   render() {
     const t = this.state.txn;
-    let subheader = `${t.description} - $${t.amount}`;
+    let subheader = `${t.description} - ${t.vendor} - $${t.amount}`;
     if (this.props.isAdmin) {
       subheader = `${subheader}\n${t.ownerName}`;
     }
@@ -340,13 +362,22 @@ export class TxnCard extends React.PureComponent<props, state> {
               <CostCenterPicker
                 onSelect={this.updateCostCenterID}
                 selected={t.costCenterId}
-                test={this.testCostCenter}
                 useDevClient
               />
               <DepartmentPicker
                 onSelect={this.updateDepartmentID}
                 selected={t.departmentId || this.props.userDepartmentID}
                 useDevClient
+              />
+              <TextField
+                label="Job Number"
+                defaultValue={t.jobId}
+                onChange={e =>
+                  this.updateJobNumber(parseInt(e.currentTarget.value))
+                }
+                variant="outlined"
+                margin="none"
+                style={{ marginBottom: 10 }}
               />
               <TextField
                 label="Notes"
@@ -381,9 +412,10 @@ export class TxnCard extends React.PureComponent<props, state> {
               )}
               <Gallery
                 title="Receipt Photo(s)"
-                text="Photo(s)"
+                text="View Photo(s)"
                 fileList={this.state.files}
                 onOpen={this.fetchFiles}
+                disabled={t.documentsList.length === 0}
               />
               {this.props.isAdmin && <TxnLog txnID={this.state.txn.id} />}
               {!this.props.isAdmin && (
@@ -425,9 +457,12 @@ export class TxnCard extends React.PureComponent<props, state> {
             </Grid>
           </Grid>
         </Card>
-        <Hidden xsUp>
-          <input type="file" ref={this.FileInput} onChange={this.handleFile} />
-        </Hidden>
+        <input
+          type="file"
+          ref={this.FileInput}
+          onChange={this.handleFile}
+          style={{ display: 'none' }}
+        />
       </>
     );
   }

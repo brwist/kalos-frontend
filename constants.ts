@@ -239,6 +239,10 @@ const NAMED_EXPORTS = {
     'TransactionDocument',
     'TransactionDocumentList',
   ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_status_pb.js': [
+    'TransactionStatus',
+    'TransactionStatusList',
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/user_group_link_pb.js': [
     'UserGroupLink',
     'UserGroupLinkList',
@@ -255,7 +259,7 @@ const NAMED_EXPORTS = {
     'Vendor',
     'VendorList',
   ],
-  'node_modules/react-is/index.js': ['ForwardRef'],
+  'node_modules/react-is/index.js': ['ForwardRef', 'isFragment'],
   'prop-types': [
     'array',
     'bool',

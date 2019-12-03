@@ -27,11 +27,9 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
     this.state = {
       accountList: [],
     };
-    const endpoint = this.props.useDevClient
-      ? 'https://core-dev.kalosflorida.com:8443'
-      : 'https://core.kalosflorida.com:8443';
-    console.log(endpoint);
-    this.AccClient = new TransactionAccountClient(endpoint);
+    this.AccClient = new TransactionAccountClient(
+      'https://core-dev.kalosflorida.com:8443',
+    );
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addAccount = this.addAccount.bind(this);
