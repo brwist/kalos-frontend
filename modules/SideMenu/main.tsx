@@ -102,6 +102,13 @@ export class SideMenu extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
+    const href = window.location.href;
+    if (href.includes('http://')) {
+      window.location.href = window.location.href.replace(
+        'http://',
+        'https://',
+      );
+    }
     await this.getIdentity();
   }
   render() {

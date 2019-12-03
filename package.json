@@ -8,6 +8,7 @@
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
     "release": "gulp -LL release",
+    "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css"
   },
   "license": "MIT",

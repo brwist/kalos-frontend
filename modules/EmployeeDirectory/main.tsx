@@ -6,8 +6,8 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import PdfIcon from '@material-ui/icons/PictureAsPdf';
-import ReactPDF from '@react-pdf/renderer';
-import { EmployeePDF } from './pdf'; // use ./ for local imports
+//import ReactPDF from '@react-pdf/renderer';
+//import { EmployeePDF } from './pdf'; // use ./ for local imports
 import Tooltip from '@material-ui/core/Tooltip';
 import GroupIcon from '@material-ui/icons/Group';
 import AddIcon from '@material-ui/icons/Add';
@@ -71,7 +71,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
     this.UserClient = new UserClient('https://core-dev.kalosflorida.com:8443');
     this.addUser = this.addUser.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
-    this.saveAsPDF = this.saveAsPDF.bind(this);
+    //this.saveAsPDF = this.saveAsPDF.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.toggleshowInactive = this.toggleshowInactive.bind(this);
   }
@@ -86,7 +86,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
   }; //textfield needs this onchnge handler
 
   toggleModal(e: SyntheticEvent<HTMLElement>) {
-    const selectedUserId = parseInt(e.currentTarget.id);
+    const selectedUserId = parseInt(e.currentTarget.id.split('-')[0]);
     this.setState(prevState => ({
       isModalOpen: !prevState.isModalOpen,
       selectedUserId,
@@ -139,6 +139,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
     }
   }
 
+  /*
   async saveAsPDF() {
     const doc = await ReactPDF.pdf(
       <EmployeePDF users={this.state.users} />,
@@ -149,7 +150,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
     document.body.append(link);
     link.click();
     link.remove();
-  }
+  }*/
 
   async componentDidMount() {
     await this.UserClient.GetToken('test', 'test');
@@ -199,11 +200,11 @@ export class EmployeeDirectory extends React.Component<props, state> {
         )}
 
         <Toolbar>
-          <Tooltip title="Download as PDF">
+          {/*<Tooltip title="Download as PDF">
             <IconButton onClick={this.saveAsPDF}>
               <PdfIcon />
             </IconButton>
-          </Tooltip>
+          </Tooltip>*/}
           <Tooltip title="Employee Group">
             <IconButton href=" https://app.kalosflorida.com/index.cfm?action=admin:user.employeedept">
               <GroupIcon />
@@ -240,7 +241,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
         </Toolbar>
 
         {this.state.users.length !== 0 && (
-          <Table stickyHeader style={{ width: '80%' }}>
+          <Table stickyHeader style={{ width: '80%' }} size="small">
             <TableHead>
               <TableRow>
                 <TableCell align="center">First Name</TableCell>
@@ -252,17 +253,24 @@ export class EmployeeDirectory extends React.Component<props, state> {
             </TableHead>
             <TableBody>
               {users.map(user => (
-                <TableRow
-                  id={`${user.id}`}
-                  onClick={this.toggleModal}
-                  hover
-                  key={`${user.id}-${user.lastname}-trow`}
-                >
-                  <TableCell align="center">{user.lastname}</TableCell>
-                  <TableCell align="center">{user.firstname}</TableCell>
+                <TableRow hover key={`${user.id}-${user.lastname}-trow`}>
+                  <TableCell
+                    id={`${user.id}-lastname`}
+                    onClick={this.toggleModal}
+                    align="center"
+                  >
+                    {user.lastname}
+                  </TableCell>
+                  <TableCell
+                    id={`${user.id}-firstname`}
+                    onClick={this.toggleModal}
+                    align="center"
+                  >
+                    {user.firstname}
+                  </TableCell>
                   {this.state.user.isAdmin === 1 && (
                     <TableCell align="center">
-                      <ButtonGroup>
+                      <Tooltip title="View Spiff Log" placement="top">
                         <IconButton
                           onClick={() =>
                             this.openLink(
@@ -272,7 +280,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
                         >
                           <BuildIcon />
                         </IconButton>
-
+                      </Tooltip>
+                      <Tooltip title="View Timesheet" placement="top">
                         <IconButton
                           onClick={() =>
                             this.openLink(
@@ -282,6 +291,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
                         >
                           <ScheduleIcon />
                         </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit User" placement="top">
                         <IconButton
                           onClick={() =>
                             this.openLink(
@@ -291,7 +302,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
                         >
                           <EditIcon />
                         </IconButton>
-                      </ButtonGroup>
+                      </Tooltip>
                     </TableCell>
                   )}
                 </TableRow>
