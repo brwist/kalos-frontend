@@ -297,7 +297,6 @@ function rollupBuild() {
                     console.log('starting bundler');
                     return [4 /*yield*/, rollup.rollup({
                             input: "modules/" + target + "/main.tsx",
-                            external: ['@react-pdf'],
                             plugins: [
                                 resolve({ preferBuiltins: true }),
                                 commonjs({
@@ -331,8 +330,7 @@ function rollupBuild() {
                             format: 'umd',
                             globals: {
                                 react: 'React',
-                                'react-dom': 'ReactDOM',
-                                '@react-pdf': 'ReactPDF'
+                                'react-dom': 'ReactDOM'
                             }
                         })];
                 case 6:
@@ -400,7 +398,43 @@ function release() {
         });
     });
 }
+function bustCache() {
+    return __awaiter(this, void 0, void 0, function () {
+        var controller, filename, res, versionMatch, version, newVersion, newFile;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    controller = process.argv[4].replace(/-/g, '');
+                    filename = process.argv[5].replace(/-/g, '');
+                    return [4 /*yield*/, sh.exec("scp " + c.KALOS_ROOT + "/app/admin/views/" + controller + "/" + filename + ".cfm tmp/" + filename + ".cfm")];
+                case 1:
+                    _a.sent();
+                    return [4 /*yield*/, sh.cat("tmp/" + filename + ".cfm")];
+                case 2:
+                    res = _a.sent();
+                    if (!res.stdout.includes('.js?version=')) return [3 /*break*/, 6];
+                    versionMatch = res.stdout.match(/\.js\?version=\d{1,}/);
+                    if (!versionMatch) return [3 /*break*/, 6];
+                    version = parseInt(versionMatch[0].replace(/\.js\?version=/, ''));
+                    newVersion = version + 1;
+                    newFile = new sh.ShellString(res.stdout.replace(/\.js\?version=\d{1,}/, ".js?version=" + newVersion));
+                    return [4 /*yield*/, sh.rm("tmp/" + filename + ".cfm")];
+                case 3:
+                    _a.sent();
+                    return [4 /*yield*/, newFile.to("tmp/" + filename + ".cfm")];
+                case 4:
+                    _a.sent();
+                    return [4 /*yield*/, sh.exec("scp tmp/" + filename + ".cfm " + c.KALOS_ROOT + "/app/admin/views/" + controller + "/" + filename + ".cfm")];
+                case 5:
+                    _a.sent();
+                    _a.label = 6;
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
 task('bundle', rollupBuild);
+task('bust', bustCache);
 task('goog', googBuild);
 task(release);
 task('cfpatch', patchCFC);
