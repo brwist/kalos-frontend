@@ -72,7 +72,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       },
       await (async () => {
         const newTxns = await this.fetchTxns(1);
+        console.log(newTxns);
         const rejectedTxns = await this.fetchTxns(4);
+        console.log(rejectedTxns);
         this.setState({
           transactions: newTxns.concat(rejectedTxns),
           isLoading: false,

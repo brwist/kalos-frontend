@@ -245,8 +245,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
             <TableHead>
               <TableRow>
                 <TableCell align="center">First Name</TableCell>
-                <TableCell align="center">Last Name</TableCell>
-                {this.state.user.isAdmin === 1 && (
+                <TableCell align="center">Last Name</TableCell>(
+                {(this.state.user.isAdmin === 1 || this.state.user) && (
                   <TableCell align="center"></TableCell>
                 )}
               </TableRow>
