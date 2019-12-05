@@ -11,6 +11,10 @@ import TablePagination from '@material-ui/core/TablePagination';
 import { TxnUploadRow } from './row';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
+import {
+  RemoteIdentity,
+  RemoteIdentityClient,
+} from '@kalos-core/kalos-rpc/RemoteIdentity';
 
 interface props {
   userId: number;
@@ -21,10 +25,12 @@ interface state {
   csvArr: string[][];
   page: number;
   rowsPerPage: number;
+  account: string;
 }
 
 export class TxnUpload extends React.PureComponent<props, state> {
   UserClient: UserClient;
+  IdentityClient: RemoteIdentityClient;
   FileInput: React.RefObject<HTMLInputElement>;
   constructor(props: props) {
     super(props);
@@ -33,6 +39,7 @@ export class TxnUpload extends React.PureComponent<props, state> {
       csvArr: [],
       page: 0,
       rowsPerPage: 10,
+      account: '',
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
 
@@ -40,7 +47,43 @@ export class TxnUpload extends React.PureComponent<props, state> {
     this.setRowsPerPage = this.setRowsPerPage.bind(this);
     this.handleFile = this.handleFile.bind(this);
     this.FileInput = React.createRef<HTMLInputElement>();
+
     this.UserClient = new UserClient(endpoint);
+    this.IdentityClient = new RemoteIdentityClient(endpoint);
+    this.makeGetTxnUser = this.makeGetTxnUser.bind(this);
+  }
+
+  makeGetTxnUser(cardUsed: string) {
+    return async () => {
+      const req = new RemoteIdentity();
+      req.setIdentityString(cardUsed);
+      req.setService('credit_card');
+      const res = await this.IdentityClient.BatchGet(req);
+      const list = res.getResultsList();
+      if (list.length === 1) {
+        return list[0].getUserId();
+      } else {
+        return await this.recursiveGetUser(list.map(u => u.getUserId()));
+      }
+    };
+  }
+
+  async recursiveGetUser(idArr: number[], index = 0): Promise<number> {
+    const idReq = new RemoteIdentity();
+    idReq.setUserId(idArr[index]);
+    idReq.setIdentityString(this.state.account);
+    idReq.setService('credit_account');
+    try {
+      const res = await this.IdentityClient.Get(idReq);
+      return res.userId;
+    } catch (err) {
+      index = index + 1;
+      if (index <= idArr.length - 1) {
+        return await this.recursiveGetUser(idArr, index);
+      } else {
+        return 0;
+      }
+    }
   }
 
   async handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -48,16 +91,34 @@ export class TxnUpload extends React.PureComponent<props, state> {
       const fr = new FileReader();
       fr.onload = () => {
         const arr = fr.result ? (fr.result as string).split('\n') : [];
-        this.setState({
-          csvArr: arr.map(s => s.split(',')),
-        });
+        this.setState(
+          {
+            csvArr: arr.map(s => s.split(',')),
+          },
+          this.guessAccountNumber,
+        );
       };
       fr.readAsBinaryString(e.currentTarget.files[0]);
     }
   }
 
-  async componentDidMount() {
-    await this.UserClient.GetToken('test', 'test');
+  async guessAccountNumber(index = 1): Promise<void> {
+    const currentRow = this.state.csvArr[index];
+    const req = new RemoteIdentity();
+    req.setIdentityString(currentRow[2]);
+    req.setService('credit_card');
+    const res = await this.IdentityClient.BatchGet(req);
+    const list = res.getResultsList();
+    if (list.length === 1) {
+      const idReq = new RemoteIdentity();
+      idReq.setUserId(list[0].getUserId());
+      idReq.setService('credit_account');
+      const account = await this.IdentityClient.Get(idReq);
+      this.setState({ account: account.identityString });
+    } else {
+      index = index + 1;
+      return await this.guessAccountNumber(index);
+    }
   }
 
   setPage(event: unknown, newPage: number) {
@@ -68,9 +129,13 @@ export class TxnUpload extends React.PureComponent<props, state> {
 
   setRowsPerPage(e: React.ChangeEvent<HTMLInputElement>) {
     this.setState({
-      rowsPerPage: +e.currentTarget.value,
+      rowsPerPage: +e.target.value,
       page: 0,
     });
+  }
+
+  async componentDidMount() {
+    await this.UserClient.GetToken('test', 'test');
   }
 
   render() {
@@ -107,7 +172,11 @@ export class TxnUpload extends React.PureComponent<props, state> {
                   .slice(1)
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map(arr => (
-                    <TxnUploadRow source={arr} key={arr.join(',')} />
+                    <TxnUploadRow
+                      source={arr}
+                      key={arr.join(',')}
+                      getUser={this.makeGetTxnUser(arr[2])}
+                    />
                   ))}
               </TableBody>
             </Table>

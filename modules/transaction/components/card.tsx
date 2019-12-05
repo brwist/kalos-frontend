@@ -157,7 +157,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           throw 'Please provide a brief description in the notes';
         } else {
           await this.updateStatus(2);
-          await this.makeSubmitLog(2, 'subtmitted for approval');
+          await this.makeSubmitLog(2, 'submitted for approval');
           await this.props.fetchFn();
         }
       }

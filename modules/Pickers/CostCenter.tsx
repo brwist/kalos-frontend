@@ -65,7 +65,26 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   }
 
   componentDidMount() {
-    this.fetchAccounts();
+    const cacheList = localStorage.getItem('COST_CENTER_LIST');
+    if (!cacheList) {
+      this.fetchAccounts();
+    } else {
+      this.setState({
+        accountList: JSON.parse(cacheList),
+      });
+    }
+  }
+
+  componentDidUpdate(prevProps: props, prevState: state) {
+    if (prevState.accountList.length === this.state.accountList.length) {
+      const cacheList = localStorage.getItem('COST_CENTER_LIST');
+      if (!cacheList) {
+        localStorage.setItem(
+          'COST_CENTER_LIST',
+          JSON.stringify(this.state.accountList),
+        );
+      }
+    }
   }
 
   render() {

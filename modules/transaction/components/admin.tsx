@@ -248,7 +248,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       txn.setStatusId(statusID);
       txn.setFieldMaskList(['StatusId']);
       await client.Update(txn);
-      await this.makeLog(`${description} ${reason}`);
+      await this.makeLog(`${description} ${reason || ''}`, id);
     };
   }
 
@@ -281,7 +281,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     }
   }
 
-  async makeLog(description: string) {
+  async makeLog(description: string, id: number) {
     const client = new TransactionActivityClient(
       'https://core-dev.kalosflorida.com:8443',
     );
@@ -291,6 +291,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     console.log(timestamp());
     activity.setUserId(this.props.userID);
     activity.setDescription(description);
+    activity.setTransactionId(id);
     await client.Create(activity);
   }
 
