@@ -8,7 +8,10 @@ import EditIcon from '@material-ui/icons/EditSharp';
 import CancelIcon from '@material-ui/icons/CloseSharp';
 import UploadIcon from '@material-ui/icons/ThumbUpSharp';
 import { CostCenterPicker } from '../Pickers/CostCenter';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import {
+  Transaction,
+  TransactionClient,
+} from '@kalos-core/kalos-rpc/Transaction';
 import {
   TransactionAccount,
   TransactionAccountClient,
@@ -16,6 +19,7 @@ import {
 
 interface props {
   source: string[];
+  getUser(): Promise<number>;
 }
 
 interface state {
@@ -29,6 +33,7 @@ interface state {
 
 export class TxnUploadRow extends React.PureComponent<props, state> {
   AccountClient: TransactionAccountClient;
+  TxnClient: TransactionClient;
   Description: React.RefObject<HTMLInputElement>;
   constructor(props: props) {
     super(props);
@@ -42,12 +47,14 @@ export class TxnUploadRow extends React.PureComponent<props, state> {
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
     this.AccountClient = new TransactionAccountClient(endpoint);
+    this.TxnClient = new TransactionClient(endpoint);
 
     this.Description = React.createRef<HTMLInputElement>();
     this.updateDescription = this.updateDescription.bind(this);
     this.updateCostCenter = this.updateCostCenter.bind(this);
     this.getCostCenter = this.getCostCenter.bind(this);
     this.toggleEditing = this.toggleEditing.bind(this);
+    this.submitTransaction = this.submitTransaction.bind(this);
   }
 
   updateDescription(e: React.ChangeEvent<HTMLInputElement>) {
@@ -86,6 +93,13 @@ export class TxnUploadRow extends React.PureComponent<props, state> {
     const res = await this.AccountClient.Get(accReq);
     console.log(res);
     this.setState({ costCenterID: res.id });
+  }
+
+  async submitTransaction() {
+    console.log('getting user ID...');
+    const userId = await this.props.getUser();
+    console.log(userId);
+    //await this.TxnClient.Create(this.state.txn);
   }
 
   render() {
@@ -129,7 +143,7 @@ export class TxnUploadRow extends React.PureComponent<props, state> {
             </IconButton>
           </Tooltip>
           <Tooltip title="Upload Transaction" placement="top">
-            <IconButton>
+            <IconButton onClick={this.submitTransaction}>
               <UploadIcon />
             </IconButton>
           </Tooltip>

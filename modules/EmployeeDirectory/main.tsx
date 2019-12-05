@@ -139,8 +139,14 @@ export class EmployeeDirectory extends React.Component<props, state> {
     }
   }
 
-  /*
-  async saveAsPDF() {
+  saveAsPDF() {
+    const el = document.createElement('a');
+    el.href =
+      'http://app.kalosflorida.com/index.cfm?action=admin:user.contact_list_pdf';
+    el.target = '_blank';
+    el.click();
+    el.remove();
+    /*
     const doc = await ReactPDF.pdf(
       <EmployeePDF users={this.state.users} />,
     ).toBlob();
@@ -150,7 +156,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
     document.body.append(link);
     link.click();
     link.remove();
-  }*/
+    */
+  }
 
   async componentDidMount() {
     await this.UserClient.GetToken('test', 'test');
@@ -200,19 +207,20 @@ export class EmployeeDirectory extends React.Component<props, state> {
         )}
 
         <Toolbar>
-          {/*<Tooltip title="Download as PDF">
-            <IconButton onClick={this.saveAsPDF}>
+          <Tooltip title="Download as PDF">
+            <IconButton href="http://app.kalosflorida.com/index.cfm?action=admin:user.contact_list_pdf">
               <PdfIcon />
             </IconButton>
-          </Tooltip>*/}
+          </Tooltip>
+
           <Tooltip title="Employee Group">
-            <IconButton href=" https://app.kalosflorida.com/index.cfm?action=admin:user.employeedept">
+            <IconButton href="https://app.kalosflorida.com/index.cfm?action=admin:user.employeedept">
               <GroupIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Add Employee">
-            <IconButton href=" https://app.kalosflorida.com/index.cfm?action=admin:user.edit">
+            <IconButton href="https://app.kalosflorida.com/index.cfm?action=admin:user.edit">
               <AddIcon />
             </IconButton>
           </Tooltip>
@@ -245,8 +253,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
             <TableHead>
               <TableRow>
                 <TableCell align="center">First Name</TableCell>
-                <TableCell align="center">Last Name</TableCell>(
-                {(this.state.user.isAdmin === 1 || this.state.user) && (
+                <TableCell align="center">Last Name</TableCell>
+                {this.state.user.isAdmin === 1 && (
                   <TableCell align="center"></TableCell>
                 )}
               </TableRow>

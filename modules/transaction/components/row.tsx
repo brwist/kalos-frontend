@@ -61,7 +61,9 @@ export function TransactionRow({
     try {
       await slackNotify(
         id,
-        `A receipt you submitted has been rejected. Reason: ${reason}`,
+        `A receipt you submitted has been rejected | ${
+          txn.description
+        } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
       );
       await slackNotify(
         id,
