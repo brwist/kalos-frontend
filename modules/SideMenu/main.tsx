@@ -138,7 +138,6 @@ export class SideMenu extends React.PureComponent<props, state> {
 
     return (
       <>
-        <CssBaseline />
         <Hidden mdDown>
           <Button onClick={this.toggleMenu}>
             <img
@@ -153,10 +152,13 @@ export class SideMenu extends React.PureComponent<props, state> {
             <MenuSharp />
           </IconButton>
         </Hidden>
-        <Drawer open={this.state.isOpen} onClose={this.toggleMenu}>
-          <List>
+        <Drawer
+          open={this.state.isOpen}
+          onClose={this.toggleMenu}
+          style={{ width: 250, padding: 10 }}
+        >
+          <List style={{ width: 250 }}>
             <ListItem
-              button
               href="https://app.kalosflorida.com/index.cfm"
               component="a"
             >
@@ -165,44 +167,44 @@ export class SideMenu extends React.PureComponent<props, state> {
               </ListItemIcon>
               <ListItemText primary="Dashboard" />
             </ListItem>
-            <ListItem button href={calendar} component="a">
+            <ListItem href={calendar} component="a">
               <ListItemIcon>
                 <CalendarTodaySharp />
               </ListItemIcon>
               <ListItemText primary="Service Calendar" />
             </ListItem>
-            <ListItem button href={serviceCalls} component="a">
+            <ListItem href={serviceCalls} component="a">
               <ListItemIcon>
                 <EventSharp />
               </ListItemIcon>
               <ListItemText primary="Service Call Search" />
             </ListItem>
-            <ListItem button href={spiffLog} component="a">
+            <ListItem href={spiffLog} component="a">
               <ListItemIcon>
                 <MoneySharp />
               </ListItemIcon>
               <ListItemText primary="Spiff Log" />
             </ListItem>
-            <ListItem button href={toolLog} component="a">
+            <ListItem href={toolLog} component="a">
               <ListItemIcon>
                 <AttachMoneySharp />
               </ListItemIcon>
               <ListItemText primary="Tool Log" />
             </ListItem>
-            <ListItem button href={timesheet} component="a">
+            <ListItem href={timesheet} component="a">
               <ListItemIcon>
                 <AccessTimeIcon />
               </ListItemIcon>
               <ListItemText primary="Timesheet" />
             </ListItem>
             <Divider />
-            <ListItem button href={employees} component="a">
+            <ListItem href={employees} component="a">
               <ListItemIcon>
                 <PersonSharp />
               </ListItemIcon>
               <ListItemText primary="Employee Directory" />
             </ListItem>
-            <ListItem button href={search} component="a">
+            <ListItem href={search} component="a">
               <ListItemIcon>
                 <SearchSharp />
               </ListItemIcon>
@@ -210,31 +212,31 @@ export class SideMenu extends React.PureComponent<props, state> {
             </ListItem>
             {this.state.user.isAdmin === 1 && (
               <>
-                <ListItem button href={reports} component="a">
+                <ListItem href={reports} component="a">
                   <ListItemIcon>
                     <MenuBookIcon />
                   </ListItemIcon>
                   <ListItemText primary="Reports" />
                 </ListItem>
-                <ListItem button href={dispatch} component="a">
+                <ListItem href={dispatch} component="a">
                   <ListItemIcon>
                     <LocationOnIcon />
                   </ListItemIcon>
                   <ListItemText primary="Dispatch" />
                 </ListItem>
-                <ListItem button href={documents} component="a">
+                <ListItem href={documents} component="a">
                   <ListItemIcon>
                     <PictureAsPdfSharpIcon />
                   </ListItemIcon>
                   <ListItemText primary="Kalos Documents" />
                 </ListItem>
-                <ListItem button href={productivity} component="a">
+                <ListItem href={productivity} component="a">
                   <ListItemIcon>
                     <BarChartSharp />
                   </ListItemIcon>
                   <ListItemText primary="Productivity / Metrics" />
                 </ListItem>
-                <ListItem button href={serviceBilling} component="a">
+                <ListItem href={serviceBilling} component="a">
                   <ListItemIcon>
                     <RoomServiceIcon />
                   </ListItemIcon>
@@ -243,7 +245,7 @@ export class SideMenu extends React.PureComponent<props, state> {
               </>
             )}
             {this.state.isManager && (
-              <ListItem button href={txnAdmin} component="a">
+              <ListItem href={txnAdmin} component="a">
                 <ListItemIcon>
                   <ReceiptIcon />
                 </ListItemIcon>
@@ -251,14 +253,13 @@ export class SideMenu extends React.PureComponent<props, state> {
               </ListItem>
             )}
             <Divider />
-            <ListItem button href={profile} component="a">
+            <ListItem href={profile} component="a">
               <ListItemIcon>
                 <AccountCircleIcon />
               </ListItemIcon>
               <ListItemText primary="Account Info" />
             </ListItem>
             <ListItem
-              button
               href="https://app.kalosflorida.com/index.cfm?action=account.logout"
               component="a"
             >

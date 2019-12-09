@@ -12,6 +12,8 @@ import { IFile } from '../../Gallery/main';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { S3Client, FileObject } from '@kalos-core/kalos-rpc/S3File';
 import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { getMimeType } from './card';
 import { TxnLog } from './log';
 import { TxnNotes } from './notes';
@@ -38,9 +40,15 @@ export function TransactionRow({
   reject,
   refresh,
 }: props) {
+  const endpoint = 'https://core.kalosflorida.com:8443';
   const [state, setState] = useState<state>({
     files: [],
   });
+
+  const clients = {
+    user: new UserClient(endpoint),
+    email: new EmailClient(endpoint),
+  };
 
   const updateStatus = async () => {
     const ok = confirm(
@@ -56,9 +64,20 @@ export function TransactionRow({
   };
 
   const dispute = async (reason: string) => {
-    const id = await getSlackID(txn.ownerName);
-
     try {
+      const id = await getSlackID(txn.ownerName);
+      const userReq = new User();
+      userReq.setId(txn.ownerId);
+      const user = await clients.user.Get(userReq);
+      const body = `Reason: ${reason}\r\nInfo: ${prettyMoney(txn.amount)} - ${
+        txn.description
+      }\r\nReview transactions here: https://app.kalosflorida.com?action=admin:reports.transactions`;
+      const email: EmailConfig = {
+        type: 'receipts',
+        recipient: user.email,
+        body,
+      };
+      await clients.email.sendMail(email);
       await slackNotify(
         id,
         `A receipt you submitted has been rejected | ${

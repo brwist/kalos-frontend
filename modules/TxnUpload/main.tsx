@@ -16,6 +16,8 @@ import {
   RemoteIdentityClient,
 } from '@kalos-core/kalos-rpc/RemoteIdentity';
 
+const CSV_CACHE_KEY = 'LOCAL_CSV_STORAGE';
+
 interface props {
   userId: number;
 }
@@ -51,6 +53,9 @@ export class TxnUpload extends React.PureComponent<props, state> {
     this.UserClient = new UserClient(endpoint);
     this.IdentityClient = new RemoteIdentityClient(endpoint);
     this.makeGetTxnUser = this.makeGetTxnUser.bind(this);
+    this.restoreFromCache = this.restoreFromCache.bind(this);
+    this.cacheCSV = this.cacheCSV.bind(this);
+    this.removeTxnLine = this.removeTxnLine.bind(this);
   }
 
   makeGetTxnUser(cardUsed: string) {
@@ -95,11 +100,43 @@ export class TxnUpload extends React.PureComponent<props, state> {
           {
             csvArr: arr.map(s => s.split(',')),
           },
-          this.guessAccountNumber,
+          async () => {
+            localStorage.setItem(CSV_CACHE_KEY, fr.result as string);
+            await this.guessAccountNumber();
+          },
         );
       };
       fr.readAsBinaryString(e.currentTarget.files[0]);
     }
+  }
+
+  restoreFromCache() {
+    const cachedCSV = localStorage.getItem(CSV_CACHE_KEY);
+    if (cachedCSV) {
+      this.setState({
+        csvArr: cachedCSV.split('\n').map(s => s.split(',')),
+      });
+    }
+  }
+
+  cacheCSV() {
+    const CSV = this.state.csvArr.map(arr => arr.join(',')).join('\n');
+    localStorage.setItem(CSV_CACHE_KEY, CSV);
+  }
+
+  removeTxnLine(sourceArr: string) {
+    const newCSV = this.state.csvArr.filter(arr => {
+      const arrStr = arr.join(',');
+      if (arrStr === sourceArr) {
+        return false;
+      } else return true;
+    });
+    this.setState(
+      {
+        csvArr: newCSV,
+      },
+      this.cacheCSV,
+    );
   }
 
   async guessAccountNumber(index = 1): Promise<void> {
@@ -136,6 +173,7 @@ export class TxnUpload extends React.PureComponent<props, state> {
 
   async componentDidMount() {
     await this.UserClient.GetToken('test', 'test');
+    this.restoreFromCache();
   }
 
   render() {
@@ -176,6 +214,7 @@ export class TxnUpload extends React.PureComponent<props, state> {
                       source={arr}
                       key={arr.join(',')}
                       getUser={this.makeGetTxnUser(arr[2])}
+                      onUpload={this.removeTxnLine}
                     />
                   ))}
               </TableBody>
@@ -197,5 +236,3 @@ export class TxnUpload extends React.PureComponent<props, state> {
     );
   }
 }
-
-function lineToTransaction(txnStr: string) {}

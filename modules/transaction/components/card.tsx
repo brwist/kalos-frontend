@@ -244,7 +244,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           </Typography>
         </Grid>
       );
-    } else if (txn.statusId === 1) {
+    } else {
       style.backgroundColor = green[700];
       return (
         <Grid container direction="row" style={style}>

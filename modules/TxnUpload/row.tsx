@@ -20,6 +20,7 @@ import {
 interface props {
   source: string[];
   getUser(): Promise<number>;
+  onUpload(arr: string): void;
 }
 
 interface state {
@@ -91,15 +92,25 @@ export class TxnUploadRow extends React.PureComponent<props, state> {
     const accReq = new TransactionAccount();
     accReq.setDescription(`%${this.state.category}%`);
     const res = await this.AccountClient.Get(accReq);
-    console.log(res);
     this.setState({ costCenterID: res.id });
   }
 
   async submitTransaction() {
-    console.log('getting user ID...');
     const userId = await this.props.getUser();
-    console.log(userId);
-    //await this.TxnClient.Create(this.state.txn);
+    const { txn } = this.state;
+    txn.setOwnerId(userId);
+    txn.setCostCenterId(this.state.costCenterID);
+    try {
+      const res = await this.TxnClient.Create(txn);
+      console.log(
+        this.props.source[0],
+        this.props.source[2],
+        this.props.source[5],
+      );
+      this.props.onUpload(this.props.source.join(','));
+    } catch (err) {
+      console.log('transaction upload failed', err);
+    }
   }
 
   render() {
@@ -159,7 +170,6 @@ function sourceToTxn(source: string[]) {
   txn.setCardUsed(source[2]);
   txn.setDescription(source[3]);
   let amount = parseFloat(source[5]);
-
   txn.setAmount(amount);
   return txn;
 }
