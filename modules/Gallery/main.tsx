@@ -9,24 +9,7 @@ import ChevronLeftTwoTone from '@material-ui/icons/ChevronLeftTwoTone';
 import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
 import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
-import { makeStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
-
-const useStyles = makeStyles(theme => ({
-  modal: {
-    position: 'absolute',
-    height: '100%',
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  paper: {
-    backgroundColor: theme.palette.background.paper,
-    border: '2px solid #000',
-    boxShadow: theme.shadows[5],
-  },
-}));
 
 interface props {
   fileList: IFile[];
@@ -35,6 +18,7 @@ interface props {
   onOpen?(): void;
   iconButton?: boolean;
   disabled?: boolean;
+  deleteFn?(name: string, bucket: string, cb?: () => void): Promise<void>;
 }
 
 export interface IFile {
@@ -51,8 +35,8 @@ export function Gallery({
   onOpen,
   iconButton,
   disabled,
+  deleteFn,
 }: props) {
-  const classes = useStyles();
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
 
@@ -78,6 +62,16 @@ export function Gallery({
   const prevImage = () => {
     if (activeImage - 1 >= 0) {
       setImage(activeImage - 1);
+    }
+  };
+
+  const onDelete = () => {
+    if (fileList.length === 1 || fileList.length === 0) {
+      toggleOpen();
+    } else {
+      if (onOpen) {
+        onOpen();
+      }
     }
   };
 
@@ -161,6 +155,21 @@ export function Gallery({
             >
               Close
             </Button>
+            {deleteFn && (
+              <Button
+                onClick={() =>
+                  deleteFn(
+                    fileList[activeImage].name,
+                    'kalos-transactions',
+                    toggleOpen,
+                  )
+                }
+                size="large"
+                style={{ height: 44 }}
+              >
+                Delete Image
+              </Button>
+            )}
           </Grid>
           {fileList[activeImage] && (
             <Grid

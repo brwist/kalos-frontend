@@ -61,6 +61,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     reqObj.setOwnerId(this.props.userID);
     reqObj.setPageNumber(this.state.page);
     reqObj.setStatusId(statusID);
+    reqObj.setIsActive(1);
     const res = (await this.TxnClient.BatchGet(reqObj)).toObject();
     return res.resultsList;
   }

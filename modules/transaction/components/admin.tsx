@@ -35,6 +35,7 @@ import {
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import { parse } from 'date-fns';
 
 interface props {
   userID: number;
@@ -94,6 +95,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.altChangePage = this.altChangePage.bind(this);
     this.handleSubmitPage = this.handleSubmitPage.bind(this);
     this.copyPage = this.copyPage.bind(this);
+    this.makeAddJobNumber = this.makeAddJobNumber.bind(this);
   }
 
   toggleView() {
@@ -157,6 +159,24 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.setState({ filters: {}, page: 0, count: 0 }, this.fetchTxns);
   }
 
+  makeAddJobNumber(id: number) {
+    return async (jobNumber: string) => {
+      try {
+        const txn = new Transaction();
+        const jn = jobNumberFromString(jobNumber);
+        txn.setId(id);
+        txn.setJobId(jn);
+        txn.setFieldMaskList(['JobId']);
+        const res = await this.TxnClient.Update(txn);
+        console.log(res);
+        await this.fetchTxns();
+      } catch (err) {
+        alert('Job number could not be set');
+        console.log(err);
+      }
+    };
+  }
+
   applyFilters(obj: Transaction) {
     const { filters } = this.state;
     if (filters.userID) {
@@ -216,6 +236,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       reqObj.setDepartmentId(this.props.departmentId);
     }
     reqObj.setPageNumber(this.state.page);
+    reqObj.setIsActive(1);
     this.setState(
       { isLoading: true },
       await (async () => {
@@ -479,6 +500,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                     accept={this.makeUpdateStatus(t.id, 3, 'accepted')}
                     reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
                     refresh={this.fetchTxns}
+                    addJobNumber={this.makeAddJobNumber(t.id)}
                   />
                 ))}
               </TableBody>
@@ -530,4 +552,12 @@ function timestamp() {
   }
 
   return `${dateObj.getFullYear()}-${month}-${day} ${hour}:${minute}:00`;
+}
+
+function jobNumberFromString(jn: string) {
+  if (jn.includes('-')) {
+    return parseInt(jn.split('-')[1]);
+  } else {
+    return parseInt(jn);
+  }
 }

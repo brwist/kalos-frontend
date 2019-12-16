@@ -26,6 +26,7 @@ interface props {
   accept(): Promise<void>;
   reject(reason?: string): Promise<void>;
   refresh(): Promise<void>;
+  addJobNumber(jn: string): Promise<void>;
 }
 
 interface state {
@@ -39,8 +40,9 @@ export function TransactionRow({
   accept,
   reject,
   refresh,
+  addJobNumber,
 }: props) {
-  const endpoint = 'https://core.kalosflorida.com:8443';
+  const endpoint = 'https://core-dev.kalosflorida.com:8443';
   const [state, setState] = useState<state>({
     files: [],
   });
@@ -71,6 +73,8 @@ export function TransactionRow({
       const user = await clients.user.Get(userReq);
       const body = `Reason: ${reason}\r\nInfo: ${prettyMoney(txn.amount)} - ${
         txn.description
+      } - ${
+        txn.vendor
       }\r\nReview transactions here: https://app.kalosflorida.com?action=admin:reports.transactions`;
       const email: EmailConfig = {
         type: 'receipts',
@@ -116,7 +120,17 @@ export function TransactionRow({
           ? `${txn.department.description} (${txn.department.classification})`
           : ''}
       </TableCell>
-      <TableCell align="center">{txn.jobId !== 0 ? txn.jobId : ''}</TableCell>
+      <TableCell align="center">
+        {txn.jobId !== 0 ? (
+          txn.jobId
+        ) : (
+          <Prompt
+            confirmFn={addJobNumber}
+            text="Update Job Number"
+            prompt="Job Number: "
+          />
+        )}
+      </TableCell>
       <TableCell align="center">${amount}</TableCell>
       <TableCell align="center">{txn.description}</TableCell>
       <TableCell align="right">
