@@ -86,6 +86,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.fetchFiles = this.fetchFiles.bind(this);
     this.fetchFile = this.fetchFile.bind(this);
     this.submit = this.submit.bind(this);
+    this.deleteFile = this.deleteFile.bind(this);
   }
 
   async makeLog<K extends keyof Transaction.AsObject>(
@@ -153,7 +154,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           throw 'A purchase category must be assigned';
         } else if (txn.documentsList.length === 0) {
           throw 'This receipt requires a photo';
-        } else if (txn.notes !== '') {
+        } else if (txn.notes === '') {
           throw 'Please provide a brief description in the notes';
         } else {
           await this.updateStatus(2);
@@ -207,7 +208,6 @@ export class TxnCard extends React.PureComponent<props, state> {
       borderRadius: '3px',
       padding: '5px',
     };
-    console.log(txn);
     if (!txn.costCenter || txn.costCenter.id === 0) {
       return (
         <Grid container direction="row" style={style}>
@@ -288,6 +288,18 @@ export class TxnCard extends React.PureComponent<props, state> {
       alert(
         'Network error, displayed information may be incorrect. Refresh is advised',
       );
+      console.log(err);
+    }
+  }
+
+  async deleteFile(name: string, bucket: string, cb?: () => void) {
+    try {
+      await this.DocsClient.deleteByName(name, bucket);
+      if (cb) {
+        cb();
+      }
+      await this.refresh();
+    } catch (err) {
       console.log(err);
     }
   }
@@ -412,10 +424,11 @@ export class TxnCard extends React.PureComponent<props, state> {
               )}
               <Gallery
                 title="Receipt Photo(s)"
-                text="View Photo(s)"
+                text="Photo(s)"
                 fileList={this.state.files}
                 onOpen={this.fetchFiles}
                 disabled={t.documentsList.length === 0}
+                deleteFn={this.deleteFile}
               />
               {this.props.isAdmin && <TxnLog txnID={this.state.txn.id} />}
               {!this.props.isAdmin && (

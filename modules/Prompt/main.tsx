@@ -27,13 +27,12 @@ export function Prompt({ disabled, text, Icon, prompt, confirmFn }: props) {
   const toggleOpen = async (event: React.MouseEvent<HTMLButtonElement>) => {
     setIsOpen(!isOpen);
     setAnchorEl(event.currentTarget);
+    try {
+      answer.current && answer.current.focus();
+    } catch (err) {
+      console.log(err);
+    }
   };
-
-  try {
-    answer.current && answer.current.focus();
-  } catch (err) {
-    console.log(err);
-  }
 
   const handleConfirm = () => {
     if (answer.current && answer.current.value !== '') {
@@ -50,8 +49,7 @@ export function Prompt({ disabled, text, Icon, prompt, confirmFn }: props) {
   ) : (
     <Button
       variant="outlined"
-      size="large"
-      style={{ height: 44, marginBottom: 10 }}
+      size="small"
       fullWidth
       startIcon={Icon}
       onClick={toggleOpen}
