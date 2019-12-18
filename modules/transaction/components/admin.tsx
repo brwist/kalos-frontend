@@ -35,7 +35,6 @@ import {
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { parse } from 'date-fns';
 
 interface props {
   userID: number;
@@ -361,7 +360,13 @@ export class TransactionAdminView extends React.Component<props, state> {
         )}
 
         <>
-          <Toolbar style={{ justifyContent: 'center', position: 'sticky' }}>
+          <Toolbar
+            style={{
+              justifyContent: 'space-evenly',
+              position: 'sticky',
+              width: '100%',
+            }}
+          >
             <TablePagination
               component="span"
               count={this.state.count}

@@ -6,6 +6,7 @@ import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import PerDiemIcon from '@material-ui/icons/MonetizationOn';
 import Hidden from '@material-ui/core/Hidden';
 import IconButton from '@material-ui/core/IconButton';
 import HomeSharp from '@material-ui/icons/HomeSharp';
@@ -198,6 +199,16 @@ export class SideMenu extends React.PureComponent<props, state> {
                   <AttachMoneySharp />
                 </ListItemIcon>
                 <ListItemText primary="Tool Log" />
+              </ListItem>
+              <ListItem
+                href="https://www.kalosflorida.com/OT"
+                component="a"
+                target="_blank"
+              >
+                <ListItemIcon>
+                  <PerDiemIcon />
+                </ListItemIcon>
+                <ListItemText primary="New Per Diem" />
               </ListItem>
               <ListItem href={timesheet} component="a">
                 <ListItemIcon>

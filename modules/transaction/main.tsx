@@ -80,46 +80,6 @@ export default class Transaction extends React.PureComponent<props, state> {
           justify="flex-start"
         >
           <CssBaseline />
-          {/*<Toolbar>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={this.state.isAdmin}
-                  onChange={this.toggleAdmin}
-                />
-              }
-              label="Toggle Admin"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={this.state.isManager}
-                  onChange={this.toggleManager}
-                />
-              }
-              label="Toggle Manager"
-            />
-            <FormControlLabel
-              control={
-                <Switch checked={this.state.isSU} onChange={this.toggleSU} />
-              }
-              label="Toggle Super User"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={this.state.isLoading}
-                  onChange={this.toggleLoading}
-                />
-              }
-              label="Toggle Loading"
-            />
-            <DepartmentPicker
-              selected={this.state.userDepartmentID}
-              onSelect={id => this.setState({ userDepartmentID: id })}
-              useDevClient
-            />
-            </Toolbar>*/}
           <Grid
             container
             direction="column"

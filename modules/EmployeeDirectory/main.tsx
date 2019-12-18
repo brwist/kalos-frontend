@@ -131,12 +131,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
   }
 
   openLink(url: string) {
-    const tab = window.open(url, '_blank');
-    try {
-      tab!.focus();
-    } catch (err) {
-      console.log(err);
-    }
+    window.open(url, '_blank');
   }
 
   saveAsPDF() {
@@ -146,17 +141,6 @@ export class EmployeeDirectory extends React.Component<props, state> {
     el.target = '_blank';
     el.click();
     el.remove();
-    /*
-    const doc = await ReactPDF.pdf(
-      <EmployeePDF users={this.state.users} />,
-    ).toBlob();
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(doc);
-    link.download = 'directory.pdf';
-    document.body.append(link);
-    link.click();
-    link.remove();
-    */
   }
 
   async componentDidMount() {
@@ -219,11 +203,13 @@ export class EmployeeDirectory extends React.Component<props, state> {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Add Employee">
-            <IconButton href="https://app.kalosflorida.com/index.cfm?action=admin:user.edit">
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
+          {this.state.user.isAdmin === 1 && (
+            <Tooltip title="Add Employee">
+              <IconButton href="https://app.kalosflorida.com/index.cfm?action=admin:user.edit">
+                <AddIcon />
+              </IconButton>
+            </Tooltip>
+          )}
 
           <Tooltip title="Employee Detail">
             <IconButton href="https://app.kalosflorida.com/index.cfm?action=admin:user.employees_detail">
@@ -291,11 +277,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
                       </Tooltip>
                       <Tooltip title="View Timesheet" placement="top">
                         <IconButton
-                          onClick={() =>
-                            this.openLink(
-                              `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetview&timesheetAction=cardview&user_id=${user.id}&search_user_id=${user.id}&timesheetadmin=${this.state.user.isAdmin}`,
-                            )
-                          }
+                          target="_blank"
+                          href={`https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetview&timesheetAction=cardview&user_id=${user.id}&search_user_id=${user.id}&timesheetadmin=${this.state.user.isAdmin}`}
                         >
                           <ScheduleIcon />
                         </IconButton>
