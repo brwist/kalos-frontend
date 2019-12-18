@@ -4,6 +4,7 @@ import {
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TxnCard } from './card';
+import { Loader } from '../../Loader/main';
 
 interface props {
   userID: number;
@@ -56,6 +57,17 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   nextPage = this.changePage(1);
 
+  toggleLoading = (cb?: () => void) => {
+    this.setState(
+      prevState => ({
+        isLoading: !prevState.isLoading,
+      }),
+      () => {
+        cb && cb();
+      },
+    );
+  };
+
   async fetchTxns(statusID: number) {
     const reqObj = new Transaction();
     reqObj.setOwnerId(this.props.userID);
@@ -94,29 +106,29 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       const dateB = new Date(b.timestamp.split(' ').join('T'));
       return dateA.getTime() - dateB.getTime();
     });
-    if (txns.length > 0) {
-      return (
-        <>
-          {txns.map(t => (
-            <TxnCard
-              txn={t}
-              key={`${t.id}`}
-              userID={this.props.userID}
-              userName={this.props.userName}
-              userDepartmentID={this.props.departmentId}
-              fetchFn={this.fetchAllTxns}
-            />
-          ))}
-        </>
-      );
-    } else {
-      return (
-        <div className="flex-col align-self-stretch align-center">
-          <span className="title-text">
-            You have no transactions in need of review
-          </span>
-        </div>
-      );
-    }
+    const { isLoading } = this.state;
+    return (
+      <>
+        {isLoading && <Loader />}
+        {txns.map(t => (
+          <TxnCard
+            txn={t}
+            key={`${t.id}`}
+            userID={this.props.userID}
+            userName={this.props.userName}
+            userDepartmentID={this.props.departmentId}
+            fetchFn={this.fetchAllTxns}
+            toggleLoading={this.toggleLoading}
+          />
+        ))}
+        {txns.length === 0 && !isLoading && (
+          <div className="flex-col align-self-stretch align-center">
+            <span className="title-text">
+              You have no transactions in need of review
+            </span>
+          </div>
+        )}
+      </>
+    );
   }
 }

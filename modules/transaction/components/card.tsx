@@ -36,6 +36,7 @@ interface props {
   userID: number;
   isAdmin?: boolean;
   fetchFn(): void;
+  toggleLoading(cb?: () => void): void;
 }
 
 interface state {
@@ -133,7 +134,18 @@ export class TxnCard extends React.PureComponent<props, state> {
   updateCostCenterID = this.updateTransaction('costCenterId');
   updateDepartmentID = this.updateTransaction('departmentId');
   updateStatus = this.updateTransaction('statusId');
-  updateJobNumber = this.updateTransaction('jobId');
+  handleJobNumber = this.updateTransaction('jobId');
+
+  updateJobNumber(jobString: string) {
+    let jobNumber;
+    if (jobString.includes('-')) {
+      jobNumber = parseInt(jobString.split('-')[1]);
+    } else {
+      jobNumber = parseInt(jobString);
+    }
+
+    this.handleJobNumber(jobNumber);
+  }
 
   async submit() {
     const { txn } = this.state;
@@ -262,18 +274,27 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   handleFile() {
-    const fr = new FileReader();
-    fr.onload = async () => {
-      await this.DocsClient.upload(
-        this.state.txn.id,
-        this.FileInput.current!.files![0].name,
-        new Uint8Array(fr.result as ArrayBuffer),
-      );
-      await this.refresh();
-    };
-    if (this.FileInput.current && this.FileInput.current.files) {
-      fr.readAsArrayBuffer(this.FileInput.current.files[0]);
-    }
+    this.props.toggleLoading(() => {
+      const fr = new FileReader();
+      fr.onload = async () => {
+        try {
+          await this.DocsClient.upload(
+            this.state.txn.id,
+            this.FileInput.current!.files![0].name,
+            new Uint8Array(fr.result as ArrayBuffer),
+          );
+        } catch (err) {
+          alert('File could not be uploaded');
+          console.log(err);
+        }
+
+        await this.refresh();
+        this.props.toggleLoading(() => alert('Upload complete!'));
+      };
+      if (this.FileInput.current && this.FileInput.current.files) {
+        fr.readAsArrayBuffer(this.FileInput.current.files[0]);
+      }
+    });
   }
 
   async refresh() {
@@ -384,9 +405,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               <TextField
                 label="Job Number"
                 defaultValue={t.jobId}
-                onChange={e =>
-                  this.updateJobNumber(parseInt(e.currentTarget.value))
-                }
+                onChange={e => this.updateJobNumber(e.currentTarget.value)}
                 variant="outlined"
                 margin="none"
                 style={{ marginBottom: 10 }}
