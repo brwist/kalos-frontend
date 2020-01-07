@@ -7,11 +7,16 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { PopoverGallery } from '../../PopoverGallery/main';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
+import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
+import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import { Prompt } from '../../Prompt/main';
 import { IFile } from '../../Gallery/main';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { S3Client, FileObject } from '@kalos-core/kalos-rpc/S3File';
-import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
+import {
+  TransactionDocumentClient,
+  TransactionDocument,
+} from '@kalos-core/kalos-rpc/TransactionDocument';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { getMimeType } from './card';
@@ -27,6 +32,7 @@ interface props {
   reject(reason?: string): Promise<void>;
   refresh(): Promise<void>;
   addJobNumber(jn: string): Promise<void>;
+  toggleLoading(cb?: () => void): void;
 }
 
 interface state {
@@ -41,15 +47,45 @@ export function TransactionRow({
   reject,
   refresh,
   addJobNumber,
+  toggleLoading,
 }: props) {
   const endpoint = 'https://core-dev.kalosflorida.com:8443';
   const [state, setState] = useState<state>({
     files: [],
   });
+  const FileInput = React.createRef<HTMLInputElement>();
 
   const clients = {
     user: new UserClient(endpoint),
     email: new EmailClient(endpoint),
+    docs: new TransactionDocumentClient(endpoint),
+  };
+
+  const handleFile = (e: any) => {
+    const fr = new FileReader();
+    fr.onload = async () => {
+      try {
+        await clients.docs.upload(
+          txn.id,
+          FileInput.current!.files![0].name,
+          new Uint8Array(fr.result as ArrayBuffer),
+        );
+      } catch (err) {
+        alert('File could not be uploaded');
+        console.log(err);
+      }
+
+      await refresh();
+      alert('Upload complete!');
+      //toggleLoading(() => alert('Upload complete!'));
+    };
+    if (FileInput.current && FileInput.current.files) {
+      fr.readAsArrayBuffer(FileInput.current.files[0]);
+    }
+  };
+
+  const openFileInput = () => {
+    FileInput.current && FileInput.current.click();
   };
 
   const updateStatus = async () => {
@@ -66,22 +102,28 @@ export function TransactionRow({
   };
 
   const dispute = async (reason: string) => {
+    const id = await getSlackID(txn.ownerName);
+    const userReq = new User();
+    userReq.setId(txn.ownerId);
+    const user = await clients.user.Get(userReq);
+    const body = `Reason: ${reason}\r\nInfo: ${prettyMoney(txn.amount)} - ${
+      txn.description
+    } - ${
+      txn.vendor
+    }\r\nReview transactions here: https://app.kalosflorida.com?action=admin:reports.transactions`;
+    const email: EmailConfig = {
+      type: 'receipts',
+      recipient: user.email,
+      body,
+    };
+
     try {
-      const id = await getSlackID(txn.ownerName);
-      const userReq = new User();
-      userReq.setId(txn.ownerId);
-      const user = await clients.user.Get(userReq);
-      const body = `Reason: ${reason}\r\nInfo: ${prettyMoney(txn.amount)} - ${
-        txn.description
-      } - ${
-        txn.vendor
-      }\r\nReview transactions here: https://app.kalosflorida.com?action=admin:reports.transactions`;
-      const email: EmailConfig = {
-        type: 'receipts',
-        recipient: user.email,
-        body,
-      };
       await clients.email.sendMail(email);
+    } catch (err) {
+      alert('An error occurred, user was not notified via email');
+    }
+
+    try {
       await slackNotify(
         id,
         `A receipt you submitted has been rejected | ${
@@ -94,7 +136,7 @@ export function TransactionRow({
       );
     } catch (err) {
       console.log(err);
-      alert('An error occurred, user was not notified');
+      alert('An error occurred, user was not notified via slack');
     }
 
     await reject(reason);
@@ -103,81 +145,94 @@ export function TransactionRow({
 
   const amount = prettyMoney(txn.amount);
   return (
-    <TableRow hover>
-      <TableCell align="center">
-        {new Date(txn.timestamp.split(' ').join('T')).toLocaleDateString()}
-      </TableCell>
-      <TableCell align="center">
-        {`${txn.ownerName} (${txn.cardUsed})` || ''}
-      </TableCell>
-      <TableCell align="center">
-        {txn.costCenter
-          ? `${txn.costCenter.description} (${txn.costCenter.id})`
-          : ''}
-      </TableCell>
-      <TableCell align="center">
-        {txn.department
-          ? `${txn.department.description} (${txn.department.classification})`
-          : ''}
-      </TableCell>
-      <TableCell align="center">
-        {txn.jobId !== 0 ? (
-          txn.jobId
-        ) : (
+    <>
+      <TableRow hover>
+        <TableCell align="center">
+          {new Date(txn.timestamp.split(' ').join('T')).toLocaleDateString()}
+        </TableCell>
+        <TableCell align="center">
+          {`${txn.ownerName} (${txn.cardUsed})` || ''}
+        </TableCell>
+        <TableCell align="center">
+          {txn.costCenter
+            ? `${txn.costCenter.description} (${txn.costCenter.id})`
+            : ''}
+        </TableCell>
+        <TableCell align="center">
+          {txn.department
+            ? `${txn.department.description} (${txn.department.classification})`
+            : ''}
+        </TableCell>
+        <TableCell align="center">{txn.jobId}</TableCell>
+        <TableCell align="center">${amount}</TableCell>
+        <TableCell align="center">
+          {txn.description} / {txn.vendor}
+        </TableCell>
+        <TableCell align="right">
+          <Tooltip title="Copy data to clipboard" placement="top">
+            <IconButton
+              onClick={() =>
+                copyToClipboard(
+                  `${new Date(
+                    txn.timestamp.split(' ').join('T'),
+                  ).toLocaleDateString()},${txn.description},${amount}`,
+                )
+              }
+            >
+              <CopyIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Upload File" placement="top">
+            <IconButton onClick={openFileInput}>
+              <UploadIcon />
+            </IconButton>
+          </Tooltip>
           <Prompt
             confirmFn={addJobNumber}
             text="Update Job Number"
-            prompt="Job Number: "
+            prompt="New Job Number: "
+            Icon={KeyboardIcon}
           />
-        )}
-      </TableCell>
-      <TableCell align="center">${amount}</TableCell>
-      <TableCell align="center">{txn.description}</TableCell>
-      <TableCell align="right">
-        <Tooltip title="Copy data to clipboard" placement="top">
-          <IconButton
-            onClick={() =>
-              copyToClipboard(
-                `${new Date(
-                  txn.timestamp.split(' ').join('T'),
-                ).toLocaleDateString()},${txn.description},${amount}`,
-              )
-            }
+          <PopoverGallery
+            title="Receipt Photos"
+            fileList={state.files}
+            text="View receipt photos"
+            onOpen={() => fetchFiles(txn, setState)}
+            disabled={txn.documentsList.length === 0}
+            iconButton
+          />
+          <TxnLog iconButton txnID={txn.id} />
+          <TxnNotes
+            iconButton
+            text="View notes"
+            notes={txn.notes}
+            disabled={txn.notes === ''}
+          />
+          <Tooltip
+            title={departmentView ? 'Mark as accepted' : 'Mark as entered'}
+            placement="top"
           >
-            <CopyIcon />
-          </IconButton>
-        </Tooltip>
-        <PopoverGallery
-          title="Receipt Photos"
-          fileList={state.files}
-          text="View receipt photos"
-          onOpen={() => fetchFiles(txn, setState)}
-          disabled={txn.documentsList.length === 0}
-          iconButton
-        />
-        <TxnLog iconButton txnID={txn.id} />
-        <TxnNotes
-          iconButton
-          text="View notes"
-          notes={txn.notes}
-          disabled={txn.notes === ''}
-        />
-        <Tooltip
-          title={departmentView ? 'Mark as accepted' : 'Mark as entered'}
-          placement="top"
-        >
-          <IconButton onClick={updateStatus}>
-            <SubmitIcon />
-          </IconButton>
-        </Tooltip>
-        <Prompt
-          confirmFn={dispute}
-          text="Reject transaction"
-          prompt="Enter reason for rejection: "
-          Icon={RejectIcon}
-        />
-      </TableCell>
-    </TableRow>
+            <IconButton onClick={updateStatus}>
+              <SubmitIcon />
+            </IconButton>
+          </Tooltip>
+          <Prompt
+            confirmFn={dispute}
+            text="Reject transaction"
+            prompt="Enter reason for rejection: "
+            Icon={RejectIcon}
+          />
+        </TableCell>
+        <TableCell style={{ display: 'none' }}>
+          <input
+            type="file"
+            ref={FileInput}
+            onChange={handleFile}
+            style={{ display: 'none' }}
+          />
+        </TableCell>
+      </TableRow>
+    </>
   );
 }
 
@@ -185,7 +240,6 @@ async function fetchFiles(
   txn: Transaction.AsObject,
   setState: (state: state) => void,
 ) {
-  console.log('doc list: ', txn.documentsList);
   const filesList = txn.documentsList
     .filter(d => d.reference)
     .map(d => {
@@ -199,10 +253,7 @@ async function fetchFiles(
   const promiseArr = txn.documentsList.filter(d => d.reference).map(fetchFile);
 
   const fileObjects = await Promise.all(promiseArr);
-  console.log('Files from S3:', fileObjects);
   const files = filesList.map(f => {
-    console.log('File in list:', f);
-    console.log(fileObjects);
     const fileObj = fileObjects.find(
       obj => obj.key.replace(`${txn.id}-`, '') === f.name,
     );
@@ -221,7 +272,6 @@ function fetchFile(doc: TransactionDocument.AsObject) {
   const s3 = new S3Client('https://core-dev.kalosflorida.com:8443');
   const fileObj = new FileObject();
   fileObj.setBucket('kalos-transactions');
-  console.log(`${doc.transactionId}-${doc.reference}`);
   fileObj.setKey(`${doc.transactionId}-${doc.reference}`);
   return s3.Get(fileObj);
 }

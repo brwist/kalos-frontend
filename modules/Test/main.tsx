@@ -1,25 +1,22 @@
-import React from "react";
+import React from 'react';
 
 interface props {
   userId: number;
 }
 
 interface state {
-  customers: 
+  customers: any[];
 }
 
 export class Test extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      customers: []
-    }
+      customers: [],
+    };
   }
-\
-
-
 
   render() {
-    return ()
+    return <div>Test 2!</div>;
   }
 }

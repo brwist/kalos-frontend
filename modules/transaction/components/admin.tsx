@@ -24,7 +24,7 @@ import { DepartmentPicker } from '../../Pickers/Department';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { EmployeePicker } from '../../Pickers/Employee';
 import { TxnStatusPicker } from '../../Pickers/TransactionStatus';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { Loader } from '../../Loader/main';
 import Typography from '@material-ui/core/Typography';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
@@ -95,7 +95,19 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.handleSubmitPage = this.handleSubmitPage.bind(this);
     this.copyPage = this.copyPage.bind(this);
     this.makeAddJobNumber = this.makeAddJobNumber.bind(this);
+    this.toggleLoading = this.toggleLoading.bind(this);
   }
+
+  toggleLoading = (cb?: () => void) => {
+    this.setState(
+      prevState => ({
+        isLoading: !prevState.isLoading,
+      }),
+      () => {
+        cb && cb();
+      },
+    );
+  };
 
   toggleView() {
     this.setState(prevState => ({
@@ -159,15 +171,19 @@ export class TransactionAdminView extends React.Component<props, state> {
   }
 
   makeAddJobNumber(id: number) {
-    return async (jobNumber: string) => {
+    return async (jobString: string) => {
       try {
+        let jobNumber;
+        if (jobString.includes('-')) {
+          jobNumber = parseInt(jobString.split('-')[1]);
+        } else {
+          jobNumber = parseInt(jobString);
+        }
         const txn = new Transaction();
-        const jn = jobNumberFromString(jobNumber);
         txn.setId(id);
-        txn.setJobId(jn);
+        txn.setJobId(jobNumber);
         txn.setFieldMaskList(['JobId']);
         const res = await this.TxnClient.Update(txn);
-        console.log(res);
         await this.fetchTxns();
       } catch (err) {
         alert('Job number could not be set');
@@ -308,7 +324,6 @@ export class TransactionAdminView extends React.Component<props, state> {
     const activity = new TransactionActivity();
     activity.setIsActive(1);
     activity.setTimestamp(timestamp());
-    console.log(timestamp());
     activity.setUserId(this.props.userID);
     activity.setDescription(description);
     activity.setTransactionId(id);
@@ -494,37 +509,26 @@ export class TransactionAdminView extends React.Component<props, state> {
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
-            {!this.state.isLoading && (
-              <TableBody>
-                {txns.map(t => (
-                  <TransactionRow
-                    txn={t}
-                    key={`txnRow-${t.id}`}
-                    departmentView={this.state.departmentView}
-                    enter={this.makeUpdateStatus(t.id, 5, 'recorded')}
-                    accept={this.makeUpdateStatus(t.id, 3, 'accepted')}
-                    reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
-                    refresh={this.fetchTxns}
-                    addJobNumber={this.makeAddJobNumber(t.id)}
-                  />
-                ))}
-              </TableBody>
-            )}
+            <TableBody>
+              {txns.map(t => (
+                <TransactionRow
+                  txn={t}
+                  key={`txnRow-${t.id}`}
+                  departmentView={this.state.departmentView}
+                  enter={this.makeUpdateStatus(t.id, 5, 'recorded')}
+                  accept={this.makeUpdateStatus(t.id, 3, 'accepted')}
+                  reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
+                  refresh={this.fetchTxns}
+                  addJobNumber={this.makeAddJobNumber(t.id)}
+                  toggleLoading={this.toggleLoading}
+                />
+              ))}
+            </TableBody>
           </Table>
           {!this.state.isLoading && this.state.count === 0 && (
             <Typography>0 results</Typography>
           )}
-          {this.state.isLoading && (
-            <CircularProgress
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                marginLeft: '-20px',
-                marginTop: '-20px',
-              }}
-            />
-          )}
+          {this.state.isLoading && <Loader />}
         </>
       </Paper>
     );
@@ -557,12 +561,4 @@ function timestamp() {
   }
 
   return `${dateObj.getFullYear()}-${month}-${day} ${hour}:${minute}:00`;
-}
-
-function jobNumberFromString(jn: string) {
-  if (jn.includes('-')) {
-    return parseInt(jn.split('-')[1]);
-  } else {
-    return parseInt(jn);
-  }
 }

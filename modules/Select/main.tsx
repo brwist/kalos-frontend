@@ -229,7 +229,6 @@ export class DepartmentSelect extends React.PureComponent<
   }
 
   render() {
-    console.log(this);
     return (
       <DeptSelect
         items={this.state.list}

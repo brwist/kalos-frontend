@@ -14,6 +14,7 @@ import {
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { Gallery, IFile } from '../../Gallery/main';
+import { AltGallery, GalleryData } from '../../AltGallery/main';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { DepartmentPicker } from '../../Pickers/Department';
 import { TxnLog } from './log';
@@ -289,7 +290,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         }
 
         await this.refresh();
-        this.props.toggleLoading(() => alert('Upload complete!'));
+        this.props.toggleLoading(() => alert('Upload complete'));
       };
       if (this.FileInput.current && this.FileInput.current.files) {
         fr.readAsArrayBuffer(this.FileInput.current.files[0]);
@@ -330,6 +331,15 @@ export class TxnCard extends React.PureComponent<props, state> {
     fileObj.setBucket('kalos-transactions');
     fileObj.setKey(`${this.state.txn.id}-${doc.reference}`);
     return this.S3Client.Get(fileObj);
+  }
+
+  getGalleryData(): GalleryData[] {
+    return this.state.txn.documentsList.map(d => {
+      return {
+        key: `${this.state.txn.id}-${d.reference}`,
+        bucket: 'kalos-transactions',
+      };
+    });
   }
 
   async fetchFiles() {
@@ -374,6 +384,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     if (this.props.isAdmin) {
       subheader = `${subheader}\n${t.ownerName}`;
     }
+    const galleryData = this.getGalleryData();
     return (
       <>
         <Card elevation={3} className="card" key={`${t.id}`} id={`${t.id}`}>
@@ -429,18 +440,15 @@ export class TxnCard extends React.PureComponent<props, state> {
               justify="space-evenly"
               alignItems="center"
             >
-              {!this.props.isAdmin && (
-                <Button
-                  onClick={this.openFilePrompt}
-                  startIcon={<AddAPhotoTwoTone />}
-                  variant="outlined"
-                  size="large"
-                  fullWidth
-                  style={{ height: 44, marginBottom: 10 }}
-                >
-                  Photo
-                </Button>
-              )}
+              <Button
+                onClick={this.openFilePrompt}
+                startIcon={<AddAPhotoTwoTone />}
+                size="large"
+                fullWidth
+                style={{ height: 44, marginBottom: 10 }}
+              >
+                Photo
+              </Button>
               <Gallery
                 title="Receipt Photo(s)"
                 text="Photo(s)"
@@ -449,11 +457,9 @@ export class TxnCard extends React.PureComponent<props, state> {
                 disabled={t.documentsList.length === 0}
                 deleteFn={this.deleteFile}
               />
-              {this.props.isAdmin && <TxnLog txnID={this.state.txn.id} />}
               {!this.props.isAdmin && (
                 <Button
                   startIcon={<SendTwoTone />}
-                  variant="outlined"
                   size="large"
                   fullWidth
                   style={{ height: 44, marginBottom: 10 }}
@@ -465,25 +471,12 @@ export class TxnCard extends React.PureComponent<props, state> {
               {this.props.isAdmin && (
                 <Button
                   startIcon={<SendTwoTone />}
-                  variant="outlined"
                   size="large"
                   fullWidth
                   style={{ height: 44, marginBottom: 10 }}
                   onClick={this.approve}
                 >
                   Approve
-                </Button>
-              )}
-              {this.props.isAdmin && (
-                <Button
-                  startIcon={<SendTwoTone />}
-                  variant="outlined"
-                  size="large"
-                  fullWidth
-                  style={{ height: 44, marginBottom: 10 }}
-                  onClick={this.reject}
-                >
-                  Reject
                 </Button>
               )}
             </Grid>

@@ -13,6 +13,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.7.7",
     "@types/google-protobuf": "^3.7.2",
     "@types/node": "^12.7.8",
     "@types/react-dom": "^16.9.2",
@@ -49,6 +50,7 @@
     "date-fns": "^2.6.0",
     "google-protobuf": "^3.10.0",
     "lottie-web": "^5.5.9",
+    "pako": "^1.0.10",
     "react": "^16.10.1",
     "react-dom": "^16.10.1",
     "tslib": "^1.10.0"

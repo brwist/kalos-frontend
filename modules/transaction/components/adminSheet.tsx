@@ -151,7 +151,6 @@ export class TransactionAdminView extends React.PureComponent<props, state> {
             reqObj.setPageNumber(this.state.page + 1);
             const res = await this.TxnClient.BatchGet(reqObj);
             const txns = res.getResultsList();
-            console.log(txns);
             const matrix = txns.map(txnToArray);
             const sortFunc = this.getSortFunc();
             this.sortAndSet(sortFunc, matrix);
@@ -190,9 +189,7 @@ export class TransactionAdminView extends React.PureComponent<props, state> {
       }
     } else {
       reqTxn = updateReqObj(reqTxn, colName, txnRow[columnIndex]);
-      console.log(reqTxn.toObject());
     }
-    console.log(reqTxn.toObject());
     await this.TxnClient.Update(reqTxn);
     await this.fetchTxnMatrix();
     return true;
@@ -240,11 +237,6 @@ export class TransactionAdminView extends React.PureComponent<props, state> {
       value = 'XXXXXXXXX';
     }*/
     return value;
-  }
-
-  testFunc(context: IMenuContext) {
-    console.log(context);
-    console.log(context.getTarget());
   }
 
   renderBodyContextMenu(context: IMenuContext) {
@@ -338,7 +330,6 @@ function numberSortDesc(a: any, b: any) {
 function updateReqObj(reqObj: Txn, columnName: string, value: any): Txn {
   const propName = columnName.split(' ').join('');
   const methodName = `set${propName}`;
-  console.log(methodName, reqObj.hasOwnProperty('setVendor'));
   //@ts-ignore
   reqObj[methodName](value);
   reqObj.setFieldMaskList([propName]);

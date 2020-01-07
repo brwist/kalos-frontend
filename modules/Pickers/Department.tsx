@@ -61,7 +61,34 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
   }
 
   componentDidMount() {
-    this.fetchList();
+    const cacheListStr = localStorage.getItem('DEPARTMENT_LIST');
+    if (cacheListStr) {
+      const cacheList = JSON.parse(cacheListStr);
+      if (cacheList && cacheList.length !== 0) {
+        this.setState({
+          list: cacheList,
+        });
+      } else {
+        this.fetchList();
+      }
+    } else {
+      this.fetchList();
+    }
+  }
+
+  componentDidUpdate(prevProps: props, prevState: state) {
+    if (
+      this.state.list.length > 0 &&
+      prevState.list.length === this.state.list.length
+    ) {
+      const cacheList = localStorage.getItem('DEPARTMENT_LIST');
+      if (!cacheList) {
+        localStorage.setItem(
+          'DEPARTMENT_LIST',
+          JSON.stringify(this.state.list),
+        );
+      }
+    }
   }
 
   render() {
@@ -74,6 +101,7 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
           disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
+          IconComponent={undefined}
           inputProps={{ id: 'cost-center-picker' }}
         >
           <option value={0}>Select Department</option>
