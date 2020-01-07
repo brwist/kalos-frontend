@@ -64,6 +64,7 @@ function start() {
                     return [3 /*break*/, 8];
                 case 2:
                     err_1 = _a.sent();
+                    error(err_1);
                     _a.label = 3;
                 case 3:
                     _a.trys.push([3, 6, , 7]);
@@ -76,7 +77,8 @@ function start() {
                     return [3 /*break*/, 7];
                 case 6:
                     err_2 = _a.sent();
-                    console.log('Failed to determine target from branch or CLI flags');
+                    error(err_2);
+                    error('Failed to determine target from branch or CLI flags');
                     return [3 /*break*/, 7];
                 case 7: return [3 /*break*/, 8];
                 case 8: return [2 /*return*/];
@@ -294,7 +296,6 @@ function rollupBuild() {
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
                     }
-                    console.log('starting bundler');
                     return [4 /*yield*/, rollup.rollup({
                             input: "modules/" + target + "/main.tsx",
                             plugins: [
@@ -323,7 +324,6 @@ function rollupBuild() {
                         })];
                 case 5:
                     bundle = _a.sent();
-                    console.log('writing bundle');
                     return [4 /*yield*/, bundle.write({
                             file: "build/modules/" + target + ".js",
                             name: titleCase(target),

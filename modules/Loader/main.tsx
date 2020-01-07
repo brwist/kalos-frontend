@@ -5,13 +5,21 @@ function Loader() {
   const style: React.CSSProperties = {
     backgroundColor: 'grey',
     position: 'absolute',
-    opacity: 0.1,
+    opacity: 0.2,
     zIndex: 100,
     height: window.innerHeight,
     width: window.innerWidth,
-    top: -1 * window.scrollX,
+    top: window.scrollY,
   };
 
+  React.useEffect(() => {
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return function cleanup() {
+      document.body.style.overflow = oldOverflow;
+    };
+  });
   return (
     <>
       <div style={style} />
@@ -19,7 +27,7 @@ function Loader() {
         style={{
           zIndex: 300,
           position: 'absolute',
-          top: '50%',
+          top: window.innerHeight * 0.5 + window.scrollY,
           left: '50%',
           marginLeft: -10,
           marginTop: -10,

@@ -35,9 +35,11 @@ export function TxnNotes({ text, onOpen, iconButton, disabled, notes }: props) {
 
   const button = iconButton ? (
     <Tooltip title={text} placement="top">
-      <IconButton onClick={toggleOpen} disabled={disabled}>
-        <NotesIcon />
-      </IconButton>
+      <span>
+        <IconButton onClick={toggleOpen} disabled={disabled}>
+          <NotesIcon />
+        </IconButton>
+      </span>
     </Tooltip>
   ) : (
     <Button

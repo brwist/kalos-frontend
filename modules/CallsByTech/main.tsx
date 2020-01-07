@@ -162,10 +162,8 @@ export class CallsByTech extends React.PureComponent<{}, state> {
       await this.toggleLoading();
     }
     const reqObj = new Event();
-    console.log(`${this.getDateString()} 00:00:00`);
     reqObj.setDateStarted(`${this.getDateString()} 00:00:00`);
     reqObj.setPageNumber(page);
-    console.log(`%${this.state.selectedID}%`);
     reqObj.setLogTechnicianAssigned(`%${this.state.selectedID}%`);
     const res = (await this.EventClient.BatchGet(reqObj)).toObject();
     this.setState(

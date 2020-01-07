@@ -101,14 +101,11 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     return async (value: Event.AsObject[K]) => {
       const event = new Event();
       const upperCaseProp = `${prop[0].toUpperCase()}${prop.slice(1)}`;
-      console.log(prop, upperCaseProp);
       const methodName = `set${upperCaseProp}`;
-      console.log(methodName);
       event.setId(this.state.event.id);
       //@ts-ignore
       event[methodName](value);
       event.setFieldMaskList([upperCaseProp]);
-      console.log(event.toObject());
       const updatedEvent = await this.EventClient.Update(event);
       this.setState(() => ({ event: updatedEvent }));
     };
@@ -165,7 +162,6 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     const { event } = this.state;
     let assigned = event.logTechnicianAssigned.split(',');
     assigned = assigned.filter(a => a !== '0');
-    console.log(assigned);
     const id = e.currentTarget.name;
     if (assigned.includes(id!)) {
       assigned = assigned.filter(a => a !== id);
@@ -197,7 +193,6 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
   onTimeChange(fn: (str: string) => Promise<void>) {
     return (date: MaterialUiPickersDate) => {
       if (date) {
-        console.log(date.getHours(), date.getMinutes());
         const hourPrefix = date.getHours() < 10 ? '0' : '';
         const minutePrefix = date.getMinutes() < 10 ? '0' : '';
         const dateString = `${hourPrefix}${date.getHours()}:${minutePrefix}${date.getMinutes()}`;

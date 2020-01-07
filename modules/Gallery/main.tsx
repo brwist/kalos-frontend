@@ -10,6 +10,7 @@ import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
 import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 
 interface props {
   fileList: IFile[];
@@ -39,13 +40,12 @@ export function Gallery({
 }: props) {
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
+  const S3 = new S3Client();
 
   const toggleOpen = () => {
     setOpen(!isOpen);
-    console.log(isOpen);
     if (onOpen && !isOpen) {
       try {
-        console.log('calling on open?');
         onOpen();
       } catch (err) {
         console.log(err);
@@ -82,20 +82,39 @@ export function Gallery({
       } else if (img.mimeType && img.data) {
         return `data:${img.mimeType};base64,${img.data}`;
       } else {
-        return img.data;
+        const mimeType = S3.getMimeType(img.name);
+        return `data:${mimeType};base64,${img.data}`;
       }
     }
+  };
+
+  const b64toBlob = (b64Data: string, contentType = '', sliceSize = 512) => {
+    const byteCharacters = atob(b64Data);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    const blob = new Blob(byteArrays, { type: contentType });
+    return blob;
   };
 
   const downloadImg = () => {
     const img = fileList[activeImage];
     const el = document.createElement('a');
-    const type = img.mimeType ? img.mimeType.split('/')[1] : 'png';
-    const src = getSource(img);
-    console.log('src: ', src);
-    console.log(fileList);
-    el.download = `${img.name}`;
-    el.href = src!;
+    const type = S3.getMimeType(img.name);
+    const src = b64toBlob(img.data!, type);
+    el.download = img.name;
+    el.href = URL.createObjectURL(src);
     el.click();
   };
 
@@ -107,7 +126,6 @@ export function Gallery({
     </Tooltip>
   ) : (
     <Button
-      variant="outlined"
       size="large"
       style={{ height: 44, marginBottom: 10 }}
       fullWidth

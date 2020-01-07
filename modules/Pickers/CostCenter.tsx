@@ -65,11 +65,26 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    await this.fetchAccounts();
+    const cacheListStr = localStorage.getItem('COST_CENTER_LIST');
+    if (cacheListStr) {
+      const cacheList = JSON.parse(cacheListStr);
+      if (cacheList && cacheList.length !== 0) {
+        this.setState({
+          accountList: cacheList,
+        });
+      } else {
+        await this.fetchAccounts();
+      }
+    } else {
+      await this.fetchAccounts();
+    }
   }
 
   componentDidUpdate(prevProps: props, prevState: state) {
-    if (prevState.accountList.length === this.state.accountList.length) {
+    if (
+      this.state.accountList.length > 0 &&
+      prevState.accountList.length === this.state.accountList.length
+    ) {
       const cacheList = localStorage.getItem('COST_CENTER_LIST');
       if (!cacheList) {
         localStorage.setItem(
@@ -90,6 +105,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
           disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
+          IconComponent={undefined}
           inputProps={{ id: 'cost-center-picker' }}
         >
           <option value={0}>Select Purchase Type</option>

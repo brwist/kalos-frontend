@@ -44,13 +44,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
   }
 
   addItem(item: User.AsObject) {
-    console.log('adding user');
     if (this.props.test) {
-      console.log(
-        'testing employee',
-        this.props.test(item),
-        item.employeeDepartmentId,
-      );
       if (this.props.test(item)) {
         this.setState(prevState => ({
           list: prevState.list.concat(item),
@@ -72,7 +66,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     this.Client.List(user, this.addItem);
   }
 
-  componentDidUpdate(prevProps: props) {
+  componentDidUpdate(prevProps: props, prevState: state) {
     if (
       (!prevProps.test && this.props.test) ||
       (prevProps.test && !this.props.test)
@@ -84,10 +78,31 @@ export class EmployeePicker extends React.PureComponent<props, state> {
         this.fetchUsers,
       );
     }
+    if (
+      this.state.list.length > 0 &&
+      prevState.list.length === this.state.list.length
+    ) {
+      const cacheList = localStorage.getItem('EMPLOYEE_LIST');
+      if (!cacheList) {
+        localStorage.setItem('EMPLOYEE_LIST', JSON.stringify(this.state.list));
+      }
+    }
   }
 
   componentDidMount() {
-    this.fetchUsers();
+    const cacheListStr = localStorage.getItem('EMPLOYEE_LIST');
+    if (cacheListStr) {
+      const cacheList = JSON.parse(cacheListStr);
+      if (cacheList && cacheList.length !== 0) {
+        this.setState({
+          list: cacheList,
+        });
+      } else {
+        this.fetchUsers();
+      }
+    } else {
+      this.fetchUsers();
+    }
   }
 
   render() {

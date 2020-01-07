@@ -26,14 +26,12 @@ export class Directory extends React.PureComponent<props, state> {
   }
 
   addEmployee(emp: User.AsObject) {
-    console.log(emp);
     this.setState(prevState => ({
       employees: prevState.employees.concat(emp),
     }));
   }
 
   async componentDidMount() {
-    console.log('?');
     const req = new User();
     req.setIsEmployee(1);
     req.setIsActive(1);

@@ -68,7 +68,6 @@ export class TxnUploadRow extends React.PureComponent<props, state> {
 
   updateCostCenter(id: number) {
     const { txn } = this.state;
-    console.log(id);
     txn.setCostCenterId(id);
     this.setState({
       costCenterID: id,
@@ -102,11 +101,6 @@ export class TxnUploadRow extends React.PureComponent<props, state> {
     txn.setCostCenterId(this.state.costCenterID);
     try {
       const res = await this.TxnClient.Create(txn);
-      console.log(
-        this.props.source[0],
-        this.props.source[2],
-        this.props.source[5],
-      );
       this.props.onUpload(this.props.source.join(','));
     } catch (err) {
       console.log('transaction upload failed', err);
@@ -115,8 +109,6 @@ export class TxnUploadRow extends React.PureComponent<props, state> {
 
   render() {
     const { txn, postDate, category, credit, isEditing } = this.state;
-    console.log(txn.getCostCenterId());
-    const costCenter = txn.getCostCenterId();
     return (
       <TableRow>
         <TableCell>{txn.getTimestamp()}</TableCell>

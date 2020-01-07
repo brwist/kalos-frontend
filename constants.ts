@@ -16,6 +16,7 @@ const NAMED_EXPORTS = {
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/S3_pb.js': [
     'FileObject',
+    'URLObject',
     'BucketObject',
     'S3Files',
   ],
@@ -326,6 +327,27 @@ const PAYMENT_TYPE_LIST = [
 const DUMMY_USER = 'test';
 const DUMMY_PWD = 'test';
 
+const COLORS = {
+  light1: '#FAFAFC',
+  light2: '#F2F2F5',
+  light3: '#EBEBF0',
+  dark1: '#8F90A6',
+  dark2: '#555770',
+  dark3: '#28293D',
+  primary1: '#FF908A',
+  primary2: '#FF453A',
+  primary3: '#F20E00',
+};
+
+const ELEVATION = {
+  card: '0px 1px 2px #00000052',
+  button: '0px 2px 4px #00000052',
+  menu: '0px 4px 8px #00000052',
+  card2: '0px 8px 16px #00000052',
+  popover: '0px 16px 24px #00000052',
+  modals: '0px 20px 32px #00000052',
+};
+
 module.exports = {
   BASE_URL,
   KALOS_ROOT,
@@ -337,4 +359,5 @@ module.exports = {
   DUMMY_PWD,
   DUMMY_USER,
   PAYMENT_TYPE_LIST,
+  COLORS,
 };

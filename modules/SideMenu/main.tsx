@@ -75,7 +75,6 @@ export class SideMenu extends React.PureComponent<props, state> {
       const req = new User();
       req.setId(this.props.userID);
       const user = await this.UserClient.Get(req);
-      console.log(user);
       this.setState({ user }, this.userManagerCheck);
     } catch (err) {
       console.log(err);

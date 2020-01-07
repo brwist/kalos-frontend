@@ -5,6 +5,10 @@ import {
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TxnCard } from './card';
 import { Loader } from '../../Loader/main';
+import { NativeSelect } from '@material-ui/core';
+import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+
+const MISSING_RECEIPT_KEY = 'KALOS MISSING RECIEPT AFFADAVIT';
 
 interface props {
   userID: number;
@@ -17,11 +21,12 @@ interface state {
   page: number;
   isLoading: boolean;
   transactions: Transaction.AsObject[];
-  layout: string;
+  totalCount: number;
 }
 
 export class TransactionUserView extends React.PureComponent<props, state> {
   TxnClient: TransactionClient;
+  S3Client: S3Client;
 
   constructor(props: props) {
     super(props);
@@ -29,12 +34,13 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       page: 0,
       isLoading: false,
       transactions: [],
-      layout: 'list',
+      totalCount: 0,
     };
-    this.TxnClient = new TransactionClient(
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    const endpoint = 'https://core-dev.kalosflorida.com:8443';
+    this.TxnClient = new TransactionClient(endpoint);
+    this.S3Client = new S3Client(endpoint);
 
+    this.downloadAffadavit = this.downloadAffadavit.bind(this);
     this.changePage = this.changePage.bind(this);
     this.fetchTxns = this.fetchTxns.bind(this);
     this.fetchAllTxns = this.fetchAllTxns.bind(this);
@@ -85,15 +91,24 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       },
       await (async () => {
         const newTxns = await this.fetchTxns(1);
-        console.log(newTxns);
         const rejectedTxns = await this.fetchTxns(4);
-        console.log(rejectedTxns);
         this.setState({
           transactions: newTxns.concat(rejectedTxns),
           isLoading: false,
         });
       }),
     );
+  }
+
+  async downloadAffadavit(e: React.SyntheticEvent<HTMLSelectElement>) {
+    if (e.currentTarget.value.length > 0) {
+      try {
+        const key = `${MISSING_RECEIPT_KEY}${e.currentTarget.value}`;
+        await this.S3Client.download(key, 'kalos-transactions');
+      } catch (err) {
+        console.log(err);
+      }
+    }
   }
 
   async componentDidMount() {
@@ -110,6 +125,13 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     return (
       <>
         {isLoading && <Loader />}
+        {!isLoading && (
+          <NativeSelect onChange={this.downloadAffadavit}>
+            <option value="">Download Missing Receipt Form</option>
+            <option value=".pdf">PDF</option>
+            <option value=".docx">Word Document</option>
+          </NativeSelect>
+        )}
         {txns.map(t => (
           <TxnCard
             txn={t}

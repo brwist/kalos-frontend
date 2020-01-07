@@ -82,8 +82,6 @@ export function PopoverGallery({
     const img = fileList[activeImage];
     const el = document.createElement('a');
     const src = getSource(img);
-    console.log('src: ', src);
-    console.log(fileList);
     el.download = `${img.name}`;
     el.href = src!;
     el.click();
@@ -91,9 +89,11 @@ export function PopoverGallery({
 
   const button = iconButton ? (
     <Tooltip title={text} placement="top">
-      <IconButton onClick={toggleOpen} disabled={disabled}>
-        <ImageSearchSharp />
-      </IconButton>
+      <span>
+        <IconButton onClick={toggleOpen} disabled={disabled}>
+          <ImageSearchSharp />
+        </IconButton>
+      </span>
     </Tooltip>
   ) : (
     <Button

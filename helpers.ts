@@ -50,7 +50,6 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
     `https://slack.com/api/users.list?token=${KALOS_BOT}`,
   );
   const jsonRes = await res.json();
-  console.log(jsonRes);
   const resString = JSON.stringify(jsonRes.members);
   localStorage.setItem('SLACK_USER_CACHE', resString);
   return jsonRes.members;
