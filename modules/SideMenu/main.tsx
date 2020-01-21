@@ -33,6 +33,8 @@ import {
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import customTheme from '../Theme/main';
 
 interface props {
   userID: number;
@@ -109,12 +111,14 @@ export class SideMenu extends React.PureComponent<props, state> {
         'http://',
         'https://',
       );
-    }
-    await this.UserClient.GetToken('test', 'test');
-    await this.getIdentity();
-    if (href.includes('admin') && this.state.user.isEmployee === 0) {
-      window.location.href =
-        'https://app.kalosflorida.com/index.cfm?action=customer:account.dashboard';
+    } else {
+      await this.UserClient.GetToken('test', 'test');
+      await this.getIdentity();
+      console.log(this.state.user);
+      //if (href.includes('admin') && this.state.user.isEmployee === 0) {
+      //  window.location.href =
+      //    'https://app.kalosflorida.com/index.cfm?action=customer:account.dashboard';
+      //}
     }
   }
 
@@ -207,7 +211,7 @@ export class SideMenu extends React.PureComponent<props, state> {
                 <ListItemIcon>
                   <PerDiemIcon />
                 </ListItemIcon>
-                <ListItemText primary="New Per Diem" />
+                <ListItemText primary="Per Diem" />
               </ListItem>
               <ListItem href={timesheet} component="a">
                 <ListItemIcon>

@@ -299,7 +299,7 @@ function rollupBuild() {
                     return [4 /*yield*/, rollup.rollup({
                             input: "modules/" + target + "/main.tsx",
                             plugins: [
-                                resolve({ preferBuiltins: true }),
+                                resolve({ preferBuiltins: true, browser: true }),
                                 commonjs({
                                     namedExports: c.NAMED_EXPORTS
                                 }),
@@ -319,11 +319,11 @@ function rollupBuild() {
                                     comments: 'all',
                                     sourcemap: true
                                 }),
-                                terser(),
                             ]
                         })];
                 case 5:
                     bundle = _a.sent();
+                    console.log(target);
                     return [4 /*yield*/, bundle.write({
                             file: "build/modules/" + target + ".js",
                             name: titleCase(target),

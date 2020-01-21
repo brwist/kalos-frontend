@@ -1,11 +1,10 @@
 import React from 'react';
 import Typography from '@material-ui/core/Typography';
-import { ThemeProvider } from '@material-ui/core/styles';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Button from '@material-ui/core/Button';
 import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
 import customTheme from '../Theme/main';
 import Paper from '@material-ui/core/Paper';
-const { COLORS } = require('../../constants');
 
 interface props {
   userID: number;
@@ -21,8 +20,9 @@ const overlay: React.CSSProperties = {
   position: 'absolute',
   opacity: 0.2,
   zIndex: 100,
-  height: window.innerHeight,
-  width: window.innerWidth,
+  height: screen.height,
+  width: screen.width,
+  bottom: '-170px',
 };
 
 const modal: React.CSSProperties = {
@@ -80,7 +80,7 @@ export class TimesheetCheck extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <ThemeProvider theme={customTheme}>
+      <ThemeProvider theme={customTheme.lightTheme}>
         <div style={this.state.hasReceiptsIssue ? overlay : {}} />
         {this.state.receiptsIssueStr && (
           <Paper style={modal} elevation={20}>

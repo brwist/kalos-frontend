@@ -11,6 +11,7 @@ import CloseSharp from '@material-ui/icons/CloseSharp';
 import ImageSearchSharp from '@material-ui/icons/ImageSearchSharp';
 import Popover from '@material-ui/core/Popover';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 
 interface props {
   fileList: IFile[];
@@ -41,6 +42,7 @@ export function PopoverGallery({
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null,
   );
+  const S3 = new S3Client('https://core-dev.kalosflorida.com:8443');
 
   const toggleOpen = async (event: React.MouseEvent<HTMLButtonElement>) => {
     setOpen(!isOpen);
@@ -78,12 +80,16 @@ export function PopoverGallery({
     }
   };
 
-  const downloadImg = () => {
+  const getHREF = () => {
     const img = fileList[activeImage];
+    const src = S3.b64toBlob(img.data!, img.name);
+    return URL.createObjectURL(src);
+  };
+
+  const downloadImg = () => {
     const el = document.createElement('a');
-    const src = getSource(img);
-    el.download = `${img.name}`;
-    el.href = src!;
+    el.download = fileList[activeImage].name;
+    el.href = getHREF();
     el.click();
   };
 
@@ -186,13 +192,13 @@ export function PopoverGallery({
             <Grid item style={{ height: '100%', width: '100%' }}>
               {fileList[activeImage].mimeType === 'application/pdf' && (
                 <iframe
-                  src={getSource(fileList[activeImage])}
+                  src={getHREF()}
                   style={{ width: '100%', height: '100%' }}
                 ></iframe>
               )}
               {fileList[activeImage].mimeType !== 'application/pdf' && (
                 <img
-                  src={getSource(fileList[activeImage])}
+                  src={getHREF()}
                   style={{ width: '100%', height: 'auto' }}
                 />
               )}

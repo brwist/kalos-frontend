@@ -158,7 +158,12 @@ export class TxnCard extends React.PureComponent<props, state> {
         if (txn.jobId !== 0) {
           const job = new Event();
           job.setId(txn.jobId);
-          const res = await this.EventClient.Get(job);
+          let res;
+          try {
+            res = await this.EventClient.Get(job);
+          } catch (err) {
+            console.log(err);
+          }
           if (!res || res.id === 0) {
             throw 'The entered job number is invalid';
           }
@@ -346,9 +351,13 @@ export class TxnCard extends React.PureComponent<props, state> {
     const filesList = this.state.txn.documentsList
       .filter(d => d.reference)
       .map(d => {
+        const arr = d.reference.split('.');
+        const mimeTypeStr = arr[arr.length - 1];
+        console.log(mimeTypeStr);
+        console.log(this.S3Client.getMimeType(mimeTypeStr));
         return {
           name: d.reference,
-          mimeType: getMimeType(d.reference.split('.')[1]),
+          mimeType: this.S3Client.getMimeType(mimeTypeStr),
           data: '',
         };
       });
@@ -367,6 +376,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       }
       return f;
     });
+    console.log(files);
     this.setState({
       files,
     });
@@ -384,7 +394,6 @@ export class TxnCard extends React.PureComponent<props, state> {
     if (this.props.isAdmin) {
       subheader = `${subheader}\n${t.ownerName}`;
     }
-    const galleryData = this.getGalleryData();
     return (
       <>
         <Card elevation={3} className="card" key={`${t.id}`} id={`${t.id}`}>

@@ -208,6 +208,16 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_pb.js': [
     'Task',
     'TaskList',
+    'ToolFund',
+    'SpiffList',
+    'Spiff',
+  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/metrics_pb.js': [
+    'MetricsClient',
+    'Billable',
+    'AvgTicket',
+    'Revenue',
+    'Callbacks',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_assignment_pb.js': [
     'TaskAssignment',
@@ -224,6 +234,7 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb.js': [
     'TimeoffRequest',
     'TimeoffRequestList',
+    'PTO',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb.js': [
     'TimesheetLine',

@@ -7,6 +7,7 @@ import { TxnCard } from './card';
 import { Loader } from '../../Loader/main';
 import { NativeSelect } from '@material-ui/core';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+import { getEditDistance } from '../../../helpers';
 
 const MISSING_RECEIPT_KEY = 'KALOS MISSING RECIEPT AFFADAVIT';
 
@@ -44,6 +45,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     this.changePage = this.changePage.bind(this);
     this.fetchTxns = this.fetchTxns.bind(this);
     this.fetchAllTxns = this.fetchAllTxns.bind(this);
+    this.handleCostCenterChange = this.handleCostCenterChange.bind(this);
   }
 
   changePage(changeAmount: number) {
@@ -109,6 +111,29 @@ export class TransactionUserView extends React.PureComponent<props, state> {
         console.log(err);
       }
     }
+  }
+
+  handleCostCenterChange(txn: Transaction.AsObject) {
+    let IDList: number[] = [];
+    for (const t of this.state.transactions) {
+      if (t.vendor === txn.vendor) {
+        IDList = [...IDList, t.id];
+      } else {
+        const editDistance = getEditDistance(txn.vendor, t.vendor);
+        console.log(editDistance);
+      }
+    }
+    const newTxns = this.state.transactions.slice().map(t => {
+      if (IDList.includes(t.id)) {
+        t.costCenterId = txn.costCenterId;
+        return t;
+      } else {
+        return t;
+      }
+    });
+    this.setState({
+      transactions: newTxns,
+    });
   }
 
   async componentDidMount() {

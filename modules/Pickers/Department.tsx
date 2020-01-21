@@ -107,7 +107,7 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
           <option value={0}>Select Department</option>
           {this.state.list.map(item => (
             <option value={item.id} key={`${item.description}-${item.id}`}>
-              {item.description}
+              {item.value} - {item.description}
             </option>
           ))}
         </NativeSelect>

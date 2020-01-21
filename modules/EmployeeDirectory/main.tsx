@@ -18,7 +18,6 @@ import TableCell from '@material-ui/core/TableCell';
 import TableRow from '@material-ui/core/TableRow';
 import TableHead from '@material-ui/core/TableHead';
 import TableBody from '@material-ui/core/TableBody';
-import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Grid from '@material-ui/core/Grid';
 import Dialog from '@material-ui/core/Dialog';
 import Divider from '@material-ui/core/Divider';
@@ -30,10 +29,15 @@ import TextField from '@material-ui/core/TextField';
 import Toolbar from '@material-ui/core/Toolbar';
 import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import customTheme from '../Theme/main';
+import { DepartmentPicker } from '../Pickers/Department';
 import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import Paper from '@material-ui/core/Paper';
+import CssBaseline from '@material-ui/core/CssBaseline';
 
 interface props {
   userId: number;
@@ -48,6 +52,7 @@ interface state {
   isModalOpen: boolean;
   searchString: string;
   showInactive: boolean;
+  departmentID: number;
 }
 
 export class EmployeeDirectory extends React.Component<props, state> {
@@ -60,6 +65,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
       users: [],
       user: new User().toObject(),
       totalUsers: 0,
+      departmentID: 0,
       isModalOpen: false,
       timeSheetDepartments: [],
       searchString: '',
@@ -74,6 +80,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
     //this.saveAsPDF = this.saveAsPDF.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.toggleshowInactive = this.toggleshowInactive.bind(this);
+    this.updateDepartment = this.updateDepartment.bind(this);
   }
 
   handleInputChange = (
@@ -143,6 +150,12 @@ export class EmployeeDirectory extends React.Component<props, state> {
     el.remove();
   }
 
+  updateDepartment(ID: number) {
+    this.setState({
+      departmentID: ID,
+    });
+  }
+
   async componentDidMount() {
     await this.UserClient.GetToken('test', 'test');
     await this.fetchUser();
@@ -171,6 +184,11 @@ export class EmployeeDirectory extends React.Component<props, state> {
     //if (this.state.searchString.length >= 3) {
     //  users = users.filter(searchUsers);
     //}
+    if (this.state.departmentID) {
+      users = users.filter(
+        user => user.employeeDepartmentId === this.state.departmentID,
+      );
+    }
     const selectedUser = this.state.users.find(
       user => user.id === this.state.selectedUserId,
     );
@@ -185,197 +203,224 @@ export class EmployeeDirectory extends React.Component<props, state> {
     }
 
     return (
-      <Grid container direction="column" alignItems="center" justify="center">
-        {this.state.users.length === 0 && (
-          <CircularProgress style={{ position: 'absolute', top: '50%' }} />
-        )}
-
-        <Toolbar>
-          <Tooltip title="Download as PDF">
-            <IconButton href="http://app.kalosflorida.com/index.cfm?action=admin:user.contact_list_pdf">
-              <PdfIcon />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Employee Group">
-            <IconButton href="https://app.kalosflorida.com/index.cfm?action=admin:user.employeedept">
-              <GroupIcon />
-            </IconButton>
-          </Tooltip>
-
-          {this.state.user.isAdmin === 1 && (
-            <Tooltip title="Add Employee">
-              <IconButton href="https://app.kalosflorida.com/index.cfm?action=admin:user.edit">
-                <AddIcon />
-              </IconButton>
-            </Tooltip>
+      <ThemeProvider theme={customTheme.lightTheme}>
+        <CssBaseline />
+        <Grid container direction="column" alignItems="center" justify="center">
+          {this.state.users.length === 0 && (
+            <CircularProgress style={{ position: 'absolute', top: '50%' }} />
           )}
 
-          <Tooltip title="Employee Detail">
-            <IconButton href="https://app.kalosflorida.com/index.cfm?action=admin:user.employees_detail">
-              <ImportContactsIcon />
-            </IconButton>
-          </Tooltip>
-
-          <TextField
-            label="Search Employees"
-            onChange={this.handleInputChange}
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={this.state.showInactive}
-                onChange={this.toggleshowInactive}
-                value="Inactives"
-                color="primary"
-              />
-            }
-            label={'Show Inactive'}
-          />
-        </Toolbar>
-
-        {this.state.users.length !== 0 && (
-          <Table stickyHeader style={{ width: '80%' }} size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell align="center">First Name</TableCell>
-                <TableCell align="center">Last Name</TableCell>
-                {this.state.user.isAdmin === 1 && (
-                  <TableCell align="center"></TableCell>
-                )}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {users.map(user => (
-                <TableRow hover key={`${user.id}-${user.lastname}-trow`}>
-                  <TableCell
-                    id={`${user.id}-lastname`}
-                    onClick={this.toggleModal}
-                    align="center"
-                  >
-                    {user.lastname}
-                  </TableCell>
-                  <TableCell
-                    id={`${user.id}-firstname`}
-                    onClick={this.toggleModal}
-                    align="center"
-                  >
-                    {user.firstname}
-                  </TableCell>
-                  {this.state.user.isAdmin === 1 && (
-                    <TableCell align="center">
-                      <Tooltip title="View Spiff Log" placement="top">
-                        <IconButton
-                          onClick={() =>
-                            this.openLink(
-                              `https://app.kalosflorida.com/index.cfm?action=admin:tasks.spiff_tool_logs&type=tool&rt=all&reportUserId=${user.id}`,
-                            )
-                          }
-                        >
-                          <BuildIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="View Timesheet" placement="top">
-                        <IconButton
-                          target="_blank"
-                          href={`https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetview&timesheetAction=cardview&user_id=${user.id}&search_user_id=${user.id}&timesheetadmin=${this.state.user.isAdmin}`}
-                        >
-                          <ScheduleIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit User" placement="top">
-                        <IconButton
-                          onClick={() =>
-                            this.openLink(
-                              `https://app.kalosflorida.com/index.cfm?action=admin:user.edit&id=${user.id}`,
-                            )
-                          }
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-        {selectedUser && (
-          <Dialog
-            open={this.state.isModalOpen}
-            fullScreen
-            onClose={this.toggleModal}
+          <Toolbar
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-evenly',
+              alignItems: 'center',
+              width: '90%',
+            }}
           >
-            <Grid container direction="column" alignItems="center">
-              <IconButton
-                style={{ alignSelf: 'stretch' }}
-                onClick={this.toggleModal}
-              >
-                <CloseIcon />
-              </IconButton>
-              <Avatar src="https://app.kalosflorida.com/app/assets/images/user-icon.png" />
-              <List>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primary="Email"
-                    primaryTypographyProps={{ variant: 'h6' }}
-                    secondaryTypographyProps={{ variant: 'h4' }}
-                    secondary={selectedUser.email}
-                  />
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primaryTypographyProps={{ variant: 'h6' }}
-                    secondaryTypographyProps={{ variant: 'h4' }}
-                    primary="First Name"
-                    secondary={selectedUser.firstname}
-                  />
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primaryTypographyProps={{ variant: 'h6' }}
-                    secondaryTypographyProps={{ variant: 'h4' }}
-                    primary="Last Name"
-                    secondary={selectedUser.lastname}
-                  />
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primaryTypographyProps={{ variant: 'h6' }}
-                    secondaryTypographyProps={{ variant: 'h4' }}
-                    primary="Phone Number"
-                    secondary={selectedUser.phone}
-                  />
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primary="Title"
-                    primaryTypographyProps={{ variant: 'h6' }}
-                    secondaryTypographyProps={{ variant: 'h4' }}
-                    secondary={selectedUser.empTitle}
-                  />
-                </ListItem>
-                <Divider />
-                <ListItem>
-                  <ListItemText
-                    primary="Manager"
-                    primaryTypographyProps={{ variant: 'h6' }}
-                    secondaryTypographyProps={{ variant: 'h4' }}
-                    secondary={department ? department.description : ''}
-                  />
-                </ListItem>
-                <Divider />
-              </List>
-            </Grid>
-          </Dialog>
-        )}
-      </Grid>
+            <span>
+              <Tooltip title="Download as PDF">
+                <IconButton
+                  href="http://app.kalosflorida.com/index.cfm?action=admin:user.contact_list_pdf"
+                  style={{ marginBottom: '10px' }}
+                >
+                  <PdfIcon />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Employee Group">
+                <IconButton
+                  href="https://app.kalosflorida.com/index.cfm?action=admin:user.employeedept"
+                  style={{ marginBottom: '10px' }}
+                >
+                  <GroupIcon />
+                </IconButton>
+              </Tooltip>
+
+              {this.state.user.isAdmin === 1 && (
+                <Tooltip title="Add Employee">
+                  <IconButton
+                    href="https://app.kalosflorida.com/index.cfm?action=admin:user.edit"
+                    style={{ marginBottom: '10px' }}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              <Tooltip title="Employee Detail">
+                <IconButton
+                  href="https://app.kalosflorida.com/index.cfm?action=admin:user.employees_detail"
+                  style={{ marginBottom: '10px' }}
+                >
+                  <ImportContactsIcon />
+                </IconButton>
+              </Tooltip>
+            </span>
+            <TextField
+              label="Search Employees"
+              onChange={this.handleInputChange}
+              style={{ marginBottom: '10px' }}
+            />
+
+            <DepartmentPicker
+              label="Filter by Department"
+              onSelect={this.updateDepartment}
+              selected={this.state.departmentID}
+            />
+            {/*<FormControlLabel
+              control={
+                <Switch
+                  checked={this.state.showInactive}
+                  onChange={this.toggleshowInactive}
+                  value="Inactives"
+                  color="primary"
+                />
+              }
+              label={'Show Inactive'}
+            />*/}
+          </Toolbar>
+
+          {this.state.users.length !== 0 && (
+            <Paper style={{ width: '90%' }} elevation={7}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center">Last Name</TableCell>
+                    <TableCell align="center">First Name</TableCell>
+                    {this.state.user.isAdmin === 1 && (
+                      <TableCell align="center"></TableCell>
+                    )}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {users.map(user => (
+                    <TableRow hover key={`${user.id}-${user.lastname}-trow`}>
+                      <TableCell
+                        id={`${user.id}-lastname`}
+                        onClick={this.toggleModal}
+                        align="center"
+                      >
+                        {user.lastname}
+                      </TableCell>
+                      <TableCell
+                        id={`${user.id}-firstname`}
+                        onClick={this.toggleModal}
+                        align="center"
+                      >
+                        {user.firstname}
+                      </TableCell>
+                      {this.state.user.isAdmin === 1 && (
+                        <TableCell align="center">
+                          <Tooltip title="View Spiff Log" placement="top">
+                            <IconButton
+                              target="_blank"
+                              href={`https://app.kalosflorida.com/index.cfm?action=admin:tasks.spiff_tool_logs&type=tool&rt=all&reportUserId=${user.id}`}
+                            >
+                              <BuildIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="View Timesheet" placement="top">
+                            <IconButton
+                              target="_blank"
+                              href={`https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetview&timesheetAction=cardview&user_id=${user.id}&search_user_id=${user.id}&timesheetadmin=${this.state.user.isAdmin}`}
+                            >
+                              <ScheduleIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit User" placement="top">
+                            <IconButton
+                              target="_blank"
+                              href={`https://app.kalosflorida.com/index.cfm?action=admin:user.edit&id=${user.id}`}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          )}
+          {selectedUser && (
+            <Dialog
+              open={this.state.isModalOpen}
+              fullScreen
+              onClose={this.toggleModal}
+            >
+              <Grid container direction="column" alignItems="center">
+                <IconButton
+                  style={{ alignSelf: 'stretch' }}
+                  onClick={this.toggleModal}
+                >
+                  <CloseIcon />
+                </IconButton>
+                <Avatar src="https://app.kalosflorida.com/app/assets/images/user-icon.png" />
+                <List>
+                  <Divider />
+                  <ListItem>
+                    <ListItemText
+                      primary="Email"
+                      primaryTypographyProps={{ variant: 'h6' }}
+                      secondaryTypographyProps={{ variant: 'h4' }}
+                      secondary={selectedUser.email}
+                    />
+                  </ListItem>
+                  <Divider />
+                  <ListItem>
+                    <ListItemText
+                      primaryTypographyProps={{ variant: 'h6' }}
+                      secondaryTypographyProps={{ variant: 'h4' }}
+                      primary="First Name"
+                      secondary={selectedUser.firstname}
+                    />
+                  </ListItem>
+                  <Divider />
+                  <ListItem>
+                    <ListItemText
+                      primaryTypographyProps={{ variant: 'h6' }}
+                      secondaryTypographyProps={{ variant: 'h4' }}
+                      primary="Last Name"
+                      secondary={selectedUser.lastname}
+                    />
+                  </ListItem>
+                  <Divider />
+                  <ListItem>
+                    <ListItemText
+                      primaryTypographyProps={{ variant: 'h6' }}
+                      secondaryTypographyProps={{ variant: 'h4' }}
+                      primary="Phone Number"
+                      secondary={selectedUser.phone}
+                    />
+                  </ListItem>
+                  <Divider />
+                  <ListItem>
+                    <ListItemText
+                      primary="Title"
+                      primaryTypographyProps={{ variant: 'h6' }}
+                      secondaryTypographyProps={{ variant: 'h4' }}
+                      secondary={selectedUser.empTitle}
+                    />
+                  </ListItem>
+                  <Divider />
+                  <ListItem>
+                    <ListItemText
+                      primary="Manager"
+                      primaryTypographyProps={{ variant: 'h6' }}
+                      secondaryTypographyProps={{ variant: 'h4' }}
+                      secondary={department ? department.description : ''}
+                    />
+                  </ListItem>
+                  <Divider />
+                </List>
+              </Grid>
+            </Dialog>
+          )}
+        </Grid>
+      </ThemeProvider>
     );
   }
 }
@@ -388,8 +433,11 @@ function sortUsers(a: User.AsObject, b: User.AsObject) {
 
 function makeSearchUsers(searchString: string) {
   return (user: User.AsObject) => {
-    return `${user.lastname} ${user.firstname}`
-      .toLowerCase()
-      .includes(searchString);
+    return (
+      `${user.lastname} ${user.firstname}`
+        .toLowerCase()
+        .includes(searchString) ||
+      `${user.firstname} ${user.lastname}`.toLowerCase().includes(searchString)
+    );
   };
 }

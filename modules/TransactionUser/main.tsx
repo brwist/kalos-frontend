@@ -4,7 +4,7 @@ import { TransactionUserView } from '../Transaction/components/user';
 import Grid from '@material-ui/core/Grid';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { ThemeProvider } from '@material-ui/core';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 
 interface props {
@@ -60,14 +60,13 @@ export default class Transaction extends React.PureComponent<props, state> {
   render() {
     if (!this.state.isLoading) {
       return (
-        <ThemeProvider theme={customTheme}>
+        <ThemeProvider theme={customTheme.lightTheme}>
           <Grid
             container
             direction="column"
             alignItems="center"
             justify="flex-start"
           >
-            <CssBaseline />
             <Grid
               container
               direction="column"
