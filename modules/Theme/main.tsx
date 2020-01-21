@@ -1,17 +1,5 @@
 import React from 'react';
-import createMuiTheme, {
-  ThemeOptions,
-} from '@material-ui/core/styles/createMuiTheme';
-import {
-  green,
-  red,
-  blue,
-  purple,
-  deepOrange,
-  orange,
-} from '@material-ui/core/colors';
-
-const { COLORS, ELEVATION } = require('../../constants');
+import createMuiTheme from '@material-ui/core/styles/createMuiTheme';
 
 interface props {
   userId: number;
@@ -27,7 +15,7 @@ export class Theme extends React.PureComponent<props, state> {
     return <h1>Theme!</h1>;
   }
 }
-
+/*
 const customTheme = createMuiTheme({
   shape: {
     borderRadius: 4,
@@ -55,9 +43,234 @@ const customTheme = createMuiTheme({
     type: 'dark',
     info: blue,
   },
+});*/
+
+const darkTheme = createMuiTheme({
+  breakpoints: {
+    keys: ['xs', 'sm', 'md', 'lg', 'xl'],
+    values: { xs: 0, lg: 1280, sm: 600, xl: 1920, md: 960 },
+  },
+  mixins: {
+    toolbar: {
+      minHeight: 56,
+      '@media (min-width:0px) and (orientation: landscape)': {
+        minHeight: 48,
+      },
+      '@media (min-width:600px)': { minHeight: 64 },
+    },
+  },
+  shadows: [
+    'none',
+    '0px 1px 3px 0px rgba(0, 0, 0, 0.2),0px 1px 1px 0px rgba(0, 0, 0, 0.14),0px 2px 1px -1px rgba(0, 0, 0, 0.12)',
+    '0px 1px 5px 0px rgba(0, 0, 0, 0.2),0px 2px 2px 0px rgba(0, 0, 0, 0.14),0px 3px 1px -2px rgba(0, 0, 0, 0.12)',
+    '0px 1px 8px 0px rgba(0, 0, 0, 0.2),0px 3px 4px 0px rgba(0, 0, 0, 0.14),0px 3px 3px -2px rgba(0, 0, 0, 0.12)',
+    '0px 2px 4px -1px rgba(0, 0, 0, 0.2),0px 4px 5px 0px rgba(0, 0, 0, 0.14),0px 1px 10px 0px rgba(0, 0, 0, 0.12)',
+    '0px 3px 5px -1px rgba(0, 0, 0, 0.2),0px 5px 8px 0px rgba(0, 0, 0, 0.14),0px 1px 14px 0px rgba(0, 0, 0, 0.12)',
+    '0px 3px 5px -1px rgba(0, 0, 0, 0.2),0px 6px 10px 0px rgba(0, 0, 0, 0.14),0px 1px 18px 0px rgba(0, 0, 0, 0.12)',
+    '0px 4px 5px -2px rgba(0, 0, 0, 0.2),0px 7px 10px 1px rgba(0, 0, 0, 0.14),0px 2px 16px 1px rgba(0, 0, 0, 0.12)',
+    '0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0, 0, 0, 0.12)',
+    '0px 5px 6px -3px rgba(0, 0, 0, 0.2),0px 9px 12px 1px rgba(0, 0, 0, 0.14),0px 3px 16px 2px rgba(0, 0, 0, 0.12)',
+    '0px 6px 6px -3px rgba(0, 0, 0, 0.2),0px 10px 14px 1px rgba(0, 0, 0, 0.14),0px 4px 18px 3px rgba(0, 0, 0, 0.12)',
+    '0px 6px 7px -4px rgba(0, 0, 0, 0.2),0px 11px 15px 1px rgba(0, 0, 0, 0.14),0px 4px 20px 3px rgba(0, 0, 0, 0.12)',
+    '0px 7px 8px -4px rgba(0, 0, 0, 0.2),0px 12px 17px 2px rgba(0, 0, 0, 0.14),0px 5px 22px 4px rgba(0, 0, 0, 0.12)',
+    '0px 7px 8px -4px rgba(0, 0, 0, 0.2),0px 13px 19px 2px rgba(0, 0, 0, 0.14),0px 5px 24px 4px rgba(0, 0, 0, 0.12)',
+    '0px 7px 9px -4px rgba(0, 0, 0, 0.2),0px 14px 21px 2px rgba(0, 0, 0, 0.14),0px 5px 26px 4px rgba(0, 0, 0, 0.12)',
+    '0px 8px 9px -5px rgba(0, 0, 0, 0.2),0px 15px 22px 2px rgba(0, 0, 0, 0.14),0px 6px 28px 5px rgba(0, 0, 0, 0.12)',
+    '0px 8px 10px -5px rgba(0, 0, 0, 0.2),0px 16px 24px 2px rgba(0, 0, 0, 0.14),0px 6px 30px 5px rgba(0, 0, 0, 0.12)',
+    '0px 8px 11px -5px rgba(0, 0, 0, 0.2),0px 17px 26px 2px rgba(0, 0, 0, 0.14),0px 6px 32px 5px rgba(0, 0, 0, 0.12)',
+    '0px 9px 11px -5px rgba(0, 0, 0, 0.2),0px 18px 28px 2px rgba(0, 0, 0, 0.14),0px 7px 34px 6px rgba(0, 0, 0, 0.12)',
+    '0px 9px 12px -6px rgba(0, 0, 0, 0.2),0px 19px 29px 2px rgba(0, 0, 0, 0.14),0px 7px 36px 6px rgba(0, 0, 0, 0.12)',
+    '0px 10px 13px -6px rgba(0, 0, 0, 0.2),0px 20px 31px 3px rgba(0, 0, 0, 0.14),0px 8px 38px 7px rgba(0, 0, 0, 0.12)',
+    '0px 10px 13px -6px rgba(0, 0, 0, 0.2),0px 21px 33px 3px rgba(0, 0, 0, 0.14),0px 8px 40px 7px rgba(0, 0, 0, 0.12)',
+    '0px 10px 14px -6px rgba(0, 0, 0, 0.2),0px 22px 35px 3px rgba(0, 0, 0, 0.14),0px 8px 42px 7px rgba(0, 0, 0, 0.12)',
+    '0px 11px 14px -7px rgba(0, 0, 0, 0.2),0px 23px 36px 3px rgba(0, 0, 0, 0.14),0px 9px 44px 8px rgba(0, 0, 0, 0.12)',
+    '0px 11px 15px -7px rgba(0, 0, 0, 0.2),0px 24px 38px 3px rgba(0, 0, 0, 0.14),0px 9px 46px 8px rgba(0, 0, 0, 0.12)',
+  ],
+  direction: 'ltr',
+  overrides: {
+    MuiTableCell: {
+      stickyHeader: {
+        backgroundColor: '#28293D',
+      },
+    },
+  },
+  transitions: {
+    easing: {
+      easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      easeOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
+      easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
+      sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
+    },
+    duration: {
+      standard: 300,
+      short: 250,
+      enteringScreen: 225,
+      shorter: 200,
+      leavingScreen: 195,
+      shortest: 150,
+      complex: 375,
+    },
+  },
+  typography: {
+    //@ts-ignore
+    headline: {
+      color: '#FAFAFC',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      lineHeight: '1.35417em',
+      fontSize: '1.5rem',
+      fontWeight: 400,
+    },
+    display2: {
+      marginLeft: '-.02em',
+      color: '#F2F2F5',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      lineHeight: '1.13333em',
+      fontSize: '2.8125rem',
+      fontWeight: 400,
+    },
+    fontWeightLight: 300,
+    display3: {
+      marginLeft: '-.02em',
+      color: '#F2F2F5',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      letterSpacing: '-.02em',
+      lineHeight: '1.30357em',
+      fontSize: '3.5rem',
+      fontWeight: 400,
+    },
+    display4: {
+      marginLeft: '-.04em',
+      color: '#F2F2F5',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      letterSpacing: '-.04em',
+      lineHeight: '1.14286em',
+      fontSize: '7rem',
+      fontWeight: 300,
+    },
+    fontWeightRegular: 400,
+    display1: {
+      color: '#F2F2F5',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      lineHeight: '1.20588em',
+      fontSize: '2.125rem',
+      fontWeight: 400,
+    },
+    button: {
+      textTransform: 'uppercase',
+      color: '#FAFAFC',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      fontSize: '0.875rem',
+      fontWeight: 500,
+    },
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    body2: {
+      color: '#EBEBF0',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      lineHeight: '1.71429em',
+      fontSize: '0.875rem',
+      fontWeight: 500,
+    },
+    caption: {
+      color: '#F2F2F5',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      lineHeight: '1.375em',
+      fontSize: '0.75rem',
+      fontWeight: 400,
+    },
+    fontSize: 14,
+    fontWeightMedium: 500,
+    title: {
+      color: '#FAFAFC',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      lineHeight: '1.16667em',
+      fontSize: '1.3125rem',
+      fontWeight: 500,
+    },
+    subheading: {
+      color: '#FAFAFC',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      lineHeight: '1.5em',
+      fontSize: '1rem',
+      fontWeight: 400,
+    },
+    body1: {
+      color: '#F2F2F5',
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      lineHeight: '1.46429em',
+      fontSize: '0.875rem',
+      fontWeight: 400,
+    },
+  },
+  zIndex: {
+    modal: 1300,
+    snackbar: 1400,
+    drawer: 1200,
+    appBar: 1100,
+    mobileStepper: 1000,
+    tooltip: 1500,
+  },
+  shape: { borderRadius: 4 },
+  props: {},
+  spacing: 8,
+  palette: {
+    tonalOffset: 0.2,
+    background: { paper: '#28293D', default: '#555770' },
+    contrastThreshold: 3,
+    grey: {
+      '50': '#fafafa',
+      '100': '#f5f5f5',
+      '200': '#eeeeee',
+      '300': '#e0e0e0',
+      '400': '#bdbdbd',
+      '500': '#9e9e9e',
+      '600': '#757575',
+      '700': '#616161',
+      '800': '#424242',
+      '900': '#212121',
+      A700: '#616161',
+      A100: '#d5d5d5',
+      A400: '#303030',
+      A200: '#aaaaaa',
+    },
+    text: {
+      primary: '#F2F2F5',
+      secondary: '#EBEBF0',
+      disabled: '#FAFAFC',
+      hint: '#FAFAFC',
+    },
+    divider: '#FAFAFC',
+    secondary: {
+      main: '#00B7C4',
+      light: '#73DFE7',
+      dark: '#00CFDE',
+      contrastText: '#fff',
+    },
+    common: { black: '#000', white: '#fff' },
+    error: {
+      light: '#e57373',
+      main: '#f44336',
+      dark: '#d32f2f',
+      contrastText: '#fff',
+    },
+    type: 'dark',
+    action: {
+      hoverOpacity: 0.08,
+      hover: '#EBEBF0',
+      selected: '#FAFAFC',
+      disabledBackground: '#8F90A6',
+      disabled: '#FAFAFC',
+      active: '#F2F2F5',
+    },
+    primary: {
+      main: '#C62828',
+      light: 'rgb(209, 83, 83)',
+      dark: 'rgb(138, 28, 28)',
+      contrastText: '#fff',
+    },
+  },
 });
 
-const theme2 = createMuiTheme({
+const lightTheme = createMuiTheme({
   breakpoints: {
     keys: ['xs', 'sm', 'md', 'lg', 'xl'],
     values: { xs: 0, lg: 1280, sm: 600, xl: 1920, md: 960 },
@@ -118,7 +331,7 @@ const theme2 = createMuiTheme({
     },
   },
   typography: {
-    //@ts-ignore
+    // @ts-ignore
     headline: {
       color: 'rgba(0, 0, 0, 0.87)',
       fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
@@ -246,9 +459,9 @@ const theme2 = createMuiTheme({
     },
     divider: 'rgba(0, 0, 0, 0.12)',
     secondary: {
-      main: '#616161',
-      light: 'rgb(128, 128, 128)',
-      dark: 'rgb(67, 67, 67)',
+      main: '#00B7C4',
+      light: '#73DFE7',
+      dark: '#00CFDE',
       contrastText: '#fff',
     },
     common: { black: '#000', white: '#fff' },
@@ -276,4 +489,9 @@ const theme2 = createMuiTheme({
   },
 });
 
-export default customTheme;
+const themes = {
+  darkTheme,
+  lightTheme,
+};
+
+export default themes;

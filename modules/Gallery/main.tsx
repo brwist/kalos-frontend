@@ -79,8 +79,6 @@ export function Gallery({
     if (img) {
       if (img.uri) {
         return img.uri;
-      } else if (img.mimeType && img.data) {
-        return `data:${img.mimeType};base64,${img.data}`;
       } else {
         const mimeType = S3.getMimeType(img.name);
         return `data:${mimeType};base64,${img.data}`;
@@ -108,13 +106,16 @@ export function Gallery({
     return blob;
   };
 
-  const downloadImg = () => {
+  const getHREF = () => {
     const img = fileList[activeImage];
+    const src = S3.b64toBlob(img.data!, img.name);
+    return URL.createObjectURL(src);
+  };
+
+  const downloadImg = () => {
     const el = document.createElement('a');
-    const type = S3.getMimeType(img.name);
-    const src = b64toBlob(img.data!, type);
-    el.download = img.name;
-    el.href = URL.createObjectURL(src);
+    el.download = fileList[activeImage].name;
+    el.href = getHREF();
     el.click();
   };
 
@@ -204,13 +205,13 @@ export function Gallery({
             >
               {fileList[activeImage].mimeType === 'application/pdf' && (
                 <iframe
-                  src={getSource(fileList[activeImage])}
+                  src={getHREF()}
                   style={{ maxWidth: '100%', height: 'auto' }}
                 ></iframe>
               )}
               {fileList[activeImage].mimeType !== 'application/pdf' && (
                 <img
-                  src={getSource(fileList[activeImage])}
+                  src={getHREF()}
                   style={{ maxWidth: '100%', height: 'auto' }}
                 />
               )}

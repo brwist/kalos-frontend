@@ -25,15 +25,13 @@ yarn global add parcel
 
 ## Development
 
-Development should occur on only a single module, in a single modules branch. For example, work on `modules/Login` should occur on the `Login` branch. All modules should be title case (each unique word begins with an upper case letter)
-
-To create a new module run `yarn make`:
+Development should occur on the master branch. All modules should be title case (each unique word begins with an upper case letter). To create a new module run `yarn make`:
 
 ```
 yarn make --ModuleName
 ```
 
-This will create a new branch, switch to that branch, generate some boilerplate files, and then publish that branch. You can then run `yarn start --ModuleName` and visit `localhost:1234` in your browser. All changes will be reflected in the browser via hot module replacement.
+This will creates a new module and generates some boilerplate files. You can then run `yarn start --ModuleName` and visit `localhost:1234` in your browser. All changes will be reflected in the browser via hot module replacement.
 
 ## Development Concerns
 
@@ -55,16 +53,22 @@ import { Transaction, TransactionClient } from '@kalos-core/kalos-rpc/
 
 By allowing imports of specific files, we can avoid including large unused files and signficantly keep bundle size down.
 
-This project also includes ['@blueprintjs'](https://github.com/palantir/blueprint). This library is excellent for admin UI development, but currently does not support code splitting so care should be taken when using it.
+## Making Network Requests
+
+We use an RPC client to handle all backend requests. A list of available clients can be found here (ADD LINK). Each client exposes the same 5 methods:
+
+- Get: Fetch a single entitiy
+
+- BatchGet: Fetch a list of 25 entities
+
+- List: Stream all entities
+
+- Create: Create a new entitiy
+
+- Delete: Delete an entity
+
+Each client accepts a corresponding protobuf message type. For example, the `UserClient` methods all accept one `User` protobuf message and returns the same type of message (except for `BatchGet` which returns a List (e.g. `UserList`)).
 
 ## Releasing a Module
 
-To build your module simply run:
-
-```
-yarn bundle --ModuleName
-```
-
-This can take as long as two minutes depending on the size and complexity of your module and it's dependencies. Your module will be bundled and output to `build/ModuleName.js`.
-
-UNDER CONSTRUCTION
+Releasing a module is currenlty handled by @robbiemilejczak

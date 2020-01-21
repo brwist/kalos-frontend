@@ -91,4 +91,63 @@ interface SlackUser {
   };
 }
 
-export { cfURL, BASE_URL, timestamp, getSlackList, getSlackID, slackNotify };
+function getEditDistance(strOne: string, strTwo: string): number {
+  const strOneLen = strOne.length;
+  const strTwoLen = strTwo.length;
+  const prevRow = [];
+  const strTwoChar = [];
+  let nextCol = 0;
+  let curCol = 0;
+
+  if (strOneLen === 0) {
+    return strTwoLen;
+  }
+  if (strTwoLen === 0) {
+    return strOneLen;
+  }
+  for (let i = 0; i < strTwoLen; ++i) {
+    prevRow[i] = i;
+    strTwoChar[i] = strTwo.charCodeAt(i);
+  }
+  prevRow[strTwoLen] = strTwoLen;
+
+  let strComparison: boolean;
+  let tmp: number;
+  let j: number;
+  for (let i = 0; i < strOneLen; ++i) {
+    nextCol = i + 1;
+
+    for (j = 0; j < strTwoLen; ++j) {
+      curCol = nextCol;
+
+      strComparison = strOne.charCodeAt(i) === strTwoChar[j];
+      nextCol = prevRow[j] + (strComparison ? 0 : 1);
+      tmp = curCol + 1;
+      if (nextCol > tmp) {
+        nextCol = tmp;
+      }
+
+      tmp = prevRow[j + 1] + 1;
+      if (nextCol > tmp) {
+        nextCol = tmp;
+      }
+
+      // copy current col value into previous (in preparation for next iteration)
+      prevRow[j] = curCol;
+    }
+
+    // copy last col value into previous (in preparation for next iteration)
+    prevRow[j] = nextCol;
+  }
+  return nextCol;
+}
+
+export {
+  cfURL,
+  BASE_URL,
+  timestamp,
+  getSlackList,
+  getSlackID,
+  slackNotify,
+  getEditDistance,
+};

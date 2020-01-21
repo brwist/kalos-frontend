@@ -19,7 +19,6 @@ import {
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
-import { getMimeType } from './card';
 import { TxnLog } from './log';
 import { TxnNotes } from './notes';
 import { getSlackID, slackNotify } from '../../../helpers';
@@ -59,6 +58,7 @@ export function TransactionRow({
     user: new UserClient(endpoint),
     email: new EmailClient(endpoint),
     docs: new TransactionDocumentClient(endpoint),
+    s3: new S3Client(endpoint),
   };
 
   const handleFile = (e: any) => {
@@ -197,7 +197,8 @@ export function TransactionRow({
             title="Receipt Photos"
             fileList={state.files}
             text="View receipt photos"
-            onOpen={() => fetchFiles(txn, setState)}
+            //@ts-ignore
+            onOpen={() => fetchFiles(txn, setState, clients.s3.getMimeType)}
             disabled={txn.documentsList.length === 0}
             iconButton
           />
@@ -239,13 +240,16 @@ export function TransactionRow({
 async function fetchFiles(
   txn: Transaction.AsObject,
   setState: (state: state) => void,
+  getMimeType: (str: string) => string,
 ) {
   const filesList = txn.documentsList
     .filter(d => d.reference)
     .map(d => {
+      const arr = d.reference.split('.');
+      const mimeTypeStr = arr[arr.length - 1];
       return {
         name: d.reference,
-        mimeType: getMimeType(d.reference.split('.')[1]),
+        mimeType: getMimeType(mimeTypeStr),
         data: '',
       };
     });
