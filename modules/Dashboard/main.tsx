@@ -32,6 +32,8 @@ import { Assignments } from './components/AssignmentsTable';
 import { Spiffs } from './components/SpiffsTable';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Typography } from '@material-ui/core';
+import { timestamp } from '../../helpers';
+import { Search } from '../Search/main';
 
 interface props {
   userId: number;
@@ -44,6 +46,7 @@ interface state {
   revenue: number;
   receiptCount: number;
   recentEvents: Event.AsObject[];
+  todaysEvents: Event.AsObject[];
   toolFundBalance: number;
   availablePTO: number;
   isLoading: boolean;
@@ -56,12 +59,10 @@ type PromiseArr = [
   AvgTicket.AsObject,
   Callbacks.AsObject,
   Revenue.AsObject,
-  TransactionList,
-  EventList,
   ToolFund,
-  User.AsObject,
   PTO,
   SpiffList.AsObject,
+  EventList,
 ];
 
 export class Dashboard extends React.PureComponent<props, state> {
@@ -80,11 +81,12 @@ export class Dashboard extends React.PureComponent<props, state> {
       revenue: 0,
       receiptCount: 0,
       recentEvents: [],
+      todaysEvents: [],
       toolFundBalance: 0,
       availablePTO: 0,
-      isLoading: true,
+      isLoading: false,
       currentUser: new User().toObject(),
-      spiffs: [],
+      spiffs: [new Spiff().toObject()],
     };
 
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
@@ -96,70 +98,138 @@ export class Dashboard extends React.PureComponent<props, state> {
     this.PTOCLient = new TimeoffRequestClient(endpoint);
   }
 
-  async getMetrics(): Promise<void> {
-    try {
-      const txn = new Transaction();
-      txn.setOwnerId(this.props.userId);
-      txn.setStatusId(1);
+  toggleLoading() {
+    return new Promise(resolve => {
+      this.setState(
+        prevState => ({
+          isLoading: !prevState.isLoading,
+        }),
+        resolve,
+      );
+    });
+  }
 
-      const event = new Event();
-      event.setLogTechnicianAssigned(`%${this.props.userId}%`);
-      event.setOrderBy('date_started');
-      event.setOrderDir('desc');
-      event.setIsActive(1);
+  async getTransactionCount() {
+    const txn = new Transaction();
+    txn.setOwnerId(this.props.userId);
+    txn.setStatusId(1);
+    const res = await this.TxnClient.BatchGet(txn);
+    this.setState({
+      receiptCount: res.getTotalCount(),
+    });
+  }
 
-      const user = new User();
-      user.setId(this.props.userId);
+  async getRecentEvents() {
+    const event = new Event();
+    event.setLogTechnicianAssigned(`%${this.props.userId}%`);
+    event.setOrderBy('date_started');
+    event.setOrderDir('desc');
+    event.setIsActive(1);
+    const res = await this.EventClient.BatchGet(event);
+    this.setState({
+      recentEvents: res.toObject().resultsList,
+    });
+  }
+  async getIdentity() {
+    const user = new User();
+    user.setId(this.props.userId);
+    const res = await this.UserClient.Get(user);
+    this.setState({
+      currentUser: res,
+    });
+  }
 
-      const promiseArr = [
-        this.MetricsClient.GetBillable(this.props.userId),
-        this.MetricsClient.GetAvgTicket(this.props.userId),
-        this.MetricsClient.GetCallbacks(this.props.userId),
-        this.MetricsClient.GetRevenue(this.props.userId),
-        this.TxnClient.BatchGet(txn),
-        this.EventClient.BatchGet(event),
-        this.TaskClient.GetToolFundBalanceByID(this.props.userId),
-        this.UserClient.Get(user),
-        this.PTOCLient.PTOInquiry(this.props.userId),
-        this.TaskClient.GetAppliedSpiffs(this.props.userId),
-      ];
-      //@ts-ignore
-      const res: PromiseArr = await Promise.all(promiseArr);
-      console.log(res[8]);
+  async getBillable() {
+    if (this.state.currentUser.isHvacTech === 1) {
+      const res = await this.MetricsClient.GetBillable(this.props.userId);
       this.setState({
-        billable: res[0].value,
-        avgTicket: res[1].value,
-        callbacks: res[2].value,
-        revenue: res[3].value,
-        receiptCount: res[4].getTotalCount(),
-        recentEvents: res[5].toObject().resultsList,
-        toolFundBalance: res[6].getValue(),
-        currentUser: res[7],
-        availablePTO: res[8].getHoursAvailable(),
-        spiffs: res[9].resultsListList,
-        isLoading: false,
+        billable: parseInt(res.value.toFixed(2)),
       });
-    } catch (err) {
-      console.log('metrics could not be fetched', err);
-      if (err === 'Response closed without headers') {
-        return await this.getMetrics();
-      } else {
-        this.setState({
-          isLoading: false,
-        });
-      }
+    } else {
+      return false;
     }
+  }
+
+  async getAvgTicket() {
+    if (this.state.currentUser.isHvacTech === 1) {
+      const res = await this.MetricsClient.GetAvgTicket(this.props.userId);
+      this.setState({
+        avgTicket: parseInt(res.value.toFixed(2)),
+      });
+    } else {
+      return false;
+    }
+  }
+
+  async getCallbackCount() {
+    if (this.state.currentUser.isHvacTech === 1) {
+      const res = await this.MetricsClient.GetCallbacks(this.props.userId);
+      this.setState({
+        callbacks: res.value,
+      });
+    } else {
+      return false;
+    }
+  }
+
+  async getRevenue() {
+    if (this.state.currentUser.isHvacTech === 1) {
+      const res = await this.MetricsClient.GetRevenue(this.props.userId);
+      this.setState({
+        revenue: parseInt(res.value.toFixed(2)),
+      });
+    } else {
+      return false;
+    }
+  }
+
+  async getToolfundBalance() {
+    if (this.state.currentUser.toolFund > 0) {
+      const res = await this.TaskClient.GetToolFundBalanceByID(
+        this.props.userId,
+      );
+      this.setState({
+        toolFundBalance: parseInt(res.getValue().toFixed(2)),
+      });
+    } else {
+      return false;
+    }
+  }
+
+  async getPTO() {
+    const res = await this.PTOCLient.PTOInquiry(this.props.userId);
+    this.setState({
+      availablePTO: res.getHoursAvailable(),
+    });
+  }
+
+  async getSpiffList() {
+    const res = await this.TaskClient.GetAppliedSpiffs(this.props.userId);
+    this.setState({
+      //@ts-ignore
+      spiffs: res.resultsListList,
+    });
   }
 
   async componentDidMount() {
     await this.MetricsClient.GetToken('test', 'test');
-    await this.getMetrics();
+    await this.toggleLoading();
+    await this.getIdentity();
+    await this.getPTO();
+    await this.getTransactionCount();
+    await this.getSpiffList();
+    await this.getRecentEvents();
+    await this.getBillable();
+    await this.getAvgTicket();
+    await this.getRevenue();
+    await this.getCallbackCount();
+    await this.getToolfundBalance();
+    await this.toggleLoading();
   }
 
   render() {
     return (
       <ThemeProvider theme={themes.lightTheme}>
-        <CssBaseline />
         <Grid
           container
           direction="column"
@@ -185,7 +255,9 @@ export class Dashboard extends React.PureComponent<props, state> {
               isLoading={this.state.isLoading}
               action={
                 <Button
-                  disabled={this.state.isLoading}
+                  disabled={
+                    this.state.isLoading && this.state.availablePTO === 0
+                  }
                   color="primary"
                   variant="contained"
                   href="https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest"
@@ -202,7 +274,9 @@ export class Dashboard extends React.PureComponent<props, state> {
               isLoading={this.state.isLoading}
               action={
                 <Button
-                  disabled={this.state.isLoading}
+                  disabled={
+                    this.state.isLoading && this.state.receiptCount === 0
+                  }
                   color="primary"
                   variant="contained"
                   href="https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions"
@@ -211,23 +285,27 @@ export class Dashboard extends React.PureComponent<props, state> {
                 </Button>
               }
             ></Widget>
-            <Widget
-              title="Tool Fund Balance"
-              subtitle=""
-              displayData={`$${this.state.toolFundBalance}`}
-              displaySubtitle=""
-              isLoading={this.state.isLoading}
-              action={
-                <Button
-                  disabled={this.state.isLoading}
-                  color="primary"
-                  variant="contained"
-                  href={`https://app.kalosflorida.com/index.cfm?action=admin:tasks.spiff_tool_logs&rt=all&type=tool&reportUserId=${this.props.userId}`}
-                >
-                  Go To Tool Fund
-                </Button>
-              }
-            ></Widget>
+            {this.state.currentUser.toolFund > 0 && (
+              <Widget
+                title="Tool Fund Balance"
+                subtitle=""
+                displayData={`$${this.state.toolFundBalance}`}
+                displaySubtitle=""
+                isLoading={this.state.isLoading}
+                action={
+                  <Button
+                    disabled={
+                      this.state.isLoading && this.state.toolFundBalance === 0
+                    }
+                    color="primary"
+                    variant="contained"
+                    href={`https://app.kalosflorida.com/index.cfm?action=admin:tasks.spiff_tool_logs&rt=all&type=tool&reportUserId=${this.props.userId}`}
+                  >
+                    Go To Tool Fund
+                  </Button>
+                }
+              ></Widget>
+            )}
           </Grid>
           {this.state.currentUser.isHvacTech === 1 && (
             <>
@@ -279,11 +357,36 @@ export class Dashboard extends React.PureComponent<props, state> {
               </Paper>
             </>
           )}
-          <Spiffs spiffs={this.state.spiffs} isLoading={this.state.isLoading} />
-          <Assignments
-            events={this.state.recentEvents}
-            isLoading={this.state.isLoading}
+          <Typography
+            variant="h5"
+            component="span"
+            style={{
+              alignSelf: 'flex-start',
+              marginLeft: '6%',
+            }}
+          >
+            Search
+          </Typography>
+          <Search
+            containerStyle={{
+              width: '90%',
+              maxHeight: 400,
+              overflowY: 'scroll',
+              marginBottom: 20,
+            }}
           />
+          {this.state.spiffs.length !== 0 && (
+            <Spiffs
+              spiffs={this.state.spiffs}
+              isLoading={this.state.isLoading}
+            />
+          )}
+          {this.state.currentUser.isHvacTech === 1 && (
+            <Assignments
+              events={this.state.recentEvents}
+              isLoading={this.state.isLoading}
+            />
+          )}
         </Grid>
       </ThemeProvider>
     );

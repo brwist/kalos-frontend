@@ -17,6 +17,7 @@ export const MetricTile = ({
   isLoading,
   tooltip,
 }: tileProps) => {
+  console.log(subtitle);
   return (
     <Grid item xs={6} lg={3}>
       <Grid
@@ -28,7 +29,7 @@ export const MetricTile = ({
         <Typography variant="subtitle1" component="h1">
           {title}
         </Typography>
-        {isLoading ? (
+        {isLoading && (subtitle === '$0' || subtitle === '0') ? (
           <Skeleton variant="text" width={20} height={41} />
         ) : (
           <Tooltip placement="bottom" title={tooltip}>

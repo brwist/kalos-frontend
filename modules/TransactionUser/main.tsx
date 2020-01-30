@@ -6,6 +6,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
+import { Loader } from '../Loader/main';
 
 interface props {
   userID: number;
@@ -86,15 +87,9 @@ export default class Transaction extends React.PureComponent<props, state> {
       );
     } else {
       return (
-        <Grid
-          container
-          direction="column"
-          justify="center"
-          alignItems="center"
-          style={{ height: '100%' }}
-        >
-          <CircularProgress />
-        </Grid>
+        <ThemeProvider theme={customTheme.lightTheme}>
+          <Loader />
+        </ThemeProvider>
       );
     }
   }

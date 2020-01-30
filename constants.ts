@@ -4,6 +4,10 @@ const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
 const MODULE_CFC = `${KALOS_ROOT}/app/admin/controllers/module.cfc`;
 const MODULE_CFM = `${KALOS_ROOT}/app/admin/views/module`;
 const NAMED_EXPORTS = {
+  'node_modules/scheduler/index.js': [
+    'unstable_scheduleCallback',
+    'unstable_cancelCallback',
+  ],
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/email_pb.js': [
     'Email',

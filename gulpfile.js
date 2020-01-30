@@ -40,12 +40,15 @@ var readline = require('readline');
 var fs = require('fs');
 var rollup = require('rollup');
 var typescript = require('rollup-plugin-typescript2');
-var resolve = require('rollup-plugin-node-resolve');
-var commonjs = require('rollup-plugin-commonjs');
+var resolve = require('@rollup/plugin-node-resolve');
+var commonjs = require('@rollup/plugin-commonjs');
 var peerDependencies = require('rollup-plugin-peer-deps-external');
-var replace = require('rollup-plugin-replace');
+var replace = require('@rollup/plugin-replace');
 var cleanup = require('rollup-plugin-cleanup');
+var image = require('@rollup/plugin-image');
+var builtins = require('rollup-plugin-node-builtins');
 var terser = require('rollup-plugin-terser').terser;
+var jsonPlugin = require('@rollup/plugin-json');
 var c = require('./constants.ts');
 /**
  * Serves all modules to localhost:1234 via parcel
@@ -61,6 +64,7 @@ function start() {
                     return [4 /*yield*/, sh.exec("parcel modules/" + target + "/index.html")];
                 case 1:
                     _a.sent();
+                    console.log("parcel modules/" + target + "/index.html");
                     return [3 /*break*/, 8];
                 case 2:
                     err_1 = _a.sent();
@@ -203,11 +207,11 @@ function htmlTemplate(title) {
 }
 function mainTemplate(title) {
     title = titleCase(title);
-    return ("\nimport React from \"react\";\n\ninterface props {\n  userId: number;\n}\n\ninterface state {}\n\nexport class " + title + " extends React.PureComponent<props, state> {\n  constructor(props: props) {\n    super(props);\n  }\n  render() {\n    return <h1>" + title + "!</h1>;\n  }\n}").replace('\n', '');
+    return ("\nimport React from \"react\";\nimport ThemeProvider from '@material-ui/styles/ThemeProvider';\nimport customTheme from '../Theme/main';\n\n// add any prop types here\ninterface props {\n  userID: number;\n}\n\n// map your state here\ninterface state {}\n\nexport class " + title + " extends React.PureComponent<props, state> {\n  constructor(props: props) {\n    super(props);\n  }\n  render() {\n    return (\n      <ThemeProvider theme={customTheme.lightTheme}>\n        <h1>" + title + "!</h1>\n      </ThemeProvider>\n    );\n  }\n}").replace('\n', '');
 }
 function indexTemplate(title) {
     title = titleCase(title);
-    return ("\nimport React from 'react'\nimport ReactDOM from 'react-dom'\nimport { " + title + " } from './main'\n\nReactDOM.render(<" + title + "/>, document.getElementById('root'))\n").replace('\n', '');
+    return ("\nimport React from 'react'\nimport ReactDOM from 'react-dom'\nimport { " + title + " } from './main'\n\nReactDOM.render(<" + title + " userID={8418} />, document.getElementById('root'))\n").replace('\n', '');
 }
 function cfmTemplate(title) {
     title = titleCase(title);
@@ -286,11 +290,15 @@ function rollupBuild() {
                     return [3 /*break*/, 3];
                 case 1:
                     err_3 = _a.sent();
+                    console.log(err_3);
                     return [4 /*yield*/, getBranch()];
                 case 2:
                     target = target = (_a.sent()).replace(/\n/g, '');
                     return [3 /*break*/, 3];
-                case 3: return [4 /*yield*/, getModulesList()];
+                case 3:
+                    console.log(target);
+                    console.log(process.argv);
+                    return [4 /*yield*/, getModulesList()];
                 case 4:
                     modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
                     if (!modules.includes(target.toLowerCase())) {
@@ -299,10 +307,11 @@ function rollupBuild() {
                     return [4 /*yield*/, rollup.rollup({
                             input: "modules/" + target + "/main.tsx",
                             plugins: [
-                                resolve({ preferBuiltins: true, browser: true }),
+                                resolve({ browser: true, preferBuiltins: true }),
                                 commonjs({
                                     namedExports: c.NAMED_EXPORTS
                                 }),
+                                builtins(),
                                 typescript({
                                     tsconfigOverride: {
                                         compilerOptions: {
@@ -310,14 +319,12 @@ function rollupBuild() {
                                         }
                                     }
                                 }),
+                                image(),
+                                jsonPlugin(),
                                 peerDependencies(),
                                 replace({
                                     'process.env.NODE_ENV': JSON.stringify('production'),
                                     'core-dev.kalosflorida.com': 'core.kalosflorida.com'
-                                }),
-                                cleanup({
-                                    comments: 'all',
-                                    sourcemap: true
                                 }),
                             ]
                         })];
@@ -331,7 +338,8 @@ function rollupBuild() {
                             globals: {
                                 react: 'React',
                                 'react-dom': 'ReactDOM'
-                            }
+                            },
+                            plugins: [terser()]
                         })];
                 case 6:
                     _a.sent();

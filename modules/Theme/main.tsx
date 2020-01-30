@@ -53,6 +53,7 @@ const darkTheme = createMuiTheme({
   mixins: {
     toolbar: {
       minHeight: 56,
+      //@ts-ignore
       '@media (min-width:0px) and (orientation: landscape)': {
         minHeight: 48,
       },
@@ -278,6 +279,7 @@ const lightTheme = createMuiTheme({
   mixins: {
     toolbar: {
       minHeight: 56,
+      //@ts-ignore
       '@media (min-width:0px) and (orientation: landscape)': {
         minHeight: 48,
       },
