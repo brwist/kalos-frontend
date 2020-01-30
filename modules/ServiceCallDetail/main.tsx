@@ -5,9 +5,9 @@ import DateFnsUtils from '@date-io/date-fns';
 import {
   DatePicker,
   MuiPickersUtilsProvider,
-  MaterialUiPickersDate,
   TimePicker,
 } from '@material-ui/pickers';
+import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 import { JobTypePicker } from '../Pickers/JobType';
 import { JobSubtypePicker } from '../Pickers/JobSubtype';
 import NativeSelect from '@material-ui/core/NativeSelect';

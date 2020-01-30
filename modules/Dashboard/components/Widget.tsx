@@ -21,6 +21,7 @@ export const Widget = ({
   action,
   isLoading,
 }: WidgetProps) => {
+  console.log(displayData);
   return (
     <Grid item xs={6} lg={3}>
       <Paper elevation={7} style={{ margin: 20, padding: 10 }}>
@@ -40,7 +41,10 @@ export const Widget = ({
             </Typography>
           </span>
           <span style={{ margin: 10 }}>
-            {isLoading ? (
+            {isLoading &&
+            (displayData === '' ||
+              displayData === '0' ||
+              displayData === '$0') ? (
               <Skeleton variant="text" width={38} height={38} />
             ) : (
               <Typography variant="h4" component="span">

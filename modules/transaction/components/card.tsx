@@ -29,6 +29,7 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { red, green } from '@material-ui/core/colors';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
+import { TaskClient } from '@kalos-core/kalos-rpc/Task';
 
 interface props {
   txn: Transaction.AsObject;
@@ -61,6 +62,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   TxnClient: TransactionClient;
   DocsClient: TransactionDocumentClient;
   LogClient: TransactionActivityClient;
+  TaskClient: TaskClient;
   EventClient: EventClient;
   S3Client: S3Client;
   FileInput: React.RefObject<HTMLInputElement>;
@@ -78,6 +80,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.LogClient = new TransactionActivityClient(endpoint);
     this.S3Client = new S3Client(endpoint);
     this.EventClient = new EventClient(endpoint);
+    this.TaskClient = new TaskClient(endpoint);
 
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
@@ -176,6 +179,15 @@ export class TxnCard extends React.PureComponent<props, state> {
           throw 'Please provide a brief description in the notes';
         } else {
           await this.updateStatus(2);
+          if (txn.costCenterId === 673002) {
+            await this.TaskClient.newToolPurchase(
+              txn.amount,
+              txn.ownerId,
+              txn.vendor,
+              txn.notes,
+              txn.timestamp,
+            );
+          }
           await this.makeSubmitLog(2, 'submitted for approval');
           await this.props.fetchFn();
         }
@@ -390,7 +402,7 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   render() {
     const t = this.state.txn;
-    let subheader = `${t.description} - ${t.vendor} - $${t.amount}`;
+    let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
     if (this.props.isAdmin) {
       subheader = `${subheader}\n${t.ownerName}`;
     }
@@ -401,7 +413,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           <CardHeader
             title={`${new Date(
               t.timestamp.split(' ').join('T'),
-            ).toDateString()}`}
+            ).toDateString()} - $${t.amount}`}
             subheader={subheader}
           />
           <Grid container direction="row" wrap="nowrap" spacing={2}>
@@ -415,12 +427,11 @@ export class TxnCard extends React.PureComponent<props, state> {
               <CostCenterPicker
                 onSelect={this.updateCostCenterID}
                 selected={t.costCenterId}
-                useDevClient
+                sort={costCenterSortByPopularity}
               />
               <DepartmentPicker
                 onSelect={this.updateDepartmentID}
                 selected={t.departmentId || this.props.userDepartmentID}
-                useDevClient
               />
               <TextField
                 label="Job Number"
@@ -510,4 +521,11 @@ export function getMimeType(fileType: string) {
   } else {
     return fileType;
   }
+}
+
+function costCenterSortByPopularity(
+  a: TransactionAccount.AsObject,
+  b: TransactionAccount.AsObject,
+) {
+  return b.popularity - a.popularity;
 }

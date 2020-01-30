@@ -160,6 +160,15 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
                     </TableCell>
                   </TableRow>
                 ))}
+            {!isLoading && events.length === 0 && (
+              <TableRow>
+                <TableCell align="center" colSpan={7}>
+                  <Typography variant="body1" component="span">
+                    No Results
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Paper>

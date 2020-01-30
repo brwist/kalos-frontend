@@ -12,6 +12,7 @@ interface props {
   disabled?: boolean;
   onSelect?(id: number): void;
   test?(item: TransactionAccount.AsObject): boolean;
+  sort?(a: TransactionAccount.AsObject, b: TransactionAccount.AsObject): number;
   label?: string;
   useDevClient?: boolean;
 }
@@ -65,7 +66,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    const cacheListStr = localStorage.getItem('COST_CENTER_LIST');
+    const cacheListStr = localStorage.getItem('COST_CENTER_LIST_2');
     if (cacheListStr) {
       const cacheList = JSON.parse(cacheListStr);
       if (cacheList && cacheList.length !== 0) {
@@ -85,10 +86,10 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
       this.state.accountList.length > 0 &&
       prevState.accountList.length === this.state.accountList.length
     ) {
-      const cacheList = localStorage.getItem('COST_CENTER_LIST');
+      const cacheList = localStorage.getItem('COST_CENTER_LIST_2');
       if (!cacheList) {
         localStorage.setItem(
-          'COST_CENTER_LIST',
+          'COST_CENTER_LIST_2',
           JSON.stringify(this.state.accountList),
         );
       }
@@ -96,6 +97,12 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   }
 
   render() {
+    let accountList = this.state.accountList;
+    console.log(accountList);
+    if (this.props.sort) {
+      accountList = this.state.accountList.sort(this.props.sort);
+      console.log(accountList);
+    }
     return (
       <FormControl style={{ marginBottom: 10 }}>
         <InputLabel htmlFor="cost-center-picker">
@@ -109,7 +116,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
           inputProps={{ id: 'cost-center-picker' }}
         >
           <option value={0}>Select Purchase Type</option>
-          {this.state.accountList.map(acc => (
+          {accountList.map(acc => (
             <option value={acc.id} key={`${acc.description}-${acc.id}`}>
               {acc.description}
             </option>

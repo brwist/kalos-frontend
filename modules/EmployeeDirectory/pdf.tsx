@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactPDF from '@react-pdf/renderer';
 import { User } from '@kalos-core/kalos-rpc/User';
-
+//@ts-ignore
+import logo from './kalos-logo-2019.png';
 /*
 const semiBold = require('./OpenSans-SemiBold.ttf');
 const bold = require('./OpenSans-Bold.ttf');
@@ -93,7 +94,7 @@ const EmployeePDF = ({ users }: props) => {
     <ReactPDF.Document>
       {pages.map((page, i) => (
         <ReactPDF.Page size="LETTER" style={styles.body}>
-          {/*i === 0 && <Image style={styles.logo} src={logo} />*/}
+          {i === 0 && <ReactPDF.Image style={styles.logo} src={logo} />}
 
           <ReactPDF.View style={styles.table}>
             <ReactPDF.View style={styles.tableRow}>

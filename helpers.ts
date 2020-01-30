@@ -5,7 +5,12 @@ function cfURL(action: string, qs = '') {
   return `${BASE_URL}?action=admin:${action}${qs}`;
 }
 
-function timestamp() {
+/**
+ *
+ * @param dateOnly if true, returns only the date portion YYYY-MM-DD
+ * @returns a timestamp in the format YYYY-MM-DD HH:MM:SS
+ */
+function timestamp(dateOnly = false) {
   const dateObj = new Date();
   let month = `${dateObj.getMonth() + 1}`;
   if (month.length === 1) {
@@ -24,6 +29,9 @@ function timestamp() {
     minute = `0${minute}`;
   }
 
+  if (dateOnly) {
+    return `${dateObj.getFullYear()}-${month}-${day}`;
+  }
   return `${dateObj.getFullYear()}-${month}-${day} ${hour}:${minute}:00`;
 }
 
@@ -37,45 +45,57 @@ async function slackNotify(id: string, text: string) {
 }
 
 async function getSlackList(skipCache = false): Promise<SlackUser[]> {
-  if (!skipCache) {
-    const listStr = localStorage.getItem('SLACK_USER_CACHE');
-    if (listStr) {
-      const cacheList = JSON.parse(listStr);
-      if (cacheList) {
-        return cacheList;
+  try {
+    if (!skipCache) {
+      const listStr = localStorage.getItem('SLACK_USER_CACHE');
+      if (listStr) {
+        const cacheList = JSON.parse(listStr);
+        if (cacheList) {
+          return cacheList;
+        }
       }
     }
+    const res = await fetch(
+      `https://slack.com/api/users.list?token=${KALOS_BOT}`,
+    );
+    const jsonRes = await res.json();
+    try {
+      const resString = JSON.stringify(jsonRes.members);
+      localStorage.setItem('SLACK_USER_CACHE', resString);
+    } catch (err) {
+      console.log('failed to save slack list in local storage', err);
+    }
+    return jsonRes.members;
+  } catch (err) {
+    return getSlackList(true);
   }
-  const res = await fetch(
-    `https://slack.com/api/users.list?token=${KALOS_BOT}`,
-  );
-  const jsonRes = await res.json();
-  const resString = JSON.stringify(jsonRes.members);
-  localStorage.setItem('SLACK_USER_CACHE', resString);
-  return jsonRes.members;
 }
 
 async function getSlackID(
   userName: string,
   skipCache = false,
 ): Promise<string> {
-  let slackUsers = await getSlackList(skipCache);
-  let user = slackUsers.find(s => {
-    if (s.real_name === userName) {
-      return true;
-    }
+  try {
+    let slackUsers = await getSlackList(skipCache);
+    let user = slackUsers.find(s => {
+      if (s.real_name === userName) {
+        return true;
+      }
 
-    if (s.profile.real_name === userName) {
-      return true;
-    }
+      if (s.profile.real_name === userName) {
+        return true;
+      }
 
-    if (s.profile.real_name_normalized === userName) {
-      return true;
+      if (s.profile.real_name_normalized === userName) {
+        return true;
+      }
+    });
+    if (user) {
+      return user.id;
+    } else {
+      return await getSlackID(userName, true);
     }
-  });
-  if (user) {
-    return user.id;
-  } else {
+  } catch (err) {
     return await getSlackID(userName, true);
   }
 }
@@ -142,6 +162,15 @@ function getEditDistance(strOne: string, strTwo: string): number {
   return nextCol;
 }
 
+function getURLParams() {
+  const params = new URLSearchParams(window.location.search);
+  const res: { [key: string]: string } = {};
+  params.forEach((val: string, key: string) => {
+    res[key] = val;
+  });
+  return res;
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -150,4 +179,5 @@ export {
   getSlackID,
   slackNotify,
   getEditDistance,
+  getURLParams,
 };

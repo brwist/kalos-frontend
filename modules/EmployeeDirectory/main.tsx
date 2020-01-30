@@ -6,8 +6,8 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import PdfIcon from '@material-ui/icons/PictureAsPdf';
-//import ReactPDF from '@react-pdf/renderer';
-//import { EmployeePDF } from './pdf'; // use ./ for local imports
+import ReactPDF from '@react-pdf/renderer';
+import { EmployeePDF } from './pdf'; // use ./ for local imports
 import Tooltip from '@material-ui/core/Tooltip';
 import GroupIcon from '@material-ui/icons/Group';
 import AddIcon from '@material-ui/icons/Add';
@@ -77,7 +77,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
     this.UserClient = new UserClient('https://core-dev.kalosflorida.com:8443');
     this.addUser = this.addUser.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
-    //this.saveAsPDF = this.saveAsPDF.bind(this);
+    this.saveAsPDF = this.saveAsPDF.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.toggleshowInactive = this.toggleshowInactive.bind(this);
     this.updateDepartment = this.updateDepartment.bind(this);
@@ -141,10 +141,13 @@ export class EmployeeDirectory extends React.Component<props, state> {
     window.open(url, '_blank');
   }
 
-  saveAsPDF() {
+  async saveAsPDF() {
+    const blob = await ReactPDF.pdf(
+      <EmployeePDF users={this.state.users} />,
+    ).toBlob();
     const el = document.createElement('a');
-    el.href =
-      'http://app.kalosflorida.com/index.cfm?action=admin:user.contact_list_pdf';
+    el.download = 'employee_directory.pdf';
+    el.href = URL.createObjectURL(blob); //'http://app.kalosflorida.com/index.cfm?action=admin:user.contact_list_pdf';
     el.target = '_blank';
     el.click();
     el.remove();
@@ -222,7 +225,7 @@ export class EmployeeDirectory extends React.Component<props, state> {
             <span>
               <Tooltip title="Download as PDF">
                 <IconButton
-                  href="http://app.kalosflorida.com/index.cfm?action=admin:user.contact_list_pdf"
+                  onClick={this.saveAsPDF}
                   style={{ marginBottom: '10px' }}
                 >
                   <PdfIcon />

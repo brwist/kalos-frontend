@@ -148,9 +148,9 @@ export class SideMenu extends React.PureComponent<props, state> {
     const txnAdmin = cfURL('reports.transaction_admin');
     const txnUser = cfURL('reports.transactions');
     return (
-      <>
+      <ThemeProvider theme={customTheme.lightTheme}>
         <Hidden mdDown>
-          <Button onClick={this.toggleMenu}>
+          <Button onClick={this.toggleMenu} style={{ margin: '10px' }}>
             <img
               src={this.props.imgURL}
               alt="no img"
@@ -159,7 +159,10 @@ export class SideMenu extends React.PureComponent<props, state> {
           </Button>
         </Hidden>
         <Hidden lgUp>
-          <IconButton onClick={this.toggleMenu} style={{ color: 'white' }}>
+          <IconButton
+            onClick={this.toggleMenu}
+            style={{ color: 'white', margin: '10px' }}
+          >
             <MenuSharp />
           </IconButton>
         </Hidden>
@@ -171,33 +174,85 @@ export class SideMenu extends React.PureComponent<props, state> {
           >
             <List style={{ width: 250 }}>
               <ListItem
+                button
                 href="https://app.kalosflorida.com/index.cfm"
                 component="a"
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
               >
                 <ListItemIcon>
                   <HomeSharp />
                 </ListItemIcon>
                 <ListItemText primary="Dashboard" />
               </ListItem>
-              <ListItem href={calendar} component="a">
+              <ListItem
+                href={calendar}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <CalendarTodaySharp />
                 </ListItemIcon>
                 <ListItemText primary="Service Calendar" />
               </ListItem>
-              <ListItem href={serviceCalls} component="a">
+              <ListItem
+                href={serviceCalls}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <EventSharp />
                 </ListItemIcon>
                 <ListItemText primary="Service Call Search" />
               </ListItem>
-              <ListItem href={spiffLog} component="a">
+              <ListItem
+                href={spiffLog}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <MoneySharp />
                 </ListItemIcon>
                 <ListItemText primary="Spiff Log" />
               </ListItem>
-              <ListItem href={toolLog} component="a">
+              <ListItem
+                href={toolLog}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <AttachMoneySharp />
                 </ListItemIcon>
@@ -207,32 +262,84 @@ export class SideMenu extends React.PureComponent<props, state> {
                 href="https://www.kalosflorida.com/OT"
                 component="a"
                 target="_blank"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
               >
                 <ListItemIcon>
                   <PerDiemIcon />
                 </ListItemIcon>
                 <ListItemText primary="Per Diem" />
               </ListItem>
-              <ListItem href={timesheet} component="a">
+              <ListItem
+                href={timesheet}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <AccessTimeIcon />
                 </ListItemIcon>
                 <ListItemText primary="Timesheet" />
               </ListItem>
-              <ListItem href={txnUser} component="a">
+              <ListItem
+                href={txnUser}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <ReceiptIcon />
                 </ListItemIcon>
                 <ListItemText primary="Receipts" />
               </ListItem>
               <Divider />
-              <ListItem href={employees} component="a">
+              <ListItem
+                href={employees}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <PersonSharp />
                 </ListItemIcon>
                 <ListItemText primary="Employee Directory" />
               </ListItem>
-              <ListItem href={search} component="a">
+              <ListItem
+                href={search}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <SearchSharp />
                 </ListItemIcon>
@@ -240,31 +347,86 @@ export class SideMenu extends React.PureComponent<props, state> {
               </ListItem>
               {this.state.user.isAdmin === 1 && (
                 <>
-                  <ListItem href={reports} component="a">
+                  <ListItem
+                    href={reports}
+                    component="a"
+                    button
+                    style={{
+                      minHeight: 44,
+                      paddingRight: 16,
+                      paddingLeft: 16,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                    }}
+                  >
                     <ListItemIcon>
                       <MenuBookIcon />
                     </ListItemIcon>
                     <ListItemText primary="Reports" />
                   </ListItem>
-                  <ListItem href={dispatch} component="a">
+                  <ListItem
+                    href={dispatch}
+                    component="a"
+                    button
+                    style={{
+                      minHeight: 44,
+                      paddingRight: 16,
+                      paddingLeft: 16,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                    }}
+                  >
                     <ListItemIcon>
                       <LocationOnIcon />
                     </ListItemIcon>
                     <ListItemText primary="Dispatch" />
                   </ListItem>
-                  <ListItem href={documents} component="a">
+                  <ListItem
+                    href={documents}
+                    component="a"
+                    button
+                    style={{
+                      minHeight: 44,
+                      paddingRight: 16,
+                      paddingLeft: 16,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                    }}
+                  >
                     <ListItemIcon>
                       <PictureAsPdfSharpIcon />
                     </ListItemIcon>
                     <ListItemText primary="Kalos Documents" />
                   </ListItem>
-                  <ListItem href={productivity} component="a">
+                  <ListItem
+                    href={productivity}
+                    component="a"
+                    button
+                    style={{
+                      minHeight: 44,
+                      paddingRight: 16,
+                      paddingLeft: 16,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                    }}
+                  >
                     <ListItemIcon>
                       <BarChartSharp />
                     </ListItemIcon>
                     <ListItemText primary="Productivity / Metrics" />
                   </ListItem>
-                  <ListItem href={serviceBilling} component="a">
+                  <ListItem
+                    href={serviceBilling}
+                    component="a"
+                    button
+                    style={{
+                      minHeight: 44,
+                      paddingRight: 16,
+                      paddingLeft: 16,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                    }}
+                  >
                     <ListItemIcon>
                       <RoomServiceIcon />
                     </ListItemIcon>
@@ -273,7 +435,18 @@ export class SideMenu extends React.PureComponent<props, state> {
                 </>
               )}
               {this.state.isManager && (
-                <ListItem href={txnAdmin} component="a">
+                <ListItem
+                  href={txnAdmin}
+                  component="a"
+                  button
+                  style={{
+                    minHeight: 44,
+                    paddingRight: 16,
+                    paddingLeft: 16,
+                    paddingTop: 8,
+                    paddingBottom: 8,
+                  }}
+                >
                   <ListItemIcon>
                     <ReceiptIcon />
                   </ListItemIcon>
@@ -281,7 +454,18 @@ export class SideMenu extends React.PureComponent<props, state> {
                 </ListItem>
               )}
               <Divider />
-              <ListItem href={profile} component="a">
+              <ListItem
+                href={profile}
+                component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
+              >
                 <ListItemIcon>
                   <AccountCircleIcon />
                 </ListItemIcon>
@@ -290,6 +474,14 @@ export class SideMenu extends React.PureComponent<props, state> {
               <ListItem
                 href="https://app.kalosflorida.com/index.cfm?action=account.logout"
                 component="a"
+                button
+                style={{
+                  minHeight: 44,
+                  paddingRight: 16,
+                  paddingLeft: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                }}
               >
                 <ListItemIcon>
                   <ExitToAppIcon />
@@ -299,7 +491,7 @@ export class SideMenu extends React.PureComponent<props, state> {
             </List>
           </Drawer>
         )}
-      </>
+      </ThemeProvider>
     );
   }
 }
