@@ -81,10 +81,11 @@ export class TransactionAdminView extends React.Component<props, state> {
       },
       count: 0,
     };
+    const { userID } = this.props;
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.TxnClient = new TransactionClient(endpoint);
-    this.EventClient = new EventClient(endpoint);
-    this.PropertyClient = new PropertyClient(endpoint);
+    this.TxnClient = new TransactionClient(userID, endpoint);
+    this.EventClient = new EventClient(userID, endpoint);
+    this.PropertyClient = new PropertyClient(userID, endpoint);
 
     this.fetchTxns = this.fetchTxns.bind(this);
     this.setFilter = this.setFilter.bind(this);
@@ -277,6 +278,7 @@ export class TransactionAdminView extends React.Component<props, state> {
   makeUpdateStatus(id: number, statusID: number, description: string) {
     return async (reason?: string) => {
       const client = new TransactionClient(
+        this.props.userID,
         'https://core-dev.kalosflorida.com:8443',
       );
       const txn = new Transaction();
@@ -319,6 +321,7 @@ export class TransactionAdminView extends React.Component<props, state> {
 
   async makeLog(description: string, id: number) {
     const client = new TransactionActivityClient(
+      this.props.userID,
       'https://core-dev.kalosflorida.com:8443',
     );
     const activity = new TransactionActivity();
