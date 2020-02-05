@@ -9,6 +9,14 @@ export class Predictor {
     );
   }
 
+  async auth() {
+    try {
+      await this.PredictionClient.GetToken('test', 'test');
+    } catch (err) {
+      console.log('failed to authenticate', err);
+    }
+  }
+
   async predictCostCenter(
     vendor: string,
     ownerID: number,
@@ -23,6 +31,15 @@ export class Predictor {
         ownerID,
       );
     } catch (err) {
+      if (err.includes('authentication')) {
+        await this.auth();
+        return await this.PredictionClient.getCostCenterPrediction(
+          vendor,
+          amount,
+          notes,
+          ownerID,
+        );
+      }
       console.log(err);
       return [];
     }

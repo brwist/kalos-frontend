@@ -1,13 +1,11 @@
 import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import Divider from '@material-ui/core/Divider';
 
 interface props {
   selected: number;
@@ -30,6 +28,7 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
       list: [],
     };
     this.Client = new TimesheetDepartmentClient(
+      0,
       'https://core-dev.kalosflorida.com:8443',
     );
 
