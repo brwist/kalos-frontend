@@ -281,7 +281,7 @@ function checkBranch() {
 }
 function rollupBuild() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_3, modules, bundle;
+        var target, err_3, modules, inputStr, bundle;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -290,22 +290,22 @@ function rollupBuild() {
                     return [3 /*break*/, 3];
                 case 1:
                     err_3 = _a.sent();
-                    console.log(err_3);
                     return [4 /*yield*/, getBranch()];
                 case 2:
                     target = target = (_a.sent()).replace(/\n/g, '');
                     return [3 /*break*/, 3];
-                case 3:
-                    console.log(target);
-                    console.log(process.argv);
-                    return [4 /*yield*/, getModulesList()];
+                case 3: return [4 /*yield*/, getModulesList()];
                 case 4:
                     modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
                     }
+                    inputStr = "modules/" + target + "/main.tsx";
+                    if (!fs.existsSync(inputStr)) {
+                        inputStr = "modules/" + target + "/main.ts";
+                    }
                     return [4 /*yield*/, rollup.rollup({
-                            input: "modules/" + target + "/main.tsx",
+                            input: inputStr,
                             plugins: [
                                 resolve({ browser: true, preferBuiltins: true }),
                                 commonjs({
@@ -330,7 +330,6 @@ function rollupBuild() {
                         })];
                 case 5:
                     bundle = _a.sent();
-                    console.log(target);
                     return [4 /*yield*/, bundle.write({
                             file: "build/modules/" + target + ".js",
                             name: titleCase(target),
