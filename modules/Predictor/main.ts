@@ -1,7 +1,4 @@
-import React from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
-import { Prediction, PredictionClient } from '@kalos-core/kalos-rpc/Predict';
+import { PredictionClient } from '@kalos-core/kalos-rpc/Predict';
 
 export class Predictor {
   PredictionClient: PredictionClient;
