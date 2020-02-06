@@ -1,22 +1,19 @@
 import React, { ChangeEvent } from 'react';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import PermIdentityIcon from '@material-ui/icons/PermIdentity';
-import EditIcon from '@material-ui/icons/Edit';
 import SendIcon from '@material-ui/icons/Send';
-import {
-  TextField,
-  Grid,
-  Modal,
-  Button,
-  Paper,
-  Switch,
-  Typography,
-  Divider,
-  IconButton,
-  FormControlLabel,
-  CssBaseline,
-} from '@material-ui/core';
+import TextField from '@material-ui/core/TextField';
+import Grid from '@material-ui/core/Grid';
+import Modal from '@material-ui/core/Modal';
+import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
+import Switch from '@material-ui/core/Switch';
+import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
+import IconButton from '@material-ui/core/IconButton';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import CloseIcon from '@material-ui/icons/CloseSharp';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import themes from '../Theme/main';
 
 interface props {
   userId: number;
@@ -53,7 +50,10 @@ export class AccountInfo extends React.PureComponent<props, state> {
     this.toggleEditing = this.toggleEditing.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.handleUpdatePassword = this.handleUpdatePassword.bind(this);
-    this.UserClient = new UserClient('https://core-dev.kalosflorida.com:8443');
+    this.UserClient = new UserClient(
+      this.props.userId,
+      'https://core-dev.kalosflorida.com:8443',
+    );
     this.oldPassword = React.createRef();
     this.newPassword = React.createRef();
     this.reTypePassword = React.createRef();
@@ -188,8 +188,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
       return null;
     }
     return (
-      <>
-        <CssBaseline />
+      <ThemeProvider theme={themes.lightTheme}>
         <Grid
           style={{ paddingBottom: '20px' }}
           container
@@ -431,7 +430,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
             </Button>
           </Paper>
         </Modal>
-      </>
+      </ThemeProvider>
     );
   }
 }

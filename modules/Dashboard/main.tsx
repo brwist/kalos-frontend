@@ -1,17 +1,10 @@
 import React from 'react';
-import {
-  MetricsClient,
-  Billable,
-  AvgTicket,
-  Revenue,
-  Callbacks,
-} from '@kalos-core/kalos-rpc/Metrics';
+import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
 import {
   Transaction,
   TransactionClient,
-  TransactionList,
 } from '@kalos-core/kalos-rpc/Transaction';
-import { EventClient, Event, EventList } from '@kalos-core/kalos-rpc/Event';
+import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { TaskClient } from '@kalos-core/kalos-rpc/Task';
 import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
@@ -19,20 +12,13 @@ import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import themes from '../Theme/main';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import {
-  ToolFund,
-  SpiffList,
-  Spiff,
-} from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
-import { PTO } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import { Spiff } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import { MetricTile } from './components/MetricTile';
 import { Widget } from './components/Widget';
 import { Assignments } from './components/AssignmentsTable';
 import { Spiffs } from './components/SpiffsTable';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Typography } from '@material-ui/core';
-import { timestamp } from '../../helpers';
 import { Search } from '../Search/main';
 
 interface props {
@@ -53,17 +39,6 @@ interface state {
   currentUser: User.AsObject;
   spiffs: Spiff.AsObject[];
 }
-
-type PromiseArr = [
-  Billable.AsObject,
-  AvgTicket.AsObject,
-  Callbacks.AsObject,
-  Revenue.AsObject,
-  ToolFund,
-  PTO,
-  SpiffList.AsObject,
-  EventList,
-];
 
 export class Dashboard extends React.PureComponent<props, state> {
   MetricsClient: MetricsClient;
@@ -90,12 +65,12 @@ export class Dashboard extends React.PureComponent<props, state> {
     };
 
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.MetricsClient = new MetricsClient(endpoint);
-    this.TxnClient = new TransactionClient(endpoint);
-    this.EventClient = new EventClient(endpoint);
-    this.TaskClient = new TaskClient(endpoint);
-    this.UserClient = new UserClient(endpoint);
-    this.PTOCLient = new TimeoffRequestClient(endpoint);
+    this.MetricsClient = new MetricsClient(this.props.userId, endpoint);
+    this.TxnClient = new TransactionClient(this.props.userId, endpoint);
+    this.EventClient = new EventClient(this.props.userId, endpoint);
+    this.TaskClient = new TaskClient(this.props.userId, endpoint);
+    this.UserClient = new UserClient(this.props.userId, endpoint);
+    this.PTOCLient = new TimeoffRequestClient(this.props.userId, endpoint);
   }
 
   toggleLoading() {

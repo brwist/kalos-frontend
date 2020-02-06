@@ -61,6 +61,7 @@
     "pako": "^1.0.10",
     "react": "^16.10.1",
     "react-dom": "^16.10.1",
+    "react-signature-pad-wrapper": "^1.2.8",
     "tslib": "^1.10.0"
   },
   "peerDependencies": {
