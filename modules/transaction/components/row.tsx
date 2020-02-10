@@ -9,6 +9,7 @@ import { PopoverGallery } from '../../PopoverGallery/main';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
+import NotesIcon from '@material-ui/icons/EditSharp';
 import { Prompt } from '../../Prompt/main';
 import { IFile } from '../../Gallery/main';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
@@ -31,6 +32,7 @@ interface props {
   reject(reason?: string): Promise<void>;
   refresh(): Promise<void>;
   addJobNumber(jn: string): Promise<void>;
+  updateNotes(notes: string): Promise<void>;
   toggleLoading(cb?: () => void): void;
 }
 
@@ -47,6 +49,7 @@ export function TransactionRow({
   refresh,
   addJobNumber,
   toggleLoading,
+  updateNotes,
 }: props) {
   const endpoint = 'https://core-dev.kalosflorida.com:8443';
   const [state, setState] = useState<state>({
@@ -55,10 +58,10 @@ export function TransactionRow({
   const FileInput = React.createRef<HTMLInputElement>();
 
   const clients = {
-    user: new UserClient(endpoint),
-    email: new EmailClient(endpoint),
-    docs: new TransactionDocumentClient(endpoint),
-    s3: new S3Client(endpoint),
+    user: new UserClient(0, endpoint),
+    email: new EmailClient(0, endpoint),
+    docs: new TransactionDocumentClient(0, endpoint),
+    s3: new S3Client(0, endpoint),
   };
 
   const handleFile = (e: any) => {
@@ -102,7 +105,6 @@ export function TransactionRow({
   };
 
   const dispute = async (reason: string) => {
-    const id = await getSlackID(txn.ownerName);
     const userReq = new User();
     userReq.setId(txn.ownerId);
     const user = await clients.user.Get(userReq);
@@ -122,8 +124,8 @@ export function TransactionRow({
     } catch (err) {
       alert('An error occurred, user was not notified via email');
     }
-
     try {
+      const id = await getSlackID(txn.ownerName);
       await slackNotify(
         id,
         `A receipt you submitted has been rejected | ${
@@ -192,6 +194,13 @@ export function TransactionRow({
             text="Update Job Number"
             prompt="New Job Number: "
             Icon={KeyboardIcon}
+          />
+          <Prompt
+            confirmFn={updateNotes}
+            text="Edit Notes"
+            prompt="Update Txn Notes: "
+            Icon={NotesIcon}
+            defaultValue={txn.notes}
           />
           <PopoverGallery
             title="Receipt Photos"
@@ -273,7 +282,7 @@ async function fetchFiles(
 }
 
 function fetchFile(doc: TransactionDocument.AsObject) {
-  const s3 = new S3Client('https://core-dev.kalosflorida.com:8443');
+  const s3 = new S3Client(0, 'https://core-dev.kalosflorida.com:8443');
   const fileObj = new FileObject();
   fileObj.setBucket('kalos-transactions');
   fileObj.setKey(`${doc.transactionId}-${doc.reference}`);

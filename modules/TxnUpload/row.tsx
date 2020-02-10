@@ -47,8 +47,8 @@ export class TxnUploadRow extends React.PureComponent<props, state> {
       isEditing: false,
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.AccountClient = new TransactionAccountClient(endpoint);
-    this.TxnClient = new TransactionClient(endpoint);
+    this.AccountClient = new TransactionAccountClient(0, endpoint);
+    this.TxnClient = new TransactionClient(0, endpoint);
 
     this.Description = React.createRef<HTMLInputElement>();
     this.updateDescription = this.updateDescription.bind(this);

@@ -53,7 +53,7 @@ export class TimesheetCheck extends React.PureComponent<props, state> {
       receiptsIssueStr: '',
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.TxnClient = new TransactionClient(endpoint);
+    this.TxnClient = new TransactionClient(this.props.userID, endpoint);
     this.handleCheck = this.handleCheck.bind(this);
   }
 

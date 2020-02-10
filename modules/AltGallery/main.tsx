@@ -54,8 +54,8 @@ export class AltGallery extends React.PureComponent<props, state> {
     };
 
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.S3Client = new S3Client(endpoint);
-    this.DocClient = new TransactionDocumentClient(endpoint);
+    this.S3Client = new S3Client(0, endpoint);
+    this.DocClient = new TransactionDocumentClient(0, endpoint);
     this.toggleOpen = this.toggleOpen.bind(this);
     this.changeImage = this.changeImage.bind(this);
     this.fetch = this.fetch.bind(this);

@@ -291,6 +291,7 @@ const NAMED_EXPORTS = {
     'TransactionData',
     'Prediction',
   ],
+  'node_modules/prop-types/index.js': ['default'],
   'prop-types': [
     'array',
     'bool',

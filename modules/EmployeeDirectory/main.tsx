@@ -72,9 +72,13 @@ export class EmployeeDirectory extends React.Component<props, state> {
       showInactive: false,
     };
     this.TimesheetDepartmentClient = new TimesheetDepartmentClient(
+      0,
       'https://core-dev.kalosflorida.com:8443',
     );
-    this.UserClient = new UserClient('https://core-dev.kalosflorida.com:8443');
+    this.UserClient = new UserClient(
+      0,
+      'https://core-dev.kalosflorida.com:8443',
+    );
     this.addUser = this.addUser.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.saveAsPDF = this.saveAsPDF.bind(this);

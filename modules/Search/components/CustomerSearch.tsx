@@ -63,7 +63,7 @@ export class CustomerSearch extends React.PureComponent<props, state> {
       customers: [],
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.Client = new UserClient(endpoint);
+    this.Client = new UserClient(0, endpoint);
     this.updateSearchStr = this.updateSearchStr.bind(this);
     this.updateSearchTarget = this.updateSearchTarget.bind(this);
     this.doFetchUsers = this.doFetchUsers.bind(this);

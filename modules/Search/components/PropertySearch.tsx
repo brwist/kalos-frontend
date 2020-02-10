@@ -47,7 +47,7 @@ export class PropertySearch extends React.PureComponent<props, state> {
       properties: [],
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.Client = new PropertyClient(endpoint);
+    this.Client = new PropertyClient(0, endpoint);
     this.updateSearchStr = this.updateSearchStr.bind(this);
     this.updateSearchTarget = this.updateSearchTarget.bind(this);
     this.doFetchProperties = this.doFetchProperties.bind(this);

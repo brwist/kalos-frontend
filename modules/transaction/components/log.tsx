@@ -42,8 +42,14 @@ export class TxnLog extends React.PureComponent<props, state> {
       actorMap: new Map<number, string>(),
     };
 
-    this.LogClient = new TransactionActivityClient();
-    this.UserClient = new UserClient();
+    this.LogClient = new TransactionActivityClient(
+      0,
+      'https://core-dev.kalosflorida.com:8443',
+    );
+    this.UserClient = new UserClient(
+      0,
+      'https://core-dev.kalosflorida.com:8443',
+    );
 
     this.toggleVisibility = this.toggleVisibility.bind(this);
     this.addLog = this.addLog.bind(this);

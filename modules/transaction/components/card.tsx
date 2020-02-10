@@ -14,10 +14,9 @@ import {
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { Gallery, IFile } from '../../Gallery/main';
-import { AltGallery, GalleryData } from '../../AltGallery/main';
+import { GalleryData } from '../../AltGallery/main';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { DepartmentPicker } from '../../Pickers/Department';
-import { TxnLog } from './log';
 import TextField from '@material-ui/core/TextField';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
@@ -30,6 +29,10 @@ import Typography from '@material-ui/core/Typography';
 import { red, green } from '@material-ui/core/colors';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 import { TaskClient } from '@kalos-core/kalos-rpc/Task';
+import CloseIcon from '@material-ui/icons/CloseSharp';
+import { PDFMaker } from '../../PDFMaker/main';
+import ReIcon from '@material-ui/icons/RefreshSharp';
+import { timestamp } from '../../../helpers';
 
 interface props {
   txn: Transaction.AsObject;
@@ -37,6 +40,7 @@ interface props {
   userName: string;
   userID: number;
   isAdmin?: boolean;
+  isManager?: boolean;
   fetchFn(): void;
   toggleLoading(cb?: () => void): void;
 }
@@ -75,12 +79,13 @@ export class TxnCard extends React.PureComponent<props, state> {
       files: [],
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.TxnClient = new TransactionClient(endpoint);
-    this.DocsClient = new TransactionDocumentClient(endpoint);
-    this.LogClient = new TransactionActivityClient(endpoint);
-    this.S3Client = new S3Client(endpoint);
-    this.EventClient = new EventClient(endpoint);
-    this.TaskClient = new TaskClient(endpoint);
+    const { userID } = props;
+    this.TxnClient = new TransactionClient(userID, endpoint);
+    this.DocsClient = new TransactionDocumentClient(userID, endpoint);
+    this.LogClient = new TransactionActivityClient(userID, endpoint);
+    this.S3Client = new S3Client(userID, endpoint);
+    this.EventClient = new EventClient(userID, endpoint);
+    this.TaskClient = new TaskClient(userID, endpoint);
 
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
@@ -92,6 +97,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.fetchFile = this.fetchFile.bind(this);
     this.submit = this.submit.bind(this);
     this.deleteFile = this.deleteFile.bind(this);
+    this.onPDFGenerate = this.onPDFGenerate.bind(this);
   }
 
   async makeLog<K extends keyof Transaction.AsObject>(
@@ -291,6 +297,21 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.FileInput.current && this.FileInput.current.click();
   }
 
+  async onPDFGenerate(fileData: Blob) {
+    this.props.toggleLoading();
+    await this.DocsClient.upload(
+      this.state.txn.id,
+      `${timestamp()}-generated.pdf`,
+      fileData,
+    );
+    await this.refresh();
+    this.props.toggleLoading(() =>
+      alert(
+        'A PDF has been generated and uploaded for you, it is recommended you review this document before proceeding',
+      ),
+    );
+  }
+
   handleFile() {
     this.props.toggleLoading(() => {
       const fr = new FileReader();
@@ -403,9 +424,6 @@ export class TxnCard extends React.PureComponent<props, state> {
   render() {
     const t = this.state.txn;
     let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
-    if (this.props.isAdmin) {
-      subheader = `${subheader}\n${t.ownerName}`;
-    }
     return (
       <>
         <Card elevation={3} className="card" key={`${t.id}`} id={`${t.id}`}>
@@ -465,7 +483,11 @@ export class TxnCard extends React.PureComponent<props, state> {
                 startIcon={<AddAPhotoTwoTone />}
                 size="large"
                 fullWidth
-                style={{ height: 44, marginBottom: 10 }}
+                style={{
+                  height: 44,
+                  marginBottom: 10,
+                  justifyContent: 'space-evenly',
+                }}
               >
                 Photo
               </Button>
@@ -477,27 +499,38 @@ export class TxnCard extends React.PureComponent<props, state> {
                 disabled={t.documentsList.length === 0}
                 deleteFn={this.deleteFile}
               />
-              {!this.props.isAdmin && (
-                <Button
-                  startIcon={<SendTwoTone />}
-                  size="large"
-                  fullWidth
-                  style={{ height: 44, marginBottom: 10 }}
-                  onClick={this.submit}
-                >
-                  Submit
-                </Button>
-              )}
-              {this.props.isAdmin && (
-                <Button
-                  startIcon={<SendTwoTone />}
-                  size="large"
-                  fullWidth
-                  style={{ height: 44, marginBottom: 10 }}
-                  onClick={this.approve}
-                >
-                  Approve
-                </Button>
+              <Button
+                startIcon={<SendTwoTone />}
+                size="large"
+                fullWidth
+                style={{ height: 44, marginBottom: 10 }}
+                onClick={this.submit}
+              >
+                Submit
+              </Button>
+              <PDFMaker
+                dateStr={t.timestamp}
+                name={t.ownerName}
+                title="Missing"
+                icon={<CloseIcon />}
+                amount={t.amount}
+                onCreate={this.onPDFGenerate}
+                jobNumber={`${t.jobId}`}
+                vendor={t.vendor}
+                pdfType="Missing Receipt"
+              />
+              {this.props.isManager && (
+                <PDFMaker
+                  dateStr={t.timestamp}
+                  name={t.ownerName}
+                  icon={<ReIcon />}
+                  title="Recurring"
+                  amount={t.amount}
+                  vendor={t.vendor}
+                  jobNumber={`${t.jobId}`}
+                  onCreate={this.onPDFGenerate}
+                  pdfType="Retrievable Receipt"
+                />
               )}
             </Grid>
           </Grid>

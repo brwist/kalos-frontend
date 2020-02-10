@@ -50,8 +50,8 @@ export class TxnUpload extends React.PureComponent<props, state> {
     this.handleFile = this.handleFile.bind(this);
     this.FileInput = React.createRef<HTMLInputElement>();
 
-    this.UserClient = new UserClient(endpoint);
-    this.IdentityClient = new RemoteIdentityClient(endpoint);
+    this.UserClient = new UserClient(0, endpoint);
+    this.IdentityClient = new RemoteIdentityClient(0, endpoint);
     this.makeGetTxnUser = this.makeGetTxnUser.bind(this);
     this.restoreFromCache = this.restoreFromCache.bind(this);
     this.cacheCSV = this.cacheCSV.bind(this);

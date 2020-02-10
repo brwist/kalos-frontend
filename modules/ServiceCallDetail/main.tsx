@@ -27,6 +27,7 @@ const { EVENT_STATUS_LIST, PAYMENT_TYPE_LIST } = require('../../constants');
 
 interface props {
   eventID: number;
+  userID: number;
 }
 
 interface state {
@@ -48,11 +49,12 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       technicians: [],
       isEditing: false,
     };
+    const endpoint = 'https://core-dev.kalosflorida.com:8443';
     this.toggleEditing = this.toggleEditing.bind(this);
-    this.UserClient = new UserClient();
+    this.UserClient = new UserClient(this.props.userID, endpoint);
     this.fetchTechnicians = this.fetchTechnicians.bind(this);
     this.fetchCallbacks = this.fetchCallbacks.bind(this);
-    this.EventClient = new EventClient();
+    this.EventClient = new EventClient(this.props.userID, endpoint);
     this.fetchEvent = this.fetchEvent.bind(this);
     this.updateEvent = this.updateEvent.bind(this);
     this.onDateChange = this.onDateChange.bind(this);
