@@ -27,7 +27,7 @@ export class Search extends React.PureComponent<props, state> {
       target: 'Service Call',
     };
 
-    this.Client = new EventClient('https://core-dev.kalosflorida.com:8443');
+    this.Client = new EventClient(0, 'https://core-dev.kalosflorida.com:8443');
     this.renderSelector = this.renderSelector.bind(this);
     this.setSearchTarget = this.setSearchTarget.bind(this);
   }

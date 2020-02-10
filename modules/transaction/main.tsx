@@ -4,10 +4,12 @@ import { TransactionAdminView } from './components/admin';
 import Grid from '@material-ui/core/Grid';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { Loader } from '../Loader/main';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import customTheme from '../Theme/main';
 
 interface props {
   userID: number;
-  isProd?: boolean;
+  isAdmin: boolean;
 }
 
 interface state {
@@ -76,32 +78,36 @@ export default class Transaction extends React.PureComponent<props, state> {
   render() {
     if (!this.state.isLoading) {
       return (
-        <Grid
-          container
-          direction="column"
-          alignItems="center"
-          justify="flex-start"
-        >
-          <CssBaseline />
+        <ThemeProvider theme={customTheme.lightTheme}>
           <Grid
             container
             direction="column"
-            justify="flex-start"
             alignItems="center"
-            style={{ maxHeight: '100%' }}
+            justify="flex-start"
           >
-            <TransactionAdminView
-              userID={this.props.userID}
-              userName={this.state.userName}
-              departmentId={this.state.userDepartmentID}
-              isSU={this.state.isSU}
-              isProd={this.props.isProd}
-            />
+            <Grid
+              container
+              direction="column"
+              justify="flex-start"
+              alignItems="center"
+              style={{ maxHeight: '100%' }}
+            >
+              <TransactionAdminView
+                userID={this.props.userID}
+                userName={this.state.userName}
+                departmentId={this.state.userDepartmentID}
+                isSU={this.state.isSU}
+              />
+            </Grid>
           </Grid>
-        </Grid>
+        </ThemeProvider>
       );
     } else {
-      return <Loader />;
+      return (
+        <ThemeProvider theme={customTheme.lightTheme}>
+          <Loader />
+        </ThemeProvider>
+      );
     }
   }
 }

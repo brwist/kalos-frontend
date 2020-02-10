@@ -60,7 +60,7 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
   }
 
   componentDidMount() {
-    const cacheListStr = localStorage.getItem('DEPARTMENT_LIST');
+    const cacheListStr = localStorage.getItem('DEPARTMENT_LIST_2');
     if (cacheListStr) {
       const cacheList = JSON.parse(cacheListStr);
       if (cacheList && cacheList.length !== 0) {
@@ -80,10 +80,10 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
       this.state.list.length > 0 &&
       prevState.list.length === this.state.list.length
     ) {
-      const cacheList = localStorage.getItem('DEPARTMENT_LIST');
+      const cacheList = localStorage.getItem('DEPARTMENT_LIST_2');
       if (!cacheList) {
         localStorage.setItem(
-          'DEPARTMENT_LIST',
+          'DEPARTMENT_LIST_2',
           JSON.stringify(this.state.list),
         );
       }

@@ -65,7 +65,7 @@ export class EventSearch extends React.PureComponent<props, state> {
       events: [],
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.Client = new EventClient(endpoint);
+    this.Client = new EventClient(0, endpoint);
     this.updateSearchStr = this.updateSearchStr.bind(this);
     this.updateSearchTarget = this.updateSearchTarget.bind(this);
     this.doFetchEvents = this.doFetchEvents.bind(this);

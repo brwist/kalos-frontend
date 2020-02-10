@@ -42,7 +42,7 @@ export function PopoverGallery({
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null,
   );
-  const S3 = new S3Client('https://core-dev.kalosflorida.com:8443');
+  const S3 = new S3Client(0, 'https://core-dev.kalosflorida.com:8443');
 
   const toggleOpen = async (event: React.MouseEvent<HTMLButtonElement>) => {
     setOpen(!isOpen);

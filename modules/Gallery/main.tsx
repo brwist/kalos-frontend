@@ -40,7 +40,7 @@ export function Gallery({
 }: props) {
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
-  const S3 = new S3Client();
+  const S3 = new S3Client(0, 'https://core-dev.kalosflorida.com:8443');
 
   const toggleOpen = () => {
     setOpen(!isOpen);
@@ -150,7 +150,7 @@ export function Gallery({
         <Grid
           container
           direction="column"
-          alignItems="center"
+          alignItems="stretch"
           justify="flex-start"
           wrap="nowrap"
         >
@@ -196,23 +196,24 @@ export function Gallery({
               container
               direction="column"
               justify="center"
-              alignItems="center"
+              alignItems="stretch"
               style={{
                 maxHeight: imgHeight,
                 overflow: 'scroll',
                 height: imgHeight,
+                width: '100%',
               }}
             >
               {fileList[activeImage].mimeType === 'application/pdf' && (
                 <iframe
                   src={getHREF()}
-                  style={{ maxWidth: '100%', height: 'auto' }}
+                  style={{ maxWidth: '100%', height: '100%' }}
                 ></iframe>
               )}
               {fileList[activeImage].mimeType !== 'application/pdf' && (
                 <img
                   src={getHREF()}
-                  style={{ maxWidth: '100%', height: 'auto' }}
+                  style={{ maxWidth: '100%', height: '100%' }}
                 />
               )}
             </Grid>

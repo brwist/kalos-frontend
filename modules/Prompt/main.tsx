@@ -11,12 +11,20 @@ import TextField from '@material-ui/core/TextField';
 interface props {
   disabled?: boolean;
   Icon?(props: SvgIconProps): JSX.Element;
+  defaultValue?: string;
   confirmFn(str: string): void;
   text: string;
   prompt: string;
 }
 
-export function Prompt({ disabled, text, Icon, prompt, confirmFn }: props) {
+export function Prompt({
+  disabled,
+  text,
+  Icon,
+  prompt,
+  confirmFn,
+  defaultValue,
+}: props) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null,
@@ -36,6 +44,7 @@ export function Prompt({ disabled, text, Icon, prompt, confirmFn }: props) {
 
   const handleConfirm = () => {
     if (answer.current && answer.current.value !== '') {
+      setIsOpen(false);
       confirmFn(answer.current.value);
     }
   };
@@ -83,7 +92,11 @@ export function Prompt({ disabled, text, Icon, prompt, confirmFn }: props) {
           style={{ padding: 10 }}
         >
           <Typography>{prompt}</Typography>
-          <TextField inputRef={answer} variant="outlined" />
+          <TextField
+            inputRef={answer}
+            variant="outlined"
+            defaultValue={defaultValue || ''}
+          />
           <Grid
             container
             item

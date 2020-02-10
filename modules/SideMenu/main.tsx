@@ -58,8 +58,8 @@ export class SideMenu extends React.PureComponent<props, state> {
       isOpen: false,
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.UserClient = new UserClient(endpoint);
-    this.DeptClient = new TimesheetDepartmentClient(endpoint);
+    this.UserClient = new UserClient(0, endpoint);
+    this.DeptClient = new TimesheetDepartmentClient(0, endpoint);
 
     this.toggleMenu = this.toggleMenu.bind(this);
     this.getIdentity = this.getIdentity.bind(this);

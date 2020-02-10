@@ -2,11 +2,10 @@ import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TransactionUserView } from '../Transaction/components/user';
 import Grid from '@material-ui/core/Grid';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 import { Loader } from '../Loader/main';
+import { TimesheetDepartmentClient } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 interface props {
   userID: number;
@@ -24,6 +23,7 @@ interface state {
 
 export default class Transaction extends React.PureComponent<props, state> {
   UserClient: UserClient;
+  DepartmentClient: TimesheetDepartmentClient;
 
   constructor(props: props) {
     super(props);
@@ -35,22 +35,42 @@ export default class Transaction extends React.PureComponent<props, state> {
       userName: '',
       isSU: false,
     };
-    this.UserClient = new UserClient('https://core-dev.kalosflorida.com:8443');
+    this.UserClient = new UserClient(
+      props.userID,
+      'https://core-dev.kalosflorida.com:8443',
+    );
+
+    this.DepartmentClient = new TimesheetDepartmentClient(
+      props.userID,
+      'https://core-dev.kalosflorida.com:8443',
+    );
 
     this.getUserData = this.getUserData.bind(this);
+    this.managerCheck = this.managerCheck.bind(this);
   }
 
   async getUserData() {
     const user = new User();
     user.setId(this.props.userID);
     const userData = await this.UserClient.Get(user);
+    const isManager = await this.managerCheck();
     this.setState({
       isAdmin: userData.isAdmin === 1,
       isSU: userData.isSu === 1,
       userDepartmentID: userData.employeeDepartmentId,
       userName: `${userData.firstname} ${userData.lastname}`,
       isLoading: false,
+      isManager,
     });
+  }
+
+  async managerCheck() {
+    try {
+      await this.DepartmentClient.getDepartmentByManagerID(this.props.userID);
+      return true;
+    } catch (err) {
+      return false;
+    }
   }
 
   async componentDidMount() {
@@ -79,7 +99,7 @@ export default class Transaction extends React.PureComponent<props, state> {
                 userID={this.props.userID}
                 userName={this.state.userName}
                 departmentId={this.state.userDepartmentID}
-                isProd={this.props.isProd}
+                isManager={this.state.isManager}
               />
             </Grid>
           </Grid>

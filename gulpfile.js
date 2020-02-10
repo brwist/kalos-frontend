@@ -39,16 +39,17 @@ var sh = require('shelljs');
 var readline = require('readline');
 var fs = require('fs');
 var rollup = require('rollup');
-var typescript = require('rollup-plugin-typescript2');
+var typescript = require('@rollup/plugin-typescript');
 var resolve = require('@rollup/plugin-node-resolve');
 var commonjs = require('@rollup/plugin-commonjs');
 var peerDependencies = require('rollup-plugin-peer-deps-external');
 var replace = require('@rollup/plugin-replace');
-var cleanup = require('rollup-plugin-cleanup');
 var image = require('@rollup/plugin-image');
 var builtins = require('rollup-plugin-node-builtins');
+var globals = require('rollup-plugin-node-globals');
 var terser = require('rollup-plugin-terser').terser;
 var jsonPlugin = require('@rollup/plugin-json');
+var autoInstall = require('@rollup/plugin-auto-install');
 var c = require('./constants.ts');
 /**
  * Serves all modules to localhost:1234 via parcel
@@ -294,7 +295,9 @@ function rollupBuild() {
                 case 2:
                     target = target = (_a.sent()).replace(/\n/g, '');
                     return [3 /*break*/, 3];
-                case 3: return [4 /*yield*/, getModulesList()];
+                case 3:
+                    console.log(process.argv[4]);
+                    return [4 /*yield*/, getModulesList()];
                 case 4:
                     modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
                     if (!modules.includes(target.toLowerCase())) {
@@ -311,20 +314,19 @@ function rollupBuild() {
                                 commonjs({
                                     namedExports: c.NAMED_EXPORTS
                                 }),
+                                globals(),
                                 builtins(),
                                 typescript({
-                                    tsconfigOverride: {
-                                        compilerOptions: {
-                                            module: 'ES2015'
-                                        }
-                                    }
+                                    module: 'ES2015'
                                 }),
                                 image(),
                                 jsonPlugin(),
                                 peerDependencies(),
                                 replace({
                                     'process.env.NODE_ENV': JSON.stringify('production'),
-                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com'
+                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com',
+                                    'bufferEs6.hasOwnProperty(key$2)': 'key$2 in bufferEs6',
+                                    '_a = _typeModule(_typeModule)': 'var _a = _typeModule(_typeModule);'
                                 }),
                             ]
                         })];
@@ -338,7 +340,9 @@ function rollupBuild() {
                                 react: 'React',
                                 'react-dom': 'ReactDOM'
                             },
-                            plugins: [terser()]
+                            plugins: [
+                            /*terser()*/
+                            ]
                         })];
                 case 6:
                     _a.sent();

@@ -74,30 +74,36 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
 async function getSlackID(
   userName: string,
   skipCache = false,
+  count = 0,
 ): Promise<string> {
-  try {
-    let slackUsers = await getSlackList(skipCache);
-    let user = slackUsers.find(s => {
-      if (s.real_name === userName) {
-        return true;
-      }
+  if (count != 4) {
+    try {
+      let slackUsers = await getSlackList(skipCache);
+      let user = slackUsers.find(s => {
+        if (s.real_name === userName) {
+          return true;
+        }
 
-      if (s.profile.real_name === userName) {
-        return true;
-      }
+        if (s.profile.real_name === userName) {
+          return true;
+        }
 
-      if (s.profile.real_name_normalized === userName) {
-        return true;
+        if (s.profile.real_name_normalized === userName) {
+          return true;
+        }
+      });
+      if (user) {
+        return user.id;
+      } else {
+        count = count + 1;
+        return await getSlackID(userName, true, count);
       }
-    });
-    if (user) {
-      return user.id;
-    } else {
-      return await getSlackID(userName, true);
+    } catch (err) {
+      count = count + 1;
+      return await getSlackID(userName, true, count);
     }
-  } catch (err) {
-    return await getSlackID(userName, true);
   }
+  return '0';
 }
 
 interface SlackUser {
@@ -171,6 +177,42 @@ function getURLParams() {
   return res;
 }
 
+function b64toBlob(b64Data: string, fileName: string) {
+  const sliceSize = 512;
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+  const contentType = getMimeType(fileName);
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  const blob = new Blob(byteArrays, { type: contentType });
+  return blob;
+}
+
+function getMimeType(fileName: string) {
+  const arr = fileName.split('.');
+  const ext = arr[arr.length - 1];
+  if (ext === 'pdf') {
+    return 'application/pdf';
+  } else if (ext === 'doc' || ext === 'docx') {
+    return 'application/msword';
+  } else if (ext === 'png') {
+    return 'image/png';
+  } else if (ext === 'jpg' || ext === 'jpeg') {
+    return 'image/jpeg';
+  }
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -180,4 +222,6 @@ export {
   slackNotify,
   getEditDistance,
   getURLParams,
+  b64toBlob,
+  getMimeType,
 };

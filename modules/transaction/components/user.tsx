@@ -15,7 +15,7 @@ interface props {
   userID: number;
   departmentId: number;
   userName: string;
-  isProd?: boolean;
+  isManager: boolean;
 }
 
 interface state {
@@ -38,8 +38,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       totalCount: 0,
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.TxnClient = new TransactionClient(endpoint);
-    this.S3Client = new S3Client(endpoint);
+    const { userID } = props;
+    this.TxnClient = new TransactionClient(userID, endpoint);
+    this.S3Client = new S3Client(userID, endpoint);
 
     this.downloadAffadavit = this.downloadAffadavit.bind(this);
     this.changePage = this.changePage.bind(this);
@@ -150,13 +151,13 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     return (
       <>
         {isLoading && <Loader />}
-        {!isLoading && (
+        {/*!isLoading && (
           <NativeSelect onChange={this.downloadAffadavit}>
             <option value="">Download Missing Receipt Form</option>
             <option value=".pdf">PDF</option>
             <option value=".docx">Word Document</option>
           </NativeSelect>
-        )}
+        )*/}
         {txns.map(t => (
           <TxnCard
             txn={t}
@@ -166,6 +167,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
             userDepartmentID={this.props.departmentId}
             fetchFn={this.fetchAllTxns}
             toggleLoading={this.toggleLoading}
+            isManager={this.props.isManager}
           />
         ))}
         {txns.length === 0 && !isLoading && (

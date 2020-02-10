@@ -53,7 +53,7 @@ export class ContractSearch extends React.PureComponent<props, state> {
       contracts: [],
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.Client = new ContractClient(endpoint);
+    this.Client = new ContractClient(0, endpoint);
     this.updateSearchStr = this.updateSearchStr.bind(this);
     this.updateSearchTarget = this.updateSearchTarget.bind(this);
     this.doFetchContracts = this.doFetchContracts.bind(this);

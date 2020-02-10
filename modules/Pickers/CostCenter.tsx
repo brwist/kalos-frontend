@@ -29,6 +29,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
       accountList: [],
     };
     this.AccClient = new TransactionAccountClient(
+      0,
       'https://core-dev.kalosflorida.com:8443',
     );
 
@@ -98,10 +99,8 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
 
   render() {
     let accountList = this.state.accountList;
-    console.log(accountList);
     if (this.props.sort) {
       accountList = this.state.accountList.sort(this.props.sort);
-      console.log(accountList);
     }
     return (
       <FormControl style={{ marginBottom: 10 }}>

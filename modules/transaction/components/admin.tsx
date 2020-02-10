@@ -57,6 +57,7 @@ interface IFilter {
   [key: string]: number | string | undefined;
   userID?: number;
   dateCreated?: string;
+  yearCreated: string;
   dateSubmitted?: string;
   approvedByID?: number;
   costCenterID?: number;
@@ -78,6 +79,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       transactions: [],
       filters: {
         statusID: this.props.isSU ? 3 : 2,
+        yearCreated: `${new Date().getFullYear()}`,
       },
       count: 0,
     };
@@ -96,6 +98,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.handleSubmitPage = this.handleSubmitPage.bind(this);
     this.copyPage = this.copyPage.bind(this);
     this.makeAddJobNumber = this.makeAddJobNumber.bind(this);
+    this.makeUpdateNotes = this.makeUpdateNotes.bind(this);
     this.toggleLoading = this.toggleLoading.bind(this);
   }
 
@@ -168,7 +171,16 @@ export class TransactionAdminView extends React.Component<props, state> {
   }
 
   clearFilters() {
-    this.setState({ filters: {}, page: 0, count: 0 }, this.fetchTxns);
+    this.setState(
+      {
+        filters: {
+          yearCreated: `${new Date().getFullYear()}`,
+        },
+        page: 0,
+        count: 0,
+      },
+      this.fetchTxns,
+    );
   }
 
   makeAddJobNumber(id: number) {
@@ -184,12 +196,23 @@ export class TransactionAdminView extends React.Component<props, state> {
         txn.setId(id);
         txn.setJobId(jobNumber);
         txn.setFieldMaskList(['JobId']);
-        const res = await this.TxnClient.Update(txn);
+        await this.TxnClient.Update(txn);
         await this.fetchTxns();
       } catch (err) {
         alert('Job number could not be set');
         console.log(err);
       }
+    };
+  }
+
+  makeUpdateNotes(id: number) {
+    return async (notes: string) => {
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setNotes(notes);
+      txn.setFieldMaskList(['Notes']);
+      await this.TxnClient.Update(txn);
+      await this.fetchTxns();
     };
   }
 
@@ -205,7 +228,9 @@ export class TransactionAdminView extends React.Component<props, state> {
       obj.setDepartmentId(filters.departmentID);
     }
     if (filters.dateCreated) {
-      obj.setTimestamp(`2019-${filters.dateCreated}%`);
+      obj.setTimestamp(`${filters.yearCreated}-${filters.dateCreated}%`);
+    } else {
+      obj.setTimestamp(`${filters.yearCreated}-%`);
     }
     if (filters.statusID) {
       obj.setStatusId(filters.statusID);
@@ -339,6 +364,22 @@ export class TransactionAdminView extends React.Component<props, state> {
     }
   }
 
+  getYearList() {
+    let start = 2019;
+    let options: React.ReactNode[] = [];
+    const end = new Date().getFullYear();
+
+    while (start <= end) {
+      options = options.concat(
+        <option key={`year_${start}`} value={`${start}`}>
+          {start}
+        </option>,
+      );
+      start = start + 1;
+    }
+    return options;
+  }
+
   async componentDidMount() {
     await this.fetchTxns();
   }
@@ -399,6 +440,19 @@ export class TransactionAdminView extends React.Component<props, state> {
               onChangePage={this.altChangePage}
               rowsPerPageOptions={[25]}
             />
+            <FormControl style={{ marginBottom: 10 }}>
+              <InputLabel htmlFor="set-year-select">Filter by Year</InputLabel>
+              <NativeSelect
+                disabled={this.state.isLoading}
+                onChange={e =>
+                  this.setFilter('yearCreated', e.currentTarget.value)
+                }
+                inputProps={{ id: 'set-year-select' }}
+                value={this.state.filters.yearCreated}
+              >
+                {this.getYearList()}
+              </NativeSelect>
+            </FormControl>
             <FormControl style={{ marginBottom: 10 }}>
               <InputLabel htmlFor="set-month-select">
                 Filter by Month
@@ -523,6 +577,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                   reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
                   refresh={this.fetchTxns}
                   addJobNumber={this.makeAddJobNumber(t.id)}
+                  updateNotes={this.makeUpdateNotes(t.id)}
                   toggleLoading={this.toggleLoading}
                 />
               ))}

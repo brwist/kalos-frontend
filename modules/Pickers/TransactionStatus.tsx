@@ -28,6 +28,7 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
       list: [],
     };
     this.Client = new TransactionStatusClient(
+      0,
       'https://core-dev.kalosflorida.com:8443',
     );
 

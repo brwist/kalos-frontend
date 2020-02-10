@@ -26,7 +26,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    this.Client = new UserClient('https://core-dev.kalosflorida.com:8443');
+    this.Client = new UserClient(0, 'https://core-dev.kalosflorida.com:8443');
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
