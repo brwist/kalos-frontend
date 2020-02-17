@@ -446,6 +446,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 onSelect={this.updateCostCenterID}
                 selected={t.costCenterId}
                 sort={costCenterSortByPopularity}
+                hideInactive
               />
               <DepartmentPicker
                 onSelect={this.updateDepartmentID}
@@ -486,7 +487,6 @@ export class TxnCard extends React.PureComponent<props, state> {
                 style={{
                   height: 44,
                   marginBottom: 10,
-                  justifyContent: 'space-evenly',
                 }}
               >
                 Photo

@@ -133,7 +133,7 @@ export const Spiffs = ({ spiffs, isLoading }: SpiffProps) => {
                         </Tooltip>
                       ) : (
                         <Typography variant="body1" component="span">
-                          {e.status}
+                          {e.status === 'New' ? 'Pending' : e.status}
                         </Typography>
                       )}
                     </TableCell>

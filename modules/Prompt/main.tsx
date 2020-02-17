@@ -13,6 +13,7 @@ interface props {
   Icon?(props: SvgIconProps): JSX.Element;
   defaultValue?: string;
   confirmFn(str: string): void;
+  multiline?: boolean;
   text: string;
   prompt: string;
 }
@@ -24,6 +25,7 @@ export function Prompt({
   prompt,
   confirmFn,
   defaultValue,
+  multiline,
 }: props) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
@@ -96,6 +98,7 @@ export function Prompt({
             inputRef={answer}
             variant="outlined"
             defaultValue={defaultValue || ''}
+            multiline={multiline}
           />
           <Grid
             container

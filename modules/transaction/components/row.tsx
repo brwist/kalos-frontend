@@ -201,6 +201,7 @@ export function TransactionRow({
             prompt="Update Txn Notes: "
             Icon={NotesIcon}
             defaultValue={txn.notes}
+            multiline
           />
           <PopoverGallery
             title="Receipt Photos"

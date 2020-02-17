@@ -26,7 +26,6 @@ import AccountCircleIcon from '@material-ui/icons/AccountCircleSharp';
 import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
 import RoomServiceIcon from '@material-ui/icons/RoomServiceSharp';
 import BarChartSharp from '@material-ui/icons/BarChartSharp';
-import CssBaseline from '@material-ui/core/CssBaseline';
 import { cfURL } from '../../helpers';
 import {
   TimesheetDepartmentClient,
