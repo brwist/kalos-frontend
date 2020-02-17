@@ -72,6 +72,13 @@ Each client accepts a corresponding protobuf message type and maps directly to a
 
 The API is currently still experimental and very much in development, so this information is subject to change. Any breaking changes can be refactored by me (@rmilejcz)
 
+### Authenticating
+Every client shares a common `GetToken` method, which accepts a username and password and fetches a JWT from the server. All this logic is handled implicitly in the client so no token is returned or exposed, all that is required is to call `GetToken` with your provided username and password. Note that you should not commit code containing your username and password, and released code will have these lines removed.
+```javascript
+  async componentDidMount(){
+    await this.UserClient.GetToken("my_username", "my_password")
+  }
+```
 ### Fetching a user by user ID
 ```javascript
 async function getUserByID(ID: number): User.AsObject {
@@ -129,3 +136,26 @@ function getTransactionStatuses(): TransactionStatusList.AsObject {
 ```
 
 `List` can be dangerous, since it is not constrained server side and will list **every entity** requested. It is therefore recommended that you set client side constraints on your protobuf messages to prevent crashing the app or worse the server. For example, using the `ActivityLogClient.List` method without setting any constraints on the protobuf `ActivityLog` will initiate stream of 2.1 million individual protobuf messages, putting extreme strain on the server and database. `List` can also lead to many uneeded rerenders, which is why is should be used in conjunction with some caching solution, never on `PureComponent`, and with some `shouldComponentUpdate` logic.
+
+### Database relationships
+It is common to encounter two database entities with some relationship, for example in our database each `user` can have one or more `properties`. Our current system does not (in most cases) automatically handle these relationships and so it must be handled client side. For example, getting an array of all `properties` belonging to a single `user` must be done explicitly:
+
+```javascript
+async function getUserProperties(userID: number): PropertyList.AsObject {
+  const client = new PropertyClient();
+  const req = new Property();
+  req.setUserId(userID);
+  const res = await client.BatchGet(req);
+  return res.toObject().resultsList;
+}
+```
+Or, more commonly, a list of `ServicesRendered` (note: `ServicesRendered` is a bit of a misnomer, it represents any employee interaction with an `Event`):
+```javascript
+async function getServicesRenderedByUserID(userID: number): ServicesRenderedList.AsObject {
+  const client = new ServicesRenderedClient();
+  const req = new ServicesRendered();
+  req.setTechnicianUserId(userID);
+  const req = await client.BatchGet(req);
+  return res.toObject().resultsList;
+}
+```
