@@ -35,25 +35,26 @@ This will creates a new module and generates some boilerplate files. You can the
 
 ## Development Concerns
 
-This project currently relies on [material-ui](https://material-ui.com) for most of it's UI and `@kalos-core/kalos-rpc` for all network requests. Both libraries are structured in such a way to keep bundles as small as possible. All this means is that you need to import from these libraries by specifying specific files to ensure that only necessary code is included. Example:
+### Tree shaking
 
+This project currently relies on [material-ui](https://material-ui.com) for most of it's UI and `@kalos-core/kalos-rpc` for all network requests. Both libraries are structured in such a way to keep bundles as small as possible by supporting tree shaking. All this means is that you need to import from these libraries by specifying specific files to ensure that only necessary code is included. Example:
 ```
 import Button from '@material-ui/core/Button'
 import CloudUploadOutline from '@material-ui/icons/CloudUploadOutline'
 import { Transaction, TransactionClient } from '@kalos-core/kalos-rpc/Transaction'
 ```
-
 instead of
-
 ```
 import { Button } from '@material-ui/core/'
 import { CloudUploadOutline } from '@material-ui/icons/CloudUploadOutline'
 import { Transaction, TransactionClient } from '@kalos-core/kalos-rpc/
 ```
+### Formatting
+Style is not a major concern for us. We use `prettier` in our IDEs but don't much mind you styling code to your preference. All code will eventually be reformatted using `prettier` and while PRs that are already formatted are preferred, it is not critical if it harms your productivity or is disagreeable to you otherwise.
+### Functional vs Class Components
+While class components are preferred for larger components with many methods, whatever style works best for you is acceptable.
 
-By allowing imports of specific files, we can avoid including large unused files and signficantly keep bundle size down.
-
-## Making Network Requests
+## Backend API
 
 We use an RPC client to handle all backend requests. Each client exposes the same 5 methods:
 
@@ -114,12 +115,19 @@ async function convertEmployeeToCustomer(ID: number): void {
   await client.Update(req);
 }
 ```
-## Style
+### The List method
+The list method is generally only used for small, cacheable sets of information. The List method requires a callback to handle new incoming messages. For example, the `TransactionStatus` client is a great candidate for the `List` method:
+```
+function handleMessage(txnStatus: TransactionStatus.AsObject): void {
+  // do something with the status, usually setState
+}
 
-### Formatting
+function getTransactionStatuses(): TransactionStatusList.AsObject {
+  const client = new TransactionStatusClient();
+  client.List(new TransactionStatus(), handleMessage)
+}
+```
 
-Style is not a major concern for us. We use `prettier` in our IDEs but don't much mind you styling code to your preference. All code will eventually be reformatted using `prettier` and while PRs that are already formatted are preferred, it is not critical if it harms your productivity or is disagreeable to you otherwise.
+`List` can be dangerous, since it is not constrained server side and will list **every entity** requested. It is therefore recommended that you set client side constraints on your protobuf messages to prevent crashing the app or worse the server. For example, using the `ActivityLogClient.List` method without setting any constraints on the protobuf `ActivityLog` will initiate stream of 2.1 million individual protobuf messages, putting extreme strain on the server and database.
 
-### Functional vs Class Components
-
-While class components are preferred for larger components with many methods, whatever style works best for you is acceptable.
+`List` can also lead to many uneeded rerenders, which is why is should be used in conjunction with some caching solution, never on `PureComponent`, and with some `shouldComponentUpdate` logic.
