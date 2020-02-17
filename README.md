@@ -67,7 +67,53 @@ We use an RPC client to handle all backend requests. A list of available clients
 
 - Delete: Delete an entity
 
-Each client accepts a corresponding protobuf message type. For example, the `UserClient` methods all accept one `User` protobuf message and returns the same type of message (except for `BatchGet` which returns a List (e.g. `UserList`)).
+Each client accepts a corresponding protobuf message type. For example, the `UserClient` methods all accept one `User` protobuf message and returns the same type of message (except for `BatchGet` which returns a List (e.g. `UserList`)). Protobuf messages are classes with `setX` and `getX` methods exposed, and are used as arguments to the appropriate client. Only non-zero values are read by default, so querying the API is as simple as passing a protobuf message with your desired constraints set to the appropriate client. All valid properties map directly to database properties, so reviewing database tables can be a good way to figure out what properties you have available to you. The client is also strongly typed, as are the protobufs, so your IDE should auto complete that information for you.
+
+The API is currently still experimental and very much in development, so this information is subject to change. Any breaking changes can be refactored by me (@rmilejcz)
+
+### Fetching a user by user ID
+```javascript
+async function getUserByID(ID: number): User.AsObject {
+  const client = new UserClient();
+  const req = new User();
+  req.setId(ID);
+  const res = await client.Get(req);
+  return res;
+}
+```
+### Fetching a list of users who are employees
+Fetching lists requires you to specify the page (the API is constrained to return arrays with 25 entities at a time to simplify API usage and server code). Unlike the other methods, the `BatchGet` method returns a protobuf. Simply call the `toObject` method available to all protobufs to convert it to an object and then access the `resultsList` property. Under the hood this type will always be called `XList` where `X` is the kind of entity the client works with (in this case `UserList`). 
+```javascript
+async function getEmployeeList(page = 0): User.AsObject[] {
+  const client = new UserClient();
+  const req = new User();
+  req.setIsEmployee(1);
+  req.setIsActive(1);
+  req.setPage(page);
+  const res: UserList = await client.BatchGet(req);
+  
+  const resAsObject: UserList.AsObject = res.toObject();
+  // UserList.AsObject {
+  //   resultsList: User.AsObject[];
+  //   totalCount: number;
+  // }
+  
+  return res.toObject().resultsList
+}
+```
+### Updating user information
+Making update requests requires you to specify which fields are being updated via a field mask array (which is just an array of strings in our case). This is because the backend API is written in Go; the way Go handles empty values requires us to specify which values we would like to be changed. The casing of strings specified in the field mask list must currently be cased as Go struct properties (sometimes called "Pascal Case") as opposed to camel case (so "IsEmployee" not "isEmployee"). For example, changing an employee to a customer:
+
+```javascript
+async function convertEmployeeToCustomer(ID: number): void {
+  const client = new UserClient();
+  const req = new User();
+  req.setIsEmployee(0);
+  req.setId(ID);
+  req.setFieldMaskList(['IsEmployee'])
+  await client.Update(req);
+}
+```
 
 ## Releasing a Module
 
