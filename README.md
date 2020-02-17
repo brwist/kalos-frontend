@@ -117,7 +117,7 @@ async function convertEmployeeToCustomer(ID: number): void {
 ```
 ### The List method
 The list method is generally only used for small, cacheable sets of information. The List method requires a callback to handle new incoming messages. For example, the `TransactionStatus` client is a great candidate for the `List` method:
-```
+```javascript
 function handleMessage(txnStatus: TransactionStatus.AsObject): void {
   // do something with the status, usually setState
 }
@@ -128,6 +128,4 @@ function getTransactionStatuses(): TransactionStatusList.AsObject {
 }
 ```
 
-`List` can be dangerous, since it is not constrained server side and will list **every entity** requested. It is therefore recommended that you set client side constraints on your protobuf messages to prevent crashing the app or worse the server. For example, using the `ActivityLogClient.List` method without setting any constraints on the protobuf `ActivityLog` will initiate stream of 2.1 million individual protobuf messages, putting extreme strain on the server and database.
-
-`List` can also lead to many uneeded rerenders, which is why is should be used in conjunction with some caching solution, never on `PureComponent`, and with some `shouldComponentUpdate` logic.
+`List` can be dangerous, since it is not constrained server side and will list **every entity** requested. It is therefore recommended that you set client side constraints on your protobuf messages to prevent crashing the app or worse the server. For example, using the `ActivityLogClient.List` method without setting any constraints on the protobuf `ActivityLog` will initiate stream of 2.1 million individual protobuf messages, putting extreme strain on the server and database. `List` can also lead to many uneeded rerenders, which is why is should be used in conjunction with some caching solution, never on `PureComponent`, and with some `shouldComponentUpdate` logic.
