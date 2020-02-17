@@ -14,7 +14,7 @@ interface props {
   test?(item: TransactionAccount.AsObject): boolean;
   sort?(a: TransactionAccount.AsObject, b: TransactionAccount.AsObject): number;
   label?: string;
-  useDevClient?: boolean;
+  hideInactive?: boolean;
 }
 
 interface state {
@@ -63,11 +63,16 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   }
 
   async fetchAccounts() {
-    this.AccClient.List(new TransactionAccount(), this.addAccount);
+    const req = new TransactionAccount();
+    if (this.props.hideInactive) {
+      req.setIsActive(1);
+    }
+
+    this.AccClient.List(req, this.addAccount);
   }
 
   async componentDidMount() {
-    const cacheListStr = localStorage.getItem('COST_CENTER_LIST_2');
+    const cacheListStr = localStorage.getItem('COST_CENTER_LIST_3');
     if (cacheListStr) {
       const cacheList = JSON.parse(cacheListStr);
       if (cacheList && cacheList.length !== 0) {
@@ -87,10 +92,10 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
       this.state.accountList.length > 0 &&
       prevState.accountList.length === this.state.accountList.length
     ) {
-      const cacheList = localStorage.getItem('COST_CENTER_LIST_2');
+      const cacheList = localStorage.getItem('COST_CENTER_LIST_3');
       if (!cacheList) {
         localStorage.setItem(
-          'COST_CENTER_LIST_2',
+          'COST_CENTER_LIST_3',
           JSON.stringify(this.state.accountList),
         );
       }
