@@ -114,7 +114,12 @@ async function convertEmployeeToCustomer(ID: number): void {
   await client.Update(req);
 }
 ```
+## Style
 
-## Releasing a Module
+### Formatting
 
-Releasing a module is currenlty handled by @robbiemilejczak
+Style is not a major concern for us. We use `prettier` in our IDEs but don't much mind you styling code to your preference. All code will eventually be reformatted using `prettier` and while PRs that are already formatted are preferred, it is not critical if it harms your productivity or is disagreeable to you otherwise.
+
+### Functional vs Class Components
+
+While class components are preferred for larger components with many methods, whatever style works best for you is acceptable.
