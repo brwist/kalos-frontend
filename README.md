@@ -55,7 +55,7 @@ By allowing imports of specific files, we can avoid including large unused files
 
 ## Making Network Requests
 
-We use an RPC client to handle all backend requests. A list of available clients can be found here (ADD LINK). Each client exposes the same 5 methods:
+We use an RPC client to handle all backend requests. Each client exposes the same 5 methods:
 
 - Get: Fetch a single entitiy
 
@@ -67,7 +67,7 @@ We use an RPC client to handle all backend requests. A list of available clients
 
 - Delete: Delete an entity
 
-Each client accepts a corresponding protobuf message type. For example, the `UserClient` methods all accept one `User` protobuf message and returns the same type of message (except for `BatchGet` which returns a List (e.g. `UserList`)). Protobuf messages are classes with `setX` and `getX` methods exposed, and are used as arguments to the appropriate client. Only non-zero values are read by default, so querying the API is as simple as passing a protobuf message with your desired constraints set to the appropriate client. All valid properties map directly to database properties, so reviewing database tables can be a good way to figure out what properties you have available to you. The client is also strongly typed, as are the protobufs, so your IDE should auto complete that information for you.
+Each client accepts a corresponding protobuf message type and maps directly to a database table. For example, the `UserClient` methods all accept one `User` protobuf message and returns the same type of message (except for `BatchGet` which returns a List (e.g. `UserList`)) and contains all of the same properties as a user does in our `MySQL` database (all property names are camel case). Protobuf messages are classes with `setX` and `getX` methods exposed, and are used as arguments to the appropriate client. Only non-zero values are read by default, so querying the API is as simple as passing a protobuf message with your desired constraints set to the appropriate client. All valid properties map directly to database properties, so reviewing database tables can be a good way to figure out what properties you have available to you. The client is also strongly typed, as are the protobufs, so your IDE should auto complete that information for you.
 
 The API is currently still experimental and very much in development, so this information is subject to change. Any breaking changes can be refactored by me (@rmilejcz)
 
