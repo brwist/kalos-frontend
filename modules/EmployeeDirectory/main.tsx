@@ -27,8 +27,6 @@ import List from '@material-ui/core/List';
 import ListItemText from '@material-ui/core/ListItemText';
 import TextField from '@material-ui/core/TextField';
 import Toolbar from '@material-ui/core/Toolbar';
-import Switch from '@material-ui/core/Switch';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 import { DepartmentPicker } from '../Pickers/Department';
@@ -38,6 +36,7 @@ import {
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import Paper from '@material-ui/core/Paper';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   userId: number;
@@ -71,14 +70,8 @@ export class EmployeeDirectory extends React.Component<props, state> {
       searchString: '',
       showInactive: false,
     };
-    this.TimesheetDepartmentClient = new TimesheetDepartmentClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
-    this.UserClient = new UserClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.TimesheetDepartmentClient = new TimesheetDepartmentClient(ENDPOINT);
+    this.UserClient = new UserClient(ENDPOINT);
     this.addUser = this.addUser.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.saveAsPDF = this.saveAsPDF.bind(this);

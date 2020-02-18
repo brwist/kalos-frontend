@@ -10,11 +10,9 @@ import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
 import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { S3Client, FileObject, URLObject } from '@kalos-core/kalos-rpc/S3File';
-import {
-  TransactionDocument,
-  TransactionDocumentClient,
-} from '@kalos-core/kalos-rpc/TransactionDocument';
+import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
+import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { ENDPOINT } from '../../constants';
 
 export interface GalleryData {
   key: string;
@@ -53,9 +51,8 @@ export class AltGallery extends React.PureComponent<props, state> {
       fileList: props.fileList,
     };
 
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.S3Client = new S3Client(0, endpoint);
-    this.DocClient = new TransactionDocumentClient(0, endpoint);
+    this.S3Client = new S3Client(ENDPOINT);
+    this.DocClient = new TransactionDocumentClient(ENDPOINT);
     this.toggleOpen = this.toggleOpen.bind(this);
     this.changeImage = this.changeImage.bind(this);
     this.fetch = this.fetch.bind(this);

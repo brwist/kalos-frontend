@@ -20,6 +20,7 @@ import { Spiffs } from './components/SpiffsTable';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Typography } from '@material-ui/core';
 import { Search } from '../Search/main';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   userId: number;
@@ -64,13 +65,12 @@ export class Dashboard extends React.PureComponent<props, state> {
       spiffs: [new Spiff().toObject()],
     };
 
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.MetricsClient = new MetricsClient(this.props.userId, endpoint);
-    this.TxnClient = new TransactionClient(this.props.userId, endpoint);
-    this.EventClient = new EventClient(this.props.userId, endpoint);
-    this.TaskClient = new TaskClient(this.props.userId, endpoint);
-    this.UserClient = new UserClient(this.props.userId, endpoint);
-    this.PTOCLient = new TimeoffRequestClient(this.props.userId, endpoint);
+    this.MetricsClient = new MetricsClient(ENDPOINT);
+    this.TxnClient = new TransactionClient(ENDPOINT);
+    this.EventClient = new EventClient(ENDPOINT);
+    this.TaskClient = new TaskClient(ENDPOINT);
+    this.UserClient = new UserClient(ENDPOINT);
+    this.PTOCLient = new TimeoffRequestClient(ENDPOINT);
   }
 
   toggleLoading() {

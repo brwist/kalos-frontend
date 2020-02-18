@@ -32,6 +32,7 @@ import {
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from '../../constants';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 
@@ -56,9 +57,8 @@ export class SideMenu extends React.PureComponent<props, state> {
       user: new User().toObject(),
       isOpen: false,
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.UserClient = new UserClient(0, endpoint);
-    this.DeptClient = new TimesheetDepartmentClient(0, endpoint);
+    this.UserClient = new UserClient(ENDPOINT);
+    this.DeptClient = new TimesheetDepartmentClient(ENDPOINT);
 
     this.toggleMenu = this.toggleMenu.bind(this);
     this.getIdentity = this.getIdentity.bind(this);

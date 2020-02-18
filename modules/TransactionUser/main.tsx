@@ -6,6 +6,7 @@ import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 import { Loader } from '../Loader/main';
 import { TimesheetDepartmentClient } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   userID: number;
@@ -35,15 +36,9 @@ export default class Transaction extends React.PureComponent<props, state> {
       userName: '',
       isSU: false,
     };
-    this.UserClient = new UserClient(
-      props.userID,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.UserClient = new UserClient(ENDPOINT);
 
-    this.DepartmentClient = new TimesheetDepartmentClient(
-      props.userID,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.DepartmentClient = new TimesheetDepartmentClient(ENDPOINT);
 
     this.getUserData = this.getUserData.bind(this);
     this.managerCheck = this.managerCheck.bind(this);

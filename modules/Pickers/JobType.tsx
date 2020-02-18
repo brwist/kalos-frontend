@@ -4,6 +4,7 @@ import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import { JobType, JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
 import Divider from '@material-ui/core/Divider';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   selected: number;
@@ -24,10 +25,7 @@ export class JobTypePicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    this.Client = new JobTypeClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.Client = new JobTypeClient(ENDPOINT);
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);

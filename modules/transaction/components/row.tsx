@@ -23,6 +23,7 @@ import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { TxnLog } from './log';
 import { TxnNotes } from './notes';
 import { getSlackID, slackNotify } from '../../../helpers';
+import { ENDPOINT } from '../../../constants';
 
 interface props {
   txn: Transaction.AsObject;
@@ -51,17 +52,16 @@ export function TransactionRow({
   toggleLoading,
   updateNotes,
 }: props) {
-  const endpoint = 'https://core-dev.kalosflorida.com:8443';
   const [state, setState] = useState<state>({
     files: [],
   });
   const FileInput = React.createRef<HTMLInputElement>();
 
   const clients = {
-    user: new UserClient(0, endpoint),
-    email: new EmailClient(0, endpoint),
-    docs: new TransactionDocumentClient(0, endpoint),
-    s3: new S3Client(0, endpoint),
+    user: new UserClient(ENDPOINT),
+    email: new EmailClient(ENDPOINT),
+    docs: new TransactionDocumentClient(ENDPOINT),
+    s3: new S3Client(ENDPOINT),
   };
 
   const handleFile = (e: any) => {
@@ -177,7 +177,9 @@ export function TransactionRow({
                 copyToClipboard(
                   `${new Date(
                     txn.timestamp.split(' ').join('T'),
-                  ).toLocaleDateString()},${txn.description},${amount}`,
+                  ).toLocaleDateString()},${txn.description},${amount},${
+                    txn.ownerName
+                  },${txn.vendor}`,
                 )
               }
             >
@@ -283,7 +285,7 @@ async function fetchFiles(
 }
 
 function fetchFile(doc: TransactionDocument.AsObject) {
-  const s3 = new S3Client(0, 'https://core-dev.kalosflorida.com:8443');
+  const s3 = new S3Client(ENDPOINT);
   const fileObj = new FileObject();
   fileObj.setBucket('kalos-transactions');
   fileObj.setKey(`${doc.transactionId}-${doc.reference}`);

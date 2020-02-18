@@ -8,6 +8,7 @@ import {
   TableCell,
   TableBody,
 } from '@material-ui/core';
+import { ENDPOINT } from '../../constants';
 
 interface props {}
 
@@ -26,7 +27,7 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
       page: 0,
       totalCount: 0,
     };
-    this.Client = new EventClient();
+    this.Client = new EventClient(ENDPOINT);
     this.fetchCalls = this.fetchCalls.bind(this);
   }
 

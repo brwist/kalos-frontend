@@ -15,6 +15,7 @@ import Grid from '@material-ui/core/Grid';
 import TablePagination from '@material-ui/core/TablePagination';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { TableSkeleton } from '../../Tables/Skeleton';
+import { ENDPOINT } from '../../../constants';
 import Divider from '@material-ui/core/Divider';
 
 // add any prop types here
@@ -46,8 +47,7 @@ export class PropertySearch extends React.PureComponent<props, state> {
       isLoading: false,
       properties: [],
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.Client = new PropertyClient(0, endpoint);
+    this.Client = new PropertyClient(ENDPOINT);
     this.updateSearchStr = this.updateSearchStr.bind(this);
     this.updateSearchTarget = this.updateSearchTarget.bind(this);
     this.doFetchProperties = this.doFetchProperties.bind(this);

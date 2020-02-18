@@ -15,6 +15,7 @@ import {
   RemoteIdentity,
   RemoteIdentityClient,
 } from '@kalos-core/kalos-rpc/RemoteIdentity';
+import { ENDPOINT } from '../../constants';
 
 const CSV_CACHE_KEY = 'LOCAL_CSV_STORAGE';
 
@@ -43,15 +44,13 @@ export class TxnUpload extends React.PureComponent<props, state> {
       rowsPerPage: 10,
       account: '',
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-
     this.setPage = this.setPage.bind(this);
     this.setRowsPerPage = this.setRowsPerPage.bind(this);
     this.handleFile = this.handleFile.bind(this);
     this.FileInput = React.createRef<HTMLInputElement>();
 
-    this.UserClient = new UserClient(0, endpoint);
-    this.IdentityClient = new RemoteIdentityClient(0, endpoint);
+    this.UserClient = new UserClient(ENDPOINT);
+    this.IdentityClient = new RemoteIdentityClient(ENDPOINT);
     this.makeGetTxnUser = this.makeGetTxnUser.bind(this);
     this.restoreFromCache = this.restoreFromCache.bind(this);
     this.cacheCSV = this.cacheCSV.bind(this);

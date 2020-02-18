@@ -5,9 +5,9 @@ import {
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TxnCard } from './card';
 import { Loader } from '../../Loader/main';
-import { NativeSelect } from '@material-ui/core';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { getEditDistance } from '../../../helpers';
+import { ENDPOINT } from '../../../constants';
 
 const MISSING_RECEIPT_KEY = 'KALOS MISSING RECIEPT AFFADAVIT';
 
@@ -37,10 +37,8 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       transactions: [],
       totalCount: 0,
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    const { userID } = props;
-    this.TxnClient = new TransactionClient(userID, endpoint);
-    this.S3Client = new S3Client(userID, endpoint);
+    this.TxnClient = new TransactionClient(ENDPOINT);
+    this.S3Client = new S3Client(ENDPOINT);
 
     this.downloadAffadavit = this.downloadAffadavit.bind(this);
     this.changePage = this.changePage.bind(this);
@@ -151,13 +149,6 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     return (
       <>
         {isLoading && <Loader />}
-        {/*!isLoading && (
-          <NativeSelect onChange={this.downloadAffadavit}>
-            <option value="">Download Missing Receipt Form</option>
-            <option value=".pdf">PDF</option>
-            <option value=".docx">Word Document</option>
-          </NativeSelect>
-        )*/}
         {txns.map(t => (
           <TxnCard
             txn={t}

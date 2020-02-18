@@ -6,6 +6,7 @@ import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   selected: number;
@@ -27,10 +28,7 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    this.Client = new TimesheetDepartmentClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.Client = new TimesheetDepartmentClient(ENDPOINT);
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addToList = this.addToList.bind(this);

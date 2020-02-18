@@ -18,6 +18,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { TableSkeleton } from '../../Tables/Skeleton';
 import { timestamp } from '../../../helpers';
+import { ENDPOINT } from '../../../constants';
 
 // add any prop types here
 interface props {
@@ -64,8 +65,7 @@ export class EventSearch extends React.PureComponent<props, state> {
       isLoading: false,
       events: [],
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.Client = new EventClient(0, endpoint);
+    this.Client = new EventClient(ENDPOINT);
     this.updateSearchStr = this.updateSearchStr.bind(this);
     this.updateSearchTarget = this.updateSearchTarget.bind(this);
     this.doFetchEvents = this.doFetchEvents.bind(this);

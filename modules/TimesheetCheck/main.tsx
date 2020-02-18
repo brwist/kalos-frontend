@@ -5,6 +5,7 @@ import Button from '@material-ui/core/Button';
 import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
 import customTheme from '../Theme/main';
 import Paper from '@material-ui/core/Paper';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   userID: number;
@@ -52,8 +53,7 @@ export class TimesheetCheck extends React.PureComponent<props, state> {
       hasReceiptsIssue: false,
       receiptsIssueStr: '',
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.TxnClient = new TransactionClient(this.props.userID, endpoint);
+    this.TxnClient = new TransactionClient(ENDPOINT);
     this.handleCheck = this.handleCheck.bind(this);
   }
 

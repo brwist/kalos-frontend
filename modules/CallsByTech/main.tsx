@@ -10,13 +10,11 @@ import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
-import {
-  DatePicker,
-  MaterialUiPickersDate,
-  MuiPickersUtilsProvider,
-} from '@material-ui/pickers';
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
+import { ENDPOINT } from '../../constants';
+import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 
 interface state {
   selectedID: number;
@@ -40,8 +38,8 @@ export class CallsByTech extends React.PureComponent<{}, state> {
       employees: [],
       isLoading: false,
     };
-    this.EventClient = new EventClient();
-    this.UserClient = new UserClient();
+    this.EventClient = new EventClient(ENDPOINT);
+    this.UserClient = new UserClient(ENDPOINT);
 
     this.handleDateChange = this.handleDateChange.bind(this);
     this.fetchAllEmployees = this.fetchAllEmployees.bind(this);

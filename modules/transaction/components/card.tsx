@@ -33,6 +33,7 @@ import CloseIcon from '@material-ui/icons/CloseSharp';
 import { PDFMaker } from '../../PDFMaker/main';
 import ReIcon from '@material-ui/icons/RefreshSharp';
 import { timestamp } from '../../../helpers';
+import { ENDPOINT } from '../../../constants';
 
 interface props {
   txn: Transaction.AsObject;
@@ -78,14 +79,12 @@ export class TxnCard extends React.PureComponent<props, state> {
       txn: props.txn,
       files: [],
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    const { userID } = props;
-    this.TxnClient = new TransactionClient(userID, endpoint);
-    this.DocsClient = new TransactionDocumentClient(userID, endpoint);
-    this.LogClient = new TransactionActivityClient(userID, endpoint);
-    this.S3Client = new S3Client(userID, endpoint);
-    this.EventClient = new EventClient(userID, endpoint);
-    this.TaskClient = new TaskClient(userID, endpoint);
+    this.TxnClient = new TransactionClient(ENDPOINT);
+    this.DocsClient = new TransactionDocumentClient(ENDPOINT);
+    this.LogClient = new TransactionActivityClient(ENDPOINT);
+    this.S3Client = new S3Client(ENDPOINT);
+    this.EventClient = new EventClient(ENDPOINT);
+    this.TaskClient = new TaskClient(ENDPOINT);
 
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
@@ -184,7 +183,12 @@ export class TxnCard extends React.PureComponent<props, state> {
         } else if (txn.notes === '') {
           throw 'Please provide a brief description in the notes';
         } else {
-          await this.updateStatus(2);
+          const statusID = this.props.isManager ? 3 : 2;
+          const statusMessage = this.props.isManager
+            ? 'manager receipt accepted automatically'
+            : 'submitted for approval';
+          await this.updateStatus(statusID);
+          await this.makeSubmitLog(statusID, statusMessage);
           if (txn.costCenterId === 673002) {
             await this.TaskClient.newToolPurchase(
               txn.amount,
@@ -194,7 +198,6 @@ export class TxnCard extends React.PureComponent<props, state> {
               txn.timestamp,
             );
           }
-          await this.makeSubmitLog(2, 'submitted for approval');
           await this.props.fetchFn();
         }
       }

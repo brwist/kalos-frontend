@@ -6,6 +6,7 @@ import {
   TransactionStatus,
   TransactionStatusClient,
 } from '@kalos-core/kalos-rpc/TransactionStatus';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   selected: number;
@@ -27,11 +28,7 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    this.Client = new TransactionStatusClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
-
+    this.Client = new TransactionStatusClient(ENDPOINT);
     this.handleSelect = this.handleSelect.bind(this);
     this.addToList = this.addToList.bind(this);
   }

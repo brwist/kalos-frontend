@@ -16,6 +16,7 @@ import TablePagination from '@material-ui/core/TablePagination';
 import { ContractClient, Contract } from '@kalos-core/kalos-rpc/Contract';
 import { TableSkeleton } from '../../Tables/Skeleton';
 import Divider from '@material-ui/core/Divider';
+import { ENDPOINT } from '../../../constants';
 
 // add any prop types here
 interface props {
@@ -52,8 +53,7 @@ export class ContractSearch extends React.PureComponent<props, state> {
       isLoading: false,
       contracts: [],
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.Client = new ContractClient(0, endpoint);
+    this.Client = new ContractClient(ENDPOINT);
     this.updateSearchStr = this.updateSearchStr.bind(this);
     this.updateSearchTarget = this.updateSearchTarget.bind(this);
     this.doFetchContracts = this.doFetchContracts.bind(this);
