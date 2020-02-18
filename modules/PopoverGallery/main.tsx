@@ -12,6 +12,7 @@ import ImageSearchSharp from '@material-ui/icons/ImageSearchSharp';
 import Popover from '@material-ui/core/Popover';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   fileList: IFile[];
@@ -42,7 +43,7 @@ export function PopoverGallery({
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null,
   );
-  const S3 = new S3Client(0, 'https://core-dev.kalosflorida.com:8443');
+  const S3 = new S3Client(ENDPOINT);
 
   const toggleOpen = async (event: React.MouseEvent<HTMLButtonElement>) => {
     setOpen(!isOpen);

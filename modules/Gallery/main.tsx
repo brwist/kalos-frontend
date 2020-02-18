@@ -11,6 +11,7 @@ import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   fileList: IFile[];
@@ -40,7 +41,7 @@ export function Gallery({
 }: props) {
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
-  const S3 = new S3Client(0, 'https://core-dev.kalosflorida.com:8443');
+  const S3 = new S3Client(ENDPOINT);
 
   const toggleOpen = () => {
     setOpen(!isOpen);

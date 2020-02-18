@@ -6,6 +6,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   userId: number;
@@ -20,7 +21,7 @@ export class Directory extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = { employees: [] };
-    this.UserClient = new UserClient();
+    this.UserClient = new UserClient(ENDPOINT);
 
     this.addEmployee = this.addEmployee.bind(this);
   }

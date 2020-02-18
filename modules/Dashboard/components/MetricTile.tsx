@@ -17,7 +17,6 @@ export const MetricTile = ({
   isLoading,
   tooltip,
 }: tileProps) => {
-  console.log(subtitle);
   return (
     <Grid item xs={6} lg={3}>
       <Grid

@@ -35,6 +35,7 @@ import {
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import { ENDPOINT } from '../../../constants';
 
 interface props {
   userID: number;
@@ -83,11 +84,9 @@ export class TransactionAdminView extends React.Component<props, state> {
       },
       count: 0,
     };
-    const { userID } = this.props;
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.TxnClient = new TransactionClient(userID, endpoint);
-    this.EventClient = new EventClient(userID, endpoint);
-    this.PropertyClient = new PropertyClient(userID, endpoint);
+    this.TxnClient = new TransactionClient(ENDPOINT);
+    this.EventClient = new EventClient(ENDPOINT);
+    this.PropertyClient = new PropertyClient(ENDPOINT);
 
     this.fetchTxns = this.fetchTxns.bind(this);
     this.setFilter = this.setFilter.bind(this);
@@ -131,13 +130,13 @@ export class TransactionAdminView extends React.Component<props, state> {
             curr.timestamp.split(' ').join('T'),
           ).toLocaleDateString()},${curr.description},${prettyMoney(
             curr.amount,
-          )}`;
+          )},${curr.ownerName},${curr.vendor}`;
         } else {
           return `${acc}\n${new Date(
             curr.timestamp.split(' ').join('T'),
           ).toLocaleDateString()},${curr.description},${prettyMoney(
             curr.amount,
-          )}`;
+          )},${curr.ownerName},${curr.vendor}`;
         }
       },
       '',
@@ -302,10 +301,7 @@ export class TransactionAdminView extends React.Component<props, state> {
 
   makeUpdateStatus(id: number, statusID: number, description: string) {
     return async (reason?: string) => {
-      const client = new TransactionClient(
-        this.props.userID,
-        'https://core-dev.kalosflorida.com:8443',
-      );
+      const client = new TransactionClient(ENDPOINT);
       const txn = new Transaction();
       txn.setId(id);
       txn.setStatusId(statusID);
@@ -345,10 +341,7 @@ export class TransactionAdminView extends React.Component<props, state> {
   }
 
   async makeLog(description: string, id: number) {
-    const client = new TransactionActivityClient(
-      this.props.userID,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    const client = new TransactionActivityClient(ENDPOINT);
     const activity = new TransactionActivity();
     activity.setIsActive(1);
     activity.setTimestamp(timestamp());
@@ -495,7 +488,6 @@ export class TransactionAdminView extends React.Component<props, state> {
               selected={this.state.filters.statusID || 0}
               onSelect={statusID => this.setFilter('statusID', statusID)}
               label="Filter by Status"
-              useDevClient
             />
             <CostCenterPicker
               disabled={this.state.isLoading}
@@ -504,7 +496,6 @@ export class TransactionAdminView extends React.Component<props, state> {
                 this.setFilter('costCenterID', costCenterID)
               }
               label="Filter by Account"
-              useDevClient
             />
             <EmployeePicker
               disabled={this.state.isLoading}
@@ -512,7 +503,6 @@ export class TransactionAdminView extends React.Component<props, state> {
               onSelect={userID => this.setFilter('userID', userID)}
               label="Filter by User"
               test={employeeTest}
-              useDevClient
             />
             <Tooltip
               title={`Clear filters${!this.checkFilters() ? '(disabled)' : ''}`}

@@ -1,12 +1,10 @@
 import { PredictionClient } from '@kalos-core/kalos-rpc/Predict';
+import { ENDPOINT } from '../../constants';
 
 export class Predictor {
   PredictionClient: PredictionClient;
   constructor() {
-    this.PredictionClient = new PredictionClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.PredictionClient = new PredictionClient(ENDPOINT);
   }
 
   async auth() {

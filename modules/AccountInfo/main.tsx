@@ -14,6 +14,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import themes from '../Theme/main';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   userId: number;
@@ -50,10 +51,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
     this.toggleEditing = this.toggleEditing.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.handleUpdatePassword = this.handleUpdatePassword.bind(this);
-    this.UserClient = new UserClient(
-      this.props.userId,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.UserClient = new UserClient(ENDPOINT);
     this.oldPassword = React.createRef();
     this.newPassword = React.createRef();
     this.reTypePassword = React.createRef();

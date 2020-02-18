@@ -6,6 +6,7 @@ import {
   TransactionAccount,
   TransactionAccountClient,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   selected: number;
@@ -28,11 +29,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
     this.state = {
       accountList: [],
     };
-    this.AccClient = new TransactionAccountClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
-
+    this.AccClient = new TransactionAccountClient(ENDPOINT);
     this.handleSelect = this.handleSelect.bind(this);
     this.addAccount = this.addAccount.bind(this);
   }
@@ -72,7 +69,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    const cacheListStr = localStorage.getItem('COST_CENTER_LIST_3');
+    const cacheListStr = localStorage.getItem('COST_CENTER_LIST_4');
     if (cacheListStr) {
       const cacheList = JSON.parse(cacheListStr);
       if (cacheList && cacheList.length !== 0) {
@@ -92,10 +89,10 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
       this.state.accountList.length > 0 &&
       prevState.accountList.length === this.state.accountList.length
     ) {
-      const cacheList = localStorage.getItem('COST_CENTER_LIST_3');
+      const cacheList = localStorage.getItem('COST_CENTER_LIST_4');
       if (!cacheList) {
         localStorage.setItem(
-          'COST_CENTER_LIST_3',
+          'COST_CENTER_LIST_4',
           JSON.stringify(this.state.accountList),
         );
       }

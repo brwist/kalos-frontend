@@ -5,9 +5,9 @@ import NativeSelect from '@material-ui/core/NativeSelect';
 import InputLabel from '@material-ui/core/InputLabel';
 import { PropertySearch } from './components/PropertySearch';
 import { CustomerSearch } from './components/CustomerSearch';
-import { ContractSearch } from './components/ContractSearch';
 import { EventSearch } from './components/ServiceCallSearch';
 import { EventClient } from '@kalos-core/kalos-rpc/Event';
+import { ENDPOINT } from '../../constants';
 
 // add any prop types here
 interface props {
@@ -27,7 +27,7 @@ export class Search extends React.PureComponent<props, state> {
       target: 'Service Call',
     };
 
-    this.Client = new EventClient(0, 'https://core-dev.kalosflorida.com:8443');
+    this.Client = new EventClient(ENDPOINT);
     this.renderSelector = this.renderSelector.bind(this);
     this.setSearchTarget = this.setSearchTarget.bind(this);
   }

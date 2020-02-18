@@ -23,7 +23,11 @@ import {
   Switch,
 } from '@material-ui/core';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-const { EVENT_STATUS_LIST, PAYMENT_TYPE_LIST } = require('../../constants');
+import {
+  EVENT_STATUS_LIST,
+  PAYMENT_TYPE_LIST,
+  ENDPOINT,
+} from '../../constants';
 
 interface props {
   eventID: number;
@@ -51,10 +55,10 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     };
     const endpoint = 'https://core-dev.kalosflorida.com:8443';
     this.toggleEditing = this.toggleEditing.bind(this);
-    this.UserClient = new UserClient(this.props.userID, endpoint);
+    this.UserClient = new UserClient(ENDPOINT);
     this.fetchTechnicians = this.fetchTechnicians.bind(this);
     this.fetchCallbacks = this.fetchCallbacks.bind(this);
-    this.EventClient = new EventClient(this.props.userID, endpoint);
+    this.EventClient = new EventClient(ENDPOINT);
     this.fetchEvent = this.fetchEvent.bind(this);
     this.updateEvent = this.updateEvent.bind(this);
     this.onDateChange = this.onDateChange.bind(this);

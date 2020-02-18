@@ -17,7 +17,7 @@ import Grid from '@material-ui/core/Grid';
 import TablePagination from '@material-ui/core/TablePagination';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TableSkeleton } from '../../Tables/Skeleton';
-import { timestamp } from '../../../helpers';
+import { ENDPOINT } from '../../../constants';
 import Divider from '@material-ui/core/Divider';
 
 // add any prop types here
@@ -62,8 +62,7 @@ export class CustomerSearch extends React.PureComponent<props, state> {
       isLoading: false,
       customers: [],
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
-    this.Client = new UserClient(0, endpoint);
+    this.Client = new UserClient(ENDPOINT);
     this.updateSearchStr = this.updateSearchStr.bind(this);
     this.updateSearchTarget = this.updateSearchTarget.bind(this);
     this.doFetchUsers = this.doFetchUsers.bind(this);

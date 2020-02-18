@@ -17,6 +17,7 @@ import ListIcon from '@material-ui/icons/ListSharp';
 import Tooltip from '@material-ui/core/Tooltip';
 import Grid from '@material-ui/core/Grid';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from '../../../constants';
 
 interface props {
   txnID: number;
@@ -42,14 +43,8 @@ export class TxnLog extends React.PureComponent<props, state> {
       actorMap: new Map<number, string>(),
     };
 
-    this.LogClient = new TransactionActivityClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
-    this.UserClient = new UserClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.LogClient = new TransactionActivityClient(ENDPOINT);
+    this.UserClient = new UserClient(ENDPOINT);
 
     this.toggleVisibility = this.toggleVisibility.bind(this);
     this.addLog = this.addLog.bind(this);

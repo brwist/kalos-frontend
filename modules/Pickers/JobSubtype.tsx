@@ -9,6 +9,7 @@ import {
 } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import Divider from '@material-ui/core/Divider';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   selected: number;
@@ -32,14 +33,8 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
       list: [],
       allowed: [],
     };
-    this.Client = new JobSubtypeClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
-    this.JobTypeSubtypeClient = new JobTypeSubtypeClient(
-      0,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.Client = new JobSubtypeClient(ENDPOINT);
+    this.JobTypeSubtypeClient = new JobTypeSubtypeClient(ENDPOINT);
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
   }

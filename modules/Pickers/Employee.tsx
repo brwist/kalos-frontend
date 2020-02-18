@@ -3,6 +3,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   selected: number;
@@ -26,7 +27,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     this.state = {
       list: [],
     };
-    this.Client = new UserClient(0, 'https://core-dev.kalosflorida.com:8443');
+    this.Client = new UserClient(ENDPOINT);
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);

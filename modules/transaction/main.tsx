@@ -2,10 +2,10 @@ import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TransactionAdminView } from './components/admin';
 import Grid from '@material-ui/core/Grid';
-import CssBaseline from '@material-ui/core/CssBaseline';
 import { Loader } from '../Loader/main';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
+import { ENDPOINT } from '../../constants';
 
 interface props {
   userID: number;
@@ -34,10 +34,7 @@ export default class Transaction extends React.PureComponent<props, state> {
       userName: '',
       isSU: false,
     };
-    this.UserClient = new UserClient(
-      this.props.userID,
-      'https://core-dev.kalosflorida.com:8443',
-    );
+    this.UserClient = new UserClient(ENDPOINT);
 
     this.getUserData = this.getUserData.bind(this);
   }

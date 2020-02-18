@@ -3,10 +3,10 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
-import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import Popover from '@material-ui/core/Popover';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
+import { SvgIconProps } from '@material-ui/core/SvgIcon';
 
 interface props {
   disabled?: boolean;
