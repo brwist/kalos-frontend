@@ -341,9 +341,7 @@ function rollupBuild() {
                                 react: 'React',
                                 'react-dom': 'ReactDOM'
                             },
-                            plugins: [
-                            /*terser()*/
-                            ]
+                            plugins: [terser()]
                         })];
                 case 6:
                     _a.sent();
@@ -410,6 +408,29 @@ function release() {
         });
     });
 }
+function upload() {
+    return __awaiter(this, void 0, void 0, function () {
+        var target, err_5;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 1, , 3]);
+                    target = titleCase(process.argv[4].replace(/-/g, ''));
+                    return [3 /*break*/, 3];
+                case 1:
+                    err_5 = _a.sent();
+                    return [4 /*yield*/, getBranch()];
+                case 2:
+                    target = target = (_a.sent()).replace(/\n/g, '');
+                    return [3 /*break*/, 3];
+                case 3: return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + exports.KALOS_ASSETS + "/modules/" + target + ".js")];
+                case 4:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
 function bustCache() {
     return __awaiter(this, void 0, void 0, function () {
         var controller, filename, res, versionMatch, version, newVersion, newFile;
@@ -450,6 +471,7 @@ task('bust', bustCache);
 task('goog', googBuild);
 task(release);
 task('cfpatch', patchCFC);
+task(upload);
 exports.KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
 exports.KALOS_ASSETS = exports.KALOS_ROOT + "/app/assets";
 exports.MODULE_CFC = exports.KALOS_ROOT + "/app/admin/controllers/module.cfc";

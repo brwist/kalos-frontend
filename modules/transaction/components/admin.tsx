@@ -561,6 +561,9 @@ export class TransactionAdminView extends React.Component<props, state> {
                 <TransactionRow
                   txn={t}
                   key={`txnRow-${t.id}`}
+                  acceptOverride={
+                    this.props.userID === 213 || this.props.userID === 336
+                  }
                   departmentView={this.state.departmentView}
                   enter={this.makeUpdateStatus(t.id, 5, 'recorded')}
                   accept={this.makeUpdateStatus(t.id, 3, 'accepted')}

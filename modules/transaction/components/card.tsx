@@ -164,16 +164,19 @@ export class TxnCard extends React.PureComponent<props, state> {
       );
       if (ok) {
         if (txn.jobId !== 0) {
-          const job = new Event();
-          job.setId(txn.jobId);
-          let res;
+          console.log('trying job number...');
           try {
-            res = await this.EventClient.Get(job);
+            console.log('making event');
+            const job = new Event();
+            job.setId(txn.jobId);
+            console.log(job.toObject());
+            //const res = await this.EventClient.Get(job);
+            //console.log(res);
+            //if (!res || res.id === 0) {
+            //throw 'The entered job number is invalid';
+            //}
           } catch (err) {
             console.log(err);
-          }
-          if (!res || res.id === 0) {
-            throw 'The entered job number is invalid';
           }
         }
         if (!txn.costCenter) {
@@ -389,8 +392,6 @@ export class TxnCard extends React.PureComponent<props, state> {
       .map(d => {
         const arr = d.reference.split('.');
         const mimeTypeStr = arr[arr.length - 1];
-        console.log(mimeTypeStr);
-        console.log(this.S3Client.getMimeType(mimeTypeStr));
         return {
           name: d.reference,
           mimeType: this.S3Client.getMimeType(mimeTypeStr),
@@ -404,15 +405,15 @@ export class TxnCard extends React.PureComponent<props, state> {
 
     const fileObjects = await Promise.all(promiseArr);
     const files = filesList.map(f => {
-      const fileObj = fileObjects.find(
-        obj => obj.key.replace(`${this.state.txn.id}-`, '') === f.name,
-      );
+      const fileObj = fileObjects.find(obj => obj.key.includes(f.name));
       if (fileObj) {
         f.data = fileObj.data as string;
       }
+
+      f.name = `${this.state.txn.id}-${f.name}`;
       return f;
     });
-    console.log(files);
+
     this.setState({
       files,
     });
