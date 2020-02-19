@@ -28,6 +28,7 @@ import { ENDPOINT } from '../../../constants';
 interface props {
   txn: Transaction.AsObject;
   departmentView: boolean;
+  acceptOverride: boolean;
   enter(): Promise<void>;
   accept(): Promise<void>;
   reject(reason?: string): Promise<void>;
@@ -51,6 +52,7 @@ export function TransactionRow({
   addJobNumber,
   toggleLoading,
   updateNotes,
+  acceptOverride,
 }: props) {
   const [state, setState] = useState<state>({
     files: [],
@@ -94,11 +96,11 @@ export function TransactionRow({
   const updateStatus = async () => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as ${
-        departmentView ? 'accepted' : 'recorded'
+        departmentView || acceptOverride ? 'accepted' : 'recorded'
       }?`,
     );
     if (ok) {
-      const fn = departmentView ? accept : enter;
+      const fn = departmentView || acceptOverride ? accept : enter;
       await fn();
       await refresh();
     }

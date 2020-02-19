@@ -9,7 +9,8 @@
     "make": "gulp -LL create",
     "release": "gulp -LL release",
     "bust": "gulp -LL bust",
-    "less": "lessc styles/index.less styles/main.css"
+    "less": "lessc styles/index.less styles/main.css",
+    "upload": "gulp -LL upload"
   },
   "license": "MIT",
   "devDependencies": {
