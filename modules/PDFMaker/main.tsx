@@ -23,6 +23,7 @@ interface props {
   icon?: React.ReactNode;
   jobNumber?: string;
   onCreate?(file: Blob): void;
+  confirmText?: string;
   pdfType: PDFList;
 }
 
@@ -35,7 +36,11 @@ interface state {
   jobNumber: string;
 }
 
-type PDFList = 'Missing Receipt' | 'Retrievable Receipt';
+type PDFList =
+  | 'Missing Receipt'
+  | 'Retrievable Receipt'
+  | 'Approved Proposal'
+  | 'Pending Proposal';
 
 export class PDFMaker extends React.PureComponent<props, state> {
   SigPad: React.RefObject<HTMLCanvasElement>;
@@ -135,10 +140,6 @@ export class PDFMaker extends React.PureComponent<props, state> {
   }
 
   render() {
-    const ThePDF =
-      this.props.pdfType === 'Missing Receipt'
-        ? ReceiptAffadavit
-        : RetrievableAffadavit;
     return (
       <>
         <Button
@@ -217,35 +218,6 @@ export class PDFMaker extends React.PureComponent<props, state> {
                   )}
                 </Grid>
               </Grid>
-              {/*<Grid
-                container
-                direction="row"
-                justify="center"
-                alignItems="center"
-              >
-                {this.state.sigURL.length > 0 && (
-                  <Grid
-                    container
-                    item
-                    direction="column"
-                    alignItems="center"
-                    justify="center"
-                  >
-                    <Typography variant="body1">PDF Preview</Typography>
-                    <ReactPDF.PDFViewer>
-                      <ThePDF
-                        date={this.props.dateStr}
-                        vendor={this.state.vendor}
-                        name={this.props.name}
-                        purpose={this.state.purpose}
-                        sigURL={this.state.sigURL}
-                        amount={this.props.amount}
-                        jobNumber={this.props.jobNumber}
-                      />
-                    </ReactPDF.PDFViewer>
-                  </Grid>
-                )}
-                </Grid>*/}
               <Grid
                 container
                 direction="row"
@@ -257,7 +229,7 @@ export class PDFMaker extends React.PureComponent<props, state> {
                   Cancel
                 </Button>
                 <Button onClick={this.saveAsPDF} style={{ marginLeft: 5 }}>
-                  Create PDF
+                  {this.props.confirmText || 'Create PDF'}
                 </Button>
               </Grid>
             </Grid>
