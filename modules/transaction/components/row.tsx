@@ -10,6 +10,7 @@ import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import NotesIcon from '@material-ui/icons/EditSharp';
+import Button from '@material-ui/core/Button';
 import { Prompt } from '../../Prompt/main';
 import { IFile } from '../../Gallery/main';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
@@ -24,6 +25,7 @@ import { TxnLog } from './log';
 import { TxnNotes } from './notes';
 import { getSlackID, slackNotify } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
+import { CostCenterPicker } from '../../Pickers/CostCenter';
 
 interface props {
   txn: Transaction.AsObject;
@@ -35,6 +37,8 @@ interface props {
   refresh(): Promise<void>;
   addJobNumber(jn: string): Promise<void>;
   updateNotes(notes: string): Promise<void>;
+  updateCostCenter(id: number): Promise<void>;
+  updateDepartment(id: number): Promise<void>;
   toggleLoading(cb?: () => void): void;
 }
 
@@ -50,13 +54,15 @@ export function TransactionRow({
   reject,
   refresh,
   addJobNumber,
-  toggleLoading,
   updateNotes,
   acceptOverride,
+  updateCostCenter,
 }: props) {
   const [state, setState] = useState<state>({
     files: [],
   });
+  const [isEditingCostCenter, setIsEditingCostCenter] = useState(false);
+
   const FileInput = React.createRef<HTMLInputElement>();
 
   const clients = {
@@ -82,7 +88,6 @@ export function TransactionRow({
 
       await refresh();
       alert('Upload complete!');
-      //toggleLoading(() => alert('Upload complete!'));
     };
     if (FileInput.current && FileInput.current.files) {
       fr.readAsArrayBuffer(FileInput.current.files[0]);
@@ -147,6 +152,11 @@ export function TransactionRow({
     await refresh();
   };
 
+  const handleCostCenterSelect = async (id: number) => {
+    await updateCostCenter(id);
+    setIsEditingCostCenter(false);
+  };
+
   const amount = prettyMoney(txn.amount);
   return (
     <>
@@ -158,9 +168,20 @@ export function TransactionRow({
           {`${txn.ownerName} (${txn.cardUsed})` || ''}
         </TableCell>
         <TableCell align="center">
-          {txn.costCenter
-            ? `${txn.costCenter.description} (${txn.costCenter.id})`
-            : ''}
+          {isEditingCostCenter && (
+            <CostCenterPicker
+              selected={txn.costCenter ? txn.costCenter.id : 0}
+              onSelect={handleCostCenterSelect}
+              hideInactive
+            />
+          )}
+          {!isEditingCostCenter && (
+            <Button onClick={() => setIsEditingCostCenter(true)}>
+              {txn.costCenter
+                ? `${txn.costCenter.description} (${txn.costCenter.id})`
+                : ''}
+            </Button>
+          )}
         </TableCell>
         <TableCell align="center">
           {txn.department

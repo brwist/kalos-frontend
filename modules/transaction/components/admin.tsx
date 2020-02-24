@@ -98,6 +98,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.copyPage = this.copyPage.bind(this);
     this.makeAddJobNumber = this.makeAddJobNumber.bind(this);
     this.makeUpdateNotes = this.makeUpdateNotes.bind(this);
+    this.makeUpdateCostCenter = this.makeUpdateCostCenter.bind(this);
     this.toggleLoading = this.toggleLoading.bind(this);
   }
 
@@ -215,6 +216,39 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
+  makeUpdateCostCenter(id: number) {
+    return async (costCenterID: number) => {
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setCostCenterId(costCenterID);
+      txn.setFieldMaskList(['CostCenterId']);
+      await this.TxnClient.Update(txn);
+      await this.fetchTxns();
+    };
+  }
+
+  makeUpdateStatus(id: number, statusID: number, description: string) {
+    return async (reason?: string) => {
+      const client = new TransactionClient(ENDPOINT);
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setStatusId(statusID);
+      txn.setFieldMaskList(['StatusId']);
+      await client.Update(txn);
+      await this.makeLog(`${description} ${reason || ''}`, id);
+    };
+  }
+
+  makeUpdateDepartment(id: number) {
+    return async (departmentID: number) => {
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setDepartmentId(departmentID);
+      txn.setFieldMaskList(['DepartmentId']);
+      await this.TxnClient.Update(txn);
+    };
+  }
+
   applyFilters(obj: Transaction) {
     const { filters } = this.state;
     if (filters.userID) {
@@ -297,18 +331,6 @@ export class TransactionAdminView extends React.Component<props, state> {
     el.select();
     document.execCommand('copy');
     document.body.removeChild(el);
-  }
-
-  makeUpdateStatus(id: number, statusID: number, description: string) {
-    return async (reason?: string) => {
-      const client = new TransactionClient(ENDPOINT);
-      const txn = new Transaction();
-      txn.setId(id);
-      txn.setStatusId(statusID);
-      txn.setFieldMaskList(['StatusId']);
-      await client.Update(txn);
-      await this.makeLog(`${description} ${reason || ''}`, id);
-    };
   }
 
   async handleSubmitPage() {
@@ -571,6 +593,8 @@ export class TransactionAdminView extends React.Component<props, state> {
                   refresh={this.fetchTxns}
                   addJobNumber={this.makeAddJobNumber(t.id)}
                   updateNotes={this.makeUpdateNotes(t.id)}
+                  updateCostCenter={this.makeUpdateCostCenter(t.id)}
+                  updateDepartment={this.makeUpdateDepartment(t.id)}
                   toggleLoading={this.toggleLoading}
                 />
               ))}
