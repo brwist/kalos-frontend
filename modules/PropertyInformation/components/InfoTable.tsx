@@ -3,19 +3,17 @@ import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
 interface props {
-  data: Array<
-    Array<{
-      label: string;
-      value: string;
-    }>
-  >;
+  data: {
+    label: string;
+    value: string;
+  }[][];
 }
 
 const useStyles = makeStyles(theme => ({
   row: {
     display: 'flex',
-    paddingTop: theme.spacing(0.5),
-    paddingBottom: theme.spacing(0.5),
+    paddingTop: theme.spacing(),
+    paddingBottom: theme.spacing(),
     '&:not(:last-of-type)': {
       borderBottomWidth: 1,
       borderBottomStyle: 'solid',
