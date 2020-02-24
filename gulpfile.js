@@ -341,7 +341,9 @@ function rollupBuild() {
                                 react: 'React',
                                 'react-dom': 'ReactDOM'
                             },
-                            plugins: [terser()]
+                            plugins: [
+                            /*terser()*/
+                            ]
                         })];
                 case 6:
                     _a.sent();
