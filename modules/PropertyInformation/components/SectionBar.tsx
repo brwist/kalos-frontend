@@ -1,9 +1,9 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import Button, { props as ButtonProps } from './Button';
+import Button, { Props as ButtonProps } from './Button';
 import Typography from '@material-ui/core/Typography';
 
-interface props {
+interface Props {
   title: string;
   buttons?: ButtonProps[];
 }
@@ -18,7 +18,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const SectionBar = ({ title, buttons = [] }: props) => {
+export const SectionBar = ({ title, buttons = [] }: Props) => {
   const classes = useStyles();
   return (
     <div className={classes.wrapper}>
@@ -33,5 +33,3 @@ const SectionBar = ({ title, buttons = [] }: props) => {
     </div>
   );
 };
-
-export default SectionBar;

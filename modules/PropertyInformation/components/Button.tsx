@@ -2,10 +2,11 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import ButtonUI from '@material-ui/core/Button';
 
-export interface props {
+export interface Props {
   label: string;
   url?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -17,15 +18,15 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const Button = ({ label, url, onClick }: props) => {
+const Button = ({ label, url, ...props }: Props) => {
   const classes = useStyles();
   const Component = (
     <ButtonUI
       className={classes.button}
       variant="contained"
       color="primary"
-      onClick={onClick}
       size="small"
+      {...props}
     >
       {label}
     </ButtonUI>

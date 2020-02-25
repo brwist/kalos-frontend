@@ -1,28 +1,34 @@
 import React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-// import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-// import TextField from '@material-ui/core/TextField';
 import CircularProgress from '@material-ui/core/CircularProgress';
-// import FormControlLabel from '@material-ui/core/FormControlLabel';
-// import FormControl from '@material-ui/core/FormControl';
-// import InputLabel from '@material-ui/core/InputLabel';
-// import Select from '@material-ui/core/Select';
-// import MenuItem from '@material-ui/core/MenuItem';
-// import Switch from '@material-ui/core/Switch';
 import Grid from '@material-ui/core/Grid';
-import {
-  ENDPOINT,
-  // USA_STATES
-} from '../../../constants';
+import { ENDPOINT, USA_STATES } from '../../../constants';
 import InfoTable from './InfoTable';
+import { Modal } from './Modal';
+import { Form, Schema } from './Form';
+
+const SCHEMA: Schema<User.AsObject>[] = [
+  { label: 'First Name', name: 'firstname' },
+  { label: 'Last Name', name: 'lastname' },
+  { label: 'Business Name', name: 'businessname' },
+  { label: 'Phone', name: 'phone' },
+  { label: 'Alternate Phone', name: 'altphone' },
+  { label: 'Email', name: 'email' },
+  { label: 'Address', name: 'address' },
+  { label: 'City', name: 'city' },
+  { label: 'State', name: 'state', options: USA_STATES },
+  { label: 'Zip', name: 'zip' },
+];
 
 interface props {
   userID: number;
-  isEditing: boolean;
+  editing: boolean;
+  onCloseEdit: () => void;
 }
 
 interface state {
   customer: User.AsObject;
+  saving: boolean;
 }
 
 export class CustomerInformation extends React.PureComponent<props, state> {
@@ -32,55 +38,38 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     super(props);
     this.state = {
       customer: new User().toObject(),
+      saving: false,
     };
     this.UserClient = new UserClient(ENDPOINT);
-    this.getCustomer = this.getCustomer.bind(this);
   }
 
-  // updateUserProperty<K extends keyof Property.AsObject>(prop: K) {
-  //   return async (
-  //     e: ChangeEvent<
-  //       | HTMLInputElement
-  //       | HTMLTextAreaElement
-  //       | {
-  //           name?: string | undefined;
-  //           value: unknown;
-  //         }
-  //     >
-  //   ) => {
-  //     const property = new Property();
-  //     const upperCaseProp = `${prop[0].toUpperCase()}${prop.slice(1)}`;
-  //     const methodName = `set${upperCaseProp}`;
-  //     property.setId(this.props.propertyId);
-  //     property.setUserId(this.props.userID);
-  //     //@ts-ignore
-  //     property[methodName](e.target.value);
-  //     property.setFieldMaskList([upperCaseProp]);
-  //     const updatedProperty = await this.PropertyClient.Update(property);
-  //     this.setState(() => ({ userProperty: updatedProperty }));
-  //   };
-  // }
-  // updateFirstName = this.updateUserProperty('firstname');
-  // updateLastName = this.updateUserProperty('lastname');
-  // updateBusinessName = this.updateUserProperty('businessname');
-  // updatePhone = this.updateUserProperty('phone');
-  // updateAltPhone = this.updateUserProperty('altphone');
-  // updateEmail = this.updateUserProperty('email');
-  // updateAddress = this.updateUserProperty('address');
-  // updateCity = this.updateUserProperty('city');
-  // updateState = this.updateUserProperty('state');
-  // updateZip = this.updateUserProperty('zip');
-  // updateSubdivision = this.updateUserProperty('subdivision');
-  // updateNotes = this.updateUserProperty('notes');
-
-  async getCustomer() {
+  getCustomer = async () => {
     const user = new User();
     user.setId(this.props.userID);
     const userData = await this.UserClient.Get(user);
     this.setState({
       customer: userData,
     });
-  }
+  };
+
+  handleSave = async (data: User.AsObject) => {
+    const { userID, onCloseEdit } = this.props;
+    this.setState({ saving: true });
+    const user = new User();
+    user.setId(userID);
+    const fieldMaskList = [];
+    for (const key in data) {
+      const upperCaseProp = `${key[0].toUpperCase()}${key.slice(1)}`;
+      const methodName = `set${upperCaseProp}`;
+      //@ts-ignore
+      user[methodName](data[key]);
+      fieldMaskList.push(upperCaseProp);
+    }
+    user.setFieldMaskList(fieldMaskList);
+    const updatedUser = await this.UserClient.Update(user);
+    this.setState(() => ({ customer: updatedUser, saving: false }));
+    onCloseEdit();
+  };
 
   async componentDidMount() {
     await this.UserClient.GetToken('test', 'test');
@@ -88,8 +77,8 @@ export class CustomerInformation extends React.PureComponent<props, state> {
   }
 
   render() {
-    const { isEditing } = this.props;
-    const { customer } = this.state;
+    const { editing, onCloseEdit } = this.props;
+    const { customer, saving } = this.state;
     const {
       id,
       firstname,
@@ -134,135 +123,16 @@ export class CustomerInformation extends React.PureComponent<props, state> {
           <CircularProgress style={{ margin: '10px auto' }} />
         ) : (
           <>
-            {/* <FormControlLabel
-              style={{
-                marginLeft: 'auto',
-              }}
-              control={
-                <Switch
-                  checked={isEditing}
-                  onChange={this.toggleEditing}
-                  value="isEditing"
-                  color="primary"
-                />
-              }
-              label={isEditing ? 'Editing Enabled' : 'Editing Disabled'}
-            /> */}
-            {isEditing ? (
-              <>
-                {/* <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={firstname}
-                  onChange={this.updateFirstName}
-                  label={'First Name'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={lastname}
-                  onChange={this.updateLastName}
-                  label={'Last Name'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={businessname}
-                  onChange={this.updateBusinessName}
-                  label={'Business Name'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={phone}
-                  onChange={this.updatePhone}
-                  label={'Phone'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={altphone}
-                  onChange={this.updateAltPhone}
-                  label={'Alternate Phone'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={email}
-                  onChange={this.updateEmail}
-                  label={'Email'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={address}
-                  onChange={this.updateAddress}
-                  label={'Address'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={city}
-                  onChange={this.updateCity}
-                  label={'City'}
-                  fullWidth
-                />
-                <FormControl
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  fullWidth
-                  disabled={!isEditing}
-                >
-                  <InputLabel id="state-select-label">State</InputLabel>
-                  <Select
-                    labelId="state-select-label"
-                    id="state-select"
-                    value={state}
-                    onChange={this.updateState}
-                  >
-                    {USA_STATES.map(value => (
-                      <MenuItem key={value} value={value}>
-                        {value}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={zip}
-                  onChange={this.updateZip}
-                  label={'Zip'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={subdivision}
-                  onChange={this.updateSubdivision}
-                  label={'Subdivision'}
-                  fullWidth
-                />
-                <TextField
-                  disabled={!isEditing}
-                  style={{ paddingBottom: '10px', paddingTop: '10px' }}
-                  defaultValue={notes}
-                  onChange={this.updateNotes}
-                  label={'Notes'}
-                  fullWidth
-                /> */}
-              </>
-            ) : (
-              <div>
-                <InfoTable data={infoTableData} />
-              </div>
-            )}
+            <Modal open={editing} onClose={onCloseEdit}>
+              <Form<User.AsObject>
+                schema={SCHEMA}
+                data={customer}
+                onSave={this.handleSave}
+                onClose={onCloseEdit}
+                disabled={saving}
+              />
+            </Modal>
+            <InfoTable data={infoTableData} />
           </>
         )}
       </Grid>

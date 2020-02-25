@@ -11,21 +11,21 @@ import Grid from '@material-ui/core/Grid';
 import { ENDPOINT, USA_STATES } from '../../../constants';
 import InfoTable from './InfoTable';
 
-interface props {
+interface Props {
   userID: number;
   propertyId: number;
   isEditing: boolean;
 }
 
-interface state {
+interface State {
   userProperty: Property.AsObject;
 }
 
-export class PropertyInfo extends React.PureComponent<props, state> {
+export class PropertyInfo extends React.PureComponent<Props, State> {
   UserClient: UserClient;
   PropertyClient: PropertyClient;
 
-  constructor(props: props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       userProperty: new Property().toObject(),

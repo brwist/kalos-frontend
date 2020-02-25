@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
-import SectionBar from './components/SectionBar';
+import { SectionBar } from './components/SectionBar';
 import { CustomerInformation } from './components/CustomerInformation';
 import { PropertyInfo } from './components/PropertyInfo';
 
@@ -57,7 +57,11 @@ export const PropertyInformation = (props: props) => {
           },
         ]}
       />
-      <CustomerInformation {...props} isEditing={editingCustomerInformation} />
+      <CustomerInformation
+        {...props}
+        editing={editingCustomerInformation}
+        onCloseEdit={handleToggleEditingCustomerInformation}
+      />
       <SectionBar
         title="Property Information"
         buttons={[
