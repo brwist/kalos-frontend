@@ -3,12 +3,10 @@ import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import TextField from '@material-ui/core/TextField';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
-import Switch from '@material-ui/core/Switch';
 import Grid from '@material-ui/core/Grid';
 import { ENDPOINT, USA_STATES } from '../../../constants';
 import InfoTable from './InfoTable';
@@ -16,10 +14,10 @@ import InfoTable from './InfoTable';
 interface props {
   userID: number;
   propertyId: number;
+  isEditing: boolean;
 }
 
 interface state {
-  isEditing: boolean;
   userProperty: Property.AsObject;
 }
 
@@ -30,19 +28,12 @@ export class PropertyInfo extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      isEditing: false,
       userProperty: new Property().toObject(),
     };
     this.UserClient = new UserClient(ENDPOINT);
     this.PropertyClient = new PropertyClient(ENDPOINT);
     this.getUserProperty = this.getUserProperty.bind(this);
   }
-
-  toggleEditing = () => {
-    this.setState(prevState => ({
-      isEditing: !prevState.isEditing,
-    }));
-  };
 
   updateUserProperty<K extends keyof Property.AsObject>(prop: K) {
     return async (
@@ -97,7 +88,8 @@ export class PropertyInfo extends React.PureComponent<props, state> {
   }
 
   render() {
-    const { userProperty, isEditing } = this.state;
+    const { isEditing } = this.props;
+    const { userProperty } = this.state;
     const {
       id,
       firstname,
@@ -133,20 +125,6 @@ export class PropertyInfo extends React.PureComponent<props, state> {
           <CircularProgress style={{ margin: '10px auto' }} />
         ) : (
           <>
-            <FormControlLabel
-              style={{
-                marginLeft: 'auto',
-              }}
-              control={
-                <Switch
-                  checked={isEditing}
-                  onChange={this.toggleEditing}
-                  value="isEditing"
-                  color="primary"
-                />
-              }
-              label={isEditing ? 'Editing Enabled' : 'Editing Disabled'}
-            />
             {isEditing ? (
               <>
                 <TextField

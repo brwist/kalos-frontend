@@ -18,10 +18,10 @@ import InfoTable from './InfoTable';
 
 interface props {
   userID: number;
+  isEditing: boolean;
 }
 
 interface state {
-  isEditing: boolean;
   customer: User.AsObject;
 }
 
@@ -31,18 +31,11 @@ export class CustomerInformation extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      isEditing: false,
       customer: new User().toObject(),
     };
     this.UserClient = new UserClient(ENDPOINT);
     this.getCustomer = this.getCustomer.bind(this);
   }
-
-  toggleEditing = () => {
-    this.setState(prevState => ({
-      isEditing: !prevState.isEditing,
-    }));
-  };
 
   // updateUserProperty<K extends keyof Property.AsObject>(prop: K) {
   //   return async (
@@ -95,7 +88,8 @@ export class CustomerInformation extends React.PureComponent<props, state> {
   }
 
   render() {
-    const { customer, isEditing } = this.state;
+    const { isEditing } = this.props;
+    const { customer } = this.state;
     const {
       id,
       firstname,
