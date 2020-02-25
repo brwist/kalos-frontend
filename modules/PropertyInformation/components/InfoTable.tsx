@@ -26,7 +26,6 @@ const useStyles = makeStyles(theme => ({
     minHeight: 70,
   },
   row: {
-    opacity: ({ loading }: Styles) => (loading ? 0.5 : 1),
     display: 'flex',
     paddingTop: theme.spacing(),
     paddingBottom: theme.spacing(),
@@ -57,7 +56,7 @@ const useStyles = makeStyles(theme => ({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: `${theme.palette.error.light}88`,
+    backgroundColor: `${theme.palette.error.light}44`,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -66,6 +65,7 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.error.dark,
     color: theme.palette.common.white,
     padding: theme.spacing(2),
+    borderRadius: theme.shape.borderRadius,
   },
   fake: {
     display: 'inline-block',
@@ -106,7 +106,6 @@ export const InfoTable = ({ data, loading = false, error = false }: Props) => {
           ))}
         </div>
       ))}
-      {loading && !error && <CircularProgress className={classes.loader} />}
       {error && (
         <div className={classes.error}>
           <Typography className={classes.errorText}>
