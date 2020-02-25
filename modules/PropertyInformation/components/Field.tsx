@@ -99,6 +99,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       InputLabelProps={{
         shrink: true,
       }}
+      rowsMax={4}
       error={error}
       {...props}
       helperText={helper}

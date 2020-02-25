@@ -20,16 +20,16 @@ const SCHEMA: Schema<Property.AsObject>[] = [
   { label: 'Primary Phone', name: 'phone', helperText: PROP_LEVEL },
   { label: 'Alternate Phone', name: 'altphone', helperText: PROP_LEVEL },
   { label: 'Email', name: 'email', helperText: PROP_LEVEL },
-  { label: 'Address', name: 'address', required: true },
+  { label: 'Address', name: 'address', required: true, multiline: true },
   { label: 'City', name: 'city', required: true },
   { label: 'State', name: 'state', options: USA_STATES, required: true },
   { label: 'Zip Code', name: 'zip', required: true },
   { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
   { label: 'Subdivision', name: 'subdivision' },
-  { label: 'Directions', name: 'directions' },
+  { label: 'Directions', name: 'directions', multiline: true },
   { label: 'Latitude', name: 'geolocationLat' },
   { label: 'Longitude', name: 'geolocationLng' },
-  { label: 'Notes', name: 'notes' },
+  { label: 'Notes', name: 'notes', multiline: true },
 ];
 interface Props {
   userID: number;
