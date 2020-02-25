@@ -11,7 +11,7 @@ type Styles = {
 type Href = 'tel' | 'mailto';
 
 export type Data = {
-  label: string;
+  label?: string;
   value: string;
   href?: Href;
 }[][];
@@ -23,6 +23,7 @@ interface Props extends Styles {
 const useStyles = makeStyles(theme => ({
   wrapper: {
     position: 'relative',
+    minHeight: 70,
   },
   row: {
     opacity: ({ loading }: Styles) => (loading ? 0.5 : 1),
@@ -66,6 +67,13 @@ const useStyles = makeStyles(theme => ({
     color: theme.palette.common.white,
     padding: theme.spacing(2),
   },
+  fake: {
+    display: 'inline-block',
+    backgroundColor: theme.palette.grey[300],
+    height: theme.spacing(),
+    width: 100,
+    borderRadius: theme.shape.borderRadius,
+  },
 }));
 
 export const InfoTable = ({ data, loading = false, error = false }: Props) => {
@@ -80,16 +88,20 @@ export const InfoTable = ({ data, loading = false, error = false }: Props) => {
               className={classes.item}
               style={{ width: `${100 / items.length}%` }}
             >
-              <strong>{label}:</strong>{' '}
-              <span className={classes.value}>
-                {href ? (
-                  <a className={classes.link} href={`${href}:${value}`}>
-                    {value}
-                  </a>
-                ) : (
-                  value
-                )}
-              </span>
+              {label && <strong>{label}: </strong>}
+              {loading || error ? (
+                <span className={classes.fake} />
+              ) : (
+                <span className={classes.value}>
+                  {href ? (
+                    <a className={classes.link} href={`${href}:${value}`}>
+                      {value}
+                    </a>
+                  ) : (
+                    value
+                  )}
+                </span>
+              )}
             </Typography>
           ))}
         </div>

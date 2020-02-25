@@ -1,19 +1,11 @@
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { PureComponent } from 'react';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
-import Grid from '@material-ui/core/Grid';
-import { ENDPOINT, USA_STATES } from '../../../constants';
+import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data as InfoTableData } from './InfoTable';
 import { Modal } from './Modal';
 import { Form, Schema } from './Form';
 import { SectionBar } from './SectionBar';
-
-// const PROP_LEVEL = 'Used for property-level billing only';
-// const RESIDENTIAL = [
-//   { label: 'Residential', value: 1 },
-//   { label: 'Commercial', value: 0 },
-// ];
 
 // const SCHEMA: Schema<Property.AsObject>[] = [
 //   { label: 'First Name', name: 'firstname', helperText: PROP_LEVEL },
@@ -43,38 +35,45 @@ interface Props {
 }
 
 interface State {
-  //   userProperty: Property.AsObject;
+  documents: Document.AsObject[];
+  loading: boolean;
+  error: boolean;
   //   saving: boolean;
 }
 
 export class PropertyDocuments extends PureComponent<Props, State> {
   UserClient: UserClient;
-  //   PropertyClient: PropertyClient;
+  DocumentClient: DocumentClient;
 
   constructor(props: Props) {
     super(props);
-    //   this.state = {
-    //     userProperty: new Property().toObject(),
-    //     saving: false,
-    //   };
+    this.state = {
+      documents: [],
+      loading: true,
+      error: false,
+      // saving: false,
+    };
     this.UserClient = new UserClient(ENDPOINT);
-    //   this.PropertyClient = new PropertyClient(ENDPOINT);
+    this.DocumentClient = new DocumentClient(ENDPOINT);
   }
 
   loadEntry = async () => {
-    // const entry = new Document();
-    // console.log({ entry });
-    //   entry.setUserId(this.props.userID);
-    //   entry.setId(this.props.propertyId);
-    //   const response = await this.PropertyClient.BatchGet(entry);
-    //   this.setState({
-    //     userProperty: response.toObject().resultsList[0],
-    //   });
+    const { userID, propertyId } = this.props;
+    const entry = new Document();
+    entry.setUserId(userID);
+    entry.setPropertyId(propertyId);
+    try {
+      const response = await this.DocumentClient.BatchGet(entry);
+      const documents = response.toObject().resultsList;
+      this.setState({ documents, loading: false });
+    } catch (e) {
+      this.setState({ error: true, loading: false });
+    }
   };
 
   async componentDidMount() {
     // await this.UserClient.GetToken('test', 'test');
-    // await this.loadEntry();
+    await this.loadEntry();
   }
 
   //   handleSave = async (data: Property.AsObject) => {
@@ -102,47 +101,14 @@ export class PropertyDocuments extends PureComponent<Props, State> {
 
   render() {
     const { className } = this.props;
-    // const { userProperty, saving } = this.state;
-    // const {
-    //   id,
-    //   firstname,
-    //   lastname,
-    //   businessname,
-    //   phone,
-    //   altphone,
-    //   email,
-    //   address,
-    //   city,
-    //   state,
-    //   zip,
-    //   subdivision,
-    //   notes,
-    // } = userProperty;
-    // const infoTableData: InfoTableData = [
-    //   [
-    //     { label: 'Name', value: `${firstname} ${lastname}` },
-    //     { label: 'Business Name', value: businessname },
-    //   ],
-    //   [
-    //     { label: 'Primary Phone', value: phone, href: 'tel' },
-    //     { label: 'Alternate Phone', value: altphone, href: 'tel' },
-    //   ],
-    //   [{ label: 'Email', value: email, href: 'mailto' }],
-    //   [{ label: 'Address', value: `${address}, ${city}, ${state} ${zip}` }],
-    //   [{ label: 'Subdivision', value: subdivision }],
-    //   [{ label: 'Notes', value: notes }],
-    // ];
+    const { documents, loading, error } = this.state;
+    const infoTableData: InfoTableData = documents.map(
+      ({ description: value }) => [{ value }]
+    );
     return (
       <div className={className}>
-        <SectionBar
-          title="Property Documents"
-          buttons={[
-            {
-              label: 'Add',
-            },
-          ]}
-        />
-        {/* <InfoTable data={infoTableData} loading={false} /> */}
+        <SectionBar title="Property Documents" buttons={[{ label: 'Add' }]} />
+        <InfoTable data={infoTableData} loading={loading} error={error} />
         {/* <Modal open={editing} onClose={onCloseEdit}>
           <Form<Property.AsObject>
             schema={SCHEMA}
