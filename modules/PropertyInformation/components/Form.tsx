@@ -7,6 +7,9 @@ export type Schema<T> = {
   name: keyof T;
   label: string;
   options?: string[];
+  required?: boolean;
+  helperText?: string;
+  type?: 'string' | 'password';
 };
 
 interface Props<T> {

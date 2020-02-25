@@ -7,26 +7,40 @@ import { Modal } from './Modal';
 import { Form, Schema } from './Form';
 
 const SCHEMA: Schema<User.AsObject>[] = [
-  { label: 'First Name', name: 'firstname' },
-  { label: 'Last Name', name: 'lastname' },
+  { label: 'First Name', name: 'firstname', required: true },
+  { label: 'Last Name', name: 'lastname', required: true },
   { label: 'Business Name', name: 'businessname' },
   { label: 'Primary Phone', name: 'phone' },
   { label: 'Alternate Phone', name: 'altphone' },
   { label: 'Cell Phone', name: 'cellphone' },
-  { label: 'Email', name: 'email' },
-  { label: 'Alternate Email(s)', name: 'altEmail' },
+  { label: 'Email', name: 'email', required: true },
+  {
+    label: 'Alternate Email(s)',
+    name: 'altEmail',
+    helperText: 'Separate multiple email addresses w/comma',
+  },
   { label: 'Bulling Address', name: 'address' },
   { label: 'Billing City', name: 'city' },
   { label: 'Billing State', name: 'state', options: USA_STATES },
   { label: 'Billing Zip Code', name: 'zip' },
   { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
-  { label: 'Discount', name: 'discount' },
-  { label: 'Rebate', name: 'rebate' },
-  { label: 'Customer notes (visible to customer)', name: 'notes' },
-  { label: 'Internal Notes (NOT visible to customer)', name: 'intNotes' },
+  { label: 'Discount', name: 'discount', required: true },
+  { label: 'Rebate', name: 'rebate', required: true },
+  { label: 'Customer notes', name: 'notes', helperText: 'Visible to customer' },
+  {
+    label: 'Internal Notes',
+    name: 'intNotes',
+    helperText: 'NOT visible to customer',
+  },
   // {label:'Who recommended us?', name:''}, // TODO
-  { label: 'Login', name: 'login' },
-  { label: 'Password', name: 'pwd' },
+  {
+    label: 'Login',
+    name: 'login',
+    required: true,
+    helperText:
+      'NOTE: If they have an email address, their login ID will automatically be their email address.',
+  },
+  { label: 'Password', name: 'pwd', type: 'password' },
 ];
 
 interface props {
