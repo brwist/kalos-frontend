@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import Grid from '@material-ui/core/Grid';
@@ -61,9 +61,10 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
   }
 
   loadEntry = async () => {
+    const { userID, propertyId } = this.props;
     const entry = new Property();
-    entry.setUserId(this.props.userID);
-    entry.setId(this.props.propertyId);
+    entry.setUserId(userID);
+    entry.setId(propertyId);
     const response = await this.PropertyClient.BatchGet(entry);
     const userProperty = response.toObject().resultsList[0];
     if (userProperty) {
