@@ -110,6 +110,8 @@ export const USA_STATES = [
   'WY',
 ];
 
+export const BILLING_TERMS = ['COD', 'Net 10', 'Net 30', 'Net 45', 'Pre-paid'];
+
 export default {
   BASE_URL,
   EVENT_STATUS_LIST,
@@ -120,4 +122,5 @@ export default {
   ENDPOINT,
   ELEVATION,
   USA_STATES,
+  BILLING_TERMS,
 };
