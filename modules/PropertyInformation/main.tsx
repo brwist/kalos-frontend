@@ -1,9 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import { makeStyles } from '@material-ui/core/styles';
 import customTheme from '../Theme/main';
 import { SectionBar } from './components/SectionBar';
 import { CustomerInformation } from './components/CustomerInformation';
 import { PropertyInfo } from './components/PropertyInfo';
+import { PropertyDocuments } from './components/PropertyDocuments';
 
 interface props {
   userID: number;
@@ -12,7 +14,22 @@ interface props {
 
 interface state {}
 
+const useStyles = makeStyles(theme => ({
+  propertiesWrapper: {
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  properties: {
+    flexGrow: 1,
+    marginRight: theme.spacing(2),
+  },
+  documents: {
+    width: '34%',
+  },
+}));
+
 export const PropertyInformation = (props: props) => {
+  const classes = useStyles();
   const { userID, propertyId } = props;
   const [editingCustomerInformation, setEditingCustomerInformation] = useState(
     false
@@ -62,32 +79,37 @@ export const PropertyInformation = (props: props) => {
         editing={editingCustomerInformation}
         onCloseEdit={handleToggleEditingCustomerInformation}
       />
-      <SectionBar
-        title="Property Information"
-        buttons={[
-          {
-            label: 'Tasks',
-            url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
-          },
-          {
-            label: 'Add Notification',
-            onClick: () => {}, // TODO: implement onClick
-          },
-          {
-            label: 'Change Property',
-            onClick: handleToggleEditingPropertyInfo,
-          },
-          {
-            label: 'Owner Details',
-            url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
-          },
-        ]}
-      />
-      <PropertyInfo
-        {...props}
-        editing={editingPropertyInfo}
-        onCloseEdit={handleToggleEditingPropertyInfo}
-      />
+      <div className={classes.propertiesWrapper}>
+        <div className={classes.properties}>
+          <SectionBar
+            title="Property Information"
+            buttons={[
+              {
+                label: 'Tasks',
+                url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
+              },
+              {
+                label: 'Add Notification',
+                onClick: () => {}, // TODO: implement onClick
+              },
+              {
+                label: 'Change Property',
+                onClick: handleToggleEditingPropertyInfo,
+              },
+              {
+                label: 'Owner Details',
+                url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
+              },
+            ]}
+          />
+          <PropertyInfo
+            {...props}
+            editing={editingPropertyInfo}
+            onCloseEdit={handleToggleEditingPropertyInfo}
+          />
+        </div>
+        <PropertyDocuments className={classes.documents} {...props} />
+      </div>
     </ThemeProvider>
   );
 };

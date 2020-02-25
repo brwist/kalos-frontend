@@ -58,6 +58,7 @@ interface props {
 interface state {
   customer: User.AsObject;
   saving: boolean;
+  error: boolean;
 }
 
 export class CustomerInformation extends React.PureComponent<props, state> {
@@ -68,18 +69,21 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     this.state = {
       customer: new User().toObject(),
       saving: false,
+      error: false,
     };
     this.UserClient = new UserClient(ENDPOINT);
   }
 
-  loadCustomer = async () => {
+  loadEntry = async () => {
     const { userID } = this.props;
     const entry = new User();
     entry.setId(userID);
-    const customer = await this.UserClient.Get(entry);
-    this.setState({
-      customer,
-    });
+    try {
+      const customer = await this.UserClient.Get(entry);
+      this.setState({ customer });
+    } catch (e) {
+      this.setState({ error: true });
+    }
   };
 
   handleSave = async (data: User.AsObject) => {
@@ -103,12 +107,12 @@ export class CustomerInformation extends React.PureComponent<props, state> {
 
   async componentDidMount() {
     // await this.UserClient.GetToken('test', 'test');
-    await this.loadCustomer();
+    await this.loadEntry();
   }
 
   render() {
     const { editing, onCloseEdit } = this.props;
-    const { customer, saving } = this.state;
+    const { customer, saving, error } = this.state;
     const {
       id,
       firstname,
@@ -158,7 +162,7 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     ];
     return (
       <Grid container direction="column">
-        <InfoTable data={infoTableData} loading={id === 0} />
+        <InfoTable data={infoTableData} loading={id === 0} error={error} />
         <Modal open={editing} onClose={onCloseEdit}>
           <Form<User.AsObject>
             schema={SCHEMA}

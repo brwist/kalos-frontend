@@ -31,6 +31,7 @@ const SCHEMA: Schema<Property.AsObject>[] = [
   { label: 'Longitude', name: 'geolocationLng' },
   { label: 'Notes', name: 'notes', multiline: true },
 ];
+
 interface Props {
   userID: number;
   propertyId: number;
@@ -41,6 +42,7 @@ interface Props {
 interface State {
   userProperty: Property.AsObject;
   saving: boolean;
+  error: boolean;
 }
 
 export class PropertyInfo extends React.PureComponent<Props, State> {
@@ -52,24 +54,28 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     this.state = {
       userProperty: new Property().toObject(),
       saving: false,
+      error: false,
     };
     this.UserClient = new UserClient(ENDPOINT);
     this.PropertyClient = new PropertyClient(ENDPOINT);
   }
 
-  loadUserProperty = async () => {
+  loadEntry = async () => {
     const entry = new Property();
     entry.setUserId(this.props.userID);
     entry.setId(this.props.propertyId);
     const response = await this.PropertyClient.BatchGet(entry);
-    this.setState({
-      userProperty: response.toObject().resultsList[0],
-    });
+    const userProperty = response.toObject().resultsList[0];
+    if (userProperty) {
+      this.setState({ userProperty });
+    } else {
+      this.setState({ error: true });
+    }
   };
 
   async componentDidMount() {
     // await this.UserClient.GetToken('test', 'test');
-    await this.loadUserProperty();
+    await this.loadEntry();
   }
 
   handleSave = async (data: Property.AsObject) => {
@@ -97,7 +103,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
 
   render() {
     const { editing, onCloseEdit } = this.props;
-    const { userProperty, saving } = this.state;
+    const { userProperty, saving, error } = this.state;
     const {
       id,
       firstname,
@@ -129,7 +135,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     ];
     return (
       <Grid container direction="column">
-        <InfoTable data={infoTableData} loading={id === 0} />
+        <InfoTable data={infoTableData} loading={id === 0} error={error} />
         <Modal open={editing} onClose={onCloseEdit}>
           <Form<Property.AsObject>
             schema={SCHEMA}
