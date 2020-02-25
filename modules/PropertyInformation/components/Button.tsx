@@ -11,6 +11,8 @@ export interface Props {
 
 const useStyles = makeStyles(theme => ({
   button: {
+    marginTop: theme.spacing(),
+    marginBottom: theme.spacing(),
     marginLeft: theme.spacing(),
   },
   link: {

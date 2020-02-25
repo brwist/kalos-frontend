@@ -5,6 +5,7 @@ import Typography from '@material-ui/core/Typography';
 
 type Styles = {
   loading?: boolean;
+  error?: boolean;
 };
 
 type Href = 'tel' | 'mailto';
@@ -49,10 +50,26 @@ const useStyles = makeStyles(theme => ({
   link: {
     color: theme.palette.action.active,
   },
+  error: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: `${theme.palette.error.light}88`,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    backgroundColor: theme.palette.error.dark,
+    color: theme.palette.common.white,
+    padding: theme.spacing(2),
+  },
 }));
 
-export const InfoTable = ({ data, loading = false }: Props) => {
-  const classes = useStyles({ loading });
+export const InfoTable = ({ data, loading = false, error = false }: Props) => {
+  const classes = useStyles({ loading, error });
   return (
     <div className={classes.wrapper}>
       {data.map((items, idx) => (
@@ -77,7 +94,14 @@ export const InfoTable = ({ data, loading = false }: Props) => {
           ))}
         </div>
       ))}
-      {loading && <CircularProgress className={classes.loader} />}
+      {loading && !error && <CircularProgress className={classes.loader} />}
+      {error && (
+        <div className={classes.error}>
+          <Typography className={classes.errorText}>
+            Error loading data
+          </Typography>
+        </div>
+      )}
     </div>
   );
 };

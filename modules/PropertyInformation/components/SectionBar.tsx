@@ -12,7 +12,8 @@ interface Props {
 const useStyles = makeStyles(theme => ({
   wrapper: {
     backgroundColor: theme.palette.grey[300],
-    padding: theme.spacing(),
+    paddingLeft: theme.spacing(),
+    paddingRight: theme.spacing(),
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
