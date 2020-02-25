@@ -1,7 +1,7 @@
 import React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import Grid from '@material-ui/core/Grid';
-import { ENDPOINT, USA_STATES } from '../../../constants';
+import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import InfoTable from './InfoTable';
 import { Modal } from './Modal';
 import { Form, Schema } from './Form';
@@ -10,13 +10,23 @@ const SCHEMA: Schema<User.AsObject>[] = [
   { label: 'First Name', name: 'firstname' },
   { label: 'Last Name', name: 'lastname' },
   { label: 'Business Name', name: 'businessname' },
-  { label: 'Phone', name: 'phone' },
+  { label: 'Primary Phone', name: 'phone' },
   { label: 'Alternate Phone', name: 'altphone' },
+  { label: 'Cell Phone', name: 'cellphone' },
   { label: 'Email', name: 'email' },
-  { label: 'Address', name: 'address' },
-  { label: 'City', name: 'city' },
-  { label: 'State', name: 'state', options: USA_STATES },
-  { label: 'Zip', name: 'zip' },
+  { label: 'Alternate Email(s)', name: 'altEmail' },
+  { label: 'Bulling Address', name: 'address' },
+  { label: 'Billing City', name: 'city' },
+  { label: 'Billing State', name: 'state', options: USA_STATES },
+  { label: 'Billing Zip Code', name: 'zip' },
+  { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
+  { label: 'Discount', name: 'discount' },
+  { label: 'Rebate', name: 'rebate' },
+  { label: 'Customer notes (visible to customer)', name: 'notes' },
+  { label: 'Internal Notes (NOT visible to customer)', name: 'intNotes' },
+  // {label:'Who recommended us?', name:''}, // TODO
+  { label: 'Login', name: 'login' },
+  { label: 'Password', name: 'pwd' },
 ];
 
 interface props {
