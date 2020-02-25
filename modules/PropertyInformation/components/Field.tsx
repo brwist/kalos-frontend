@@ -5,7 +5,8 @@ import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
-import { Schema } from './Form';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import { Schema, Option } from './Form';
 
 export type Value = string;
 
@@ -13,10 +14,12 @@ export interface Props<T> extends Schema<T> {
   value: T[keyof T];
   disabled?: boolean;
   onChange: (value: Value) => void;
+  validation?: string;
 }
 
 const useStyles = makeStyles(theme => ({
   field: {
+    marginTop: 0,
     marginBottom: theme.spacing(2),
   },
   required: {
@@ -31,6 +34,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   onChange,
   disabled = false,
   required = false,
+  validation = '',
+  helperText = '',
   ...props
 }) => {
   const classes = useStyles();
@@ -44,10 +49,20 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       {required ? <span className={classes.required}> *</span> : ''}
     </>
   );
+  const error = validation !== '';
+  const helper =
+    validation !== '' || helperText !== ''
+      ? validation + ' ' + helperText
+      : undefined;
   if (options) {
     const id = `${name}-select-label`;
     return (
-      <FormControl className={classes.field} fullWidth disabled={disabled}>
+      <FormControl
+        className={classes.field}
+        fullWidth
+        disabled={disabled}
+        error={error}
+      >
         <InputLabel id={id}>{inputLabel}</InputLabel>
         <Select
           labelId={id}
@@ -55,12 +70,22 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           onChange={handleChange}
           {...props}
         >
-          {options.map(value => (
-            <MenuItem key={value} value={value}>
-              {value}
-            </MenuItem>
-          ))}
+          {options.map(option => {
+            const isStringOption = typeof option === 'string';
+            const label = isStringOption
+              ? (option as string)
+              : (option as Option).label;
+            const value = isStringOption
+              ? (option as string)
+              : (option as Option).value;
+            return (
+              <MenuItem key={value} value={value}>
+                {label}
+              </MenuItem>
+            );
+          })}
         </Select>
+        {helper && <FormHelperText>{helper}</FormHelperText>}
       </FormControl>
     );
   }
@@ -74,7 +99,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       InputLabelProps={{
         shrink: true,
       }}
+      error={error}
       {...props}
+      helperText={helper}
     />
   );
 };

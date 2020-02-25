@@ -3,14 +3,21 @@ import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from './SectionBar';
 import { Field, Value } from './Field';
 
+export type Option = {
+  label: string;
+  value: string | number;
+};
+
 export type Schema<T> = {
   name: keyof T;
   label: string;
-  options?: string[];
+  options?: (string | Option)[];
   required?: boolean;
   helperText?: string;
   type?: 'string' | 'password';
 };
+
+type Validation = { [key: string]: string };
 
 interface Props<T> {
   schema: Schema<T>[];
@@ -53,11 +60,28 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       {} as typeof data
     )
   );
+  const [validations, setValidations] = useState<Validation>({});
   const handleChange = useCallback(
     name => (value: Value) => setFormData({ ...formData, [name]: value }),
     [formData, setFormData]
   );
-  const handleSave = useCallback(() => onSave(formData), [onSave, formData]);
+  const handleSave = useCallback(() => {
+    setValidations({});
+    const validations: Validation = {};
+    schema
+      .filter(({ required }) => required)
+      .forEach(({ name }) => {
+        const value: string = '' + formData[name];
+        if (value === '') {
+          validations[name as string] = 'This field is required.';
+        }
+      });
+    if (Object.keys(validations).length > 0) {
+      setValidations(validations);
+      return;
+    }
+    onSave(formData);
+  }, [onSave, formData, schema, setValidations]);
   return (
     <div className={classes.wrapper}>
       <SectionBar
@@ -84,6 +108,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             value={formData[props.name]}
             onChange={handleChange(props.name)}
             disabled={disabled}
+            validation={validations[props.name as string]}
           />
         ))}
       </div>

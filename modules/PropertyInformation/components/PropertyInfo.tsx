@@ -7,18 +7,28 @@ import InfoTable from './InfoTable';
 import { Modal } from './Modal';
 import { Form, Schema } from './Form';
 
+const PROP_LEVEL = 'Used for property-level billing only';
+const RESIDENTIAL = [
+  { label: 'Residential', value: 1 },
+  { label: 'Commercial', value: 0 },
+];
+
 const SCHEMA: Schema<Property.AsObject>[] = [
-  { label: 'First Name', name: 'firstname' },
-  { label: 'Last Name', name: 'lastname' },
-  { label: 'Business Name', name: 'businessname' },
-  { label: 'Phone', name: 'phone' },
-  { label: 'Alternate Phone', name: 'altphone' },
-  { label: 'Email', name: 'email' },
-  { label: 'Address', name: 'address' },
-  { label: 'City', name: 'city' },
-  { label: 'State', name: 'state', options: USA_STATES },
-  { label: 'Zip', name: 'zip' },
+  { label: 'First Name', name: 'firstname', helperText: PROP_LEVEL },
+  { label: 'Last Name', name: 'lastname', helperText: PROP_LEVEL },
+  { label: 'Business Name', name: 'businessname', helperText: PROP_LEVEL },
+  { label: 'Primary Phone', name: 'phone', helperText: PROP_LEVEL },
+  { label: 'Alternate Phone', name: 'altphone', helperText: PROP_LEVEL },
+  { label: 'Email', name: 'email', helperText: PROP_LEVEL },
+  { label: 'Address', name: 'address', required: true },
+  { label: 'City', name: 'city', required: true },
+  { label: 'State', name: 'state', options: USA_STATES, required: true },
+  { label: 'Zip Code', name: 'zip', required: true },
+  { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
   { label: 'Subdivision', name: 'subdivision' },
+  { label: 'Directions', name: 'directions' },
+  { label: 'Latitude', name: 'geolocationLat' },
+  { label: 'Longitude', name: 'geolocationLng' },
   { label: 'Notes', name: 'notes' },
 ];
 interface Props {
@@ -47,39 +57,14 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     this.PropertyClient = new PropertyClient(ENDPOINT);
   }
 
-  updateUserProperty<K extends keyof Property.AsObject>(prop: K) {
-    return async (
-      e: ChangeEvent<
-        | HTMLInputElement
-        | HTMLTextAreaElement
-        | {
-            name?: string | undefined;
-            value: unknown;
-          }
-      >
-    ) => {
-      const property = new Property();
-      const upperCaseProp = `${prop[0].toUpperCase()}${prop.slice(1)}`;
-      const methodName = `set${upperCaseProp}`;
-      property.setId(this.props.propertyId);
-      property.setUserId(this.props.userID);
-      //@ts-ignore
-      property[methodName](e.target.value);
-      property.setFieldMaskList([upperCaseProp]);
-      const updatedProperty = await this.PropertyClient.Update(property);
-      this.setState(() => ({ userProperty: updatedProperty }));
-    };
-  }
-
   loadUserProperty = async () => {
-    const req = new Property();
-    req.setUserId(this.props.userID);
-    req.setId(this.props.propertyId);
-    const res = await this.PropertyClient.BatchGet(req);
+    const entry = new Property();
+    entry.setUserId(this.props.userID);
+    entry.setId(this.props.propertyId);
+    const response = await this.PropertyClient.BatchGet(entry);
     this.setState({
-      userProperty: res.toObject().resultsList[0],
+      userProperty: response.toObject().resultsList[0],
     });
-    return res.toObject().resultsList;
   };
 
   async componentDidMount() {

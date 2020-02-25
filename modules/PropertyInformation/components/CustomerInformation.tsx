@@ -67,11 +67,12 @@ export class CustomerInformation extends React.PureComponent<props, state> {
   }
 
   loadCustomer = async () => {
-    const user = new User();
-    user.setId(this.props.userID);
-    const userData = await this.UserClient.Get(user);
+    const { userID } = this.props;
+    const entry = new User();
+    entry.setId(userID);
+    const customer = await this.UserClient.Get(entry);
     this.setState({
-      customer: userData,
+      customer,
     });
   };
 
@@ -85,7 +86,7 @@ export class CustomerInformation extends React.PureComponent<props, state> {
       const upperCaseProp = `${key[0].toUpperCase()}${key.slice(1)}`;
       const methodName = `set${upperCaseProp}`;
       //@ts-ignore
-      user[methodName](data[key]);
+      entry[methodName](data[key]);
       fieldMaskList.push(upperCaseProp);
     }
     entry.setFieldMaskList(fieldMaskList);
