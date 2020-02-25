@@ -19,31 +19,41 @@ const useStyles = makeStyles(theme => ({
   field: {
     marginBottom: theme.spacing(2),
   },
+  required: {
+    color: theme.palette.error.main,
+  },
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   name,
   label,
-  value = '',
   options,
   onChange,
   disabled = false,
+  required = false,
+  ...props
 }) => {
   const classes = useStyles();
   const handleChange = useCallback(
     ({ target: { value } }) => onChange(value as string),
     [onChange]
   );
+  const inputLabel = (
+    <>
+      {label}
+      {required ? <span className={classes.required}> *</span> : ''}
+    </>
+  );
   if (options) {
     const id = `${name}-select-label`;
     return (
       <FormControl className={classes.field} fullWidth disabled={disabled}>
-        <InputLabel id={id}>{label}</InputLabel>
+        <InputLabel id={id}>{inputLabel}</InputLabel>
         <Select
           labelId={id}
           id={`${name}-select`}
-          value={value}
           onChange={handleChange}
+          {...props}
         >
           {options.map(value => (
             <MenuItem key={value} value={value}>
@@ -58,13 +68,13 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     <TextField
       className={classes.field}
       disabled={disabled}
-      value={value}
       onChange={handleChange}
-      label={label}
+      label={inputLabel}
       fullWidth
       InputLabelProps={{
         shrink: true,
       }}
+      {...props}
     />
   );
 };
