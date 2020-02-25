@@ -193,10 +193,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       const req = new Document();
       req.setDateCreated(timestamp());
       req.setFilename(
-        `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`,
+        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
       );
       req.setDescription(
-        `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`,
+        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
       );
       req.setId(this.state.docID);
       req.setFieldMaskList(['DateCreated', 'Filename', 'Description']);
@@ -251,21 +251,41 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       />,
     ).toBlob();
 
-    await this.uploadPDF(blob);
-
     const el = document.createElement('a');
-    el.download = `reviewed_proposal_${timestamp(true)}`;
-    el.href = URL.createObjectURL(blob);
-    el.target = '_blank';
+    el.style.display = 'none';
+    el.download = `reviewed_proposal_${timestamp(true)}.pdf`;
+    const theURL = URL.createObjectURL(blob);
+    el.href = theURL;
+    document.body.appendChild(el);
     el.click();
+    document.body.removeChild(el);
     el.remove();
+
+    return true;
   }
 
-  async uploadPDF(fd: Blob) {
+  async uploadPDF() {
+    const fd = await ReactPDF.pdf(
+      <ApprovedProposal
+        sigURL={this.state.sigURL}
+        quoteLines={this.state.quoteLines.filter(ql =>
+          this.state.selected.includes(ql.id),
+        )}
+        jobNumber={this.props.jobNumber}
+        property={this.state.property}
+        name={
+          this.props.useBusinessName
+            ? this.state.customer.businessname
+            : `${this.state.customer.firstname} ${this.state.customer.lastname}`
+        }
+        total={this.getTotal()}
+        notes={this.state.notes}
+      />,
+    ).toBlob();
     const urlObj = new URLObject();
     urlObj.setBucket('testbuckethelios');
     urlObj.setKey(
-      `${this.props.jobNumber}_approved_proposal_${this.props.userID}`,
+      `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
     );
     urlObj.setContentType('pdf');
     const urlRes = await this.S3Client.GetUploadURL(urlObj);
@@ -349,7 +369,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   async finalize() {
     await this.approveProposal();
-    await this.saveAsPDF();
+    await this.uploadPDF();
     try {
       await this.deleteOldPDF();
     } catch (err) {
@@ -358,6 +378,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     await this.updateDocument();
     await this.createLog();
     await this.pingSlack();
+    await this.saveAsPDF();
     window.location.href = `https://app.kalosflorida.com/index.cfm?action=customer:service.post_proposal&user_id=${this.props.userID}`;
   }
 
