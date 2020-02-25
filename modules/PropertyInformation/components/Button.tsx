@@ -8,7 +8,10 @@ export interface props {
   onClick?: () => void;
 }
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles(theme => ({
+  button: {
+    marginLeft: theme.spacing(),
+  },
   link: {
     textDecoration: 'inherit',
   },
@@ -18,6 +21,7 @@ const Button = ({ label, url, onClick }: props) => {
   const classes = useStyles();
   const Component = (
     <ButtonUI
+      className={classes.button}
       variant="contained"
       color="primary"
       onClick={onClick}
