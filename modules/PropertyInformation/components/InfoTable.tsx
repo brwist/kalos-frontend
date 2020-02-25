@@ -6,11 +6,17 @@ import Typography from '@material-ui/core/Typography';
 type Styles = {
   loading?: boolean;
 };
+
+type Href = 'tel' | 'mailto';
+
+export type Data = {
+  label: string;
+  value: string;
+  href?: Href;
+}[][];
+
 interface Props extends Styles {
-  data: {
-    label: string;
-    value: string;
-  }[][];
+  data: Data;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -40,22 +46,33 @@ const useStyles = makeStyles(theme => ({
     top: 'calc(50% - 20px)',
     left: 'calc(50% - 20px)',
   },
+  link: {
+    color: theme.palette.action.active,
+  },
 }));
 
-const InfoTable = ({ data, loading = false }: Props) => {
+export const InfoTable = ({ data, loading = false }: Props) => {
   const classes = useStyles({ loading });
   return (
     <div className={classes.wrapper}>
       {data.map((items, idx) => (
         <div key={idx} className={classes.row}>
-          {items.map(({ label, value }, idx) => (
+          {items.map(({ label, value, href }, idx) => (
             <Typography
               key={idx}
               className={classes.item}
               style={{ width: `${100 / items.length}%` }}
             >
               <strong>{label}:</strong>{' '}
-              <span className={classes.value}>{value}</span>
+              <span className={classes.value}>
+                {href ? (
+                  <a className={classes.link} href={`${href}:${value}`}>
+                    {value}
+                  </a>
+                ) : (
+                  value
+                )}
+              </span>
             </Typography>
           ))}
         </div>
@@ -64,5 +81,3 @@ const InfoTable = ({ data, loading = false }: Props) => {
     </div>
   );
 };
-
-export default InfoTable;

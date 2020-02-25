@@ -3,7 +3,7 @@ import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import Grid from '@material-ui/core/Grid';
 import { ENDPOINT, USA_STATES } from '../../../constants';
-import InfoTable from './InfoTable';
+import { InfoTable, Data as InfoTableData } from './InfoTable';
 import { Modal } from './Modal';
 import { Form, Schema } from './Form';
 
@@ -113,16 +113,16 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       subdivision,
       notes,
     } = userProperty;
-    const infoTableData = [
+    const infoTableData: InfoTableData = [
       [
         { label: 'Name', value: `${firstname} ${lastname}` },
         { label: 'Business Name', value: businessname },
       ],
       [
-        { label: 'Primary Phone', value: phone },
-        { label: 'Alternate Phone', value: altphone },
+        { label: 'Primary Phone', value: phone, href: 'tel' },
+        { label: 'Alternate Phone', value: altphone, href: 'tel' },
       ],
-      [{ label: 'Email', value: email }],
+      [{ label: 'Email', value: email, href: 'mailto' }],
       [{ label: 'Address', value: `${address}, ${city}, ${state} ${zip}` }],
       [{ label: 'Subdivision', value: subdivision }],
       [{ label: 'Notes', value: notes }],
