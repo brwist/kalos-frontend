@@ -2,7 +2,7 @@ import React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import Grid from '@material-ui/core/Grid';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
-import InfoTable from './InfoTable';
+import { InfoTable, Data as InfoTableData } from './InfoTable';
 import { Modal } from './Modal';
 import { Form, Schema } from './Form';
 
@@ -127,17 +127,17 @@ export class CustomerInformation extends React.PureComponent<props, state> {
       notes,
       intNotes,
     } = customer;
-    const infoTableData = [
+    const infoTableData: InfoTableData = [
       [
         { label: 'Name', value: `${firstname} ${lastname}` },
         { label: 'Business Name', value: businessname },
       ],
       [
-        { label: 'Primary Phone', value: phone },
-        { label: 'Cell Phone', value: cellphone },
+        { label: 'Primary Phone', value: phone, href: 'tel' },
+        { label: 'Cell Phone', value: cellphone, href: 'tel' },
       ],
       [
-        { label: 'Alternate Phone', value: altphone },
+        { label: 'Alternate Phone', value: altphone, href: 'tel' },
         { label: 'Fax', value: fax },
       ],
       [
@@ -145,7 +145,7 @@ export class CustomerInformation extends React.PureComponent<props, state> {
           label: 'Billing Address',
           value: `${address}, ${city}, ${state} ${zip}`,
         },
-        { label: 'Email', value: email },
+        { label: 'Email', value: email, href: 'mailto' },
       ],
       [{ label: 'Billing Terms', value: billingTerms }],
       [
