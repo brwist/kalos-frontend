@@ -19,7 +19,7 @@ const useStyles = makeStyles(theme => ({
     width: '30%',
     minWidth: 300,
     maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
-    overflowY: 'auto',
+    overflow: 'hidden',
     outline: 'none',
   },
 }));

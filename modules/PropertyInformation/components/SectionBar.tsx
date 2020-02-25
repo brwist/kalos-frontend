@@ -6,6 +6,7 @@ import Typography from '@material-ui/core/Typography';
 interface Props {
   title: string;
   buttons?: ButtonProps[];
+  className?: string;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -18,10 +19,10 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const SectionBar = ({ title, buttons = [] }: Props) => {
+export const SectionBar = ({ title, buttons = [], className = '' }: Props) => {
   const classes = useStyles();
   return (
-    <div className={classes.wrapper}>
+    <div className={className + ' ' + classes.wrapper}>
       <Typography variant="h6">{title}</Typography>
       {buttons.length > 0 && (
         <div>
