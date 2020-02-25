@@ -18,8 +18,21 @@ interface Props<T> {
 }
 
 const useStyles = makeStyles(theme => ({
+  wrapper: {
+    position: 'relative',
+  },
+  sectionBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+  },
   form: {
     padding: theme.spacing(2),
+    paddingTop: 50 + theme.spacing(),
+    maxHeight: 'calc(100vh - 110px)',
+    overflowY: 'auto',
   },
 }));
 
@@ -43,7 +56,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   );
   const handleSave = useCallback(() => onSave(formData), [onSave, formData]);
   return (
-    <div>
+    <div className={classes.wrapper}>
       <SectionBar
         title="Edit Customer Information"
         buttons={[
@@ -58,6 +71,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             disabled,
           },
         ]}
+        className={classes.sectionBar}
       />
       <div className={classes.form}>
         {schema.map((props, idx) => (

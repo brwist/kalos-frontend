@@ -1,8 +1,12 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
-interface Props {
+type Styles = {
+  loading?: boolean;
+};
+interface Props extends Styles {
   data: {
     label: string;
     value: string;
@@ -10,7 +14,11 @@ interface Props {
 }
 
 const useStyles = makeStyles(theme => ({
+  wrapper: {
+    position: 'relative',
+  },
   row: {
+    opacity: ({ loading }: Styles) => (loading ? 0.5 : 1),
     display: 'flex',
     paddingTop: theme.spacing(),
     paddingBottom: theme.spacing(),
@@ -24,12 +32,17 @@ const useStyles = makeStyles(theme => ({
     paddingLeft: theme.spacing(),
     paddingRight: theme.spacing(),
   },
+  loader: {
+    position: 'absolute',
+    top: 'calc(50% - 20px)',
+    left: 'calc(50% - 20px)',
+  },
 }));
 
-const InfoTable = ({ data }: Props) => {
-  const classes = useStyles({ a: 1 });
+const InfoTable = ({ data, loading = false }: Props) => {
+  const classes = useStyles({ loading });
   return (
-    <div>
+    <div className={classes.wrapper}>
       {data.map((items, idx) => (
         <div key={idx} className={classes.row}>
           {items.map(({ label, value }, idx) => (
@@ -43,6 +56,7 @@ const InfoTable = ({ data }: Props) => {
           ))}
         </div>
       ))}
+      {loading && <CircularProgress className={classes.loader} />}
     </div>
   );
 };

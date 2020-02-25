@@ -83,7 +83,11 @@ export const PropertyInformation = (props: props) => {
           },
         ]}
       />
-      <PropertyInfo {...props} isEditing={editingPropertyInfo} />
+      <PropertyInfo
+        {...props}
+        editing={editingPropertyInfo}
+        onCloseEdit={handleToggleEditingPropertyInfo}
+      />
     </ThemeProvider>
   );
 };

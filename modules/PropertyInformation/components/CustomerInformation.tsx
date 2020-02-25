@@ -1,6 +1,5 @@
 import React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import { ENDPOINT, USA_STATES } from '../../../constants';
 import InfoTable from './InfoTable';
@@ -43,7 +42,7 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     this.UserClient = new UserClient(ENDPOINT);
   }
 
-  getCustomer = async () => {
+  loadCustomer = async () => {
     const user = new User();
     user.setId(this.props.userID);
     const userData = await this.UserClient.Get(user);
@@ -55,8 +54,8 @@ export class CustomerInformation extends React.PureComponent<props, state> {
   handleSave = async (data: User.AsObject) => {
     const { userID, onCloseEdit } = this.props;
     this.setState({ saving: true });
-    const user = new User();
-    user.setId(userID);
+    const entry = new User();
+    entry.setId(userID);
     const fieldMaskList = [];
     for (const key in data) {
       const upperCaseProp = `${key[0].toUpperCase()}${key.slice(1)}`;
@@ -65,15 +64,15 @@ export class CustomerInformation extends React.PureComponent<props, state> {
       user[methodName](data[key]);
       fieldMaskList.push(upperCaseProp);
     }
-    user.setFieldMaskList(fieldMaskList);
-    const updatedUser = await this.UserClient.Update(user);
-    this.setState(() => ({ customer: updatedUser, saving: false }));
+    entry.setFieldMaskList(fieldMaskList);
+    const customer = await this.UserClient.Update(entry);
+    this.setState(() => ({ customer, saving: false }));
     onCloseEdit();
   };
 
   async componentDidMount() {
-    await this.UserClient.GetToken('test', 'test');
-    await this.getCustomer();
+    // await this.UserClient.GetToken('test', 'test');
+    await this.loadCustomer();
   }
 
   render() {
@@ -119,22 +118,16 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     ];
     return (
       <Grid container direction="column">
-        {id === 0 ? (
-          <CircularProgress style={{ margin: '10px auto' }} />
-        ) : (
-          <>
-            <Modal open={editing} onClose={onCloseEdit}>
-              <Form<User.AsObject>
-                schema={SCHEMA}
-                data={customer}
-                onSave={this.handleSave}
-                onClose={onCloseEdit}
-                disabled={saving}
-              />
-            </Modal>
-            <InfoTable data={infoTableData} />
-          </>
-        )}
+        <InfoTable data={infoTableData} loading={id === 0} />
+        <Modal open={editing} onClose={onCloseEdit}>
+          <Form<User.AsObject>
+            schema={SCHEMA}
+            data={customer}
+            onSave={this.handleSave}
+            onClose={onCloseEdit}
+            disabled={saving}
+          />
+        </Modal>
       </Grid>
     );
   }
