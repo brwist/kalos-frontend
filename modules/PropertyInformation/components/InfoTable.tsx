@@ -32,6 +32,9 @@ const useStyles = makeStyles(theme => ({
     paddingLeft: theme.spacing(),
     paddingRight: theme.spacing(),
   },
+  value: {
+    whiteSpace: 'pre-line',
+  },
   loader: {
     position: 'absolute',
     top: 'calc(50% - 20px)',
@@ -51,7 +54,8 @@ const InfoTable = ({ data, loading = false }: Props) => {
               className={classes.item}
               style={{ width: `${100 / items.length}%` }}
             >
-              <strong>{label}:</strong> {value}
+              <strong>{label}:</strong>{' '}
+              <span className={classes.value}>{value}</span>
             </Typography>
           ))}
         </div>

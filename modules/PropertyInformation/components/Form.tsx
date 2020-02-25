@@ -14,6 +14,7 @@ export type Schema<T> = {
   options?: (string | Option)[];
   required?: boolean;
   helperText?: string;
+  multiline?: boolean;
   type?: 'string' | 'password';
 };
 

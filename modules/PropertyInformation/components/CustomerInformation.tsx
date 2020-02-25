@@ -19,18 +19,24 @@ const SCHEMA: Schema<User.AsObject>[] = [
     name: 'altEmail',
     helperText: 'Separate multiple email addresses w/comma',
   },
-  { label: 'Bulling Address', name: 'address' },
+  { label: 'Bulling Address', name: 'address', multiline: true },
   { label: 'Billing City', name: 'city' },
   { label: 'Billing State', name: 'state', options: USA_STATES },
   { label: 'Billing Zip Code', name: 'zip' },
   { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
   { label: 'Discount', name: 'discount', required: true },
   { label: 'Rebate', name: 'rebate', required: true },
-  { label: 'Customer notes', name: 'notes', helperText: 'Visible to customer' },
+  {
+    label: 'Customer notes',
+    name: 'notes',
+    helperText: 'Visible to customer',
+    multiline: true,
+  },
   {
     label: 'Internal Notes',
     name: 'intNotes',
     helperText: 'NOT visible to customer',
+    multiline: true,
   },
   // {label:'Who recommended us?', name:''}, // TODO
   {
@@ -118,6 +124,8 @@ export class CustomerInformation extends React.PureComponent<props, state> {
       state,
       zip,
       billingTerms,
+      notes,
+      intNotes,
     } = customer;
     const infoTableData = [
       [
@@ -140,6 +148,13 @@ export class CustomerInformation extends React.PureComponent<props, state> {
         { label: 'Email', value: email },
       ],
       [{ label: 'Billing Terms', value: billingTerms }],
+      [
+        {
+          label: 'Customer Notes',
+          value: notes,
+        },
+        { label: 'Internal Notes', value: intNotes },
+      ],
     ];
     return (
       <Grid container direction="column">
