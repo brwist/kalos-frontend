@@ -40,7 +40,7 @@ async function slackNotify(id: string, text: string) {
     `https://slack.com/api/chat.postMessage?token=${KALOS_BOT}&channel=${id}&text=${text}`,
     {
       method: 'POST',
-    },
+    }
   );
 }
 
@@ -56,7 +56,7 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
       }
     }
     const res = await fetch(
-      `https://slack.com/api/users.list?token=${KALOS_BOT}`,
+      `https://slack.com/api/users.list?token=${KALOS_BOT}`
     );
     const jsonRes = await res.json();
     try {
@@ -74,7 +74,7 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
 async function getSlackID(
   userName: string,
   skipCache = false,
-  count = 0,
+  count = 0
 ): Promise<string> {
   if (count != 4) {
     try {
@@ -213,6 +213,29 @@ function getMimeType(fileName: string) {
   }
 }
 
+/**
+ *
+ * @param time time in format HH:MM (ie. 16:30)
+ * @returns format h:MMa (ie. 4:30AM)
+ */
+function formatTime(time: string) {
+  const [hourStr, minutes] = time.split(':');
+  const hour = +hourStr;
+  return (
+    (hour > 12 ? hour - 12 : hour) + ':' + minutes + (hour < 12 ? 'AM' : 'PM')
+  );
+}
+
+/**
+ *
+ * @param date date in format YYYY-MM-DD (ie. 2020-06-01)
+ * @returns format M/D/YYYY (ie. 6/1/2020)
+ */
+function formatDate(date: string) {
+  const [year, month, day] = date.substr(0, 10).split('-');
+  return [+month, +day, +year].join('/');
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -224,4 +247,6 @@ export {
   getURLParams,
   b64toBlob,
   getMimeType,
+  formatTime,
+  formatDate,
 };

@@ -7,6 +7,7 @@ import { CustomerInformation } from './components/CustomerInformation';
 import { PropertyInfo } from './components/PropertyInfo';
 import { PropertyDocuments } from './components/PropertyDocuments';
 import { ServiceItems } from './components/ServiceItems';
+import { ServiceCalls } from './components/ServiceCalls';
 
 interface props {
   userID: number;
@@ -112,6 +113,7 @@ export const PropertyInformation = (props: props) => {
         </div>
         <PropertyDocuments className={classes.documents} {...props} />
       </div>
+      <ServiceCalls {...props} />
     </ThemeProvider>
   );
 };
