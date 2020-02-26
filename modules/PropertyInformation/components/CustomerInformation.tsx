@@ -1,6 +1,5 @@
 import React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import Grid from '@material-ui/core/Grid';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data as InfoTableData } from './InfoTable';
 import { Modal } from './Modal';
@@ -161,7 +160,7 @@ export class CustomerInformation extends React.PureComponent<props, state> {
       ],
     ];
     return (
-      <Grid container direction="column">
+      <>
         <InfoTable data={infoTableData} loading={id === 0} error={error} />
         <Modal open={editing} onClose={onCloseEdit}>
           <Form<User.AsObject>
@@ -172,7 +171,7 @@ export class CustomerInformation extends React.PureComponent<props, state> {
             disabled={saving}
           />
         </Modal>
-      </Grid>
+      </>
     );
   }
 }

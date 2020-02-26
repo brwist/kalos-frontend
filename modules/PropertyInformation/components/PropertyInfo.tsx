@@ -1,7 +1,6 @@
 import React from 'react';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import Grid from '@material-ui/core/Grid';
 import { ENDPOINT, USA_STATES } from '../../../constants';
 import { InfoTable, Data as InfoTableData } from './InfoTable';
 import { Modal } from './Modal';
@@ -135,7 +134,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       [{ label: 'Notes', value: notes }],
     ];
     return (
-      <Grid container direction="column">
+      <>
         <InfoTable data={infoTableData} loading={id === 0} error={error} />
         <Modal open={editing} onClose={onCloseEdit}>
           <Form<Property.AsObject>
@@ -146,7 +145,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             disabled={saving}
           />
         </Modal>
-      </Grid>
+      </>
     );
   }
 }

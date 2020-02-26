@@ -25,6 +25,7 @@ const useStyles = makeStyles(theme => ({
   wrapper: {
     position: 'relative',
     minHeight: 70,
+    marginBottom: theme.spacing(2),
   },
   row: ({ compact }: Styles) => ({
     display: 'flex',

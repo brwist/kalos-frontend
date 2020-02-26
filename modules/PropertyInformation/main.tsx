@@ -6,6 +6,7 @@ import { SectionBar } from './components/SectionBar';
 import { CustomerInformation } from './components/CustomerInformation';
 import { PropertyInfo } from './components/PropertyInfo';
 import { PropertyDocuments } from './components/PropertyDocuments';
+import { ServiceItems } from './components/ServiceItems';
 
 interface props {
   userID: number;
@@ -106,6 +107,14 @@ export const PropertyInformation = (props: props) => {
             {...props}
             editing={editingPropertyInfo}
             onCloseEdit={handleToggleEditingPropertyInfo}
+          />
+          <SectionBar
+            title="Service Items"
+            buttons={[
+              {
+                label: 'Add Service Item',
+              },
+            ]}
           />
         </div>
         <PropertyDocuments className={classes.documents} {...props} />
