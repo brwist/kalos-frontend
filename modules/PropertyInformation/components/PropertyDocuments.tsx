@@ -104,7 +104,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
   render() {
     const { className } = this.props;
     const { documents, loading, error } = this.state;
-    const infoTableData: InfoTableData = loading
+    const data: InfoTableData = loading
       ? [[{ value: '' }], [{ value: '' }], [{ value: '' }]]
       : documents.map(({ description: value }) => [
           {
@@ -123,7 +123,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
       <div className={className}>
         <SectionBar title="Property Documents" buttons={[{ label: 'Add' }]} />
         <InfoTable
-          data={infoTableData}
+          data={data}
           loading={loading}
           error={error}
           compact

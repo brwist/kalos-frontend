@@ -121,7 +121,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       subdivision,
       notes,
     } = userProperty;
-    const infoTableData: InfoTableData = [
+    const data: InfoTableData = [
       [
         { label: 'Name', value: `${firstname} ${lastname}` },
         { label: 'Business Name', value: businessname },
@@ -158,7 +158,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             },
           ]}
         />
-        <InfoTable data={infoTableData} loading={id === 0} error={error} />
+        <InfoTable data={data} loading={id === 0} error={error} />
         <Modal open={editing} onClose={this.handleToggleEditing}>
           <Form<Property.AsObject>
             title="Edit Property Information"
