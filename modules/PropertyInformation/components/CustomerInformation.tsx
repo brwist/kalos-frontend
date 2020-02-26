@@ -52,21 +52,21 @@ const SCHEMA: Schema<User.AsObject>[] = [
   { label: 'Password', name: 'pwd', type: 'password' },
 ];
 
-interface props {
+interface Props {
   userID: number;
 }
 
-interface state {
+interface State {
   customer: User.AsObject;
   editing: boolean;
   saving: boolean;
   error: boolean;
 }
 
-export class CustomerInformation extends React.PureComponent<props, state> {
+export class CustomerInformation extends React.PureComponent<Props, State> {
   UserClient: UserClient;
 
-  constructor(props: props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       customer: new User().toObject(),

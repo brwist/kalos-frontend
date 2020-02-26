@@ -13,6 +13,8 @@ type Styles = {
 
 type Href = 'tel' | 'mailto';
 
+export type Dir = 'DESC' | 'ASC';
+
 export type Data = {
   label?: string;
   value: ReactNode;
@@ -22,7 +24,7 @@ export type Data = {
 
 export type Columns = {
   name: string;
-  dir?: 'desc' | 'asc';
+  dir?: Dir;
   onClick?: () => void;
 }[];
 
@@ -138,7 +140,7 @@ export const InfoTable = ({
         <div className={classes.header}>
           {columns.map(({ name, dir, onClick }, idx) => {
             const ArrowIcon =
-              dir === 'desc' ? ArrowDropDownIcon : ArrowDropUpIcon;
+              dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
             return (
               <Typography
                 key={idx}

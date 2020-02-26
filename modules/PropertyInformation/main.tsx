@@ -8,12 +8,10 @@ import { PropertyDocuments } from './components/PropertyDocuments';
 import { ServiceItems } from './components/ServiceItems';
 import { ServiceCalls } from './components/ServiceCalls';
 
-interface props {
+interface Props {
   userID: number;
   propertyId: number;
 }
-
-interface state {}
 
 const useStyles = makeStyles(theme => ({
   propertiesWrapper: {
@@ -29,18 +27,18 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const PropertyInformation = (props: props) => {
+export const PropertyInformation = (props: Props) => {
   const classes = useStyles();
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      {/* <CustomerInformation {...props} />
+      <CustomerInformation {...props} />
       <div className={classes.propertiesWrapper}>
         <div className={classes.properties}>
           <PropertyInfo {...props} />
           <ServiceItems {...props} />
         </div>
         <PropertyDocuments className={classes.documents} {...props} />
-      </div> */}
+      </div>
       <ServiceCalls {...props} />
     </ThemeProvider>
   );
