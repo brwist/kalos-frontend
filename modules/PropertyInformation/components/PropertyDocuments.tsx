@@ -1,10 +1,13 @@
 import React, { PureComponent } from 'react';
+import IconButton from '@material-ui/core/IconButton';
+import MailIcon from '@material-ui/icons/Mail';
+import DeleteIcon from '@material-ui/icons/Delete';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data as InfoTableData } from './InfoTable';
-import { Modal } from './Modal';
-import { Form, Schema } from './Form';
+// import { Modal } from './Modal';
+// import { Form, Schema } from './Form';
 import { SectionBar } from './SectionBar';
 
 // const SCHEMA: Schema<Property.AsObject>[] = [
@@ -102,9 +105,21 @@ export class PropertyDocuments extends PureComponent<Props, State> {
   render() {
     const { className } = this.props;
     const { documents, loading, error } = this.state;
-    const infoTableData: InfoTableData = documents.map(
-      ({ description: value }) => [{ value }]
-    );
+    const infoTableData: InfoTableData = loading
+      ? [[{ value: '' }], [{ value: '' }], [{ value: '' }]]
+      : documents.map(({ description: value }) => [
+          {
+            value,
+            actions: [
+              <IconButton key={0} style={{ marginLeft: 4 }} size="small">
+                <MailIcon />
+              </IconButton>,
+              <IconButton key={1} style={{ marginLeft: 4 }} size="small">
+                <DeleteIcon />
+              </IconButton>,
+            ],
+          },
+        ]);
     return (
       <div className={className}>
         <SectionBar title="Property Documents" buttons={[{ label: 'Add' }]} />
