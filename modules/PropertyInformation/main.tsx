@@ -33,14 +33,14 @@ export const PropertyInformation = (props: props) => {
   const classes = useStyles();
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <CustomerInformation {...props} />
+      {/* <CustomerInformation {...props} />
       <div className={classes.propertiesWrapper}>
         <div className={classes.properties}>
           <PropertyInfo {...props} />
           <ServiceItems {...props} />
         </div>
         <PropertyDocuments className={classes.documents} {...props} />
-      </div>
+      </div> */}
       <ServiceCalls {...props} />
     </ThemeProvider>
   );
