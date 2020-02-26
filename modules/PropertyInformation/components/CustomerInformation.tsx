@@ -1,10 +1,7 @@
 import React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
-import {
-  InfoTable,
-  Data as InfoTableData,
-} from '../../ComponentsLibrary/InfoTable';
+import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -135,7 +132,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
       notes,
       intNotes,
     } = customer;
-    const data: InfoTableData = [
+    const data: Data = [
       [
         { label: 'Name', value: `${firstname} ${lastname}` },
         { label: 'Business Name', value: businessname },

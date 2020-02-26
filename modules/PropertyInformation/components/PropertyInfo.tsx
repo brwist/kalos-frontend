@@ -1,10 +1,7 @@
 import React from 'react';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT, USA_STATES } from '../../../constants';
-import {
-  InfoTable,
-  Data as InfoTableData,
-} from '../../ComponentsLibrary/InfoTable';
+import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -121,7 +118,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       subdivision,
       notes,
     } = userProperty;
-    const data: InfoTableData = [
+    const data: Data = [
       [
         { label: 'Name', value: `${firstname} ${lastname}` },
         { label: 'Business Name', value: businessname },

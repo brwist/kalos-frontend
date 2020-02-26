@@ -10,7 +10,7 @@ import {
   Dir,
 } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { formatTime, formatDate } from '../../../helpers';
+import { formatTime, formatDate, makeFakeRows } from '../../../helpers';
 
 interface Props {
   className?: string;
@@ -115,7 +115,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       },
     ];
     const data: Data = loading
-      ? [[{ value: '' }], [{ value: '' }], [{ value: '' }]]
+      ? makeFakeRows(5)
       : serviceCalls
           .sort(sort)
           .map(
