@@ -1,5 +1,7 @@
 import React, { ReactElement, ReactNode } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
+import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Typography from '@material-ui/core/Typography';
 
 type Styles = {
@@ -20,6 +22,8 @@ export type Data = {
 
 export type Columns = {
   name: string;
+  dir?: 'desc' | 'asc';
+  onClick?: () => void;
 }[];
 
 interface Props extends Styles {
@@ -68,6 +72,10 @@ const useStyles = makeStyles(theme => {
       fontWeight: 600,
     },
     item: commonCell,
+    dir: {
+      display: 'flex',
+      alignItems: 'center',
+    },
     label: {
       marginRight: theme.spacing(),
     },
@@ -128,15 +136,25 @@ export const InfoTable = ({
     <div className={classes.wrapper}>
       {columns.length > 0 && (
         <div className={classes.header}>
-          {columns.map(({ name }, idx) => (
-            <Typography
-              key={idx}
-              className={classes.column}
-              style={{ width: `${100 / columns.length}%` }}
-            >
-              {name}
-            </Typography>
-          ))}
+          {columns.map(({ name, dir, onClick }, idx) => {
+            const ArrowIcon =
+              dir === 'desc' ? ArrowDropDownIcon : ArrowDropUpIcon;
+            return (
+              <Typography
+                key={idx}
+                className={classes.column}
+                style={{ width: `${100 / columns.length}%` }}
+              >
+                <span
+                  onClick={onClick}
+                  className={classes.dir}
+                  style={{ cursor: onClick ? 'pointer' : 'default' }}
+                >
+                  {name} {dir && <ArrowIcon />}
+                </span>
+              </Typography>
+            );
+          })}
         </div>
       )}
       {data.map((items, idx) => (
