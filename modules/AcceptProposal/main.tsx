@@ -378,8 +378,12 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     await this.updateDocument();
     await this.createLog();
     await this.pingSlack();
-    await this.saveAsPDF();
-    window.location.href = `https://app.kalosflorida.com/index.cfm?action=customer:service.post_proposal&user_id=${this.props.userID}`;
+    //await this.saveAsPDF();
+    window.location.href = `https://app.kalosflorida.com/index.cfm?action=customer:service.post_proposal&user_id=${
+      this.props.userID
+    }&jobNumber=${
+      this.props.jobNumber
+    }&userName=${`${this.state.customer.firstname} ${this.state.customer.lastname}`}`;
   }
 
   async componentDidMount() {
