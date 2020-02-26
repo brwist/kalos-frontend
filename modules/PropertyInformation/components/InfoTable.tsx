@@ -6,6 +6,7 @@ type Styles = {
   loading?: boolean;
   error?: boolean;
   compact?: boolean;
+  hoverable?: boolean;
 };
 
 type Href = 'tel' | 'mailto';
@@ -27,7 +28,7 @@ const useStyles = makeStyles(theme => ({
     minHeight: 70,
     marginBottom: theme.spacing(2),
   },
-  row: ({ compact }: Styles) => ({
+  row: ({ compact, hoverable }: Styles) => ({
     display: 'flex',
     paddingTop: compact ? 3 : theme.spacing(),
     paddingBottom: compact ? 3 : theme.spacing(),
@@ -35,6 +36,13 @@ const useStyles = makeStyles(theme => ({
       borderBottomWidth: 1,
       borderBottomStyle: 'solid',
       borderBottomColor: theme.palette.grey[400],
+    },
+    '&:hover': {
+      ...(hoverable
+        ? {
+            backgroundColor: theme.palette.grey[200],
+          }
+        : {}),
     },
   }),
   item: {
@@ -94,8 +102,9 @@ export const InfoTable = ({
   loading = false,
   error = false,
   compact = false,
+  hoverable = false,
 }: Props) => {
-  const classes = useStyles({ loading, error, compact });
+  const classes = useStyles({ loading, error, compact, hoverable });
   return (
     <div className={classes.wrapper}>
       {data.map((items, idx) => (
@@ -118,7 +127,7 @@ export const InfoTable = ({
                   ) : (
                     value
                   )}
-                  {actions && <div>{actions}</div>}
+                  {actions && <span>{actions}</span>}
                 </span>
               )}
             </Typography>

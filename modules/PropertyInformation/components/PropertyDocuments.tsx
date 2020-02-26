@@ -128,6 +128,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
           loading={loading}
           error={error}
           compact
+          hoverable
         />
         {/* <Modal open={editing} onClose={onCloseEdit}>
           <Form<Property.AsObject>

@@ -108,14 +108,7 @@ export const PropertyInformation = (props: props) => {
             editing={editingPropertyInfo}
             onCloseEdit={handleToggleEditingPropertyInfo}
           />
-          <SectionBar
-            title="Service Items"
-            buttons={[
-              {
-                label: 'Add Service Item',
-              },
-            ]}
-          />
+          <ServiceItems {...props} />
         </div>
         <PropertyDocuments className={classes.documents} {...props} />
       </div>
