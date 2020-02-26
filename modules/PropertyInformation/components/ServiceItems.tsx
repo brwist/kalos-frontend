@@ -3,6 +3,8 @@ import IconButton from '@material-ui/core/IconButton';
 import LinkIcon from '@material-ui/icons/Link';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
+import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import {
   ServiceItemClient,
   ServiceItem,
@@ -44,6 +46,7 @@ export class ServiceItems extends PureComponent<Props, State> {
   }
 
   loadEntry = async () => {
+    this.setState({ loading: true });
     const { propertyId } = this.props;
     const entry = new ServiceItem();
     entry.setPropertyId(propertyId);
@@ -60,14 +63,51 @@ export class ServiceItems extends PureComponent<Props, State> {
     await this.loadEntry();
   }
 
+  handleReorder = (idx: number, step: number) => async () => {
+    this.setState({ loading: true });
+    const { serviceItems } = this.state;
+    const currentItem = serviceItems[idx];
+    const nextItem = serviceItems[idx + step];
+    const entry = new ServiceItem();
+    entry.setFieldMaskList(['SortOrder']);
+    entry.setId(currentItem.id);
+    entry.setSortOrder(nextItem.sortOrder);
+    await this.ServiceItemClient.Update(entry);
+    entry.setId(nextItem.id);
+    entry.setSortOrder(currentItem.sortOrder);
+    await this.ServiceItemClient.Update(entry);
+    await this.loadEntry();
+  };
+
   render() {
-    const { className } = this.props;
-    const { serviceItems, loading, error } = this.state;
+    const { handleReorder, props, state } = this;
+    const { className } = props;
+    const { serviceItems, loading, error } = state;
     const data: Data = loading
       ? makeFakeRows()
-      : serviceItems.sort(sort).map(({ type: value }) => [
+      : serviceItems.sort(sort).map(({ type: value }, idx) => [
           {
-            value,
+            value: (
+              <>
+                <IconButton
+                  style={{ marginRight: 4 }}
+                  size="small"
+                  disabled={idx === 0}
+                  onClick={handleReorder(idx, -1)}
+                >
+                  <ArrowUpwardIcon />
+                </IconButton>
+                <IconButton
+                  style={{ marginRight: 4 }}
+                  size="small"
+                  disabled={idx === serviceItems.length - 1}
+                  onClick={handleReorder(idx, 1)}
+                >
+                  <ArrowDownwardIcon />
+                </IconButton>
+                <span>{value}</span>
+              </>
+            ),
             actions: [
               <IconButton key={0} style={{ marginLeft: 4 }} size="small">
                 <LinkIcon />
