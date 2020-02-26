@@ -113,7 +113,7 @@ export class ServiceItems extends PureComponent<Props, State> {
   render() {
     const { className } = this.props;
     const { serviceItems, loading, error } = this.state;
-    const infoTableData: InfoTableData = loading
+    const data: InfoTableData = loading
       ? [[{ value: '' }], [{ value: '' }], [{ value: '' }]]
       : serviceItems.sort(sort).map(({ type: value }) => [
           {
@@ -138,7 +138,7 @@ export class ServiceItems extends PureComponent<Props, State> {
           buttons={[{ label: 'Add Service Item' }]}
         />
         <InfoTable
-          data={infoTableData}
+          data={data}
           loading={loading}
           error={error}
           compact

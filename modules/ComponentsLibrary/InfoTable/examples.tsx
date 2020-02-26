@@ -22,10 +22,27 @@ const EXAMPLE_1: Data = [
 
 export default () => (
   <>
+    <InfoTable
+      data={[
+        [{ value: 'Row 1.0' }, { value: 'Row 1.1' }, { value: 'Row 1.2' }],
+        [{ value: 'Row 2.0' }, { value: 'Row 2.1' }, { value: 'Row 2.2' }],
+        [{ value: 'Row 3.0' }, { value: 'Row 3.1' }, { value: 'Row 3.2' }],
+      ]}
+      columns={[
+        { name: 'Column 1' },
+        { name: 'Column 2' },
+        { name: 'Column 3' },
+      ]}
+    />
+    <hr />
     <InfoTable data={EXAMPLE_1} />
+    <hr />
     <InfoTable data={EXAMPLE_1} compact />
+    <hr />
     <InfoTable data={EXAMPLE_1} hoverable />
+    <hr />
     <InfoTable data={EXAMPLE_1} loading />
+    <hr />
     <InfoTable data={EXAMPLE_1} error />
   </>
 );

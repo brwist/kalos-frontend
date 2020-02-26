@@ -109,7 +109,14 @@ export class ServiceCalls extends PureComponent<Props, State> {
   render() {
     const { className } = this.props;
     const { serviceCalls, loading, error } = this.state;
-    const infoTableData: InfoTableData = loading
+    const columns = [
+      { name: 'Date/time' },
+      { name: 'Job Status' },
+      { name: 'Job Type / Subtype' },
+      { name: 'JobNumber' },
+      { name: 'Contract Number' },
+    ];
+    const data: InfoTableData = loading
       ? [[{ value: '' }], [{ value: '' }], [{ value: '' }]]
       : serviceCalls
           .sort(sort)
@@ -126,14 +133,16 @@ export class ServiceCalls extends PureComponent<Props, State> {
               color,
             }) => [
               {
+                value:
+                  formatDate(dateStarted) +
+                  ' ' +
+                  formatTime(timeStarted) +
+                  ' - ' +
+                  formatTime(timeEnded),
+              },
+              {
                 value: (
                   <>
-                    {formatDate(dateStarted) +
-                      ' ' +
-                      formatTime(timeStarted) +
-                      ' - ' +
-                      formatTime(timeEnded)}
-                    <br />
                     <span
                       style={{
                         display: 'inline-block',
@@ -167,7 +176,8 @@ export class ServiceCalls extends PureComponent<Props, State> {
           buttons={[{ label: 'New Service Call' }]}
         />
         <InfoTable
-          data={infoTableData}
+          columns={columns}
+          data={data}
           loading={loading}
           error={error}
           compact

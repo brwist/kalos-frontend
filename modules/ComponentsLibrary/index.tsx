@@ -11,7 +11,7 @@ const COMPONENTS = { Button, Field, Form, InfoTable, Modal, SectionBar };
 
 const ComponentsLibrary = () => {
   const [component, setComponent] = useState<keyof typeof COMPONENTS>(
-    Object.keys(COMPONENTS)[4] as keyof typeof COMPONENTS
+    Object.keys(COMPONENTS)[0] as keyof typeof COMPONENTS
   );
   const Component = COMPONENTS[component];
   const handleClickMenuItem = useCallback(v => () => setComponent(v), []);
