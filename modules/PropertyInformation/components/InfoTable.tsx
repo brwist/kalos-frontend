@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
@@ -13,7 +13,7 @@ type Href = 'tel' | 'mailto';
 
 export type Data = {
   label?: string;
-  value: string;
+  value: ReactNode;
   href?: Href;
   actions?: ReactElement[];
 }[][];
@@ -125,7 +125,7 @@ export const InfoTable = ({
                       {value}
                     </a>
                   ) : (
-                    value
+                    <span>{value}</span>
                   )}
                   {actions && <span>{actions}</span>}
                 </span>
