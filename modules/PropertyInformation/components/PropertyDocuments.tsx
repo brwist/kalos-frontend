@@ -3,12 +3,10 @@ import IconButton from '@material-ui/core/IconButton';
 import MailIcon from '@material-ui/icons/Mail';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
-import { ENDPOINT } from '../../../constants';
-import {
-  InfoTable,
-  Data as InfoTableData,
-} from '../../ComponentsLibrary/InfoTable';
+import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { ENDPOINT } from '../../../constants';
+import { makeFakeRows } from '../../../helpers';
 
 interface Props {
   className?: string;
@@ -56,8 +54,8 @@ export class PropertyDocuments extends PureComponent<Props, State> {
   render() {
     const { className } = this.props;
     const { documents, loading, error } = this.state;
-    const data: InfoTableData = loading
-      ? [[{ value: '' }], [{ value: '' }], [{ value: '' }]]
+    const data: Data = loading
+      ? makeFakeRows()
       : documents.map(({ description: value }) => [
           {
             value,

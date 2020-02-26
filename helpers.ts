@@ -236,6 +236,12 @@ function formatDate(date: string) {
   return [+month, +day, +year].join('/');
 }
 
+function makeFakeRows(columns: number = 1, rows: number = 3) {
+  return Array.from(Array(rows)).map(() =>
+    Array.from(Array(columns)).map(() => ({ value: '' }))
+  );
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -249,4 +255,5 @@ export {
   getMimeType,
   formatTime,
   formatDate,
+  makeFakeRows,
 };

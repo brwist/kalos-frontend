@@ -8,11 +8,9 @@ import {
   ServiceItem,
 } from '@kalos-core/kalos-rpc/ServiceItem';
 import { ENDPOINT } from '../../../constants';
-import {
-  InfoTable,
-  Data as InfoTableData,
-} from '../../ComponentsLibrary/InfoTable';
+import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { makeFakeRows } from '../../../helpers';
 
 interface Props {
   className?: string;
@@ -65,8 +63,8 @@ export class ServiceItems extends PureComponent<Props, State> {
   render() {
     const { className } = this.props;
     const { serviceItems, loading, error } = this.state;
-    const data: InfoTableData = loading
-      ? [[{ value: '' }], [{ value: '' }], [{ value: '' }]]
+    const data: Data = loading
+      ? makeFakeRows()
       : serviceItems.sort(sort).map(({ type: value }) => [
           {
             value,
