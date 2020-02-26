@@ -16,7 +16,7 @@ const useStyles = makeStyles(theme => ({
     alignItems: 'center',
   },
   paper: {
-    width: '30%',
+    width: '40%',
     minWidth: 300,
     maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
     overflow: 'hidden',
