@@ -12,7 +12,9 @@ import {
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { Modal } from '../../ComponentsLibrary/Modal';
 import { makeFakeRows } from '../../../helpers';
+import { ServiceItemsLinks } from './ServiceItemsLinks';
 
 interface Props {
   className?: string;
@@ -24,6 +26,7 @@ interface State {
   serviceItems: ServiceItem.AsObject[];
   loading: boolean;
   error: boolean;
+  linkId?: number;
 }
 
 const sort = (a: ServiceItem.AsObject, b: ServiceItem.AsObject) => {
@@ -79,13 +82,15 @@ export class ServiceItems extends PureComponent<Props, State> {
     await this.loadEntry();
   };
 
+  handleSetLinkId = (linkId?: number) => () => this.setState({ linkId });
+
   render() {
-    const { handleReorder, props, state } = this;
+    const { props, state, handleReorder, handleSetLinkId } = this;
     const { className } = props;
-    const { serviceItems, loading, error } = state;
+    const { serviceItems, loading, error, linkId } = state;
     const data: Data = loading
       ? makeFakeRows()
-      : serviceItems.sort(sort).map(({ type: value }, idx) => [
+      : serviceItems.sort(sort).map(({ id, type: value }, idx) => [
           {
             value: (
               <>
@@ -109,7 +114,12 @@ export class ServiceItems extends PureComponent<Props, State> {
               </>
             ),
             actions: [
-              <IconButton key={0} style={{ marginLeft: 4 }} size="small">
+              <IconButton
+                key={0}
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={handleSetLinkId(id)}
+              >
                 <LinkIcon />
               </IconButton>,
               <IconButton key={1} style={{ marginLeft: 4 }} size="small">
@@ -134,6 +144,14 @@ export class ServiceItems extends PureComponent<Props, State> {
           compact
           hoverable
         />
+        {linkId && (
+          <Modal open onClose={handleSetLinkId(undefined)}>
+            <ServiceItemsLinks
+              title={serviceItems.find(({ id }) => id === linkId)?.type}
+              serviceItemId={linkId}
+            />
+          </Modal>
+        )}
       </div>
     );
   }
