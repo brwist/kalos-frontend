@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
 type Styles = {
@@ -14,6 +13,7 @@ export type Data = {
   label?: string;
   value: string;
   href?: Href;
+  actions?: ReactElement[];
 }[][];
 
 interface Props extends Styles {
@@ -38,9 +38,18 @@ const useStyles = makeStyles(theme => ({
   item: {
     paddingLeft: theme.spacing(),
     paddingRight: theme.spacing(),
+    display: 'flex',
+    alignItems: 'center',
+  },
+  label: {
+    marginRight: theme.spacing(),
   },
   value: {
     whiteSpace: 'pre-line',
+    display: 'inline-flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexGrow: 1,
   },
   loader: {
     position: 'absolute',
@@ -73,6 +82,8 @@ const useStyles = makeStyles(theme => ({
     height: theme.spacing(),
     width: 100,
     borderRadius: theme.shape.borderRadius,
+    marginTop: 6,
+    marginBottom: 6,
   },
 }));
 
@@ -82,13 +93,13 @@ export const InfoTable = ({ data, loading = false, error = false }: Props) => {
     <div className={classes.wrapper}>
       {data.map((items, idx) => (
         <div key={idx} className={classes.row}>
-          {items.map(({ label, value, href }, idx) => (
+          {items.map(({ label, value, href, actions }, idx) => (
             <Typography
               key={idx}
               className={classes.item}
               style={{ width: `${100 / items.length}%` }}
             >
-              {label && <strong>{label}: </strong>}
+              {label && <strong className={classes.label}>{label}: </strong>}
               {loading || error ? (
                 <span className={classes.fake} />
               ) : (
@@ -100,6 +111,7 @@ export const InfoTable = ({ data, loading = false, error = false }: Props) => {
                   ) : (
                     value
                   )}
+                  {actions && <div>{actions}</div>}
                 </span>
               )}
             </Typography>
