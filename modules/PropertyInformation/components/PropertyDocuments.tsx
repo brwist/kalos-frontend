@@ -123,7 +123,12 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     return (
       <div className={className}>
         <SectionBar title="Property Documents" buttons={[{ label: 'Add' }]} />
-        <InfoTable data={infoTableData} loading={loading} error={error} />
+        <InfoTable
+          data={infoTableData}
+          loading={loading}
+          error={error}
+          compact
+        />
         {/* <Modal open={editing} onClose={onCloseEdit}>
           <Form<Property.AsObject>
             schema={SCHEMA}

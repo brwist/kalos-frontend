@@ -5,6 +5,7 @@ import Typography from '@material-ui/core/Typography';
 type Styles = {
   loading?: boolean;
   error?: boolean;
+  compact?: boolean;
 };
 
 type Href = 'tel' | 'mailto';
@@ -25,16 +26,16 @@ const useStyles = makeStyles(theme => ({
     position: 'relative',
     minHeight: 70,
   },
-  row: {
+  row: ({ compact }: Styles) => ({
     display: 'flex',
-    paddingTop: theme.spacing(),
-    paddingBottom: theme.spacing(),
+    paddingTop: compact ? 3 : theme.spacing(),
+    paddingBottom: compact ? 3 : theme.spacing(),
     '&:not(:last-of-type)': {
       borderBottomWidth: 1,
       borderBottomStyle: 'solid',
       borderBottomColor: theme.palette.grey[400],
     },
-  },
+  }),
   item: {
     paddingLeft: theme.spacing(),
     paddingRight: theme.spacing(),
@@ -76,19 +77,24 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(2),
     borderRadius: theme.shape.borderRadius,
   },
-  fake: {
+  fake: ({ compact }: Styles) => ({
     display: 'inline-block',
     backgroundColor: theme.palette.grey[300],
     height: theme.spacing(),
     width: 100,
     borderRadius: theme.shape.borderRadius,
-    marginTop: 6,
-    marginBottom: 6,
-  },
+    marginTop: compact ? 11 : 6,
+    marginBottom: compact ? 11 : 6,
+  }),
 }));
 
-export const InfoTable = ({ data, loading = false, error = false }: Props) => {
-  const classes = useStyles({ loading, error });
+export const InfoTable = ({
+  data,
+  loading = false,
+  error = false,
+  compact = false,
+}: Props) => {
+  const classes = useStyles({ loading, error, compact });
   return (
     <div className={classes.wrapper}>
       {data.map((items, idx) => (
