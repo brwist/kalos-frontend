@@ -3,10 +3,13 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../../constants';
-import { InfoTable, Data as InfoTableData } from './InfoTable';
+import {
+  InfoTable,
+  Data as InfoTableData,
+} from '../../ComponentsLibrary/InfoTable';
 // import { Modal } from './Modal';
 // import { Form, Schema } from './Form';
-import { SectionBar } from './SectionBar';
+import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { formatTime, formatDate } from '../../../helpers';
 
 // const SCHEMA: Schema<Property.AsObject>[] = [

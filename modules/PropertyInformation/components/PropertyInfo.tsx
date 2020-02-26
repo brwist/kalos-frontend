@@ -1,10 +1,13 @@
 import React from 'react';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT, USA_STATES } from '../../../constants';
-import { InfoTable, Data as InfoTableData } from './InfoTable';
-import { Modal } from './Modal';
-import { Form, Schema } from './Form';
-import { SectionBar } from './SectionBar';
+import {
+  InfoTable,
+  Data as InfoTableData,
+} from '../../ComponentsLibrary/InfoTable';
+import { Modal } from '../../ComponentsLibrary/Modal';
+import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 
 const PROP_LEVEL = 'Used for property-level billing only';
 const RESIDENTIAL = [
@@ -158,6 +161,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
         <InfoTable data={infoTableData} loading={id === 0} error={error} />
         <Modal open={editing} onClose={this.handleToggleEditing}>
           <Form<Property.AsObject>
+            title="Edit Property Information"
             schema={SCHEMA}
             data={userProperty}
             onSave={this.handleSave}
