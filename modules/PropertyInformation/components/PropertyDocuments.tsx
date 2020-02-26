@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import MailIcon from '@material-ui/icons/Mail';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data as InfoTableData } from './InfoTable';
@@ -45,7 +44,6 @@ interface State {
 }
 
 export class PropertyDocuments extends PureComponent<Props, State> {
-  UserClient: UserClient;
   DocumentClient: DocumentClient;
 
   constructor(props: Props) {
@@ -56,7 +54,6 @@ export class PropertyDocuments extends PureComponent<Props, State> {
       error: false,
       // saving: false,
     };
-    this.UserClient = new UserClient(ENDPOINT);
     this.DocumentClient = new DocumentClient(ENDPOINT);
   }
 
@@ -75,7 +72,6 @@ export class PropertyDocuments extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    // await this.UserClient.GetToken('test', 'test');
     await this.loadEntry();
   }
 

@@ -3,7 +3,6 @@ import IconButton from '@material-ui/core/IconButton';
 import LinkIcon from '@material-ui/icons/Link';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
 import {
   ServiceItemClient,
   ServiceItem,
@@ -55,7 +54,6 @@ const sort = (a: ServiceItem.AsObject, b: ServiceItem.AsObject) => {
 };
 
 export class ServiceItems extends PureComponent<Props, State> {
-  UserClient: UserClient;
   ServiceItemClient: ServiceItemClient;
 
   constructor(props: Props) {
@@ -66,7 +64,6 @@ export class ServiceItems extends PureComponent<Props, State> {
       error: false,
       // saving: false,
     };
-    this.UserClient = new UserClient(ENDPOINT);
     this.ServiceItemClient = new ServiceItemClient(ENDPOINT);
   }
 
@@ -84,7 +81,6 @@ export class ServiceItems extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    // await this.UserClient.GetToken('test', 'test');
     await this.loadEntry();
   }
 

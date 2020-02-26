@@ -1,10 +1,10 @@
 import React from 'react';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT, USA_STATES } from '../../../constants';
 import { InfoTable, Data as InfoTableData } from './InfoTable';
 import { Modal } from './Modal';
 import { Form, Schema } from './Form';
+import { SectionBar } from './SectionBar';
 
 const PROP_LEVEL = 'Used for property-level billing only';
 const RESIDENTIAL = [
@@ -34,30 +34,30 @@ const SCHEMA: Schema<Property.AsObject>[] = [
 interface Props {
   userID: number;
   propertyId: number;
-  editing: boolean;
-  onCloseEdit: () => void;
 }
 
 interface State {
   userProperty: Property.AsObject;
+  editing: boolean;
   saving: boolean;
   error: boolean;
 }
 
 export class PropertyInfo extends React.PureComponent<Props, State> {
-  UserClient: UserClient;
   PropertyClient: PropertyClient;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       userProperty: new Property().toObject(),
+      editing: false,
       saving: false,
       error: false,
     };
-    this.UserClient = new UserClient(ENDPOINT);
     this.PropertyClient = new PropertyClient(ENDPOINT);
   }
+
+  handleToggleEditing = () => this.setState({ editing: !this.state.editing });
 
   loadEntry = async () => {
     const { userID, propertyId } = this.props;
@@ -74,12 +74,11 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    // await this.UserClient.GetToken('test', 'test');
     await this.loadEntry();
   }
 
   handleSave = async (data: Property.AsObject) => {
-    const { propertyId, userID, onCloseEdit } = this.props;
+    const { propertyId, userID } = this.props;
     this.setState({ saving: true });
     const entry = new Property();
     entry.setId(propertyId);
@@ -98,12 +97,12 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       userProperty,
       saving: false,
     }));
-    onCloseEdit();
+    this.handleToggleEditing();
   };
 
   render() {
-    const { editing, onCloseEdit } = this.props;
-    const { userProperty, saving, error } = this.state;
+    const { userID, propertyId } = this.props;
+    const { userProperty, editing, saving, error } = this.state;
     const {
       id,
       firstname,
@@ -135,13 +134,34 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     ];
     return (
       <>
+        <SectionBar
+          title="Property Information"
+          buttons={[
+            {
+              label: 'Tasks',
+              url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
+            },
+            {
+              label: 'Add Notification',
+              onClick: () => {}, // TODO: implement onClick
+            },
+            {
+              label: 'Change Property',
+              onClick: this.handleToggleEditing,
+            },
+            {
+              label: 'Owner Details',
+              url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
+            },
+          ]}
+        />
         <InfoTable data={infoTableData} loading={id === 0} error={error} />
-        <Modal open={editing} onClose={onCloseEdit}>
+        <Modal open={editing} onClose={this.handleToggleEditing}>
           <Form<Property.AsObject>
             schema={SCHEMA}
             data={userProperty}
             onSave={this.handleSave}
-            onClose={onCloseEdit}
+            onClose={this.handleToggleEditing}
             disabled={saving}
           />
         </Modal>

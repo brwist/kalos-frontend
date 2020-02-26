@@ -4,6 +4,7 @@ import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data as InfoTableData } from './InfoTable';
 import { Modal } from './Modal';
 import { Form, Schema } from './Form';
+import { SectionBar } from './SectionBar';
 
 const SCHEMA: Schema<User.AsObject>[] = [
   { label: 'First Name', name: 'firstname', required: true },
@@ -50,12 +51,11 @@ const SCHEMA: Schema<User.AsObject>[] = [
 
 interface props {
   userID: number;
-  editing: boolean;
-  onCloseEdit: () => void;
 }
 
 interface state {
   customer: User.AsObject;
+  editing: boolean;
   saving: boolean;
   error: boolean;
 }
@@ -67,6 +67,7 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     super(props);
     this.state = {
       customer: new User().toObject(),
+      editing: false,
       saving: false,
       error: false,
     };
@@ -85,8 +86,10 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     }
   };
 
+  handleToggleEditing = () => this.setState({ editing: !this.state.editing });
+
   handleSave = async (data: User.AsObject) => {
-    const { userID, onCloseEdit } = this.props;
+    const { userID } = this.props;
     this.setState({ saving: true });
     const entry = new User();
     entry.setId(userID);
@@ -101,17 +104,16 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     entry.setFieldMaskList(fieldMaskList);
     const customer = await this.UserClient.Update(entry);
     this.setState(() => ({ customer, saving: false }));
-    onCloseEdit();
+    this.handleToggleEditing();
   };
 
   async componentDidMount() {
-    // await this.UserClient.GetToken('test', 'test');
     await this.loadEntry();
   }
 
   render() {
-    const { editing, onCloseEdit } = this.props;
-    const { customer, saving, error } = this.state;
+    const { userID } = this.props;
+    const { customer, editing, saving, error } = this.state;
     const {
       id,
       firstname,
@@ -161,13 +163,42 @@ export class CustomerInformation extends React.PureComponent<props, state> {
     ];
     return (
       <>
+        <SectionBar
+          title="Customer Information"
+          buttons={[
+            {
+              label: 'Calendar',
+              url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
+            },
+            {
+              label: 'Call History',
+              url: `/index.cfm?action=admin:customers.listPhoneCallLogs&code=customers&id=${userID}`,
+            },
+            {
+              label: 'Tasks',
+              url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
+            },
+            {
+              label: 'Add Notification',
+              onClick: () => {}, // TODO: implement onClick
+            },
+            {
+              label: 'Edit Customer Information',
+              onClick: this.handleToggleEditing,
+            },
+            {
+              label: 'Delete Customer',
+              onClick: () => {}, // TODO: implement onClick
+            },
+          ]}
+        />
         <InfoTable data={infoTableData} loading={id === 0} error={error} />
-        <Modal open={editing} onClose={onCloseEdit}>
+        <Modal open={editing} onClose={this.handleToggleEditing}>
           <Form<User.AsObject>
             schema={SCHEMA}
             data={customer}
             onSave={this.handleSave}
-            onClose={onCloseEdit}
+            onClose={this.handleToggleEditing}
             disabled={saving}
           />
         </Modal>
