@@ -1,6 +1,6 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import Button, { Props as ButtonProps } from './Button';
+import { Button, Props as ButtonProps } from '../Button';
 import Typography from '@material-ui/core/Typography';
 
 interface Props {

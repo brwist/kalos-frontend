@@ -1,10 +1,13 @@
 import React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
-import { InfoTable, Data as InfoTableData } from './InfoTable';
-import { Modal } from './Modal';
-import { Form, Schema } from './Form';
-import { SectionBar } from './SectionBar';
+import {
+  InfoTable,
+  Data as InfoTableData,
+} from '../../ComponentsLibrary/InfoTable';
+import { Modal } from '../../ComponentsLibrary/Modal';
+import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 
 const SCHEMA: Schema<User.AsObject>[] = [
   { label: 'First Name', name: 'firstname', required: true },
@@ -195,6 +198,7 @@ export class CustomerInformation extends React.PureComponent<props, state> {
         <InfoTable data={infoTableData} loading={id === 0} error={error} />
         <Modal open={editing} onClose={this.handleToggleEditing}>
           <Form<User.AsObject>
+            title="Edit Customer Information"
             schema={SCHEMA}
             data={customer}
             onSave={this.handleSave}

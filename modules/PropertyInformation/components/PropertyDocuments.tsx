@@ -4,10 +4,13 @@ import MailIcon from '@material-ui/icons/Mail';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { ENDPOINT } from '../../../constants';
-import { InfoTable, Data as InfoTableData } from './InfoTable';
+import {
+  InfoTable,
+  Data as InfoTableData,
+} from '../../ComponentsLibrary/InfoTable';
 // import { Modal } from './Modal';
 // import { Form, Schema } from './Form';
-import { SectionBar } from './SectionBar';
+import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 
 // const SCHEMA: Schema<Property.AsObject>[] = [
 //   { label: 'First Name', name: 'firstname', helperText: PROP_LEVEL },

@@ -20,7 +20,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const Button = ({ label, url, ...props }: Props) => {
+export const Button = ({ label, url, ...props }: Props) => {
   const classes = useStyles();
   const Component = (
     <ButtonUI
@@ -42,5 +42,3 @@ const Button = ({ label, url, ...props }: Props) => {
   }
   return Component;
 };
-
-export default Button;

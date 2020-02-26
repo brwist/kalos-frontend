@@ -1,7 +1,7 @@
 import React, { ReactElement, useCallback, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { SectionBar } from './SectionBar';
-import { Field, Value } from './Field';
+import { SectionBar } from '../SectionBar';
+import { Field, Value } from '../Field';
 
 export type Option = {
   label: string;
@@ -21,6 +21,7 @@ export type Schema<T> = {
 type Validation = { [key: string]: string };
 
 interface Props<T> {
+  title: string;
   schema: Schema<T>[];
   data: T;
   onSave: (data: T) => void;
@@ -48,6 +49,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
+  title,
   schema,
   data,
   onSave,
@@ -86,7 +88,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   return (
     <div className={classes.wrapper}>
       <SectionBar
-        title="Edit Customer Information"
+        title={title}
         buttons={[
           {
             label: 'Save',
