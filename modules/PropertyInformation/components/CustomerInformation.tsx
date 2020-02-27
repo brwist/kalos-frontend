@@ -7,7 +7,9 @@ import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { getRPCFields } from '../../../helpers';
 
-const SCHEMA: Schema<User.AsObject>[] = [
+type Entry = User.AsObject;
+
+const SCHEMA: Schema<Entry>[] = [
   { label: 'First Name', name: 'firstname', required: true },
   { label: 'Last Name', name: 'lastname', required: true },
   { label: 'Business Name', name: 'businessname' },
@@ -25,8 +27,8 @@ const SCHEMA: Schema<User.AsObject>[] = [
   { label: 'Billing State', name: 'state', options: USA_STATES },
   { label: 'Billing Zip Code', name: 'zip' },
   { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
-  { label: 'Discount', name: 'discount', required: true },
-  { label: 'Rebate', name: 'rebate', required: true },
+  { label: 'Discount', name: 'discount', required: true, type: 'number' },
+  { label: 'Rebate', name: 'rebate', required: true, type: 'number' },
   {
     label: 'Customer notes',
     name: 'notes',
@@ -55,7 +57,7 @@ interface Props {
 }
 
 interface State {
-  customer: User.AsObject;
+  customer: Entry;
   editing: boolean;
   saving: boolean;
   error: boolean;
@@ -89,7 +91,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
 
   handleToggleEditing = () => this.setState({ editing: !this.state.editing });
 
-  handleSave = async (data: User.AsObject) => {
+  handleSave = async (data: Entry) => {
     const { userID } = this.props;
     this.setState({ saving: true });
     const entry = new User();
@@ -194,7 +196,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
         />
         <InfoTable data={data} loading={id === 0} error={error} />
         <Modal open={editing} onClose={this.handleToggleEditing}>
-          <Form<User.AsObject>
+          <Form<Entry>
             title="Edit Customer Information"
             schema={SCHEMA}
             data={customer}

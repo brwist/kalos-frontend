@@ -7,6 +7,7 @@ export interface Props {
   url?: string;
   onClick?: () => void;
   disabled?: boolean;
+  variant?: 'contained' | 'outlined';
 }
 
 const useStyles = makeStyles(theme => ({
@@ -20,12 +21,17 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Button = ({ label, url, ...props }: Props) => {
+export const Button = ({
+  label,
+  url,
+  variant = 'contained',
+  ...props
+}: Props) => {
   const classes = useStyles();
   const Component = (
     <ButtonUI
       className={classes.button}
-      variant="contained"
+      variant={variant}
       color="primary"
       size="small"
       {...props}

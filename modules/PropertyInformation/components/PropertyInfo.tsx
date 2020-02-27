@@ -27,8 +27,8 @@ const SCHEMA: Schema<Property.AsObject>[] = [
   { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
   { label: 'Subdivision', name: 'subdivision' },
   { label: 'Directions', name: 'directions', multiline: true },
-  { label: 'Latitude', name: 'geolocationLat' },
-  { label: 'Longitude', name: 'geolocationLng' },
+  { label: 'Latitude', name: 'geolocationLat', type: 'number' },
+  { label: 'Longitude', name: 'geolocationLng', type: 'number' },
   { label: 'Notes', name: 'notes', multiline: true },
 ];
 

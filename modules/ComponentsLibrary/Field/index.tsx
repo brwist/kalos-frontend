@@ -6,10 +6,14 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
-import { Schema, Option } from '../../PropertyInformation/components/Form';
+import { Schema, Option, Type } from '../Form';
 
-export type Value = string;
+export type Value = string | number;
 
+const getDefaultValueByType = (type: Type) => {
+  if (type === 'number') return 0;
+  return '';
+};
 export interface Props<T> extends Schema<T> {
   value: T[keyof T];
   disabled?: boolean;
@@ -36,12 +40,15 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   required = false,
   validation = '',
   helperText = '',
+  type = 'text',
+  value: propValue,
   ...props
 }) => {
   const classes = useStyles();
+  const value = propValue || getDefaultValueByType(type);
   const handleChange = useCallback(
-    ({ target: { value } }) => onChange(value as string),
-    [onChange]
+    ({ target: { value } }) => onChange(type === 'number' ? +value : value),
+    [type, onChange]
   );
   const inputLabel = (
     <>
@@ -69,6 +76,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           id={`${name}-select`}
           onChange={handleChange}
           {...props}
+          value={value}
         >
           {options.map(option => {
             const isStringOption = typeof option === 'string';
@@ -102,6 +110,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       rowsMax={4}
       error={error}
       {...props}
+      type={type}
+      value={value}
       helperText={helper}
     />
   );
