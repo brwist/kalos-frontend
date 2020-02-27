@@ -12,6 +12,10 @@ import {
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { formatTime, formatDate, makeFakeRows } from '../../../helpers';
 
+const ROWS_PER_PAGE = 25;
+
+type Entry = Event.AsObject;
+
 interface Props {
   className?: string;
   userID: number;
@@ -19,12 +23,14 @@ interface Props {
 }
 
 interface State {
-  serviceCalls: Event.AsObject[];
+  entries: Entry[];
   loading: boolean;
   error: boolean;
-  orderByFields: (keyof Event.AsObject)[];
+  orderByFields: (keyof Entry)[];
   orderByDBField: string;
   dir: Dir;
+  count: number;
+  page: number;
 }
 
 export class ServiceCalls extends PureComponent<Props, State> {
@@ -33,12 +39,14 @@ export class ServiceCalls extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      serviceCalls: [],
+      entries: [],
       loading: true,
       error: false,
       dir: 'ASC',
       orderByFields: ['dateStarted'],
       orderByDBField: 'date_started',
+      count: 0,
+      page: 0,
     };
     this.EventClient = new EventClient(ENDPOINT);
   }
@@ -46,15 +54,16 @@ export class ServiceCalls extends PureComponent<Props, State> {
   loadEntry = async () => {
     this.setState({ loading: true });
     const { propertyId } = this.props;
-    const { dir, orderByDBField } = this.state;
+    const { dir, orderByDBField, page } = this.state;
     const entry = new Event();
     entry.setPropertyId(propertyId);
     entry.setOrderBy(orderByDBField);
     entry.setOrderDir(dir);
+    entry.setPageNumber(page);
     try {
       const response = await this.EventClient.BatchGet(entry);
-      const serviceCalls = response.toObject().resultsList;
-      this.setState({ serviceCalls, loading: false });
+      const { resultsList: entries, totalCount: count } = response.toObject();
+      this.setState({ entries, count, loading: false });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
@@ -62,10 +71,11 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   handleOrder = (
     orderByDBField: string,
-    orderByFields: (keyof Event.AsObject)[]
+    orderByFields: (keyof Entry)[]
   ) => () => {
     this.setState(
       {
+        page: 0,
         orderByFields,
         orderByDBField,
         dir:
@@ -83,7 +93,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
     await this.loadEntry();
   }
 
-  sort = (a: Event.AsObject, b: Event.AsObject) => {
+  sort = (a: Entry, b: Entry) => {
     const { orderByFields, dir } = this.state;
     const A = orderByFields
       .map(field => a[field] as string)
@@ -100,10 +110,14 @@ export class ServiceCalls extends PureComponent<Props, State> {
     return 0;
   };
 
+  handleChangePage = (page: number) => {
+    this.setState({ page }, this.loadEntry);
+  };
+
   render() {
-    const { props, state, handleOrder, sort } = this;
+    const { props, state, handleOrder, sort, handleChangePage } = this;
     const { className } = props;
-    const { serviceCalls, loading, error, dir, orderByDBField } = state;
+    const { entries, loading, error, dir, orderByDBField, count, page } = state;
     const columns: Columns = [
       {
         name: 'Date / Time',
@@ -136,7 +150,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
     ];
     const data: Data = loading
       ? makeFakeRows(5)
-      : serviceCalls
+      : entries
           .sort(sort)
           .map(
             ({
@@ -192,6 +206,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
         <SectionBar
           title="Service Calls"
           buttons={[{ label: 'New Service Call' }]}
+          pagination={{
+            count,
+            page,
+            rowsPerPage: ROWS_PER_PAGE,
+            onChangePage: handleChangePage,
+          }}
         />
         <InfoTable
           columns={columns}
