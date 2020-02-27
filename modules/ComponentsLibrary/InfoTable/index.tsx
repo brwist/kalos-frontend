@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactNode } from 'react';
+import React, { ReactElement, ReactNode, CSSProperties } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
@@ -32,6 +32,7 @@ export type Columns = {
 interface Props extends Styles {
   columns?: Columns;
   data: Data;
+  styles?: CSSProperties;
 }
 
 const useStyles = makeStyles(theme => {
@@ -134,10 +135,11 @@ export const InfoTable = ({
   error = false,
   compact = false,
   hoverable = false,
+  styles,
 }: Props) => {
   const classes = useStyles({ loading, error, compact, hoverable });
   return (
-    <div className={classes.wrapper}>
+    <div className={classes.wrapper} style={styles}>
       {columns.length > 0 && (
         <div className={classes.header}>
           {columns.map(({ name, dir, onClick }, idx) => {
