@@ -9,6 +9,8 @@ export type Option = {
   value: string | number;
 };
 
+export type Type = 'text' | 'password' | 'number';
+
 export type Schema<T> = {
   name: keyof T;
   label: string;
@@ -16,7 +18,7 @@ export type Schema<T> = {
   required?: boolean;
   helperText?: string;
   multiline?: boolean;
-  type?: 'string' | 'password';
+  type?: Type;
 };
 
 type Validation = { [key: string]: string };
@@ -94,7 +96,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       .filter(({ required }) => required)
       .forEach(({ name }) => {
         const value: string = '' + formData[name];
-        if (value === '') {
+        if (formData[name] === undefined || value === '') {
           validations[name as string] = 'This field is required.';
         }
       });
@@ -111,13 +113,14 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         title={title}
         buttons={[
           {
-            label: 'Save',
-            onClick: handleSave,
-            disabled,
-          },
-          {
             label: 'Cancel',
             onClick: onClose,
+            disabled,
+            variant: 'outlined',
+          },
+          {
+            label: 'Save',
+            onClick: handleSave,
             disabled,
           },
         ]}

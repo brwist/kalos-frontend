@@ -77,12 +77,17 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
   setEditing = (editedEntry?: Entry) => () => this.setState({ editedEntry });
 
   handleSave = async (data: Entry) => {
+    const { serviceItemId } = this.props;
     const { editedEntry } = this.state;
     if (editedEntry) {
+      const isNew = !editedEntry.id;
       this.setState({ saving: true });
       const entry = new PropLink();
-      entry.setId(editedEntry.id);
-      const fieldMaskList = [];
+      if (!isNew) {
+        entry.setId(editedEntry.id);
+      }
+      entry.setPropertyId(serviceItemId);
+      const fieldMaskList = ['setPropertyId'];
       for (const fieldName in data) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
         // @ts-ignore
@@ -90,10 +95,10 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
         fieldMaskList.push(upperCaseProp);
       }
       entry.setFieldMaskList(fieldMaskList);
-      await this.SiLinkClient.Update(entry);
-      await this.load();
+      await this.SiLinkClient[isNew ? 'Create' : 'Update'](entry);
       this.setState({ saving: false });
       this.setEditing(undefined)();
+      await this.load();
     }
   };
 
@@ -104,7 +109,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     const data: Data = loading
       ? makeFakeRows()
       : entries.map(entry => {
-          const { id, url, description } = entry;
+          const { url, description } = entry;
           return [
             {
               value: description || url,
@@ -135,9 +140,14 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
           title={`Service Item Links: ${title}`}
           buttons={[
             {
-              label: 'Add Link',
+              label: 'Close',
+              onClick: onClose,
+              variant: 'outlined',
             },
-            { label: 'Close', onClick: onClose },
+            {
+              label: 'Add Link',
+              onClick: setEditing({} as Entry),
+            },
           ]}
         />
         <InfoTable data={data} loading={loading} hoverable />
