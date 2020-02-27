@@ -2,6 +2,9 @@ import React from 'react';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import Collapse from '@material-ui/core/Collapse';
+import IconButton from "@material-ui/core/IconButton";
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import customTheme from '../Theme/main';
 import {ENDPOINT} from '../../constants';
 import { timestamp } from '../../helpers';
@@ -18,7 +21,10 @@ interface state {
   date: string;
   defaultDate: string;
   calls: Event.AsObject[];
+  completedCalls: Event.AsObject[];
+  reminders: Event.AsObject[];
   isLoading: boolean;
+  showCompleted: boolean;
 }
 
 export class ServiceCalendar extends React.PureComponent<props, state> {
@@ -31,36 +37,17 @@ export class ServiceCalendar extends React.PureComponent<props, state> {
       user: new User().toObject(),
       date: '',
       defaultDate: new Date().toISOString(),
-      calls: [{
-        id: 97379,
-        propertyId: 8790,
-        description: 'Replace 8 split - 11 Pine Lakes Pkwy N #0501, Palm Coast 32137',
-        customer: {
-          id: 90,
-          firstname: 'Cube',
-          lastname: 'Smart',
-          businessname: 'CubeSmart',
-        },
-        property: {
-          address: 'Address',
-          city: 'City',
-          zip: 10001,
-          phone: '',
-        },
-        logTechnicianAssigned: 'Unassigned',
-        name: 'name',
-        timeStarted: '8:00 A',
-        timeEnded: '6:00 P',
-        jobType: 'jobType',
-        jobSubtype: 'jobSubtype',
-        logJobStatus: 'logJobStatus',
-      }],
+      calls: [],
+      completedCalls: [],
+      reminders: [],
       isLoading: false,
+      showCompleted: false,
     };
     this.EventClient = new EventClient(ENDPOINT);
     this.UserClient = new UserClient(ENDPOINT);
 
     this.fetchCalls = this.fetchCalls.bind(this);
+    this.toggleShowCompletedClick = this.toggleShowCompletedClick.bind(this);
     // this.getDateString = this.getDateString.bind(this);
   }
 
@@ -80,17 +67,22 @@ export class ServiceCalendar extends React.PureComponent<props, state> {
       await this.toggleLoading();
     }
     const reqObj = new Event();
-    reqObj.setDateStarted(timestamp(true));
+    reqObj.setDateStarted(`${timestamp(true)} 00:00:00%`);
     reqObj.setPageNumber(page);
     const res = (await this.EventClient.BatchGet(reqObj)).toObject();
+    const completedCalls = res.resultsList.filter(call => call.logJobStatus === 'Completed');
+    const calls = res.resultsList.filter(call => call.logJobStatus !== 'Completed' && call.color !== 'ffbfbf');
+    const reminders = res.resultsList.filter(call => call.color === 'ffbfbf');
     this.setState(
       prevState => ({
-        calls: prevState.calls.concat(res.resultsList),
+        completedCalls: prevState.completedCalls.concat(completedCalls),
+        calls: prevState.calls.concat(calls),
+        reminders: prevState.reminders.concat(reminders),
       }),
       async () => {
-        if (this.state.calls.length !== res.totalCount) {
-          /* page = page + 1;
-          await this.fetchCalls(page);*/
+        if ((this.state.calls.length + this.state.completedCalls.length + this.state.reminders.length) !== res.totalCount) {
+           page = page + 1;
+          await this.fetchCalls(page);
         } else {
           await this.toggleLoading();
         }
@@ -103,12 +95,43 @@ export class ServiceCalendar extends React.PureComponent<props, state> {
     await this.fetchCalls();
   }
 
+  toggleShowCompletedClick(): void {
+    this.setState(prevState => ({
+      showCompleted: !prevState.showCompleted,
+    }))
+  };
+
   render() {
-    console.log(this.state.calls);
     return (
       <ThemeProvider theme={customTheme.lightTheme}>
-        {this.state.calls.map(call => (
-          <CallCard key={call.id} card={call} />
+        {!!this.state.completedCalls.length && (
+          <IconButton
+            // className={clsx(classes.expand, {
+            //   [classes.expandOpen]: expanded,
+            // })}
+            onClick={this.toggleShowCompletedClick}
+            aria-expanded={this.state.showCompleted}
+            aria-label="show more"
+          >
+            <ExpandMoreIcon />
+          </IconButton>
+        )}
+        <Collapse in={this.state.showCompleted}>
+          {this.state.completedCalls
+            .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+            .map(call => (
+              <CallCard key={call.id} card={call} />
+            ))}
+        </Collapse>
+        {this.state.reminders
+          .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+          .map(call => (
+            <CallCard key={call.id} card={call} reminder />
+          ))}
+        {this.state.calls
+          .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+          .map(call => (
+            <CallCard key={call.id} card={call} />
         ))}
       </ThemeProvider>
     );
