@@ -2,6 +2,7 @@ import React, { ReactElement, useCallback, useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from '../SectionBar';
+import { Props as ButtonProps } from '../Button';
 import { Field, Value } from '../Field';
 
 export type Option = {
@@ -30,6 +31,8 @@ interface Props<T> {
   onSave: (data: T) => void;
   onClose: () => void;
   disabled?: boolean;
+  readOnly?: boolean;
+  buttons?: ButtonProps[];
 }
 
 const useStyles = makeStyles(theme => ({
@@ -76,6 +79,8 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   onSave,
   onClose,
   disabled = false,
+  readOnly = false,
+  buttons = [],
 }) => {
   const classes = useStyles();
   const [formData, setFormData] = useState(
@@ -106,23 +111,27 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     }
     onSave(formData);
   }, [onSave, formData, schema, setValidations]);
-  console.log({ validations, schema });
   return (
     <div className={classes.wrapper}>
       <SectionBar
         title={title}
         buttons={[
+          ...buttons,
           {
-            label: 'Cancel',
+            label: readOnly ? 'Close' : 'Cancel',
             onClick: onClose,
             disabled,
-            variant: 'outlined',
+            variant: readOnly ? 'contained' : 'outlined',
           },
-          {
-            label: 'Save',
-            onClick: handleSave,
-            disabled,
-          },
+          ...(readOnly
+            ? []
+            : [
+                {
+                  label: 'Save',
+                  onClick: handleSave,
+                  disabled,
+                },
+              ]),
         ]}
         className={classes.sectionBar}
       />
@@ -150,6 +159,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             onChange={handleChange(props.name)}
             disabled={disabled}
             validation={validations[props.name as string]}
+            readOnly={readOnly}
           />
         ))}
       </div>

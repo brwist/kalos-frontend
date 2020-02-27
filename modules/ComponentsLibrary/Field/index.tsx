@@ -19,6 +19,7 @@ export interface Props<T> extends Schema<T> {
   disabled?: boolean;
   onChange: (value: Value) => void;
   validation?: string;
+  readOnly?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -42,6 +43,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   helperText = '',
   type = 'text',
   value: propValue,
+  readOnly = false,
   ...props
 }) => {
   const classes = useStyles();
@@ -61,7 +63,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     validation !== '' || helperText !== ''
       ? validation + ' ' + helperText
       : undefined;
-  if (options) {
+  if (options && !readOnly) {
     const id = `${name}-select-label`;
     return (
       <FormControl
@@ -104,6 +106,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       onChange={handleChange}
       label={inputLabel}
       fullWidth
+      InputProps={{
+        readOnly,
+      }}
       InputLabelProps={{
         shrink: true,
       }}
