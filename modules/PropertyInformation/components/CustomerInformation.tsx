@@ -9,47 +9,68 @@ import { getRPCFields, formatDateTime } from '../../../helpers';
 
 type Entry = User.AsObject;
 
-const SCHEMA: Schema<Entry>[] = [
-  { label: 'First Name', name: 'firstname', required: true },
-  { label: 'Last Name', name: 'lastname', required: true },
-  { label: 'Business Name', name: 'businessname' },
-  { label: 'Primary Phone', name: 'phone' },
-  { label: 'Alternate Phone', name: 'altphone' },
-  { label: 'Cell Phone', name: 'cellphone' },
-  { label: 'Email', name: 'email', required: true },
-  {
-    label: 'Alternate Email(s)',
-    name: 'altEmail',
-    helperText: 'Separate multiple email addresses w/comma',
-  },
-  { label: 'Bulling Address', name: 'address', multiline: true },
-  { label: 'Billing City', name: 'city' },
-  { label: 'Billing State', name: 'state', options: USA_STATES },
-  { label: 'Billing Zip Code', name: 'zip' },
-  { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
-  { label: 'Discount', name: 'discount', required: true, type: 'number' },
-  { label: 'Rebate', name: 'rebate', required: true, type: 'number' },
-  {
-    label: 'Customer notes',
-    name: 'notes',
-    helperText: 'Visible to customer',
-    multiline: true,
-  },
-  {
-    label: 'Internal Notes',
-    name: 'intNotes',
-    helperText: 'NOT visible to customer',
-    multiline: true,
-  },
+const SCHEMA: Schema<Entry> = [
+  [{ label: 'Personal Details', headline: true }],
+  [
+    { label: 'First Name', name: 'firstname', required: true },
+    { label: 'Last Name', name: 'lastname', required: true },
+    { label: 'Business Name', name: 'businessname', multiline: true },
+  ],
+  [{ label: 'Contact Details', headline: true }],
+  [
+    { label: 'Primary Phone', name: 'phone' },
+    { label: 'Alternate Phone', name: 'altphone' },
+    { label: 'Cell Phone', name: 'cellphone' },
+  ],
+  [
+    { label: 'Email', name: 'email', required: true },
+
+    {
+      label: 'Alternate Email(s)',
+      name: 'altEmail',
+      helperText: 'Separate multiple email addresses w/comma',
+    },
+  ],
+  [{ label: 'Address Details', headline: true }],
+  [
+    { label: 'Bulling Address', name: 'address', multiline: true },
+    { label: 'Billing City', name: 'city' },
+    { label: 'Billing State', name: 'state', options: USA_STATES },
+    { label: 'Billing Zip Code', name: 'zip' },
+  ],
+  [{ label: 'Billing Details', headline: true }],
+  [
+    { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
+    { label: 'Discount', name: 'discount', required: true, type: 'number' },
+    { label: 'Rebate', name: 'rebate', required: true, type: 'number' },
+  ],
+  [{ label: 'Notes', headline: true }],
+  [
+    {
+      label: 'Customer notes',
+      name: 'notes',
+      helperText: 'Visible to customer',
+      multiline: true,
+    },
+    {
+      label: 'Internal Notes',
+      name: 'intNotes',
+      helperText: 'NOT visible to customer',
+      multiline: true,
+    },
+  ],
   // {label:'Who recommended us?', name:''}, // TODO
-  {
-    label: 'Login',
-    name: 'login',
-    required: true,
-    helperText:
-      'NOTE: If they have an email address, their login ID will automatically be their email address.',
-  },
-  { label: 'Password', name: 'pwd', type: 'password' },
+  [{ label: 'Login details', headline: true }],
+  [
+    {
+      label: 'Login',
+      name: 'login',
+      required: true,
+      helperText:
+        'NOTE: If they have an email address, their login ID will automatically be their email address.',
+    },
+    { label: 'Password', name: 'pwd', type: 'password' },
+  ],
 ];
 
 interface Props {

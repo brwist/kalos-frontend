@@ -12,10 +12,11 @@ export type Option = {
 
 export type Type = 'text' | 'password' | 'number';
 
-export type Schema<T> = {
+export type SchemaProps<T> = {
   label: string;
   name?: keyof T;
   headline?: boolean;
+  description?: string;
   options?: (string | Option)[];
   required?: boolean;
   helperText?: string;
@@ -23,11 +24,13 @@ export type Schema<T> = {
   type?: Type;
 };
 
+export type Schema<T> = SchemaProps<T>[][];
+
 type Validation = { [key: string]: string };
 
 interface Props<T> {
   title: string;
-  schema: Schema<T>[];
+  schema: Schema<T>;
   data: T;
   onSave: (data: T) => void;
   onClose: () => void;
@@ -81,6 +84,20 @@ const useStyles = makeStyles(theme => ({
     marginRight: theme.spacing(-2),
     marginBottom: theme.spacing(),
     fontWeight: 600,
+    flexGrow: 1,
+  },
+  group: {
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  field: {
+    marginLeft: theme.spacing(2),
+  },
+  description: {
+    fontWeight: 400,
+    marginLeft: theme.spacing(),
+    fontSize: 12,
+    color: theme.palette.grey[600],
   },
 }));
 
@@ -97,8 +114,14 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const classes = useStyles();
   const [formData, setFormData] = useState(
     schema.reduce(
-      (aggr, { name }) =>
-        name === undefined ? aggr : { ...aggr, [name]: data[name] },
+      (aggr, fields) => ({
+        ...aggr,
+        ...fields.reduce(
+          (aggr, { name }) =>
+            name === undefined ? aggr : { ...aggr, [name]: data[name] },
+          {}
+        ),
+      }),
       {} as typeof data
     )
   );
@@ -110,16 +133,18 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const handleSave = useCallback(() => {
     setValidations({});
     const validations: Validation = {};
-    schema
-      .filter(({ required }) => required)
-      .forEach(({ name }) => {
-        if (name) {
-          const value: string = '' + formData[name];
-          if (formData[name] === undefined || value === '') {
-            validations[name as string] = 'This field is required.';
+    schema.forEach(fields => {
+      fields
+        .filter(({ required }) => required)
+        .forEach(({ name }) => {
+          if (name) {
+            const value: string = '' + formData[name];
+            if (formData[name] === undefined || value === '') {
+              validations[name as string] = 'This field is required.';
+            }
           }
-        }
-      });
+        });
+    });
     if (Object.keys(validations).length > 0) {
       setValidations(validations);
       return;
@@ -158,7 +183,8 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               {Object.keys(validations).map(fieldName => (
                 <span key={fieldName} className={classes.errorField}>
                   <strong>
-                    {schema.find(({ name }) => name === fieldName)?.label}:{' '}
+                    {fieldName}
+                    {/* {schema.find(({ name }) => name === fieldName)?.label}:{' '} */}
                   </strong>
                   {validations[fieldName]}
                 </span>
@@ -166,23 +192,34 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             </span>
           </Typography>
         )}
-        {schema.map((props, idx) =>
-          props.name === undefined ? (
-            <Typography key={idx} className={classes.headline}>
-              {props.label}
-            </Typography>
-          ) : (
-            <Field
-              key={idx}
-              {...props}
-              value={formData[props.name]}
-              onChange={handleChange(props.name)}
-              disabled={disabled}
-              validation={validations[props.name as string]}
-              readOnly={readOnly}
-            />
-          )
-        )}
+        {schema.map((fields, idx) => (
+          <div key={idx} className={classes.group}>
+            {fields.map((props, idx2) => {
+              const { name, label, description } = props;
+              if (name !== undefined)
+                return (
+                  <Field
+                    key={idx2}
+                    {...props}
+                    value={formData[name]}
+                    onChange={handleChange(name)}
+                    disabled={disabled}
+                    validation={validations[name as string]}
+                    readOnly={readOnly}
+                    className={idx2 === 0 ? '' : classes.field}
+                  />
+                );
+              return (
+                <Typography key={idx2} className={classes.headline}>
+                  {label}
+                  {description && (
+                    <span className={classes.description}>{description}</span>
+                  )}
+                </Typography>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
-import { Schema, Option, Type } from '../Form';
+import { SchemaProps, Option, Type } from '../Form';
 
 export type Value = string | number;
 
@@ -14,12 +14,13 @@ const getDefaultValueByType = (type: Type) => {
   if (type === 'number') return 0;
   return '';
 };
-export interface Props<T> extends Schema<T> {
+export interface Props<T> extends SchemaProps<T> {
   value: T[keyof T];
   disabled?: boolean;
   onChange: (value: Value) => void;
   validation?: string;
   readOnly?: boolean;
+  className?: string;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -44,6 +45,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   type = 'text',
   value: propValue,
   readOnly = false,
+  className = '',
   ...props
 }) => {
   const classes = useStyles();
@@ -67,7 +69,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     const id = `${name}-select-label`;
     return (
       <FormControl
-        className={classes.field}
+        className={classes.field + ' ' + className}
         fullWidth
         disabled={disabled}
         error={error}
@@ -101,7 +103,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }
   return (
     <TextField
-      className={classes.field}
+      className={classes.field + ' ' + className}
       disabled={disabled}
       onChange={handleChange}
       label={inputLabel}

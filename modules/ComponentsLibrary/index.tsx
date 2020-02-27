@@ -24,7 +24,7 @@ const COMPONENTS = {
 
 const ComponentsLibrary = () => {
   const [component, setComponent] = useState<keyof typeof COMPONENTS>(
-    Object.keys(COMPONENTS)[0] as keyof typeof COMPONENTS
+    Object.keys(COMPONENTS)[3] as keyof typeof COMPONENTS
   );
   const Component = COMPONENTS[component];
   const handleClickMenuItem = useCallback(v => () => setComponent(v), []);
