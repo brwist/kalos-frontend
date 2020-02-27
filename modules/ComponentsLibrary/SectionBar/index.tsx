@@ -17,6 +17,7 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minHeight: 46,
   },
 }));
 
