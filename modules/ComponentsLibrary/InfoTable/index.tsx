@@ -3,6 +3,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Typography from '@material-ui/core/Typography';
+import { Link } from '../Link';
 
 type Styles = {
   loading?: boolean;
@@ -97,9 +98,6 @@ const useStyles = makeStyles(theme => {
       top: 'calc(50% - 20px)',
       left: 'calc(50% - 20px)',
     },
-    link: {
-      color: theme.palette.action.active,
-    },
     error: {
       position: 'absolute',
       top: 0,
@@ -177,9 +175,7 @@ export const InfoTable = ({
               ) : (
                 <span className={classes.value}>
                   {href ? (
-                    <a className={classes.link} href={`${href}:${value}`}>
-                      {value}
-                    </a>
+                    <Link href={`${href}:${value}`}>{value}</Link>
                   ) : (
                     <span>{value}</span>
                   )}
