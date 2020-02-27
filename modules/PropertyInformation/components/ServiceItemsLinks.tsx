@@ -60,9 +60,11 @@ export class ServiceItemsLinks extends PureComponent<Props, State> {
           {
             value: description || url,
             actions: [
-              <IconButton key={0} style={{ marginLeft: 4 }} size="small">
-                <SearchIcon />
-              </IconButton>,
+              <a key={0} href={url} target="_blank">
+                <IconButton style={{ marginLeft: 4 }} size="small">
+                  <SearchIcon />
+                </IconButton>
+              </a>,
               <IconButton key={1} style={{ marginLeft: 4 }} size="small">
                 <EditIcon />
               </IconButton>,
