@@ -108,8 +108,27 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     }
   };
 
+  handleDelete = async () => {
+    const { deletingEntry } = this.state;
+    this.setDeleting(undefined)();
+    if (deletingEntry) {
+      this.setState({ loading: true });
+      const entry = new PropLink();
+      entry.setId(deletingEntry.id);
+      await this.SiLinkClient.Delete(entry);
+      await this.load();
+    }
+  };
+
   render() {
-    const { props, state, setEditing, handleSave, setDeleting } = this;
+    const {
+      props,
+      state,
+      setEditing,
+      handleSave,
+      handleDelete,
+      setDeleting,
+    } = this;
     const { title, onClose } = props;
     const { entries, loading, saving, editedEntry, deletingEntry } = state;
     const data: Data = loading
@@ -178,7 +197,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
           <ConfirmDelete
             open
             onClose={setDeleting(undefined)}
-            onConfirm={() => {}}
+            onConfirm={handleDelete}
             kind="Service Item Link"
             name={deletingEntry.description || deletingEntry.url}
           />
