@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, CSSProperties } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TablePagination from '@material-ui/core/TablePagination';
@@ -16,6 +16,7 @@ interface Props {
   buttons?: ButtonProps[];
   className?: string;
   pagination?: Pagination;
+  styles?: CSSProperties;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -27,6 +28,7 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'space-between',
     alignItems: 'center',
     minHeight: 46,
+    boxSizing: 'border-box',
   },
   header: {
     display: 'flex',
@@ -42,6 +44,7 @@ export const SectionBar = ({
   buttons = [],
   className = '',
   pagination,
+  styles,
 }: Props) => {
   const classes = useStyles();
   const handleChangePage = useCallback(
@@ -53,7 +56,7 @@ export const SectionBar = ({
     [pagination]
   );
   return (
-    <div className={className + ' ' + classes.wrapper}>
+    <div className={className + ' ' + classes.wrapper} style={styles}>
       <div className={classes.header}>
         <Typography variant="h6">{title}</Typography>
         {pagination && pagination.count > 0 && (

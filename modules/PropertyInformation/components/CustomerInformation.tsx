@@ -5,7 +5,7 @@ import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { getRPCFields } from '../../../helpers';
+import { getRPCFields, formatDateTime } from '../../../helpers';
 
 type Entry = User.AsObject;
 
@@ -54,6 +54,7 @@ const SCHEMA: Schema<Entry>[] = [
 
 interface Props {
   userID: number;
+  propertyId: number;
 }
 
 interface State {
@@ -114,7 +115,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const { userID } = this.props;
+    const { userID, propertyId } = this.props;
     const { customer, editing, saving, error } = this.state;
     const {
       id,
@@ -133,6 +134,9 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
       billingTerms,
       notes,
       intNotes,
+      dateCreated,
+      lastLogin,
+      login,
     } = customer;
     const data: Data = [
       [
@@ -162,6 +166,11 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
         },
         { label: 'Internal Notes', value: intNotes },
       ],
+    ];
+    const systemData: Data = [
+      [{ label: 'Created', value: formatDateTime(dateCreated) }],
+      [{ label: 'Last Logn', value: formatDateTime(lastLogin) }],
+      [{ label: 'Login ID', value: login }],
     ];
     return (
       <>
@@ -194,7 +203,32 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
             },
           ]}
         />
-        <InfoTable data={data} loading={id === 0} error={error} />
+        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+          <InfoTable
+            styles={{ flexGrow: 1, marginRight: 16 }}
+            data={data}
+            loading={id === 0}
+            error={error}
+          />
+          <div style={{ width: '34%', marginTop: 8 }}>
+            <SectionBar title="System Information" />
+            <InfoTable data={systemData} loading={id === 0} error={error} />
+            <SectionBar
+              title="Pending Billing"
+              buttons={[
+                {
+                  label: 'View',
+                  url: [
+                    '/index.cfm?action=admin:properties.customerpendingbilling',
+                    `user_id=${userID}`,
+                    `property_id=${propertyId}`,
+                    'unique=207D8F02-BBCF-005A-4455A712EDA6614C', // FIXME set proper unique
+                  ].join('&'),
+                },
+              ]}
+            />
+          </div>
+        </div>
         <Modal open={editing} onClose={this.handleToggleEditing}>
           <Form<Entry>
             title="Edit Customer Information"

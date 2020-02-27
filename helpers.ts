@@ -237,6 +237,15 @@ function formatDate(date: string) {
 }
 
 /**
+ *
+ * @param datetime date in format YYYY-MM-DD HH:MM:SS (ie. 2020-06-01 15:28:31)
+ * @returns format M/D/YYYY h:MMa (ie. 6/1/2020 3:28PM)
+ */
+function formatDateTime(datetime: string) {
+  return formatDate(datetime) + ' ' + formatTime(datetime.substr(10));
+}
+
+/**
  * Returns array of fake rows for InfoTable component
  * @param columns: number (default 1)
  * @param rows: number (default 3)
@@ -276,4 +285,5 @@ export {
   formatDate,
   makeFakeRows,
   getRPCFields,
+  formatDateTime,
 };
