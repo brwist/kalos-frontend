@@ -183,8 +183,12 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               {Object.keys(validations).map(fieldName => (
                 <span key={fieldName} className={classes.errorField}>
                   <strong>
-                    {fieldName}
-                    {/* {schema.find(({ name }) => name === fieldName)?.label}:{' '} */}
+                    {
+                      schema
+                        .reduce((aggr, fields) => [...aggr, ...fields], [])
+                        .find(({ name }) => name === fieldName)?.label
+                    }
+                    :{' '}
                   </strong>
                   {validations[fieldName]}
                 </span>
