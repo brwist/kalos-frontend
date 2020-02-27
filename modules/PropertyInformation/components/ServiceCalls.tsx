@@ -114,7 +114,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   render() {
     const { props, state, handleOrder, sort, handleChangePage } = this;
-    const { className } = props;
+    const { userID, propertyId, className } = props;
     const { entries, loading, error, dir, orderByDBField, count, page } = state;
     const columns: Columns = [
       {
@@ -203,7 +203,17 @@ export class ServiceCalls extends PureComponent<Props, State> {
       <div className={className}>
         <SectionBar
           title="Service Calls"
-          buttons={[{ label: 'New Service Call' }]}
+          buttons={[
+            {
+              label: 'New Service Call',
+              url: [
+                '/index.cfm?action=admin:service.addserviceCall',
+                `user_id=${userID}`,
+                `property_id=${propertyId}`,
+                'unique=207D906B-05C0-B58E-B451566171C79356', // FIXME set proper unique
+              ].join('&'),
+            },
+          ]}
           pagination={{
             count,
             page,
