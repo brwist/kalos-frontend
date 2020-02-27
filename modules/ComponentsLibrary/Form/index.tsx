@@ -1,4 +1,5 @@
 import React, { ReactElement, useCallback, useState } from 'react';
+import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from '../SectionBar';
 import { Field, Value } from '../Field';
@@ -46,6 +47,24 @@ const useStyles = makeStyles(theme => ({
     maxHeight: 'calc(100vh - 110px)',
     overflowY: 'auto',
   },
+  error: {
+    color: theme.palette.error.contrastText,
+    backgroundColor: theme.palette.error.dark,
+    padding: theme.spacing(2),
+    marginTop: theme.spacing(-1.5),
+    marginLeft: theme.spacing(-2),
+    marginRight: theme.spacing(-2),
+    marginBottom: theme.spacing(2),
+  },
+  errorFields: {
+    display: 'block',
+    margin: theme.spacing(),
+    marginBottom: 0,
+    paddingLeft: theme.spacing(2),
+  },
+  errorField: {
+    display: 'list-item',
+  },
 }));
 
 export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
@@ -85,6 +104,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     }
     onSave(formData);
   }, [onSave, formData, schema, setValidations]);
+  console.log({ validations, schema });
   return (
     <div className={classes.wrapper}>
       <SectionBar
@@ -104,6 +124,21 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         className={classes.sectionBar}
       />
       <div className={classes.form}>
+        {Object.keys(validations).length > 0 && (
+          <Typography className={classes.error}>
+            Please correct the following validation errors and try again.
+            <span className={classes.errorFields}>
+              {Object.keys(validations).map(fieldName => (
+                <span key={fieldName} className={classes.errorField}>
+                  <strong>
+                    {schema.find(({ name }) => name === fieldName)?.label}:{' '}
+                  </strong>
+                  {validations[fieldName]}
+                </span>
+              ))}
+            </span>
+          </Typography>
+        )}
         {schema.map((props, idx) => (
           <Field
             key={idx}
