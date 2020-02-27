@@ -14,7 +14,7 @@ import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { makeFakeRows } from '../../../helpers';
-import { ServiceItemsLinks } from './ServiceItemsLinks';
+import { ServiceItemLinks } from './ServiceItemLinks';
 
 interface Props {
   className?: string;
@@ -146,9 +146,10 @@ export class ServiceItems extends PureComponent<Props, State> {
         />
         {linkId && (
           <Modal open onClose={handleSetLinkId(undefined)}>
-            <ServiceItemsLinks
+            <ServiceItemLinks
               title={serviceItems.find(({ id }) => id === linkId)?.type}
               serviceItemId={linkId}
+              onClose={handleSetLinkId(undefined)}
             />
           </Modal>
         )}

@@ -74,6 +74,10 @@ const useStyles = makeStyles(theme => {
       fontWeight: 600,
     },
     item: commonCell,
+    noEntries: {
+      ...commonCell,
+      color: theme.palette.grey[600],
+    },
     dir: {
       display: 'flex',
       alignItems: 'center',
@@ -186,6 +190,13 @@ export const InfoTable = ({
           ))}
         </div>
       ))}
+      {!loading && !error && data.length === 0 && (
+        <div className={classes.row}>
+          <Typography className={classes.noEntries}>
+            No entries found.
+          </Typography>
+        </div>
+      )}
       {error && (
         <div className={classes.error}>
           <Typography className={classes.errorText}>

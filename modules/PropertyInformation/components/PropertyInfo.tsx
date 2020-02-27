@@ -5,6 +5,7 @@ import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { getRPCFields } from '../../../helpers';
 
 const PROP_LEVEL = 'Used for property-level billing only';
 const RESIDENTIAL = [
@@ -84,19 +85,18 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     entry.setId(propertyId);
     entry.setUserId(userID);
     const fieldMaskList = [];
-    for (const key in data) {
-      const upperCaseProp = `${key[0].toUpperCase()}${key.slice(1)}`;
-      const methodName = `set${upperCaseProp}`;
+    for (const fieldName in data) {
+      const { upperCaseProp, methodName } = getRPCFields(fieldName);
       //@ts-ignore
-      entry[methodName](data[key]);
+      entry[methodName](data[fieldName]);
       fieldMaskList.push(upperCaseProp);
     }
     entry.setFieldMaskList(fieldMaskList);
     const userProperty = await this.PropertyClient.Update(entry);
-    this.setState(() => ({
+    this.setState({
       userProperty,
       saving: false,
-    }));
+    });
     this.handleToggleEditing();
   };
 

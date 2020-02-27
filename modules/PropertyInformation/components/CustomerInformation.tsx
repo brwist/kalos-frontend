@@ -5,6 +5,7 @@ import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { getRPCFields } from '../../../helpers';
 
 const SCHEMA: Schema<User.AsObject>[] = [
   { label: 'First Name', name: 'firstname', required: true },
@@ -94,16 +95,15 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
     const entry = new User();
     entry.setId(userID);
     const fieldMaskList = [];
-    for (const key in data) {
-      const upperCaseProp = `${key[0].toUpperCase()}${key.slice(1)}`;
-      const methodName = `set${upperCaseProp}`;
-      //@ts-ignore
-      entry[methodName](data[key]);
+    for (const fieldName in data) {
+      const { upperCaseProp, methodName } = getRPCFields(fieldName);
+      // @ts-ignore
+      entry[methodName](data[fieldName]);
       fieldMaskList.push(upperCaseProp);
     }
     entry.setFieldMaskList(fieldMaskList);
     const customer = await this.UserClient.Update(entry);
-    this.setState(() => ({ customer, saving: false }));
+    this.setState({ customer, saving: false });
     this.handleToggleEditing();
   };
 

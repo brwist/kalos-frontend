@@ -236,10 +236,29 @@ function formatDate(date: string) {
   return [+month, +day, +year].join('/');
 }
 
+/**
+ * Returns array of fake rows for InfoTable component
+ * @param columns: number (default 1)
+ * @param rows: number (default 3)
+ * @returns fake rows with columns being { value: '' }
+ */
 function makeFakeRows(columns: number = 1, rows: number = 3) {
   return Array.from(Array(rows)).map(() =>
     Array.from(Array(columns)).map(() => ({ value: '' }))
   );
+}
+
+/**
+ * Returns rpc fields
+ * @param fieldName: field name, ie. jobNumber
+ * @returns object { upperCaseProp: string, methodName: string }, ie. { upperCaseProp: 'JobNumber', methodName: 'setJobNumber'}
+ */
+function getRPCFields(fieldName: string) {
+  const upperCaseProp = `${fieldName[0].toUpperCase()}${fieldName.slice(1)}`;
+  return {
+    upperCaseProp,
+    methodName: `set${upperCaseProp}`,
+  };
 }
 
 export {
@@ -256,4 +275,5 @@ export {
   formatTime,
   formatDate,
   makeFakeRows,
+  getRPCFields,
 };
