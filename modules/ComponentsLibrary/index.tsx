@@ -7,6 +7,7 @@ import ConfirmDelete from './ConfirmDelete/examples';
 import Field from './Field/examples';
 import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
+import Link from './Link/examples';
 import Modal from './Modal/examples';
 import SectionBar from './SectionBar/examples';
 
@@ -16,6 +17,7 @@ const COMPONENTS = {
   Field,
   Form,
   InfoTable,
+  Link,
   Modal,
   SectionBar,
 };
