@@ -23,29 +23,38 @@ dolor sit
 amet`,
 };
 
-const SCHEMA_1: Schema<Model>[] = [
-  { name: 'firstName', label: 'First Name' },
-  { name: 'lastName', label: 'Last Name' },
-  { name: 'gender', label: 'Gender', options: GENDERS },
-  { name: 'password', label: 'Password', type: 'password', required: true },
-  { name: 'note', label: 'Note', multiline: true },
+const SCHEMA_1: Schema<Model> = [
+  [{ name: 'firstName', label: 'First Name' }],
+  [{ name: 'lastName', label: 'Last Name' }],
 ];
 
-const SCHEMA_2: Schema<Model>[] = [
-  { label: 'Personal detail', headline: true },
-  { name: 'firstName', label: 'First Name' },
-  { name: 'lastName', label: 'Last Name' },
-  { name: 'gender', label: 'Gender', options: GENDERS },
-  { label: 'Login detail', headline: true },
-  { name: 'login', label: 'Login', required: true },
-  { name: 'password', label: 'Password', type: 'password', required: true },
-  { label: 'Various', headline: true },
-  { name: 'note', label: 'Note', multiline: true },
+const SCHEMA_2: Schema<Model> = [
+  [
+    {
+      label: 'Personal detail',
+      headline: true,
+      description: 'optional description',
+    },
+  ],
+  [
+    { name: 'firstName', label: 'First Name' },
+    { name: 'lastName', label: 'Last Name' },
+    { name: 'gender', label: 'Gender', options: GENDERS },
+  ],
+  [{ label: 'Login detail', headline: true }],
+  [
+    { name: 'login', label: 'Login', required: true },
+    { name: 'password', label: 'Password', type: 'password', required: true },
+  ],
+  [{ label: 'Various', headline: true }],
+  [{ name: 'note', label: 'Note', multiline: true }],
 ];
 
-const SCHEMA_3: Schema<Model>[] = [
-  { name: 'firstName', label: 'First Name' },
-  { name: 'lastName', label: 'Last Name' },
+const SCHEMA_3: Schema<Model> = [
+  [
+    { name: 'firstName', label: 'First Name' },
+    { name: 'lastName', label: 'Last Name' },
+  ],
 ];
 
 export default () => (

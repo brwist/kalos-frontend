@@ -29,18 +29,22 @@ interface State {
   deletingEntry?: Entry;
 }
 
-const SCHEMA: Schema<Entry>[] = [
-  {
-    label: 'Link',
-    name: 'url',
-    required: true,
-    helperText: 'Be sure to include "http://"',
-  },
-  {
-    label: 'Description',
-    name: 'description',
-    helperText: 'Keep this very short: 2 - 4 words',
-  },
+const SCHEMA: Schema<Entry> = [
+  [
+    {
+      label: 'Link',
+      name: 'url',
+      required: true,
+      helperText: 'Be sure to include "http://"',
+    },
+  ],
+  [
+    {
+      label: 'Description',
+      name: 'description',
+      helperText: 'Keep this very short: 2 - 4 words',
+    },
+  ],
 ];
 
 export class ServiceItemLinks extends PureComponent<Props, State> {

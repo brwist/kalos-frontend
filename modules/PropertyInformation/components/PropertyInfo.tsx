@@ -33,32 +33,49 @@ const RESIDENTIAL = [
   { label: 'Commercial', value: 0 },
 ];
 
-const SCHEMA_PROPERTY_INFORMATION: Schema<Entry>[] = [
-  { label: 'First Name', name: 'firstname', helperText: PROP_LEVEL },
-  { label: 'Last Name', name: 'lastname', helperText: PROP_LEVEL },
-  { label: 'Business Name', name: 'businessname', helperText: PROP_LEVEL },
-  { label: 'Primary Phone', name: 'phone', helperText: PROP_LEVEL },
-  { label: 'Alternate Phone', name: 'altphone', helperText: PROP_LEVEL },
-  { label: 'Email', name: 'email', helperText: PROP_LEVEL },
-  { label: 'Address', name: 'address', required: true, multiline: true },
-  { label: 'City', name: 'city', required: true },
-  { label: 'State', name: 'state', options: USA_STATES, required: true },
-  { label: 'Zip Code', name: 'zip', required: true },
-  { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
-  { label: 'Subdivision', name: 'subdivision' },
-  { label: 'Directions', name: 'directions', multiline: true },
-  { label: 'Latitude', name: 'geolocationLat', type: 'number' },
-  { label: 'Longitude', name: 'geolocationLng', type: 'number' },
-  { label: 'Notes', name: 'notes', multiline: true },
+const SCHEMA_PROPERTY_INFORMATION: Schema<Entry> = [
+  [{ label: 'Personal Details', headline: true, description: PROP_LEVEL }],
+  [
+    { label: 'First Name', name: 'firstname' },
+    { label: 'Last Name', name: 'lastname' },
+    { label: 'Business Name', name: 'businessname' },
+  ],
+  [{ label: 'Contact Details', headline: true, description: PROP_LEVEL }],
+  [
+    { label: 'Primary Phone', name: 'phone' },
+    { label: 'Alternate Phone', name: 'altphone' },
+    { label: 'Email', name: 'email' },
+  ],
+  [{ label: 'Address Details', headline: true }],
+  [
+    { label: 'Address', name: 'address', required: true, multiline: true },
+    { label: 'City', name: 'city', required: true },
+    { label: 'State', name: 'state', options: USA_STATES, required: true },
+    { label: 'Zip Code', name: 'zip', required: true },
+  ],
+  [{ label: 'Location Details', headline: true }],
+  [
+    { label: 'Directions', name: 'directions', multiline: true },
+    { label: 'Subdivision', name: 'subdivision' },
+  ],
+  [
+    { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
+    { label: 'Latitude', name: 'geolocationLat', type: 'number' },
+    { label: 'Longitude', name: 'geolocationLng', type: 'number' },
+  ],
+  [{ label: 'Notes', headline: true }],
+  [{ label: 'Notes', name: 'notes', multiline: true }],
 ];
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry>[] = [
-  {
-    label: 'Notification',
-    name: 'notification',
-    required: true,
-    multiline: true,
-  },
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
+  [
+    {
+      label: 'Notification',
+      name: 'notification',
+      required: true,
+      multiline: true,
+    },
+  ],
 ];
 
 export class PropertyInfo extends React.PureComponent<Props, State> {
