@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { ReactNode, AnchorHTMLAttributes } from 'react';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT, USA_STATES } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -22,6 +24,7 @@ interface State {
   notificationEditing: boolean;
   notificationViewing: boolean;
   notificationShown: boolean;
+  editMenuAnchorEl: (EventTarget & HTMLElement) | null;
 }
 
 const PROP_LEVEL = 'Used for property-level billing only';
@@ -71,6 +74,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       notificationEditing: false,
       notificationViewing: false,
       notificationShown: false,
+      editMenuAnchorEl: null,
     };
     this.PropertyClient = new PropertyClient(ENDPOINT);
   }
@@ -82,6 +86,10 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
 
   handleSetNotificationViewing = (notificationViewing: boolean) => () =>
     this.setState({ notificationViewing });
+
+  handleSetEditEditMenuAnchorEl = (
+    editMenuAnchorEl: (EventTarget & HTMLElement) | null
+  ) => this.setState({ editMenuAnchorEl });
 
   loadEntry = async () => {
     const { userID, propertyId } = this.props;
@@ -136,6 +144,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       handleSetEditing,
       handleSetNotificationEditing,
       handleSetNotificationViewing,
+      handleSetEditEditMenuAnchorEl,
     } = this;
     const { userID, propertyId } = props;
     const {
@@ -145,6 +154,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       error,
       notificationEditing,
       notificationViewing,
+      editMenuAnchorEl,
     } = state;
     const {
       id,
@@ -198,7 +208,8 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             },
             {
               label: 'Change Property',
-              onClick: handleSetEditing(true),
+              onClick: ({ currentTarget }: React.MouseEvent<HTMLElement>) =>
+                handleSetEditEditMenuAnchorEl(currentTarget),
             },
             {
               label: 'Owner Details',
@@ -265,6 +276,58 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             }
           />
         </Modal>
+        <Menu
+          id="customized-menu"
+          keepMounted
+          anchorEl={editMenuAnchorEl}
+          open={Boolean(editMenuAnchorEl)}
+          onClose={() => handleSetEditEditMenuAnchorEl(null)}
+          transformOrigin={{
+            vertical: -45,
+            horizontal: 'left',
+          }}
+        >
+          <MenuItem
+            onClick={() => {
+              handleSetEditEditMenuAnchorEl(null);
+              handleSetEditing(true)();
+            }}
+          >
+            Edit
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleSetEditEditMenuAnchorEl(null);
+              document.location.href = `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`;
+            }}
+          >
+            Activity
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleSetEditEditMenuAnchorEl(null);
+              // TODO implement delete property with confirmation
+            }}
+          >
+            Delete Property
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleSetEditEditMenuAnchorEl(null);
+              // TODO implement merge property
+            }}
+          >
+            Merge Property
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleSetEditEditMenuAnchorEl(null);
+              // TODO implement change owner
+            }}
+          >
+            Change Owner
+          </MenuItem>
+        </Menu>
       </>
     );
   }

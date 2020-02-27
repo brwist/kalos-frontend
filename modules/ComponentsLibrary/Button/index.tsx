@@ -5,7 +5,7 @@ import ButtonUI from '@material-ui/core/Button';
 export interface Props {
   label: string;
   url?: string;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
   disabled?: boolean;
   variant?: 'contained' | 'outlined';
 }
