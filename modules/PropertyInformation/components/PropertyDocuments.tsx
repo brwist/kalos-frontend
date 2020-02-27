@@ -7,7 +7,7 @@ import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Link } from '../../ComponentsLibrary/Link';
-import { ENDPOINT } from '../../../constants';
+import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { makeFakeRows } from '../../../helpers';
 
 type Entry = Document.AsObject;
@@ -22,6 +22,8 @@ interface State {
   entries: Entry[];
   loading: boolean;
   error: boolean;
+  count: number;
+  page: number;
 }
 
 export class PropertyDocuments extends PureComponent<Props, State> {
@@ -33,6 +35,8 @@ export class PropertyDocuments extends PureComponent<Props, State> {
       entries: [],
       loading: true,
       error: false,
+      count: 0,
+      page: 0,
     };
     this.DocumentClient = new DocumentClient(ENDPOINT);
   }
@@ -44,8 +48,8 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     entry.setPropertyId(propertyId);
     try {
       const response = await this.DocumentClient.BatchGet(entry);
-      const entries = response.toObject().resultsList;
-      this.setState({ entries, loading: false });
+      const { resultsList: entries, totalCount: count } = response.toObject();
+      this.setState({ entries, count, loading: false });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
@@ -67,10 +71,14 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     window.open(dlURL.url, '_blank');
   };
 
+  handleChangePage = (page: number) => {
+    this.setState({ page }, this.loadEntry);
+  };
+
   render() {
-    const { props, state, handleDownload } = this;
+    const { props, state, handleDownload, handleChangePage } = this;
     const { className } = props;
-    const { entries, loading, error } = state;
+    const { entries, loading, error, count, page } = state;
     const data: Data = loading
       ? makeFakeRows()
       : entries.map(({ filename, description: value }) => [
@@ -92,7 +100,16 @@ export class PropertyDocuments extends PureComponent<Props, State> {
         ]);
     return (
       <div className={className}>
-        <SectionBar title="Property Documents" buttons={[{ label: 'Add' }]} />
+        <SectionBar
+          title="Property Documents"
+          buttons={[{ label: 'Add' }]}
+          pagination={{
+            count,
+            page,
+            rowsPerPage: ROWS_PER_PAGE,
+            onChangePage: handleChangePage,
+          }}
+        />
         <InfoTable
           data={data}
           loading={loading}

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { ENDPOINT } from '../../../constants';
+import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import {
   InfoTable,
   Data,
@@ -11,8 +11,6 @@ import {
 } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { formatTime, formatDate, makeFakeRows } from '../../../helpers';
-
-const ROWS_PER_PAGE = 25;
 
 type Entry = Event.AsObject;
 
