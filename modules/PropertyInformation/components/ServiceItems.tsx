@@ -9,12 +9,14 @@ import {
   ServiceItemClient,
   ServiceItem,
 } from '@kalos-core/kalos-rpc/ServiceItem';
-import { ENDPOINT } from '../../../constants';
+import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { makeFakeRows } from '../../../helpers';
 import { ServiceItemLinks } from './ServiceItemLinks';
+
+type Entry = ServiceItem.AsObject;
 
 interface Props {
   className?: string;
@@ -23,13 +25,15 @@ interface Props {
 }
 
 interface State {
-  serviceItems: ServiceItem.AsObject[];
+  entries: Entry[];
   loading: boolean;
   error: boolean;
   linkId?: number;
+  count: number;
+  page: number;
 }
 
-const sort = (a: ServiceItem.AsObject, b: ServiceItem.AsObject) => {
+const sort = (a: Entry, b: Entry) => {
   if (a.sortOrder < b.sortOrder) return -1;
   if (a.sortOrder > b.sortOrder) return 1;
   return 0;
@@ -41,9 +45,11 @@ export class ServiceItems extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      serviceItems: [],
+      entries: [],
       loading: true,
       error: false,
+      count: 0,
+      page: 0,
     };
     this.ServiceItemClient = new ServiceItemClient(ENDPOINT);
   }
@@ -55,8 +61,8 @@ export class ServiceItems extends PureComponent<Props, State> {
     entry.setPropertyId(propertyId);
     try {
       const response = await this.ServiceItemClient.BatchGet(entry);
-      const serviceItems = response.toObject().resultsList;
-      this.setState({ serviceItems, loading: false });
+      const { resultsList: entries, totalCount: count } = response.toObject();
+      this.setState({ entries, count, loading: false });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
@@ -68,9 +74,9 @@ export class ServiceItems extends PureComponent<Props, State> {
 
   handleReorder = (idx: number, step: number) => async () => {
     this.setState({ loading: true });
-    const { serviceItems } = this.state;
-    const currentItem = serviceItems[idx];
-    const nextItem = serviceItems[idx + step];
+    const { entries } = this.state;
+    const currentItem = entries[idx];
+    const nextItem = entries[idx + step];
     const entry = new ServiceItem();
     entry.setFieldMaskList(['SortOrder']);
     entry.setId(currentItem.id);
@@ -84,13 +90,23 @@ export class ServiceItems extends PureComponent<Props, State> {
 
   handleSetLinkId = (linkId?: number) => () => this.setState({ linkId });
 
+  handleChangePage = (page: number) => {
+    this.setState({ page }, this.loadEntry);
+  };
+
   render() {
-    const { props, state, handleReorder, handleSetLinkId } = this;
+    const {
+      props,
+      state,
+      handleReorder,
+      handleSetLinkId,
+      handleChangePage,
+    } = this;
     const { className } = props;
-    const { serviceItems, loading, error, linkId } = state;
+    const { entries, loading, error, linkId, count, page } = state;
     const data: Data = loading
       ? makeFakeRows()
-      : serviceItems.sort(sort).map(({ id, type: value }, idx) => [
+      : entries.sort(sort).map(({ id, type: value }, idx) => [
           {
             value: (
               <>
@@ -105,7 +121,7 @@ export class ServiceItems extends PureComponent<Props, State> {
                 <IconButton
                   style={{ marginRight: 4 }}
                   size="small"
-                  disabled={idx === serviceItems.length - 1}
+                  disabled={idx === entries.length - 1}
                   onClick={handleReorder(idx, 1)}
                 >
                   <ArrowDownwardIcon />
@@ -136,6 +152,12 @@ export class ServiceItems extends PureComponent<Props, State> {
         <SectionBar
           title="Service Items"
           buttons={[{ label: 'Add Service Item' }]}
+          pagination={{
+            count,
+            page,
+            rowsPerPage: ROWS_PER_PAGE,
+            onChangePage: handleChangePage,
+          }}
         />
         <InfoTable
           data={data}
@@ -147,7 +169,7 @@ export class ServiceItems extends PureComponent<Props, State> {
         {linkId && (
           <Modal open onClose={handleSetLinkId(undefined)}>
             <ServiceItemLinks
-              title={serviceItems.find(({ id }) => id === linkId)?.type}
+              title={entries.find(({ id }) => id === linkId)?.type}
               serviceItemId={linkId}
               onClose={handleSetLinkId(undefined)}
             />
