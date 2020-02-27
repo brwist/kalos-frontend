@@ -188,7 +188,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
         {editedEntry && (
           <Modal open onClose={setEditing(undefined)}>
             <Form<Entry>
-              title="Edit Service Item Link"
+              title={`${editedEntry.id ? 'Edit' : 'Add'} Service Item Link`}
               schema={SCHEMA}
               data={editedEntry}
               onSave={handleSave}
