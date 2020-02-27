@@ -22,15 +22,10 @@ interface State {
   serviceCalls: Event.AsObject[];
   loading: boolean;
   error: boolean;
-  orderBy: string;
+  orderByFields: (keyof Event.AsObject)[];
+  orderByDBField: string;
   dir: Dir;
 }
-
-const sort = (a: Event.AsObject, b: Event.AsObject) => {
-  if (a.logJobNumber < b.logJobNumber) return -1;
-  if (a.logJobNumber > b.logJobNumber) return 1;
-  return 0;
-};
 
 export class ServiceCalls extends PureComponent<Props, State> {
   EventClient: EventClient;
@@ -42,7 +37,8 @@ export class ServiceCalls extends PureComponent<Props, State> {
       loading: true,
       error: false,
       dir: 'ASC',
-      orderBy: 'date_started',
+      orderByFields: ['dateStarted'],
+      orderByDBField: 'date_started',
     };
     this.EventClient = new EventClient(ENDPOINT);
   }
@@ -50,10 +46,10 @@ export class ServiceCalls extends PureComponent<Props, State> {
   loadEntry = async () => {
     this.setState({ loading: true });
     const { propertyId } = this.props;
-    const { dir, orderBy } = this.state;
+    const { dir, orderByDBField } = this.state;
     const entry = new Event();
     entry.setPropertyId(propertyId);
-    entry.setOrderBy(orderBy);
+    entry.setOrderBy(orderByDBField);
     entry.setOrderDir(dir);
     try {
       const response = await this.EventClient.BatchGet(entry);
@@ -64,12 +60,16 @@ export class ServiceCalls extends PureComponent<Props, State> {
     }
   };
 
-  handleOrder = (orderBy: string) => () => {
+  handleOrder = (
+    orderByDBField: string,
+    orderByFields: (keyof Event.AsObject)[]
+  ) => () => {
     this.setState(
       {
-        orderBy,
+        orderByFields,
+        orderByDBField,
         dir:
-          orderBy !== this.state.orderBy
+          orderByDBField !== this.state.orderByDBField
             ? 'ASC'
             : this.state.dir === 'ASC'
             ? 'DESC'
@@ -83,35 +83,55 @@ export class ServiceCalls extends PureComponent<Props, State> {
     await this.loadEntry();
   }
 
+  sort = (a: Event.AsObject, b: Event.AsObject) => {
+    const { orderByFields, dir } = this.state;
+    const A = orderByFields
+      .map(field => a[field] as string)
+      .join(' ')
+      .trim()
+      .toUpperCase();
+    const B = orderByFields
+      .map(field => b[field] as string)
+      .join(' ')
+      .trim()
+      .toUpperCase();
+    if (A > B) return dir === 'ASC' ? 1 : -1;
+    if (A < B) return dir === 'ASC' ? -1 : 1;
+    return 0;
+  };
+
   render() {
-    const { handleOrder, props, state } = this;
+    const { props, state, handleOrder, sort } = this;
     const { className } = props;
-    const { serviceCalls, loading, error, dir, orderBy } = state;
+    const { serviceCalls, loading, error, dir, orderByDBField } = state;
     const columns: Columns = [
       {
         name: 'Date / Time',
-        dir: orderBy === 'date_started' ? dir : undefined,
-        onClick: handleOrder('date_started'),
+        dir: orderByDBField === 'date_started' ? dir : undefined,
+        onClick: handleOrder('date_started', ['dateStarted', 'timeStarted']),
       },
       {
         name: 'Job Status',
-        dir: orderBy === 'log_jobStatus' ? dir : undefined,
-        onClick: handleOrder('log_jobStatus'),
+        dir: orderByDBField === 'log_jobStatus' ? dir : undefined,
+        onClick: handleOrder('log_jobStatus', ['logJobStatus']),
       },
       {
         name: 'Job Type / Subtype',
-        dir: orderBy === 'job_type_id, job_subtype_id' ? dir : undefined,
-        onClick: handleOrder('job_type_id, job_subtype_id'),
+        dir: orderByDBField === 'job_type_id, job_subtype_id' ? dir : undefined,
+        onClick: handleOrder('job_type_id, job_subtype_id', [
+          'jobType',
+          'jobSubtype',
+        ]),
       },
       {
         name: 'Job Number',
-        dir: orderBy === 'log_jobNumber' ? dir : undefined,
-        onClick: handleOrder('log_jobNumber'),
+        dir: orderByDBField === 'log_jobNumber' ? dir : undefined,
+        onClick: handleOrder('log_jobNumber', ['logJobNumber']),
       },
       {
         name: 'Contract Number',
-        dir: orderBy === 'contract_number' ? dir : undefined,
-        onClick: handleOrder('contract_number'),
+        dir: orderByDBField === 'contract_number' ? dir : undefined,
+        onClick: handleOrder('contract_number', ['contractNumber']),
       },
     ];
     const data: Data = loading
