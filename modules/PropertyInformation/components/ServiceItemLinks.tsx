@@ -8,6 +8,7 @@ import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
+import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 
@@ -25,6 +26,7 @@ interface State {
   error: boolean;
   saving: boolean;
   editedEntry?: Entry;
+  deletingEntry?: Entry;
 }
 
 const SCHEMA: Schema<Entry>[] = [
@@ -52,6 +54,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
       error: false,
       saving: false,
       editedEntry: undefined,
+      deletingEntry: undefined,
     };
     this.SiLinkClient = new PropLinkClient(ENDPOINT);
   }
@@ -75,6 +78,9 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
   }
 
   setEditing = (editedEntry?: Entry) => () => this.setState({ editedEntry });
+
+  setDeleting = (deletingEntry?: Entry) => () =>
+    this.setState({ deletingEntry });
 
   handleSave = async (data: Entry) => {
     const { serviceItemId } = this.props;
@@ -103,9 +109,9 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
   };
 
   render() {
-    const { props, state, setEditing, handleSave } = this;
+    const { props, state, setEditing, handleSave, setDeleting } = this;
     const { title, onClose } = props;
-    const { entries, loading, saving, editedEntry } = state;
+    const { entries, loading, saving, editedEntry, deletingEntry } = state;
     const data: Data = loading
       ? makeFakeRows()
       : entries.map(entry => {
@@ -127,7 +133,12 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
                 >
                   <EditIcon />
                 </IconButton>,
-                <IconButton key={2} style={{ marginLeft: 4 }} size="small">
+                <IconButton
+                  key={2}
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={setDeleting(entry)}
+                >
                   <DeleteIcon />
                 </IconButton>,
               ],
@@ -162,6 +173,15 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
               disabled={saving}
             />
           </Modal>
+        )}
+        {deletingEntry && (
+          <ConfirmDelete
+            open
+            onClose={setDeleting(undefined)}
+            onConfirm={() => {}}
+            kind="Service Item Link"
+            name={deletingEntry.description || deletingEntry.url}
+          />
         )}
       </div>
     );

@@ -3,7 +3,11 @@ import { makeStyles } from '@material-ui/core/styles';
 import ModalUI from '@material-ui/core/Modal';
 import Paper from '@material-ui/core/Paper';
 
-interface Props {
+type Style = {
+  compact?: boolean;
+};
+
+interface Props extends Style {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
@@ -16,7 +20,7 @@ const useStyles = makeStyles(theme => ({
     alignItems: 'center',
   },
   paper: {
-    width: '40%',
+    width: ({ compact }: Style) => (compact ? 'auto' : '40%'),
     minWidth: 300,
     maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
     overflow: 'hidden',
@@ -24,8 +28,8 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Modal = ({ open, onClose, children }: Props) => {
-  const classes = useStyles();
+export const Modal = ({ open, onClose, children, compact = false }: Props) => {
+  const classes = useStyles({ compact });
   return (
     <ModalUI open={open} onClose={onClose} className={classes.modal}>
       <Paper className={classes.paper}>{children}</Paper>

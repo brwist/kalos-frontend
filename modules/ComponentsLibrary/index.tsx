@@ -1,13 +1,24 @@
 import React, { useState, useCallback } from 'react';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import ReactDOM from 'react-dom';
+import customTheme from '../Theme/main';
 import Button from './Button/examples';
+import ConfirmDelete from './ConfirmDelete/examples';
 import Field from './Field/examples';
 import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
 import Modal from './Modal/examples';
 import SectionBar from './SectionBar/examples';
 
-const COMPONENTS = { Button, Field, Form, InfoTable, Modal, SectionBar };
+const COMPONENTS = {
+  Button,
+  ConfirmDelete,
+  Field,
+  Form,
+  InfoTable,
+  Modal,
+  SectionBar,
+};
 
 const ComponentsLibrary = () => {
   const [component, setComponent] = useState<keyof typeof COMPONENTS>(
@@ -17,51 +28,53 @@ const ComponentsLibrary = () => {
   const handleClickMenuItem = useCallback(v => () => setComponent(v), []);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-      }}
-    >
+    <ThemeProvider theme={customTheme.lightTheme}>
       <div
         style={{
-          width: 150,
-          padding: 10,
-          backgroundColor: '#eee',
+          display: 'flex',
+          minHeight: '100vh',
         }}
       >
-        <h1
+        <div
           style={{
-            fontSize: 20,
-            margin: 0,
-            marginBottom: 10,
-            fontFamily: 'arial',
-            color: '#888',
-            borderBottom: '1px solid #ccc',
-            paddingBottom: 10,
+            width: 150,
+            padding: 10,
+            backgroundColor: '#eee',
           }}
         >
-          Components Library
-        </h1>
-        {Object.keys(COMPONENTS).map(key => (
-          <div
-            key={key}
+          <h1
             style={{
-              marginTop: 15,
+              fontSize: 20,
+              margin: 0,
+              marginBottom: 10,
               fontFamily: 'arial',
-              fontWeight: key === component ? 900 : 400,
-              cursor: 'pointer',
+              color: '#888',
+              borderBottom: '1px solid #ccc',
+              paddingBottom: 10,
             }}
-            onClick={handleClickMenuItem(key)}
           >
-            {key}
-          </div>
-        ))}
+            Components Library
+          </h1>
+          {Object.keys(COMPONENTS).map(key => (
+            <div
+              key={key}
+              style={{
+                marginTop: 15,
+                fontFamily: 'arial',
+                fontWeight: key === component ? 900 : 400,
+                cursor: 'pointer',
+              }}
+              onClick={handleClickMenuItem(key)}
+            >
+              {key}
+            </div>
+          ))}
+        </div>
+        <div style={{ padding: 10, flexGrow: 1 }}>
+          <Component />
+        </div>
       </div>
-      <div style={{ padding: 10, flexGrow: 1 }}>
-        <Component />
-      </div>
-    </div>
+    </ThemeProvider>
   );
 };
 
