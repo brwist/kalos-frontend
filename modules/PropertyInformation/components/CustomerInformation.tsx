@@ -169,7 +169,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
     ];
     const systemData: Data = [
       [{ label: 'Created', value: formatDateTime(dateCreated) }],
-      [{ label: 'Last Logn', value: formatDateTime(lastLogin) }],
+      [{ label: 'Last Login', value: formatDateTime(lastLogin) }],
       [{ label: 'Login ID', value: login }],
     ];
     return (
