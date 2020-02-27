@@ -3,10 +3,14 @@ import IconButton from '@material-ui/core/IconButton';
 import MailIcon from '@material-ui/icons/Mail';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
+import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { Link } from '../../ComponentsLibrary/Link';
 import { ENDPOINT } from '../../../constants';
 import { makeFakeRows } from '../../../helpers';
+
+type Entry = Document.AsObject;
 
 interface Props {
   className?: string;
@@ -15,7 +19,7 @@ interface Props {
 }
 
 interface State {
-  documents: Document.AsObject[];
+  entries: Entry[];
   loading: boolean;
   error: boolean;
 }
@@ -26,7 +30,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      documents: [],
+      entries: [],
       loading: true,
       error: false,
     };
@@ -40,8 +44,8 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     entry.setPropertyId(propertyId);
     try {
       const response = await this.DocumentClient.BatchGet(entry);
-      const documents = response.toObject().resultsList;
-      this.setState({ documents, loading: false });
+      const entries = response.toObject().resultsList;
+      this.setState({ entries, loading: false });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
@@ -51,14 +55,31 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     await this.loadEntry();
   }
 
+  handleDownload = (filename: string) => async (
+    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+  ) => {
+    event.preventDefault();
+    const S3 = new S3Client(ENDPOINT);
+    const url = new URLObject();
+    url.setKey(filename);
+    url.setBucket('kalosdocs-prod');
+    const dlURL = await S3.GetDownloadURL(url);
+    window.open(dlURL.url, '_blank');
+  };
+
   render() {
-    const { className } = this.props;
-    const { documents, loading, error } = this.state;
+    const { props, state, handleDownload } = this;
+    const { className } = props;
+    const { entries, loading, error } = state;
     const data: Data = loading
       ? makeFakeRows()
-      : documents.map(({ description: value }) => [
+      : entries.map(({ filename, description: value }) => [
           {
-            value,
+            value: (
+              <Link href="" onClick={handleDownload(filename)}>
+                {value}
+              </Link>
+            ),
             actions: [
               <IconButton key={0} style={{ marginLeft: 4 }} size="small">
                 <MailIcon />
