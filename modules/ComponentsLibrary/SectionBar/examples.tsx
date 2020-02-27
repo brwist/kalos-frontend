@@ -1,17 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SectionBar } from './';
 
-export default () => (
-  <>
-    <SectionBar title="Title" />
-    <br />
-    <SectionBar title="With button" buttons={[{ label: 'Button' }]} />
-    <br />
-    <SectionBar
-      title="With buttons"
-      buttons={Array.from(Array(5)).map((_, idx) => ({
-        label: `Button ${idx + 1}`,
-      }))}
-    />
-  </>
-);
+export default () => {
+  const [page, setPage] = useState(0);
+  return (
+    <>
+      <SectionBar title="Title" />
+      <hr />
+      <SectionBar title="With button" buttons={[{ label: 'Button' }]} />
+      <hr />
+      <SectionBar
+        title="With buttons"
+        buttons={Array.from(Array(5)).map((_, idx) => ({
+          label: `Button ${idx + 1}`,
+        }))}
+      />
+      <hr />
+      <SectionBar
+        title="With Paging"
+        pagination={{
+          count: 35,
+          rowsPerPage: 10,
+          page,
+          onChangePage: setPage,
+        }}
+      />
+    </>
+  );
+};
