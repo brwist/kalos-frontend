@@ -41,7 +41,21 @@ export function Gallery({
 }: props) {
   const [isOpen, setOpen] = React.useState(false);
   const [activeImage, setImage] = React.useState(0);
+  const [rotation, setRotation] = React.useState(0);
   const S3 = new S3Client(ENDPOINT);
+  let top = 0;
+
+  if ((rotation / 90) % 2 !== 0) {
+    console.log('90 deg rotation?');
+    top = 150;
+  }
+  const rotateLeft = () => {
+    setRotation(rotation - 90);
+  };
+
+  const rotateRight = () => {
+    setRotation(rotation + 90);
+  };
 
   const toggleOpen = () => {
     setOpen(!isOpen);
@@ -199,9 +213,9 @@ export function Gallery({
               justify="center"
               alignItems="stretch"
               style={{
-                maxHeight: imgHeight,
                 overflow: 'scroll',
-                height: imgHeight,
+                minHeight: imgHeight,
+                maxHeight: window.innerHeight,
                 width: '100%',
               }}
             >
@@ -214,7 +228,14 @@ export function Gallery({
               {fileList[activeImage].mimeType !== 'application/pdf' && (
                 <img
                   src={getHREF()}
-                  style={{ maxWidth: '100%', height: '100%' }}
+                  style={{
+                    maxWidth: '100%',
+                    height: '100%',
+                    transform: `rotate(${rotation}deg)`,
+                    position: 'relative',
+                    top,
+                  }}
+                  onClick={rotateRight}
                 />
               )}
             </Grid>

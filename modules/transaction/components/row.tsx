@@ -6,6 +6,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { PopoverGallery } from '../../PopoverGallery/main';
+import { Gallery } from '../../Gallery/main';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
@@ -228,7 +229,7 @@ export function TransactionRow({
             defaultValue={txn.notes}
             multiline
           />
-          <PopoverGallery
+          <Gallery
             title="Receipt Photos"
             fileList={state.files}
             text="View receipt photos"
@@ -237,6 +238,15 @@ export function TransactionRow({
             disabled={txn.documentsList.length === 0}
             iconButton
           />
+          {/*<PopoverGallery
+            title="Receipt Photos"
+            fileList={state.files}
+            text="View receipt photos"
+            //@ts-ignore
+            onOpen={() => fetchFiles(txn, setState, clients.s3.getMimeType)}
+            disabled={txn.documentsList.length === 0}
+            iconButton
+          />*/}
           <TxnLog iconButton txnID={txn.id} />
           <TxnNotes
             iconButton

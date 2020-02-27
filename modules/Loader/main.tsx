@@ -15,9 +15,12 @@ function Loader() {
   React.useEffect(() => {
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-
     return function cleanup() {
-      document.body.style.overflow = oldOverflow;
+      if (oldOverflow === 'hidden' || oldOverflow === '') {
+        document.body.style.overflow = 'visible';
+      } else {
+        document.body.style.overflow = oldOverflow;
+      }
     };
   });
   return (
