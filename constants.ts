@@ -112,6 +112,8 @@ export const USA_STATES = [
 
 export const BILLING_TERMS = ['COD', 'Net 10', 'Net 30', 'Net 45', 'Pre-paid'];
 
+export const ROWS_PER_PAGE = 25;
+
 export default {
   BASE_URL,
   EVENT_STATUS_LIST,
@@ -123,4 +125,5 @@ export default {
   ELEVATION,
   USA_STATES,
   BILLING_TERMS,
+  ROWS_PER_PAGE,
 };
