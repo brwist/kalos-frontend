@@ -7,13 +7,30 @@ import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { getRPCFields } from '../../../helpers';
 
+type Entry = Property.AsObject;
+
+interface Props {
+  userID: number;
+  propertyId: number;
+}
+
+interface State {
+  entry: Entry;
+  editing: boolean;
+  saving: boolean;
+  error: boolean;
+  notificationEditing: boolean;
+  notificationViewing: boolean;
+  notificationShown: boolean;
+}
+
 const PROP_LEVEL = 'Used for property-level billing only';
 const RESIDENTIAL = [
   { label: 'Residential', value: 1 },
   { label: 'Commercial', value: 0 },
 ];
 
-const SCHEMA: Schema<Property.AsObject>[] = [
+const SCHEMA_PROPERTY_INFORMATION: Schema<Entry>[] = [
   { label: 'First Name', name: 'firstname', helperText: PROP_LEVEL },
   { label: 'Last Name', name: 'lastname', helperText: PROP_LEVEL },
   { label: 'Business Name', name: 'businessname', helperText: PROP_LEVEL },
@@ -32,17 +49,14 @@ const SCHEMA: Schema<Property.AsObject>[] = [
   { label: 'Notes', name: 'notes', multiline: true },
 ];
 
-interface Props {
-  userID: number;
-  propertyId: number;
-}
-
-interface State {
-  userProperty: Property.AsObject;
-  editing: boolean;
-  saving: boolean;
-  error: boolean;
-}
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry>[] = [
+  {
+    label: 'Notification',
+    name: 'notification',
+    required: true,
+    multiline: true,
+  },
+];
 
 export class PropertyInfo extends React.PureComponent<Props, State> {
   PropertyClient: PropertyClient;
@@ -50,59 +64,88 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      userProperty: new Property().toObject(),
+      entry: new Property().toObject(),
       editing: false,
       saving: false,
       error: false,
+      notificationEditing: false,
+      notificationViewing: false,
+      notificationShown: false,
     };
     this.PropertyClient = new PropertyClient(ENDPOINT);
   }
 
-  handleToggleEditing = () => this.setState({ editing: !this.state.editing });
+  handleSetEditing = (editing: boolean) => () => this.setState({ editing });
+
+  handleSetNotificationEditing = (notificationEditing: boolean) => () =>
+    this.setState({ notificationEditing });
+
+  handleSetNotificationViewing = (notificationViewing: boolean) => () =>
+    this.setState({ notificationViewing });
 
   loadEntry = async () => {
     const { userID, propertyId } = this.props;
-    const entry = new Property();
-    entry.setUserId(userID);
-    entry.setId(propertyId);
-    const response = await this.PropertyClient.BatchGet(entry);
-    const userProperty = response.toObject().resultsList[0];
-    if (userProperty) {
-      this.setState({ userProperty });
+    const req = new Property();
+    req.setUserId(userID);
+    req.setId(propertyId);
+    const response = await this.PropertyClient.BatchGet(req);
+    const entry = response.toObject().resultsList[0];
+    if (entry) {
+      this.setState({ entry });
     } else {
       this.setState({ error: true });
     }
+    return entry;
   };
 
   async componentDidMount() {
-    await this.loadEntry();
+    const entry = await this.loadEntry();
+    if (entry.notification !== '') {
+      this.setState({ notificationViewing: true });
+    }
   }
 
-  handleSave = async (data: Property.AsObject) => {
+  handleSave = async (data: Entry) => {
     const { propertyId, userID } = this.props;
     this.setState({ saving: true });
-    const entry = new Property();
-    entry.setId(propertyId);
-    entry.setUserId(userID);
+    const req = new Property();
+    req.setId(propertyId);
+    req.setUserId(userID);
     const fieldMaskList = [];
     for (const fieldName in data) {
       const { upperCaseProp, methodName } = getRPCFields(fieldName);
       //@ts-ignore
-      entry[methodName](data[fieldName]);
+      req[methodName](data[fieldName]);
       fieldMaskList.push(upperCaseProp);
     }
-    entry.setFieldMaskList(fieldMaskList);
-    const userProperty = await this.PropertyClient.Update(entry);
+    req.setFieldMaskList(fieldMaskList);
+    const entry = await this.PropertyClient.Update(req);
     this.setState({
-      userProperty,
+      entry,
       saving: false,
     });
-    this.handleToggleEditing();
+    this.handleSetEditing(false)();
+    this.handleSetNotificationEditing(false)();
   };
 
   render() {
-    const { userID, propertyId } = this.props;
-    const { userProperty, editing, saving, error } = this.state;
+    const {
+      props,
+      state,
+      handleSave,
+      handleSetEditing,
+      handleSetNotificationEditing,
+      handleSetNotificationViewing,
+    } = this;
+    const { userID, propertyId } = props;
+    const {
+      entry,
+      editing,
+      saving,
+      error,
+      notificationEditing,
+      notificationViewing,
+    } = state;
     const {
       id,
       firstname,
@@ -113,11 +156,12 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       email,
       address,
       city,
-      state,
+      state: addressState,
       zip,
       subdivision,
       notes,
-    } = userProperty;
+      notification,
+    } = entry;
     const data: Data = [
       [
         { label: 'Name', value: `${firstname} ${lastname}` },
@@ -128,7 +172,12 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
         { label: 'Alternate Phone', value: altphone, href: 'tel' },
       ],
       [{ label: 'Email', value: email, href: 'mailto' }],
-      [{ label: 'Address', value: `${address}, ${city}, ${state} ${zip}` }],
+      [
+        {
+          label: 'Address',
+          value: `${address}, ${city}, ${addressState} ${zip}`,
+        },
+      ],
       [{ label: 'Subdivision', value: subdivision }],
       [{ label: 'Notes', value: notes }],
     ];
@@ -142,12 +191,14 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
               url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
             },
             {
-              label: 'Add Notification',
-              onClick: () => {}, // TODO: implement onClick
+              label: notification ? 'Notification' : 'Add Notification',
+              onClick: notification
+                ? handleSetNotificationViewing(true)
+                : handleSetNotificationEditing(true),
             },
             {
               label: 'Change Property',
-              onClick: this.handleToggleEditing,
+              onClick: handleSetEditing(true),
             },
             {
               label: 'Owner Details',
@@ -156,14 +207,62 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
           ]}
         />
         <InfoTable data={data} loading={id === 0} error={error} />
-        <Modal open={editing} onClose={this.handleToggleEditing}>
-          <Form<Property.AsObject>
+        <Modal open={editing} onClose={handleSetEditing(false)}>
+          <Form<Entry>
             title="Edit Property Information"
-            schema={SCHEMA}
-            data={userProperty}
-            onSave={this.handleSave}
-            onClose={this.handleToggleEditing}
+            schema={SCHEMA_PROPERTY_INFORMATION}
+            data={entry}
+            onSave={handleSave}
+            onClose={handleSetEditing(false)}
             disabled={saving}
+          />
+        </Modal>
+        <Modal
+          open={notificationEditing || notificationViewing}
+          onClose={() => {
+            handleSetNotificationViewing(false)();
+            handleSetNotificationEditing(false)();
+          }}
+        >
+          <Form<Entry>
+            title={
+              notificationViewing
+                ? 'Property Notification'
+                : `${
+                    notification === '' ? 'Add' : 'Edit'
+                  } Property Notification`
+            }
+            schema={SCHEMA_PROPERTY_NOTIFICATION}
+            data={entry}
+            onSave={handleSave}
+            onClose={() => {
+              handleSetNotificationViewing(false)();
+              handleSetNotificationEditing(false)();
+            }}
+            disabled={saving}
+            readOnly={notificationViewing}
+            buttons={
+              notificationViewing
+                ? [
+                    {
+                      label: 'Edit',
+                      variant: 'outlined',
+                      onClick: () => {
+                        handleSetNotificationViewing(false)();
+                        handleSetNotificationEditing(true)();
+                      },
+                    },
+                    {
+                      label: 'Delete',
+                      variant: 'outlined',
+                      onClick: () => {
+                        handleSetNotificationViewing(false)();
+                        handleSave({ notification: '' } as Entry);
+                      },
+                    },
+                  ]
+                : []
+            }
           />
         </Modal>
       </>
