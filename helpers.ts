@@ -1,3 +1,8 @@
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from './constants';
+
+const UserClientService = new UserClient(ENDPOINT);
+
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
 
@@ -270,6 +275,30 @@ function getRPCFields(fieldName: string) {
   };
 }
 
+/**
+ * Returns loaded Users by their ids
+ * @param ids: array of user id
+ * @returns object { [userId]: User }
+ */
+async function getUsersByIds(ids: number[]) {
+  const uniqueIds: number[] = [];
+  ids.forEach(id => {
+    if (id > 0 && !uniqueIds.includes(id)) {
+      uniqueIds.push(id);
+    }
+  });
+  const users = await Promise.all(
+    uniqueIds.map(async id => {
+      const user = new User();
+      user.setId(id);
+      return await UserClientService.Get(user);
+    })
+  );
+  return users.reduce((aggr, user) => ({ ...aggr, [user.id]: user }), {}) as {
+    [key: number]: User.AsObject;
+  };
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -286,4 +315,5 @@ export {
   makeFakeRows,
   getRPCFields,
   formatDateTime,
+  getUsersByIds,
 };

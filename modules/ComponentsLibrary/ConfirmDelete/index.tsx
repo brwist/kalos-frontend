@@ -27,7 +27,7 @@ export const ConfirmDelete = ({
 }: Props) => {
   const classes = useStyles();
   return (
-    <Modal open={open} onClose={onClose} compact>
+    <Modal open={open} onClose={onClose} compact maxWidth={370}>
       <SectionBar
         title="Confirm delete"
         buttons={[
