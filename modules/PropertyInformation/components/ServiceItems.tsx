@@ -13,16 +13,37 @@ import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { Form, Schema, Option } from '../../ComponentsLibrary/Form';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from './ServiceItemLinks';
 
 type Entry = ServiceItem.AsObject;
 
+const SYSTEM_READINGS_TYPE_OPTIONS: Option[] = [
+  { label: 'Straight-cool AC w/ heatstrips', value: '1' },
+  { label: 'Heat-pump AC', value: '2' },
+  { label: 'Furnace (Straight-Cool)', value: '3' },
+  { label: 'Gas Pool Heater', value: '4' },
+  { label: 'Heat Pump Pool Heater', value: '5' },
+  { label: 'Furnace (Heat-pump)', value: '6' },
+  { label: 'Cooler', value: '7' },
+  { label: 'Freezer', value: '8' },
+  { label: 'AC w/ Reheat', value: '9' },
+  { label: 'Other', value: '10' },
+];
+
 const SCHEMA: Schema<Entry> = [
   [
     { label: 'System Description', name: 'type', required: true },
+    {
+      label: 'System Type',
+      name: 'systemReadingsTypeId',
+      required: true,
+      options: SYSTEM_READINGS_TYPE_OPTIONS,
+    },
+  ],
+  [
     { label: 'Start Date', name: 'startDate' },
     { label: 'Item Location', name: 'location' },
   ],
