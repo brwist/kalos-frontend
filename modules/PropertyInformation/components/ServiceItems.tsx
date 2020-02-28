@@ -17,6 +17,7 @@ import { Form, Schema, Option } from '../../ComponentsLibrary/Form';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from './ServiceItemLinks';
+import { ServiceItemReadings } from './ServiceItemReadings';
 
 type Entry = ServiceItem.AsObject;
 
@@ -141,6 +142,7 @@ export class ServiceItems extends PureComponent<Props, State> {
 
   async componentDidMount() {
     await this.load();
+    this.setEditing(this.state.entries[0])();
   }
 
   handleSave = async (data: Entry) => {
@@ -331,15 +333,18 @@ export class ServiceItems extends PureComponent<Props, State> {
           </Modal>
         )}
         {editing && (
-          <Modal open onClose={setEditing()}>
-            <Form<Entry>
-              title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
-              schema={SCHEMA}
-              data={editing}
-              onSave={handleSave}
-              onClose={setEditing()}
-              disabled={saving}
-            />
+          <Modal open onClose={setEditing()} compact>
+            <div style={{ display: 'flex' }}>
+              <Form<Entry>
+                title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
+                schema={SCHEMA}
+                data={editing}
+                onSave={handleSave}
+                onClose={setEditing()}
+                disabled={saving}
+              />
+              <ServiceItemReadings {...props} serviceItemId={editing.id} />
+            </div>
           </Modal>
         )}
         {deletingEntry && (

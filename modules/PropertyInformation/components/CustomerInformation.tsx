@@ -99,7 +99,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
     this.UserClient = new UserClient(ENDPOINT);
   }
 
-  loadEntry = async () => {
+  load = async () => {
     const { userID } = this.props;
     const entry = new User();
     entry.setId(userID);
@@ -132,7 +132,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    await this.loadEntry();
+    await this.load();
   }
 
   render() {

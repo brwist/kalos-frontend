@@ -5,6 +5,7 @@ import Paper from '@material-ui/core/Paper';
 
 type Style = {
   compact?: boolean;
+  maxWidth?: number | 'none';
 };
 
 interface Props extends Style {
@@ -19,9 +20,9 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  paper: ({ compact }: Style) => ({
+  paper: ({ compact, maxWidth }: Style) => ({
     width: compact ? 'auto' : '40%',
-    maxWidth: compact ? 370 : 'none',
+    maxWidth,
     minWidth: 300,
     maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
     overflow: 'hidden',
@@ -29,8 +30,14 @@ const useStyles = makeStyles(theme => ({
   }),
 }));
 
-export const Modal = ({ open, onClose, children, compact = false }: Props) => {
-  const classes = useStyles({ compact });
+export const Modal = ({
+  open,
+  onClose,
+  children,
+  compact = false,
+  maxWidth = 'none',
+}: Props) => {
+  const classes = useStyles({ compact, maxWidth });
   return (
     <ModalUI open={open} onClose={onClose} className={classes.modal}>
       <Paper className={classes.paper}>{children}</Paper>
