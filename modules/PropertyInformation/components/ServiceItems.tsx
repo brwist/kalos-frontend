@@ -143,7 +143,6 @@ export class ServiceItems extends PureComponent<Props, State> {
 
   async componentDidMount() {
     await this.load();
-    this.setEditing(this.state.entries[0])();
   }
 
   handleSave = async (data: Entry) => {
