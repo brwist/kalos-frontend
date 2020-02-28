@@ -2,7 +2,12 @@ import React, { PureComponent } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import BuildIcon from '@material-ui/icons/Build';
 import { ReadingClient, Reading } from '@kalos-core/kalos-rpc/Reading';
+import {
+  MaintenanceQuestionClient,
+  MaintenanceQuestion,
+} from '@kalos-core/kalos-rpc/MaintenanceQuestion';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, API_FAILED_GENERAL_ERROR_MSG } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -24,6 +29,7 @@ const REFRIGERANT_TYPES: Options = [
 ];
 
 type Entry = Reading.AsObject;
+type MaintenanceQuestionEntry = MaintenanceQuestion.AsObject;
 
 interface Props {
   serviceItemId: number;
@@ -37,6 +43,7 @@ interface State {
   saving: boolean;
   editedEntry?: Entry;
   deletingEntry?: Entry;
+  maintenanceQuestions: { [key: number]: MaintenanceQuestionEntry };
 }
 
 const SCHEMA: Schema<Entry> = [
@@ -103,6 +110,7 @@ const sort = (a: Entry, b: Entry) => {
 export class ServiceItemReadings extends PureComponent<Props, State> {
   ReadingClient: ReadingClient;
   UserClient: UserClient;
+  MaintenanceQuestionClient: MaintenanceQuestionClient;
 
   constructor(props: Props) {
     super(props);
@@ -114,10 +122,39 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       saving: false,
       editedEntry: undefined,
       deletingEntry: undefined,
+      maintenanceQuestions: {},
     };
     this.ReadingClient = new ReadingClient(ENDPOINT);
     this.UserClient = new UserClient(ENDPOINT);
+    this.MaintenanceQuestionClient = new MaintenanceQuestionClient(ENDPOINT);
   }
+
+  loadMaintenanceQuestions = async (readingIds: number[]) => {
+    const maintenanceQuestions = await Promise.all(
+      readingIds.map(async id => {
+        const entry = new MaintenanceQuestion();
+        entry.setReadingId(id);
+        try {
+          return await this.MaintenanceQuestionClient.Get(entry);
+        } catch (e) {
+          return null;
+        }
+      })
+    );
+    return maintenanceQuestions.reduce(
+      (aggr, entry) => ({
+        ...aggr,
+        ...(entry === null
+          ? {}
+          : {
+              [entry.readingId]: entry,
+            }),
+      }),
+      {}
+    ) as {
+      [key: number]: MaintenanceQuestionEntry;
+    };
+  };
 
   load = async () => {
     this.setState({ loading: true });
@@ -130,7 +167,15 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       const users = await getUsersByIds(
         resultsList.map(({ userId }) => userId)
       );
-      this.setState({ entries: resultsList.sort(sort), users, loading: false });
+      const maintenanceQuestions = await this.loadMaintenanceQuestions(
+        resultsList.map(({ id }) => id)
+      );
+      this.setState({
+        entries: resultsList.sort(sort),
+        maintenanceQuestions,
+        users,
+        loading: false,
+      });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
@@ -190,14 +235,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
   };
 
   render() {
-    const {
-      props,
-      state,
-      setEditing,
-      handleSave,
-      handleDelete,
-      setDeleting,
-    } = this;
+    const { state, setEditing, handleSave, handleDelete, setDeleting } = this;
     const {
       entries,
       users,
@@ -206,20 +244,26 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       editedEntry,
       deletingEntry,
       error,
+      maintenanceQuestions,
     } = state;
     const data: Data = loading
       ? makeFakeRows()
       : entries.map(entry => {
-          const { date, userId } = entry;
+          const { id, date, userId } = entry;
           return [
             {
               value: [
                 formatDate(date),
+                '-',
+                maintenanceQuestions[id] ? 'Maintenance' : 'Service',
                 userId === 0
                   ? ''
-                  : `${users[userId].firstname} ${users[userId].lastname}`,
+                  : ` - ${users[userId].firstname} ${users[userId].lastname}`,
               ].join(' '),
               actions: [
+                <IconButton key={0} style={{ marginLeft: 4 }} size="small">
+                  <BuildIcon />
+                </IconButton>,
                 <IconButton
                   key={1}
                   style={{ marginLeft: 4 }}
