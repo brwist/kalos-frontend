@@ -19,15 +19,16 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import TableSortLabel from '@material-ui/core/TableSortLabel';
 import Paper from '@material-ui/core/Paper';
 import { DepartmentPicker } from '../../Pickers/Department';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { EmployeePicker } from '../../Pickers/Employee';
 import { TxnStatusPicker } from '../../Pickers/TransactionStatus';
-import { Loader } from '../../Loader/main';
 import Typography from '@material-ui/core/Typography';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import Skeleton from '@material-ui/lab/Skeleton';
 import {
   TransactionActivityClient,
   TransactionActivity,
@@ -36,6 +37,7 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../../constants';
+import { range } from '../../../helpers';
 
 interface props {
   userID: number;
@@ -55,7 +57,7 @@ interface state {
 }
 
 interface IFilter {
-  [key: string]: number | string | undefined;
+  [key: string]: number | string | ISort | undefined;
   userID?: number;
   dateCreated?: string;
   yearCreated: string;
@@ -64,7 +66,28 @@ interface IFilter {
   costCenterID?: number;
   departmentID?: number;
   statusID?: number;
+  sort: ISort;
 }
+
+interface ISort {
+  sortBy: sortString;
+  sortDir: 'asc' | 'desc';
+}
+
+type sortString =
+  | 'timestamp'
+  | 'owner_id'
+  | 'cost_center_id'
+  | 'department_id'
+  | 'job_number'
+  | 'amount';
+
+const sortableHeader = {
+  cursor: 'pointer',
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+};
 
 export class TransactionAdminView extends React.Component<props, state> {
   TxnClient: TransactionClient;
@@ -81,6 +104,10 @@ export class TransactionAdminView extends React.Component<props, state> {
       filters: {
         statusID: this.props.isSU ? 3 : 2,
         yearCreated: `${new Date().getFullYear()}`,
+        sort: {
+          sortBy: 'timestamp',
+          sortDir: 'asc',
+        },
       },
       count: 0,
     };
@@ -100,6 +127,8 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.makeUpdateNotes = this.makeUpdateNotes.bind(this);
     this.makeUpdateCostCenter = this.makeUpdateCostCenter.bind(this);
     this.toggleLoading = this.toggleLoading.bind(this);
+    this.setSort = this.setSort.bind(this);
+    this.sortTxns = this.sortTxns.bind(this);
   }
 
   toggleLoading = (cb?: () => void) => {
@@ -175,6 +204,10 @@ export class TransactionAdminView extends React.Component<props, state> {
       {
         filters: {
           yearCreated: `${new Date().getFullYear()}`,
+          sort: {
+            sortBy: 'timestamp',
+            sortDir: 'asc',
+          },
         },
         page: 0,
         count: 0,
@@ -268,6 +301,8 @@ export class TransactionAdminView extends React.Component<props, state> {
     if (filters.statusID) {
       obj.setStatusId(filters.statusID);
     }
+    obj.setOrderBy(filters.sort.sortBy);
+    obj.setOrderDir(filters.sort.sortDir);
     return obj;
   }
 
@@ -322,6 +357,33 @@ export class TransactionAdminView extends React.Component<props, state> {
         });
       }),
     );
+  }
+
+  setSort(sortBy: sortString) {
+    this.setState(prevState => {
+      console.log(
+        sortBy,
+        prevState.filters.sort.sortBy,
+        prevState.filters.sort.sortBy === sortBy,
+      );
+      let newDir: 'desc' | 'asc' = 'desc';
+      if (
+        prevState.filters.sort.sortDir === newDir &&
+        prevState.filters.sort.sortBy === sortBy
+      ) {
+        newDir = 'asc';
+      }
+      console.log(newDir);
+      return {
+        filters: {
+          ...prevState.filters,
+          sort: {
+            sortDir: newDir,
+            sortBy,
+          },
+        },
+      };
+    }, this.fetchTxns);
   }
 
   copyText(text: string): void {
@@ -399,8 +461,56 @@ export class TransactionAdminView extends React.Component<props, state> {
     await this.fetchTxns();
   }
 
+  sortTxns() {
+    const { sortBy, sortDir } = this.state.filters.sort;
+    console.log(sortBy, sortDir);
+    if (sortBy === 'timestamp') {
+      return this.state.transactions.sort((a, b) => {
+        const dateA = new Date(a.timestamp.split(' ')[0]);
+        const dateB = new Date(b.timestamp.split(' ')[0]);
+
+        if (sortDir === 'asc') {
+          return dateA.valueOf() - dateB.valueOf();
+        } else {
+          return dateB.valueOf() - dateA.valueOf();
+        }
+      });
+    }
+
+    if (sortBy === 'amount') {
+      return this.state.transactions.sort((a, b) => {
+        if (sortDir === 'asc') {
+          return a.amount - b.amount;
+        } else {
+          return b.amount - a.amount;
+        }
+      });
+    }
+
+    if (sortBy === 'cost_center_id') {
+      return this.state.transactions.sort((a, b) => {
+        if (sortDir === 'asc') {
+          return a.costCenterId - b.costCenterId;
+        } else {
+          return b.costCenterId - a.costCenterId;
+        }
+      });
+    }
+
+    if (sortBy === 'job_number') {
+      return this.state.transactions.sort((a, b) => {
+        if (sortDir === 'asc') {
+          return a.jobId - b.jobId;
+        } else {
+          return b.jobId - a.jobId;
+        }
+      });
+    }
+    return this.state.transactions;
+  }
+
   render() {
-    const txns = this.state.transactions.sort((a, b) => b.id - a.id);
+    const txns = this.sortTxns();
     let employeeTest;
     if (this.state.departmentView) {
       employeeTest = makeEmployeeTest(this.props.departmentId);
@@ -565,45 +675,110 @@ export class TransactionAdminView extends React.Component<props, state> {
               </span>
             </Tooltip>
           </Toolbar>
-          <Table stickyHeader style={{ maxHeight: '100%' }} size="small">
+          <Table stickyHeader style={{ maxHeight: '100%' }}>
             <TableHead>
               <TableRow>
-                <TableCell align="center">Transaction Date</TableCell>
-                <TableCell align="center">Purchaser</TableCell>
-                <TableCell align="center">Account Type</TableCell>
-                <TableCell align="center">Department</TableCell>
-                <TableCell align="center">Job Number</TableCell>
-                <TableCell align="center">Amount</TableCell>
-                <TableCell align="center">Description</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell
+                  align="center"
+                  sortDirection={this.state.filters.sort.sortDir}
+                  style={{ padding: 0 }}
+                >
+                  <TableSortLabel
+                    active={this.state.filters.sort.sortBy === 'timestamp'}
+                    direction={this.state.filters.sort.sortDir}
+                    onClick={() => this.setSort('timestamp')}
+                  >
+                    Transaction Date
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell align="center" style={{ padding: 0 }}>
+                  Purchaser
+                </TableCell>
+                <TableCell align="center" style={{ padding: 0 }}>
+                  Account Type
+                </TableCell>
+                <TableCell align="center" style={{ padding: 0 }}>
+                  Department
+                </TableCell>
+                <TableCell align="center" style={{ padding: 0 }}>
+                  Job Number
+                </TableCell>
+                <TableCell
+                  style={{ padding: 0 }}
+                  align="right"
+                  sortDirection={this.state.filters.sort.sortDir}
+                >
+                  <TableSortLabel
+                    active={this.state.filters.sort.sortBy === 'amount'}
+                    direction={this.state.filters.sort.sortDir}
+                    onClick={() => this.setSort('amount')}
+                  >
+                    Amount
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell align="center" style={{ padding: 0 }}>
+                  Description
+                </TableCell>
+                <TableCell align="center" colSpan={2} style={{ padding: 0 }}>
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {txns.map(t => (
-                <TransactionRow
-                  txn={t}
-                  key={`txnRow-${t.id}`}
-                  acceptOverride={
-                    this.props.userID === 213 || this.props.userID === 336
-                  }
-                  departmentView={this.state.departmentView}
-                  enter={this.makeUpdateStatus(t.id, 5, 'recorded')}
-                  accept={this.makeUpdateStatus(t.id, 3, 'accepted')}
-                  reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
-                  refresh={this.fetchTxns}
-                  addJobNumber={this.makeAddJobNumber(t.id)}
-                  updateNotes={this.makeUpdateNotes(t.id)}
-                  updateCostCenter={this.makeUpdateCostCenter(t.id)}
-                  updateDepartment={this.makeUpdateDepartment(t.id)}
-                  toggleLoading={this.toggleLoading}
-                />
-              ))}
+              {!this.state.isLoading &&
+                txns.map(t => (
+                  <TransactionRow
+                    txn={t}
+                    key={`txnRow-${t.id}`}
+                    acceptOverride={
+                      this.props.userID === 213 || this.props.userID === 336
+                    }
+                    departmentView={this.state.departmentView}
+                    enter={this.makeUpdateStatus(t.id, 5, 'recorded')}
+                    accept={this.makeUpdateStatus(t.id, 3, 'accepted')}
+                    reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
+                    refresh={this.fetchTxns}
+                    addJobNumber={this.makeAddJobNumber(t.id)}
+                    updateNotes={this.makeUpdateNotes(t.id)}
+                    updateCostCenter={this.makeUpdateCostCenter(t.id)}
+                    updateDepartment={this.makeUpdateDepartment(t.id)}
+                    toggleLoading={this.toggleLoading}
+                  />
+                ))}
+              {this.state.isLoading &&
+                range(0, 25).map(i => (
+                  <TableRow key={`${i}_txn_skeleton_row`}>
+                    <TableCell align="center" style={{ height: 85 }}>
+                      <Skeleton variant="text" width={40} height={16} />
+                    </TableCell>
+                    <TableCell align="center" style={{ height: 85 }}>
+                      <Skeleton variant="text" width={40} height={16} />
+                    </TableCell>
+                    <TableCell align="center" style={{ height: 85 }}>
+                      <Skeleton variant="text" width={40} height={16} />
+                    </TableCell>
+                    <TableCell align="center" style={{ height: 85 }}>
+                      <Skeleton variant="text" width={40} height={16} />
+                    </TableCell>
+                    <TableCell align="center" style={{ height: 85 }}>
+                      <Skeleton variant="text" width={40} height={16} />
+                    </TableCell>
+                    <TableCell align="center" style={{ height: 85 }}>
+                      <Skeleton variant="text" width={40} height={16} />
+                    </TableCell>
+                    <TableCell align="center" style={{ height: 85 }}>
+                      <Skeleton variant="text" width={40} height={16} />
+                    </TableCell>
+                    <TableCell align="center" style={{ height: 85 }}>
+                      <Skeleton variant="text" width={40} height={16} />
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
           {!this.state.isLoading && this.state.count === 0 && (
             <Typography>0 results</Typography>
           )}
-          {this.state.isLoading && <Loader />}
         </>
       </Paper>
     );
