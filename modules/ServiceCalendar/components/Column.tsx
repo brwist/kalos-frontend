@@ -10,7 +10,6 @@ const eventClient = new EventClient(ENDPOINT);
 
 type Props = {
   date: string,
-  eventClient: EventClient,
 }
 
 type State = {
@@ -19,26 +18,30 @@ type State = {
   reminders: Event.AsObject[];
   isLoading: boolean;
   showCompleted: boolean;
+  totalCount: number,
+  fetchedCount: number,
+  page: number,
 }
 
 type Action =
   | { type: 'toggleShowCompleted' }
   | { type: 'toggleLoading' }
-  | { type: 'addData', data: Event.AsObject[] };
+  | { type: 'addData', data: Event.AsObject[], totalCount: number, page: number };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
   case 'addData': {
-    console.log(action.data);
     const completedCalls = action.data.filter(call => call.logJobStatus === 'Completed');
     const calls = action.data.filter(call => call.logJobStatus !== 'Completed' && call.color !== 'ffbfbf');
     const reminders = action.data.filter(call => call.color === 'ffbfbf');
-    console.log(state)
     return {
       ...state,
       completedCalls: [...state.completedCalls, ...completedCalls],
       calls: [...state.calls, ...calls],
       reminders: [...state.reminders, ...reminders],
+      totalCount: action.totalCount,
+      fetchedCount: state.fetchedCount + action.data.length,
+      page: action.page,
     };
   }
   case 'toggleShowCompleted': {
@@ -64,31 +67,48 @@ const initialState: State = {
   calls: [],
   completedCalls: [],
   reminders: [],
+  totalCount: 0,
+  fetchedCount: 0,
+  page: 0,
 };
 
 const Column = ({ date }: Props) => {
-  const [{calls, completedCalls, reminders, showCompleted, isLoading}, dispatch] = useReducer(reducer, initialState);
+  const [
+    {
+      calls,
+      completedCalls,
+      reminders,
+      showCompleted,
+      isLoading,
+      fetchedCount,
+      totalCount,
+      page
+    },
+    dispatch
+  ] = useReducer(reducer, initialState);
+
   const fetchCalls = (page = 0) => {
     (async () => {
       if (page === 0) {
-        await dispatch({ type: 'toggleLoading' });
+        dispatch({ type: 'toggleLoading' });
       }
       const reqObj = new Event();
       reqObj.setDateStarted(date);
       reqObj.setPageNumber(page);
       const res = (await eventClient.BatchGet(reqObj)).toObject();
-      await dispatch({ type: 'addData', data: res.resultsList });
-      await dispatch({ type: 'toggleLoading'});
-      /*if ((calls.length + completedCalls.length + reminders.length) !== res.totalCount) {
-        page = page + 1;
-        await fetchCalls(page);
-      } else {
-        await dispatch({ type: 'toggleLoading'});
-      }*/
+      await dispatch({ type: 'addData', data: res.resultsList, totalCount: res.totalCount, page });
+      if (page === 0) {
+        dispatch({ type: 'toggleLoading' });
+      }
     })();
   };
 
   useEffect(fetchCalls, []);
+  useEffect(() => {
+    if(fetchedCount < totalCount) {
+      fetchCalls(page + 1);
+    }
+  }, [fetchedCount]);
 
   if (isLoading) {
     return null;
