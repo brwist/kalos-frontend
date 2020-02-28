@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback, useState } from 'react';
+import React, { ReactElement, useCallback, useState, ReactNode } from 'react';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from '../SectionBar';
@@ -39,6 +39,7 @@ interface Props<T> {
   disabled?: boolean;
   readOnly?: boolean;
   buttons?: ButtonProps[];
+  children?: ReactNode;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -118,6 +119,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   disabled = false,
   readOnly = false,
   buttons = [],
+  children,
 }) => {
   const classes = useStyles();
   const [formData, setFormData] = useState(
@@ -186,6 +188,9 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         className={classes.sectionBar}
       />
       <div className={classes.form}>
+        {children && (
+          <Typography className={classes.error}>{children}</Typography>
+        )}
         {Object.keys(validations).length > 0 && (
           <Typography className={classes.error}>
             Please correct the following validation errors and try again.
