@@ -19,13 +19,14 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  paper: {
-    width: ({ compact }: Style) => (compact ? 'auto' : '40%'),
+  paper: ({ compact }: Style) => ({
+    width: compact ? 'auto' : '40%',
+    maxWidth: compact ? 370 : 'none',
     minWidth: 300,
     maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
     overflow: 'hidden',
     outline: 'none',
-  },
+  }),
 }));
 
 export const Modal = ({ open, onClose, children, compact = false }: Props) => {

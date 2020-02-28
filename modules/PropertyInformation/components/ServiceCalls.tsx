@@ -10,6 +10,7 @@ import {
   Dir,
 } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { formatTime, formatDate, makeFakeRows } from '../../../helpers';
 
 type Entry = Event.AsObject;
@@ -24,6 +25,7 @@ interface State {
   entries: Entry[];
   loading: boolean;
   error: boolean;
+  deletingEntry?: Entry;
   orderByFields: (keyof Entry)[];
   orderByDBField: string;
   dir: Dir;
@@ -40,6 +42,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       entries: [],
       loading: true,
       error: false,
+      deletingEntry: undefined,
       dir: 'ASC',
       orderByFields: ['dateStarted'],
       orderByDBField: 'date_started',
@@ -91,6 +94,22 @@ export class ServiceCalls extends PureComponent<Props, State> {
     );
   };
 
+  handleDelete = async () => {
+    // FIXME: service call is not actually deleted for some reason
+    const { propertyId } = this.props;
+    const { deletingEntry } = this.state;
+    this.setDeleting()();
+    if (deletingEntry) {
+      this.setState({ loading: true });
+      const entry = new Event();
+      entry.setId(deletingEntry.id);
+      entry.setPropertyId(propertyId);
+      entry.setFieldMaskList(['setPropertyId']);
+      await this.EventClient.Delete(entry);
+      await this.load();
+    }
+  };
+
   async componentDidMount() {
     await this.load();
   }
@@ -111,6 +130,9 @@ export class ServiceCalls extends PureComponent<Props, State> {
     if (A < B) return dir === 'ASC' ? -1 : 1;
     return 0;
   };
+
+  setDeleting = (deletingEntry?: Entry) => () =>
+    this.setState({ deletingEntry });
 
   handleChangePage = (page: number) => {
     this.setState({ page }, this.load);
@@ -133,9 +155,20 @@ export class ServiceCalls extends PureComponent<Props, State> {
       handleOrder,
       handleChangePage,
       handleRowClick,
+      setDeleting,
+      handleDelete,
     } = this;
     const { userID, propertyId, className } = props;
-    const { entries, loading, error, dir, orderByDBField, count, page } = state;
+    const {
+      entries,
+      loading,
+      error,
+      dir,
+      orderByDBField,
+      count,
+      page,
+      deletingEntry,
+    } = state;
     const columns: Columns = [
       {
         name: 'Date / Time',
@@ -168,8 +201,8 @@ export class ServiceCalls extends PureComponent<Props, State> {
     ];
     const data: Data = loading
       ? makeFakeRows(5)
-      : entries.map(
-          ({
+      : entries.map(entry => {
+          const {
             id,
             dateStarted,
             timeStarted,
@@ -180,7 +213,8 @@ export class ServiceCalls extends PureComponent<Props, State> {
             logJobNumber,
             contractNumber,
             color,
-          }) => [
+          } = entry;
+          return [
             {
               value:
                 formatDate(dateStarted) +
@@ -219,14 +253,19 @@ export class ServiceCalls extends PureComponent<Props, State> {
             {
               value: contractNumber,
               actions: [
-                <IconButton key={2} style={{ marginLeft: 4 }} size="small">
+                <IconButton
+                  key={2}
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={setDeleting(entry)}
+                >
                   <DeleteIcon />
                 </IconButton>,
               ],
               onClick: handleRowClick(id),
             },
-          ]
-        );
+          ];
+        });
     return (
       <div className={className}>
         <SectionBar
@@ -257,6 +296,26 @@ export class ServiceCalls extends PureComponent<Props, State> {
           compact
           hoverable
         />
+        {deletingEntry && (
+          <ConfirmDelete
+            open
+            onClose={setDeleting()}
+            onConfirm={handleDelete}
+            kind="Service Call"
+            name={
+              deletingEntry.jobType +
+              (deletingEntry.jobSubtype
+                ? ' / ' + deletingEntry.jobSubtype
+                : '') +
+              ' ' +
+              formatDate(deletingEntry.dateStarted) +
+              ' ' +
+              formatTime(deletingEntry.timeStarted) +
+              ' - ' +
+              formatTime(deletingEntry.timeEnded)
+            }
+          />
+        )}
       </div>
     );
   }
