@@ -80,6 +80,7 @@ const useStyles = makeStyles(theme => ({
     paddingBottom: theme.spacing(0.5),
     paddingLeft: theme.spacing(2),
     paddingRight: theme.spacing(2),
+    marginTop: theme.spacing(-1),
     marginLeft: theme.spacing(-2),
     marginRight: theme.spacing(-2),
     marginBottom: theme.spacing(),
@@ -101,6 +102,11 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
+const getDefaultValueByType = (type: Type) => {
+  if (type === 'number') return 0;
+  return '';
+};
+
 export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   title,
   schema,
@@ -117,8 +123,10 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       (aggr, fields) => ({
         ...aggr,
         ...fields.reduce(
-          (aggr, { name }) =>
-            name === undefined ? aggr : { ...aggr, [name]: data[name] },
+          (aggr, { name, type = 'text' }) =>
+            name === undefined
+              ? aggr
+              : { ...aggr, [name]: data[name] || getDefaultValueByType(type) },
           {}
         ),
       }),

@@ -10,10 +10,6 @@ import { SchemaProps, Option, Type } from '../Form';
 
 export type Value = string | number;
 
-const getDefaultValueByType = (type: Type) => {
-  if (type === 'number') return 0;
-  return '';
-};
 export interface Props<T> extends SchemaProps<T> {
   value: T[keyof T];
   disabled?: boolean;
@@ -43,13 +39,12 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   validation = '',
   helperText = '',
   type = 'text',
-  value: propValue,
+  value,
   readOnly = false,
   className = '',
   ...props
 }) => {
   const classes = useStyles();
-  const value = propValue || getDefaultValueByType(type);
   const handleChange = useCallback(
     ({ target: { value } }) => onChange(type === 'number' ? +value : value),
     [type, onChange]
