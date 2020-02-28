@@ -28,8 +28,83 @@ const REFRIGERANT_TYPES: Options = [
   { label: 'Other', value: '3' },
 ];
 
+const MAINTENANCE_CONDITIONS: Options = [
+  'New',
+  'Good',
+  'Fair',
+  'Poor',
+  'Inoperative',
+];
+
+const THERMOSTAT_OPTIONS: Options = [
+  { label: 'Good', value: 1 },
+  { label: 'Physical Damage', value: 2 },
+  { label: 'Miscalibrated', value: 3 },
+  { label: 'Mercury', value: 4 },
+];
+
+const PLATEFORM_OPTIONS: Options = [
+  { label: 'Solid', value: 1 },
+  { label: 'Mild Damage', value: 2 },
+  { label: 'Disruptive Damage', value: 3 },
+  { label: 'Replace', value: 4 },
+];
+
+const FLOAT_SWITCH_OPTIONS: Options = [
+  { label: 'Working', value: 1 },
+  { label: 'Not Working', value: 2 },
+  { label: 'Not Installed', value: 3 },
+];
+
+const COIL_OPTIONS: Options = [
+  { label: 'Clean', value: 1 },
+  { label: 'Mild Damage', value: 2 },
+  { label: 'Dirty', value: 3 },
+  { label: 'Blocked', value: 4 },
+];
+
+const HURRICANE_PAD_OPTIONS: Options = [
+  { label: 'New', value: 1 },
+  { label: 'Sinking', value: 2 },
+  { label: 'Crumbling', value: 3 },
+  { label: 'Replace', value: 4 },
+];
+
+const LINESET_OPTIONS: Options = [
+  { label: 'New', value: 1 },
+  { label: 'Insulation Damaged', value: 2 },
+  { label: 'Significant Patina', value: 3 },
+  { label: 'Replace', value: 4 },
+];
+
+const DRAIN_LINE_OPTIONS: Options = [
+  { label: 'Clean', value: 1 },
+  { label: 'Mildly Blocked', value: 2 },
+  { label: 'Blocked', value: 3 },
+  { label: 'Broken', value: 4 },
+];
+
+const GAS_TYPE_OPTIONS: Options = [
+  { label: 'LP', value: 1 },
+  { label: 'Natural gas', value: 2 },
+];
+
+const BURNER_OPTIONS: Options = [
+  { label: 'Clean', value: 1 },
+  { label: 'Mild Damage', value: 2 },
+  { label: 'Carbon Buildup', value: 3 },
+  { label: 'Major Corrosion', value: 4 },
+];
+
+const HEAT_EXCHANGE_OPTIONS: Options = [
+  { label: 'Clean', value: 1 },
+  { label: 'Mild Damage', value: 2 },
+  { label: 'Dirty', value: 3 },
+  { label: 'Major Corrosion', value: 4 },
+];
+
 type Entry = Reading.AsObject;
-type MaintenanceQuestionEntry = MaintenanceQuestion.AsObject;
+type MaintenanceEntry = MaintenanceQuestion.AsObject;
 
 interface Props {
   serviceItemId: number;
@@ -43,10 +118,11 @@ interface State {
   saving: boolean;
   editedEntry?: Entry;
   deletingEntry?: Entry;
-  maintenanceQuestions: { [key: number]: MaintenanceQuestionEntry };
+  editedMaintenanceEntry?: MaintenanceEntry;
+  maintenanceQuestions: { [key: number]: MaintenanceEntry };
 }
 
-const SCHEMA: Schema<Entry> = [
+const SCHEMA_READING: Schema<Entry> = [
   [{ label: 'Refrigerant', headline: true }],
   [
     {
@@ -101,6 +177,74 @@ const SCHEMA: Schema<Entry> = [
   [{ label: 'Notes', name: 'notes', multiline: true }],
 ];
 
+const SCHEMA_MAINTENANCE: Schema<MaintenanceEntry> = [
+  [{ label: '#1', headline: true }],
+  [
+    {
+      label: 'Condition',
+      name: 'conditionRating1',
+      options: MAINTENANCE_CONDITIONS,
+      required: true,
+    },
+    { label: 'Notes', name: 'conditionNotes1' },
+  ],
+  [{ label: '#2', headline: true }],
+  [
+    {
+      label: 'Condition',
+      name: 'conditionRating2',
+      options: MAINTENANCE_CONDITIONS,
+      required: true,
+    },
+    { label: 'Notes', name: 'conditionNotes2' },
+  ],
+  [{ label: '#3', headline: true }],
+  [
+    {
+      label: 'Condition',
+      name: 'conditionRating3',
+      options: MAINTENANCE_CONDITIONS,
+      required: true,
+    },
+    { label: 'Notes', name: 'conditionNotes3' },
+  ],
+  [{ label: 'Refrigerant', headline: true }],
+  [
+    { label: 'Thermostat', name: 'thermostat', options: THERMOSTAT_OPTIONS },
+    { label: 'Plateform', name: 'plateform', options: PLATEFORM_OPTIONS },
+  ],
+  [
+    {
+      label: 'Float switch',
+      name: 'floatSwitch',
+      options: FLOAT_SWITCH_OPTIONS,
+    },
+    { label: 'Evaportor Coil', name: 'evaporatorCoil', options: COIL_OPTIONS },
+  ],
+  [{ label: 'Compressor', headline: true }],
+  [
+    { label: 'Condenser Coil', name: 'condenserCoil', options: COIL_OPTIONS },
+    {
+      label: 'Hurricane Pad',
+      name: 'hurricanePad',
+      options: HURRICANE_PAD_OPTIONS,
+    },
+  ],
+  [
+    { label: 'Lineset', name: 'lineset', options: LINESET_OPTIONS },
+    { label: 'Drain Line', name: 'drainLine', options: DRAIN_LINE_OPTIONS },
+  ],
+  [
+    { label: 'Gas Type', name: 'gasType', options: GAS_TYPE_OPTIONS },
+    { label: 'Burner', name: 'burner', options: BURNER_OPTIONS },
+    {
+      label: 'Heat Exchanger',
+      name: 'heatExchanger',
+      options: HEAT_EXCHANGE_OPTIONS,
+    },
+  ],
+];
+
 const sort = (a: Entry, b: Entry) => {
   if (a.date > b.date) return -1;
   if (a.date < b.date) return 1;
@@ -123,6 +267,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       editedEntry: undefined,
       deletingEntry: undefined,
       maintenanceQuestions: {},
+      editedMaintenanceEntry: undefined,
     };
     this.ReadingClient = new ReadingClient(ENDPOINT);
     this.UserClient = new UserClient(ENDPOINT);
@@ -152,7 +297,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       }),
       {}
     ) as {
-      [key: number]: MaintenanceQuestionEntry;
+      [key: number]: MaintenanceEntry;
     };
   };
 
@@ -188,6 +333,9 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
   setEditing = (editedEntry?: Entry) => () =>
     this.setState({ editedEntry, error: false });
 
+  setEditingMaintenance = (editedMaintenanceEntry?: MaintenanceEntry) => () =>
+    this.setState({ editedMaintenanceEntry, error: false });
+
   setDeleting = (deletingEntry?: Entry) => () =>
     this.setState({ deletingEntry });
 
@@ -222,6 +370,37 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
     }
   };
 
+  handleSaveMaintenance = async (data: MaintenanceEntry) => {
+    const { editedMaintenanceEntry } = this.state;
+    if (editedMaintenanceEntry) {
+      const isNew = !editedMaintenanceEntry.id;
+      this.setState({ saving: true });
+      const entry = new MaintenanceQuestion();
+      if (!isNew) {
+        entry.setId(editedMaintenanceEntry.id);
+      }
+      entry.setReadingId(editedMaintenanceEntry.readingId);
+      const fieldMaskList = ['setReadingId'];
+      for (const fieldName in data) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        entry[methodName](data[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      entry.setFieldMaskList(fieldMaskList);
+      try {
+        await this.MaintenanceQuestionClient[isNew ? 'Create' : 'Update'](
+          entry
+        );
+        this.setState({ saving: false });
+        this.setEditingMaintenance()();
+        await this.load();
+      } catch (e) {
+        this.setState({ error: true, saving: false });
+      }
+    }
+  };
+
   handleDelete = async () => {
     const { deletingEntry } = this.state;
     this.setDeleting()();
@@ -235,7 +414,15 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
   };
 
   render() {
-    const { state, setEditing, handleSave, handleDelete, setDeleting } = this;
+    const {
+      state,
+      setEditing,
+      handleSave,
+      handleDelete,
+      setDeleting,
+      setEditingMaintenance,
+      handleSaveMaintenance,
+    } = this;
     const {
       entries,
       users,
@@ -245,11 +432,14 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       deletingEntry,
       error,
       maintenanceQuestions,
+      editedMaintenanceEntry,
     } = state;
     const data: Data = loading
       ? makeFakeRows()
       : entries.map(entry => {
           const { id, date, userId } = entry;
+          const newMaintenanceQuestion = new MaintenanceQuestion();
+          newMaintenanceQuestion.setReadingId(id);
           return [
             {
               value: [
@@ -261,7 +451,15 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
                   : ` - ${users[userId].firstname} ${users[userId].lastname}`,
               ].join(' '),
               actions: [
-                <IconButton key={0} style={{ marginLeft: 4 }} size="small">
+                <IconButton
+                  key={0}
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={setEditingMaintenance(
+                    maintenanceQuestions[id] ||
+                      newMaintenanceQuestion.toObject()
+                  )}
+                >
                   <BuildIcon />
                 </IconButton>,
                 <IconButton
@@ -286,13 +484,24 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
         });
     return (
       <div style={{ width: 500, marginLeft: 8 }}>
-        {editedEntry ? (
+        {editedMaintenanceEntry !== undefined ? (
+          <Form<MaintenanceEntry>
+            title={`${editedMaintenanceEntry.id ? 'Edit' : 'Add'} Maintenance`}
+            schema={SCHEMA_MAINTENANCE}
+            data={editedMaintenanceEntry}
+            onSave={handleSaveMaintenance}
+            onClose={setEditingMaintenance()}
+            disabled={saving}
+          >
+            {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
+          </Form>
+        ) : editedEntry ? (
           <Form<Entry>
             title={`${editedEntry.id ? 'Edit' : 'Add'} Reading`}
-            schema={SCHEMA}
+            schema={SCHEMA_READING}
             data={editedEntry}
             onSave={handleSave}
-            onClose={setEditing(undefined)}
+            onClose={setEditing()}
             disabled={saving}
           >
             {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
@@ -321,7 +530,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
         {deletingEntry && (
           <ConfirmDelete
             open
-            onClose={setDeleting(undefined)}
+            onClose={setDeleting()}
             onConfirm={handleDelete}
             kind="Reading"
             name={[
