@@ -162,13 +162,13 @@ export function TransactionRow({
   return (
     <>
       <TableRow hover>
-        <TableCell align="center">
+        <TableCell align="center" style={{ padding: 0 }}>
           {new Date(txn.timestamp.split(' ').join('T')).toLocaleDateString()}
         </TableCell>
-        <TableCell align="center">
+        <TableCell align="center" style={{ padding: 0 }}>
           {`${txn.ownerName} (${txn.cardUsed})` || ''}
         </TableCell>
-        <TableCell align="center">
+        <TableCell align="center" style={{ padding: 0 }}>
           {isEditingCostCenter && (
             <CostCenterPicker
               selected={txn.costCenter ? txn.costCenter.id : 0}
@@ -184,17 +184,21 @@ export function TransactionRow({
             </Button>
           )}
         </TableCell>
-        <TableCell align="center">
+        <TableCell align="center" style={{ padding: 0 }}>
           {txn.department
             ? `${txn.department.description} (${txn.department.classification})`
             : ''}
         </TableCell>
-        <TableCell align="center">{txn.jobId}</TableCell>
-        <TableCell align="center">${amount}</TableCell>
-        <TableCell align="center">
-          {txn.description} / {txn.vendor}
+        <TableCell align="center" style={{ padding: 0 }}>
+          {txn.jobId}
         </TableCell>
-        <TableCell align="right">
+        <TableCell align="center" style={{ padding: 0 }}>
+          ${amount}
+        </TableCell>
+        <TableCell align="center" style={{ padding: 0 }}>
+          {txn.vendor}
+        </TableCell>
+        <TableCell align="right" colSpan={2} style={{ padding: 0 }}>
           <Tooltip title="Copy data to clipboard" placement="top">
             <IconButton
               onClick={() =>
