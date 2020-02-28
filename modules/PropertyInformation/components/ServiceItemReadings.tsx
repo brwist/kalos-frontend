@@ -108,6 +108,7 @@ type MaintenanceEntry = MaintenanceQuestion.AsObject;
 
 interface Props {
   serviceItemId: number;
+  loggedUserId: number;
 }
 
 interface State {
@@ -340,7 +341,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
     this.setState({ deletingEntry });
 
   handleSave = async (data: Entry) => {
-    const { serviceItemId } = this.props;
+    const { serviceItemId, loggedUserId } = this.props;
     const { editedEntry } = this.state;
     if (editedEntry) {
       const isNew = !editedEntry.id;
@@ -351,7 +352,8 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       }
       entry.setServiceItemId(serviceItemId);
       entry.setDate(timestamp(true));
-      const fieldMaskList = ['setServiceItemId', 'setDate'];
+      entry.setUserId(loggedUserId);
+      const fieldMaskList = ['setServiceItemId', 'setDate', 'setUserId'];
       for (const fieldName in data) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
         // @ts-ignore
