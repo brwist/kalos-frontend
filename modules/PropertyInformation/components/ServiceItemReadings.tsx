@@ -179,12 +179,12 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
 
   handleDelete = async () => {
     const { deletingEntry } = this.state;
-    this.setDeleting(undefined)();
+    this.setDeleting()();
     if (deletingEntry) {
-      //   this.setState({ loading: true });
-      //   const entry = new PropLink();
-      //   entry.setId(deletingEntry.id);
-      //   await this.SiLinkClient.Delete(entry);
+      this.setState({ loading: true });
+      const entry = new Reading();
+      entry.setId(deletingEntry.id);
+      await this.ReadingClient.Delete(entry);
       await this.load();
     }
   };
@@ -280,7 +280,16 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
             onClose={setDeleting(undefined)}
             onConfirm={handleDelete}
             kind="Reading"
-            name={formatDate(deletingEntry.date)}
+            name={[
+              formatDate(deletingEntry.date),
+              deletingEntry.userId === 0
+                ? ''
+                : `${users[deletingEntry.userId].firstname} ${
+                    users[deletingEntry.userId].lastname
+                  }`,
+            ]
+              .join(' ')
+              .trim()}
           />
         )}
       </div>
