@@ -13,10 +13,54 @@ import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
-import { makeFakeRows } from '../../../helpers';
+import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
+import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from './ServiceItemLinks';
 
 type Entry = ServiceItem.AsObject;
+
+const SCHEMA: Schema<Entry> = [
+  [
+    { label: 'System Description', name: 'type', required: true },
+    { label: 'Start Date', name: 'startDate' },
+    { label: 'Item Location', name: 'location' },
+  ],
+  [{ label: 'Item #1', headline: true }],
+  [
+    { label: 'Item', name: 'item' },
+    { label: 'Brand', name: 'brand' },
+    { label: 'Model #', name: 'model' },
+    { label: 'Serial #', name: 'serial' },
+  ],
+  [{ label: 'Item #2', headline: true }],
+  [
+    { label: 'Item', name: 'item2' },
+    { label: 'Brand', name: 'brand2' },
+    { label: 'Model #', name: 'model2' },
+    { label: 'Serial #', name: 'serial2' },
+  ],
+  [{ label: 'Item #3', headline: true }],
+  [
+    { label: 'Item', name: 'item3' },
+    { label: 'Brand', name: 'brand3' },
+    { label: 'Model #', name: 'model3' },
+    { label: 'Serial #', name: 'serial3' },
+  ],
+  [{ label: 'Filter', headline: true }],
+  [
+    { label: 'Width', name: 'filterWidth' },
+    { label: 'Length', name: 'filterLength' },
+    { label: 'Thickness', name: 'filterThickness' },
+    { label: 'Quantity', name: 'filterQty' },
+  ],
+  [
+    { label: 'Part #', name: 'filterPartNumber' },
+    { label: 'Vendor', name: 'filterVendor' },
+  ],
+  [{ label: 'Notes', headline: true }],
+  [{ label: 'Additional Notes', name: 'notes', multiline: true }],
+];
 
 interface Props {
   className?: string;
@@ -28,6 +72,9 @@ interface State {
   entries: Entry[];
   loading: boolean;
   error: boolean;
+  editing?: Entry;
+  deletingEntry?: Entry;
+  saving: boolean;
   linkId?: number;
   count: number;
   page: number;
@@ -48,29 +95,80 @@ export class ServiceItems extends PureComponent<Props, State> {
       entries: [],
       loading: true,
       error: false,
+      editing: undefined,
+      deletingEntry: undefined,
+      saving: false,
       count: 0,
       page: 0,
     };
     this.ServiceItemClient = new ServiceItemClient(ENDPOINT);
   }
 
-  loadEntry = async () => {
+  load = async () => {
     this.setState({ loading: true });
     const { propertyId } = this.props;
     const entry = new ServiceItem();
     entry.setPropertyId(propertyId);
     try {
       const response = await this.ServiceItemClient.BatchGet(entry);
-      const { resultsList: entries, totalCount: count } = response.toObject();
-      this.setState({ entries, count, loading: false });
+      const { resultsList, totalCount: count } = response.toObject();
+      this.setState({ entries: resultsList.sort(sort), count, loading: false });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
   };
 
   async componentDidMount() {
-    await this.loadEntry();
+    await this.load();
   }
+
+  handleSave = async (data: Entry) => {
+    const { propertyId } = this.props;
+    const { editing, entries } = this.state;
+    if (editing) {
+      this.setState({ saving: true });
+      const entry = new ServiceItem();
+      entry.setPropertyId(propertyId);
+      const fieldMaskList = ['setPropertyId'];
+      const isNew = !editing.id;
+      if (!isNew) {
+        entry.setId(editing.id);
+      } else {
+        const sortOrder = Math.max(
+          entries[entries.length - 1].sortOrder + 1,
+          entries.length
+        );
+        entry.setSortOrder(sortOrder);
+        fieldMaskList.push('setSortOrder');
+      }
+      for (const fieldName in data) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        entry[methodName](data[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      entry.setFieldMaskList(fieldMaskList);
+      await this.ServiceItemClient[isNew ? 'Create' : 'Update'](entry);
+      this.setState({ saving: false });
+      this.setEditing()();
+      await this.load();
+    }
+  };
+
+  handleDelete = async () => {
+    const { propertyId } = this.props;
+    const { deletingEntry } = this.state;
+    this.setDeleting()();
+    if (deletingEntry) {
+      this.setState({ loading: true });
+      const entry = new ServiceItem();
+      entry.setId(deletingEntry.id);
+      entry.setPropertyId(propertyId);
+      entry.setFieldMaskList(['setPropertyId']);
+      await this.ServiceItemClient.Delete(entry);
+      await this.load();
+    }
+  };
 
   handleReorder = (idx: number, step: number) => async () => {
     this.setState({ loading: true });
@@ -85,14 +183,17 @@ export class ServiceItems extends PureComponent<Props, State> {
     entry.setId(nextItem.id);
     entry.setSortOrder(currentItem.sortOrder);
     await this.ServiceItemClient.Update(entry);
-    await this.loadEntry();
+    await this.load();
   };
 
   handleSetLinkId = (linkId?: number) => () => this.setState({ linkId });
 
-  handleChangePage = (page: number) => {
-    this.setState({ page }, this.loadEntry);
-  };
+  handleChangePage = (page: number) => this.setState({ page }, this.load);
+
+  setEditing = (editing?: Entry) => () => this.setState({ editing });
+
+  setDeleting = (deletingEntry?: Entry) => () =>
+    this.setState({ deletingEntry });
 
   render() {
     const {
@@ -101,57 +202,89 @@ export class ServiceItems extends PureComponent<Props, State> {
       handleReorder,
       handleSetLinkId,
       handleChangePage,
+      setEditing,
+      handleSave,
+      setDeleting,
+      handleDelete,
     } = this;
     const { className } = props;
-    const { entries, loading, error, linkId, count, page } = state;
+    const {
+      entries,
+      loading,
+      error,
+      linkId,
+      count,
+      page,
+      editing,
+      saving,
+      deletingEntry,
+    } = state;
     const data: Data = loading
       ? makeFakeRows()
-      : entries.sort(sort).map(({ id, type: value }, idx) => [
-          {
-            value: (
-              <>
+      : entries.map((entry, idx) => {
+          const { id, type: value } = entry;
+          return [
+            {
+              value: (
+                <>
+                  <IconButton
+                    style={{ marginRight: 4 }}
+                    size="small"
+                    disabled={idx === 0}
+                    onClick={handleReorder(idx, -1)}
+                  >
+                    <ArrowUpwardIcon />
+                  </IconButton>
+                  <IconButton
+                    style={{ marginRight: 4 }}
+                    size="small"
+                    disabled={idx === entries.length - 1}
+                    onClick={handleReorder(idx, 1)}
+                  >
+                    <ArrowDownwardIcon />
+                  </IconButton>
+                  <span>{value}</span>
+                </>
+              ),
+              actions: [
                 <IconButton
-                  style={{ marginRight: 4 }}
+                  key={0}
+                  style={{ marginLeft: 4 }}
                   size="small"
-                  disabled={idx === 0}
-                  onClick={handleReorder(idx, -1)}
+                  onClick={handleSetLinkId(id)}
                 >
-                  <ArrowUpwardIcon />
-                </IconButton>
+                  <LinkIcon />
+                </IconButton>,
                 <IconButton
-                  style={{ marginRight: 4 }}
+                  key={1}
+                  style={{ marginLeft: 4 }}
                   size="small"
-                  disabled={idx === entries.length - 1}
-                  onClick={handleReorder(idx, 1)}
+                  onClick={setEditing(entry)}
                 >
-                  <ArrowDownwardIcon />
-                </IconButton>
-                <span>{value}</span>
-              </>
-            ),
-            actions: [
-              <IconButton
-                key={0}
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={handleSetLinkId(id)}
-              >
-                <LinkIcon />
-              </IconButton>,
-              <IconButton key={1} style={{ marginLeft: 4 }} size="small">
-                <EditIcon />
-              </IconButton>,
-              <IconButton key={2} style={{ marginLeft: 4 }} size="small">
-                <DeleteIcon />
-              </IconButton>,
-            ],
-          },
-        ]);
+                  <EditIcon />
+                </IconButton>,
+                <IconButton
+                  key={2}
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={setDeleting(entry)}
+                >
+                  <DeleteIcon />
+                </IconButton>,
+              ],
+            },
+          ];
+        });
     return (
       <div className={className}>
         <SectionBar
           title="Service Items"
-          buttons={[{ label: 'Add Service Item' }]}
+          buttons={[
+            {
+              label: 'Add Service Item',
+              onClick: setEditing({} as Entry),
+            },
+          ]}
           pagination={{
             count,
             page,
@@ -174,6 +307,27 @@ export class ServiceItems extends PureComponent<Props, State> {
               onClose={handleSetLinkId(undefined)}
             />
           </Modal>
+        )}
+        {editing && (
+          <Modal open onClose={setEditing()}>
+            <Form<Entry>
+              title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
+              schema={SCHEMA}
+              data={editing}
+              onSave={handleSave}
+              onClose={setEditing()}
+              disabled={saving}
+            />
+          </Modal>
+        )}
+        {deletingEntry && (
+          <ConfirmDelete
+            open
+            onClose={setDeleting()}
+            onConfirm={handleDelete}
+            kind="Service Item"
+            name={deletingEntry.type}
+          />
         )}
       </div>
     );
