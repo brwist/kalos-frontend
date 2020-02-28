@@ -4,7 +4,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { ReadingClient, Reading } from '@kalos-core/kalos-rpc/Reading';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT } from '../../../constants';
+import { ENDPOINT, API_FAILED_GENERAL_ERROR_MSG } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
@@ -14,9 +14,14 @@ import {
   getRPCFields,
   formatDate,
   getUsersByIds,
+  timestamp,
 } from '../../../helpers';
 
-const REFRIGERANT_TYPES: Options = ['R410a', 'R22', 'Other'];
+const REFRIGERANT_TYPES: Options = [
+  { label: 'R410a', value: '1' },
+  { label: 'R22', value: '2' },
+  { label: 'Other', value: '3' },
+];
 
 type Entry = Reading.AsObject;
 
@@ -89,6 +94,12 @@ const SCHEMA: Schema<Entry> = [
   [{ label: 'Notes', name: 'notes', multiline: true }],
 ];
 
+const sort = (a: Entry, b: Entry) => {
+  if (a.date > b.date) return -1;
+  if (a.date < b.date) return 1;
+  return 0;
+};
+
 export class ServiceItemReadings extends PureComponent<Props, State> {
   ReadingClient: ReadingClient;
   UserClient: UserClient;
@@ -115,9 +126,11 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
     entry.setServiceItemId(serviceItemId);
     try {
       const response = await this.ReadingClient.BatchGet(entry);
-      const entries = response.toObject().resultsList;
-      const users = await getUsersByIds(entries.map(({ userId }) => userId));
-      this.setState({ entries, users, loading: false });
+      const { resultsList } = response.toObject();
+      const users = await getUsersByIds(
+        resultsList.map(({ userId }) => userId)
+      );
+      this.setState({ entries: resultsList.sort(sort), users, loading: false });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
@@ -127,7 +140,8 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
     await this.load();
   }
 
-  setEditing = (editedEntry?: Entry) => () => this.setState({ editedEntry });
+  setEditing = (editedEntry?: Entry) => () =>
+    this.setState({ editedEntry, error: false });
 
   setDeleting = (deletingEntry?: Entry) => () =>
     this.setState({ deletingEntry });
@@ -136,25 +150,30 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
     const { serviceItemId } = this.props;
     const { editedEntry } = this.state;
     if (editedEntry) {
-      //   const isNew = !editedEntry.id;
-      //   this.setState({ saving: true });
-      //   const entry = new PropLink();
-      //   if (!isNew) {
-      //     entry.setId(editedEntry.id);
-      //   }
-      //   entry.setPropertyId(serviceItemId);
-      //   const fieldMaskList = ['setPropertyId'];
-      //   for (const fieldName in data) {
-      //     const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      //     // @ts-ignore
-      //     entry[methodName](data[fieldName]);
-      //     fieldMaskList.push(upperCaseProp);
-      //   }
-      //   entry.setFieldMaskList(fieldMaskList);
-      //   await this.SiLinkClient[isNew ? 'Create' : 'Update'](entry);
-      //   this.setState({ saving: false });
-      //   this.setEditing(undefined)();
-      await this.load();
+      const isNew = !editedEntry.id;
+      this.setState({ saving: true });
+      const entry = new Reading();
+      if (!isNew) {
+        entry.setId(editedEntry.id);
+      }
+      entry.setServiceItemId(serviceItemId);
+      entry.setDate(timestamp(true));
+      const fieldMaskList = ['setServiceItemId', 'setDate'];
+      for (const fieldName in data) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        entry[methodName](data[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      entry.setFieldMaskList(fieldMaskList);
+      try {
+        await this.ReadingClient[isNew ? 'Create' : 'Update'](entry);
+        this.setState({ saving: false });
+        this.setEditing(undefined)();
+        await this.load();
+      } catch (e) {
+        this.setState({ error: true, saving: false });
+      }
     }
   };
 
@@ -186,6 +205,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       saving,
       editedEntry,
       deletingEntry,
+      error,
     } = state;
     const data: Data = loading
       ? makeFakeRows()
@@ -230,7 +250,9 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
             onSave={handleSave}
             onClose={setEditing(undefined)}
             disabled={saving}
-          />
+          >
+            {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
+          </Form>
         ) : (
           <>
             <SectionBar
