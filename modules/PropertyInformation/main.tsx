@@ -11,6 +11,7 @@ import { ServiceCalls } from './components/ServiceCalls';
 interface Props {
   userID: number;
   propertyId: number;
+  loggedUserId: number;
 }
 
 const useStyles = makeStyles(theme => ({

@@ -87,6 +87,7 @@ const SCHEMA: Schema<Entry> = [
 interface Props {
   className?: string;
   userID: number;
+  loggedUserId: number;
   propertyId: number;
 }
 
