@@ -1,12 +1,40 @@
 import React from 'react';
+import IconButton from '@material-ui/core/IconButton';
+import SearchIcon from '@material-ui/icons/Search';
+import EditIcon from '@material-ui/icons/Edit';
 import { InfoTable, Data } from './';
 
+const onClick = () => console.log('Row clicked');
+const actions = [
+  <IconButton key={0} size="small">
+    <SearchIcon />
+  </IconButton>,
+  <IconButton key={1} size="small">
+    <EditIcon />
+  </IconButton>,
+];
+
 const EXAMPLE_1: Data = [
-  [{ value: 'Row 0' }],
   [
-    { value: 'Row 1.0' },
-    { value: 'Row 1.1', actions: [<span>Actions...</span>] },
+    { value: 'Row 1.0', onClick },
+    { value: 'Row 1.1', onClick },
+    { value: 'Row 1.2', onClick, actions },
   ],
+  [
+    { value: 'Row 2.0', onClick },
+    { value: 'Row 2.1', onClick },
+    { value: 'Row 2.2', onClick, actions },
+  ],
+  [
+    { value: 'Row 3.0', onClick },
+    { value: 'Row 3.1', onClick },
+    { value: 'Row 3.2', onClick, actions },
+  ],
+];
+
+const EXAMPLE_2: Data = [
+  [{ value: 'Row 0' }],
+  [{ value: 'Row 1.0' }, { value: 'Row 1.1' }],
   [{ value: 'Row 2.0' }, { value: 'Row 2.1' }, { value: 'Row 2.2' }],
   [{ label: 'Label 3', value: 'Row 3' }],
   [
@@ -21,13 +49,9 @@ const EXAMPLE_1: Data = [
 ];
 
 export default () => (
-  <>
+  <strong>
     <InfoTable
-      data={[
-        [{ value: 'Row 1.0' }, { value: 'Row 1.1' }, { value: 'Row 1.2' }],
-        [{ value: 'Row 2.0' }, { value: 'Row 2.1' }, { value: 'Row 2.2' }],
-        [{ value: 'Row 3.0' }, { value: 'Row 3.1' }, { value: 'Row 3.2' }],
-      ]}
+      data={EXAMPLE_1}
       columns={[
         { name: 'Column 1' },
         { name: 'Column 2' },
@@ -35,14 +59,14 @@ export default () => (
       ]}
     />
     <hr />
-    <InfoTable data={EXAMPLE_1} />
+    <InfoTable data={EXAMPLE_2} />
     <hr />
-    <InfoTable data={EXAMPLE_1} compact />
+    <InfoTable data={EXAMPLE_2} compact />
     <hr />
-    <InfoTable data={EXAMPLE_1} hoverable />
+    <InfoTable data={EXAMPLE_2} hoverable />
     <hr />
-    <InfoTable data={EXAMPLE_1} loading />
+    <InfoTable data={EXAMPLE_2} loading />
     <hr />
-    <InfoTable data={EXAMPLE_1} error />
-  </>
+    <InfoTable data={EXAMPLE_2} error />
+  </strong>
 );

@@ -49,7 +49,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
     this.EventClient = new EventClient(ENDPOINT);
   }
 
-  loadEntry = async () => {
+  load = async () => {
     this.setState({ loading: true });
     const { propertyId } = this.props;
     const { dir, orderByDBField, page } = this.state;
@@ -60,8 +60,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
     entry.setPageNumber(page);
     try {
       const response = await this.EventClient.BatchGet(entry);
-      const { resultsList: entries, totalCount: count } = response.toObject();
-      this.setState({ entries, count, loading: false });
+      const { resultsList, totalCount: count } = response.toObject();
+      this.setState({
+        entries: resultsList.sort(this.sort),
+        count,
+        loading: false,
+      });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
@@ -83,12 +87,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
             ? 'DESC'
             : 'ASC',
       },
-      () => this.loadEntry()
+      this.load
     );
   };
 
   async componentDidMount() {
-    await this.loadEntry();
+    await this.load();
   }
 
   sort = (a: Entry, b: Entry) => {
@@ -109,11 +113,27 @@ export class ServiceCalls extends PureComponent<Props, State> {
   };
 
   handleChangePage = (page: number) => {
-    this.setState({ page }, this.loadEntry);
+    this.setState({ page }, this.load);
+  };
+
+  handleRowClick = (id: number) => () => {
+    const { userID, propertyId } = this.props;
+    window.location.href = [
+      '/index.cfm?action=admin:service.editServiceCall',
+      `id=${id}`,
+      `user_id=${userID}`,
+      `property_id=${propertyId}`,
+    ].join('&');
   };
 
   render() {
-    const { props, state, handleOrder, sort, handleChangePage } = this;
+    const {
+      props,
+      state,
+      handleOrder,
+      handleChangePage,
+      handleRowClick,
+    } = this;
     const { userID, propertyId, className } = props;
     const { entries, loading, error, dir, orderByDBField, count, page } = state;
     const columns: Columns = [
@@ -148,57 +168,65 @@ export class ServiceCalls extends PureComponent<Props, State> {
     ];
     const data: Data = loading
       ? makeFakeRows(5)
-      : entries
-          .sort(sort)
-          .map(
-            ({
-              dateStarted,
-              timeStarted,
-              timeEnded,
-              jobType,
-              jobSubtype,
-              logJobStatus,
-              logJobNumber,
-              contractNumber,
-              color,
-            }) => [
-              {
-                value:
-                  formatDate(dateStarted) +
-                  ' ' +
-                  formatTime(timeStarted) +
-                  ' - ' +
-                  formatTime(timeEnded),
-              },
-              {
-                value: (
-                  <>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        width: 10,
-                        height: 10,
-                        backgroundColor: '#' + color,
-                        marginRight: 6,
-                        borderRadius: '50%',
-                      }}
-                    />
-                    {logJobStatus}
-                  </>
-                ),
-              },
-              { value: jobType + (jobSubtype ? ' / ' + jobSubtype : '') },
-              { value: logJobNumber },
-              {
-                value: contractNumber,
-                actions: [
-                  <IconButton key={2} style={{ marginLeft: 4 }} size="small">
-                    <DeleteIcon />
-                  </IconButton>,
-                ],
-              },
-            ]
-          );
+      : entries.map(
+          ({
+            id,
+            dateStarted,
+            timeStarted,
+            timeEnded,
+            jobType,
+            jobSubtype,
+            logJobStatus,
+            logJobNumber,
+            contractNumber,
+            color,
+          }) => [
+            {
+              value:
+                formatDate(dateStarted) +
+                ' ' +
+                formatTime(timeStarted) +
+                ' - ' +
+                formatTime(timeEnded),
+              onClick: handleRowClick(id),
+            },
+            {
+              value: (
+                <>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 10,
+                      height: 10,
+                      backgroundColor: '#' + color,
+                      marginRight: 6,
+                      borderRadius: '50%',
+                    }}
+                  />
+                  {logJobStatus}
+                </>
+              ),
+              onClick: handleRowClick(id),
+            },
+            {
+              value: jobType + (jobSubtype ? ' / ' + jobSubtype : ''),
+              onClick: handleRowClick(id),
+            },
+            {
+              value: logJobNumber,
+              onClick: handleRowClick(id),
+            },
+            {
+              value: contractNumber,
+              actions: [
+                <IconButton key={2} style={{ marginLeft: 4 }} size="small">
+                  <DeleteIcon />
+                </IconButton>,
+              ],
+              onClick: handleRowClick(id),
+            },
+          ]
+        );
     return (
       <div className={className}>
         <SectionBar

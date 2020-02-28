@@ -156,6 +156,7 @@ export class ServiceItems extends PureComponent<Props, State> {
   };
 
   handleDelete = async () => {
+    // FIXME: service item is not actually deleted for some reason
     const { propertyId } = this.props;
     const { deletingEntry } = this.state;
     this.setDeleting()();

@@ -21,6 +21,7 @@ export type Data = {
   value: ReactNode;
   href?: Href;
   actions?: ReactElement[];
+  onClick?: () => void;
 }[][];
 
 export type Columns = {
@@ -165,11 +166,15 @@ export const InfoTable = ({
       )}
       {data.map((items, idx) => (
         <div key={idx} className={classes.row}>
-          {items.map(({ label, value, href, actions }, idx) => (
+          {items.map(({ label, value, href, actions, onClick }, idx2) => (
             <Typography
-              key={idx}
+              key={idx2}
               className={classes.item}
-              style={{ width: `${100 / items.length}%` }}
+              style={{
+                width: `${100 / items.length}%`,
+                cursor: onClick ? 'pointer' : 'default',
+              }}
+              onClick={loading || error ? undefined : onClick}
             >
               {label && <strong className={classes.label}>{label}: </strong>}
               {loading || error ? (
@@ -181,7 +186,11 @@ export const InfoTable = ({
                   ) : (
                     <span>{value}</span>
                   )}
-                  {actions && <span>{actions}</span>}
+                  {actions && (
+                    <span onClick={event => event.stopPropagation()}>
+                      {actions}
+                    </span>
+                  )}
                 </span>
               )}
             </Typography>
