@@ -45,7 +45,7 @@ async function slackNotify(id: string, text: string) {
     `https://slack.com/api/chat.postMessage?token=${KALOS_BOT}&channel=${id}&text=${text}`,
     {
       method: 'POST',
-    }
+    },
   );
 }
 
@@ -61,7 +61,7 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
       }
     }
     const res = await fetch(
-      `https://slack.com/api/users.list?token=${KALOS_BOT}`
+      `https://slack.com/api/users.list?token=${KALOS_BOT}`,
     );
     const jsonRes = await res.json();
     try {
@@ -79,7 +79,7 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
 async function getSlackID(
   userName: string,
   skipCache = false,
-  count = 0
+  count = 0,
 ): Promise<string> {
   if (count != 4) {
     try {
@@ -258,7 +258,7 @@ function formatDateTime(datetime: string) {
  */
 function makeFakeRows(columns: number = 1, rows: number = 3) {
   return Array.from(Array(rows)).map(() =>
-    Array.from(Array(columns)).map(() => ({ value: '' }))
+    Array.from(Array(columns)).map(() => ({ value: '' })),
   );
 }
 
@@ -292,11 +292,21 @@ async function getUsersByIds(ids: number[]) {
       const user = new User();
       user.setId(id);
       return await UserClientService.Get(user);
-    })
+    }),
   );
   return users.reduce((aggr, user) => ({ ...aggr, [user.id]: user }), {}) as {
     [key: number]: User.AsObject;
   };
+}
+
+/**
+ * Returns an array of numbers from start to end inclusive
+ * @param start
+ * @param end
+ */
+function range(start: number, end: number) {
+  const length = end - start;
+  return Array.from({ length }, (_, i) => start + i);
 }
 
 export {
@@ -316,4 +326,5 @@ export {
   getRPCFields,
   formatDateTime,
   getUsersByIds,
+  range,
 };

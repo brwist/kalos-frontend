@@ -222,7 +222,7 @@ export function Gallery({
               {fileList[activeImage].mimeType === 'application/pdf' && (
                 <iframe
                   src={getHREF()}
-                  style={{ maxWidth: '100%', height: '100%' }}
+                  style={{ maxWidth: '100%', height: imgHeight }}
                 ></iframe>
               )}
               {fileList[activeImage].mimeType !== 'application/pdf' && (
