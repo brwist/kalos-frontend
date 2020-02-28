@@ -13,7 +13,7 @@ import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
-import { Form, Schema, Option } from '../../ComponentsLibrary/Form';
+import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from './ServiceItemLinks';
@@ -21,7 +21,7 @@ import { ServiceItemReadings } from './ServiceItemReadings';
 
 type Entry = ServiceItem.AsObject;
 
-const SYSTEM_READINGS_TYPE_OPTIONS: Option[] = [
+const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Straight-cool AC w/ heatstrips', value: '1' },
   { label: 'Heat-pump AC', value: '2' },
   { label: 'Furnace (Straight-Cool)', value: '3' },

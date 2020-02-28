@@ -10,6 +10,8 @@ export type Option = {
   value: string | number;
 };
 
+export type Options = (string | Option)[];
+
 export type Type = 'text' | 'password' | 'number';
 
 export type SchemaProps<T> = {
@@ -17,7 +19,7 @@ export type SchemaProps<T> = {
   name?: keyof T;
   headline?: boolean;
   description?: string;
-  options?: (string | Option)[];
+  options?: Options;
   required?: boolean;
   helperText?: string;
   multiline?: boolean;

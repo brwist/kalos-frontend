@@ -7,15 +7,16 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { Modal } from '../../ComponentsLibrary/Modal';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import {
   makeFakeRows,
   getRPCFields,
   formatDate,
   getUsersByIds,
 } from '../../../helpers';
+
+const REFRIGERANT_TYPES: Options = ['R410a', 'R22', 'Other'];
 
 type Entry = Reading.AsObject;
 
@@ -34,21 +35,58 @@ interface State {
 }
 
 const SCHEMA: Schema<Entry> = [
-  //   [
-  //     {
-  //       label: 'Link',
-  //       name: 'date',
-  //       required: true,
-  //       helperText: 'Be sure to include "http://"',
-  //     },
-  //   ],
-  //   [
-  //     {
-  //       label: 'Description',
-  //       name: 'description',
-  //       helperText: 'Keep this very short: 2 - 4 words',
-  //     },
-  //   ],
+  [{ label: 'Refrigerant', headline: true }],
+  [
+    {
+      label: 'Refrigerant Type',
+      name: 'refrigerantType',
+      options: REFRIGERANT_TYPES,
+    },
+    { label: 'Tstat brand', name: 'tstatBrand' },
+    { label: 'Blower Capacitor', name: 'blowerCapacitor' },
+  ],
+  [
+    { label: 'Blower Amps', name: 'blowerAmps' },
+    { label: 'Return Temp DB', name: 'returnDb' },
+    { label: 'Supply Temp DB', name: 'supplyTemperature' },
+  ],
+  [
+    { label: 'Compressor Amps', name: 'compressorAmps' },
+    { label: 'Pool supply temp', name: 'poolSupplyTemp' },
+    { label: 'Pool return temp', name: 'poolReturnTemp' },
+  ],
+  [
+    { label: 'Ambient air temp', name: 'ambientAirTemp' },
+    { label: 'Coil Static Drop', name: 'coilStaticDrop' },
+    { label: 'Return WB', name: 'returnWb' },
+  ],
+  [
+    { label: 'Evap TD', name: 'evapTd' },
+    { label: 'Tesp', name: 'tesp' },
+  ],
+  [{ label: 'Compressor', headline: true }],
+  [
+    { label: 'Condenser Fan Amps', name: 'condensingFanAmps' },
+    { label: 'Compressor Capacitor', name: 'compressorCapacitor' },
+    { label: 'Condenser Fan Capacitor', name: 'condenserFanCapacitor' },
+  ],
+  [
+    { label: 'Suction Pressure', name: 'suctionPressure' },
+    { label: 'Head Pressure', name: 'headPressure' },
+    { label: 'Discharge Temperature', name: 'dischargeTemperature' },
+  ],
+  [
+    { label: 'Subcool', name: 'subcool' },
+    { label: 'Superheat', name: 'superheat' },
+    { label: 'Gas Pressure In', name: 'gasPressureIn' },
+  ],
+  [
+    { label: 'Gas Pressure Out', name: 'gasPressureOut' },
+    { label: 'LL Temp Drop', name: 'llTempDrop' },
+    { label: 'SL Temp Drop', name: 'slTempDrop' },
+  ],
+  [{ label: 'Notes', headline: true }],
+  [{ label: 'Notes', name: 'notes', multiline: true }],
 ];
 
 export class ServiceItemReadings extends PureComponent<Props, State> {
@@ -183,35 +221,36 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
           ];
         });
     return (
-      <div style={{ width: 400, marginLeft: 8 }}>
-        <SectionBar
-          title="Readings"
-          buttons={[
-            {
-              label: 'Add',
-              onClick: setEditing({} as Entry),
-            },
-          ]}
-        />
-        <div
-          style={{
-            maxHeight: 660,
-            overflowY: 'auto',
-          }}
-        >
-          <InfoTable data={data} loading={loading} hoverable />
-        </div>
-        {editedEntry && (
-          <Modal open onClose={setEditing(undefined)}>
-            <Form<Entry>
-              title={`${editedEntry.id ? 'Edit' : 'Add'} Reading`}
-              schema={SCHEMA}
-              data={editedEntry}
-              onSave={handleSave}
-              onClose={setEditing(undefined)}
-              disabled={saving}
+      <div style={{ width: 500, marginLeft: 8 }}>
+        {editedEntry ? (
+          <Form<Entry>
+            title={`${editedEntry.id ? 'Edit' : 'Add'} Reading`}
+            schema={SCHEMA}
+            data={editedEntry}
+            onSave={handleSave}
+            onClose={setEditing(undefined)}
+            disabled={saving}
+          />
+        ) : (
+          <>
+            <SectionBar
+              title="Readings"
+              buttons={[
+                {
+                  label: 'Add',
+                  onClick: setEditing({} as Entry),
+                },
+              ]}
             />
-          </Modal>
+            <div
+              style={{
+                maxHeight: 660,
+                overflowY: 'auto',
+              }}
+            >
+              <InfoTable data={data} loading={loading} hoverable />
+            </div>
+          </>
         )}
         {deletingEntry && (
           <ConfirmDelete
