@@ -1,4 +1,4 @@
-import React, { ReactNode, AnchorHTMLAttributes } from 'react';
+import React from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
@@ -227,6 +227,29 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
               label: 'Change Property',
               onClick: ({ currentTarget }: React.MouseEvent<HTMLElement>) =>
                 handleSetEditEditMenuAnchorEl(currentTarget),
+              desktop: true,
+            },
+            {
+              label: 'Edit Property',
+              onClick: handleSetEditing(true),
+              desktop: false,
+            },
+            {
+              label: 'Activity',
+              url: `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`,
+              desktop: false,
+            },
+            {
+              label: 'Delete Property',
+              desktop: false,
+            },
+            {
+              label: 'Merge Property',
+              desktop: false,
+            },
+            {
+              label: 'Change Owner',
+              desktop: false,
             },
             {
               label: 'Owner Details',
@@ -300,10 +323,15 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
           anchorEl={editMenuAnchorEl}
           open={Boolean(editMenuAnchorEl)}
           onClose={() => handleSetEditEditMenuAnchorEl(null)}
-          transformOrigin={{
-            vertical: -45,
+          anchorOrigin={{
+            vertical: 'bottom',
             horizontal: 'left',
           }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+          getContentAnchorEl={null}
         >
           <MenuItem
             onClick={() => {

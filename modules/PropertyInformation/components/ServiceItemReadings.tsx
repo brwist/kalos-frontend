@@ -521,6 +521,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
                   onClick: setEditing({} as Entry),
                 },
               ]}
+              fixedActions
             />
             <div
               style={{

@@ -183,6 +183,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
               onClick: setEditing({} as Entry),
             },
           ]}
+          fixedActions
         />
         <InfoTable data={data} loading={loading} hoverable />
         {editedEntry && (
