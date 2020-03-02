@@ -197,7 +197,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
       <>
         <SectionBar
           title="Customer Information"
-          buttons={[
+          actions={[
             {
               label: 'Calendar',
               url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
@@ -237,7 +237,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
               </SectionBar>
               <SectionBar
                 title="Pending Billing"
-                buttons={[
+                actions={[
                   {
                     label: 'View',
                     url: [

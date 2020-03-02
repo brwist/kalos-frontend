@@ -5,6 +5,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import TablePagination from '@material-ui/core/TablePagination';
 import { Button, Props as ButtonProps } from '../Button';
+import { Actions } from '../Actions';
 
 type Pagination = {
   count: number;
@@ -20,7 +21,7 @@ type Styles = {
 
 interface Props {
   title: string;
-  buttons?: ButtonProps[];
+  actions?: ButtonProps[];
   className?: string;
   pagination?: Pagination;
   styles?: CSSProperties;
@@ -55,7 +56,7 @@ const useStyles = makeStyles(theme => ({
 
 export const SectionBar: FC<Props> = ({
   title,
-  buttons = [],
+  actions = [],
   className = '',
   pagination,
   styles,
@@ -99,13 +100,7 @@ export const SectionBar: FC<Props> = ({
             />
           )}
         </div>
-        {buttons.length > 0 && (
-          <div>
-            {buttons.map((props, idx) => (
-              <Button key={idx} {...props} />
-            ))}
-          </div>
-        )}
+        <Actions actions={actions} />
       </div>
       {!collapsed && children}
     </>

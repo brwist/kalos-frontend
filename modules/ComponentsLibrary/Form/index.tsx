@@ -38,7 +38,7 @@ interface Props<T> {
   onClose: () => void;
   disabled?: boolean;
   readOnly?: boolean;
-  buttons?: ButtonProps[];
+  actions?: ButtonProps[];
   children?: ReactNode;
 }
 
@@ -118,7 +118,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   onClose,
   disabled = false,
   readOnly = false,
-  buttons = [],
+  actions = [],
   children,
 }) => {
   const classes = useStyles();
@@ -131,16 +131,16 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             name === undefined
               ? aggr
               : { ...aggr, [name]: data[name] || getDefaultValueByType(type) },
-          {}
+          {},
         ),
       }),
-      {} as typeof data
-    )
+      {} as typeof data,
+    ),
   );
   const [validations, setValidations] = useState<Validation>({});
   const handleChange = useCallback(
     name => (value: Value) => setFormData({ ...formData, [name]: value }),
-    [formData, setFormData]
+    [formData, setFormData],
   );
   const handleSave = useCallback(() => {
     setValidations({});
@@ -167,8 +167,8 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     <div className={classes.wrapper}>
       <SectionBar
         title={title}
-        buttons={[
-          ...buttons,
+        actions={[
+          ...actions,
           {
             label: readOnly ? 'Close' : 'Cancel',
             onClick: onClose,
