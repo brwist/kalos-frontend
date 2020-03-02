@@ -105,7 +105,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     this.setState({ notificationViewing });
 
   handleSetEditEditMenuAnchorEl = (
-    editMenuAnchorEl: (EventTarget & HTMLElement) | null
+    editMenuAnchorEl: (EventTarget & HTMLElement) | null,
   ) => this.setState({ editMenuAnchorEl });
 
   loadEntry = async () => {
@@ -233,8 +233,9 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
               url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
             },
           ]}
-        />
-        <InfoTable data={data} loading={id === 0} error={error} />
+        >
+          <InfoTable data={data} loading={id === 0} error={error} />
+        </SectionBar>
         <Modal open={editing} onClose={handleSetEditing(false)}>
           <Form<Entry>
             title="Edit Property Information"

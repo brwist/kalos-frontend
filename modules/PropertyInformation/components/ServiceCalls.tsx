@@ -76,7 +76,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   handleOrder = (
     orderByDBField: string,
-    orderByFields: (keyof Entry)[]
+    orderByFields: (keyof Entry)[],
   ) => () => {
     this.setState(
       {
@@ -90,7 +90,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             ? 'DESC'
             : 'ASC',
       },
-      this.load
+      this.load,
     );
   };
 
@@ -287,15 +287,16 @@ export class ServiceCalls extends PureComponent<Props, State> {
             rowsPerPage: ROWS_PER_PAGE,
             onChangePage: handleChangePage,
           }}
-        />
-        <InfoTable
-          columns={columns}
-          data={data}
-          loading={loading}
-          error={error}
-          compact
-          hoverable
-        />
+        >
+          <InfoTable
+            columns={columns}
+            data={data}
+            loading={loading}
+            error={error}
+            compact
+            hoverable
+          />
+        </SectionBar>
         {deletingEntry && (
           <ConfirmDelete
             open

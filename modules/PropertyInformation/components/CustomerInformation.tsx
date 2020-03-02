@@ -223,33 +223,35 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
               onClick: () => {}, // TODO: implement onClick
             },
           ]}
-        />
-        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-          <InfoTable
-            styles={{ flexGrow: 1, marginRight: 16 }}
-            data={data}
-            loading={id === 0}
-            error={error}
-          />
-          <div style={{ width: '34%', marginTop: 8 }}>
-            <SectionBar title="System Information" />
-            <InfoTable data={systemData} loading={id === 0} error={error} />
-            <SectionBar
-              title="Pending Billing"
-              buttons={[
-                {
-                  label: 'View',
-                  url: [
-                    '/index.cfm?action=admin:properties.customerpendingbilling',
-                    `user_id=${userID}`,
-                    `property_id=${propertyId}`,
-                    'unique=207D8F02-BBCF-005A-4455A712EDA6614C', // FIXME set proper unique
-                  ].join('&'),
-                },
-              ]}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+            <InfoTable
+              styles={{ flexGrow: 1, marginRight: 16 }}
+              data={data}
+              loading={id === 0}
+              error={error}
             />
+            <div style={{ width: '34%', marginTop: 8 }}>
+              <SectionBar title="System Information">
+                <InfoTable data={systemData} loading={id === 0} error={error} />
+              </SectionBar>
+              <SectionBar
+                title="Pending Billing"
+                buttons={[
+                  {
+                    label: 'View',
+                    url: [
+                      '/index.cfm?action=admin:properties.customerpendingbilling',
+                      `user_id=${userID}`,
+                      `property_id=${propertyId}`,
+                      'unique=207D8F02-BBCF-005A-4455A712EDA6614C', // FIXME set proper unique
+                    ].join('&'),
+                  },
+                ]}
+              />
+            </div>
           </div>
-        </div>
+        </SectionBar>
         <Modal open={editing} onClose={this.handleToggleEditing}>
           <Form<Entry>
             title="Edit Customer Information"
