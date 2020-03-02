@@ -285,7 +285,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
         } catch (e) {
           return null;
         }
-      })
+      }),
     );
     return maintenanceQuestions.reduce(
       (aggr, entry) => ({
@@ -296,7 +296,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
               [entry.readingId]: entry,
             }),
       }),
-      {}
+      {},
     ) as {
       [key: number]: MaintenanceEntry;
     };
@@ -311,10 +311,10 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       const response = await this.ReadingClient.BatchGet(entry);
       const { resultsList } = response.toObject();
       const users = await loadUsersByIds(
-        resultsList.map(({ userId }) => userId)
+        resultsList.map(({ userId }) => userId),
       );
       const maintenanceQuestions = await this.loadMaintenanceQuestions(
-        resultsList.map(({ id }) => id)
+        resultsList.map(({ id }) => id),
       );
       this.setState({
         entries: resultsList.sort(sort),
@@ -392,7 +392,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
       entry.setFieldMaskList(fieldMaskList);
       try {
         await this.MaintenanceQuestionClient[isNew ? 'Create' : 'Update'](
-          entry
+          entry,
         );
         this.setState({ saving: false });
         this.setEditingMaintenance()();
@@ -408,6 +408,9 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
     this.setDeleting()();
     if (deletingEntry) {
       this.setState({ loading: true });
+      const maintenanceQuestion = new MaintenanceQuestion();
+      maintenanceQuestion.setReadingId(deletingEntry.id);
+      await this.MaintenanceQuestionClient.Delete(maintenanceQuestion);
       const entry = new Reading();
       entry.setId(deletingEntry.id);
       await this.ReadingClient.Delete(entry);
@@ -459,7 +462,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
                   size="small"
                   onClick={setEditingMaintenance(
                     maintenanceQuestions[id] ||
-                      newMaintenanceQuestion.toObject()
+                      newMaintenanceQuestion.toObject(),
                   )}
                 >
                   <BuildIcon />
@@ -537,9 +540,13 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
             kind="Reading"
             name={[
               formatDate(deletingEntry.date),
+              '-',
+              maintenanceQuestions[deletingEntry.id]
+                ? 'Maintenance'
+                : 'Service',
               deletingEntry.userId === 0
                 ? ''
-                : `${users[deletingEntry.userId].firstname} ${
+                : ` - ${users[deletingEntry.userId].firstname} ${
                     users[deletingEntry.userId].lastname
                   }`,
             ]
