@@ -60,7 +60,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
   }
 
   handleDownload = (filename: string) => async (
-    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
   ) => {
     event.preventDefault();
     const S3 = new S3Client(ENDPOINT);
@@ -109,14 +109,15 @@ export class PropertyDocuments extends PureComponent<Props, State> {
             rowsPerPage: ROWS_PER_PAGE,
             onChangePage: handleChangePage,
           }}
-        />
-        <InfoTable
-          data={data}
-          loading={loading}
-          error={error}
-          compact
-          hoverable
-        />
+        >
+          <InfoTable
+            data={data}
+            loading={loading}
+            error={error}
+            compact
+            hoverable
+          />
+        </SectionBar>
       </div>
     );
   }

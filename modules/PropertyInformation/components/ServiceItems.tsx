@@ -341,14 +341,15 @@ export class ServiceItems extends PureComponent<Props, State> {
             rowsPerPage: ROWS_PER_PAGE,
             onChangePage: handleChangePage,
           }}
-        />
-        <InfoTable
-          data={data}
-          loading={loading}
-          error={error}
-          compact
-          hoverable
-        />
+        >
+          <InfoTable
+            data={data}
+            loading={loading}
+            error={error}
+            compact
+            hoverable
+          />
+        </SectionBar>
         {linkId && (
           <Modal open onClose={handleSetLinkId(undefined)}>
             <ServiceItemLinks
