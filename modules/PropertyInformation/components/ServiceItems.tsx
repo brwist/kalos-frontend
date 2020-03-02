@@ -159,7 +159,7 @@ export class ServiceItems extends PureComponent<Props, State> {
       } else {
         const sortOrder = Math.max(
           entries[entries.length - 1].sortOrder + 1,
-          entries.length
+          entries.length,
         );
         entry.setSortOrder(sortOrder);
         fieldMaskList.push('setSortOrder');
@@ -343,7 +343,9 @@ export class ServiceItems extends PureComponent<Props, State> {
                 onClose={setEditing()}
                 disabled={saving}
               />
-              <ServiceItemReadings {...props} serviceItemId={editing.id} />
+              {editing.id && (
+                <ServiceItemReadings {...props} serviceItemId={editing.id} />
+              )}
             </div>
           </Modal>
         )}
