@@ -39,10 +39,18 @@ const useStyles = makeStyles(theme => ({
     minHeight: 46,
     boxSizing: 'border-box',
     marginBottom: collapsable && collapsed ? theme.spacing() : 0,
+    [theme.breakpoints.down('xs')]: {
+      paddingTop: theme.spacing(0.5),
+      paddingBottom: theme.spacing(0.5),
+    },
   }),
   header: {
     display: 'flex',
     alignItems: 'center',
+    [theme.breakpoints.down('xs')]: {
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+    },
   },
   title: ({ collapsable }: Styles) => ({
     display: 'flex',
