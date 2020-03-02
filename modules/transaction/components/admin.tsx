@@ -681,30 +681,30 @@ export class TransactionAdminView extends React.Component<props, state> {
                 <TableCell
                   align="center"
                   sortDirection={this.state.filters.sort.sortDir}
-                  style={{ padding: 0 }}
+                  style={{ padding: 4 }}
                 >
                   <TableSortLabel
                     active={this.state.filters.sort.sortBy === 'timestamp'}
                     direction={this.state.filters.sort.sortDir}
                     onClick={() => this.setSort('timestamp')}
                   >
-                    Transaction Date
+                    Date
                   </TableSortLabel>
                 </TableCell>
-                <TableCell align="center" style={{ padding: 0 }}>
+                <TableCell align="center" style={{ padding: 4 }}>
                   Purchaser
                 </TableCell>
-                <TableCell align="center" style={{ padding: 0 }}>
-                  Account Type
+                <TableCell align="center" style={{ padding: 4 }}>
+                  Account
                 </TableCell>
-                <TableCell align="center" style={{ padding: 0 }}>
+                <TableCell align="center" style={{ padding: 4 }}>
                   Department
                 </TableCell>
-                <TableCell align="center" style={{ padding: 0 }}>
-                  Job Number
+                <TableCell align="center" style={{ padding: 4 }}>
+                  Job #
                 </TableCell>
                 <TableCell
-                  style={{ padding: 0 }}
+                  style={{ padding: 4 }}
                   align="right"
                   sortDirection={this.state.filters.sort.sortDir}
                 >
@@ -716,10 +716,10 @@ export class TransactionAdminView extends React.Component<props, state> {
                     Amount
                   </TableSortLabel>
                 </TableCell>
-                <TableCell align="center" style={{ padding: 0 }}>
+                <TableCell align="center" style={{ padding: 4 }}>
                   Description
                 </TableCell>
-                <TableCell align="center" colSpan={2} style={{ padding: 0 }}>
+                <TableCell align="center" colSpan={2} style={{ padding: 4 }}>
                   Actions
                 </TableCell>
               </TableRow>
