@@ -231,7 +231,7 @@ export class CustomerInformation extends React.PureComponent<Props, State> {
               loading={id === 0}
               error={error}
             />
-            <div style={{ width: '34%', marginTop: 8 }}>
+            <div style={{ width: 470, marginTop: 8, flexShrink: 0 }}>
               <SectionBar title="System Information">
                 <InfoTable data={systemData} loading={id === 0} error={error} />
               </SectionBar>
