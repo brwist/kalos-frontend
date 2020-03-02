@@ -9,6 +9,11 @@ import {
   ServiceItemClient,
   ServiceItem,
 } from '@kalos-core/kalos-rpc/ServiceItem';
+import { ReadingClient, Reading } from '@kalos-core/kalos-rpc/Reading';
+import {
+  MaintenanceQuestionClient,
+  MaintenanceQuestion,
+} from '@kalos-core/kalos-rpc/MaintenanceQuestion';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -111,6 +116,8 @@ const sort = (a: Entry, b: Entry) => {
 
 export class ServiceItems extends PureComponent<Props, State> {
   ServiceItemClient: ServiceItemClient;
+  ReadingClient: ReadingClient;
+  MaintenanceQuestionClient: MaintenanceQuestionClient;
 
   constructor(props: Props) {
     super(props);
@@ -125,6 +132,8 @@ export class ServiceItems extends PureComponent<Props, State> {
       page: 0,
     };
     this.ServiceItemClient = new ServiceItemClient(ENDPOINT);
+    this.ReadingClient = new ReadingClient(ENDPOINT);
+    this.MaintenanceQuestionClient = new MaintenanceQuestionClient(ENDPOINT);
   }
 
   load = async () => {
@@ -180,15 +189,32 @@ export class ServiceItems extends PureComponent<Props, State> {
 
   handleDelete = async () => {
     // FIXME: service item is not actually deleted for some reason
-    const { propertyId } = this.props;
     const { deletingEntry } = this.state;
     this.setDeleting()();
     if (deletingEntry) {
       this.setState({ loading: true });
+      const reading = new Reading();
+      reading.setServiceItemId(deletingEntry.id);
+      const response = await this.ReadingClient.BatchGet(reading);
+      const readingIds = response.toObject().resultsList.map(({ id }) => id);
+      await Promise.all(
+        readingIds.map(async id => {
+          const maintenanceQuestion = new MaintenanceQuestion();
+          maintenanceQuestion.setReadingId(id);
+          return await this.MaintenanceQuestionClient.Delete(
+            maintenanceQuestion,
+          );
+        }),
+      );
+      await Promise.all(
+        readingIds.map(async id => {
+          const reading = new Reading();
+          reading.setId(id);
+          return await this.ReadingClient.Delete(reading);
+        }),
+      );
       const entry = new ServiceItem();
       entry.setId(deletingEntry.id);
-      entry.setPropertyId(propertyId);
-      entry.setFieldMaskList(['setPropertyId']);
       await this.ServiceItemClient.Delete(entry);
       await this.load();
     }
