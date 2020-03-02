@@ -280,7 +280,7 @@ function getRPCFields(fieldName: string) {
  * @param ids: array of user id
  * @returns object { [userId]: User }
  */
-async function getUsersByIds(ids: number[]) {
+async function loadUsersByIds(ids: number[]) {
   const uniqueIds: number[] = [];
   ids.forEach(id => {
     if (id > 0 && !uniqueIds.includes(id)) {
@@ -325,6 +325,6 @@ export {
   makeFakeRows,
   getRPCFields,
   formatDateTime,
-  getUsersByIds,
+  loadUsersByIds,
   range,
 };
