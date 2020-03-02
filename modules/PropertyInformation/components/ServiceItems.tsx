@@ -329,7 +329,7 @@ export class ServiceItems extends PureComponent<Props, State> {
       <div className={className}>
         <SectionBar
           title="Service Items"
-          buttons={[
+          actions={[
             {
               label: 'Add Service Item',
               onClick: setEditing({} as Entry),

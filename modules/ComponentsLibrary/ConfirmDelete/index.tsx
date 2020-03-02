@@ -30,7 +30,7 @@ export const ConfirmDelete = ({
     <Modal open={open} onClose={onClose} compact maxWidth={370}>
       <SectionBar
         title="Confirm delete"
-        buttons={[
+        actions={[
           { label: 'Cancel', onClick: onClose, variant: 'outlined' },
           { label: 'Confirm', onClick: onConfirm },
         ]}

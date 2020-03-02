@@ -212,7 +212,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       <>
         <SectionBar
           title="Property Information"
-          buttons={[
+          actions={[
             {
               label: 'Tasks',
               url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
@@ -270,7 +270,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             }}
             disabled={saving}
             readOnly={notificationViewing}
-            buttons={
+            actions={
               notificationViewing
                 ? [
                     {
