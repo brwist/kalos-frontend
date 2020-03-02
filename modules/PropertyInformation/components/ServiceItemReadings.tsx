@@ -18,7 +18,7 @@ import {
   makeFakeRows,
   getRPCFields,
   formatDate,
-  getUsersByIds,
+  loadUsersByIds,
   timestamp,
 } from '../../../helpers';
 
@@ -310,7 +310,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
     try {
       const response = await this.ReadingClient.BatchGet(entry);
       const { resultsList } = response.toObject();
-      const users = await getUsersByIds(
+      const users = await loadUsersByIds(
         resultsList.map(({ userId }) => userId)
       );
       const maintenanceQuestions = await this.loadMaintenanceQuestions(
