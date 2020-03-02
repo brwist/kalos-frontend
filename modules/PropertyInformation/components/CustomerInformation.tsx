@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC, useState, useEffect, useCallback } from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -6,6 +6,8 @@ import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { getRPCFields, formatDateTime } from '../../../helpers';
+
+const UserClientService = new UserClient(ENDPOINT);
 
 type Entry = User.AsObject;
 
@@ -85,184 +87,179 @@ interface State {
   error: boolean;
 }
 
-export class CustomerInformation extends React.PureComponent<Props, State> {
-  UserClient: UserClient;
+export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
+  const [customer, setCustomer] = useState<Entry>(new User().toObject());
+  const [editing, setEditing] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      customer: new User().toObject(),
-      editing: false,
-      saving: false,
-      error: false,
-    };
-    this.UserClient = new UserClient(ENDPOINT);
-  }
-
-  load = async () => {
-    const { userID } = this.props;
+  const load = useCallback(async () => {
     const entry = new User();
     entry.setId(userID);
     try {
-      const customer = await this.UserClient.Get(entry);
-      this.setState({ customer });
+      const customer = await UserClientService.Get(entry);
+      setCustomer(customer);
     } catch (e) {
-      this.setState({ error: true });
+      setError(true);
     }
-  };
+  }, [userID, setCustomer, setError]);
 
-  handleToggleEditing = () => this.setState({ editing: !this.state.editing });
+  const handleToggleEditing = useCallback(() => setEditing(!editing), [
+    editing,
+    setEditing,
+  ]);
 
-  handleSave = async (data: Entry) => {
-    const { userID } = this.props;
-    this.setState({ saving: true });
-    const entry = new User();
-    entry.setId(userID);
-    const fieldMaskList = [];
-    for (const fieldName in data) {
-      const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      // @ts-ignore
-      entry[methodName](data[fieldName]);
-      fieldMaskList.push(upperCaseProp);
+  const handleSave = useCallback(
+    async (data: Entry) => {
+      setSaving(true);
+      const entry = new User();
+      entry.setId(userID);
+      const fieldMaskList = [];
+      for (const fieldName in data) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        entry[methodName](data[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      entry.setFieldMaskList(fieldMaskList);
+      const customer = await UserClientService.Update(entry);
+      setCustomer(customer);
+      setSaving(false);
+      handleToggleEditing();
+    },
+    [setSaving, userID, setCustomer, handleToggleEditing],
+  );
+
+  useEffect(() => {
+    if (!customer.id) {
+      load();
     }
-    entry.setFieldMaskList(fieldMaskList);
-    const customer = await this.UserClient.Update(entry);
-    this.setState({ customer, saving: false });
-    this.handleToggleEditing();
-  };
+  }, [customer, load]);
 
-  async componentDidMount() {
-    await this.load();
-  }
-
-  render() {
-    const { userID, propertyId } = this.props;
-    const { customer, editing, saving, error } = this.state;
-    const {
-      id,
-      firstname,
-      lastname,
-      businessname,
-      phone,
-      altphone,
-      cellphone,
-      fax,
-      email,
-      address,
-      city,
-      state,
-      zip,
-      billingTerms,
-      notes,
-      intNotes,
-      dateCreated,
-      lastLogin,
-      login,
-    } = customer;
-    const data: Data = [
-      [
-        { label: 'Name', value: `${firstname} ${lastname}` },
-        { label: 'Business Name', value: businessname },
-      ],
-      [
-        { label: 'Primary Phone', value: phone, href: 'tel' },
-        { label: 'Cell Phone', value: cellphone, href: 'tel' },
-      ],
-      [
-        { label: 'Alternate Phone', value: altphone, href: 'tel' },
-        { label: 'Fax', value: fax },
-      ],
-      [
-        {
-          label: 'Billing Address',
-          value: `${address}, ${city}, ${state} ${zip}`,
-        },
-        { label: 'Email', value: email, href: 'mailto' },
-      ],
-      [{ label: 'Billing Terms', value: billingTerms }],
-      [
-        {
-          label: 'Customer Notes',
-          value: notes,
-        },
-        { label: 'Internal Notes', value: intNotes },
-      ],
-    ];
-    const systemData: Data = [
-      [{ label: 'Created', value: formatDateTime(dateCreated) }],
-      [{ label: 'Last Login', value: formatDateTime(lastLogin) }],
-      [{ label: 'Login ID', value: login }],
-    ];
-    return (
-      <>
-        <SectionBar
-          title="Customer Information"
-          actions={[
-            {
-              label: 'Calendar',
-              url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
-            },
-            {
-              label: 'Call History',
-              url: `/index.cfm?action=admin:customers.listPhoneCallLogs&code=customers&id=${userID}`,
-            },
-            {
-              label: 'Tasks',
-              url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
-            },
-            {
-              label: 'Add Notification',
-              onClick: () => {}, // TODO: implement onClick
-            },
-            {
-              label: 'Edit Customer Information',
-              onClick: this.handleToggleEditing,
-            },
-            {
-              label: 'Delete Customer',
-              onClick: () => {}, // TODO: implement onClick
-            },
-          ]}
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-            <InfoTable
-              styles={{ flexGrow: 1, marginRight: 16 }}
-              data={data}
-              loading={id === 0}
-              error={error}
-            />
-            <div style={{ width: 470, marginTop: 8, flexShrink: 0 }}>
-              <SectionBar title="System Information">
-                <InfoTable data={systemData} loading={id === 0} error={error} />
-              </SectionBar>
-              <SectionBar
-                title="Pending Billing"
-                actions={[
-                  {
-                    label: 'View',
-                    url: [
-                      '/index.cfm?action=admin:properties.customerpendingbilling',
-                      `user_id=${userID}`,
-                      `property_id=${propertyId}`,
-                      'unique=207D8F02-BBCF-005A-4455A712EDA6614C', // FIXME set proper unique
-                    ].join('&'),
-                  },
-                ]}
-              />
-            </div>
-          </div>
-        </SectionBar>
-        <Modal open={editing} onClose={this.handleToggleEditing}>
-          <Form<Entry>
-            title="Edit Customer Information"
-            schema={SCHEMA}
-            data={customer}
-            onSave={this.handleSave}
-            onClose={this.handleToggleEditing}
-            disabled={saving}
+  const {
+    id,
+    firstname,
+    lastname,
+    businessname,
+    phone,
+    altphone,
+    cellphone,
+    fax,
+    email,
+    address,
+    city,
+    state,
+    zip,
+    billingTerms,
+    notes,
+    intNotes,
+    dateCreated,
+    lastLogin,
+    login,
+  } = customer;
+  const data: Data = [
+    [
+      { label: 'Name', value: `${firstname} ${lastname}` },
+      { label: 'Business Name', value: businessname },
+    ],
+    [
+      { label: 'Primary Phone', value: phone, href: 'tel' },
+      { label: 'Cell Phone', value: cellphone, href: 'tel' },
+    ],
+    [
+      { label: 'Alternate Phone', value: altphone, href: 'tel' },
+      { label: 'Fax', value: fax },
+    ],
+    [
+      {
+        label: 'Billing Address',
+        value: `${address}, ${city}, ${state} ${zip}`,
+      },
+      { label: 'Email', value: email, href: 'mailto' },
+    ],
+    [{ label: 'Billing Terms', value: billingTerms }],
+    [
+      {
+        label: 'Customer Notes',
+        value: notes,
+      },
+      { label: 'Internal Notes', value: intNotes },
+    ],
+  ];
+  const systemData: Data = [
+    [{ label: 'Created', value: formatDateTime(dateCreated) }],
+    [{ label: 'Last Login', value: formatDateTime(lastLogin) }],
+    [{ label: 'Login ID', value: login }],
+  ];
+  return (
+    <>
+      <SectionBar
+        title="Customer Information"
+        actions={[
+          {
+            label: 'Calendar',
+            url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
+          },
+          {
+            label: 'Call History',
+            url: `/index.cfm?action=admin:customers.listPhoneCallLogs&code=customers&id=${userID}`,
+          },
+          {
+            label: 'Tasks',
+            url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
+          },
+          {
+            label: 'Add Notification',
+            onClick: () => {}, // TODO: implement onClick
+          },
+          {
+            label: 'Edit Customer Information',
+            onClick: handleToggleEditing,
+          },
+          {
+            label: 'Delete Customer',
+            onClick: () => {}, // TODO: implement onClick
+          },
+        ]}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+          <InfoTable
+            styles={{ flexGrow: 1, marginRight: 16 }}
+            data={data}
+            loading={id === 0}
+            error={error}
           />
-        </Modal>
-      </>
-    );
-  }
-}
+          <div style={{ width: 470, marginTop: 8, flexShrink: 0 }}>
+            <SectionBar title="System Information">
+              <InfoTable data={systemData} loading={id === 0} error={error} />
+            </SectionBar>
+            <SectionBar
+              title="Pending Billing"
+              actions={[
+                {
+                  label: 'View',
+                  url: [
+                    '/index.cfm?action=admin:properties.customerpendingbilling',
+                    `user_id=${userID}`,
+                    `property_id=${propertyId}`,
+                    'unique=207D8F02-BBCF-005A-4455A712EDA6614C', // FIXME set proper unique
+                  ].join('&'),
+                },
+              ]}
+            />
+          </div>
+        </div>
+      </SectionBar>
+      <Modal open={editing} onClose={handleToggleEditing}>
+        <Form<Entry>
+          title="Edit Customer Information"
+          schema={SCHEMA}
+          data={customer}
+          onSave={handleSave}
+          onClose={handleToggleEditing}
+          disabled={saving}
+        />
+      </Modal>
+    </>
+  );
+};
