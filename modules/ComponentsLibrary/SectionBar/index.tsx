@@ -4,8 +4,8 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import TablePagination from '@material-ui/core/TablePagination';
-import { Button, Props as ButtonProps } from '../Button';
-import { Actions } from '../Actions';
+import { Props as ButtonProps } from '../Button';
+import { Actions, ActionsProps } from '../Actions';
 
 type Pagination = {
   count: number;
@@ -21,10 +21,11 @@ type Styles = {
 
 interface Props {
   title: string;
-  actions?: ButtonProps[];
+  actions?: ActionsProps;
   className?: string;
   pagination?: Pagination;
   styles?: CSSProperties;
+  fixedActions?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -60,6 +61,7 @@ export const SectionBar: FC<Props> = ({
   className = '',
   pagination,
   styles,
+  fixedActions = false,
   children,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -100,7 +102,9 @@ export const SectionBar: FC<Props> = ({
             />
           )}
         </div>
-        <Actions actions={actions} />
+        {actions.length > 0 && (
+          <Actions actions={actions} fixed={fixedActions} />
+        )}
       </div>
       {!collapsed && children}
     </>

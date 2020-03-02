@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { Modal } from '../Modal';
@@ -34,6 +34,7 @@ export const ConfirmDelete = ({
           { label: 'Cancel', onClick: onClose, variant: 'outlined' },
           { label: 'Confirm', onClick: onConfirm },
         ]}
+        fixedActions
       />
       <Typography className={classes.wrapper}>
         Are you sure, you want to delete {kind} <strong>{name}</strong>?

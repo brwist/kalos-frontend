@@ -185,6 +185,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                 },
               ]),
         ]}
+        fixedActions
         className={classes.sectionBar}
       />
       <div className={classes.form}>
