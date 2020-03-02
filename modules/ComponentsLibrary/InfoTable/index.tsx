@@ -1,5 +1,6 @@
 import React, { ReactElement, ReactNode, CSSProperties } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles, useTheme } from '@material-ui/core/styles';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Typography from '@material-ui/core/Typography';
@@ -41,7 +42,7 @@ const useStyles = makeStyles(theme => {
     paddingLeft: theme.spacing(),
     paddingRight: theme.spacing(),
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   };
   return {
     wrapper: {
@@ -50,35 +51,48 @@ const useStyles = makeStyles(theme => {
       marginBottom: theme.spacing(2),
     },
     header: {
-      display: 'flex',
       backgroundColor: theme.palette.grey[200],
       paddingTop: theme.spacing(),
       paddingBottom: theme.spacing(),
+      [theme.breakpoints.up('sm')]: {
+        display: 'flex',
+      },
     },
     row: ({ compact, hoverable }: Styles) => ({
-      display: 'flex',
-      paddingTop: compact ? 3 : theme.spacing(),
-      paddingBottom: compact ? 3 : theme.spacing(),
       '&:not(:last-of-type)': {
         borderBottomWidth: 1,
         borderBottomStyle: 'solid',
         borderBottomColor: theme.palette.grey[400],
       },
-      '&:hover': {
-        ...(hoverable
-          ? {
-              backgroundColor: theme.palette.grey[100],
-            }
-          : {}),
+      [theme.breakpoints.up('sm')]: {
+        display: 'flex',
+        paddingTop: compact ? 3 : theme.spacing(),
+        paddingBottom: compact ? 3 : theme.spacing(),
+        '&:hover': {
+          ...(hoverable
+            ? {
+                backgroundColor: theme.palette.grey[100],
+              }
+            : {}),
+        },
       },
     }),
     column: {
       ...commonCell,
+      boxSizing: 'border-box',
       fontWeight: 600,
     },
-    item: commonCell,
+    item: ({ compact }: Styles) => ({
+      ...commonCell,
+      boxSizing: 'border-box',
+      [theme.breakpoints.down('xs')]: {
+        marginTop: compact ? 3 : theme.spacing(0.5),
+        marginBottom: compact ? 3 : theme.spacing(0.5),
+      },
+    }),
     noEntries: {
       ...commonCell,
+      boxSizing: 'border-box',
       color: theme.palette.grey[600],
     },
     dir: {
@@ -126,6 +140,9 @@ const useStyles = makeStyles(theme => {
       marginTop: compact ? 11 : 6,
       marginBottom: compact ? 11 : 6,
     }),
+    actions: {
+      flexShrink: 0,
+    },
   };
 });
 
@@ -139,6 +156,8 @@ export const InfoTable = ({
   styles,
 }: Props) => {
   const classes = useStyles({ loading, error, compact, hoverable });
+  const theme = useTheme();
+  const md = useMediaQuery(theme.breakpoints.down('md'));
   return (
     <div className={classes.wrapper} style={styles}>
       {columns.length > 0 && (
@@ -150,7 +169,7 @@ export const InfoTable = ({
               <Typography
                 key={idx}
                 className={classes.column}
-                style={{ width: `${100 / columns.length}%` }}
+                style={{ width: `${100 / (md ? 1 : columns.length)}%` }}
               >
                 <span
                   onClick={onClick}
@@ -171,7 +190,7 @@ export const InfoTable = ({
               key={idx2}
               className={classes.item}
               style={{
-                width: `${100 / items.length}%`,
+                width: `${100 / (md ? 1 : items.length)}%`,
                 cursor: onClick ? 'pointer' : 'default',
               }}
               onClick={loading || error ? undefined : onClick}
@@ -187,7 +206,10 @@ export const InfoTable = ({
                     <span>{value}</span>
                   )}
                   {actions && (
-                    <span onClick={event => event.stopPropagation()}>
+                    <span
+                      className={classes.actions}
+                      onClick={event => event.stopPropagation()}
+                    >
                       {actions}
                     </span>
                   )}

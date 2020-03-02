@@ -95,6 +95,7 @@ const useStyles = makeStyles(theme => ({
     },
     [theme.breakpoints.up('lg')]: {
       width: 470,
+      marginLeft: theme.spacing(2),
     },
   },
 }));
@@ -249,7 +250,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
       >
         <div className={classes.wrapper}>
           <InfoTable
-            styles={{ flexGrow: 1, marginRight: 16 }}
+            styles={{ flexGrow: 1 }}
             data={data}
             loading={id === 0}
             error={error}
