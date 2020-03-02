@@ -1,5 +1,6 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
@@ -75,6 +76,29 @@ const SCHEMA: Schema<Entry> = [
   ],
 ];
 
+const useStyles = makeStyles(theme => ({
+  wrapper: {
+    display: 'flex',
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column',
+    },
+    [theme.breakpoints.up('lg')]: {
+      alignItems: 'flex-start',
+    },
+  },
+  asidePanel: {
+    marginTop: 8,
+    flexShrink: 0,
+    [theme.breakpoints.down('md')]: {
+      flexGrow: 1,
+      marginBottom: theme.spacing(),
+    },
+    [theme.breakpoints.up('lg')]: {
+      width: 470,
+    },
+  },
+}));
+
 interface Props {
   userID: number;
   propertyId: number;
@@ -92,6 +116,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const classes = useStyles();
 
   const load = useCallback(async () => {
     const entry = new User();
@@ -222,14 +247,14 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           },
         ]}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+        <div className={classes.wrapper}>
           <InfoTable
             styles={{ flexGrow: 1, marginRight: 16 }}
             data={data}
             loading={id === 0}
             error={error}
           />
-          <div style={{ width: 470, marginTop: 8, flexShrink: 0 }}>
+          <div className={classes.asidePanel}>
             <SectionBar title="System Information">
               <InfoTable data={systemData} loading={id === 0} error={error} />
             </SectionBar>
