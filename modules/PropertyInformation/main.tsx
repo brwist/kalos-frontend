@@ -18,14 +18,19 @@ const useStyles = makeStyles(theme => ({
   propertiesWrapper: {
     display: 'flex',
     justifyContent: 'space-between',
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column',
+    },
   },
   properties: {
     flexGrow: 1,
-    marginRight: theme.spacing(2),
   },
   documents: {
-    width: 470,
     flexShrink: 0,
+    [theme.breakpoints.up('lg')]: {
+      marginLeft: theme.spacing(2),
+      width: 470,
+    },
   },
 }));
 
