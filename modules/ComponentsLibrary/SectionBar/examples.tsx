@@ -7,11 +7,11 @@ export default () => {
     <>
       <SectionBar title="Title" />
       <hr />
-      <SectionBar title="With button" buttons={[{ label: 'Button' }]} />
+      <SectionBar title="With button" actions={[{ label: 'Button' }]} />
       <hr />
       <SectionBar
-        title="With buttons"
-        buttons={Array.from(Array(5)).map((_, idx) => ({
+        title="With actions"
+        actions={Array.from(Array(5)).map((_, idx) => ({
           label: `Button ${idx + 1}`,
         }))}
       />

@@ -102,7 +102,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
       <div className={className}>
         <SectionBar
           title="Property Documents"
-          buttons={[{ label: 'Add' }]}
+          actions={[{ label: 'Add' }]}
           pagination={{
             count,
             page,

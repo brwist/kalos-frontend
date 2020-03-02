@@ -270,7 +270,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       <div className={className}>
         <SectionBar
           title="Service Calls"
-          buttons={[
+          actions={[
             {
               label: 'New Service Call',
               url: [
