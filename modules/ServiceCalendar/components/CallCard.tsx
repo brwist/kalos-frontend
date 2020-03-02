@@ -1,13 +1,14 @@
 import React from 'react';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { makeStyles } from "@material-ui/core/styles";
+import Skeleton from '@material-ui/lab/Skeleton';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardHeader from "@material-ui/core/CardHeader";
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
-import Avatar from "@material-ui/core/Avatar";
 import { colorsMapping, repeatsMapping } from '../constants';
+import { useEmployees } from '../hooks';
 
 const useStyles = makeStyles( theme => ({
   card: {
@@ -43,6 +44,25 @@ const ColorIndicator = ({ color }:colorProps) => {
   );
 };
 
+const SkeletonCard = () => {
+  const classes = useStyles();
+  return (
+    <Card className={classes.card}>
+      <CardHeader
+        className={classes.cardHeader}
+        avatar={<Skeleton variant="circle" width={16} height={16} />}
+        title={<Skeleton width="50%" />}
+        subheader={<Skeleton width="50%" />}
+      />
+      <CardContent className={classes.cardContent}>
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+      </CardContent>
+    </Card>
+  );
+}
+
 const CallCard = ({ card, reminder }:props) => {
   const {
     id,
@@ -61,7 +81,17 @@ const CallCard = ({ card, reminder }:props) => {
     dateEnded,
   } = card;
   const classes = useStyles();
-  // @ts-ignore
+  const { employees, employeesLoading } = useEmployees();
+  const technicianIds = logTechnicianAssigned !== "0" && logTechnicianAssigned !== "" ? logTechnicianAssigned.split(',') : [];
+  if (technicianIds.length && employeesLoading) {
+    return <SkeletonCard />;
+  }
+  const technicianNames = technicianIds
+    .map(id => {
+      const employee = employees.find(emp => emp.id === +id);
+      return `${employee.firstname} ${employee.lastname}`;
+    })
+    .join(', ');
   return (
     <Card
       className={classes.card}
@@ -89,9 +119,9 @@ const CallCard = ({ card, reminder }:props) => {
               Customer: {customer?.businessname || `${customer?.firstname} ${customer?.lastname}`}
             </Typography>
           )}
-          {logTechnicianAssigned !== "0" && logTechnicianAssigned !== "" ? (
+          {technicianNames.length ? (
             <Typography variant="body2" color="textSecondary" component="p">
-              Technician: {logTechnicianAssigned}
+              Technician: {technicianNames}
             </Typography>
           ) : null}
           <Typography variant="body2" color="textSecondary" component="p">

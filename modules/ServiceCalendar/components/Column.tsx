@@ -1,10 +1,26 @@
 import React, { useReducer, useEffect } from 'react';
-import IconButton from '@material-ui/core/IconButton';
+import clsx from 'clsx';
+import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
+import Button from "@material-ui/core/Button";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import CallCard from './CallCard';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import { ENDPOINT } from '../../../constants';
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    expand: {
+      transform: 'rotate(0deg)',
+      transition: theme.transitions.create('transform', {
+        duration: theme.transitions.duration.shortest,
+      }),
+    },
+    expandOpen: {
+      transform: 'rotate(-180deg)',
+    },
+  }),
+);
 
 const eventClient = new EventClient(ENDPOINT);
 
@@ -73,6 +89,7 @@ const initialState: State = {
 };
 
 const Column = ({ date }: Props) => {
+  const classes = useStyles();
   const [
     {
       calls,
@@ -117,16 +134,12 @@ const Column = ({ date }: Props) => {
   return (
     <>
       {!!completedCalls.length && (
-        <IconButton
-          /*className={clsx(classes.expand, {
-        [classes.expandOpen]: expanded,
-      })}*/
-          onClick={() => dispatch({ type: 'toggleShowCompleted' })}
-          aria-expanded={showCompleted}
-          aria-label="show more"
-        >
-          <ExpandMoreIcon />
-        </IconButton>
+        <Button onClick={() => dispatch({ type: 'toggleShowCompleted' })}>
+          <ExpandMoreIcon className={clsx(classes.expand, {
+            [classes.expandOpen]: showCompleted,
+          })} />
+          Completed Service Calls
+        </Button>
       )}
       <Collapse in={showCompleted}>
         {completedCalls
