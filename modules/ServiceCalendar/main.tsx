@@ -1,50 +1,55 @@
-import React, {createContext, useEffect, useReducer} from 'react';
+import React, { createContext, useEffect, useReducer } from 'react';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Container from '@material-ui/core/Container';
 import customTheme from '../Theme/main';
-import {ENDPOINT} from '../../constants';
+import { ENDPOINT } from '../../constants';
 import { timestamp } from '../../helpers';
 import Column from './components/Column';
 import { useGetAll } from './hooks';
 
 type Props = {
   userId: number;
-}
+};
 
 type State = {
   employees: User.AsObject[];
   isLoading: boolean;
-  totalCount: number,
-  fetchedCount: number,
-  page: number,
-}
+  totalCount: number;
+  fetchedCount: number;
+  page: number;
+};
 
 type Action =
   | { type: 'toggleLoading' }
-  | { type: 'addData', data: User.AsObject[], totalCount: number, page: number };
+  | {
+      type: 'addData';
+      data: User.AsObject[];
+      totalCount: number;
+      page: number;
+    };
 
 const userClient = new UserClient(ENDPOINT);
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
-  case 'addData': {
-    return {
-      ...state,
-      employees: [...state.employees, ...action.data],
-      totalCount: action.totalCount,
-      fetchedCount: state.fetchedCount + action.data.length,
-      page: action.page,
-    };
-  }
-  case 'toggleLoading': {
-    return {
-      ...state,
-      isLoading: !state.isLoading,
-    };
-  }
-  default:
-    return {...state};
+    case 'addData': {
+      return {
+        ...state,
+        employees: [...state.employees, ...action.data],
+        totalCount: action.totalCount,
+        fetchedCount: state.fetchedCount + action.data.length,
+        page: action.page,
+      };
+    }
+    case 'toggleLoading': {
+      return {
+        ...state,
+        isLoading: !state.isLoading,
+      };
+    }
+    default:
+      return { ...state };
   }
 };
 
@@ -56,18 +61,20 @@ const initialState: State = {
   page: 0,
 };
 
-export const EmployeesContext = createContext({ employees: [], isLoading: false });
+type EmployeesContext = {
+  employees: User.AsObject[];
+  isLoading: boolean;
+};
+
+export const EmployeesContext = createContext<EmployeesContext>({
+  employees: [],
+  isLoading: false,
+});
 
 const ServiceCalendar = ({ userId }: Props) => {
   const [
-    {
-      employees,
-      isLoading,
-      fetchedCount,
-      totalCount,
-      page
-    },
-    dispatch
+    { employees, isLoading, fetchedCount, totalCount, page },
+    dispatch,
   ] = useReducer(reducer, initialState);
   /* TODO make a hook
   const fetchEmployees = useGetAll(0, async () => {
@@ -79,7 +86,7 @@ const ServiceCalendar = ({ userId }: Props) => {
     return res;
   });
   */
-  
+
   const fetchEmployees = (page = 0) => {
     (async () => {
       const user = new User();
@@ -87,7 +94,12 @@ const ServiceCalendar = ({ userId }: Props) => {
       user.setIsEmployee(1);
       user.setPageNumber(page);
       const res = (await userClient.BatchGet(user)).toObject();
-      await dispatch({ type: 'addData', data: res.resultsList, totalCount: res.totalCount, page });
+      await dispatch({
+        type: 'addData',
+        data: res.resultsList,
+        totalCount: res.totalCount,
+        page,
+      });
     })();
   };
   useEffect(() => {
@@ -96,14 +108,16 @@ const ServiceCalendar = ({ userId }: Props) => {
   }, []);
 
   useEffect(() => {
-    if(fetchedCount < totalCount) {
+    if (fetchedCount < totalCount) {
       fetchEmployees(page + 1);
     }
   }, [fetchedCount]);
 
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <EmployeesContext.Provider value={{ employees, employeesLoading: fetchedCount < totalCount }}>
+      <EmployeesContext.Provider
+        value={{ employees, employeesLoading: fetchedCount < totalCount }}
+      >
         {/*<Filter></Filter>*/}
         <Container>
           <Column date={`${timestamp(true)} 00:00:00%`} />

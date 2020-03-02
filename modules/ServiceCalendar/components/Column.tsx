@@ -1,7 +1,7 @@
 import React, { useReducer, useEffect } from 'react';
 import clsx from 'clsx';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
-import Button from "@material-ui/core/Button";
+import Button from '@material-ui/core/Button';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import CallCard from './CallCard';
@@ -25,8 +25,8 @@ const useStyles = makeStyles((theme: Theme) =>
 const eventClient = new EventClient(ENDPOINT);
 
 type Props = {
-  date: string,
-}
+  date: string;
+};
 
 type State = {
   calls: Event.AsObject[];
@@ -34,46 +34,55 @@ type State = {
   reminders: Event.AsObject[];
   isLoading: boolean;
   showCompleted: boolean;
-  totalCount: number,
-  fetchedCount: number,
-  page: number,
-}
+  totalCount: number;
+  fetchedCount: number;
+  page: number;
+};
 
 type Action =
   | { type: 'toggleShowCompleted' }
   | { type: 'toggleLoading' }
-  | { type: 'addData', data: Event.AsObject[], totalCount: number, page: number };
+  | {
+      type: 'addData';
+      data: Event.AsObject[];
+      totalCount: number;
+      page: number;
+    };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
-  case 'addData': {
-    const completedCalls = action.data.filter(call => call.logJobStatus === 'Completed');
-    const calls = action.data.filter(call => call.logJobStatus !== 'Completed' && call.color !== 'ffbfbf');
-    const reminders = action.data.filter(call => call.color === 'ffbfbf');
-    return {
-      ...state,
-      completedCalls: [...state.completedCalls, ...completedCalls],
-      calls: [...state.calls, ...calls],
-      reminders: [...state.reminders, ...reminders],
-      totalCount: action.totalCount,
-      fetchedCount: state.fetchedCount + action.data.length,
-      page: action.page,
-    };
-  }
-  case 'toggleShowCompleted': {
-    return {
-      ...state,
-      showCompleted: !state.showCompleted,
-    };
-  }
-  case 'toggleLoading': {
-    return {
-      ...state,
-      isLoading: !state.isLoading,
-    };
-  }
-  default: 
-    return {...state};
+    case 'addData': {
+      const completedCalls = action.data.filter(
+        call => call.logJobStatus === 'Completed',
+      );
+      const calls = action.data.filter(
+        call => call.logJobStatus !== 'Completed' && call.color !== 'ffbfbf',
+      );
+      const reminders = action.data.filter(call => call.color === 'ffbfbf');
+      return {
+        ...state,
+        completedCalls: [...state.completedCalls, ...completedCalls],
+        calls: [...state.calls, ...calls],
+        reminders: [...state.reminders, ...reminders],
+        totalCount: action.totalCount,
+        fetchedCount: state.fetchedCount + action.data.length,
+        page: action.page,
+      };
+    }
+    case 'toggleShowCompleted': {
+      return {
+        ...state,
+        showCompleted: !state.showCompleted,
+      };
+    }
+    case 'toggleLoading': {
+      return {
+        ...state,
+        isLoading: !state.isLoading,
+      };
+    }
+    default:
+      return { ...state };
   }
 };
 
@@ -99,9 +108,9 @@ const Column = ({ date }: Props) => {
       isLoading,
       fetchedCount,
       totalCount,
-      page
+      page,
     },
-    dispatch
+    dispatch,
   ] = useReducer(reducer, initialState);
 
   const fetchCalls = (page = 0) => {
@@ -113,7 +122,12 @@ const Column = ({ date }: Props) => {
       reqObj.setDateStarted(date);
       reqObj.setPageNumber(page);
       const res = (await eventClient.BatchGet(reqObj)).toObject();
-      await dispatch({ type: 'addData', data: res.resultsList, totalCount: res.totalCount, page });
+      await dispatch({
+        type: 'addData',
+        data: res.resultsList,
+        totalCount: res.totalCount,
+        page,
+      });
       if (page === 0) {
         dispatch({ type: 'toggleLoading' });
       }
@@ -122,7 +136,7 @@ const Column = ({ date }: Props) => {
 
   useEffect(fetchCalls, []);
   useEffect(() => {
-    if(fetchedCount < totalCount) {
+    if (fetchedCount < totalCount) {
       fetchCalls(page + 1);
     }
   }, [fetchedCount]);
@@ -135,9 +149,11 @@ const Column = ({ date }: Props) => {
     <>
       {!!completedCalls.length && (
         <Button onClick={() => dispatch({ type: 'toggleShowCompleted' })}>
-          <ExpandMoreIcon className={clsx(classes.expand, {
-            [classes.expandOpen]: showCompleted,
-          })} />
+          <ExpandMoreIcon
+            className={clsx(classes.expand, {
+              [classes.expandOpen]: showCompleted,
+            })}
+          />
           Completed Service Calls
         </Button>
       )}
