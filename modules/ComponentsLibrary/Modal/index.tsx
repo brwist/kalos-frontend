@@ -20,8 +20,8 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  paper: ({ compact, maxWidth }: Style) => ({
-    width: compact ? 'auto' : '40%',
+  paper: ({ maxWidth }: Style) => ({
+    width: 'auto',
     maxWidth,
     minWidth: 300,
     maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
