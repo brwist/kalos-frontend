@@ -24,7 +24,8 @@ const useStyles = makeStyles(theme => ({
     marginRight: theme.spacing(2),
   },
   documents: {
-    width: '34%',
+    width: 470,
+    flexShrink: 0,
   },
 }));
 
