@@ -15,7 +15,10 @@ interface Props {
   actions: ActionsProps;
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles(() => ({
+  wrapper: {
+    flexShrink: 0,
+  },
   burger: {
     cursor: 'pointer',
   },
@@ -70,6 +73,7 @@ export const Actions: FC<Props> = ({ fixed = false, actions }) => {
                   <MenuItem
                     key={idx}
                     {...props}
+                    dense
                     onClick={event => {
                       handleSetAnchorEl(null)();
                       if (onClick) {
@@ -89,7 +93,7 @@ export const Actions: FC<Props> = ({ fixed = false, actions }) => {
       </>
     );
   return (
-    <>
+    <div className={classes.wrapper}>
       {actions.length > 0 && (
         <div>
           {actions
@@ -99,6 +103,6 @@ export const Actions: FC<Props> = ({ fixed = false, actions }) => {
             ))}
         </div>
       )}
-    </>
+    </div>
   );
 };

@@ -17,6 +17,7 @@ type Pagination = {
 type Styles = {
   collapsable?: boolean;
   collapsed?: boolean;
+  fixedActions?: boolean;
 };
 
 interface Props {
@@ -42,21 +43,30 @@ const useStyles = makeStyles(theme => ({
     [theme.breakpoints.down('xs')]: {
       paddingTop: theme.spacing(0.5),
       paddingBottom: theme.spacing(0.5),
+      minHeight: 0,
     },
   }),
   header: {
     display: 'flex',
     alignItems: 'center',
+    overflow: 'hidden',
     [theme.breakpoints.down('xs')]: {
       flexDirection: 'column',
       alignItems: 'flex-start',
     },
   },
-  title: ({ collapsable }: Styles) => ({
-    display: 'flex',
+  title: ({ collapsable, fixedActions }: Styles) => ({
+    display: fixedActions ? 'block' : 'flex',
     alignItems: 'center',
     cursor: collapsable ? 'pointer' : 'default',
     userSelect: 'none',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    width: '100%',
+    [theme.breakpoints.down('xs')]: {
+      fontSize: 15,
+    },
   }),
   toolbar: {
     minHeight: 0,
@@ -73,7 +83,11 @@ export const SectionBar: FC<Props> = ({
   children,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const classes = useStyles({ collapsable: !!children, collapsed });
+  const classes = useStyles({
+    collapsable: !!children,
+    collapsed,
+    fixedActions,
+  });
   const handleToggleCollapsed = useCallback(() => setCollapsed(!collapsed), [
     collapsed,
     setCollapsed,

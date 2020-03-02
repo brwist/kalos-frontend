@@ -93,9 +93,14 @@ const useStyles = makeStyles(theme => ({
   group: {
     display: 'flex',
     justifyContent: 'space-between',
+    [theme.breakpoints.down('xs')]: {
+      flexDirection: 'column',
+    },
   },
   field: {
-    marginLeft: theme.spacing(2),
+    [theme.breakpoints.up('sm')]: {
+      marginLeft: theme.spacing(2),
+    },
   },
   description: {
     fontWeight: 400,
@@ -169,12 +174,6 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         title={title}
         actions={[
           ...actions,
-          {
-            label: readOnly ? 'Close' : 'Cancel',
-            onClick: onClose,
-            disabled,
-            variant: readOnly ? 'contained' : 'outlined',
-          },
           ...(readOnly
             ? []
             : [
@@ -184,6 +183,12 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   disabled,
                 },
               ]),
+          {
+            label: readOnly ? 'Close' : 'Cancel',
+            onClick: onClose,
+            disabled,
+            variant: readOnly ? 'contained' : 'outlined',
+          },
         ]}
         fixedActions
         className={classes.sectionBar}
