@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -245,17 +246,14 @@ interface Props {
   loggedUserId: number;
 }
 
-interface State {
-  entries: Entry[];
-  users: { [key: number]: User.AsObject };
-  loading: boolean;
-  error: boolean;
-  saving: boolean;
-  editedEntry?: Entry;
-  deletingEntry?: Entry;
-  editedMaintenanceEntry?: MaintenanceEntry;
-  maintenanceQuestions: { [key: number]: MaintenanceEntry };
-}
+const useStyles = makeStyles(theme => ({
+  readingsData: {
+    [theme.breakpoints.up('md')]: {
+      maxHeight: 660,
+      overflowY: 'auto',
+    },
+  },
+}));
 
 export const ServiceItemReadings: FC<Props> = ({
   serviceItemId,
@@ -275,6 +273,7 @@ export const ServiceItemReadings: FC<Props> = ({
   const [maintenanceQuestions, setMaintenanceQuestions] = useState<{
     [key: number]: MaintenanceEntry;
   }>({});
+  const classes = useStyles();
 
   const loadMaintenanceQuestions = async (readingIds: number[]) => {
     const maintenanceQuestions = await Promise.all(
@@ -526,12 +525,7 @@ export const ServiceItemReadings: FC<Props> = ({
             ]}
             fixedActions
           />
-          <div
-            style={{
-              maxHeight: 660,
-              overflowY: 'auto',
-            }}
-          >
+          <div className={classes.readingsData}>
             <InfoTable data={data} loading={loading} hoverable />
           </div>
         </>

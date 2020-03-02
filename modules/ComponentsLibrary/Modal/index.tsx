@@ -24,9 +24,13 @@ const useStyles = makeStyles(theme => ({
     width: 'auto',
     maxWidth,
     minWidth: 300,
-    maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
-    overflow: 'hidden',
     outline: 'none',
+    maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
+    overflowX: 'hidden',
+    overflowY: 'auto',
+    [theme.breakpoints.up('md')]: {
+      overflowY: 'hidden',
+    },
   }),
 }));
 

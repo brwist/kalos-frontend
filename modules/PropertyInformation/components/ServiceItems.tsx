@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import LinkIcon from '@material-ui/icons/Link';
 import EditIcon from '@material-ui/icons/Edit';
@@ -102,23 +103,25 @@ interface Props {
   propertyId: number;
 }
 
-interface State {
-  entries: Entry[];
-  loading: boolean;
-  error: boolean;
-  editing?: Entry;
-  deletingEntry?: Entry;
-  saving: boolean;
-  linkId?: number;
-  count: number;
-  page: number;
-}
-
 const sort = (a: Entry, b: Entry) => {
   if (a.sortOrder < b.sortOrder) return -1;
   if (a.sortOrder > b.sortOrder) return 1;
   return 0;
 };
+
+const useStyles = makeStyles(theme => ({
+  form: {
+    [theme.breakpoints.up('md')]: {
+      display: 'flex',
+    },
+  },
+  readings: {
+    [theme.breakpoints.up('md')]: {
+      width: 500,
+      marginLeft: theme.spacing(),
+    },
+  },
+}));
 
 export const ServiceItems: FC<Props> = props => {
   const { propertyId, className } = props;
@@ -132,6 +135,7 @@ export const ServiceItems: FC<Props> = props => {
   const [linkId, setLinkId] = useState<number>();
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
+  const classes = useStyles();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -355,7 +359,7 @@ export const ServiceItems: FC<Props> = props => {
       )}
       {editing && (
         <Modal open onClose={handleEditing()} compact>
-          <div style={{ display: 'flex' }}>
+          <div className={classes.form}>
             <Form<Entry>
               title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
               schema={SCHEMA}
@@ -365,7 +369,9 @@ export const ServiceItems: FC<Props> = props => {
               disabled={saving}
             />
             {editing.id && (
-              <ServiceItemReadings {...props} serviceItemId={editing.id} />
+              <div className={classes.readings}>
+                <ServiceItemReadings {...props} serviceItemId={editing.id} />
+              </div>
             )}
           </div>
         </Modal>
