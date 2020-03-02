@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { FC, useState, useCallback, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import LinkIcon from '@material-ui/icons/Link';
 import EditIcon from '@material-ui/icons/Edit';
@@ -23,6 +23,12 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from './ServiceItemLinks';
 import { ServiceItemReadings } from './ServiceItemReadings';
+
+const ServiceItemClientService = new ServiceItemClient(ENDPOINT);
+const ReadingClientService = new ReadingClient(ENDPOINT);
+const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
+  ENDPOINT,
+);
 
 type Entry = ServiceItem.AsObject;
 
@@ -114,94 +120,90 @@ const sort = (a: Entry, b: Entry) => {
   return 0;
 };
 
-export class ServiceItems extends PureComponent<Props, State> {
-  ServiceItemClient: ServiceItemClient;
-  ReadingClient: ReadingClient;
-  MaintenanceQuestionClient: MaintenanceQuestionClient;
+export const ServiceItems: FC<Props> = props => {
+  const { propertyId, className } = props;
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
+  const [editing, setEditing] = useState<Entry>();
+  const [deletingEntry, setDeletingEntry] = useState<Entry>();
+  const [saving, setSaving] = useState<boolean>(false);
+  const [linkId, setLinkId] = useState<number>();
+  const [count, setCount] = useState<number>(0);
+  const [page, setPage] = useState<number>(0);
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      entries: [],
-      loading: true,
-      error: false,
-      editing: undefined,
-      deletingEntry: undefined,
-      saving: false,
-      count: 0,
-      page: 0,
-    };
-    this.ServiceItemClient = new ServiceItemClient(ENDPOINT);
-    this.ReadingClient = new ReadingClient(ENDPOINT);
-    this.MaintenanceQuestionClient = new MaintenanceQuestionClient(ENDPOINT);
-  }
-
-  load = async () => {
-    this.setState({ loading: true });
-    const { propertyId } = this.props;
+  const load = useCallback(async () => {
+    setLoading(true);
     const entry = new ServiceItem();
     entry.setPropertyId(propertyId);
     try {
-      const response = await this.ServiceItemClient.BatchGet(entry);
+      const response = await ServiceItemClientService.BatchGet(entry);
       const { resultsList, totalCount: count } = response.toObject();
-      this.setState({ entries: resultsList.sort(sort), count, loading: false });
+      setEntries(resultsList.sort(sort));
+      setCount(count);
+      setLoading(false);
+      setLoaded(true);
     } catch (e) {
-      this.setState({ error: true, loading: false });
+      setError(true);
+      setLoading(false);
     }
-  };
+  }, [setLoading, setEntries, setCount, setError, setLoaded]);
 
-  async componentDidMount() {
-    await this.load();
-  }
-
-  handleSave = async (data: Entry) => {
-    const { propertyId } = this.props;
-    const { editing, entries } = this.state;
-    if (editing) {
-      this.setState({ saving: true });
-      const entry = new ServiceItem();
-      entry.setPropertyId(propertyId);
-      const fieldMaskList = ['setPropertyId'];
-      const isNew = !editing.id;
-      if (!isNew) {
-        entry.setId(editing.id);
-      } else {
-        const sortOrder = Math.max(
-          entries[entries.length - 1].sortOrder + 1,
-          entries.length,
-        );
-        entry.setSortOrder(sortOrder);
-        fieldMaskList.push('setSortOrder');
-      }
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        entry[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      entry.setFieldMaskList(fieldMaskList);
-      await this.ServiceItemClient[isNew ? 'Create' : 'Update'](entry);
-      this.setState({ saving: false });
-      this.setEditing()();
-      await this.load();
+  useEffect(() => {
+    if (!loaded) {
+      load();
     }
-  };
+  }, [loaded, load]);
 
-  handleDelete = async () => {
+  const handleSave = useCallback(
+    async (data: Entry) => {
+      if (editing) {
+        setSaving(true);
+        const entry = new ServiceItem();
+        entry.setPropertyId(propertyId);
+        const fieldMaskList = ['setPropertyId'];
+        const isNew = !editing.id;
+        if (!isNew) {
+          entry.setId(editing.id);
+        } else {
+          const sortOrder = Math.max(
+            entries[entries.length - 1].sortOrder + 1,
+            entries.length,
+          );
+          entry.setSortOrder(sortOrder);
+          fieldMaskList.push('setSortOrder');
+        }
+        for (const fieldName in data) {
+          const { upperCaseProp, methodName } = getRPCFields(fieldName);
+          // @ts-ignore
+          entry[methodName](data[fieldName]);
+          fieldMaskList.push(upperCaseProp);
+        }
+        entry.setFieldMaskList(fieldMaskList);
+        await ServiceItemClientService[isNew ? 'Create' : 'Update'](entry);
+        setSaving(false);
+        setEditing(undefined);
+        await load();
+      }
+    },
+    [editing, setSaving, entries, setEditing, load],
+  );
+
+  const handleDelete = useCallback(async () => {
     // FIXME: service item is not actually deleted for some reason
-    const { deletingEntry } = this.state;
-    this.setDeleting()();
+    setDeletingEntry(undefined);
     if (deletingEntry) {
-      this.setState({ loading: true });
+      setLoading(true);
       const reading = new Reading();
       reading.setServiceItemId(deletingEntry.id);
-      const response = await this.ReadingClient.BatchGet(reading);
+      const response = await ReadingClientService.BatchGet(reading);
       const readingIds = response.toObject().resultsList.map(({ id }) => id);
       await Promise.all(
         readingIds.map(async id => {
           const maintenanceQuestion = new MaintenanceQuestion();
           maintenanceQuestion.setReadingId(id);
-          return await this.MaintenanceQuestionClient.Delete(
+          return await MaintenanceQuestionClientService.Delete(
             maintenanceQuestion,
           );
         }),
@@ -210,182 +212,173 @@ export class ServiceItems extends PureComponent<Props, State> {
         readingIds.map(async id => {
           const reading = new Reading();
           reading.setId(id);
-          return await this.ReadingClient.Delete(reading);
+          return await ReadingClientService.Delete(reading);
         }),
       );
       const entry = new ServiceItem();
       entry.setId(deletingEntry.id);
-      await this.ServiceItemClient.Delete(entry);
-      await this.load();
+      await ServiceItemClientService.Delete(entry);
+      await load();
     }
-  };
+  }, [setDeletingEntry, deletingEntry, setLoading, load]);
 
-  handleReorder = (idx: number, step: number) => async () => {
-    this.setState({ loading: true });
-    const { entries } = this.state;
-    const currentItem = entries[idx];
-    const nextItem = entries[idx + step];
-    const entry = new ServiceItem();
-    entry.setFieldMaskList(['SortOrder']);
-    entry.setId(currentItem.id);
-    entry.setSortOrder(nextItem.sortOrder);
-    await this.ServiceItemClient.Update(entry);
-    entry.setId(nextItem.id);
-    entry.setSortOrder(currentItem.sortOrder);
-    await this.ServiceItemClient.Update(entry);
-    await this.load();
-  };
+  const handleReorder = useCallback(
+    (idx: number, step: number) => async () => {
+      setLoading(true);
+      const currentItem = entries[idx];
+      const nextItem = entries[idx + step];
+      const entry = new ServiceItem();
+      entry.setFieldMaskList(['SortOrder']);
+      entry.setId(currentItem.id);
+      entry.setSortOrder(nextItem.sortOrder);
+      await ServiceItemClientService.Update(entry);
+      entry.setId(nextItem.id);
+      entry.setSortOrder(currentItem.sortOrder);
+      await ServiceItemClientService.Update(entry);
+      await load();
+    },
+    [setLoading, entries, load],
+  );
 
-  handleSetLinkId = (linkId?: number) => () => this.setState({ linkId });
+  const handleSetLinkId = useCallback(
+    (linkId?: number) => () => setLinkId(linkId),
+    [setLinkId],
+  );
 
-  handleChangePage = (page: number) => this.setState({ page }, this.load);
+  const handleChangePage = useCallback(
+    (page: number) => {
+      setPage(page);
+      setLoaded(false);
+    },
+    [setPage, setLoaded],
+  );
 
-  setEditing = (editing?: Entry) => () => this.setState({ editing });
+  const handleEditing = useCallback(
+    (editing?: Entry) => () => setEditing(editing),
+    [setEditing],
+  );
 
-  setDeleting = (deletingEntry?: Entry) => () =>
-    this.setState({ deletingEntry });
+  const setDeleting = useCallback(
+    (deletingEntry?: Entry) => () => setDeletingEntry(deletingEntry),
+    [setDeletingEntry],
+  );
 
-  render() {
-    const {
-      props,
-      state,
-      handleReorder,
-      handleSetLinkId,
-      handleChangePage,
-      setEditing,
-      handleSave,
-      setDeleting,
-      handleDelete,
-    } = this;
-    const { className } = props;
-    const {
-      entries,
-      loading,
-      error,
-      linkId,
-      count,
-      page,
-      editing,
-      saving,
-      deletingEntry,
-    } = state;
-    const data: Data = loading
-      ? makeFakeRows()
-      : entries.map((entry, idx) => {
-          const { id, type: value } = entry;
-          return [
-            {
-              value: (
-                <>
-                  <IconButton
-                    style={{ marginRight: 4 }}
-                    size="small"
-                    disabled={idx === 0}
-                    onClick={handleReorder(idx, -1)}
-                  >
-                    <ArrowUpwardIcon />
-                  </IconButton>
-                  <IconButton
-                    style={{ marginRight: 4 }}
-                    size="small"
-                    disabled={idx === entries.length - 1}
-                    onClick={handleReorder(idx, 1)}
-                  >
-                    <ArrowDownwardIcon />
-                  </IconButton>
-                  <span>{value}</span>
-                </>
-              ),
-              actions: [
+  const data: Data = loading
+    ? makeFakeRows()
+    : entries.map((entry, idx) => {
+        const { id, type: value } = entry;
+        return [
+          {
+            value: (
+              <>
                 <IconButton
-                  key={0}
-                  style={{ marginLeft: 4 }}
+                  style={{ marginRight: 4 }}
                   size="small"
-                  onClick={handleSetLinkId(id)}
+                  disabled={idx === 0}
+                  onClick={handleReorder(idx, -1)}
                 >
-                  <LinkIcon />
-                </IconButton>,
+                  <ArrowUpwardIcon />
+                </IconButton>
                 <IconButton
-                  key={1}
-                  style={{ marginLeft: 4 }}
+                  style={{ marginRight: 4 }}
                   size="small"
-                  onClick={setEditing(entry)}
+                  disabled={idx === entries.length - 1}
+                  onClick={handleReorder(idx, 1)}
                 >
-                  <EditIcon />
-                </IconButton>,
-                <IconButton
-                  key={2}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={setDeleting(entry)}
-                >
-                  <DeleteIcon />
-                </IconButton>,
-              ],
-            },
-          ];
-        });
-    return (
-      <div className={className}>
-        <SectionBar
-          title="Service Items"
-          actions={[
-            {
-              label: 'Add Service Item',
-              onClick: setEditing({} as Entry),
-            },
-          ]}
-          pagination={{
-            count,
-            page,
-            rowsPerPage: ROWS_PER_PAGE,
-            onChangePage: handleChangePage,
-          }}
-        >
-          <InfoTable
-            data={data}
-            loading={loading}
-            error={error}
-            compact
-            hoverable
+                  <ArrowDownwardIcon />
+                </IconButton>
+                <span>{value}</span>
+              </>
+            ),
+            actions: [
+              <IconButton
+                key={0}
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={handleSetLinkId(id)}
+              >
+                <LinkIcon />
+              </IconButton>,
+              <IconButton
+                key={1}
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={handleEditing(entry)}
+              >
+                <EditIcon />
+              </IconButton>,
+              <IconButton
+                key={2}
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={setDeleting(entry)}
+              >
+                <DeleteIcon />
+              </IconButton>,
+            ],
+          },
+        ];
+      });
+  return (
+    <div className={className}>
+      <SectionBar
+        title="Service Items"
+        actions={[
+          {
+            label: 'Add Service Item',
+            onClick: handleEditing({} as Entry),
+          },
+        ]}
+        pagination={{
+          count,
+          page,
+          rowsPerPage: ROWS_PER_PAGE,
+          onChangePage: handleChangePage,
+        }}
+      >
+        <InfoTable
+          data={data}
+          loading={loading}
+          error={error}
+          compact
+          hoverable
+        />
+      </SectionBar>
+      {linkId && (
+        <Modal open onClose={handleSetLinkId(undefined)}>
+          <ServiceItemLinks
+            title={entries.find(({ id }) => id === linkId)?.type}
+            serviceItemId={linkId}
+            onClose={handleSetLinkId(undefined)}
           />
-        </SectionBar>
-        {linkId && (
-          <Modal open onClose={handleSetLinkId(undefined)}>
-            <ServiceItemLinks
-              title={entries.find(({ id }) => id === linkId)?.type}
-              serviceItemId={linkId}
-              onClose={handleSetLinkId(undefined)}
+        </Modal>
+      )}
+      {editing && (
+        <Modal open onClose={handleEditing()} compact>
+          <div style={{ display: 'flex' }}>
+            <Form<Entry>
+              title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
+              schema={SCHEMA}
+              data={editing}
+              onSave={handleSave}
+              onClose={handleEditing()}
+              disabled={saving}
             />
-          </Modal>
-        )}
-        {editing && (
-          <Modal open onClose={setEditing()} compact>
-            <div style={{ display: 'flex' }}>
-              <Form<Entry>
-                title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
-                schema={SCHEMA}
-                data={editing}
-                onSave={handleSave}
-                onClose={setEditing()}
-                disabled={saving}
-              />
-              {editing.id && (
-                <ServiceItemReadings {...props} serviceItemId={editing.id} />
-              )}
-            </div>
-          </Modal>
-        )}
-        {deletingEntry && (
-          <ConfirmDelete
-            open
-            onClose={setDeleting()}
-            onConfirm={handleDelete}
-            kind="Service Item"
-            name={deletingEntry.type}
-          />
-        )}
-      </div>
-    );
-  }
-}
+            {editing.id && (
+              <ServiceItemReadings {...props} serviceItemId={editing.id} />
+            )}
+          </div>
+        </Modal>
+      )}
+      {deletingEntry && (
+        <ConfirmDelete
+          open
+          onClose={setDeleting()}
+          onConfirm={handleDelete}
+          kind="Service Item"
+          name={deletingEntry.type}
+        />
+      )}
+    </div>
+  );
+};
