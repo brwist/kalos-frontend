@@ -172,7 +172,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
       <div>
         <SectionBar
           title={`Service Item Links: ${title}`}
-          buttons={[
+          actions={[
             {
               label: 'Close',
               onClick: onClose,

@@ -515,7 +515,7 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
           <>
             <SectionBar
               title="Readings"
-              buttons={[
+              actions={[
                 {
                   label: 'Add',
                   onClick: setEditing({} as Entry),
