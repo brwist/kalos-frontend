@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { FC, useState, useCallback, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -21,6 +21,11 @@ import {
   loadUsersByIds,
   timestamp,
 } from '../../../helpers';
+
+const ReadingClientService = new ReadingClient(ENDPOINT);
+const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
+  ENDPOINT,
+);
 
 const REFRIGERANT_TYPES: Options = [
   { label: 'R410a', value: '1' },
@@ -102,26 +107,6 @@ const HEAT_EXCHANGE_OPTIONS: Options = [
   { label: 'Dirty', value: 3 },
   { label: 'Major Corrosion', value: 4 },
 ];
-
-type Entry = Reading.AsObject;
-type MaintenanceEntry = MaintenanceQuestion.AsObject;
-
-interface Props {
-  serviceItemId: number;
-  loggedUserId: number;
-}
-
-interface State {
-  entries: Entry[];
-  users: { [key: number]: User.AsObject };
-  loading: boolean;
-  error: boolean;
-  saving: boolean;
-  editedEntry?: Entry;
-  deletingEntry?: Entry;
-  editedMaintenanceEntry?: MaintenanceEntry;
-  maintenanceQuestions: { [key: number]: MaintenanceEntry };
-}
 
 const SCHEMA_READING: Schema<Entry> = [
   [{ label: 'Refrigerant', headline: true }],
@@ -252,36 +237,52 @@ const sort = (a: Entry, b: Entry) => {
   return 0;
 };
 
-export class ServiceItemReadings extends PureComponent<Props, State> {
-  ReadingClient: ReadingClient;
-  UserClient: UserClient;
-  MaintenanceQuestionClient: MaintenanceQuestionClient;
+type Entry = Reading.AsObject;
+type MaintenanceEntry = MaintenanceQuestion.AsObject;
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      entries: [],
-      users: {},
-      loading: true,
-      error: false,
-      saving: false,
-      editedEntry: undefined,
-      deletingEntry: undefined,
-      maintenanceQuestions: {},
-      editedMaintenanceEntry: undefined,
-    };
-    this.ReadingClient = new ReadingClient(ENDPOINT);
-    this.UserClient = new UserClient(ENDPOINT);
-    this.MaintenanceQuestionClient = new MaintenanceQuestionClient(ENDPOINT);
-  }
+interface Props {
+  serviceItemId: number;
+  loggedUserId: number;
+}
 
-  loadMaintenanceQuestions = async (readingIds: number[]) => {
+interface State {
+  entries: Entry[];
+  users: { [key: number]: User.AsObject };
+  loading: boolean;
+  error: boolean;
+  saving: boolean;
+  editedEntry?: Entry;
+  deletingEntry?: Entry;
+  editedMaintenanceEntry?: MaintenanceEntry;
+  maintenanceQuestions: { [key: number]: MaintenanceEntry };
+}
+
+export const ServiceItemReadings: FC<Props> = ({
+  serviceItemId,
+  loggedUserId,
+}) => {
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [users, setUsers] = useState<{ [key: number]: User.AsObject }>({});
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [editedEntry, setEditedEntry] = useState<Entry>();
+  const [deletingEntry, setDeletingEntry] = useState<Entry>();
+  const [editedMaintenanceEntry, setEditedMaintenanceEntry] = useState<
+    MaintenanceEntry
+  >();
+  const [maintenanceQuestions, setMaintenanceQuestions] = useState<{
+    [key: number]: MaintenanceEntry;
+  }>({});
+
+  const loadMaintenanceQuestions = async (readingIds: number[]) => {
     const maintenanceQuestions = await Promise.all(
       readingIds.map(async id => {
         const entry = new MaintenanceQuestion();
         entry.setReadingId(id);
         try {
-          return await this.MaintenanceQuestionClient.Get(entry);
+          return await MaintenanceQuestionClientService.Get(entry);
         } catch (e) {
           return null;
         }
@@ -302,260 +303,259 @@ export class ServiceItemReadings extends PureComponent<Props, State> {
     };
   };
 
-  load = async () => {
-    this.setState({ loading: true });
-    const { serviceItemId } = this.props;
+  const load = useCallback(async () => {
+    setLoading(true);
     const entry = new Reading();
     entry.setServiceItemId(serviceItemId);
     try {
-      const response = await this.ReadingClient.BatchGet(entry);
+      const response = await ReadingClientService.BatchGet(entry);
       const { resultsList } = response.toObject();
       const users = await loadUsersByIds(
         resultsList.map(({ userId }) => userId),
       );
-      const maintenanceQuestions = await this.loadMaintenanceQuestions(
+      const maintenanceQuestions = await loadMaintenanceQuestions(
         resultsList.map(({ id }) => id),
       );
-      this.setState({
-        entries: resultsList.sort(sort),
-        maintenanceQuestions,
-        users,
-        loading: false,
-      });
+      setEntries(resultsList.sort(sort));
+      setMaintenanceQuestions(maintenanceQuestions);
+      setUsers(users);
+      setLoading(false);
+      setLoaded(true);
     } catch (e) {
-      this.setState({ error: true, loading: false });
+      setError(true);
+      setLoading(false);
     }
-  };
+  }, [
+    setLoading,
+    loadMaintenanceQuestions,
+    setEntries,
+    setMaintenanceQuestions,
+    setUsers,
+    setError,
+  ]);
 
-  async componentDidMount() {
-    await this.load();
-  }
-
-  setEditing = (editedEntry?: Entry) => () =>
-    this.setState({ editedEntry, error: false });
-
-  setEditingMaintenance = (editedMaintenanceEntry?: MaintenanceEntry) => () =>
-    this.setState({ editedMaintenanceEntry, error: false });
-
-  setDeleting = (deletingEntry?: Entry) => () =>
-    this.setState({ deletingEntry });
-
-  handleSave = async (data: Entry) => {
-    const { serviceItemId, loggedUserId } = this.props;
-    const { editedEntry } = this.state;
-    if (editedEntry) {
-      const isNew = !editedEntry.id;
-      this.setState({ saving: true });
-      const entry = new Reading();
-      if (!isNew) {
-        entry.setId(editedEntry.id);
-      }
-      entry.setServiceItemId(serviceItemId);
-      entry.setDate(timestamp(true));
-      entry.setUserId(loggedUserId);
-      const fieldMaskList = ['setServiceItemId', 'setDate', 'setUserId'];
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        entry[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      entry.setFieldMaskList(fieldMaskList);
-      try {
-        await this.ReadingClient[isNew ? 'Create' : 'Update'](entry);
-        this.setState({ saving: false });
-        this.setEditing(undefined)();
-        await this.load();
-      } catch (e) {
-        this.setState({ error: true, saving: false });
-      }
+  useEffect(() => {
+    if (!loaded) {
+      load();
     }
-  };
+  }, [loaded, load]);
 
-  handleSaveMaintenance = async (data: MaintenanceEntry) => {
-    const { editedMaintenanceEntry } = this.state;
-    if (editedMaintenanceEntry) {
-      const isNew = !editedMaintenanceEntry.id;
-      this.setState({ saving: true });
-      const entry = new MaintenanceQuestion();
-      if (!isNew) {
-        entry.setId(editedMaintenanceEntry.id);
-      }
-      entry.setReadingId(editedMaintenanceEntry.readingId);
-      const fieldMaskList = ['setReadingId'];
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        entry[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      entry.setFieldMaskList(fieldMaskList);
-      try {
-        await this.MaintenanceQuestionClient[isNew ? 'Create' : 'Update'](
-          entry,
-        );
-        this.setState({ saving: false });
-        this.setEditingMaintenance()();
-        await this.load();
-      } catch (e) {
-        this.setState({ error: true, saving: false });
-      }
-    }
-  };
+  const setEditing = useCallback(
+    (editedEntry?: Entry) => () => {
+      setEditedEntry(editedEntry);
+      setError(false);
+    },
+    [setEditedEntry, setError],
+  );
 
-  handleDelete = async () => {
-    const { deletingEntry } = this.state;
-    this.setDeleting()();
+  const setEditingMaintenance = useCallback(
+    (editedMaintenanceEntry?: MaintenanceEntry) => () => {
+      setEditedMaintenanceEntry(editedMaintenanceEntry);
+      setError(false);
+    },
+    [setEditedMaintenanceEntry, setError],
+  );
+
+  const setDeleting = useCallback(
+    (deletingEntry?: Entry) => () => setDeletingEntry(deletingEntry),
+    [setDeletingEntry],
+  );
+
+  const handleSave = useCallback(
+    async (data: Entry) => {
+      if (editedEntry) {
+        const isNew = !editedEntry.id;
+        setSaving(true);
+        const entry = new Reading();
+        if (!isNew) {
+          entry.setId(editedEntry.id);
+        }
+        entry.setServiceItemId(serviceItemId);
+        entry.setDate(timestamp(true));
+        entry.setUserId(loggedUserId);
+        const fieldMaskList = ['setServiceItemId', 'setDate', 'setUserId'];
+        for (const fieldName in data) {
+          const { upperCaseProp, methodName } = getRPCFields(fieldName);
+          // @ts-ignore
+          entry[methodName](data[fieldName]);
+          fieldMaskList.push(upperCaseProp);
+        }
+        entry.setFieldMaskList(fieldMaskList);
+        try {
+          await ReadingClientService[isNew ? 'Create' : 'Update'](entry);
+          setSaving(false);
+          setEditing()();
+          await load();
+        } catch (e) {
+          setError(true);
+          setSaving(false);
+        }
+      }
+    },
+    [editedEntry, setSaving, setEditing, load, setError],
+  );
+
+  const handleSaveMaintenance = useCallback(
+    async (data: MaintenanceEntry) => {
+      if (editedMaintenanceEntry) {
+        const isNew = !editedMaintenanceEntry.id;
+        setSaving(true);
+        const entry = new MaintenanceQuestion();
+        if (!isNew) {
+          entry.setId(editedMaintenanceEntry.id);
+        }
+        entry.setReadingId(editedMaintenanceEntry.readingId);
+        const fieldMaskList = ['setReadingId'];
+        for (const fieldName in data) {
+          const { upperCaseProp, methodName } = getRPCFields(fieldName);
+          // @ts-ignore
+          entry[methodName](data[fieldName]);
+          fieldMaskList.push(upperCaseProp);
+        }
+        entry.setFieldMaskList(fieldMaskList);
+        try {
+          await MaintenanceQuestionClientService[isNew ? 'Create' : 'Update'](
+            entry,
+          );
+          setSaving(false);
+          setEditingMaintenance()();
+          await load();
+        } catch (e) {
+          setError(true);
+          setSaving(false);
+        }
+      }
+    },
+    [editedMaintenanceEntry, setSaving, setEditingMaintenance, load, setError],
+  );
+
+  const handleDelete = useCallback(async () => {
+    setDeleting()();
     if (deletingEntry) {
-      this.setState({ loading: true });
+      setLoading(true);
       const maintenanceQuestion = new MaintenanceQuestion();
       maintenanceQuestion.setReadingId(deletingEntry.id);
-      await this.MaintenanceQuestionClient.Delete(maintenanceQuestion);
+      await MaintenanceQuestionClientService.Delete(maintenanceQuestion);
       const entry = new Reading();
       entry.setId(deletingEntry.id);
-      await this.ReadingClient.Delete(entry);
-      await this.load();
+      await ReadingClientService.Delete(entry);
+      await load();
     }
-  };
+  }, [setDeleting, deletingEntry, load]);
 
-  render() {
-    const {
-      state,
-      setEditing,
-      handleSave,
-      handleDelete,
-      setDeleting,
-      setEditingMaintenance,
-      handleSaveMaintenance,
-    } = this;
-    const {
-      entries,
-      users,
-      loading,
-      saving,
-      editedEntry,
-      deletingEntry,
-      error,
-      maintenanceQuestions,
-      editedMaintenanceEntry,
-    } = state;
-    const data: Data = loading
-      ? makeFakeRows()
-      : entries.map(entry => {
-          const { id, date, userId } = entry;
-          const newMaintenanceQuestion = new MaintenanceQuestion();
-          newMaintenanceQuestion.setReadingId(id);
-          return [
-            {
-              value: [
-                formatDate(date),
-                '-',
-                maintenanceQuestions[id] ? 'Maintenance' : 'Service',
-                userId === 0
-                  ? ''
-                  : ` - ${users[userId].firstname} ${users[userId].lastname}`,
-              ].join(' '),
-              actions: [
-                <IconButton
-                  key={0}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={setEditingMaintenance(
-                    maintenanceQuestions[id] ||
-                      newMaintenanceQuestion.toObject(),
-                  )}
-                >
-                  <BuildIcon />
-                </IconButton>,
-                <IconButton
-                  key={1}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={setEditing(entry)}
-                >
-                  <EditIcon />
-                </IconButton>,
-                <IconButton
-                  key={2}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={setDeleting(entry)}
-                >
-                  <DeleteIcon />
-                </IconButton>,
-              ],
-            },
-          ];
-        });
-    return (
-      <div style={{ width: 500, marginLeft: 8 }}>
-        {editedMaintenanceEntry !== undefined ? (
-          <Form<MaintenanceEntry>
-            title={`${editedMaintenanceEntry.id ? 'Edit' : 'Add'} Maintenance`}
-            schema={SCHEMA_MAINTENANCE}
-            data={editedMaintenanceEntry}
-            onSave={handleSaveMaintenance}
-            onClose={setEditingMaintenance()}
-            disabled={saving}
-          >
-            {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
-          </Form>
-        ) : editedEntry ? (
-          <Form<Entry>
-            title={`${editedEntry.id ? 'Edit' : 'Add'} Reading`}
-            schema={SCHEMA_READING}
-            data={editedEntry}
-            onSave={handleSave}
-            onClose={setEditing()}
-            disabled={saving}
-          >
-            {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
-          </Form>
-        ) : (
-          <>
-            <SectionBar
-              title="Readings"
-              actions={[
-                {
-                  label: 'Add',
-                  onClick: setEditing({} as Entry),
-                },
-              ]}
-              fixedActions
-            />
-            <div
-              style={{
-                maxHeight: 660,
-                overflowY: 'auto',
-              }}
-            >
-              <InfoTable data={data} loading={loading} hoverable />
-            </div>
-          </>
-        )}
-        {deletingEntry && (
-          <ConfirmDelete
-            open
-            onClose={setDeleting()}
-            onConfirm={handleDelete}
-            kind="Reading"
-            name={[
-              formatDate(deletingEntry.date),
+  const data: Data = loading
+    ? makeFakeRows()
+    : entries.map(entry => {
+        const { id, date, userId } = entry;
+        const newMaintenanceQuestion = new MaintenanceQuestion();
+        newMaintenanceQuestion.setReadingId(id);
+        return [
+          {
+            value: [
+              formatDate(date),
               '-',
-              maintenanceQuestions[deletingEntry.id]
-                ? 'Maintenance'
-                : 'Service',
-              deletingEntry.userId === 0
+              maintenanceQuestions[id] ? 'Maintenance' : 'Service',
+              userId === 0
                 ? ''
-                : ` - ${users[deletingEntry.userId].firstname} ${
-                    users[deletingEntry.userId].lastname
-                  }`,
-            ]
-              .join(' ')
-              .trim()}
+                : ` - ${users[userId].firstname} ${users[userId].lastname}`,
+            ].join(' '),
+            actions: [
+              <IconButton
+                key={0}
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={setEditingMaintenance(
+                  maintenanceQuestions[id] || newMaintenanceQuestion.toObject(),
+                )}
+              >
+                <BuildIcon />
+              </IconButton>,
+              <IconButton
+                key={1}
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={setEditing(entry)}
+              >
+                <EditIcon />
+              </IconButton>,
+              <IconButton
+                key={2}
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={setDeleting(entry)}
+              >
+                <DeleteIcon />
+              </IconButton>,
+            ],
+          },
+        ];
+      });
+  return (
+    <>
+      {editedMaintenanceEntry !== undefined ? (
+        <Form<MaintenanceEntry>
+          title={`${editedMaintenanceEntry.id ? 'Edit' : 'Add'} Maintenance`}
+          schema={SCHEMA_MAINTENANCE}
+          data={editedMaintenanceEntry}
+          onSave={handleSaveMaintenance}
+          onClose={setEditingMaintenance()}
+          disabled={saving}
+        >
+          {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
+        </Form>
+      ) : editedEntry ? (
+        <Form<Entry>
+          title={`${editedEntry.id ? 'Edit' : 'Add'} Reading`}
+          schema={SCHEMA_READING}
+          data={editedEntry}
+          onSave={handleSave}
+          onClose={setEditing()}
+          disabled={saving}
+        >
+          {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
+        </Form>
+      ) : (
+        <>
+          <SectionBar
+            title="Readings"
+            actions={[
+              {
+                label: 'Add',
+                onClick: setEditing({} as Entry),
+              },
+            ]}
+            fixedActions
           />
-        )}
-      </div>
-    );
-  }
-}
+          <div
+            style={{
+              maxHeight: 660,
+              overflowY: 'auto',
+            }}
+          >
+            <InfoTable data={data} loading={loading} hoverable />
+          </div>
+        </>
+      )}
+      {deletingEntry && (
+        <ConfirmDelete
+          open
+          onClose={setDeleting()}
+          onConfirm={handleDelete}
+          kind="Reading"
+          name={[
+            formatDate(deletingEntry.date),
+            '-',
+            maintenanceQuestions[deletingEntry.id] ? 'Maintenance' : 'Service',
+            deletingEntry.userId === 0
+              ? ''
+              : ` - ${users[deletingEntry.userId].firstname} ${
+                  users[deletingEntry.userId].lastname
+                }`,
+          ]
+            .join(' ')
+            .trim()}
+        />
+      )}
+    </>
+  );
+};
