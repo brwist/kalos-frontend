@@ -15,6 +15,7 @@ import { makeFakeRows, getRPCFields } from '../../../helpers';
 type Entry = PropLink.AsObject;
 
 interface Props {
+  kind: string;
   title?: string;
   serviceItemId: number;
   onClose: () => void;
@@ -133,7 +134,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
       handleDelete,
       setDeleting,
     } = this;
-    const { title, onClose } = props;
+    const { kind, title = '', onClose } = props;
     const { entries, loading, saving, editedEntry, deletingEntry } = state;
     const data: Data = loading
       ? makeFakeRows()
@@ -171,7 +172,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     return (
       <div>
         <SectionBar
-          title={`Service Item Links: ${title}`}
+          title={`${kind}s${title}`}
           actions={[
             {
               label: 'Add Link',
@@ -189,7 +190,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
         {editedEntry && (
           <Modal open onClose={setEditing(undefined)}>
             <Form<Entry>
-              title={`${editedEntry.id ? 'Edit' : 'Add'} Service Item Link`}
+              title={`${editedEntry.id ? 'Edit' : 'Add'} ${kind}`}
               schema={SCHEMA}
               data={editedEntry}
               onSave={handleSave}
@@ -203,7 +204,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
             open
             onClose={setDeleting(undefined)}
             onConfirm={handleDelete}
-            kind="Service Item Link"
+            kind={kind}
             name={deletingEntry.description || deletingEntry.url}
           />
         )}

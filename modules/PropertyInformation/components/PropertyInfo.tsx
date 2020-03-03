@@ -7,6 +7,7 @@ import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { ServiceItemLinks } from './ServiceItemLinks';
 import { getRPCFields } from '../../../helpers';
 
 type Entry = Property.AsObject;
@@ -24,6 +25,7 @@ interface State {
   notificationEditing: boolean;
   notificationViewing: boolean;
   editMenuAnchorEl: (EventTarget & HTMLElement) | null;
+  linksViewing: boolean;
 }
 
 const PROP_LEVEL = 'Used for property-level billing only';
@@ -90,6 +92,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       notificationEditing: false,
       notificationViewing: false,
       editMenuAnchorEl: null,
+      linksViewing: false,
     };
     this.PropertyClient = new PropertyClient(ENDPOINT);
   }
@@ -105,6 +108,9 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
   handleSetEditEditMenuAnchorEl = (
     editMenuAnchorEl: (EventTarget & HTMLElement) | null,
   ) => this.setState({ editMenuAnchorEl });
+
+  handleSetLinksViewing = (linksViewing: boolean) => () =>
+    this.setState({ linksViewing });
 
   loadEntry = async () => {
     const { userID, propertyId } = this.props;
@@ -160,6 +166,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       handleSetNotificationEditing,
       handleSetNotificationViewing,
       handleSetEditEditMenuAnchorEl,
+      handleSetLinksViewing,
     } = this;
     const { userID, propertyId } = props;
     const {
@@ -170,6 +177,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       notificationEditing,
       notificationViewing,
       editMenuAnchorEl,
+      linksViewing,
     } = state;
     const {
       id,
@@ -252,6 +260,10 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             {
               label: 'Owner Details',
               url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
+            },
+            {
+              label: 'View Property Links',
+              onClick: handleSetLinksViewing(true),
             },
           ]}
         >
@@ -372,6 +384,13 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             Change Owner
           </MenuItem>
         </Menu>
+        <Modal open={linksViewing} onClose={handleSetLinksViewing(false)}>
+          <ServiceItemLinks
+            kind="Property Information Link"
+            serviceItemId={propertyId}
+            onClose={handleSetLinksViewing(false)}
+          />
+        </Modal>
       </>
     );
   }
