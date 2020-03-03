@@ -3,6 +3,7 @@ import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import ReactDOM from 'react-dom';
 import customTheme from '../Theme/main';
 import Button from './Button/examples';
+import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
 import Field from './Field/examples';
 import Form from './Form/examples';
@@ -16,6 +17,7 @@ const DEFAULT_COMPONENT_IDX = 0;
 
 const COMPONENTS = {
   Button,
+  Confirm,
   ConfirmDelete,
   Field,
   Form,
