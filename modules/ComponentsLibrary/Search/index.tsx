@@ -1,5 +1,4 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { Modal } from '../Modal';
@@ -36,14 +35,7 @@ const SEARCH_SCHEMA: Schema<Entry> = [
   [{ label: 'Matched results', headline: true }],
 ];
 
-const useStyles = makeStyles(theme => ({
-  kind: {
-    marginBottom: 0,
-  },
-}));
-
 export const Search: FC<Props> = ({ open, onClose, onSelect }: Props) => {
-  const classes = useStyles();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -84,10 +76,10 @@ export const Search: FC<Props> = ({ open, onClose, onSelect }: Props) => {
   );
 
   useEffect(() => {
-    if (!loaded) {
+    if (open && !loaded) {
       load(search);
     }
-  }, [loaded, load]);
+  }, [loaded, load, open]);
 
   const handleChangePage = useCallback(
     (page: number) => {

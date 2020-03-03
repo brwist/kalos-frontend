@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { Modal } from '../Modal';
-import { SectionBar } from '../SectionBar';
+import { Confirm } from '../Confirm';
 
 interface Props {
   open: boolean;
@@ -18,27 +18,8 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const ConfirmDelete = ({
-  open,
-  onClose,
-  onConfirm,
-  kind,
-  name,
-}: Props) => {
-  const classes = useStyles();
-  return (
-    <Modal open={open} onClose={onClose} compact maxWidth={370}>
-      <SectionBar
-        title="Confirm delete"
-        actions={[
-          { label: 'Cancel', onClick: onClose, variant: 'outlined' },
-          { label: 'Confirm', onClick: onConfirm },
-        ]}
-        fixedActions
-      />
-      <Typography className={classes.wrapper}>
-        Are you sure, you want to delete {kind} <strong>{name}</strong>?
-      </Typography>
-    </Modal>
-  );
-};
+export const ConfirmDelete: FC<Props> = ({ name, kind, ...props }) => (
+  <Confirm title="Confirm delete" {...props}>
+    Are you sure, you want to delete {kind} <strong>{name}</strong>?
+  </Confirm>
+);

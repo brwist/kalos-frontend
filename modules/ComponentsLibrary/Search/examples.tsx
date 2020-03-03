@@ -7,7 +7,7 @@ type Props = {
 };
 
 const EnhancedModal: FC<Props> = ({ button, children, ...props }) => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const handleToggleOpen = useCallback(open => () => setOpen(open), [setOpen]);
   return (
     <>
