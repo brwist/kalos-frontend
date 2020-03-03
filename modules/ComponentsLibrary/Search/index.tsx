@@ -18,6 +18,7 @@ interface Props extends Style {
   open: boolean;
   onClose: () => void;
   onSelect: (entry: Entry) => void;
+  excludeId?: number;
 }
 
 const SEARCH_OPTIONS: Options = [{ label: 'Customers', value: 1 }];
@@ -35,7 +36,12 @@ const SEARCH_SCHEMA: Schema<Entry> = [
   [{ label: 'Matched results', headline: true }],
 ];
 
-export const Search: FC<Props> = ({ open, onClose, onSelect }: Props) => {
+export const Search: FC<Props> = ({
+  open,
+  onClose,
+  onSelect,
+  excludeId,
+}: Props) => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -68,11 +74,15 @@ export const Search: FC<Props> = ({ open, onClose, onSelect }: Props) => {
         await UserClientService.BatchGet(entry)
       ).toObject();
       setLoaded(true);
-      setEntries(resultsList.map(item => ({ ...item, kind: 1 })));
+      setEntries(
+        resultsList
+          .filter(({ id }) => id !== excludeId)
+          .map(item => ({ ...item, kind: 1 })),
+      );
       setCount(totalCount);
       setLoading(false);
     },
-    [setLoading, page, setLoaded, setEntries, setCount, search],
+    [setLoading, page, setLoaded, setEntries, setCount, search, excludeId],
   );
 
   useEffect(() => {
