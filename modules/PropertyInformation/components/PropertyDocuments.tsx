@@ -59,14 +59,14 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     await this.load();
   }
 
-  handleDownload = (filename: string) => async (
+  handleDownload = (filename: string, type: number) => async (
     event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
   ) => {
     event.preventDefault();
     const S3 = new S3Client(ENDPOINT);
     const url = new URLObject();
     url.setKey(filename);
-    url.setBucket('kalosdocs-prod');
+    url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
     const dlURL = await S3.GetDownloadURL(url);
     window.open(dlURL.url, '_blank');
   };
@@ -81,10 +81,10 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     const { entries, loading, error, count, page } = state;
     const data: Data = loading
       ? makeFakeRows()
-      : entries.map(({ id, filename, description: value }) => [
+      : entries.map(({ id, filename, type, description: value }) => [
           {
             value: (
-              <Link href="" onClick={handleDownload(filename)}>
+              <Link href="" onClick={handleDownload(filename, type)}>
                 {value}
               </Link>
             ),
