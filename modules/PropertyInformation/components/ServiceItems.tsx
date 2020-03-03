@@ -141,6 +141,7 @@ export const ServiceItems: FC<Props> = props => {
     setLoading(true);
     const entry = new ServiceItem();
     entry.setPropertyId(propertyId);
+    entry.setPageNumber(page);
     try {
       const response = await ServiceItemClientService.BatchGet(entry);
       const { resultsList, totalCount: count } = response.toObject();
@@ -152,7 +153,7 @@ export const ServiceItems: FC<Props> = props => {
       setError(true);
       setLoading(false);
     }
-  }, [setLoading, setEntries, setCount, setError, setLoaded]);
+  }, [setLoading, setEntries, setCount, setError, setLoaded, page]);
 
   useEffect(() => {
     if (!loaded) {

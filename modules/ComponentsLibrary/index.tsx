@@ -9,6 +9,7 @@ import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
+import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
 
 const DEFAULT_COMPONENT_IDX = 0;
@@ -21,12 +22,13 @@ const COMPONENTS = {
   InfoTable,
   Link,
   Modal,
+  Search,
   SectionBar,
 };
 
 const ComponentsLibrary = () => {
   const [component, setComponent] = useState<keyof typeof COMPONENTS>(
-    Object.keys(COMPONENTS)[DEFAULT_COMPONENT_IDX] as keyof typeof COMPONENTS
+    Object.keys(COMPONENTS)[DEFAULT_COMPONENT_IDX] as keyof typeof COMPONENTS,
   );
   const Component = COMPONENTS[component];
   const handleClickMenuItem = useCallback(v => () => setComponent(v), []);
