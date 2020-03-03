@@ -198,7 +198,8 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     const entry = new User();
     entry.setId(userID);
     await UserClientService.Delete(entry);
-  }, [userID]);
+    setDeleting(false);
+  }, [userID, setDeleting]);
 
   useEffect(() => {
     if (!customer.id) {
@@ -382,15 +383,13 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           }
         />
       </Modal>
-      {deleting && (
-        <ConfirmDelete
-          open
-          onClose={handleSetDeleting(false)}
-          onConfirm={handleDelete}
-          kind="Customer"
-          name={`${firstname} ${lastname}`}
-        />
-      )}
+      <ConfirmDelete
+        open={deleting}
+        onClose={handleSetDeleting(false)}
+        onConfirm={handleDelete}
+        kind="Customer"
+        name={`${firstname} ${lastname}`}
+      />
     </>
   );
 };
