@@ -6,6 +6,7 @@ import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { getRPCFields, formatDateTime } from '../../../helpers';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -128,13 +129,13 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
   const [notificationEditing, setNotificationEditing] = useState<boolean>(
     false,
   );
   const [notificationViewing, setNotificationViewing] = useState<boolean>(
     false,
   );
-  const [notificationShown, setNotificationShown] = useState<boolean>(false);
   const classes = useStyles();
 
   const load = useCallback(async () => {
@@ -165,6 +166,11 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     [setNotificationViewing],
   );
 
+  const handleSetDeleting = useCallback(
+    (deleting: boolean) => () => setDeleting(deleting),
+    [setDeleting],
+  );
+
   const handleSave = useCallback(
     async (data: Entry) => {
       setSaving(true);
@@ -186,6 +192,13 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     },
     [setSaving, userID, setCustomer, setEditing, handleSetNotificationEditing],
   );
+
+  const handleDelete = useCallback(async () => {
+    // TODO: delete customer related data?
+    const entry = new User();
+    entry.setId(userID);
+    await UserClientService.Delete(entry);
+  }, [userID]);
 
   useEffect(() => {
     if (!customer.id) {
@@ -281,7 +294,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           },
           {
             label: 'Delete Customer',
-            onClick: () => {}, // TODO: implement onClick
+            onClick: handleSetDeleting(true),
           },
         ]}
       >
@@ -369,6 +382,15 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           }
         />
       </Modal>
+      {deleting && (
+        <ConfirmDelete
+          open
+          onClose={handleSetDeleting(false)}
+          onConfirm={handleDelete}
+          kind="Customer"
+          name={`${firstname} ${lastname}`}
+        />
+      )}
     </>
   );
 };
