@@ -2,33 +2,20 @@ import React from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, USA_STATES } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
+import { Search } from '../../ComponentsLibrary/Search';
 import { ServiceItemLinks } from './ServiceItemLinks';
 import { getRPCFields } from '../../../helpers';
 
 type Entry = Property.AsObject;
-
-interface Props {
-  userID: number;
-  propertyId: number;
-}
-
-interface State {
-  entry: Entry;
-  editing: boolean;
-  saving: boolean;
-  error: boolean;
-  deleting: boolean;
-  notificationEditing: boolean;
-  notificationViewing: boolean;
-  editMenuAnchorEl: (EventTarget & HTMLElement) | null;
-  linksViewing: boolean;
-}
+type UserEntry = User.AsObject;
 
 const PROP_LEVEL = 'Used for property-level billing only';
 const RESIDENTIAL = [
@@ -81,6 +68,25 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
   ],
 ];
 
+interface Props {
+  userID: number;
+  propertyId: number;
+}
+
+interface State {
+  entry: Entry;
+  editing: boolean;
+  saving: boolean;
+  error: boolean;
+  deleting: boolean;
+  notificationEditing: boolean;
+  notificationViewing: boolean;
+  editMenuAnchorEl: (EventTarget & HTMLElement) | null;
+  linksViewing: boolean;
+  changingOwner: boolean;
+  pendingChangeOwner?: UserEntry;
+}
+
 export class PropertyInfo extends React.PureComponent<Props, State> {
   PropertyClient: PropertyClient;
 
@@ -96,6 +102,8 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       notificationViewing: false,
       editMenuAnchorEl: null,
       linksViewing: false,
+      changingOwner: false,
+      pendingChangeOwner: undefined,
     };
     this.PropertyClient = new PropertyClient(ENDPOINT);
   }
@@ -116,6 +124,9 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
 
   handleSetLinksViewing = (linksViewing: boolean) => () =>
     this.setState({ linksViewing });
+
+  handleSetChangingOwner = (changingOwner: boolean) => () =>
+    this.setState({ changingOwner });
 
   load = async () => {
     const { userID, propertyId } = this.props;
@@ -171,6 +182,29 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     this.setState({ deleting: false });
   };
 
+  handleChangeOwner = async () => {
+    const { propertyId } = this.props;
+    const { pendingChangeOwner } = this.state;
+    if (pendingChangeOwner) {
+      const { id } = pendingChangeOwner;
+      this.setState({ pendingChangeOwner: undefined, error: false });
+      const entry = new Property();
+      entry.setId(propertyId);
+      entry.setUserId(id);
+      // entry.setFieldMaskList(['setUserId']);
+      try {
+        await this.PropertyClient.Update(entry); // FIXME: for some reason this call fails
+        document.location.href = [
+          '/index.cfm?action=admin:properties.details',
+          `property_id=${propertyId}`,
+          `user_id=${id}`,
+        ].join('&');
+      } catch (e) {
+        this.setState({ error: true });
+      }
+    }
+  };
+
   render() {
     const {
       props,
@@ -183,6 +217,8 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       handleSetLinksViewing,
       handleSetDeleting,
       handleDelete,
+      handleSetChangingOwner,
+      handleChangeOwner,
     } = this;
     const { userID, propertyId } = props;
     const {
@@ -195,6 +231,8 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       editMenuAnchorEl,
       linksViewing,
       deleting,
+      changingOwner,
+      pendingChangeOwner,
     } = state;
     const {
       id,
@@ -274,6 +312,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             {
               label: 'Change Owner',
               desktop: false,
+              onClick: handleSetChangingOwner(true),
             },
             {
               label: 'Owner Details',
@@ -396,7 +435,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
           <MenuItem
             onClick={() => {
               handleSetEditEditMenuAnchorEl(null);
-              // TODO implement change owner
+              handleSetChangingOwner(true)();
             }}
           >
             Change Owner
@@ -416,6 +455,26 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
           kind="Property Information"
           name={`${firstname} ${lastname}`}
         />
+        <Search
+          open={changingOwner}
+          onClose={handleSetChangingOwner(false)}
+          onSelect={pendingChangeOwner => this.setState({ pendingChangeOwner })}
+          excludeId={userID}
+        />
+        {pendingChangeOwner && (
+          <Confirm
+            open
+            title="Confirm"
+            onClose={() => this.setState({ pendingChangeOwner: undefined })}
+            onConfirm={handleChangeOwner}
+          >
+            Are you sure you want to move this property to{' '}
+            <strong>
+              {pendingChangeOwner.firstname} {pendingChangeOwner.lastname}
+            </strong>
+            ?
+          </Confirm>
+        )}
       </>
     );
   }
