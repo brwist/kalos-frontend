@@ -7,6 +7,7 @@ import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { ServiceItemLinks } from './ServiceItemLinks';
 import { getRPCFields } from '../../../helpers';
 
@@ -22,6 +23,7 @@ interface State {
   editing: boolean;
   saving: boolean;
   error: boolean;
+  deleting: boolean;
   notificationEditing: boolean;
   notificationViewing: boolean;
   editMenuAnchorEl: (EventTarget & HTMLElement) | null;
@@ -89,6 +91,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       editing: false,
       saving: false,
       error: false,
+      deleting: false,
       notificationEditing: false,
       notificationViewing: false,
       editMenuAnchorEl: null,
@@ -98,6 +101,8 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
   }
 
   handleSetEditing = (editing: boolean) => () => this.setState({ editing });
+
+  handleSetDeleting = (deleting: boolean) => () => this.setState({ deleting });
 
   handleSetNotificationEditing = (notificationEditing: boolean) => () =>
     this.setState({ notificationEditing });
@@ -157,6 +162,15 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     this.handleSetNotificationEditing(false)();
   };
 
+  handleDelete = async () => {
+    // TODO: delete customer related data + redirect somewhere?
+    const { propertyId } = this.props;
+    const entry = new Property();
+    entry.setId(propertyId);
+    await this.PropertyClient.Delete(entry);
+    this.setState({ deleting: false });
+  };
+
   render() {
     const {
       props,
@@ -167,6 +181,8 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       handleSetNotificationViewing,
       handleSetEditEditMenuAnchorEl,
       handleSetLinksViewing,
+      handleSetDeleting,
+      handleDelete,
     } = this;
     const { userID, propertyId } = props;
     const {
@@ -178,6 +194,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       notificationViewing,
       editMenuAnchorEl,
       linksViewing,
+      deleting,
     } = state;
     const {
       id,
@@ -248,6 +265,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             {
               label: 'Delete Property',
               desktop: false,
+              onClick: handleSetDeleting(true),
             },
             {
               label: 'Merge Property',
@@ -362,7 +380,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
           <MenuItem
             onClick={() => {
               handleSetEditEditMenuAnchorEl(null);
-              // TODO implement delete property with confirmation
+              handleSetDeleting(true)();
             }}
           >
             Delete Property
@@ -391,6 +409,13 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             onClose={handleSetLinksViewing(false)}
           />
         </Modal>
+        <ConfirmDelete
+          open={deleting}
+          onClose={handleSetDeleting(false)}
+          onConfirm={handleDelete}
+          kind="Property Information"
+          name={`${firstname} ${lastname}`}
+        />
       </>
     );
   }
