@@ -1,4 +1,10 @@
-import React, { FC, useCallback, CSSProperties, useState } from 'react';
+import React, {
+  FC,
+  useCallback,
+  CSSProperties,
+  useState,
+  ReactNode,
+} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
@@ -7,7 +13,7 @@ import TablePagination from '@material-ui/core/TablePagination';
 import { Props as ButtonProps } from '../Button';
 import { Actions, ActionsProps } from '../Actions';
 
-type Pagination = {
+export type Pagination = {
   count: number;
   page: number;
   rowsPerPage: number;
@@ -21,7 +27,7 @@ type Styles = {
 };
 
 interface Props {
-  title: string;
+  title: ReactNode;
   actions?: ActionsProps;
   className?: string;
   pagination?: Pagination;
@@ -68,8 +74,12 @@ const useStyles = makeStyles(theme => ({
       fontSize: 15,
     },
   }),
+  toolbarRoot: {
+    flexShrink: 0,
+  },
   toolbar: {
     minHeight: 0,
+    color: theme.palette.common.black,
   },
 }));
 
@@ -114,7 +124,7 @@ export const SectionBar: FC<Props> = ({
           </Typography>
           {pagination && pagination.count > 0 && !collapsed && (
             <TablePagination
-              classes={{ toolbar: classes.toolbar }}
+              classes={{ root: classes.toolbarRoot, toolbar: classes.toolbar }}
               component="div"
               rowsPerPageOptions={[]}
               {...pagination}

@@ -499,9 +499,8 @@ export const ServiceItemReadings: FC<Props> = ({
           onSave={handleSaveMaintenance}
           onClose={setEditingMaintenance()}
           disabled={saving}
-        >
-          {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
-        </Form>
+          error={error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
+        />
       ) : editedEntry ? (
         <Form<Entry>
           title={`${editedEntry.id ? 'Edit' : 'Add'} Reading`}
@@ -510,9 +509,8 @@ export const ServiceItemReadings: FC<Props> = ({
           onSave={handleSave}
           onClose={setEditing()}
           disabled={saving}
-        >
-          {error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
-        </Form>
+          error={error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
+        />
       ) : (
         <>
           <SectionBar

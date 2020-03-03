@@ -1,7 +1,7 @@
 import React, { ReactElement, useCallback, useState, ReactNode } from 'react';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
-import { SectionBar } from '../SectionBar';
+import { SectionBar, Pagination } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
 import { Field, Value } from '../Field';
 
@@ -12,7 +12,7 @@ export type Option = {
 
 export type Options = (string | Option)[];
 
-export type Type = 'text' | 'password' | 'number';
+export type Type = 'text' | 'password' | 'number' | 'search';
 
 export type SchemaProps<T> = {
   label: string;
@@ -39,6 +39,10 @@ interface Props<T> {
   disabled?: boolean;
   readOnly?: boolean;
   actions?: ButtonProps[];
+  pagination?: Pagination;
+  submitLabel?: string;
+  cancelLabel?: string;
+  error?: ReactNode;
   children?: ReactNode;
 }
 
@@ -124,6 +128,10 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   disabled = false,
   readOnly = false,
   actions = [],
+  pagination,
+  submitLabel = 'Save',
+  cancelLabel = 'Cancel',
+  error,
   children,
 }) => {
   const classes = useStyles();
@@ -178,13 +186,13 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             ? []
             : [
                 {
-                  label: 'Save',
+                  label: submitLabel,
                   onClick: handleSave,
                   disabled,
                 },
               ]),
           {
-            label: readOnly ? 'Close' : 'Cancel',
+            label: readOnly ? 'Close' : cancelLabel,
             onClick: onClose,
             disabled,
             variant: readOnly ? 'contained' : 'outlined',
@@ -192,11 +200,10 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         ]}
         fixedActions
         className={classes.sectionBar}
+        pagination={pagination}
       />
       <div className={classes.form}>
-        {children && (
-          <Typography className={classes.error}>{children}</Typography>
-        )}
+        {error && <Typography className={classes.error}>{error}</Typography>}
         {Object.keys(validations).length > 0 && (
           <Typography className={classes.error}>
             Please correct the following validation errors and try again.
@@ -245,6 +252,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             })}
           </div>
         ))}
+        {children}
       </div>
     </div>
   );

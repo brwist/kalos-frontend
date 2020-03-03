@@ -6,6 +6,7 @@ import Paper from '@material-ui/core/Paper';
 type Style = {
   compact?: boolean;
   maxWidth?: number | 'none';
+  fullScreen?: boolean;
 };
 
 interface Props extends Style {
@@ -20,12 +21,13 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  paper: ({ maxWidth }: Style) => ({
-    width: 'auto',
+  paper: ({ maxWidth, fullScreen }: Style) => ({
+    width: fullScreen ? '100%' : 'auto',
+    height: fullScreen ? '100%' : 'auto',
     maxWidth,
     minWidth: 300,
     outline: 'none',
-    maxHeight: `calc(100% - ${theme.spacing(4)}px)`,
+    maxHeight: fullScreen ? '100%' : `calc(100% - ${theme.spacing(4)}px)`,
     overflowX: 'hidden',
     overflowY: 'auto',
     [theme.breakpoints.up('md')]: {
@@ -40,8 +42,9 @@ export const Modal = ({
   children,
   compact = false,
   maxWidth = 'none',
+  fullScreen = false,
 }: Props) => {
-  const classes = useStyles({ compact, maxWidth });
+  const classes = useStyles({ compact, maxWidth, fullScreen });
   return (
     <ModalUI open={open} onClose={onClose} className={classes.modal}>
       <Paper className={classes.paper}>{children}</Paper>
