@@ -357,7 +357,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
         <Form<Entry>
           title={
             notificationViewing
-              ? 'Property Notification'
+              ? 'Customer Notification'
               : `${notification === '' ? 'Add' : 'Edit'} Customer Notification`
           }
           schema={SCHEMA_PROPERTY_NOTIFICATION}
