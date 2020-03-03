@@ -117,7 +117,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
   handleSetLinksViewing = (linksViewing: boolean) => () =>
     this.setState({ linksViewing });
 
-  loadEntry = async () => {
+  load = async () => {
     const { userID, propertyId } = this.props;
     const req = new Property();
     req.setUserId(userID);
@@ -133,8 +133,8 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const entry = await this.loadEntry();
-    if (entry.notification !== '') {
+    const entry = await this.load();
+    if (entry && entry.notification !== '') {
       this.setState({ notificationViewing: true });
     }
   }

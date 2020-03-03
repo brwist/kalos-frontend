@@ -262,8 +262,18 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     ],
   ];
   const systemData: Data = [
-    [{ label: 'Created', value: formatDateTime(dateCreated) }],
-    [{ label: 'Last Login', value: formatDateTime(lastLogin) }],
+    [
+      {
+        label: 'Created',
+        value: dateCreated === '' ? '' : formatDateTime(dateCreated),
+      },
+    ],
+    [
+      {
+        label: 'Last Login',
+        value: lastLogin === '' ? '' : formatDateTime(lastLogin),
+      },
+    ],
     [{ label: 'Login ID', value: login }],
   ];
   return (
