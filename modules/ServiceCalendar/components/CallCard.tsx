@@ -95,7 +95,7 @@ const CallCard = ({ card, reminder }: props) => {
   const technicianNames = technicianIds
     .map(id => {
       const employee = employees.find(emp => emp.id === +id);
-      return `${employee.firstname} ${employee.lastname}`;
+      return `${employee?.firstname} ${employee?.lastname}`;
     })
     .join(', ');
   return (

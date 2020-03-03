@@ -1,4 +1,8 @@
-export const colorsMapping = {
+type Colors = {
+  [key: string]: string,
+};
+
+export const colorsMapping: Colors = {
   'Requested': '#EFC281',
   'Confirmed': '#FEFDB9',
   'Enroute': '#FFFF00',
@@ -14,7 +18,11 @@ export const colorsMapping = {
   '*': '',
 };
 
-export const repeatsMapping = {
+type Repeats = {
+  [key: string]: string,
+};
+
+export const repeatsMapping: Repeats = {
   '1': 'daily',
   '2': 'weekly',
   '3': 'bi-weekly',

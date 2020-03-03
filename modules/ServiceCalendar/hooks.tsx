@@ -3,16 +3,48 @@ import { EmployeesContext } from './main';
 
 export const useEmployees = () => useContext(EmployeesContext);
 
-export const useGetAll = (page = 0, fetchFn) => {
-  const [loading, toggleLoading] = useState(false);
-  const [data, setData] = useState<any[]>([]);
-  if (page === 0) {
-    toggleLoading(!loading);
-  }
-  const res = fetchFn();
-  setData([...data, res.resultsList]);
+type State = {
+  data: any[],
+  isLoading: boolean,
+  page: number,
+  totalCount: number,
+  fetchedCount: number,
+}
 
-  if (page === 0) {
-    toggleLoading(!loading);
-  }
+type Response = {
+  resultsList: any[],
+  totalCount: number,
+}
+
+export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
+  const [state, setState] = useState<State>({
+    data: [],
+    isLoading: true,
+    page: 0,
+    totalCount: 0,
+    fetchedCount: 0
+  });
+  const { data, isLoading, page, totalCount, fetchedCount } = state;
+
+  useEffect(() => {
+    if(fetchedCount < totalCount || !totalCount) {
+      (async () => {
+        const res = await fetchFn(page);
+        setState({
+          data: [...data, ...res.resultsList],
+          totalCount: res.totalCount,
+          fetchedCount: fetchedCount + res.resultsList.length,
+          page: page + 1,
+          isLoading: true,
+        });
+      })();
+    } else if (fetchedCount === totalCount) {
+      setState({
+        ...state,
+        isLoading: false,
+      });
+    }
+  }, [fetchedCount, totalCount, fetchFn]);
+
+  return { data, isLoading };
 };
