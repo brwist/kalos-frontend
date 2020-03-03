@@ -23,7 +23,6 @@ interface State {
   error: boolean;
   notificationEditing: boolean;
   notificationViewing: boolean;
-  notificationShown: boolean;
   editMenuAnchorEl: (EventTarget & HTMLElement) | null;
 }
 
@@ -90,7 +89,6 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       error: false,
       notificationEditing: false,
       notificationViewing: false,
-      notificationShown: false,
       editMenuAnchorEl: null,
     };
     this.PropertyClient = new PropertyClient(ENDPOINT);

@@ -76,6 +76,17 @@ const SCHEMA: Schema<Entry> = [
   ],
 ];
 
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
+  [
+    {
+      label: 'Notification',
+      name: 'notification',
+      required: true,
+      multiline: true,
+    },
+  ],
+];
+
 const useStyles = makeStyles(theme => ({
   wrapper: {
     display: 'flex',
@@ -117,6 +128,13 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
+  const [notificationShown, setNotificationShown] = useState<boolean>(false);
   const classes = useStyles();
 
   const load = useCallback(async () => {
@@ -135,6 +153,18 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     setEditing,
   ]);
 
+  const handleSetNotificationEditing = useCallback(
+    (notificationEditing: boolean) => () =>
+      setNotificationEditing(notificationEditing),
+    [setNotificationEditing],
+  );
+
+  const handleSetNotificationViewing = useCallback(
+    (notificationViewing: boolean) => () =>
+      setNotificationViewing(notificationViewing),
+    [setNotificationViewing],
+  );
+
   const handleSave = useCallback(
     async (data: Entry) => {
       setSaving(true);
@@ -151,16 +181,20 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
       const customer = await UserClientService.Update(entry);
       setCustomer(customer);
       setSaving(false);
-      handleToggleEditing();
+      setEditing(false);
+      handleSetNotificationEditing(false)();
     },
-    [setSaving, userID, setCustomer, handleToggleEditing],
+    [setSaving, userID, setCustomer, setEditing, handleSetNotificationEditing],
   );
 
   useEffect(() => {
     if (!customer.id) {
       load();
     }
-  }, [customer, load]);
+    if (customer.notification !== '') {
+      setNotificationViewing(true);
+    }
+  }, [customer, load, setNotificationViewing]);
 
   const {
     id,
@@ -182,6 +216,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     dateCreated,
     lastLogin,
     login,
+    notification,
   } = customer;
   const data: Data = [
     [
@@ -235,8 +270,10 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
             url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
           },
           {
-            label: 'Add Notification',
-            onClick: () => {}, // TODO: implement onClick
+            label: notification ? 'Notification' : 'Add Notification',
+            onClick: notification
+              ? handleSetNotificationViewing(true)
+              : handleSetNotificationEditing(true),
           },
           {
             label: 'Edit Customer Information',
@@ -284,6 +321,52 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           onSave={handleSave}
           onClose={handleToggleEditing}
           disabled={saving}
+        />
+      </Modal>
+      <Modal
+        open={notificationEditing || notificationViewing}
+        onClose={() => {
+          handleSetNotificationViewing(false)();
+          handleSetNotificationEditing(false)();
+        }}
+      >
+        <Form<Entry>
+          title={
+            notificationViewing
+              ? 'Property Notification'
+              : `${notification === '' ? 'Add' : 'Edit'} Customer Notification`
+          }
+          schema={SCHEMA_PROPERTY_NOTIFICATION}
+          data={customer}
+          onSave={handleSave}
+          onClose={() => {
+            handleSetNotificationViewing(false)();
+            handleSetNotificationEditing(false)();
+          }}
+          disabled={saving}
+          readOnly={notificationViewing}
+          actions={
+            notificationViewing
+              ? [
+                  {
+                    label: 'Edit',
+                    variant: 'outlined',
+                    onClick: () => {
+                      handleSetNotificationViewing(false)();
+                      handleSetNotificationEditing(true)();
+                    },
+                  },
+                  {
+                    label: 'Delete',
+                    variant: 'outlined',
+                    onClick: () => {
+                      handleSetNotificationViewing(false)();
+                      handleSave({ notification: '' } as Entry);
+                    },
+                  },
+                ]
+              : []
+          }
         />
       </Modal>
     </>
