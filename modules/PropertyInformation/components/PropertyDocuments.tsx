@@ -77,7 +77,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
 
   render() {
     const { props, state, handleDownload, handleChangePage } = this;
-    const { className } = props;
+    const { className, userID, propertyId } = props;
     const { entries, loading, error, count, page } = state;
     const data: Data = loading
       ? makeFakeRows()
@@ -102,7 +102,16 @@ export class PropertyDocuments extends PureComponent<Props, State> {
       <div className={className}>
         <SectionBar
           title="Property Documents"
-          actions={[{ label: 'Add' }]}
+          actions={[
+            {
+              label: 'Add',
+              url: [
+                '/index.cfm?action=admin:properties.docaddS3',
+                `user_id=${userID}`,
+                `property_id=${propertyId}`,
+              ].join('&'),
+            },
+          ]}
           pagination={{
             count,
             page,
