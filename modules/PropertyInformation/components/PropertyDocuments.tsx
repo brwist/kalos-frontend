@@ -41,7 +41,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     this.DocumentClient = new DocumentClient(ENDPOINT);
   }
 
-  loadEntry = async () => {
+  load = async () => {
     const { userID, propertyId } = this.props;
     const entry = new Document();
     entry.setUserId(userID);
@@ -56,7 +56,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    await this.loadEntry();
+    await this.load();
   }
 
   handleDownload = (filename: string) => async (
@@ -72,7 +72,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
   };
 
   handleChangePage = (page: number) => {
-    this.setState({ page }, this.loadEntry);
+    this.setState({ page }, this.load);
   };
 
   render() {
@@ -81,7 +81,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
     const { entries, loading, error, count, page } = state;
     const data: Data = loading
       ? makeFakeRows()
-      : entries.map(({ filename, description: value }) => [
+      : entries.map(({ id, filename, description: value }) => [
           {
             value: (
               <Link href="" onClick={handleDownload(filename)}>
@@ -89,7 +89,20 @@ export class PropertyDocuments extends PureComponent<Props, State> {
               </Link>
             ),
             actions: [
-              <IconButton key={0} style={{ marginLeft: 4 }} size="small">
+              <IconButton
+                key={0}
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={() => {
+                  document.location.href = [
+                    '/index.cfm?action=admin:properties.docemail',
+                    `user_id=${userID}`,
+                    `document_id=${id}`,
+                    `property_id=${propertyId}`,
+                    `p=2`, // TODO: p=2 is constant or variable?
+                  ].join('&');
+                }}
+              >
                 <MailIcon />
               </IconButton>,
               <IconButton key={1} style={{ marginLeft: 4 }} size="small">
