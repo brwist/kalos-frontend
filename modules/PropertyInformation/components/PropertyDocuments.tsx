@@ -99,7 +99,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
                     `user_id=${userID}`,
                     `document_id=${id}`,
                     `property_id=${propertyId}`,
-                    `p=2`, // TODO: p=2 is constant or variable?
+                    `p=2`,
                   ].join('&');
                 }}
               >
