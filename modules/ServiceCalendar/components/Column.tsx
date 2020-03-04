@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import clsx from 'clsx';
+import { format } from 'date-fns';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
@@ -7,7 +8,7 @@ import Collapse from '@material-ui/core/Collapse';
 import CallCard from './CallCard';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import { ENDPOINT } from '../../../constants';
-import { useFetchAll } from "../hooks";
+import { useFetchAll } from '../hooks';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -23,6 +24,7 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
+
 const eventClient = new EventClient(ENDPOINT);
 
 type Props = {
@@ -35,7 +37,7 @@ const Column = ({ date }: Props) => {
 
   const fetchCalls = useCallback( async (page) => {
     const reqObj = new Event();
-    reqObj.setDateStarted(date);
+    reqObj.setDateStarted(`${date} 00:00:00%`);
     reqObj.setPageNumber(page);
     return (await eventClient.BatchGet(reqObj)).toObject();
   }, []);
@@ -47,7 +49,8 @@ const Column = ({ date }: Props) => {
   const reminders = data.filter(call => call.color === 'ffbfbf');
 
   return (
-    <>
+    <div>
+      {format(new Date(date), 'MMMM d, yyyy')}
       {!!completedCalls.length && (
         <Button onClick={() => setShowCompleted(!showCompleted)}>
           <ExpandMoreIcon
@@ -75,7 +78,7 @@ const Column = ({ date }: Props) => {
         .map(call => (
           <CallCard key={call.id} card={call} />
         ))}
-    </>
+    </div>
   );
 };
 
