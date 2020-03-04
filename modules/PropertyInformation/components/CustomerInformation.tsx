@@ -117,13 +117,6 @@ interface Props {
   propertyId: number;
 }
 
-interface State {
-  customer: Entry;
-  editing: boolean;
-  saving: boolean;
-  error: boolean;
-}
-
 export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const [customer, setCustomer] = useState<Entry>(new User().toObject());
   const [editing, setEditing] = useState<boolean>(false);

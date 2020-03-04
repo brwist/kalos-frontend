@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC, useCallback, useState, useEffect } from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
@@ -13,6 +13,8 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Search } from '../../ComponentsLibrary/Search';
 import { ServiceItemLinks } from './ServiceItemLinks';
 import { getRPCFields } from '../../../helpers';
+
+const PropertyClientService = new PropertyClient(ENDPOINT);
 
 type Entry = Property.AsObject;
 type UserEntry = User.AsObject;
@@ -73,428 +75,404 @@ interface Props {
   propertyId: number;
 }
 
-interface State {
-  entry: Entry;
-  loading: boolean;
-  editing: boolean;
-  saving: boolean;
-  error: boolean;
-  deleting: boolean;
-  notificationEditing: boolean;
-  notificationViewing: boolean;
-  editMenuAnchorEl: (EventTarget & HTMLElement) | null;
-  linksViewing: boolean;
-  changingOwner: boolean;
-  pendingChangeOwner?: UserEntry;
-}
+export const PropertyInfo: FC<Props> = props => {
+  const { userID, propertyId } = props;
+  const [entry, setEntry] = useState<Entry>(new Property().toObject());
+  const [loading, setLoading] = useState<boolean>(false);
+  const [editing, setEditing] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
+  const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<
+    (EventTarget & HTMLElement) | null
+  >(null);
+  const [linksViewing, setLinksViewing] = useState<boolean>(false);
+  const [changingOwner, setChangingOwner] = useState<boolean>(false);
+  const [pendingChangeOwner, setPendingChangeOwner] = useState<UserEntry>();
 
-export class PropertyInfo extends React.PureComponent<Props, State> {
-  PropertyClient: PropertyClient;
+  const handleSetEditing = useCallback(
+    (editing: boolean) => () => setEditing(editing),
+    [setEditing],
+  );
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      entry: new Property().toObject(),
-      loading: false,
-      editing: false,
-      saving: false,
-      error: false,
-      deleting: false,
-      notificationEditing: false,
-      notificationViewing: false,
-      editMenuAnchorEl: null,
-      linksViewing: false,
-      changingOwner: false,
-      pendingChangeOwner: undefined,
-    };
-    this.PropertyClient = new PropertyClient(ENDPOINT);
-  }
+  const handleSetDeleting = useCallback(
+    (deleting: boolean) => () => setDeleting(deleting),
+    [setDeleting],
+  );
 
-  handleSetEditing = (editing: boolean) => () => this.setState({ editing });
+  const handleSetNotificationEditing = useCallback(
+    (notificationEditing: boolean) => () =>
+      setNotificationEditing(notificationEditing),
+    [setNotificationEditing],
+  );
 
-  handleSetDeleting = (deleting: boolean) => () => this.setState({ deleting });
+  const handleSetNotificationViewing = useCallback(
+    (notificationViewing: boolean) => () =>
+      setNotificationViewing(notificationViewing),
+    [setNotificationViewing],
+  );
 
-  handleSetNotificationEditing = (notificationEditing: boolean) => () =>
-    this.setState({ notificationEditing });
+  const handleSetEditEditMenuAnchorEl = useCallback(
+    (editMenuAnchorEl: (EventTarget & HTMLElement) | null) =>
+      setEditMenuAnchorEl(editMenuAnchorEl),
+    [setEditMenuAnchorEl],
+  );
 
-  handleSetNotificationViewing = (notificationViewing: boolean) => () =>
-    this.setState({ notificationViewing });
+  const handleSetLinksViewing = useCallback(
+    (linksViewing: boolean) => () => setLinksViewing(linksViewing),
+    [setLinksViewing],
+  );
 
-  handleSetEditEditMenuAnchorEl = (
-    editMenuAnchorEl: (EventTarget & HTMLElement) | null,
-  ) => this.setState({ editMenuAnchorEl });
+  const handleSetChangingOwner = useCallback(
+    (changingOwner: boolean) => () => setChangingOwner(changingOwner),
+    [setChangingOwner],
+  );
 
-  handleSetLinksViewing = (linksViewing: boolean) => () =>
-    this.setState({ linksViewing });
-
-  handleSetChangingOwner = (changingOwner: boolean) => () =>
-    this.setState({ changingOwner });
-
-  load = async () => {
-    this.setState({ loading: true });
-    const { userID, propertyId } = this.props;
+  const load = useCallback(async () => {
+    setLoading(true);
     const req = new Property();
     req.setUserId(userID);
     req.setId(propertyId);
     try {
       const { resultsList, totalCount } = (
-        await this.PropertyClient.BatchGet(req)
+        await PropertyClientService.BatchGet(req)
       ).toObject();
       if (totalCount === 1) {
         const entry = resultsList[0];
-        this.setState({ entry, loading: false });
+        setEntry(entry);
+        setLoading(false);
         return entry;
       }
-      this.setState({ loading: false });
+      setLoading(false);
       return null;
     } catch (e) {
-      this.setState({ error: true });
+      setError(true);
     }
-    this.setState({ loading: false });
+    setLoading(false);
     return null;
-  };
+  }, [setLoading, userID, propertyId, setEntry, setError]);
 
-  async componentDidMount() {
-    const entry = await this.load();
-    if (entry && entry.notification !== '') {
-      this.setState({ notificationViewing: true });
+  useEffect(() => {
+    if (!entry.id) {
+      load();
     }
-  }
-
-  handleSave = async (data: Entry) => {
-    const { propertyId, userID } = this.props;
-    this.setState({ saving: true });
-    const req = new Property();
-    req.setId(propertyId);
-    req.setUserId(userID);
-    const fieldMaskList = [];
-    for (const fieldName in data) {
-      const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      //@ts-ignore
-      req[methodName](data[fieldName]);
-      fieldMaskList.push(upperCaseProp);
+    if (entry.notification !== '') {
+      setNotificationViewing(true);
     }
-    req.setFieldMaskList(fieldMaskList);
-    const entry = await this.PropertyClient.Update(req);
-    this.setState({
-      entry,
-      saving: false,
-    });
-    this.handleSetEditing(false)();
-    this.handleSetNotificationEditing(false)();
-  };
+  }, [entry, load, setNotificationViewing]);
 
-  handleDelete = async () => {
+  const handleSave = useCallback(
+    async (data: Entry) => {
+      setSaving(true);
+      const req = new Property();
+      req.setUserId(userID);
+      req.setId(propertyId);
+      const fieldMaskList = [];
+      for (const fieldName in data) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        //@ts-ignore
+        req[methodName](data[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      req.setFieldMaskList(fieldMaskList);
+      const entry = await PropertyClientService.Update(req);
+      setEntry(entry);
+      setSaving(false);
+      setEditing(false);
+      setNotificationEditing(false);
+    },
+    [
+      setSaving,
+      userID,
+      propertyId,
+      setEntry,
+      setEditing,
+      setNotificationEditing,
+    ],
+  );
+
+  const handleDelete = useCallback(async () => {
     // TODO: delete customer related data + redirect somewhere?
-    const { propertyId } = this.props;
     const entry = new Property();
     entry.setId(propertyId);
-    await this.PropertyClient.Delete(entry);
-    this.setState({ deleting: false });
-  };
+    await PropertyClientService.Delete(entry);
+    setDeleting(false);
+  }, [propertyId, setDeleting]);
 
-  handleChangeOwner = async () => {
-    const { propertyId } = this.props;
-    const { pendingChangeOwner } = this.state;
+  const handleChangeOwner = useCallback(async () => {
     if (pendingChangeOwner) {
       const { id } = pendingChangeOwner;
-      this.setState({ pendingChangeOwner: undefined, error: false });
+      setPendingChangeOwner(undefined);
+      setError(false);
       const entry = new Property();
       entry.setId(propertyId);
       entry.setUserId(id);
       // entry.setFieldMaskList(['setUserId']);
       try {
-        await this.PropertyClient.Update(entry); // FIXME: for some reason this call fails
+        await PropertyClientService.Update(entry); // FIXME: for some reason this call fails
         document.location.href = [
           '/index.cfm?action=admin:properties.details',
           `property_id=${propertyId}`,
           `user_id=${id}`,
         ].join('&');
       } catch (e) {
-        this.setState({ error: true });
+        setError(true);
       }
     }
-  };
+  }, [pendingChangeOwner, setPendingChangeOwner, setError, propertyId]);
 
-  render() {
-    const {
-      props,
-      state,
-      handleSave,
-      handleSetEditing,
-      handleSetNotificationEditing,
-      handleSetNotificationViewing,
-      handleSetEditEditMenuAnchorEl,
-      handleSetLinksViewing,
-      handleSetDeleting,
-      handleDelete,
-      handleSetChangingOwner,
-      handleChangeOwner,
-    } = this;
-    const { userID, propertyId } = props;
-    const {
-      entry,
-      editing,
-      saving,
-      error,
-      notificationEditing,
-      notificationViewing,
-      editMenuAnchorEl,
-      linksViewing,
-      deleting,
-      changingOwner,
-      pendingChangeOwner,
-      loading,
-    } = state;
-    const {
-      firstname,
-      lastname,
-      businessname,
-      phone,
-      altphone,
-      email,
-      address,
-      city,
-      state: addressState,
-      zip,
-      subdivision,
-      notes,
-      notification,
-    } = entry;
-    if (!loading && entry.id === 0)
-      return (
-        <>
-          <SectionBar title="Property Information">
-            <InfoTable data={[]} compact />
-          </SectionBar>
-        </>
-      );
-    const data: Data = [
-      [
-        { label: 'Name', value: `${firstname} ${lastname}` },
-        { label: 'Business Name', value: businessname },
-      ],
-      [
-        { label: 'Primary Phone', value: phone, href: 'tel' },
-        { label: 'Alternate Phone', value: altphone, href: 'tel' },
-      ],
-      [{ label: 'Email', value: email, href: 'mailto' }],
-      [
-        {
-          label: 'Address',
-          value: `${address}, ${city}, ${addressState} ${zip}`,
-        },
-      ],
-      [{ label: 'Subdivision', value: subdivision }],
-      [{ label: 'Notes', value: notes }],
-    ];
+  const {
+    firstname,
+    lastname,
+    businessname,
+    phone,
+    altphone,
+    email,
+    address,
+    city,
+    state: addressState,
+    zip,
+    subdivision,
+    notes,
+    notification,
+  } = entry;
+  if (!loading && entry.id === 0)
     return (
       <>
-        <SectionBar
-          title="Property Information"
-          actions={[
-            {
-              label: 'Tasks',
-              url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
-            },
-            {
-              label: notification ? 'Notification' : 'Add Notification',
-              onClick: notification
-                ? handleSetNotificationViewing(true)
-                : handleSetNotificationEditing(true),
-            },
-            {
-              label: 'Change Property',
-              onClick: ({ currentTarget }: React.MouseEvent<HTMLElement>) =>
-                handleSetEditEditMenuAnchorEl(currentTarget),
-              desktop: true,
-            },
-            {
-              label: 'Edit Property',
-              onClick: handleSetEditing(true),
-              desktop: false,
-            },
-            {
-              label: 'Activity',
-              url: `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`,
-              desktop: false,
-            },
-            {
-              label: 'Delete Property',
-              desktop: false,
-              onClick: handleSetDeleting(true),
-            },
-            {
-              label: 'Merge Property',
-              desktop: false,
-            },
-            {
-              label: 'Change Owner',
-              desktop: false,
-              onClick: handleSetChangingOwner(true),
-            },
-            {
-              label: 'Owner Details',
-              url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
-            },
-            {
-              label: 'View Property Links',
-              onClick: handleSetLinksViewing(true),
-            },
-          ]}
-        >
-          <InfoTable data={data} loading={loading} error={error} />
+        <SectionBar title="Property Information">
+          <InfoTable data={[]} compact />
         </SectionBar>
-        <Modal open={editing} onClose={handleSetEditing(false)}>
-          <Form<Entry>
-            title="Edit Property Information"
-            schema={SCHEMA_PROPERTY_INFORMATION}
-            data={entry}
-            onSave={handleSave}
-            onClose={handleSetEditing(false)}
-            disabled={saving}
-          />
-        </Modal>
-        <Modal
-          open={notificationEditing || notificationViewing}
+      </>
+    );
+  const data: Data = [
+    [
+      { label: 'Name', value: `${firstname} ${lastname}` },
+      { label: 'Business Name', value: businessname },
+    ],
+    [
+      { label: 'Primary Phone', value: phone, href: 'tel' },
+      { label: 'Alternate Phone', value: altphone, href: 'tel' },
+    ],
+    [{ label: 'Email', value: email, href: 'mailto' }],
+    [
+      {
+        label: 'Address',
+        value: `${address}, ${city}, ${addressState} ${zip}`,
+      },
+    ],
+    [{ label: 'Subdivision', value: subdivision }],
+    [{ label: 'Notes', value: notes }],
+  ];
+  return (
+    <>
+      <SectionBar
+        title="Property Information"
+        actions={[
+          {
+            label: 'Tasks',
+            url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
+          },
+          {
+            label: notification ? 'Notification' : 'Add Notification',
+            onClick: notification
+              ? handleSetNotificationViewing(true)
+              : handleSetNotificationEditing(true),
+          },
+          {
+            label: 'Change Property',
+            onClick: ({ currentTarget }: React.MouseEvent<HTMLElement>) =>
+              handleSetEditEditMenuAnchorEl(currentTarget),
+            desktop: true,
+          },
+          {
+            label: 'Edit Property',
+            onClick: handleSetEditing(true),
+            desktop: false,
+          },
+          {
+            label: 'Activity',
+            url: `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`,
+            desktop: false,
+          },
+          {
+            label: 'Delete Property',
+            desktop: false,
+            onClick: handleSetDeleting(true),
+          },
+          {
+            label: 'Merge Property',
+            desktop: false,
+          },
+          {
+            label: 'Change Owner',
+            desktop: false,
+            onClick: handleSetChangingOwner(true),
+          },
+          {
+            label: 'Owner Details',
+            url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
+          },
+          {
+            label: 'View Property Links',
+            onClick: handleSetLinksViewing(true),
+          },
+        ]}
+      >
+        <InfoTable data={data} loading={loading} error={error} />
+      </SectionBar>
+      <Modal open={editing} onClose={handleSetEditing(false)}>
+        <Form<Entry>
+          title="Edit Property Information"
+          schema={SCHEMA_PROPERTY_INFORMATION}
+          data={entry}
+          onSave={handleSave}
+          onClose={handleSetEditing(false)}
+          disabled={saving}
+        />
+      </Modal>
+      <Modal
+        open={notificationEditing || notificationViewing}
+        onClose={() => {
+          handleSetNotificationViewing(false)();
+          handleSetNotificationEditing(false)();
+        }}
+      >
+        <Form<Entry>
+          title={
+            notificationViewing
+              ? 'Property Notification'
+              : `${notification === '' ? 'Add' : 'Edit'} Property Notification`
+          }
+          schema={SCHEMA_PROPERTY_NOTIFICATION}
+          data={entry}
+          onSave={handleSave}
           onClose={() => {
             handleSetNotificationViewing(false)();
             handleSetNotificationEditing(false)();
           }}
-        >
-          <Form<Entry>
-            title={
-              notificationViewing
-                ? 'Property Notification'
-                : `${
-                    notification === '' ? 'Add' : 'Edit'
-                  } Property Notification`
-            }
-            schema={SCHEMA_PROPERTY_NOTIFICATION}
-            data={entry}
-            onSave={handleSave}
-            onClose={() => {
-              handleSetNotificationViewing(false)();
-              handleSetNotificationEditing(false)();
-            }}
-            disabled={saving}
-            readOnly={notificationViewing}
-            actions={
-              notificationViewing
-                ? [
-                    {
-                      label: 'Edit',
-                      variant: 'outlined',
-                      onClick: () => {
-                        handleSetNotificationViewing(false)();
-                        handleSetNotificationEditing(true)();
-                      },
+          disabled={saving}
+          readOnly={notificationViewing}
+          actions={
+            notificationViewing
+              ? [
+                  {
+                    label: 'Edit',
+                    variant: 'outlined',
+                    onClick: () => {
+                      handleSetNotificationViewing(false)();
+                      handleSetNotificationEditing(true)();
                     },
-                    {
-                      label: 'Delete',
-                      variant: 'outlined',
-                      onClick: () => {
-                        handleSetNotificationViewing(false)();
-                        handleSave({ notification: '' } as Entry);
-                      },
+                  },
+                  {
+                    label: 'Delete',
+                    variant: 'outlined',
+                    onClick: () => {
+                      handleSetNotificationViewing(false)();
+                      handleSave({ notification: '' } as Entry);
                     },
-                  ]
-                : []
-            }
-          />
-        </Modal>
-        <Menu
-          id="customized-menu"
-          keepMounted
-          anchorEl={editMenuAnchorEl}
-          open={Boolean(editMenuAnchorEl)}
-          onClose={() => handleSetEditEditMenuAnchorEl(null)}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'left',
+                  },
+                ]
+              : []
+          }
+        />
+      </Modal>
+      <Menu
+        id="customized-menu"
+        keepMounted
+        anchorEl={editMenuAnchorEl}
+        open={Boolean(editMenuAnchorEl)}
+        onClose={() => handleSetEditEditMenuAnchorEl(null)}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        getContentAnchorEl={null}
+      >
+        <MenuItem
+          onClick={() => {
+            handleSetEditEditMenuAnchorEl(null);
+            handleSetEditing(true)();
           }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-          }}
-          getContentAnchorEl={null}
         >
-          <MenuItem
-            onClick={() => {
-              handleSetEditEditMenuAnchorEl(null);
-              handleSetEditing(true)();
-            }}
-          >
-            Edit
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleSetEditEditMenuAnchorEl(null);
-              document.location.href = `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`;
-            }}
-          >
-            Activity
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleSetEditEditMenuAnchorEl(null);
-              handleSetDeleting(true)();
-            }}
-          >
-            Delete Property
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleSetEditEditMenuAnchorEl(null);
-              // TODO implement merge property
-            }}
-          >
-            Merge Property
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleSetEditEditMenuAnchorEl(null);
-              handleSetChangingOwner(true)();
-            }}
-          >
-            Change Owner
-          </MenuItem>
-        </Menu>
-        <Modal open={linksViewing} onClose={handleSetLinksViewing(false)}>
-          <ServiceItemLinks
-            kind="Property Information Link"
-            serviceItemId={propertyId}
-            onClose={handleSetLinksViewing(false)}
-          />
-        </Modal>
-        <ConfirmDelete
-          open={deleting}
-          onClose={handleSetDeleting(false)}
-          onConfirm={handleDelete}
-          kind="Property Information"
-          name={`${firstname} ${lastname}`}
+          Edit
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleSetEditEditMenuAnchorEl(null);
+            document.location.href = `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`;
+          }}
+        >
+          Activity
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleSetEditEditMenuAnchorEl(null);
+            handleSetDeleting(true)();
+          }}
+        >
+          Delete Property
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleSetEditEditMenuAnchorEl(null);
+            // TODO implement merge property
+          }}
+        >
+          Merge Property
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleSetEditEditMenuAnchorEl(null);
+            handleSetChangingOwner(true)();
+          }}
+        >
+          Change Owner
+        </MenuItem>
+      </Menu>
+      <Modal open={linksViewing} onClose={handleSetLinksViewing(false)}>
+        <ServiceItemLinks
+          kind="Property Information Link"
+          serviceItemId={propertyId}
+          onClose={handleSetLinksViewing(false)}
         />
-        <Search
-          open={changingOwner}
-          onClose={handleSetChangingOwner(false)}
-          onSelect={pendingChangeOwner => this.setState({ pendingChangeOwner })}
-          excludeId={userID}
-        />
-        {pendingChangeOwner && (
-          <Confirm
-            open
-            title="Confirm"
-            onClose={() => this.setState({ pendingChangeOwner: undefined })}
-            onConfirm={handleChangeOwner}
-          >
-            Are you sure you want to move this property to{' '}
-            <strong>
-              {pendingChangeOwner.firstname} {pendingChangeOwner.lastname}
-            </strong>
-            ?
-          </Confirm>
-        )}
-      </>
-    );
-  }
-}
+      </Modal>
+      <ConfirmDelete
+        open={deleting}
+        onClose={handleSetDeleting(false)}
+        onConfirm={handleDelete}
+        kind="Property Information"
+        name={`${firstname} ${lastname}`}
+      />
+      <Search
+        open={changingOwner}
+        onClose={handleSetChangingOwner(false)}
+        onSelect={setPendingChangeOwner}
+        excludeId={userID}
+      />
+      {pendingChangeOwner && (
+        <Confirm
+          open
+          title="Confirm"
+          onClose={() => setPendingChangeOwner(undefined)}
+          onConfirm={handleChangeOwner}
+        >
+          Are you sure you want to move this property to{' '}
+          <strong>
+            {pendingChangeOwner.firstname} {pendingChangeOwner.lastname}
+          </strong>
+          ?
+        </Confirm>
+      )}
+    </>
+  );
+};
