@@ -247,7 +247,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               if (name !== undefined)
                 return (
                   <Field
-                    key={idx2}
+                    key={`${idx2}-${name}`}
                     {...props}
                     value={formData[name]}
                     onChange={handleChange(name)}
