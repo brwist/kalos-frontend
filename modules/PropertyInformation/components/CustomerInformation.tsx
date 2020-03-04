@@ -34,6 +34,11 @@ const SCHEMA: Schema<Entry> = [
       name: 'altEmail',
       helperText: 'Separate multiple email addresses w/comma',
     },
+    {
+      label: 'Wishes to receive promotional emails',
+      name: 'receiveemail',
+      type: 'checkbox',
+    },
   ],
   [{ label: 'Address Details', headline: true }],
   [
