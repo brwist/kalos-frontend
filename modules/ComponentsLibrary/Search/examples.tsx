@@ -1,9 +1,10 @@
 import React, { FC, useState, useCallback } from 'react';
-import { Search } from './';
+import { Search, Kind } from './';
 
 type Props = {
   button: string;
   compact?: boolean;
+  kinds: Kind[];
 };
 
 const EnhancedModal: FC<Props> = ({ button, children, ...props }) => {
@@ -24,6 +25,11 @@ const EnhancedModal: FC<Props> = ({ button, children, ...props }) => {
 
 export default () => (
   <>
-    <EnhancedModal button="Search" />
+    <EnhancedModal button="Search Customers" kinds={['Customers']} />
+    <EnhancedModal button="Search Properties" kinds={['Properties']} />
+    <EnhancedModal
+      button="Search Customers and Properties"
+      kinds={['Customers', 'Properties']}
+    />
   </>
 );

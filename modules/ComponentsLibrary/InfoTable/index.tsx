@@ -59,6 +59,9 @@ const useStyles = makeStyles(theme => {
       },
     },
     row: ({ compact, hoverable }: Styles) => ({
+      '&:nth-of-type(odd)': {
+        backgroundColor: theme.palette.grey[50],
+      },
       '&:not(:last-of-type)': {
         borderBottomWidth: 1,
         borderBottomStyle: 'solid',
@@ -71,7 +74,7 @@ const useStyles = makeStyles(theme => {
         '&:hover': {
           ...(hoverable
             ? {
-                backgroundColor: theme.palette.grey[100],
+                backgroundColor: `${theme.palette.grey[100]} !important`,
               }
             : {}),
         },

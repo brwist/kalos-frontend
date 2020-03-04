@@ -253,6 +253,11 @@ export const PropertyInfo: FC<Props> = props => {
     }
   }, [pendingChangeOwner, setPendingChangeOwner, setError, propertyId]);
 
+  const handleSetPendingChangeOwner = useCallback(
+    pendingChangeOwner => setPendingChangeOwner(pendingChangeOwner),
+    [setPendingChangeOwner],
+  );
+
   const {
     firstname,
     lastname,
@@ -487,9 +492,10 @@ export const PropertyInfo: FC<Props> = props => {
         name={`${firstname} ${lastname}`}
       />
       <Search
+        kinds={['Customers']}
         open={changingOwner}
         onClose={handleSetChangingOwner(false)}
-        onSelect={setPendingChangeOwner}
+        onSelect={handleSetPendingChangeOwner}
         excludeId={userID}
       />
       {pendingChangeOwner && (
