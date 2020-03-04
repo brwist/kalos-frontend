@@ -16,7 +16,7 @@ import { ServiceItemLinks } from './ServiceItemLinks';
 import { PropertyDocuments } from './PropertyDocuments';
 import { ServiceItems } from './ServiceItems';
 import { ServiceCalls } from './ServiceCalls';
-import { getRPCFields, loadUsersByIds } from '../../../helpers';
+import { getRPCFields, loadUsersByIds, makeFakeRows } from '../../../helpers';
 
 const PropertyClientService = new PropertyClient(ENDPOINT);
 
@@ -302,11 +302,11 @@ export const PropertyInfo: FC<Props> = props => {
     notes,
     notification,
   } = entry;
-  if (!loading && entry.id === 0)
+  if (entry.id === 0)
     return (
       <>
         <SectionBar title="Property Information">
-          <InfoTable data={[]} />
+          <InfoTable loading={loading} data={loading ? makeFakeRows() : []} />
         </SectionBar>
       </>
     );
