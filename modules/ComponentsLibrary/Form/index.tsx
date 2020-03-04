@@ -1,16 +1,9 @@
-import React, {
-  ReactElement,
-  useCallback,
-  useState,
-  ReactNode,
-  ReactText,
-} from 'react';
+import React, { ReactElement, useCallback, useState, ReactNode } from 'react';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar, Pagination } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
 import { Field, Value } from '../Field';
-import { ExtensionFieldInfo } from 'google-protobuf';
 
 export type Option = {
   label: string;

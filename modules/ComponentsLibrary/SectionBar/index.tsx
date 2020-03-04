@@ -10,7 +10,6 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import TablePagination from '@material-ui/core/TablePagination';
-import { Props as ButtonProps } from '../Button';
 import { Actions, ActionsProps } from '../Actions';
 
 export type Pagination = {
