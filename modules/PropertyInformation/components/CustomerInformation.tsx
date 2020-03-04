@@ -115,6 +115,9 @@ const useStyles = makeStyles(theme => ({
       marginLeft: theme.spacing(2),
     },
   },
+  pendingBilling: {
+    marginBottom: theme.spacing(),
+  },
 }));
 
 interface Props {
@@ -332,6 +335,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
             </SectionBar>
             <SectionBar
               title="Pending Billing"
+              className={classes.pendingBilling}
               actions={[
                 {
                   label: 'View',
