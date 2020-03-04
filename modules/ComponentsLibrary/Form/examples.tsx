@@ -10,6 +10,7 @@ type Model = {
   login: string;
   password: string;
   note: string;
+  mailing: number;
 };
 
 const model: Model = {
@@ -21,6 +22,7 @@ const model: Model = {
   note: `Lorem ipsum
 dolor sit
 amet`,
+  mailing: 1,
 };
 
 const SCHEMA_1: Schema<Model> = [
@@ -45,6 +47,7 @@ const SCHEMA_2: Schema<Model> = [
   [
     { name: 'login', label: 'Login', required: true },
     { name: 'password', label: 'Password', type: 'password', required: true },
+    { name: 'mailing', label: 'Mailing', type: 'checkbox' },
   ],
   [{ label: 'Various', headline: true }],
   [{ name: 'note', label: 'Note', multiline: true }],
@@ -54,6 +57,7 @@ const SCHEMA_3: Schema<Model> = [
   [
     { name: 'firstName', label: 'First Name' },
     { name: 'lastName', label: 'Last Name' },
+    { name: 'mailing', label: 'Mailing', type: 'checkbox' },
   ],
 ];
 

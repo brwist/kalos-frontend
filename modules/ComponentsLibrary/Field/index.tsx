@@ -2,6 +2,8 @@ import React, { ReactElement, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -47,8 +49,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const classes = useStyles();
   const handleChange = useCallback(
     ({ target: { value } }) => onChange(type === 'number' ? +value : value),
-    [type, onChange]
+    [type, onChange],
   );
+  const handleChangeCheckbox = useCallback((_, value) => onChange(+value), [
+    onChange,
+  ]);
   const inputLabel = (
     <>
       {label}
@@ -60,6 +65,28 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     validation !== '' || helperText !== ''
       ? validation + ' ' + helperText
       : undefined;
+  if (type === 'checkbox') {
+    return (
+      <FormControl
+        className={classes.field + ' ' + className}
+        fullWidth
+        disabled={disabled}
+        error={error}
+      >
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={+value === 1}
+              onChange={handleChangeCheckbox}
+              value={value}
+              color="primary"
+            />
+          }
+          label={inputLabel}
+        />
+      </FormControl>
+    );
+  }
   if (options && !readOnly) {
     const id = `${name}-select-label`;
     return (
