@@ -1,3 +1,8 @@
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from './constants';
+
+const UserClientService = new UserClient(ENDPOINT);
+
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
 
@@ -213,6 +218,97 @@ function getMimeType(fileName: string) {
   }
 }
 
+/**
+ *
+ * @param time time in format HH:MM (ie. 16:30)
+ * @returns format h:MMa (ie. 4:30AM)
+ */
+function formatTime(time: string) {
+  const [hourStr, minutes] = time.split(':');
+  const hour = +hourStr;
+  return (
+    (hour > 12 ? hour - 12 : hour) + ':' + minutes + (hour < 12 ? 'AM' : 'PM')
+  );
+}
+
+/**
+ *
+ * @param date date in format YYYY-MM-DD (ie. 2020-06-01)
+ * @returns format M/D/YYYY (ie. 6/1/2020)
+ */
+function formatDate(date: string) {
+  const [year, month, day] = date.substr(0, 10).split('-');
+  return [+month, +day, +year].join('/');
+}
+
+/**
+ *
+ * @param datetime date in format YYYY-MM-DD HH:MM:SS (ie. 2020-06-01 15:28:31)
+ * @returns format M/D/YYYY h:MMa (ie. 6/1/2020 3:28PM)
+ */
+function formatDateTime(datetime: string) {
+  return formatDate(datetime) + ' ' + formatTime(datetime.substr(10));
+}
+
+/**
+ * Returns array of fake rows for InfoTable component
+ * @param columns: number (default 1)
+ * @param rows: number (default 3)
+ * @returns fake rows with columns being { value: '' }
+ */
+function makeFakeRows(columns: number = 1, rows: number = 3) {
+  return Array.from(Array(rows)).map(() =>
+    Array.from(Array(columns)).map(() => ({ value: '' })),
+  );
+}
+
+/**
+ * Returns rpc fields
+ * @param fieldName: field name, ie. jobNumber
+ * @returns object { upperCaseProp: string, methodName: string }, ie. { upperCaseProp: 'JobNumber', methodName: 'setJobNumber'}
+ */
+function getRPCFields(fieldName: string) {
+  const upperCaseProp = `${fieldName[0].toUpperCase()}${fieldName.slice(1)}`;
+  return {
+    upperCaseProp,
+    methodName: `set${upperCaseProp}`,
+  };
+}
+
+/**
+ * Returns loaded Users by their ids
+ * @param ids: array of user id
+ * @returns object { [userId]: User }
+ */
+async function loadUsersByIds(ids: number[]) {
+  const uniqueIds: number[] = [];
+  ids.forEach(id => {
+    if (id > 0 && !uniqueIds.includes(id)) {
+      uniqueIds.push(id);
+    }
+  });
+  const users = await Promise.all(
+    uniqueIds.map(async id => {
+      const user = new User();
+      user.setId(id);
+      return await UserClientService.Get(user);
+    }),
+  );
+  return users.reduce((aggr, user) => ({ ...aggr, [user.id]: user }), {}) as {
+    [key: number]: User.AsObject;
+  };
+}
+
+/**
+ * Returns an array of numbers from start to end inclusive
+ * @param start
+ * @param end
+ */
+function range(start: number, end: number) {
+  const length = end - start;
+  return Array.from({ length }, (_, i) => start + i);
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -224,4 +320,11 @@ export {
   getURLParams,
   b64toBlob,
   getMimeType,
+  formatTime,
+  formatDate,
+  makeFakeRows,
+  getRPCFields,
+  formatDateTime,
+  loadUsersByIds,
+  range,
 };

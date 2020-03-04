@@ -44,6 +44,7 @@ interface props {
 interface state {
   isOpen: boolean;
   sigURL: string;
+  isLoading: boolean;
   total: number;
   docID: number;
   quoteLines: QuoteLine.AsObject[];
@@ -67,6 +68,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     super(props);
     this.state = {
       isOpen: false,
+      isLoading: false,
       sigURL: '',
       notes: '',
       total: 0,
@@ -99,6 +101,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     this.finalize = this.finalize.bind(this);
     this.uploadPDF = this.uploadPDF.bind(this);
     this.getDocumentID = this.getDocumentID.bind(this);
+    this.toggleLoading = this.toggleLoading.bind(this);
   }
 
   addQuoteLine(ql: QuoteLine.AsObject) {
@@ -143,7 +146,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     });
   }
 
-  handleSelect(e: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
+  handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const val = parseInt(e.currentTarget.value);
     this.setState(prevState => {
       if (prevState.selected.includes(val)) {
@@ -164,6 +167,17 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     return qls.reduce((acc: number, curr: QuoteLine.AsObject) => {
       return acc + parseInt(curr.adjustment);
     }, 0);
+  }
+
+  toggleLoading() {
+    return new Promise(resolve => {
+      this.setState(
+        prevState => ({
+          isLoading: !prevState.isLoading,
+        }),
+        resolve,
+      );
+    });
   }
 
   toggleModal() {
@@ -193,10 +207,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       const req = new Document();
       req.setDateCreated(timestamp());
       req.setFilename(
-        `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`,
+        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
       );
       req.setDescription(
-        `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`,
+        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
       );
       req.setId(this.state.docID);
       req.setFieldMaskList(['DateCreated', 'Filename', 'Description']);
@@ -251,21 +265,41 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       />,
     ).toBlob();
 
-    await this.uploadPDF(blob);
-
     const el = document.createElement('a');
-    el.download = `reviewed_proposal_${timestamp(true)}`;
-    el.href = URL.createObjectURL(blob);
-    el.target = '_blank';
+    el.style.display = 'none';
+    el.download = `reviewed_proposal_${timestamp(true)}.pdf`;
+    const theURL = URL.createObjectURL(blob);
+    el.href = theURL;
+    document.body.appendChild(el);
     el.click();
+    document.body.removeChild(el);
     el.remove();
+
+    return true;
   }
 
-  async uploadPDF(fd: Blob) {
+  async uploadPDF() {
+    const fd = await ReactPDF.pdf(
+      <ApprovedProposal
+        sigURL={this.state.sigURL}
+        quoteLines={this.state.quoteLines.filter(ql =>
+          this.state.selected.includes(ql.id),
+        )}
+        jobNumber={this.props.jobNumber}
+        property={this.state.property}
+        name={
+          this.props.useBusinessName
+            ? this.state.customer.businessname
+            : `${this.state.customer.firstname} ${this.state.customer.lastname}`
+        }
+        total={this.getTotal()}
+        notes={this.state.notes}
+      />,
+    ).toBlob();
     const urlObj = new URLObject();
     urlObj.setBucket('testbuckethelios');
     urlObj.setKey(
-      `${this.props.jobNumber}_approved_proposal_${this.props.userID}`,
+      `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
     );
     urlObj.setContentType('pdf');
     const urlRes = await this.S3Client.GetUploadURL(urlObj);
@@ -348,17 +382,29 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   }
 
   async finalize() {
-    await this.approveProposal();
-    await this.saveAsPDF();
     try {
-      await this.deleteOldPDF();
+      await this.toggleLoading();
+      await this.approveProposal();
+      await this.saveAsPDF();
+      try {
+        await this.deleteOldPDF();
+      } catch (err) {
+        console.log('Failed to deleted pending document', err);
+      }
+      await this.updateDocument();
+      await this.createLog();
+      await this.pingSlack();
+      const name =
+        this.props.useBusinessName && this.state.customer.businessname != ''
+          ? this.state.customer.businessname
+          : `${this.state.customer.firstname}`;
+      window.location.href = `https://app.kalosflorida.com/index.cfm?action=customer:service.post_proposal&user_id=${this.props.userID}&username=${name}&jobNumber=${this.props.jobNumber}`;
     } catch (err) {
-      console.log('Failed to deleted pending document', err);
+      alert(
+        'Something went wrong, please refresh and try again. If you continue to experience issues, please contact office@kalosflorida.com',
+      );
+      await this.toggleLoading();
     }
-    await this.updateDocument();
-    await this.createLog();
-    await this.pingSlack();
-    window.location.href = `https://app.kalosflorida.com/index.cfm?action=customer:service.post_proposal&user_id=${this.props.userID}`;
   }
 
   async componentDidMount() {
@@ -558,6 +604,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
               </Button>
               <Button
                 onClick={this.finalize}
+                disabled={this.state.isLoading}
                 variant="outlined"
                 style={{ marginBottom: 10, marginTop: 10 }}
               >

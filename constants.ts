@@ -110,6 +110,13 @@ export const USA_STATES = [
   'WY',
 ];
 
+export const BILLING_TERMS = ['COD', 'Net 10', 'Net 30', 'Net 45', 'Pre-paid'];
+
+export const ROWS_PER_PAGE = 25;
+
+export const API_FAILED_GENERAL_ERROR_MSG =
+  'Error occured while performing this operation.';
+
 export default {
   BASE_URL,
   EVENT_STATUS_LIST,
@@ -120,4 +127,7 @@ export default {
   ENDPOINT,
   ELEVATION,
   USA_STATES,
+  BILLING_TERMS,
+  ROWS_PER_PAGE,
+  API_FAILED_GENERAL_ERROR_MSG,
 };

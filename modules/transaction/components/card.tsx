@@ -43,7 +43,7 @@ interface props {
   isAdmin?: boolean;
   isManager?: boolean;
   fetchFn(): void;
-  toggleLoading(cb?: () => void): void;
+  toggleLoading(cb?: () => void): Promise<void>;
 }
 
 interface state {
@@ -304,14 +304,14 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   async onPDFGenerate(fileData: Blob) {
-    this.props.toggleLoading();
+    await this.props.toggleLoading();
     await this.DocsClient.upload(
       this.state.txn.id,
       `${timestamp()}-generated.pdf`,
       fileData,
     );
     await this.refresh();
-    this.props.toggleLoading(() =>
+    await this.props.toggleLoading(() =>
       alert(
         'A PDF has been generated and uploaded for you, it is recommended you review this document before proceeding',
       ),
