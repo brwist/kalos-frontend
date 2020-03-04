@@ -12,6 +12,7 @@ const PropertyClientService = new PropertyClient(ENDPOINT);
 
 type Entry = (User.AsObject | Property.AsObject) & {
   kind: number;
+  __user?: User.AsObject;
 };
 
 export type Kind = 'Customers' | 'Properties';
@@ -209,10 +210,17 @@ export const Search: FC<Props> = ({
 
   const handleSelect = useCallback(
     (entry: Entry) => () => {
-      onSelect(entry);
+      onSelect({
+        ...entry,
+        ...(entry.hasOwnProperty('userId')
+          ? {
+              __user: users[(entry as Property.AsObject).userId],
+            }
+          : {}),
+      });
       onClose();
     },
-    [onSelect, onClose],
+    [onSelect, onClose, users],
   );
 
   const schema: {
@@ -318,7 +326,7 @@ export const Search: FC<Props> = ({
           } = entry as Property.AsObject;
           return [
             {
-              value: `${address}, ${city}, ${zip} ${state}`,
+              value: `${address}, ${city}, ${state} ${zip}`,
               onClick: handleSelect(entry),
             },
             {

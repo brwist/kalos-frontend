@@ -16,7 +16,7 @@ import { ServiceItemLinks } from './ServiceItemLinks';
 import { PropertyDocuments } from './PropertyDocuments';
 import { ServiceItems } from './ServiceItems';
 import { ServiceCalls } from './ServiceCalls';
-import { getRPCFields } from '../../../helpers';
+import { getRPCFields, loadUsersByIds } from '../../../helpers';
 
 const PropertyClientService = new PropertyClient(ENDPOINT);
 
@@ -103,6 +103,7 @@ const useStyles = makeStyles(theme => ({
 export const PropertyInfo: FC<Props> = props => {
   const { userID, propertyId } = props;
   const [entry, setEntry] = useState<Entry>(new Property().toObject());
+  const [user, setUser] = useState<User.AsObject>();
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -120,6 +121,10 @@ export const PropertyInfo: FC<Props> = props => {
   const [linksViewing, setLinksViewing] = useState<boolean>(false);
   const [changingOwner, setChangingOwner] = useState<boolean>(false);
   const [pendingChangeOwner, setPendingChangeOwner] = useState<UserEntry>();
+  const [merging, setMerging] = useState<boolean>(false);
+  const [pendingMerge, setPendingMerge] = useState<
+    Entry & { __user: UserEntry }
+  >();
   const classes = useStyles();
 
   const handleSetEditing = useCallback(
@@ -160,8 +165,25 @@ export const PropertyInfo: FC<Props> = props => {
     [setChangingOwner],
   );
 
+  const handleSetPendingChangeOwner = useCallback(
+    pendingChangeOwner => setPendingChangeOwner(pendingChangeOwner),
+    [setPendingChangeOwner],
+  );
+
+  const handleSetMerging = useCallback(
+    (merging: boolean) => () => setMerging(merging),
+    [setMerging],
+  );
+
+  const handleSetPendingMerge = useCallback(
+    pendingMerge => setPendingMerge(pendingMerge),
+    [setPendingMerge],
+  );
+
   const load = useCallback(async () => {
     setLoading(true);
+    const users = await loadUsersByIds([userID]);
+    setUser(users[userID]);
     const req = new Property();
     req.setUserId(userID);
     req.setId(propertyId);
@@ -182,7 +204,7 @@ export const PropertyInfo: FC<Props> = props => {
     }
     setLoading(false);
     return null;
-  }, [setLoading, userID, propertyId, setEntry, setError]);
+  }, [setLoading, userID, propertyId, setEntry, setError, setUser]);
 
   useEffect(() => {
     if (!entry.id) {
@@ -253,10 +275,17 @@ export const PropertyInfo: FC<Props> = props => {
     }
   }, [pendingChangeOwner, setPendingChangeOwner, setError, propertyId]);
 
-  const handleSetPendingChangeOwner = useCallback(
-    pendingChangeOwner => setPendingChangeOwner(pendingChangeOwner),
-    [setPendingChangeOwner],
-  );
+  const handleMerge = useCallback(async () => {
+    if (pendingMerge) {
+      setPendingMerge(undefined);
+      document.location.href = [
+        '/index.cfm?action=admin:properties.mergeproperty',
+        `oldPropertyId=${propertyId}`,
+        `newPropertyId=${pendingMerge.id}`,
+        `newOwnerId=${pendingMerge.__user.id}`,
+      ].join('&');
+    }
+  }, [pendingMerge, setPendingMerge, propertyId]);
 
   const {
     firstname,
@@ -341,6 +370,7 @@ export const PropertyInfo: FC<Props> = props => {
               {
                 label: 'Merge Property',
                 desktop: false,
+                onClick: handleSetMerging(true),
               },
               {
                 label: 'Change Owner',
@@ -463,7 +493,7 @@ export const PropertyInfo: FC<Props> = props => {
         <MenuItem
           onClick={() => {
             handleSetEditEditMenuAnchorEl(null);
-            // TODO implement merge property
+            handleSetMerging(true)();
           }}
         >
           Merge Property
@@ -498,6 +528,13 @@ export const PropertyInfo: FC<Props> = props => {
         onSelect={handleSetPendingChangeOwner}
         excludeId={userID}
       />
+      <Search
+        kinds={['Properties']}
+        open={merging}
+        onClose={handleSetMerging(false)}
+        onSelect={handleSetPendingMerge}
+        excludeId={userID}
+      />
       {pendingChangeOwner && (
         <Confirm
           open
@@ -508,6 +545,34 @@ export const PropertyInfo: FC<Props> = props => {
           Are you sure you want to move this property to{' '}
           <strong>
             {pendingChangeOwner.firstname} {pendingChangeOwner.lastname}
+          </strong>
+          ?
+        </Confirm>
+      )}
+      {pendingMerge && user && (
+        <Confirm
+          open
+          title="Confirm"
+          onClose={() => setPendingMerge(undefined)}
+          onConfirm={handleMerge}
+        >
+          Are you sure you want to remove all information from{' '}
+          <strong>
+            {entry.address}, {entry.city}, {entry.state} {entry.zip}
+          </strong>
+          , under{' '}
+          <strong>
+            {user.businessname || `${user.firstname} ${user.lastname}`}
+          </strong>
+          , and merge it into{' '}
+          <strong>
+            {pendingMerge.address}, {pendingMerge.city}, {pendingMerge.state}{' '}
+            {pendingMerge.zip}
+          </strong>
+          , under{' '}
+          <strong>
+            {pendingMerge.__user.businessname ||
+              `${pendingMerge.__user.firstname} ${pendingMerge.__user.lastname}`}
           </strong>
           ?
         </Confirm>
