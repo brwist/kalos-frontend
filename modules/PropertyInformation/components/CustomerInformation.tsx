@@ -224,6 +224,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     lastLogin,
     login,
     notification,
+    receiveemail,
   } = customer;
   const data: Data = [
     [
@@ -267,7 +268,18 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
         value: lastLogin === '' ? '' : formatDateTime(lastLogin),
       },
     ],
-    [{ label: 'Login ID', value: login }],
+    [
+      {
+        label: 'Login ID',
+        value: login,
+      },
+    ],
+    [
+      {
+        label: 'Wishes to receive promotional emails',
+        value: receiveemail ? 'Yes' : 'No',
+      },
+    ],
   ];
   return (
     <>
