@@ -5,10 +5,16 @@ type Props = {
   button: string;
   compact?: boolean;
   kinds: Kind[];
+  defaultOpen?: boolean;
 };
 
-const EnhancedModal: FC<Props> = ({ button, children, ...props }) => {
-  const [open, setOpen] = useState(false);
+const EnhancedModal: FC<Props> = ({
+  button,
+  children,
+  defaultOpen = false,
+  ...props
+}) => {
+  const [open, setOpen] = useState(defaultOpen);
   const handleToggleOpen = useCallback(open => () => setOpen(open), [setOpen]);
   return (
     <>
@@ -17,7 +23,7 @@ const EnhancedModal: FC<Props> = ({ button, children, ...props }) => {
         open={open}
         onClose={handleToggleOpen(false)}
         {...props}
-        onSelect={user => console.log('SELECTED USER', user)}
+        onSelect={user => console.log('SELECTED: ', user)}
       />
     </>
   );
