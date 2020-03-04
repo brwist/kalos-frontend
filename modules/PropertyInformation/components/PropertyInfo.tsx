@@ -75,6 +75,7 @@ interface Props {
 
 interface State {
   entry: Entry;
+  loading: boolean;
   editing: boolean;
   saving: boolean;
   error: boolean;
@@ -94,6 +95,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     super(props);
     this.state = {
       entry: new Property().toObject(),
+      loading: false,
       editing: false,
       saving: false,
       error: false,
@@ -129,18 +131,27 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
     this.setState({ changingOwner });
 
   load = async () => {
+    this.setState({ loading: true });
     const { userID, propertyId } = this.props;
     const req = new Property();
     req.setUserId(userID);
     req.setId(propertyId);
-    const response = await this.PropertyClient.BatchGet(req);
-    const entry = response.toObject().resultsList[0];
-    if (entry) {
-      this.setState({ entry });
-    } else {
+    try {
+      const { resultsList, totalCount } = (
+        await this.PropertyClient.BatchGet(req)
+      ).toObject();
+      if (totalCount === 1) {
+        const entry = resultsList[0];
+        this.setState({ entry, loading: false });
+        return entry;
+      }
+      this.setState({ loading: false });
+      return null;
+    } catch (e) {
       this.setState({ error: true });
     }
-    return entry;
+    this.setState({ loading: false });
+    return null;
   };
 
   async componentDidMount() {
@@ -233,9 +244,9 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       deleting,
       changingOwner,
       pendingChangeOwner,
+      loading,
     } = state;
     const {
-      id,
       firstname,
       lastname,
       businessname,
@@ -250,6 +261,14 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
       notes,
       notification,
     } = entry;
+    if (!loading && entry.id === 0)
+      return (
+        <>
+          <SectionBar title="Property Information">
+            <InfoTable data={[]} compact />
+          </SectionBar>
+        </>
+      );
     const data: Data = [
       [
         { label: 'Name', value: `${firstname} ${lastname}` },
@@ -324,7 +343,7 @@ export class PropertyInfo extends React.PureComponent<Props, State> {
             },
           ]}
         >
-          <InfoTable data={data} loading={id === 0} error={error} />
+          <InfoTable data={data} loading={loading} error={error} />
         </SectionBar>
         <Modal open={editing} onClose={handleSetEditing(false)}>
           <Form<Entry>
