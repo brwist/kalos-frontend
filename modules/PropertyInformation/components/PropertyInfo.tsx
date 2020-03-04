@@ -1,4 +1,5 @@
 import React, { FC, useCallback, useState, useEffect } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
@@ -12,6 +13,9 @@ import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Search } from '../../ComponentsLibrary/Search';
 import { ServiceItemLinks } from './ServiceItemLinks';
+import { PropertyDocuments } from './PropertyDocuments';
+import { ServiceItems } from './ServiceItems';
+import { ServiceCalls } from './ServiceCalls';
 import { getRPCFields } from '../../../helpers';
 
 const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -73,7 +77,28 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
 interface Props {
   userID: number;
   propertyId: number;
+  loggedUserId: number;
 }
+
+const useStyles = makeStyles(theme => ({
+  propertiesWrapper: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column',
+    },
+  },
+  properties: {
+    flexGrow: 1,
+  },
+  documents: {
+    flexShrink: 0,
+    [theme.breakpoints.up('lg')]: {
+      marginLeft: theme.spacing(2),
+      width: 470,
+    },
+  },
+}));
 
 export const PropertyInfo: FC<Props> = props => {
   const { userID, propertyId } = props;
@@ -95,6 +120,7 @@ export const PropertyInfo: FC<Props> = props => {
   const [linksViewing, setLinksViewing] = useState<boolean>(false);
   const [changingOwner, setChangingOwner] = useState<boolean>(false);
   const [pendingChangeOwner, setPendingChangeOwner] = useState<UserEntry>();
+  const classes = useStyles();
 
   const handleSetEditing = useCallback(
     (editing: boolean) => () => setEditing(editing),
@@ -246,7 +272,7 @@ export const PropertyInfo: FC<Props> = props => {
     return (
       <>
         <SectionBar title="Property Information">
-          <InfoTable data={[]} compact />
+          <InfoTable data={[]} />
         </SectionBar>
       </>
     );
@@ -271,61 +297,68 @@ export const PropertyInfo: FC<Props> = props => {
   ];
   return (
     <>
-      <SectionBar
-        title="Property Information"
-        actions={[
-          {
-            label: 'Tasks',
-            url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
-          },
-          {
-            label: notification ? 'Notification' : 'Add Notification',
-            onClick: notification
-              ? handleSetNotificationViewing(true)
-              : handleSetNotificationEditing(true),
-          },
-          {
-            label: 'Change Property',
-            onClick: ({ currentTarget }: React.MouseEvent<HTMLElement>) =>
-              handleSetEditEditMenuAnchorEl(currentTarget),
-            desktop: true,
-          },
-          {
-            label: 'Edit Property',
-            onClick: handleSetEditing(true),
-            desktop: false,
-          },
-          {
-            label: 'Activity',
-            url: `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`,
-            desktop: false,
-          },
-          {
-            label: 'Delete Property',
-            desktop: false,
-            onClick: handleSetDeleting(true),
-          },
-          {
-            label: 'Merge Property',
-            desktop: false,
-          },
-          {
-            label: 'Change Owner',
-            desktop: false,
-            onClick: handleSetChangingOwner(true),
-          },
-          {
-            label: 'Owner Details',
-            url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
-          },
-          {
-            label: 'View Property Links',
-            onClick: handleSetLinksViewing(true),
-          },
-        ]}
-      >
-        <InfoTable data={data} loading={loading} error={error} />
-      </SectionBar>
+      <div className={classes.propertiesWrapper}>
+        <div className={classes.properties}>
+          <SectionBar
+            title="Property Information"
+            actions={[
+              {
+                label: 'Tasks',
+                url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
+              },
+              {
+                label: notification ? 'Notification' : 'Add Notification',
+                onClick: notification
+                  ? handleSetNotificationViewing(true)
+                  : handleSetNotificationEditing(true),
+              },
+              {
+                label: 'Change Property',
+                onClick: ({ currentTarget }: React.MouseEvent<HTMLElement>) =>
+                  handleSetEditEditMenuAnchorEl(currentTarget),
+                desktop: true,
+              },
+              {
+                label: 'Edit Property',
+                onClick: handleSetEditing(true),
+                desktop: false,
+              },
+              {
+                label: 'Activity',
+                url: `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`,
+                desktop: false,
+              },
+              {
+                label: 'Delete Property',
+                desktop: false,
+                onClick: handleSetDeleting(true),
+              },
+              {
+                label: 'Merge Property',
+                desktop: false,
+              },
+              {
+                label: 'Change Owner',
+                desktop: false,
+                onClick: handleSetChangingOwner(true),
+              },
+              {
+                label: 'Owner Details',
+                url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
+              },
+              {
+                label: 'View Property Links',
+                onClick: handleSetLinksViewing(true),
+              },
+            ]}
+          >
+            <InfoTable data={data} loading={loading} error={error} />
+          </SectionBar>
+          <ServiceItems {...props} />
+        </div>
+        <PropertyDocuments className={classes.documents} {...props} />
+      </div>
+      <ServiceCalls {...props} />
       <Modal open={editing} onClose={handleSetEditing(false)}>
         <Form<Entry>
           title="Edit Property Information"
