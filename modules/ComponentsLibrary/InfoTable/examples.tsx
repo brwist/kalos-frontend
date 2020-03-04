@@ -1,0 +1,72 @@
+import React from 'react';
+import IconButton from '@material-ui/core/IconButton';
+import SearchIcon from '@material-ui/icons/Search';
+import EditIcon from '@material-ui/icons/Edit';
+import { InfoTable, Data } from './';
+
+const onClick = () => console.log('Row clicked');
+const actions = [
+  <IconButton key={0} size="small">
+    <SearchIcon />
+  </IconButton>,
+  <IconButton key={1} size="small">
+    <EditIcon />
+  </IconButton>,
+];
+
+const EXAMPLE_1: Data = [
+  [
+    { value: 'Row 1.0', onClick },
+    { value: 'Row 1.1', onClick },
+    { value: 'Row 1.2', onClick, actions },
+  ],
+  [
+    { value: 'Row 2.0', onClick },
+    { value: 'Row 2.1', onClick },
+    { value: 'Row 2.2', onClick, actions },
+  ],
+  [
+    { value: 'Row 3.0', onClick },
+    { value: 'Row 3.1', onClick },
+    { value: 'Row 3.2', onClick, actions },
+  ],
+];
+
+const EXAMPLE_2: Data = [
+  [{ value: 'Row 0' }],
+  [{ value: 'Row 1.0' }, { value: 'Row 1.1' }],
+  [{ value: 'Row 2.0' }, { value: 'Row 2.1' }, { value: 'Row 2.2' }],
+  [{ label: 'Label 3', value: 'Row 3' }],
+  [
+    { label: 'Label 4.0', value: 'Row 4.0', href: 'tel' },
+    { label: 'Label 4.1', value: 'Row 4.1', href: 'mailto' },
+  ],
+  [
+    { label: 'Label 5.0', value: 'Row 5.0' },
+    { label: 'Label 5.1', value: 'Row 5.1' },
+    { label: 'Label 5.2', value: 'Row 5.2' },
+  ],
+];
+
+export default () => (
+  <strong>
+    <InfoTable
+      data={EXAMPLE_1}
+      columns={[
+        { name: 'Column 1' },
+        { name: 'Column 2' },
+        { name: 'Column 3' },
+      ]}
+    />
+    <hr />
+    <InfoTable data={EXAMPLE_2} />
+    <hr />
+    <InfoTable data={EXAMPLE_2} compact />
+    <hr />
+    <InfoTable data={EXAMPLE_2} hoverable />
+    <hr />
+    <InfoTable data={EXAMPLE_2} loading />
+    <hr />
+    <InfoTable data={EXAMPLE_2} error />
+  </strong>
+);

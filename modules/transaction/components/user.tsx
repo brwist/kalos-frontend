@@ -64,15 +64,18 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   nextPage = this.changePage(1);
 
-  toggleLoading = (cb?: () => void) => {
-    this.setState(
-      prevState => ({
-        isLoading: !prevState.isLoading,
-      }),
-      () => {
-        cb && cb();
-      },
-    );
+  toggleLoading = (cb?: () => void): Promise<void> => {
+    return new Promise(resolve => {
+      this.setState(
+        prevState => ({
+          isLoading: !prevState.isLoading,
+        }),
+        () => {
+          cb && cb();
+          resolve();
+        },
+      );
+    });
   };
 
   async fetchTxns(statusID: number) {
