@@ -19,7 +19,7 @@ export type Option = {
 
 export type Options = (string | Option)[];
 
-export type Type = 'text' | 'password' | 'number' | 'search';
+export type Type = 'text' | 'password' | 'number' | 'search' | 'checkbox';
 
 export type SchemaProps<T> = {
   label: string;
