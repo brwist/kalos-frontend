@@ -1,9 +1,16 @@
-import React, { ReactElement, useCallback, useState, ReactNode } from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useState,
+  ReactNode,
+  ReactText,
+} from 'react';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar, Pagination } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
 import { Field, Value } from '../Field';
+import { ExtensionFieldInfo } from 'google-protobuf';
 
 export type Option = {
   label: string;
@@ -24,6 +31,7 @@ export type SchemaProps<T> = {
   helperText?: string;
   multiline?: boolean;
   type?: Type;
+  onChange?: (value: Value) => void;
 };
 
 export type Schema<T> = SchemaProps<T>[][];
@@ -152,7 +160,15 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   );
   const [validations, setValidations] = useState<Validation>({});
   const handleChange = useCallback(
-    name => (value: Value) => setFormData({ ...formData, [name]: value }),
+    name => (value: Value) => {
+      setFormData({ ...formData, [name]: value });
+      const field = schema
+        .reduce((aggr, fields) => [...aggr, ...fields], [])
+        .find(field => field.name === name);
+      if (field && field.onChange) {
+        field.onChange(value);
+      }
+    },
     [formData, setFormData],
   );
   const handleSave = useCallback(() => {
