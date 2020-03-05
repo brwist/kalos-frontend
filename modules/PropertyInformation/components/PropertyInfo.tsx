@@ -347,7 +347,7 @@ export const PropertyInfo: FC<Props> = props => {
                   : handleSetNotificationEditing(true),
               },
               {
-                label: 'Change Property',
+                label: 'Change',
                 onClick: ({ currentTarget }: React.MouseEvent<HTMLElement>) =>
                   handleSetEditEditMenuAnchorEl(currentTarget),
                 desktop: true,
@@ -382,7 +382,7 @@ export const PropertyInfo: FC<Props> = props => {
                 url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
               },
               {
-                label: 'View Property Links',
+                label: 'Links',
                 onClick: handleSetLinksViewing(true),
               },
             ]}

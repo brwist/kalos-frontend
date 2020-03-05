@@ -48,21 +48,8 @@ interface Props<T> {
 }
 
 const useStyles = makeStyles(theme => ({
-  wrapper: {
-    position: 'relative',
-  },
-  sectionBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-  },
   form: {
     padding: theme.spacing(2),
-    paddingTop: 50 + theme.spacing(),
-    maxHeight: 'calc(100vh - 110px)',
-    overflowY: 'auto',
   },
   error: {
     color: theme.palette.error.contrastText,
@@ -186,7 +173,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     onSave(formData);
   }, [onSave, formData, schema, setValidations]);
   return (
-    <div className={classes.wrapper}>
+    <div>
       <SectionBar
         title={title}
         actions={[
@@ -208,7 +195,6 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           },
         ]}
         fixedActions
-        className={classes.sectionBar}
         pagination={pagination}
       />
       <div className={classes.form}>
