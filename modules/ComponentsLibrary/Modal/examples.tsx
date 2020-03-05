@@ -6,15 +6,37 @@ import { Modal } from './';
 type Props = {
   button: string;
   compact?: boolean;
+  fullScreen?: boolean;
 };
 
-const EnhancedModal: FC<Props> = ({ button, children, ...props }) => {
+const EnhancedModal: FC<Props> = ({
+  button,
+  children,
+  fullScreen = false,
+  ...props
+}) => {
   const [open, setOpen] = useState(false);
   const handleToggleOpen = useCallback(open => () => setOpen(open), [setOpen]);
   return (
     <>
       <button onClick={handleToggleOpen(true)}>{button}</button>{' '}
-      <Modal open={open} onClose={handleToggleOpen(false)} {...props}>
+      <Modal
+        open={open}
+        onClose={handleToggleOpen(false)}
+        fullScreen={fullScreen}
+        {...props}
+      >
+        <div
+          style={{
+            position: 'sticky',
+            backgroundColor: 'gold',
+            padding: 10,
+            textAlign: 'right',
+            top: 0,
+          }}
+        >
+          <button onClick={handleToggleOpen(false)}>Close</button>
+        </div>
         <div style={{ padding: 20 }}>{children}</div>
       </Modal>
     </>
@@ -28,6 +50,11 @@ export default () => (
     </EnhancedModal>
     <EnhancedModal button="Compact Modal" compact>
       <Typography>Lorem ipsum dolor sit amet</Typography>
+    </EnhancedModal>
+    <EnhancedModal button="Full Screen Modal" fullScreen>
+      {Array.from(Array(10)).map((_, idx) => (
+        <LoremIpsumList key={idx} />
+      ))}
     </EnhancedModal>
   </>
 );

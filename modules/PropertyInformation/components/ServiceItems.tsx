@@ -330,7 +330,7 @@ export const ServiceItems: FC<Props> = props => {
         title="Service Items"
         actions={[
           {
-            label: 'Add Service Item',
+            label: 'Add',
             onClick: handleEditing({} as Entry),
           },
         ]}

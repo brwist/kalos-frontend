@@ -125,8 +125,10 @@ const useStyles = makeStyles(theme => ({
       alignItems: 'flex-start',
     },
   },
+  customerInformation: {
+    flexGrow: 1,
+  },
   asidePanel: {
-    marginTop: 8,
     flexShrink: 0,
     [theme.breakpoints.down('md')]: {
       flexGrow: 1,
@@ -142,10 +144,15 @@ const useStyles = makeStyles(theme => ({
   },
   editForm: {
     display: 'flex',
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column',
+    },
   },
   groups: {
-    width: 250,
-    marginLeft: theme.spacing(1),
+    [theme.breakpoints.up('md')]: {
+      width: 250,
+      marginLeft: theme.spacing(1),
+    },
   },
   groupLinks: {
     paddingTop: theme.spacing(),
@@ -154,6 +161,15 @@ const useStyles = makeStyles(theme => ({
   },
   group: {
     marginBottom: 0,
+    [theme.breakpoints.down('sm')]: {
+      display: 'inline-block',
+      width: 'calc(100% / 3)',
+      marginBottom: theme.spacing(),
+    },
+    [theme.breakpoints.down('xs')]: {
+      width: '100%',
+      marginBottom: 0,
+    },
   },
 }));
 
@@ -395,66 +411,63 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   ];
   return (
     <>
-      <SectionBar
-        title="Customer Information"
-        actions={[
-          {
-            label: 'Calendar',
-            url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
-          },
-          {
-            label: 'Call History',
-            url: `/index.cfm?action=admin:customers.listPhoneCallLogs&code=customers&id=${userID}`,
-          },
-          {
-            label: 'Tasks',
-            url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
-          },
-          {
-            label: notification ? 'Notification' : 'Add Notification',
-            onClick: notification
-              ? handleSetNotificationViewing(true)
-              : handleSetNotificationEditing(true),
-          },
-          {
-            label: 'Edit Customer Information',
-            onClick: handleToggleEditing,
-          },
-          {
-            label: 'Delete Customer',
-            onClick: handleSetDeleting(true),
-          },
-        ]}
-      >
-        <div className={classes.wrapper}>
-          <InfoTable
-            styles={{ flexGrow: 1 }}
-            data={data}
-            loading={id === 0}
-            error={error}
-          />
-          <div className={classes.asidePanel}>
-            <SectionBar title="System Information">
-              <InfoTable data={systemData} loading={id === 0} error={error} />
-            </SectionBar>
-            <SectionBar
-              title="Pending Billing"
-              className={classes.pendingBilling}
-              actions={[
-                {
-                  label: 'View',
-                  url: [
-                    '/index.cfm?action=admin:properties.customerpendingbilling',
-                    `user_id=${userID}`,
-                    `property_id=${propertyId}`,
-                    'unique=207D8F02-BBCF-005A-4455A712EDA6614C', // FIXME set proper unique
-                  ].join('&'),
-                },
-              ]}
-            />
-          </div>
+      <div className={classes.wrapper}>
+        <div className={classes.customerInformation}>
+          <SectionBar
+            title="Customer Information"
+            actions={[
+              {
+                label: 'Calendar',
+                url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
+              },
+              {
+                label: 'Call History',
+                url: `/index.cfm?action=admin:customers.listPhoneCallLogs&code=customers&id=${userID}`,
+              },
+              {
+                label: 'Tasks',
+                url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
+              },
+              {
+                label: notification ? 'Notification' : 'Add Notification',
+                onClick: notification
+                  ? handleSetNotificationViewing(true)
+                  : handleSetNotificationEditing(true),
+              },
+              {
+                label: 'Edit',
+                onClick: handleToggleEditing,
+              },
+              {
+                label: 'Delete',
+                onClick: handleSetDeleting(true),
+              },
+            ]}
+          >
+            <InfoTable data={data} loading={id === 0} error={error} />
+          </SectionBar>
         </div>
-      </SectionBar>
+        <div className={classes.asidePanel}>
+          <SectionBar title="System Information">
+            <InfoTable data={systemData} loading={id === 0} error={error} />
+          </SectionBar>
+          <SectionBar
+            title="Pending Billing"
+            className={classes.pendingBilling}
+            actions={[
+              {
+                label: 'View',
+                url: [
+                  '/index.cfm?action=admin:properties.customerpendingbilling',
+                  `user_id=${userID}`,
+                  `property_id=${propertyId}`,
+                  'unique=207D8F02-BBCF-005A-4455A712EDA6614C', // FIXME set proper unique
+                ].join('&'),
+              },
+            ]}
+          />
+        </div>
+      </div>
       <Modal open={editing} onClose={handleToggleEditing}>
         <div className={classes.editForm}>
           <Form<Entry>

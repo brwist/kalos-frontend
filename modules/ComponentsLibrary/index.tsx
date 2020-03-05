@@ -63,20 +63,28 @@ const ComponentsLibrary = () => {
           >
             Components Library
           </h1>
-          {Object.keys(COMPONENTS).map(key => (
-            <div
-              key={key}
-              style={{
-                marginTop: 15,
-                fontFamily: 'arial',
-                fontWeight: key === component ? 900 : 400,
-                cursor: 'pointer',
-              }}
-              onClick={handleClickMenuItem(key)}
-            >
-              {key}
-            </div>
-          ))}
+          <ol style={{ paddingInlineStart: 20 }}>
+            {Object.keys(COMPONENTS).map(key => (
+              <li
+                key={key}
+                style={{
+                  fontSize: 14,
+                  fontFamily: 'arial',
+                  cursor: 'pointer',
+                }}
+                onClick={handleClickMenuItem(key)}
+              >
+                <div
+                  style={{
+                    backgroundColor: key === component ? 'gold' : 'transparent',
+                    padding: 5,
+                  }}
+                >
+                  {key}
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
         <div style={{ padding: 10, flexGrow: 1 }}>
           <Component />
