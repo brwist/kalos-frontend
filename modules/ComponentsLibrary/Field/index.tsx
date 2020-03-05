@@ -57,7 +57,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const inputLabel = (
     <>
       {label}
-      {required ? <span className={classes.required}> *</span> : ''}
+      {required && !readOnly ? (
+        <span className={classes.required}> *</span>
+      ) : (
+        ''
+      )}
     </>
   );
   const error = validation !== '';
@@ -136,7 +140,6 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       InputLabelProps={{
         shrink: true,
       }}
-      rowsMax={4}
       error={error}
       {...props}
       type={type}
