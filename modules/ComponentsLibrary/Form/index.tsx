@@ -4,6 +4,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar, Pagination } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
 import { Field, Value } from '../Field';
+import { Actions } from '../Actions';
 
 export type Option = {
   label: string;
@@ -25,6 +26,7 @@ export type SchemaProps<T> = {
   multiline?: boolean;
   type?: Type;
   onChange?: (value: Value) => void;
+  actions?: ButtonProps[];
 };
 
 export type Schema<T> = SchemaProps<T>[][];
@@ -81,6 +83,9 @@ const useStyles = makeStyles(theme => ({
     marginBottom: theme.spacing(),
     fontWeight: 600,
     flexGrow: 1,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   group: {
     display: 'flex',
@@ -222,7 +227,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         {schema.map((fields, idx) => (
           <div key={idx} className={classes.group}>
             {fields.map((props, idx2) => {
-              const { name, label, description } = props;
+              const { name, label, description, actions } = props;
               if (name !== undefined)
                 return (
                   <Field
@@ -237,11 +242,16 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   />
                 );
               return (
-                <Typography key={idx2} className={classes.headline}>
+                <Typography
+                  component="div"
+                  key={idx2}
+                  className={classes.headline}
+                >
                   {label}
                   {description && (
                     <span className={classes.description}>{description}</span>
                   )}
+                  {actions && <Actions actions={actions} fixed />}
                 </Typography>
               );
             })}

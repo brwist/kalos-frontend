@@ -16,7 +16,12 @@ import { ServiceItemLinks } from './ServiceItemLinks';
 import { PropertyDocuments } from './PropertyDocuments';
 import { ServiceItems } from './ServiceItems';
 import { ServiceCalls } from './ServiceCalls';
-import { getRPCFields, loadUsersByIds, makeFakeRows } from '../../../helpers';
+import {
+  getRPCFields,
+  loadUsersByIds,
+  makeFakeRows,
+  loadGeoLocationByAddress,
+} from '../../../helpers';
 
 const PropertyClientService = new PropertyClient(ENDPOINT);
 
@@ -27,40 +32,6 @@ const PROP_LEVEL = 'Used for property-level billing only';
 const RESIDENTIAL = [
   { label: 'Residential', value: 1 },
   { label: 'Commercial', value: 0 },
-];
-
-const SCHEMA_PROPERTY_INFORMATION: Schema<Entry> = [
-  [{ label: 'Personal Details', headline: true, description: PROP_LEVEL }],
-  [
-    { label: 'First Name', name: 'firstname' },
-    { label: 'Last Name', name: 'lastname' },
-    { label: 'Business Name', name: 'businessname' },
-  ],
-  [{ label: 'Contact Details', headline: true, description: PROP_LEVEL }],
-  [
-    { label: 'Primary Phone', name: 'phone' },
-    { label: 'Alternate Phone', name: 'altphone' },
-    { label: 'Email', name: 'email' },
-  ],
-  [{ label: 'Address Details', headline: true }],
-  [
-    { label: 'Address', name: 'address', required: true, multiline: true },
-    { label: 'City', name: 'city', required: true },
-    { label: 'State', name: 'state', options: USA_STATES, required: true },
-    { label: 'Zip Code', name: 'zip', required: true },
-  ],
-  [{ label: 'Location Details', headline: true }],
-  [
-    { label: 'Directions', name: 'directions', multiline: true },
-    { label: 'Subdivision', name: 'subdivision' },
-  ],
-  [
-    { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
-    { label: 'Latitude', name: 'geolocationLat', type: 'number' },
-    { label: 'Longitude', name: 'geolocationLng', type: 'number' },
-  ],
-  [{ label: 'Notes', headline: true }],
-  [{ label: 'Notes', name: 'notes', multiline: true }],
 ];
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
@@ -103,6 +74,7 @@ const useStyles = makeStyles(theme => ({
 export const PropertyInfo: FC<Props> = props => {
   const { userID, propertyId } = props;
   const [entry, setEntry] = useState<Entry>(new Property().toObject());
+  const [formKey, setFormKey] = useState<number>(0);
   const [user, setUser] = useState<User.AsObject>();
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
@@ -287,6 +259,64 @@ export const PropertyInfo: FC<Props> = props => {
     }
   }, [pendingMerge, setPendingMerge, propertyId]);
 
+  const handleCheckLocation = useCallback(async () => {
+    const { address, city, state: addressState, zip } = entry;
+    const geo = await loadGeoLocationByAddress(
+      `${address}, ${city}, ${addressState} ${zip}`,
+    );
+    if (geo) {
+      setEntry({ ...entry, ...geo });
+      setFormKey(formKey + 1);
+    }
+  }, [entry, setEntry, formKey, setFormKey]);
+
+  const SCHEMA_PROPERTY_INFORMATION: Schema<Entry> = [
+    [{ label: 'Personal Details', headline: true, description: PROP_LEVEL }],
+    [
+      { label: 'First Name', name: 'firstname' },
+      { label: 'Last Name', name: 'lastname' },
+      { label: 'Business Name', name: 'businessname' },
+    ],
+    [{ label: 'Contact Details', headline: true, description: PROP_LEVEL }],
+    [
+      { label: 'Primary Phone', name: 'phone' },
+      { label: 'Alternate Phone', name: 'altphone' },
+      { label: 'Email', name: 'email' },
+    ],
+    [{ label: 'Address Details', headline: true }],
+    [
+      { label: 'Address', name: 'address', required: true, multiline: true },
+      { label: 'City', name: 'city', required: true },
+      { label: 'State', name: 'state', options: USA_STATES, required: true },
+      { label: 'Zip Code', name: 'zip', required: true },
+    ],
+    [
+      {
+        label: 'Location Details',
+        headline: true,
+        actions: [
+          {
+            label: 'Check Location',
+            compact: true,
+            onClick: handleCheckLocation,
+            disabled: saving,
+          },
+        ],
+      },
+    ],
+    [
+      { label: 'Directions', name: 'directions', multiline: true },
+      { label: 'Subdivision', name: 'subdivision' },
+    ],
+    [
+      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
+      { label: 'Latitude', name: 'geolocationLat', type: 'number' },
+      { label: 'Longitude', name: 'geolocationLng', type: 'number' },
+    ],
+    [{ label: 'Notes', headline: true }],
+    [{ label: 'Notes', name: 'notes', multiline: true }],
+  ];
+
   const {
     firstname,
     lastname,
@@ -396,6 +426,7 @@ export const PropertyInfo: FC<Props> = props => {
       <ServiceCalls {...props} />
       <Modal open={editing} onClose={handleSetEditing(false)}>
         <Form<Entry>
+          key={formKey}
           title="Edit Property Information"
           schema={SCHEMA_PROPERTY_INFORMATION}
           data={entry}
