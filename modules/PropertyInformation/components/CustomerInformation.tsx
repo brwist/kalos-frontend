@@ -461,7 +461,6 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
                   '/index.cfm?action=admin:properties.customerpendingbilling',
                   `user_id=${userID}`,
                   `property_id=${propertyId}`,
-                  'unique=207D8F02-BBCF-005A-4455A712EDA6614C', // FIXME set proper unique
                 ].join('&'),
               },
             ]}
