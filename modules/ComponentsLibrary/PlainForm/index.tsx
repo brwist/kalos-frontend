@@ -31,6 +31,7 @@ export interface PlainFormProps<T> {
   readOnly?: boolean;
   error?: ReactNode;
   children?: ReactNode;
+  className?: string;
 }
 
 interface Props<T> extends PlainFormProps<T> {
@@ -104,6 +105,7 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   readOnly = false,
   error,
   validations = {},
+  className = '',
   children,
 }) => {
   const classes = useStyles();
@@ -137,7 +139,7 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [formData, setFormData, onChange],
   );
   return (
-    <div className={classes.form}>
+    <div className={className + ' ' + classes.form}>
       {error && <Typography className={classes.error}>{error}</Typography>}
       {Object.keys(validations).length > 0 && (
         <Typography className={classes.error}>
