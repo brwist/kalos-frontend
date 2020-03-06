@@ -15,11 +15,13 @@ import {
   MaintenanceQuestionClient,
   MaintenanceQuestion,
 } from '@kalos-core/kalos-rpc/MaintenanceQuestion';
+import { MaterialClient, Material } from '@kalos-core/kalos-rpc/Material';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
+import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from './ServiceItemLinks';
@@ -30,8 +32,10 @@ const ReadingClientService = new ReadingClient(ENDPOINT);
 const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
   ENDPOINT,
 );
+const MaterialClientService = new MaterialClient(ENDPOINT);
 
 type Entry = ServiceItem.AsObject;
+type MaterialType = Material.AsObject;
 
 const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Straight-cool AC w/ heatstrips', value: '1' },
@@ -44,6 +48,16 @@ const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Freezer', value: '8' },
   { label: 'AC w/ Reheat', value: '9' },
   { label: 'Other', value: '10' },
+];
+
+const MATERIAL_SCHEMA: Schema<MaterialType> = [
+  [
+    { label: 'Name', name: 'name' },
+    { label: 'Part Number', name: 'partNumber' },
+    { label: 'Vendor', name: 'vendor' },
+    { label: 'Quantity', name: 'quantity' },
+    { name: 'id', type: 'hidden' },
+  ],
 ];
 
 interface Props {
@@ -76,11 +90,19 @@ const useStyles = makeStyles(theme => ({
       overflowY: 'auto',
     },
   },
+  noMaterials: {
+    ...theme.typography.body1,
+    padding: theme.spacing(2),
+    margin: 0,
+    marginBottom: theme.spacing(3),
+  },
 }));
 
 export const ServiceItems: FC<Props> = props => {
   const { propertyId, className } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [materials, setMaterials] = useState<MaterialType[]>([]);
+  const [materialsIds, setMaterialsIds] = useState<number[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -91,6 +113,65 @@ export const ServiceItems: FC<Props> = props => {
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
   const classes = useStyles();
+
+  const handleMaterialChange = useCallback(
+    (idx: number) => (data: MaterialType) => {
+      const newMaterials = [...materials];
+      newMaterials[idx] = data;
+      setMaterials(newMaterials);
+    },
+    [materials, setMaterials],
+  );
+
+  const handleAddMaterial = useCallback(() => {
+    const newMaterial = new Material();
+    newMaterial.setId(Date.now());
+    const newMaterials = [...materials, newMaterial.toObject()];
+    setMaterials(newMaterials);
+  }, [materials, setMaterials]);
+
+  const handleRemoveMaterial = useCallback(
+    (idx: number) => () => {
+      setMaterials(materials.filter((_, idy) => idx !== idy));
+    },
+    [materials, setMaterials],
+  );
+
+  const MATERIALS_SCHEMA = materials
+    .map(
+      (_, idx): Schema<Entry> => [
+        [
+          {
+            label: `Material #${idx + 1}`,
+            headline: true,
+            actions: [
+              {
+                label: 'Remove',
+                variant: 'outlined',
+                onClick: handleRemoveMaterial(idx),
+                compact: true,
+                size: 'xsmall',
+                disabled: saving,
+              },
+            ],
+          },
+        ],
+        [
+          {
+            content: (
+              <PlainForm<MaterialType>
+                key={materials[idx].id}
+                schema={MATERIAL_SCHEMA}
+                data={materials[idx]}
+                onChange={handleMaterialChange(idx)}
+                disabled={saving}
+              />
+            ),
+          },
+        ],
+      ],
+    )
+    .reduce((aggr, item) => [...aggr, ...item], []);
 
   const SCHEMA: Schema<Entry> = [
     [
@@ -137,7 +218,25 @@ export const ServiceItems: FC<Props> = props => {
       { label: 'Part #', name: 'filterPartNumber' },
       { label: 'Vendor', name: 'filterVendor' },
     ],
-    // [{ label: 'Materials', headline: true }],
+    [
+      {
+        label: 'Materials',
+        headline: true,
+        actions: [
+          {
+            label: 'Add',
+            size: 'xsmall',
+            variant: 'outlined',
+            compact: true,
+            onClick: handleAddMaterial,
+            disabled: saving,
+          },
+        ],
+      },
+    ],
+    ...(MATERIALS_SCHEMA.length === 0
+      ? [[{ content: <div className={classes.noMaterials}>No materials</div> }]]
+      : MATERIALS_SCHEMA),
     [{ label: 'Notes', headline: true }],
     [{ label: 'Additional Notes', name: 'notes', multiline: true }],
   ];
@@ -166,6 +265,54 @@ export const ServiceItems: FC<Props> = props => {
     }
   }, [loaded, load]);
 
+  const handleMaterials = async (
+    materials: MaterialType[],
+    materialsIds: number[],
+    serviceItemId: number,
+  ) => {
+    const formFields = MATERIAL_SCHEMA[0].map(({ name }) => name as string);
+    const ids = materials.map(({ id }) => id);
+    await Promise.all(
+      materialsIds
+        .filter(id => !ids.includes(id))
+        .map(async id => {
+          const entry = new Material();
+          entry.setId(id);
+          return await MaterialClientService.Delete(entry);
+        }),
+    );
+    const operations: {
+      operation: 'Create' | 'Update';
+      entry: Material;
+    }[] = [];
+    for (let i = 0; i < materials.length; i += 1) {
+      const entry = new Material();
+      entry.setServiceItemId(serviceItemId);
+      const fieldMaskList = ['ServiceItemId'];
+      for (const fieldName in materials[i]) {
+        if (!fieldName || fieldName === 'id' || !formFields.includes(fieldName))
+          continue;
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        entry[methodName](materials[i][fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      entry.setFieldMaskList(fieldMaskList);
+      if (materialsIds.includes(materials[i].id)) {
+        entry.setId(materials[i].id);
+        operations.push({ operation: 'Update', entry });
+      } else {
+        operations.push({ operation: 'Create', entry });
+      }
+    }
+    await Promise.all(
+      operations.map(
+        async ({ operation, entry }) =>
+          await MaterialClientService[operation](entry),
+      ),
+    );
+  };
+
   const handleSave = useCallback(
     async (data: Entry) => {
       if (editing) {
@@ -191,13 +338,16 @@ export const ServiceItems: FC<Props> = props => {
           fieldMaskList.push(upperCaseProp);
         }
         entry.setFieldMaskList(fieldMaskList);
-        await ServiceItemClientService[isNew ? 'Create' : 'Update'](entry);
+        const { id } = await ServiceItemClientService[
+          isNew ? 'Create' : 'Update'
+        ](entry);
+        await handleMaterials(materials, materialsIds, id);
         setSaving(false);
         setEditing(undefined);
         await load();
       }
     },
-    [editing, setSaving, entries, setEditing, load],
+    [editing, setSaving, entries, setEditing, load, materials, materialsIds],
   );
 
   const handleDelete = useCallback(async () => {
@@ -264,8 +414,22 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleEditing = useCallback(
-    (editing?: Entry) => () => setEditing(editing),
-    [setEditing],
+    (editing?: Entry) => async () => {
+      setEditing(editing);
+      if (editing && editing.id) {
+        const entry = new Material();
+        entry.setServiceItemId(editing.id);
+        const { resultsList } = (
+          await MaterialClientService.BatchGet(entry)
+        ).toObject();
+        setMaterials(resultsList);
+        setMaterialsIds(resultsList.map(({ id }) => id));
+      } else {
+        setMaterials([]);
+        setMaterialsIds([]);
+      }
+    },
+    [setEditing, setMaterials],
   );
 
   const setDeleting = useCallback(

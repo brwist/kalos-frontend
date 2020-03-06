@@ -13,7 +13,13 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import { SchemaProps } from '../PlainForm';
 import { Actions } from '../Actions';
 
-export type Type = 'text' | 'password' | 'number' | 'search' | 'checkbox';
+export type Type =
+  | 'text'
+  | 'password'
+  | 'number'
+  | 'search'
+  | 'checkbox'
+  | 'hidden';
 
 export type Value = string | number;
 
@@ -23,6 +29,10 @@ export type Option = {
 };
 
 export type Options = (string | Option)[];
+
+type Style = {
+  type?: Type;
+};
 
 export interface Props<T> extends SchemaProps<T> {
   value?: T[keyof T];
@@ -39,10 +49,11 @@ export const getDefaultValueByType = (type: Type) => {
 };
 
 const useStyles = makeStyles(theme => ({
-  field: {
+  field: ({ type }: Style) => ({
     marginTop: 0,
     marginBottom: theme.spacing(2),
-  },
+    ...(type === 'hidden' ? { display: 'none' } : {}),
+  }),
   required: {
     color: theme.palette.error.main,
   },
@@ -68,11 +79,16 @@ const useStyles = makeStyles(theme => ({
     fontSize: 12,
     color: theme.palette.grey[600],
   },
+  content: {
+    flexGrow: 1,
+    margin: theme.spacing(-2),
+  },
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   name,
   label,
+  headline,
   options,
   onChange,
   disabled = false,
@@ -85,10 +101,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   className = '',
   startAdornment,
   endAdornment,
+  content,
   ...props
 }) => {
   const { actions, description } = props;
-  const classes = useStyles();
+  const classes = useStyles({ type });
   const handleChange = useCallback(
     ({ target: { value } }) => {
       if (onChange) {
@@ -120,16 +137,20 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     validation !== '' || helperText !== ''
       ? validation + ' ' + helperText
       : undefined;
-  if (name === undefined || value === undefined)
-    return (
-      <Typography component="div" className={classes.headline}>
-        {label}
-        {description && (
-          <span className={classes.description}>{description}</span>
-        )}
-        {actions && <Actions actions={actions} fixed />}
-      </Typography>
-    );
+  if (name === undefined || value === undefined) {
+    if (headline) {
+      return (
+        <Typography component="div" className={classes.headline}>
+          {label}
+          {description && (
+            <span className={classes.description}>{description}</span>
+          )}
+          {actions && <Actions actions={actions} fixed />}
+        </Typography>
+      );
+    }
+    return <div className={classes.content}>{content}</div>;
+  }
   if (type === 'checkbox') {
     return (
       <FormControl
