@@ -53,9 +53,9 @@ const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
 const MATERIAL_SCHEMA: Schema<MaterialType> = [
   [
     { label: 'Name', name: 'name' },
-    { label: 'Part Number', name: 'partNumber' },
-    { label: 'Vendor', name: 'vendor' },
     { label: 'Quantity', name: 'quantity' },
+    { label: 'Part #', name: 'partNumber' },
+    { label: 'Vendor', name: 'vendor' },
     { name: 'id', type: 'hidden' },
   ],
 ];
@@ -220,7 +220,8 @@ export const ServiceItems: FC<Props> = props => {
       { label: 'Length', name: 'filterLength' },
       { label: 'Thickness', name: 'filterThickness' },
       { label: 'Quantity', name: 'filterQty' },
-
+    ],
+    [
       { label: 'Part #', name: 'filterPartNumber' },
       { label: 'Vendor', name: 'filterVendor' },
     ],
