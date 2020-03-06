@@ -250,7 +250,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
 
   const saveGroupLinks = useCallback(
     async (groupLinks: GroupLink[], groupLinksInitial: GroupLink[]) => {
-      const actions: {
+      const operations: {
         operation: 'Create' | 'Delete';
         entry: UserGroupLink;
       }[] = [];
@@ -263,16 +263,16 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
         const entry = new UserGroupLink();
         if (isInGroupLinksInitial && !isInGroupLinks) {
           entry.setId(isInGroupLinksInitial.id);
-          actions.push({ operation: 'Delete', entry });
+          operations.push({ operation: 'Delete', entry });
         }
         if (!isInGroupLinksInitial && isInGroupLinks) {
           entry.setUserId(userID);
           entry.setGroupId(id);
-          actions.push({ operation: 'Create', entry });
+          operations.push({ operation: 'Create', entry });
         }
       }
       await Promise.all(
-        actions.map(
+        operations.map(
           async ({ operation, entry }) =>
             await UserGroupLinkClientService[operation](entry),
         ),

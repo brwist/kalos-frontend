@@ -5,7 +5,7 @@ import { Props as ButtonProps } from '../Button';
 import { Field, Value, Options, Type, getDefaultValueByType } from '../Field';
 
 export type SchemaProps<T> = {
-  label: string;
+  label?: string;
   name?: keyof T;
   headline?: boolean;
   description?: string;
@@ -18,6 +18,7 @@ export type SchemaProps<T> = {
   actions?: ButtonProps[];
   startAdornment?: string;
   endAdornment?: string;
+  content?: ReactNode;
 };
 
 export type Schema<T> = SchemaProps<T>[][];

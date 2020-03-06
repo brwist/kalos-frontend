@@ -7,9 +7,7 @@ import {
   Validation,
   Schema as PlainFormSchema,
 } from '../PlainForm';
-import { Options as FieldOptions } from '../Field';
-
-export type Type = 'text' | 'password' | 'number' | 'search' | 'checkbox';
+import { Options as FieldOptions, Type } from '../Field';
 
 export type Schema<T> = PlainFormSchema<T>;
 
