@@ -1,72 +1,13 @@
 import React from 'react';
-import { Form, Schema } from './';
+import { Form } from './';
+import {
+  model,
+  Model,
+  SCHEMA_1,
+  SCHEMA_2,
+  SCHEMA_3,
+} from '../PlainForm/examples';
 import { LoremIpsumList } from '../helpers';
-
-const GENDERS = ['Male', 'Female', 'Other'];
-
-type Model = {
-  firstName: string;
-  lastName: string;
-  gender: string;
-  login: string;
-  password: string;
-  note: string;
-  mailing: number;
-};
-
-const model: Model = {
-  firstName: 'John',
-  lastName: 'Doe',
-  gender: GENDERS[0],
-  login: 'test',
-  password: '123456',
-  note: `Lorem ipsum
-dolor sit
-amet`,
-  mailing: 1,
-};
-
-const SCHEMA_1: Schema<Model> = [
-  [{ name: 'firstName', label: 'First Name' }],
-  [{ name: 'lastName', label: 'Last Name' }],
-];
-
-const SCHEMA_2: Schema<Model> = [
-  [
-    {
-      label: 'Personal detail',
-      headline: true,
-      description: 'optional description',
-    },
-  ],
-  [
-    { name: 'firstName', label: 'First Name' },
-    { name: 'lastName', label: 'Last Name' },
-    { name: 'gender', label: 'Gender', options: GENDERS },
-  ],
-  [{ label: 'Login detail', headline: true }],
-  [
-    { name: 'login', label: 'Login', required: true },
-    {
-      name: 'password',
-      label: 'Password',
-      type: 'password',
-      helperText: 'Min 3 characters long',
-      required: true,
-    },
-    { name: 'mailing', label: 'Mailing', type: 'checkbox' },
-  ],
-  [{ label: 'Various', headline: true }],
-  [{ name: 'note', label: 'Note', multiline: true }],
-];
-
-const SCHEMA_3: Schema<Model> = [
-  [
-    { name: 'firstName', label: 'First Name' },
-    { name: 'lastName', label: 'Last Name' },
-    { name: 'mailing', label: 'Mailing', type: 'checkbox' },
-  ],
-];
 
 export default () => (
   <>

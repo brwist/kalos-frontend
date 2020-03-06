@@ -13,6 +13,7 @@ import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
+import PlainForm from './PlainForm/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
 
@@ -27,6 +28,7 @@ const COMPONENTS = {
   InfoTable,
   Link,
   Modal,
+  PlainForm,
   Search,
   SectionBar,
 };
