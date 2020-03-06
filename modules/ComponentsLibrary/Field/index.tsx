@@ -32,6 +32,7 @@ export type Options = (string | Option)[];
 
 type Style = {
   type?: Type;
+  disabled?: boolean;
 };
 
 export interface Props<T> extends SchemaProps<T> {
@@ -57,7 +58,7 @@ const useStyles = makeStyles(theme => ({
   required: {
     color: theme.palette.error.main,
   },
-  headline: {
+  headline: ({ disabled }: Style) => ({
     backgroundColor: theme.palette.grey[200],
     paddingTop: theme.spacing(0.5),
     paddingBottom: theme.spacing(0.5),
@@ -72,7 +73,8 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
+    color: disabled ? theme.palette.grey[500] : theme.palette.common.black,
+  }),
   description: {
     fontWeight: 400,
     marginLeft: theme.spacing(),
@@ -105,7 +107,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   ...props
 }) => {
   const { actions, description } = props;
-  const classes = useStyles({ type });
+  const classes = useStyles({ type, disabled });
   const handleChange = useCallback(
     ({ target: { value } }) => {
       if (onChange) {

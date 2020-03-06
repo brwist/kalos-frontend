@@ -61,6 +61,7 @@ export const SCHEMA_2: Schema<Model> = [
 ];
 
 export const SCHEMA_3: Schema<Model> = [
+  [{ label: 'Personal Details', headline: true }],
   [
     { name: 'firstName', label: 'First Name' },
     { name: 'lastName', label: 'Last Name' },
