@@ -43,6 +43,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   submitLabel = 'Save',
   cancelLabel = 'Cancel',
   error,
+  className = '',
   children,
 }) => {
   const [formData, setFormData] = useState(
@@ -87,7 +88,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     onSave(formData);
   }, [onSave, formData, schema, setValidations]);
   return (
-    <div>
+    <div className={className}>
       <SectionBar
         title={title}
         actions={[

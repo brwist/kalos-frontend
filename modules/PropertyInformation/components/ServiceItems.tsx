@@ -46,56 +46,6 @@ const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Other', value: '10' },
 ];
 
-const SCHEMA: Schema<Entry> = [
-  [
-    { label: 'System Description', name: 'type', required: true },
-    {
-      label: 'System Type',
-      name: 'systemReadingsTypeId',
-      required: true,
-      options: SYSTEM_READINGS_TYPE_OPTIONS,
-    },
-  ],
-  [
-    { label: 'Start Date', name: 'startDate' },
-    { label: 'Item Location', name: 'location' },
-  ],
-  [{ label: '#1', headline: true }],
-  [
-    { label: 'Item', name: 'item' },
-    { label: 'Brand', name: 'brand' },
-    { label: 'Model #', name: 'model' },
-    { label: 'Serial #', name: 'serial' },
-  ],
-  [{ label: '#2', headline: true }],
-  [
-    { label: 'Item', name: 'item2' },
-    { label: 'Brand', name: 'brand2' },
-    { label: 'Model #', name: 'model2' },
-    { label: 'Serial #', name: 'serial2' },
-  ],
-  [{ label: '#3', headline: true }],
-  [
-    { label: 'Item', name: 'item3' },
-    { label: 'Brand', name: 'brand3' },
-    { label: 'Model #', name: 'model3' },
-    { label: 'Serial #', name: 'serial3' },
-  ],
-  [{ label: 'Filter', headline: true }],
-  [
-    { label: 'Width', name: 'filterWidth' },
-    { label: 'Length', name: 'filterLength' },
-    { label: 'Thickness', name: 'filterThickness' },
-    { label: 'Quantity', name: 'filterQty' },
-  ],
-  [
-    { label: 'Part #', name: 'filterPartNumber' },
-    { label: 'Vendor', name: 'filterVendor' },
-  ],
-  [{ label: 'Notes', headline: true }],
-  [{ label: 'Additional Notes', name: 'notes', multiline: true }],
-];
-
 interface Props {
   className?: string;
   userID: number;
@@ -110,15 +60,20 @@ const sort = (a: Entry, b: Entry) => {
 };
 
 const useStyles = makeStyles(theme => ({
-  form: {
+  modal: {
     [theme.breakpoints.up('md')]: {
       display: 'flex',
     },
   },
+  form: {
+    flexGrow: 1,
+  },
   readings: {
     [theme.breakpoints.up('md')]: {
       width: 500,
+      height: '100vh',
       marginLeft: theme.spacing(),
+      overflowY: 'auto',
     },
   },
 }));
@@ -136,6 +91,56 @@ export const ServiceItems: FC<Props> = props => {
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
   const classes = useStyles();
+
+  const SCHEMA: Schema<Entry> = [
+    [
+      { label: 'System Description', name: 'type', required: true },
+      {
+        label: 'System Type',
+        name: 'systemReadingsTypeId',
+        required: true,
+        options: SYSTEM_READINGS_TYPE_OPTIONS,
+      },
+    ],
+    [
+      { label: 'Start Date', name: 'startDate' },
+      { label: 'Item Location', name: 'location' },
+    ],
+    [{ label: '#1', headline: true }],
+    [
+      { label: 'Item', name: 'item' },
+      { label: 'Brand', name: 'brand' },
+      { label: 'Model #', name: 'model' },
+      { label: 'Serial #', name: 'serial' },
+    ],
+    [{ label: '#2', headline: true }],
+    [
+      { label: 'Item', name: 'item2' },
+      { label: 'Brand', name: 'brand2' },
+      { label: 'Model #', name: 'model2' },
+      { label: 'Serial #', name: 'serial2' },
+    ],
+    [{ label: '#3', headline: true }],
+    [
+      { label: 'Item', name: 'item3' },
+      { label: 'Brand', name: 'brand3' },
+      { label: 'Model #', name: 'model3' },
+      { label: 'Serial #', name: 'serial3' },
+    ],
+    [{ label: 'Filter', headline: true }],
+    [
+      { label: 'Width', name: 'filterWidth' },
+      { label: 'Length', name: 'filterLength' },
+      { label: 'Thickness', name: 'filterThickness' },
+      { label: 'Quantity', name: 'filterQty' },
+
+      { label: 'Part #', name: 'filterPartNumber' },
+      { label: 'Vendor', name: 'filterVendor' },
+    ],
+    // [{ label: 'Materials', headline: true }],
+    [{ label: 'Notes', headline: true }],
+    [{ label: 'Additional Notes', name: 'notes', multiline: true }],
+  ];
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -360,8 +365,8 @@ export const ServiceItems: FC<Props> = props => {
         </Modal>
       )}
       {editing && (
-        <Modal open onClose={handleEditing()} compact>
-          <div className={classes.form}>
+        <Modal open onClose={handleEditing()} fullScreen>
+          <div className={classes.modal}>
             <Form<Entry>
               title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
               schema={SCHEMA}
@@ -369,6 +374,7 @@ export const ServiceItems: FC<Props> = props => {
               onSave={handleSave}
               onClose={handleEditing()}
               disabled={saving}
+              className={classes.form}
             />
             {editing.id && (
               <div className={classes.readings}>
