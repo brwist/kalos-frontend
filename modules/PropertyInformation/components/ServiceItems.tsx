@@ -96,6 +96,11 @@ const useStyles = makeStyles(theme => ({
     margin: 0,
     marginBottom: theme.spacing(3),
   },
+  loadingMaterials: {
+    paddingTop: theme.spacing(),
+    paddingBottom: theme.spacing(),
+    marginBottom: theme.spacing(3),
+  },
 }));
 
 export const ServiceItems: FC<Props> = props => {
@@ -103,6 +108,7 @@ export const ServiceItems: FC<Props> = props => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [materials, setMaterials] = useState<MaterialType[]>([]);
   const [materialsIds, setMaterialsIds] = useState<number[]>([]);
+  const [loadingMaterials, setLoadingMaterials] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -142,7 +148,7 @@ export const ServiceItems: FC<Props> = props => {
       (_, idx): Schema<Entry> => [
         [
           {
-            label: `Material #${idx + 1}`,
+            label: `#${idx + 1}`,
             headline: true,
             actions: [
               {
@@ -234,7 +240,21 @@ export const ServiceItems: FC<Props> = props => {
         ],
       },
     ],
-    ...(MATERIALS_SCHEMA.length === 0
+    ...(loadingMaterials
+      ? [
+          [
+            {
+              content: (
+                <InfoTable
+                  className={classes.loadingMaterials}
+                  data={makeFakeRows(4, 1)}
+                  loading
+                />
+              ),
+            },
+          ],
+        ]
+      : MATERIALS_SCHEMA.length === 0
       ? [[{ content: <div className={classes.noMaterials}>No materials</div> }]]
       : MATERIALS_SCHEMA),
     [{ label: 'Notes', headline: true }],
@@ -419,11 +439,13 @@ export const ServiceItems: FC<Props> = props => {
       if (editing && editing.id) {
         const entry = new Material();
         entry.setServiceItemId(editing.id);
+        setLoadingMaterials(true);
         const { resultsList } = (
           await MaterialClientService.BatchGet(entry)
         ).toObject();
         setMaterials(resultsList);
         setMaterialsIds(resultsList.map(({ id }) => id));
+        setLoadingMaterials(false);
       } else {
         setMaterials([]);
         setMaterialsIds([]);

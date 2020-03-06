@@ -35,6 +35,7 @@ interface Props extends Styles {
   columns?: Columns;
   data: Data;
   styles?: CSSProperties;
+  className?: string;
 }
 
 const useStyles = makeStyles(theme => {
@@ -47,7 +48,6 @@ const useStyles = makeStyles(theme => {
   return {
     wrapper: {
       position: 'relative',
-      minHeight: 70,
       marginBottom: theme.spacing(2),
     },
     header: {
@@ -156,13 +156,14 @@ export const InfoTable = ({
   error = false,
   compact = false,
   hoverable = false,
+  className = '',
   styles,
 }: Props) => {
   const classes = useStyles({ loading, error, compact, hoverable });
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('md'));
   return (
-    <div className={classes.wrapper} style={styles}>
+    <div className={className + ' ' + classes.wrapper} style={styles}>
       {columns.length > 0 && (
         <div className={classes.header}>
           {columns.map(({ name, dir, onClick }, idx) => {
