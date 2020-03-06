@@ -22,17 +22,15 @@ const useStyles = makeStyles(theme => ({
     alignItems: 'center',
   },
   paper: ({ maxWidth, fullScreen }: Style) => ({
+    position: 'relative',
     width: fullScreen ? '100%' : 'auto',
     height: fullScreen ? '100%' : 'auto',
     maxWidth,
     minWidth: 300,
     outline: 'none',
-    maxHeight: fullScreen ? '100%' : `calc(100% - ${theme.spacing(4)}px)`,
+    maxHeight: '100%',
     overflowX: 'hidden',
     overflowY: 'auto',
-    [theme.breakpoints.up('md')]: {
-      overflowY: 'hidden',
-    },
   }),
 }));
 

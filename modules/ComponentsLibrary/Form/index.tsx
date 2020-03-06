@@ -1,16 +1,10 @@
-import React, {
-  ReactElement,
-  useCallback,
-  useState,
-  ReactNode,
-  ReactText,
-} from 'react';
+import React, { ReactElement, useCallback, useState, ReactNode } from 'react';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar, Pagination } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
 import { Field, Value } from '../Field';
-import { ExtensionFieldInfo } from 'google-protobuf';
+import { Actions } from '../Actions';
 
 export type Option = {
   label: string;
@@ -19,7 +13,7 @@ export type Option = {
 
 export type Options = (string | Option)[];
 
-export type Type = 'text' | 'password' | 'number' | 'search';
+export type Type = 'text' | 'password' | 'number' | 'search' | 'checkbox';
 
 export type SchemaProps<T> = {
   label: string;
@@ -32,6 +26,7 @@ export type SchemaProps<T> = {
   multiline?: boolean;
   type?: Type;
   onChange?: (value: Value) => void;
+  actions?: ButtonProps[];
 };
 
 export type Schema<T> = SchemaProps<T>[][];
@@ -55,21 +50,8 @@ interface Props<T> {
 }
 
 const useStyles = makeStyles(theme => ({
-  wrapper: {
-    position: 'relative',
-  },
-  sectionBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-  },
   form: {
     padding: theme.spacing(2),
-    paddingTop: 50 + theme.spacing(),
-    maxHeight: 'calc(100vh - 110px)',
-    overflowY: 'auto',
   },
   error: {
     color: theme.palette.error.contrastText,
@@ -101,6 +83,9 @@ const useStyles = makeStyles(theme => ({
     marginBottom: theme.spacing(),
     fontWeight: 600,
     flexGrow: 1,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   group: {
     display: 'flex',
@@ -193,7 +178,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     onSave(formData);
   }, [onSave, formData, schema, setValidations]);
   return (
-    <div className={classes.wrapper}>
+    <div>
       <SectionBar
         title={title}
         actions={[
@@ -215,7 +200,6 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           },
         ]}
         fixedActions
-        className={classes.sectionBar}
         pagination={pagination}
       />
       <div className={classes.form}>
@@ -243,7 +227,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         {schema.map((fields, idx) => (
           <div key={idx} className={classes.group}>
             {fields.map((props, idx2) => {
-              const { name, label, description } = props;
+              const { name, label, description, actions } = props;
               if (name !== undefined)
                 return (
                   <Field
@@ -258,11 +242,16 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   />
                 );
               return (
-                <Typography key={idx2} className={classes.headline}>
+                <Typography
+                  component="div"
+                  key={idx2}
+                  className={classes.headline}
+                >
                   {label}
                   {description && (
                     <span className={classes.description}>{description}</span>
                   )}
+                  {actions && <Actions actions={actions} fixed />}
                 </Typography>
               );
             })}

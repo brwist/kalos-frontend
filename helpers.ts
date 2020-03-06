@@ -5,6 +5,7 @@ const UserClientService = new UserClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
+const GOOGLE_MAPS_KEY = 'AIzaSyBufXfsM3nTanL9XsATgToVf5SgPkbWHkc';
 
 function cfURL(action: string, qs = '') {
   return `${BASE_URL}?action=admin:${action}${qs}`;
@@ -309,6 +310,33 @@ function range(start: number, end: number) {
   return Array.from({ length }, (_, i) => start + i);
 }
 
+/**
+ * Returns geo-coordinates for given address location
+ * @param address
+ * @returns { geolocationLat: number, geolocationLng: number }
+ */
+async function loadGeoLocationByAddress(address: string) {
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${GOOGLE_MAPS_KEY}`,
+    );
+    const data = await response.json();
+    const {
+      results: [
+        {
+          geometry: {
+            location: { lat, lng },
+          },
+        },
+      ],
+    } = data;
+    return {
+      geolocationLat: +lat.toFixed(7),
+      geolocationLng: +lng.toFixed(7),
+    };
+  } catch (e) {}
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -327,4 +355,5 @@ export {
   formatDateTime,
   loadUsersByIds,
   range,
+  loadGeoLocationByAddress,
 };

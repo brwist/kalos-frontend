@@ -9,7 +9,7 @@ import {
   MaintenanceQuestionClient,
   MaintenanceQuestion,
 } from '@kalos-core/kalos-rpc/MaintenanceQuestion';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, API_FAILED_GENERAL_ERROR_MSG } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -249,7 +249,7 @@ interface Props {
 const useStyles = makeStyles(theme => ({
   readingsData: {
     [theme.breakpoints.up('md')]: {
-      maxHeight: 660,
+      maxHeight: 665,
       overflowY: 'auto',
     },
   },
