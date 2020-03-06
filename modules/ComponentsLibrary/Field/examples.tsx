@@ -3,6 +3,7 @@ import { Field, Props, Value, Options } from './';
 
 type Model = {
   firstName: string;
+  amount: string;
 };
 
 const SELECT_OPTIONS_TXT: Options = ['red', 'green', 'blue'];
@@ -29,6 +30,8 @@ const EnhancedField = ({
   | 'options'
   | 'headline'
   | 'actions'
+  | 'startAdornment'
+  | 'endAdornment'
 > & {
   defaultValue?: Value;
 }) => {
@@ -66,6 +69,16 @@ export default () => (
     <EnhancedField label="Search" type="search" />
     <EnhancedField label="Password" type="password" />
     <EnhancedField label="Number" type="number" />
+    <EnhancedField
+      label="With start adornment"
+      startAdornment="$"
+      defaultValue={1432}
+    />
+    <EnhancedField
+      label="With end adornment"
+      endAdornment="USD"
+      defaultValue={1432}
+    />
     <EnhancedField
       label="Multiline"
       multiline
