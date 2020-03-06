@@ -300,6 +300,8 @@ export const PropertyInfo: FC<Props> = props => {
             compact: true,
             onClick: handleCheckLocation,
             disabled: saving,
+            variant: 'outlined',
+            size: 'xsmall',
           },
         ],
       },
