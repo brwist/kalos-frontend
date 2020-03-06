@@ -9,6 +9,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
+import InputAdornment from '@material-ui/core/InputAdornment';
 import { SchemaProps } from '../PlainForm';
 import { Actions } from '../Actions';
 
@@ -82,6 +83,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   value,
   readOnly = false,
   className = '',
+  startAdornment,
+  endAdornment,
   ...props
 }) => {
   const { actions, description } = props;
@@ -194,6 +197,16 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       fullWidth
       InputProps={{
         readOnly,
+        startAdornment: startAdornment ? (
+          <InputAdornment position="start">{startAdornment}</InputAdornment>
+        ) : (
+          undefined
+        ),
+        endAdornment: endAdornment ? (
+          <InputAdornment position="end">{endAdornment}</InputAdornment>
+        ) : (
+          undefined
+        ),
       }}
       InputLabelProps={{
         shrink: true,
