@@ -10,7 +10,6 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import TablePagination from '@material-ui/core/TablePagination';
-import { Props as ButtonProps } from '../Button';
 import { Actions, ActionsProps } from '../Actions';
 
 export type Pagination = {
@@ -37,6 +36,9 @@ interface Props {
 
 const useStyles = makeStyles(theme => ({
   wrapper: ({ collapsable, collapsed }: Styles) => ({
+    position: 'sticky',
+    top: 0,
+    zIndex: 1,
     backgroundColor: theme.palette.grey[300],
     paddingLeft: theme.spacing(),
     paddingRight: theme.spacing(),
@@ -55,7 +57,6 @@ const useStyles = makeStyles(theme => ({
   header: {
     display: 'flex',
     alignItems: 'center',
-    overflow: 'hidden',
     [theme.breakpoints.down('xs')]: {
       flexDirection: 'column',
       alignItems: 'flex-start',
@@ -66,9 +67,6 @@ const useStyles = makeStyles(theme => ({
     alignItems: 'center',
     cursor: collapsable ? 'pointer' : 'default',
     userSelect: 'none',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
     width: '100%',
     [theme.breakpoints.down('xs')]: {
       fontSize: 15,

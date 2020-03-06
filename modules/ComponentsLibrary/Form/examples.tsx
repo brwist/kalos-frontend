@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, Schema } from './';
+import { LoremIpsumList } from '../helpers';
 
 const GENDERS = ['Male', 'Female', 'Other'];
 
@@ -10,6 +11,7 @@ type Model = {
   login: string;
   password: string;
   note: string;
+  mailing: number;
 };
 
 const model: Model = {
@@ -21,6 +23,7 @@ const model: Model = {
   note: `Lorem ipsum
 dolor sit
 amet`,
+  mailing: 1,
 };
 
 const SCHEMA_1: Schema<Model> = [
@@ -44,7 +47,14 @@ const SCHEMA_2: Schema<Model> = [
   [{ label: 'Login detail', headline: true }],
   [
     { name: 'login', label: 'Login', required: true },
-    { name: 'password', label: 'Password', type: 'password', required: true },
+    {
+      name: 'password',
+      label: 'Password',
+      type: 'password',
+      helperText: 'Min 3 characters long',
+      required: true,
+    },
+    { name: 'mailing', label: 'Mailing', type: 'checkbox' },
   ],
   [{ label: 'Various', headline: true }],
   [{ name: 'note', label: 'Note', multiline: true }],
@@ -54,6 +64,7 @@ const SCHEMA_3: Schema<Model> = [
   [
     { name: 'firstName', label: 'First Name' },
     { name: 'lastName', label: 'Last Name' },
+    { name: 'mailing', label: 'Mailing', type: 'checkbox' },
   ],
 ];
 
@@ -65,7 +76,14 @@ export default () => (
       data={model}
       onSave={data => console.log(data)}
       onClose={() => console.log('CANCEL')}
-    />
+      actions={[
+        { label: 'onClick', onClick: () => console.log('LOREM') },
+        { label: 'url', variant: 'outlined', url: '/ipsum' },
+        { label: 'Disabled', variant: 'outlined', disabled: true },
+      ]}
+    >
+      <LoremIpsumList />
+    </Form>
     <hr />
     <Form<Model>
       title="Form"
@@ -73,6 +91,8 @@ export default () => (
       data={model}
       onSave={data => console.log(data)}
       onClose={() => console.log('CANCEL')}
+      submitLabel="Submit"
+      cancelLabel="Close"
     />
     <hr />
     <Form<Model>
@@ -82,6 +102,12 @@ export default () => (
       onSave={data => console.log(data)}
       onClose={() => console.log('CANCEL')}
       disabled
+      pagination={{
+        count: 35,
+        page: 2,
+        rowsPerPage: 6,
+        onChangePage: () => {},
+      }}
     />
   </>
 );

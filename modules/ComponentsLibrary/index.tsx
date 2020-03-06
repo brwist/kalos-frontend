@@ -1,5 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles, useTheme } from '@material-ui/core/styles';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ReactDOM from 'react-dom';
 import customTheme from '../Theme/main';
 import Button from './Button/examples';
@@ -28,57 +31,97 @@ const COMPONENTS = {
   SectionBar,
 };
 
+const useStyles = makeStyles(theme => ({
+  wrapper: {
+    display: 'flex',
+    minHeight: '100vh',
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column',
+    },
+  },
+  menu: {
+    width: 185,
+    padding: theme.spacing(),
+    backgroundColor: theme.palette.grey[100],
+  },
+  list: {
+    marginLeft: theme.spacing(2.5),
+    paddingInlineStart: 0,
+    ...theme.typography.body2,
+    userSelect: 'none',
+  },
+  item: {
+    cursor: 'pointer',
+  },
+  itemText: {
+    padding: theme.spacing(0.5),
+  },
+  content: {
+    padding: theme.spacing(),
+    flexGrow: 1,
+  },
+  select: {
+    margin: theme.spacing(),
+    outline: 'none',
+    background: 'gold',
+    height: 30,
+    ...theme.typography.body1,
+  },
+}));
+
 const ComponentsLibrary = () => {
+  const classes = useStyles();
+  const theme = useTheme();
+  const matches = useMediaQuery(theme.breakpoints.down('md'));
   const [component, setComponent] = useState<keyof typeof COMPONENTS>(
     Object.keys(COMPONENTS)[DEFAULT_COMPONENT_IDX] as keyof typeof COMPONENTS,
   );
   const Component = COMPONENTS[component];
-  const handleClickMenuItem = useCallback(v => () => setComponent(v), []);
-
+  const handleClickMenuItem = useCallback(v => () => setComponent(v), [
+    setComponent,
+  ]);
+  const handleSelect = useCallback(
+    ({ target: { value } }) => setComponent(value),
+    [setComponent],
+  );
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <div
-        style={{
-          display: 'flex',
-          minHeight: '100vh',
-        }}
-      >
-        <div
-          style={{
-            width: 150,
-            padding: 10,
-            backgroundColor: '#eee',
-          }}
-        >
-          <h1
-            style={{
-              fontSize: 20,
-              margin: 0,
-              marginBottom: 10,
-              fontFamily: 'arial',
-              color: '#888',
-              borderBottom: '1px solid #ccc',
-              paddingBottom: 10,
-            }}
+      <div className={classes.wrapper}>
+        {matches ? (
+          <select
+            className={classes.select}
+            value={component}
+            onChange={handleSelect}
           >
-            Components Library
-          </h1>
-          {Object.keys(COMPONENTS).map(key => (
-            <div
-              key={key}
-              style={{
-                marginTop: 15,
-                fontFamily: 'arial',
-                fontWeight: key === component ? 900 : 400,
-                cursor: 'pointer',
-              }}
-              onClick={handleClickMenuItem(key)}
-            >
-              {key}
-            </div>
-          ))}
-        </div>
-        <div style={{ padding: 10, flexGrow: 1 }}>
+            {Object.keys(COMPONENTS).map(key => (
+              <option key={key}>{key}</option>
+            ))}
+          </select>
+        ) : (
+          <div className={classes.menu}>
+            <Typography variant="h6">Components Library</Typography>
+            <ol className={classes.list}>
+              {Object.keys(COMPONENTS).map(key => (
+                <li
+                  key={key}
+                  className={classes.item}
+                  onClick={handleClickMenuItem(key)}
+                >
+                  <div
+                    className={classes.itemText}
+                    style={{
+                      backgroundColor:
+                        key === component ? 'gold' : 'transparent',
+                    }}
+                  >
+                    {key}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+        <div className={classes.content}>
           <Component />
         </div>
       </div>
