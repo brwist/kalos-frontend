@@ -58,8 +58,20 @@ const SCHEMA: Schema<Entry> = [
   [{ label: 'Billing Details', headline: true }],
   [
     { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
-    { label: 'Discount', name: 'discount', required: true, type: 'number' },
-    { label: 'Rebate', name: 'rebate', required: true, type: 'number' },
+    {
+      label: 'Discount',
+      name: 'discount',
+      required: true,
+      type: 'number',
+      endAdornment: '%',
+    },
+    {
+      label: 'Rebate',
+      name: 'rebate',
+      required: true,
+      type: 'number',
+      endAdornment: '%',
+    },
   ],
   [{ label: 'Notes', headline: true }],
   [
