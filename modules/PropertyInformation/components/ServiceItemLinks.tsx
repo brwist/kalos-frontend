@@ -175,7 +175,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
           title={`${kind}s${title}`}
           actions={[
             {
-              label: 'Add Link',
+              label: 'Add',
               onClick: setEditing({} as Entry),
             },
             {
