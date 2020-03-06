@@ -1,13 +1,17 @@
 import React from 'react';
-import { format } from 'date-fns';
+import { DatePicker } from '@material-ui/pickers';
+import { DatePickerView } from '@material-ui/pickers/DatePicker/DatePicker';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Toolbar from '@material-ui/core/Toolbar';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
+import WeekPicker from '../../WeekPicker/main';
 
 type Props = {
   viewBy: string;
   changeViewBy: (value: string) => void;
+  selectedDate: Date;
+  changeSelectedDate: (date: Date) => void;
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -22,8 +26,18 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-const Filter = ({ viewBy, changeViewBy, week, changeDate, thisYearWeeks }: Props) => {
+const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate }: Props) => {
   const classes = useStyles();
+  const getCalendarView = (): DatePickerView => {
+    switch (viewBy) {
+    case 'month':
+      return 'month';
+    case 'year':
+      return 'year';
+    default:
+      return 'date';
+    }
+  };
   return (
     <Toolbar className={classes.bar}>
       <TextField
@@ -38,16 +52,21 @@ const Filter = ({ viewBy, changeViewBy, week, changeDate, thisYearWeeks }: Props
         <MenuItem value="month">Month</MenuItem>
         <MenuItem value="year">Year</MenuItem>
       </TextField>
-      <TextField
-        select
-        className={classes.select}
-        value={week - 1}
-        onChange={e => changeDate(e.target.value)}
-      >
-        {thisYearWeeks.map( (week, index) => (
-          <MenuItem value={index}>{format(week, 'MMMM d, yyyy')}</MenuItem>
-        )}
-      </TextField>
+      {viewBy === 'week' ? (
+        <WeekPicker
+          label="Set a Period"
+          value={selectedDate}
+          onChange={changeSelectedDate}
+        />
+      ) : (
+        <DatePicker
+          views={[getCalendarView()]}
+          label="Set a Period"
+          value={selectedDate}
+          // @ts-ignore
+          onChange={changeSelectedDate}
+        />
+      )}
     </Toolbar>
   );
 };
