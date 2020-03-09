@@ -1,24 +1,18 @@
-import React from "react";
+import React from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
+import { CustomerInformation } from './components/CustomerInformation';
+import { PropertyInfo } from './components/PropertyInfo';
 
-// add any prop types here
-interface props {
+interface Props {
   userID: number;
+  propertyId: number;
+  loggedUserId: number;
 }
 
-// map your state here
-interface state {}
-
-export class CustomerDetails extends React.PureComponent<props, state> {
-  constructor(props: props) {
-    super(props);
-  }
-  render() {
-    return (
-      <ThemeProvider theme={customTheme.lightTheme}>
-        <h1>CustomerDetails!</h1>
-      </ThemeProvider>
-    );
-  }
-}
+export const CustomerDetails = (props: Props) => (
+  <ThemeProvider theme={customTheme.lightTheme}>
+    <CustomerInformation {...props} />
+    <PropertyInfo {...props} />
+  </ThemeProvider>
+);
