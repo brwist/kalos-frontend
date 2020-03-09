@@ -201,6 +201,8 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   );
   const classes = useStyles();
 
+  const groupLinksInitialIds = groupLinksInitial.map(({ groupId }) => groupId);
+
   const load = useCallback(async () => {
     const pendingBilling = new PendingBilling();
     pendingBilling.setUserId(userID);
@@ -410,6 +412,15 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
         value: notes,
       },
       { label: 'Internal Notes', value: intNotes },
+    ],
+    [
+      {
+        label: 'Groups',
+        value: groups
+          .filter(({ id }) => groupLinksInitialIds.includes(id))
+          .map(({ name }) => name)
+          .join(', '),
+      },
     ],
   ];
   const systemData: Data = [
