@@ -8,6 +8,7 @@ import customTheme from '../Theme/main';
 import Button from './Button/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
+import CustomerInformation from './CustomerInformation/examples';
 import Field from './Field/examples';
 import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
@@ -23,6 +24,7 @@ const COMPONENTS = {
   Button,
   Confirm,
   ConfirmDelete,
+  CustomerInformation,
   Field,
   Form,
   InfoTable,

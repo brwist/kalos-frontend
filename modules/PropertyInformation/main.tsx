@@ -1,7 +1,7 @@
 import React from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
-import { CustomerInformation } from './components/CustomerInformation';
+import { CustomerInformation } from '../ComponentsLibrary/CustomerInformation';
 import { PropertyInfo } from './components/PropertyInfo';
 
 interface Props {

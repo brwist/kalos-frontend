@@ -11,12 +11,12 @@ import {
 } from '@kalos-core/kalos-rpc/PendingBilling';
 import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
-import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { Modal } from '../../ComponentsLibrary/Modal';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { Field, Value } from '../../ComponentsLibrary/Field';
+import { InfoTable, Data } from '../InfoTable';
+import { Modal } from '../Modal';
+import { Form, Schema } from '../Form';
+import { SectionBar } from '../SectionBar';
+import { ConfirmDelete } from '../ConfirmDelete';
+import { Field, Value } from '../Field';
 import { getRPCFields, formatDateTime } from '../../../helpers';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -180,10 +180,14 @@ const useStyles = makeStyles(theme => ({
 
 interface Props {
   userID: number;
-  propertyId: number;
+  propertyId?: number;
 }
 
-export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
+export const CustomerInformation: FC<Props> = ({
+  userID,
+  propertyId,
+  children,
+}) => {
   const [customer, setCustomer] = useState<Entry>(new User().toObject());
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
   const [groups, setGroups] = useState<GroupType[]>([]);
@@ -204,14 +208,16 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const groupLinksInitialIds = groupLinksInitial.map(({ groupId }) => groupId);
 
   const load = useCallback(async () => {
-    const pendingBilling = new PendingBilling();
-    pendingBilling.setUserId(userID);
-    pendingBilling.setPropertyId(propertyId);
-    const { totalCount: pendingBillingsTotalCount } = (
-      await PendingBillingClientService.BatchGet(pendingBilling)
-    ).toObject();
-    if (pendingBillingsTotalCount > 0) {
-      setPendingBilling(true);
+    if (propertyId) {
+      const pendingBilling = new PendingBilling();
+      pendingBilling.setUserId(userID);
+      pendingBilling.setPropertyId(propertyId);
+      const { totalCount: pendingBillingsTotalCount } = (
+        await PendingBillingClientService.BatchGet(pendingBilling)
+      ).toObject();
+      if (pendingBillingsTotalCount > 0) {
+        setPendingBilling(true);
+      }
     }
     const group = new Group();
     const { resultsList: groups } = (
@@ -509,6 +515,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           )}
         </div>
       </div>
+      {children}
       <Modal open={editing} onClose={handleToggleEditing}>
         <div className={classes.editForm}>
           <Form<Entry>
