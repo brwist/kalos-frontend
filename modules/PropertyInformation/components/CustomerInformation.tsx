@@ -4,6 +4,7 @@ import {
   UserGroupLinkClient,
   UserGroupLink,
 } from '@kalos-core/kalos-rpc/UserGroupLink';
+import { GroupClient, Group } from '@kalos-core/kalos-rpc/Group';
 import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -16,10 +17,11 @@ import { getRPCFields, formatDateTime } from '../../../helpers';
 
 const UserClientService = new UserClient(ENDPOINT);
 const UserGroupLinkClientService = new UserGroupLinkClient(ENDPOINT);
+const GroupClientService = new GroupClient(ENDPOINT);
 
 type Entry = User.AsObject;
-
 type GroupLink = UserGroupLink.AsObject;
+type GroupType = Group.AsObject;
 
 const SCHEMA: Schema<Entry> = [
   [{ label: 'Personal Details', headline: true }],
@@ -113,20 +115,6 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
   ],
 ];
 
-const GROUPS = [
-  { id: 1, name: 'Residential Service' },
-  { id: 2, name: 'Commercial Service' },
-  { id: 3, name: 'Residential Construction' },
-  { id: 4, name: 'Commercial Construction' },
-  { id: 5, name: 'Commercial Contractor' },
-  { id: 6, name: 'Residential Contractor' },
-  { id: 7, name: 'Vacation Rental Manager' },
-  { id: 8, name: 'HOA Manager' },
-  { id: 9, name: 'Vendor' },
-  { id: 10, name: 'Villages' },
-  { id: 11, name: 'Managed Commercial' },
-];
-
 const useStyles = makeStyles(theme => ({
   wrapper: {
     display: 'flex',
@@ -192,6 +180,7 @@ interface Props {
 
 export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const [customer, setCustomer] = useState<Entry>(new User().toObject());
+  const [groups, setGroups] = useState<GroupType[]>([]);
   const [groupLinks, setGroupLinks] = useState<GroupLink[]>([]);
   const [groupLinksInitial, setGroupLinksInitial] = useState<GroupLink[]>([]);
   const [editing, setEditing] = useState<boolean>(false);
@@ -207,6 +196,11 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const classes = useStyles();
 
   const load = useCallback(async () => {
+    const group = new Group();
+    const { resultsList: groups } = (
+      await GroupClientService.BatchGet(group)
+    ).toObject();
+    setGroups(groups);
     const groupLink = new UserGroupLink();
     groupLink.setUserId(userID);
     const { resultsList: groupLinks } = (
@@ -222,7 +216,14 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     } catch (e) {
       setError(true);
     }
-  }, [userID, setCustomer, setError, setGroupLinks, setGroupLinksInitial]);
+  }, [
+    userID,
+    setCustomer,
+    setError,
+    setGroupLinks,
+    setGroupLinksInitial,
+    setGroups,
+  ]);
 
   const handleToggleEditing = useCallback(() => {
     setEditing(!editing);
@@ -254,8 +255,8 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
         operation: 'Create' | 'Delete';
         entry: UserGroupLink;
       }[] = [];
-      for (let i = 0; i < GROUPS.length; i += 1) {
-        const id = GROUPS[i].id;
+      for (let i = 0; i < groups.length; i += 1) {
+        const id = groups[i].id;
         const isInGroupLinks = groupLinks.find(({ groupId }) => groupId === id);
         const isInGroupLinksInitial = groupLinksInitial.find(
           ({ groupId }) => groupId === id,
@@ -279,7 +280,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
       );
       setGroupLinksInitial(groupLinks);
     },
-    [userID, setGroupLinksInitial],
+    [userID, setGroupLinksInitial, groups],
   );
 
   const handleSave = useCallback(
@@ -492,7 +493,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           <div className={classes.groups}>
             <SectionBar title="Mailing lists" />
             <div className={classes.groupLinks}>
-              {GROUPS.map(({ id, name }) => (
+              {groups.map(({ id, name }) => (
                 <Field
                   key={id}
                   label={name}
