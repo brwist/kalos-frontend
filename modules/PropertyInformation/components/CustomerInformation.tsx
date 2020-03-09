@@ -5,6 +5,10 @@ import {
   UserGroupLink,
 } from '@kalos-core/kalos-rpc/UserGroupLink';
 import { GroupClient, Group } from '@kalos-core/kalos-rpc/Group';
+import {
+  PendingBillingClient,
+  PendingBilling,
+} from '@kalos-core/kalos-rpc/PendingBilling';
 import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -18,10 +22,12 @@ import { getRPCFields, formatDateTime } from '../../../helpers';
 const UserClientService = new UserClient(ENDPOINT);
 const UserGroupLinkClientService = new UserGroupLinkClient(ENDPOINT);
 const GroupClientService = new GroupClient(ENDPOINT);
+const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
 
 type Entry = User.AsObject;
 type GroupLink = UserGroupLink.AsObject;
 type GroupType = Group.AsObject;
+type PendingBillingType = PendingBilling.AsObject;
 
 const SCHEMA: Schema<Entry> = [
   [{ label: 'Personal Details', headline: true }],
@@ -180,6 +186,7 @@ interface Props {
 
 export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const [customer, setCustomer] = useState<Entry>(new User().toObject());
+  const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
   const [groups, setGroups] = useState<GroupType[]>([]);
   const [groupLinks, setGroupLinks] = useState<GroupLink[]>([]);
   const [groupLinksInitial, setGroupLinksInitial] = useState<GroupLink[]>([]);
@@ -196,6 +203,15 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   const classes = useStyles();
 
   const load = useCallback(async () => {
+    const pendingBilling = new PendingBilling();
+    pendingBilling.setUserId(userID);
+    pendingBilling.setPropertyId(propertyId);
+    const { totalCount: pendingBillingsTotalCount } = (
+      await PendingBillingClientService.BatchGet(pendingBilling)
+    ).toObject();
+    if (pendingBillingsTotalCount > 0) {
+      setPendingBilling(true);
+    }
     const group = new Group();
     const { resultsList: groups } = (
       await GroupClientService.BatchGet(group)
@@ -218,6 +234,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     }
   }, [
     userID,
+    propertyId,
     setCustomer,
     setError,
     setGroupLinks,
@@ -464,20 +481,22 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           <SectionBar title="System Information">
             <InfoTable data={systemData} loading={id === 0} error={error} />
           </SectionBar>
-          <SectionBar
-            title="Pending Billing"
-            className={classes.pendingBilling}
-            actions={[
-              {
-                label: 'View',
-                url: [
-                  '/index.cfm?action=admin:properties.customerpendingbilling',
-                  `user_id=${userID}`,
-                  `property_id=${propertyId}`,
-                ].join('&'),
-              },
-            ]}
-          />
+          {isPendingBilling && (
+            <SectionBar
+              title="Pending Billing"
+              className={classes.pendingBilling}
+              actions={[
+                {
+                  label: 'View',
+                  url: [
+                    '/index.cfm?action=admin:properties.customerpendingbilling',
+                    `user_id=${userID}`,
+                    `property_id=${propertyId}`,
+                  ].join('&'),
+                },
+              ]}
+            />
+          )}
         </div>
       </div>
       <Modal open={editing} onClose={handleToggleEditing}>
