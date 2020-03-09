@@ -520,7 +520,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
             disabled={saving}
           />
           <div className={classes.groups}>
-            <SectionBar title="Mailing lists" />
+            <SectionBar title="Groups" />
             <div className={classes.groupLinks}>
               {groups.map(({ id, name }) => (
                 <Field
