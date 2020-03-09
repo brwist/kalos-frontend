@@ -27,7 +27,6 @@ const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
 type Entry = User.AsObject;
 type GroupLink = UserGroupLink.AsObject;
 type GroupType = Group.AsObject;
-type PendingBillingType = PendingBilling.AsObject;
 
 const SCHEMA: Schema<Entry> = [
   [{ label: 'Personal Details', headline: true }],
