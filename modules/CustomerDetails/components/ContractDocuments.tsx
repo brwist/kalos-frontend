@@ -16,7 +16,7 @@ type Entry = Document.AsObject;
 interface Props {
   className?: string;
   userID: number;
-  propertyId: number;
+  contractId: number;
 }
 
 interface State {
@@ -28,7 +28,7 @@ interface State {
   page: number;
 }
 
-export class PropertyDocuments extends PureComponent<Props, State> {
+export class ContractDocuments extends PureComponent<Props, State> {
   DocumentClient: DocumentClient;
 
   constructor(props: Props) {
@@ -46,10 +46,10 @@ export class PropertyDocuments extends PureComponent<Props, State> {
 
   load = async () => {
     this.setState({ loading: true });
-    const { userID, propertyId } = this.props;
+    const { userID, contractId } = this.props;
     const entry = new Document();
     entry.setUserId(userID);
-    entry.setPropertyId(propertyId);
+    entry.setContractId(contractId);
     try {
       const response = await this.DocumentClient.BatchGet(entry);
       const { resultsList: entries, totalCount: count } = response.toObject();
@@ -112,7 +112,7 @@ export class PropertyDocuments extends PureComponent<Props, State> {
       handleSetDeleting,
       handleDelete,
     } = this;
-    const { className, userID, propertyId } = props;
+    const { className, userID, contractId } = props;
     const { entries, loading, error, count, page, deleting } = state;
     const data: Data = loading
       ? makeFakeRows()
@@ -132,11 +132,10 @@ export class PropertyDocuments extends PureComponent<Props, State> {
                   size="small"
                   onClick={() => {
                     document.location.href = [
-                      '/index.cfm?action=admin:properties.docemail',
+                      '/index.cfm?action=admin:contracts.docemail',
                       `user_id=${userID}`,
-                      `document_id=${id}`,
-                      `property_id=${propertyId}`,
-                      `p=2`,
+                      `document_id=${contractId}`,
+                      'p=1',
                     ].join('&');
                   }}
                 >
@@ -162,9 +161,10 @@ export class PropertyDocuments extends PureComponent<Props, State> {
             {
               label: 'Add',
               url: [
-                '/index.cfm?action=admin:properties.docaddS3',
+                '/index.cfm?action=admin:contracts.docaddS3',
                 `user_id=${userID}`,
-                `property_id=${propertyId}`,
+                `contract_id=${contractId}`,
+                'p=1',
               ].join('&'),
             },
           ]}

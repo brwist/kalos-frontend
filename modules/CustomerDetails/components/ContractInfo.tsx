@@ -9,6 +9,7 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Field, Value } from '../../ComponentsLibrary/Field';
 import { getRPCFields, formatDate } from '../../../helpers';
+import { ContractDocuments } from './ContractDocuments';
 
 const ContractClientService = new ContractClient(ENDPOINT);
 
@@ -105,7 +106,7 @@ const useStyles = makeStyles(theme => ({
       alignItems: 'flex-start',
     },
   },
-  customerInformation: {
+  panel: {
     flexGrow: 1,
   },
   asidePanel: {
@@ -119,45 +120,14 @@ const useStyles = makeStyles(theme => ({
       marginLeft: theme.spacing(2),
     },
   },
-  pendingBilling: {
-    marginBottom: theme.spacing(),
-  },
-  editForm: {
-    display: 'flex',
-    [theme.breakpoints.down('sm')]: {
-      flexDirection: 'column',
-    },
-  },
-  groups: {
-    [theme.breakpoints.up('md')]: {
-      width: 250,
-      marginLeft: theme.spacing(1),
-    },
-  },
-  groupLinks: {
-    paddingTop: theme.spacing(),
-    paddingBottom: theme.spacing(),
-    paddingLeft: theme.spacing(2),
-  },
-  group: {
-    marginBottom: 0,
-    [theme.breakpoints.down('sm')]: {
-      display: 'inline-block',
-      width: 'calc(100% / 3)',
-      marginBottom: theme.spacing(),
-    },
-    [theme.breakpoints.down('xs')]: {
-      width: '100%',
-      marginBottom: 0,
-    },
-  },
 }));
 
 interface Props {
   userID: number;
 }
 
-export const ContractInfo: FC<Props> = ({ userID }) => {
+export const ContractInfo: FC<Props> = props => {
+  const { userID, children } = props;
   const [entry, setEntry] = useState<Entry>(new Contract().toObject());
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -174,12 +144,10 @@ export const ContractInfo: FC<Props> = ({ userID }) => {
     entry.setUserId(userID);
     try {
       const customer = await ContractClientService.Get(entry);
-      console.log({ customer });
       setEntry(customer);
       setLoaded(true);
       setLoading(false);
     } catch (e) {
-      console.log({ e });
       setError(true);
       setLoading(false);
     }
@@ -269,7 +237,7 @@ export const ContractInfo: FC<Props> = ({ userID }) => {
   return (
     <>
       <div className={classes.wrapper}>
-        <div className={classes.customerInformation}>
+        <div className={classes.panel}>
           <SectionBar
             title="Contract Info"
             actions={[
@@ -304,10 +272,13 @@ export const ContractInfo: FC<Props> = ({ userID }) => {
           >
             <InfoTable data={data} loading={loading} error={error} />
           </SectionBar>
+          {children}
         </div>
-        {/* <div className={classes.asidePanel}>
-            
-        </div> */}
+        <div className={classes.asidePanel}>
+          {entry.id > 0 && (
+            <ContractDocuments contractId={entry.id} {...props} />
+          )}
+        </div>
       </div>
       <Modal open={editing} onClose={handleToggleEditing}>
         <Form<Entry>
