@@ -6,9 +6,7 @@ import Button from '@material-ui/core/Button';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import CallCard from './CallCard';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
-import { ENDPOINT } from '../../../constants';
-import { useFetchAll } from '../hooks';
+import { Event } from '@kalos-core/kalos-rpc/Event/index';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -25,28 +23,34 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 
-const eventClient = new EventClient(ENDPOINT);
 
 type Props = {
   date: string;
+  data: Event.AsObject[];
+  filters: Filters;
 };
 
-const Column = ({ date }: Props) => {
+const Column = ({ date, data = [], filters }: Props) => {
   const classes = useStyles();
   const [showCompleted, setShowCompleted] = useState(false);
 
-  const fetchCalls = useCallback( async (page) => {
-    const reqObj = new Event();
-    reqObj.setDateStarted(`${date} 00:00:00%`);
-    reqObj.setPageNumber(page);
-    return (await eventClient.BatchGet(reqObj)).toObject();
-  }, []);
-
-  const { data } = useFetchAll(fetchCalls);
-
-  const completedCalls = data.filter(call => call.logJobStatus === 'Completed');
-  const calls = data.filter(call => call.logJobStatus !== 'Completed' && call.color !== 'ffbfbf');
-  const reminders = data.filter(call => call.color === 'ffbfbf');
+  const {completedCalls, calls, reminders} = data.reduce((acc, call) => {
+    if (filters.customers.length) {
+      if (!filters.customers.includes(call?.customer?.id)) {
+        return acc;
+      }
+    }
+    if (call.logJobStatus === 'Completed') {
+      acc.completedCalls.push(call);
+    }
+    if (call.logJobStatus !== 'Completed' && call.color !== 'ffbfbf') {
+      acc.calls.push(call);
+    }
+    if (call.color === 'ffbfbf') {
+      acc.reminders.push(call);
+    }
+    return acc;
+  }, { completedCalls: [], calls: [], reminders: []});
 
   return (
     <div>
