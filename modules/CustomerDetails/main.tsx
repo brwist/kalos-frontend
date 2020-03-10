@@ -2,7 +2,8 @@ import React from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 import { CustomerInformation } from '../ComponentsLibrary/CustomerInformation';
-import { PropertyInfo } from './components/PropertyInfo';
+import { Properties } from './components/Properties';
+import { ContractInfo } from './components/ContractInfo';
 
 interface Props {
   userID: number;
@@ -10,9 +11,10 @@ interface Props {
   loggedUserId: number;
 }
 
-export const PropertyInformation = (props: Props) => (
+export const CustomerDetails = (props: Props) => (
   <ThemeProvider theme={customTheme.lightTheme}>
     <CustomerInformation {...props} />
-    <PropertyInfo {...props} />
+    <ContractInfo {...props} />
+    <Properties {...props} />
   </ThemeProvider>
 );

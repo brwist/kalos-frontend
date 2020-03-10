@@ -1,5 +1,6 @@
 import React, { ReactElement, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -8,32 +9,88 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
-import { SchemaProps, Option, Type } from '../Form';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import { SchemaProps } from '../PlainForm';
+import { Actions } from '../Actions';
+
+export type Type =
+  | 'text'
+  | 'password'
+  | 'number'
+  | 'search'
+  | 'checkbox'
+  | 'hidden';
 
 export type Value = string | number;
 
-export interface Props<T> extends SchemaProps<T> {
-  value: T[keyof T];
+export type Option = {
+  label: string;
+  value: string | number;
+};
+
+export type Options = (string | Option)[];
+
+type Style = {
+  type?: Type;
   disabled?: boolean;
-  onChange: (value: Value) => void;
+};
+
+export interface Props<T> extends SchemaProps<T> {
+  value?: T[keyof T];
+  disabled?: boolean;
+  onChange?: (value: Value) => void;
   validation?: string;
   readOnly?: boolean;
   className?: string;
 }
 
+export const getDefaultValueByType = (type: Type) => {
+  if (type === 'number') return 0;
+  return '';
+};
+
 const useStyles = makeStyles(theme => ({
-  field: {
+  field: ({ type }: Style) => ({
     marginTop: 0,
     marginBottom: theme.spacing(2),
-  },
+    ...(type === 'hidden' ? { display: 'none' } : {}),
+  }),
   required: {
     color: theme.palette.error.main,
+  },
+  headline: ({ disabled }: Style) => ({
+    backgroundColor: theme.palette.grey[200],
+    paddingTop: theme.spacing(0.5),
+    paddingBottom: theme.spacing(0.5),
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
+    marginTop: theme.spacing(-1),
+    marginLeft: theme.spacing(-2),
+    marginRight: theme.spacing(-2),
+    marginBottom: theme.spacing(),
+    fontWeight: 600,
+    flexGrow: 1,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    color: disabled ? theme.palette.grey[500] : theme.palette.common.black,
+  }),
+  description: {
+    fontWeight: 400,
+    marginLeft: theme.spacing(),
+    fontSize: 12,
+    color: theme.palette.grey[600],
+  },
+  content: {
+    flexGrow: 1,
+    margin: theme.spacing(-2),
   },
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   name,
   label,
+  headline,
   options,
   onChange,
   disabled = false,
@@ -44,20 +101,37 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   value,
   readOnly = false,
   className = '',
+  startAdornment,
+  endAdornment,
+  content,
   ...props
 }) => {
-  const classes = useStyles();
+  const { actions, description } = props;
+  const classes = useStyles({ type, disabled });
   const handleChange = useCallback(
-    ({ target: { value } }) => onChange(type === 'number' ? +value : value),
+    ({ target: { value } }) => {
+      if (onChange) {
+        onChange(type === 'number' ? +value : value);
+      }
+    },
     [type, onChange],
   );
-  const handleChangeCheckbox = useCallback((_, value) => onChange(+value), [
-    onChange,
-  ]);
+  const handleChangeCheckbox = useCallback(
+    (_, value) => {
+      if (onChange) {
+        onChange(+value);
+      }
+    },
+    [onChange],
+  );
   const inputLabel = (
     <>
       {label}
-      {required ? <span className={classes.required}> *</span> : ''}
+      {required && !readOnly ? (
+        <span className={classes.required}> *</span>
+      ) : (
+        ''
+      )}
     </>
   );
   const error = validation !== '';
@@ -65,6 +139,20 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     validation !== '' || helperText !== ''
       ? validation + ' ' + helperText
       : undefined;
+  if (name === undefined || value === undefined) {
+    if (headline) {
+      return (
+        <Typography component="div" className={classes.headline}>
+          {label}
+          {description && (
+            <span className={classes.description}>{description}</span>
+          )}
+          {actions && <Actions actions={actions} fixed />}
+        </Typography>
+      );
+    }
+    return <div className={classes.content}>{content}</div>;
+  }
   if (type === 'checkbox') {
     return (
       <FormControl
@@ -132,11 +220,20 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       fullWidth
       InputProps={{
         readOnly,
+        startAdornment: startAdornment ? (
+          <InputAdornment position="start">{startAdornment}</InputAdornment>
+        ) : (
+          undefined
+        ),
+        endAdornment: endAdornment ? (
+          <InputAdornment position="end">{endAdornment}</InputAdornment>
+        ) : (
+          undefined
+        ),
       }}
       InputLabelProps={{
         shrink: true,
       }}
-      rowsMax={4}
       error={error}
       {...props}
       type={type}

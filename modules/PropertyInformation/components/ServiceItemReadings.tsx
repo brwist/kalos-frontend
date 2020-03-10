@@ -1,5 +1,4 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -9,7 +8,7 @@ import {
   MaintenanceQuestionClient,
   MaintenanceQuestion,
 } from '@kalos-core/kalos-rpc/MaintenanceQuestion';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, API_FAILED_GENERAL_ERROR_MSG } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -246,15 +245,6 @@ interface Props {
   loggedUserId: number;
 }
 
-const useStyles = makeStyles(theme => ({
-  readingsData: {
-    [theme.breakpoints.up('md')]: {
-      maxHeight: 660,
-      overflowY: 'auto',
-    },
-  },
-}));
-
 export const ServiceItemReadings: FC<Props> = ({
   serviceItemId,
   loggedUserId,
@@ -273,7 +263,6 @@ export const ServiceItemReadings: FC<Props> = ({
   const [maintenanceQuestions, setMaintenanceQuestions] = useState<{
     [key: number]: MaintenanceEntry;
   }>({});
-  const classes = useStyles();
 
   const loadMaintenanceQuestions = async (readingIds: number[]) => {
     const maintenanceQuestions = await Promise.all(
@@ -523,9 +512,7 @@ export const ServiceItemReadings: FC<Props> = ({
             ]}
             fixedActions
           />
-          <div className={classes.readingsData}>
-            <InfoTable data={data} loading={loading} hoverable />
-          </div>
+          <InfoTable data={data} loading={loading} hoverable />
         </>
       )}
       {deletingEntry && (
