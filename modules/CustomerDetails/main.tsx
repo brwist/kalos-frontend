@@ -7,14 +7,14 @@ import { ContractInfo } from './components/ContractInfo';
 
 interface Props {
   userID: number;
-  propertyId: number;
   loggedUserId: number;
 }
 
 export const CustomerDetails = (props: Props) => (
   <ThemeProvider theme={customTheme.lightTheme}>
     <CustomerInformation {...props} />
-    <ContractInfo {...props} />
-    <Properties {...props} />
+    <ContractInfo {...props}>
+      <Properties {...props} />
+    </ContractInfo>
   </ThemeProvider>
 );
