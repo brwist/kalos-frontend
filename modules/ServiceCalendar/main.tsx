@@ -169,14 +169,12 @@ const ServiceCalendar = ({ userId }: Props) => {
   const { data:employees, isLoading:employeesLoading } = useFetchAll(fetchEmployees);
   const fetchCalls = useCallback( async (page) => {
     const event = new Event();
-    event.setDateStarted(`${format(today, 'yyyy-MM-dd')} 00:00:00%`);
-    // event.setDateRangeList(['>', shownDates[0], '<', shownDates[shownDates.length - 1]]);
-    // event.setDateRangeList['>', '2020-02-02', '<', '2020-20-22'];
+    event.setDateRangeList(['>=', shownDates[0], '<=', shownDates[shownDates.length - 1]]);
     event.setPageNumber(page);
     return (await eventClient.BatchGet(event)).toObject();
   }, [shownDates]);
 
-  const { data:calls } = useFetchAll(fetchCalls);
+  const { data:calls } = useFetchAll(fetchCalls, shownDates);
 
   // console.log(calls);
   const { callsByDate, customersList } = calls.reduce((acc, call) => {
