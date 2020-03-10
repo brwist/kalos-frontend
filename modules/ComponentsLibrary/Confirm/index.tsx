@@ -30,8 +30,8 @@ export const Confirm: FC<Props> = ({
       <SectionBar
         title={title}
         actions={[
-          { label: 'Cancel', onClick: onClose, variant: 'outlined' },
           { label: 'Confirm', onClick: onConfirm },
+          { label: 'Cancel', onClick: onClose, variant: 'outlined' },
         ]}
         fixedActions
       />

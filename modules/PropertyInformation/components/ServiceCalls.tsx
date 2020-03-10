@@ -272,7 +272,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
           title="Service Calls"
           actions={[
             {
-              label: 'New Service Call',
+              label: 'Add',
               url: [
                 '/index.cfm?action=admin:service.addserviceCall',
                 `user_id=${userID}`,

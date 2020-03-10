@@ -15,11 +15,13 @@ import {
   MaintenanceQuestionClient,
   MaintenanceQuestion,
 } from '@kalos-core/kalos-rpc/MaintenanceQuestion';
+import { MaterialClient, Material } from '@kalos-core/kalos-rpc/Material';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
+import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from './ServiceItemLinks';
@@ -30,8 +32,10 @@ const ReadingClientService = new ReadingClient(ENDPOINT);
 const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
   ENDPOINT,
 );
+const MaterialClientService = new MaterialClient(ENDPOINT);
 
 type Entry = ServiceItem.AsObject;
+type MaterialType = Material.AsObject;
 
 const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Straight-cool AC w/ heatstrips', value: '1' },
@@ -46,54 +50,14 @@ const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Other', value: '10' },
 ];
 
-const SCHEMA: Schema<Entry> = [
+const MATERIAL_SCHEMA: Schema<MaterialType> = [
   [
-    { label: 'System Description', name: 'type', required: true },
-    {
-      label: 'System Type',
-      name: 'systemReadingsTypeId',
-      required: true,
-      options: SYSTEM_READINGS_TYPE_OPTIONS,
-    },
+    { label: 'Name', name: 'name' },
+    { label: 'Quantity', name: 'quantity' },
+    { label: 'Part #', name: 'partNumber' },
+    { label: 'Vendor', name: 'vendor' },
+    { name: 'id', type: 'hidden' },
   ],
-  [
-    { label: 'Start Date', name: 'startDate' },
-    { label: 'Item Location', name: 'location' },
-  ],
-  [{ label: '#1', headline: true }],
-  [
-    { label: 'Item', name: 'item' },
-    { label: 'Brand', name: 'brand' },
-    { label: 'Model #', name: 'model' },
-    { label: 'Serial #', name: 'serial' },
-  ],
-  [{ label: '#2', headline: true }],
-  [
-    { label: 'Item', name: 'item2' },
-    { label: 'Brand', name: 'brand2' },
-    { label: 'Model #', name: 'model2' },
-    { label: 'Serial #', name: 'serial2' },
-  ],
-  [{ label: '#3', headline: true }],
-  [
-    { label: 'Item', name: 'item3' },
-    { label: 'Brand', name: 'brand3' },
-    { label: 'Model #', name: 'model3' },
-    { label: 'Serial #', name: 'serial3' },
-  ],
-  [{ label: 'Filter', headline: true }],
-  [
-    { label: 'Width', name: 'filterWidth' },
-    { label: 'Length', name: 'filterLength' },
-    { label: 'Thickness', name: 'filterThickness' },
-    { label: 'Quantity', name: 'filterQty' },
-  ],
-  [
-    { label: 'Part #', name: 'filterPartNumber' },
-    { label: 'Vendor', name: 'filterVendor' },
-  ],
-  [{ label: 'Notes', headline: true }],
-  [{ label: 'Additional Notes', name: 'notes', multiline: true }],
 ];
 
 interface Props {
@@ -110,22 +74,41 @@ const sort = (a: Entry, b: Entry) => {
 };
 
 const useStyles = makeStyles(theme => ({
-  form: {
+  modal: {
     [theme.breakpoints.up('md')]: {
       display: 'flex',
     },
   },
+  form: {
+    flexGrow: 1,
+  },
   readings: {
     [theme.breakpoints.up('md')]: {
       width: 500,
+      height: '100vh',
       marginLeft: theme.spacing(),
+      overflowY: 'auto',
     },
+  },
+  noMaterials: {
+    ...theme.typography.body1,
+    padding: theme.spacing(2),
+    margin: 0,
+    marginBottom: theme.spacing(3),
+  },
+  loadingMaterials: {
+    paddingTop: theme.spacing(),
+    paddingBottom: theme.spacing(),
+    marginBottom: theme.spacing(3),
   },
 }));
 
 export const ServiceItems: FC<Props> = props => {
   const { propertyId, className } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [materials, setMaterials] = useState<MaterialType[]>([]);
+  const [materialsIds, setMaterialsIds] = useState<number[]>([]);
+  const [loadingMaterials, setLoadingMaterials] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -136,6 +119,148 @@ export const ServiceItems: FC<Props> = props => {
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
   const classes = useStyles();
+
+  const handleMaterialChange = useCallback(
+    (idx: number) => (data: MaterialType) => {
+      const newMaterials = [...materials];
+      newMaterials[idx] = data;
+      setMaterials(newMaterials);
+    },
+    [materials, setMaterials],
+  );
+
+  const handleAddMaterial = useCallback(() => {
+    const newMaterial = new Material();
+    newMaterial.setId(Date.now());
+    const newMaterials = [...materials, newMaterial.toObject()];
+    setMaterials(newMaterials);
+  }, [materials, setMaterials]);
+
+  const handleRemoveMaterial = useCallback(
+    (idx: number) => () => {
+      setMaterials(materials.filter((_, idy) => idx !== idy));
+    },
+    [materials, setMaterials],
+  );
+
+  const MATERIALS_SCHEMA = materials
+    .map(
+      (_, idx): Schema<Entry> => [
+        [
+          {
+            label: `#${idx + 1}`,
+            headline: true,
+            actions: [
+              {
+                label: 'Remove',
+                variant: 'outlined',
+                onClick: handleRemoveMaterial(idx),
+                compact: true,
+                size: 'xsmall',
+                disabled: saving,
+              },
+            ],
+          },
+        ],
+        [
+          {
+            content: (
+              <PlainForm<MaterialType>
+                key={materials[idx].id}
+                schema={MATERIAL_SCHEMA}
+                data={materials[idx]}
+                onChange={handleMaterialChange(idx)}
+                disabled={saving}
+              />
+            ),
+          },
+        ],
+      ],
+    )
+    .reduce((aggr, item) => [...aggr, ...item], []);
+
+  const SCHEMA: Schema<Entry> = [
+    [
+      { label: 'System Description', name: 'type', required: true },
+      {
+        label: 'System Type',
+        name: 'systemReadingsTypeId',
+        required: true,
+        options: SYSTEM_READINGS_TYPE_OPTIONS,
+      },
+    ],
+    [
+      { label: 'Start Date', name: 'startDate' },
+      { label: 'Item Location', name: 'location' },
+    ],
+    [{ label: '#1', headline: true }],
+    [
+      { label: 'Item', name: 'item' },
+      { label: 'Brand', name: 'brand' },
+      { label: 'Model #', name: 'model' },
+      { label: 'Serial #', name: 'serial' },
+    ],
+    [{ label: '#2', headline: true }],
+    [
+      { label: 'Item', name: 'item2' },
+      { label: 'Brand', name: 'brand2' },
+      { label: 'Model #', name: 'model2' },
+      { label: 'Serial #', name: 'serial2' },
+    ],
+    [{ label: '#3', headline: true }],
+    [
+      { label: 'Item', name: 'item3' },
+      { label: 'Brand', name: 'brand3' },
+      { label: 'Model #', name: 'model3' },
+      { label: 'Serial #', name: 'serial3' },
+    ],
+    [{ label: 'Filter', headline: true }],
+    [
+      { label: 'Width', name: 'filterWidth' },
+      { label: 'Length', name: 'filterLength' },
+      { label: 'Thickness', name: 'filterThickness' },
+      { label: 'Quantity', name: 'filterQty' },
+    ],
+    [
+      { label: 'Part #', name: 'filterPartNumber' },
+      { label: 'Vendor', name: 'filterVendor' },
+    ],
+    [
+      {
+        label: 'Materials',
+        headline: true,
+        actions: [
+          {
+            label: 'Add',
+            size: 'xsmall',
+            variant: 'outlined',
+            compact: true,
+            onClick: handleAddMaterial,
+            disabled: saving,
+          },
+        ],
+      },
+    ],
+    ...(loadingMaterials
+      ? [
+          [
+            {
+              content: (
+                <InfoTable
+                  className={classes.loadingMaterials}
+                  data={makeFakeRows(4, 1)}
+                  loading
+                />
+              ),
+            },
+          ],
+        ]
+      : MATERIALS_SCHEMA.length === 0
+      ? [[{ content: <div className={classes.noMaterials}>No materials</div> }]]
+      : MATERIALS_SCHEMA),
+    [{ label: 'Notes', headline: true }],
+    [{ label: 'Additional Notes', name: 'notes', multiline: true }],
+  ];
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -160,6 +285,54 @@ export const ServiceItems: FC<Props> = props => {
       load();
     }
   }, [loaded, load]);
+
+  const handleMaterials = async (
+    materials: MaterialType[],
+    materialsIds: number[],
+    serviceItemId: number,
+  ) => {
+    const formFields = MATERIAL_SCHEMA[0].map(({ name }) => name as string);
+    const ids = materials.map(({ id }) => id);
+    await Promise.all(
+      materialsIds
+        .filter(id => !ids.includes(id))
+        .map(async id => {
+          const entry = new Material();
+          entry.setId(id);
+          return await MaterialClientService.Delete(entry);
+        }),
+    );
+    const operations: {
+      operation: 'Create' | 'Update';
+      entry: Material;
+    }[] = [];
+    for (let i = 0; i < materials.length; i += 1) {
+      const entry = new Material();
+      entry.setServiceItemId(serviceItemId);
+      const fieldMaskList = ['ServiceItemId'];
+      for (const fieldName in materials[i]) {
+        if (!fieldName || fieldName === 'id' || !formFields.includes(fieldName))
+          continue;
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        entry[methodName](materials[i][fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      entry.setFieldMaskList(fieldMaskList);
+      if (materialsIds.includes(materials[i].id)) {
+        entry.setId(materials[i].id);
+        operations.push({ operation: 'Update', entry });
+      } else {
+        operations.push({ operation: 'Create', entry });
+      }
+    }
+    await Promise.all(
+      operations.map(
+        async ({ operation, entry }) =>
+          await MaterialClientService[operation](entry),
+      ),
+    );
+  };
 
   const handleSave = useCallback(
     async (data: Entry) => {
@@ -186,13 +359,16 @@ export const ServiceItems: FC<Props> = props => {
           fieldMaskList.push(upperCaseProp);
         }
         entry.setFieldMaskList(fieldMaskList);
-        await ServiceItemClientService[isNew ? 'Create' : 'Update'](entry);
+        const { id } = await ServiceItemClientService[
+          isNew ? 'Create' : 'Update'
+        ](entry);
+        await handleMaterials(materials, materialsIds, id);
         setSaving(false);
         setEditing(undefined);
         await load();
       }
     },
-    [editing, setSaving, entries, setEditing, load],
+    [editing, setSaving, entries, setEditing, load, materials, materialsIds],
   );
 
   const handleDelete = useCallback(async () => {
@@ -259,8 +435,24 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleEditing = useCallback(
-    (editing?: Entry) => () => setEditing(editing),
-    [setEditing],
+    (editing?: Entry) => async () => {
+      setEditing(editing);
+      if (editing && editing.id) {
+        const entry = new Material();
+        entry.setServiceItemId(editing.id);
+        setLoadingMaterials(true);
+        const { resultsList } = (
+          await MaterialClientService.BatchGet(entry)
+        ).toObject();
+        setMaterials(resultsList);
+        setMaterialsIds(resultsList.map(({ id }) => id));
+        setLoadingMaterials(false);
+      } else {
+        setMaterials([]);
+        setMaterialsIds([]);
+      }
+    },
+    [setEditing, setMaterials],
   );
 
   const setDeleting = useCallback(
@@ -330,7 +522,7 @@ export const ServiceItems: FC<Props> = props => {
         title="Service Items"
         actions={[
           {
-            label: 'Add Service Item',
+            label: 'Add',
             onClick: handleEditing({} as Entry),
           },
         ]}
@@ -360,8 +552,8 @@ export const ServiceItems: FC<Props> = props => {
         </Modal>
       )}
       {editing && (
-        <Modal open onClose={handleEditing()} compact>
-          <div className={classes.form}>
+        <Modal open onClose={handleEditing()} fullScreen>
+          <div className={classes.modal}>
             <Form<Entry>
               title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
               schema={SCHEMA}
@@ -369,6 +561,7 @@ export const ServiceItems: FC<Props> = props => {
               onSave={handleSave}
               onClose={handleEditing()}
               disabled={saving}
+              className={classes.form}
             />
             {editing.id && (
               <div className={classes.readings}>
