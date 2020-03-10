@@ -16,14 +16,16 @@ type Response = {
   totalCount: number,
 }
 
-export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
-  const [state, setState] = useState<State>({
-    data: [],
-    isLoading: true,
-    page: 0,
-    totalCount: 0,
-    fetchedCount: 0
-  });
+const initialState = {
+  data: [],
+  isLoading: true,
+  page: 0,
+  totalCount: 0,
+  fetchedCount: 0
+};
+
+export const useFetchAll = (fetchFn: (page: number) => Promise<Response>, ...deps: any) => {
+  const [state, setState] = useState<State>(initialState);
   const { data, isLoading, page, totalCount, fetchedCount } = state;
   useEffect(() => {
     if(fetchedCount < totalCount || !totalCount) {
@@ -44,6 +46,10 @@ export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
       });
     }
   }, [fetchedCount, totalCount, fetchFn]);
+
+  useEffect(() => {
+    setState(initialState);
+  }, [...deps]);
 
   return { data, isLoading };
 };
