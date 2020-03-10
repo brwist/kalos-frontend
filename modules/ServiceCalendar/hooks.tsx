@@ -25,7 +25,6 @@ export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
     fetchedCount: 0
   });
   const { data, isLoading, page, totalCount, fetchedCount } = state;
-
   useEffect(() => {
     if(fetchedCount < totalCount || !totalCount) {
       (async () => {

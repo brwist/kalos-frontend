@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DatePicker } from '@material-ui/pickers';
 import { DatePickerView } from '@material-ui/pickers/DatePicker/DatePicker';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
@@ -6,12 +6,20 @@ import Toolbar from '@material-ui/core/Toolbar';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import WeekPicker from '../../WeekPicker/main';
+import { Button } from '../../ComponentsLibrary/Button';
+import FilterDrawer from './FilterDrawer';
+
+type CustomerMap = {
+  [id: number]: string;
+};
 
 type Props = {
   viewBy: string;
   changeViewBy: (value: string) => void;
   selectedDate: Date;
   changeSelectedDate: (date: Date) => void;
+  changeFilters: (value: Filters) => void;
+  customersList: CustomerMap[];
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -26,7 +34,7 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate }: Props) => {
+const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate, filters, changeFilters, customersList }: Props) => {
   const classes = useStyles();
   const getCalendarView = (): DatePickerView => {
     switch (viewBy) {
@@ -38,6 +46,9 @@ const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate }: Prop
       return 'date';
     }
   };
+
+  const [showDrawer, toggleDrawer] = useState<boolean>(false);
+
   return (
     <Toolbar className={classes.bar}>
       <TextField
@@ -67,6 +78,8 @@ const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate }: Prop
           onChange={changeSelectedDate}
         />
       )}
+      <Button label="Filter" onClick={() => toggleDrawer(!showDrawer)} />
+      <FilterDrawer open={showDrawer} toggleDrawer={toggleDrawer} filters={filters} customersList={customersList} changeFilters={changeFilters} />
     </Toolbar>
   );
 };
