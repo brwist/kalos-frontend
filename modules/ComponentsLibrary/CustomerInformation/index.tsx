@@ -233,6 +233,7 @@ export const CustomerInformation: FC<Props> = ({
     setGroupLinksInitial(groupLinks);
     const entry = new User();
     entry.setId(userID);
+    entry.setIsActive(1);
     try {
       const customer = await UserClientService.Get(entry);
       setCustomer(customer);

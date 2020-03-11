@@ -267,6 +267,7 @@ export const ServiceItems: FC<Props> = props => {
     const entry = new ServiceItem();
     entry.setPropertyId(propertyId);
     entry.setPageNumber(page);
+    entry.setIsActive(1);
     try {
       const response = await ServiceItemClientService.BatchGet(entry);
       const { resultsList, totalCount: count } = response.toObject();

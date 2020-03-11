@@ -61,6 +61,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
     entry.setOrderBy(orderByDBField);
     entry.setOrderDir(dir);
     entry.setPageNumber(page);
+    entry.setIsActive(1);
     try {
       const response = await this.EventClient.BatchGet(entry);
       const { resultsList, totalCount: count } = response.toObject();
