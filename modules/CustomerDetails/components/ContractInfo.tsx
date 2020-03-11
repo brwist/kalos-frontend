@@ -1,5 +1,9 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import { ContractClient, Contract } from '@kalos-core/kalos-rpc/Contract';
+import {
+  ContractFrequencyClient,
+  ContractFrequency,
+} from '@kalos-core/kalos-rpc/ContractFrequency';
 import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -12,8 +16,10 @@ import { getRPCFields, formatDate } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
 
 const ContractClientService = new ContractClient(ENDPOINT);
+const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
 
 type Entry = Contract.AsObject;
+type ContractFrequencyType = ContractFrequency.AsObject;
 
 const SCHEMA: Schema<Entry> = [
   [{ label: 'Personal Details', headline: true }],
@@ -129,6 +135,7 @@ interface Props {
 export const ContractInfo: FC<Props> = props => {
   const { userID, children } = props;
   const [entry, setEntry] = useState<Entry>(new Contract().toObject());
+  const [frequencies, setFrequencies] = useState<ContractFrequencyType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
@@ -137,6 +144,14 @@ export const ContractInfo: FC<Props> = props => {
   const [deleting, setDeleting] = useState<boolean>(false);
   const classes = useStyles();
 
+  const loadFrequencies = useCallback(async () => {
+    const entry = new ContractFrequency();
+    const { resultsList } = (
+      await ContractFrequencyClientService.BatchGet(entry)
+    ).toObject();
+    setFrequencies(resultsList);
+  }, [setFrequencies]);
+
   const load = useCallback(async () => {
     setLoaded(false);
     setLoading(true);
@@ -144,6 +159,7 @@ export const ContractInfo: FC<Props> = props => {
     entry.setUserId(userID);
     entry.setIsActive(1);
     try {
+      await loadFrequencies();
       const customer = await ContractClientService.Get(entry);
       setEntry(customer);
       setLoaded(true);
@@ -198,6 +214,16 @@ export const ContractInfo: FC<Props> = props => {
     }
   }, [loaded, load]);
 
+  const getFrequencyById = useMemo(
+    () => (frequencyId: number) => {
+      if (frequencyId === 0) return '';
+      const frequency = frequencies.find(({ id }) => id === frequencyId);
+      if (!frequency) return '';
+      return frequency.name;
+    },
+    [frequencies],
+  );
+
   const {
     id,
     number,
@@ -224,7 +250,10 @@ export const ContractInfo: FC<Props> = props => {
       { label: 'Payment Status', value: paymentStatus },
     ],
     [
-      { label: 'frequency', value: frequency },
+      {
+        label: 'Frequency',
+        value: getFrequencyById(frequency),
+      },
       { label: 'Payment Terms', value: paymentTerms },
     ],
     [
