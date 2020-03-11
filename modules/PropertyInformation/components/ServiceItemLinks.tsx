@@ -98,7 +98,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
         entry.setId(editedEntry.id);
       }
       entry.setPropertyId(serviceItemId);
-      const fieldMaskList = ['setPropertyId'];
+      const fieldMaskList = ['PropertyId'];
       for (const fieldName in data) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
         // @ts-ignore

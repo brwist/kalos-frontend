@@ -361,7 +361,7 @@ export const ServiceItemReadings: FC<Props> = ({
         entry.setServiceItemId(serviceItemId);
         entry.setDate(timestamp(true));
         entry.setUserId(loggedUserId);
-        const fieldMaskList = ['setServiceItemId', 'setDate', 'setUserId'];
+        const fieldMaskList = ['ServiceItemId', 'Date', 'UserId'];
         for (const fieldName in data) {
           const { upperCaseProp, methodName } = getRPCFields(fieldName);
           // @ts-ignore
@@ -393,7 +393,7 @@ export const ServiceItemReadings: FC<Props> = ({
           entry.setId(editedMaintenanceEntry.id);
         }
         entry.setReadingId(editedMaintenanceEntry.readingId);
-        const fieldMaskList = ['setReadingId'];
+        const fieldMaskList = ['ReadingId'];
         for (const fieldName in data) {
           const { upperCaseProp, methodName } = getRPCFields(fieldName);
           // @ts-ignore

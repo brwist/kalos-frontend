@@ -341,7 +341,7 @@ export const ServiceItems: FC<Props> = props => {
         setSaving(true);
         const entry = new ServiceItem();
         entry.setPropertyId(propertyId);
-        const fieldMaskList = ['setPropertyId'];
+        const fieldMaskList = ['PropertyId'];
         const isNew = !editing.id;
         if (!isNew) {
           entry.setId(editing.id);
@@ -351,7 +351,7 @@ export const ServiceItems: FC<Props> = props => {
             entries.length,
           );
           entry.setSortOrder(sortOrder);
-          fieldMaskList.push('setSortOrder');
+          fieldMaskList.push('SortOrder');
         }
         for (const fieldName in data) {
           const { upperCaseProp, methodName } = getRPCFields(fieldName);

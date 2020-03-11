@@ -234,7 +234,7 @@ export const PropertyInfo: FC<Props> = props => {
       const entry = new Property();
       entry.setId(propertyId);
       entry.setUserId(id);
-      // entry.setFieldMaskList(['setUserId']);
+      // entry.setFieldMaskList(['UserId']);
       try {
         await PropertyClientService.Update(entry); // FIXME: for some reason this call fails
         document.location.href = [
