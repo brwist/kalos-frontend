@@ -261,9 +261,9 @@
     browser-headers "^0.4.0"
 
 "@kalos-core/kalos-rpc@^2.0.0":
-  version "2.12.1"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.12.1.tgz#04bc3e555c155031e935e3483be3f7b0a1e70f55"
-  integrity sha512-TncEJT2iUqDWHzkfZIjCicIM4J0zGLWfvGOqb8yFaYXSd96oHoD2kXvf26zOAiQzcEoT6QfpFVtod+QFFtAaVQ==
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.13.0.tgz#a156d907787df862d20d0cb6fecdf51fd98a434d"
+  integrity sha512-BbMmMQpPM4NocWPwYjY5pI7lgC0tzZXjyqGAsoiphQMW8kkq5ZyeC/+wLtQZKSA5tT0PFxXi317HavAwkPD9ug==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -699,19 +699,11 @@
     "@types/node" "*"
 
 "@typescript-eslint/eslint-plugin@^2.6.0":
-<<<<<<< HEAD
   version "2.23.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-2.23.0.tgz#aa7133bfb7b685379d9eafe4ae9e08b9037e129d"
   integrity sha512-8iA4FvRsz8qTjR0L/nK9RcRUN3QtIHQiOm69FzV7WS3SE+7P7DyGGwh3k4UNR2JBbk+Ej2Io+jLAaqKibNhmtw==
   dependencies:
     "@typescript-eslint/experimental-utils" "2.23.0"
-=======
-  version "2.22.0"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-2.22.0.tgz#218ce6d4aa0244c6a40baba39ca1e021b26bb017"
-  integrity sha512-BvxRLaTDVQ3N+Qq8BivLiE9akQLAOUfxNHIEhedOcg8B2+jY8Rc4/D+iVprvuMX1AdezFYautuGDwr9QxqSxBQ==
-  dependencies:
-    "@typescript-eslint/experimental-utils" "2.22.0"
->>>>>>> 579c714540921f42c4d0b526ece0ff7be95da60d
     eslint-utils "^1.4.3"
     functional-red-black-tree "^1.0.1"
     regexpp "^3.0.0"
