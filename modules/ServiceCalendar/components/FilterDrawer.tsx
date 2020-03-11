@@ -1,17 +1,8 @@
 import React, { useState, useReducer } from 'react';
 import { Theme, createStyles, makeStyles } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Checkbox from '@material-ui/core/Checkbox';
-import {Button} from '../../ComponentsLibrary/Button';
+import { Button } from '../../ComponentsLibrary/Button';
+import SearchableList from './SearchableList';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -88,10 +79,10 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
-const FilterDrawer = ({ open, toggleDrawer, filters, customersList, changeFilters }) => {
+const FilterDrawer = ({ open, toggleDrawer, filterOptions, filters, changeFilters }) => {
   const classes = useStyles();
   const [state, dispatch] = useReducer(reducer, filters);
-  const { customers } = state;
+  const { customers, zip } = state;
 
   const handleSave = () => {
     changeFilters(state);
@@ -100,30 +91,22 @@ const FilterDrawer = ({ open, toggleDrawer, filters, customersList, changeFilter
 
   return (
     <Drawer anchor="right" open={open} onClose={() => toggleDrawer(!open)}>
-      <ExpansionPanel>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-        >
-          <Typography className={classes.heading}>Customers</Typography>
-        </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
-          <List>
-            {Object.entries(customersList).map(([id, name]) => (
-              <ListItem key={`customer-${id}`} role={undefined} dense button onClick={() => {dispatch({ type: 'customers', value: +id })}}>
-                <ListItemIcon>
-                  <Checkbox
-                    edge="start"
-                    checked={customers.indexOf(+id) !== -1}
-                    tabIndex={-1}
-                    disableRipple
-                  />
-                </ListItemIcon>
-                <ListItemText primary={name} />
-              </ListItem>
-            ))}
-          </List>
-        </ExpansionPanelDetails>
-      </ExpansionPanel>
+      <SearchableList
+        title="Customers"
+        options={filterOptions.customers}
+        values={customers}
+        handleChange={value =>
+          dispatch({ type: 'customers', value })
+        }
+      />
+      <SearchableList
+        title="ZIP codes"
+        options={filterOptions.zip}
+        values={zip}
+        handleChange={value =>
+          dispatch({ type: 'zip', value })
+        }
+      />
       <Button label="Save" onClick={handleSave} />
     </Drawer>
   );

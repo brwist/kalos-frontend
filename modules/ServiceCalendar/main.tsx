@@ -1,16 +1,14 @@
-import React, { createContext, useCallback, useEffect, useReducer } from 'react';
+import React, { createContext, useCallback, useEffect, useReducer, useRef } from 'react';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { format, startOfWeek, startOfMonth, endOfMonth, endOfYear, startOfYear, eachDayOfInterval, addDays } from 'date-fns';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
-import { JobType } from "@kalos-core/kalos-rpc/compiled-protos/job_type_pb";
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Backdrop from '@material-ui/core/Backdrop';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import customTheme from '../Theme/main';
-import {ENDPOINT} from '../../constants';
+import { ENDPOINT } from '../../constants';
 import Filter from './components/Filter';
 import Column from './components/Column';
 import AddNewButton from './components/AddNewButton';
@@ -21,8 +19,6 @@ type Props = {
 }
 
 const userClient = new UserClient(ENDPOINT);
-const eventClient = new EventClient(ENDPOINT);
-
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -158,6 +154,15 @@ export const EmployeesContext = createContext<EmployeesContext>({ employees: [],
 const ServiceCalendar = ({ userId }: Props) => {
   const classes = useStyles();
   const [{speedDialOpen, viewBy, shownDates, selectedDate, filters}, dispatch] = useReducer(reducer, initialState);
+  const filterOptions = useRef({ customers: {}, zip: {} });
+  const addFilterOptions = ({ customer, zip }) => {
+    if (customer) {
+      filterOptions.current.customers[customer.id] = `${customer.firstname} ${customer.lastname}`;
+    }
+    if (zip) {
+      filterOptions.current.zip[zip] = zip;
+    }
+  });
   const fetchEmployees = useCallback( async (page) => {
     const user = new User();
     user.setIsActive(1);
@@ -167,35 +172,6 @@ const ServiceCalendar = ({ userId }: Props) => {
   }, []);
 
   const { data:employees, isLoading:employeesLoading } = useFetchAll(fetchEmployees);
-  const fetchCalls = useCallback( async (page) => {
-    const event = new Event();
-    event.setDateRangeList(['>=', shownDates[0], '<=', shownDates[shownDates.length - 1]]);
-    event.setPageNumber(page);
-    return (await eventClient.BatchGet(event)).toObject();
-  }, [shownDates]);
-
-  const { data:calls } = useFetchAll(fetchCalls, shownDates);
-
-  // console.log(calls);
-  const { callsByDate, customersList } = calls.reduce((acc, call) => {
-    let { callsByDate, customersList } = acc;
-    let customer = call?.customer;
-    let dateFormatted = format(new Date(call.dateStarted), 'yyyy-MM-dd');
-
-    if (callsByDate[dateFormatted]) {
-      callsByDate[dateFormatted].push(call);
-    } else {
-      callsByDate[dateFormatted] = [call];
-    }
-    if (customer) {
-      customersList[customer.id] = `${customer.firstname} ${customer.lastname}`;
-    }
-
-    return {
-      callsByDate,
-      customersList,
-    };
-  }, { callsByDate: {}, customersList: {} });
 
   useEffect(() => {
     userClient.GetToken('test', 'test');
@@ -223,13 +199,13 @@ const ServiceCalendar = ({ userId }: Props) => {
             selectedDate={selectedDate}
             changeSelectedDate={changeSelectedDate}
             changeFilters={changeFilters}
-            customersList={customersList}
+            filterOptions={filterOptions.current}
             filters={filters}
           />
         </MuiPickersUtilsProvider>
         <Container className={viewBy !== 'day' ? classes.week : ''} maxWidth={false}>
           {shownDates.map(date => (
-            <Column key={date} date={date} data={callsByDate[date]} filters={filters} />
+            <Column key={date} date={date} filters={filters} addFilterOptions={addFilterOptions} />
           ))}
         </Container>
         <Backdrop open={speedDialOpen} style={{ zIndex: 10 }} />
