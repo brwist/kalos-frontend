@@ -239,7 +239,7 @@ export const ContractInfo: FC<Props> = props => {
   const data: Data = [
     [
       { label: 'Contract Number', value: number },
-      { label: 'Billing', value: groupBilling },
+      { label: 'Billing', value: groupBilling === 1 ? 'Group' : 'Site' },
     ],
     [
       { label: 'Start Date', value: formatDate(dateStarted) },
