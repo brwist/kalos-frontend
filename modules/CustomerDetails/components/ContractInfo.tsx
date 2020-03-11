@@ -1,10 +1,12 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
+import AddCircleIcon from '@material-ui/icons/AddCircle';
 import { ContractClient, Contract } from '@kalos-core/kalos-rpc/Contract';
 import {
   ContractFrequencyClient,
   ContractFrequency,
 } from '@kalos-core/kalos-rpc/ContractFrequency';
 import { InvoiceClient, Invoice } from '@kalos-core/kalos-rpc/Invoice';
+import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -14,16 +16,19 @@ import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
+import { Field, Value } from '../../ComponentsLibrary/Field';
 import { getRPCFields, formatDate } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
 
 const ContractClientService = new ContractClient(ENDPOINT);
 const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
 const InvoiceClientService = new InvoiceClient(ENDPOINT);
+const PropertyClientService = new PropertyClient(ENDPOINT);
 
 type Entry = Contract.AsObject;
 type ContractFrequencyType = ContractFrequency.AsObject;
 type InvoiceType = Invoice.AsObject;
+type PropertyType = Property.AsObject;
 
 const BILLING_OPTIONS: Options = [
   { label: 'Site', value: 0 },
@@ -112,6 +117,28 @@ const useStyles = makeStyles(theme => ({
   addContract: {
     marginBottom: theme.spacing(),
   },
+  form: {
+    display: 'flex',
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column',
+    },
+  },
+  properties: {
+    [theme.breakpoints.up('md')]: {
+      marginLeft: theme.spacing(),
+    },
+  },
+  property: {
+    marginBottom: 0,
+  },
+  propertyPM: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  propertyAdd: {
+    cursor: 'pointer',
+    marginLeft: theme.spacing(),
+  },
 }));
 
 interface Props {
@@ -127,6 +154,8 @@ export const ContractInfo: FC<Props> = props => {
   const [invoiceInitial, setInvoiceInitial] = useState<InvoiceType>(
     new Invoice().toObject(),
   );
+  const [properties, setProperties] = useState<PropertyType[]>([]);
+  const [propertiesIds, setPropertiesIds] = useState<number[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
@@ -161,6 +190,16 @@ export const ContractInfo: FC<Props> = props => {
     [setInvoice, setInvoiceInitial],
   );
 
+  const loadProperties = useCallback(async () => {
+    const req = new Property();
+    req.setUserId(userID);
+    req.setIsActive(1);
+    const { resultsList } = (
+      await PropertyClientService.BatchGet(req)
+    ).toObject();
+    setProperties(resultsList);
+  }, [userID, setProperties]);
+
   const load = useCallback(async () => {
     setLoaded(false);
     setLoading(true);
@@ -168,12 +207,14 @@ export const ContractInfo: FC<Props> = props => {
     entry.setUserId(userID);
     entry.setIsActive(1);
     try {
+      await loadProperties();
       await loadFrequencies();
       const { resultsList, totalCount } = (
         await ContractClientService.BatchGet(entry)
       ).toObject();
       if (totalCount === 1) {
         const contract = resultsList[0];
+        setPropertiesIds(contract.properties.split(',').map(id => +id));
         await loadInvoice(contract);
         setEntry(contract);
       }
@@ -183,15 +224,27 @@ export const ContractInfo: FC<Props> = props => {
       setError(true);
       setLoading(false);
     }
-  }, [userID, setEntry, setError, setLoaded, setLoading]);
+  }, [userID, setEntry, setError, setLoaded, setLoading, setPropertiesIds]);
 
   const handleToggleEditing = useCallback(() => {
     setEditing(!editing);
-  }, [editing, setEditing, ,]);
+    setInvoice(invoiceInitial);
+  }, [editing, setEditing, setInvoice, invoiceInitial]);
 
   const handleSetDeleting = useCallback(
     (deleting: boolean) => () => setDeleting(deleting),
     [setDeleting],
+  );
+
+  const handleChangePropertiesIds = useCallback(
+    (id: number) => (value: Value) => {
+      if (value === 1) {
+        setPropertiesIds([...propertiesIds, id]);
+      } else {
+        setPropertiesIds(propertiesIds.filter(_id => _id !== id));
+      }
+    },
+    [propertiesIds, setPropertiesIds],
   );
 
   const saveInvoice = useCallback(
@@ -224,9 +277,10 @@ export const ContractInfo: FC<Props> = props => {
   const handleSave = useCallback(
     async (data: Entry) => {
       setSaving(true);
-      const fieldMaskList = ['UserId'];
+      const fieldMaskList = ['UserId', 'Properties'];
       const req = new Contract();
       req.setUserId(userID);
+      req.setProperties(propertiesIds.join(','));
       if (entry.id !== 0) {
         req.setId(entry.id);
         fieldMaskList.push('Id');
@@ -253,7 +307,7 @@ export const ContractInfo: FC<Props> = props => {
       setSaving(false);
       setEditing(false);
     },
-    [entry, userID, invoice, setSaving, setEntry, setEditing],
+    [entry, userID, invoice, setSaving, setEntry, setEditing, propertiesIds],
   );
 
   const handleDelete = useCallback(async () => {
@@ -364,7 +418,31 @@ export const ContractInfo: FC<Props> = props => {
     ],
     [{ label: 'Notes', value: notes }],
   ];
-
+  const propertiesData: Data = properties.map(
+    ({ id, address, city, state, zip }, idx) => [
+      {
+        value: (
+          <Field
+            name={`property-${id}`}
+            label={`${address}, ${city}, ${state} ${zip}`}
+            type="checkbox"
+            value={propertiesIds.includes(id)}
+            onChange={handleChangePropertiesIds(id)}
+            className={classes.property}
+            disabled={saving}
+          />
+        ),
+        actions: propertiesIds.includes(id)
+          ? [
+              // TODO: PM's count
+              <span key={0} className={classes.propertyPM}>
+                PM's: 1 <AddCircleIcon className={classes.propertyAdd} />
+              </span>,
+            ]
+          : [],
+      },
+    ],
+  );
   return (
     <>
       <div className={classes.wrapper}>
@@ -433,17 +511,23 @@ export const ContractInfo: FC<Props> = props => {
         </div>
       </div>
       <Modal open={editing} onClose={handleToggleEditing}>
-        <Form<Entry>
-          title={`Customer: ${customer.firstname} ${customer.lastname}`}
-          subtitle={
-            entry.id === 0 ? 'New contract' : `Edit contract: ${number}`
-          }
-          schema={SCHEMA}
-          data={entry}
-          onSave={handleSave}
-          onClose={handleToggleEditing}
-          disabled={saving}
-        />
+        <div className={classes.form}>
+          <Form<Entry>
+            title={`Customer: ${customer.firstname} ${customer.lastname}`}
+            subtitle={
+              entry.id === 0 ? 'New contract' : `Edit contract: ${number}`
+            }
+            schema={SCHEMA}
+            data={entry}
+            onSave={handleSave}
+            onClose={handleToggleEditing}
+            disabled={saving}
+          />
+          <div className={classes.properties}>
+            <SectionBar title="Properties" />
+            <InfoTable data={propertiesData} />
+          </div>
+        </div>
       </Modal>
       <ConfirmDelete
         open={deleting}
