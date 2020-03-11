@@ -11,7 +11,6 @@ import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-// import { PropertyDocuments } from './PropertyDocuments';
 import { getRPCFields, loadGeoLocationByAddress } from '../../../helpers';
 
 const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -270,13 +269,12 @@ export const Properties: FC<Props> = props => {
             />
           </SectionBar>
         </div>
-        {/* <PropertyDocuments className={classes.documents} {...props} /> */}
       </div>
       {editing && (
         <Modal open onClose={handleSetEditing()}>
           <Form<Entry>
             key={formKey}
-            title="Edit Property Information"
+            title={`${editing.id === 0 ? 'Add' : 'Edit'} Property Information`}
             schema={SCHEMA_PROPERTY_INFORMATION}
             data={editing}
             onSave={handleSave}
