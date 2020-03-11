@@ -23,84 +23,22 @@ type Entry = Contract.AsObject;
 type ContractFrequencyType = ContractFrequency.AsObject;
 
 const SCHEMA: Schema<Entry> = [
-  [{ label: 'Personal Details', headline: true }],
+  [{ label: 'Contract Details', headline: true }],
   [
-    { label: 'Contract Number', name: 'number', required: true },
-    // { label: 'Last Name', name: 'lastname', required: true },
-    // { label: 'Business Name', name: 'businessname', multiline: true },
+    // { label: 'Start Date', name: 'dateStarted', required: true },
+    // { label: 'End Date', name: 'dateEnded', required: true },
   ],
-  // [{ label: 'Contact Details', headline: true }],
-  // [
-  //   { label: 'Primary Phone', name: 'phone' },
-  //   { label: 'Alternate Phone', name: 'altphone' },
-  //   { label: 'Cell Phone', name: 'cellphone' },
-  // ],
-  // [
-  //   { label: 'Email', name: 'email', required: true },
-
-  //   {
-  //     label: 'Alternate Email(s)',
-  //     name: 'altEmail',
-  //     helperText: 'Separate multiple email addresses w/comma',
-  //   },
-  //   {
-  //     label: 'Wishes to receive promotional emails',
-  //     name: 'receiveemail',
-  //     type: 'checkbox',
-  //   },
-  // ],
-  // [{ label: 'Address Details', headline: true }],
-  // [
-  //   { label: 'Bulling Address', name: 'address', multiline: true },
-  //   { label: 'Billing City', name: 'city' },
-  //   { label: 'Billing State', name: 'state', options: USA_STATES },
-  //   { label: 'Billing Zip Code', name: 'zip' },
-  // ],
-  // [{ label: 'Billing Details', headline: true }],
-  // [
-  //   { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
-  //   {
-  //     label: 'Discount',
-  //     name: 'discount',
-  //     required: true,
-  //     type: 'number',
-  //     endAdornment: '%',
-  //   },
-  //   {
-  //     label: 'Rebate',
-  //     name: 'rebate',
-  //     required: true,
-  //     type: 'number',
-  //     endAdornment: '%',
-  //   },
-  // ],
-  // [{ label: 'Notes', headline: true }],
-  // [
-  //   {
-  //     label: 'Customer notes',
-  //     name: 'notes',
-  //     helperText: 'Visible to customer',
-  //     multiline: true,
-  //   },
-  //   {
-  //     label: 'Internal Notes',
-  //     name: 'intNotes',
-  //     helperText: 'NOT visible to customer',
-  //     multiline: true,
-  //   },
-  // ],
-  // {label:'Who recommended us?', name:''}, // TODO
-  // [{ label: 'Login details', headline: true }],
-  // [
-  //   {
-  //     label: 'Login',
-  //     name: 'login',
-  //     required: true,
-  //     helperText:
-  //       'NOTE: If they have an email address, their login ID will automatically be their email address.',
-  //   },
-  //   { label: 'Password', name: 'pwd', type: 'password' },
-  // ],
+  [
+    // { label: 'Frequency', name: 'frequency', required: true },
+    // { label: 'Billing', name: 'groupBilling', required: true },
+  ],
+  [
+    // { label: 'Payment Type', name: 'paymentType', required: true },
+    // { label: 'Payment Status', name: 'paymentStatus', required: true },
+  ],
+  [{ label: 'Notes', name: 'notes', multiline: true }],
+  [{ label: 'Invoice Data', headline: true }],
+  [{ label: 'Terms', name: 'paymentTerms', multiline: true }],
 ];
 
 const useStyles = makeStyles(theme => ({
@@ -183,23 +121,23 @@ export const ContractInfo: FC<Props> = props => {
 
   const handleSave = useCallback(
     async (data: Entry) => {
-      // setSaving(true);
-      // const entry = new User();
-      // entry.setId(userID);
-      // const fieldMaskList = [];
-      // for (const fieldName in data) {
-      //   const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      //   // @ts-ignore
-      //   entry[methodName](data[fieldName]);
-      //   fieldMaskList.push(upperCaseProp);
-      // }
-      // entry.setFieldMaskList(fieldMaskList);
-      // const customer = await UserClientService.Update(entry);
-      // setCustomer(customer);
-      // setSaving(false);
-      // setEditing(false);
+      setSaving(true);
+      const req = new Contract();
+      req.setId(entry.id);
+      const fieldMaskList = [];
+      for (const fieldName in data) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        req[methodName](data[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      req.setFieldMaskList(fieldMaskList);
+      const res = await ContractClientService.Update(req);
+      setEntry(res);
+      setSaving(false);
+      setEditing(false);
     },
-    [setSaving, userID, setEntry, setEditing],
+    [entry, setSaving, setEntry, setEditing],
   );
 
   const handleDelete = useCallback(async () => {
@@ -302,7 +240,7 @@ export const ContractInfo: FC<Props> = props => {
               },
             ]}
           >
-            <InfoTable data={data} loading={loading} error={error} />
+            <InfoTable data={data} loading={loading || saving} error={error} />
           </SectionBar>
           {children}
         </div>
