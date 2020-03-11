@@ -15,6 +15,7 @@ export type Options = FieldOptions;
 
 interface Props<T> extends PlainFormProps<T> {
   title: string;
+  subtitle?: string;
   onSave: (data: T) => void;
   onClose: () => void;
   actions?: ButtonProps[];
@@ -30,6 +31,7 @@ const getDefaultValueByType = (type: Type) => {
 
 export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   title,
+  subtitle,
   schema,
   data,
   onSave,
@@ -89,6 +91,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     <div className={className}>
       <SectionBar
         title={title}
+        subtitle={subtitle}
         actions={[
           ...actions,
           ...(readOnly
