@@ -28,6 +28,7 @@ export default () => (
     <hr />
     <Form<Model>
       title="Form"
+      subtitle="Subtitle"
       schema={SCHEMA_2}
       data={model}
       onSave={data => console.log(data)}

@@ -172,7 +172,8 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     return (
       <div>
         <SectionBar
-          title={`${kind}s${title}`}
+          title={`${kind}s`}
+          subtitle={title}
           actions={[
             {
               label: 'Add',

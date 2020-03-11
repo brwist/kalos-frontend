@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, ReactNode } from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import {
   UserGroupLinkClient,
@@ -24,11 +24,11 @@ const UserGroupLinkClientService = new UserGroupLinkClient(ENDPOINT);
 const GroupClientService = new GroupClient(ENDPOINT);
 const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
 
-type Entry = User.AsObject;
+export type Customer = User.AsObject;
 type GroupLink = UserGroupLink.AsObject;
 type GroupType = Group.AsObject;
 
-const SCHEMA: Schema<Entry> = [
+const SCHEMA: Schema<Customer> = [
   [{ label: 'Personal Details', headline: true }],
   [
     { label: 'First Name', name: 'firstname', required: true },
@@ -109,7 +109,7 @@ const SCHEMA: Schema<Entry> = [
   ],
 ];
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<Customer> = [
   [
     {
       label: 'Notification',
@@ -181,14 +181,16 @@ const useStyles = makeStyles(theme => ({
 interface Props {
   userID: number;
   propertyId?: number;
+  renderChildren?: (customer: Customer) => ReactNode;
 }
 
 export const CustomerInformation: FC<Props> = ({
   userID,
   propertyId,
+  renderChildren,
   children,
 }) => {
-  const [customer, setCustomer] = useState<Entry>(new User().toObject());
+  const [customer, setCustomer] = useState<Customer>(new User().toObject());
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
   const [groups, setGroups] = useState<GroupType[]>([]);
   const [groupLinks, setGroupLinks] = useState<GroupLink[]>([]);
@@ -309,7 +311,7 @@ export const CustomerInformation: FC<Props> = ({
   );
 
   const handleSave = useCallback(
-    async (data: Entry) => {
+    async (data: Customer) => {
       setSaving(true);
       const entry = new User();
       entry.setId(userID);
@@ -516,10 +518,11 @@ export const CustomerInformation: FC<Props> = ({
           )}
         </div>
       </div>
+      {renderChildren && renderChildren(customer)}
       {children}
       <Modal open={editing} onClose={handleToggleEditing}>
         <div className={classes.editForm}>
-          <Form<Entry>
+          <Form<Customer>
             title="Edit Customer Information"
             schema={SCHEMA}
             data={customer}
@@ -555,7 +558,7 @@ export const CustomerInformation: FC<Props> = ({
           handleSetNotificationEditing(false)();
         }}
       >
-        <Form<Entry>
+        <Form<Customer>
           title={
             notificationViewing
               ? 'Customer Notification'
@@ -586,7 +589,7 @@ export const CustomerInformation: FC<Props> = ({
                     variant: 'outlined',
                     onClick: () => {
                       handleSetNotificationViewing(false)();
-                      handleSave({ notification: '' } as Entry);
+                      handleSave({ notification: '' } as Customer);
                     },
                   },
                 ]

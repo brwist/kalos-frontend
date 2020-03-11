@@ -7,6 +7,7 @@ import {
 import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
+import { Customer } from '../../ComponentsLibrary/CustomerInformation';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -130,10 +131,11 @@ const useStyles = makeStyles(theme => ({
 
 interface Props {
   userID: number;
+  customer: Customer;
 }
 
 export const ContractInfo: FC<Props> = props => {
-  const { userID, children } = props;
+  const { userID, children, customer } = props;
   const [entry, setEntry] = useState<Entry>(new Contract().toObject());
   const [frequencies, setFrequencies] = useState<ContractFrequencyType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -312,7 +314,8 @@ export const ContractInfo: FC<Props> = props => {
       </div>
       <Modal open={editing} onClose={handleToggleEditing}>
         <Form<Entry>
-          title="Edit Customer Information"
+          title={`Customer: ${customer.firstname} ${customer.lastname}`}
+          subtitle={`Edit contract: ${number}`}
           schema={SCHEMA}
           data={entry}
           onSave={handleSave}

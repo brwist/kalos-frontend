@@ -12,9 +12,13 @@ interface Props {
 
 export const CustomerDetails = (props: Props) => (
   <ThemeProvider theme={customTheme.lightTheme}>
-    <CustomerInformation {...props} />
-    <ContractInfo {...props}>
-      <Properties {...props} />
-    </ContractInfo>
+    <CustomerInformation
+      {...props}
+      renderChildren={customer => (
+        <ContractInfo customer={customer} {...props}>
+          <Properties {...props} />
+        </ContractInfo>
+      )}
+    ></CustomerInformation>
   </ThemeProvider>
 );

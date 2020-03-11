@@ -546,7 +546,7 @@ export const ServiceItems: FC<Props> = props => {
         <Modal open onClose={handleSetLinkId(undefined)}>
           <ServiceItemLinks
             kind="Service Item Link"
-            title={`: ${entries.find(({ id }) => id === linkId)?.type}`}
+            title={entries.find(({ id }) => id === linkId)?.type}
             serviceItemId={linkId}
             onClose={handleSetLinkId(undefined)}
           />
