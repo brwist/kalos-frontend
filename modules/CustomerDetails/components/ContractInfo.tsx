@@ -76,6 +76,15 @@ const INVOICE_SCHEMA: Schema<InvoiceType> = [
   [{ label: 'Grand Total', name: 'totalamounttotal' }],
 ];
 
+const makeContractNumber = (id: number) =>
+  'C' +
+  new Date()
+    .getFullYear()
+    .toString()
+    .substr(2, 2) +
+  '-' +
+  id.toString().padStart(5, '0');
+
 const useStyles = makeStyles(theme => ({
   wrapper: {
     display: 'flex',
@@ -99,6 +108,9 @@ const useStyles = makeStyles(theme => ({
       width: 470,
       marginLeft: theme.spacing(2),
     },
+  },
+  addContract: {
+    marginBottom: theme.spacing(),
   },
 }));
 
@@ -157,9 +169,14 @@ export const ContractInfo: FC<Props> = props => {
     entry.setIsActive(1);
     try {
       await loadFrequencies();
-      const contract = await ContractClientService.Get(entry);
-      await loadInvoice(contract);
-      setEntry(contract);
+      const { resultsList, totalCount } = (
+        await ContractClientService.BatchGet(entry)
+      ).toObject();
+      if (totalCount === 1) {
+        const contract = resultsList[0];
+        await loadInvoice(contract);
+        setEntry(contract);
+      }
       setLoaded(true);
       setLoading(false);
     } catch (e) {
@@ -178,7 +195,7 @@ export const ContractInfo: FC<Props> = props => {
   );
 
   const saveInvoice = useCallback(
-    async (invoice: InvoiceType) => {
+    async (invoice: InvoiceType, entry: Entry) => {
       const req = new Invoice();
       req.setContractId(entry.id);
       req.setUserId(userID);
@@ -194,22 +211,26 @@ export const ContractInfo: FC<Props> = props => {
         fieldMaskList.push(upperCaseProp);
       }
       req.setFieldMaskList(fieldMaskList);
+      // FIXME: Create sql fails
       const res = await InvoiceClientService[
         invoice.id === 0 ? 'Create' : 'Update'
       ](req);
       setInvoice(res);
       setInvoiceInitial(res);
     },
-    [userID, entry, setInvoice, setInvoiceInitial],
+    [userID, setInvoice, setInvoiceInitial],
   );
 
   const handleSave = useCallback(
     async (data: Entry) => {
       setSaving(true);
-      await saveInvoice(invoice);
+      const fieldMaskList = ['UserId'];
       const req = new Contract();
-      req.setId(entry.id);
-      const fieldMaskList = [];
+      req.setUserId(userID);
+      if (entry.id !== 0) {
+        req.setId(entry.id);
+        fieldMaskList.push('Id');
+      }
       for (const fieldName in data) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
         // @ts-ignore
@@ -217,21 +238,31 @@ export const ContractInfo: FC<Props> = props => {
         fieldMaskList.push(upperCaseProp);
       }
       req.setFieldMaskList(fieldMaskList);
-      const res = await ContractClientService.Update(req);
+      let res = await ContractClientService[
+        entry.id === 0 ? 'Create' : 'Update'
+      ](req);
+      if (entry.id === 0) {
+        const req2 = new Contract();
+        req2.setId(res.id);
+        req2.setNumber(makeContractNumber(res.id));
+        req2.setFieldMaskList(['Number']);
+        res = await ContractClientService.Update(req2);
+      }
+      await saveInvoice(invoice, res);
       setEntry(res);
       setSaving(false);
       setEditing(false);
     },
-    [entry, invoice, setSaving, setEntry, setEditing],
+    [entry, userID, invoice, setSaving, setEntry, setEditing],
   );
 
   const handleDelete = useCallback(async () => {
-    // TODO: delete customer related data?
-    // const entry = new User();
-    // entry.setId(userID);
-    // await UserClientService.Delete(entry);
-    // setDeleting(false);
-  }, [userID, setDeleting]);
+    const req = new Contract();
+    req.setId(entry.id);
+    await ContractClientService.Delete(req);
+    setDeleting(false);
+    setEntry(new Contract().toObject());
+  }, [entry, setDeleting]);
 
   useEffect(() => {
     if (!loaded) {
@@ -338,40 +369,61 @@ export const ContractInfo: FC<Props> = props => {
     <>
       <div className={classes.wrapper}>
         <div className={classes.panel}>
-          <SectionBar
-            title="Contract Info"
-            actions={[
-              {
-                label: 'Edit',
-                onClick: handleToggleEditing,
-              },
-              {
-                label: 'Materials',
-                url: [
-                  '/index.cfm?action=admin:contracts.materials',
-                  `contract_id=${id}`,
-                ].join('&'),
-              },
-              {
-                label: 'Summary',
-                url: [
-                  '/index.cfm?action=admin:contracts.summary',
-                  `contract_id=${id}`,
-                  'refpage=1',
-                ].join('&'),
-              },
-              {
-                label: 'Delete',
-                onClick: handleSetDeleting(true),
-              },
-              {
-                label: 'New',
-                // onClick: handleSetDeleting(true),
-              },
-            ]}
-          >
-            <InfoTable data={data} loading={loading || saving} error={error} />
-          </SectionBar>
+          {entry.id === 0 ? (
+            <SectionBar
+              title="Contract Info"
+              actions={
+                loading
+                  ? []
+                  : [
+                      {
+                        label: 'Add',
+                        onClick: handleToggleEditing,
+                      },
+                    ]
+              }
+              className={classes.addContract}
+            />
+          ) : (
+            <SectionBar
+              title="Contract Info"
+              actions={[
+                {
+                  label: 'Edit',
+                  onClick: handleToggleEditing,
+                },
+                {
+                  label: 'Materials',
+                  url: [
+                    '/index.cfm?action=admin:contracts.materials',
+                    `contract_id=${id}`,
+                  ].join('&'),
+                },
+                {
+                  label: 'Summary',
+                  url: [
+                    '/index.cfm?action=admin:contracts.summary',
+                    `contract_id=${id}`,
+                    'refpage=1',
+                  ].join('&'),
+                },
+                {
+                  label: 'Delete',
+                  onClick: handleSetDeleting(true),
+                },
+                {
+                  label: 'New',
+                  // onClick: handleSetDeleting(true),
+                },
+              ]}
+            >
+              <InfoTable
+                data={data}
+                loading={loading || saving}
+                error={error}
+              />
+            </SectionBar>
+          )}
           {children}
         </div>
         <div className={classes.asidePanel}>
@@ -383,7 +435,9 @@ export const ContractInfo: FC<Props> = props => {
       <Modal open={editing} onClose={handleToggleEditing}>
         <Form<Entry>
           title={`Customer: ${customer.firstname} ${customer.lastname}`}
-          subtitle={`Edit contract: ${number}`}
+          subtitle={
+            entry.id === 0 ? 'New contract' : `Edit contract: ${number}`
+          }
           schema={SCHEMA}
           data={entry}
           onSave={handleSave}
