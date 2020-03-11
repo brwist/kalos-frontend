@@ -193,6 +193,7 @@ export const InfoTable = ({
             <Typography
               key={idx2}
               className={classes.item}
+              component="div"
               style={{
                 width: `${100 / (md ? 1 : items.length)}%`,
                 cursor: onClick ? 'pointer' : 'default',

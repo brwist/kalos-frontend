@@ -82,7 +82,7 @@ export const Properties: FC<Props> = props => {
     req.setUserId(userID);
     req.setIsActive(1);
     try {
-      const { resultsList, totalCount } = (
+      const { resultsList } = (
         await PropertyClientService.BatchGet(req)
       ).toObject();
       setEntries(resultsList);
