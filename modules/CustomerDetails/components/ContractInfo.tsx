@@ -22,6 +22,34 @@ const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
 type Entry = Contract.AsObject;
 type ContractFrequencyType = ContractFrequency.AsObject;
 
+const BILLING_OPTIONS: Options = [
+  { label: 'Site', value: 0 },
+  { label: 'Group', value: 1 },
+];
+
+const PAYMENT_TYPE_OPTIONS: Options = [
+  'Cash',
+  'Check',
+  'Credit Card',
+  'PayPal',
+  'Billing',
+  'Financing',
+  'AOR Warranty',
+  'Service Warranty',
+  'Extended Warranty',
+  'Pre-Paid',
+  'No Charge',
+  'Account Transfer',
+  'Charity',
+];
+
+const PAYMENT_STATUS_OPTIONS: Options = [
+  'Pending',
+  'Billed',
+  'Canceled',
+  'Paid',
+];
+
 const useStyles = makeStyles(theme => ({
   wrapper: {
     display: 'flex',
@@ -69,11 +97,6 @@ export const ContractInfo: FC<Props> = props => {
     () => frequencies.map(({ id: value, name: label }) => ({ label, value })),
     [frequencies],
   );
-
-  const billingOptions: Options = [
-    { label: 'Site', value: 0 },
-    { label: 'Group', value: 1 },
-  ];
 
   const loadFrequencies = useCallback(async () => {
     const entry = new ContractFrequency();
@@ -177,12 +200,22 @@ export const ContractInfo: FC<Props> = props => {
         label: 'Billing',
         name: 'groupBilling',
         required: true,
-        options: billingOptions,
+        options: BILLING_OPTIONS,
       },
     ],
     [
-      // { label: 'Payment Type', name: 'paymentType', required: true },
-      // { label: 'Payment Status', name: 'paymentStatus', required: true },
+      {
+        label: 'Payment Type',
+        name: 'paymentType',
+        required: true,
+        options: PAYMENT_TYPE_OPTIONS,
+      },
+      {
+        label: 'Payment Status',
+        name: 'paymentStatus',
+        required: true,
+        options: PAYMENT_STATUS_OPTIONS,
+      },
     ],
     [{ label: 'Notes', name: 'notes', multiline: true }],
     [{ label: 'Invoice Data', headline: true }],
@@ -214,18 +247,10 @@ export const ContractInfo: FC<Props> = props => {
       { label: 'Payment Status', value: paymentStatus },
     ],
     [
-      {
-        label: 'Frequency',
-        value: getFrequencyById(frequency),
-      },
+      { label: 'Frequency', value: getFrequencyById(frequency) },
       { label: 'Payment Terms', value: paymentTerms },
     ],
-    [
-      {
-        label: 'Notes',
-        value: notes,
-      },
-    ],
+    [{ label: 'Notes', value: notes }],
   ];
 
   return (
