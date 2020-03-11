@@ -105,7 +105,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       const entry = new Event();
       entry.setId(deletingEntry.id);
       entry.setPropertyId(propertyId);
-      entry.setFieldMaskList(['setPropertyId']);
+      entry.setFieldMaskList(['PropertyId']);
       await this.EventClient.Delete(entry);
       await this.load();
     }
