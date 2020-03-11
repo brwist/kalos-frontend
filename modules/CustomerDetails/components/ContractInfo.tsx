@@ -9,7 +9,7 @@ import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Customer } from '../../ComponentsLibrary/CustomerInformation';
 import { Modal } from '../../ComponentsLibrary/Modal';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Field, Value } from '../../ComponentsLibrary/Field';
@@ -21,25 +21,6 @@ const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
 
 type Entry = Contract.AsObject;
 type ContractFrequencyType = ContractFrequency.AsObject;
-
-const SCHEMA: Schema<Entry> = [
-  [{ label: 'Contract Details', headline: true }],
-  [
-    { label: 'Start Date', name: 'dateStarted', required: true, type: 'date' },
-    { label: 'End Date', name: 'dateEnded', required: true, type: 'date' },
-  ],
-  [
-    // { label: 'Frequency', name: 'frequency', required: true },
-    // { label: 'Billing', name: 'groupBilling', required: true },
-  ],
-  [
-    // { label: 'Payment Type', name: 'paymentType', required: true },
-    // { label: 'Payment Status', name: 'paymentStatus', required: true },
-  ],
-  [{ label: 'Notes', name: 'notes', multiline: true }],
-  [{ label: 'Invoice Data', headline: true }],
-  [{ label: 'Terms', name: 'paymentTerms', multiline: true }],
-];
 
 const useStyles = makeStyles(theme => ({
   wrapper: {
@@ -83,6 +64,16 @@ export const ContractInfo: FC<Props> = props => {
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const classes = useStyles();
+
+  const frequencyOptions: Options = useMemo(
+    () => frequencies.map(({ id: value, name: label }) => ({ label, value })),
+    [frequencies],
+  );
+
+  const billingOptions: Options = [
+    { label: 'Site', value: 0 },
+    { label: 'Group', value: 1 },
+  ];
 
   const loadFrequencies = useCallback(async () => {
     const entry = new ContractFrequency();
@@ -164,6 +155,39 @@ export const ContractInfo: FC<Props> = props => {
     [frequencies],
   );
 
+  const SCHEMA: Schema<Entry> = [
+    [{ label: 'Contract Details', headline: true }],
+    [
+      {
+        label: 'Start Date',
+        name: 'dateStarted',
+        required: true,
+        type: 'date',
+      },
+      { label: 'End Date', name: 'dateEnded', required: true, type: 'date' },
+    ],
+    [
+      {
+        label: 'Frequency',
+        name: 'frequency',
+        required: true,
+        options: frequencyOptions,
+      },
+      {
+        label: 'Billing',
+        name: 'groupBilling',
+        required: true,
+        options: billingOptions,
+      },
+    ],
+    [
+      // { label: 'Payment Type', name: 'paymentType', required: true },
+      // { label: 'Payment Status', name: 'paymentStatus', required: true },
+    ],
+    [{ label: 'Notes', name: 'notes', multiline: true }],
+    [{ label: 'Invoice Data', headline: true }],
+    [{ label: 'Terms', name: 'paymentTerms', multiline: true }],
+  ];
   const {
     id,
     number,
