@@ -29,8 +29,9 @@ const useStyles = makeStyles(theme => ({
 }));
 
 interface props {
-  card: Event.AsObject;
+  card?: Event.AsObject;
   reminder?: boolean;
+  skeleton?: boolean
 }
 
 interface colorProps {
@@ -66,7 +67,10 @@ const SkeletonCard = () => {
   );
 };
 
-const CallCard = ({ card, reminder }: props) => {
+const CallCard = ({ card, reminder, skeleton }: props) => {
+  if (skeleton) {
+    return <SkeletonCard />
+  }
   const {
     id,
     propertyId,

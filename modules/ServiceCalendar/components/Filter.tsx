@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {MutableRefObject, useState} from 'react';
 import { DatePicker } from '@material-ui/pickers';
 import { DatePickerView } from '@material-ui/pickers/DatePicker/DatePicker';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
@@ -19,7 +19,7 @@ type Props = {
   selectedDate: Date;
   changeSelectedDate: (date: Date) => void;
   changeFilters: (value: Filters) => void;
-  customersList: CustomerMap[];
+  filterOptions: MutableRefObject<CustomerMap>;
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -34,7 +34,7 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate, filters, changeFilters, customersList }: Props) => {
+const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate, filterOptions, filters, changeFilters }: Props) => {
   const classes = useStyles();
   const getCalendarView = (): DatePickerView => {
     switch (viewBy) {
@@ -79,7 +79,7 @@ const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate, filter
         />
       )}
       <Button label="Filter" onClick={() => toggleDrawer(!showDrawer)} />
-      <FilterDrawer open={showDrawer} toggleDrawer={toggleDrawer} filters={filters} customersList={customersList} changeFilters={changeFilters} />
+      <FilterDrawer open={showDrawer} toggleDrawer={toggleDrawer} filters={filters} filterOptions={filterOptions} changeFilters={changeFilters} />
     </Toolbar>
   );
 };

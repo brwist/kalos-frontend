@@ -24,7 +24,7 @@ const initialState = {
   fetchedCount: 0
 };
 
-export const useFetchAll = (fetchFn: (page: number) => Promise<Response>, ...deps: any) => {
+export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
   const [state, setState] = useState<State>(initialState);
   const { data, isLoading, page, totalCount, fetchedCount } = state;
   useEffect(() => {
@@ -46,10 +46,5 @@ export const useFetchAll = (fetchFn: (page: number) => Promise<Response>, ...dep
       });
     }
   }, [fetchedCount, totalCount, fetchFn]);
-
-  useEffect(() => {
-    setState(initialState);
-  }, [...deps]);
-
   return { data, isLoading };
 };
