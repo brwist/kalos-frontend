@@ -70,6 +70,11 @@ export default () => (
     <EnhancedField label="Password" type="password" />
     <EnhancedField label="Number" type="number" />
     <EnhancedField
+      label="Date"
+      defaultValue="2020-03-02 00:00:00"
+      type="date"
+    />
+    <EnhancedField
       label="With start adornment"
       startAdornment="$"
       defaultValue={1432}

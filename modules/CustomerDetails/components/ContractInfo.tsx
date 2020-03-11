@@ -25,8 +25,8 @@ type ContractFrequencyType = ContractFrequency.AsObject;
 const SCHEMA: Schema<Entry> = [
   [{ label: 'Contract Details', headline: true }],
   [
-    // { label: 'Start Date', name: 'dateStarted', required: true },
-    // { label: 'End Date', name: 'dateEnded', required: true },
+    { label: 'Start Date', name: 'dateStarted', required: true, type: 'date' },
+    { label: 'End Date', name: 'dateEnded', required: true, type: 'date' },
   ],
   [
     // { label: 'Frequency', name: 'frequency', required: true },

@@ -19,6 +19,7 @@ export type Type =
   | 'number'
   | 'search'
   | 'checkbox'
+  | 'date'
   | 'hidden';
 
 export type Value = string | number;
@@ -98,7 +99,6 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   validation = '',
   helperText = '',
   type = 'text',
-  value,
   readOnly = false,
   className = '',
   startAdornment,
@@ -106,15 +106,22 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   content,
   ...props
 }) => {
+  const dateTimePart = type === 'date' ? (props.value + '').substr(11, 8) : '';
+  const value =
+    type === 'date' ? (props.value + '').substr(0, 10) : props.value;
   const { actions, description } = props;
   const classes = useStyles({ type, disabled });
   const handleChange = useCallback(
     ({ target: { value } }) => {
       if (onChange) {
-        onChange(type === 'number' ? +value : value);
+        let newValue = type === 'number' ? +value : value;
+        if (type === 'date') {
+          newValue += ' ' + dateTimePart;
+        }
+        onChange(newValue);
       }
     },
-    [type, onChange],
+    [type, dateTimePart, onChange],
   );
   const handleChangeCheckbox = useCallback(
     (_, value) => {

@@ -12,6 +12,7 @@ export type Model = {
   password: string;
   note: string;
   mailing: number;
+  dob: string;
 };
 
 export const model: Model = {
@@ -24,6 +25,7 @@ export const model: Model = {
 dolor sit
 amet`,
   mailing: 1,
+  dob: '1980-11-23 00:00:00',
 };
 
 export const SCHEMA_1: Schema<Model> = [
@@ -43,6 +45,7 @@ export const SCHEMA_2: Schema<Model> = [
     { name: 'firstName', label: 'First Name' },
     { name: 'lastName', label: 'Last Name' },
     { name: 'gender', label: 'Gender', options: GENDERS },
+    { name: 'dob', label: 'Date of birth', type: 'date' },
   ],
   [{ label: 'Login detail', headline: true }],
   [
