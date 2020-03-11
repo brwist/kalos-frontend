@@ -4,23 +4,26 @@ import {
   ContractFrequencyClient,
   ContractFrequency,
 } from '@kalos-core/kalos-rpc/ContractFrequency';
+import { InvoiceClient, Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import { makeStyles } from '@material-ui/core/styles';
-import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
+import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Customer } from '../../ComponentsLibrary/CustomerInformation';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { Field, Value } from '../../ComponentsLibrary/Field';
+import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { getRPCFields, formatDate } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
 
 const ContractClientService = new ContractClient(ENDPOINT);
 const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
+const InvoiceClientService = new InvoiceClient(ENDPOINT);
 
 type Entry = Contract.AsObject;
 type ContractFrequencyType = ContractFrequency.AsObject;
+type InvoiceType = Invoice.AsObject;
 
 const BILLING_OPTIONS: Options = [
   { label: 'Site', value: 0 },
@@ -48,6 +51,29 @@ const PAYMENT_STATUS_OPTIONS: Options = [
   'Billed',
   'Canceled',
   'Paid',
+];
+
+const INVOICE_SCHEMA: Schema<InvoiceType> = [
+  [{ name: 'id', type: 'hidden' }],
+  [{ label: 'Invoice Data', headline: true }],
+  [{ label: 'Terms', name: 'terms', multiline: true }],
+  [
+    { label: 'Services Performed (1)', name: 'servicesperformedrow1' },
+    { label: 'Total Amount (1)', name: 'totalamountrow1' },
+  ],
+  [
+    { label: 'Services Performed (2)', name: 'servicesperformedrow2' },
+    { label: 'Total Amount (2)', name: 'totalamountrow2' },
+  ],
+  [
+    { label: 'Services Performed (3)', name: 'servicesperformedrow3' },
+    { label: 'Total Amount (3)', name: 'totalamountrow3' },
+  ],
+  [
+    { label: 'Services Performed (4)', name: 'servicesperformedrow4' },
+    { label: 'Total Amount (4)', name: 'totalamountrow4' },
+  ],
+  [{ label: 'Grand Total', name: 'totalamounttotal' }],
 ];
 
 const useStyles = makeStyles(theme => ({
@@ -85,6 +111,10 @@ export const ContractInfo: FC<Props> = props => {
   const { userID, children, customer } = props;
   const [entry, setEntry] = useState<Entry>(new Contract().toObject());
   const [frequencies, setFrequencies] = useState<ContractFrequencyType[]>([]);
+  const [invoice, setInvoice] = useState<InvoiceType>(new Invoice().toObject());
+  const [invoiceInitial, setInvoiceInitial] = useState<InvoiceType>(
+    new Invoice().toObject(),
+  );
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
@@ -106,6 +136,19 @@ export const ContractInfo: FC<Props> = props => {
     setFrequencies(resultsList);
   }, [setFrequencies]);
 
+  const loadInvoice = useCallback(
+    async (contract: Entry) => {
+      const entry = new Invoice();
+      entry.setContractId(contract.id);
+      try {
+        const invoice = await InvoiceClientService.Get(entry);
+        setInvoiceInitial(invoice);
+        setInvoice(invoice);
+      } catch (e) {}
+    },
+    [setInvoice, setInvoiceInitial],
+  );
+
   const load = useCallback(async () => {
     setLoaded(false);
     setLoading(true);
@@ -114,8 +157,9 @@ export const ContractInfo: FC<Props> = props => {
     entry.setIsActive(1);
     try {
       await loadFrequencies();
-      const customer = await ContractClientService.Get(entry);
-      setEntry(customer);
+      const contract = await ContractClientService.Get(entry);
+      await loadInvoice(contract);
+      setEntry(contract);
       setLoaded(true);
       setLoading(false);
     } catch (e) {
@@ -133,9 +177,36 @@ export const ContractInfo: FC<Props> = props => {
     [setDeleting],
   );
 
+  const saveInvoice = useCallback(
+    async (invoice: InvoiceType) => {
+      const req = new Invoice();
+      req.setContractId(entry.id);
+      req.setUserId(userID);
+      const fieldMaskList = ['UserId', 'ContractId'];
+      if (invoice.id !== 0) {
+        req.setId(invoice.id);
+      }
+      for (const fieldName in invoice) {
+        if (fieldName === 'id') continue;
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        req[methodName](invoice[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      req.setFieldMaskList(fieldMaskList);
+      const res = await InvoiceClientService[
+        invoice.id === 0 ? 'Create' : 'Update'
+      ](req);
+      setInvoice(res);
+      setInvoiceInitial(res);
+    },
+    [userID, entry, setInvoice, setInvoiceInitial],
+  );
+
   const handleSave = useCallback(
     async (data: Entry) => {
       setSaving(true);
+      await saveInvoice(invoice);
       const req = new Contract();
       req.setId(entry.id);
       const fieldMaskList = [];
@@ -151,7 +222,7 @@ export const ContractInfo: FC<Props> = props => {
       setSaving(false);
       setEditing(false);
     },
-    [entry, setSaving, setEntry, setEditing],
+    [entry, invoice, setSaving, setEntry, setEditing],
   );
 
   const handleDelete = useCallback(async () => {
@@ -218,8 +289,18 @@ export const ContractInfo: FC<Props> = props => {
       },
     ],
     [{ label: 'Notes', name: 'notes', multiline: true }],
-    [{ label: 'Invoice Data', headline: true }],
-    [{ label: 'Terms', name: 'paymentTerms', multiline: true }],
+    [
+      {
+        content: (
+          <PlainForm<InvoiceType>
+            schema={INVOICE_SCHEMA}
+            data={invoice}
+            onChange={setInvoice}
+            disabled={saving}
+          />
+        ),
+      },
+    ],
   ];
   const {
     id,
@@ -229,10 +310,10 @@ export const ContractInfo: FC<Props> = props => {
     dateEnded,
     paymentType,
     paymentStatus,
-    paymentTerms,
     frequency,
     notes,
   } = entry;
+  const { terms } = invoice;
   const data: Data = [
     [
       { label: 'Contract Number', value: number },
@@ -248,7 +329,7 @@ export const ContractInfo: FC<Props> = props => {
     ],
     [
       { label: 'Frequency', value: getFrequencyById(frequency) },
-      { label: 'Payment Terms', value: paymentTerms },
+      { label: 'Payment Terms', value: terms },
     ],
     [{ label: 'Notes', value: notes }],
   ];
