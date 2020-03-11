@@ -142,6 +142,7 @@ export const ContractInfo: FC<Props> = props => {
     setLoading(true);
     const entry = new Contract();
     entry.setUserId(userID);
+    entry.setIsActive(1);
     try {
       const customer = await ContractClientService.Get(entry);
       setEntry(customer);

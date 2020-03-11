@@ -159,6 +159,7 @@ export const PropertyInfo: FC<Props> = props => {
     const req = new Property();
     req.setUserId(userID);
     req.setId(propertyId);
+    req.setIsActive(1);
     try {
       const { resultsList, totalCount } = (
         await PropertyClientService.BatchGet(req)
