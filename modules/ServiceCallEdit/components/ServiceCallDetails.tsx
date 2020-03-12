@@ -3,7 +3,6 @@ import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT } from '../../../constants';
-import { loadUserById, loadPropertyById } from '../../../helpers';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Tabs } from '../../ComponentsLibrary/Tabs';
@@ -16,8 +15,6 @@ import { Proposal } from './Proposal';
 const EventClientService = new EventClient(ENDPOINT);
 
 export type EventType = Event.AsObject;
-type CustomerType = User.AsObject;
-type PropertyType = Property.AsObject;
 
 export interface Props {
   userID: number;
@@ -28,10 +25,6 @@ export interface Props {
 export const ServiceCallDetails: FC<Props> = props => {
   const { userID, propertyId, serviceCallId } = props;
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
-  const [customer, setCustomer] = useState<CustomerType>(new User().toObject());
-  const [property, setProperty] = useState<PropertyType>(
-    new Property().toObject(),
-  );
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
@@ -41,10 +34,6 @@ export const ServiceCallDetails: FC<Props> = props => {
     const req = new Event();
     req.setId(serviceCallId);
     try {
-      const user = await loadUserById(userID);
-      setCustomer(user);
-      const property = await loadPropertyById(propertyId);
-      setProperty(property);
       const entry = await EventClientService.Get(req);
       setEntry(entry);
       setLoading(false);
@@ -52,15 +41,7 @@ export const ServiceCallDetails: FC<Props> = props => {
     } catch (e) {
       setError(true);
     }
-  }, [
-    setLoading,
-    setError,
-    setCustomer,
-    setProperty,
-    serviceCallId,
-    userID,
-    propertyId,
-  ]);
+  }, [setLoading, setError, serviceCallId, userID, propertyId]);
 
   useEffect(() => {
     if (!loaded) {
@@ -68,7 +49,7 @@ export const ServiceCallDetails: FC<Props> = props => {
     }
   }, [loaded, load]);
 
-  const { logJobNumber, contractNumber } = entry;
+  const { logJobNumber, contractNumber, property, customer } = entry;
   const {
     firstname,
     lastname,
@@ -79,9 +60,8 @@ export const ServiceCallDetails: FC<Props> = props => {
     fax,
     email,
     billingTerms,
-  } = customer;
-  const { address, city, state, zip } = property;
-
+  } = customer || new User().toObject();
+  const { address, city, state, zip } = property || new Property().toObject();
   const data: Data = [
     [
       { label: 'Customer', value: `${firstname} ${lastname}` },
