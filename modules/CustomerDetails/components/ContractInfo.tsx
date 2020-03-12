@@ -15,6 +15,7 @@ import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
+import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Field, Value } from '../../ComponentsLibrary/Field';
 import { getRPCFields, formatDate } from '../../../helpers';
@@ -162,6 +163,7 @@ export const ContractInfo: FC<Props> = props => {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [confirmNew, setConfirmNew] = useState<boolean>(false);
   const classes = useStyles();
 
   const frequencyOptions: Options = useMemo(
@@ -334,6 +336,20 @@ export const ContractInfo: FC<Props> = props => {
     [frequencies],
   );
 
+  const handleSetConfirmNew = useCallback(
+    (confirmNew: boolean) => () => setConfirmNew(confirmNew),
+    [setConfirmNew],
+  );
+
+  const handleNewContract = useCallback(
+    () =>
+      (document.location.href = [
+        '/index.cfm?action=admin:contracts.contractnew',
+        `contract_id=${entry.id}`,
+      ].join('&')),
+    [entry],
+  );
+
   const SCHEMA: Schema<Entry> = [
     [{ label: 'Contract Details', headline: true }],
     [
@@ -491,7 +507,7 @@ export const ContractInfo: FC<Props> = props => {
                 },
                 {
                   label: 'New',
-                  // onClick: handleSetDeleting(true),
+                  onClick: handleSetConfirmNew(true),
                 },
               ]}
             >
@@ -536,6 +552,15 @@ export const ContractInfo: FC<Props> = props => {
         kind="Contract"
         name={`${number}`}
       />
+      <Confirm
+        title="Confirm New Contract"
+        open={confirmNew}
+        onClose={handleSetConfirmNew(false)}
+        onConfirm={handleNewContract}
+      >
+        Are you sure you want to create a new contract? This will replace the
+        old one (documents will remail).
+      </Confirm>
     </>
   );
 };
