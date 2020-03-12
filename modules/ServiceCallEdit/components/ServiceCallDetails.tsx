@@ -14,7 +14,7 @@ import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Tabs } from '../../ComponentsLibrary/Tabs';
-import { Options } from '../../ComponentsLibrary/Field';
+import { Options, Option } from '../../ComponentsLibrary/Field';
 import { Request } from './Request';
 import { Equipment } from './Equipment';
 import { Services } from './Services';
@@ -72,11 +72,16 @@ export const ServiceCallDetails: FC<Props> = props => {
     }
   }, [loaded, load]);
 
-  const jobTypeOptions: Options = jobTypes.map(
+  const handleChangeEntry = useCallback(
+    (data: EventType) => setEntry({ ...entry, ...data }),
+    [entry, setEntry],
+  );
+
+  const jobTypeOptions: Option[] = jobTypes.map(
     ({ id: value, name: label }) => ({ label, value }),
   );
 
-  const jobSubtypeOptions: Options = jobSubtypes.map(
+  const jobSubtypeOptions: Option[] = jobSubtypes.map(
     ({ id: value, name: label }) => ({ label, value }),
   );
 
@@ -136,6 +141,7 @@ export const ServiceCallDetails: FC<Props> = props => {
                 jobTypeOptions={jobTypeOptions}
                 jobSubtypeOptions={jobSubtypeOptions}
                 jobTypeSubtypes={jobTypeSubtypes}
+                onChange={handleChangeEntry}
               />
             ),
           },
