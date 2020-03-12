@@ -85,23 +85,23 @@ export const ServiceCallDetails: FC<Props> = props => {
   const data: Data = [
     [
       { label: 'Customer', value: `${firstname} ${lastname}` },
-      { label: 'Primary Phone', value: phone },
+      { label: 'Business Name', value: businessname },
     ],
     [
-      { label: 'Business Name', value: businessname },
+      { label: 'Primary Phone', value: phone },
       { label: 'Alternate Phone', value: altphone, href: 'tel' },
     ],
     [
-      { label: 'Property', value: address },
       { label: 'Cell Phone', value: cellphone, href: 'tel' },
-    ],
-    [
-      { label: 'City, State, Zip', value: `${city}, ${state} ${zip}` },
       { label: 'Fax', value: fax, href: 'tel' },
     ],
     [
       { label: 'Job Number', value: logJobNumber },
       { label: 'Email', value: email, href: 'mailto' },
+    ],
+    [
+      { label: 'Property', value: address },
+      { label: 'City, State, Zip', value: `${city}, ${state} ${zip}` },
     ],
     [
       { label: 'Billing Terms', value: billingTerms },
