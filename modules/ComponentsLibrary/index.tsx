@@ -17,6 +17,7 @@ import Modal from './Modal/examples';
 import PlainForm from './PlainForm/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
+import Tabs from './Tabs/examples';
 
 const DEFAULT_COMPONENT_IDX = 0;
 
@@ -33,6 +34,7 @@ const COMPONENTS = {
   PlainForm,
   Search,
   SectionBar,
+  Tabs,
 };
 
 const useStyles = makeStyles(theme => ({
