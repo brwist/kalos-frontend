@@ -2,7 +2,11 @@ import React, { FC } from 'React';
 import { PlainForm, Schema, Options } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { makeFakeRows } from '../../../helpers';
-import { RESIDENTIAL_OPTIONS } from '../../../constants';
+import {
+  RESIDENTIAL_OPTIONS,
+  EVENT_STATUS_LIST,
+  PAYMENT_TYPE_LIST,
+} from '../../../constants';
 import { EventType, JobTypeSubtypeType } from './ServiceCallDetails';
 
 interface Props {
@@ -43,7 +47,12 @@ export const Request: FC<Props> = ({
         name: 'logTechnicianAssigned',
         required: true,
       },
-      { label: 'Payment Type', name: 'logPaymentType', required: true },
+      {
+        label: 'Payment Type',
+        name: 'logPaymentType',
+        required: true,
+        options: PAYMENT_TYPE_LIST,
+      },
       {
         label: 'Sector',
         name: 'isResidential',
@@ -65,7 +74,12 @@ export const Request: FC<Props> = ({
         options: jobTypeOptions,
       },
       { label: 'Sub Type', name: 'jobSubtype', options: jobSubtypeOptions },
-      { label: 'Job Status', name: 'logJobStatus', required: true },
+      {
+        label: 'Job Status',
+        name: 'logJobStatus',
+        required: true,
+        options: EVENT_STATUS_LIST,
+      },
       { label: 'Amount Quoted', name: 'amountQuoted' },
     ],
     [
