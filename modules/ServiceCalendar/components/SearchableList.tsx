@@ -27,7 +27,7 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-const SearchableList = ({ title, options, values, handleChange }) => {
+const SearchableList = ({ title, options, values, handleChange, noSearch }) => {
   const classes = useStyles();
   const [searchTerm, setSearchTerm] = useState<string>('');
   return (
@@ -38,7 +38,9 @@ const SearchableList = ({ title, options, values, handleChange }) => {
         <Typography className={classes.heading}>{title}</Typography>
       </ExpansionPanelSummary>
       <ExpansionPanelDetails className={classes.panelDetails}>
-        <TextField label="Search" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        {!noSearch && (
+          <TextField label="Search" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        )}
         <List>
           {Object.entries(options).map(([id, name]) => {
             if (!searchTerm || name.toLowerCase().includes(searchTerm.toLowerCase())) {
