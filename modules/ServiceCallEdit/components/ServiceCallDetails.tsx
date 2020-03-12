@@ -166,6 +166,25 @@ export const ServiceCallDetails: FC<Props> = props => {
       >
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
+      <SectionBar
+        title="Service Call Data"
+        actions={[
+          {
+            label: 'Save Service Call Only',
+          },
+          {
+            label: 'Save and Invoice',
+          },
+          {
+            label: 'Cancel',
+            url: [
+              '/index.cfm?action=admin:properties.details',
+              `property_id=${propertyId}`,
+              `user_id=${userID}`,
+            ].join('&'),
+          },
+        ]}
+      />
       <Tabs
         tabs={[
           {

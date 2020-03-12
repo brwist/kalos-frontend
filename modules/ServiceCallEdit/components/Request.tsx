@@ -44,7 +44,7 @@ export const Request: FC<Props> = ({
     },
     [onChange],
   );
-  if (loading) return <InfoTable data={makeFakeRows(2, 10)} loading />;
+  if (loading) return <InfoTable data={makeFakeRows(4, 5)} loading />;
   const SCHEMA: Schema<EventType> = [
     [
       {
