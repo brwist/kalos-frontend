@@ -3,13 +3,14 @@ import { PlainForm, Schema, Options } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { makeFakeRows } from '../../../helpers';
 import { RESIDENTIAL_OPTIONS } from '../../../constants';
-import { EventType } from './ServiceCallDetails';
+import { EventType, JobTypeSubtypeType } from './ServiceCallDetails';
 
 interface Props {
   loading: boolean;
   serviceItem: EventType;
   jobTypeOptions: Options;
   jobSubtypeOptions: Options;
+  jobTypeSubtypes: JobTypeSubtypeType[];
 }
 
 export const Request: FC<Props> = ({
