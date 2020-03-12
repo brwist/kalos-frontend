@@ -20,6 +20,7 @@ export type Type =
   | 'search'
   | 'checkbox'
   | 'date'
+  | 'time'
   | 'hidden';
 
 export type Value = string | number;

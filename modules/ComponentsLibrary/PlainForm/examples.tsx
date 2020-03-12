@@ -13,6 +13,7 @@ export type Model = {
   note: string;
   mailing: number;
   dob: string;
+  hour: string;
 };
 
 export const model: Model = {
@@ -26,6 +27,7 @@ dolor sit
 amet`,
   mailing: 1,
   dob: '1980-11-23 00:00:00',
+  hour: '21:45',
 };
 
 export const SCHEMA_1: Schema<Model> = [
@@ -58,6 +60,7 @@ export const SCHEMA_2: Schema<Model> = [
       required: true,
     },
     { name: 'mailing', label: 'Mailing', type: 'checkbox' },
+    { name: 'hour', label: 'Hour', type: 'time' },
   ],
   [{ label: 'Various', headline: true }],
   [{ name: 'note', label: 'Note', multiline: true }],
