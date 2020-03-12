@@ -88,7 +88,7 @@ export const ServiceCallDetails: FC<Props> = props => {
       label: jobSubtypes.find(({ id }) => id === jobSubtypeId)?.name || '',
     }));
 
-  const { logJobNumber, contractNumber, property, customer } = entry;
+  const { id, logJobNumber, contractNumber, property, customer } = entry;
   const {
     firstname,
     lastname,
@@ -130,7 +130,40 @@ export const ServiceCallDetails: FC<Props> = props => {
 
   return (
     <div>
-      <SectionBar title="Service Call Details">
+      <SectionBar
+        title="Service Call Details"
+        actions={[
+          {
+            label: 'Spiff Apply',
+            url: [
+              '/index.cfm?action=admin:tasks.addtask',
+              'type=Spiff',
+              `job_no=${logJobNumber}`,
+            ].join('&'),
+          },
+          {
+            label: 'Job Activity',
+            url: ['/index.cfm?action=admin:service.viewlogs', `id=${id}`].join(
+              '&',
+            ),
+          },
+          {
+            label: 'Add Notification',
+          },
+          {
+            label: 'Service Call Search',
+            url: '/index.cfm?action=admin:service.calls',
+          },
+          {
+            label: 'Close',
+            url: [
+              '/index.cfm?action=admin:properties.details',
+              `property_id=${propertyId}`,
+              `user_id=${userID}`,
+            ].join('&'),
+          },
+        ]}
+      >
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
       <Tabs
