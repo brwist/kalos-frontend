@@ -5,11 +5,13 @@ import { Props as ButtonProps } from '../Button';
 import {
   Field,
   Value,
+  Option as OptionType,
   Options as OptionsType,
   Type,
   getDefaultValueByType,
 } from '../Field';
 
+export type Option = OptionType;
 export type Options = OptionsType;
 
 export type SchemaProps<T> = {

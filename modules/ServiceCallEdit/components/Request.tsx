@@ -1,5 +1,10 @@
-import React, { FC } from 'React';
-import { PlainForm, Schema, Options } from '../../ComponentsLibrary/PlainForm';
+import React, { FC, useCallback } from 'react';
+import {
+  PlainForm,
+  Schema,
+  Options,
+  Option,
+} from '../../ComponentsLibrary/PlainForm';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { makeFakeRows } from '../../../helpers';
 import {
@@ -12,9 +17,10 @@ import { EventType, JobTypeSubtypeType } from './ServiceCallDetails';
 interface Props {
   loading: boolean;
   serviceItem: EventType;
-  jobTypeOptions: Options;
-  jobSubtypeOptions: Options;
+  jobTypeOptions: Option[];
+  jobSubtypeOptions: Option[];
   jobTypeSubtypes: JobTypeSubtypeType[];
+  onChange: (serviceItem: EventType) => void;
 }
 
 export const Request: FC<Props> = ({
@@ -22,7 +28,22 @@ export const Request: FC<Props> = ({
   loading,
   jobTypeOptions,
   jobSubtypeOptions,
+  onChange,
 }) => {
+  const handleChange = useCallback(
+    (data: EventType) => {
+      onChange({
+        ...data,
+        jobType:
+          jobTypeOptions.find(({ value }) => value === data.jobTypeId)?.label ||
+          '',
+        jobSubtype:
+          jobSubtypeOptions.find(({ value }) => value === data.jobSubtypeId)
+            ?.label || '',
+      });
+    },
+    [onChange],
+  );
   if (loading) return <InfoTable data={makeFakeRows(2, 10)} loading />;
   const SCHEMA: Schema<EventType> = [
     [
@@ -73,7 +94,7 @@ export const Request: FC<Props> = ({
         required: true,
         options: jobTypeOptions,
       },
-      { label: 'Sub Type', name: 'jobSubtype', options: jobSubtypeOptions },
+      { label: 'Sub Type', name: 'jobSubtypeId', options: jobSubtypeOptions },
       {
         label: 'Job Status',
         name: 'logJobStatus',
@@ -113,10 +134,6 @@ export const Request: FC<Props> = ({
     ],
   ];
   return (
-    <PlainForm
-      schema={SCHEMA}
-      data={serviceItem}
-      onChange={a => console.log(a)}
-    />
+    <PlainForm schema={SCHEMA} data={serviceItem} onChange={handleChange} />
   );
 };
