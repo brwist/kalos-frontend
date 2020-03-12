@@ -9,12 +9,14 @@ interface Props {
   loading: boolean;
   serviceItem: EventType;
   jobTypeOptions: Options;
+  jobSubtypeOptions: Options;
 }
 
 export const Request: FC<Props> = ({
   serviceItem,
   loading,
   jobTypeOptions,
+  jobSubtypeOptions,
 }) => {
   if (loading) return <InfoTable data={makeFakeRows(2, 10)} loading />;
   const SCHEMA: Schema<EventType> = [
@@ -61,7 +63,7 @@ export const Request: FC<Props> = ({
         required: true,
         options: jobTypeOptions,
       },
-      { label: 'Sub Type', name: 'jobSubtype' },
+      { label: 'Sub Type', name: 'jobSubtype', options: jobSubtypeOptions },
       { label: 'Job Status', name: 'logJobStatus', required: true },
       { label: 'Amount Quoted', name: 'amountQuoted' },
     ],

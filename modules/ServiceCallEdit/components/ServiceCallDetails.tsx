@@ -2,8 +2,9 @@ import React, { FC, useState, useEffect, useCallback } from 'react';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { Property } from '@kalos-core/kalos-rpc/Property';
-import { loadJobTypes } from '../../../helpers';
+import { loadJobTypes, loadJobSubtypes } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
@@ -19,6 +20,7 @@ const EventClientService = new EventClient(ENDPOINT);
 
 export type EventType = Event.AsObject;
 type JobTypeType = JobType.AsObject;
+type JobSubtypeType = JobSubtype.AsObject;
 
 export interface Props {
   userID: number;
@@ -33,6 +35,7 @@ export const ServiceCallDetails: FC<Props> = props => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
+  const [jobSubtypes, setJobSubtype] = useState<JobSubtypeType[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,6 +44,8 @@ export const ServiceCallDetails: FC<Props> = props => {
     try {
       const jobTypes = await loadJobTypes();
       setJobTypes(jobTypes);
+      const jobSubtypes = await loadJobSubtypes();
+      setJobSubtype(jobSubtypes);
       const entry = await EventClientService.Get(req);
       setEntry(entry);
       setLoading(false);
@@ -57,6 +62,10 @@ export const ServiceCallDetails: FC<Props> = props => {
   }, [loaded, load]);
 
   const jobTypeOptions: Options = jobTypes.map(
+    ({ id: value, name: label }) => ({ label, value }),
+  );
+
+  const jobSubtypeOptions: Options = jobSubtypes.map(
     ({ id: value, name: label }) => ({ label, value }),
   );
 
@@ -114,6 +123,7 @@ export const ServiceCallDetails: FC<Props> = props => {
                 serviceItem={entry}
                 loading={loading}
                 jobTypeOptions={jobTypeOptions}
+                jobSubtypeOptions={jobSubtypeOptions}
               />
             ),
           },
