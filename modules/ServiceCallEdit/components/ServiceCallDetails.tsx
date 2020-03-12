@@ -15,7 +15,7 @@ import { Proposal } from './Proposal';
 
 const EventClientService = new EventClient(ENDPOINT);
 
-type EventType = Event.AsObject;
+export type EventType = Event.AsObject;
 type CustomerType = User.AsObject;
 type PropertyType = Property.AsObject;
 
@@ -118,7 +118,7 @@ export const ServiceCallDetails: FC<Props> = props => {
         tabs={[
           {
             label: 'Request',
-            content: <Request />,
+            content: <Request serviceItem={entry} loading={loading} />,
           },
           {
             label: 'Equipment',
