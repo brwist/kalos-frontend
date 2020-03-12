@@ -314,10 +314,17 @@ async function loadJobSubtypes() {
  * @returns JobTypeSubtype[]
  */
 async function loadJobTypeSubtypes() {
-  const { resultsList } = (
-    await JobTypeSubtypeClientService.BatchGet(new JobTypeSubtype())
-  ).toObject();
-  return resultsList;
+  const results: JobTypeSubtype.AsObject[] = [];
+  const req = new JobTypeSubtype();
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await JobTypeSubtypeClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results;
 }
 
 /**

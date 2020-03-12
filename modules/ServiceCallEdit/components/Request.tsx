@@ -94,7 +94,7 @@ export const Request: FC<Props> = ({
         required: true,
         options: jobTypeOptions,
       },
-      { label: 'Sub Type', name: 'jobSubtypeId', options: jobSubtypeOptions },
+      { label: 'Sub Type', name: 'jobSubtypeId', options: jobSubtypeOptions }, //TODO: clear field on jobTypeId change
       {
         label: 'Job Status',
         name: 'logJobStatus',
