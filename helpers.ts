@@ -1,7 +1,9 @@
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
+const PropertyClientService = new PropertyClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -277,6 +279,30 @@ function getRPCFields(fieldName: string) {
 }
 
 /**
+ * Returns loaded Property by its ids
+ * @param id: property id
+ * @returns Property
+ */
+async function loadPropertyById(id: number) {
+  const req = new Property();
+  req.setId(id);
+  req.setIsActive(1);
+  return await PropertyClientService.Get(req);
+}
+
+/**
+ * Returns loaded User by its ids
+ * @param id: user id
+ * @returns User
+ */
+async function loadUserById(id: number) {
+  const req = new User();
+  req.setId(id);
+  req.setIsActive(1);
+  return await UserClientService.Get(req);
+}
+
+/**
  * Returns loaded Users by their ids
  * @param ids: array of user id
  * @returns object { [userId]: User }
@@ -288,13 +314,7 @@ async function loadUsersByIds(ids: number[]) {
       uniqueIds.push(id);
     }
   });
-  const users = await Promise.all(
-    uniqueIds.map(async id => {
-      const user = new User();
-      user.setId(id);
-      return await UserClientService.Get(user);
-    }),
-  );
+  const users = await Promise.all(uniqueIds.map(loadUserById));
   return users.reduce((aggr, user) => ({ ...aggr, [user.id]: user }), {}) as {
     [key: number]: User.AsObject;
   };
@@ -353,6 +373,8 @@ export {
   makeFakeRows,
   getRPCFields,
   formatDateTime,
+  loadPropertyById,
+  loadUserById,
   loadUsersByIds,
   range,
   loadGeoLocationByAddress,
