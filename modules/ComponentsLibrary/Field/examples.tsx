@@ -74,6 +74,7 @@ export default () => (
       defaultValue="2020-03-02 00:00:00"
       type="date"
     />
+    <EnhancedField label="Time" defaultValue="21:35" type="time" />
     <EnhancedField
       label="With start adornment"
       startAdornment="$"
