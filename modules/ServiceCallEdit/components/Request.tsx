@@ -17,43 +17,35 @@ const SCHEMA: Schema<EventType> = [
       type: 'date',
       required: true,
     },
+    { label: 'Begin Time', name: 'timeStarted', type: 'time', required: true },
+    { label: 'End Date', name: 'dateEnded', type: 'date', required: true },
+    { label: 'End Time', name: 'timeEnded', type: 'time', required: true },
+  ],
+  [
     {
       label: 'Technician Assigned',
       name: 'logTechnicianAssigned',
       required: true,
     },
-  ],
-  [
-    { label: 'Begin Time', name: 'timeStarted', required: true },
     { label: 'Payment Type', name: 'logPaymentType', required: true },
-  ],
-  [
-    { label: 'End Date', name: 'dateEnded', type: 'date', required: true },
-    { label: 'Diagnostic Quoted', name: 'diagnosticQuoted', type: 'checkbox' },
-  ],
-  [
-    { label: 'End Time', name: 'timeEnded', required: true },
-    { label: 'Is LMPC?', name: 'isLmpc', type: 'checkbox' },
-  ],
-  [
     { label: 'Sector', name: 'id', required: true },
-    { label: 'Is Callback?', name: 'isCallback', type: 'checkbox' },
-  ],
-  [
-    { label: 'Job Type', name: 'jobType', required: true },
-    { label: 'Amount Quoted', name: 'amountQuoted' },
-  ],
-  [
-    { label: 'Sub Type', name: 'jobSubtype' },
     {
       label: 'Brief Description',
-      name: 'description',
+      name: 'name',
       required: true,
       description: 'Used on calendar',
     },
   ],
   [
+    { label: 'Job Type', name: 'jobType', required: true },
+    { label: 'Sub Type', name: 'jobSubtype' },
     { label: 'Job Status', name: 'logJobStatus', required: true },
+    { label: 'Amount Quoted', name: 'amountQuoted' },
+  ],
+  [
+    { label: 'Diagnostic Quoted', name: 'diagnosticQuoted', type: 'checkbox' },
+    { label: 'Is LMPC?', name: 'isLmpc', type: 'checkbox' },
+    { label: 'Is Callback?', name: 'isCallback', type: 'checkbox' },
     {
       label: 'Priority',
       name: 'highPriority',
@@ -62,17 +54,24 @@ const SCHEMA: Schema<EventType> = [
     },
   ],
   [
-    { label: 'Service Needed', name: 'services', required: true },
+    {
+      label: 'Service Needed',
+      name: 'description',
+      required: true,
+      multiline: true,
+    },
     {
       label: 'Service Call Notes',
-      name: 'notes',
+      name: 'logNotes',
       description: 'For internal use',
+      multiline: true,
     },
   ],
 ];
 
 export const Request: FC<Props> = ({ serviceItem, loading }) => {
   if (loading) return <InfoTable data={makeFakeRows(2, 10)} loading />;
+  console.log({ serviceItem });
   return (
     <PlainForm
       schema={SCHEMA}
