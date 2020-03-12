@@ -81,9 +81,12 @@ export const ServiceCallDetails: FC<Props> = props => {
     ({ id: value, name: label }) => ({ label, value }),
   );
 
-  const jobSubtypeOptions: Option[] = jobSubtypes.map(
-    ({ id: value, name: label }) => ({ label, value }),
-  );
+  const jobSubtypeOptions: Option[] = jobTypeSubtypes
+    .filter(({ jobTypeId }) => jobTypeId === entry.jobTypeId)
+    .map(({ jobSubtypeId }) => ({
+      value: jobSubtypeId,
+      label: jobSubtypes.find(({ id }) => id === jobSubtypeId)?.name || '',
+    }));
 
   const { logJobNumber, contractNumber, property, customer } = entry;
   const {
