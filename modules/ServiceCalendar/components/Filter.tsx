@@ -34,7 +34,16 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate, filterOptions, filters, changeFilters }: Props) => {
+const Filter = ({
+  viewBy,
+  changeViewBy,
+  selectedDate,
+  changeSelectedDate,
+  filterOptions,
+  filters,
+  changeFilters,
+  initialFilters,
+}: Props) => {
   const classes = useStyles();
   const getCalendarView = (): DatePickerView => {
     switch (viewBy) {
@@ -79,7 +88,14 @@ const Filter = ({ viewBy, changeViewBy, selectedDate, changeSelectedDate, filter
         />
       )}
       <Button label="Filter" onClick={() => toggleDrawer(!showDrawer)} />
-      <FilterDrawer open={showDrawer} toggleDrawer={toggleDrawer} filters={filters} filterOptions={filterOptions} changeFilters={changeFilters} />
+      <FilterDrawer
+        open={showDrawer}
+        toggleDrawer={toggleDrawer}
+        filters={filters}
+        filterOptions={filterOptions}
+        changeFilters={changeFilters}
+        initialFilters={initialFilters}
+      />
     </Toolbar>
   );
 };

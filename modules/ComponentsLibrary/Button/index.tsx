@@ -12,6 +12,7 @@ export interface Props extends Style {
   onClick?: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
   disabled?: boolean;
   variant?: 'contained' | 'outlined' | 'text';
+  color?: 'primary' | 'secondary';
 }
 
 const useStyles = makeStyles(theme => ({
@@ -21,12 +22,12 @@ const useStyles = makeStyles(theme => ({
     marginLeft: theme.spacing(compact ? 0 : 1),
     ...(size === 'xsmall'
       ? {
-          fontSize: 11,
-          paddingTop: 0,
-          paddingBottom: 0,
-          paddingLeft: 6,
-          paddingRight: 6,
-        }
+        fontSize: 11,
+        paddingTop: 0,
+        paddingBottom: 0,
+        paddingLeft: 6,
+        paddingRight: 6,
+      }
       : {}),
   }),
   link: {
@@ -40,6 +41,7 @@ export const Button = ({
   variant = 'contained',
   compact = false,
   size = 'small',
+  color = 'primary',
   ...props
 }: Props) => {
   const classes = useStyles({ compact, size });
@@ -47,9 +49,9 @@ export const Button = ({
     <ButtonUI
       className={classes.button}
       variant={variant}
-      color="primary"
-      {...props}
+      color={color}
       size={size === 'xsmall' ? 'small' : size}
+      {...props}
     >
       {label}
     </ButtonUI>

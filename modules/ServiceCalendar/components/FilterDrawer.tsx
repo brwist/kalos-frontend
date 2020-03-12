@@ -1,17 +1,23 @@
 import React, { useState, useReducer } from 'react';
 import { Theme, createStyles, makeStyles } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
+import ListItem from '@material-ui/core/ListItem';
 import { Button } from '../../ComponentsLibrary/Button';
 import SearchableList from './SearchableList';
+import {JobTypePicker} from '../../Pickers/JobType';
+import {JobSubtypePicker} from '../../Pickers/JobSubtype';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
-      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      height: '100%',
     },
-    heading: {
-      fontSize: theme.typography.pxToRem(15),
-      fontWeight: theme.typography.fontWeightRegular,
+    buttons: {
+      display: 'flex',
+      justifyContent: 'space-between',
     },
   }),
 );
@@ -69,45 +75,102 @@ const reducer = (state: State, action: Action): State => {
     };
   }
   case 'propertyUse': {
+    const propertyUse = [...state.propertyUse];
+    const currentIndex = propertyUse.indexOf(action.value);
+
+    if (currentIndex === -1) {
+      propertyUse.push(action.value);
+    } else {
+      propertyUse.splice(currentIndex, 1);
+    }
     return {
       ...state,
-      propertyUse: action.value,
+      propertyUse,
     };
   }
+    case 'resetFilters':
+      return action.value;
   default:
     return {...state};
   }
 };
 
-const FilterDrawer = ({ open, toggleDrawer, filterOptions, filters, changeFilters }) => {
+const FilterDrawer = ({
+  open,
+  toggleDrawer,
+  filterOptions,
+  filters,
+  changeFilters,
+  initialFilters,
+}) => {
   const classes = useStyles();
   const [state, dispatch] = useReducer(reducer, filters);
-  const { customers, zip } = state;
+  const { customers, zip, jobType, jobSubType, propertyUse } = state;
 
   const handleSave = () => {
     changeFilters(state);
     toggleDrawer();
   };
 
+  const handleReset = () => {
+    dispatch({ type: 'resetFilters', value: initialFilters });
+  };
+
   return (
     <Drawer anchor="right" open={open} onClose={() => toggleDrawer(!open)}>
-      <SearchableList
-        title="Customers"
-        options={filterOptions.customers}
-        values={customers}
-        handleChange={value =>
-          dispatch({ type: 'customers', value })
-        }
-      />
-      <SearchableList
-        title="ZIP codes"
-        options={filterOptions.zip}
-        values={zip}
-        handleChange={value =>
-          dispatch({ type: 'zip', value })
-        }
-      />
-      <Button label="Save" onClick={handleSave} />
+      <div className={classes.root}>
+        <div>
+          <SearchableList
+            title="Customers"
+            options={filterOptions.customers}
+            values={customers}
+            handleChange={value =>
+              dispatch({ type: 'customers', value })
+            }
+          />
+          <SearchableList
+            title="ZIP Codes"
+            options={filterOptions.zip}
+            values={zip}
+            handleChange={value =>
+              dispatch({ type: 'zip', value })
+            }
+          />
+          <SearchableList
+            title="Property Use"
+            options={{
+              1: 'Residential',
+              0: 'Commercial',
+            }}
+            values={propertyUse}
+            handleChange={value =>
+              dispatch({ type: 'propertyUse', value })
+            }
+            noSearch
+          />
+          <ListItem>
+            <JobTypePicker
+              selected={jobType}
+              onSelect={value =>
+                dispatch({ type: 'jobType', value })
+              }
+            />
+          </ListItem>
+          <ListItem>
+            <JobSubtypePicker
+              selected={jobSubType}
+              jobTypeID={jobType}
+              onSelect={value =>
+                dispatch({ type: 'jobSubType', value })
+              }
+            />
+          </ListItem>
+        </div>
+        <div className={classes.buttons}>
+          <Button label="Reset" onClick={handleReset} color="secondary" fullWidth />
+          <Button label="Save" onClick={handleSave} fullWidth />
+        </div>
+      </div>
     </Drawer>
   );
 };

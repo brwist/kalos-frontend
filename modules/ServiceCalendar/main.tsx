@@ -75,10 +75,10 @@ const getShownDates = (viewBy: string, date?: Date) => {
 };
 
 type Filters = {
-  customers: number[],
-  jobType: number | null,
-  jobSubType: number | null,
-  zip: number[],
+  customers: string[],
+  jobType: string,
+  jobSubType: string,
+  zip: string[],
   propertyUse: string[],
 };
 
@@ -130,18 +130,20 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
+const initialFilters: Filters = {
+  customers: [],
+  jobType: '',
+  jobSubType: '',
+  zip: [],
+  propertyUse: [],
+};
+
 const initialState: State = {
   speedDialOpen: false,
   viewBy: 'week',
   selectedDate: getDefaultSelectedDate('week'),
   shownDates: getShownDates('week', getDefaultSelectedDate('week')),
-  filters: {
-    customers: [],
-    jobType: null,
-    jobSubType: null,
-    zip: [],
-    propertyUse: [],
-  }
+  filters: initialFilters,
 };
 
 type EmployeesContext = {
@@ -201,6 +203,7 @@ const ServiceCalendar = ({ userId }: Props) => {
             changeFilters={changeFilters}
             filterOptions={filterOptions.current}
             filters={filters}
+            initialFilters={initialFilters}
           />
         </MuiPickersUtilsProvider>
         <Container className={viewBy !== 'day' ? classes.week : ''} maxWidth={false}>

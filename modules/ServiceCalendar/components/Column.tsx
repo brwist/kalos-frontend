@@ -25,11 +25,14 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 const eventClient = new EventClient(ENDPOINT);
-
+type FilterOption = {
+  customer: any;
+  zip: string | null;
+}
 type Props = {
   date: string;
   filters: Filters;
-  addFilterOptions: (object) => void;
+  addFilterOptions: (arg0: FilterOption) => void;
 };
 
 const Column = ({ date, filters, addFilterOptions }: Props) => {
@@ -44,13 +47,23 @@ const Column = ({ date, filters, addFilterOptions }: Props) => {
   }, []);
 
   const { data } = useFetchAll(fetchCalls);
-  const {completedCalls, calls, reminders} = data.reduce((acc, call) => {
+  const { completedCalls, calls, reminders } = data.reduce((acc, call) => {
     if (filters.customers.length && !filters.customers.includes(`${call?.customer?.id}`)) {
       return acc;
     }
     if (filters.zip.length && !filters.zip.includes(call?.property?.zip)) {
       return acc;
     }
+    if(filters.propertyUse.length && !filters.propertyUse.includes(`${call?.isResidential}`)) {
+      return acc;
+    }
+    if(filters.jobType && filters.jobType !== call?.jobTypeId ) {
+      return acc;
+    }
+    if(filters.jobSubType && filters.jobType !== call?.jobSubTypeId ) {
+      return acc;
+    }
+
     if (call.logJobStatus === 'Completed') {
       acc.completedCalls.push(call);
     }
