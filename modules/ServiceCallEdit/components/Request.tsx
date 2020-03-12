@@ -2,6 +2,7 @@ import React, { FC } from 'React';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { makeFakeRows } from '../../../helpers';
+import { RESIDENTIAL_OPTIONS } from '../../../constants';
 import { EventType } from './ServiceCallDetails';
 
 interface Props {
@@ -28,7 +29,12 @@ const SCHEMA: Schema<EventType> = [
       required: true,
     },
     { label: 'Payment Type', name: 'logPaymentType', required: true },
-    { label: 'Sector', name: 'id', required: true },
+    {
+      label: 'Sector',
+      name: 'isResidential',
+      required: true,
+      options: RESIDENTIAL_OPTIONS,
+    },
     {
       label: 'Brief Description',
       name: 'name',

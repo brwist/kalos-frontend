@@ -4,7 +4,11 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT, USA_STATES } from '../../../constants';
+import {
+  ENDPOINT,
+  USA_STATES_OPTIONS,
+  RESIDENTIAL_OPTIONS,
+} from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -29,10 +33,6 @@ type Entry = Property.AsObject;
 type UserEntry = User.AsObject;
 
 const PROP_LEVEL = 'Used for property-level billing only';
-const RESIDENTIAL = [
-  { label: 'Residential', value: 1 },
-  { label: 'Commercial', value: 0 },
-];
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
   [
@@ -288,7 +288,12 @@ export const PropertyInfo: FC<Props> = props => {
     [
       { label: 'Address', name: 'address', required: true, multiline: true },
       { label: 'City', name: 'city', required: true },
-      { label: 'State', name: 'state', options: USA_STATES, required: true },
+      {
+        label: 'State',
+        name: 'state',
+        options: USA_STATES_OPTIONS,
+        required: true,
+      },
       { label: 'Zip Code', name: 'zip', required: true },
     ],
     [
@@ -312,7 +317,7 @@ export const PropertyInfo: FC<Props> = props => {
       { label: 'Subdivision', name: 'subdivision' },
     ],
     [
-      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
+      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL_OPTIONS },
       { label: 'Latitude', name: 'geolocationLat', type: 'number' },
       { label: 'Longitude', name: 'geolocationLng', type: 'number' },
     ],
