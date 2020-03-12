@@ -2,12 +2,17 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtypeClient, JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import {
+  JobTypeSubtypeClient,
+  JobTypeSubtype,
+} from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
 const JobTypeClientService = new JobTypeClient(ENDPOINT);
 const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
+const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -305,6 +310,17 @@ async function loadJobSubtypes() {
 }
 
 /**
+ * Returns loaded JobTypeSubtypes
+ * @returns JobTypeSubtype[]
+ */
+async function loadJobTypeSubtypes() {
+  const { resultsList } = (
+    await JobTypeSubtypeClientService.BatchGet(new JobTypeSubtype())
+  ).toObject();
+  return resultsList;
+}
+
+/**
  * Returns loaded Property by its ids
  * @param id: property id
  * @returns Property
@@ -401,6 +417,7 @@ export {
   formatDateTime,
   loadJobTypes,
   loadJobSubtypes,
+  loadJobTypeSubtypes,
   loadPropertyById,
   loadUserById,
   loadUsersByIds,
