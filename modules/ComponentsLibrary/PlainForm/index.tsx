@@ -2,7 +2,15 @@ import React, { ReactElement, useCallback, useState, ReactNode } from 'react';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { Props as ButtonProps } from '../Button';
-import { Field, Value, Options, Type, getDefaultValueByType } from '../Field';
+import {
+  Field,
+  Value,
+  Options as OptionsType,
+  Type,
+  getDefaultValueByType,
+} from '../Field';
+
+export type Options = OptionsType;
 
 export type SchemaProps<T> = {
   label?: string;
