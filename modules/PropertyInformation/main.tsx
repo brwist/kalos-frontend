@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 import { CustomerInformation } from '../ComponentsLibrary/CustomerInformation';
@@ -10,7 +10,7 @@ interface Props {
   loggedUserId: number;
 }
 
-export const PropertyInformation = (props: Props) => (
+export const PropertyInformation: FC<Props> = props => (
   <ThemeProvider theme={customTheme.lightTheme}>
     <CustomerInformation {...props} />
     <PropertyInfo {...props} />
