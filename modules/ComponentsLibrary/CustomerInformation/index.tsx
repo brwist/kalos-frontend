@@ -10,7 +10,11 @@ import {
   PendingBilling,
 } from '@kalos-core/kalos-rpc/PendingBilling';
 import { makeStyles } from '@material-ui/core/styles';
-import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
+import {
+  ENDPOINT,
+  USA_STATES_OPTIONS,
+  BILLING_TERMS_OPTIONS,
+} from '../../../constants';
 import { InfoTable, Data } from '../InfoTable';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -59,12 +63,16 @@ const SCHEMA: Schema<Customer> = [
   [
     { label: 'Bulling Address', name: 'address', multiline: true },
     { label: 'Billing City', name: 'city' },
-    { label: 'Billing State', name: 'state', options: USA_STATES },
+    { label: 'Billing State', name: 'state', options: USA_STATES_OPTIONS },
     { label: 'Billing Zip Code', name: 'zip' },
   ],
   [{ label: 'Billing Details', headline: true }],
   [
-    { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
+    {
+      label: 'Billing Terms',
+      name: 'billingTerms',
+      options: BILLING_TERMS_OPTIONS,
+    },
     {
       label: 'Discount',
       name: 'discount',

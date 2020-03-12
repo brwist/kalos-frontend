@@ -5,7 +5,11 @@ import EditIcon from '@material-ui/icons/Edit';
 import InfoIcon from '@material-ui/icons/Info';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import { ENDPOINT, USA_STATES } from '../../../constants';
+import {
+  ENDPOINT,
+  USA_STATES_OPTIONS,
+  RESIDENTIAL_OPTIONS,
+} from '../../../constants';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -18,10 +22,6 @@ const PropertyClientService = new PropertyClient(ENDPOINT);
 type Entry = Property.AsObject;
 
 const PROP_LEVEL = 'Used for property-level billing only';
-const RESIDENTIAL = [
-  { label: 'Residential', value: 1 },
-  { label: 'Commercial', value: 0 },
-];
 
 const COLUMNS: Columns = [{ name: 'Address' }, { name: 'Neighborhood' }];
 
@@ -169,7 +169,12 @@ export const Properties: FC<Props> = props => {
     [
       { label: 'Address', name: 'address', required: true, multiline: true },
       { label: 'City', name: 'city', required: true },
-      { label: 'State', name: 'state', options: USA_STATES, required: true },
+      {
+        label: 'State',
+        name: 'state',
+        options: USA_STATES_OPTIONS,
+        required: true,
+      },
       { label: 'Zip Code', name: 'zip', required: true },
     ],
     [
@@ -193,7 +198,7 @@ export const Properties: FC<Props> = props => {
       { label: 'Subdivision', name: 'subdivision' },
     ],
     [
-      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
+      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL_OPTIONS },
       { label: 'Latitude', name: 'geolocationLat', type: 'number' },
       { label: 'Longitude', name: 'geolocationLng', type: 'number' },
     ],
