@@ -43,7 +43,7 @@ const useStyles = makeStyles(theme => {
     paddingLeft: theme.spacing(),
     paddingRight: theme.spacing(),
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   };
   return {
     wrapper: {
