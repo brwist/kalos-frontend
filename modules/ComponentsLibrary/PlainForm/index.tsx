@@ -4,13 +4,14 @@ import { makeStyles } from '@material-ui/core/styles';
 import { Props as ButtonProps } from '../Button';
 import {
   Field,
-  Value,
+  Value as ValueType,
   Option as OptionType,
   Options as OptionsType,
   Type,
   getDefaultValueByType,
 } from '../Field';
 
+export type Value = ValueType;
 export type Option = OptionType;
 export type Options = OptionsType;
 
