@@ -64,10 +64,11 @@ export const getDefaultValueByType = (type: Type) => {
 };
 
 const useStyles = makeStyles(theme => ({
-  field: ({ type }: Style) => ({
+  field: ({ type, disabled }: Style) => ({
     marginTop: 0,
     marginBottom: theme.spacing(2),
     ...(type === 'hidden' ? { display: 'none' } : {}),
+    ...(disabled ? { filter: 'grayscale(1)' } : {}),
   }),
   required: {
     color: theme.palette.error.main,

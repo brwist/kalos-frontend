@@ -1,5 +1,10 @@
-import React, { FC, useCallback } from 'react';
-import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
+import React, { FC, useCallback, useState } from 'react';
+import {
+  PlainForm,
+  Schema,
+  Option,
+  Value,
+} from '../../ComponentsLibrary/PlainForm';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { makeFakeRows } from '../../../helpers';
 import {
@@ -18,6 +23,7 @@ const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
 
 interface Props {
   loading: boolean;
+  disabled: boolean;
   serviceItem: EventType;
   jobTypeOptions: Option[];
   jobSubtypeOptions: Option[];
@@ -28,23 +34,39 @@ interface Props {
 export const Request: FC<Props> = ({
   serviceItem,
   loading,
+  disabled,
   jobTypeOptions,
   jobSubtypeOptions,
   onChange,
 }) => {
+  const [resetId, setResetId] = useState<number>(0);
   const handleChange = useCallback(
     (data: EventType) => {
-      onChange({
+      const { jobTypeId, jobSubtypeId, logJobStatus } = data;
+      const formData = {
         ...data,
         jobType:
-          jobTypeOptions.find(({ value }) => value === data.jobTypeId)?.label ||
-          '',
+          jobTypeOptions.find(({ value }) => value === jobTypeId)?.label || '',
         jobSubtype:
-          jobSubtypeOptions.find(({ value }) => value === data.jobSubtypeId)
+          jobSubtypeOptions.find(({ value }) => value === jobSubtypeId)
             ?.label || '',
-      });
+        color: JOB_STATUS_COLORS[logJobStatus],
+      };
+      if (formData.jobTypeId !== serviceItem.jobTypeId) {
+        formData.jobSubtypeId = 0;
+        formData.jobSubtype = '';
+        setResetId(resetId + 1);
+      }
+      onChange(formData);
     },
-    [onChange],
+    [
+      serviceItem,
+      onChange,
+      jobTypeOptions,
+      jobSubtypeOptions,
+      resetId,
+      setResetId,
+    ],
   );
   if (loading) return <InfoTable data={makeFakeRows(4, 5)} loading />;
   const SCHEMA: Schema<EventType> = [
@@ -98,7 +120,7 @@ export const Request: FC<Props> = ({
         required: true,
         options: jobTypeOptions,
       },
-      { label: 'Sub Type', name: 'jobSubtypeId', options: jobSubtypeOptions }, //TODO: clear field on jobTypeId change
+      { label: 'Sub Type', name: 'jobSubtypeId', options: jobSubtypeOptions },
 
       {
         label: 'Diagnostic Quoted',
@@ -138,6 +160,12 @@ export const Request: FC<Props> = ({
     ],
   ];
   return (
-    <PlainForm schema={SCHEMA} data={serviceItem} onChange={handleChange} />
+    <PlainForm
+      key={resetId}
+      schema={SCHEMA}
+      data={serviceItem}
+      onChange={handleChange}
+      disabled={disabled}
+    />
   );
 };

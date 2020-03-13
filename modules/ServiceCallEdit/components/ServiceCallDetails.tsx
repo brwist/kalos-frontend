@@ -9,12 +9,13 @@ import {
   loadJobTypes,
   loadJobSubtypes,
   loadJobTypeSubtypes,
+  getRPCFields,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Tabs } from '../../ComponentsLibrary/Tabs';
-import { Options, Option } from '../../ComponentsLibrary/Field';
+import { Option } from '../../ComponentsLibrary/Field';
 import { Request } from './Request';
 import { Equipment } from './Equipment';
 import { Services } from './Services';
@@ -39,6 +40,7 @@ export const ServiceCallDetails: FC<Props> = props => {
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
   const [jobSubtypes, setJobSubtype] = useState<JobSubtypeType[]>([]);
@@ -64,7 +66,34 @@ export const ServiceCallDetails: FC<Props> = props => {
     } catch (e) {
       setError(true);
     }
-  }, [setLoading, setError, setJobTypes, serviceCallId, userID, propertyId]);
+  }, [
+    setLoading,
+    setError,
+    setEntry,
+    setLoaded,
+    setJobTypes,
+    serviceCallId,
+    userID,
+    propertyId,
+  ]);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    const req = new Event();
+    req.setId(serviceCallId);
+    const fieldMaskList = [];
+    for (const fieldName in entry) {
+      if (['id', 'customer', 'property'].includes(fieldName)) continue;
+      const { upperCaseProp, methodName } = getRPCFields(fieldName);
+      //@ts-ignore
+      req[methodName](entry[fieldName]);
+      fieldMaskList.push(upperCaseProp);
+    }
+    req.setFieldMaskList(fieldMaskList);
+    const res = await EventClientService.Update(req);
+    setEntry(res);
+    setSaving(false);
+  }, [entry, serviceCallId, setEntry, setSaving]);
 
   useEffect(() => {
     if (!loaded) {
@@ -81,12 +110,15 @@ export const ServiceCallDetails: FC<Props> = props => {
     ({ id: value, name: label }) => ({ label, value }),
   );
 
-  const jobSubtypeOptions: Option[] = jobTypeSubtypes
-    .filter(({ jobTypeId }) => jobTypeId === entry.jobTypeId)
-    .map(({ jobSubtypeId }) => ({
-      value: jobSubtypeId,
-      label: jobSubtypes.find(({ id }) => id === jobSubtypeId)?.name || '',
-    }));
+  const jobSubtypeOptions: Option[] = [
+    { label: '-- Select --', value: 0 },
+    ...jobTypeSubtypes
+      .filter(({ jobTypeId }) => jobTypeId === entry.jobTypeId)
+      .map(({ jobSubtypeId }) => ({
+        value: jobSubtypeId,
+        label: jobSubtypes.find(({ id }) => id === jobSubtypeId)?.name || '',
+      })),
+  ];
 
   const { id, logJobNumber, contractNumber, property, customer } = entry;
   const {
@@ -171,9 +203,12 @@ export const ServiceCallDetails: FC<Props> = props => {
         actions={[
           {
             label: 'Save Service Call Only',
+            onClick: handleSave,
+            disabled: loading || saving,
           },
           {
             label: 'Save and Invoice',
+            disabled: loading || saving,
           },
           {
             label: 'Cancel',
@@ -182,6 +217,7 @@ export const ServiceCallDetails: FC<Props> = props => {
               `property_id=${propertyId}`,
               `user_id=${userID}`,
             ].join('&'),
+            disabled: loading || saving,
           },
         ]}
       />
@@ -197,6 +233,7 @@ export const ServiceCallDetails: FC<Props> = props => {
                 jobSubtypeOptions={jobSubtypeOptions}
                 jobTypeSubtypes={jobTypeSubtypes}
                 onChange={handleChangeEntry}
+                disabled={saving}
               />
             ),
           },
