@@ -99,9 +99,6 @@ const useStyles = makeStyles(theme => ({
     margin: theme.spacing(-2),
   },
   technicians: {
-    display: 'flex',
-    width: '100%',
-    alignItems: 'flex-start',
     marginTop: theme.spacing(2),
   },
   technician: {
@@ -111,6 +108,9 @@ const useStyles = makeStyles(theme => ({
   searchTechnician: {
     marginTop: `${theme.spacing(-2.5)}px !important`,
     marginBottom: `0px !important`,
+  },
+  technicalButton: {
+    alignSelf: 'flex-start',
   },
 }));
 
@@ -326,13 +326,21 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               readOnly
               fullWidth
               multiline
-            />
-            <Button
-              label="Change"
-              variant="outlined"
-              size="xsmall"
-              onClick={handleSetTechniciansOpened(true)}
-              disabled={disabled}
+              endAdornment={
+                <InputAdornment
+                  position="end"
+                  className={classes.technicalButton}
+                >
+                  <Button
+                    label="Change"
+                    variant="outlined"
+                    size="xsmall"
+                    onClick={handleSetTechniciansOpened(true)}
+                    disabled={disabled}
+                    compact
+                  />
+                </InputAdornment>
+              }
             />
           </div>
         </FormControl>
