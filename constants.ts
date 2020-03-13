@@ -2,7 +2,7 @@ import { Options } from './modules/ComponentsLibrary/Field';
 
 export const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 
-export const EVENT_STATUS_LIST: Options = [
+export const EVENT_STATUS_LIST = [
   'Requested',
   'Confirmed',
   'Enroute',
@@ -47,17 +47,18 @@ export const COLORS = {
   primary3: '#F20E00',
 };
 
-export const JOB_STATUS_COLORS = {
-  Confirmed: '#fefdb9',
-  Enroute: '#ffff00',
-  'On Call': '#88edb3',
-  Delayed: '#07ccec',
-  Incomplete: '#bfd4ff',
-  'Part on order': '#aa93ea',
-  'Pend Sched': '#fd9834',
-  Canceled: '#e74c3c',
-  Completed: '#55e552',
-  'Admin Review': '#e1e1e1',
+export const JOB_STATUS_COLORS: { [key: string]: string } = {
+  Requested: 'efc281',
+  Confirmed: 'fefdb9',
+  Enroute: 'ffff00',
+  'On Call': '88edb3',
+  Delayed: '07ccec',
+  Incomplete: 'bfd4ff',
+  'Part on Order': 'aa93ea',
+  'Pend Sched': 'fd9834',
+  Canceled: 'e74c3c',
+  Completed: '55e552',
+  'Admin Review': 'e1e1e1',
 };
 
 export const ELEVATION = {
