@@ -24,8 +24,8 @@ import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
-import { ServiceItemLinks } from './ServiceItemLinks';
-import { ServiceItemReadings } from './ServiceItemReadings';
+import { ServiceItemLinks } from '../ServiceItemLinks';
+import { ServiceItemReadings } from '../ServiceItemReadings';
 
 const ServiceItemClientService = new ServiceItemClient(ENDPOINT);
 const ReadingClientService = new ReadingClient(ENDPOINT);

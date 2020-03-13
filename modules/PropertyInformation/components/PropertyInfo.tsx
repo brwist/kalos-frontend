@@ -16,9 +16,9 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Search } from '../../ComponentsLibrary/Search';
-import { ServiceItemLinks } from './ServiceItemLinks';
+import { ServiceItemLinks } from '../../ComponentsLibrary/ServiceItemLinks';
 import { PropertyDocuments } from './PropertyDocuments';
-import { ServiceItems } from './ServiceItems';
+import { ServiceItems } from '../../ComponentsLibrary/ServiceItems';
 import { ServiceCalls } from './ServiceCalls';
 import {
   getRPCFields,

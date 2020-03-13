@@ -10,10 +10,10 @@ import {
 } from '@kalos-core/kalos-rpc/MaintenanceQuestion';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, API_FAILED_GENERAL_ERROR_MSG } from '../../../constants';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
+import { SectionBar } from '../SectionBar';
+import { InfoTable, Data } from '../InfoTable';
+import { ConfirmDelete } from '../ConfirmDelete';
+import { Form, Schema, Options } from '..//Form';
 import {
   makeFakeRows,
   getRPCFields,

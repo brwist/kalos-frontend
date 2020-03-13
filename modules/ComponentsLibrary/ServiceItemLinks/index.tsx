@@ -5,11 +5,11 @@ import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { PropLinkClient, PropLink } from '@kalos-core/kalos-rpc/PropLink';
 import { ENDPOINT } from '../../../constants';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { Modal } from '../../ComponentsLibrary/Modal';
-import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { SectionBar } from '../SectionBar';
+import { InfoTable, Data } from '../InfoTable';
+import { Modal } from '../Modal';
+import { ConfirmDelete } from '../ConfirmDelete';
+import { Form, Schema } from '../Form';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 
 type Entry = PropLink.AsObject;
