@@ -1,5 +1,6 @@
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
+import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtypeClient, JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import {
@@ -10,6 +11,7 @@ import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
+const EventClientService = new EventClient(ENDPOINT);
 const JobTypeClientService = new JobTypeClient(ENDPOINT);
 const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
 const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
@@ -355,6 +357,29 @@ async function loadJobTypeSubtypes() {
 }
 
 /**
+ * Returns loaded Events by property id
+ * @param propertyId: property id
+ * @returns Event[]
+ */
+async function loadEventsByPropertyId(propertyId: number) {
+  const results: Event.AsObject[] = [];
+  const req = new Event();
+  req.setIsActive(1);
+  req.setPropertyId(propertyId);
+  req.setOrderBy('log_jobNumber');
+  req.setOrderDir('ASC');
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await EventClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results;
+}
+
+/**
  * Returns loaded Property by its ids
  * @param id: property id
  * @returns Property
@@ -458,4 +483,5 @@ export {
   range,
   loadGeoLocationByAddress,
   loadTechnicians,
+  loadEventsByPropertyId,
 };

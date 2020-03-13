@@ -10,6 +10,7 @@ import {
   loadJobSubtypes,
   loadJobTypeSubtypes,
   getRPCFields,
+  loadEventsByPropertyId,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -38,6 +39,7 @@ export interface Props {
 export const ServiceCallDetails: FC<Props> = props => {
   const { userID, propertyId, serviceCallId } = props;
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
+  const [propertyEvents, setPropertyEvents] = useState<EventType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -50,16 +52,19 @@ export const ServiceCallDetails: FC<Props> = props => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const req = new Event();
-    req.setId(serviceCallId);
     try {
+      // const propertyEvents = await loadEventsByPropertyId(propertyId);
+      // setPropertyEvents(propertyEvents);
       const jobTypes = await loadJobTypes();
       setJobTypes(jobTypes);
       const jobSubtypes = await loadJobSubtypes();
       setJobSubtype(jobSubtypes);
       const jobTypeSubtypes = await loadJobTypeSubtypes();
       setJobTypeSubtypes(jobTypeSubtypes);
+      const req = new Event();
+      req.setId(serviceCallId);
       const entry = await EventClientService.Get(req);
+      console.log({ entry });
       setEntry(entry);
       setLoading(false);
       setLoaded(true);
@@ -75,6 +80,7 @@ export const ServiceCallDetails: FC<Props> = props => {
     serviceCallId,
     userID,
     propertyId,
+    setPropertyEvents,
   ]);
 
   const handleSave = useCallback(async () => {
