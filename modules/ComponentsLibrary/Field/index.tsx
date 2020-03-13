@@ -153,15 +153,17 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     (opened: boolean) => () => {
       setTechniciansOpened(opened);
       setSearchTechnician('');
+      if (!loadedTechnicians) {
+        loadUserTechnicians();
+      }
     },
-    [setTechniciansOpened, loadedTechnicians],
+    [setTechniciansOpened, setSearchTechnician, loadedTechnicians],
   );
-
   useEffect(() => {
-    if (type === 'technician' && !loadedTechnicians) {
+    if (type === 'technician' && !loadedTechnicians && value !== '0') {
       loadUserTechnicians();
     }
-  }, [loadedTechnicians]);
+  }, [loadedTechnicians, value]);
 
   const handleTechniciansSelect = useCallback(() => {
     if (onChange) {
