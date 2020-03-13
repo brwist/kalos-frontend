@@ -33,6 +33,7 @@ interface Props {
   pagination?: Pagination;
   styles?: CSSProperties;
   fixedActions?: boolean;
+  footer?: ReactNode;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -45,8 +46,9 @@ const useStyles = makeStyles(theme => ({
     paddingRight: theme.spacing(),
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyItems: 'center',
     minHeight: 46,
+    flexDirection: 'column',
     boxSizing: 'border-box',
     marginBottom: collapsable && collapsed ? theme.spacing() : 0,
     [theme.breakpoints.down('xs')]: {
@@ -55,6 +57,12 @@ const useStyles = makeStyles(theme => ({
       minHeight: 0,
     },
   }),
+  headerWrapper: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexGrow: 1,
+  },
   header: {
     display: 'flex',
     alignItems: 'center',
@@ -100,6 +108,9 @@ const useStyles = makeStyles(theme => ({
     minHeight: 0,
     color: theme.palette.common.black,
   },
+  footer: {
+    marginBottom: theme.spacing(),
+  },
 }));
 
 export const SectionBar: FC<Props> = ({
@@ -110,6 +121,7 @@ export const SectionBar: FC<Props> = ({
   pagination,
   styles,
   fixedActions = false,
+  footer,
   children,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -133,42 +145,48 @@ export const SectionBar: FC<Props> = ({
   return (
     <>
       <div className={className + ' ' + classes.wrapper} style={styles}>
-        <div className={classes.header}>
-          <div className={classes.titleWrapper}>
-            <Typography
-              variant="h5"
-              className={classes.title}
-              onClick={handleToggleCollapsed}
-            >
-              {title}{' '}
-              {children &&
-                (collapsed ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
-            </Typography>
-            {subtitle && (
+        <div className={classes.headerWrapper}>
+          <div className={classes.header}>
+            <div className={classes.titleWrapper}>
               <Typography
-                variant="h6"
-                className={classes.subtitle}
+                variant="h5"
+                className={classes.title}
                 onClick={handleToggleCollapsed}
               >
-                {subtitle}
+                {title}{' '}
+                {children &&
+                  (collapsed ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
               </Typography>
+              {subtitle && (
+                <Typography
+                  variant="h6"
+                  className={classes.subtitle}
+                  onClick={handleToggleCollapsed}
+                >
+                  {subtitle}
+                </Typography>
+              )}
+            </div>
+            {pagination && pagination.count > 0 && !collapsed && (
+              <TablePagination
+                classes={{
+                  root: classes.toolbarRoot,
+                  toolbar: classes.toolbar,
+                }}
+                component="div"
+                rowsPerPageOptions={[]}
+                {...pagination}
+                onChangePage={handleChangePage}
+                backIconButtonProps={{ size: 'small' }}
+                nextIconButtonProps={{ size: 'small' }}
+              />
             )}
           </div>
-          {pagination && pagination.count > 0 && !collapsed && (
-            <TablePagination
-              classes={{ root: classes.toolbarRoot, toolbar: classes.toolbar }}
-              component="div"
-              rowsPerPageOptions={[]}
-              {...pagination}
-              onChangePage={handleChangePage}
-              backIconButtonProps={{ size: 'small' }}
-              nextIconButtonProps={{ size: 'small' }}
-            />
+          {actions.length > 0 && (
+            <Actions actions={actions} fixed={fixedActions} />
           )}
         </div>
-        {actions.length > 0 && (
-          <Actions actions={actions} fixed={fixedActions} />
-        )}
+        {footer && <div className={classes.footer}>{footer}</div>}
       </div>
       {!collapsed && children}
     </>

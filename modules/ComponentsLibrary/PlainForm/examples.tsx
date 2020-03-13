@@ -14,6 +14,7 @@ export type Model = {
   mailing: number;
   dob: string;
   hour: string;
+  technician: string;
 };
 
 export const model: Model = {
@@ -28,6 +29,7 @@ amet`,
   mailing: 1,
   dob: '1980-11-23 00:00:00',
   hour: '21:45',
+  technician: '0',
 };
 
 export const SCHEMA_1: Schema<Model> = [
@@ -63,7 +65,15 @@ export const SCHEMA_2: Schema<Model> = [
     { name: 'hour', label: 'Hour', type: 'time' },
   ],
   [{ label: 'Various', headline: true }],
-  [{ name: 'note', label: 'Note', multiline: true }],
+  [
+    { name: 'note', label: 'Note', multiline: true },
+    {
+      name: 'technician',
+      label: 'Technician',
+      type: 'technician',
+      required: true,
+    },
+  ],
 ];
 
 export const SCHEMA_3: Schema<Model> = [

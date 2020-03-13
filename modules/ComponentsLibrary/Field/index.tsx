@@ -1,4 +1,5 @@
-import React, { ReactElement, useCallback } from 'react';
+import React, { ReactElement, useCallback, useState, useEffect } from 'react';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -10,8 +11,16 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import Input from '@material-ui/core/Input';
+import { Button } from '../Button';
 import { SchemaProps } from '../PlainForm';
 import { Actions } from '../Actions';
+import { Modal } from '../Modal';
+import { SectionBar } from '../SectionBar';
+import { InfoTable, Data } from '../InfoTable';
+import { makeFakeRows, loadTechnicians } from '../../../helpers';
+
+type UserType = User.AsObject;
 
 export type Type =
   | 'text'
@@ -21,6 +30,7 @@ export type Type =
   | 'checkbox'
   | 'date'
   | 'time'
+  | 'technician'
   | 'hidden';
 
 export type Value = string | number;
@@ -44,6 +54,7 @@ export interface Props<T> extends SchemaProps<T> {
   validation?: string;
   readOnly?: boolean;
   className?: string;
+  placeholder?: string;
 }
 
 export const getDefaultValueByType = (type: Type) => {
@@ -87,6 +98,20 @@ const useStyles = makeStyles(theme => ({
     flexGrow: 1,
     margin: theme.spacing(-2),
   },
+  technicians: {
+    display: 'flex',
+    width: '100%',
+    alignItems: 'flex-start',
+    marginTop: theme.spacing(2),
+  },
+  technician: {
+    marginTop: `${theme.spacing(-1.5)}px !important`,
+    marginBottom: `${theme.spacing(-1.5)}px !important`,
+  },
+  searchTechnician: {
+    marginTop: `${theme.spacing(-2.5)}px !important`,
+    marginBottom: `0px !important`,
+  },
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
@@ -110,6 +135,52 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const dateTimePart = type === 'date' ? (props.value + '').substr(11, 8) : '';
   const value =
     type === 'date' ? (props.value + '').substr(0, 10) : props.value;
+  const [technicians, setTechnicians] = useState<UserType[]>([]);
+  const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
+  const [techniciansOpened, setTechniciansOpened] = useState<boolean>(false);
+  const [techniciansIds, setTechniciansIds] = useState<number[]>(
+    (value + '').split(',').map(id => +id),
+  );
+  const [searchTechnician, setSearchTechnician] = useState<Value>('');
+
+  const loadUserTechnicians = useCallback(async () => {
+    const technicians = await loadTechnicians();
+    setLoadedTechnicians(true);
+    setTechnicians(technicians);
+  }, [setLoadedTechnicians, setTechnicians]);
+
+  const handleSetTechniciansOpened = useCallback(
+    (opened: boolean) => () => {
+      setTechniciansOpened(opened);
+      setSearchTechnician('');
+    },
+    [setTechniciansOpened, loadedTechnicians],
+  );
+
+  useEffect(() => {
+    if (type === 'technician' && !loadedTechnicians) {
+      loadUserTechnicians();
+    }
+  }, [loadedTechnicians]);
+
+  const handleTechniciansSelect = useCallback(() => {
+    if (onChange) {
+      onChange(techniciansIds.join(','));
+    }
+    setTechniciansOpened(false);
+  }, [onChange, techniciansIds, setTechniciansOpened]);
+
+  const handleTechnicianChecked = useCallback(
+    (id: number) => () => {
+      if (id === 0) {
+        setTechniciansIds([0]);
+      } else {
+        setTechniciansIds([...techniciansIds.filter(id => id !== 0), id]);
+      }
+    },
+    [techniciansIds, setTechniciansIds],
+  );
+
   const { actions, description } = props;
   const classes = useStyles({ type, disabled });
   const handleChange = useCallback(
@@ -180,7 +251,121 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           }
           label={inputLabel}
         />
+        {helper && <FormHelperText>{helper}</FormHelperText>}
       </FormControl>
+    );
+  }
+  if (type === 'technician') {
+    const id = `${name}-technician-label`;
+    const ids = (value + '').split(',').map(id => +id);
+    const valueTechnicians =
+      ids.length === 1 && ids[0] === 0
+        ? 'Unassigned'
+        : ids
+            .map(id => {
+              const technician = technicians.find(item => item.id === id);
+              if (!technician) return '...';
+              const { firstname, lastname } = technician;
+              return `${firstname} ${lastname}`;
+            })
+            .join('\n');
+    const searchTechnicianPhrase = (searchTechnician + '').toLowerCase();
+    const data: Data = loadedTechnicians
+      ? [
+          [
+            {
+              value: (
+                <Field
+                  name="technician-0"
+                  value={techniciansIds.includes(0)}
+                  label="Unassigned"
+                  type="checkbox"
+                  className={classes.technician}
+                  onChange={handleTechnicianChecked(0)}
+                />
+              ),
+            },
+          ],
+          ...technicians
+            .filter(
+              ({ firstname, lastname }) =>
+                firstname.toLowerCase().includes(searchTechnicianPhrase) ||
+                lastname.toLowerCase().includes(searchTechnicianPhrase),
+            )
+            .map(({ id, firstname, lastname }) => [
+              {
+                value: (
+                  <Field
+                    name={`technician-${id}`}
+                    value={techniciansIds.includes(id)}
+                    label={`${firstname} ${lastname}`}
+                    type="checkbox"
+                    className={classes.technician}
+                    onChange={handleTechnicianChecked(id)}
+                  />
+                ),
+              },
+            ]),
+        ]
+      : makeFakeRows(1, 30);
+    return (
+      <>
+        <FormControl
+          className={classes.field + ' ' + className}
+          fullWidth
+          disabled={disabled}
+          error={error}
+        >
+          <InputLabel htmlFor={id}>{inputLabel}</InputLabel>
+          <div className={classes.technicians}>
+            <Input
+              id={id}
+              value={valueTechnicians}
+              readOnly
+              fullWidth
+              multiline
+            />
+            <Button
+              label="Change"
+              variant="outlined"
+              size="xsmall"
+              onClick={handleSetTechniciansOpened(true)}
+              disabled={disabled}
+            />
+          </div>
+        </FormControl>
+        {techniciansOpened && (
+          <Modal open onClose={handleSetTechniciansOpened(false)} fullHeight>
+            <SectionBar
+              title="Select Technician(s)"
+              subtitle={
+                techniciansIds.length === 1 && techniciansIds[0] === 0
+                  ? 'Unassigned'
+                  : `${techniciansIds.length} selected`
+              }
+              actions={[
+                { label: 'Select', onClick: handleTechniciansSelect },
+                {
+                  label: 'Close',
+                  variant: 'outlined',
+                  onClick: handleSetTechniciansOpened(false),
+                },
+              ]}
+              footer={
+                <Field
+                  className={classes.searchTechnician}
+                  name="searchTechnician"
+                  value={searchTechnician}
+                  placeholder="Search technician..."
+                  type="search"
+                  onChange={setSearchTechnician}
+                />
+              }
+            />
+            <InfoTable data={data} loading={!loadedTechnicians} />
+          </Modal>
+        )}
+      </>
     );
   }
   if (options && !readOnly) {

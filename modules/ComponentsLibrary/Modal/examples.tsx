@@ -7,12 +7,14 @@ type Props = {
   button: string;
   compact?: boolean;
   fullScreen?: boolean;
+  fullHeight?: boolean;
 };
 
 const EnhancedModal: FC<Props> = ({
   button,
   children,
   fullScreen = false,
+  fullHeight = false,
   ...props
 }) => {
   const [open, setOpen] = useState(false);
@@ -24,6 +26,7 @@ const EnhancedModal: FC<Props> = ({
         open={open}
         onClose={handleToggleOpen(false)}
         fullScreen={fullScreen}
+        fullHeight={fullHeight}
         {...props}
       >
         <div
@@ -55,6 +58,9 @@ export default () => (
       {Array.from(Array(10)).map((_, idx) => (
         <LoremIpsumList key={idx} />
       ))}
+    </EnhancedModal>
+    <EnhancedModal button="Full Height Modal" fullHeight>
+      <LoremIpsumList />
     </EnhancedModal>
   </>
 );

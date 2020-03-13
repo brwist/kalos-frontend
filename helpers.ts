@@ -309,6 +309,33 @@ async function loadJobSubtypes() {
   return resultsList;
 }
 
+/** Returns loaded Technicians
+ * @returns User[]
+ */
+async function loadTechnicians() {
+  const results: User.AsObject[] = [];
+  const req = new User();
+  req.setIsActive(1);
+  req.setIsEmployee(1);
+  req.setIsSu(0);
+  req.setServiceCalls(1);
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await UserClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results.sort((a, b) => {
+    const A = `${a.firstname} ${a.lastname}`.toLocaleLowerCase();
+    const B = `${b.firstname} ${b.lastname}`.toLocaleLowerCase();
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+  });
+}
+
 /**
  * Returns loaded JobTypeSubtypes
  * @returns JobTypeSubtype[]
@@ -430,4 +457,5 @@ export {
   loadUsersByIds,
   range,
   loadGeoLocationByAddress,
+  loadTechnicians,
 };

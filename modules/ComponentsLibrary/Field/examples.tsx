@@ -32,6 +32,7 @@ const EnhancedField = ({
   | 'actions'
   | 'startAdornment'
   | 'endAdornment'
+  | 'placeholder'
 > & {
   defaultValue?: Value;
 }) => {
@@ -63,6 +64,11 @@ const EnhancedField = ({
 export default () => (
   <div style={{ margin: 8 }}>
     <EnhancedField label="Text Field" />
+    <EnhancedField
+      label="With placeholder"
+      defaultValue=""
+      placeholder="Placeholder..."
+    />
     <EnhancedField label="Disabled" disabled />
     <EnhancedField label="Disabled" readOnly />
     <EnhancedField label="Required" required />
@@ -85,6 +91,7 @@ export default () => (
       endAdornment="USD"
       defaultValue={1432}
     />
+    <EnhancedField label="Technician" type="technician" defaultValue={'0'} />
     <EnhancedField
       label="Multiline"
       multiline
