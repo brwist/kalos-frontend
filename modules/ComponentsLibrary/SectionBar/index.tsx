@@ -110,6 +110,7 @@ const useStyles = makeStyles(theme => ({
   },
   footer: {
     marginBottom: theme.spacing(),
+    ...theme.typography.body1,
   },
 }));
 
