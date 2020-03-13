@@ -34,6 +34,7 @@ export interface Props {
   userID: number;
   propertyId: number;
   serviceCallId: number;
+  loggedUserId: number;
 }
 
 export const ServiceCallDetails: FC<Props> = props => {
@@ -246,7 +247,7 @@ export const ServiceCallDetails: FC<Props> = props => {
           },
           {
             label: 'Equipment',
-            content: <Equipment />,
+            content: <Equipment {...props} />,
           },
           {
             label: 'Services',
