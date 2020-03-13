@@ -53,8 +53,8 @@ export const ServiceCallDetails: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // const propertyEvents = await loadEventsByPropertyId(propertyId);
-      // setPropertyEvents(propertyEvents);
+      const propertyEvents = await loadEventsByPropertyId(propertyId);
+      setPropertyEvents(propertyEvents);
       const jobTypes = await loadJobTypes();
       setJobTypes(jobTypes);
       const jobSubtypes = await loadJobSubtypes();
@@ -234,6 +234,7 @@ export const ServiceCallDetails: FC<Props> = props => {
             content: (
               <Request
                 serviceItem={entry}
+                propertyEvents={propertyEvents}
                 loading={loading}
                 jobTypeOptions={jobTypeOptions}
                 jobSubtypeOptions={jobSubtypeOptions}
