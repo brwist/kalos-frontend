@@ -34,7 +34,7 @@ const Examples = ({ subtitle }: { subtitle?: string }) => {
         }}
       />
       <hr />
-      <SectionBar title="With content" subtitle={subtitle}>
+      <SectionBar title="With content" subtitle={subtitle} footer="Footer">
         <LoremIpsumList style={{ padding: 10, backgroundColor: '#eee' }} />
       </SectionBar>
       <hr />
