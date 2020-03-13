@@ -47,6 +47,19 @@ export const COLORS = {
   primary3: '#F20E00',
 };
 
+export const JOB_STATUS_COLORS = {
+  Confirmed: '#fefdb9',
+  Enroute: '#ffff00',
+  'On Call': '#88edb3',
+  Delayed: '#07ccec',
+  Incomplete: '#bfd4ff',
+  'Part on order': '#aa93ea',
+  'Pend Sched': '#fd9834',
+  Canceled: '#e74c3c',
+  Completed: '#55e552',
+  'Admin Review': '#e1e1e1',
+};
+
 export const ELEVATION = {
   card: '0px 1px 2px #00000052',
   button: '0px 2px 4px #00000052',

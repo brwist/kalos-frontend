@@ -26,8 +26,8 @@ export type SchemaProps<T> = {
   type?: Type;
   onChange?: (value: Value) => void;
   actions?: ButtonProps[];
-  startAdornment?: string;
-  endAdornment?: string;
+  startAdornment?: ReactNode;
+  endAdornment?: ReactNode;
   content?: ReactNode;
 };
 
