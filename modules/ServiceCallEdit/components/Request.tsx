@@ -1,18 +1,20 @@
 import React, { FC, useCallback } from 'react';
-import {
-  PlainForm,
-  Schema,
-  Options,
-  Option,
-} from '../../ComponentsLibrary/PlainForm';
+import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { makeFakeRows } from '../../../helpers';
 import {
   RESIDENTIAL_OPTIONS,
   EVENT_STATUS_LIST,
   PAYMENT_TYPE_LIST,
+  JOB_STATUS_COLORS,
 } from '../../../constants';
 import { EventType, JobTypeSubtypeType } from './ServiceCallDetails';
+
+const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
+  label,
+  value: label,
+  color: `#${JOB_STATUS_COLORS[label]}`,
+}));
 
 interface Props {
   loading: boolean;
@@ -85,18 +87,19 @@ export const Request: FC<Props> = ({
     ],
     [
       {
+        label: 'Job Status',
+        name: 'logJobStatus',
+        required: true,
+        options: JOB_STATUS_OPTIONS,
+      },
+      {
         label: 'Job Type',
         name: 'jobTypeId',
         required: true,
         options: jobTypeOptions,
       },
       { label: 'Sub Type', name: 'jobSubtypeId', options: jobSubtypeOptions }, //TODO: clear field on jobTypeId change
-      {
-        label: 'Job Status',
-        name: 'logJobStatus',
-        required: true,
-        options: EVENT_STATUS_LIST,
-      },
+
       {
         label: 'Diagnostic Quoted',
         name: 'diagnosticQuoted',
