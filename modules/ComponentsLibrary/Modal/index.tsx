@@ -7,6 +7,7 @@ type Style = {
   compact?: boolean;
   maxWidth?: number | 'none';
   fullScreen?: boolean;
+  fullHeight?: boolean;
 };
 
 interface Props extends Style {
@@ -21,10 +22,10 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  paper: ({ maxWidth, fullScreen }: Style) => ({
+  paper: ({ maxWidth, fullScreen, fullHeight }: Style) => ({
     position: 'relative',
     width: fullScreen ? '100%' : 'auto',
-    height: fullScreen ? '100%' : 'auto',
+    height: fullScreen || fullHeight ? '100%' : 'auto',
     maxWidth,
     minWidth: 300,
     outline: 'none',
@@ -41,8 +42,9 @@ export const Modal = ({
   compact = false,
   maxWidth = 'none',
   fullScreen = false,
+  fullHeight = false,
 }: Props) => {
-  const classes = useStyles({ compact, maxWidth, fullScreen });
+  const classes = useStyles({ compact, maxWidth, fullScreen, fullHeight });
   return (
     <ModalUI open={open} onClose={onClose} className={classes.modal}>
       <Paper className={classes.paper}>{children}</Paper>
