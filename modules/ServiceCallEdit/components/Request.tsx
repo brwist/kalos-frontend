@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useState, useMemo } from 'react';
 import {
   PlainForm,
   Schema,
@@ -25,6 +25,7 @@ interface Props {
   loading: boolean;
   disabled: boolean;
   serviceItem: EventType;
+  propertyEvents: EventType[];
   jobTypeOptions: Option[];
   jobSubtypeOptions: Option[];
   jobTypeSubtypes: JobTypeSubtypeType[];
@@ -33,6 +34,7 @@ interface Props {
 
 export const Request: FC<Props> = ({
   serviceItem,
+  propertyEvents,
   loading,
   disabled,
   jobTypeOptions,
@@ -57,6 +59,10 @@ export const Request: FC<Props> = ({
         formData.jobSubtype = '';
         setResetId(resetId + 1);
       }
+      if (!formData.isCallback && serviceItem.isCallback) {
+        formData.callbackOriginalId = 0;
+        setResetId(resetId + 1);
+      }
       onChange(formData);
     },
     [
@@ -68,7 +74,18 @@ export const Request: FC<Props> = ({
       setResetId,
     ],
   );
+  const callbackOriginalOptions: Option[] = useMemo(
+    () => [
+      { label: '-- Select --', value: 0 },
+      ...propertyEvents.map(({ id, logJobNumber, name }) => ({
+        label: `${logJobNumber} - ${name}`,
+        value: id,
+      })),
+    ],
+    [propertyEvents],
+  );
   if (loading) return <InfoTable data={makeFakeRows(4, 5)} loading />;
+  const { isCallback } = serviceItem;
   const SCHEMA: Schema<EventType> = [
     [
       {
@@ -137,6 +154,12 @@ export const Request: FC<Props> = ({
         type: 'checkbox',
       },
       { label: 'Is Callback?', name: 'isCallback', type: 'checkbox' },
+      {
+        label: 'Callback Regarding Service Call',
+        name: 'callbackOriginalId',
+        options: callbackOriginalOptions,
+        disabled: !isCallback,
+      },
     ],
     [
       {

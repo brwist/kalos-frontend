@@ -366,8 +366,6 @@ async function loadEventsByPropertyId(propertyId: number) {
   const req = new Event();
   req.setIsActive(1);
   req.setPropertyId(propertyId);
-  req.setOrderBy('log_jobNumber');
-  req.setOrderDir('ASC');
   for (let page = 0; ; page += 1) {
     req.setPageNumber(page);
     const { resultsList, totalCount } = (
@@ -376,7 +374,13 @@ async function loadEventsByPropertyId(propertyId: number) {
     results.push(...resultsList);
     if (results.length === totalCount) break;
   }
-  return results;
+  return results.sort((a, b) => {
+    const A = a.logJobNumber.toLocaleLowerCase();
+    const B = b.logJobNumber.toLocaleLowerCase();
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+  });
 }
 
 /**

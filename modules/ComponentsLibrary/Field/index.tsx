@@ -122,6 +122,9 @@ const useStyles = makeStyles(theme => ({
     marginRight: theme.spacing(),
     verticalAlign: 'bottom',
   },
+  option: {
+    whiteSpace: 'normal',
+  },
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
@@ -415,7 +418,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               : (option as Option).value;
             const color = isStringOption ? undefined : (option as Option).color;
             return (
-              <MenuItem key={value} value={value}>
+              <MenuItem key={value} value={value} className={classes.option}>
                 {color && (
                   <div
                     className={classes.color}
