@@ -17,6 +17,9 @@ import Modal from './Modal/examples';
 import PlainForm from './PlainForm/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
+import ServiceItemLinks from './ServiceItemLinks/examples';
+import ServiceItemReadings from './ServiceItemReadings/examples';
+import ServiceItems from './ServiceItems/examples';
 import Tabs from './Tabs/examples';
 
 const DEFAULT_COMPONENT_IDX = 0;
@@ -34,6 +37,9 @@ const COMPONENTS = {
   PlainForm,
   Search,
   SectionBar,
+  ServiceItemLinks,
+  ServiceItemReadings,
+  ServiceItems,
   Tabs,
 };
 
