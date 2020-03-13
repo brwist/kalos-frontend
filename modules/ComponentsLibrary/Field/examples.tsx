@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Field, Props, Value, Options } from './';
+import { Field, Props, Value, Options, Option } from './';
 
 type Model = {
   firstName: string;
@@ -7,10 +7,10 @@ type Model = {
 };
 
 const SELECT_OPTIONS_TXT: Options = ['red', 'green', 'blue'];
-const SELECT_OPTIONS_PAIRS = [
-  { label: 'Dark Red', value: '#500' },
-  { label: 'Dark Green', value: '#050' },
-  { label: 'Dark Blue', value: '#005' },
+const SELECT_OPTIONS_PAIRS: Option[] = [
+  { label: 'Gold', value: 'gold', color: '#EC4' },
+  { label: 'Brown', value: 'brown', color: '#A72' },
+  { label: 'Orange', value: 'orange', color: '#E96' },
 ];
 
 const EnhancedField = ({
@@ -47,7 +47,7 @@ const EnhancedField = ({
         onChange={setValue}
         {...props}
       />
-      {props.options && (
+      {props.options && typeof props.options[0] === 'string' && (
         <div
           style={{
             width: 45,
@@ -114,7 +114,7 @@ Amet`}
       description="Description..."
     />
     <EnhancedField
-      label="Select Field"
+      label="Select Field With Color"
       options={SELECT_OPTIONS_PAIRS}
       defaultValue={SELECT_OPTIONS_PAIRS[0].value}
     />

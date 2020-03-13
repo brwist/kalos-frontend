@@ -38,6 +38,7 @@ export type Value = string | number;
 export type Option = {
   label: string;
   value: string | number;
+  color?: string;
 };
 
 export type Options = (string | Option)[];
@@ -111,6 +112,14 @@ const useStyles = makeStyles(theme => ({
   },
   technicalButton: {
     alignSelf: 'flex-start',
+  },
+  color: {
+    width: theme.spacing(2),
+    height: theme.spacing(2),
+    borderRadius: '50%',
+    display: 'inline-flex',
+    marginRight: theme.spacing(),
+    verticalAlign: 'bottom',
   },
 }));
 
@@ -403,8 +412,15 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             const value = isStringOption
               ? (option as string)
               : (option as Option).value;
+            const color = isStringOption ? undefined : (option as Option).color;
             return (
               <MenuItem key={value} value={value}>
+                {color && (
+                  <div
+                    className={classes.color}
+                    style={{ backgroundColor: color }}
+                  />
+                )}
                 {label}
               </MenuItem>
             );
