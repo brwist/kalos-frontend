@@ -20,6 +20,7 @@ import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
+import { Field } from '../../ComponentsLibrary/Field';
 import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
@@ -66,6 +67,7 @@ interface Props {
   loggedUserId: number;
   propertyId: number;
   title?: string;
+  selectable?: boolean;
 }
 
 const sort = (a: Entry, b: Entry) => {
@@ -102,10 +104,15 @@ const useStyles = makeStyles(theme => ({
     paddingBottom: theme.spacing(),
     marginBottom: theme.spacing(3),
   },
+  checkbox: {
+    display: 'inline',
+    verticalAlign: 'middle',
+    marginRight: theme.spacing(-2),
+  },
 }));
 
 export const ServiceItems: FC<Props> = props => {
-  const { propertyId, className, title = 'Service Items' } = props;
+  const { propertyId, className, title = 'Service Items', selectable } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
   const [materials, setMaterials] = useState<MaterialType[]>([]);
   const [materialsIds, setMaterialsIds] = useState<number[]>([]);
@@ -470,6 +477,14 @@ export const ServiceItems: FC<Props> = props => {
           {
             value: (
               <>
+                {selectable && (
+                  <Field
+                    name="name" //FIXME
+                    type="checkbox"
+                    value={0}
+                    className={classes.checkbox}
+                  />
+                )}
                 <IconButton
                   style={{ marginRight: 4 }}
                   size="small"

@@ -8,5 +8,5 @@ interface Props {
 }
 
 export const Equipment: FC<Props> = props => (
-  <ServiceItems title="Property Service Items" {...props} />
+  <ServiceItems selectable title="Property Service Items" {...props} />
 );
