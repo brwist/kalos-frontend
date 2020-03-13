@@ -1,5 +1,10 @@
 import React, { FC } from 'react';
+import { ServiceItems } from '../../ComponentsLibrary/ServiceItems';
 
-interface Props {}
+interface Props {
+  userID: number;
+  loggedUserId: number;
+  propertyId: number;
+}
 
-export const Equipment: FC<Props> = () => <div />;
+export const Equipment: FC<Props> = props => <ServiceItems {...props} />;

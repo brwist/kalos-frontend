@@ -1,10 +1,5 @@
 import React, { FC, useCallback, useState, useMemo } from 'react';
-import {
-  PlainForm,
-  Schema,
-  Option,
-  Value,
-} from '../../ComponentsLibrary/PlainForm';
+import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { makeFakeRows } from '../../../helpers';
 import {
