@@ -65,6 +65,7 @@ interface Props {
   userID: number;
   loggedUserId: number;
   propertyId: number;
+  title?: string;
 }
 
 const sort = (a: Entry, b: Entry) => {
@@ -104,7 +105,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export const ServiceItems: FC<Props> = props => {
-  const { propertyId, className } = props;
+  const { propertyId, className, title = 'Service Items' } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
   const [materials, setMaterials] = useState<MaterialType[]>([]);
   const [materialsIds, setMaterialsIds] = useState<number[]>([]);
@@ -520,7 +521,7 @@ export const ServiceItems: FC<Props> = props => {
   return (
     <div className={className}>
       <SectionBar
-        title="Service Items"
+        title={title}
         actions={[
           {
             label: 'Add',

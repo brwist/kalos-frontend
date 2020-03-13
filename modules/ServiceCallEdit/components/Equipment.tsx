@@ -7,4 +7,6 @@ interface Props {
   propertyId: number;
 }
 
-export const Equipment: FC<Props> = props => <ServiceItems {...props} />;
+export const Equipment: FC<Props> = props => (
+  <ServiceItems title="Property Service Items" {...props} />
+);
