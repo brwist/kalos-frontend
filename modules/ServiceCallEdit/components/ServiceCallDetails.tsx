@@ -38,7 +38,7 @@ export const ServiceCallDetails: FC<Props> = props => {
   const { userID, propertyId, serviceCallId } = props;
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
   const [jobSubtypes, setJobSubtype] = useState<JobSubtypeType[]>([]);

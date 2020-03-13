@@ -64,11 +64,6 @@ export const Request: FC<Props> = ({
     ],
     [
       {
-        label: 'Technician Assigned',
-        name: 'logTechnicianAssigned',
-        required: true,
-      },
-      {
         label: 'Payment Type',
         name: 'logPaymentType',
         required: true,
@@ -86,6 +81,7 @@ export const Request: FC<Props> = ({
         required: true,
         description: 'Used on calendar',
       },
+      { label: 'Amount Quoted', name: 'amountQuoted' },
     ],
     [
       {
@@ -101,24 +97,29 @@ export const Request: FC<Props> = ({
         required: true,
         options: EVENT_STATUS_LIST,
       },
-      { label: 'Amount Quoted', name: 'amountQuoted' },
-    ],
-    [
       {
         label: 'Diagnostic Quoted',
         name: 'diagnosticQuoted',
         type: 'checkbox',
       },
+    ],
+    [
       { label: 'Is LMPC?', name: 'isLmpc', type: 'checkbox' },
-      { label: 'Is Callback?', name: 'isCallback', type: 'checkbox' },
       {
         label: 'Priority',
         name: 'highPriority',
         required: true,
         type: 'checkbox',
       },
+      { label: 'Is Callback?', name: 'isCallback', type: 'checkbox' },
     ],
     [
+      {
+        label: 'Technician Assigned',
+        name: 'logTechnicianAssigned',
+        type: 'technician',
+        required: true,
+      },
       {
         label: 'Service Needed',
         name: 'description',
