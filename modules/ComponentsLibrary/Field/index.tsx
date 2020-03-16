@@ -97,8 +97,7 @@ const useStyles = makeStyles(theme => ({
     color: theme.palette.grey[600],
   },
   content: {
-    flexGrow: 1,
-    margin: theme.spacing(-2),
+    width: '100%',
   },
   technicians: {
     marginTop: theme.spacing(2),
@@ -245,7 +244,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         </Typography>
       );
     }
-    return <div className={classes.content}>{content}</div>;
+    return (
+      <div className={classes.field + ' ' + classes.content + ' ' + className}>
+        {content}
+      </div>
+    );
   }
   if (type === 'checkbox') {
     return (

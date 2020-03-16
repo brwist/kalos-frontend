@@ -11,6 +11,7 @@ import {
   loadJobTypeSubtypes,
   getRPCFields,
   loadEventsByPropertyId,
+  makeFakeRows,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -54,14 +55,14 @@ export const ServiceCallDetails: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // const propertyEvents = await loadEventsByPropertyId(propertyId);
-      // setPropertyEvents(propertyEvents);
-      // const jobTypes = await loadJobTypes();
-      // setJobTypes(jobTypes);
-      // const jobSubtypes = await loadJobSubtypes();
-      // setJobSubtype(jobSubtypes);
-      // const jobTypeSubtypes = await loadJobTypeSubtypes();
-      // setJobTypeSubtypes(jobTypeSubtypes);
+      const propertyEvents = await loadEventsByPropertyId(propertyId);
+      setPropertyEvents(propertyEvents);
+      const jobTypes = await loadJobTypes();
+      setJobTypes(jobTypes);
+      const jobSubtypes = await loadJobSubtypes();
+      setJobSubtype(jobSubtypes);
+      const jobTypeSubtypes = await loadJobTypeSubtypes();
+      setJobTypeSubtypes(jobTypeSubtypes);
       const req = new Event();
       req.setId(serviceCallId);
       const entry = await EventClientService.Get(req);
@@ -255,12 +256,10 @@ export const ServiceCallDetails: FC<Props> = props => {
           },
           {
             label: 'Invoice',
-            content: (
-              <Invoice
-                serviceItem={entry}
-                loading={loading}
-                disabled={saving}
-              />
+            content: loading ? (
+              <InfoTable data={makeFakeRows(4, 5)} loading />
+            ) : (
+              <Invoice serviceItem={entry} disabled={saving} />
             ),
           },
           {
