@@ -1,19 +1,47 @@
-import React, { FC } from 'react';
+import React, { FC, useState, useCallback } from 'react';
 import { EventType } from './ServiceCallDetails';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
-import { InfoTable } from '../../ComponentsLibrary/InfoTable';
-import { makeFakeRows } from '../../../helpers';
+import { Field } from '../../ComponentsLibrary/Field';
 import { PAYMENT_TYPE_LIST } from '../../../constants';
 
+type EventTypeExtended = EventType & {
+  grandTotal: number;
+};
+
 interface Props {
-  loading: boolean;
   disabled: boolean;
   serviceItem: EventType;
 }
 
-export const Invoice: FC<Props> = ({ serviceItem, loading }) => {
-  console.log({ serviceItem });
-  const SCHEMA: Schema<EventType> = [
+export const Invoice: FC<Props> = ({ serviceItem }) => {
+  const transformData = (data: EventType) => {
+    const {
+      totalamountrow1,
+      totalamountrow2,
+      totalamountrow3,
+      totalamountrow4,
+    } = data;
+    const total1 = +totalamountrow1;
+    const total2 = +totalamountrow2;
+    const total3 = +totalamountrow3;
+    const total4 = +totalamountrow4;
+    const grandTotal = total1 + total2 + total3 + total4;
+    return Object.assign({ ...data }, {
+      totalamountrow1: total1.toString(),
+      totalamountrow2: total2.toString(),
+      totalamountrow3: total3.toString(),
+      totalamountrow4: total4.toString(),
+      grandTotal,
+    } as EventTypeExtended);
+  };
+  const [data, setData] = useState<EventTypeExtended>(
+    transformData(serviceItem),
+  );
+  const handleChange = useCallback(
+    (data: EventTypeExtended) => setData(transformData(data)),
+    [setData],
+  );
+  const SCHEMA: Schema<EventTypeExtended> = [
     [
       { label: 'Services Performed (1)', name: 'servicesperformedrow1' },
       {
@@ -64,7 +92,15 @@ export const Invoice: FC<Props> = ({ serviceItem, loading }) => {
       },
     ],
     [
-      //   { label: 'Grand Total', name: 'id' }, // FIXME
+      {
+        content: (
+          <Field
+            label="Grand Total"
+            name="grandTotal"
+            value={data.grandTotal}
+          />
+        ),
+      },
       //   { label: 'Payments', name: 'id', readOnly: true }, // FIXME
       //   { label: 'Remaining due', name: 'id', readOnly: true }, // FIXME
       { label: 'Billing Date', name: 'logBillingDate', type: 'date' },
@@ -84,12 +120,5 @@ export const Invoice: FC<Props> = ({ serviceItem, loading }) => {
       { label: 'Invoice Notes', name: 'notes' },
     ],
   ];
-  if (loading) return <InfoTable data={makeFakeRows(4, 5)} loading />;
-  return (
-    <PlainForm
-      schema={SCHEMA}
-      data={serviceItem}
-      onChange={a => console.log(a)}
-    />
-  );
+  return <PlainForm schema={SCHEMA} data={data} onChange={handleChange} />;
 };
