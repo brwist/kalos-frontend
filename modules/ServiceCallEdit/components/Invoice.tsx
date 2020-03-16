@@ -83,7 +83,7 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
         type: 'number',
         endAdornment: '$',
       },
-      //   { label: 'Payment', name: 'color', readOnly: true }, // FIXME
+      { label: 'Payment', name: 'logType', readOnly: true }, // FIXME
       {
         label: 'Discount',
         name: 'discount',
@@ -101,8 +101,8 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
           />
         ),
       },
-      //   { label: 'Payments', name: 'id', readOnly: true }, // FIXME
-      //   { label: 'Remaining due', name: 'id', readOnly: true }, // FIXME
+      { label: 'Payments', name: 'logType', readOnly: true }, // FIXME
+      { label: 'Remaining due', name: 'logType', readOnly: true }, // FIXME
       { label: 'Billing Date', name: 'logBillingDate', type: 'date' },
     ],
     [
