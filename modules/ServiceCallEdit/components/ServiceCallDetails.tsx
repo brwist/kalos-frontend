@@ -262,6 +262,7 @@ export const ServiceCallDetails: FC<Props> = props => {
             content: <Proposal />,
           },
         ]}
+        defaultOpenIdx={0}
       />
     </div>
   );
