@@ -31,6 +31,7 @@ export type SchemaProps<T> = {
   endAdornment?: ReactNode;
   content?: ReactNode;
   disabled?: boolean;
+  readOnly?: boolean;
 };
 
 export type Schema<T> = SchemaProps<T>[][];
@@ -192,7 +193,7 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                 onChange={handleChange(name)}
                 disabled={disabled || props.disabled}
                 validation={validations[name as string]}
-                readOnly={readOnly}
+                readOnly={readOnly || props.readOnly}
                 className={idx2 === 0 ? '' : classes.field}
               />
             );
