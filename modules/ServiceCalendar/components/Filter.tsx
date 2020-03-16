@@ -39,10 +39,7 @@ const Filter = ({
   changeViewBy,
   selectedDate,
   changeSelectedDate,
-  filterOptions,
-  filters,
   changeFilters,
-  initialFilters,
 }: Props) => {
   const classes = useStyles();
   const getCalendarView = (): DatePickerView => {
@@ -91,10 +88,6 @@ const Filter = ({
       <FilterDrawer
         open={showDrawer}
         toggleDrawer={toggleDrawer}
-        filters={filters}
-        filterOptions={filterOptions}
-        changeFilters={changeFilters}
-        initialFilters={initialFilters}
       />
     </Toolbar>
   );

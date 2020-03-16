@@ -7,7 +7,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import { ENDPOINT } from '../../../constants';
-import { useFetchAll } from '../hooks';
+import { useCalendarData } from '../hooks';
 import CallCard from './CallCard';
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -35,60 +35,57 @@ type Props = {
   addFilterOptions: (arg0: FilterOption) => void;
 };
 
-const Column = ({ date, filters, addFilterOptions }: Props) => {
+const Column = ({ date}: Props) => {
   const classes = useStyles();
   const [showCompleted, setShowCompleted] = useState(false);
+  const { fetchingCalendarData, datesMap, filters } = useCalendarData();
 
-  const fetchCalls = useCallback( async (page) => {
-    const event = new Event();
-    event.setDateStarted(`${date} 00:00:00%`);
-    event.setPageNumber(page);
-    return (await eventClient.BatchGet(event)).toObject();
-  }, []);
+  const filterCalls = useCallback(calendarDay => {
+    const { customers, zip, propertyUse, jobType, jobSubType } = filters;
+    return Object.keys(calendarDay).reduce((acc, key) => {
+      let calls = calendarDay[key];
+      acc[key] = calls.filter(call => {
+        if (customers.length && !customers.includes(`${call?.customer?.id}`)) {
+          return false;
+        }
+        if (zip.length && !zip.includes(call?.property?.zip)) {
+          return false;
+        }
+        if (propertyUse.length && !propertyUse.includes(`${call?.isResidential}`)) {
+          return false;
+        }
+        if (jobType && jobType !== call?.jobTypeId) {
+          return false;
+        }
+        if (jobSubType && jobType !== call?.jobSubTypeId) {
+          return false;
+        }
+        return true;
+      });
+      return acc;
+    }, {});
+  }, [filters]);
 
-  const { data } = useFetchAll(fetchCalls);
-  const { completedCalls, calls, reminders } = data.reduce((acc, call) => {
-    if (filters.customers.length && !filters.customers.includes(`${call?.customer?.id}`)) {
-      return acc;
-    }
-    if (filters.zip.length && !filters.zip.includes(call?.property?.zip)) {
-      return acc;
-    }
-    if(filters.propertyUse.length && !filters.propertyUse.includes(`${call?.isResidential}`)) {
-      return acc;
-    }
-    if(filters.jobType && filters.jobType !== call?.jobTypeId ) {
-      return acc;
-    }
-    if(filters.jobSubType && filters.jobType !== call?.jobSubTypeId ) {
-      return acc;
-    }
+  if (fetchingCalendarData) {
+    return (
+      [...Array(5)].map((e, i) => (
+        <CallCard key={`${date}-skeleton-${i}`} skeleton />
+      ))
+    );
+  }
 
-    if (call.logJobStatus === 'Completed') {
-      acc.completedCalls.push(call);
-    }
-    if (call.logJobStatus !== 'Completed' && call.color !== 'ffbfbf') {
-      acc.calls.push(call);
-    }
-    if (call.color === 'ffbfbf') {
-      acc.reminders.push(call);
-    }
-    addFilterOptions({
-      customer: call.customer,
-      zip: call?.property?.zip ?? null,
-    });
-    return acc;
-  }, { completedCalls: [], calls: [], reminders: []});
+  const calendarDay = datesMap.get(date).toObject();
+  const {
+    completedServiceCallsList,
+    remindersList,
+    serviceCallsList,
+    timeoffRequestsList
+  } = filterCalls(calendarDay);
 
   return (
     <div>
       {format(new Date(date), 'MMMM d, yyyy')}
-      {!data.length && (
-        [...Array(5)].map((e, i) => (
-          <CallCard key={`${date}-skeleton-${i}`} skeleton />
-        ))
-      )}
-      {!!completedCalls.length && (
+      {!!completedServiceCallsList.length && (
         <Button onClick={() => setShowCompleted(!showCompleted)}>
           <ExpandMoreIcon
             className={clsx(classes.expand, {
@@ -99,18 +96,18 @@ const Column = ({ date, filters, addFilterOptions }: Props) => {
         </Button>
       )}
       <Collapse in={showCompleted}>
-        {completedCalls
+        {completedServiceCallsList
           .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
           .map(call => (
             <CallCard key={call.id} card={call} />
           ))}
       </Collapse>
-      {reminders
+      {remindersList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
         .map(call => (
           <CallCard key={call.id} card={call} reminder />
         ))}
-      {calls
+      {serviceCallsList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
         .map(call => (
           <CallCard key={call.id} card={call} />
