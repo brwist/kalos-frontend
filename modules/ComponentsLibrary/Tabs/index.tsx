@@ -9,6 +9,7 @@ interface Props {
     label: string;
     content: ReactNode;
   }[];
+  defaultOpenIdx?: number;
 }
 
 const useStyles = makeStyles(theme => ({}));
@@ -18,9 +19,9 @@ const a11yProps = (idx: number) => ({
   'aria-controls': `scrollable-auto-tabpanel-${idx}`,
 });
 
-export const Tabs: FC<Props> = ({ tabs }) => {
+export const Tabs: FC<Props> = ({ tabs, defaultOpenIdx = 0 }) => {
   const classes = useStyles();
-  const [tabIdx, setTabIdx] = useState<number>(0);
+  const [tabIdx, setTabIdx] = useState<number>(defaultOpenIdx);
   const handleChange = useCallback(
     (_, newValue: number) => {
       setTabIdx(newValue);
