@@ -54,14 +54,14 @@ export const ServiceCallDetails: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const propertyEvents = await loadEventsByPropertyId(propertyId);
-      setPropertyEvents(propertyEvents);
-      const jobTypes = await loadJobTypes();
-      setJobTypes(jobTypes);
-      const jobSubtypes = await loadJobSubtypes();
-      setJobSubtype(jobSubtypes);
-      const jobTypeSubtypes = await loadJobTypeSubtypes();
-      setJobTypeSubtypes(jobTypeSubtypes);
+      // const propertyEvents = await loadEventsByPropertyId(propertyId);
+      // setPropertyEvents(propertyEvents);
+      // const jobTypes = await loadJobTypes();
+      // setJobTypes(jobTypes);
+      // const jobSubtypes = await loadJobSubtypes();
+      // setJobSubtype(jobSubtypes);
+      // const jobTypeSubtypes = await loadJobTypeSubtypes();
+      // setJobTypeSubtypes(jobTypeSubtypes);
       const req = new Event();
       req.setId(serviceCallId);
       const entry = await EventClientService.Get(req);
@@ -255,14 +255,20 @@ export const ServiceCallDetails: FC<Props> = props => {
           },
           {
             label: 'Invoice',
-            content: <Invoice />,
+            content: (
+              <Invoice
+                serviceItem={entry}
+                loading={loading}
+                disabled={saving}
+              />
+            ),
           },
           {
             label: 'Proposal',
             content: <Proposal />,
           },
         ]}
-        defaultOpenIdx={0}
+        defaultOpenIdx={3}
       />
     </div>
   );
