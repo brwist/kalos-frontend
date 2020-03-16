@@ -6,6 +6,7 @@ import { Button } from '../../ComponentsLibrary/Button';
 import SearchableList from './SearchableList';
 import {JobTypePicker} from '../../Pickers/JobType';
 import {JobSubtypePicker} from '../../Pickers/JobSubtype';
+import {useCalendarData} from '../hooks';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -98,12 +99,9 @@ const reducer = (state: State, action: Action): State => {
 const FilterDrawer = ({
   open,
   toggleDrawer,
-  filterOptions,
-  filters,
-  changeFilters,
-  initialFilters,
 }) => {
   const classes = useStyles();
+  const { fetchingCalendarData, filters, initialFilters, changeFilters, customersMap, zipCodesMap } = useCalendarData();
   const [state, dispatch] = useReducer(reducer, filters);
   const { customers, zip, jobType, jobSubType, propertyUse } = state;
 
@@ -122,16 +120,18 @@ const FilterDrawer = ({
         <div>
           <SearchableList
             title="Customers"
-            options={filterOptions.customers}
+            options={customersMap}
             values={customers}
+            loading={fetchingCalendarData}
             handleChange={value =>
               dispatch({ type: 'customers', value })
             }
           />
           <SearchableList
             title="ZIP Codes"
-            options={filterOptions.zip}
+            options={zipCodesMap}
             values={zip}
+            loading={fetchingCalendarData}
             handleChange={value =>
               dispatch({ type: 'zip', value })
             }

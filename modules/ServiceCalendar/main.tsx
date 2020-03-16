@@ -1,8 +1,9 @@
-import React, { createContext, useCallback, useEffect, useReducer, useRef } from 'react';
+import React, { createContext, useCallback, useEffect, useState, useReducer, useRef } from 'react';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { format, startOfWeek, startOfMonth, endOfMonth, endOfYear, startOfYear, eachDayOfInterval, addDays } from 'date-fns';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Backdrop from '@material-ui/core/Backdrop';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -19,6 +20,7 @@ type Props = {
 }
 
 const userClient = new UserClient(ENDPOINT);
+const eventClient = new EventClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -74,6 +76,10 @@ const getShownDates = (viewBy: string, date?: Date) => {
   }
 };
 
+const mapToObject = mapping => (
+  mapping.toArray().reduce((acc, [key, val]) => {acc[key] = val; return acc}, {});
+);
+
 type Filters = {
   customers: string[],
   jobType: string,
@@ -83,6 +89,8 @@ type Filters = {
 };
 
 type State = {
+  fetchingCalendarData: boolean;
+  CalendarData: CalendarData;
   speedDialOpen: boolean;
   viewBy: string;
   selectedDate: Date,
@@ -91,6 +99,8 @@ type State = {
 }
 
 type Action =
+  | { type: 'fetchingCalendarData' }
+  | { type: 'fetchedCalendarData', data: CalendarData }
   | { type: 'viewBy', value: string }
   | { type: 'speedDialOpen' }
   | { type: 'changeSelectedDate', value: Date}
@@ -98,6 +108,22 @@ type Action =
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
+  case 'fetchingCalendarData': {
+    return {
+      ...state,
+      fetchingCalendarData: true,
+    };
+  }
+  case 'fetchedCalendarData': {
+    const CalendarData = action.data;
+    return {
+      ...state,
+      datesMap: CalendarData.getDatesMap(),
+      customersMap: mapToObject(CalendarData.getCustomersMap()),
+      zipCodesMap: mapToObject(CalendarData.getZipCodesMap()),
+      fetchingCalendarData: false,
+    };
+  }
   case 'viewBy': {
     return {
       ...state,
@@ -139,6 +165,10 @@ const initialFilters: Filters = {
 };
 
 const initialState: State = {
+  fetchingCalendarData: true,
+  datesMap: {},
+  customersMap: {},
+  zipCodesMap: {},
   speedDialOpen: false,
   viewBy: 'week',
   selectedDate: getDefaultSelectedDate('week'),
@@ -151,20 +181,36 @@ type EmployeesContext = {
   employeesLoading: boolean;
 };
 
+type CalendarDay = {
+  getServiceCallsList(): Array<Event>;
+  getCompletedServiceCallsList(): Array<Event>;
+  getRemindersList(): Array<Event>;
+  getTimeoffRequestsList(): Array<timeoff_request_pb.TimeoffRequest>;
+};
+
+type CalendarData = {
+  getDatesMap(): Map<string, CalendarDay>;
+  getCustomersMap(): Map<number, string>;
+  getZipCodesMap(): Map<string, string>;
+};
+
+export const CalendarDataContext = createContext();
 export const EmployeesContext = createContext<EmployeesContext>({ employees: [], employeesLoading: false });
 
 const ServiceCalendar = ({ userId }: Props) => {
   const classes = useStyles();
-  const [{speedDialOpen, viewBy, shownDates, selectedDate, filters}, dispatch] = useReducer(reducer, initialState);
-  const filterOptions = useRef({ customers: {}, zip: {} });
-  const addFilterOptions = ({ customer, zip }) => {
-    if (customer) {
-      filterOptions.current.customers[customer.id] = `${customer.firstname} ${customer.lastname}`;
-    }
-    if (zip) {
-      filterOptions.current.zip[zip] = zip;
-    }
-  });
+  const [{
+    fetchingCalendarData,
+    datesMap,
+    customersMap,
+    zipCodesMap,
+    speedDialOpen,
+    viewBy,
+    shownDates,
+    selectedDate,
+    filters
+  }, dispatch] = useReducer(reducer, initialState);
+
   const fetchEmployees = useCallback( async (page) => {
     const user = new User();
     user.setIsActive(1);
@@ -178,6 +224,14 @@ const ServiceCalendar = ({ userId }: Props) => {
   useEffect(() => {
     userClient.GetToken('test', 'test');
   }, []);
+
+  useEffect(() => {
+    dispatch({ type: 'fetchingCalendarData' });
+    (async () => {
+      const data = (await eventClient.GetCalendarData(shownDates[0], shownDates[shownDates.length - 1]));
+      dispatch({ type: 'fetchedCalendarData', data });
+    })();
+  }, [shownDates]);
 
   const changeViewBy = useCallback(value => {
     dispatch({ type: 'viewBy', value });
@@ -193,27 +247,35 @@ const ServiceCalendar = ({ userId }: Props) => {
 
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <EmployeesContext.Provider value={{ employees, employeesLoading }}>
+      <CalendarDataContext.Provider
+        value={{
+          fetchingCalendarData,
+          datesMap,
+          customersMap,
+          zipCodesMap,
+          initialFilters,
+          filters,
+          changeFilters,
+        }}
+      >
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <Filter
             viewBy={viewBy}
             changeViewBy={changeViewBy}
             selectedDate={selectedDate}
             changeSelectedDate={changeSelectedDate}
-            changeFilters={changeFilters}
-            filterOptions={filterOptions.current}
-            filters={filters}
-            initialFilters={initialFilters}
           />
         </MuiPickersUtilsProvider>
-        <Container className={viewBy !== 'day' ? classes.week : ''} maxWidth={false}>
-          {shownDates.map(date => (
-            <Column key={date} date={date} filters={filters} addFilterOptions={addFilterOptions} />
-          ))}
-        </Container>
+        <EmployeesContext.Provider value={{ employees, employeesLoading }}>
+          <Container className={viewBy !== 'day' ? classes.week : ''} maxWidth={false}>
+            {shownDates.map(date => (
+              <Column key={date} date={date} />
+            ))}
+          </Container>
+        </EmployeesContext.Provider>
         <Backdrop open={speedDialOpen} style={{ zIndex: 10 }} />
         <AddNewButton open={speedDialOpen} setOpen={() => dispatch({ type: 'speedDialOpen' })} />
-      </EmployeesContext.Provider>
+      </CalendarDataContext.Provider>
     </ThemeProvider>
   );
 };

@@ -1,7 +1,8 @@
 import { useState, useEffect, useContext } from 'react';
-import { EmployeesContext } from './main';
+import { EmployeesContext, CalendarDataContext } from './main';
 
 export const useEmployees = () => useContext(EmployeesContext);
+export const useCalendarData = () => useContext(CalendarDataContext);
 
 type State = {
   data: any[],
