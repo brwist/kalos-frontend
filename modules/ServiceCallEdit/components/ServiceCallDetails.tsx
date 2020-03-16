@@ -66,7 +66,6 @@ export const ServiceCallDetails: FC<Props> = props => {
       const req = new Event();
       req.setId(serviceCallId);
       const entry = await EventClientService.Get(req);
-      console.log({ entry });
       setEntry(entry);
       setLoading(false);
       setLoaded(true);
