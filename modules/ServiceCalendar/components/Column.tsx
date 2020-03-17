@@ -6,7 +6,6 @@ import Button from '@material-ui/core/Button';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
-import { ENDPOINT } from '../../../constants';
 import { useCalendarData } from '../hooks';
 import CallCard from './CallCard';
 
@@ -24,15 +23,8 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-const eventClient = new EventClient(ENDPOINT);
-type FilterOption = {
-  customer: any;
-  zip: string | null;
-}
 type Props = {
   date: string;
-  filters: Filters;
-  addFilterOptions: (arg0: FilterOption) => void;
 };
 
 const Column = ({ date}: Props) => {
@@ -57,7 +49,7 @@ const Column = ({ date}: Props) => {
         if (jobType && jobType !== call?.jobTypeId) {
           return false;
         }
-        if (jobSubType && jobType !== call?.jobSubTypeId) {
+        if (jobSubType && jobSubType !== call?.jobSubTypeId) {
           return false;
         }
         return true;
@@ -66,7 +58,7 @@ const Column = ({ date}: Props) => {
     }, {});
   }, [filters]);
 
-  if (fetchingCalendarData) {
+  if (fetchingCalendarData || !datesMap.get(date)) {
     return (
       [...Array(5)].map((e, i) => (
         <CallCard key={`${date}-skeleton-${i}`} skeleton />
@@ -81,7 +73,6 @@ const Column = ({ date}: Props) => {
     serviceCallsList,
     timeoffRequestsList
   } = filterCalls(calendarDay);
-
   return (
     <div>
       {format(new Date(date), 'MMMM d, yyyy')}

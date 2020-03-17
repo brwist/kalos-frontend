@@ -13,6 +13,7 @@ export interface Props extends Style {
   disabled?: boolean;
   variant?: 'contained' | 'outlined' | 'text';
   color?: 'primary' | 'secondary';
+  fullWidth?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({

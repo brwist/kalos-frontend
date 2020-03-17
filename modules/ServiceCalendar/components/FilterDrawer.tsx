@@ -1,4 +1,4 @@
-import React, { useState, useReducer } from 'react';
+import React, { useReducer } from 'react';
 import { Theme, createStyles, makeStyles } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import ListItem from '@material-ui/core/ListItem';
@@ -15,6 +15,7 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: 'column',
       justifyContent: 'space-between',
       height: '100%',
+      width: 320,
     },
     buttons: {
       display: 'flex',
@@ -24,18 +25,30 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 type State = {
-  filters: Filters
+  customers: string[];
+  zip: string[];
+  jobType: number;
+  jobSubType: number;
+  propertyUse: string[];
 }
 
 type Action =
-  | { type: 'customers', value: number }
-  | { type: 'zip', value: number }
-  | { type: 'jobType', value: number}
-  | { type: 'jobSubType', value: number}
-  | { type: 'propertyUse', value: string};
+  | { type: 'toggleAll', key: string, value: string[] }
+  | { type: 'customers', value: string }
+  | { type: 'zip', value: string }
+  | { type: 'jobType', value: number }
+  | { type: 'jobSubType', value: number }
+  | { type: 'propertyUse', value: string }
+  | { type: 'resetFilters', value: State };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
+  case 'toggleAll': {
+    return {
+      ...state,
+      [action.key]: action.value,
+    };
+  }
   case 'customers': {
     const customers = [...state.customers];
     const currentIndex = customers.indexOf(action.value);
@@ -89,17 +102,22 @@ const reducer = (state: State, action: Action): State => {
       propertyUse,
     };
   }
-    case 'resetFilters':
-      return action.value;
+  case 'resetFilters':
+    return action.value;
   default:
     return {...state};
   }
 };
 
+type Props = {
+  open: boolean;
+  toggleDrawer: (show: boolean) => void;
+}
+
 const FilterDrawer = ({
   open,
   toggleDrawer,
-}) => {
+}: Props) => {
   const classes = useStyles();
   const { fetchingCalendarData, filters, initialFilters, changeFilters, customersMap, zipCodesMap } = useCalendarData();
   const [state, dispatch] = useReducer(reducer, filters);
@@ -107,7 +125,7 @@ const FilterDrawer = ({
 
   const handleSave = () => {
     changeFilters(state);
-    toggleDrawer();
+    toggleDrawer(false);
   };
 
   const handleReset = () => {
@@ -126,6 +144,13 @@ const FilterDrawer = ({
             handleChange={value =>
               dispatch({ type: 'customers', value })
             }
+            handleToggleAll={value =>
+              dispatch({
+                type: 'toggleAll',
+                key: 'customers',
+                value: value ? Object.keys(customersMap) : [],
+              })
+            }
           />
           <SearchableList
             title="ZIP Codes"
@@ -134,6 +159,13 @@ const FilterDrawer = ({
             loading={fetchingCalendarData}
             handleChange={value =>
               dispatch({ type: 'zip', value })
+            }
+            handleToggleAll={value =>
+              dispatch({
+                type: 'toggleAll',
+                key: 'zip',
+                value: value ? Object.keys(zipCodesMap) : [],
+              })
             }
           />
           <SearchableList
