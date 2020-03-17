@@ -4,6 +4,7 @@ import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Typography from '@material-ui/core/Typography';
+import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
 
 type Styles = {
@@ -29,6 +30,8 @@ export type Columns = {
   name: string;
   dir?: Dir;
   onClick?: () => void;
+  actions?: ActionsProps;
+  fixedActions?: boolean;
 }[];
 
 interface Props extends Styles {
@@ -84,6 +87,7 @@ const useStyles = makeStyles(theme => {
       ...commonCell,
       boxSizing: 'border-box',
       fontWeight: 600,
+      justifyContent: 'space-between',
     },
     item: ({ compact }: Styles) => ({
       ...commonCell,
@@ -166,7 +170,7 @@ export const InfoTable = ({
     <div className={className + ' ' + classes.wrapper} style={styles}>
       {columns.length > 0 && (
         <div className={classes.header}>
-          {columns.map(({ name, dir, onClick }, idx) => {
+          {columns.map(({ name, dir, onClick, actions, fixedActions }, idx) => {
             const ArrowIcon =
               dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
             return (
@@ -174,6 +178,7 @@ export const InfoTable = ({
                 key={idx}
                 className={classes.column}
                 style={{ width: `${100 / (md ? 1 : columns.length)}%` }}
+                component="div"
               >
                 <span
                   onClick={onClick}
@@ -182,6 +187,7 @@ export const InfoTable = ({
                 >
                   {name} {dir && <ArrowIcon />}
                 </span>
+                {actions && <Actions actions={actions} fixed={fixedActions} />}
               </Typography>
             );
           })}

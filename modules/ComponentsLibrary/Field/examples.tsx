@@ -39,7 +39,7 @@ const EnhancedField = ({
   const [value, setValue] = useState(defaultValue);
   if (props.headline) return <Field {...props} />;
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
       <Field
         name="firstName"
         label="Text Field"
@@ -50,8 +50,8 @@ const EnhancedField = ({
       {props.options && typeof props.options[0] === 'string' && (
         <div
           style={{
-            width: 45,
-            height: 45,
+            width: 30,
+            height: 30,
             background: value,
             marginLeft: 20,
           }}
@@ -70,8 +70,15 @@ export default () => (
       placeholder="Placeholder..."
     />
     <EnhancedField label="Disabled" disabled />
-    <EnhancedField label="Disabled" readOnly />
-    <EnhancedField label="Required" required />
+    <EnhancedField label="Read Only" readOnly />
+    <EnhancedField
+      label="Required with actions"
+      required
+      actions={[
+        { label: 'Action 1' },
+        { label: 'Action 2', variant: 'outlined' },
+      ]}
+    />
     <EnhancedField label="Search" type="search" />
     <EnhancedField label="Password" type="password" />
     <EnhancedField label="Number" type="number" />
@@ -107,6 +114,7 @@ Amet`}
       label="Select Field"
       options={SELECT_OPTIONS_TXT}
       defaultValue={SELECT_OPTIONS_TXT[0] as string}
+      actions={[{ label: 'Action' }]}
     />
     <EnhancedField
       label="Headline with description"
