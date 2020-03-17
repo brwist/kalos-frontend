@@ -18,8 +18,6 @@ type Props = {
   changeViewBy: (value: string) => void;
   selectedDate: Date;
   changeSelectedDate: (date: Date) => void;
-  changeFilters: (value: Filters) => void;
-  filterOptions: MutableRefObject<CustomerMap>;
 };
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -39,7 +37,6 @@ const Filter = ({
   changeViewBy,
   selectedDate,
   changeSelectedDate,
-  changeFilters,
 }: Props) => {
   const classes = useStyles();
   const getCalendarView = (): DatePickerView => {

@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     week: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(7, 1fr)',
+      gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
       gridGap: theme.spacing(2),
     },
   }),
@@ -76,21 +76,19 @@ const getShownDates = (viewBy: string, date?: Date) => {
   }
 };
 
-const mapToObject = mapping => (
-  mapping.toArray().reduce((acc, [key, val]) => {acc[key] = val; return acc}, {});
-);
+const mapToObject = (mapping: Map<string, CalendarDay>) => mapping.toArray().reduce((acc, [key, val]) => {acc[key] = val; return acc}, {});
 
 type Filters = {
   customers: string[],
-  jobType: string,
-  jobSubType: string,
+  jobType: number,
+  jobSubType: number,
   zip: string[],
   propertyUse: string[],
 };
 
 type State = {
   fetchingCalendarData: boolean;
-  CalendarData: CalendarData;
+  datesMap?: Map<string, CalendarDay>;
   speedDialOpen: boolean;
   viewBy: string;
   selectedDate: Date,
@@ -158,17 +156,14 @@ const reducer = (state: State, action: Action): State => {
 
 const initialFilters: Filters = {
   customers: [],
-  jobType: '',
-  jobSubType: '',
+  jobType: 0,
+  jobSubType: 0,
   zip: [],
   propertyUse: [],
 };
 
 const initialState: State = {
   fetchingCalendarData: true,
-  datesMap: {},
-  customersMap: {},
-  zipCodesMap: {},
   speedDialOpen: false,
   viewBy: 'week',
   selectedDate: getDefaultSelectedDate('week'),

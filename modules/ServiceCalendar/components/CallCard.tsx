@@ -69,7 +69,7 @@ const SkeletonCard = () => {
 
 const CallCard = ({ card, reminder, skeleton }: props) => {
   if (skeleton) {
-    return <SkeletonCard />
+    return <SkeletonCard />;
   }
   const {
     id,
