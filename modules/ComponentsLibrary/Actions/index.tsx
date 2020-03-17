@@ -13,6 +13,7 @@ export type ActionsProps = (ButtonProps & {
 interface Props {
   fixed?: boolean;
   actions: ActionsProps;
+  className?: string;
 }
 
 const useStyles = makeStyles(() => ({
@@ -24,7 +25,7 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-export const Actions: FC<Props> = ({ fixed = false, actions }) => {
+export const Actions: FC<Props> = ({ fixed = false, actions, className }) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState<(EventTarget & HTMLElement) | null>(
     null,
@@ -93,7 +94,7 @@ export const Actions: FC<Props> = ({ fixed = false, actions }) => {
       </>
     );
   return (
-    <div className={classes.wrapper}>
+    <div className={className + ' ' + classes.wrapper}>
       {actions.length > 0 && (
         <div>
           {actions

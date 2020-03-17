@@ -49,7 +49,7 @@ export const SCHEMA_2: Schema<Model> = [
     { name: 'firstName', label: 'First Name' },
     { name: 'lastName', label: 'Last Name' },
     { name: 'gender', label: 'Gender', options: GENDERS },
-    { name: 'dob', label: 'Date of birth', type: 'date' },
+    { label: 'Date of birth', type: 'date' },
   ],
   [{ label: 'Login detail', headline: true }],
   [
@@ -60,6 +60,7 @@ export const SCHEMA_2: Schema<Model> = [
       type: 'password',
       helperText: 'Min 3 characters long',
       required: true,
+      actions: [{ label: 'Random', size: 'xsmall', variant: 'outlined' }],
     },
     { name: 'mailing', label: 'Mailing', type: 'checkbox' },
     { name: 'hour', label: 'Hour', type: 'time' },

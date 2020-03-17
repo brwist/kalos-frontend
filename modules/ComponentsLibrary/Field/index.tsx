@@ -64,6 +64,11 @@ export const getDefaultValueByType = (type: Type) => {
 };
 
 const useStyles = makeStyles(theme => ({
+  fieldWrapper: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+  },
   field: ({ type, disabled }: Style) => ({
     marginTop: 0,
     marginBottom: theme.spacing(2),
@@ -123,6 +128,9 @@ const useStyles = makeStyles(theme => ({
   },
   option: {
     whiteSpace: 'normal',
+  },
+  actions: {
+    marginLeft: theme.spacing(),
   },
 }));
 
@@ -397,74 +405,86 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   if (options && !readOnly) {
     const id = `${name}-select-label`;
     return (
-      <FormControl
-        className={classes.field + ' ' + className}
-        fullWidth
-        disabled={disabled}
-        error={error}
-      >
-        <InputLabel id={id}>{inputLabel}</InputLabel>
-        <Select
-          labelId={id}
-          id={`${name}-select`}
-          onChange={handleChange}
-          {...props}
-          value={value}
+      <div className={classes.fieldWrapper + ' ' + className}>
+        <FormControl
+          className={classes.field}
+          fullWidth
+          disabled={disabled}
+          error={error}
         >
-          {options.map(option => {
-            const isStringOption = typeof option === 'string';
-            const label = isStringOption
-              ? (option as string)
-              : (option as Option).label;
-            const value = isStringOption
-              ? (option as string)
-              : (option as Option).value;
-            const color = isStringOption ? undefined : (option as Option).color;
-            return (
-              <MenuItem key={value} value={value} className={classes.option}>
-                {color && (
-                  <div
-                    className={classes.color}
-                    style={{ backgroundColor: color }}
-                  />
-                )}
-                {label}
-              </MenuItem>
-            );
-          })}
-        </Select>
-        {helper && <FormHelperText>{helper}</FormHelperText>}
-      </FormControl>
+          <InputLabel id={id}>{inputLabel}</InputLabel>
+          <Select
+            labelId={id}
+            id={`${name}-select`}
+            onChange={handleChange}
+            {...props}
+            value={value}
+          >
+            {options.map(option => {
+              const isStringOption = typeof option === 'string';
+              const label = isStringOption
+                ? (option as string)
+                : (option as Option).label;
+              const value = isStringOption
+                ? (option as string)
+                : (option as Option).value;
+              const color = isStringOption
+                ? undefined
+                : (option as Option).color;
+              return (
+                <MenuItem key={value} value={value} className={classes.option}>
+                  {color && (
+                    <div
+                      className={classes.color}
+                      style={{ backgroundColor: color }}
+                    />
+                  )}
+                  {label}
+                </MenuItem>
+              );
+            })}
+          </Select>
+          {helper && <FormHelperText>{helper}</FormHelperText>}{' '}
+        </FormControl>
+        {actions && (
+          <Actions className={classes.actions} actions={actions} fixed />
+        )}
+      </div>
     );
   }
   return (
-    <TextField
-      className={classes.field + ' ' + className}
-      disabled={disabled}
-      onChange={handleChange}
-      label={inputLabel}
-      fullWidth
-      InputProps={{
-        readOnly,
-        startAdornment: startAdornment ? (
-          <InputAdornment position="start">{startAdornment}</InputAdornment>
-        ) : (
-          undefined
-        ),
-        endAdornment: endAdornment ? (
-          <InputAdornment position="end">{endAdornment}</InputAdornment>
-        ) : (
-          undefined
-        ),
-      }}
-      InputLabelProps={{
-        shrink: true,
-      }}
-      error={error}
-      {...props}
-      type={type}
-      value={value}
-      helperText={helper}
-    />
+    <div className={classes.fieldWrapper + ' ' + className}>
+      <TextField
+        className={classes.field}
+        disabled={disabled}
+        onChange={handleChange}
+        label={inputLabel}
+        fullWidth
+        InputProps={{
+          readOnly,
+          startAdornment: startAdornment ? (
+            <InputAdornment position="start">{startAdornment}</InputAdornment>
+          ) : (
+            undefined
+          ),
+          endAdornment: endAdornment ? (
+            <InputAdornment position="end">{endAdornment}</InputAdornment>
+          ) : (
+            undefined
+          ),
+        }}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        error={error}
+        {...props}
+        type={type}
+        value={value}
+        helperText={helper}
+      />
+      {actions && (
+        <Actions className={classes.actions} actions={actions} fixed />
+      )}
+    </div>
   );
 };

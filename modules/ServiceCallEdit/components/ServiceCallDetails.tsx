@@ -263,10 +263,14 @@ export const ServiceCallDetails: FC<Props> = props => {
           },
           {
             label: 'Proposal',
-            content: <Proposal />,
+            content: loading ? (
+              <InfoTable data={makeFakeRows(2, 5)} loading />
+            ) : (
+              <Proposal serviceItem={entry} />
+            ),
           },
         ]}
-        defaultOpenIdx={3}
+        defaultOpenIdx={0}
       />
     </div>
   );

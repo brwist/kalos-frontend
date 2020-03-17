@@ -55,7 +55,10 @@ export default () => (
       columns={[
         { name: 'Column 1' },
         { name: 'Column 2' },
-        { name: 'Column 3' },
+        {
+          name: 'Column 3',
+          actions: [{ label: 'Action', compact: true, variant: 'outlined' }],
+        },
       ]}
     />
     <hr />
