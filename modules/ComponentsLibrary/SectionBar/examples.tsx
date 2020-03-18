@@ -9,7 +9,13 @@ const Examples = ({ subtitle }: { subtitle?: string }) => {
       <SectionBar title="Title" subtitle={subtitle} />
       <hr />
       <SectionBar
-        title="With actions"
+        actions={Array.from(Array(5)).map((_, idx) => ({
+          label: `Button ${idx + 1}`,
+        }))}
+      />
+      <hr />
+      <SectionBar
+        title="With title and actions"
         subtitle={subtitle}
         actions={Array.from(Array(5)).map((_, idx) => ({
           label: `Button ${idx + 1}`,

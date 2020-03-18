@@ -47,6 +47,16 @@ export const COLORS = {
   primary3: '#F20E00',
 };
 
+export const SERVICE_STATUSES = {
+  ENROUTE: 'Enroute',
+  ON_CALL: 'On Call',
+  SIGNATURE: 'Signature',
+  PAYMENT: 'Payment',
+  COMPLETED: 'Completed',
+  INCOMPLETE: 'Incomplete',
+  ADMIN: 'Admin',
+};
+
 export const JOB_STATUS_COLORS: { [key: string]: string } = {
   Requested: 'efc281',
   Confirmed: 'fefdb9',
@@ -158,4 +168,5 @@ export default {
   ROWS_PER_PAGE,
   API_FAILED_GENERAL_ERROR_MSG,
   RESIDENTIAL_OPTIONS,
+  SERVICE_STATUSES,
 };

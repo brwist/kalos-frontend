@@ -26,7 +26,7 @@ type Styles = {
 };
 
 interface Props {
-  title: ReactNode;
+  title?: ReactNode;
   subtitle?: ReactNode;
   actions?: ActionsProps;
   className?: string;
@@ -115,7 +115,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export const SectionBar: FC<Props> = ({
-  title,
+  title = '',
   subtitle,
   actions = [],
   className = '',
