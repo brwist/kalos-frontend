@@ -258,7 +258,6 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
   return (
     <>
       <SectionBar
-        title=""
         actions={[
           {
             label: `${notes.notes === '' ? 'Add' : 'Edit'} Job Notes`,
@@ -271,7 +270,6 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
       <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
       <InfoTable columns={COLUMNS} data={data} />
       <SectionBar
-        title=""
         actions={[
           {
             label: 'Submit And Send To Customer',

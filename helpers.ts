@@ -11,6 +11,10 @@ import {
   JobTypeSubtypeClient,
   JobTypeSubtype,
 } from '@kalos-core/kalos-rpc/JobTypeSubtype';
+import {
+  ServicesRenderedClient,
+  ServicesRendered,
+} from '@kalos-core/kalos-rpc/ServicesRendered';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -20,6 +24,7 @@ const JobTypeClientService = new JobTypeClient(ENDPOINT);
 const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
 const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
 const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
+const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -243,7 +248,8 @@ function getMimeType(fileName: string) {
  * @returns format h:MMa (ie. 4:30AM)
  */
 function formatTime(time: string) {
-  const [hourStr, minutes] = time.split(':');
+  const str = time.includes(' ') ? time.substr(11) : time;
+  const [hourStr, minutes] = str.split(':');
   const hour = +hourStr;
   return (
     (hour > 12 ? hour - 12 : hour) + ':' + minutes + (hour < 12 ? 'AM' : 'PM')
@@ -380,6 +386,30 @@ async function loadJobTypeSubtypes() {
 }
 
 /**
+ * Returns loaded ServicesRendered
+ * @returns ServicesRendered[]
+ */
+async function loadServicesRendered(eventId: number) {
+  const results: ServicesRendered.AsObject[] = [];
+  const req = new ServicesRendered();
+  req.setEventId(eventId);
+  req.setIsActive(1);
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await ServicesRenderedClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results.sort(({ id: A }, { id: B }) => {
+    if (A > B) return -1;
+    if (A < B) return 1;
+    return 0;
+  });
+}
+
+/**
  * Returns loaded Events by property id
  * @param propertyId: property id
  * @returns Event[]
@@ -512,4 +542,5 @@ export {
   loadTechnicians,
   loadEventsByPropertyId,
   loadStoredQuotes,
+  loadServicesRendered,
 };

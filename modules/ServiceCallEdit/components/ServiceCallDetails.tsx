@@ -12,6 +12,7 @@ import {
   getRPCFields,
   loadEventsByPropertyId,
   makeFakeRows,
+  loadUserById,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -30,6 +31,7 @@ export type EventType = Event.AsObject;
 type JobTypeType = JobType.AsObject;
 type JobSubtypeType = JobSubtype.AsObject;
 export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
+export type UserType = User.AsObject;
 
 export interface Props {
   userID: number;
@@ -39,7 +41,7 @@ export interface Props {
 }
 
 export const ServiceCallDetails: FC<Props> = props => {
-  const { userID, propertyId, serviceCallId } = props;
+  const { userID, propertyId, serviceCallId, loggedUserId } = props;
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
   const [propertyEvents, setPropertyEvents] = useState<EventType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -51,6 +53,7 @@ export const ServiceCallDetails: FC<Props> = props => {
   const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
     [],
   );
+  const [loggedUser, setLoggedUser] = useState<UserType>();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,6 +66,8 @@ export const ServiceCallDetails: FC<Props> = props => {
       setJobSubtype(jobSubtypes);
       const jobTypeSubtypes = await loadJobTypeSubtypes();
       setJobTypeSubtypes(jobTypeSubtypes);
+      const loggedUser = await loadUserById(loggedUserId);
+      setLoggedUser(loggedUser);
       const req = new Event();
       req.setId(serviceCallId);
       const entry = await EventClientService.Get(req);
@@ -82,6 +87,8 @@ export const ServiceCallDetails: FC<Props> = props => {
     userID,
     propertyId,
     setPropertyEvents,
+    loggedUserId,
+    setLoggedUser,
   ]);
 
   const handleSave = useCallback(async () => {
@@ -166,7 +173,6 @@ export const ServiceCallDetails: FC<Props> = props => {
       { label: 'Contract Number', value: contractNumber },
     ],
   ];
-
   return (
     <div>
       <SectionBar
@@ -251,7 +257,11 @@ export const ServiceCallDetails: FC<Props> = props => {
           },
           {
             label: 'Services',
-            content: <Services />,
+            content: loggedUser ? (
+              <Services serviceCallId={serviceCallId} loggedUser={loggedUser} />
+            ) : (
+              <InfoTable data={makeFakeRows(4, 4)} loading />
+            ),
           },
           {
             label: 'Invoice',
