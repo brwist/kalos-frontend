@@ -1,10 +1,12 @@
-import React, { createContext, useCallback, useEffect, useState, useReducer, useRef } from 'react';
+import React, { createContext, useCallback, useEffect, useReducer } from 'react';
+import clsx from 'clsx';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { format, startOfWeek, startOfMonth, endOfMonth, endOfYear, startOfYear, eachDayOfInterval, addDays } from 'date-fns';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import Box from '@material-ui/core/Box';
 import Backdrop from '@material-ui/core/Backdrop';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
@@ -24,6 +26,12 @@ const eventClient = new EventClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    wrapper: {
+      overflow: 'auto',
+    },
+    container: {
+      minWidth: 1500,
+    },
     week: {
       display: 'grid',
       gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
@@ -223,7 +231,10 @@ const ServiceCalendar = ({ userId }: Props) => {
   useEffect(() => {
     dispatch({ type: 'fetchingCalendarData' });
     (async () => {
-      const data = (await eventClient.GetCalendarData(shownDates[0], shownDates[shownDates.length - 1]));
+      const req = new Event();
+      req.setDateStarted(shownDates[0]);
+      req.setDateEnded(shownDates[shownDates.length - 1]);
+      const data = await eventClient.GetCalendarData(req);
       dispatch({ type: 'fetchedCalendarData', data });
     })();
   }, [shownDates]);
@@ -262,11 +273,13 @@ const ServiceCalendar = ({ userId }: Props) => {
           />
         </MuiPickersUtilsProvider>
         <EmployeesContext.Provider value={{ employees, employeesLoading }}>
-          <Container className={viewBy !== 'day' ? classes.week : ''} maxWidth={false}>
-            {shownDates.map(date => (
-              <Column key={date} date={date} />
-            ))}
-          </Container>
+          <Box className={classes.wrapper}>
+            <Container className={clsx(classes.container, viewBy !== 'day' && classes.week)} maxWidth={false}>
+              {shownDates.map(date => (
+                <Column key={date} date={date} />
+              ))}
+            </Container>
+          </Box>
         </EmployeesContext.Provider>
         <Backdrop open={speedDialOpen} style={{ zIndex: 10 }} />
         <AddNewButton open={speedDialOpen} setOpen={() => dispatch({ type: 'speedDialOpen' })} />

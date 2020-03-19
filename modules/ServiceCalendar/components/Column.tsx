@@ -8,6 +8,7 @@ import Collapse from '@material-ui/core/Collapse';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import { useCalendarData } from '../hooks';
 import CallCard from './CallCard';
+import {log} from 'util';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -67,6 +68,7 @@ const Column = ({ date}: Props) => {
   }
 
   const calendarDay = datesMap.get(date).toObject();
+  console.log(calendarDay.timeoffRequestsList);
   const {
     completedServiceCallsList,
     remindersList,
@@ -76,7 +78,7 @@ const Column = ({ date}: Props) => {
   return (
     <div>
       {format(new Date(date), 'MMMM d, yyyy')}
-      {!!completedServiceCallsList.length && (
+      {completedServiceCallsList.length && (
         <Button onClick={() => setShowCompleted(!showCompleted)}>
           <ExpandMoreIcon
             className={clsx(classes.expand, {
@@ -90,13 +92,18 @@ const Column = ({ date}: Props) => {
         {completedServiceCallsList
           .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
           .map(call => (
-            <CallCard key={call.id} card={call} />
+            <CallCard key={call.id} card={call} type="completed" />
           ))}
       </Collapse>
+      {timeoffRequestsList
+        .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+        .map(call => (
+          <CallCard key={call.id} card={call} type="timeoff" />
+        ))}
       {remindersList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
         .map(call => (
-          <CallCard key={call.id} card={call} reminder />
+          <CallCard key={call.id} card={call} type="reminder" />
         ))}
       {serviceCallsList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))

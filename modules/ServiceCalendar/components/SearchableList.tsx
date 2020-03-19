@@ -21,6 +21,12 @@ const useStyles = makeStyles((theme: Theme) =>
       fontSize: theme.typography.pxToRem(15),
       fontWeight: theme.typography.fontWeightRegular,
     },
+    desc: {
+      fontSize: theme.typography.pxToRem(15),
+      fontWeight: 400,
+      color: theme.palette.grey.A200,
+      marginLeft: theme.spacing(1),
+    },
     panelDetails: {
       flexDirection: 'column',
     },
@@ -59,6 +65,9 @@ const SearchableList = ({
         expandIcon={<ExpandMoreIcon />}
       >
         <Typography className={classes.heading}>{title}</Typography>
+        {!!values.length && (
+          <Typography className={classes.desc}>| {values.length} Selected</Typography>
+        )}
       </ExpansionPanelSummary>
       <ExpansionPanelDetails className={classes.panelDetails}>
         {!noSearch && (
