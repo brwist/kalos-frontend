@@ -68,7 +68,6 @@ const Column = ({ date}: Props) => {
   }
 
   const calendarDay = datesMap.get(date).toObject();
-  console.log(calendarDay.timeoffRequestsList);
   const {
     completedServiceCallsList,
     remindersList,

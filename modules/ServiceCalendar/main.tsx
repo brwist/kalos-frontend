@@ -29,10 +29,8 @@ const useStyles = makeStyles((theme: Theme) =>
     wrapper: {
       overflow: 'auto',
     },
-    container: {
-      minWidth: 1500,
-    },
     week: {
+      minWidth: 1500,
       display: 'grid',
       gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
       gridGap: theme.spacing(2),
@@ -95,25 +93,36 @@ type Filters = {
 };
 
 type State = {
+  user: User;
   fetchingCalendarData: boolean;
   datesMap?: Map<string, CalendarDay>;
   speedDialOpen: boolean;
   viewBy: string;
+  defaultView: string;
   selectedDate: Date,
   shownDates: string[];
   filters: Filters;
 }
 
 type Action =
+  | { type: 'setUser' }
   | { type: 'fetchingCalendarData' }
   | { type: 'fetchedCalendarData', data: CalendarData }
   | { type: 'viewBy', value: string }
   | { type: 'speedDialOpen' }
   | { type: 'changeSelectedDate', value: Date}
-  | { type: 'changeFilters', value: Filters};
+  | { type: 'changeFilters', value: Filters}
+  | { type: 'defaultView', value: string};
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
+  case 'setUser': {
+    return {
+      ...state,
+      user: action.value,
+      defaultView: action.value.calendarPref,
+    };
+  }
   case 'fetchingCalendarData': {
     return {
       ...state,
@@ -128,6 +137,12 @@ const reducer = (state: State, action: Action): State => {
       customersMap: mapToObject(CalendarData.getCustomersMap()),
       zipCodesMap: mapToObject(CalendarData.getZipCodesMap()),
       fetchingCalendarData: false,
+    };
+  }
+  case 'defaultView': {
+    return {
+      ...state,
+      defaultView: action.value,
     };
   }
   case 'viewBy': {
@@ -171,11 +186,12 @@ const initialFilters: Filters = {
 };
 
 const initialState: State = {
+  user: {},
   fetchingCalendarData: true,
   speedDialOpen: false,
-  viewBy: 'week',
-  selectedDate: getDefaultSelectedDate('week'),
-  shownDates: getShownDates('week', getDefaultSelectedDate('week')),
+  viewBy: '',
+  selectedDate: null,
+  shownDates: [],
   filters: initialFilters,
 };
 
@@ -203,6 +219,8 @@ export const EmployeesContext = createContext<EmployeesContext>({ employees: [],
 const ServiceCalendar = ({ userId }: Props) => {
   const classes = useStyles();
   const [{
+    user,
+    defaultView,
     fetchingCalendarData,
     datesMap,
     customersMap,
@@ -213,6 +231,17 @@ const ServiceCalendar = ({ userId }: Props) => {
     selectedDate,
     filters
   }, dispatch] = useReducer(reducer, initialState);
+
+  const fetchUser = async () => {
+    const req = new User();
+    req.setId(userId);
+    const result = await userClient.Get(req);
+    dispatch({ type: 'setUser', value: result, });
+  };
+
+  if (defaultView && !viewBy) {
+    dispatch({ type: 'viewBy', value: defaultView });
+  }
 
   const fetchEmployees = useCallback( async (page) => {
     const user = new User();
@@ -226,17 +255,21 @@ const ServiceCalendar = ({ userId }: Props) => {
 
   useEffect(() => {
     userClient.GetToken('test', 'test');
+    fetchUser();
+
   }, []);
 
   useEffect(() => {
-    dispatch({ type: 'fetchingCalendarData' });
-    (async () => {
-      const req = new Event();
-      req.setDateStarted(shownDates[0]);
-      req.setDateEnded(shownDates[shownDates.length - 1]);
-      const data = await eventClient.GetCalendarData(req);
-      dispatch({ type: 'fetchedCalendarData', data });
-    })();
+    if(shownDates.length) {
+      dispatch({ type: 'fetchingCalendarData' });
+      (async () => {
+        const req = new Event();
+        req.setDateStarted(shownDates[0]);
+        req.setDateEnded(shownDates[shownDates.length - 1]);
+        const data = await eventClient.GetCalendarData(req);
+        dispatch({type: 'fetchedCalendarData', data});
+      })();
+    }
   }, [shownDates]);
 
   const changeViewBy = useCallback(value => {
@@ -250,6 +283,17 @@ const ServiceCalendar = ({ userId }: Props) => {
   const changeFilters = useCallback((value: Filters): void => {
     dispatch({ type: 'changeFilters', value});
   }, []);
+
+  const setDefaultView = useCallback(() => {
+    (async () => {
+      const req = new User();
+      req.setId(userId);
+      req.setCalendarPref(viewBy);
+      req.setFieldMaskList(['CalendarPref']);
+      const result = await userClient.Update(req);
+      dispatch({ type: 'defaultView', value: result.calendarPref });
+    })();
+  }, [viewBy]);
 
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
@@ -266,6 +310,8 @@ const ServiceCalendar = ({ userId }: Props) => {
       >
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <Filter
+            defaultView={defaultView}
+            setDefaultView={setDefaultView}
             viewBy={viewBy}
             changeViewBy={changeViewBy}
             selectedDate={selectedDate}
@@ -274,7 +320,7 @@ const ServiceCalendar = ({ userId }: Props) => {
         </MuiPickersUtilsProvider>
         <EmployeesContext.Provider value={{ employees, employeesLoading }}>
           <Box className={classes.wrapper}>
-            <Container className={clsx(classes.container, viewBy !== 'day' && classes.week)} maxWidth={false}>
+            <Container className={clsx(viewBy !== 'day' && classes.week)} maxWidth={false}>
               {shownDates.map(date => (
                 <Column key={date} date={date} />
               ))}

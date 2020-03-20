@@ -1,7 +1,8 @@
-import React, {MutableRefObject, useState} from 'react';
+import React, { useState } from 'react';
 import { DatePicker } from '@material-ui/pickers';
 import { DatePickerView } from '@material-ui/pickers/DatePicker/DatePicker';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
+import Box from '@material-ui/core/Box';
 import Toolbar from '@material-ui/core/Toolbar';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -9,11 +10,9 @@ import WeekPicker from '../../WeekPicker/main';
 import { Button } from '../../ComponentsLibrary/Button';
 import FilterDrawer from './FilterDrawer';
 
-type CustomerMap = {
-  [id: number]: string;
-};
-
 type Props = {
+  defaultView: string,
+  setDefaultView: () => void;
   viewBy: string;
   changeViewBy: (value: string) => void;
   selectedDate: Date;
@@ -25,6 +24,11 @@ const useStyles = makeStyles((theme: Theme) =>
     bar: {
       background: theme.palette.primary.dark,
       color: theme.palette.primary.contrastText,
+      justifyContent: 'space-between',
+    },
+    dateControls: {
+      display: 'flex',
+      alignItems: 'baseline',
     },
     select: {
       minWidth: 100,
@@ -33,6 +37,8 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 const Filter = ({
+  defaultView,
+  setDefaultView,
   viewBy,
   changeViewBy,
   selectedDate,
@@ -54,33 +60,42 @@ const Filter = ({
 
   return (
     <Toolbar className={classes.bar}>
-      <TextField
-        select
-        className={classes.select}
-        label="View By"
-        value={viewBy}
-        onChange={e => changeViewBy(e.target.value)}
-      >
-        <MenuItem value="day">Day</MenuItem>
-        <MenuItem value="week">Week</MenuItem>
-        <MenuItem value="month">Month</MenuItem>
-        <MenuItem value="year">Year</MenuItem>
-      </TextField>
-      {viewBy === 'week' ? (
-        <WeekPicker
-          label="Set a Period"
-          value={selectedDate}
-          onChange={changeSelectedDate}
+      <Box className={classes.dateControls}>
+        <TextField
+          select
+          className={classes.select}
+          label="View By"
+          value={viewBy}
+          onChange={e => changeViewBy(e.target.value)}
+        >
+          <MenuItem value="day">Day</MenuItem>
+          <MenuItem value="week">Week</MenuItem>
+          <MenuItem value="month">Month</MenuItem>
+          <MenuItem value="year">Year</MenuItem>
+        </TextField>
+        <Button
+          label="Set to default view"
+          variant="text"
+          color="secondary"
+          onClick={setDefaultView}
+          disabled={viewBy === defaultView}
         />
-      ) : (
-        <DatePicker
-          views={[getCalendarView()]}
-          label="Set a Period"
-          value={selectedDate}
-          // @ts-ignore
-          onChange={changeSelectedDate}
-        />
-      )}
+        {viewBy === 'week' ? (
+          <WeekPicker
+            label="Set a Period"
+            value={selectedDate}
+            onChange={changeSelectedDate}
+          />
+        ) : (
+          <DatePicker
+            views={[getCalendarView()]}
+            label="Set a Period"
+            value={selectedDate}
+            // @ts-ignore
+            onChange={changeSelectedDate}
+          />
+        )}
+      </Box>
       <Button label="Filter" onClick={() => toggleDrawer(!showDrawer)} />
       <FilterDrawer
         open={showDrawer}
