@@ -14,7 +14,7 @@ export const colorsMapping: Colors = {
   Canceled: '#E74C3C',
   'Admin Review': '#55DD55',
   ffbfbf: '#FFBFBF',
-  completed: '#55E552',
+  Completed: '#55E552',
   reminder: '#FFBFBF',
   timeoff: '#000000',
   timeoff10: '#4d4dff',

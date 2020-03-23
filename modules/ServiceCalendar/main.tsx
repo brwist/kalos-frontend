@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useEffect, useReducer } from 'react'
 import clsx from 'clsx';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
-import { format, startOfWeek, startOfMonth, endOfMonth, endOfYear, startOfYear, eachDayOfInterval, addDays } from 'date-fns';
+import { format, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays } from 'date-fns';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
@@ -48,8 +48,6 @@ const getDefaultSelectedDate = (viewBy: string): Date => {
     return startOfWeek(today);
   case 'month':
     return startOfMonth(today);
-  case 'year':
-    return startOfYear(today);
   default:
     return today;
   }
@@ -68,12 +66,6 @@ const getShownDates = (viewBy: string, date?: Date) => {
   case 'month': {
     const firstDay = date || startOfMonth(today);
     const lastDay = endOfMonth(date || today);
-    const days = eachDayOfInterval({ start: firstDay, end: lastDay });
-    return days.map(date => format(date, 'yyyy-MM-dd'));
-  }
-  case 'year': {
-    const firstDay = date || startOfYear(today);
-    const lastDay = endOfYear(date || today);
     const days = eachDayOfInterval({ start: firstDay, end: lastDay });
     return days.map(date => format(date, 'yyyy-MM-dd'));
   }
@@ -322,7 +314,7 @@ const ServiceCalendar = ({ userId }: Props) => {
           <Box className={classes.wrapper}>
             <Container className={clsx(viewBy !== 'day' && classes.week)} maxWidth={false}>
               {shownDates.map(date => (
-                <Column key={date} date={date} />
+                <Column key={date} date={date} viewBy={viewBy} />
               ))}
             </Container>
           </Box>
