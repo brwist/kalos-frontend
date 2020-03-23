@@ -45,17 +45,7 @@ const Filter = ({
   changeSelectedDate,
 }: Props) => {
   const classes = useStyles();
-  const getCalendarView = (): DatePickerView => {
-    switch (viewBy) {
-    case 'month':
-      return 'month';
-    case 'year':
-      return 'year';
-    default:
-      return 'date';
-    }
-  };
-
+  const getCalendarView = (): DatePickerView => viewBy === 'month' ? 'month' : 'date';
   const [showDrawer, toggleDrawer] = useState<boolean>(false);
 
   return (
@@ -71,14 +61,13 @@ const Filter = ({
           <MenuItem value="day">Day</MenuItem>
           <MenuItem value="week">Week</MenuItem>
           <MenuItem value="month">Month</MenuItem>
-          <MenuItem value="year">Year</MenuItem>
         </TextField>
         <Button
           label="Set to default view"
           variant="text"
           color="secondary"
           onClick={setDefaultView}
-          disabled={viewBy === defaultView}
+          disabled={!defaultView || viewBy === defaultView}
         />
         {viewBy === 'week' ? (
           <WeekPicker

@@ -1,6 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
-import { differenceInHours, format } from 'date-fns';
+import { isSameDay, format } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { makeStyles } from '@material-ui/core/styles';
 import Skeleton from '@material-ui/lab/Skeleton';
@@ -17,13 +17,17 @@ const useStyles = makeStyles(theme => ({
     margin: `${theme.spacing(1)}px 0`,
   },
   cardHeader: {
-    padding: `${theme.spacing(1)}px ${theme.spacing(2)}px`,
+    padding: theme.spacing(1),
     '&.jobNumber': {
       paddingTop: theme.spacing(2.5),
     },
   },
   cardContent: {
-    padding: `0 ${theme.spacing(2)}px ${theme.spacing(1)}px`,
+    padding: `0 ${theme.spacing(1)}px ${theme.spacing(1)}px`,
+  },
+  date: {
+    fontSize: '0.75rem',
+    fontWeight: 100,
   },
   colorIndicator: {
     display: 'block',
@@ -127,7 +131,7 @@ const CallCard = ({ card, type, skeleton }: props) => {
   if (type === 'timeoff') {
     const started = new Date(timeStarted);
     const finished = new Date(timeFinished);
-    const diff = differenceInHours(finished, started);
+    const sameDay = isSameDay(started, finished);
     if (requestType === '10') {
       const empl = employees.find(emp => emp.id === +userId);
       title = 'Training:';
@@ -136,15 +140,15 @@ const CallCard = ({ card, type, skeleton }: props) => {
       title = `${adminApprovalUserId ? 'Time off' : 'Pending'}:`;
       subheader = userName;
     }
-    if (diff > 24) {
-      dates = `${format(started, 'M/dd')} - ${format(finished, 'M/dd')}`;
-    } else {
+    if (sameDay) {
       dates = format(started, 'M/dd');
-    }
-    if (allDayOff) {
-      time = 'All Day';
-    } else if (diff < 24) {
-      time = `${format(started, 'p')} - ${format(finished, 'p')}`;
+      if (allDayOff) {
+        time = 'All Day';
+      } else {
+        time = `${format(started, 'p')} - ${format(finished, 'p')}`;
+      }
+    } else {
+      dates = `${format(started, 'M/dd p')} - ${format(finished, 'M/dd p')}`;
     }
   } else {
     title = logJobStatus ? logJobStatus : null;
@@ -163,6 +167,8 @@ const CallCard = ({ card, type, skeleton }: props) => {
         let url;
         if (type === 'timeoff') {
           url = `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`;
+        } else if (type === 'reminder') {
+          url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editReminder&id=${id}`;
         } else {
           url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${id}&property_id=${propertyId}&user_id=${customer.id}`;
         }
@@ -189,14 +195,8 @@ const CallCard = ({ card, type, skeleton }: props) => {
         />
         <CardContent className={classes.cardContent}>
           {dates && (
-            <Typography variant="body2" color="textSecondary" component="p">
-              Date: {dates}
-              {time && (
-                <>
-                  <br />
-                  {time}
-                </>
-              )}
+            <Typography className={classes.date} variant="body2" color="textSecondary" component="p">
+              {dates} {time}
             </Typography>
           )}
           {(!type || type === 'completed') && (

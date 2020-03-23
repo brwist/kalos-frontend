@@ -2,16 +2,59 @@ import React, { useState, useCallback } from 'react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
+import IconButton from '@material-ui/core/IconButton';
+import ViewDayIcon from '@material-ui/icons/ViewDay';
+import { useTheme } from '@material-ui/core/styles';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { useCalendarData } from '../hooks';
 import CallCard from './CallCard';
-import {log} from 'util';
+import { colorsMapping } from '../constants';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    dateHeading: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      background: theme.palette.grey['200'],
+      margin: `${theme.spacing(1)}px 0`,
+      padding: theme.spacing(1),
+      textAlign: 'center',
+    },
+    dayView: {
+      flex: '1 0 auto',
+    },
+    dayCircle: {
+      width: '24px',
+      height: '24px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: '12px',
+      boxShadow: 'inset 0 2px 3px rgba(0, 0, 0, .25)',
+      color: '#666',
+      fontSize: '12px',
+    },
+    dayViewButton: {
+      visibility: 'hidden',
+      '&.visible': {
+        visibility: 'visible',
+      },
+    },
+    completedButton: {
+      width: '100%',
+      background: colorsMapping.Completed,
+      fontSize: '0.75rem',
+      lineHeight: 1.2,
+      '&:hover': {
+        background: '#88ed86',
+      }
+    },
     expand: {
       transform: 'rotate(0deg)',
       transition: theme.transitions.create('transform', {
@@ -26,12 +69,16 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type Props = {
   date: string;
+  viewBy: 'day' | 'week' | 'month';
 };
 
-const Column = ({ date}: Props) => {
+const Column = ({ date, viewBy}: Props) => {
   const classes = useStyles();
   const [showCompleted, setShowCompleted] = useState(false);
+  const theme = useTheme();
+  const md = useMediaQuery(theme.breakpoints.down('md'));
   const { fetchingCalendarData, datesMap, filters } = useCalendarData();
+  const dateObj = new Date(date);
 
   const filterCalls = useCallback(calendarDay => {
     const { customers, zip, propertyUse, jobType, jobSubType } = filters;
@@ -75,10 +122,33 @@ const Column = ({ date}: Props) => {
     timeoffRequestsList
   } = filterCalls(calendarDay);
   return (
-    <div>
-      {format(new Date(date), 'MMMM d, yyyy')}
-      {completedServiceCallsList.length && (
-        <Button onClick={() => setShowCompleted(!showCompleted)}>
+    <Box>
+      <Box className={classes.dateHeading}>
+        {viewBy === 'day' ? (
+          <Typography className={classes.dayView} variant="subtitle2">
+            {format(dateObj, 'cccc, MMMM d, yyyy')}
+          </Typography>
+        ) : (
+          <>
+            <Typography className={classes.dayCircle}>
+              {format(dateObj, 'd')}
+            </Typography>
+            <Typography variant="subtitle2">
+              {format(dateObj, 'cccc')}
+            </Typography>
+            <IconButton
+              className={clsx(classes.dayViewButton, md && 'visible')}
+              aria-label="dayview"
+              size="small"
+              onClick={() => {alert('day view')}}
+            >
+              <ViewDayIcon fontSize="inherit" />
+            </IconButton>
+          </>
+        )}
+      </Box>
+      {!!completedServiceCallsList.length && (
+        <Button className={classes.completedButton} onClick={() => setShowCompleted(!showCompleted)}>
           <ExpandMoreIcon
             className={clsx(classes.expand, {
               [classes.expandOpen]: showCompleted,
@@ -109,7 +179,7 @@ const Column = ({ date}: Props) => {
         .map(call => (
           <CallCard key={call.id} card={call} />
         ))}
-    </div>
+    </Box>
   );
 };
 
