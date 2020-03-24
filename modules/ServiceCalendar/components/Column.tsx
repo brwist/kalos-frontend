@@ -1,13 +1,15 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useLayoutEffect } from 'react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse';
 import IconButton from '@material-ui/core/IconButton';
+import BackIcon from '@material-ui/icons/ArrowBack';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
@@ -17,6 +19,19 @@ import { colorsMapping } from '../constants';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    dayView: {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100%',
+      background: 'white',
+      height: '100%',
+      overflow: 'auto',
+      boxSizing: 'border-box',
+      padding: '16px',
+      transition: 'width 1500ms',
+      zIndex: 10000,
+    },
     dateHeading: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -26,7 +41,7 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(1),
       textAlign: 'center',
     },
-    dayView: {
+    dayViewHeading: {
       flex: '1 0 auto',
     },
     dayCircle: {
@@ -75,6 +90,10 @@ type Props = {
 const Column = ({ date, viewBy}: Props) => {
   const classes = useStyles();
   const [showCompleted, setShowCompleted] = useState(false);
+  const [dayView, setDayView] = useState(false);
+  useLayoutEffect(() => {
+    document.body.style.overflow = dayView ? 'hidden' : 'visible';
+  }, [dayView]);
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('md'));
   const { fetchingCalendarData, datesMap, filters } = useCalendarData();
@@ -121,11 +140,20 @@ const Column = ({ date, viewBy}: Props) => {
     serviceCallsList,
     timeoffRequestsList
   } = filterCalls(calendarDay);
+
   return (
-    <Box>
+    <Box className={clsx(dayView && classes.dayView)}>
+      {dayView && (
+        <Button
+          startIcon={<BackIcon />}
+          onClick={() => setDayView(false)}
+        >
+          {`Back to ${viewBy} View`}
+        </Button>
+      )}
       <Box className={classes.dateHeading}>
         {viewBy === 'day' ? (
-          <Typography className={classes.dayView} variant="subtitle2">
+          <Typography className={classes.dayViewHeading} variant="subtitle2">
             {format(dateObj, 'cccc, MMMM d, yyyy')}
           </Typography>
         ) : (
@@ -136,14 +164,16 @@ const Column = ({ date, viewBy}: Props) => {
             <Typography variant="subtitle2">
               {format(dateObj, 'cccc')}
             </Typography>
-            <IconButton
-              className={clsx(classes.dayViewButton, md && 'visible')}
-              aria-label="dayview"
-              size="small"
-              onClick={() => {alert('day view')}}
-            >
-              <ViewDayIcon fontSize="inherit" />
-            </IconButton>
+            <Tooltip title="Day View">
+              <IconButton
+                className={clsx(classes.dayViewButton, md && !dayView && 'visible')}
+                aria-label="dayview"
+                size="small"
+                onClick={() => setDayView(true)}
+              >
+                <ViewDayIcon fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
           </>
         )}
       </Box>

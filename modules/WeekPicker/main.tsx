@@ -59,9 +59,12 @@ type Props = {
   label: string;
   value: Date;
   onChange: (value: Date) => void;
+  inputVariant?: string;
+  size?: string;
+  className?: any;
 }
 
-const WeekPicker = ({ label, value, onChange }: Props) => {
+const WeekPicker = ({ label, value, onChange, inputVariant, size, className }: Props) => {
   const classes = useStyles();
   const handleWeekChange = (date: MaterialUiPickersDate) => {
     onChange(startOfWeek(date || value));
@@ -108,7 +111,10 @@ const WeekPicker = ({ label, value, onChange }: Props) => {
 
   return (
     <DatePicker
+      className={className}
       label={label}
+      inputVariant={inputVariant}
+      size={size}
       value={value}
       onChange={handleWeekChange}
       renderDay={renderWrappedWeekDay}

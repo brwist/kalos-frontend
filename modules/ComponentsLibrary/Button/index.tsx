@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
 import ButtonUI from '@material-ui/core/Button';
 
@@ -14,6 +15,7 @@ export interface Props extends Style {
   variant?: 'contained' | 'outlined' | 'text';
   color?: 'primary' | 'secondary';
   fullWidth?: boolean;
+  className?: React.HTMLAttributes<HTMLDivElement>;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -43,12 +45,13 @@ export const Button = ({
   compact = false,
   size = 'small',
   color = 'primary',
+  className,
   ...props
 }: Props) => {
   const classes = useStyles({ compact, size });
   const Component = (
     <ButtonUI
-      className={classes.button}
+      className={clsx(classes.button, className && className)}
       variant={variant}
       color={color}
       size={size === 'xsmall' ? 'small' : size}
