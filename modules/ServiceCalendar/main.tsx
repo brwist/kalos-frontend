@@ -85,11 +85,11 @@ type Filters = {
 };
 
 type State = {
-  user: User;
+  user: User.AsObject;
   fetchingCalendarData: boolean;
   datesMap?: Map<string, CalendarDay>;
   speedDialOpen: boolean;
-  viewBy: string;
+  viewBy: 'day' | 'week' | 'month';
   defaultView: string;
   selectedDate: Date,
   shownDates: string[];
@@ -223,7 +223,6 @@ const ServiceCalendar = ({ userId }: Props) => {
     selectedDate,
     filters
   }, dispatch] = useReducer(reducer, initialState);
-
   const fetchUser = async () => {
     const req = new User();
     req.setId(userId);
@@ -314,7 +313,13 @@ const ServiceCalendar = ({ userId }: Props) => {
           <Box className={classes.wrapper}>
             <Container className={clsx(viewBy !== 'day' && classes.week)} maxWidth={false}>
               {shownDates.map(date => (
-                <Column key={date} date={date} viewBy={viewBy} />
+                <Column
+                  key={date}
+                  date={date}
+                  viewBy={viewBy}
+                  userId={userId}
+                  isAdmin={user.isAdmin}
+                />
               ))}
             </Container>
           </Box>

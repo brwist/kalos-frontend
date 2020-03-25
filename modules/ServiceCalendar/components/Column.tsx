@@ -85,9 +85,11 @@ const useStyles = makeStyles((theme: Theme) =>
 type Props = {
   date: string;
   viewBy: 'day' | 'week' | 'month';
+  userId: number;
+  isAdmin: number;
 };
 
-const Column = ({ date, viewBy}: Props) => {
+const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
   const classes = useStyles();
   const [showCompleted, setShowCompleted] = useState(false);
   const [dayView, setDayView] = useState(false);
@@ -104,6 +106,12 @@ const Column = ({ date, viewBy}: Props) => {
     return Object.keys(calendarDay).reduce((acc, key) => {
       let calls = calendarDay[key];
       acc[key] = calls.filter(call => {
+        if (!isAdmin && call.logTechnicianAssigned) {
+          const techIds = call.logTechnicianAssigned.split(',').map(Number);
+          if (!techIds.includes(userId)) {
+            return false;
+          }
+        }
         if (customers.length && !customers.includes(`${call?.customer?.id}`)) {
           return false;
         }

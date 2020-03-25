@@ -139,8 +139,6 @@ const FilterDrawer = ({
     }
   } , [expanded]);
 
-  console.log(expanded);
-
   const handleSave = () => {
     changeFilters(state);
     toggleDrawer(false);
