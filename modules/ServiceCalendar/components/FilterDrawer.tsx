@@ -1,8 +1,9 @@
-import React, { useReducer } from 'react';
+import React, {useState, useReducer, useCallback} from 'react';
 import { Theme, createStyles, makeStyles } from '@material-ui/core/styles';
+import Box from '@material-ui/core/Box';
 import Drawer from '@material-ui/core/Drawer';
-import ListItem from '@material-ui/core/ListItem';
 import { Button } from '../../ComponentsLibrary/Button';
+import FilterPanel from './FilterPanel';
 import SearchableList from './SearchableList';
 import {JobTypePicker} from '../../Pickers/JobType';
 import {JobSubtypePicker} from '../../Pickers/JobSubtype';
@@ -17,9 +18,15 @@ const useStyles = makeStyles((theme: Theme) =>
       height: '100%',
       width: 320,
     },
+    panels: {
+      overflow: 'auto',
+    },
     buttons: {
       display: 'flex',
       justifyContent: 'space-between',
+    },
+    button: {
+      margin: theme.spacing(1),
     },
   }),
 );
@@ -120,8 +127,19 @@ const FilterDrawer = ({
 }: Props) => {
   const classes = useStyles();
   const { fetchingCalendarData, filters, initialFilters, changeFilters, customersMap, zipCodesMap } = useCalendarData();
+  const [expanded, setExpanded] = useState('');
   const [state, dispatch] = useReducer(reducer, filters);
   const { customers, zip, jobType, jobSubType, propertyUse } = state;
+
+  const toggleExpanded = useCallback(key => {
+    if (key === expanded) {
+      setExpanded('');
+    } else {
+      setExpanded(key);
+    }
+  } , [expanded]);
+
+  console.log(expanded);
 
   const handleSave = () => {
     changeFilters(state);
@@ -134,61 +152,84 @@ const FilterDrawer = ({
 
   return (
     <Drawer anchor="right" open={open} onClose={() => toggleDrawer(!open)}>
-      <div className={classes.root}>
-        <div>
-          <SearchableList
+      <Box className={classes.root}>
+        <Box className={classes.panels}>
+          <FilterPanel
             title="Customers"
-            options={customersMap}
-            values={customers}
-            loading={fetchingCalendarData}
-            handleChange={value =>
-              dispatch({ type: 'customers', value })
-            }
-            handleToggleAll={value =>
-              dispatch({
-                type: 'toggleAll',
-                key: 'customers',
-                value: value ? Object.keys(customersMap) : [],
-              })
-            }
-          />
-          <SearchableList
+            selectedCount={customers.length}
+            expanded={expanded === 'customers'}
+            handleChange={() => toggleExpanded('customers')}
+          >
+            <SearchableList
+              title="Customers"
+              options={customersMap}
+              values={customers}
+              loading={fetchingCalendarData}
+              handleChange={value =>
+                dispatch({ type: 'customers', value })
+              }
+              handleToggleAll={value =>
+                dispatch({
+                  type: 'toggleAll',
+                  key: 'customers',
+                  value: value ? Object.keys(customersMap) : [],
+                })
+              }
+            />
+          </FilterPanel>
+          <FilterPanel
             title="ZIP Codes"
-            options={zipCodesMap}
-            values={zip}
-            loading={fetchingCalendarData}
-            handleChange={value =>
-              dispatch({ type: 'zip', value })
-            }
-            handleToggleAll={value =>
-              dispatch({
-                type: 'toggleAll',
-                key: 'zip',
-                value: value ? Object.keys(zipCodesMap) : [],
-              })
-            }
-          />
-          <SearchableList
+            selectedCount={zip.length}
+            expanded={expanded === 'zip'}
+            handleChange={() => toggleExpanded('zip')}
+          >
+            <SearchableList
+              title="ZIP Codes"
+              options={zipCodesMap}
+              values={zip}
+              loading={fetchingCalendarData}
+              handleChange={value =>
+                dispatch({ type: 'zip', value })
+              }
+              handleToggleAll={value =>
+                dispatch({
+                  type: 'toggleAll',
+                  key: 'zip',
+                  value: value ? Object.keys(zipCodesMap) : [],
+                })
+              }
+            />
+          </FilterPanel>
+          <FilterPanel
             title="Property Use"
-            options={{
-              1: 'Residential',
-              0: 'Commercial',
-            }}
-            values={propertyUse}
-            handleChange={value =>
-              dispatch({ type: 'propertyUse', value })
-            }
-            noSearch
-          />
-          <ListItem>
+            selectedCount={propertyUse.length}
+            expanded={expanded === 'propUse'}
+            handleChange={() => toggleExpanded('propUse')}
+          >
+            <SearchableList
+              title="Property Use"
+              options={{
+                1: 'Residential',
+                0: 'Commercial',
+              }}
+              values={propertyUse}
+              handleChange={value =>
+                dispatch({ type: 'propertyUse', value })
+              }
+              noSearch
+            />
+          </FilterPanel>
+          <FilterPanel
+            title="Job Type & Subtype"
+            expanded={expanded === 'jobType'}
+            handleChange={() => toggleExpanded('jobType')}
+          >
             <JobTypePicker
               selected={jobType}
               onSelect={value =>
                 dispatch({ type: 'jobType', value })
               }
             />
-          </ListItem>
-          <ListItem>
             <JobSubtypePicker
               selected={jobSubType}
               jobTypeID={jobType}
@@ -196,13 +237,24 @@ const FilterDrawer = ({
                 dispatch({ type: 'jobSubType', value })
               }
             />
-          </ListItem>
-        </div>
+          </FilterPanel>
+        </Box>
         <div className={classes.buttons}>
-          <Button label="Reset" onClick={handleReset} color="secondary" fullWidth />
-          <Button label="Save" onClick={handleSave} fullWidth />
+          <Button
+            label="Reset"
+            className={classes.button}
+            onClick={handleReset}
+            color="secondary"
+            fullWidth
+          />
+          <Button
+            label="Save"
+            className={classes.button}
+            onClick={handleSave}
+            fullWidth
+          />
         </div>
-      </div>
+      </Box>
     </Drawer>
   );
 };
