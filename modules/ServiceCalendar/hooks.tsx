@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useLayoutEffect } from 'react';
 import { EmployeesContext, CalendarDataContext } from './main';
 
 export const useEmployees = () => useContext(EmployeesContext);
@@ -49,3 +49,16 @@ export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
   }, [fetchedCount, totalCount, fetchFn]);
   return { data, isLoading };
 };
+
+export const useWindowSize = () => {
+  const [size, setSize] = useState([0, 0]);
+  useLayoutEffect(() => {
+    function updateSize() {
+      setSize([window.innerWidth, window.innerHeight]);
+    }
+    window.addEventListener('resize', updateSize);
+    updateSize();
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+  return size;
+}

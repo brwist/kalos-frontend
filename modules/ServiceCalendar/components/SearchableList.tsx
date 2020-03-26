@@ -5,6 +5,8 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import ListItemText from '@material-ui/core/ListItemText';
 import TextField from '@material-ui/core/TextField';
+import Skeleton from '@material-ui/lab/Skeleton';
+import CallCard from './CallCard';
 
 type MapList = {
   [key: string]: string,
@@ -18,6 +20,7 @@ type Props = {
   handleToggleAll?: (value: boolean) => void;
   noSearch?: boolean;
   loading?: boolean;
+  maxListHeight?: number;
 }
 
 const SearchableList = ({
@@ -28,15 +31,24 @@ const SearchableList = ({
   handleToggleAll,
   noSearch,
   loading,
+  maxListHeight,
 }: Props) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
+
+  if (loading) {
+    return [...Array(10)].map((e, i) => (
+      <Skeleton key={`${title}-skeleton-${i}`} />
+    ));
+  }
+
   const allChecked = Object.keys(options).length === values.length;
+
   return (
     <>
       {!noSearch && (
         <TextField label="Search" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
       )}
-      <List>
+      <List style={{ maxHeight: maxListHeight ? maxListHeight : null, overflow: 'auto' }}>
         {!noSearch && (
           <ListItem dense button onClick={() => handleToggleAll(!allChecked)}>
             <ListItemIcon>
