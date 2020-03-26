@@ -385,7 +385,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     try {
       await this.toggleLoading();
       await this.approveProposal();
-      await this.saveAsPDF();
+      await this.uploadPDF();
       try {
         await this.deleteOldPDF();
       } catch (err) {

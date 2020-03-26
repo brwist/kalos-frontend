@@ -1,3 +1,5 @@
+import { Options } from './modules/ComponentsLibrary/Field';
+
 export const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 
 export const EVENT_STATUS_LIST = [
@@ -13,7 +15,7 @@ export const EVENT_STATUS_LIST = [
   'Completed',
   'Admin Review',
 ];
-export const PAYMENT_TYPE_LIST = [
+export const PAYMENT_TYPE_LIST: Options = [
   'Pre-Paid',
   'Cash',
   'Check',
@@ -45,6 +47,30 @@ export const COLORS = {
   primary3: '#F20E00',
 };
 
+export const SERVICE_STATUSES = {
+  ENROUTE: 'Enroute',
+  ON_CALL: 'On Call',
+  SIGNATURE: 'Signature',
+  PAYMENT: 'Payment',
+  COMPLETED: 'Completed',
+  INCOMPLETE: 'Incomplete',
+  ADMIN: 'Admin',
+};
+
+export const JOB_STATUS_COLORS: { [key: string]: string } = {
+  Requested: 'efc281',
+  Confirmed: 'fefdb9',
+  Enroute: 'ffff00',
+  'On Call': '88edb3',
+  Delayed: '07ccec',
+  Incomplete: 'bfd4ff',
+  'Part on Order': 'aa93ea',
+  'Pend Sched': 'fd9834',
+  Canceled: 'e74c3c',
+  Completed: '55e552',
+  'Admin Review': 'e1e1e1',
+};
+
 export const ELEVATION = {
   card: '0px 1px 2px #00000052',
   button: '0px 2px 4px #00000052',
@@ -56,7 +82,7 @@ export const ELEVATION = {
 
 export const ENDPOINT = 'https://core-dev.kalosflorida.com:8443';
 
-export const USA_STATES = [
+export const USA_STATES_OPTIONS: Options = [
   'AL',
   'AK',
   'AZ',
@@ -110,12 +136,23 @@ export const USA_STATES = [
   'WY',
 ];
 
-export const BILLING_TERMS = ['COD', 'Net 10', 'Net 30', 'Net 45', 'Pre-paid'];
+export const BILLING_TERMS_OPTIONS: Options = [
+  'COD',
+  'Net 10',
+  'Net 30',
+  'Net 45',
+  'Pre-paid',
+];
 
 export const ROWS_PER_PAGE = 25;
 
 export const API_FAILED_GENERAL_ERROR_MSG =
   'Error occured while performing this operation.';
+
+export const RESIDENTIAL_OPTIONS: Options = [
+  { label: 'Residential', value: 1 },
+  { label: 'Commercial', value: 0 },
+];
 
 export default {
   BASE_URL,
@@ -126,8 +163,10 @@ export default {
   COLORS,
   ENDPOINT,
   ELEVATION,
-  USA_STATES,
-  BILLING_TERMS,
+  USA_STATES_OPTIONS,
+  BILLING_TERMS_OPTIONS,
   ROWS_PER_PAGE,
   API_FAILED_GENERAL_ERROR_MSG,
+  RESIDENTIAL_OPTIONS,
+  SERVICE_STATUSES,
 };

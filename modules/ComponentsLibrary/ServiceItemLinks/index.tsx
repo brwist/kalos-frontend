@@ -5,11 +5,11 @@ import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { PropLinkClient, PropLink } from '@kalos-core/kalos-rpc/PropLink';
 import { ENDPOINT } from '../../../constants';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { Modal } from '../../ComponentsLibrary/Modal';
-import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { SectionBar } from '../SectionBar';
+import { InfoTable, Data } from '../InfoTable';
+import { Modal } from '../Modal';
+import { ConfirmDelete } from '../ConfirmDelete';
+import { Form, Schema } from '../Form';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 
 type Entry = PropLink.AsObject;
@@ -98,7 +98,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
         entry.setId(editedEntry.id);
       }
       entry.setPropertyId(serviceItemId);
-      const fieldMaskList = ['setPropertyId'];
+      const fieldMaskList = ['PropertyId'];
       for (const fieldName in data) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
         // @ts-ignore
@@ -172,10 +172,11 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     return (
       <div>
         <SectionBar
-          title={`${kind}s${title}`}
+          title={`${kind}s`}
+          subtitle={title}
           actions={[
             {
-              label: 'Add Link',
+              label: 'Add',
               onClick: setEditing({} as Entry),
             },
             {

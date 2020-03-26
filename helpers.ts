@@ -1,7 +1,30 @@
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
+import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobSubtypeClient, JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import {
+  StoredQuoteClient,
+  StoredQuote,
+} from '@kalos-core/kalos-rpc/StoredQuote';
+import {
+  JobTypeSubtypeClient,
+  JobTypeSubtype,
+} from '@kalos-core/kalos-rpc/JobTypeSubtype';
+import {
+  ServicesRenderedClient,
+  ServicesRendered,
+} from '@kalos-core/kalos-rpc/ServicesRendered';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
+const PropertyClientService = new PropertyClient(ENDPOINT);
+const EventClientService = new EventClient(ENDPOINT);
+const JobTypeClientService = new JobTypeClient(ENDPOINT);
+const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
+const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
+const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
+const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -225,7 +248,8 @@ function getMimeType(fileName: string) {
  * @returns format h:MMa (ie. 4:30AM)
  */
 function formatTime(time: string) {
-  const [hourStr, minutes] = time.split(':');
+  const str = time.includes(' ') ? time.substr(11) : time;
+  const [hourStr, minutes] = str.split(':');
   const hour = +hourStr;
   return (
     (hour > 12 ? hour - 12 : hour) + ':' + minutes + (hour < 12 ? 'AM' : 'PM')
@@ -277,6 +301,166 @@ function getRPCFields(fieldName: string) {
 }
 
 /**
+ * Returns loaded StoredQuotes
+ * @returns StoredQuote[]
+ */
+async function loadStoredQuotes() {
+  const results: StoredQuote.AsObject[] = [];
+  const req = new StoredQuote();
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await StoredQuoteClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results;
+}
+
+/**
+ * Returns loaded JobTypes
+ * @returns JobType[]
+ */
+async function loadJobTypes() {
+  const { resultsList } = (
+    await JobTypeClientService.BatchGet(new JobType())
+  ).toObject();
+  return resultsList;
+}
+
+/**
+ * Returns loaded JobSubtypes
+ * @returns JobSubtype[]
+ */
+async function loadJobSubtypes() {
+  const { resultsList } = (
+    await JobSubtypeClientService.BatchGet(new JobSubtype())
+  ).toObject();
+  return resultsList;
+}
+
+/** Returns loaded Technicians
+ * @returns User[]
+ */
+async function loadTechnicians() {
+  const results: User.AsObject[] = [];
+  const req = new User();
+  req.setIsActive(1);
+  req.setIsEmployee(1);
+  req.setIsSu(0);
+  req.setServiceCalls(1);
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await UserClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results.sort((a, b) => {
+    const A = `${a.firstname} ${a.lastname}`.toLocaleLowerCase();
+    const B = `${b.firstname} ${b.lastname}`.toLocaleLowerCase();
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+  });
+}
+
+/**
+ * Returns loaded JobTypeSubtypes
+ * @returns JobTypeSubtype[]
+ */
+async function loadJobTypeSubtypes() {
+  const results: JobTypeSubtype.AsObject[] = [];
+  const req = new JobTypeSubtype();
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await JobTypeSubtypeClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results;
+}
+
+/**
+ * Returns loaded ServicesRendered
+ * @returns ServicesRendered[]
+ */
+async function loadServicesRendered(eventId: number) {
+  const results: ServicesRendered.AsObject[] = [];
+  const req = new ServicesRendered();
+  req.setEventId(eventId);
+  req.setIsActive(1);
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await ServicesRenderedClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results.sort(({ id: A }, { id: B }) => {
+    if (A > B) return -1;
+    if (A < B) return 1;
+    return 0;
+  });
+}
+
+/**
+ * Returns loaded Events by property id
+ * @param propertyId: property id
+ * @returns Event[]
+ */
+async function loadEventsByPropertyId(propertyId: number) {
+  const results: Event.AsObject[] = [];
+  const req = new Event();
+  req.setIsActive(1);
+  req.setPropertyId(propertyId);
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await EventClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results.sort((a, b) => {
+    const A = a.logJobNumber.toLocaleLowerCase();
+    const B = b.logJobNumber.toLocaleLowerCase();
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+  });
+}
+
+/**
+ * Returns loaded Property by its ids
+ * @param id: property id
+ * @returns Property
+ */
+async function loadPropertyById(id: number) {
+  const req = new Property();
+  req.setId(id);
+  req.setIsActive(1);
+  return await PropertyClientService.Get(req);
+}
+
+/**
+ * Returns loaded User by its ids
+ * @param id: user id
+ * @returns User
+ */
+async function loadUserById(id: number) {
+  const req = new User();
+  req.setId(id);
+  req.setIsActive(1);
+  return await UserClientService.Get(req);
+}
+
+/**
  * Returns loaded Users by their ids
  * @param ids: array of user id
  * @returns object { [userId]: User }
@@ -288,13 +472,7 @@ async function loadUsersByIds(ids: number[]) {
       uniqueIds.push(id);
     }
   });
-  const users = await Promise.all(
-    uniqueIds.map(async id => {
-      const user = new User();
-      user.setId(id);
-      return await UserClientService.Get(user);
-    }),
-  );
+  const users = await Promise.all(uniqueIds.map(loadUserById));
   return users.reduce((aggr, user) => ({ ...aggr, [user.id]: user }), {}) as {
     [key: number]: User.AsObject;
   };
@@ -353,7 +531,16 @@ export {
   makeFakeRows,
   getRPCFields,
   formatDateTime,
+  loadJobTypes,
+  loadJobSubtypes,
+  loadJobTypeSubtypes,
+  loadPropertyById,
+  loadUserById,
   loadUsersByIds,
   range,
   loadGeoLocationByAddress,
+  loadTechnicians,
+  loadEventsByPropertyId,
+  loadStoredQuotes,
+  loadServicesRendered,
 };

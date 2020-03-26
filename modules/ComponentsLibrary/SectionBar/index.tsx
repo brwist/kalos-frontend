@@ -26,12 +26,14 @@ type Styles = {
 };
 
 interface Props {
-  title: ReactNode;
+  title?: ReactNode;
+  subtitle?: ReactNode;
   actions?: ActionsProps;
   className?: string;
   pagination?: Pagination;
   styles?: CSSProperties;
   fixedActions?: boolean;
+  footer?: ReactNode;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -44,8 +46,9 @@ const useStyles = makeStyles(theme => ({
     paddingRight: theme.spacing(),
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyItems: 'center',
     minHeight: 46,
+    flexDirection: 'column',
     boxSizing: 'border-box',
     marginBottom: collapsable && collapsed ? theme.spacing() : 0,
     [theme.breakpoints.down('xs')]: {
@@ -54,6 +57,12 @@ const useStyles = makeStyles(theme => ({
       minHeight: 0,
     },
   }),
+  headerWrapper: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexGrow: 1,
+  },
   header: {
     display: 'flex',
     alignItems: 'center',
@@ -62,16 +71,36 @@ const useStyles = makeStyles(theme => ({
       alignItems: 'flex-start',
     },
   },
-  title: ({ collapsable, fixedActions }: Styles) => ({
-    display: fixedActions ? 'block' : 'flex',
-    alignItems: 'center',
+  titleWrapper: ({ collapsable }: Styles) => ({
     cursor: collapsable ? 'pointer' : 'default',
     userSelect: 'none',
     width: '100%',
+    marginTop: theme.spacing(),
+    marginBottom: theme.spacing(),
     [theme.breakpoints.down('xs')]: {
-      fontSize: 15,
+      marginTop: theme.spacing(0.5),
+      marginBottom: theme.spacing(0.5),
     },
   }),
+  title: ({ fixedActions }: Styles) => ({
+    display: fixedActions ? 'block' : 'flex',
+    alignItems: 'center',
+    ...theme.typography.h6,
+    lineHeight: 1,
+    [theme.breakpoints.down('xs')]: {
+      ...theme.typography.subtitle1,
+      lineHeight: 1,
+    },
+  }),
+  subtitle: {
+    marginTop: theme.spacing(0.25),
+    ...theme.typography.subtitle1,
+    lineHeight: 1,
+    [theme.breakpoints.down('xs')]: {
+      ...theme.typography.subtitle2,
+      lineHeight: 1,
+    },
+  },
   toolbarRoot: {
     flexShrink: 0,
   },
@@ -79,15 +108,21 @@ const useStyles = makeStyles(theme => ({
     minHeight: 0,
     color: theme.palette.common.black,
   },
+  footer: {
+    marginBottom: theme.spacing(),
+    ...theme.typography.body1,
+  },
 }));
 
 export const SectionBar: FC<Props> = ({
-  title,
+  title = '',
+  subtitle,
   actions = [],
   className = '',
   pagination,
   styles,
   fixedActions = false,
+  footer,
   children,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -111,30 +146,48 @@ export const SectionBar: FC<Props> = ({
   return (
     <>
       <div className={className + ' ' + classes.wrapper} style={styles}>
-        <div className={classes.header}>
-          <Typography
-            variant="h6"
-            className={classes.title}
-            onClick={handleToggleCollapsed}
-          >
-            {title}{' '}
-            {children && (collapsed ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
-          </Typography>
-          {pagination && pagination.count > 0 && !collapsed && (
-            <TablePagination
-              classes={{ root: classes.toolbarRoot, toolbar: classes.toolbar }}
-              component="div"
-              rowsPerPageOptions={[]}
-              {...pagination}
-              onChangePage={handleChangePage}
-              backIconButtonProps={{ size: 'small' }}
-              nextIconButtonProps={{ size: 'small' }}
-            />
+        <div className={classes.headerWrapper}>
+          <div className={classes.header}>
+            <div className={classes.titleWrapper}>
+              <Typography
+                variant="h5"
+                className={classes.title}
+                onClick={handleToggleCollapsed}
+              >
+                {title}{' '}
+                {children &&
+                  (collapsed ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
+              </Typography>
+              {subtitle && (
+                <Typography
+                  variant="h6"
+                  className={classes.subtitle}
+                  onClick={handleToggleCollapsed}
+                >
+                  {subtitle}
+                </Typography>
+              )}
+            </div>
+            {pagination && pagination.count > 0 && !collapsed && (
+              <TablePagination
+                classes={{
+                  root: classes.toolbarRoot,
+                  toolbar: classes.toolbar,
+                }}
+                component="div"
+                rowsPerPageOptions={[]}
+                {...pagination}
+                onChangePage={handleChangePage}
+                backIconButtonProps={{ size: 'small' }}
+                nextIconButtonProps={{ size: 'small' }}
+              />
+            )}
+          </div>
+          {actions.length > 0 && (
+            <Actions actions={actions} fixed={fixedActions} />
           )}
         </div>
-        {actions.length > 0 && (
-          <Actions actions={actions} fixed={fixedActions} />
-        )}
+        {footer && <div className={classes.footer}>{footer}</div>}
       </div>
       {!collapsed && children}
     </>
