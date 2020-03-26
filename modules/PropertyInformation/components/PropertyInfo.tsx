@@ -4,7 +4,11 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT, USA_STATES } from '../../../constants';
+import {
+  ENDPOINT,
+  USA_STATES_OPTIONS,
+  RESIDENTIAL_OPTIONS,
+} from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -12,9 +16,9 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Search } from '../../ComponentsLibrary/Search';
-import { ServiceItemLinks } from './ServiceItemLinks';
+import { ServiceItemLinks } from '../../ComponentsLibrary/ServiceItemLinks';
 import { PropertyDocuments } from './PropertyDocuments';
-import { ServiceItems } from './ServiceItems';
+import { ServiceItems } from '../../ComponentsLibrary/ServiceItems';
 import { ServiceCalls } from './ServiceCalls';
 import {
   getRPCFields,
@@ -29,10 +33,6 @@ type Entry = Property.AsObject;
 type UserEntry = User.AsObject;
 
 const PROP_LEVEL = 'Used for property-level billing only';
-const RESIDENTIAL = [
-  { label: 'Residential', value: 1 },
-  { label: 'Commercial', value: 0 },
-];
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
   [
@@ -159,6 +159,7 @@ export const PropertyInfo: FC<Props> = props => {
     const req = new Property();
     req.setUserId(userID);
     req.setId(propertyId);
+    req.setIsActive(1);
     try {
       const { resultsList, totalCount } = (
         await PropertyClientService.BatchGet(req)
@@ -233,7 +234,7 @@ export const PropertyInfo: FC<Props> = props => {
       const entry = new Property();
       entry.setId(propertyId);
       entry.setUserId(id);
-      // entry.setFieldMaskList(['setUserId']);
+      // entry.setFieldMaskList(['UserId']);
       try {
         await PropertyClientService.Update(entry); // FIXME: for some reason this call fails
         document.location.href = [
@@ -287,7 +288,12 @@ export const PropertyInfo: FC<Props> = props => {
     [
       { label: 'Address', name: 'address', required: true, multiline: true },
       { label: 'City', name: 'city', required: true },
-      { label: 'State', name: 'state', options: USA_STATES, required: true },
+      {
+        label: 'State',
+        name: 'state',
+        options: USA_STATES_OPTIONS,
+        required: true,
+      },
       { label: 'Zip Code', name: 'zip', required: true },
     ],
     [
@@ -311,7 +317,7 @@ export const PropertyInfo: FC<Props> = props => {
       { label: 'Subdivision', name: 'subdivision' },
     ],
     [
-      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL },
+      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL_OPTIONS },
       { label: 'Latitude', name: 'geolocationLat', type: 'number' },
       { label: 'Longitude', name: 'geolocationLng', type: 'number' },
     ],

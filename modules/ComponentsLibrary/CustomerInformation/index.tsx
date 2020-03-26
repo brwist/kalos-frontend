@@ -1,27 +1,38 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, ReactNode } from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import {
   UserGroupLinkClient,
   UserGroupLink,
 } from '@kalos-core/kalos-rpc/UserGroupLink';
+import { GroupClient, Group } from '@kalos-core/kalos-rpc/Group';
+import {
+  PendingBillingClient,
+  PendingBilling,
+} from '@kalos-core/kalos-rpc/PendingBilling';
 import { makeStyles } from '@material-ui/core/styles';
-import { ENDPOINT, USA_STATES, BILLING_TERMS } from '../../../constants';
-import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { Modal } from '../../ComponentsLibrary/Modal';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { Field, Value } from '../../ComponentsLibrary/Field';
+import {
+  ENDPOINT,
+  USA_STATES_OPTIONS,
+  BILLING_TERMS_OPTIONS,
+} from '../../../constants';
+import { InfoTable, Data } from '../InfoTable';
+import { Modal } from '../Modal';
+import { Form, Schema } from '../Form';
+import { SectionBar } from '../SectionBar';
+import { ConfirmDelete } from '../ConfirmDelete';
+import { Field, Value } from '../Field';
 import { getRPCFields, formatDateTime } from '../../../helpers';
 
 const UserClientService = new UserClient(ENDPOINT);
 const UserGroupLinkClientService = new UserGroupLinkClient(ENDPOINT);
+const GroupClientService = new GroupClient(ENDPOINT);
+const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
 
-type Entry = User.AsObject;
-
+export type Customer = User.AsObject;
 type GroupLink = UserGroupLink.AsObject;
+type GroupType = Group.AsObject;
 
-const SCHEMA: Schema<Entry> = [
+const SCHEMA: Schema<Customer> = [
   [{ label: 'Personal Details', headline: true }],
   [
     { label: 'First Name', name: 'firstname', required: true },
@@ -52,14 +63,30 @@ const SCHEMA: Schema<Entry> = [
   [
     { label: 'Bulling Address', name: 'address', multiline: true },
     { label: 'Billing City', name: 'city' },
-    { label: 'Billing State', name: 'state', options: USA_STATES },
+    { label: 'Billing State', name: 'state', options: USA_STATES_OPTIONS },
     { label: 'Billing Zip Code', name: 'zip' },
   ],
   [{ label: 'Billing Details', headline: true }],
   [
-    { label: 'Billing Terms', name: 'billingTerms', options: BILLING_TERMS },
-    { label: 'Discount', name: 'discount', required: true, type: 'number' },
-    { label: 'Rebate', name: 'rebate', required: true, type: 'number' },
+    {
+      label: 'Billing Terms',
+      name: 'billingTerms',
+      options: BILLING_TERMS_OPTIONS,
+    },
+    {
+      label: 'Discount',
+      name: 'discount',
+      required: true,
+      type: 'number',
+      endAdornment: '%',
+    },
+    {
+      label: 'Rebate',
+      name: 'rebate',
+      required: true,
+      type: 'number',
+      endAdornment: '%',
+    },
   ],
   [{ label: 'Notes', headline: true }],
   [
@@ -90,7 +117,7 @@ const SCHEMA: Schema<Entry> = [
   ],
 ];
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<Customer> = [
   [
     {
       label: 'Notification',
@@ -99,20 +126,6 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
       multiline: true,
     },
   ],
-];
-
-const GROUPS = [
-  { id: 1, name: 'Residential Service' },
-  { id: 2, name: 'Commercial Service' },
-  { id: 3, name: 'Residential Construction' },
-  { id: 4, name: 'Commercial Construction' },
-  { id: 5, name: 'Commercial Contractor' },
-  { id: 6, name: 'Residential Contractor' },
-  { id: 7, name: 'Vacation Rental Manager' },
-  { id: 8, name: 'HOA Manager' },
-  { id: 9, name: 'Vendor' },
-  { id: 10, name: 'Villages' },
-  { id: 11, name: 'Managed Commercial' },
 ];
 
 const useStyles = makeStyles(theme => ({
@@ -175,11 +188,19 @@ const useStyles = makeStyles(theme => ({
 
 interface Props {
   userID: number;
-  propertyId: number;
+  propertyId?: number;
+  renderChildren?: (customer: Customer) => ReactNode;
 }
 
-export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
-  const [customer, setCustomer] = useState<Entry>(new User().toObject());
+export const CustomerInformation: FC<Props> = ({
+  userID,
+  propertyId,
+  renderChildren,
+  children,
+}) => {
+  const [customer, setCustomer] = useState<Customer>(new User().toObject());
+  const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
+  const [groups, setGroups] = useState<GroupType[]>([]);
   const [groupLinks, setGroupLinks] = useState<GroupLink[]>([]);
   const [groupLinksInitial, setGroupLinksInitial] = useState<GroupLink[]>([]);
   const [editing, setEditing] = useState<boolean>(false);
@@ -194,7 +215,25 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
   );
   const classes = useStyles();
 
+  const groupLinksInitialIds = groupLinksInitial.map(({ groupId }) => groupId);
+
   const load = useCallback(async () => {
+    if (propertyId) {
+      const pendingBilling = new PendingBilling();
+      pendingBilling.setUserId(userID);
+      pendingBilling.setPropertyId(propertyId);
+      const { totalCount: pendingBillingsTotalCount } = (
+        await PendingBillingClientService.BatchGet(pendingBilling)
+      ).toObject();
+      if (pendingBillingsTotalCount > 0) {
+        setPendingBilling(true);
+      }
+    }
+    const group = new Group();
+    const { resultsList: groups } = (
+      await GroupClientService.BatchGet(group)
+    ).toObject();
+    setGroups(groups);
     const groupLink = new UserGroupLink();
     groupLink.setUserId(userID);
     const { resultsList: groupLinks } = (
@@ -204,13 +243,22 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
     setGroupLinksInitial(groupLinks);
     const entry = new User();
     entry.setId(userID);
+    entry.setIsActive(1);
     try {
       const customer = await UserClientService.Get(entry);
       setCustomer(customer);
     } catch (e) {
       setError(true);
     }
-  }, [userID, setCustomer, setError, setGroupLinks, setGroupLinksInitial]);
+  }, [
+    userID,
+    propertyId,
+    setCustomer,
+    setError,
+    setGroupLinks,
+    setGroupLinksInitial,
+    setGroups,
+  ]);
 
   const handleToggleEditing = useCallback(() => {
     setEditing(!editing);
@@ -238,12 +286,12 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
 
   const saveGroupLinks = useCallback(
     async (groupLinks: GroupLink[], groupLinksInitial: GroupLink[]) => {
-      const actions: {
+      const operations: {
         operation: 'Create' | 'Delete';
         entry: UserGroupLink;
       }[] = [];
-      for (let i = 0; i < GROUPS.length; i += 1) {
-        const id = GROUPS[i].id;
+      for (let i = 0; i < groups.length; i += 1) {
+        const id = groups[i].id;
         const isInGroupLinks = groupLinks.find(({ groupId }) => groupId === id);
         const isInGroupLinksInitial = groupLinksInitial.find(
           ({ groupId }) => groupId === id,
@@ -251,27 +299,27 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
         const entry = new UserGroupLink();
         if (isInGroupLinksInitial && !isInGroupLinks) {
           entry.setId(isInGroupLinksInitial.id);
-          actions.push({ operation: 'Delete', entry });
+          operations.push({ operation: 'Delete', entry });
         }
         if (!isInGroupLinksInitial && isInGroupLinks) {
           entry.setUserId(userID);
           entry.setGroupId(id);
-          actions.push({ operation: 'Create', entry });
+          operations.push({ operation: 'Create', entry });
         }
       }
       await Promise.all(
-        actions.map(
+        operations.map(
           async ({ operation, entry }) =>
             await UserGroupLinkClientService[operation](entry),
         ),
       );
       setGroupLinksInitial(groupLinks);
     },
-    [userID, setGroupLinksInitial],
+    [userID, setGroupLinksInitial, groups],
   );
 
   const handleSave = useCallback(
-    async (data: Entry) => {
+    async (data: Customer) => {
       setSaving(true);
       const entry = new User();
       entry.setId(userID);
@@ -382,6 +430,15 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
       },
       { label: 'Internal Notes', value: intNotes },
     ],
+    [
+      {
+        label: 'Groups',
+        value: groups
+          .filter(({ id }) => groupLinksInitialIds.includes(id))
+          .map(({ name }) => name)
+          .join(', '),
+      },
+    ],
   ];
   const systemData: Data = [
     [
@@ -451,25 +508,29 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           <SectionBar title="System Information">
             <InfoTable data={systemData} loading={id === 0} error={error} />
           </SectionBar>
-          <SectionBar
-            title="Pending Billing"
-            className={classes.pendingBilling}
-            actions={[
-              {
-                label: 'View',
-                url: [
-                  '/index.cfm?action=admin:properties.customerpendingbilling',
-                  `user_id=${userID}`,
-                  `property_id=${propertyId}`,
-                ].join('&'),
-              },
-            ]}
-          />
+          {isPendingBilling && (
+            <SectionBar
+              title="Pending Billing"
+              className={classes.pendingBilling}
+              actions={[
+                {
+                  label: 'View',
+                  url: [
+                    '/index.cfm?action=admin:properties.customerpendingbilling',
+                    `user_id=${userID}`,
+                    `property_id=${propertyId}`,
+                  ].join('&'),
+                },
+              ]}
+            />
+          )}
         </div>
       </div>
+      {renderChildren && renderChildren(customer)}
+      {children}
       <Modal open={editing} onClose={handleToggleEditing}>
         <div className={classes.editForm}>
-          <Form<Entry>
+          <Form<Customer>
             title="Edit Customer Information"
             schema={SCHEMA}
             data={customer}
@@ -478,9 +539,9 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
             disabled={saving}
           />
           <div className={classes.groups}>
-            <SectionBar title="Mailing lists" />
+            <SectionBar title="Groups" />
             <div className={classes.groupLinks}>
-              {GROUPS.map(({ id, name }) => (
+              {groups.map(({ id, name }) => (
                 <Field
                   key={id}
                   label={name}
@@ -505,7 +566,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
           handleSetNotificationEditing(false)();
         }}
       >
-        <Form<Entry>
+        <Form<Customer>
           title={
             notificationViewing
               ? 'Customer Notification'
@@ -536,7 +597,7 @@ export const CustomerInformation: FC<Props> = ({ userID, propertyId }) => {
                     variant: 'outlined',
                     onClick: () => {
                       handleSetNotificationViewing(false)();
-                      handleSave({ notification: '' } as Entry);
+                      handleSave({ notification: '' } as Customer);
                     },
                   },
                 ]

@@ -1,9 +1,17 @@
-import React, { CSSProperties } from 'react';
+import React, { FC, CSSProperties } from 'react';
 import Typography from '@material-ui/core/Typography';
 
-export const LoremIpsumList = ({ style = {} }: { style?: CSSProperties }) => (
+interface Props {
+  title?: string;
+  style?: CSSProperties;
+}
+
+export const LoremIpsumList: FC<Props> = ({
+  title = 'Lorem ipsum dolor sit amet',
+  style = {},
+}) => (
   <Typography component="div" style={style}>
-    <h1 style={{ marginTop: 0 }}>Lorem ipsum dolor sit amet</h1>
+    <h1 style={{ marginTop: 0 }}>{title}</h1>
     <ul>
       <li>Consectetur adipiscing elit. Vivamus volutpat iaculis feugiat.</li>
       <li>Donec et iaculis augue, quis posuere velit.</li>
