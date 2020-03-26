@@ -22,7 +22,7 @@ rules:
     - error
     - 2
     - ignoredNodes: JSXElement
-    - SwitchCase: 1
+    - SwitchCase
   linebreak-style:
     - error
     - unix
