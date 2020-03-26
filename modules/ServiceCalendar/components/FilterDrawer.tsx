@@ -7,7 +7,13 @@ import FilterPanel from './FilterPanel';
 import SearchableList from './SearchableList';
 import {JobTypePicker} from '../../Pickers/JobType';
 import {JobSubtypePicker} from '../../Pickers/JobSubtype';
-import {useCalendarData} from '../hooks';
+import {useCalendarData, useWindowSize} from '../hooks';
+
+const panelHeight = 64;
+const panelsCount = 4;
+const margins = 32;
+const buttonsHeight = 46;
+const searchHeight = 46;
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -131,6 +137,8 @@ const FilterDrawer = ({
   const [state, dispatch] = useReducer(reducer, filters);
   const { customers, zip, jobType, jobSubType, propertyUse } = state;
 
+  const [, wHeight] = useWindowSize();
+  const maxListHeight = wHeight - (64*4) - 46 - 46 - 32
   const toggleExpanded = useCallback(key => {
     if (key === expanded) {
       setExpanded('');
@@ -163,6 +171,7 @@ const FilterDrawer = ({
               options={customersMap}
               values={customers}
               loading={fetchingCalendarData}
+              maxListHeight={maxListHeight}
               handleChange={value =>
                 dispatch({ type: 'customers', value })
               }
@@ -186,6 +195,7 @@ const FilterDrawer = ({
               options={zipCodesMap}
               values={zip}
               loading={fetchingCalendarData}
+              maxListHeight={maxListHeight}
               handleChange={value =>
                 dispatch({ type: 'zip', value })
               }
