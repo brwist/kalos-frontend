@@ -15,7 +15,7 @@ export interface Props extends Style {
   variant?: 'contained' | 'outlined' | 'text';
   color?: 'primary' | 'secondary';
   fullWidth?: boolean;
-  className?: React.HTMLAttributes<HTMLDivElement>;
+  className?: React.HTMLAttributes<HTMLDivElement> | string;
 }
 
 const useStyles = makeStyles(theme => ({

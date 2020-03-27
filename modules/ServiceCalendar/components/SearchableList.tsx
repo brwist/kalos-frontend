@@ -6,7 +6,6 @@ import Checkbox from '@material-ui/core/Checkbox';
 import ListItemText from '@material-ui/core/ListItemText';
 import TextField from '@material-ui/core/TextField';
 import Skeleton from '@material-ui/lab/Skeleton';
-import CallCard from './CallCard';
 
 type MapList = {
   [key: string]: string,
@@ -14,7 +13,7 @@ type MapList = {
 
 type Props = {
   title: string;
-  options: MapList;
+  options?: MapList;
   values: string[];
   handleChange: (value: string) => void;
   handleToggleAll?: (value: boolean) => void;

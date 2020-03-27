@@ -2,6 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import { DatePicker } from '@material-ui/pickers';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
+import { TextFieldProps } from '@material-ui/core/TextField';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import format from 'date-fns/format';
@@ -57,10 +58,10 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type Props = {
   label: string;
-  value: Date;
+  value: Date | '';
   onChange: (value: Date) => void;
-  inputVariant?: string;
-  size?: string;
+  inputVariant?: TextFieldProps['variant'];
+  size?: 'small' | 'medium';
   className?: any;
 }
 
