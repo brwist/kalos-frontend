@@ -11,6 +11,7 @@ import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 import { colorsMapping, repeatsMapping, requestTypeMappping } from '../constants';
 import { useEmployees } from '../hooks';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 
 const useStyles = makeStyles(theme => ({
   card: {
@@ -42,8 +43,8 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-interface props {
-  card?: Event.AsObject;
+interface Props {
+  card?: Event.AsObject | TimeoffRequest.AsObject;
   type?: string;
   skeleton?: boolean
 }
@@ -90,7 +91,7 @@ const SkeletonCard = () => {
   );
 };
 
-const CallCard = ({ card, type, skeleton }: props) => {
+const CallCard = ({ card, type, skeleton }: Props) => {
   if (skeleton) {
     return <SkeletonCard />;
   }
@@ -99,7 +100,6 @@ const CallCard = ({ card, type, skeleton }: props) => {
     propertyId,
     name,
     customer,
-    timeStarted,
     timeEnded,
     description,
     logTechnicianAssigned = '',

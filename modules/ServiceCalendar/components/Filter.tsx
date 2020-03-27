@@ -12,11 +12,11 @@ import { Button } from '../../ComponentsLibrary/Button';
 import FilterDrawer from './FilterDrawer';
 
 type Props = {
-  defaultView: string,
+  defaultView?: string,
   setDefaultView: () => void;
   viewBy: string;
   changeViewBy: (value: string) => void;
-  selectedDate: Date;
+  selectedDate: Date | '';
   changeSelectedDate: (date: Date) => void;
 };
 

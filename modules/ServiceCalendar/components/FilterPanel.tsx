@@ -27,10 +27,6 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-type MapList = {
-  [key: string]: string,
-}
-
 type Props = {
   title: string;
   selectedCount?: number;

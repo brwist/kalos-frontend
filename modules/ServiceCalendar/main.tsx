@@ -5,6 +5,7 @@ import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { format, startOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, addDays } from 'date-fns';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Box from '@material-ui/core/Box';
 import Backdrop from '@material-ui/core/Backdrop';
@@ -53,7 +54,7 @@ const getDefaultSelectedDate = (viewBy: string): Date => {
   }
 };
 
-const getShownDates = (viewBy: string, date?: Date) => {
+const getShownDates = (viewBy: string, date?: Date): string[] => {
   switch (viewBy) {
   case 'day':
     return [format(date || today, 'yyyy-MM-dd')];
@@ -74,7 +75,15 @@ const getShownDates = (viewBy: string, date?: Date) => {
   }
 };
 
-const mapToObject = (mapping: Map<string, CalendarDay>) => mapping.toArray().reduce((acc, [key, val]) => {acc[key] = val; return acc}, {});
+type MapList = {
+  [key:string]: string,
+}
+
+const mapToObject = (mapping: Map<string | number, string>): MapList =>
+  mapping.toArray()
+    .reduce((acc: MapList, [key, val]: [string | number, string]) => {
+      acc[key] = val; return acc;
+    }, {});
 
 type Filters = {
   customers: string[],
@@ -85,19 +94,21 @@ type Filters = {
 };
 
 type State = {
-  user: User.AsObject;
+  user?: User.AsObject;
   fetchingCalendarData: boolean;
   datesMap?: Map<string, CalendarDay>;
+  customersMap: MapList;
+  zipCodesMap: MapList;
   speedDialOpen: boolean;
-  viewBy: 'day' | 'week' | 'month';
-  defaultView: string;
-  selectedDate: Date,
+  viewBy: string | '';
+  defaultView?: string;
+  selectedDate: Date | '',
   shownDates: string[];
   filters: Filters;
 }
 
 type Action =
-  | { type: 'setUser' }
+  | { type: 'setUser', value: User.AsObject }
   | { type: 'fetchingCalendarData' }
   | { type: 'fetchedCalendarData', data: CalendarData }
   | { type: 'viewBy', value: string }
@@ -178,13 +189,14 @@ const initialFilters: Filters = {
 };
 
 const initialState: State = {
-  user: {},
   fetchingCalendarData: true,
   speedDialOpen: false,
   viewBy: '',
-  selectedDate: null,
+  selectedDate: '',
   shownDates: [],
   filters: initialFilters,
+  customersMap: {},
+  zipCodesMap: {},
 };
 
 type EmployeesContext = {
@@ -196,7 +208,7 @@ type CalendarDay = {
   getServiceCallsList(): Array<Event>;
   getCompletedServiceCallsList(): Array<Event>;
   getRemindersList(): Array<Event>;
-  getTimeoffRequestsList(): Array<timeoff_request_pb.TimeoffRequest>;
+  getTimeoffRequestsList(): Array<TimeoffRequest>;
 };
 
 type CalendarData = {
@@ -205,7 +217,17 @@ type CalendarData = {
   getZipCodesMap(): Map<string, string>;
 };
 
-export const CalendarDataContext = createContext();
+type CalendarDataContext = {
+  fetchingCalendarData?: boolean,
+  datesMap?: Map<string, CalendarDay>,
+  customersMap?: MapList,
+  zipCodesMap?: MapList,
+  initialFilters?: Filters,
+  filters?: Filters,
+  changeFilters?: (value: Filters) => void,
+}
+
+export const CalendarDataContext = createContext<CalendarDataContext>({});
 export const EmployeesContext = createContext<EmployeesContext>({ employees: [], employeesLoading: false });
 
 const ServiceCalendar = ({ userId }: Props) => {

@@ -16,6 +16,8 @@ import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { useCalendarData } from '../hooks';
 import CallCard from './CallCard';
 import { colorsMapping } from '../constants';
+import { CalendarDay } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -84,9 +86,16 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type Props = {
   date: string;
-  viewBy: 'day' | 'week' | 'month';
+  viewBy?: string;
   userId: number;
   isAdmin: number;
+};
+
+type CallsList = {
+  completedServiceCallsList: Event.AsObject[];
+  remindersList: Event.AsObject[];
+  serviceCallsList: Event.AsObject[];
+  timeoffRequestsList: TimeoffRequest.AsObject[];
 };
 
 const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
@@ -101,7 +110,7 @@ const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
   const { fetchingCalendarData, datesMap, filters } = useCalendarData();
   const dateObj = new Date(date);
 
-  const filterCalls = useCallback(calendarDay => {
+  const filterCalls = useCallback((calendarDay: CalendarDay): CallsList => {
     const { customers, zip, propertyUse, jobType, jobSubType } = filters;
     return Object.keys(calendarDay).reduce((acc, key) => {
       let calls = calendarDay[key];
@@ -130,7 +139,12 @@ const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
         return true;
       });
       return acc;
-    }, {});
+    }, {
+      completedServiceCallsList: [],
+      remindersList: [],
+      serviceCallsList: [],
+      timeoffRequestsList: [],
+    });
   }, [filters]);
 
   if (fetchingCalendarData || !datesMap.get(date)) {
