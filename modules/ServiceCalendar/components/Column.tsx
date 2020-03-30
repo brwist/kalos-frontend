@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useLayoutEffect } from 'react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
+import { Event } from '@kalos-core/kalos-rpc/Event/index';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
@@ -14,7 +15,7 @@ import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { useCalendarData } from '../hooks';
-import CallCard from './CallCard';
+import { CallCard, TimeoffCard, SkeletonCard } from './CallCard';
 import { colorsMapping } from '../constants';
 import { CalendarDay } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
@@ -92,13 +93,14 @@ type Props = {
 };
 
 type CallsList = {
+  [key: string]: Event.AsObject[] | TimeoffRequest.AsObject[];
   completedServiceCallsList: Event.AsObject[];
   remindersList: Event.AsObject[];
   serviceCallsList: Event.AsObject[];
   timeoffRequestsList: TimeoffRequest.AsObject[];
 };
 
-const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
+const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
   const classes = useStyles();
   const [showCompleted, setShowCompleted] = useState(false);
   const [dayView, setDayView] = useState(false);
@@ -111,10 +113,11 @@ const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
   const dateObj = new Date(date);
 
   const filterCalls = useCallback((calendarDay: CalendarDay): CallsList => {
-    const { customers, zip, propertyUse, jobType, jobSubType } = filters;
-    return Object.keys(calendarDay).reduce((acc, key) => {
+    const { customers, zip, propertyUse, jobType, jobSubType } = filters!;
+    return Object.keys(calendarDay).reduce((acc: CallsList, key) => {
+      // @ts-ignore
       let calls = calendarDay[key];
-      acc[key] = calls.filter(call => {
+      acc[key] = calls.filter((call: Event.AsObject) => {
         if (!isAdmin && call.logTechnicianAssigned) {
           const techIds = call.logTechnicianAssigned.split(',').map(Number);
           if (!techIds.includes(userId)) {
@@ -124,7 +127,7 @@ const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
         if (customers.length && !customers.includes(`${call?.customer?.id}`)) {
           return false;
         }
-        if (zip.length && !zip.includes(call?.property?.zip)) {
+        if (zip.length && !zip.includes(call?.property?.zip || '')) {
           return false;
         }
         if (propertyUse.length && !propertyUse.includes(`${call?.isResidential}`)) {
@@ -133,7 +136,7 @@ const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
         if (jobType && jobType !== call?.jobTypeId) {
           return false;
         }
-        if (jobSubType && jobSubType !== call?.jobSubTypeId) {
+        if (jobSubType && jobSubType !== call?.jobSubtypeId) {
           return false;
         }
         return true;
@@ -147,15 +150,19 @@ const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
     });
   }, [filters]);
 
-  if (fetchingCalendarData || !datesMap.get(date)) {
+  if (fetchingCalendarData || !datesMap?.get(date)) {
     return (
-      [...Array(5)].map((e, i) => (
-        <CallCard key={`${date}-skeleton-${i}`} skeleton />
-      ))
+      <>
+        {[...Array(5)].map((e, i) => (
+          <SkeletonCard key={`${date}-skeleton-${i}`} />
+        ))
+        }
+      </>
     );
   }
 
-  const calendarDay = datesMap.get(date).toObject();
+  // @ts-ignore
+  const calendarDay = datesMap?.get(date)?.toObject();
   const {
     completedServiceCallsList,
     remindersList,
@@ -219,7 +226,7 @@ const Column = ({ date, viewBy, userId, isAdmin}: Props) => {
       {timeoffRequestsList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
         .map(call => (
-          <CallCard key={call.id} card={call} type="timeoff" />
+          <TimeoffCard key={call.id} card={call} />
         ))}
       {remindersList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))

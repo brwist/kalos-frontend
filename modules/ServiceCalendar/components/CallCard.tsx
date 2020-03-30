@@ -43,26 +43,20 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-interface Props {
-  card?: Event.AsObject | TimeoffRequest.AsObject;
-  type?: string;
-  skeleton?: boolean
-}
-
 interface colorProps {
   type?: string;
-  requestType?: string;
-  logJobStatus: string;
-  color: string;
+  requestType?: number;
+  logJobStatus?: string;
+  color?: string;
 }
 
 const ColorIndicator = ({ type, requestType, logJobStatus, color }: colorProps) => {
   const classes = useStyles();
   let colorToUse;
   if (type === 'timeoff') {
-    colorToUse = requestType === '10' ? colorsMapping.timeoff10 : colorsMapping.timeoff;
+    colorToUse = requestType === 10 ? colorsMapping.timeoff10 : colorsMapping.timeoff;
   } else {
-    colorToUse = colorsMapping[logJobStatus] || colorsMapping[color];
+    colorToUse = colorsMapping[logJobStatus || '*'] || colorsMapping[color || '*'];
   }
   return (
     <span
@@ -72,7 +66,7 @@ const ColorIndicator = ({ type, requestType, logJobStatus, color }: colorProps) 
   );
 };
 
-const SkeletonCard = () => {
+export const SkeletonCard = () => {
   const classes = useStyles();
   return (
     <Card className={classes.card}>
@@ -91,10 +85,96 @@ const SkeletonCard = () => {
   );
 };
 
-const CallCard = ({ card, type, skeleton }: Props) => {
-  if (skeleton) {
-    return <SkeletonCard />;
+interface TimeoffProps {
+  card: TimeoffRequest.AsObject;
+}
+
+export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
+  const {
+    id,
+    requestType,
+    adminApprovalUserId,
+    timeStarted,
+    timeFinished,
+    userName,
+    userId,
+    allDayOff,
+  } = card;
+
+  const classes = useStyles();
+  const { employees, employeesLoading } = useEmployees();
+
+  let title, subheader, dates, time;
+  const started = new Date(timeStarted);
+  const finished = new Date(timeFinished);
+  const sameDay = isSameDay(started, finished);
+  if (requestType === 10) {
+    if (employeesLoading) {
+      return <SkeletonCard />;
+    }
+    const empl = employees.find(emp => emp.id === +userId);
+    title = 'Training:';
+    subheader = `${empl?.firstname} ${empl?.lastname}`;
+  } else {
+    title = `${adminApprovalUserId ? 'Time off' : 'Pending'}:`;
+    subheader = userName;
   }
+  if (sameDay) {
+    dates = format(started, 'M/dd');
+    if (allDayOff) {
+      time = 'All Day';
+    } else {
+      time = `${format(started, 'p')} - ${format(finished, 'p')}`;
+    }
+  } else {
+    dates = `${format(started, 'M/dd p')} - ${format(finished, 'M/dd p')}`;
+  }
+  return (
+    <Card
+      className={classes.card}
+      onClick={() => {
+        const win = window.open(`https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`, '_blank');
+        if (win) {
+          win.focus();
+        }
+      }}
+    >
+      <CardActionArea>
+        <CardHeader
+          className={classes.cardHeader}
+          avatar={
+            <ColorIndicator
+              type="timeoff"
+              requestType={requestType}
+            />
+          }
+          title={title}
+          subheader={subheader}
+        />
+        <CardContent className={classes.cardContent}>
+          {dates && (
+            <Typography className={classes.date} variant="body2" color="textSecondary" component="p">
+              {dates} {time}
+            </Typography>
+          )}
+          <Typography variant="body2" color="textSecondary" component="p">
+            {name}
+          </Typography>
+          {requestType && (
+            <Typography variant="body2" color="textSecondary" component="p">{requestTypeMappping[requestType]}</Typography>
+          )}
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
+};
+
+type CallProps = {
+  card: Event.AsObject;
+  type?: string;
+}
+
+export const CallCard = ({ card, type}: CallProps): JSX.Element => {
   const {
     id,
     propertyId,
@@ -109,51 +189,22 @@ const CallCard = ({ card, type, skeleton }: Props) => {
     isAllDay,
     repeatType,
     dateEnded,
-    requestType,
-    adminApprovalUserId,
     timeStarted,
-    timeFinished,
-    userName,
-    userId,
-    allDayOff,
   } = card;
 
   const classes = useStyles();
   const { employees, employeesLoading } = useEmployees();
-  let title, subheader, dates, time;
   const technicianIds =
     logTechnicianAssigned !== '0' && logTechnicianAssigned !== ''
       ? logTechnicianAssigned.split(',')
       : [];
-  if ((technicianIds.length || (type === 'timeoff' && requestType === '10')) && employeesLoading) {
+  if (technicianIds.length && employeesLoading) {
     return <SkeletonCard />;
   }
-  if (type === 'timeoff') {
-    const started = new Date(timeStarted);
-    const finished = new Date(timeFinished);
-    const sameDay = isSameDay(started, finished);
-    if (requestType === '10') {
-      const empl = employees.find(emp => emp.id === +userId);
-      title = 'Training:';
-      subheader = `${empl?.firstname} ${empl?.lastname}`;
-    } else {
-      title = `${adminApprovalUserId ? 'Time off' : 'Pending'}:`;
-      subheader = userName;
-    }
-    if (sameDay) {
-      dates = format(started, 'M/dd');
-      if (allDayOff) {
-        time = 'All Day';
-      } else {
-        time = `${format(started, 'p')} - ${format(finished, 'p')}`;
-      }
-    } else {
-      dates = `${format(started, 'M/dd p')} - ${format(finished, 'M/dd p')}`;
-    }
-  } else {
-    title = logJobStatus ? logJobStatus : null;
-    subheader = isAllDay ? 'All Day Event' : `${timeStarted} - ${timeEnded}`;
-  }
+
+  const title = logJobStatus ? logJobStatus : null;
+  const subheader = isAllDay ? 'All Day Event' : `${timeStarted} - ${timeEnded}`;
+
   const technicianNames = technicianIds
     .map((id: string) => {
       const employee = employees.find(emp => emp.id === +id);
@@ -165,12 +216,10 @@ const CallCard = ({ card, type, skeleton }: Props) => {
       className={classes.card}
       onClick={() => {
         let url;
-        if (type === 'timeoff') {
-          url = `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`;
-        } else if (type === 'reminder') {
+        if (type === 'reminder') {
           url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editReminder&id=${id}`;
         } else {
-          url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${id}&property_id=${propertyId}&user_id=${customer.id}`;
+          url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${id}&property_id=${propertyId}&user_id=${customer?.id}`;
         }
         const win = window.open(url, '_blank');
         if (win) {
@@ -184,7 +233,6 @@ const CallCard = ({ card, type, skeleton }: Props) => {
           avatar={
             <ColorIndicator
               type={type}
-              requestType={requestType}
               logJobStatus={logJobStatus}
               color={color}
             />
@@ -194,11 +242,6 @@ const CallCard = ({ card, type, skeleton }: Props) => {
           action={<Typography variant="caption" className={classes.jobNumber}>{logJobNumber}</Typography>}
         />
         <CardContent className={classes.cardContent}>
-          {dates && (
-            <Typography className={classes.date} variant="body2" color="textSecondary" component="p">
-              {dates} {time}
-            </Typography>
-          )}
           {(!type || type === 'completed') && (
             <Typography variant="body2" color="textSecondary" component="p">
               Customer:{' '}
@@ -230,13 +273,8 @@ const CallCard = ({ card, type, skeleton }: Props) => {
               }}
             />
           ) : null}
-          {requestType && (
-            <Typography variant="body2" color="textSecondary" component="p">{requestTypeMappping[requestType]}</Typography>
-          )}
         </CardContent>
       </CardActionArea>
     </Card>
   );
 };
-
-export default CallCard;

@@ -31,25 +31,29 @@ const SearchableList = ({
   noSearch,
   loading,
   maxListHeight,
-}: Props) => {
+}: Props): JSX.Element => {
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   if (loading) {
-    return [...Array(10)].map((e, i) => (
-      <Skeleton key={`${title}-skeleton-${i}`} />
-    ));
+    return (
+      <>
+        {[...Array(10)].map((e, i) => (
+          <Skeleton key={`${title}-skeleton-${i}`} />
+        ))}
+      </>
+    );
   }
 
-  const allChecked = Object.keys(options).length === values.length;
+  const allChecked = Object.keys(options || {}).length === values.length;
 
   return (
     <>
       {!noSearch && (
         <TextField label="Search" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
       )}
-      <List style={{ maxHeight: maxListHeight ? maxListHeight : null, overflow: 'auto' }}>
+      <List style={{ maxHeight: maxListHeight ? maxListHeight : undefined, overflow: 'auto' }}>
         {!noSearch && (
-          <ListItem dense button onClick={() => handleToggleAll(!allChecked)}>
+          <ListItem dense button onClick={() => handleToggleAll && handleToggleAll(!allChecked)}>
             <ListItemIcon>
               <Checkbox
                 edge="start"
@@ -61,7 +65,7 @@ const SearchableList = ({
             <ListItemText primary={`All ${title}`} />
           </ListItem>
         )}
-        {Object.entries(options).map(([id, name]) => {
+        {Object.entries(options || {}).map(([id, name]) => {
           if (!searchTerm || name.toLowerCase().includes(searchTerm.toLowerCase())) {
             return (
               <ListItem key={`title-${id}`} dense button onClick={() => handleChange(id)}>
