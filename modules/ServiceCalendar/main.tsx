@@ -11,6 +11,7 @@ import Box from '@material-ui/core/Box';
 import Backdrop from '@material-ui/core/Backdrop';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+import * as jspb from 'google-protobuf';
 import customTheme from '../Theme/main';
 import { ENDPOINT } from '../../constants';
 import Filter from './components/Filter';
@@ -79,7 +80,7 @@ type MapList = {
   [key:string]: string,
 }
 
-const mapToObject = (mapping: Map<string | number, string>): MapList =>
+const mapToObject = (mapping: jspb.Map<string|number, string>): MapList =>
   mapping.toArray()
     .reduce((acc: MapList, [key, val]: [string | number, string]) => {
       acc[key] = val; return acc;
@@ -96,7 +97,7 @@ type Filters = {
 type State = {
   user?: User.AsObject;
   fetchingCalendarData: boolean;
-  datesMap?: Map<string, CalendarDay>;
+  datesMap?: jspb.Map<string, CalendarDay>;
   customersMap: MapList;
   zipCodesMap: MapList;
   speedDialOpen: boolean;
@@ -212,22 +213,26 @@ type CalendarDay = {
 };
 
 type CalendarData = {
-  getDatesMap(): Map<string, CalendarDay>;
-  getCustomersMap(): Map<number, string>;
-  getZipCodesMap(): Map<string, string>;
+  getDatesMap(): jspb.Map<string, CalendarDay>;
+  getCustomersMap(): jspb.Map<number, string>;
+  getZipCodesMap(): jspb.Map<string, string>;
 };
 
 type CalendarDataContext = {
   fetchingCalendarData?: boolean,
-  datesMap?: Map<string, CalendarDay>,
+  datesMap?: jspb.Map<string, CalendarDay>,
   customersMap?: MapList,
   zipCodesMap?: MapList,
-  initialFilters?: Filters,
-  filters?: Filters,
-  changeFilters?: (value: Filters) => void,
+  initialFilters: Filters,
+  filters: Filters,
+  changeFilters: (value: Filters) => void,
 }
 
-export const CalendarDataContext = createContext<CalendarDataContext>({});
+export const CalendarDataContext = createContext<CalendarDataContext>({
+  initialFilters: initialFilters,
+  filters: initialFilters,
+  changeFilters: () => {},
+});
 export const EmployeesContext = createContext<EmployeesContext>({ employees: [], employeesLoading: false });
 
 const ServiceCalendar = ({ userId }: Props) => {
@@ -340,7 +345,7 @@ const ServiceCalendar = ({ userId }: Props) => {
                   date={date}
                   viewBy={viewBy}
                   userId={userId}
-                  isAdmin={user.isAdmin}
+                  isAdmin={user?.isAdmin || 0}
                 />
               ))}
             </Container>

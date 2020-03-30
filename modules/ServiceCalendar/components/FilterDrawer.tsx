@@ -9,12 +9,6 @@ import {JobTypePicker} from '../../Pickers/JobType';
 import {JobSubtypePicker} from '../../Pickers/JobSubtype';
 import {useCalendarData, useWindowSize} from '../hooks';
 
-const panelHeight = 64;
-const panelsCount = 4;
-const margins = 32;
-const buttonsHeight = 46;
-const searchHeight = 46;
-
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
@@ -138,7 +132,7 @@ const FilterDrawer = ({
   const { customers, zip, jobType, jobSubType, propertyUse } = state;
 
   const [, wHeight] = useWindowSize();
-  const maxListHeight = wHeight - (64*4) - 46 - 46 - 32
+  const maxListHeight = wHeight - (64*4) - 46 - 46 - 32;
   const toggleExpanded = useCallback(key => {
     if (key === expanded) {
       setExpanded('');
@@ -179,7 +173,7 @@ const FilterDrawer = ({
                 dispatch({
                   type: 'toggleAll',
                   key: 'customers',
-                  value: value ? Object.keys(customersMap) : [],
+                  value: value ? Object.keys(customersMap || {}) : [],
                 })
               }
             />
@@ -203,7 +197,7 @@ const FilterDrawer = ({
                 dispatch({
                   type: 'toggleAll',
                   key: 'zip',
-                  value: value ? Object.keys(zipCodesMap) : [],
+                  value: value ? Object.keys(zipCodesMap || {}) : [],
                 })
               }
             />

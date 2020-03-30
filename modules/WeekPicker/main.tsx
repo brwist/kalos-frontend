@@ -68,7 +68,7 @@ type Props = {
 const WeekPicker = ({ label, value, onChange, inputVariant, size, className }: Props) => {
   const classes = useStyles();
   const handleWeekChange = (date: MaterialUiPickersDate) => {
-    onChange(startOfWeek(date || value));
+    onChange(startOfWeek(date || value || new Date().valueOf()));
   };
 
   const formatWeekSelectLabel = (date: MaterialUiPickersDate, invalidLabel: string) => {
