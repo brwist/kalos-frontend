@@ -5,9 +5,10 @@ import Drawer from '@material-ui/core/Drawer';
 import { Button } from '../../ComponentsLibrary/Button';
 import FilterPanel from './FilterPanel';
 import SearchableList from './SearchableList';
-import {JobTypePicker} from '../../Pickers/JobType';
-import {JobSubtypePicker} from '../../Pickers/JobSubtype';
-import {useCalendarData, useWindowSize} from '../hooks';
+import { JobTypePicker } from '../../Pickers/JobType';
+import { JobSubtypePicker } from '../../Pickers/JobSubtype';
+import { useWindowSize } from '../../ComponentsLibrary/hooks';
+import { useCalendarData } from '../hooks';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({

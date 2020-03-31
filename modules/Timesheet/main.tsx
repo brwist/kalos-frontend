@@ -13,9 +13,10 @@ import {
 } from '@kalos-core/kalos-rpc/TimesheetLine';
 import customTheme from '../Theme/main';
 import { ENDPOINT } from '../../constants';
-import { useFetchAll } from './hooks';
+import { useFetchAll } from '../ComponentsLibrary/hooks';
 
 const srClient = new ServicesRenderedClient(ENDPOINT);
+const tslClient = new TimesheetLineClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -47,7 +48,7 @@ const getShownDates = (date?: Date): string[] => {
   const lastDay = addDays(firstDay, 6);
   const days = eachDayOfInterval({ start: firstDay, end: lastDay });
   return days.map(date => format(date, 'yyyy-MM-dd'));
-}
+};
 
 const Timesheet = ({ userId }: Props) => {
   const classes = useStyles();
