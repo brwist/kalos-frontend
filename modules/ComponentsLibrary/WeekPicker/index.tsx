@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import clsx from 'clsx';
 import { DatePicker } from '@material-ui/pickers';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
@@ -65,7 +65,14 @@ type Props = {
   className?: any;
 }
 
-const WeekPicker = ({ label, value, onChange, inputVariant, size, className }: Props) => {
+export const WeekPicker: FC<Props> = ({
+  label,
+  value,
+  onChange,
+  inputVariant,
+  size,
+  className,
+}) => {
   const classes = useStyles();
   const handleWeekChange = (date: MaterialUiPickersDate) => {
     onChange(startOfWeek(date || value || new Date().valueOf()));
@@ -123,5 +130,3 @@ const WeekPicker = ({ label, value, onChange, inputVariant, size, className }: P
     />
   );
 };
-
-export default WeekPicker;

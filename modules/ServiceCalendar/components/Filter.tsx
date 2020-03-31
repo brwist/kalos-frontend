@@ -7,7 +7,7 @@ import Box from '@material-ui/core/Box';
 import Toolbar from '@material-ui/core/Toolbar';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
-import WeekPicker from '../../WeekPicker/main';
+import { WeekPicker } from '../../ComponentsLibrary/WeekPicker';
 import { Button } from '../../ComponentsLibrary/Button';
 import FilterDrawer from './FilterDrawer';
 

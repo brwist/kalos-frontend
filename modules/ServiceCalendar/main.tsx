@@ -17,7 +17,7 @@ import { ENDPOINT } from '../../constants';
 import Filter from './components/Filter';
 import Column from './components/Column';
 import AddNewButton from './components/AddNewButton';
-import { useFetchAll } from './hooks';
+import { useFetchAll } from '../ComponentsLibrary/hooks';
 
 type Props = {
   userId: number;
