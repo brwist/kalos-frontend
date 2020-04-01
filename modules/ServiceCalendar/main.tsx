@@ -8,7 +8,6 @@ import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Box from '@material-ui/core/Box';
-import Backdrop from '@material-ui/core/Backdrop';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import * as jspb from 'google-protobuf';
@@ -16,8 +15,11 @@ import customTheme from '../Theme/main';
 import { ENDPOINT } from '../../constants';
 import Filter from './components/Filter';
 import Column from './components/Column';
-import AddNewButton from './components/AddNewButton';
 import { useFetchAll } from '../ComponentsLibrary/hooks';
+import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
+import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
+import AddAlertIcon from '@material-ui/icons/AddAlert';
+import EventIcon from '@material-ui/icons/Event';
 
 type Props = {
   userId: number;
@@ -235,6 +237,12 @@ export const CalendarDataContext = createContext<CalendarDataContext>({
 });
 export const EmployeesContext = createContext<EmployeesContext>({ employees: [], employeesLoading: false });
 
+const addNewOptions = [
+  { icon: <AssignmentIndIcon />, name: 'Task', url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addServiceCallGeneral' },
+  { icon: <AddAlertIcon />, name: 'Reminder', url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder' },
+  { icon: <EventIcon />, name: 'Service Call', url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask' },
+];
+
 const ServiceCalendar = ({ userId }: Props) => {
   const classes = useStyles();
   const [{
@@ -351,8 +359,7 @@ const ServiceCalendar = ({ userId }: Props) => {
             </Container>
           </Box>
         </EmployeesContext.Provider>
-        <Backdrop open={speedDialOpen} style={{ zIndex: 10 }} />
-        <AddNewButton open={speedDialOpen} setOpen={() => dispatch({ type: 'speedDialOpen' })} />
+        <AddNewButton options={addNewOptions} />
       </CalendarDataContext.Provider>
     </ThemeProvider>
   );
