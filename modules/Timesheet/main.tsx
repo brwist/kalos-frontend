@@ -13,6 +13,7 @@ import TimerOffIcon from '@material-ui/icons/TimerOff';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import AssessmentIcon from '@material-ui/icons/Assessment';
+import EditTimesheetModal from './components/EditModal';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -44,9 +45,14 @@ const getShownDates = (date?: Date): string[] => {
 const Timesheet = ({ userId }: Props) => {
   const classes = useStyles();
   const [selectedDate, setSelectedDate] = useState(weekStart);
+  const [editTimesheetModalShown, setEditTimesheetModalShown] = useState(false);
+
+  const handleAddNewTimecard = () => {
+    setEditTimesheetModalShown(true);
+  };
 
   const addNewOptions = [
-    { icon: <EventIcon />, name: 'Timecard', url: `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetEdit&tlid=0&user_id=${userId}` },
+    { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimecard },
     { icon: <TimerOffIcon />, name: 'Request Off', url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest' },
     { icon: <AddAlertIcon />, name: 'Reminder', url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder' },
     { icon: <AssignmentIndIcon />, name: 'Task', url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask' },
@@ -71,6 +77,9 @@ const Timesheet = ({ userId }: Props) => {
           ))}
         </Container>
       </Box>
+      {editTimesheetModalShown && (
+        <EditTimesheetModal onClose={() => setEditTimesheetModalShown(false)} />
+      )}
       <AddNewButton options={addNewOptions} />
     </ThemeProvider>
   );

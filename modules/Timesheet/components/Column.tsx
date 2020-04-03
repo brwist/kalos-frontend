@@ -1,5 +1,15 @@
 import React, {FC, useCallback, useLayoutEffect, useState} from 'react';
+import clsx from 'clsx';
+import { format } from "date-fns";
 import Box from '@material-ui/core/Box';
+import Button from '@material-ui/core/Button';
+import BackIcon from '@material-ui/icons/ArrowBack';
+import Typography from '@material-ui/core/Typography';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
+import ViewDayIcon from '@material-ui/icons/ViewDay';
+import { createStyles, makeStyles, Theme, useTheme } from '@material-ui/core/styles';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import {
   ServicesRenderedClient,
   ServicesRendered,
@@ -8,19 +18,9 @@ import {
   TimesheetLineClient,
   TimesheetLine
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-import {ENDPOINT} from '../../../constants';
-import {useFetchAll} from '../../ComponentsLibrary/hooks';
-import clsx from 'clsx';
-import Button from '@material-ui/core/Button';
-import BackIcon from '@material-ui/icons/ArrowBack';
-import Typography from '@material-ui/core/Typography';
-import {format} from "date-fns";
-import Tooltip from '@material-ui/core/Tooltip';
-import IconButton from '@material-ui/core/IconButton';
-import ViewDayIcon from '@material-ui/icons/ViewDay';
-import {createStyles, makeStyles, Theme, useTheme} from '@material-ui/core/styles';
-import {colorsMapping} from '../../ServiceCalendar/constants';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
+import { ENDPOINT } from '../../../constants';
+import { useFetchAll } from '../../ComponentsLibrary/hooks';
+import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -85,7 +85,7 @@ const Column: FC<Props> = ({ date, userId }) => {
 
   const fetchServicesRendered = useCallback( async (page) => {
     const req = new ServicesRendered();
-    req.setTimeStarted(date);
+    req.setTimeStarted(`${date}%`);
     req.setTechnicianUserId(userId);
     req.setPageNumber(page);
     return (await srClient.BatchGet(req)).toObject();
@@ -93,7 +93,7 @@ const Column: FC<Props> = ({ date, userId }) => {
 
   const fetchTimesheetLine = useCallback( async (page) => {
     const req = new TimesheetLine();
-    req.setTimeStarted(date);
+    req.setTimeStarted(`${date}%`);
     req.setTechnicianUserId(userId);
     req.setPageNumber(page);
     return (await tslClient.BatchGet(req)).toObject();
@@ -107,6 +107,7 @@ const Column: FC<Props> = ({ date, userId }) => {
 
   const { data:servicesRendered, isLoading:servicesRenderedLoading } = useFetchAll(fetchServicesRendered);
   const { data:timesheetLine, isLoading:timesheetLineLoading } = useFetchAll(fetchTimesheetLine);
+  const cards = [...servicesRendered, ...timesheetLine].sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted));
   return (
     <Box className={clsx(dayView && classes.dayView)}>
       {dayView && (
@@ -137,6 +138,12 @@ const Column: FC<Props> = ({ date, userId }) => {
           </Tooltip>
         </>
       </Box>
+      {cards.map(card => {
+        if (card.hideFromTimesheet === 0) {
+          return <ServicesRenderedCard card={card} />
+        }
+        return <TimesheetLineCard card={card} />
+      })}
     </Box>
   );
 };
