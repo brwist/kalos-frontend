@@ -49,7 +49,7 @@ export const SCHEMA_2: Schema<Model> = [
     { name: 'firstName', label: 'First Name' },
     { name: 'lastName', label: 'Last Name' },
     { name: 'gender', label: 'Gender', options: GENDERS },
-    { label: 'Date of birth', type: 'date' },
+    { name: 'dob', label: 'Date of birth', type: 'date' },
   ],
   [{ label: 'Login detail', headline: true }],
   [
