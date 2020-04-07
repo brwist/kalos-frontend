@@ -13,9 +13,8 @@ import { Field } from '../../ComponentsLibrary/Field';
 import {
   loadServicesRendered,
   makeFakeRows,
-  formatDate,
-  formatTime,
   timestamp,
+  formatDateTime,
 } from '../../../helpers';
 import { ENDPOINT, SERVICE_STATUSES } from '../../../constants';
 import { UserType } from './ServiceCallDetails';
@@ -40,8 +39,7 @@ interface Props {
 }
 
 const COLUMNS: Columns = [
-  { name: 'Date' },
-  { name: 'Time' },
+  { name: 'Date/Time' },
   { name: 'Technician' },
   { name: 'Status' },
 ];
@@ -124,14 +122,12 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
     },
     [loggedUser, load],
   );
-  console.log({ servicesRendered });
   const data: Data = loading
     ? makeFakeRows(4, 3)
     : servicesRendered.map(props => {
         const { datetime, name, status } = props;
         return [
-          { value: formatDate(datetime) },
-          { value: formatTime(datetime) },
+          { value: formatDateTime(datetime) },
           { value: name },
           {
             value: status,
@@ -146,7 +142,6 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
   const wasEnrouted = servicesRendered.some(({ status }) => status === ENROUTE);
   const lastEntry = servicesRendered[0];
   const lastStatus = servicesRendered[0] ? servicesRendered[0].status : '';
-  console.log({ lastStatus });
   return (
     <>
       <SectionBar
