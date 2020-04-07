@@ -102,8 +102,8 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
     quickAdd: '',
   });
   const load = useCallback(async () => {
-    // const storedQuotes = await loadStoredQuotes();
-    // setStoredQuotes(storedQuotes);
+    const storedQuotes = await loadStoredQuotes();
+    setStoredQuotes(storedQuotes);
     setLoaded(true);
   }, [setStoredQuotes, setLoaded]);
   useEffect(() => {
