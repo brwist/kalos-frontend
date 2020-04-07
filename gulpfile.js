@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -35,7 +34,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-exports.__esModule = true;
 var task = require('gulp').task;
 var sh = require('shelljs');
 var readline = require('readline');
@@ -51,7 +49,6 @@ var builtins = require('rollup-plugin-node-builtins');
 var globals = require('rollup-plugin-node-globals');
 var terser = require('rollup-plugin-terser').terser;
 var jsonPlugin = require('@rollup/plugin-json');
-var autoInstall = require('@rollup/plugin-auto-install');
 /**
  * Serves all modules to localhost:1234 via parcel
  */
@@ -162,25 +159,6 @@ function getModulesList() {
         });
     });
 }
-function parseArgs() {
-    var args = process.argv.slice(3);
-    if (args.length === 0) {
-        return {};
-    }
-    else {
-        try {
-            return args.reduce(function (argObject, arg) {
-                var _a = arg.split('='), key = _a[0], value = _a[1];
-                argObject[key.replace(/-/g, '')] = value || true;
-                return argObject;
-            }, {});
-        }
-        catch (err) {
-            error(err);
-            sh.exit(1);
-        }
-    }
-}
 function info(msg) {
     log('\x1b[2m')(msg);
 }
@@ -236,12 +214,12 @@ function patchCFC() {
                     if (!!res.stdout.includes(cfcFunc)) return [3 /*break*/, 4];
                     output = sh.ShellString(res.stdout.replace(/}$/, cfcFunc));
                     output.to('build/common/module.cfc');
-                    return [4 /*yield*/, sh.exec("scp build/common/module.cfc " + exports.MODULE_CFC)];
+                    return [4 /*yield*/, sh.exec("scp build/common/module.cfc " + MODULE_CFC)];
                 case 2:
                     _a.sent();
                     cfmFile = sh.ShellString(cfmTemplate(branch));
                     cfmFile.to("build/modules/" + branch + ".cfm");
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + branch + ".cfm " + exports.MODULE_CFM + "/" + branch.toLowerCase() + ".cfm")];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + branch + ".cfm " + MODULE_CFM + "/" + branch.toLowerCase() + ".cfm")];
                 case 3:
                     _a.sent();
                     sh.rm("build/modules/" + branch + ".cfm");
@@ -258,26 +236,6 @@ function getBranch() {
     return new Promise(function (resolve) {
         sh.exec('git rev-parse --abbrev-ref HEAD', { silent: true }, function (code, output) {
             resolve(output);
-        });
-    });
-}
-function checkBranch() {
-    return __awaiter(this, void 0, void 0, function () {
-        var branch;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, getBranch()];
-                case 1:
-                    branch = (_a.sent()).replace(/\n/g, '');
-                    if (branch === 'master') {
-                        error("Don't make commits to master! Want to make a new branch?");
-                        return [2 /*return*/, true];
-                    }
-                    else {
-                        return [2 /*return*/, false];
-                    }
-                    return [2 /*return*/];
-            }
         });
     });
 }
@@ -313,7 +271,7 @@ function rollupBuild() {
                             plugins: [
                                 resolve({ browser: true, preferBuiltins: true }),
                                 commonjs({
-                                    namedExports: exports.NAMED_EXPORTS
+                                    namedExports: NAMED_EXPORTS
                                 }),
                                 globals(),
                                 builtins(),
@@ -341,9 +299,7 @@ function rollupBuild() {
                                 react: 'React',
                                 'react-dom': 'ReactDOM'
                             },
-                            plugins: [
-                            /*terser()*/
-                            ]
+                            plugins: [terser()]
                         })];
                 case 6:
                     _a.sent();
@@ -358,13 +314,13 @@ function googBuild() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, rollup.rollup({
-                        input: "node_modules/google-protobuf/google-protobuf.js",
+                        input: 'node_modules/google-protobuf/google-protobuf.js',
                         plugins: [resolve(), commonjs()]
                     })];
                 case 1:
                     bundle = _a.sent();
                     return [4 /*yield*/, bundle.write({
-                            file: "build/common/google-protobuf.js",
+                            file: 'build/common/google-protobuf.js',
                             name: 'googleProtobuf',
                             format: 'umd'
                         })];
@@ -401,7 +357,7 @@ function release() {
                         throw "module " + target + " could not be found";
                     }
                     //await patchCFC();
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + exports.KALOS_ASSETS + "/modules/" + target + ".js")];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
                 case 7:
                     //await patchCFC();
                     _a.sent();
@@ -425,7 +381,7 @@ function upload() {
                 case 2:
                     target = target = (_a.sent()).replace(/\n/g, '');
                     return [3 /*break*/, 3];
-                case 3: return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + exports.KALOS_ASSETS + "/modules/" + target + ".js")];
+                case 3: return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
                 case 4:
                     _a.sent();
                     return [2 /*return*/];
@@ -441,7 +397,7 @@ function bustCache() {
                 case 0:
                     controller = process.argv[4].replace(/-/g, '');
                     filename = process.argv[5].replace(/-/g, '');
-                    return [4 /*yield*/, sh.exec("scp " + exports.KALOS_ROOT + "/app/admin/views/" + controller + "/" + filename + ".cfm tmp/" + filename + ".cfm")];
+                    return [4 /*yield*/, sh.exec("scp " + KALOS_ROOT + "/app/admin/views/" + controller + "/" + filename + ".cfm tmp/" + filename + ".cfm")];
                 case 1:
                     _a.sent();
                     return [4 /*yield*/, sh.cat("tmp/" + filename + ".cfm")];
@@ -459,7 +415,7 @@ function bustCache() {
                     return [4 /*yield*/, newFile.to("tmp/" + filename + ".cfm")];
                 case 4:
                     _a.sent();
-                    return [4 /*yield*/, sh.exec("scp tmp/" + filename + ".cfm " + exports.KALOS_ROOT + "/app/admin/views/" + controller + "/" + filename + ".cfm")];
+                    return [4 /*yield*/, sh.exec("scp tmp/" + filename + ".cfm " + KALOS_ROOT + "/app/admin/views/" + controller + "/" + filename + ".cfm")];
                 case 5:
                     _a.sent();
                     _a.label = 6;
@@ -474,11 +430,11 @@ task('goog', googBuild);
 task(release);
 task('cfpatch', patchCFC);
 task(upload);
-exports.KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
-exports.KALOS_ASSETS = exports.KALOS_ROOT + "/app/assets";
-exports.MODULE_CFC = exports.KALOS_ROOT + "/app/admin/controllers/module.cfc";
-exports.MODULE_CFM = exports.KALOS_ROOT + "/app/admin/views/module";
-exports.NAMED_EXPORTS = {
+var KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
+var KALOS_ASSETS = KALOS_ROOT + "/app/assets";
+var MODULE_CFC = KALOS_ROOT + "/app/admin/controllers/module.cfc";
+var MODULE_CFM = KALOS_ROOT + "/app/admin/views/module";
+var NAMED_EXPORTS = {
     'node_modules/scheduler/index.js': [
         'unstable_scheduleCallback',
         'unstable_cancelCallback',
@@ -555,6 +511,14 @@ exports.NAMED_EXPORTS = {
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/invoice_pb.js': [
         'Invoice',
         'InvoiceList',
+    ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/job_type_pb.js': [
+        'JobType',
+        'JobTypeList',
+    ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/job_subtype_pb.js': [
+        'JobSubtype',
+        'JobSubtypeList',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/job_type_subtype_pb.js': [
         'JobTypeSubtype',
@@ -702,6 +666,12 @@ exports.NAMED_EXPORTS = {
         'TaskAssignment',
         'TaskAssignmentList',
     ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/perdiem_pb.js': [
+        'PerDiem',
+        'PerDiemList',
+        'PerDiemRow',
+        'PerDiemRowList',
+    ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_event_pb.js': [
         'TaskEvent',
         'TaskEventList',
@@ -759,7 +729,15 @@ exports.NAMED_EXPORTS = {
         'Vendor',
         'VendorList',
     ],
-    'node_modules/react-is/index.js': ['ForwardRef', 'isFragment'],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/pending_billing_pb.js': [
+        'PendingBilling',
+        'PendingBillingList',
+    ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/group_pb.js': [
+        'Group',
+        'GroupList',
+    ],
+    'node_modules/react-is/index.js': ['ForwardRef', 'isFragment', 'Memo'],
     'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
     'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js': ['grpc'],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [

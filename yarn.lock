@@ -3938,9 +3938,9 @@ loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.4.0:
     js-tokens "^3.0.0 || ^4.0.0"
 
 lottie-web@^5.5.9:
-  version "5.6.8"
-  resolved "https://registry.yarnpkg.com/lottie-web/-/lottie-web-5.6.8.tgz#4e19c4985076368ace3e2140ba599fdc4d927c52"
-  integrity sha512-2b7KDEIzpp3Y+u9BtFMHBkUFWe6TFgVdYvXvpfmbbxAL9XiwHUywAoWH1GhCCMmGqWqkxw8v4IxnOq/3hiOtJg==
+  version "5.6.7"
+  resolved "https://registry.yarnpkg.com/lottie-web/-/lottie-web-5.6.7.tgz#8d738fbc615f7bef553014474f0426fcdd2128e7"
+  integrity sha512-ckdo2Myr4iv0nZ+ENwAN3NIsL6QsNLDWW1l52/rjpsDOVFO4iSVNgupYZXWrvsNcLWofoS9oeP8HgX7AGQY8DQ==
 
 ltgt@^2.1.2:
   version "2.2.1"
