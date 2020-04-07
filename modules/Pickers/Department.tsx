@@ -11,10 +11,11 @@ import { ENDPOINT } from '../../constants';
 interface props {
   selected: number;
   disabled?: boolean;
-  onSelect?(id: number): void;
+  onSelect?(id: number | React.SyntheticEvent<HTMLSelectElement>): void;
   test?(item: TimesheetDepartment.AsObject): boolean;
   label?: string;
   useDevClient?: boolean;
+  withinForm?: boolean;
 }
 
 interface state {
@@ -38,7 +39,7 @@ export class DepartmentPicker extends React.PureComponent<props, state> {
     const id = parseInt(e.currentTarget.value);
     if (this.props.onSelect) {
       try {
-        this.props.onSelect(id);
+        this.props.onSelect(this.props.withinForm ? e : id);
       } catch (err) {
         console.log(err);
       }
