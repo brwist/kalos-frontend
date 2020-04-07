@@ -18,8 +18,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
-//@ts-ignore
-import SignatureCanvas from 'react-signature-pad-wrapper';
 import { Button } from '../Button';
 import { SchemaProps } from '../PlainForm';
 import { Actions } from '../Actions';
@@ -27,6 +25,8 @@ import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { makeFakeRows, loadTechnicians, trailingZero } from '../../../helpers';
+import { DepartmentPicker } from '../../Pickers/Department';
+import { ClassCodePicker } from '../../Pickers/ClassCode';
 
 type UserType = User.AsObject;
 
@@ -40,7 +40,10 @@ export type Type =
   | 'time'
   | 'technician'
   | 'hidden'
-  | 'signature';
+  | 'signature'
+  | 'department'
+  | 'classCode'
+  | 'hidden';
 
 export type Value = string | number;
 
@@ -645,6 +648,12 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         )}
       </div>
     );
+  }
+  if (type === 'department') {
+    return <DepartmentPicker withinForm selected={props.value} onSelect={handleChange} />
+  }
+  if (type === 'classCode') {
+    return <ClassCodePicker withinForm selected={props.value} onSelect={handleChange} />
   }
   return (
     <div className={classes.fieldWrapper + ' ' + className}>

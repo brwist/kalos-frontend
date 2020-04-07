@@ -1,19 +1,23 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { format, startOfWeek, eachDayOfInterval, addDays } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import customTheme from '../Theme/main';
-import Toolbar from './components/Toolbar';
-import Column from './components/Column';
 import Box from '@material-ui/core/Box';
-import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import EventIcon from '@material-ui/icons/Event';
 import TimerOffIcon from '@material-ui/icons/TimerOff';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import AssessmentIcon from '@material-ui/icons/Assessment';
+import customTheme from '../Theme/main';
+import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
+import Toolbar from './components/Toolbar';
+import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
+import { UserClient } from '@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from '../../constants';
+
+const userClient = new UserClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -44,13 +48,14 @@ const getShownDates = (date?: Date): string[] => {
 
 const Timesheet = ({ userId }: Props) => {
   const classes = useStyles();
-  const [selectedDate, setSelectedDate] = useState(weekStart);
-  const [editTimesheetModalShown, setEditTimesheetModalShown] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(weekStart);
+  const [editTimesheetModalShown, setEditTimesheetModalShown] = useState<boolean>(false);
 
   const handleAddNewTimecard = () => {
     setEditTimesheetModalShown(true);
   };
 
+  const shownDates = getShownDates(selectedDate);
   const addNewOptions = [
     { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimecard },
     { icon: <TimerOffIcon />, name: 'Request Off', url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest' },
@@ -62,7 +67,12 @@ const Timesheet = ({ userId }: Props) => {
   const handleDateChange = (value: Date) => {
     setSelectedDate(value);
   };
-  const shownDates = getShownDates(selectedDate);
+
+  useEffect(() => {
+    userClient.GetToken('test', 'test');
+
+  }, []);
+
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
       <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
@@ -78,7 +88,7 @@ const Timesheet = ({ userId }: Props) => {
         </Container>
       </Box>
       {editTimesheetModalShown && (
-        <EditTimesheetModal onClose={() => setEditTimesheetModalShown(false)} />
+        <EditTimesheetModal data={[]} userId={userId} onClose={() => setEditTimesheetModalShown(false)} />
       )}
       <AddNewButton options={addNewOptions} />
     </ThemeProvider>
