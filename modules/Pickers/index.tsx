@@ -17,7 +17,7 @@ import {
 import { ENDPOINT } from '../../constants';
 
 interface props<R, T> {
-  selected: T[keyof T] | number;
+  selected: number;
   disabled?: boolean;
   withinForm?: boolean;
   hideInactive?: boolean;
@@ -27,8 +27,8 @@ interface props<R, T> {
   client?: {
     new (endpoint: string): Client<R, T>;
   };
-  onSelect?(id: number): void;
   onSelect?(e: React.SyntheticEvent<HTMLSelectElement>): void;
+  onSelect?(id: number): void;
   test?(item: T): boolean;
   sort?(a: T, b: T): number;
   filter?(a: T): boolean;
