@@ -382,9 +382,11 @@ async function loadStoredQuotes() {
     results.push(...resultsList);
     if (results.length === totalCount) break;
   }
-  return results.sort(({ description: A }, { description: B }) => {
-    if (A > B) return -1;
-    if (A < B) return 1;
+  return results.sort(({ description: a }, { description: b }) => {
+    const A = a.toLocaleLowerCase().trim();
+    const B = b.toLocaleLowerCase().trim();
+    if (A > B) return 1;
+    if (A < B) return -1;
     return 0;
   });
 }
