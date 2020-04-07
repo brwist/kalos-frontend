@@ -21,10 +21,11 @@ import SectionBar from './SectionBar/examples';
 import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
+import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
 import WeekPicker from './WeekPicker/examples';
 
-const DEFAULT_COMPONENT_IDX = 10;
+const DEFAULT_COMPONENT_IDX = 0;
 
 const COMPONENTS = {
   AddNewButton,
@@ -43,6 +44,7 @@ const COMPONENTS = {
   ServiceItemLinks,
   ServiceItemReadings,
   ServiceItems,
+  StoredQuotes,
   Tabs,
   WeekPicker,
 };
