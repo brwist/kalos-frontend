@@ -19,6 +19,8 @@ import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { makeFakeRows, loadTechnicians } from '../../../helpers';
+import { DepartmentPicker } from '../../Pickers/Department';
+import { ClassCodePicker } from '../../Pickers/ClassCode';
 
 type UserType = User.AsObject;
 
@@ -31,6 +33,8 @@ export type Type =
   | 'date'
   | 'time'
   | 'technician'
+  | 'department'
+  | 'classCode'
   | 'hidden';
 
 export type Value = string | number;
@@ -451,6 +455,12 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         )}
       </div>
     );
+  }
+  if (type === 'department') {
+    return <DepartmentPicker withinForm selected={props.value} onSelect={handleChange} />
+  }
+  if (type === 'classCode') {
+    return <ClassCodePicker withinForm selected={props.value} onSelect={handleChange} />
   }
   return (
     <div className={classes.fieldWrapper + ' ' + className}>

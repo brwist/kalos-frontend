@@ -140,9 +140,9 @@ const Column: FC<Props> = ({ date, userId }) => {
       </Box>
       {cards.map(card => {
         if (card.hideFromTimesheet === 0) {
-          return <ServicesRenderedCard card={card} />
+          return <ServicesRenderedCard key={`src-${card.id}`} card={card} />
         }
-        return <TimesheetLineCard card={card} />
+        return <TimesheetLineCard key={`tlc-${card.id}`} card={card} />
       })}
     </Box>
   );
