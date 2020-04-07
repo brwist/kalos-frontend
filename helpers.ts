@@ -11,6 +11,10 @@ import {
   ServicesRenderedClient,
   ServicesRendered,
 } from '@kalos-core/kalos-rpc/ServicesRendered';
+import {
+  StoredQuoteClient,
+  StoredQuote,
+} from '@kalos-core/kalos-rpc/StoredQuote';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -20,6 +24,7 @@ const JobTypeClientService = new JobTypeClient(ENDPOINT);
 const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
 const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
+const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -363,6 +368,28 @@ async function loadJobTypeSubtypes() {
 }
 
 /**
+ * Returns loaded StoredQuotes
+ * @returns StoredQuote[]
+ */
+async function loadStoredQuotes() {
+  const results: StoredQuote.AsObject[] = [];
+  const req = new StoredQuote();
+  for (let page = 0; ; page += 1) {
+    req.setPageNumber(page);
+    const { resultsList, totalCount } = (
+      await StoredQuoteClientService.BatchGet(req)
+    ).toObject();
+    results.push(...resultsList);
+    if (results.length === totalCount) break;
+  }
+  return results.sort(({ description: A }, { description: B }) => {
+    if (A > B) return -1;
+    if (A < B) return 1;
+    return 0;
+  });
+}
+
+/**
  * Returns loaded ServicesRendered
  * @returns ServicesRendered[]
  */
@@ -519,4 +546,5 @@ export {
   loadTechnicians,
   loadEventsByPropertyId,
   loadServicesRendered,
+  loadStoredQuotes,
 };
