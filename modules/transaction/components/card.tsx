@@ -11,12 +11,14 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { AccountPicker, DepartmentPicker } from '../../Pickers';
+import {
+  TransactionAccount,
+  TransactionAccountClient,
+} from '@kalos-core/kalos-rpc/TransactionAccount';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { Gallery, IFile } from '../../Gallery/main';
 import { GalleryData } from '../../AltGallery/main';
-import { CostCenterPicker } from '../../Pickers/CostCenter';
-import { DepartmentPicker } from '../../Pickers/Department';
 import TextField from '@material-ui/core/TextField';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
@@ -34,6 +36,7 @@ import { PDFMaker } from '../../PDFMaker/main';
 import ReIcon from '@material-ui/icons/RefreshSharp';
 import { timestamp } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
+import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 
 interface props {
   txn: Transaction.AsObject;
@@ -72,6 +75,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   S3Client: S3Client;
   FileInput: React.RefObject<HTMLInputElement>;
   NotesInput: React.RefObject<HTMLInputElement>;
+  EmailClient: EmailClient;
 
   constructor(props: props) {
     super(props);
@@ -79,6 +83,8 @@ export class TxnCard extends React.PureComponent<props, state> {
       txn: props.txn,
       files: [],
     };
+
+    this.EmailClient = new EmailClient(ENDPOINT);
     this.TxnClient = new TransactionClient(ENDPOINT);
     this.DocsClient = new TransactionDocumentClient(ENDPOINT);
     this.LogClient = new TransactionActivityClient(ENDPOINT);
@@ -186,13 +192,36 @@ export class TxnCard extends React.PureComponent<props, state> {
         } else if (txn.notes === '') {
           throw 'Please provide a brief description in the notes';
         } else {
-          const statusID = this.props.isManager ? 3 : 2;
-          const statusMessage = this.props.isManager
+          let statusID = this.props.isManager ? 3 : 2;
+          let statusMessage = this.props.isManager
             ? 'manager receipt accepted automatically'
             : 'submitted for approval';
+          if (txn.costCenterId === 2 || txn.costCenter.id === 2) {
+            statusID = 2;
+            statusMessage =
+              'receipt marked as fraud and sent directly to accounting for review';
+            const mailBody = `A fraud transaction has been reported by ${
+              txn.ownerName
+            } (${txn.cardUsed}).
+              Amount $${txn.amount} Vendor: ${txn.vendor} Post date: ${
+              txn.timestamp
+            }
+              Department: ${txn.department?.classification} ${
+              txn.department?.description
+            }
+              ${txn.notes != '' ? `Notes: ${txn.notes}` : ''}
+              https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions
+            `;
+            const mailConfig: EmailConfig = {
+              type: 'receipts',
+              recipient: 'accounts@kalosflorida.com',
+              body: mailBody,
+            };
+            await this.EmailClient.sendMail(mailConfig);
+          }
           await this.updateStatus(statusID);
           await this.makeSubmitLog(statusID, statusMessage);
-          if (txn.costCenterId === 673002) {
+          if (txn.costCenterId === 673002 || txn.costCenter.id === 673002) {
             await this.TaskClient.newToolPurchase(
               txn.amount,
               txn.ownerId,
@@ -201,6 +230,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               txn.timestamp,
             );
           }
+
           await this.props.fetchFn();
         }
       }
@@ -287,6 +317,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         </Grid>
       );
     } else {
+      //@ts-ignore
       style.backgroundColor = green[700];
       return (
         <Grid container direction="row" style={style}>
@@ -427,6 +458,7 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   render() {
     const t = this.state.txn;
+    const { isManager } = this.props;
     let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
     return (
       <>
@@ -446,15 +478,30 @@ export class TxnCard extends React.PureComponent<props, state> {
               justify="space-evenly"
               alignItems="flex-start"
             >
-              <CostCenterPicker
+              <AccountPicker
                 onSelect={this.updateCostCenterID}
                 selected={t.costCenterId}
                 sort={costCenterSortByPopularity}
+                filter={
+                  !isManager
+                    ? a => ALLOWED_ACCOUNT_IDS.includes(a.id)
+                    : undefined
+                }
                 hideInactive
+                renderItem={i => (
+                  <option value={i.id} key={`${i.id}-${i.description}`}>
+                    {i.description} ({i.id})
+                  </option>
+                )}
               />
               <DepartmentPicker
                 onSelect={this.updateDepartmentID}
                 selected={t.departmentId || this.props.userDepartmentID}
+                renderItem={i => (
+                  <option value={i.id} key={`${i.id}-${i.description}`}>
+                    {i.description}
+                  </option>
+                )}
               />
               <TextField
                 label="Job Number"
@@ -566,3 +613,18 @@ function costCenterSortByPopularity(
 ) {
   return b.popularity - a.popularity;
 }
+
+const ALLOWED_ACCOUNT_IDS = [
+  601002,
+  673002,
+  673001,
+  51400,
+  643002,
+  643003,
+  601001,
+  51500,
+  601004,
+  1,
+  68500,
+  66600,
+];

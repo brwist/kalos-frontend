@@ -2,38 +2,56 @@ import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
-import {
-  TransactionAccount,
-  TransactionAccountClient,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { ENDPOINT } from '../../constants';
 
-interface props {
+interface props<R, T> {
   selected: number;
   disabled?: boolean;
-  onSelect?(id: number): void;
-  test?(item: TransactionAccount.AsObject): boolean;
-  sort?(a: TransactionAccount.AsObject, b: TransactionAccount.AsObject): number;
-  filter?(a: TransactionAccount.AsObject): boolean;
   label?: string;
   hideInactive?: boolean;
+  cacheKey: string;
+  cacheVer: number;
+  reqObj: {
+    new (): R;
+  };
+  client: {
+    new (endpoint: string): Client<R, T>;
+  };
+  onSelect?(id: number): void;
+  test?(item: T): boolean;
+  sort?(a: T, b: T): number;
+  filter?(a: T): boolean;
+  renderItem(item: T): JSX.Element;
 }
 
-interface state {
-  accountList: TransactionAccount.AsObject[];
+interface Client<R, T> {
+  BatchGet(req: R): Promise<BatchRes<T>>;
+  Get(req: R): Promise<T>;
+  Delete(req: R): Promise<T>;
+  Create(req: R): Promise<T>;
+  Update(req: R): Promise<T>;
 }
 
-const CACHE_KEY = 'COST_CENTER_LIST';
-const CACHE_VERSION = 5;
+type BatchRes<T> = {
+  toObject(): { resultsList: T[]; totalCount: number };
+};
 
-export class CostCenterPicker extends React.PureComponent<props, state> {
-  Client: TransactionAccountClient;
-  constructor(props: props) {
+interface state<T> {
+  list: T[];
+}
+
+class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
+  Client: Client<R, T>;
+  req: R;
+  constructor(props: props<R, T>) {
     super(props);
     this.state = {
-      accountList: [],
+      list: [],
     };
-    this.Client = new TransactionAccountClient(ENDPOINT);
+    this.Client = new props.client(ENDPOINT);
+    this.req = new props.reqObj();
     this.handleSelect = this.handleSelect.bind(this);
     this.fetchData = this.fetchData.bind(this);
   }
@@ -50,8 +68,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   }
 
   async fetchData() {
-    const req = new TransactionAccount();
-    const res = await this.Client.BatchGet(req);
+    const res = await this.Client.BatchGet(this.req);
     return res.toObject().resultsList;
   }
 
@@ -60,9 +77,9 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
   }
 
   async handleCache() {
-    const cache = new Cache<TransactionAccount.AsObject[]>(
-      CACHE_KEY,
-      CACHE_VERSION,
+    const cache = new Cache<T[]>(
+      this.props.cacheKey,
+      this.props.cacheVer,
       this.fetchData,
     );
     console.log('checking cache');
@@ -72,20 +89,20 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
       const freshData = await cache.update();
       if (freshData) {
         console.log('fresh data found! adding to state');
-        this.setState({ accountList: freshData });
+        this.setState({ list: freshData });
       } else {
         console.log('no data found?');
       }
     } else {
       console.log('data found! adding to state');
-      this.setState({ accountList: data });
+      this.setState({ list: data });
     }
   }
 
   render() {
-    let accountList = this.state.accountList;
+    let accountList = this.state.list;
     if (this.props.sort) {
-      accountList = this.state.accountList.sort(this.props.sort);
+      accountList = this.state.list.sort(this.props.sort);
     }
 
     if (this.props.filter) {
@@ -105,11 +122,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
           inputProps={{ id: 'cost-center-picker' }}
         >
           <option value={0}>Select Purchase Type</option>
-          {accountList.map(acc => (
-            <option value={acc.id} key={`${acc.description}-${acc.id}`}>
-              {acc.description}
-            </option>
-          ))}
+          {accountList.map(this.props.renderItem)}
         </NativeSelect>
       </FormControl>
     );
@@ -175,4 +188,22 @@ class Cache<T> {
       console.log(err);
     }
   };
+}
+
+export class AccountPicker extends Picker<
+  TransactionAccount,
+  TransactionAccount.AsObject
+> {
+  constructor(props: props<TransactionAccount, TransactionAccount.AsObject>) {
+    super(props);
+  }
+}
+
+export class DepartmentPicker extends Picker<
+  TimesheetDepartment,
+  TimesheetDepartment.AsObject
+> {
+  constructor(props: props<TimesheetDepartment, TimesheetDepartment.AsObject>) {
+    super(props);
+  }
 }

@@ -4,10 +4,6 @@ import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtypeClient, JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import {
-  StoredQuoteClient,
-  StoredQuote,
-} from '@kalos-core/kalos-rpc/StoredQuote';
-import {
   JobTypeSubtypeClient,
   JobTypeSubtype,
 } from '@kalos-core/kalos-rpc/JobTypeSubtype';
@@ -23,7 +19,6 @@ const EventClientService = new EventClient(ENDPOINT);
 const JobTypeClientService = new JobTypeClient(ENDPOINT);
 const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
 const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
-const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
@@ -301,24 +296,6 @@ function getRPCFields(fieldName: string) {
 }
 
 /**
- * Returns loaded StoredQuotes
- * @returns StoredQuote[]
- */
-async function loadStoredQuotes() {
-  const results: StoredQuote.AsObject[] = [];
-  const req = new StoredQuote();
-  for (let page = 0; ; page += 1) {
-    req.setPageNumber(page);
-    const { resultsList, totalCount } = (
-      await StoredQuoteClientService.BatchGet(req)
-    ).toObject();
-    results.push(...resultsList);
-    if (results.length === totalCount) break;
-  }
-  return results;
-}
-
-/**
  * Returns loaded JobTypes
  * @returns JobType[]
  */
@@ -541,6 +518,5 @@ export {
   loadGeoLocationByAddress,
   loadTechnicians,
   loadEventsByPropertyId,
-  loadStoredQuotes,
   loadServicesRendered,
 };

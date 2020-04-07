@@ -55,6 +55,7 @@ export class TimesheetCheck extends React.PureComponent<props, state> {
     };
     this.TxnClient = new TransactionClient(ENDPOINT);
     this.handleCheck = this.handleCheck.bind(this);
+    this.setTimeout = this.setTimeout.bind(this);
   }
 
   async handleCheck() {
@@ -65,6 +66,10 @@ export class TimesheetCheck extends React.PureComponent<props, state> {
       hasReceiptsIssue: hasIssue,
       receiptsIssueStr: issueStr,
     });
+  }
+
+  setTimeout() {
+    this.TxnClient.setTimeout();
   }
 
   componentDidUpdate() {
@@ -93,6 +98,13 @@ export class TimesheetCheck extends React.PureComponent<props, state> {
               href="https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions"
             >
               Go To Receipts
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={this.setTimeout}
+            >
+              Dismiss
             </Button>
           </Paper>
         )}
