@@ -267,7 +267,7 @@ function formatDate(date: string) {
  * @returns format M/D/YYYY h:MMa (ie. 6/1/2020 3:28PM)
  */
 function formatDateTime(datetime: string) {
-  return formatDate(datetime) + ' ' + formatTime(datetime.substr(10));
+  return formatDate(datetime) + ' ' + formatTime(datetime.substr(11));
 }
 
 /**
