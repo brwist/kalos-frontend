@@ -10,6 +10,7 @@ import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { ENDPOINT } from '../../constants';
 
 interface props<R, T> {
@@ -24,7 +25,7 @@ interface props<R, T> {
     new (endpoint: string): Client<R, T>;
   };
   onSelect?(id: number): void;
-  onSelect?(e: )
+  onSelect?(e: React.SyntheticEvent<HTMLSelectElement>): void;
   test?(item: T): boolean;
   sort?(a: T, b: T): number;
   filter?(a: T): boolean;
@@ -69,7 +70,11 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
     const id = parseInt(e.currentTarget.value);
     if (this.props.onSelect) {
       try {
-        this.props.onSelect(this.props.withinForm ? e : id);
+        if (this.props.withinForm) {
+          this.props.onSelect(e);
+        } else {
+          this.props.onSelect(id);
+        }
       } catch (err) {
         console.log(err);
       }
@@ -212,5 +217,13 @@ export class DepartmentPicker extends Picker<
     super(props, 'Department', 'DEPARTMENT_LIST', 3);
     this.Client = new TimesheetDepartmentClient(ENDPOINT);
     this.req = new TimesheetDepartment();
+  }
+}
+
+export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
+  constructor(props: props<ClassCodePicker, ClassCode.AsObject>) {
+    super(props, 'Class Code', 'CLASS_CODE_LIST', 1);
+    this.Client = new ClassCodeClient(ENDPOINT);
+    this.req = new ClassCode();
   }
 }
