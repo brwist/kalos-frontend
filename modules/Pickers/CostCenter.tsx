@@ -14,6 +14,7 @@ interface props {
   onSelect?(id: number): void;
   test?(item: TransactionAccount.AsObject): boolean;
   sort?(a: TransactionAccount.AsObject, b: TransactionAccount.AsObject): number;
+  filter?(a: TransactionAccount.AsObject): boolean;
   label?: string;
   hideInactive?: boolean;
 }
@@ -22,16 +23,19 @@ interface state {
   accountList: TransactionAccount.AsObject[];
 }
 
+const CACHE_KEY = 'COST_CENTER_LIST';
+const CACHE_VERSION = 5;
+
 export class CostCenterPicker extends React.PureComponent<props, state> {
-  AccClient: TransactionAccountClient;
+  Client: TransactionAccountClient;
   constructor(props: props) {
     super(props);
     this.state = {
       accountList: [],
     };
-    this.AccClient = new TransactionAccountClient(ENDPOINT);
+    this.Client = new TransactionAccountClient(ENDPOINT);
     this.handleSelect = this.handleSelect.bind(this);
-    this.addAccount = this.addAccount.bind(this);
+    this.fetchData = this.fetchData.bind(this);
   }
 
   handleSelect(e: React.SyntheticEvent<HTMLSelectElement>) {
@@ -45,57 +49,36 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
     }
   }
 
-  addAccount(acc: TransactionAccount.AsObject) {
-    if (this.props.test) {
-      if (this.props.test(acc)) {
-        this.setState(prevState => ({
-          accountList: prevState.accountList.concat(acc),
-        }));
-      }
-    } else {
-      this.setState(prevState => ({
-        accountList: prevState.accountList.concat(acc),
-      }));
-    }
-  }
-
-  async fetchAccounts() {
+  async fetchData() {
     const req = new TransactionAccount();
-    if (this.props.hideInactive) {
-      req.setIsActive(1);
-    }
-
-    this.AccClient.List(req, this.addAccount);
+    const res = await this.Client.BatchGet(req);
+    return res.toObject().resultsList;
   }
 
   async componentDidMount() {
-    const cacheListStr = localStorage.getItem('COST_CENTER_LIST_4');
-    if (cacheListStr) {
-      const cacheList = JSON.parse(cacheListStr);
-      if (cacheList && cacheList.length !== 0) {
-        this.setState({
-          accountList: cacheList,
-        });
-      } else {
-        await this.fetchAccounts();
-      }
-    } else {
-      await this.fetchAccounts();
-    }
+    await this.handleCache();
   }
 
-  componentDidUpdate(prevProps: props, prevState: state) {
-    if (
-      this.state.accountList.length > 0 &&
-      prevState.accountList.length === this.state.accountList.length
-    ) {
-      const cacheList = localStorage.getItem('COST_CENTER_LIST_4');
-      if (!cacheList) {
-        localStorage.setItem(
-          'COST_CENTER_LIST_4',
-          JSON.stringify(this.state.accountList),
-        );
+  async handleCache() {
+    const cache = new Cache<TransactionAccount.AsObject[]>(
+      CACHE_KEY,
+      CACHE_VERSION,
+      this.fetchData,
+    );
+    console.log('checking cache');
+    const data = cache.getItem();
+    if (!data) {
+      console.log('no data found, busting and updating');
+      const freshData = await cache.update();
+      if (freshData) {
+        console.log('fresh data found! adding to state');
+        this.setState({ accountList: freshData });
+      } else {
+        console.log('no data found?');
       }
+    } else {
+      console.log('data found! adding to state');
+      this.setState({ accountList: data });
     }
   }
 
@@ -104,6 +87,11 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
     if (this.props.sort) {
       accountList = this.state.accountList.sort(this.props.sort);
     }
+
+    if (this.props.filter) {
+      accountList = accountList.filter(this.props.filter);
+    }
+
     return (
       <FormControl style={{ marginBottom: 10 }}>
         <InputLabel htmlFor="cost-center-picker">
@@ -126,4 +114,65 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
       </FormControl>
     );
   }
+}
+
+class Cache<T> {
+  key: string;
+  version: number;
+  fetchData: () => Promise<T>;
+  constructor(key: string, version: number, fetchFn: () => Promise<T>) {
+    this.key = `${key}_${version}`;
+    this.version = version;
+    this.fetchData = fetchFn;
+  }
+
+  getItem = () => {
+    const dataAsStr = localStorage.getItem(`${this.key}_${this.version}`);
+    if (!dataAsStr || dataAsStr === '') {
+      return;
+    } else {
+      try {
+        const data: T = JSON.parse(dataAsStr);
+        return data;
+      } catch (err) {
+        console.log(err);
+        return;
+      }
+    }
+  };
+
+  setItem = (data: T) => {
+    try {
+      const dataAsStr = JSON.stringify(data);
+      localStorage.setItem(`${this.key}_${this.version}`, dataAsStr);
+      return true;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+  };
+
+  clearHistory = () => {
+    let version = this.version - 1;
+    while (version > 0) {
+      try {
+        localStorage.removeItem(`${this.key}_${version}`);
+      } catch (err) {
+        console.log(err);
+      }
+      version = version - 1;
+    }
+  };
+
+  update = async () => {
+    this.clearHistory();
+    const freshData = await this.fetchData();
+    try {
+      const strData = JSON.stringify(freshData);
+      localStorage.setItem(`${this.key}_${this.version}`, strData);
+      return freshData;
+    } catch (err) {
+      console.log(err);
+    }
+  };
 }

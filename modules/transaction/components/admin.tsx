@@ -21,8 +21,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 import Paper from '@material-ui/core/Paper';
-import { DepartmentPicker } from '../../Pickers/Department';
-import { CostCenterPicker } from '../../Pickers/CostCenter';
+import { AccountPicker, DepartmentPicker } from '../../Pickers';
 import { EmployeePicker } from '../../Pickers/Employee';
 import { TxnStatusPicker } from '../../Pickers/TransactionStatus';
 import Typography from '@material-ui/core/Typography';
@@ -75,19 +74,13 @@ interface ISort {
 }
 
 type sortString =
+  | 'description'
   | 'timestamp'
   | 'owner_id'
   | 'cost_center_id'
   | 'department_id'
   | 'job_number'
   | 'amount';
-
-const sortableHeader = {
-  cursor: 'pointer',
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'center',
-};
 
 export class TransactionAdminView extends React.Component<props, state> {
   TxnClient: TransactionClient;
@@ -506,6 +499,17 @@ export class TransactionAdminView extends React.Component<props, state> {
         }
       });
     }
+
+    if (sortBy === 'description') {
+      return this.state.transactions.sort((a, b) => {
+        if (sortDir === 'asc') {
+          return a.vendor.localeCompare(b.vendor);
+        } else {
+          return b.vendor.localeCompare(a.vendor);
+        }
+      });
+    }
+
     return this.state.transactions;
   }
 
@@ -554,7 +558,7 @@ export class TransactionAdminView extends React.Component<props, state> {
             <TablePagination
               component="span"
               count={this.state.count}
-              rowsPerPage={25}
+              rowsPerPage={50}
               page={this.state.page}
               backIconButtonProps={{
                 'aria-label': 'previous page',
@@ -563,7 +567,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                 'aria-label': 'next page',
               }}
               onChangePage={this.altChangePage}
-              rowsPerPageOptions={[25]}
+              rowsPerPageOptions={[50]}
             />
             <FormControl style={{ marginBottom: 10 }}>
               <InputLabel htmlFor="set-year-select">Filter by Year</InputLabel>
@@ -611,8 +615,11 @@ export class TransactionAdminView extends React.Component<props, state> {
                 onSelect={departmentID =>
                   this.setFilter('departmentID', departmentID)
                 }
-                label="Filter by Department"
-                useDevClient
+                renderItem={i => (
+                  <option value={i.id}>
+                    {i.description} - {i.value}
+                  </option>
+                )}
               />
             )}
             <TxnStatusPicker
@@ -621,13 +628,18 @@ export class TransactionAdminView extends React.Component<props, state> {
               onSelect={statusID => this.setFilter('statusID', statusID)}
               label="Filter by Status"
             />
-            <CostCenterPicker
+            <AccountPicker
               disabled={this.state.isLoading}
               selected={this.state.filters.costCenterID || 0}
               onSelect={costCenterID =>
                 this.setFilter('costCenterID', costCenterID)
               }
-              label="Filter by Account"
+              sort={(a, b) => a.description.localeCompare(b.description)}
+              renderItem={i => (
+                <option value={i.id}>
+                  {i.description} ({i.id})
+                </option>
+              )}
             />
             <EmployeePicker
               disabled={this.state.isLoading}
@@ -694,8 +706,18 @@ export class TransactionAdminView extends React.Component<props, state> {
                 <TableCell align="center" style={{ padding: 4 }}>
                   Purchaser
                 </TableCell>
-                <TableCell align="center" style={{ padding: 4 }}>
-                  Account
+                <TableCell
+                  align="center"
+                  sortDirection={this.state.filters.sort.sortDir}
+                  style={{ padding: 4 }}
+                >
+                  <TableSortLabel
+                    active={this.state.filters.sort.sortBy === 'cost_center_id'}
+                    direction={this.state.filters.sort.sortDir}
+                    onClick={() => this.setSort('cost_center_id')}
+                  >
+                    Account
+                  </TableSortLabel>
                 </TableCell>
                 <TableCell align="center" style={{ padding: 4 }}>
                   Department
@@ -716,8 +738,18 @@ export class TransactionAdminView extends React.Component<props, state> {
                     Amount
                   </TableSortLabel>
                 </TableCell>
-                <TableCell align="center" style={{ padding: 4 }}>
-                  Description
+                <TableCell
+                  align="center"
+                  sortDirection={this.state.filters.sort.sortDir}
+                  style={{ padding: 4 }}
+                >
+                  <TableSortLabel
+                    active={this.state.filters.sort.sortBy === 'description'}
+                    direction={this.state.filters.sort.sortDir}
+                    onClick={() => this.setSort('description')}
+                  >
+                    Description
+                  </TableSortLabel>
                 </TableCell>
                 <TableCell align="center" colSpan={2} style={{ padding: 4 }}>
                   Actions
@@ -746,7 +778,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                   />
                 ))}
               {this.state.isLoading &&
-                range(0, 25).map(i => (
+                range(0, 50).map(i => (
                   <TableRow key={`${i}_txn_skeleton_row`}>
                     <TableCell align="center" style={{ height: 85 }}>
                       <Skeleton variant="text" width={40} height={16} />

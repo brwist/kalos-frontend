@@ -24,7 +24,7 @@ import ServiceItems from './ServiceItems/examples';
 import Tabs from './Tabs/examples';
 import WeekPicker from './WeekPicker/examples';
 
-const DEFAULT_COMPONENT_IDX = 0;
+const DEFAULT_COMPONENT_IDX = 10;
 
 const COMPONENTS = {
   AddNewButton,
