@@ -94,6 +94,7 @@ const useStyles = makeStyles(theme => ({
   group: {
     display: 'flex',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     [theme.breakpoints.down('xs')]: {
       flexDirection: 'column',
     },
