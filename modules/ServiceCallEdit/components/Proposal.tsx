@@ -172,7 +172,7 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
     console.log({ data });
   }, [notes, table, file, form]);
   const storedQuotesOptions: Options = storedQuotes.map(
-    ({ description }) => description,
+    ({ id, description }) => ({ label: description, value: id }),
   );
   const COLUMNS: Columns = [
     { name: '' },
@@ -180,6 +180,11 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
     {
       name: 'Price',
       actions: [
+        {
+          label: 'Quick Add',
+          compact: true,
+          // onClick:
+        },
         {
           label: 'Add',
           compact: true,

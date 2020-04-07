@@ -69,6 +69,7 @@
     "date-fns": "^2.6.0",
     "eslint-plugin-react": "^7.18.3",
     "google-protobuf": "^3.10.0",
+    "lodash": "^4.17.15",
     "lottie-web": "^5.5.9",
     "pako": "^1.0.10",
     "react": "^16.10.1",
