@@ -6,6 +6,7 @@ import ButtonUI from '@material-ui/core/Button';
 type Style = {
   compact?: boolean;
   size?: 'large' | 'medium' | 'small' | 'xsmall';
+  status?: 'success' | 'failure';
 };
 export interface Props extends Style {
   label: string;
@@ -19,7 +20,7 @@ export interface Props extends Style {
 }
 
 const useStyles = makeStyles(theme => ({
-  button: ({ compact, size }: Style) => ({
+  button: ({ compact, size, status }: Style) => ({
     marginTop: theme.spacing(compact ? 0 : 1),
     marginBottom: theme.spacing(compact ? 0 : 1),
     marginLeft: theme.spacing(1),
@@ -30,6 +31,11 @@ const useStyles = makeStyles(theme => ({
           paddingBottom: 0,
           paddingLeft: 6,
           paddingRight: 6,
+        }
+      : {}),
+    ...(status
+      ? {
+          backgroundColor: status === 'success' ? 'green' : 'red',
         }
       : {}),
   }),
@@ -45,10 +51,11 @@ export const Button = ({
   compact = false,
   size = 'small',
   color = 'primary',
+  status,
   className,
   ...props
 }: Props) => {
-  const classes = useStyles({ compact, size });
+  const classes = useStyles({ compact, size, status });
   const Component = (
     <ButtonUI
       className={clsx(classes.button, className && className)}
