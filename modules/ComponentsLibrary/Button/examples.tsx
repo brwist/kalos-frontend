@@ -9,6 +9,9 @@ export default () => (
     <Button label="outlined disabled" disabled variant="outlined" />
     <Button label="with onClick" onClick={() => alert('clicked')} />
     <Button label="with url" url="/with-url" />
+    <Button label="color secondary" color="secondary" />
+    <Button label="status success" status="success" />
+    <Button label="status failure" status="failure" />
     <hr />
     <Button label="compact" compact />
     <Button label="compact disabled" disabled compact />
