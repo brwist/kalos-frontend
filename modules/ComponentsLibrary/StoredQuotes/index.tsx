@@ -3,7 +3,6 @@ import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
-import { Button } from '../Button';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
@@ -22,6 +21,8 @@ type StoredQuoteType = StoredQuote.AsObject;
 
 interface Props {
   label?: string;
+  open: boolean;
+  onClose: () => void;
   onSelect: (storedQuote: StoredQuoteType) => void;
 }
 
@@ -52,19 +53,24 @@ const SCHEMA: Schema<StoredQuoteType> = [
   [{ name: 'id', type: 'hidden' }],
 ];
 
-export const StoredQuotes: FC<Props> = ({ label = 'Quick Add', onSelect }) => {
+export const StoredQuotes: FC<Props> = ({
+  label = 'Quick Add',
+  open,
+  onClose,
+  onSelect,
+}) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [storedQuotes, setStoredQuotes] = useState<StoredQuoteType[]>([]);
-  const [opened, setOpened] = useState<boolean>(false);
   const [edit, setEdit] = useState<boolean>(false);
   const [editing, setEditing] = useState<StoredQuoteType>();
   const [saving, setSaving] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<StoredQuoteType>();
-  const toggleOpen = useCallback((opened: boolean) => () => setOpened(opened), [
-    setOpened,
-  ]);
   const toggleEdit = useCallback(() => () => setEdit(!edit), [edit, setEdit]);
+  const handleClose = useCallback(() => {
+    setEdit(false);
+    onClose();
+  }, [setEdit, onClose]);
   const handleSetEditing = useCallback(
     (editing?: StoredQuoteType) => () => setEditing(editing),
     [setEditing],
@@ -87,9 +93,9 @@ export const StoredQuotes: FC<Props> = ({ label = 'Quick Add', onSelect }) => {
   const handleSelect = useCallback(
     storedQuote => () => {
       onSelect(storedQuote);
-      setOpened(false);
+      handleClose();
     },
-    [onSelect, setOpened],
+    [onSelect, handleClose],
   );
   const handleSave = useCallback(
     async ({ id, description, price }: StoredQuoteType) => {
@@ -128,7 +134,7 @@ export const StoredQuotes: FC<Props> = ({ label = 'Quick Add', onSelect }) => {
         return [
           {
             value: storedQuote.description,
-            onClick: handleSelect(storedQuote),
+            onClick: edit ? undefined : handleSelect(storedQuote),
             actions: edit
               ? [
                   price,
@@ -154,9 +160,8 @@ export const StoredQuotes: FC<Props> = ({ label = 'Quick Add', onSelect }) => {
     : makeFakeRows();
   return (
     <>
-      <Button label={label} onClick={toggleOpen(true)} />
-      {opened && (
-        <Modal open onClose={toggleOpen(false)} fullScreen>
+      {open && (
+        <Modal open onClose={handleClose} fullScreen>
           <SectionBar
             title={label}
             actions={[
@@ -166,7 +171,7 @@ export const StoredQuotes: FC<Props> = ({ label = 'Quick Add', onSelect }) => {
                 variant: 'outlined',
               },
               { label: 'Edit', onClick: toggleEdit(), variant: 'outlined' },
-              { label: 'Close', onClick: toggleOpen(false) },
+              { label: 'Close', onClick: handleClose },
             ]}
             fixedActions
           />
