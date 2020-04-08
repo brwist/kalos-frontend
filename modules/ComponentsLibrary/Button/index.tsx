@@ -22,15 +22,15 @@ const useStyles = makeStyles(theme => ({
   button: ({ compact, size }: Style) => ({
     marginTop: theme.spacing(compact ? 0 : 1),
     marginBottom: theme.spacing(compact ? 0 : 1),
-    marginLeft: theme.spacing(compact ? 0 : 1),
+    marginLeft: theme.spacing(1),
     ...(size === 'xsmall'
       ? {
-        fontSize: 11,
-        paddingTop: 0,
-        paddingBottom: 0,
-        paddingLeft: 6,
-        paddingRight: 6,
-      }
+          fontSize: 11,
+          paddingTop: 0,
+          paddingBottom: 0,
+          paddingLeft: 6,
+          paddingRight: 6,
+        }
       : {}),
   }),
   link: {

@@ -10,6 +10,7 @@ import { Field, Value } from '../../ComponentsLibrary/Field';
 import { InfoTable, Columns, Data } from '../../ComponentsLibrary/InfoTable';
 import { Form, Options } from '../../ComponentsLibrary/Form';
 import { Modal } from '../../ComponentsLibrary/Modal';
+import { StoredQuotes } from '../../ComponentsLibrary/StoredQuotes';
 import { EventType } from './ServiceCallDetails';
 import { loadStoredQuotes } from '../../../helpers';
 
@@ -94,6 +95,7 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
     fileDescription: `${serviceItem.id}_pending_proposal_${customer?.id || ''}`,
   });
   const [editingNotes, setEditingNotes] = useState<boolean>(false);
+  const [quickAddOpen, setQuickAddOpen] = useState<boolean>(false);
   const [preview, setPreview] = useState<boolean>(false);
   const [table, setTable] = useState<Entry[]>([]);
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
@@ -111,6 +113,10 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
       load();
     }
   }, [loaded, load]);
+  const handleToggleQuickAdd = useCallback(
+    () => setQuickAddOpen(!quickAddOpen),
+    [quickAddOpen, setQuickAddOpen],
+  );
   const handleAddEntry = useCallback(
     (entry?: Entry) => () => {
       setEditing(entry);
@@ -183,7 +189,7 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
         {
           label: 'Quick Add',
           compact: true,
-          // onClick:
+          onClick: handleToggleQuickAdd,
         },
         {
           label: 'Add',
@@ -343,6 +349,13 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
           />
           <PlainForm schema={SCHEMA_FILE} data={file} onChange={setFile} />
         </Modal>
+      )}
+      {quickAddOpen && (
+        <StoredQuotes
+          open
+          onClose={handleToggleQuickAdd}
+          onSelect={a => console.log(a)}
+        />
       )}
     </>
   );
