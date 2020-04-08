@@ -80,6 +80,9 @@ const useStyles = makeStyles(theme => ({
   },
   checkbox: {
     marginBottom: 0,
+    display: 'inline-block',
+    verticalAlign: 'middle',
+    width: 'auto',
   },
 }));
 
@@ -138,6 +141,12 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
     },
     [setTable, setEditing, table],
   );
+  const handleQuickAdd = useCallback(
+    (entry: StoredQuote.AsObject) => {
+      handleSaveEntry({ ...entry, predefined: true, remember: 0 });
+    },
+    [handleSaveEntry],
+  );
   const handleSetRemember = useCallback(
     (id: number) => (value: Value) => {
       setTable(
@@ -177,9 +186,6 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
     };
     console.log({ data });
   }, [notes, table, file, form]);
-  const storedQuotesOptions: Options = storedQuotes.map(
-    ({ id, description }) => ({ label: description, value: id }),
-  );
   const COLUMNS: Columns = [
     { name: '' },
     { name: 'Description' },
@@ -213,37 +219,30 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
         name: 'displayName',
         options: [customerName, customer?.businessname || ''],
       },
-      {
-        label: 'Quick Add',
-        name: 'quickAdd',
-        options: storedQuotesOptions,
-        actions: [
-          { label: 'Add', variant: 'outlined', size: 'xsmall', compact: true },
-        ],
-      },
     ],
   ];
   const data: Data = table.map(props => {
     const { id, remember, description, price, predefined } = props;
     return [
-      {
-        value: predefined ? null : (
-          <Field
-            className={classes.checkbox}
-            name={`remember-${id}`}
-            type="checkbox"
-            label="Remember This Item"
-            value={remember}
-            onChange={handleSetRemember(id)}
-          />
-        ),
-      },
       { value: description },
       {
         value: `$ ${price}`,
         actions: [
+          ...(predefined
+            ? []
+            : [
+                <Field
+                  key={0}
+                  className={classes.checkbox}
+                  name={`remember-${id}`}
+                  type="checkbox"
+                  label="Remember This Item"
+                  value={remember}
+                  onChange={handleSetRemember(id)}
+                />,
+              ]),
           <IconButton
-            key={0}
+            key={1}
             style={{ marginLeft: 4 }}
             size="small"
             onClick={handleAddEntry(props)}
@@ -251,7 +250,7 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
             <EditIcon />
           </IconButton>,
           <IconButton
-            key={1}
+            key={2}
             style={{ marginLeft: 4 }}
             size="small"
             onClick={handleDeleteEntry(id)}
@@ -354,7 +353,7 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
         <StoredQuotes
           open
           onClose={handleToggleQuickAdd}
-          onSelect={a => console.log(a)}
+          onSelect={handleQuickAdd}
         />
       )}
     </>

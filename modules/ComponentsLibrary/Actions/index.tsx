@@ -70,24 +70,29 @@ export const Actions: FC<Props> = ({ fixed = false, actions, className }) => {
                 .filter(
                   ({ desktop }) => desktop === undefined || desktop === false,
                 )
-                .map(({ label, onClick, url, desktop, ...props }, idx) => (
-                  <MenuItem
-                    key={idx}
-                    {...props}
-                    dense
-                    onClick={event => {
-                      handleSetAnchorEl(null)();
-                      if (onClick) {
-                        onClick(event);
-                      }
-                      if (url) {
-                        document.location.href = url;
-                      }
-                    }}
-                  >
-                    {label}
-                  </MenuItem>
-                ))}
+                .map(
+                  (
+                    { label, onClick, url, desktop, className, ...props },
+                    idx,
+                  ) => (
+                    <MenuItem
+                      key={idx}
+                      {...props}
+                      dense
+                      onClick={event => {
+                        handleSetAnchorEl(null)();
+                        if (onClick) {
+                          onClick(event);
+                        }
+                        if (url) {
+                          document.location.href = url;
+                        }
+                      }}
+                    >
+                      {label}
+                    </MenuItem>
+                  ),
+                )}
             </div>
           )}
         </Menu>
