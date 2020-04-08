@@ -22,6 +22,7 @@ import { UserType } from './ServiceCallDetails';
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
 const {
+  NO_STATUS,
   ENROUTE,
   ON_CALL,
   ADMIN,
@@ -39,7 +40,7 @@ interface Props {
 }
 
 const COLUMNS: Columns = [
-  { name: 'Date/Time' },
+  { name: 'Time' },
   { name: 'Technician' },
   { name: 'Status' },
 ];
@@ -79,6 +80,7 @@ const SCHEMA_ON_CALL: Schema<ServicesRenderedType> = [
 ];
 
 export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
+  const { isAdmin } = loggedUser;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [servicesRendered, setServicesRendered] = useState<
@@ -147,12 +149,16 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       <SectionBar
         title="Services Rendered History"
         actions={[
-          {
-            label: ENROUTE,
-            onClick: handleChangeStatus(ENROUTE),
-            disabled: loading || wasEnrouted,
-          },
-          ...([ENROUTE, ON_CALL].includes(lastStatus)
+          ...([NO_STATUS, ENROUTE, ON_CALL].includes(lastStatus)
+            ? [
+                {
+                  label: ENROUTE,
+                  onClick: handleChangeStatus(ENROUTE),
+                  disabled: loading || wasEnrouted,
+                },
+              ]
+            : []),
+          ...([ENROUTE].includes(lastStatus)
             ? [
                 {
                   label: ON_CALL,
@@ -161,30 +167,32 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
                 },
               ]
             : []),
-          ...(lastStatus === ON_CALL
-            ? [
-                {
-                  label: COMPLETED,
-                  onClick: handleChangeStatus(COMPLETED),
-                  disabled: loading,
-                },
-                {
-                  label: INCOMPLETE,
-                  onClick: handleChangeStatus(INCOMPLETE),
-                  disabled: loading,
-                },
-              ]
-            : []),
-          ...(lastStatus === ''
+          ...([NO_STATUS, ON_CALL].includes(lastStatus) && isAdmin
             ? [
                 {
                   label: ADMIN,
                   onClick: handleChangeStatus(ADMIN),
-                  disabled: loading,
+                  disabled: loading || [ON_CALL].includes(lastStatus),
                 },
               ]
             : []),
-          ...(lastStatus !== ON_CALL
+          ...([NO_STATUS, ENROUTE, ON_CALL].includes(lastStatus)
+            ? [
+                {
+                  label: COMPLETED,
+                  onClick: handleChangeStatus(COMPLETED),
+                  disabled:
+                    loading || [NO_STATUS, ENROUTE].includes(lastStatus),
+                },
+                {
+                  label: INCOMPLETE,
+                  onClick: handleChangeStatus(INCOMPLETE),
+                  disabled:
+                    loading || [NO_STATUS, ENROUTE].includes(lastStatus),
+                },
+              ]
+            : []),
+          ...(['aaa'].includes(lastStatus)
             ? [
                 {
                   label: PAYMENT,

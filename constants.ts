@@ -48,6 +48,7 @@ export const COLORS = {
 };
 
 export const SERVICE_STATUSES = {
+  NO_STATUS: '',
   ENROUTE: 'Enroute',
   ON_CALL: 'On Call',
   SIGNATURE: 'Signature',
