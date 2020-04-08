@@ -20,7 +20,7 @@ interface Props {
 
 type Form = {
   displayName: string;
-  quickAdd: string;
+  notes: string;
 };
 
 type Entry = {
@@ -89,33 +89,20 @@ const useStyles = makeStyles(theme => ({
 export const Proposal: FC<Props> = ({ serviceItem }) => {
   const classes = useStyles();
   const { customer } = serviceItem;
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const [storedQuotes, setStoredQuotes] = useState<StoredQuote.AsObject[]>([]);
   const [editing, setEditing] = useState<Entry>();
   const [notes, setNotes] = useState<Notes>({ notes: '' });
   const [file, setFile] = useState<File>({
     localCopyName: '',
     fileDescription: `${serviceItem.id}_pending_proposal_${customer?.id || ''}`,
   });
-  const [editingNotes, setEditingNotes] = useState<boolean>(false);
   const [quickAddOpen, setQuickAddOpen] = useState<boolean>(false);
   const [preview, setPreview] = useState<boolean>(false);
   const [table, setTable] = useState<Entry[]>([]);
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
   const [form, setForm] = useState<Form>({
     displayName: customerName,
-    quickAdd: '',
+    notes: '',
   });
-  const load = useCallback(async () => {
-    const storedQuotes = await loadStoredQuotes();
-    setStoredQuotes(storedQuotes);
-    setLoaded(true);
-  }, [setStoredQuotes, setLoaded]);
-  useEffect(() => {
-    if (!loaded) {
-      load();
-    }
-  }, [loaded, load]);
   const handleToggleQuickAdd = useCallback(
     () => setQuickAddOpen(!quickAddOpen),
     [quickAddOpen, setQuickAddOpen],
@@ -166,26 +153,14 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
     (preview: boolean) => () => setPreview(preview),
     [setPreview],
   );
-  const handleSetNotes = useCallback(
-    (notes: Notes) => {
-      setNotes(notes);
-      setEditingNotes(false);
-    },
-    [setNotes, setEditingNotes],
-  );
-  const handleSetEditingNotes = useCallback(
-    (editingNotes: boolean) => () => setEditingNotes(editingNotes),
-    [setEditingNotes],
-  );
   const handleSendToCustomer = useCallback(() => {
     const data = {
-      notes: notes.notes,
       items: table,
       ...file,
-      displayName: form.displayName,
+      ...form,
     };
     console.log({ data });
-  }, [notes, table, file, form]);
+  }, [table, file, form]);
   const COLUMNS: Columns = [
     { name: '' },
     { name: 'Description' },
@@ -218,6 +193,11 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
         label: 'Display Name',
         name: 'displayName',
         options: [customerName, customer?.businessname || ''],
+      },
+      {
+        label: 'Job Notes',
+        name: 'notes',
+        multiline: true,
       },
     ],
   ];
@@ -267,16 +247,7 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
   ]);
   return (
     <>
-      <SectionBar
-        actions={[
-          {
-            label: `${notes.notes === '' ? 'Add' : 'Edit'} Job Notes`,
-            onClick: handleSetEditingNotes(true),
-          },
-          { label: 'PDF Preview' },
-        ]}
-        fixedActions
-      />
+      <SectionBar actions={[{ label: 'PDF Preview' }]} fixedActions />
       <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
       <InfoTable columns={COLUMNS} data={data} />
       <SectionBar
@@ -296,18 +267,6 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
             onSave={handleSaveEntry}
             data={editing}
             onClose={handleAddEntry()}
-            submitLabel="Done"
-          />
-        </Modal>
-      )}
-      {editingNotes && (
-        <Modal open onClose={handleSetEditingNotes(false)}>
-          <Form<Notes>
-            title="Job Notes"
-            schema={SCHEMA_NOTES}
-            onSave={handleSetNotes}
-            data={notes}
-            onClose={handleSetEditingNotes(false)}
             submitLabel="Done"
           />
         </Modal>
@@ -336,10 +295,10 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
             columns={[{ name: 'Display Name' }]}
             data={[[{ value: form.displayName }]]}
           />
-          {notes.notes !== '' && (
+          {form.notes !== '' && (
             <InfoTable
               columns={[{ name: 'Notes' }]}
-              data={[[{ value: notes.notes }]]}
+              data={[[{ value: form.notes }]]}
             />
           )}
           <InfoTable
