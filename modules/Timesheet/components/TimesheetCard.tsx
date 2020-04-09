@@ -13,6 +13,7 @@ import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 import { colorsMapping } from '../constants';
+import { useEditTimesheet } from '../hooks';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -67,6 +68,7 @@ type TimesheetLineProps = {
 
 export const TimesheetLineCard: FC<TimesheetLineProps> = ({ card }): JSX.Element => {
   const classes = useStyles();
+  const { editTimesheetCard } = useEditTimesheet();
   const { timeStarted, timeFinished, userApprovalDatetime, adminApprovalDatetime, briefDescription } = card;
   let status;
   if (adminApprovalDatetime) {
@@ -80,7 +82,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({ card }): JSX.Element
     <Card
       className={classes.card}
       onClick={() => {
-
+        editTimesheetCard(card, true);
       }}
     >
       <CardActionArea>
@@ -114,12 +116,13 @@ type ServicesRenderedProps = {
 
 export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({ card }): JSX.Element => {
   const classes = useStyles();
+  const { editTimesheetCard } = useEditTimesheet();
   const { timeStarted, timeFinished, status } = card;
   return (
     <Card
       className={classes.card}
       onClick={() => {
-
+        editTimesheetCard(card, false);
       }}
     >
       <CardActionArea>
