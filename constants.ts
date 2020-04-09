@@ -83,6 +83,14 @@ export const ELEVATION = {
 
 export const ENDPOINT = 'https://core-dev.kalosflorida.com:8443';
 
+export const QUOTE_PART_AVAILABILITY: { [key: number]: string } = {
+  1: 'local',
+  2: 'next day',
+  3: '3-7 days',
+  4: 'more than a week',
+  5: 'Truck Stock',
+};
+
 export const USA_STATES_OPTIONS: Options = [
   'AL',
   'AK',
@@ -170,4 +178,5 @@ export default {
   API_FAILED_GENERAL_ERROR_MSG,
   RESIDENTIAL_OPTIONS,
   SERVICE_STATUSES,
+  QUOTE_PART_AVAILABILITY,
 };
