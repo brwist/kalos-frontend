@@ -16,6 +16,7 @@ import InfoTable from './InfoTable/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PlainForm from './PlainForm/examples';
+import QuoteSelector from './QuoteSelector/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
 import ServiceItemLinks from './ServiceItemLinks/examples';
@@ -39,6 +40,7 @@ const COMPONENTS = {
   Link,
   Modal,
   PlainForm,
+  QuoteSelector,
   Search,
   SectionBar,
   ServiceItemLinks,

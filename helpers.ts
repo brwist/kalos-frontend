@@ -15,6 +15,12 @@ import {
   StoredQuoteClient,
   StoredQuote,
 } from '@kalos-core/kalos-rpc/StoredQuote';
+import { QuotePartClient, QuotePart } from '@kalos-core/kalos-rpc/QuotePart';
+import {
+  QuoteLinePartClient,
+  QuoteLinePart,
+} from '@kalos-core/kalos-rpc/QuoteLinePart';
+import { QuoteLineClient, QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -25,6 +31,9 @@ const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
 const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
+const QuotePartClientService = new QuotePartClient(ENDPOINT);
+const QuoteLinePartClientService = new QuoteLinePartClient(ENDPOINT);
+const QuoteLineClientService = new QuoteLineClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -416,6 +425,96 @@ async function loadServicesRendered(eventId: number) {
 }
 
 /**
+ * Returns loaded QuoteParts
+ * @returns QuotePart[]
+ */
+async function loadQuoteParts() {
+  const results: QuotePart.AsObject[] = [];
+  const req = new QuotePart();
+  req.setPageNumber(0);
+  const { resultsList, totalCount } = (
+    await QuotePartClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await QuotePartClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
+}
+
+/**
+ * Returns loaded QuoteLineParts
+ * @returns QuoteLinePart[]
+ */
+async function loadQuoteLineParts() {
+  const results: QuoteLinePart.AsObject[] = [];
+  const req = new QuoteLinePart();
+  req.setPageNumber(0);
+  const { resultsList, totalCount } = (
+    await QuoteLinePartClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await QuoteLinePartClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
+}
+
+/**
+ * Returns loaded QuoteLines
+ * @returns QuoteLine[]
+ */
+async function loadQuoteLines() {
+  const results: QuoteLine.AsObject[] = [];
+  const req = new QuoteLine();
+  req.setPageNumber(0);
+  const { resultsList, totalCount } = (
+    await QuoteLineClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await QuoteLineClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
+}
+
+/**
  * Returns loaded Events by property id
  * @param propertyId: property id
  * @returns Event[]
@@ -549,4 +648,7 @@ export {
   loadEventsByPropertyId,
   loadServicesRendered,
   loadStoredQuotes,
+  loadQuoteParts,
+  loadQuoteLineParts,
+  loadQuoteLines,
 };
