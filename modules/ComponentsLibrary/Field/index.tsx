@@ -25,8 +25,18 @@ import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { makeFakeRows, loadTechnicians, trailingZero } from '../../../helpers';
-import { DepartmentPicker } from '../../Pickers/Department';
-import { ClassCodePicker } from '../../Pickers/ClassCode';
+import { ClassCodePicker, DepartmentPicker } from '../../Pickers/';
+
+type SelectOption = {
+  id: number;
+  description: string;
+};
+
+const renderSelectOptions = (i: SelectOption) => (
+  <option value={i.id} key={`${i.id}-${i.description}`}>
+    {i.description}
+  </option>
+);
 
 type UserType = User.AsObject;
 
@@ -39,7 +49,6 @@ export type Type =
   | 'date'
   | 'time'
   | 'technician'
-  | 'hidden'
   | 'signature'
   | 'department'
   | 'classCode'
@@ -650,10 +659,20 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     );
   }
   if (type === 'department') {
-    return <DepartmentPicker withinForm selected={props.value} onSelect={handleChange} />
+    return <DepartmentPicker
+      withinForm
+      renderItem={renderSelectOptions}
+      selected={props.value as unknown as number}
+      onSelect={handleChange}
+    />
   }
   if (type === 'classCode') {
-    return <ClassCodePicker withinForm selected={props.value} onSelect={handleChange} />
+    return <ClassCodePicker
+      withinForm
+      renderItem={renderSelectOptions}
+      selected={props.value as unknown as number}
+      onSelect={handleChange}
+    />
   }
   return (
     <div className={classes.fieldWrapper + ' ' + className}>

@@ -1,5 +1,5 @@
-import React, {FC, ReactElement, ReactNode, useCallback, useState} from 'react';
-import { TimesheetLine, TimesheetLineClient } from '@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb';
+import React, {FC, useCallback, useState} from 'react';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import {Form, Schema} from '../../ComponentsLibrary/Form';
 import {getRPCFields} from '../../../helpers';
@@ -7,7 +7,7 @@ import {getRPCFields} from '../../../helpers';
 type Entry = TimesheetLine.AsObject;
 
 type Props = {
-  data?: Entry;
+  data: Entry;
   userId: number,
   onClose: () => void;
 };
@@ -33,20 +33,21 @@ type Props = {
   pageNumber: 0
 }*/
 
-const emptyTimesheetLine = new TimesheetLine().toObject();
-
 const EditTimesheetModal: FC<Props> = ({ data, userId, onClose }): JSX.Element => {
   const [saving, setSaving] = useState<boolean>(false);
   const SCHEMA: Schema<Entry> = [
     [{ label: 'Reference', name: 'referenceNumber' },],
-    // [{ label: 'Source', name: 'source', disabled: true },],
     [{ label: 'Brief Description', name: 'briefDescription' },],
     [{ label: 'Class Code', name: 'classCode', type: 'classCode'},],
     [{ label: 'Department', name: 'departmentCode', type: 'department'},],
-    // [{ label: 'Date Started/Finish', name: 'dateStarted'}]
+    [
+      { label: 'Date', name: 'date', type: 'date' },
+      { label: 'Started', name: 'timeStarted', type: 'time'},
+      { label: 'Finished', name: 'timeFinished', type: 'time'},
+    ],
     [{ label: 'Notes', name: 'notes', multiline: true },],
   ];
-  const { id } = data;
+  const { id = 0 } = data;
   const handleSave = useCallback(
     async (data: Entry) => {
       setSaving(true);
@@ -74,11 +75,15 @@ const EditTimesheetModal: FC<Props> = ({ data, userId, onClose }): JSX.Element =
       <Form<Entry>
         title="Edit Timesheet Line"
         schema={SCHEMA}
-        data={emptyTimesheetLine}
+        data={data}
         onSave={handleSave}
         onClose={onClose}
         disabled={saving}
-      />
+      >
+        {!!data?.eventId && (
+          <span>Source: {data?.eventId}</span>
+        )}
+      </Form>
     </Modal>
   )
 };
