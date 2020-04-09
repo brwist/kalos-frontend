@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, { createContext, useEffect, useState } from "react";
 import { format, startOfWeek, eachDayOfInterval, addDays } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -15,8 +15,9 @@ import Toolbar from './components/Toolbar';
 import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { ENDPOINT } from '../../constants';
-
 const userClient = new UserClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -46,18 +47,69 @@ const getShownDates = (date?: Date): string[] => {
   return days.map(date => format(date, 'yyyy-MM-dd'));
 };
 
+type EditTimesheetContext = {
+  editTimesheetCard: (card: TimesheetLine.AsObject) => void;
+  editServicesRenderedCard: (card: ServicesRendered.AsObject) => void;
+};
+
+type EditingState = {
+  data: TimesheetLine.AsObject | null,
+  modalShown: boolean,
+};
+
+export const EditTimesheetContext = createContext<EditTimesheetContext>({
+  editTimesheetCard: (card: TimesheetLine.AsObject) => {},
+  editServicesRenderedCard: (card: ServicesRendered.AsObject) => {},
+});
+
 const Timesheet = ({ userId }: Props) => {
   const classes = useStyles();
   const [selectedDate, setSelectedDate] = useState<Date>(weekStart);
-  const [editTimesheetModalShown, setEditTimesheetModalShown] = useState<boolean>(false);
+  const [editingState, setEditingState] = useState<EditingState>({
+    data: null,
+    modalShown: false,
+  });
 
-  const handleAddNewTimecard = () => {
-    setEditTimesheetModalShown(true);
+  const handleAddNewTimeshhetCard = () => {
+    setEditingState({
+      ...editingState,
+      data: new TimesheetLine().toObject(),
+      modalShown: true,
+
+    });
+  };
+
+  const editTimesheetCard = (card: TimesheetLine.AsObject) => {
+    setEditingState({
+      ...editingState,
+      data: card,
+      modalShown: true,
+    });
+  };
+  const editServicesRenderedCard = (card: ServicesRendered.AsObject) => {
+    const data = new TimesheetLine().toObject();
+    Object.keys(data).forEach(key => {
+      if (card.hasOwnProperty(key)) {
+        data[key] = card[key];
+      }
+    });
+    setEditingState({
+      ...editingState,
+      modalShown: true,
+      data,
+    });
+  };
+
+  const handleCloseModal = () => {
+    setEditingState({
+      data: null,
+      modalShown: false,
+    })
   };
 
   const shownDates = getShownDates(selectedDate);
   const addNewOptions = [
-    { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimecard },
+    { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimeshhetCard },
     { icon: <TimerOffIcon />, name: 'Request Off', url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest' },
     { icon: <AddAlertIcon />, name: 'Reminder', url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder' },
     { icon: <AssignmentIndIcon />, name: 'Task', url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask' },
@@ -75,22 +127,28 @@ const Timesheet = ({ userId }: Props) => {
 
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
-      <Box className={classes.wrapper}>
-        <Container className={classes.week} maxWidth={false}>
-          {shownDates.map(date => (
-            <Column
-              key={date}
-              date={date}
-              userId={userId}
-            />
-          ))}
-        </Container>
-      </Box>
-      {editTimesheetModalShown && (
-        <EditTimesheetModal data={[]} userId={userId} onClose={() => setEditTimesheetModalShown(false)} />
-      )}
-      <AddNewButton options={addNewOptions} />
+      <EditTimesheetContext.Provider
+        value={{
+          editTimesheetCard,
+        }}
+      >
+        <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
+        <Box className={classes.wrapper}>
+          <Container className={classes.week} maxWidth={false}>
+            {shownDates.map(date => (
+              <Column
+                key={date}
+                date={date}
+                userId={userId}
+              />
+            ))}
+          </Container>
+        </Box>
+        {editingState.modalShown && (
+          <EditTimesheetModal data={editingState.data} userId={userId} onClose={handleCloseModal} />
+        )}
+        <AddNewButton options={addNewOptions} />
+      </EditTimesheetContext.Provider>
     </ThemeProvider>
   );
 };
