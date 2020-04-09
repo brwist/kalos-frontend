@@ -1,15 +1,14 @@
 import React, { FC, CSSProperties } from 'react';
 import Typography from '@material-ui/core/Typography';
 
+const LOREM = 'Lorem ipsum dolor sit amet';
+
 interface Props {
   title?: string;
   style?: CSSProperties;
 }
 
-export const LoremIpsumList: FC<Props> = ({
-  title = 'Lorem ipsum dolor sit amet',
-  style = {},
-}) => (
+export const LoremIpsumList: FC<Props> = ({ title = LOREM, style = {} }) => (
   <Typography component="div" style={style}>
     <h1 style={{ marginTop: 0 }}>{title}</h1>
     <ul>
@@ -25,5 +24,11 @@ export const LoremIpsumList: FC<Props> = ({
       <li>Donec faucibus pellentesque tincidunt.</li>
       <li>Vivamus in mollis felis.</li>
     </ul>
+  </Typography>
+);
+
+export const LoremIpsum: FC<Props> = ({ title = LOREM, style = {} }) => (
+  <Typography component="div" style={{ padding: 10, ...style }}>
+    {title}
   </Typography>
 );

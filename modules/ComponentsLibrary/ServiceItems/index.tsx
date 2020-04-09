@@ -1,7 +1,9 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import uniqueId from 'lodash/uniqueId';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import LinkIcon from '@material-ui/icons/Link';
+import AddIcon from '@material-ui/icons/Add';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
@@ -61,6 +63,14 @@ const MATERIAL_SCHEMA: Schema<MaterialType> = [
   ],
 ];
 
+type Repair = {
+  id: string;
+  serviceItemId: number;
+  diagnosis: string;
+  description: string;
+  price: number;
+};
+
 interface Props {
   className?: string;
   userID: number;
@@ -68,7 +78,18 @@ interface Props {
   propertyId: number;
   title?: string;
   selectable?: boolean;
+  onSelect?: (entries: Entry[]) => void;
+  repair?: boolean;
+  onRepairsChange?: (repairs: Repair[]) => void;
 }
+
+const REPAIR_SCHEMA: Schema<Repair> = [
+  [
+    { name: 'diagnosis', label: 'Diagnosis' },
+    { name: 'description', label: 'Description', multiline: true },
+    { name: 'price', label: 'Price', type: 'number', startAdornment: '$' },
+  ],
+];
 
 const sort = (a: Entry, b: Entry) => {
   if (a.sortOrder < b.sortOrder) return -1;
@@ -112,8 +133,18 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export const ServiceItems: FC<Props> = props => {
-  const { propertyId, className, title = 'Service Items', selectable } = props;
+  const {
+    propertyId,
+    className,
+    title = 'Service Items',
+    selectable,
+    onSelect,
+    repair,
+    onRepairsChange,
+    children,
+  } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [repairs, setRepairs] = useState<Repair[]>([]);
   const [materials, setMaterials] = useState<MaterialType[]>([]);
   const [materialsIds, setMaterialsIds] = useState<number[]>([]);
   const [loadingMaterials, setLoadingMaterials] = useState<boolean>(false);
@@ -126,6 +157,7 @@ export const ServiceItems: FC<Props> = props => {
   const [linkId, setLinkId] = useState<number>();
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
+  const [selected, setSelected] = useState<Entry[]>([]);
   const classes = useStyles();
 
   const handleMaterialChange = useCallback(
@@ -412,6 +444,21 @@ export const ServiceItems: FC<Props> = props => {
     }
   }, [setDeletingEntry, deletingEntry, setLoading, load]);
 
+  const handleSelectedChange = useCallback(
+    (entry: Entry) => () => {
+      const newSelected: Entry[] = [...selected.filter(item => item !== entry)];
+      const isSelected = selected.find(item => item === entry);
+      if (!isSelected) {
+        newSelected.push(entry);
+      }
+      setSelected(newSelected);
+      if (onSelect) {
+        onSelect(newSelected);
+      }
+    },
+    [setSelected, selected, onSelect],
+  );
+
   const handleReorder = useCallback(
     (idx: number, step: number) => async () => {
       setLoading(true);
@@ -433,6 +480,41 @@ export const ServiceItems: FC<Props> = props => {
   const handleSetLinkId = useCallback(
     (linkId?: number) => () => setLinkId(linkId),
     [setLinkId],
+  );
+
+  const handleAddRepair = useCallback(
+    (entry: Entry) => () => {
+      const { id } = entry;
+      const repair: Repair = {
+        id: uniqueId(),
+        serviceItemId: id,
+        diagnosis: '',
+        description: '',
+        price: 0,
+      };
+      setRepairs([...repairs, repair]);
+    },
+    [setRepairs, repairs],
+  );
+
+  const handleDeleteRepair = useCallback(
+    ({ id }: Repair) => () => {
+      setRepairs(repairs.filter(item => item.id !== id));
+    },
+    [setRepairs, repairs],
+  );
+
+  const handleChangeRepair = useCallback(
+    (repair: Repair) => (data: Repair) => {
+      const newRepairs = repairs.map(item =>
+        item === repair ? { ...item, ...data } : item,
+      );
+      setRepairs(newRepairs);
+      if (onRepairsChange) {
+        onRepairsChange(newRepairs);
+      }
+    },
+    [setRepairs, repairs, onRepairsChange],
   );
 
   const handleChangePage = useCallback(
@@ -469,70 +551,112 @@ export const ServiceItems: FC<Props> = props => {
     [setDeletingEntry],
   );
 
-  const data: Data = loading
-    ? makeFakeRows()
-    : entries.map((entry, idx) => {
-        const { id, type: value } = entry;
-        return [
-          {
-            value: (
-              <>
-                {selectable && (
-                  <Field
-                    name="name" //FIXME
-                    type="checkbox"
-                    value={0}
-                    className={classes.checkbox}
-                  />
-                )}
+  const makeData = () => {
+    const data: Data = [];
+    entries.forEach((entry, idx) => {
+      const { id, type: value } = entry;
+      data.push([
+        {
+          value: (
+            <>
+              {selectable && (
+                <Field
+                  name="name"
+                  type="checkbox"
+                  value={!!selected.find(item => item.id === id)}
+                  onChange={handleSelectedChange(entry)}
+                  className={classes.checkbox}
+                />
+              )}
+              <IconButton
+                style={{ marginRight: 4 }}
+                size="small"
+                disabled={idx === 0}
+                onClick={handleReorder(idx, -1)}
+              >
+                <ArrowUpwardIcon />
+              </IconButton>
+              <IconButton
+                style={{ marginRight: 4 }}
+                size="small"
+                disabled={idx === entries.length - 1}
+                onClick={handleReorder(idx, 1)}
+              >
+                <ArrowDownwardIcon />
+              </IconButton>
+              <span>{value}</span>
+            </>
+          ),
+          actions: [
+            ...(repair
+              ? [
+                  <IconButton
+                    key={3}
+                    style={{ marginLeft: 4 }}
+                    size="small"
+                    onClick={handleAddRepair(entry)}
+                  >
+                    <AddIcon />
+                  </IconButton>,
+                ]
+              : []),
+            <IconButton
+              key={0}
+              style={{ marginLeft: 4 }}
+              size="small"
+              onClick={handleSetLinkId(id)}
+            >
+              <LinkIcon />
+            </IconButton>,
+            <IconButton
+              key={1}
+              style={{ marginLeft: 4 }}
+              size="small"
+              onClick={handleEditing(entry)}
+            >
+              <EditIcon />
+            </IconButton>,
+            <IconButton
+              key={2}
+              style={{ marginLeft: 4 }}
+              size="small"
+              onClick={setDeleting(entry)}
+            >
+              <DeleteIcon />
+            </IconButton>,
+          ],
+        },
+      ]);
+      repairs
+        .filter(({ serviceItemId }) => serviceItemId === id)
+        .forEach(repair => {
+          data.push([
+            {
+              value: (
+                <PlainForm<Repair>
+                  key={repair.id}
+                  schema={REPAIR_SCHEMA}
+                  data={repair}
+                  onChange={handleChangeRepair(repair)}
+                />
+              ),
+              actions: [
                 <IconButton
-                  style={{ marginRight: 4 }}
+                  key={0}
+                  style={{ marginLeft: 4 }}
                   size="small"
-                  disabled={idx === 0}
-                  onClick={handleReorder(idx, -1)}
+                  onClick={handleDeleteRepair(repair)}
                 >
-                  <ArrowUpwardIcon />
-                </IconButton>
-                <IconButton
-                  style={{ marginRight: 4 }}
-                  size="small"
-                  disabled={idx === entries.length - 1}
-                  onClick={handleReorder(idx, 1)}
-                >
-                  <ArrowDownwardIcon />
-                </IconButton>
-                <span>{value}</span>
-              </>
-            ),
-            actions: [
-              <IconButton
-                key={0}
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={handleSetLinkId(id)}
-              >
-                <LinkIcon />
-              </IconButton>,
-              <IconButton
-                key={1}
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={handleEditing(entry)}
-              >
-                <EditIcon />
-              </IconButton>,
-              <IconButton
-                key={2}
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={setDeleting(entry)}
-              >
-                <DeleteIcon />
-              </IconButton>,
-            ],
-          },
-        ];
-      });
+                  <DeleteIcon />
+                </IconButton>,
+              ],
+            },
+          ]);
+        });
+    });
+    return data;
+  };
+  const data: Data = loading ? makeFakeRows() : makeData();
   return (
     <div className={className}>
       <SectionBar
@@ -550,6 +674,7 @@ export const ServiceItems: FC<Props> = props => {
           onChangePage: handleChangePage,
         }}
       >
+        {children}
         <InfoTable
           data={data}
           loading={loading}

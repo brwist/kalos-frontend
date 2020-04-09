@@ -116,6 +116,9 @@ const useStyles = makeStyles(theme => {
       alignItems: 'center',
       flexGrow: 1,
     },
+    valueContent: {
+      flexGrow: 1,
+    },
     loader: {
       position: 'absolute',
       top: 'calc(50% - 20px)',
@@ -210,11 +213,11 @@ export const InfoTable = ({
               {loading || error ? (
                 <span className={classes.fake} />
               ) : (
-                <span className={classes.value}>
+                <div className={classes.value}>
                   {href ? (
                     <Link href={`${href}:${value}`}>{value}</Link>
                   ) : (
-                    <span>{value}</span>
+                    <div className={classes.valueContent}>{value}</div>
                   )}
                   {actions && (
                     <span
@@ -224,7 +227,7 @@ export const InfoTable = ({
                       {actions}
                     </span>
                   )}
-                </span>
+                </div>
               )}
             </Typography>
           ))}
