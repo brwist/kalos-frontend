@@ -48,14 +48,14 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
         label: 'Total Amount (1)',
         name: 'totalamountrow1',
         type: 'number',
-        endAdornment: '$',
+        startAdornment: '$',
       },
       { label: 'Services Performed (2)', name: 'servicesperformedrow2' },
       {
         label: 'Total Amount (2)',
         name: 'totalamountrow2',
         type: 'number',
-        endAdornment: '$',
+        startAdornment: '$',
       },
     ],
     [
@@ -64,24 +64,29 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
         label: 'Total Amount (3)',
         name: 'totalamountrow3',
         type: 'number',
-        endAdornment: '$',
+        startAdornment: '$',
       },
       { label: 'Services Performed (4)', name: 'servicesperformedrow4' },
       {
         label: 'Total Amount (4)',
         name: 'totalamountrow4',
         type: 'number',
-        endAdornment: '$',
+        startAdornment: '$',
       },
     ],
     [
-      { label: 'Material Used', name: 'materialUsed', readOnly: true },
+      {
+        label: 'Material Used',
+        name: 'materialUsed',
+        readOnly: true,
+        multiline: true,
+      },
       {
         label: 'Material Total',
         name: 'materialTotal',
         readOnly: true,
         type: 'number',
-        endAdornment: '$',
+        startAdornment: '$',
       },
       { label: 'Payment', name: 'logType', readOnly: true }, // FIXME
       {
@@ -117,7 +122,7 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
         name: 'propertyBilling',
         type: 'checkbox',
       },
-      { label: 'Invoice Notes', name: 'notes' },
+      { label: 'Invoice Notes', name: 'notes', multiline: true },
     ],
   ];
   return <PlainForm schema={SCHEMA} data={data} onChange={handleChange} />;
