@@ -82,7 +82,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({ card }): JSX.Element
     <Card
       className={classes.card}
       onClick={() => {
-        editTimesheetCard(card, true);
+        editTimesheetCard(card);
       }}
     >
       <CardActionArea>
@@ -116,13 +116,13 @@ type ServicesRenderedProps = {
 
 export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({ card }): JSX.Element => {
   const classes = useStyles();
-  const { editTimesheetCard } = useEditTimesheet();
+  const { editServicesRenderedCard } = useEditTimesheet();
   const { timeStarted, timeFinished, status } = card;
   return (
     <Card
       className={classes.card}
       onClick={() => {
-        editTimesheetCard(card, false);
+        editServicesRenderedCard(card);
       }}
     >
       <CardActionArea>
