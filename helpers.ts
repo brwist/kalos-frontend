@@ -45,6 +45,15 @@ function cfURL(action: string, qs = '') {
 
 /**
  *
+ * @param number
+ * @returns string as number with trailing zero, if number is lett than 10
+ */
+function trailingZero(val: number) {
+  return `${val < 10 ? 0 : ''}${val}`;
+}
+
+/**
+ *
  * @param dateOnly if true, returns only the date portion YYYY-MM-DD
  * @returns a timestamp in the format YYYY-MM-DD HH:MM:SS
  */
@@ -651,4 +660,5 @@ export {
   loadQuoteParts,
   loadQuoteLineParts,
   loadQuoteLines,
+  trailingZero,
 };
