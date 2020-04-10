@@ -1,6 +1,7 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
 import {
   ServicesRenderedClient,
   ServicesRendered,
@@ -30,6 +31,7 @@ const {
   SIGNATURE,
   COMPLETED,
   INCOMPLETE,
+  SIGNED_AS,
 } = SERVICE_STATUSES;
 
 type ServicesRenderedType = ServicesRendered.AsObject;
@@ -132,8 +134,31 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
           { value: formatDateTime(datetime) },
           { value: name },
           {
-            value: status,
+            value: (
+              <span
+                style={{
+                  ...([COMPLETED, INCOMPLETE].includes(status)
+                    ? {
+                        color: status === COMPLETED ? 'green' : 'red',
+                      }
+                    : {}),
+                }}
+              >
+                {status}
+              </span>
+            ),
             actions: [
+              ...([COMPLETED, INCOMPLETE].includes(status)
+                ? [
+                    <IconButton
+                      key={1}
+                      // onClick={handleDeleting(props)} // TODO
+                      size="small"
+                    >
+                      <EditIcon />
+                    </IconButton>,
+                  ]
+                : []),
               <IconButton key={0} onClick={handleDeleting(props)} size="small">
                 <DeleteIcon />
               </IconButton>,
@@ -141,72 +166,108 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
           },
         ];
       });
-  const wasEnrouted = servicesRendered.some(({ status }) => status === ENROUTE);
   const lastEntry = servicesRendered[0];
   const lastStatus = servicesRendered[0] ? servicesRendered[0].status : '';
   return (
     <>
       <SectionBar
         title="Services Rendered History"
-        actions={[
-          ...([NO_STATUS, ENROUTE, ON_CALL].includes(lastStatus)
-            ? [
-                {
-                  label: ENROUTE,
-                  onClick: handleChangeStatus(ENROUTE),
-                  disabled: loading || wasEnrouted,
-                },
+        actions={
+          loading
+            ? []
+            : [
+                ...([
+                  NO_STATUS,
+                  ENROUTE,
+                  ON_CALL,
+                  COMPLETED,
+                  INCOMPLETE,
+                  PAYMENT,
+                  SIGNATURE,
+                  ADMIN,
+                  SIGNED_AS,
+                ].includes(lastStatus)
+                  ? [
+                      {
+                        label: ENROUTE,
+                        onClick: handleChangeStatus(ENROUTE),
+                        disabled: [ENROUTE, ON_CALL, ADMIN].includes(
+                          lastStatus,
+                        ),
+                      },
+                    ]
+                  : []),
+                ...([ENROUTE, ON_CALL].includes(lastStatus)
+                  ? [
+                      {
+                        label: ON_CALL,
+                        onClick: handleChangeStatus(ON_CALL),
+                        disabled: [ON_CALL].includes(lastStatus),
+                      },
+                    ]
+                  : []),
+                ...([
+                  NO_STATUS,
+                  COMPLETED,
+                  INCOMPLETE,
+                  PAYMENT,
+                  SIGNATURE,
+                  ADMIN,
+                  SIGNED_AS,
+                ].includes(lastStatus) && isAdmin
+                  ? [
+                      {
+                        label: ADMIN,
+                        onClick: handleChangeStatus(ADMIN),
+                      },
+                    ]
+                  : []),
+                ...([ON_CALL, ADMIN].includes(lastStatus)
+                  ? [
+                      {
+                        label: COMPLETED,
+                        onClick: handleChangeStatus(COMPLETED),
+                        status: 'success' as const,
+                      },
+                      {
+                        label: INCOMPLETE,
+                        onClick: handleChangeStatus(INCOMPLETE),
+                        status: 'failure' as const,
+                      },
+                    ]
+                  : []),
+                ...([
+                  NO_STATUS,
+                  ENROUTE,
+                  COMPLETED,
+                  INCOMPLETE,
+                  SIGNED_AS,
+                ].includes(lastStatus)
+                  ? [
+                      {
+                        label: PAYMENT,
+                        onClick: handleChangeStatus(PAYMENT),
+                      },
+                      {
+                        label: SIGNATURE,
+                        onClick: handleChangeStatus(SIGNATURE),
+                      },
+                    ]
+                  : []),
+                ...([PAYMENT, SIGNATURE].includes(lastStatus)
+                  ? [
+                      {
+                        label: 'CLEAR',
+                        // onClick: handleChangeStatus(PAYMENT),
+                      },
+                      {
+                        label: 'SAVE',
+                        onClick: handleChangeStatus(SIGNED_AS),
+                      },
+                    ]
+                  : []),
               ]
-            : []),
-          ...([ENROUTE].includes(lastStatus)
-            ? [
-                {
-                  label: ON_CALL,
-                  onClick: handleChangeStatus(ON_CALL),
-                  disabled: loading || lastStatus === ON_CALL,
-                },
-              ]
-            : []),
-          ...([NO_STATUS, ON_CALL].includes(lastStatus) && isAdmin
-            ? [
-                {
-                  label: ADMIN,
-                  onClick: handleChangeStatus(ADMIN),
-                  disabled: loading || [ON_CALL].includes(lastStatus),
-                },
-              ]
-            : []),
-          ...([NO_STATUS, ENROUTE, ON_CALL].includes(lastStatus)
-            ? [
-                {
-                  label: COMPLETED,
-                  onClick: handleChangeStatus(COMPLETED),
-                  disabled:
-                    loading || [NO_STATUS, ENROUTE].includes(lastStatus),
-                },
-                {
-                  label: INCOMPLETE,
-                  onClick: handleChangeStatus(INCOMPLETE),
-                  disabled:
-                    loading || [NO_STATUS, ENROUTE].includes(lastStatus),
-                },
-              ]
-            : []),
-          ...(['aaa'].includes(lastStatus)
-            ? [
-                {
-                  label: PAYMENT,
-                  onClick: handleChangeStatus(PAYMENT),
-                  disabled: loading,
-                },
-                {
-                  label: SIGNATURE,
-                  onClick: handleChangeStatus(SIGNATURE),
-                  disabled: loading,
-                },
-              ]
-            : []),
-        ]}
+        }
       />
       {lastStatus === ON_CALL && (
         <PlainForm
