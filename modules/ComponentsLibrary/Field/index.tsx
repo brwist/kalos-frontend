@@ -664,6 +664,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       renderItem={renderSelectOptions}
       selected={props.value as unknown as number}
       onSelect={handleChange}
+      disabled={disabled}
     />
   }
   if (type === 'classCode') {
@@ -672,6 +673,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       renderItem={renderSelectOptions}
       selected={props.value as unknown as number}
       onSelect={handleChange}
+      disabled={disabled}
     />
   }
   return (
