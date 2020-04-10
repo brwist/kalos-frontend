@@ -56,6 +56,7 @@ export const SERVICE_STATUSES = {
   COMPLETED: 'Completed',
   INCOMPLETE: 'Incomplete',
   ADMIN: 'Admin',
+  SIGNED_AS: 'signed as',
 };
 
 export const JOB_STATUS_COLORS: { [key: string]: string } = {
