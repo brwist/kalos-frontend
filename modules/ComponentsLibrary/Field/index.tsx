@@ -18,7 +18,7 @@ import { Actions } from '../Actions';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
-import { makeFakeRows, loadTechnicians } from '../../../helpers';
+import { makeFakeRows, loadTechnicians, trailingZero } from '../../../helpers';
 
 type UserType = User.AsObject;
 
@@ -132,6 +132,15 @@ const useStyles = makeStyles(theme => ({
   actions: {
     marginLeft: theme.spacing(),
   },
+  hourWrapper: {
+    width: '100%',
+    flexGrow: 1,
+  },
+  hour: {
+    display: 'flex',
+    flexGrow: 1,
+    marginTop: theme.spacing(-2) + 3,
+  },
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
@@ -225,6 +234,21 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     },
     [onChange],
   );
+  const handleTimeChange = useCallback(
+    (hour, minutes, ampm) => {
+      if (onChange) {
+        let hourVal = +hour;
+        if (hourVal === 12 && ampm === 'AM') {
+          hourVal = 0;
+        }
+        if (ampm === 'PM' && hourVal < 12) {
+          hourVal += 12;
+        }
+        onChange(`${trailingZero(hourVal)}:${trailingZero(+minutes)}`);
+      }
+    },
+    [onChange],
+  );
   const inputLabel = (
     <>
       {label}
@@ -255,6 +279,64 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     return (
       <div className={classes.field + ' ' + classes.content + ' ' + className}>
         {content}
+      </div>
+    );
+  }
+  if (type === 'time') {
+    const { value } = props;
+    const [valHour, valMinutes] = String(value || '12:00').split(':');
+    let hour = +valHour === 0 ? 12 : +valHour > 12 ? +valHour - 12 : +valHour;
+    let minutes = +valMinutes;
+    if (minutes >= 45) {
+      minutes = 45;
+    } else if (minutes >= 30) {
+      minutes = 30;
+    } else if (minutes >= 15) {
+      minutes = 15;
+    } else {
+      minutes = 0;
+    }
+    const ampm = +valHour < 12 ? 'AM' : 'PM';
+    return (
+      <div className={classes.hourWrapper}>
+        <InputLabel shrink>{inputLabel}</InputLabel>
+        <div className={classes.hour}>
+          <Field
+            name={`${name}_hour`}
+            value={trailingZero(hour)}
+            options={[
+              '01',
+              '02',
+              '03',
+              '04',
+              '05',
+              '06',
+              '07',
+              '08',
+              '09',
+              '10',
+              '11',
+              '12',
+            ]}
+            onChange={hour => handleTimeChange(hour, minutes, ampm)}
+          />
+          <Field
+            name={`${name}_minutes`}
+            value={trailingZero(minutes)}
+            options={['00', '15', '30', '45']}
+            onChange={minutes =>
+              handleTimeChange(trailingZero(hour), minutes, ampm)
+            }
+          />
+          <Field
+            name={`${name}_ampm`}
+            value={ampm}
+            options={['AM', 'PM']}
+            onChange={ampm =>
+              handleTimeChange(trailingZero(hour), minutes, ampm)
+            }
+          />
+        </div>
       </div>
     );
   }
@@ -464,14 +546,10 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           readOnly,
           startAdornment: startAdornment ? (
             <InputAdornment position="start">{startAdornment}</InputAdornment>
-          ) : (
-            undefined
-          ),
+          ) : undefined,
           endAdornment: endAdornment ? (
             <InputAdornment position="end">{endAdornment}</InputAdornment>
-          ) : (
-            undefined
-          ),
+          ) : undefined,
         }}
         InputLabelProps={{
           shrink: true,
