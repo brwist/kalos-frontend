@@ -95,8 +95,18 @@ export const Request: FC<Props> = ({
         type: 'time',
         required: true,
       },
-      { label: 'End Date', name: 'dateEnded', type: 'date', required: true },
-      { label: 'End Time', name: 'timeEnded', type: 'time', required: true },
+      {
+        label: 'End Date',
+        name: 'dateEnded',
+        type: 'date',
+        required: true,
+      },
+      {
+        label: 'End Time',
+        name: 'timeEnded',
+        type: 'time',
+        required: true,
+      },
     ],
     [
       {
@@ -112,12 +122,14 @@ export const Request: FC<Props> = ({
         options: RESIDENTIAL_OPTIONS,
       },
       {
-        label: 'Brief Description',
-        name: 'name',
-        required: true,
-        description: 'Used on calendar',
+        label: 'Amount Quoted',
+        name: 'amountQuoted',
       },
-      { label: 'Amount Quoted', name: 'amountQuoted' },
+      {
+        label: 'Diagnostic Quoted',
+        name: 'diagnosticQuoted',
+        type: 'checkbox',
+      },
     ],
     [
       {
@@ -132,29 +144,36 @@ export const Request: FC<Props> = ({
         required: true,
         options: jobTypeOptions,
       },
-      { label: 'Sub Type', name: 'jobSubtypeId', options: jobSubtypeOptions },
-
       {
-        label: 'Diagnostic Quoted',
-        name: 'diagnosticQuoted',
-        type: 'checkbox',
+        label: 'Sub Type',
+        name: 'jobSubtypeId',
+        options: jobSubtypeOptions,
       },
-    ],
-    [
-      { label: 'Is LMPC?', name: 'isLmpc', type: 'checkbox' },
       {
         label: 'Priority',
         name: 'highPriority',
         required: true,
         type: 'checkbox',
       },
-      { label: 'Is Callback?', name: 'isCallback', type: 'checkbox' },
+    ],
+    [
+      {
+        label: 'Is LMPC?',
+        name: 'isLmpc',
+        type: 'checkbox',
+      },
+      {
+        label: 'Is Callback?',
+        name: 'isCallback',
+        type: 'checkbox',
+      },
       {
         label: 'Callback Regarding Service Call',
         name: 'callbackOriginalId',
         options: callbackOriginalOptions,
         disabled: !isCallback,
       },
+      {},
     ],
     [
       {
@@ -162,6 +181,12 @@ export const Request: FC<Props> = ({
         name: 'logTechnicianAssigned',
         type: 'technician',
         required: true,
+      },
+      {
+        label: 'Brief Description',
+        name: 'name',
+        required: true,
+        description: 'Used on calendar',
       },
       {
         label: 'Service Needed',
