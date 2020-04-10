@@ -53,8 +53,9 @@ type EditTimesheetContext = {
 };
 
 type EditingState = {
-  data: TimesheetLine.AsObject | null,
+  entry: TimesheetLine.AsObject,
   modalShown: boolean,
+  action: 'create' | 'update' | 'convert' | '',
 };
 
 export const EditTimesheetContext = createContext<EditTimesheetContext>({
@@ -62,48 +63,54 @@ export const EditTimesheetContext = createContext<EditTimesheetContext>({
   editServicesRenderedCard: (card: ServicesRendered.AsObject) => {},
 });
 
+const emptyTimesheet = new TimesheetLine().toObject();
+
 const Timesheet = ({ userId }: Props) => {
   const classes = useStyles();
   const [selectedDate, setSelectedDate] = useState<Date>(weekStart);
   const [editingState, setEditingState] = useState<EditingState>({
-    data: null,
+    entry: emptyTimesheet,
     modalShown: false,
+    action: '',
   });
 
   const handleAddNewTimeshhetCard = () => {
     setEditingState({
       ...editingState,
-      data: new TimesheetLine().toObject(),
+      entry: new TimesheetLine().toObject(),
       modalShown: true,
-
+      action: 'create',
     });
   };
 
   const editTimesheetCard = (card: TimesheetLine.AsObject) => {
     setEditingState({
       ...editingState,
-      data: card,
+      entry: card,
       modalShown: true,
+      action: 'update',
     });
   };
   const editServicesRenderedCard = (card: ServicesRendered.AsObject) => {
-    const data = new TimesheetLine().toObject();
-    Object.keys(data).forEach(key => {
+    const entry = new TimesheetLine().toObject();
+    Object.keys(entry).forEach(key => {
       if (card.hasOwnProperty(key)) {
-        data[key] = card[key];
+        entry[key] = card[key];
       }
     });
     setEditingState({
       ...editingState,
       modalShown: true,
-      data,
+      entry,
+      action: 'convert',
     });
   };
 
   const handleCloseModal = () => {
     setEditingState({
-      data: null,
+      entry: emptyTimesheet,
       modalShown: false,
+      action: '',
     })
   };
 
@@ -130,6 +137,7 @@ const Timesheet = ({ userId }: Props) => {
       <EditTimesheetContext.Provider
         value={{
           editTimesheetCard,
+          editServicesRenderedCard,
         }}
       >
         <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
@@ -145,7 +153,12 @@ const Timesheet = ({ userId }: Props) => {
           </Container>
         </Box>
         {editingState.modalShown && (
-          <EditTimesheetModal data={editingState.data} userId={userId} onClose={handleCloseModal} />
+          <EditTimesheetModal
+            entry={editingState.entry}
+            userId={userId}
+            onClose={handleCloseModal}
+            action={editingState.action}
+          />
         )}
         <AddNewButton options={addNewOptions} />
       </EditTimesheetContext.Provider>
