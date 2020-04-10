@@ -187,6 +187,7 @@ export const Request: FC<Props> = ({
         name: 'name',
         required: true,
         description: 'Used on calendar',
+        multiline: true,
       },
       {
         label: 'Service Needed',

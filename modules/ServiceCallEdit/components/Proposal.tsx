@@ -88,9 +88,8 @@ const useStyles = makeStyles(theme => ({
 
 export const Proposal: FC<Props> = ({ serviceItem }) => {
   const classes = useStyles();
-  const { customer } = serviceItem;
+  const { customer, notes } = serviceItem;
   const [editing, setEditing] = useState<Entry>();
-  const [notes, setNotes] = useState<Notes>({ notes: '' });
   const [file, setFile] = useState<File>({
     localCopyName: '',
     fileDescription: `${serviceItem.id}_pending_proposal_${customer?.id || ''}`,
@@ -101,7 +100,7 @@ export const Proposal: FC<Props> = ({ serviceItem }) => {
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
   const [form, setForm] = useState<Form>({
     displayName: customerName,
-    notes: '',
+    notes,
   });
   const handleToggleQuickAdd = useCallback(
     () => setQuickAddOpen(!quickAddOpen),

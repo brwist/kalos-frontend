@@ -19,13 +19,14 @@ import {
 } from '@kalos-core/kalos-rpc/MaintenanceQuestion';
 import { MaterialClient, Material } from '@kalos-core/kalos-rpc/Material';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
-import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { Modal } from '../../ComponentsLibrary/Modal';
-import { Field } from '../../ComponentsLibrary/Field';
-import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
-import { PlainForm } from '../../ComponentsLibrary/PlainForm';
-import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
+import { InfoTable, Data } from '../InfoTable';
+import { SectionBar } from '../SectionBar';
+import { Modal } from '../Modal';
+import { Field } from '../Field';
+import { ActionsProps } from '../Actions';
+import { Form, Schema, Options } from '../Form';
+import { PlainForm } from '../PlainForm';
+import { ConfirmDelete } from '../ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from '../ServiceItemLinks';
 import { ServiceItemReadings } from '../ServiceItemReadings';
@@ -37,7 +38,7 @@ const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
 );
 const MaterialClientService = new MaterialClient(ENDPOINT);
 
-type Entry = ServiceItem.AsObject;
+export type Entry = ServiceItem.AsObject;
 type MaterialType = Material.AsObject;
 
 const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
@@ -63,7 +64,7 @@ const MATERIAL_SCHEMA: Schema<MaterialType> = [
   ],
 ];
 
-type Repair = {
+export type Repair = {
   id: string;
   serviceItemId: number;
   diagnosis: string;
@@ -77,10 +78,12 @@ interface Props {
   loggedUserId: number;
   propertyId: number;
   title?: string;
+  loading?: boolean;
   selectable?: boolean;
   onSelect?: (entries: Entry[]) => void;
   repair?: boolean;
   onRepairsChange?: (repairs: Repair[]) => void;
+  actions?: ActionsProps;
 }
 
 const REPAIR_SCHEMA: Schema<Repair> = [
@@ -130,6 +133,11 @@ const useStyles = makeStyles(theme => ({
     verticalAlign: 'middle',
     marginRight: theme.spacing(-2),
   },
+  repairs: {
+    padding: theme.spacing(),
+    paddingLeft: 0,
+    marginBottom: theme.spacing(-2),
+  },
 }));
 
 export const ServiceItems: FC<Props> = props => {
@@ -142,6 +150,8 @@ export const ServiceItems: FC<Props> = props => {
     repair,
     onRepairsChange,
     children,
+    loading: loadingProp = false,
+    actions = [],
   } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
   const [repairs, setRepairs] = useState<Repair[]>([]);
@@ -413,7 +423,6 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleDelete = useCallback(async () => {
-    // FIXME: service item is not actually deleted for some reason
     setDeletingEntry(undefined);
     if (deletingEntry) {
       setLoading(true);
@@ -437,12 +446,27 @@ export const ServiceItems: FC<Props> = props => {
           return await ReadingClientService.Delete(reading);
         }),
       );
+      const newRepairs = repairs.filter(
+        ({ serviceItemId }) => serviceItemId !== deletingEntry.id,
+      );
+      setRepairs(newRepairs);
+      if (onRepairsChange) {
+        onRepairsChange(newRepairs);
+      }
       const entry = new ServiceItem();
       entry.setId(deletingEntry.id);
       await ServiceItemClientService.Delete(entry);
       await load();
     }
-  }, [setDeletingEntry, deletingEntry, setLoading, load]);
+  }, [
+    setDeletingEntry,
+    deletingEntry,
+    setLoading,
+    load,
+    repairs,
+    setRepairs,
+    onRepairsChange,
+  ]);
 
   const handleSelectedChange = useCallback(
     (entry: Entry) => () => {
@@ -492,14 +516,22 @@ export const ServiceItems: FC<Props> = props => {
         description: '',
         price: 0,
       };
-      setRepairs([...repairs, repair]);
+      const newRepairs = [...repairs, repair];
+      setRepairs(newRepairs);
+      if (onRepairsChange) {
+        onRepairsChange(newRepairs);
+      }
     },
     [setRepairs, repairs],
   );
 
   const handleDeleteRepair = useCallback(
     ({ id }: Repair) => () => {
-      setRepairs(repairs.filter(item => item.id !== id));
+      const newRepairs = repairs.filter(item => item.id !== id);
+      setRepairs(newRepairs);
+      if (onRepairsChange) {
+        onRepairsChange(newRepairs);
+      }
     },
     [setRepairs, repairs],
   );
@@ -638,6 +670,7 @@ export const ServiceItems: FC<Props> = props => {
                   schema={REPAIR_SCHEMA}
                   data={repair}
                   onChange={handleChangeRepair(repair)}
+                  className={classes.repairs}
                 />
               ),
               actions: [
@@ -656,15 +689,20 @@ export const ServiceItems: FC<Props> = props => {
     });
     return data;
   };
-  const data: Data = loading ? makeFakeRows() : makeData();
+  const data: Data = loading || loadingProp ? makeFakeRows() : makeData();
   return (
     <div className={className}>
       <SectionBar
         title={title}
         actions={[
+          ...actions.map(item => ({
+            ...item,
+            disabled: loading || loadingProp,
+          })),
           {
             label: 'Add',
             onClick: handleEditing({} as Entry),
+            disabled: loading || loadingProp,
           },
         ]}
         pagination={{
@@ -677,7 +715,7 @@ export const ServiceItems: FC<Props> = props => {
         {children}
         <InfoTable
           data={data}
-          loading={loading}
+          loading={loading || loadingProp}
           error={error}
           compact
           hoverable

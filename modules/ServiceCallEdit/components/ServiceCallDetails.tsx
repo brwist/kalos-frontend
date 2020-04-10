@@ -253,7 +253,11 @@ export const ServiceCallDetails: FC<Props> = props => {
           },
           {
             label: 'Equipment',
-            content: <Equipment {...props} />,
+            content: loading ? (
+              <InfoTable data={makeFakeRows(4, 4)} loading />
+            ) : (
+              <Equipment {...props} serviceItem={entry} />
+            ),
           },
           {
             label: 'Services',
