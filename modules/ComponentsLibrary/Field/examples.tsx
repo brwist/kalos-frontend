@@ -88,6 +88,7 @@ export default () => (
       type="date"
     />
     <EnhancedField label="Time" defaultValue="21:35" type="time" />
+    <EnhancedField label="Signature" type="signature" />
     <EnhancedField
       label="With start adornment"
       startAdornment="$"
@@ -143,6 +144,5 @@ Amet`}
       validation="Error message..."
     />
     <EnhancedField label="With helper text" helperText="Helper text..." />
-    <EnhancedField label="Signature" type="signature" />
   </div>
 );

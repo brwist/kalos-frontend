@@ -156,12 +156,13 @@ const useStyles = makeStyles(theme => ({
     marginBottom: theme.spacing(0.5),
   },
   signature: {
-    display: 'inline-block',
+    display: 'block',
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: theme.palette.grey[300],
     position: 'relative',
     boxSizing: 'content-box',
+    marginBottom: theme.spacing(2),
     '&:before': {
       display: 'block',
       content: "' '",
