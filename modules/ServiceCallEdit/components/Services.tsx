@@ -10,6 +10,8 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
+import { Form } from '../../ComponentsLibrary/Form';
+import { Modal } from '../../ComponentsLibrary/Modal';
 // import { Field } from '../../ComponentsLibrary/Field';
 import {
   loadServicesRendered,
@@ -174,6 +176,8 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
     SIGNATURE_INITIAL,
   );
   const [deleting, setDeleting] = useState<ServicesRenderedType>();
+  const [editing, setEditing] = useState<ServicesRenderedType>();
+  const [saving, setSaving] = useState<boolean>(false);
   const load = useCallback(async () => {
     setLoading(true);
     const servicesRendered = await loadServicesRendered(serviceCallId);
@@ -229,6 +233,34 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       setServicesRenderedForm,
     ],
   );
+  const handleChangeServiceRendered = useCallback(
+    async (data: ServicesRenderedType) => {
+      if (editing) {
+        setSaving(true);
+        const req = new ServicesRendered();
+        req.setId(editing.id);
+        const fieldMaskList: string[] = [];
+        SCHEMA_ON_CALL.forEach(row =>
+          row.forEach(({ name }) => {
+            const { upperCaseProp, methodName } = getRPCFields(name!);
+            // @ts-ignore
+            req[methodName](data[name]);
+            fieldMaskList.push(upperCaseProp);
+          }),
+        );
+        req.setFieldMaskList(fieldMaskList);
+        await ServicesRenderedClientService.Update(req);
+        await load();
+        setSaving(false);
+        setEditing(undefined);
+      }
+    },
+    [editing, SCHEMA_ON_CALL, setSaving, setEditing],
+  );
+  const handleSetEditing = useCallback(
+    (editing?: ServicesRenderedType) => () => setEditing(editing),
+    [setEditing],
+  );
   const data: Data = loading
     ? makeFakeRows(4, 3)
     : servicesRendered.map(props => {
@@ -255,7 +287,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
                 ? [
                     <IconButton
                       key={1}
-                      // onClick={handleDeleting(props)} // TODO
+                      onClick={handleSetEditing(props)}
                       size="small"
                     >
                       <EditIcon />
@@ -286,6 +318,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
           <InfoTable
             columns={COLUMNS_SERVICES_RENDERED}
             data={servicesRenderedData}
+            loading={saving}
           />
         )}
       <SectionBar
@@ -410,6 +443,18 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
           name={`Technician: ${deleting.name}, Status: ${deleting.status}`}
           onConfirm={handleDelete}
         />
+      )}
+      {editing && (
+        <Modal open onClose={handleSetEditing()}>
+          <Form<ServicesRenderedType>
+            title="Services Rendered Edit"
+            schema={SCHEMA_ON_CALL}
+            data={editing}
+            onClose={handleSetEditing()}
+            onSave={handleChangeServiceRendered}
+            disabled={saving}
+          />
+        </Modal>
       )}
     </>
   );
