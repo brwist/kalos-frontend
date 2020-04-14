@@ -94,6 +94,7 @@ const Column: FC<Props> = ({ date, userId, editedEntries }) => {
 
   const fetchTimesheetLine = useCallback( async (page) => {
     const req = new TimesheetLine();
+    req.setIsActive(1);
     req.setTimeStarted(`${date}%`);
     req.setTechnicianUserId(userId);
     req.setPageNumber(page);
@@ -121,7 +122,10 @@ const Column: FC<Props> = ({ date, userId, editedEntries }) => {
           cards.push(entry);
         }
       } else if (entry.action === 'delete') {
-
+        const existingIndex = cards.findIndex(item => item.id === entry.id);
+        if (existingIndex > -1) {
+          cards.splice(existingIndex, 1);
+        }
       }
     }
   });

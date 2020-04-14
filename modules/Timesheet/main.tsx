@@ -76,10 +76,10 @@ const Timesheet = ({ userId }: Props) => {
     editedEntries: [],
   });
 
-  const handleOnSave = (entry: TimesheetLine.AsObject) => {
+  const handleOnSave = (entry: TimesheetLine.AsObject, action: 'delete' | 'approve' | 'reject') => {
     const editedEntries = [...editingState.editedEntries];
     const alreadyEditedIndex = editedEntries.findIndex(item => item.id === entry.id);
-    const data = { ...entry, action: editingState.action };
+    const data = { ...entry, action: action || editingState.action };
     if (alreadyEditedIndex >= 0) {
       editedEntries[alreadyEditedIndex] = data;
     } else {
