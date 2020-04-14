@@ -111,6 +111,7 @@ export default () => (
         firstName: 'This field is too short',
         lastName: 'This field is too weird',
       }}
+      compact
     />
     <hr />
     <PlainForm<Model>
