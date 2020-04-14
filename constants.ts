@@ -32,6 +32,13 @@ export const PAYMENT_TYPE_LIST: Options = [
   'Charity',
 ];
 
+export const SIGNATURE_PAYMENT_TYPE_LIST: Options = [
+  'Credit Card',
+  'Cash',
+  'Check',
+  'Paypal',
+];
+
 export const DUMMY_USER = 'test';
 export const DUMMY_PWD = 'test';
 
@@ -180,4 +187,5 @@ export default {
   RESIDENTIAL_OPTIONS,
   SERVICE_STATUSES,
   QUOTE_PART_AVAILABILITY,
+  SIGNATURE_PAYMENT_TYPE_LIST,
 };
