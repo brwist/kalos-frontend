@@ -56,6 +56,7 @@ type EditingState = {
   entry: TimesheetLine.AsObject,
   modalShown: boolean,
   action: 'create' | 'update' | 'convert' | '',
+  editedEntries: TimesheetLine.AsObject[],
 };
 
 export const EditTimesheetContext = createContext<EditTimesheetContext>({
@@ -72,9 +73,28 @@ const Timesheet = ({ userId }: Props) => {
     entry: emptyTimesheet,
     modalShown: false,
     action: '',
+    editedEntries: [],
   });
 
-  const handleAddNewTimeshhetCard = () => {
+  const handleOnSave = (entry: TimesheetLine.AsObject) => {
+    const editedEntries = [...editingState.editedEntries];
+    const alreadyEditedIndex = editedEntries.findIndex(item => item.id === entry.id);
+    const data = { ...entry, action: editingState.action };
+    if (alreadyEditedIndex >= 0) {
+      editedEntries[alreadyEditedIndex] = data;
+    } else {
+      editedEntries.push(data);
+    }
+
+    setEditingState({
+      entry: emptyTimesheet,
+      modalShown: false,
+      action: '',
+      editedEntries,
+    })
+  };
+
+  const handleAddNewTimeshetCardClicked = () => {
     setEditingState({
       ...editingState,
       entry: new TimesheetLine().toObject(),
@@ -108,6 +128,7 @@ const Timesheet = ({ userId }: Props) => {
 
   const handleCloseModal = () => {
     setEditingState({
+      ...editingState,
       entry: emptyTimesheet,
       modalShown: false,
       action: '',
@@ -116,7 +137,7 @@ const Timesheet = ({ userId }: Props) => {
 
   const shownDates = getShownDates(selectedDate);
   const addNewOptions = [
-    { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimeshhetCard },
+    { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimeshetCardClicked },
     { icon: <TimerOffIcon />, name: 'Request Off', url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest' },
     { icon: <AddAlertIcon />, name: 'Reminder', url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder' },
     { icon: <AssignmentIndIcon />, name: 'Task', url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask' },
@@ -148,6 +169,7 @@ const Timesheet = ({ userId }: Props) => {
                 key={date}
                 date={date}
                 userId={userId}
+                editedEntries={editingState.editedEntries}
               />
             ))}
           </Container>
@@ -157,6 +179,7 @@ const Timesheet = ({ userId }: Props) => {
             entry={editingState.entry}
             userId={userId}
             onClose={handleCloseModal}
+            onSave={handleOnSave}
             action={editingState.action}
           />
         )}
