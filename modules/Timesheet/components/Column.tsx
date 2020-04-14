@@ -75,9 +75,10 @@ const tslClient = new TimesheetLineClient(ENDPOINT);
 type Props = {
   date: string,
   userId: number,
+  editedEntries: TimesheetLine.AsObject[],
 };
 
-const Column: FC<Props> = ({ date, userId }) => {
+const Column: FC<Props> = ({ date, userId, editedEntries }) => {
   const classes = useStyles();
   const [dayView, setDayView] = useState(false);
 
@@ -107,7 +108,24 @@ const Column: FC<Props> = ({ date, userId }) => {
 
   const { data:servicesRendered, isLoading:servicesRenderedLoading } = useFetchAll(fetchServicesRendered);
   const { data:timesheetLine, isLoading:timesheetLineLoading } = useFetchAll(fetchTimesheetLine);
-  const cards = [...servicesRendered, ...timesheetLine].sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted));
+  const cards = [...servicesRendered, ...timesheetLine];
+  editedEntries.forEach(entry => {
+    if (format(new Date(entry.timeStarted), 'yyyy-MM-dd') === date) {
+      if (entry.action === 'create') {
+        cards.push(entry);
+      } else if (entry.action === 'update') {
+        const existingIndex = cards.findIndex(item => item.id === entry.id);
+        if (existingIndex > -1) {
+          cards[existingIndex] = {...cards[existingIndex], ...entry};
+        } else {
+          cards.push(entry);
+        }
+      } else if (entry.action === 'delete') {
+
+      }
+    }
+  });
+  cards.sort((a, b) => new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime());
   return (
     <Box className={clsx(dayView && classes.dayView)}>
       {dayView && (
