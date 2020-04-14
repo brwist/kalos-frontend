@@ -15,6 +15,7 @@ export type Model = {
   dob: string;
   hour: string;
   technician: string;
+  signature: string;
 };
 
 export const model: Model = {
@@ -30,6 +31,7 @@ amet`,
   dob: '1980-11-23 00:00:00',
   hour: '21:45',
   technician: '0',
+  signature: '',
 };
 
 export const SCHEMA_1: Schema<Model> = [
@@ -73,6 +75,11 @@ export const SCHEMA_2: Schema<Model> = [
       label: 'Technician',
       type: 'technician',
       required: true,
+    },
+    {
+      name: 'signature',
+      label: 'Signature',
+      type: 'signature',
     },
   ],
 ];

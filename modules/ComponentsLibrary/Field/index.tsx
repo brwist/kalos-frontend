@@ -1,4 +1,10 @@
-import React, { ReactElement, useCallback, useState, useEffect } from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -12,6 +18,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
+import SignatureCanvas from 'react-signature-canvas';
 import { Button } from '../Button';
 import { SchemaProps } from '../PlainForm';
 import { Actions } from '../Actions';
@@ -31,7 +38,8 @@ export type Type =
   | 'date'
   | 'time'
   | 'technician'
-  | 'hidden';
+  | 'hidden'
+  | 'signature';
 
 export type Value = string | number;
 
@@ -141,6 +149,35 @@ const useStyles = makeStyles(theme => ({
     flexGrow: 1,
     marginTop: theme.spacing(-2) + 3,
   },
+  signatureHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing(0.5),
+  },
+  signature: {
+    display: 'inline-block',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: theme.palette.grey[300],
+    position: 'relative',
+    boxSizing: 'content-box',
+    '&:before': {
+      display: 'block',
+      content: "' '",
+      position: 'absolute',
+      bottom: theme.spacing(4),
+      left: theme.spacing(),
+      right: theme.spacing(),
+      height: 2,
+      backgroundColor: theme.palette.grey[400],
+      pointerEvents: 'none',
+      zIndex: -1,
+    },
+  },
+  canvas: {
+    display: 'block',
+  },
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
@@ -161,6 +198,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   content,
   ...props
 }) => {
+  const signatureRef = useRef(null);
   const dateTimePart = type === 'date' ? (props.value + '').substr(11, 8) : '';
   const value =
     type === 'date' ? (props.value + '').substr(0, 10) : props.value;
@@ -249,6 +287,22 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     },
     [onChange],
   );
+  const handleSignatureEnd = useCallback(() => {
+    if (onChange && signatureRef !== null && signatureRef.current !== null) {
+      // @ts-ignore
+      const signature = signatureRef.current.toDataURL();
+      onChange(signature);
+    }
+  }, [onChange, signatureRef]);
+  const handleSignatureClear = useCallback(() => {
+    if (signatureRef !== null && signatureRef.current !== null) {
+      // @ts-ignore
+      signatureRef.current.clear();
+      if (onChange) {
+        onChange('');
+      }
+    }
+  }, [onChange, signatureRef]);
   const inputLabel = (
     <>
       {label}
@@ -279,6 +333,35 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     return (
       <div className={classes.field + ' ' + classes.content + ' ' + className}>
         {content}
+      </div>
+    );
+  }
+  if (type === 'signature') {
+    return (
+      <div className={classes.fieldWrapper + ' ' + className}>
+        <div>
+          <div className={classes.signatureHeader}>
+            <InputLabel shrink>{inputLabel}</InputLabel>
+            <Button
+              label="Clear"
+              size="xsmall"
+              variant="outlined"
+              compact
+              onClick={handleSignatureClear}
+            />
+          </div>
+          <span className={classes.signature}>
+            <SignatureCanvas
+              ref={signatureRef}
+              canvasProps={{
+                width: 300,
+                height: 160,
+                className: classes.canvas,
+              }}
+              onEnd={handleSignatureEnd}
+            />
+          </span>
+        </div>
       </div>
     );
   }
