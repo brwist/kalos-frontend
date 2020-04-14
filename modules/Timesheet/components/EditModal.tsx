@@ -27,7 +27,7 @@ type Props = {
   userId: number,
   create: boolean,
   action: 'create' | 'update' | 'convert' | '';
-  onSave: (entry: TimesheetLine.AsObject) => void;
+  onSave: (entry: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => void;
   onClose: () => void;
 };
 
@@ -53,7 +53,7 @@ const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose 
     data.timeStarted = format(new Date(data.timeStarted), 'HH:mm');
     data.timeFinished = format(new Date(data.timeFinished), 'HH:mm');
   }
-  const handleSave = useCallback(
+  const handleUpdate = useCallback(
     async (data: Entry) => {
       setSaving(true);
       data.timeStarted = `${data.date.trim()} ${data.timeStarted.trim()}`;
@@ -107,13 +107,30 @@ const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose 
       entry,
     ],);
 
+  const handleDelete = useCallback(
+    async () => {
+      setSaving(true);
+      const req = new TimesheetLine();
+      // req.setUserId(userID);
+      req.setId(id);
+      const result = await tslClient.Delete(req);
+      console.log()
+      setSaving(false);
+      onSave(result, 'delete');
+    },
+    [
+      setSaving,
+      entry,
+    ],
+  );
+
   return (
     <Modal open onClose={onClose}>
       <Form<Entry>
         title="Edit Timesheet Line"
         schema={SCHEMA}
         data={data}
-        onSave={action === 'update' ? handleSave : handleCreate}
+        onSave={action === 'update' ? handleUpdate : handleCreate}
         onClose={onClose}
         disabled={saving}
       >
@@ -123,7 +140,7 @@ const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose 
         <ButtonGroup className={classes.buttonGroup}>
           <Button label="Approve" />
           <Button label="Reject" />
-          <Button label="Delete" />
+          <Button label="Delete" onClick={handleDelete} />
         </ButtonGroup>
       </Form>
     </Modal>
