@@ -42,6 +42,7 @@ const {
 type ServicesRenderedType = ServicesRendered.AsObject;
 
 type SignatureType = {
+  signature: string;
   authorizedSignorName: string;
   authorizedSignorRole: string;
   signorNotes: string;
@@ -70,18 +71,43 @@ const COLUMNS_SERVICES_RENDERED_HISTORY: Columns = [
 
 const SCHEMA_SIGNATURE: Schema<SignatureType> = [
   [
-    { label: 'Authorized Signor Name', name: 'authorizedSignorName' },
-    { label: 'Authorized Signor Role', name: 'authorizedSignorRole' },
-    { label: 'Signor Notes', name: 'signorNotes', multiline: true },
+    {
+      label: 'Signature',
+      name: 'signature',
+      type: 'signature',
+    },
   ],
   [
-    { label: 'Date', name: 'date', type: 'date' },
+    {
+      label: 'Authorized Signor Name',
+      name: 'authorizedSignorName',
+    },
+    {
+      label: 'Authorized Signor Role',
+      name: 'authorizedSignorRole',
+    },
+    {
+      label: 'Signor Notes',
+      name: 'signorNotes',
+      multiline: true,
+    },
+  ],
+  [
+    {
+      label: 'Date',
+      name: 'date',
+      type: 'date',
+    },
     {
       label: 'Payment Type',
       name: 'paymentType',
       options: ['-- Select --', ...SIGNATURE_PAYMENT_TYPE_LIST],
     },
-    { label: 'Amount Collected', name: 'amountCollected' },
+    {
+      label: 'Amount Collected',
+      name: 'amountCollected',
+      startAdornment: '$',
+    },
   ],
 ];
 
@@ -124,6 +150,16 @@ const SCHEMA_ON_CALL: Schema<ServicesRenderedType> = [
   // ],
 ];
 
+const SIGNATURE_INITIAL: SignatureType = {
+  signature: '',
+  authorizedSignorName: '',
+  authorizedSignorRole: '',
+  signorNotes: '',
+  date: timestamp(true),
+  paymentType: '-- Select --',
+  amountCollected: 0,
+};
+
 export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
   const { isAdmin } = loggedUser;
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -134,14 +170,9 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
   const [servicesRendered, setServicesRendered] = useState<
     ServicesRenderedType[]
   >([]);
-  const [signatureForm, setSignatureForm] = useState<SignatureType>({
-    authorizedSignorName: '',
-    authorizedSignorRole: '',
-    signorNotes: '',
-    date: timestamp(true),
-    paymentType: '-- Select --',
-    amountCollected: 0,
-  });
+  const [signatureForm, setSignatureForm] = useState<SignatureType>(
+    SIGNATURE_INITIAL,
+  );
   const [deleting, setDeleting] = useState<ServicesRenderedType>();
   const load = useCallback(async () => {
     setLoading(true);
@@ -187,8 +218,16 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       req.setFieldMaskList(fieldMaskList);
       await ServicesRenderedClientService.Create(req);
       load();
+      setServicesRenderedForm(new ServicesRendered().toObject());
+      setSignatureForm(SIGNATURE_INITIAL);
     },
-    [loggedUser, load, serviceRenderedForm],
+    [
+      loggedUser,
+      load,
+      serviceRenderedForm,
+      setSignatureForm,
+      setServicesRenderedForm,
+    ],
   );
   const data: Data = loading
     ? makeFakeRows(4, 3)
@@ -242,12 +281,13 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
     ]);
   return (
     <>
-      {[COMPLETED, INCOMPLETE, ENROUTE, ADMIN].includes(lastStatus) && (
-        <InfoTable
-          columns={COLUMNS_SERVICES_RENDERED}
-          data={servicesRenderedData}
-        />
-      )}
+      {[COMPLETED, INCOMPLETE, ENROUTE, ADMIN].includes(lastStatus) &&
+        servicesRenderedData.length > 0 && (
+          <InfoTable
+            columns={COLUMNS_SERVICES_RENDERED}
+            data={servicesRenderedData}
+          />
+        )}
       <SectionBar
         title="Services Rendered History"
         actions={
@@ -334,10 +374,6 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
                   : []),
                 ...([PAYMENT, SIGNATURE].includes(lastStatus)
                   ? [
-                      {
-                        label: 'CLEAR',
-                        // onClick: handleChangeStatus(PAYMENT),
-                      },
                       {
                         label: 'SAVE',
                         onClick: handleChangeStatus(SIGNED_AS),
