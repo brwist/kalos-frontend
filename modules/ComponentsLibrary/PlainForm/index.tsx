@@ -38,7 +38,11 @@ export type Schema<T> = SchemaProps<T>[][];
 
 export type Validation = { [key: string]: string };
 
-export interface PlainFormProps<T> {
+type Style = {
+  compact?: boolean;
+};
+
+export interface PlainFormProps<T> extends Style {
   schema: Schema<T>;
   data: T;
   disabled?: boolean;
@@ -54,9 +58,15 @@ interface Props<T> extends PlainFormProps<T> {
 }
 
 const useStyles = makeStyles(theme => ({
-  form: {
+  form: ({ compact }: Style) => ({
     padding: theme.spacing(2),
-  },
+    ...(compact
+      ? {
+          paddingTop: 0,
+          paddingBottom: 0,
+        }
+      : {}),
+  }),
   error: {
     color: theme.palette.error.contrastText,
     backgroundColor: theme.palette.error.dark,
@@ -118,12 +128,13 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   onChange,
   disabled = false,
   readOnly = false,
+  compact = false,
   error,
   validations = {},
   className = '',
   children,
 }) => {
-  const classes = useStyles();
+  const classes = useStyles({ compact });
   const [formData, setFormData] = useState(
     schema.reduce(
       (aggr, fields) => ({

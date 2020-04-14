@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
@@ -53,6 +54,13 @@ type SignatureType = {
   paymentType: string;
 };
 
+type PaymentType = {
+  paymentCollected: number;
+  paymentType: string;
+  amountCollected: number;
+  dateProcessed: string;
+};
+
 interface Props {
   serviceCallId: number;
   loggedUser: UserType;
@@ -69,6 +77,31 @@ const COLUMNS_SERVICES_RENDERED_HISTORY: Columns = [
   { name: 'Time' },
   { name: 'Technician' },
   { name: 'Status' },
+];
+
+const SCHEMA_PAYMENT: Schema<PaymentType> = [
+  [
+    {
+      label: 'Payment Collected',
+      name: 'paymentCollected',
+      type: 'checkbox',
+    },
+    {
+      label: 'Payment Type',
+      name: 'paymentType',
+    },
+    {
+      label: 'Amount Collected',
+      name: 'amountCollected',
+      type: 'number',
+      startAdornment: '$',
+    },
+    {
+      label: 'Date Processed',
+      name: 'dateProcessed',
+      type: 'date',
+    },
+  ],
 ];
 
 const SCHEMA_SIGNATURE: Schema<SignatureType> = [
@@ -108,6 +141,7 @@ const SCHEMA_SIGNATURE: Schema<SignatureType> = [
     {
       label: 'Amount Collected',
       name: 'amountCollected',
+      type: 'number',
       startAdornment: '$',
     },
   ],
@@ -162,7 +196,21 @@ const SIGNATURE_INITIAL: SignatureType = {
   amountCollected: 0,
 };
 
+const PAYMENT_INITIAL: PaymentType = {
+  amountCollected: 0,
+  dateProcessed: timestamp(true),
+  paymentCollected: 0,
+  paymentType: '',
+};
+
+const useStyles = makeStyles(theme => ({
+  onCallForm: {
+    marginTop: theme.spacing(),
+  },
+}));
+
 export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
+  const classes = useStyles();
   const { isAdmin } = loggedUser;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -175,6 +223,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
   const [signatureForm, setSignatureForm] = useState<SignatureType>(
     SIGNATURE_INITIAL,
   );
+  const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
   const [deleting, setDeleting] = useState<ServicesRenderedType>();
   const [editing, setEditing] = useState<ServicesRenderedType>();
   const [saving, setSaving] = useState<boolean>(false);
@@ -424,11 +473,21 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
         />
       )}
       {[ON_CALL, ADMIN].includes(lastStatus) && (
-        <PlainForm
-          schema={SCHEMA_ON_CALL}
-          data={serviceRenderedForm}
-          onChange={setServicesRenderedForm}
-        />
+        <>
+          <PlainForm
+            schema={SCHEMA_ON_CALL}
+            data={serviceRenderedForm}
+            onChange={setServicesRenderedForm}
+            compact
+            className={classes.onCallForm}
+          />
+          <PlainForm
+            schema={SCHEMA_PAYMENT}
+            data={paymentForm}
+            onChange={setPaymentForm}
+            compact
+          />
+        </>
       )}
       <InfoTable
         columns={COLUMNS_SERVICES_RENDERED_HISTORY}
