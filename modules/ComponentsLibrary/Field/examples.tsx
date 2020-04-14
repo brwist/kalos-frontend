@@ -143,5 +143,6 @@ Amet`}
       validation="Error message..."
     />
     <EnhancedField label="With helper text" helperText="Helper text..." />
+    <EnhancedField label="Signature" type="signature" />
   </div>
 );

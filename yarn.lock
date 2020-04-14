@@ -688,6 +688,14 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-signature-canvas@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@types/react-signature-canvas/-/react-signature-canvas-1.0.0.tgz#7c82d067891e9fbc372351a443e69616a65e7866"
+  integrity sha512-jMbVQ+9tBice5vMCskFukGSUVvSPnV3FAAvuA+4H33kWPBTfpIEZ9qZoymgLw6GO1NF60cbHqlRU9N17MOhjRA==
+  dependencies:
+    "@types/react" "*"
+    "@types/signature_pad" "*"
+
 "@types/react-transition-group@^4.2.0":
   version "4.2.4"
   resolved "https://registry.yarnpkg.com/@types/react-transition-group/-/react-transition-group-4.2.4.tgz#c7416225987ccdb719262766c1483da8f826838d"
@@ -748,6 +756,11 @@
   dependencies:
     "@types/glob" "*"
     "@types/node" "*"
+
+"@types/signature_pad@*":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@types/signature_pad/-/signature_pad-2.3.0.tgz#0040aa8eb82063dbb50653047eb5cb7227b7a103"
+  integrity sha512-3g03oFi6Xy7oA1foIP80X9Np+psq1CDGsGIRIEgvEuFzJZsS5oRGGqgl9K5ONlfLlnYU+Ei8vMszWKlIlMA/cA==
 
 "@types/styled-jsx@^2.2.8":
   version "2.2.8"
@@ -5095,6 +5108,14 @@ react-reconciler@^0.21.0:
     prop-types "^15.6.2"
     scheduler "^0.15.0"
 
+react-signature-canvas@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/react-signature-canvas/-/react-signature-canvas-1.0.3.tgz#1eebe3395a206ff37015f5b557e5c0274587064b"
+  integrity sha512-6KBZFWLgjbnV80hh0sYW4ZKLJkojktP+de+xrnBGjB6HBK2dOoYH3rVxjtCvpMhjM/e4cqgAoQVz3lYdKCgWxw==
+  dependencies:
+    signature_pad "^2.3.2"
+    trim-canvas "^0.1.0"
+
 react-signature-pad-wrapper@^1.2.8:
   version "1.2.9"
   resolved "https://registry.yarnpkg.com/react-signature-pad-wrapper/-/react-signature-pad-wrapper-1.2.9.tgz#648d7dd6eaa1a460c0447d40b07726dc19817122"
@@ -6185,6 +6206,11 @@ tough-cookie@~2.5.0:
   dependencies:
     psl "^1.1.28"
     punycode "^2.1.1"
+
+trim-canvas@^0.1.0:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/trim-canvas/-/trim-canvas-0.1.2.tgz#620457f5fecf564b521d35c5fcd4da58304d6e45"
+  integrity sha1-YgRX9f7PVktSHTXF/NTaWDBNbkU=
 
 tslib@1.10.0, tslib@^1.9.0, tslib@~1.10.0:
   version "1.10.0"
