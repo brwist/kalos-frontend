@@ -6,6 +6,8 @@ import { Button } from '../../ComponentsLibrary/Button';
 import { TimesheetLine, TimesheetLineClient } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { Confirm } from '../../ComponentsLibrary/Confirm';
+import { useConfirm } from '../../ComponentsLibrary/ConfirmService';
 import { getRPCFields } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
@@ -32,6 +34,7 @@ type Props = {
 };
 
 const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose }): JSX.Element => {
+  const confirm = useConfirm();
   const classes = useStyles();
   const [saving, setSaving] = useState<boolean>(false);
   const SCHEMA: Schema<Entry> = [
@@ -70,14 +73,9 @@ const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose 
         fieldMaskList.push(upperCaseProp);
       }
       req.setFieldMaskList(fieldMaskList);
-      try {
-        await tslClient.Update(req);
-      } catch (err) {
-        console.log(err)
-      } finally {
-        setSaving(false);
-        onSave(req.toObject());
-      }
+      const result = await tslClient.Update(req);
+      setSaving(false);
+      onSave(result);
     },
     [
       setSaving,
@@ -109,14 +107,20 @@ const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose 
 
   const handleDelete = useCallback(
     async () => {
-      setSaving(true);
-      const req = new TimesheetLine();
-      // req.setUserId(userID);
-      req.setId(id);
-      const result = await tslClient.Delete(req);
-      console.log()
-      setSaving(false);
-      onSave(result, 'delete');
+      confirm({
+        catchOnCancel: true,
+        title: "Are you sure you want to delete this Timecard?",
+        description: "Are you sure you want to delete this Timecard?"
+      })
+        .then( async () => {
+          setSaving(true);
+          const req = new TimesheetLine();
+          req.setId(id);
+          const result = await tslClient.Delete(req);
+          setSaving(false);
+          onSave(result, 'delete');
+        })
+        .catch(() => {})
     },
     [
       setSaving,
