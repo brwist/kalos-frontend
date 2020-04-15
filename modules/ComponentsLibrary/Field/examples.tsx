@@ -33,6 +33,7 @@ const EnhancedField = ({
   | 'startAdornment'
   | 'endAdornment'
   | 'placeholder'
+  | 'actionsInLabel'
 > & {
   defaultValue?: Value;
 }) => {
@@ -78,6 +79,16 @@ export default () => (
         { label: 'Action 1' },
         { label: 'Action 2', variant: 'outlined' },
       ]}
+    />
+    <EnhancedField
+      label="With actions on label"
+      required
+      actions={[
+        { label: 'Action 1' },
+        { label: 'Action 2', variant: 'outlined' },
+      ]}
+      actionsInLabel
+      multiline
     />
     <EnhancedField label="Search" type="search" />
     <EnhancedField label="Password" type="password" />

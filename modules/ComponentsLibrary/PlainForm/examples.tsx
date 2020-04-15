@@ -64,6 +64,7 @@ export const SCHEMA_2: Schema<Model> = [
       helperText: 'Min 3 characters long',
       required: true,
       actions: [{ label: 'Random', size: 'xsmall', variant: 'outlined' }],
+      actionsInLabel: true,
     },
     { name: 'mailing', label: 'Mailing', type: 'checkbox' },
   ],
