@@ -47,7 +47,7 @@ const SCHEMA_ENTRY: Schema<Entry> = [
     { name: 'predefined', type: 'hidden' },
   ],
   [{ label: 'Description', name: 'description', multiline: true }],
-  [{ label: 'Price', name: 'price', type: 'number', endAdornment: '$' }],
+  [{ label: 'Price', name: 'price', type: 'number', startAdornment: '$' }],
 ];
 
 const SCHEMA_NOTES: Schema<Notes> = [
