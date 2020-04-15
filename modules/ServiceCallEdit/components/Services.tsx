@@ -161,6 +161,10 @@ const useStyles = makeStyles(theme => ({
   onCallForm: {
     marginTop: theme.spacing(),
   },
+  editing: {
+    width: 900,
+    maxWidth: '100vw',
+  },
 }));
 
 export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
@@ -508,14 +512,25 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       )}
       {editing && (
         <Modal open onClose={handleSetEditing()}>
-          <Form<ServicesRenderedType>
-            title="Services Rendered Edit"
-            schema={SCHEMA_ON_CALL}
-            data={editing}
-            onClose={handleSetEditing()}
-            onSave={handleChangeServiceRendered}
-            disabled={saving}
-          />
+          <div className={classes.editing}>
+            <Form<ServicesRenderedType>
+              title="Services Rendered Edit"
+              schema={SCHEMA_ON_CALL}
+              data={editing}
+              onClose={handleSetEditing()}
+              onSave={handleChangeServiceRendered}
+              disabled={saving}
+            >
+              <PlainForm
+                key={paymentFormKey}
+                schema={SCHEMA_PAYMENT}
+                data={paymentForm}
+                onChange={handlePaymentFormChange}
+                compact
+                fullWidth
+              />
+            </Form>
+          </div>
         </Modal>
       )}
     </>
