@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
@@ -15,10 +15,12 @@ import {
   loadUserById,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
+import { Modal } from '../../ComponentsLibrary/Modal';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Tabs } from '../../ComponentsLibrary/Tabs';
 import { Option } from '../../ComponentsLibrary/Field';
+import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { Request } from './Request';
 import { Equipment } from './Equipment';
 import { Services } from './Services';
@@ -26,7 +28,9 @@ import { Invoice } from './Invoice';
 import { Proposal } from './Proposal';
 
 const EventClientService = new EventClient(ENDPOINT);
+const UserClientService = new UserClient(ENDPOINT);
 
+type Customer = User.AsObject;
 export type EventType = Event.AsObject;
 type JobTypeType = JobType.AsObject;
 type JobSubtypeType = JobSubtype.AsObject;
@@ -39,6 +43,17 @@ export interface Props {
   serviceCallId: number;
   loggedUserId: number;
 }
+
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<Customer> = [
+  [
+    {
+      label: 'Notification',
+      name: 'notification',
+      required: true,
+      multiline: true,
+    },
+  ],
+];
 
 export const ServiceCallDetails: FC<Props> = props => {
   const { userID, propertyId, serviceCallId, loggedUserId } = props;
@@ -54,7 +69,18 @@ export const ServiceCallDetails: FC<Props> = props => {
     [],
   );
   const [loggedUser, setLoggedUser] = useState<UserType>();
-
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
+  const loadEntry = useCallback(async () => {
+    const req = new Event();
+    req.setId(serviceCallId);
+    const entry = await EventClientService.Get(req);
+    setEntry(entry);
+  }, [setEntry, serviceCallId]);
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -68,22 +94,16 @@ export const ServiceCallDetails: FC<Props> = props => {
       setJobTypeSubtypes(jobTypeSubtypes);
       const loggedUser = await loadUserById(loggedUserId);
       setLoggedUser(loggedUser);
-      const req = new Event();
-      req.setId(serviceCallId);
-      const entry = await EventClientService.Get(req);
-      setEntry(entry);
+      await loadEntry();
       setLoading(false);
-      setLoaded(true);
     } catch (e) {
       setError(true);
     }
   }, [
     setLoading,
     setError,
-    setEntry,
     setLoaded,
     setJobTypes,
-    serviceCallId,
     userID,
     propertyId,
     setPropertyEvents,
@@ -112,12 +132,49 @@ export const ServiceCallDetails: FC<Props> = props => {
   useEffect(() => {
     if (!loaded) {
       load();
+      setLoaded(true);
     }
-  }, [loaded, load]);
+    if (entry && entry.customer && entry.customer.notification !== '') {
+      setNotificationViewing(true);
+    }
+  }, [entry, loaded, load, setLoaded, setNotificationViewing]);
 
   const handleChangeEntry = useCallback(
     (data: EventType) => setEntry({ ...entry, ...data }),
     [entry, setEntry],
+  );
+
+  const handleSetNotificationEditing = useCallback(
+    (notificationEditing: boolean) => () =>
+      setNotificationEditing(notificationEditing),
+    [setNotificationEditing],
+  );
+
+  const handleSetNotificationViewing = useCallback(
+    (notificationViewing: boolean) => () =>
+      setNotificationViewing(notificationViewing),
+    [setNotificationViewing],
+  );
+
+  const handleSaveCustomer = useCallback(
+    async (data: Customer) => {
+      setSaving(true);
+      const entry = new User();
+      entry.setId(userID);
+      const fieldMaskList = [];
+      for (const fieldName in data) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        entry[methodName](data[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      entry.setFieldMaskList(fieldMaskList);
+      await UserClientService.Update(entry);
+      await loadEntry();
+      setSaving(false);
+      handleSetNotificationEditing(false)();
+    },
+    [setSaving, userID, handleSetNotificationEditing],
   );
 
   const jobTypeOptions: Option[] = jobTypes.map(
@@ -145,6 +202,7 @@ export const ServiceCallDetails: FC<Props> = props => {
     fax,
     email,
     billingTerms,
+    notification,
   } = customer || new User().toObject();
   const { address, city, state, zip } = property || new Property().toObject();
   const data: Data = [
@@ -193,7 +251,10 @@ export const ServiceCallDetails: FC<Props> = props => {
             ),
           },
           {
-            label: 'Add Notification',
+            label: notification ? 'Notification' : 'Add Notification',
+            onClick: notification
+              ? handleSetNotificationViewing(true)
+              : handleSetNotificationEditing(true),
           },
           {
             label: 'Service Call Search',
@@ -286,6 +347,56 @@ export const ServiceCallDetails: FC<Props> = props => {
         ]}
         defaultOpenIdx={0}
       />
+      {customer && (
+        <Modal
+          open={notificationEditing || notificationViewing}
+          onClose={() => {
+            handleSetNotificationViewing(false)();
+            handleSetNotificationEditing(false)();
+          }}
+        >
+          <Form<Customer>
+            title={
+              notificationViewing
+                ? 'Customer Notification'
+                : `${
+                    notification === '' ? 'Add' : 'Edit'
+                  } Customer Notification`
+            }
+            schema={SCHEMA_PROPERTY_NOTIFICATION}
+            data={customer}
+            onSave={handleSaveCustomer}
+            onClose={() => {
+              handleSetNotificationViewing(false)();
+              handleSetNotificationEditing(false)();
+            }}
+            disabled={saving}
+            readOnly={notificationViewing}
+            actions={
+              notificationViewing
+                ? [
+                    {
+                      label: 'Edit',
+                      variant: 'outlined',
+                      onClick: () => {
+                        handleSetNotificationViewing(false)();
+                        handleSetNotificationEditing(true)();
+                      },
+                    },
+                    {
+                      label: 'Delete',
+                      variant: 'outlined',
+                      onClick: () => {
+                        handleSetNotificationViewing(false)();
+                        handleSaveCustomer({ notification: '' } as Customer);
+                      },
+                    },
+                  ]
+                : []
+            }
+          />
+        </Modal>
+      )}
     </div>
   );
 };
