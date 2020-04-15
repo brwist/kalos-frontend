@@ -40,6 +40,7 @@ export type Validation = { [key: string]: string };
 
 type Style = {
   compact?: boolean;
+  fullWidth?: boolean;
 };
 
 export interface PlainFormProps<T> extends Style {
@@ -58,12 +59,18 @@ interface Props<T> extends PlainFormProps<T> {
 }
 
 const useStyles = makeStyles(theme => ({
-  form: ({ compact }: Style) => ({
+  form: ({ compact, fullWidth }: Style) => ({
     padding: theme.spacing(2),
     ...(compact
       ? {
           paddingTop: 0,
           paddingBottom: 0,
+        }
+      : {}),
+    ...(fullWidth
+      ? {
+          paddingLeft: 0,
+          paddingRight: 0,
         }
       : {}),
   }),
@@ -129,12 +136,13 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   disabled = false,
   readOnly = false,
   compact = false,
+  fullWidth = false,
   error,
   validations = {},
   className = '',
   children,
 }) => {
-  const classes = useStyles({ compact });
+  const classes = useStyles({ compact, fullWidth });
   const [formData, setFormData] = useState(
     schema.reduce(
       (aggr, fields) => ({

@@ -99,6 +99,7 @@ export default () => (
       schema={SCHEMA_1}
       data={model}
       onChange={data => console.log(data)}
+      fullWidth
     >
       <LoremIpsumList />
     </PlainForm>
