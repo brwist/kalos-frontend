@@ -385,13 +385,25 @@ async function loadTechnicians() {
 async function loadJobTypeSubtypes() {
   const results: JobTypeSubtype.AsObject[] = [];
   const req = new JobTypeSubtype();
-  for (let page = 0; ; page += 1) {
-    req.setPageNumber(page);
-    const { resultsList, totalCount } = (
-      await JobTypeSubtypeClientService.BatchGet(req)
-    ).toObject();
-    results.push(...resultsList);
-    if (results.length === totalCount) break;
+  req.setPageNumber(0);
+  const { resultsList, totalCount } = (
+    await JobTypeSubtypeClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await JobTypeSubtypeClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
   }
   return results;
 }
