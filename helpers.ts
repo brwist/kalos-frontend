@@ -346,17 +346,28 @@ async function loadJobSubtypes() {
 async function loadTechnicians() {
   const results: User.AsObject[] = [];
   const req = new User();
+  req.setPageNumber(0);
   req.setIsActive(1);
   req.setIsEmployee(1);
   req.setIsSu(0);
   req.setServiceCalls(1);
-  for (let page = 0; ; page += 1) {
-    req.setPageNumber(page);
-    const { resultsList, totalCount } = (
-      await UserClientService.BatchGet(req)
-    ).toObject();
-    results.push(...resultsList);
-    if (results.length === totalCount) break;
+  const { resultsList, totalCount } = (
+    await UserClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await UserClientService.BatchGet(req)).toObject().resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
   }
   return results.sort((a, b) => {
     const A = `${a.firstname} ${a.lastname}`.toLocaleLowerCase();
