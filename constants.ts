@@ -2,6 +2,8 @@ import { Options } from './modules/ComponentsLibrary/Field';
 
 export const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 
+export const OPTION_BLANK = '-- Select --';
+
 export const EVENT_STATUS_LIST = [
   'Requested',
   'Confirmed',
@@ -37,6 +39,28 @@ export const SIGNATURE_PAYMENT_TYPE_LIST: Options = [
   'Cash',
   'Check',
   'Paypal',
+];
+
+export const PAYMENT_COLLECTED_LIST: Options = [
+  'Credit Card',
+  'Financing (Complete)',
+  'Cash',
+  'Check',
+  'PayPal',
+  'ACH Transfer',
+  'Pre-Paid',
+  'Charity',
+];
+
+export const PAYMENT_NOT_COLLECTED_LIST: Options = [
+  'Billing',
+  'Credit Card',
+  'Financing (Complete)',
+  'AOR Warranty',
+  'Service Warranty',
+  'No Charge',
+  'Pre-Paid',
+  'Charity',
 ];
 
 export const DUMMY_USER = 'test';
@@ -188,4 +212,7 @@ export default {
   SERVICE_STATUSES,
   QUOTE_PART_AVAILABILITY,
   SIGNATURE_PAYMENT_TYPE_LIST,
+  PAYMENT_COLLECTED_LIST,
+  PAYMENT_NOT_COLLECTED_LIST,
+  OPTION_BLANK,
 };

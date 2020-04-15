@@ -7,6 +7,7 @@ import {
   EVENT_STATUS_LIST,
   PAYMENT_TYPE_LIST,
   JOB_STATUS_COLORS,
+  OPTION_BLANK,
 } from '../../../constants';
 import { EventType, JobTypeSubtypeType } from './ServiceCallDetails';
 
@@ -71,7 +72,7 @@ export const Request: FC<Props> = ({
   );
   const callbackOriginalOptions: Option[] = useMemo(
     () => [
-      { label: '-- Select --', value: 0 },
+      { label: OPTION_BLANK, value: 0 },
       ...propertyEvents.map(({ id, logJobNumber, name }) => ({
         label: `${logJobNumber} - ${name}`,
         value: id,
