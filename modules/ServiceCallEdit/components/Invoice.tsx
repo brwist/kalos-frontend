@@ -43,14 +43,20 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
   );
   const SCHEMA: Schema<EventTypeExtended> = [
     [
-      { label: 'Services Performed (1)', name: 'servicesperformedrow1' },
+      {
+        label: 'Services Performed (1)',
+        name: 'servicesperformedrow1',
+      },
       {
         label: 'Total Amount (1)',
         name: 'totalamountrow1',
         type: 'number',
         startAdornment: '$',
       },
-      { label: 'Services Performed (2)', name: 'servicesperformedrow2' },
+      {
+        label: 'Services Performed (2)',
+        name: 'servicesperformedrow2',
+      },
       {
         label: 'Total Amount (2)',
         name: 'totalamountrow2',
@@ -59,14 +65,20 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
       },
     ],
     [
-      { label: 'Services Performed (3)', name: 'servicesperformedrow3' },
+      {
+        label: 'Services Performed (3)',
+        name: 'servicesperformedrow3',
+      },
       {
         label: 'Total Amount (3)',
         name: 'totalamountrow3',
         type: 'number',
         startAdornment: '$',
       },
-      { label: 'Services Performed (4)', name: 'servicesperformedrow4' },
+      {
+        label: 'Services Performed (4)',
+        name: 'servicesperformedrow4',
+      },
       {
         label: 'Total Amount (4)',
         name: 'totalamountrow4',
@@ -88,7 +100,11 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
         type: 'number',
         startAdornment: '$',
       },
-      { label: 'Payment', name: 'logType', readOnly: true }, // FIXME
+      {
+        content: (
+          <Field label="Payment" name="payment" value={0} startAdornment="$" />
+        ), // FIXME
+      },
       {
         label: 'Discount',
         name: 'discount',
@@ -103,12 +119,35 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
             label="Grand Total"
             name="grandTotal"
             value={data.grandTotal}
+            startAdornment="$"
           />
         ),
       },
-      { label: 'Payments', name: 'logType', readOnly: true }, // FIXME
-      { label: 'Remaining due', name: 'logType', readOnly: true }, // FIXME
-      { label: 'Billing Date', name: 'logBillingDate', type: 'date' },
+      {
+        content: (
+          <Field
+            label="Payments"
+            name="payments"
+            value={0}
+            startAdornment="$"
+          />
+        ), // FIXME
+      },
+      {
+        content: (
+          <Field
+            label="Remaining due"
+            name="remainingDue"
+            value={(1 - +data.discount / 100) * data.grandTotal} // FIXME
+            startAdornment="$"
+          />
+        ),
+      },
+      {
+        label: 'Billing Date',
+        name: 'logBillingDate',
+        type: 'date',
+      },
     ],
     [
       {
@@ -116,13 +155,20 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
         name: 'logPaymentType',
         options: PAYMENT_TYPE_LIST,
       },
-      { label: 'PO', name: 'logPo' },
+      {
+        label: 'PO',
+        name: 'logPo',
+      },
       {
         label: 'Use Property-level Billing?',
         name: 'propertyBilling',
         type: 'checkbox',
       },
-      { label: 'Invoice Notes', name: 'notes', multiline: true },
+      {
+        label: 'Invoice Notes',
+        name: 'notes',
+        multiline: true,
+      },
     ],
   ];
   return <PlainForm schema={SCHEMA} data={data} onChange={handleChange} />;
