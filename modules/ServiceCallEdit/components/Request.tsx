@@ -125,6 +125,7 @@ export const Request: FC<Props> = ({
       {
         label: 'Amount Quoted',
         name: 'amountQuoted',
+        startAdornment: '$',
       },
       {
         label: 'Diagnostic Quoted',
