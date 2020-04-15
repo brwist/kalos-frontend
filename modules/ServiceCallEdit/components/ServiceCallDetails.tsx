@@ -14,7 +14,7 @@ import {
   makeFakeRows,
   loadUserById,
 } from '../../../helpers';
-import { ENDPOINT } from '../../../constants';
+import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Tabs } from '../../ComponentsLibrary/Tabs';
@@ -125,7 +125,7 @@ export const ServiceCallDetails: FC<Props> = props => {
   );
 
   const jobSubtypeOptions: Option[] = [
-    { label: '-- Select --', value: 0 },
+    { label: OPTION_BLANK, value: 0 },
     ...jobTypeSubtypes
       .filter(({ jobTypeId }) => jobTypeId === entry.jobTypeId)
       .map(({ jobSubtypeId }) => ({

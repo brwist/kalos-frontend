@@ -13,7 +13,6 @@ import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { Form } from '../../ComponentsLibrary/Form';
 import { Modal } from '../../ComponentsLibrary/Modal';
-// import { Field } from '../../ComponentsLibrary/Field';
 import {
   loadServicesRendered,
   makeFakeRows,
@@ -25,6 +24,9 @@ import {
   ENDPOINT,
   SERVICE_STATUSES,
   SIGNATURE_PAYMENT_TYPE_LIST,
+  PAYMENT_COLLECTED_LIST,
+  PAYMENT_NOT_COLLECTED_LIST,
+  OPTION_BLANK,
 } from '../../../constants';
 import { UserType } from './ServiceCallDetails';
 
@@ -79,31 +81,6 @@ const COLUMNS_SERVICES_RENDERED_HISTORY: Columns = [
   { name: 'Status' },
 ];
 
-const SCHEMA_PAYMENT: Schema<PaymentType> = [
-  [
-    {
-      label: 'Payment Collected',
-      name: 'paymentCollected',
-      type: 'checkbox',
-    },
-    {
-      label: 'Payment Type',
-      name: 'paymentType',
-    },
-    {
-      label: 'Amount Collected',
-      name: 'amountCollected',
-      type: 'number',
-      startAdornment: '$',
-    },
-    {
-      label: 'Date Processed',
-      name: 'dateProcessed',
-      type: 'date',
-    },
-  ],
-];
-
 const SCHEMA_SIGNATURE: Schema<SignatureType> = [
   [
     {
@@ -136,7 +113,7 @@ const SCHEMA_SIGNATURE: Schema<SignatureType> = [
     {
       label: 'Payment Type',
       name: 'paymentType',
-      options: ['-- Select --', ...SIGNATURE_PAYMENT_TYPE_LIST],
+      options: [OPTION_BLANK, ...SIGNATURE_PAYMENT_TYPE_LIST],
     },
     {
       label: 'Amount Collected',
@@ -149,7 +126,11 @@ const SCHEMA_SIGNATURE: Schema<SignatureType> = [
 
 const SCHEMA_ON_CALL: Schema<ServicesRenderedType> = [
   [
-    { label: 'Services Rendered', name: 'serviceRendered', multiline: true },
+    {
+      label: 'Services Rendered',
+      name: 'serviceRendered',
+      multiline: true,
+    },
     {
       label: 'Technician Notes',
       name: 'techNotes',
@@ -157,33 +138,6 @@ const SCHEMA_ON_CALL: Schema<ServicesRenderedType> = [
       helperText: 'For internal use',
     },
   ],
-  // [
-  //   {
-  //     content: (
-  //       <Field
-  //         label="Payment Collected"
-  //         name="paymentCollected"
-  //         value="1"
-  //         type="checkbox"
-  //       />
-  //     ),
-  //   }, // FIXME
-  //   {
-  //     content: (
-  //       <Field label="Payment Type" name="paymentType" readOnly value="" />
-  //     ),
-  //   }, // TODO
-  //   {
-  //     content: (
-  //       <Field
-  //         label="Amount Collected"
-  //         name="amountCollected"
-  //         readOnly
-  //         value=""
-  //       />
-  //     ),
-  //   }, // TODO
-  // ],
 ];
 
 const SIGNATURE_INITIAL: SignatureType = {
@@ -192,7 +146,7 @@ const SIGNATURE_INITIAL: SignatureType = {
   authorizedSignorRole: '',
   signorNotes: '',
   date: timestamp(true),
-  paymentType: '-- Select --',
+  paymentType: OPTION_BLANK,
   amountCollected: 0,
 };
 
@@ -200,7 +154,7 @@ const PAYMENT_INITIAL: PaymentType = {
   amountCollected: 0,
   dateProcessed: timestamp(true),
   paymentCollected: 0,
-  paymentType: '',
+  paymentType: OPTION_BLANK,
 };
 
 const useStyles = makeStyles(theme => ({
@@ -214,6 +168,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
   const { isAdmin } = loggedUser;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
   const [serviceRenderedForm, setServicesRenderedForm] = useState<
     ServicesRenderedType
   >(new ServicesRendered().toObject());
@@ -310,6 +265,24 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
     (editing?: ServicesRenderedType) => () => setEditing(editing),
     [setEditing],
   );
+  const handlePaymentFormChange = useCallback(
+    (data: PaymentType) => {
+      const hasPaymentCollectedChanged =
+        data.paymentCollected !== paymentForm.paymentCollected;
+      setPaymentForm({
+        ...data,
+        ...(hasPaymentCollectedChanged
+          ? {
+              paymentType: OPTION_BLANK,
+            }
+          : {}),
+      });
+      if (hasPaymentCollectedChanged) {
+        setPaymentFormKey(paymentFormKey + 1);
+      }
+    },
+    [setPaymentForm, paymentForm, paymentFormKey, setPaymentFormKey],
+  );
   const data: Data = loading
     ? makeFakeRows(4, 3)
     : servicesRendered.map(props => {
@@ -350,7 +323,6 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
           },
         ];
       });
-  // const lastEntry = servicesRendered[0];
   const lastStatus = servicesRendered[0] ? servicesRendered[0].status : '';
   const servicesRenderedData: Data = servicesRendered
     .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
@@ -360,6 +332,36 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       { value: serviceRendered },
       { value: techNotes },
     ]);
+  const SCHEMA_PAYMENT: Schema<PaymentType> = [
+    [
+      {
+        label: 'Payment Collected',
+        name: 'paymentCollected',
+        type: 'checkbox',
+      },
+      {
+        label: 'Payment Type',
+        name: 'paymentType',
+        options: [
+          OPTION_BLANK,
+          ...(paymentForm.paymentCollected
+            ? PAYMENT_COLLECTED_LIST
+            : PAYMENT_NOT_COLLECTED_LIST),
+        ],
+      },
+      {
+        label: 'Amount Collected',
+        name: 'amountCollected',
+        type: 'number',
+        startAdornment: '$',
+      },
+      {
+        label: 'Date Processed',
+        name: 'dateProcessed',
+        type: 'date',
+      },
+    ],
+  ];
   return (
     <>
       {[COMPLETED, INCOMPLETE, ENROUTE, ADMIN].includes(lastStatus) &&
@@ -482,9 +484,10 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
             className={classes.onCallForm}
           />
           <PlainForm
+            key={paymentFormKey}
             schema={SCHEMA_PAYMENT}
             data={paymentForm}
-            onChange={setPaymentForm}
+            onChange={handlePaymentFormChange}
             compact
           />
         </>
