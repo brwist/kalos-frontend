@@ -210,13 +210,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     (value + '').split(',').map(id => +id),
   );
   const [searchTechnician, setSearchTechnician] = useState<Value>('');
-
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
     setLoadedTechnicians(true);
     setTechnicians(technicians);
   }, [setLoadedTechnicians, setTechnicians]);
-
   const handleSetTechniciansOpened = useCallback(
     (opened: boolean) => () => {
       setTechniciansOpened(opened);
@@ -232,25 +230,30 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       loadUserTechnicians();
     }
   }, [loadedTechnicians, value]);
-
   const handleTechniciansSelect = useCallback(() => {
     if (onChange) {
       onChange(techniciansIds.join(','));
     }
     setTechniciansOpened(false);
   }, [onChange, techniciansIds, setTechniciansOpened]);
-
   const handleTechnicianChecked = useCallback(
-    (id: number) => () => {
+    (id: number) => (checked: Value) => {
       if (id === 0) {
         setTechniciansIds([0]);
       } else {
-        setTechniciansIds([...techniciansIds.filter(id => id !== 0), id]);
+        const ids = [
+          ...techniciansIds.filter(techId => {
+            if (techId === 0) return false;
+            if (!checked && id === techId) return false;
+            return true;
+          }),
+          ...(checked ? [id] : []),
+        ];
+        setTechniciansIds(ids.length > 0 ? ids : [0]);
       }
     },
     [techniciansIds, setTechniciansIds],
   );
-
   const { actions, description } = props;
   const classes = useStyles({ type, disabled });
   const handleChange = useCallback(
