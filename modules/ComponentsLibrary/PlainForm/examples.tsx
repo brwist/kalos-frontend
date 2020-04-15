@@ -52,6 +52,7 @@ export const SCHEMA_2: Schema<Model> = [
     { name: 'lastName', label: 'Last Name' },
     { name: 'gender', label: 'Gender', options: GENDERS },
     { name: 'dob', label: 'Date of birth', type: 'date' },
+    { name: 'hour', label: 'Hour', type: 'time' },
   ],
   [{ label: 'Login detail', headline: true }],
   [
@@ -65,7 +66,6 @@ export const SCHEMA_2: Schema<Model> = [
       actions: [{ label: 'Random', size: 'xsmall', variant: 'outlined' }],
     },
     { name: 'mailing', label: 'Mailing', type: 'checkbox' },
-    { name: 'hour', label: 'Hour', type: 'time' },
   ],
   [{ label: 'Various', headline: true }],
   [
