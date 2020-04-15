@@ -46,7 +46,7 @@ const {
 
 type ServicesRenderedType = ServicesRendered.AsObject;
 
-type SignatureType = {
+type PaymentType = {
   signature: string;
   authorizedSignorName: string;
   authorizedSignorRole: string;
@@ -56,7 +56,14 @@ type SignatureType = {
   paymentType: string;
 };
 
-type PaymentType = {
+type SignatureType = {
+  signature: string;
+  authorizedSignorName: string;
+  authorizedSignorRole: string;
+  signorNotes: string;
+};
+
+type PaymentPartType = {
   paymentCollected: number;
   paymentType: string;
   amountCollected: number;
@@ -104,12 +111,11 @@ const SCHEMA_SIGNATURE: Schema<SignatureType> = [
       multiline: true,
     },
   ],
+];
+
+const SCHEMA_PAYMENT: Schema<PaymentType> = [
+  ...SCHEMA_SIGNATURE,
   [
-    {
-      label: 'Date',
-      name: 'date',
-      type: 'date',
-    },
     {
       label: 'Payment Type',
       name: 'paymentType',
@@ -120,6 +126,11 @@ const SCHEMA_SIGNATURE: Schema<SignatureType> = [
       name: 'amountCollected',
       type: 'number',
       startAdornment: '$',
+    },
+    {
+      label: 'Date Processed',
+      name: 'date',
+      type: 'date',
     },
   ],
 ];
@@ -140,7 +151,7 @@ const SCHEMA_ON_CALL: Schema<ServicesRenderedType> = [
   ],
 ];
 
-const SIGNATURE_INITIAL: SignatureType = {
+const PAYMENT_INITIAL: PaymentType = {
   signature: '',
   authorizedSignorName: '',
   authorizedSignorRole: '',
@@ -150,7 +161,14 @@ const SIGNATURE_INITIAL: SignatureType = {
   amountCollected: 0,
 };
 
-const PAYMENT_INITIAL: PaymentType = {
+const SIGNATURE_INITIAL: SignatureType = {
+  signature: '',
+  authorizedSignorName: '',
+  authorizedSignorRole: '',
+  signorNotes: '',
+};
+
+const PAYMENT_PART_INITIAL: PaymentPartType = {
   amountCollected: 0,
   dateProcessed: timestamp(true),
   paymentCollected: 0,
@@ -179,10 +197,13 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
   const [servicesRendered, setServicesRendered] = useState<
     ServicesRenderedType[]
   >([]);
+  const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
   const [signatureForm, setSignatureForm] = useState<SignatureType>(
     SIGNATURE_INITIAL,
   );
-  const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
+  const [paymentFormPart, setPaymentFormPart] = useState<PaymentPartType>(
+    PAYMENT_PART_INITIAL,
+  );
   const [deleting, setDeleting] = useState<ServicesRenderedType>();
   const [editing, setEditing] = useState<ServicesRenderedType>();
   const [saving, setSaving] = useState<boolean>(false);
@@ -231,6 +252,8 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       await ServicesRenderedClientService.Create(req);
       load();
       setServicesRenderedForm(new ServicesRendered().toObject());
+      setPaymentFormPart(PAYMENT_PART_INITIAL);
+      setPaymentForm(PAYMENT_INITIAL);
       setSignatureForm(SIGNATURE_INITIAL);
     },
     [
@@ -239,6 +262,9 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       serviceRenderedForm,
       setSignatureForm,
       setServicesRenderedForm,
+      setPaymentFormPart,
+      setPaymentForm,
+      setSignatureForm,
     ],
   );
   const handleChangeServiceRendered = useCallback(
@@ -270,10 +296,10 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
     [setEditing],
   );
   const handlePaymentFormChange = useCallback(
-    (data: PaymentType) => {
+    (data: PaymentPartType) => {
       const hasPaymentCollectedChanged =
-        data.paymentCollected !== paymentForm.paymentCollected;
-      setPaymentForm({
+        data.paymentCollected !== paymentFormPart.paymentCollected;
+      setPaymentFormPart({
         ...data,
         ...(hasPaymentCollectedChanged
           ? {
@@ -285,7 +311,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
         setPaymentFormKey(paymentFormKey + 1);
       }
     },
-    [setPaymentForm, paymentForm, paymentFormKey, setPaymentFormKey],
+    [setPaymentFormPart, paymentFormPart, paymentFormKey, setPaymentFormKey],
   );
   const data: Data = loading
     ? makeFakeRows(4, 3)
@@ -336,7 +362,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       { value: serviceRendered },
       { value: techNotes },
     ]);
-  const SCHEMA_PAYMENT: Schema<PaymentType> = [
+  const SCHEMA_PAYMENT_PART: Schema<PaymentPartType> = [
     [
       {
         label: 'Payment Collected',
@@ -348,7 +374,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
         name: 'paymentType',
         options: [
           OPTION_BLANK,
-          ...(paymentForm.paymentCollected
+          ...(paymentFormPart.paymentCollected
             ? PAYMENT_COLLECTED_LIST
             : PAYMENT_NOT_COLLECTED_LIST),
         ],
@@ -473,6 +499,13 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       />
       {[PAYMENT].includes(lastStatus) && (
         <PlainForm
+          schema={SCHEMA_PAYMENT}
+          data={paymentForm}
+          onChange={setPaymentForm}
+        />
+      )}
+      {[SIGNATURE].includes(lastStatus) && (
+        <PlainForm
           schema={SCHEMA_SIGNATURE}
           data={signatureForm}
           onChange={setSignatureForm}
@@ -489,8 +522,8 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
           />
           <PlainForm
             key={paymentFormKey}
-            schema={SCHEMA_PAYMENT}
-            data={paymentForm}
+            schema={SCHEMA_PAYMENT_PART}
+            data={paymentFormPart}
             onChange={handlePaymentFormChange}
             compact
           />
@@ -523,8 +556,8 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
             >
               <PlainForm
                 key={paymentFormKey}
-                schema={SCHEMA_PAYMENT}
-                data={paymentForm}
+                schema={SCHEMA_PAYMENT_PART}
+                data={paymentFormPart}
                 onChange={handlePaymentFormChange}
                 compact
                 fullWidth
