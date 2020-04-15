@@ -9,15 +9,17 @@ import TimerOffIcon from '@material-ui/icons/TimerOff';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import AssessmentIcon from '@material-ui/icons/Assessment';
-import customTheme from '../Theme/main';
-import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
-import Toolbar from './components/Toolbar';
-import Column from './components/Column';
-import EditTimesheetModal from './components/EditModal';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import customTheme from '../Theme/main';
+import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
+import { ConfirmServiceProvider } from '../ComponentsLibrary/ConfirmService';
+import Toolbar from './components/Toolbar';
+import Column from './components/Column';
+import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
+
 const userClient = new UserClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -155,36 +157,38 @@ const Timesheet = ({ userId }: Props) => {
 
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <EditTimesheetContext.Provider
-        value={{
-          editTimesheetCard,
-          editServicesRenderedCard,
-        }}
-      >
-        <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
-        <Box className={classes.wrapper}>
-          <Container className={classes.week} maxWidth={false}>
-            {shownDates.map(date => (
-              <Column
-                key={date}
-                date={date}
-                userId={userId}
-                editedEntries={editingState.editedEntries}
-              />
-            ))}
-          </Container>
-        </Box>
-        {editingState.modalShown && (
-          <EditTimesheetModal
-            entry={editingState.entry}
-            userId={userId}
-            onClose={handleCloseModal}
-            onSave={handleOnSave}
-            action={editingState.action}
-          />
-        )}
-        <AddNewButton options={addNewOptions} />
-      </EditTimesheetContext.Provider>
+      <ConfirmServiceProvider>
+        <EditTimesheetContext.Provider
+          value={{
+            editTimesheetCard,
+            editServicesRenderedCard,
+          }}
+        >
+          <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
+          <Box className={classes.wrapper}>
+            <Container className={classes.week} maxWidth={false}>
+              {shownDates.map(date => (
+                <Column
+                  key={date}
+                  date={date}
+                  userId={userId}
+                  editedEntries={editingState.editedEntries}
+                />
+              ))}
+            </Container>
+          </Box>
+          {editingState.modalShown && (
+            <EditTimesheetModal
+              entry={editingState.entry}
+              userId={userId}
+              onClose={handleCloseModal}
+              onSave={handleOnSave}
+              action={editingState.action}
+            />
+          )}
+          <AddNewButton options={addNewOptions} />
+        </EditTimesheetContext.Provider>
+      </ConfirmServiceProvider>
     </ThemeProvider>
   );
 };
