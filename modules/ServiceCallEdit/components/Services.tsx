@@ -76,14 +76,14 @@ interface Props {
 }
 
 const COLUMNS_SERVICES_RENDERED: Columns = [
-  { name: 'Time' },
+  { name: 'Date/Time' },
   { name: 'Technician' },
   { name: 'Services Rendered' },
   { name: 'Technician Notes' },
 ];
 
 const COLUMNS_SERVICES_RENDERED_HISTORY: Columns = [
-  { name: 'Time' },
+  { name: 'Date/Time' },
   { name: 'Technician' },
   { name: 'Status' },
 ];
