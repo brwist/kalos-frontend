@@ -236,8 +236,24 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
     (status: string) => async () => {
       const req = new ServicesRendered();
       req.setEventId(serviceCallId);
-      req.setStatus(status);
-      req.setName(`${loggedUser.firstname} ${loggedUser.lastname}`);
+      const isSignature = status === SIGNED_AS;
+      const statusToSave = `${status}${
+        isSignature
+          ? ` ${
+              signatureForm.authorizedSignorRole ||
+              paymentForm.authorizedSignorRole
+            }`
+          : ''
+      }`;
+      req.setStatus(statusToSave);
+      req.setName(
+        isSignature
+          ? `${
+              signatureForm.authorizedSignorName ||
+              paymentForm.authorizedSignorName
+            }`
+          : `${loggedUser.firstname} ${loggedUser.lastname}`,
+      );
       req.setDatetime(timestamp());
       const fieldMaskList = ['EventId', 'Status', 'Name', 'Datetime'];
       SCHEMA_ON_CALL.forEach(row =>
@@ -265,6 +281,8 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       setPaymentFormPart,
       setPaymentForm,
       setSignatureForm,
+      signatureForm,
+      paymentForm,
     ],
   );
   const handleChangeServiceRendered = useCallback(
@@ -353,7 +371,10 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
           },
         ];
       });
-  const lastStatus = servicesRendered[0] ? servicesRendered[0].status : '';
+  let lastStatus = servicesRendered[0] ? servicesRendered[0].status : '';
+  if (lastStatus.startsWith(SIGNED_AS)) {
+    lastStatus = SIGNED_AS;
+  }
   const servicesRenderedData: Data = servicesRendered
     .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
     .map(({ datetime, name, serviceRendered, techNotes }) => [
