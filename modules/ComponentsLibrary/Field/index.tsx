@@ -141,8 +141,8 @@ const useStyles = makeStyles(theme => ({
     marginLeft: theme.spacing(),
   },
   hourWrapper: {
-    width: '100%',
-    flexGrow: 1,
+    flexDirection: 'column',
+    alignItems: 'stretch',
   },
   hour: {
     display: 'flex',
@@ -385,7 +385,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     }
     const ampm = +valHour < 12 ? 'AM' : 'PM';
     return (
-      <div className={classes.hourWrapper}>
+      <div
+        className={[classes.fieldWrapper, classes.hourWrapper, className].join(
+          ' ',
+        )}
+      >
         <InputLabel shrink>{inputLabel}</InputLabel>
         <div className={classes.hour}>
           <Field
