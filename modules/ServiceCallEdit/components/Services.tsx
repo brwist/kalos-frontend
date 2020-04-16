@@ -17,6 +17,7 @@ import {
   makeFakeRows,
   timestamp,
   formatDateTime,
+  formatDateTimeDay,
   getRPCFields,
 } from '../../../helpers';
 import {
@@ -367,7 +368,7 @@ export const Services: FC<Props> = ({
   const servicesRenderedData: Data = servicesRendered
     .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
     .map(({ datetime, name, serviceRendered, techNotes }) => [
-      { value: formatDateTime(datetime) },
+      { value: formatDateTimeDay(datetime) },
       { value: name },
       { value: serviceRendered },
       { value: techNotes },
