@@ -5,6 +5,7 @@ import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Property } from '@kalos-core/kalos-rpc/Property';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   loadJobTypes,
   loadJobSubtypes,
@@ -13,6 +14,7 @@ import {
   loadEventsByPropertyId,
   makeFakeRows,
   loadUserById,
+  loadServicesRendered,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../../ComponentsLibrary/Modal';
@@ -36,6 +38,7 @@ type JobTypeType = JobType.AsObject;
 type JobSubtypeType = JobSubtype.AsObject;
 export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
 export type UserType = User.AsObject;
+export type ServicesRenderedType = ServicesRendered.AsObject;
 
 export interface Props {
   userID: number;
@@ -68,6 +71,9 @@ export const ServiceCallDetails: FC<Props> = props => {
   const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
     [],
   );
+  const [servicesRendered, setServicesRendered] = useState<
+    ServicesRenderedType[]
+  >([]);
   const [loggedUser, setLoggedUser] = useState<UserType>();
   const [notificationEditing, setNotificationEditing] = useState<boolean>(
     false,
@@ -81,6 +87,12 @@ export const ServiceCallDetails: FC<Props> = props => {
     const entry = await EventClientService.Get(req);
     setEntry(entry);
   }, [setEntry, serviceCallId]);
+  const loadServicesRenderedData = useCallback(async () => {
+    setLoading(true);
+    const servicesRendered = await loadServicesRendered(serviceCallId);
+    setServicesRendered(servicesRendered);
+    setLoading(false);
+  }, [setServicesRendered, serviceCallId]);
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -95,6 +107,7 @@ export const ServiceCallDetails: FC<Props> = props => {
       const loggedUser = await loadUserById(loggedUserId);
       setLoggedUser(loggedUser);
       await loadEntry();
+      await loadServicesRenderedData();
       setLoading(false);
     } catch (e) {
       setError(true);
@@ -323,7 +336,13 @@ export const ServiceCallDetails: FC<Props> = props => {
           {
             label: 'Services',
             content: loggedUser ? (
-              <Services serviceCallId={serviceCallId} loggedUser={loggedUser} />
+              <Services
+                serviceCallId={serviceCallId}
+                servicesRendered={servicesRendered}
+                loggedUser={loggedUser}
+                loadServicesRendered={loadServicesRenderedData}
+                loading={loading}
+              />
             ) : (
               <InfoTable data={makeFakeRows(4, 4)} loading />
             ),
@@ -333,7 +352,11 @@ export const ServiceCallDetails: FC<Props> = props => {
             content: loading ? (
               <InfoTable data={makeFakeRows(4, 5)} loading />
             ) : (
-              <Invoice serviceItem={entry} disabled={saving} />
+              <Invoice
+                serviceItem={entry}
+                disabled={saving}
+                servicesRendered={servicesRendered}
+              />
             ),
           },
           {
