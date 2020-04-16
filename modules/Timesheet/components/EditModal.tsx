@@ -4,13 +4,17 @@ import ButtonGroup from '@material-ui/core/ButtonGroup';
 import { format } from 'date-fns';
 import { Button } from '../../ComponentsLibrary/Button';
 import { TimesheetLine, TimesheetLineClient } from '@kalos-core/kalos-rpc/TimesheetLine';
+import {
+  ServicesRenderedClient,
+  ServicesRendered,
+} from '@kalos-core/kalos-rpc/ServicesRendered';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
-import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { useConfirm } from '../../ComponentsLibrary/ConfirmService';
 import { getRPCFields } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
+const srClient = new ServicesRenderedClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -90,6 +94,7 @@ const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose 
       data.timeFinished = `${data.date.trim()} ${data.timeFinished.trim()}`;
       delete data.date;
       data.technicianUserId = userId;
+      data.servicesRenderedId = entry.servicesRenderedId;
       const req = new TimesheetLine();
       for (const fieldName in data) {
         const { methodName } = getRPCFields(fieldName);
@@ -97,12 +102,20 @@ const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose 
         req[methodName](data[fieldName]);
       }
       const result = await tslClient.Create(req);
+      if (action === 'convert' && result.servicesRenderedId) {
+        const reqSR = new ServicesRendered();
+        reqSR.setId(result.servicesRenderedId);
+        reqSR.setHideFromTimesheet(1);
+        reqSR.setFieldMaskList(['HideFromTimesheet']);
+        const srResult = await srClient.Update(reqSR);
+      }
       setSaving(false);
       onSave(result);
     },
     [
       setSaving,
       entry,
+      action,
     ],);
 
   const handleDelete = useCallback(
@@ -127,6 +140,22 @@ const EditTimesheetModal: FC<Props> = ({ entry, userId, action, onSave, onClose 
       entry,
     ],
   );
+
+  const handleSave = useCallback((data) => {
+    switch (action) {
+      case 'update':
+        handleUpdate(data);
+        break;
+      case 'create':
+        handleCreate(data);
+        break;
+      case 'convert':
+        handleCreate(data);
+        break;
+      default:
+        return false;
+    }
+  }, [action]);
 
   return (
     <Modal open onClose={onClose}>
