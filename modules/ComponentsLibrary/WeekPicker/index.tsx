@@ -63,7 +63,7 @@ type Props = {
   inputVariant?: TextFieldProps['variant'];
   size?: 'small' | 'medium';
   className?: any;
-}
+};
 
 export const WeekPicker: FC<Props> = ({
   label,
@@ -78,7 +78,10 @@ export const WeekPicker: FC<Props> = ({
     onChange(startOfWeek(date || value || new Date().valueOf()));
   };
 
-  const formatWeekSelectLabel = (date: MaterialUiPickersDate, invalidLabel: string) => {
+  const formatWeekSelectLabel = (
+    date: MaterialUiPickersDate,
+    invalidLabel: string,
+  ) => {
     let dateClone = new Date(date || value);
 
     return dateClone && isValid(dateClone)
@@ -86,7 +89,11 @@ export const WeekPicker: FC<Props> = ({
       : invalidLabel;
   };
 
-  const renderWrappedWeekDay = (date: MaterialUiPickersDate, selectedDate: MaterialUiPickersDate, dayInCurrentMonth: boolean) => {
+  const renderWrappedWeekDay = (
+    date: MaterialUiPickersDate,
+    selectedDate: MaterialUiPickersDate,
+    dayInCurrentMonth: boolean,
+  ) => {
     let dateClone = new Date(date || value);
     let selectedDateClone = new Date(selectedDate || value);
 

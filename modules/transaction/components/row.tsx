@@ -11,6 +11,7 @@ import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import NotesIcon from '@material-ui/icons/EditSharp';
+import CheckIcon from '@material-ui/icons/CheckCircleSharp';
 import Button from '@material-ui/core/Button';
 import { Prompt } from '../../Prompt/main';
 import { IFile } from '../../Gallery/main';
@@ -33,6 +34,7 @@ interface props {
   departmentView: boolean;
   acceptOverride: boolean;
   enter(): Promise<void>;
+  audit(): Promise<void>;
   accept(): Promise<void>;
   reject(reason?: string): Promise<void>;
   refresh(): Promise<void>;
@@ -54,11 +56,13 @@ export function TransactionRow({
   accept,
   reject,
   refresh,
+  audit,
   addJobNumber,
   updateNotes,
   acceptOverride,
   updateCostCenter,
 }: props) {
+  console.log('will accept', acceptOverride);
   const [state, setState] = useState<state>({
     files: [],
   });
@@ -102,12 +106,22 @@ export function TransactionRow({
   const updateStatus = async () => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as ${
-        departmentView || acceptOverride ? 'accepted' : 'recorded'
+        acceptOverride ? 'accepted' : 'recorded'
       }?`,
     );
     if (ok) {
-      const fn = departmentView || acceptOverride ? accept : enter;
+      const fn = acceptOverride ? accept : enter;
       await fn();
+      await refresh();
+    }
+  };
+
+  const auditTxn = async () => {
+    const ok = confirm(
+      'Are you sure you want to mark all the information on this transaction (including all attached photos) as correct? This action is irreversible.',
+    );
+    if (ok) {
+      await audit();
       await refresh();
     }
   };
@@ -159,6 +173,7 @@ export function TransactionRow({
   };
 
   const amount = prettyMoney(txn.amount);
+  console.log(departmentView, 'is department');
   return (
     <>
       <TableRow hover>
@@ -258,8 +273,15 @@ export function TransactionRow({
             notes={txn.notes}
             disabled={txn.notes === ''}
           />
+          {!departmentView && !txn.isAudited && (
+            <Tooltip title={'Mark as correct'} placement="top">
+              <IconButton onClick={auditTxn}>
+                <CheckIcon />
+              </IconButton>
+            </Tooltip>
+          )}
           <Tooltip
-            title={departmentView ? 'Mark as accepted' : 'Mark as entered'}
+            title={acceptOverride ? 'Mark as accepted' : 'Mark as entered'}
             placement="top"
           >
             <IconButton onClick={updateStatus}>

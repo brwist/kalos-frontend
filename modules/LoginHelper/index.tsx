@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { LoginHelper } from './main'
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { LoginHelper } from './main';
 
-ReactDOM.render(<LoginHelper/>, document.getElementById('root'))
+ReactDOM.render(<LoginHelper />, document.getElementById('root'));

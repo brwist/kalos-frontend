@@ -27,8 +27,7 @@ interface props<R, T> {
   client?: {
     new (endpoint: string): Client<R, T>;
   };
-  onSelect?(e: React.SyntheticEvent<HTMLSelectElement>): void;
-  onSelect?(id: number): void;
+  onSelect?(e: React.SyntheticEvent<HTMLSelectElement> | number): void;
   test?(item: T): boolean;
   sort?(a: T, b: T): number;
   filter?(a: T): boolean;
@@ -73,11 +72,7 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
     const id = parseInt(e.currentTarget.value);
     if (this.props.onSelect) {
       try {
-        if (this.props.withinForm) {
-          this.props.onSelect(e);
-        } else if (!this.props.withinForm) {
-          this.props.onSelect(id);
-        }
+        this.props.onSelect(this.props.withinForm ? e : id);
       } catch (err) {
         console.log(err);
       }
@@ -206,9 +201,10 @@ export class AccountPicker extends Picker<
   TransactionAccount.AsObject
 > {
   constructor(props: props<TransactionAccount, TransactionAccount.AsObject>) {
-    super(props, 'Purchase Type', 'COST_CENTER_LIST', 5);
+    super(props, 'Purchase Type', 'COST_CENTER_LIST', 7);
     this.Client = new TransactionAccountClient(ENDPOINT);
     this.req = new TransactionAccount();
+    this.req.setIsActive(1);
   }
 }
 
@@ -217,9 +213,10 @@ export class DepartmentPicker extends Picker<
   TimesheetDepartment.AsObject
 > {
   constructor(props: props<TimesheetDepartment, TimesheetDepartment.AsObject>) {
-    super(props, 'Department', 'DEPARTMENT_LIST', 3);
+    super(props, 'Department', 'DEPARTMENT_LIST', 4);
     this.Client = new TimesheetDepartmentClient(ENDPOINT);
     this.req = new TimesheetDepartment();
+    this.req.setIsActive(1);
   }
 }
 
@@ -228,7 +225,7 @@ export class ClassCodePicker extends Picker<
   TimesheetClassCode.AsObject
 > {
   constructor(props: props<TimesheetClassCode, TimesheetClassCode.AsObject>) {
-    super(props, 'Class Code', 'CLASS_CODE_LIST', 1);
+    super(props, 'Class Code', 'CLASS_CODE_LIST', 2);
     this.Client = new TimesheetClassCodeClient(ENDPOINT);
     this.req = new TimesheetClassCode();
   }

@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { AltGallery } from './main'
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { AltGallery } from './main';
 
-ReactDOM.render(<AltGallery/>, document.getElementById('root'))
+ReactDOM.render(<AltGallery />, document.getElementById('root'));

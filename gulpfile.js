@@ -241,7 +241,7 @@ function getBranch() {
 }
 function rollupBuild() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_3, modules, inputStr, bundle;
+        var target, err_3, minify, modules, inputStr, bundle;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -255,7 +255,7 @@ function rollupBuild() {
                     target = target = (_a.sent()).replace(/\n/g, '');
                     return [3 /*break*/, 3];
                 case 3:
-                    console.log(process.argv[4]);
+                    minify = process.argv[5];
                     return [4 /*yield*/, getModulesList()];
                 case 4:
                     modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
@@ -299,7 +299,7 @@ function rollupBuild() {
                                 react: 'React',
                                 'react-dom': 'ReactDOM'
                             },
-                            plugins: [terser()]
+                            plugins: minify ? [terser()] : []
                         })];
                 case 6:
                     _a.sent();
@@ -688,6 +688,10 @@ var NAMED_EXPORTS = {
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb.js': [
         'TimesheetLine',
         'TimesheetLineList',
+    ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_classcode_pb.js': [
+        'TimesheetClassCode',
+        'TimesheetClassCodeList',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_department_pb.js': [
         'TimesheetDepartment',

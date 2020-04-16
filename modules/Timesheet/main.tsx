@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { format, startOfWeek, eachDayOfInterval, addDays } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -30,7 +30,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type Props = {
   userId: number;
-}
+};
 
 const weekStart = startOfWeek(new Date());
 
@@ -46,11 +46,35 @@ const Timesheet = ({ userId }: Props) => {
   const [selectedDate, setSelectedDate] = useState(weekStart);
 
   const addNewOptions = [
-    { icon: <EventIcon />, name: 'Timecard', url: `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetEdit&tlid=0&user_id=${userId}` },
-    { icon: <TimerOffIcon />, name: 'Request Off', url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest' },
-    { icon: <AddAlertIcon />, name: 'Reminder', url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder' },
-    { icon: <AssignmentIndIcon />, name: 'Task', url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask' },
-    { icon: <AssessmentIcon />, name: 'Timesheet Weekly Report', action: () => {console.log('Timesheet Weekly Report')} },
+    {
+      icon: <EventIcon />,
+      name: 'Timecard',
+      url: `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetEdit&tlid=0&user_id=${userId}`,
+    },
+    {
+      icon: <TimerOffIcon />,
+      name: 'Request Off',
+      url:
+        'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest',
+    },
+    {
+      icon: <AddAlertIcon />,
+      name: 'Reminder',
+      url:
+        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+    },
+    {
+      icon: <AssignmentIndIcon />,
+      name: 'Task',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
+    },
+    {
+      icon: <AssessmentIcon />,
+      name: 'Timesheet Weekly Report',
+      action: () => {
+        console.log('Timesheet Weekly Report');
+      },
+    },
   ];
 
   const handleDateChange = (value: Date) => {
@@ -59,15 +83,14 @@ const Timesheet = ({ userId }: Props) => {
   const shownDates = getShownDates(selectedDate);
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
+      <Toolbar
+        selectedDate={selectedDate}
+        handleDateChange={handleDateChange}
+      />
       <Box className={classes.wrapper}>
         <Container className={classes.week} maxWidth={false}>
           {shownDates.map(date => (
-            <Column
-              key={date}
-              date={date}
-              userId={userId}
-            />
+            <Column key={date} date={date} userId={userId} />
           ))}
         </Container>
       </Box>

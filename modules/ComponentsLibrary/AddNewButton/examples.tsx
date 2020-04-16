@@ -8,6 +8,4 @@ const addNewOptions = [
   { icon: <LinkedIn />, name: 'LinkedIn', url: 'https://linkedin.com' },
 ];
 
-export default () => (
-  <AddNewButton options={addNewOptions} />
-);
+export default () => <AddNewButton options={addNewOptions} />;

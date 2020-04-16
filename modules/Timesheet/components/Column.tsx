@@ -1,4 +1,4 @@
-import React, {FC, useCallback, useLayoutEffect, useState} from 'react';
+import React, { FC, useCallback, useLayoutEffect, useState } from 'react';
 import Box from '@material-ui/core/Box';
 import {
   ServicesRenderedClient,
@@ -6,20 +6,25 @@ import {
 } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   TimesheetLineClient,
-  TimesheetLine
+  TimesheetLine,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-import {ENDPOINT} from '../../../constants';
-import {useFetchAll} from '../../ComponentsLibrary/hooks';
+import { ENDPOINT } from '../../../constants';
+import { useFetchAll } from '../../ComponentsLibrary/hooks';
 import clsx from 'clsx';
 import Button from '@material-ui/core/Button';
 import BackIcon from '@material-ui/icons/ArrowBack';
 import Typography from '@material-ui/core/Typography';
-import {format} from "date-fns";
+import { format } from 'date-fns';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
-import {createStyles, makeStyles, Theme, useTheme} from '@material-ui/core/styles';
-import {colorsMapping} from '../../ServiceCalendar/constants';
+import {
+  createStyles,
+  makeStyles,
+  Theme,
+  useTheme,
+} from '@material-ui/core/styles';
+import { colorsMapping } from '../../ServiceCalendar/constants';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -73,8 +78,8 @@ const srClient = new ServicesRenderedClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
 
 type Props = {
-  date: string,
-  userId: number,
+  date: string;
+  userId: number;
 };
 
 const Column: FC<Props> = ({ date, userId }) => {
@@ -83,7 +88,7 @@ const Column: FC<Props> = ({ date, userId }) => {
 
   const dateObj = new Date(date);
 
-  const fetchServicesRendered = useCallback( async (page) => {
+  const fetchServicesRendered = useCallback(async page => {
     const req = new ServicesRendered();
     req.setTimeStarted(date);
     req.setTechnicianUserId(userId);
@@ -91,7 +96,7 @@ const Column: FC<Props> = ({ date, userId }) => {
     return (await srClient.BatchGet(req)).toObject();
   }, []);
 
-  const fetchTimesheetLine = useCallback( async (page) => {
+  const fetchTimesheetLine = useCallback(async page => {
     const req = new TimesheetLine();
     req.setTimeStarted(date);
     req.setTechnicianUserId(userId);
@@ -105,15 +110,17 @@ const Column: FC<Props> = ({ date, userId }) => {
     document.body.style.overflow = dayView ? 'hidden' : 'visible';
   }, [dayView]);
 
-  const { data:servicesRendered, isLoading:servicesRenderedLoading } = useFetchAll(fetchServicesRendered);
-  const { data:timesheetLine, isLoading:timesheetLineLoading } = useFetchAll(fetchTimesheetLine);
+  const {
+    data: servicesRendered,
+    isLoading: servicesRenderedLoading,
+  } = useFetchAll(fetchServicesRendered);
+  const { data: timesheetLine, isLoading: timesheetLineLoading } = useFetchAll(
+    fetchTimesheetLine,
+  );
   return (
     <Box className={clsx(dayView && classes.dayView)}>
       {dayView && (
-        <Button
-          startIcon={<BackIcon />}
-          onClick={() => setDayView(false)}
-        >
+        <Button startIcon={<BackIcon />} onClick={() => setDayView(false)}>
           {`Back to Week View`}
         </Button>
       )}
@@ -122,12 +129,13 @@ const Column: FC<Props> = ({ date, userId }) => {
           <Typography className={classes.dayCircle}>
             {format(dateObj, 'd')}
           </Typography>
-          <Typography variant="subtitle2">
-            {format(dateObj, 'cccc')}
-          </Typography>
+          <Typography variant="subtitle2">{format(dateObj, 'cccc')}</Typography>
           <Tooltip title="Day View">
             <IconButton
-              className={clsx(classes.dayViewButton, md && !dayView && 'visible')}
+              className={clsx(
+                classes.dayViewButton,
+                md && !dayView && 'visible',
+              )}
               aria-label="dayview"
               size="small"
               onClick={() => setDayView(true)}

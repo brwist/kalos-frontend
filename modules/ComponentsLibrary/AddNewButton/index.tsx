@@ -16,20 +16,20 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     staticTooltipLabel: {
       whiteSpace: 'nowrap',
-    }
+    },
   }),
 );
 
 type Option = {
-  icon: JSX.Element,
-  name: string,
-  url?: string,
-  action?: () => void,
-}
+  icon: JSX.Element;
+  name: string;
+  url?: string;
+  action?: () => void;
+};
 
 type Props = {
   options: Option[];
-}
+};
 
 export const AddNewButton = ({ options }: Props) => {
   const [open, setOpen] = useState(false);
