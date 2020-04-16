@@ -59,6 +59,8 @@ type EditingState = {
   modalShown: boolean,
   action: 'create' | 'update' | 'convert' | '',
   editedEntries: TimesheetLine.AsObject[],
+  hiddenSR: ServicesRendered.AsObject[],
+  convertingSR?: ServicesRendered.AsObject,
 };
 
 export const EditTimesheetContext = createContext<EditTimesheetContext>({
@@ -76,6 +78,7 @@ const Timesheet = ({ userId }: Props) => {
     modalShown: false,
     action: '',
     editedEntries: [],
+    hiddenSR: [],
   });
 
   const handleOnSave = (entry: TimesheetLine.AsObject, action: 'delete' | 'approve' | 'reject') => {
@@ -88,11 +91,17 @@ const Timesheet = ({ userId }: Props) => {
       editedEntries.push(data);
     }
 
+    const hiddenSR = [...editingState.hiddenSR];
+    if (editingState.convertingSR) {
+      hiddenSR.push(editingState.convertingSR);
+    }
+
     setEditingState({
       entry: emptyTimesheet,
       modalShown: false,
       action: '',
       editedEntries,
+      hiddenSR,
     })
   };
 
@@ -120,11 +129,14 @@ const Timesheet = ({ userId }: Props) => {
         entry[key] = card[key];
       }
     });
+    entry.servicesRenderedId = card.id;
+
     setEditingState({
       ...editingState,
       modalShown: true,
       entry,
       action: 'convert',
+      convertingSR: card,
     });
   };
 
@@ -173,6 +185,7 @@ const Timesheet = ({ userId }: Props) => {
                   date={date}
                   userId={userId}
                   editedEntries={editingState.editedEntries}
+                  hiddenSR={editingState.hiddenSR}
                 />
               ))}
             </Container>

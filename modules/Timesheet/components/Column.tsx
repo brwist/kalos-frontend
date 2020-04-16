@@ -76,9 +76,10 @@ type Props = {
   date: string,
   userId: number,
   editedEntries: TimesheetLine.AsObject[],
+  hiddenSR: ServicesRendered.AsObject[],
 };
 
-const Column: FC<Props> = ({ date, userId, editedEntries }) => {
+const Column: FC<Props> = ({ date, userId, editedEntries , hiddenSR}) => {
   const classes = useStyles();
   const [dayView, setDayView] = useState(false);
 
@@ -86,6 +87,8 @@ const Column: FC<Props> = ({ date, userId, editedEntries }) => {
 
   const fetchServicesRendered = useCallback( async (page) => {
     const req = new ServicesRendered();
+    req.setIsActive(1);
+    req.setHideFromTimesheet(0);
     req.setTimeStarted(`${date}%`);
     req.setTechnicianUserId(userId);
     req.setPageNumber(page);
@@ -109,26 +112,36 @@ const Column: FC<Props> = ({ date, userId, editedEntries }) => {
 
   const { data:servicesRendered, isLoading:servicesRenderedLoading } = useFetchAll(fetchServicesRendered);
   const { data:timesheetLine, isLoading:timesheetLineLoading } = useFetchAll(fetchTimesheetLine);
-  const cards = [...servicesRendered, ...timesheetLine];
+  const filteredSR = [...servicesRendered].filter(item => !item.hideFromTimesheet);
+  const filteredTL = [...timesheetLine];
+  hiddenSR.forEach(entry => {
+    if (format(new Date(entry.timeStarted), 'yyyy-MM-dd') === date) {
+      const existingIndex = filteredSR.findIndex(item => item.id === entry.id);
+      if (existingIndex > -1) {
+        filteredSR.splice(existingIndex, 1);
+      }
+    }
+  });
   editedEntries.forEach(entry => {
     if (format(new Date(entry.timeStarted), 'yyyy-MM-dd') === date) {
-      if (entry.action === 'create') {
-        cards.push(entry);
+      if (entry.action === 'create' || entry.action === 'convert') {
+        filteredTL.push(entry);
       } else if (entry.action === 'update') {
-        const existingIndex = cards.findIndex(item => item.id === entry.id);
+        const existingIndex = filteredTL.findIndex(item => item.id === entry.id);
         if (existingIndex > -1) {
-          cards[existingIndex] = {...cards[existingIndex], ...entry};
+          filteredTL[existingIndex] = {...filteredTL[existingIndex], ...entry};
         } else {
-          cards.push(entry);
+          filteredTL.push(entry);
         }
       } else if (entry.action === 'delete') {
-        const existingIndex = cards.findIndex(item => item.id === entry.id);
+        const existingIndex = filteredTL.findIndex(item => item.id === entry.id);
         if (existingIndex > -1) {
-          cards.splice(existingIndex, 1);
+          filteredTL.splice(existingIndex, 1);
         }
       }
     }
   });
+  const cards = [...filteredSR, ...filteredTL];
   cards.sort((a, b) => new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime());
   return (
     <Box className={clsx(dayView && classes.dayView)}>
