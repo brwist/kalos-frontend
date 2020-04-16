@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { CustomerDirectory } from './main'
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { CustomerDirectory } from './main';
 
-ReactDOM.render(<CustomerDirectory/>, document.getElementById('root'))
+ReactDOM.render(<CustomerDirectory />, document.getElementById('root'));

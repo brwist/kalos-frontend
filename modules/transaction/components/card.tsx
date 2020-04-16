@@ -197,7 +197,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             ? 'manager receipt accepted automatically'
             : 'submitted for approval';
           if (txn.costCenterId === 2 || txn.costCenter.id === 2) {
-            statusID = 2;
+            statusID = 3;
             statusMessage =
               'receipt marked as fraud and sent directly to accounting for review';
             const mailBody = `A fraud transaction has been reported by ${
@@ -246,26 +246,6 @@ export class TxnCard extends React.PureComponent<props, state> {
     log.setStatusId(status);
     log.setDescription(action);
     await this.LogClient.Create(log);
-  }
-
-  async approve() {
-    const ok = confirm('Are you sure you want to approve this transaction?');
-    if (ok) {
-      await this.updateStatus(4);
-      await this.makeSubmitLog(4, 'approved');
-      await this.props.fetchFn();
-    }
-  }
-
-  async reject() {
-    const ok = confirm(
-      'Are you sure you want to reject this transaction? Make sure to update the notes with a reason for this rejection before proceeding',
-    );
-    if (ok) {
-      await this.updateStatus(5);
-      await this.makeSubmitLog(5, 'rejected');
-      await this.props.fetchFn();
-    }
   }
 
   testCostCenter(acc: TransactionAccount.AsObject) {

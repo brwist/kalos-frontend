@@ -16,10 +16,10 @@ export interface Props extends Style {
   variant?: 'contained' | 'outlined' | 'text';
   color?: 'primary' | 'secondary';
   fullWidth?: boolean;
-  className?: React.HTMLAttributes<HTMLDivElement> | string;
+  className?: string;
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   button: ({ compact, size, status }: Style) => ({
     marginTop: theme.spacing(compact ? 0 : 1),
     marginBottom: theme.spacing(compact ? 0 : 1),

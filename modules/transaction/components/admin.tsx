@@ -53,6 +53,7 @@ interface state {
   filters: IFilter;
   departmentView: boolean;
   count: number;
+  acceptOverride: boolean;
 }
 
 interface IFilter {
@@ -91,11 +92,12 @@ export class TransactionAdminView extends React.Component<props, state> {
     super(props);
     this.state = {
       page: 0,
+      acceptOverride: ![1734, 9646].includes(props.userID),
       isLoading: false,
-      departmentView: !this.props.isSU,
+      departmentView: !props.isSU,
       transactions: [],
       filters: {
-        statusID: this.props.isSU ? 3 : 2,
+        statusID: props.isSU ? 3 : 2,
         yearCreated: `${new Date().getFullYear()}`,
         sort: {
           sortBy: 'timestamp',
@@ -126,7 +128,7 @@ export class TransactionAdminView extends React.Component<props, state> {
 
   toggleLoading = (cb?: () => void) => {
     this.setState(
-      prevState => ({
+      (prevState) => ({
         isLoading: !prevState.isLoading,
       }),
       () => {
@@ -136,7 +138,7 @@ export class TransactionAdminView extends React.Component<props, state> {
   };
 
   toggleView() {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       departmentView: !prevState.departmentView,
       filters: {
         ...prevState.filters,
@@ -183,7 +185,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       value = undefined;
     }
     this.setState(
-      prevState => ({
+      (prevState) => ({
         filters: { ...prevState.filters, [key]: value },
         count: 0,
         page: 0,
@@ -253,14 +255,37 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
+  makeRecordTransaction(id: number) {
+    return async () => {
+      const txn = new Transaction();
+      txn.setIsRecorded(true);
+      txn.setFieldMaskList(['IsRecorded']);
+      txn.setId(id);
+      await this.TxnClient.Update(txn);
+      await this.makeLog('Transaction recorded', id);
+      await this.fetchTxns();
+    };
+  }
+
+  makeAuditTransaction(id: number) {
+    return async () => {
+      const txn = new Transaction();
+      txn.setIsAudited(true);
+      txn.setFieldMaskList(['IsAudited']);
+      txn.setId(id);
+      await this.TxnClient.Update(txn);
+      await this.makeLog('Transaction audited', id);
+      await this.fetchTxns();
+    };
+  }
+
   makeUpdateStatus(id: number, statusID: number, description: string) {
     return async (reason?: string) => {
-      const client = new TransactionClient(ENDPOINT);
       const txn = new Transaction();
       txn.setId(id);
       txn.setStatusId(statusID);
       txn.setFieldMaskList(['StatusId']);
-      await client.Update(txn);
+      await this.TxnClient.Update(txn);
       await this.makeLog(`${description} ${reason || ''}`, id);
     };
   }
@@ -292,7 +317,18 @@ export class TransactionAdminView extends React.Component<props, state> {
       obj.setTimestamp(`${filters.yearCreated}-%`);
     }
     if (filters.statusID) {
-      obj.setStatusId(filters.statusID);
+      if (filters.statusID === 5) {
+        obj.setIsRecorded(true);
+      } else if (filters.statusID === 6) {
+        obj.setIsAudited(true);
+      } else {
+        obj.setStatusId(filters.statusID);
+        if (filters.statusID === 3) {
+          console.log('status is 3');
+          obj.setFieldMaskList(['IsRecorded']);
+          console.log(obj.getFieldMaskList());
+        }
+      }
     }
     obj.setOrderBy(filters.sort.sortBy);
     obj.setOrderDir(filters.sort.sortDir);
@@ -353,12 +389,7 @@ export class TransactionAdminView extends React.Component<props, state> {
   }
 
   setSort(sortBy: sortString) {
-    this.setState(prevState => {
-      console.log(
-        sortBy,
-        prevState.filters.sort.sortBy,
-        prevState.filters.sort.sortBy === sortBy,
-      );
+    this.setState((prevState) => {
       let newDir: 'desc' | 'asc' = 'desc';
       if (
         prevState.filters.sort.sortDir === newDir &&
@@ -366,7 +397,6 @@ export class TransactionAdminView extends React.Component<props, state> {
       ) {
         newDir = 'asc';
       }
-      console.log(newDir);
       return {
         filters: {
           ...prevState.filters,
@@ -391,19 +421,19 @@ export class TransactionAdminView extends React.Component<props, state> {
   async handleSubmitPage() {
     const ok = confirm(
       `Are you sure you want to mark the current page as ${
-        this.state.departmentView ? 'accepted' : 'recorded'
+        this.state.acceptOverride ? 'accepted' : 'recorded'
       }?`,
     );
     if (ok) {
       const fns = this.state.transactions
-        .map(t =>
+        .map((t) =>
           this.makeUpdateStatus(
             t.id,
-            this.state.departmentView ? 3 : 5,
-            this.state.departmentView ? 'accepted' : 'recorded',
+            this.state.acceptOverride ? 3 : 5,
+            this.state.acceptOverride ? 'accepted' : 'recorded',
           ),
         )
-        .map(f => f());
+        .map((f) => f());
       this.setState({ isLoading: true }, async () => {
         try {
           await Promise.all(fns);
@@ -573,7 +603,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               <InputLabel htmlFor="set-year-select">Filter by Year</InputLabel>
               <NativeSelect
                 disabled={this.state.isLoading}
-                onChange={e =>
+                onChange={(e) =>
                   this.setFilter('yearCreated', e.currentTarget.value)
                 }
                 inputProps={{ id: 'set-year-select' }}
@@ -588,7 +618,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               </InputLabel>
               <NativeSelect
                 disabled={this.state.isLoading}
-                onChange={e =>
+                onChange={(e) =>
                   this.setFilter('dateCreated', e.currentTarget.value)
                 }
                 inputProps={{ id: 'set-month-select' }}
@@ -612,11 +642,13 @@ export class TransactionAdminView extends React.Component<props, state> {
               <DepartmentPicker
                 disabled={this.state.isLoading}
                 selected={this.state.filters.departmentID || 0}
-                onSelect={departmentID =>
-                  this.setFilter('departmentID', departmentID)
-                }
-                renderItem={i => (
-                  <option value={i.id}>
+                onSelect={(departmentID) => {
+                  if (typeof departmentID === 'number') {
+                    this.setFilter('departmentID', departmentID);
+                  }
+                }}
+                renderItem={(i) => (
+                  <option value={i.id} key={`${i.id}-department-select`}>
                     {i.description} - {i.value}
                   </option>
                 )}
@@ -625,18 +657,20 @@ export class TransactionAdminView extends React.Component<props, state> {
             <TxnStatusPicker
               disabled={this.state.isLoading}
               selected={this.state.filters.statusID || 0}
-              onSelect={statusID => this.setFilter('statusID', statusID)}
+              onSelect={(statusID) => this.setFilter('statusID', statusID)}
               label="Filter by Status"
             />
             <AccountPicker
               disabled={this.state.isLoading}
               selected={this.state.filters.costCenterID || 0}
-              onSelect={costCenterID =>
-                this.setFilter('costCenterID', costCenterID)
-              }
+              onSelect={(costCenterID) => {
+                if (typeof costCenterID === 'number') {
+                  this.setFilter('costCenterID', costCenterID);
+                }
+              }}
               sort={(a, b) => a.description.localeCompare(b.description)}
-              renderItem={i => (
-                <option value={i.id}>
+              renderItem={(i) => (
+                <option value={i.id} key={`${i.id}-account-select`}>
                   {i.description} ({i.id})
                 </option>
               )}
@@ -644,7 +678,7 @@ export class TransactionAdminView extends React.Component<props, state> {
             <EmployeePicker
               disabled={this.state.isLoading}
               selected={this.state.filters.userID || 0}
-              onSelect={userID => this.setFilter('userID', userID)}
+              onSelect={(userID) => this.setFilter('userID', userID)}
               label="Filter by User"
               test={employeeTest}
             />
@@ -672,7 +706,7 @@ export class TransactionAdminView extends React.Component<props, state> {
             </Tooltip>
             <Tooltip
               title={
-                this.state.departmentView
+                this.state.acceptOverride
                   ? 'Mark current page as approved'
                   : 'Mark current page as entered'
               }
@@ -758,15 +792,14 @@ export class TransactionAdminView extends React.Component<props, state> {
             </TableHead>
             <TableBody>
               {!this.state.isLoading &&
-                txns.map(t => (
+                txns.map((t) => (
                   <TransactionRow
                     txn={t}
                     key={`txnRow-${t.id}`}
-                    acceptOverride={
-                      this.props.userID === 213 || this.props.userID === 336
-                    }
+                    acceptOverride={this.state.acceptOverride}
                     departmentView={this.state.departmentView}
-                    enter={this.makeUpdateStatus(t.id, 5, 'recorded')}
+                    enter={this.makeRecordTransaction(t.id)}
+                    audit={this.makeAuditTransaction(t.id)}
                     accept={this.makeUpdateStatus(t.id, 3, 'accepted')}
                     reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
                     refresh={this.fetchTxns}
@@ -778,7 +811,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                   />
                 ))}
               {this.state.isLoading &&
-                range(0, 50).map(i => (
+                range(0, 50).map((i) => (
                   <TableRow key={`${i}_txn_skeleton_row`}>
                     <TableCell align="center" style={{ height: 85 }}>
                       <Skeleton variant="text" width={40} height={16} />

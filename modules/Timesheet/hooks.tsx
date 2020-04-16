@@ -1,31 +1,31 @@
 import { useState, useEffect } from 'react';
 
 type State = {
-  data: any[],
-  isLoading: boolean,
-  page: number,
-  totalCount: number,
-  fetchedCount: number,
-}
+  data: any[];
+  isLoading: boolean;
+  page: number;
+  totalCount: number;
+  fetchedCount: number;
+};
 
 type Response = {
-  resultsList: any[],
-  totalCount: number,
-}
+  resultsList: any[];
+  totalCount: number;
+};
 
 const initialState = {
   data: [],
   isLoading: true,
   page: 0,
   totalCount: 0,
-  fetchedCount: 0
+  fetchedCount: 0,
 };
 
 export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
   const [state, setState] = useState<State>(initialState);
   const { data, isLoading, page, totalCount, fetchedCount } = state;
   useEffect(() => {
-    if(fetchedCount < totalCount || !totalCount) {
+    if (fetchedCount < totalCount || !totalCount) {
       (async () => {
         const res = await fetchFn(page);
         setState({
@@ -45,4 +45,3 @@ export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
   }, [fetchedCount, totalCount, fetchFn]);
   return { data, isLoading };
 };
-

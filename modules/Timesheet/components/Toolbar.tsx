@@ -19,19 +19,26 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 type Props = {
-  selectedDate: Date,
+  selectedDate: Date;
   handleDateChange: (value: Date) => void;
 };
 
-const Toolbar: FC<Props> = ({ selectedDate, handleDateChange }): JSX.Element => {
+const Toolbar: FC<Props> = ({
+  selectedDate,
+  handleDateChange,
+}): JSX.Element => {
   const classes = useStyles();
- return (
-   <MuiToolbar className={classes.bar}>
-     <MuiPickersUtilsProvider utils={DateFnsUtils}>
-       <WeekPicker label="Set Period" value={selectedDate} onChange={handleDateChange} />
-     </MuiPickersUtilsProvider>
-   </MuiToolbar>
- );
+  return (
+    <MuiToolbar className={classes.bar}>
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <WeekPicker
+          label="Set Period"
+          value={selectedDate}
+          onChange={handleDateChange}
+        />
+      </MuiPickersUtilsProvider>
+    </MuiToolbar>
+  );
 };
 
 export default Toolbar;

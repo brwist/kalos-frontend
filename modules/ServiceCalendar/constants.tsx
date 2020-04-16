@@ -1,5 +1,5 @@
 type Colors = {
-  [key: string]: string,
+  [key: string]: string;
 };
 
 export const colorsMapping: Colors = {
@@ -7,7 +7,7 @@ export const colorsMapping: Colors = {
   Confirmed: '#FEFDB9',
   Enroute: '#FFFF00',
   'On Call': '#88EDB3',
-  Delayed:  '#07CCEC',
+  Delayed: '#07CCEC',
   Incomplete: '#BFD4FF',
   'Part on order': '#AA93EA',
   'Pend Sched': '#FD9834',
@@ -22,7 +22,7 @@ export const colorsMapping: Colors = {
 };
 
 type Repeats = {
-  [key: string]: string,
+  [key: string]: string;
 };
 
 export const repeatsMapping: Repeats = {
@@ -36,7 +36,7 @@ export const repeatsMapping: Repeats = {
 };
 
 type RequestTypes = {
-  [key: string]: string,
+  [key: string]: string;
 };
 
 export const requestTypeMappping: RequestTypes = {

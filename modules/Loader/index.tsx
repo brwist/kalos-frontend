@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { Loader } from './main'
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Loader } from './main';
 
-ReactDOM.render(<Loader/>, document.getElementById('root'))
+ReactDOM.render(<Loader />, document.getElementById('root'));
