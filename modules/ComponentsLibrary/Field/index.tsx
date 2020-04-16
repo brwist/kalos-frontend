@@ -18,7 +18,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
-import SignatureCanvas from 'react-signature-canvas';
+//@ts-ignore
+import SignatureCanvas from 'react-signature-pad-wrapper';
 import { Button } from '../Button';
 import { SchemaProps } from '../PlainForm';
 import { Actions } from '../Actions';
@@ -200,6 +201,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   startAdornment,
   endAdornment,
   content,
+  actionsInLabel = false,
   ...props
 }) => {
   const signatureRef = useRef(null);
@@ -257,7 +259,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     },
     [techniciansIds, setTechniciansIds],
   );
-  const { actions = [], description, actionsInLabel = false } = props;
+  const { actions = [], description } = props;
   const classes = useStyles({ type, disabled });
   const handleChange = useCallback(
     ({ target: { value } }) => {
@@ -365,7 +367,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                 height: 160,
                 className: classes.canvas,
               }}
-              onEnd={handleSignatureEnd}
+              options={{
+                onEnd: handleSignatureEnd,
+              }}
             />
           </span>
         </div>
