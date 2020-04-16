@@ -2,7 +2,11 @@ import React, { FC, useState, useCallback } from 'react';
 import { EventType } from './ServiceCallDetails';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { Field } from '../../ComponentsLibrary/Field';
-import { PAYMENT_TYPE_LIST } from '../../../constants';
+import { ServicesRenderedType } from './ServiceCallDetails';
+import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../constants';
+import { formatDateTime } from '../../../helpers';
+
+const { COMPLETED, INCOMPLETE } = SERVICE_STATUSES;
 
 type EventTypeExtended = EventType & {
   grandTotal: number;
@@ -11,9 +15,10 @@ type EventTypeExtended = EventType & {
 interface Props {
   disabled: boolean;
   serviceItem: EventType;
+  servicesRendered: ServicesRenderedType[];
 }
 
-export const Invoice: FC<Props> = ({ serviceItem }) => {
+export const Invoice: FC<Props> = ({ serviceItem, servicesRendered }) => {
   const transformData = (data: EventType) => {
     const {
       totalamountrow1,
@@ -37,10 +42,21 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
   const [data, setData] = useState<EventTypeExtended>(
     transformData(serviceItem),
   );
+  const [formKey, setFormKey] = useState<number>(0);
   const handleChange = useCallback(
     (data: EventTypeExtended) => setData(transformData(data)),
     [setData],
   );
+  const handleCopyFromServicesRendered = useCallback(() => {
+    const servicesRenderedNotes: string = servicesRendered
+      .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
+      .map(({ datetime, name, serviceRendered }) =>
+        [formatDateTime(datetime), name, '-', serviceRendered].join(' '),
+      )
+      .join('\n');
+    setData({ ...data, notes: servicesRenderedNotes });
+    setFormKey(formKey + 1);
+  }, [setData, data, setFormKey, formKey]);
   const SCHEMA: Schema<EventTypeExtended> = [
     [
       {
@@ -168,8 +184,23 @@ export const Invoice: FC<Props> = ({ serviceItem }) => {
         label: 'Invoice Notes',
         name: 'notes',
         multiline: true,
+        actions: [
+          {
+            label: 'Copy from Services Rendered',
+            variant: 'text',
+            onClick: handleCopyFromServicesRendered,
+          },
+        ],
+        actionsInLabel: true,
       },
     ],
   ];
-  return <PlainForm schema={SCHEMA} data={data} onChange={handleChange} />;
+  return (
+    <PlainForm
+      key={formKey}
+      schema={SCHEMA}
+      data={data}
+      onChange={handleChange}
+    />
+  );
 };

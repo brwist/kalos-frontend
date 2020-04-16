@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -14,7 +14,6 @@ import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { Form } from '../../ComponentsLibrary/Form';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import {
-  loadServicesRendered,
   makeFakeRows,
   timestamp,
   formatDateTime,
@@ -28,7 +27,7 @@ import {
   PAYMENT_NOT_COLLECTED_LIST,
   OPTION_BLANK,
 } from '../../../constants';
-import { UserType } from './ServiceCallDetails';
+import { UserType, ServicesRenderedType } from './ServiceCallDetails';
 
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
@@ -43,8 +42,6 @@ const {
   INCOMPLETE,
   SIGNED_AS,
 } = SERVICE_STATUSES;
-
-type ServicesRenderedType = ServicesRendered.AsObject;
 
 type PaymentType = {
   signature: string;
@@ -73,6 +70,9 @@ type PaymentPartType = {
 interface Props {
   serviceCallId: number;
   loggedUser: UserType;
+  servicesRendered: ServicesRenderedType[];
+  loadServicesRendered: () => void;
+  loading: boolean;
 }
 
 const COLUMNS_SERVICES_RENDERED: Columns = [
@@ -185,18 +185,19 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
+export const Services: FC<Props> = ({
+  serviceCallId,
+  loggedUser,
+  servicesRendered,
+  loadServicesRendered,
+  loading,
+}) => {
   const classes = useStyles();
   const { isAdmin } = loggedUser;
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
   const [serviceRenderedForm, setServicesRenderedForm] = useState<
     ServicesRenderedType
   >(new ServicesRendered().toObject());
-  const [servicesRendered, setServicesRendered] = useState<
-    ServicesRenderedType[]
-  >([]);
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
   const [signatureForm, setSignatureForm] = useState<SignatureType>(
     SIGNATURE_INITIAL,
@@ -207,18 +208,6 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
   const [deleting, setDeleting] = useState<ServicesRenderedType>();
   const [editing, setEditing] = useState<ServicesRenderedType>();
   const [saving, setSaving] = useState<boolean>(false);
-  const load = useCallback(async () => {
-    setLoading(true);
-    const servicesRendered = await loadServicesRendered(serviceCallId);
-    setServicesRendered(servicesRendered);
-    setLoading(false);
-  }, [setServicesRendered, serviceCallId]);
-  useEffect(() => {
-    if (!loaded) {
-      load();
-      setLoaded(true);
-    }
-  }, [loaded, load, setLoaded]);
   const handleDeleting = useCallback(
     (deleting?: ServicesRenderedType) => () => setDeleting(deleting),
     [setDeleting],
@@ -229,9 +218,9 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       const req = new ServicesRendered();
       req.setId(deleting.id);
       await ServicesRenderedClientService.Delete(req);
-      load();
+      loadServicesRendered();
     }
-  }, [deleting]);
+  }, [deleting, loadServicesRendered]);
   const handleChangeStatus = useCallback(
     (status: string) => async () => {
       const req = new ServicesRendered();
@@ -266,7 +255,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
       );
       req.setFieldMaskList(fieldMaskList);
       await ServicesRenderedClientService.Create(req);
-      load();
+      loadServicesRendered();
       setServicesRenderedForm(new ServicesRendered().toObject());
       setPaymentFormPart(PAYMENT_PART_INITIAL);
       setPaymentForm(PAYMENT_INITIAL);
@@ -274,7 +263,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
     },
     [
       loggedUser,
-      load,
+      loadServicesRendered,
       serviceRenderedForm,
       setSignatureForm,
       setServicesRenderedForm,
@@ -302,12 +291,12 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
         );
         req.setFieldMaskList(fieldMaskList);
         await ServicesRenderedClientService.Update(req);
-        await load();
+        await loadServicesRendered();
         setSaving(false);
         setEditing(undefined);
       }
     },
-    [editing, SCHEMA_ON_CALL, setSaving, setEditing],
+    [editing, SCHEMA_ON_CALL, setSaving, setEditing, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
     (editing?: ServicesRenderedType) => () => setEditing(editing),
@@ -378,7 +367,7 @@ export const Services: FC<Props> = ({ serviceCallId, loggedUser }) => {
   const servicesRenderedData: Data = servicesRendered
     .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
     .map(({ datetime, name, serviceRendered, techNotes }) => [
-      { value: datetime },
+      { value: formatDateTime(datetime) },
       { value: name },
       { value: serviceRendered },
       { value: techNotes },
