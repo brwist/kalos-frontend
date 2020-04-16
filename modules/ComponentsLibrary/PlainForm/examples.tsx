@@ -24,7 +24,7 @@ export const model: Model = {
   gender: GENDERS[0],
   login: 'test',
   password: '123456',
-  note: `Lorem ipsum
+  note: `Lorem ipsum dolor sit amet. Abon fergo irgo fingo.
 dolor sit
 amet`,
   mailing: 1,
@@ -35,8 +35,18 @@ amet`,
 };
 
 export const SCHEMA_1: Schema<Model> = [
-  [{ name: 'firstName', label: 'First Name' }],
-  [{ name: 'lastName', label: 'Last Name' }],
+  [
+    {
+      name: 'firstName',
+      label: 'First Name',
+    },
+  ],
+  [
+    {
+      name: 'lastName',
+      label: 'Last Name',
+    },
+  ],
 ];
 
 export const SCHEMA_2: Schema<Model> = [
@@ -48,29 +58,87 @@ export const SCHEMA_2: Schema<Model> = [
     },
   ],
   [
-    { name: 'firstName', label: 'First Name' },
-    { name: 'lastName', label: 'Last Name' },
-    { name: 'gender', label: 'Gender', options: GENDERS },
-    { name: 'dob', label: 'Date of birth', type: 'date' },
-    { name: 'hour', label: 'Hour', type: 'time' },
+    {
+      name: 'firstName',
+      label: 'First Name',
+    },
+    {
+      name: 'lastName',
+      label: 'Last Name',
+    },
+    {
+      name: 'gender',
+      label: 'Gender',
+      options: GENDERS,
+      actions: [
+        {
+          label: 'Add new',
+          variant: 'text',
+        },
+      ],
+      actionsInLabel: true,
+    },
+    {
+      name: 'dob',
+      label: 'Date of birth',
+      type: 'date',
+    },
+    {
+      name: 'hour',
+      label: 'Hour',
+      type: 'time',
+    },
   ],
-  [{ label: 'Login detail', headline: true }],
   [
-    { name: 'login', label: 'Login', required: true },
+    {
+      label: 'Login detail',
+      headline: true,
+    },
+  ],
+  [
+    {
+      name: 'login',
+      label: 'Login',
+      required: true,
+    },
     {
       name: 'password',
       label: 'Password',
       type: 'password',
       helperText: 'Min 3 characters long',
       required: true,
-      actions: [{ label: 'Random', size: 'xsmall', variant: 'outlined' }],
+      actions: [
+        {
+          label: 'Random',
+          variant: 'outlined',
+        },
+      ],
+    },
+    {
+      name: 'mailing',
+      label: 'Mailing',
+      type: 'checkbox',
+    },
+  ],
+  [
+    {
+      label: 'Various',
+      headline: true,
+    },
+  ],
+  [
+    {
+      name: 'note',
+      label: 'Note',
+      multiline: true,
+      actions: [
+        {
+          label: 'Copy from clipboard',
+          variant: 'text',
+        },
+      ],
       actionsInLabel: true,
     },
-    { name: 'mailing', label: 'Mailing', type: 'checkbox' },
-  ],
-  [{ label: 'Various', headline: true }],
-  [
-    { name: 'note', label: 'Note', multiline: true },
     {
       name: 'technician',
       label: 'Technician',

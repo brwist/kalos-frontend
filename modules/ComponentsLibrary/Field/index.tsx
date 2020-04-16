@@ -77,6 +77,7 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     display: 'flex',
     alignItems: 'center',
+    position: 'relative',
   },
   field: ({ type, disabled }: Style) => ({
     marginTop: 0,
@@ -142,7 +143,9 @@ const useStyles = makeStyles(theme => ({
     marginLeft: theme.spacing(),
   },
   actionsInLabel: {
-    marginLeft: theme.spacing(),
+    position: 'absolute',
+    top: -5,
+    right: 0,
   },
   hourWrapper: {
     flexDirection: 'column',
@@ -629,6 +632,17 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         {actions.length > 0 && !actionsInLabel && (
           <Actions className={classes.actions} actions={actions} fixed />
         )}
+        {actions.length > 0 && actionsInLabel && (
+          <Actions
+            className={classes.actionsInLabel}
+            actions={actions.map(item => ({
+              ...item,
+              size: 'xsmall',
+              compact: true,
+            }))}
+            fixed
+          />
+        )}
       </div>
     );
   }
@@ -645,30 +659,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           startAdornment: startAdornment ? (
             <InputAdornment position="start">{startAdornment}</InputAdornment>
           ) : undefined,
-          endAdornment:
-            endAdornment || (actions.length > 0 && actionsInLabel) ? (
-              <InputAdornment
-                position="end"
-                className={
-                  actions.length > 0 && actionsInLabel
-                    ? classes.technicalButton
-                    : ''
-                }
-              >
-                {endAdornment}
-                {actions.length > 0 && actionsInLabel && (
-                  <Actions
-                    className={classes.actionsInLabel}
-                    actions={actions.map(item => ({
-                      ...item,
-                      size: 'xsmall',
-                      compact: true,
-                    }))}
-                    fixed
-                  />
-                )}
-              </InputAdornment>
-            ) : undefined,
+          endAdornment: endAdornment ? (
+            <InputAdornment position="end">{endAdornment}</InputAdornment>
+          ) : undefined,
         }}
         InputLabelProps={{
           shrink: true,
@@ -681,6 +674,17 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       />
       {actions.length > 0 && !actionsInLabel && (
         <Actions className={classes.actions} actions={actions} fixed />
+      )}
+      {actions.length > 0 && actionsInLabel && (
+        <Actions
+          className={classes.actionsInLabel}
+          actions={actions.map(item => ({
+            ...item,
+            size: 'xsmall',
+            compact: true,
+          }))}
+          fixed
+        />
       )}
     </div>
   );
