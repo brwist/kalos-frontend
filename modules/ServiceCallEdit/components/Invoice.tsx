@@ -4,7 +4,7 @@ import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { Field } from '../../ComponentsLibrary/Field';
 import { ServicesRenderedType } from './ServiceCallDetails';
 import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../constants';
-import { formatDateTime } from '../../../helpers';
+import { formatDateTimeDay } from '../../../helpers';
 
 const { COMPLETED, INCOMPLETE } = SERVICE_STATUSES;
 
@@ -51,7 +51,7 @@ export const Invoice: FC<Props> = ({ serviceItem, servicesRendered }) => {
     const servicesRenderedNotes: string = servicesRendered
       .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
       .map(({ datetime, name, serviceRendered }) =>
-        [formatDateTime(datetime), name, '-', serviceRendered].join(' '),
+        [formatDateTimeDay(datetime), name, '-', serviceRendered].join(' '),
       )
       .join('\n');
     setData({ ...data, notes: servicesRenderedNotes });
