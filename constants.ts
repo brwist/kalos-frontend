@@ -66,6 +66,14 @@ export const PAYMENT_NOT_COLLECTED_LIST: Options = [
 export const DUMMY_USER = 'test';
 export const DUMMY_PWD = 'test';
 
+export const CHART_COLORS = {
+  blue: 'rgb(51, 102, 204)',
+  red: 'rgb(220, 57, 18)',
+  orange: 'rgb(255, 153, 0)',
+  green: 'rgb(16, 150, 24)',
+  purple: 'rgb(153, 0, 153)',
+};
+
 export const COLORS = {
   light1: '#FAFAFC',
   light2: '#F2F2F5',
@@ -215,4 +223,5 @@ export default {
   PAYMENT_COLLECTED_LIST,
   PAYMENT_NOT_COLLECTED_LIST,
   OPTION_BLANK,
+  CHART_COLORS,
 };

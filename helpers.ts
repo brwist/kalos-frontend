@@ -287,10 +287,42 @@ function formatDate(date: string) {
 /**
  *
  * @param datetime date in format YYYY-MM-DD HH:MM:SS (ie. 2020-06-01 15:28:31)
+ * @returns format Day (ie. Tue)
+ */
+function formatDay(datetime: string) {
+  return ({
+    0: 'Sun',
+    1: 'Mon',
+    2: 'Tue',
+    3: 'Wed',
+    4: 'Thu',
+    5: 'Fri',
+    6: 'Sat',
+  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
+}
+
+/**
+ *
+ * @param datetime date in format YYYY-MM-DD HH:MM:SS (ie. 2020-06-01 15:28:31)
  * @returns format M/D/YYYY h:MMa (ie. 6/1/2020 3:28PM)
  */
 function formatDateTime(datetime: string) {
   return formatDate(datetime) + ' ' + formatTime(datetime.substr(11));
+}
+
+/**
+ *
+ * @param datetime date in format YYYY-MM-DD HH:MM:SS (ie. 2020-06-01 15:28:31)
+ * @returns format Day M/D/YYYY h:MMa (ie. Tue 6/1/2020 3:28PM)
+ */
+function formatDateTimeDay(datetime: string) {
+  return (
+    formatDay(datetime) +
+    ', ' +
+    formatDate(datetime) +
+    ' ' +
+    formatTime(datetime.substr(11))
+  );
 }
 
 /**
@@ -665,6 +697,8 @@ export {
   getMimeType,
   formatTime,
   formatDate,
+  formatDay,
+  formatDateTimeDay,
   makeFakeRows,
   getRPCFields,
   formatDateTime,
