@@ -32,8 +32,8 @@ export class Search extends React.PureComponent<props, state> {
     this.setSearchTarget = this.setSearchTarget.bind(this);
   }
   setSearchTarget(e: React.ChangeEvent<HTMLSelectElement>) {
-    //@ts-ignore
     this.setState({
+      //@ts-ignore
       target: e.currentTarget.value,
     });
   }

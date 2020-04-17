@@ -5,7 +5,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
-import { PopoverGallery } from '../../PopoverGallery/main';
 import { Gallery } from '../../Gallery/main';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
@@ -81,10 +80,11 @@ export function TransactionRow({
     const fr = new FileReader();
     fr.onload = async () => {
       try {
+        const u8 = new Uint8Array(fr.result as ArrayBuffer);
         await clients.docs.upload(
           txn.id,
           FileInput.current!.files![0].name,
-          new Uint8Array(fr.result as ArrayBuffer),
+          u8,
         );
       } catch (err) {
         alert('File could not be uploaded');
@@ -314,26 +314,26 @@ async function fetchFiles(
   getMimeType: (str: string) => string,
 ) {
   const filesList = txn.documentsList
-    .filter(d => d.reference)
-    .map(d => {
+    .filter((d) => d.reference)
+    .map((d) => {
       const arr = d.reference.split('.');
       const mimeTypeStr = arr[arr.length - 1];
       return {
         name: d.reference,
         mimeType: getMimeType(mimeTypeStr),
-        data: '',
+        data: new Uint8Array(0),
       };
     });
 
-  const promiseArr = txn.documentsList.filter(d => d.reference).map(fetchFile);
+  const docsArr = txn.documentsList.filter((d) => d.reference).map(downloadDoc);
+  const docObjects = await Promise.all(docsArr);
 
-  const fileObjects = await Promise.all(promiseArr);
-  const files = filesList.map(f => {
-    const fileObj = fileObjects.find(
-      obj => obj.key.replace(`${txn.id}-`, '') === f.name,
+  const files = filesList.map((f) => {
+    const docObj = docObjects.find(
+      (obj) => obj.getKey().replace(`${txn.id}-`, '') === f.name,
     );
-    if (fileObj) {
-      f.data = fileObj.data as string;
+    if (docObj) {
+      f.data = docObj.getData() as Uint8Array;
     }
     return f;
   });
@@ -341,14 +341,6 @@ async function fetchFiles(
   setState({
     files,
   });
-}
-
-function fetchFile(doc: TransactionDocument.AsObject) {
-  const s3 = new S3Client(ENDPOINT);
-  const fileObj = new FileObject();
-  fileObj.setBucket('kalos-transactions');
-  fileObj.setKey(`${doc.transactionId}-${doc.reference}`);
-  return s3.Get(fileObj);
 }
 
 function copyToClipboard(text: string): void {
@@ -369,4 +361,9 @@ export function prettyMoney(amount: number): string {
   } else {
     return `${dollars}.${cents}`;
   }
+}
+
+async function downloadDoc(doc: TransactionDocument.AsObject) {
+  const docClient = new TransactionDocumentClient(ENDPOINT);
+  return await docClient.download(doc.transactionId, doc.reference);
 }

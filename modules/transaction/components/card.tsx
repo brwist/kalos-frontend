@@ -12,10 +12,7 @@ import {
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { AccountPicker, DepartmentPicker } from '../../Pickers';
-import {
-  TransactionAccount,
-  TransactionAccountClient,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { Gallery, IFile } from '../../Gallery/main';
 import { GalleryData } from '../../AltGallery/main';
@@ -314,7 +311,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.FileInput.current && this.FileInput.current.click();
   }
 
-  async onPDFGenerate(fileData: Blob) {
+  async onPDFGenerate(fileData: Uint8Array) {
     await this.props.toggleLoading();
     await this.DocsClient.upload(
       this.state.txn.id,
@@ -389,7 +386,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   getGalleryData(): GalleryData[] {
-    return this.state.txn.documentsList.map(d => {
+    return this.state.txn.documentsList.map((d) => {
       return {
         key: `${this.state.txn.id}-${d.reference}`,
         bucket: 'kalos-transactions',
@@ -398,27 +395,26 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   async fetchFiles() {
-    const filesList = this.state.txn.documentsList
-      .filter(d => d.reference)
-      .map(d => {
+    const filesList: IFile[] = this.state.txn.documentsList
+      .filter((d) => d.reference)
+      .map((d) => {
         const arr = d.reference.split('.');
         const mimeTypeStr = arr[arr.length - 1];
         return {
           name: d.reference,
-          mimeType: this.S3Client.getMimeType(mimeTypeStr),
-          data: '',
+          mimeType: this.S3Client.getMimeType(mimeTypeStr) || '',
         };
       });
 
     const promiseArr = this.state.txn.documentsList
-      .filter(d => d.reference)
+      .filter((d) => d.reference)
       .map(this.fetchFile);
 
     const fileObjects = await Promise.all(promiseArr);
-    const files = filesList.map(f => {
-      const fileObj = fileObjects.find(obj => obj.key.includes(f.name));
+    const files = filesList.map((f) => {
+      const fileObj = fileObjects.find((obj) => obj.getKey().includes(f.name));
       if (fileObj) {
-        f.data = fileObj.data as string;
+        f.data = fileObj.getData() as Uint8Array;
       }
 
       f.name = `${this.state.txn.id}-${f.name}`;
@@ -464,11 +460,11 @@ export class TxnCard extends React.PureComponent<props, state> {
                 sort={costCenterSortByPopularity}
                 filter={
                   !isManager
-                    ? a => ALLOWED_ACCOUNT_IDS.includes(a.id)
+                    ? (a) => ALLOWED_ACCOUNT_IDS.includes(a.id)
                     : undefined
                 }
                 hideInactive
-                renderItem={i => (
+                renderItem={(i) => (
                   <option value={i.id} key={`${i.id}-${i.description}`}>
                     {i.description} ({i.id})
                   </option>
@@ -477,7 +473,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               <DepartmentPicker
                 onSelect={this.updateDepartmentID}
                 selected={t.departmentId || this.props.userDepartmentID}
-                renderItem={i => (
+                renderItem={(i) => (
                   <option value={i.id} key={`${i.id}-${i.description}`}>
                     {i.description}
                   </option>
@@ -486,7 +482,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               <TextField
                 label="Job Number"
                 defaultValue={t.jobId}
-                onChange={e => this.updateJobNumber(e.currentTarget.value)}
+                onChange={(e) => this.updateJobNumber(e.currentTarget.value)}
                 variant="outlined"
                 margin="none"
                 style={{ marginBottom: 10 }}
@@ -495,7 +491,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 label="Notes"
                 defaultValue={t.notes}
                 inputRef={this.NotesInput}
-                onChange={e => this.updateNotes(e.currentTarget.value)}
+                onChange={(e) => this.updateNotes(e.currentTarget.value)}
                 variant="outlined"
                 margin="none"
                 multiline

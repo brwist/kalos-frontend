@@ -51,14 +51,14 @@ export class TxnLog extends React.PureComponent<props, state> {
   }
 
   toggleVisibility() {
-    this.setState(prevState => ({ isOpen: !prevState.isOpen }));
+    this.setState((prevState) => ({ isOpen: !prevState.isOpen }));
   }
 
   async addLog(log: TransactionActivity.AsObject) {
     const user = new User();
     user.setId(log.userId);
     const res = await this.UserClient.Get(user);
-    this.setState(prevState => {
+    this.setState((prevState) => {
       const map = new Map(prevState.actorMap);
       map.set(log.id, `${res.firstname} ${res.lastname} ${res.id}`);
       return {
@@ -130,7 +130,7 @@ export class TxnLog extends React.PureComponent<props, state> {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {this.state.list.map(activity => (
+                {this.state.list.map((activity) => (
                   <TableRow>
                     <TableCell>{activity.timestamp}</TableCell>
                     <TableCell>{activity.description}</TableCell>

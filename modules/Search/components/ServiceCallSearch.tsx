@@ -125,8 +125,8 @@ export class EventSearch extends React.PureComponent<props, state> {
     });
   }
   updateSearchTarget(e: React.ChangeEvent<HTMLSelectElement>) {
-    //@ts-ignore
     this.setState({
+      //@ts-ignore
       searchBy: e.currentTarget.value,
     });
   }
@@ -212,15 +212,15 @@ export class EventSearch extends React.PureComponent<props, state> {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {headers.map(h => (
+                {headers.map((h) => (
                   <TableCell key={`${h}_header`}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
               {this.state.events
-                .filter(e => e.propertyId !== 0)
-                .map(e => (
+                .filter((e) => e.propertyId !== 0)
+                .map((e) => (
                   <TableRow
                     key={`${e.id}-${e.dateCreated}`}
                     hover

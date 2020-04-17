@@ -10,10 +10,7 @@ import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import {
-  TimesheetClassCode,
-  TimesheetClassCodeClient,
-} from '@kalos-core/kalos-rpc/ClassCode';
+import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { ENDPOINT } from '../../constants';
 
 interface props<R, T> {
@@ -220,13 +217,10 @@ export class DepartmentPicker extends Picker<
   }
 }
 
-export class ClassCodePicker extends Picker<
-  TimesheetClassCode,
-  TimesheetClassCode.AsObject
-> {
-  constructor(props: props<TimesheetClassCode, TimesheetClassCode.AsObject>) {
+export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
+  constructor(props: props<ClassCode, ClassCode.AsObject>) {
     super(props, 'Class Code', 'CLASS_CODE_LIST', 2);
-    this.Client = new TimesheetClassCodeClient(ENDPOINT);
-    this.req = new TimesheetClassCode();
+    this.Client = new ClassCodeClient(ENDPOINT);
+    this.req = new ClassCode();
   }
 }
