@@ -155,8 +155,8 @@ export const Chart: FC<Props> = ({
       />
       <BarChart
         key={barChartKey}
-        width={730}
-        height={350}
+        width={1200}
+        height={500}
         data={barCharData}
         className={classes.chart}
         stackOffset="expand"
