@@ -41,13 +41,7 @@ const EnhancedField = ({
   if (props.headline) return <Field {...props} />;
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      <Field
-        name="firstName"
-        label="Text Field"
-        value={value}
-        onChange={setValue}
-        {...props}
-      />
+      <Field name="firstName" value={value} onChange={setValue} {...props} />
       {props.options && typeof props.options[0] === 'string' && (
         <div
           style={{
