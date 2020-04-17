@@ -26,6 +26,7 @@ export type Config = {
 type ChartForm = {
   orderBy: string;
   ratio: number;
+  groupBy: string;
 };
 
 export interface Props {
@@ -34,6 +35,7 @@ export interface Props {
   config: Config;
   skipOrdering?: boolean;
   skipRatio?: boolean;
+  groupByKeys?: string[];
 }
 
 const useStyles = makeStyles(theme => ({
@@ -51,15 +53,26 @@ export const Chart: FC<Props> = ({
   config: { xDataKey, bars },
   skipOrdering = false,
   skipRatio = false,
+  groupByKeys = [],
 }) => {
   const classes = useStyles();
   const [chartFormData, setChartFormData] = useState<ChartForm>({
     orderBy: bars[0]!.dataKey,
     ratio: 0,
+    groupBy: xDataKey,
   });
-  const { orderBy, ratio } = chartFormData;
+  const { orderBy, ratio, groupBy } = chartFormData;
   const SCHEMA: Schema<ChartForm> = [
     [
+      ...(groupByKeys.length === 0
+        ? []
+        : [
+            {
+              label: 'Group By',
+              name: 'groupBy' as const,
+              options: [xDataKey, ...groupByKeys],
+            },
+          ]),
       ...(skipOrdering
         ? []
         : [
@@ -98,7 +111,19 @@ export const Chart: FC<Props> = ({
     },
     [ratio, bars],
   );
-  const barCharData = data.sort(sort(orderBy));
+  const groupedData = JSON.parse(JSON.stringify(data)).reduce(
+    (aggr: Data, item: DataItem) => {
+      const element = aggr.find(aa => aa[groupBy] === item[groupBy]);
+      if (element) {
+        bars.forEach(({ dataKey }) => (element[dataKey] += item[dataKey]));
+      } else {
+        aggr.push(item);
+      }
+      return aggr;
+    },
+    [],
+  );
+  const barCharData = groupedData.sort(sort(orderBy));
   const barChartKey = [orderBy].join('|');
   return (
     <div>
@@ -122,14 +147,11 @@ export const Chart: FC<Props> = ({
         height={350}
         data={barCharData}
         className={classes.chart}
-        // stackOffset="expand"
-        // layout="vertical"
+        stackOffset="expand"
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey={xDataKey} />
+        <XAxis dataKey={groupBy} />
         <YAxis tickFormatter={ratio ? toPercent : undefined} />
-        {/* <YAxis dataKey={xDataKey} type="category" />
-        <XAxis tickFormatter={ratio ? toPercent : undefined} /> */}
         <Tooltip />
         <Legend verticalAlign="top" />
         {bars.map(props => (

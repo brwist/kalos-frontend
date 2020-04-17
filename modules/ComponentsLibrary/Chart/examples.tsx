@@ -111,6 +111,7 @@ export default () => (
         ],
       }}
       data={data}
+      groupByKeys={['role']}
     />
     <hr />
     <Chart
@@ -146,6 +147,7 @@ export default () => (
         ],
       }}
       data={data}
+      groupByKeys={['role']}
     />
     <hr />
     <Chart
@@ -161,6 +163,7 @@ export default () => (
         ],
       }}
       data={data}
+      groupByKeys={['role']}
     />
   </>
 );
