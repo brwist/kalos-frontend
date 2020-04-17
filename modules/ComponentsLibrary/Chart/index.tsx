@@ -10,12 +10,15 @@ import {
   Bar,
 } from 'recharts';
 import { SectionBar } from '../SectionBar';
-import { PlainForm, Schema } from '../PlainForm';
+import { PlainForm, Schema, Option } from '../PlainForm';
 
 export type DataItem = { [key: string]: any };
 export type Data = DataItem[];
 export type Config = {
-  xDataKey: string;
+  x: {
+    dataKey: string;
+    label: string;
+  };
   bars: {
     dataKey: string;
     name: string;
@@ -35,7 +38,8 @@ export interface Props {
   config: Config;
   skipOrdering?: boolean;
   skipRatio?: boolean;
-  groupByKeys?: string[];
+  groupByKeys?: Option[];
+  groupByLabels?: { [key: string]: string };
 }
 
 const useStyles = makeStyles(theme => ({
@@ -50,16 +54,20 @@ const toPercent = (decimal: number, fixed: number = 0) =>
 export const Chart: FC<Props> = ({
   title,
   data,
-  config: { xDataKey, bars },
+  config: {
+    x: { dataKey, label },
+    bars,
+  },
   skipOrdering = false,
   skipRatio = false,
   groupByKeys = [],
+  groupByLabels = {},
 }) => {
   const classes = useStyles();
   const [chartFormData, setChartFormData] = useState<ChartForm>({
     orderBy: bars[0]!.dataKey,
     ratio: 0,
-    groupBy: xDataKey,
+    groupBy: dataKey,
   });
   const { orderBy, ratio, groupBy } = chartFormData;
   const SCHEMA: Schema<ChartForm> = [
@@ -70,7 +78,7 @@ export const Chart: FC<Props> = ({
             {
               label: 'Group By',
               name: 'groupBy' as const,
-              options: [xDataKey, ...groupByKeys],
+              options: [{ label, value: dataKey }, ...groupByKeys],
             },
           ]),
       ...(skipOrdering
@@ -79,9 +87,10 @@ export const Chart: FC<Props> = ({
             {
               label: 'Order by',
               name: 'orderBy' as const,
-              options: bars.map(({ dataKey, name }) => ({
+              options: bars.map(({ dataKey, name, fill }) => ({
                 label: name,
                 value: dataKey,
+                color: fill,
               })),
             },
           ]),
@@ -113,6 +122,9 @@ export const Chart: FC<Props> = ({
   );
   const groupedData = JSON.parse(JSON.stringify(data)).reduce(
     (aggr: Data, item: DataItem) => {
+      if (groupBy !== dataKey) {
+        item[groupBy] = groupByLabels[item[groupBy]] || item[groupBy];
+      }
       const element = aggr.find(aa => aa[groupBy] === item[groupBy]);
       if (element) {
         bars.forEach(({ dataKey }) => (element[dataKey] += item[dataKey]));
@@ -153,7 +165,12 @@ export const Chart: FC<Props> = ({
         <XAxis dataKey={groupBy} />
         <YAxis tickFormatter={ratio ? toPercent : undefined} />
         <Tooltip />
-        <Legend verticalAlign="top" />
+        <Legend
+          verticalAlign="top"
+          height={36}
+          iconType="circle"
+          iconSize={16}
+        />
         {bars.map(props => (
           <Bar
             key={props.dataKey}
