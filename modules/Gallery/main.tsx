@@ -26,7 +26,7 @@ interface props {
 export interface IFile {
   name: string;
   mimeType?: string;
-  data?: string;
+  data?: Uint8Array;
   uri?: string;
 }
 
@@ -123,8 +123,10 @@ export function Gallery({
 
   const getHREF = () => {
     const img = fileList[activeImage];
-    const src = S3.b64toBlob(img.data!, img.name);
-    return URL.createObjectURL(src);
+    const blob = new Blob([img.data!], {
+      type: S3.getMimeType(img.name) || '.png',
+    });
+    return URL.createObjectURL(blob);
   };
 
   const downloadImg = () => {
@@ -291,4 +293,13 @@ export function Gallery({
       </Dialog>
     </>
   );
+}
+
+function bufToB64(buffer: Uint8Array): string {
+  let bin = '';
+  const len = buffer.length;
+  for (let i = 0; i < len; i++) {
+    bin = `${bin}${String.fromCharCode(buffer[i])}`;
+  }
+  return bin;
 }

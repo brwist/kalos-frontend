@@ -10,6 +10,8 @@ import CloseIcon from '@material-ui/icons/CloseSharp';
 import SubmitIcon from '@material-ui/icons/SendSharp';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import Tooltip from '@material-ui/core/Tooltip';
+import PersonIcon from '@material-ui/icons/PersonSharp';
+import PeopleIcon from '@material-ui/icons/PeopleSharp';
 import IconButton from '@material-ui/core/IconButton';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import FormControl from '@material-ui/core/FormControl';
@@ -25,8 +27,6 @@ import { AccountPicker, DepartmentPicker } from '../../Pickers';
 import { EmployeePicker } from '../../Pickers/Employee';
 import { TxnStatusPicker } from '../../Pickers/TransactionStatus';
 import Typography from '@material-ui/core/Typography';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
 import Skeleton from '@material-ui/lab/Skeleton';
 import {
   TransactionActivityClient,
@@ -561,290 +561,437 @@ export class TransactionAdminView extends React.Component<props, state> {
           justifyContent: 'flex-start',
         }}
       >
-        {this.props.isSU && (
-          <FormControlLabel
-            control={
-              <Switch
-                checked={this.state.departmentView}
-                onChange={this.toggleView}
-              />
-            }
-            label={
-              this.state.departmentView
-                ? 'Showing transacations for your department'
-                : 'Showing all transactions'
-            }
-          />
-        )}
-
-        <>
-          <Toolbar
-            style={{
-              justifyContent: 'space-evenly',
-              position: 'sticky',
-              width: '100%',
+        <Toolbar
+          style={{
+            justifyContent: 'space-evenly',
+            width: '100%',
+          }}
+        >
+          <TablePagination
+            component="span"
+            count={this.state.count}
+            rowsPerPage={50}
+            page={this.state.page}
+            backIconButtonProps={{
+              'aria-label': 'previous page',
             }}
-          >
-            <TablePagination
-              component="span"
-              count={this.state.count}
-              rowsPerPage={50}
-              page={this.state.page}
-              backIconButtonProps={{
-                'aria-label': 'previous page',
-              }}
-              nextIconButtonProps={{
-                'aria-label': 'next page',
-              }}
-              onChangePage={this.altChangePage}
-              rowsPerPageOptions={[50]}
-            />
-            <FormControl style={{ marginBottom: 10 }}>
-              <InputLabel htmlFor="set-year-select">Filter by Year</InputLabel>
-              <NativeSelect
-                disabled={this.state.isLoading}
-                onChange={(e) =>
-                  this.setFilter('yearCreated', e.currentTarget.value)
-                }
-                inputProps={{ id: 'set-year-select' }}
-                value={this.state.filters.yearCreated}
-              >
-                {this.getYearList()}
-              </NativeSelect>
-            </FormControl>
-            <FormControl style={{ marginBottom: 10 }}>
-              <InputLabel htmlFor="set-month-select">
-                Filter by Month
-              </InputLabel>
-              <NativeSelect
-                disabled={this.state.isLoading}
-                onChange={(e) =>
-                  this.setFilter('dateCreated', e.currentTarget.value)
-                }
-                inputProps={{ id: 'set-month-select' }}
-              >
-                <option>Select Month</option>
-                <option value="01">January</option>
-                <option value="02">February</option>
-                <option value="03">March</option>
-                <option value="04">April</option>
-                <option value="05">May</option>
-                <option value="06">June</option>
-                <option value="07">July</option>
-                <option value="08">August</option>
-                <option value="09">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
-              </NativeSelect>
-            </FormControl>
-            {!this.state.departmentView && (
-              <DepartmentPicker
-                disabled={this.state.isLoading}
-                selected={this.state.filters.departmentID || 0}
-                onSelect={(departmentID) => {
-                  if (typeof departmentID === 'number') {
-                    this.setFilter('departmentID', departmentID);
-                  }
-                }}
-                renderItem={(i) => (
-                  <option value={i.id} key={`${i.id}-department-select`}>
-                    {i.description} - {i.value}
-                  </option>
-                )}
-              />
-            )}
-            <TxnStatusPicker
+            nextIconButtonProps={{
+              'aria-label': 'next page',
+            }}
+            onChangePage={this.altChangePage}
+            rowsPerPageOptions={[50]}
+            style={{ marginBottom: 10 }}
+          />
+          <FormControl style={{ marginBottom: 10 }}>
+            <InputLabel htmlFor="set-year-select">Filter by Year</InputLabel>
+            <NativeSelect
               disabled={this.state.isLoading}
-              selected={this.state.filters.statusID || 0}
-              onSelect={(statusID) => this.setFilter('statusID', statusID)}
-              label="Filter by Status"
-            />
-            <AccountPicker
+              onChange={(e) =>
+                this.setFilter('yearCreated', e.currentTarget.value)
+              }
+              inputProps={{ id: 'set-year-select' }}
+              value={this.state.filters.yearCreated}
+            >
+              {this.getYearList()}
+            </NativeSelect>
+          </FormControl>
+          <FormControl style={{ marginBottom: 10 }}>
+            <InputLabel htmlFor="set-month-select">Filter by Month</InputLabel>
+            <NativeSelect
               disabled={this.state.isLoading}
-              selected={this.state.filters.costCenterID || 0}
-              onSelect={(costCenterID) => {
-                if (typeof costCenterID === 'number') {
-                  this.setFilter('costCenterID', costCenterID);
+              onChange={(e) =>
+                this.setFilter('dateCreated', e.currentTarget.value)
+              }
+              inputProps={{ id: 'set-month-select' }}
+            >
+              <option>Select Month</option>
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </NativeSelect>
+          </FormControl>
+          {!this.state.departmentView && (
+            <DepartmentPicker
+              disabled={this.state.isLoading}
+              selected={this.state.filters.departmentID || 0}
+              onSelect={(departmentID) => {
+                if (typeof departmentID === 'number') {
+                  this.setFilter('departmentID', departmentID);
                 }
               }}
-              sort={(a, b) => a.description.localeCompare(b.description)}
               renderItem={(i) => (
-                <option value={i.id} key={`${i.id}-account-select`}>
-                  {i.description} ({i.id})
+                <option value={i.id} key={`${i.id}-department-select`}>
+                  {i.description} - {i.value}
                 </option>
               )}
             />
-            <EmployeePicker
-              disabled={this.state.isLoading}
-              selected={this.state.filters.userID || 0}
-              onSelect={(userID) => this.setFilter('userID', userID)}
-              label="Filter by User"
-              test={employeeTest}
-            />
-            <Tooltip
-              title={`Clear filters${!this.checkFilters() ? '(disabled)' : ''}`}
-            >
-              <span>
-                <IconButton
-                  onClick={this.clearFilters}
-                  disabled={!this.checkFilters()}
-                >
-                  <CloseIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="Copy current page as CSV">
-              <span>
-                <IconButton
-                  onClick={this.copyPage}
-                  disabled={this.state.isLoading}
-                >
-                  <CopyIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
+          )}
+          <TxnStatusPicker
+            disabled={this.state.isLoading}
+            selected={this.state.filters.statusID || 0}
+            onSelect={(statusID) => this.setFilter('statusID', statusID)}
+            label="Filter by Status"
+          />
+          <AccountPicker
+            disabled={this.state.isLoading}
+            selected={this.state.filters.costCenterID || 0}
+            onSelect={(costCenterID) => {
+              if (typeof costCenterID === 'number') {
+                this.setFilter('costCenterID', costCenterID);
+              }
+            }}
+            sort={(a, b) => a.description.localeCompare(b.description)}
+            renderItem={(i) => (
+              <option value={i.id} key={`${i.id}-account-select`}>
+                {i.description} ({i.id})
+              </option>
+            )}
+          />
+          <EmployeePicker
+            disabled={this.state.isLoading}
+            selected={this.state.filters.userID || 0}
+            onSelect={(userID) => this.setFilter('userID', userID)}
+            label="Filter by User"
+            test={employeeTest}
+          />
+          <Tooltip
+            title={`Clear filters${!this.checkFilters() ? '(disabled)' : ''}`}
+          >
+            <span>
+              <IconButton
+                onClick={this.clearFilters}
+                disabled={!this.checkFilters()}
+              >
+                <CloseIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Copy current page as CSV">
+            <span>
+              <IconButton
+                onClick={this.copyPage}
+                disabled={this.state.isLoading}
+              >
+                <CopyIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip
+            title={
+              this.state.acceptOverride
+                ? 'Mark current page as approved'
+                : 'Mark current page as entered'
+            }
+          >
+            <span>
+              <IconButton
+                onClick={this.handleSubmitPage}
+                disabled={this.state.isLoading}
+              >
+                <SubmitIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          {this.props.isSU && (
             <Tooltip
               title={
-                this.state.acceptOverride
-                  ? 'Mark current page as approved'
-                  : 'Mark current page as entered'
+                this.state.departmentView
+                  ? 'Show All Departments'
+                  : 'Show Your Department'
               }
             >
-              <span>
-                <IconButton
-                  onClick={this.handleSubmitPage}
-                  disabled={this.state.isLoading}
-                >
-                  <SubmitIcon />
-                </IconButton>
-              </span>
+              <IconButton onClick={this.toggleView}>
+                {this.state.departmentView ? <PeopleIcon /> : <PersonIcon />}
+              </IconButton>
             </Tooltip>
-          </Toolbar>
-          <Table stickyHeader style={{ maxHeight: '100%' }}>
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  align="center"
-                  sortDirection={this.state.filters.sort.sortDir}
-                  style={{ padding: 4 }}
-                >
-                  <TableSortLabel
-                    active={this.state.filters.sort.sortBy === 'timestamp'}
-                    direction={this.state.filters.sort.sortDir}
-                    onClick={() => this.setSort('timestamp')}
-                  >
-                    Date
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="center" style={{ padding: 4 }}>
-                  Purchaser
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sortDirection={this.state.filters.sort.sortDir}
-                  style={{ padding: 4 }}
-                >
-                  <TableSortLabel
-                    active={this.state.filters.sort.sortBy === 'cost_center_id'}
-                    direction={this.state.filters.sort.sortDir}
-                    onClick={() => this.setSort('cost_center_id')}
-                  >
-                    Account
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="center" style={{ padding: 4 }}>
-                  Department
-                </TableCell>
-                <TableCell align="center" style={{ padding: 4 }}>
-                  Job #
-                </TableCell>
-                <TableCell
-                  style={{ padding: 4 }}
-                  align="right"
-                  sortDirection={this.state.filters.sort.sortDir}
-                >
-                  <TableSortLabel
-                    active={this.state.filters.sort.sortBy === 'amount'}
-                    direction={this.state.filters.sort.sortDir}
-                    onClick={() => this.setSort('amount')}
-                  >
-                    Amount
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sortDirection={this.state.filters.sort.sortDir}
-                  style={{ padding: 4 }}
-                >
-                  <TableSortLabel
-                    active={this.state.filters.sort.sortBy === 'description'}
-                    direction={this.state.filters.sort.sortDir}
-                    onClick={() => this.setSort('description')}
-                  >
-                    Description
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="center" colSpan={2} style={{ padding: 4 }}>
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {!this.state.isLoading &&
-                txns.map((t) => (
-                  <TransactionRow
-                    txn={t}
-                    key={`txnRow-${t.id}`}
-                    acceptOverride={this.state.acceptOverride}
-                    departmentView={this.state.departmentView}
-                    enter={this.makeRecordTransaction(t.id)}
-                    audit={this.makeAuditTransaction(t.id)}
-                    accept={this.makeUpdateStatus(t.id, 3, 'accepted')}
-                    reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
-                    refresh={this.fetchTxns}
-                    addJobNumber={this.makeAddJobNumber(t.id)}
-                    updateNotes={this.makeUpdateNotes(t.id)}
-                    updateCostCenter={this.makeUpdateCostCenter(t.id)}
-                    updateDepartment={this.makeUpdateDepartment(t.id)}
-                    toggleLoading={this.toggleLoading}
-                  />
-                ))}
-              {this.state.isLoading &&
-                range(0, 50).map((i) => (
-                  <TableRow key={`${i}_txn_skeleton_row`}>
-                    <TableCell align="center" style={{ height: 85 }}>
-                      <Skeleton variant="text" width={40} height={16} />
-                    </TableCell>
-                    <TableCell align="center" style={{ height: 85 }}>
-                      <Skeleton variant="text" width={40} height={16} />
-                    </TableCell>
-                    <TableCell align="center" style={{ height: 85 }}>
-                      <Skeleton variant="text" width={40} height={16} />
-                    </TableCell>
-                    <TableCell align="center" style={{ height: 85 }}>
-                      <Skeleton variant="text" width={40} height={16} />
-                    </TableCell>
-                    <TableCell align="center" style={{ height: 85 }}>
-                      <Skeleton variant="text" width={40} height={16} />
-                    </TableCell>
-                    <TableCell align="center" style={{ height: 85 }}>
-                      <Skeleton variant="text" width={40} height={16} />
-                    </TableCell>
-                    <TableCell align="center" style={{ height: 85 }}>
-                      <Skeleton variant="text" width={40} height={16} />
-                    </TableCell>
-                    <TableCell align="center" style={{ height: 85 }}>
-                      <Skeleton variant="text" width={40} height={16} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-          {!this.state.isLoading && this.state.count === 0 && (
-            <Typography>0 results</Typography>
           )}
-        </>
+        </Toolbar>
+        <Table stickyHeader style={{ maxHeight: '100%' }}>
+          <TableHead>
+            <TableRow>
+              <TableCell
+                align="center"
+                sortDirection={this.state.filters.sort.sortDir}
+                style={{ padding: 4 }}
+              >
+                <TableSortLabel
+                  active={this.state.filters.sort.sortBy === 'timestamp'}
+                  direction={this.state.filters.sort.sortDir}
+                  onClick={() => this.setSort('timestamp')}
+                >
+                  Date
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center" style={{ padding: 4 }}>
+                Purchaser
+              </TableCell>
+              <TableCell
+                align="center"
+                sortDirection={this.state.filters.sort.sortDir}
+                style={{ padding: 4 }}
+              >
+                <TableSortLabel
+                  active={this.state.filters.sort.sortBy === 'cost_center_id'}
+                  direction={this.state.filters.sort.sortDir}
+                  onClick={() => this.setSort('cost_center_id')}
+                >
+                  Account
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center" style={{ padding: 4 }}>
+                Department
+              </TableCell>
+              <TableCell align="center" style={{ padding: 4 }}>
+                Job #
+              </TableCell>
+              <TableCell
+                style={{ padding: 4 }}
+                align="right"
+                sortDirection={this.state.filters.sort.sortDir}
+              >
+                <TableSortLabel
+                  active={this.state.filters.sort.sortBy === 'amount'}
+                  direction={this.state.filters.sort.sortDir}
+                  onClick={() => this.setSort('amount')}
+                >
+                  Amount
+                </TableSortLabel>
+              </TableCell>
+              <TableCell
+                align="center"
+                sortDirection={this.state.filters.sort.sortDir}
+                style={{ padding: 4 }}
+              >
+                <TableSortLabel
+                  active={this.state.filters.sort.sortBy === 'description'}
+                  direction={this.state.filters.sort.sortDir}
+                  onClick={() => this.setSort('description')}
+                >
+                  Description
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center" colSpan={2} style={{ padding: 4 }}>
+                Actions
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {!this.state.isLoading &&
+              txns.map((t) => (
+                <TransactionRow
+                  txn={t}
+                  key={`txnRow-${t.id}`}
+                  acceptOverride={this.state.acceptOverride}
+                  departmentView={this.state.departmentView}
+                  enter={this.makeRecordTransaction(t.id)}
+                  audit={this.makeAuditTransaction(t.id)}
+                  accept={this.makeUpdateStatus(t.id, 3, 'accepted')}
+                  reject={this.makeUpdateStatus(t.id, 4, 'rejected')}
+                  refresh={this.fetchTxns}
+                  addJobNumber={this.makeAddJobNumber(t.id)}
+                  updateNotes={this.makeUpdateNotes(t.id)}
+                  updateCostCenter={this.makeUpdateCostCenter(t.id)}
+                  updateDepartment={this.makeUpdateDepartment(t.id)}
+                  toggleLoading={this.toggleLoading}
+                />
+              ))}
+            {this.state.isLoading &&
+              range(0, 50).map((i) => (
+                <TableRow key={`${i}_txn_skeleton_row`}>
+                  <TableCell align="center" style={{ height: 85 }}>
+                    <Skeleton variant="text" width={40} height={16} />
+                  </TableCell>
+                  <TableCell align="center" style={{ height: 85 }}>
+                    <Skeleton variant="text" width={40} height={16} />
+                  </TableCell>
+                  <TableCell align="center" style={{ height: 85 }}>
+                    <Skeleton variant="text" width={40} height={16} />
+                  </TableCell>
+                  <TableCell align="center" style={{ height: 85 }}>
+                    <Skeleton variant="text" width={40} height={16} />
+                  </TableCell>
+                  <TableCell align="center" style={{ height: 85 }}>
+                    <Skeleton variant="text" width={40} height={16} />
+                  </TableCell>
+                  <TableCell align="center" style={{ height: 85 }}>
+                    <Skeleton variant="text" width={40} height={16} />
+                  </TableCell>
+                  <TableCell align="center" style={{ height: 85 }}>
+                    <Skeleton variant="text" width={40} height={16} />
+                  </TableCell>
+                  <TableCell align="center" style={{ height: 85 }}>
+                    <Skeleton variant="text" width={40} height={16} />
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+        <Toolbar
+          style={{
+            justifyContent: 'space-evenly',
+            width: '100%',
+          }}
+        >
+          <TablePagination
+            component="span"
+            count={this.state.count}
+            rowsPerPage={50}
+            page={this.state.page}
+            backIconButtonProps={{
+              'aria-label': 'previous page',
+            }}
+            nextIconButtonProps={{
+              'aria-label': 'next page',
+            }}
+            onChangePage={this.altChangePage}
+            rowsPerPageOptions={[50]}
+            style={{ marginBottom: 10 }}
+          />
+          <FormControl style={{ marginBottom: 10 }}>
+            <InputLabel htmlFor="set-year-select">Filter by Year</InputLabel>
+            <NativeSelect
+              disabled={this.state.isLoading}
+              onChange={(e) =>
+                this.setFilter('yearCreated', e.currentTarget.value)
+              }
+              inputProps={{ id: 'set-year-select' }}
+              value={this.state.filters.yearCreated}
+            >
+              {this.getYearList()}
+            </NativeSelect>
+          </FormControl>
+          <FormControl style={{ marginBottom: 10 }}>
+            <InputLabel htmlFor="set-month-select">Filter by Month</InputLabel>
+            <NativeSelect
+              disabled={this.state.isLoading}
+              onChange={(e) =>
+                this.setFilter('dateCreated', e.currentTarget.value)
+              }
+              inputProps={{ id: 'set-month-select' }}
+            >
+              <option>Select Month</option>
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </NativeSelect>
+          </FormControl>
+          {!this.state.departmentView && (
+            <DepartmentPicker
+              disabled={this.state.isLoading}
+              selected={this.state.filters.departmentID || 0}
+              onSelect={(departmentID) => {
+                if (typeof departmentID === 'number') {
+                  this.setFilter('departmentID', departmentID);
+                }
+              }}
+              renderItem={(i) => (
+                <option value={i.id} key={`${i.id}-department-select`}>
+                  {i.description} - {i.value}
+                </option>
+              )}
+            />
+          )}
+          <TxnStatusPicker
+            disabled={this.state.isLoading}
+            selected={this.state.filters.statusID || 0}
+            onSelect={(statusID) => this.setFilter('statusID', statusID)}
+            label="Filter by Status"
+          />
+          <AccountPicker
+            disabled={this.state.isLoading}
+            selected={this.state.filters.costCenterID || 0}
+            onSelect={(costCenterID) => {
+              if (typeof costCenterID === 'number') {
+                this.setFilter('costCenterID', costCenterID);
+              }
+            }}
+            sort={(a, b) => a.description.localeCompare(b.description)}
+            renderItem={(i) => (
+              <option value={i.id} key={`${i.id}-account-select`}>
+                {i.description} ({i.id})
+              </option>
+            )}
+          />
+          <EmployeePicker
+            disabled={this.state.isLoading}
+            selected={this.state.filters.userID || 0}
+            onSelect={(userID) => this.setFilter('userID', userID)}
+            label="Filter by User"
+            test={employeeTest}
+          />
+          <Tooltip
+            title={`Clear filters${!this.checkFilters() ? '(disabled)' : ''}`}
+          >
+            <span>
+              <IconButton
+                onClick={this.clearFilters}
+                disabled={!this.checkFilters()}
+              >
+                <CloseIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Copy current page as CSV">
+            <span>
+              <IconButton
+                onClick={this.copyPage}
+                disabled={this.state.isLoading}
+              >
+                <CopyIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip
+            title={
+              this.state.acceptOverride
+                ? 'Mark current page as approved'
+                : 'Mark current page as entered'
+            }
+          >
+            <span>
+              <IconButton
+                onClick={this.handleSubmitPage}
+                disabled={this.state.isLoading}
+              >
+                <SubmitIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          {this.props.isSU && (
+            <Tooltip
+              title={
+                this.state.departmentView
+                  ? 'Show All Departments'
+                  : 'Show Your Department'
+              }
+            >
+              <IconButton onClick={this.toggleView}>
+                {this.state.departmentView ? <PeopleIcon /> : <PersonIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
+        </Toolbar>
+        {!this.state.isLoading && this.state.count === 0 && (
+          <Typography>0 results</Typography>
+        )}
       </Paper>
     );
   }

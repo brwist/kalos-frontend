@@ -8,6 +8,7 @@ ReactDOM.render(
     dateStr="2020/02/05"
     title="Create PDF"
     amount={40.54}
+    pdfType="Retrievable Receipt"
   />,
   document.getElementById('root'),
 );

@@ -22,7 +22,7 @@ interface props {
   vendor?: string;
   icon?: React.ReactNode;
   jobNumber?: string;
-  onCreate?(file: Blob): void;
+  onCreate?(file: Uint8Array): void;
   confirmText?: string;
   pdfType: PDFList;
 }
@@ -88,19 +88,21 @@ export class PDFMaker extends React.PureComponent<props, state> {
         this.props.pdfType === 'Missing Receipt'
           ? ReceiptAffadavit
           : RetrievableAffadavit;
-      const blob = await ReactPDF.pdf(
-        <ThePDF
-          date={this.props.dateStr}
-          vendor={this.state.vendor}
-          name={this.props.name}
-          purpose={this.state.purpose}
-          sigURL={this.state.sigURL}
-          amount={this.props.amount}
-          jobNumber={this.state.jobNumber}
-        />,
-      ).toBlob();
+      const blob = await (
+        await ReactPDF.pdf(
+          <ThePDF
+            date={this.props.dateStr}
+            vendor={this.state.vendor}
+            name={this.props.name}
+            purpose={this.state.purpose}
+            sigURL={this.state.sigURL}
+            amount={this.props.amount}
+            jobNumber={this.state.jobNumber}
+          />,
+        ).toBlob()
+      ).arrayBuffer();
       if (this.props.onCreate) {
-        this.props.onCreate(blob);
+        this.props.onCreate(new Uint8Array(blob));
         this.toggleModal();
       } else {
         const el = document.createElement('a');
@@ -114,7 +116,7 @@ export class PDFMaker extends React.PureComponent<props, state> {
   }
 
   toggleModal() {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       isOpen: !prevState.isOpen,
     }));
   }
