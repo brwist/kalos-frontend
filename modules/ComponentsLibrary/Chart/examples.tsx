@@ -4,6 +4,14 @@ import { CHART_COLORS } from '../../../constants';
 
 const { blue, red, orange, green, purple } = CHART_COLORS;
 
+const GROUP_BY_LABELS = {
+  IT: 'IT',
+  technician: 'Technicians',
+  office: 'Back Office',
+};
+
+const GROUP_BY_KEYS = [{ label: 'Role', value: 'role' }];
+
 const data: Data = [
   {
     name: 'John Doe',
@@ -96,7 +104,10 @@ export default () => (
     <Chart
       title="Hourly Breakdown"
       config={{
-        xDataKey: 'name',
+        x: {
+          dataKey: 'name',
+          label: 'Name',
+        },
         bars: [
           {
             dataKey: 'billable',
@@ -111,13 +122,17 @@ export default () => (
         ],
       }}
       data={data}
-      groupByKeys={['role']}
+      groupByKeys={GROUP_BY_KEYS}
+      groupByLabels={GROUP_BY_LABELS}
     />
     <hr />
     <Chart
       title="Timeoff Requests"
       config={{
-        xDataKey: 'name',
+        x: {
+          dataKey: 'name',
+          label: 'Name',
+        },
         bars: [
           {
             dataKey: 'sick',
@@ -147,13 +162,17 @@ export default () => (
         ],
       }}
       data={data}
-      groupByKeys={['role']}
+      groupByKeys={GROUP_BY_KEYS}
+      groupByLabels={GROUP_BY_LABELS}
     />
     <hr />
     <Chart
       title="Billable Per Hour - Service"
       config={{
-        xDataKey: 'name',
+        x: {
+          dataKey: 'name',
+          label: 'Name',
+        },
         bars: [
           {
             dataKey: 'service',
@@ -163,7 +182,8 @@ export default () => (
         ],
       }}
       data={data}
-      groupByKeys={['role']}
+      groupByKeys={GROUP_BY_KEYS}
+      groupByLabels={GROUP_BY_LABELS}
     />
   </>
 );
