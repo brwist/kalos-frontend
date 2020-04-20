@@ -319,7 +319,7 @@ export const Chart: FC<Props> = ({
         <div className={classes.users}>
           <SectionBar title="Users" subtitle="11 selected" small />
           <div
-            style={{ height: width / CHART_ASPECT_RATIO }}
+            style={{ height: width / CHART_ASPECT_RATIO - 50 }}
             className={classes.usersList}
           >
             <InfoTable data={usersData} />

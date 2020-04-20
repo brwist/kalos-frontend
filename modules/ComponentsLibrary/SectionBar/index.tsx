@@ -95,15 +95,15 @@ const useStyles = makeStyles(theme => ({
       lineHeight: 1,
     },
   }),
-  subtitle: {
+  subtitle: ({ small }: Styles) => ({
     marginTop: theme.spacing(0.25),
-    ...theme.typography.subtitle1,
+    ...theme.typography[small ? 'subtitle2' : 'subtitle1'],
     lineHeight: 1,
     [theme.breakpoints.down('xs')]: {
       ...theme.typography.subtitle2,
       lineHeight: 1,
     },
-  },
+  }),
   toolbarRoot: {
     flexShrink: 0,
   },
