@@ -171,7 +171,10 @@ export const Chart: FC<Props> = ({
           iconType="circle"
           iconSize={16}
         />
-        {bars.map(props => (
+        {[
+          bars.find(({ dataKey }) => dataKey === orderBy)!,
+          ...bars.filter(({ dataKey }) => dataKey !== orderBy),
+        ].map(props => (
           <Bar
             key={props.dataKey}
             {...props}
