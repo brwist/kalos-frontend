@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SectionBar } from './';
+import { Button } from '../Button';
 import { LoremIpsumList } from '../helpers';
 
 const Examples = ({ subtitle }: { subtitle?: string }) => {
@@ -12,6 +13,7 @@ const Examples = ({ subtitle }: { subtitle?: string }) => {
         actions={Array.from(Array(5)).map((_, idx) => ({
           label: `Button ${idx + 1}`,
         }))}
+        asideContent={<Button label="Custom" />}
       />
       <hr />
       <SectionBar
