@@ -1,4 +1,5 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useState, useRef } from 'react';
+import ReactToPrint from 'react-to-print';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   BarChart,
@@ -10,6 +11,7 @@ import {
   Bar,
 } from 'recharts';
 import { SectionBar } from '../SectionBar';
+import { Button } from '../Button';
 import { PlainForm, Schema, Option } from '../PlainForm';
 
 export type DataItem = { [key: string]: any };
@@ -46,6 +48,16 @@ const useStyles = makeStyles(theme => ({
   chart: {
     ...theme.typography.body1,
   },
+  printHeader: {
+    display: 'none',
+    '@media print': {
+      display: 'block',
+      marginBottom: theme.spacing(),
+    },
+  },
+  printBody: {
+    margin: theme.spacing(4),
+  },
 }));
 
 const toPercent = (decimal: number, fixed: number = 0) =>
@@ -64,6 +76,7 @@ export const Chart: FC<Props> = ({
   groupByLabels = {},
 }) => {
   const classes = useStyles();
+  const printRef = useRef<HTMLDivElement>(null);
   const [chartFormData, setChartFormData] = useState<ChartForm>({
     orderBy: bars[0]!.dataKey,
     ratio: 0,
@@ -141,48 +154,52 @@ export const Chart: FC<Props> = ({
     <div>
       <SectionBar
         title={title}
-        actions={[
-          {
-            label: 'Print',
-          },
-        ]}
-        fixedActions
+        asideContent={
+          <ReactToPrint
+            trigger={() => <Button label="Print" />}
+            content={() => printRef.current}
+            bodyClass={classes.printBody}
+          />
+        }
       />
       <PlainForm
         schema={SCHEMA}
         data={chartFormData}
         onChange={setChartFormData}
       />
-      <BarChart
-        key={barChartKey}
-        width={1200}
-        height={500}
-        data={barCharData}
-        className={classes.chart}
-        stackOffset="expand"
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey={groupBy} />
-        <YAxis tickFormatter={ratio ? toPercent : undefined} />
-        <Tooltip />
-        <Legend
-          verticalAlign="top"
-          height={36}
-          iconType="circle"
-          iconSize={16}
-        />
-        {[
-          bars.find(({ dataKey }) => dataKey === orderBy)!,
-          ...bars.filter(({ dataKey }) => dataKey !== orderBy),
-        ].map(props => (
-          <Bar
-            key={props.dataKey}
-            {...props}
-            name={`${props.name}${ratio ? ' %' : ''}`}
-            stackId={ratio ? '1' : undefined}
+      <div ref={printRef}>
+        <SectionBar title={title} className={classes.printHeader} />
+        <BarChart
+          key={barChartKey}
+          width={1200}
+          height={500}
+          data={barCharData}
+          className={classes.chart}
+          stackOffset="expand"
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey={groupBy} />
+          <YAxis tickFormatter={ratio ? toPercent : undefined} />
+          <Tooltip />
+          <Legend
+            verticalAlign="top"
+            height={36}
+            iconType="circle"
+            iconSize={16}
           />
-        ))}
-      </BarChart>
+          {[
+            bars.find(({ dataKey }) => dataKey === orderBy)!,
+            ...bars.filter(({ dataKey }) => dataKey !== orderBy),
+          ].map(props => (
+            <Bar
+              key={props.dataKey}
+              {...props}
+              name={`${props.name}${ratio ? ' %' : ''}`}
+              stackId={ratio ? '1' : undefined}
+            />
+          ))}
+        </BarChart>
+      </div>
     </div>
   );
 };
