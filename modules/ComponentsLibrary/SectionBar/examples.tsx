@@ -9,6 +9,8 @@ const Examples = ({ subtitle }: { subtitle?: string }) => {
     <>
       <SectionBar title="Title" subtitle={subtitle} />
       <hr />
+      <SectionBar title="Small" subtitle={subtitle} small />
+      <hr />
       <SectionBar
         actions={Array.from(Array(5)).map((_, idx) => ({
           label: `Button ${idx + 1}`,

@@ -1,5 +1,13 @@
-import React, { FC, useCallback, useState, useRef, useEffect } from 'react';
+import React, {
+  FC,
+  useCallback,
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+} from 'react';
 import ReactToPrint from 'react-to-print';
+import uniq from 'lodash/uniq';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   BarChart,
@@ -14,6 +22,8 @@ import {
 } from 'recharts';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
+import { Field } from '../Field';
+import { InfoTable, Data as InfoTableData } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 
 const PRINT_WIDTH = 1200;
@@ -50,6 +60,20 @@ export interface Props {
 }
 
 const useStyles = makeStyles(theme => ({
+  panel: {
+    display: 'flex',
+  },
+  users: {
+    width: 220,
+    marginRight: theme.spacing(0),
+    overflowY: 'auto',
+  },
+  usersList: {
+    overflowY: 'auto',
+  },
+  wrapper: {
+    flexGrow: 1,
+  },
   container: {
     position: 'relative',
     width: '100%',
@@ -80,6 +104,15 @@ const useStyles = makeStyles(theme => ({
   },
   printBody: {
     width: PRINT_WIDTH,
+  },
+  checkbox: {
+    marginTop: `${theme.spacing(-1.5)}px !important`,
+    marginBottom: `${theme.spacing(-1.5)}px !important`,
+  },
+  checkboxUser: {
+    marginLeft: `${theme.spacing(2)}px !important`,
+    marginTop: `${theme.spacing(-1.5)}px !important`,
+    marginBottom: `${theme.spacing(-1.5)}px !important`,
   },
 }));
 
@@ -231,8 +264,42 @@ export const Chart: FC<Props> = ({
       </div>
     </div>
   );
+  const usersData: InfoTableData = useMemo(() => {
+    const roles = uniq(data.map(({ role }) => role));
+    return roles
+      .map(role => [
+        {
+          value: (
+            <Field
+              name={`technician-${role}`}
+              value={1}
+              label={groupByLabels[role] || role}
+              type="checkbox"
+              className={classes.checkbox}
+              // onChange={handleTechnicianChecked(id)}
+            />
+          ),
+        },
+        ...data
+          .filter(item => item.role === role)
+          .map(item => ({
+            value: (
+              <Field
+                name={`technician-${role}`}
+                value={1}
+                label={item.name}
+                type="checkbox"
+                className={classes.checkboxUser}
+                // onChange={handleTechnicianChecked(id)}
+              />
+            ),
+          })),
+      ])
+      .reduce((aggr, item) => [...aggr, ...item], [])
+      .map(item => [item]);
+  }, [data, groupByLabels]);
   return (
-    <div ref={wrapperRef}>
+    <div>
       <SectionBar
         title={title}
         asideContent={
@@ -248,13 +315,26 @@ export const Chart: FC<Props> = ({
         data={chartFormData}
         onChange={setChartFormData}
       />
-      <CustomResponsiveContainer aspect={CHART_ASPECT_RATIO}>
-        <ChartContent />
-      </CustomResponsiveContainer>
-      <div ref={printRef}>
-        <div className={classes.print}>
-          <SectionBar title={title} className={classes.printHeader} />
-          <ChartContent print />
+      <div className={classes.panel}>
+        <div className={classes.users}>
+          <SectionBar title="Users" subtitle="11 selected" small />
+          <div
+            style={{ height: width / CHART_ASPECT_RATIO }}
+            className={classes.usersList}
+          >
+            <InfoTable data={usersData} />
+          </div>
+        </div>
+        <div ref={wrapperRef} className={classes.wrapper}>
+          <CustomResponsiveContainer aspect={CHART_ASPECT_RATIO}>
+            <ChartContent />
+          </CustomResponsiveContainer>
+          <div ref={printRef}>
+            <div className={classes.print}>
+              <SectionBar title={title} className={classes.printHeader} />
+              <ChartContent print />
+            </div>
+          </div>
         </div>
       </div>
     </div>
