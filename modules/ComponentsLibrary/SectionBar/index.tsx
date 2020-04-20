@@ -23,6 +23,7 @@ type Styles = {
   collapsable?: boolean;
   collapsed?: boolean;
   fixedActions?: boolean;
+  small?: boolean;
 };
 
 interface Props {
@@ -35,10 +36,11 @@ interface Props {
   fixedActions?: boolean;
   footer?: ReactNode;
   asideContent?: ReactNode;
+  small?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({
-  wrapper: ({ collapsable, collapsed }: Styles) => ({
+  wrapper: ({ collapsable, collapsed, small }: Styles) => ({
     position: 'sticky',
     top: 0,
     zIndex: 1,
@@ -48,7 +50,7 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     justifyContent: 'space-between',
     justifyItems: 'center',
-    minHeight: 46,
+    minHeight: small ? 0 : 46,
     flexDirection: 'column',
     boxSizing: 'border-box',
     marginBottom: collapsable && collapsed ? theme.spacing() : 0,
@@ -72,21 +74,21 @@ const useStyles = makeStyles(theme => ({
       alignItems: 'flex-start',
     },
   },
-  titleWrapper: ({ collapsable }: Styles) => ({
+  titleWrapper: ({ collapsable, small }: Styles) => ({
     cursor: collapsable ? 'pointer' : 'default',
     userSelect: 'none',
     width: '100%',
-    marginTop: theme.spacing(),
-    marginBottom: theme.spacing(),
+    marginTop: theme.spacing(small ? 0.5 : 1),
+    marginBottom: theme.spacing(small ? 0.5 : 1),
     [theme.breakpoints.down('xs')]: {
       marginTop: theme.spacing(0.5),
       marginBottom: theme.spacing(0.5),
     },
   }),
-  title: ({ fixedActions }: Styles) => ({
+  title: ({ fixedActions, small }: Styles) => ({
     display: fixedActions ? 'block' : 'flex',
     alignItems: 'center',
-    ...theme.typography.h6,
+    ...theme.typography[small ? 'subtitle1' : 'h6'],
     lineHeight: 1,
     [theme.breakpoints.down('xs')]: {
       ...theme.typography.subtitle1,
@@ -125,6 +127,7 @@ export const SectionBar: FC<Props> = ({
   fixedActions = false,
   footer,
   asideContent,
+  small = false,
   children,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -132,6 +135,7 @@ export const SectionBar: FC<Props> = ({
     collapsable: !!children,
     collapsed,
     fixedActions,
+    small,
   });
   const handleToggleCollapsed = useCallback(() => setCollapsed(!collapsed), [
     collapsed,
