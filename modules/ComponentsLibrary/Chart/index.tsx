@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState, useRef } from 'react';
+import React, { FC, useCallback, useState, useRef, useEffect } from 'react';
 import ReactToPrint from 'react-to-print';
 import { makeStyles } from '@material-ui/core/styles';
 import {
@@ -9,10 +9,15 @@ import {
   Tooltip,
   Legend,
   Bar,
+  ResponsiveContainer,
+  ResponsiveContainerProps,
 } from 'recharts';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PlainForm, Schema, Option } from '../PlainForm';
+
+const PRINT_WIDTH = 1200;
+const CHART_ASPECT_RATIO = 16 / 9;
 
 export type DataItem = { [key: string]: any };
 export type Data = DataItem[];
@@ -45,18 +50,36 @@ export interface Props {
 }
 
 const useStyles = makeStyles(theme => ({
+  container: {
+    position: 'relative',
+    width: '100%',
+    '&:before': {
+      content: "' '",
+      display: 'block',
+      paddingTop: `${100 / CHART_ASPECT_RATIO}%`,
+    },
+  },
+  responsive: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
   chart: {
     ...theme.typography.body1,
   },
-  printHeader: {
+  print: {
     display: 'none',
     '@media print': {
       display: 'block',
-      marginBottom: theme.spacing(),
     },
   },
+  printHeader: {
+    marginBottom: theme.spacing(),
+  },
   printBody: {
-    margin: theme.spacing(4),
+    width: PRINT_WIDTH,
   },
 }));
 
@@ -76,7 +99,23 @@ export const Chart: FC<Props> = ({
   groupByLabels = {},
 }) => {
   const classes = useStyles();
+  const [width, setWidth] = useState<number>(0);
+  const wrapperRef = useCallback(
+    node => {
+      if (node !== null) {
+        setWidth(node.getBoundingClientRect().width);
+      }
+    },
+    [setWidth],
+  );
   const printRef = useRef<HTMLDivElement>(null);
+  const resize = useCallback(() => wrapperRef(printRef.current), [
+    wrapperRef,
+    printRef,
+  ]);
+  useEffect(() => {
+    window.addEventListener('resize', resize); // TODO removeEventListener
+  }, []);
   const [chartFormData, setChartFormData] = useState<ChartForm>({
     orderBy: bars[0]!.dataKey,
     ratio: 0,
@@ -138,7 +177,7 @@ export const Chart: FC<Props> = ({
       if (groupBy !== dataKey) {
         item[groupBy] = groupByLabels[item[groupBy]] || item[groupBy];
       }
-      const element = aggr.find(aa => aa[groupBy] === item[groupBy]);
+      const element = aggr.find(el => el[groupBy] === item[groupBy]);
       if (element) {
         bars.forEach(({ dataKey }) => (element[dataKey] += item[dataKey]));
       } else {
@@ -150,8 +189,50 @@ export const Chart: FC<Props> = ({
   );
   const barCharData = groupedData.sort(sort(orderBy));
   const barChartKey = [orderBy].join('|');
+  const ChartContent = ({
+    print = false,
+    width,
+    height,
+  }: {
+    print?: boolean;
+    width?: number;
+    height?: number;
+  }) => (
+    <BarChart
+      key={barChartKey}
+      width={print ? PRINT_WIDTH : width}
+      height={print ? PRINT_WIDTH / CHART_ASPECT_RATIO : height}
+      data={barCharData}
+      className={classes.chart}
+      stackOffset="expand"
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey={groupBy} />
+      <YAxis tickFormatter={ratio ? toPercent : undefined} />
+      <Tooltip />
+      <Legend verticalAlign="top" height={36} iconType="circle" iconSize={16} />
+      {[
+        bars.find(({ dataKey }) => dataKey === orderBy)!,
+        ...bars.filter(({ dataKey }) => dataKey !== orderBy),
+      ].map(props => (
+        <Bar
+          key={props.dataKey}
+          {...props}
+          name={`${props.name}${ratio ? ' %' : ''}`}
+          stackId={ratio ? '1' : undefined}
+        />
+      ))}
+    </BarChart>
+  );
+  const CustomResponsiveContainer = (props: ResponsiveContainerProps) => (
+    <div className={classes.container}>
+      <div className={classes.responsive}>
+        <ResponsiveContainer {...props} />
+      </div>
+    </div>
+  );
   return (
-    <div>
+    <div ref={wrapperRef}>
       <SectionBar
         title={title}
         asideContent={
@@ -167,38 +248,14 @@ export const Chart: FC<Props> = ({
         data={chartFormData}
         onChange={setChartFormData}
       />
+      <CustomResponsiveContainer aspect={CHART_ASPECT_RATIO}>
+        <ChartContent />
+      </CustomResponsiveContainer>
       <div ref={printRef}>
-        <SectionBar title={title} className={classes.printHeader} />
-        <BarChart
-          key={barChartKey}
-          width={1200}
-          height={500}
-          data={barCharData}
-          className={classes.chart}
-          stackOffset="expand"
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey={groupBy} />
-          <YAxis tickFormatter={ratio ? toPercent : undefined} />
-          <Tooltip />
-          <Legend
-            verticalAlign="top"
-            height={36}
-            iconType="circle"
-            iconSize={16}
-          />
-          {[
-            bars.find(({ dataKey }) => dataKey === orderBy)!,
-            ...bars.filter(({ dataKey }) => dataKey !== orderBy),
-          ].map(props => (
-            <Bar
-              key={props.dataKey}
-              {...props}
-              name={`${props.name}${ratio ? ' %' : ''}`}
-              stackId={ratio ? '1' : undefined}
-            />
-          ))}
-        </BarChart>
+        <div className={classes.print}>
+          <SectionBar title={title} className={classes.printHeader} />
+          <ChartContent print />
+        </div>
       </div>
     </div>
   );
