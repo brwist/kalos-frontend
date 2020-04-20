@@ -34,6 +34,7 @@ interface Props {
   styles?: CSSProperties;
   fixedActions?: boolean;
   footer?: ReactNode;
+  asideContent?: ReactNode;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -123,6 +124,7 @@ export const SectionBar: FC<Props> = ({
   styles,
   fixedActions = false,
   footer,
+  asideContent,
   children,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -183,9 +185,12 @@ export const SectionBar: FC<Props> = ({
               />
             )}
           </div>
-          {actions.length > 0 && (
-            <Actions actions={actions} fixed={fixedActions} />
-          )}
+          <div className={classes.header}>
+            {actions.length > 0 && (
+              <Actions actions={actions} fixed={fixedActions} />
+            )}
+            {asideContent}
+          </div>
         </div>
         {footer && <div className={classes.footer}>{footer}</div>}
       </div>
