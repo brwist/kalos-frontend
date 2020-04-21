@@ -3,15 +3,15 @@ import clsx from 'clsx';
 import { isSameDay, format } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import Skeleton from '@material-ui/lab/Skeleton';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
-import { colorsMapping, repeatsMapping, requestTypeMappping } from '../constants';
-import { useEmployees } from '../hooks';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
+import { useEmployees } from '../hooks';
+import { colorsMapping, repeatsMapping, requestTypeMappping } from '../constants';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -65,25 +65,6 @@ const ColorIndicator = ({ type, requestType, logJobStatus, color }: ColorIndicat
       className={classes.colorIndicator}
       style={{ backgroundColor: colorToUse }}
     />
-  );
-};
-
-export const SkeletonCard = () => {
-  const classes = useStyles();
-  return (
-    <Card className={classes.card}>
-      <CardHeader
-        className={classes.cardHeader}
-        avatar={<Skeleton variant="circle" width={16} height={16} />}
-        title={<Skeleton width="50%" />}
-        subheader={<Skeleton width="50%" />}
-      />
-      <CardContent className={classes.cardContent}>
-        <Skeleton />
-        <Skeleton />
-        <Skeleton />
-      </CardContent>
-    </Card>
   );
 };
 
