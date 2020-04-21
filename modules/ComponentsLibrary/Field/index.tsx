@@ -18,6 +18,11 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
+import DateFnsUtils from '@date-io/date-fns';
+import { format, roundToNearestMinutes } from "date-fns";
+import { MuiPickersUtilsProvider, DatePicker, TimePicker } from "@material-ui/pickers";
+//@ts-ignore
+import SignatureCanvas from 'react-signature-pad-wrapper';
 import { Button } from '../Button';
 import { SchemaProps } from '../PlainForm';
 import { Actions } from '../Actions';
@@ -48,6 +53,8 @@ export type Type =
   | 'checkbox'
   | 'date'
   | 'time'
+  | 'mui-date'
+  | 'mui-time'
   | 'technician'
   | 'signature'
   | 'department'
@@ -201,24 +208,24 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
-                                                                        name,
-                                                                        label,
-                                                                        headline,
-                                                                        options,
-                                                                        onChange,
-                                                                        disabled = false,
-                                                                        required = false,
-                                                                        validation = '',
-                                                                        helperText = '',
-                                                                        type = 'text',
-                                                                        readOnly = false,
-                                                                        className = '',
-                                                                        startAdornment,
-                                                                        endAdornment,
-                                                                        content,
-                                                                        actionsInLabel = false,
-                                                                        ...props
-                                                                      }) => {
+  name,
+  label,
+  headline,
+  options,
+  onChange,
+  disabled = false,
+  required = false,
+  validation = '',
+  helperText = '',
+  type = 'text',
+  readOnly = false,
+  className = '',
+  startAdornment,
+  endAdornment,
+  content,
+  actionsInLabel = false,
+  ...props
+}) => {
   const signatureRef = useRef(null);
   const dateTimePart = type === 'date' ? (props.value + '').substr(11, 8) : '';
   const value =
@@ -453,6 +460,32 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       </div>
     );
   }
+
+  if (type === 'mui-date') {
+    return (
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <DatePicker
+          label={inputLabel}
+          value={new Date(props.value as unknown as Date)}
+          onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
+        />
+      </MuiPickersUtilsProvider>
+    );
+  }
+
+  if (type === 'mui-time') {
+    return (
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <TimePicker
+          label={inputLabel}
+          value={roundToNearestMinutes(new Date(props.value as unknown as Date), {nearestTo: 15})}
+          onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
+          minutesStep={15}
+        />
+      </MuiPickersUtilsProvider>
+    );
+  }
+
   if (type === 'checkbox') {
     return (
       <FormControl
@@ -483,51 +516,51 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       ids.length === 1 && ids[0] === 0
         ? 'Unassigned'
         : ids
-          .map(id => {
-            const technician = technicians.find(item => item.id === id);
-            if (!technician) return '...';
-            const { firstname, lastname } = technician;
-            return `${firstname} ${lastname}`;
-          })
-          .join('\n');
+            .map(id => {
+              const technician = technicians.find(item => item.id === id);
+              if (!technician) return '...';
+              const { firstname, lastname } = technician;
+              return `${firstname} ${lastname}`;
+            })
+            .join('\n');
     const searchTechnicianPhrase = (searchTechnician + '').toLowerCase();
     const data: Data = loadedTechnicians
       ? [
-        [
-          {
-            value: (
-              <Field
-                name="technician-0"
-                value={techniciansIds.includes(0)}
-                label="Unassigned"
-                type="checkbox"
-                className={classes.technician}
-                onChange={handleTechnicianChecked(0)}
-              />
-            ),
-          },
-        ],
-        ...technicians
-          .filter(
-            ({ firstname, lastname }) =>
-              firstname.toLowerCase().includes(searchTechnicianPhrase) ||
-              lastname.toLowerCase().includes(searchTechnicianPhrase),
-          )
-          .map(({ id, firstname, lastname }) => [
+          [
             {
               value: (
                 <Field
-                  name={`technician-${id}`}
-                  value={techniciansIds.includes(id)}
-                  label={`${firstname} ${lastname}`}
+                  name="technician-0"
+                  value={techniciansIds.includes(0)}
+                  label="Unassigned"
                   type="checkbox"
                   className={classes.technician}
-                  onChange={handleTechnicianChecked(id)}
+                  onChange={handleTechnicianChecked(0)}
                 />
               ),
             },
-          ]),
-      ]
+          ],
+          ...technicians
+            .filter(
+              ({ firstname, lastname }) =>
+                firstname.toLowerCase().includes(searchTechnicianPhrase) ||
+                lastname.toLowerCase().includes(searchTechnicianPhrase),
+            )
+            .map(({ id, firstname, lastname }) => [
+              {
+                value: (
+                  <Field
+                    name={`technician-${id}`}
+                    value={techniciansIds.includes(id)}
+                    label={`${firstname} ${lastname}`}
+                    type="checkbox"
+                    className={classes.technician}
+                    onChange={handleTechnicianChecked(id)}
+                  />
+                ),
+              },
+            ]),
+        ]
       : makeFakeRows(1, 30);
     return (
       <>

@@ -21,6 +21,7 @@ import {
 import { ENDPOINT } from '../../../constants';
 import { useFetchAll } from '../../ComponentsLibrary/hooks';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
+import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -75,11 +76,12 @@ const tslClient = new TimesheetLineClient(ENDPOINT);
 type Props = {
   date: string,
   userId: number,
+  timesheetOwnerId: number,
   editedEntries: TimesheetLine.AsObject[],
   hiddenSR: ServicesRendered.AsObject[],
 };
 
-const Column: FC<Props> = ({ date, userId, editedEntries , hiddenSR}) => {
+const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hiddenSR}) => {
   const classes = useStyles();
   const [dayView, setDayView] = useState(false);
 
@@ -90,7 +92,7 @@ const Column: FC<Props> = ({ date, userId, editedEntries , hiddenSR}) => {
     req.setIsActive(1);
     req.setHideFromTimesheet(0);
     req.setTimeStarted(`${date}%`);
-    req.setTechnicianUserId(userId);
+    req.setTechnicianUserId(timesheetOwnerId);
     req.setPageNumber(page);
     return (await srClient.BatchGet(req)).toObject();
   }, []);
@@ -99,7 +101,7 @@ const Column: FC<Props> = ({ date, userId, editedEntries , hiddenSR}) => {
     const req = new TimesheetLine();
     req.setIsActive(1);
     req.setTimeStarted(`${date}%`);
-    req.setTechnicianUserId(userId);
+    req.setTechnicianUserId(timesheetOwnerId);
     req.setPageNumber(page);
     return (await tslClient.BatchGet(req)).toObject();
   }, []);
@@ -112,7 +114,8 @@ const Column: FC<Props> = ({ date, userId, editedEntries , hiddenSR}) => {
 
   const { data:servicesRendered, isLoading:servicesRenderedLoading } = useFetchAll(fetchServicesRendered);
   const { data:timesheetLine, isLoading:timesheetLineLoading } = useFetchAll(fetchTimesheetLine);
-  const filteredSR = [...servicesRendered].filter(item => !item.hideFromTimesheet);
+
+  const filteredSR = [...servicesRendered].filter(item => !item.hideFromTimesheet && item.status !== 'Completed' && item.status !== 'Incomplete');
   const filteredTL = [...timesheetLine];
   hiddenSR.forEach(entry => {
     if (format(new Date(entry.timeStarted), 'yyyy-MM-dd') === date) {
@@ -173,12 +176,22 @@ const Column: FC<Props> = ({ date, userId, editedEntries , hiddenSR}) => {
           </Tooltip>
         </>
       </Box>
-      {cards.map(card => {
-        if (card.hideFromTimesheet === 0) {
-          return <ServicesRenderedCard key={`src-${card.id}`} card={card} />
-        }
-        return <TimesheetLineCard key={`tlc-${card.id}`} card={card} />
-      })}
+      {servicesRenderedLoading && timesheetLineLoading ? (
+        <>
+          {[...Array(5)].map((e, i) => (
+            <SkeletonCard key={`${date}-skeleton-${i}`} />
+          ))}
+        </>
+      ) : (
+        <>
+          {cards.map(card => {
+            if (card.hideFromTimesheet === 0) {
+              return <ServicesRenderedCard key={`src-${card.id}`} card={card} />
+            }
+            return <TimesheetLineCard key={`tlc-${card.id}`} card={card} />
+          })}
+        </>
+      )}
     </Box>
   );
 };

@@ -69,7 +69,7 @@ type TimesheetLineProps = {
 export const TimesheetLineCard: FC<TimesheetLineProps> = ({ card }): JSX.Element => {
   const classes = useStyles();
   const { editTimesheetCard } = useEditTimesheet();
-  const { timeStarted, timeFinished, userApprovalDatetime, adminApprovalDatetime, briefDescription } = card;
+  const { timeStarted, timeFinished, userApprovalDatetime, adminApprovalDatetime, briefDescription, classCode } = card;
   let status;
   if (adminApprovalDatetime) {
     status = 'Approved';
@@ -91,7 +91,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({ card }): JSX.Element
           avatar={
             <ColorIndicator status={status} />
           }
-          title={status}
+          title={`${status} ${classCode?.billable ? '(0.25)' : '' }`}
         />
         <CardContent className={classes.cardContent}>
           <Typography className={classes.date} variant="body2" color="textSecondary" component="p">
@@ -100,6 +100,9 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({ card }): JSX.Element
           </Typography>
           <Typography variant="body2" color="textSecondary" component="p">
             {name}
+          </Typography>
+          <Typography>
+            {classCode?.description}
           </Typography>
           {briefDescription && (
             <Typography variant="body2" color="textSecondary" component="p">{briefDescription}</Typography>
