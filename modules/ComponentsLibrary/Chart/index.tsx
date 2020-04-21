@@ -25,6 +25,7 @@ import { Button } from '../Button';
 import { Field } from '../Field';
 import { InfoTable, Data as InfoTableData } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
+import { makeFakeRows } from '../../../helpers';
 
 const PRINT_WIDTH = 1200;
 const CHART_ASPECT_RATIO = 16 / 9;
@@ -49,7 +50,11 @@ type ChartForm = {
   groupBy: string;
 };
 
-export interface Props {
+type Style = {
+  loading?: boolean;
+};
+
+export interface Props extends Style {
   title?: string;
   data: Data;
   config: Config;
@@ -71,9 +76,11 @@ const useStyles = makeStyles(theme => ({
   usersList: {
     overflowY: 'auto',
   },
-  wrapper: {
+  wrapper: ({ loading }: Style) => ({
     flexGrow: 1,
-  },
+    position: 'relative',
+    filter: `grayscale(${loading ? 1 : 0})`,
+  }),
   container: {
     position: 'relative',
     width: '100%',
@@ -114,6 +121,13 @@ const useStyles = makeStyles(theme => ({
     marginTop: `${theme.spacing(-1.5)}px !important`,
     marginBottom: `${theme.spacing(-1.5)}px !important`,
   },
+  loading: {
+    ...theme.typography.caption,
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+  },
 }));
 
 const toPercent = (decimal: number, fixed: number = 0) =>
@@ -130,8 +144,9 @@ export const Chart: FC<Props> = ({
   skipRatio = false,
   groupByKeys = [],
   groupByLabels = {},
+  loading = false,
 }) => {
-  const classes = useStyles();
+  const classes = useStyles({ loading });
   const [width, setWidth] = useState<number>(0);
   const wrapperRef = useCallback(
     node => {
@@ -313,7 +328,7 @@ export const Chart: FC<Props> = ({
         title={title}
         asideContent={
           <ReactToPrint
-            trigger={() => <Button label="Print" />}
+            trigger={() => <Button label="Print" disabled={loading} />}
             content={() => printRef.current}
             bodyClass={classes.printBody}
           />
@@ -323,15 +338,23 @@ export const Chart: FC<Props> = ({
         schema={SCHEMA}
         data={chartFormData}
         onChange={setChartFormData}
+        disabled={loading}
       />
       <div className={classes.panel}>
         <div className={classes.users}>
-          <SectionBar title="Users" subtitle="11 selected" small />
+          <SectionBar
+            title="Users"
+            subtitle={`${data.length} selected`}
+            small
+          />
           <div
             style={{ height: width / CHART_ASPECT_RATIO - 50 }}
             className={classes.usersList}
           >
-            <InfoTable data={usersData} />
+            <InfoTable
+              data={loading ? makeFakeRows(1, 20) : usersData}
+              loading={loading}
+            />
           </div>
         </div>
         <div ref={wrapperRef} className={classes.wrapper}>
@@ -344,6 +367,7 @@ export const Chart: FC<Props> = ({
               <ChartContent print />
             </div>
           </div>
+          {loading && <div className={classes.loading}>Loading...</div>}
         </div>
       </div>
     </div>
