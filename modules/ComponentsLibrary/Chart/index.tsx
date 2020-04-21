@@ -264,6 +264,7 @@ export const Chart: FC<Props> = ({
             (aggr, { dataKey }) => aggr + payload[dataKey],
             0,
           );
+          if (sum === 0) return toPercent(0, 2);
           return toPercent(+value / sum, 2);
         }}
       />
