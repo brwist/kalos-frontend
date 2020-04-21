@@ -242,7 +242,16 @@ export const Chart: FC<Props> = ({
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis dataKey={groupBy} />
       <YAxis tickFormatter={ratio ? toPercent : undefined} />
-      <Tooltip />
+      <Tooltip
+        formatter={(value, name, { payload }) => {
+          if (ratio === 0) return value;
+          const sum = bars.reduce(
+            (aggr, { dataKey }) => aggr + payload[dataKey],
+            0,
+          );
+          return toPercent(+value / sum, 2);
+        }}
+      />
       <Legend verticalAlign="top" height={36} iconType="circle" iconSize={16} />
       {[
         bars.find(({ dataKey }) => dataKey === orderBy)!,
