@@ -7,6 +7,7 @@ import ReactDOM from 'react-dom';
 import customTheme from '../Theme/main';
 import AddNewButton from './AddNewButton/examples';
 import Button from './Button/examples';
+import Chart from './Chart/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
 import CustomerInformation from './CustomerInformation/examples';
@@ -29,6 +30,7 @@ const DEFAULT_COMPONENT_IDX = 0;
 const COMPONENTS = {
   AddNewButton,
   Button,
+  Chart,
   Confirm,
   ConfirmDelete,
   CustomerInformation,

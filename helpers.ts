@@ -25,6 +25,12 @@ import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import {
+  MetricsClient,
+  Billable,
+  Callbacks,
+  Revenue,
+} from '@kalos-core/kalos-rpc/Metrics';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -41,10 +47,13 @@ const QuoteLineClientService = new QuoteLineClient(ENDPOINT);
 const TimesheetDepartmentClientService = new TimesheetDepartmentClient(
   ENDPOINT,
 );
+const MetricsClientService = new MetricsClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
 const GOOGLE_MAPS_KEY = 'AIzaSyBufXfsM3nTanL9XsATgToVf5SgPkbWHkc';
+
+export type MetricType = 'Billable' | 'Callbacks' | 'Revenue';
 
 function cfURL(action: string, qs = '') {
   return `${BASE_URL}?action=admin:${action}${qs}`;
@@ -722,6 +731,32 @@ async function loadUsersByIds(ids: number[]) {
 }
 
 /**
+ * Returns loaded Metric by user id and metricType
+ * @param userId: number
+ * @param metricType: MetricType
+ * @returns metric
+ */
+async function loadMetricByUserId(userId: number, metricType: MetricType) {
+  try {
+    //@ts-ignore
+    return await MetricsClientService[`Get${metricType}`](userId);
+  } catch (e) {
+    return { id: userId, value: 0 };
+  }
+}
+
+/**
+ * Returns loaded Metric by user id
+ * @param userId: number
+ * @returns metric
+ */
+async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
+  return await Promise.all(
+    userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
+  );
+}
+
+/**
  * Returns an array of numbers from start to end inclusive
  * @param start
  * @param end
@@ -794,4 +829,6 @@ export {
   trailingZero,
   loadTimesheetDepartments,
   loadUsersByDepartmentId,
+  loadMetricByUserId,
+  loadMetricByUserIds,
 };
