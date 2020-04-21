@@ -201,24 +201,24 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
-  name,
-  label,
-  headline,
-  options,
-  onChange,
-  disabled = false,
-  required = false,
-  validation = '',
-  helperText = '',
-  type = 'text',
-  readOnly = false,
-  className = '',
-  startAdornment,
-  endAdornment,
-  content,
-  actionsInLabel = false,
-  ...props
-}) => {
+                                                                        name,
+                                                                        label,
+                                                                        headline,
+                                                                        options,
+                                                                        onChange,
+                                                                        disabled = false,
+                                                                        required = false,
+                                                                        validation = '',
+                                                                        helperText = '',
+                                                                        type = 'text',
+                                                                        readOnly = false,
+                                                                        className = '',
+                                                                        startAdornment,
+                                                                        endAdornment,
+                                                                        content,
+                                                                        actionsInLabel = false,
+                                                                        ...props
+                                                                      }) => {
   const signatureRef = useRef(null);
   const dateTimePart = type === 'date' ? (props.value + '').substr(11, 8) : '';
   const value =
@@ -483,51 +483,51 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       ids.length === 1 && ids[0] === 0
         ? 'Unassigned'
         : ids
-            .map(id => {
-              const technician = technicians.find(item => item.id === id);
-              if (!technician) return '...';
-              const { firstname, lastname } = technician;
-              return `${firstname} ${lastname}`;
-            })
-            .join('\n');
+          .map(id => {
+            const technician = technicians.find(item => item.id === id);
+            if (!technician) return '...';
+            const { firstname, lastname } = technician;
+            return `${firstname} ${lastname}`;
+          })
+          .join('\n');
     const searchTechnicianPhrase = (searchTechnician + '').toLowerCase();
     const data: Data = loadedTechnicians
       ? [
-          [
+        [
+          {
+            value: (
+              <Field
+                name="technician-0"
+                value={techniciansIds.includes(0)}
+                label="Unassigned"
+                type="checkbox"
+                className={classes.technician}
+                onChange={handleTechnicianChecked(0)}
+              />
+            ),
+          },
+        ],
+        ...technicians
+          .filter(
+            ({ firstname, lastname }) =>
+              firstname.toLowerCase().includes(searchTechnicianPhrase) ||
+              lastname.toLowerCase().includes(searchTechnicianPhrase),
+          )
+          .map(({ id, firstname, lastname }) => [
             {
               value: (
                 <Field
-                  name="technician-0"
-                  value={techniciansIds.includes(0)}
-                  label="Unassigned"
+                  name={`technician-${id}`}
+                  value={techniciansIds.includes(id)}
+                  label={`${firstname} ${lastname}`}
                   type="checkbox"
                   className={classes.technician}
-                  onChange={handleTechnicianChecked(0)}
+                  onChange={handleTechnicianChecked(id)}
                 />
               ),
             },
-          ],
-          ...technicians
-            .filter(
-              ({ firstname, lastname }) =>
-                firstname.toLowerCase().includes(searchTechnicianPhrase) ||
-                lastname.toLowerCase().includes(searchTechnicianPhrase),
-            )
-            .map(({ id, firstname, lastname }) => [
-              {
-                value: (
-                  <Field
-                    name={`technician-${id}`}
-                    value={techniciansIds.includes(id)}
-                    label={`${firstname} ${lastname}`}
-                    type="checkbox"
-                    className={classes.technician}
-                    onChange={handleTechnicianChecked(id)}
-                  />
-                ),
-              },
-            ]),
-        ]
+          ]),
+      ]
       : makeFakeRows(1, 30);
     return (
       <>
