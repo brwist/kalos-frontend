@@ -21,6 +21,10 @@ import {
   QuoteLinePart,
 } from '@kalos-core/kalos-rpc/QuoteLinePart';
 import { QuoteLineClient, QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+import {
+  TimesheetDepartmentClient,
+  TimesheetDepartment,
+} from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -34,6 +38,9 @@ const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
 const QuotePartClientService = new QuotePartClient(ENDPOINT);
 const QuoteLinePartClientService = new QuoteLinePartClient(ENDPOINT);
 const QuoteLineClientService = new QuoteLineClient(ENDPOINT);
+const TimesheetDepartmentClientService = new TimesheetDepartmentClient(
+  ENDPOINT,
+);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -372,6 +379,36 @@ async function loadJobSubtypes() {
   return resultsList;
 }
 
+/** Returns loaded TimesheetDepartments
+ * @returns TimesheetDepartment[]
+ */
+async function loadTimesheetDepartments() {
+  const results: TimesheetDepartment.AsObject[] = [];
+  const req = new TimesheetDepartment();
+  req.setPageNumber(0);
+  req.setIsActive(1);
+  const { resultsList, totalCount } = (
+    await TimesheetDepartmentClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await TimesheetDepartmentClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
+}
+
 /** Returns loaded Technicians
  * @returns User[]
  */
@@ -383,6 +420,43 @@ async function loadTechnicians() {
   req.setIsEmployee(1);
   req.setIsSu(0);
   req.setServiceCalls(1);
+  const { resultsList, totalCount } = (
+    await UserClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await UserClientService.BatchGet(req)).toObject().resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results.sort((a, b) => {
+    const A = `${a.firstname} ${a.lastname}`.toLocaleLowerCase();
+    const B = `${b.firstname} ${b.lastname}`.toLocaleLowerCase();
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+  });
+}
+
+/** Returns loaded Users by department id
+ * @param departmentId: number
+ * @returns User[]
+ */
+async function loadUsersByDepartmentId(departmentId: number) {
+  const results: User.AsObject[] = [];
+  const req = new User();
+  req.setPageNumber(0);
+  req.setIsActive(1);
+  req.setEmployeeDepartmentId(departmentId);
   const { resultsList, totalCount } = (
     await UserClientService.BatchGet(req)
   ).toObject();
@@ -718,4 +792,6 @@ export {
   loadQuoteLineParts,
   loadQuoteLines,
   trailingZero,
+  loadTimesheetDepartments,
+  loadUsersByDepartmentId,
 };
