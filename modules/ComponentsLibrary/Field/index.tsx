@@ -18,6 +18,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
+import DateFnsUtils from '@date-io/date-fns';
+import { format, roundToNearestMinutes } from "date-fns";
+import { MuiPickersUtilsProvider, DatePicker, TimePicker } from "@material-ui/pickers";
 //@ts-ignore
 import SignatureCanvas from 'react-signature-pad-wrapper';
 import { Button } from '../Button';
@@ -27,6 +30,18 @@ import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { makeFakeRows, loadTechnicians, trailingZero } from '../../../helpers';
+import { ClassCodePicker, DepartmentPicker } from '../../Pickers/';
+
+type SelectOption = {
+  id: number;
+  description: string;
+};
+
+const renderSelectOptions = (i: SelectOption) => (
+  <option value={i.id} key={`${i.id}-${i.description}`}>
+    {i.description}
+  </option>
+);
 
 type UserType = User.AsObject;
 
@@ -38,9 +53,13 @@ export type Type =
   | 'checkbox'
   | 'date'
   | 'time'
+  | 'mui-date'
+  | 'mui-time'
   | 'technician'
-  | 'hidden'
-  | 'signature';
+  | 'signature'
+  | 'department'
+  | 'classCode'
+  | 'hidden';
 
 export type Value = string | number;
 
@@ -441,6 +460,32 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       </div>
     );
   }
+
+  if (type === 'mui-date') {
+    return (
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <DatePicker
+          label={inputLabel}
+          value={new Date(props.value as unknown as Date)}
+          onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
+        />
+      </MuiPickersUtilsProvider>
+    );
+  }
+
+  if (type === 'mui-time') {
+    return (
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <TimePicker
+          label={inputLabel}
+          value={roundToNearestMinutes(new Date(props.value as unknown as Date), {nearestTo: 15})}
+          onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
+          minutesStep={15}
+        />
+      </MuiPickersUtilsProvider>
+    );
+  }
+
   if (type === 'checkbox') {
     return (
       <FormControl
@@ -645,6 +690,24 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         )}
       </div>
     );
+  }
+  if (type === 'department') {
+    return <DepartmentPicker
+      withinForm
+      renderItem={renderSelectOptions}
+      selected={props.value as unknown as number}
+      onSelect={handleChange}
+      disabled={disabled}
+    />
+  }
+  if (type === 'classCode') {
+    return <ClassCodePicker
+      withinForm
+      renderItem={renderSelectOptions}
+      selected={props.value as unknown as number}
+      onSelect={handleChange}
+      disabled={disabled}
+    />
   }
   return (
     <div className={classes.fieldWrapper + ' ' + className}>

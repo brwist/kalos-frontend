@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
+import React, { createContext, useEffect, useState } from "react";
 import { format, startOfWeek, eachDayOfInterval, addDays } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import customTheme from '../Theme/main';
-import Toolbar from './components/Toolbar';
-import Column from './components/Column';
 import Box from '@material-ui/core/Box';
-import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import EventIcon from '@material-ui/icons/Event';
 import TimerOffIcon from '@material-ui/icons/TimerOff';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import AssessmentIcon from '@material-ui/icons/Assessment';
+import Alert from '@material-ui/lab/Alert';
+import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import customTheme from '../Theme/main';
+import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
+import { ConfirmServiceProvider } from '../ComponentsLibrary/ConfirmService';
+import Toolbar from './components/Toolbar';
+import Column from './components/Column';
+import EditTimesheetModal from './components/EditModal';
+import { ENDPOINT } from '../../constants';
+
+const userClient = new UserClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -30,6 +39,7 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type Props = {
   userId: number;
+  timesheetOwnerId: number;
 };
 
 const weekStart = startOfWeek(new Date());
@@ -41,60 +51,188 @@ const getShownDates = (date?: Date): string[] => {
   return days.map(date => format(date, 'yyyy-MM-dd'));
 };
 
-const Timesheet = ({ userId }: Props) => {
-  const classes = useStyles();
-  const [selectedDate, setSelectedDate] = useState(weekStart);
+type EditTimesheetContext = {
+  editTimesheetCard: (card: TimesheetLine.AsObject) => void;
+  editServicesRenderedCard: (card: ServicesRendered.AsObject) => void;
+};
 
+type EditingState = {
+  entry: TimesheetLine.AsObject,
+  modalShown: boolean,
+  action: 'create' | 'update' | 'convert' | '',
+  editedEntries: TimesheetLine.AsObject[],
+  hiddenSR: ServicesRendered.AsObject[],
+  convertingSR?: ServicesRendered.AsObject,
+};
+
+export const EditTimesheetContext = createContext<EditTimesheetContext>({
+  editTimesheetCard: (card: TimesheetLine.AsObject) => {},
+  editServicesRenderedCard: (card: ServicesRendered.AsObject) => {},
+});
+
+const emptyTimesheet = new TimesheetLine().toObject();
+
+const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
+  const classes = useStyles();
+  const [user, setUser] = useState<User.AsObject>();
+  const [selectedDate, setSelectedDate] = useState<Date>(weekStart);
+  const [editingState, setEditingState] = useState<EditingState>({
+    entry: emptyTimesheet,
+    modalShown: false,
+    action: '',
+    editedEntries: [],
+    hiddenSR: [],
+  });
+
+  const handleOnSave = (entry: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
+    const editedEntries = [...editingState.editedEntries];
+    const alreadyEditedIndex = editedEntries.findIndex(item => item.id === entry.id);
+    const data = { ...entry, action: action || editingState.action };
+    if (alreadyEditedIndex >= 0) {
+      editedEntries[alreadyEditedIndex] = data;
+    } else {
+      editedEntries.push(data);
+    }
+
+    const hiddenSR = [...editingState.hiddenSR];
+    if (editingState.convertingSR) {
+      hiddenSR.push(editingState.convertingSR);
+    }
+
+    setEditingState({
+      entry: emptyTimesheet,
+      modalShown: false,
+      action: '',
+      editedEntries,
+      hiddenSR,
+    })
+  };
+
+  const handleAddNewTimeshetCardClicked = () => {
+    setEditingState({
+      ...editingState,
+      entry: new TimesheetLine().toObject(),
+      modalShown: true,
+      action: 'create',
+    });
+  };
+
+  const editTimesheetCard = (card: TimesheetLine.AsObject) => {
+    setEditingState({
+      ...editingState,
+      entry: card,
+      modalShown: true,
+      action: 'update',
+    });
+  };
+  const editServicesRenderedCard = (card: ServicesRendered.AsObject) => {
+    const entry = new TimesheetLine().toObject();
+    Object.keys(entry).forEach(key => {
+      if (card.hasOwnProperty(key)) {
+        entry[key] = card[key];
+      }
+    });
+    entry.servicesRenderedId = card.id;
+    if (card.status === 'Enroute') {
+      entry.classCode = 37;
+    }
+
+    setEditingState({
+      ...editingState,
+      modalShown: true,
+      entry,
+      action: 'convert',
+      convertingSR: card,
+    });
+  };
+
+  const handleCloseModal = () => {
+    setEditingState({
+      ...editingState,
+      entry: emptyTimesheet,
+      modalShown: false,
+      action: '',
+    })
+  };
+
+  const shownDates = getShownDates(selectedDate);
   const addNewOptions = [
-    {
-      icon: <EventIcon />,
-      name: 'Timecard',
-      url: `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.timesheetEdit&tlid=0&user_id=${userId}`,
-    },
-    {
-      icon: <TimerOffIcon />,
-      name: 'Request Off',
-      url:
-        'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest',
-    },
-    {
-      icon: <AddAlertIcon />,
-      name: 'Reminder',
-      url:
-        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
-    },
-    {
-      icon: <AssignmentIndIcon />,
-      name: 'Task',
-      url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
-    },
-    {
-      icon: <AssessmentIcon />,
-      name: 'Timesheet Weekly Report',
-      action: () => {
-        console.log('Timesheet Weekly Report');
-      },
-    },
+    { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimeshetCardClicked },
+    { icon: <TimerOffIcon />, name: 'Request Off', url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest' },
+    { icon: <AddAlertIcon />, name: 'Reminder', url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder' },
+    { icon: <AssignmentIndIcon />, name: 'Task', url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask' },
+    { icon: <AssessmentIcon />, name: 'Timesheet Weekly Report', action: () => {console.log('Timesheet Weekly Report')} },
   ];
 
   const handleDateChange = (value: Date) => {
     setSelectedDate(value);
   };
-  const shownDates = getShownDates(selectedDate);
+
+  const fetchUser = async () => {
+    const req = new User();
+    req.setId(userId);
+    const result = await userClient.Get(req);
+    setUser(result);
+  };
+
+  useEffect(() => {
+    userClient.GetToken('test', 'test');
+    fetchUser();
+  }, []);
+
+  if (!user) {
+    return null;
+  }
+  console.log(user);
+  const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
+
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <Toolbar
-        selectedDate={selectedDate}
-        handleDateChange={handleDateChange}
-      />
-      <Box className={classes.wrapper}>
-        <Container className={classes.week} maxWidth={false}>
-          {shownDates.map(date => (
-            <Column key={date} date={date} userId={userId} />
-          ))}
-        </Container>
-      </Box>
-      <AddNewButton options={addNewOptions} />
+      <ConfirmServiceProvider>
+        <EditTimesheetContext.Provider
+          value={{
+            editTimesheetCard,
+            editServicesRenderedCard,
+          }}
+        >
+          <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
+          <Box className={classes.wrapper}>
+              {hasAccess ? (
+                <Container className={classes.week} maxWidth={false}>
+                  {shownDates.map(date => (
+                    <Column
+                      key={date}
+                      date={date}
+                      userId={userId}
+                      timesheetOwnerId={timesheetOwnerId}
+                      editedEntries={editingState.editedEntries}
+                      hiddenSR={editingState.hiddenSR}
+                    />
+                  ))}
+                </Container>
+              ) : (
+                <Alert severity="error">
+                  You have no access to this timesheet.
+                </Alert>
+              )
+            }
+          </Box>
+          {editingState.modalShown && (
+            <EditTimesheetModal
+              entry={editingState.entry}
+              timesheetOwnerId={timesheetOwnerId}
+              userId={userId}
+              timesheetAdministration={!!user.timesheetAdministration}
+              onClose={handleCloseModal}
+              onSave={handleOnSave}
+              action={editingState.action}
+            />
+          )}
+          {hasAccess && (
+            <AddNewButton options={addNewOptions} />
+          )}
+        </EditTimesheetContext.Provider>
+      </ConfirmServiceProvider>
     </ThemeProvider>
   );
 };
