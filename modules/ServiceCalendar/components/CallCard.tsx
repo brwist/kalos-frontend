@@ -2,55 +2,57 @@ import React from 'react';
 import clsx from 'clsx';
 import { isSameDay, format } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event';
-import { makeStyles } from '@material-ui/core/styles';
-import Skeleton from '@material-ui/lab/Skeleton';
+import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
-import { colorsMapping, repeatsMapping, requestTypeMappping } from '../constants';
-import { useEmployees } from '../hooks';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
+import { useEmployees } from '../hooks';
+import { colorsMapping, repeatsMapping, requestTypeMappping } from '../constants';
 
-const useStyles = makeStyles(theme => ({
-  card: {
-    margin: `${theme.spacing(1)}px 0`,
-  },
-  cardHeader: {
-    padding: theme.spacing(1),
-    '&.jobNumber': {
-      paddingTop: theme.spacing(2.5),
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    card: {
+      margin: `${theme.spacing(1)}px 0`,
     },
-  },
-  cardContent: {
-    padding: `0 ${theme.spacing(1)}px ${theme.spacing(1)}px`,
-  },
-  date: {
-    fontSize: '0.75rem',
-    fontWeight: 100,
-  },
-  colorIndicator: {
-    display: 'block',
-    width: theme.spacing(2),
-    height: theme.spacing(2),
-    borderRadius: theme.spacing(1),
-  },
-  jobNumber: {
-    position: 'absolute',
-    top: theme.spacing(0.5),
-    right: theme.spacing(1),
-  },
-}));
+    cardHeader: {
+      padding: theme.spacing(1),
+      '&.jobNumber': {
+        paddingTop: theme.spacing(2.5),
+      },
+    },
+    cardContent: {
+      padding: `0 ${theme.spacing(1)}px ${theme.spacing(1)}px`,
+    },
+    date: {
+      fontSize: '0.75rem',
+      fontWeight: 100,
+    },
+    colorIndicator: {
+      display: 'block',
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      borderRadius: theme.spacing(1),
+    },
+    jobNumber: {
+      position: 'absolute',
+      top: theme.spacing(0.5),
+      right: theme.spacing(1),
+    },
+  }),
+);
 
-interface colorProps {
+type ColorIndicatorProps = {
   type?: string;
   requestType?: number;
   logJobStatus?: string;
   color?: string;
 }
 
-const ColorIndicator = ({ type, requestType, logJobStatus, color }: colorProps) => {
+const ColorIndicator = ({ type, requestType, logJobStatus, color }: ColorIndicatorProps) => {
   const classes = useStyles();
   let colorToUse;
   if (type === 'timeoff') {
@@ -63,25 +65,6 @@ const ColorIndicator = ({ type, requestType, logJobStatus, color }: colorProps) 
       className={classes.colorIndicator}
       style={{ backgroundColor: colorToUse }}
     />
-  );
-};
-
-export const SkeletonCard = () => {
-  const classes = useStyles();
-  return (
-    <Card className={classes.card}>
-      <CardHeader
-        className={classes.cardHeader}
-        avatar={<Skeleton variant="circle" width={16} height={16} />}
-        title={<Skeleton width="50%" />}
-        subheader={<Skeleton width="50%" />}
-      />
-      <CardContent className={classes.cardContent}>
-        <Skeleton />
-        <Skeleton />
-        <Skeleton />
-      </CardContent>
-    </Card>
   );
 };
 
