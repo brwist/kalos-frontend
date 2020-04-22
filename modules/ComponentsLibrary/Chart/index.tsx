@@ -81,6 +81,7 @@ const useStyles = makeStyles(theme => ({
     flexGrow: 1,
     position: 'relative',
     filter: `grayscale(${loading ? 1 : 0})`,
+    pointerEvents: loading ? 'none' : 'auto',
   }),
   container: {
     position: 'relative',
@@ -440,7 +441,9 @@ export const Chart: FC<Props> = ({
         <div className={classes.users}>
           <SectionBar
             title="Users"
-            subtitle={`${selectedDataIds.length} selected`}
+            subtitle={
+              loading ? 'Loading...' : `${selectedDataIds.length} selected`
+            }
             small
           />
           <div

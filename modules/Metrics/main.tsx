@@ -18,6 +18,7 @@ interface Props {
     name: string;
     fill: string;
   }[];
+  loggedUserId?: number;
 }
 
 const loadData = async (metrics: MetricType[]) => {
@@ -57,7 +58,7 @@ const loadData = async (metrics: MetricType[]) => {
   return Object.values(users);
 };
 
-export const Metrics: FC<Props> = ({ title, metrics }) => {
+export const Metrics: FC<Props> = ({ metrics, ...props }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<Data>([]);
@@ -76,7 +77,6 @@ export const Metrics: FC<Props> = ({ title, metrics }) => {
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
       <Chart
-        title={title}
         config={{
           x: {
             dataKey: 'name',
@@ -87,6 +87,7 @@ export const Metrics: FC<Props> = ({ title, metrics }) => {
         data={data}
         groupByKeys={GROUP_BY_KEYS}
         loading={loading}
+        {...props}
       />
     </ThemeProvider>
   );
