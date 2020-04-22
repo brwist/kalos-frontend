@@ -148,14 +148,27 @@ export const Chart: FC<Props> = ({
 }) => {
   const classes = useStyles({ loading });
   const roles = uniq(data.map(({ role }) => role));
+  const initSelectedRoles = roles.reduce(
+    (aggr, key) => ({ ...aggr, [key]: 1 }),
+    {},
+  );
+  const initCollapsedRoles = roles.reduce(
+    (aggr, key) => ({ ...aggr, [key]: 0 }),
+    {},
+  );
+  const initSelectedData = data.reduce(
+    (aggr, { id }) => ({ ...aggr, [id]: 1 }),
+    {},
+  );
+  const [initialized, setInitialized] = useState<boolean>(false);
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: number }>(
-    roles.reduce((aggr, key) => ({ ...aggr, [key]: 1 }), {}),
+    initSelectedRoles,
   );
   const [collapsedRoles, setCollapsedRoles] = useState<{
     [key: string]: number;
-  }>(roles.reduce((aggr, key) => ({ ...aggr, [key]: 0 }), {}));
+  }>(initCollapsedRoles);
   const [selectedData, setSelectedData] = useState<{ [key: number]: number }>(
-    data.reduce((aggr, { id }) => ({ ...aggr, [id]: 1 }), {}),
+    initSelectedData,
   );
   const [width, setWidth] = useState<number>(0);
   const wrapperRef = useCallback(
@@ -171,9 +184,25 @@ export const Chart: FC<Props> = ({
     wrapperRef,
     printRef,
   ]);
+  const initializeStates = useCallback(() => {
+    setSelectedRoles(initSelectedRoles);
+    setCollapsedRoles(initCollapsedRoles);
+    setSelectedData(initSelectedData);
+  }, [
+    setSelectedRoles,
+    initSelectedRoles,
+    setCollapsedRoles,
+    initCollapsedRoles,
+    setSelectedData,
+    initSelectedData,
+  ]);
   useEffect(() => {
+    if (!loading && !initialized) {
+      setInitialized(true);
+      initializeStates();
+    }
     window.addEventListener('resize', resize); // TODO removeEventListener
-  }, []);
+  }, [loading, initialized, setInitialized, initializeStates]);
   const [chartFormData, setChartFormData] = useState<ChartForm>({
     orderBy: bars[0]!.dataKey,
     ratio: 0,
