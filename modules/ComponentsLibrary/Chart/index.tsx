@@ -398,7 +398,7 @@ export const Chart: FC<Props> = ({
         <div className={classes.users}>
           <SectionBar
             title="Users"
-            subtitle={`${data.length} selected`}
+            subtitle={`${selectedDataIds.length} selected`}
             small
           />
           <div
