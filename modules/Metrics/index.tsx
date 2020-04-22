@@ -25,6 +25,7 @@ ReactDOM.render(
         fill: orange,
       },
     ]}
+    loggedUserId={101253}
   />,
   document.getElementById('root'),
 );

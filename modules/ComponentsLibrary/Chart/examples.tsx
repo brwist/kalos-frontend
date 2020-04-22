@@ -246,5 +246,26 @@ export default () => (
       groupByKeys={GROUP_BY_KEYS}
       groupByLabels={GROUP_BY_LABELS}
     />
+    <hr />
+    <Chart
+      title="Billable Per Hour - Service"
+      config={{
+        x: {
+          dataKey: 'name',
+          label: 'Name',
+        },
+        bars: [
+          {
+            dataKey: 'service',
+            name: 'Service',
+            fill: blue,
+          },
+        ],
+      }}
+      data={[]}
+      groupByKeys={GROUP_BY_KEYS}
+      groupByLabels={GROUP_BY_LABELS}
+      loading
+    />
   </>
 );
