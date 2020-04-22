@@ -170,9 +170,22 @@ export const Chart: FC<Props> = ({
     groupBy: dataKey,
   });
   const handleChangeData = useCallback(
-    (id: number) => (checked: Value) =>
-      setSelectedData({ ...selectedData, [id]: +checked }),
-    [selectedData, setSelectedData],
+    (id: number, role: string) => (checked: Value) => {
+      const newSelectedData = { ...selectedData, [id]: +checked };
+      setSelectedData(newSelectedData);
+      if (!checked) {
+        setSelectedRoles({ ...selectedRoles, [role]: 0 });
+      } else {
+        const allRolesChecked = data
+          .filter(item => item.role === role)
+          .map(({ id }) => id)
+          .reduce((aggr, id) => aggr && newSelectedData[id] === 1, true);
+        if (allRolesChecked) {
+          setSelectedRoles({ ...selectedRoles, [role]: 1 });
+        }
+      }
+    },
+    [selectedData, setSelectedData, selectedRoles, setSelectedRoles],
   );
   const handleChangeRole = useCallback(
     (role: string) => (checked: Value) => {
@@ -324,7 +337,7 @@ export const Chart: FC<Props> = ({
       },
       ...data
         .filter(item => item.role === role)
-        .map(({ id, name }) => ({
+        .map(({ id, name, role }) => ({
           value: (
             <Field
               name={`data-${id}`}
@@ -332,7 +345,7 @@ export const Chart: FC<Props> = ({
               label={name}
               type="checkbox"
               className={classes.checkboxUser}
-              onChange={handleChangeData(id)}
+              onChange={handleChangeData(id, role)}
             />
           ),
         })),
