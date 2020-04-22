@@ -15,6 +15,7 @@ const GROUP_BY_KEYS = [{ label: 'Role', value: 'role' }];
 
 const data: Data = [
   {
+    id: 1,
     name: 'John Doe',
     role: 'technician',
     billable: 4000,
@@ -27,6 +28,7 @@ const data: Data = [
     service: 225,
   },
   {
+    id: 2,
     name: 'Mark Smith',
     role: 'IT',
     billable: 3000,
@@ -39,6 +41,7 @@ const data: Data = [
     service: 135,
   },
   {
+    id: 3,
     name: 'Steven Woo',
     role: 'IT',
     billable: 2000,
@@ -51,6 +54,7 @@ const data: Data = [
     service: 210,
   },
   {
+    id: 4,
     name: 'Adam Sven',
     role: 'technician',
     billable: 2780,
@@ -63,6 +67,7 @@ const data: Data = [
     service: 170,
   },
   {
+    id: 5,
     name: 'Caren Mirren',
     role: 'office',
     billable: 1890,
@@ -75,6 +80,7 @@ const data: Data = [
     service: 23,
   },
   {
+    id: 6,
     name: 'Emily Sweel',
     role: 'office',
     billable: 2390,
@@ -87,6 +93,7 @@ const data: Data = [
     service: 14,
   },
   {
+    id: 7,
     name: 'Linda Camos',
     role: 'technician',
     billable: 390,
@@ -99,6 +106,7 @@ const data: Data = [
     service: 287,
   },
   {
+    id: 8,
     name: 'Kevin Lamis',
     role: 'technician',
     billable: 3490,
@@ -111,6 +119,7 @@ const data: Data = [
     service: 187,
   },
   {
+    id: 9,
     name: 'Eve Norge',
     role: 'finance',
     billable: 4190,
@@ -123,6 +132,7 @@ const data: Data = [
     service: 17,
   },
   {
+    id: 10,
     name: 'Ellen Viner',
     role: 'IT',
     billable: 490,
@@ -135,6 +145,7 @@ const data: Data = [
     service: 87,
   },
   {
+    id: 11,
     name: 'Brad Vuen',
     role: 'office',
     billable: 3490,
