@@ -1,11 +1,4 @@
-import React, {
-  FC,
-  useCallback,
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-} from 'react';
+import React, { FC, useCallback, useState, useRef, useEffect } from 'react';
 import ReactToPrint from 'react-to-print';
 import uniq from 'lodash/uniq';
 import { makeStyles } from '@material-ui/core/styles';
@@ -147,6 +140,10 @@ export const Chart: FC<Props> = ({
   loading = false,
 }) => {
   const classes = useStyles({ loading });
+  const roles = uniq(data.map(({ role }) => role));
+  const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: number }>(
+    roles.reduce((aggr, key) => ({ ...aggr, [key]: 1 }), {}),
+  );
   const [selectedData, setSelectedData] = useState<{ [key: number]: number }>(
     data.reduce((aggr, { id }) => ({ ...aggr, [id]: 1 }), {}),
   );
@@ -176,6 +173,18 @@ export const Chart: FC<Props> = ({
     (id: number) => (checked: Value) =>
       setSelectedData({ ...selectedData, [id]: +checked }),
     [selectedData, setSelectedData],
+  );
+  const handleChangeRole = useCallback(
+    (role: string) => (checked: Value) => {
+      setSelectedRoles({ ...selectedRoles, [role]: +checked });
+      setSelectedData({
+        ...selectedData,
+        ...data
+          .filter(item => item.role === role)
+          .reduce((aggr, item) => ({ ...aggr, [item.id]: +checked }), {}),
+      });
+    },
+    [data, selectedRoles, setSelectedRoles, selectedData, setSelectedData],
   );
   const { orderBy, ratio, groupBy } = chartFormData;
   const SCHEMA: Schema<ChartForm> = [
@@ -228,21 +237,23 @@ export const Chart: FC<Props> = ({
     },
     [ratio, bars],
   );
-  const groupedData = JSON.parse(JSON.stringify(data)).reduce(
-    (aggr: Data, item: DataItem) => {
-      if (groupBy !== dataKey) {
-        item[groupBy] = groupByLabels[item[groupBy]] || item[groupBy];
-      }
-      const element = aggr.find(el => el[groupBy] === item[groupBy]);
-      if (element) {
-        bars.forEach(({ dataKey }) => (element[dataKey] += item[dataKey]));
-      } else {
-        aggr.push(item);
-      }
-      return aggr;
-    },
-    [],
-  );
+  const selectedDataIds = Object.keys(selectedData)
+    .filter(id => selectedData[+id])
+    .map(id => +id);
+  const groupedData = JSON.parse(
+    JSON.stringify(data.filter(({ id }) => selectedDataIds.includes(id))),
+  ).reduce((aggr: Data, item: DataItem) => {
+    if (groupBy !== dataKey) {
+      item[groupBy] = groupByLabels[item[groupBy]] || item[groupBy];
+    }
+    const element = aggr.find(el => el[groupBy] === item[groupBy]);
+    if (element) {
+      bars.forEach(({ dataKey }) => (element[dataKey] += item[dataKey]));
+    } else {
+      aggr.push(item);
+    }
+    return aggr;
+  }, []);
   const barCharData = groupedData.sort(sort(orderBy));
   const barChartKey = [orderBy].join('|');
   const ChartContent = ({
@@ -297,18 +308,17 @@ export const Chart: FC<Props> = ({
       </div>
     </div>
   );
-  const roles = uniq(data.map(({ role }) => role));
   const usersData: InfoTableData = roles
     .map(role => [
       {
         value: (
           <Field
             name={`role-${role}`}
-            value={1}
+            value={selectedRoles[role]}
             label={groupByLabels[role] || role}
             type="checkbox"
             className={classes.checkbox}
-            // onChange={handleTechnicianChecked(id)}
+            onChange={handleChangeRole(role)}
           />
         ),
       },
@@ -319,7 +329,7 @@ export const Chart: FC<Props> = ({
             <Field
               name={`data-${id}`}
               value={selectedData[id]}
-              label={name + ' ' + id}
+              label={name}
               type="checkbox"
               className={classes.checkboxUser}
               onChange={handleChangeData(id)}
