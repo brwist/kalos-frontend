@@ -22,7 +22,7 @@ import {
 } from 'recharts';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
-import { Field } from '../Field';
+import { Field, Value } from '../Field';
 import { InfoTable, Data as InfoTableData } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { makeFakeRows } from '../../../helpers';
@@ -147,6 +147,9 @@ export const Chart: FC<Props> = ({
   loading = false,
 }) => {
   const classes = useStyles({ loading });
+  const [selectedData, setSelectedData] = useState<{ [key: number]: number }>(
+    data.reduce((aggr, { id }) => ({ ...aggr, [id]: 1 }), {}),
+  );
   const [width, setWidth] = useState<number>(0);
   const wrapperRef = useCallback(
     node => {
@@ -169,6 +172,11 @@ export const Chart: FC<Props> = ({
     ratio: 0,
     groupBy: dataKey,
   });
+  const handleChangeData = useCallback(
+    (id: number) => (checked: Value) =>
+      setSelectedData({ ...selectedData, [id]: +checked }),
+    [selectedData, setSelectedData],
+  );
   const { orderBy, ratio, groupBy } = chartFormData;
   const SCHEMA: Schema<ChartForm> = [
     [
@@ -289,40 +297,38 @@ export const Chart: FC<Props> = ({
       </div>
     </div>
   );
-  const usersData: InfoTableData = useMemo(() => {
-    const roles = uniq(data.map(({ role }) => role));
-    return roles
-      .map(role => [
-        {
+  const roles = uniq(data.map(({ role }) => role));
+  const usersData: InfoTableData = roles
+    .map(role => [
+      {
+        value: (
+          <Field
+            name={`role-${role}`}
+            value={1}
+            label={groupByLabels[role] || role}
+            type="checkbox"
+            className={classes.checkbox}
+            // onChange={handleTechnicianChecked(id)}
+          />
+        ),
+      },
+      ...data
+        .filter(item => item.role === role)
+        .map(({ id, name }) => ({
           value: (
             <Field
-              name={`technician-${role}`}
-              value={1}
-              label={groupByLabels[role] || role}
+              name={`data-${id}`}
+              value={selectedData[id]}
+              label={name + ' ' + id}
               type="checkbox"
-              className={classes.checkbox}
-              // onChange={handleTechnicianChecked(id)}
+              className={classes.checkboxUser}
+              onChange={handleChangeData(id)}
             />
           ),
-        },
-        ...data
-          .filter(item => item.role === role)
-          .map(item => ({
-            value: (
-              <Field
-                name={`technician-${role}`}
-                value={1}
-                label={item.name}
-                type="checkbox"
-                className={classes.checkboxUser}
-                // onChange={handleTechnicianChecked(id)}
-              />
-            ),
-          })),
-      ])
-      .reduce((aggr, item) => [...aggr, ...item], [])
-      .map(item => [item]);
-  }, [data, groupByLabels]);
+        })),
+    ])
+    .reduce((aggr, item) => [...aggr, ...item], [])
+    .map(item => [item]);
   return (
     <div>
       <SectionBar
