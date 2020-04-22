@@ -2,6 +2,9 @@ import React, { FC, useCallback, useState, useRef, useEffect } from 'react';
 import ReactToPrint from 'react-to-print';
 import uniq from 'lodash/uniq';
 import { makeStyles } from '@material-ui/core/styles';
+import IconButton from '@material-ui/core/IconButton';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import {
   BarChart,
   CartesianGrid,
@@ -60,6 +63,10 @@ export interface Props extends Style {
 const useStyles = makeStyles(theme => ({
   panel: {
     display: 'flex',
+  },
+  role: {
+    display: 'flex',
+    alignItems: 'center',
   },
   users: {
     width: 220,
@@ -144,6 +151,9 @@ export const Chart: FC<Props> = ({
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: number }>(
     roles.reduce((aggr, key) => ({ ...aggr, [key]: 1 }), {}),
   );
+  const [collapsedRoles, setCollapsedRoles] = useState<{
+    [key: string]: number;
+  }>(roles.reduce((aggr, key) => ({ ...aggr, [key]: 0 }), {}));
   const [selectedData, setSelectedData] = useState<{ [key: number]: number }>(
     data.reduce((aggr, { id }) => ({ ...aggr, [id]: 1 }), {}),
   );
@@ -198,6 +208,15 @@ export const Chart: FC<Props> = ({
       });
     },
     [data, selectedRoles, setSelectedRoles, selectedData, setSelectedData],
+  );
+  const handleChangeCollapsedRole = useCallback(
+    (role: string) => () => {
+      setCollapsedRoles({
+        ...collapsedRoles,
+        [role]: collapsedRoles[role] ? 0 : 1,
+      });
+    },
+    [collapsedRoles, setCollapsedRoles],
   );
   const { orderBy, ratio, groupBy } = chartFormData;
   const SCHEMA: Schema<ChartForm> = [
@@ -325,18 +344,23 @@ export const Chart: FC<Props> = ({
     .map(role => [
       {
         value: (
-          <Field
-            name={`role-${role}`}
-            value={selectedRoles[role]}
-            label={groupByLabels[role] || role}
-            type="checkbox"
-            className={classes.checkbox}
-            onChange={handleChangeRole(role)}
-          />
+          <div className={classes.role}>
+            <Field
+              name={`role-${role}`}
+              value={selectedRoles[role]}
+              label={groupByLabels[role] || role}
+              type="checkbox"
+              className={classes.checkbox}
+              onChange={handleChangeRole(role)}
+            />
+            <IconButton size="small" onClick={handleChangeCollapsedRole(role)}>
+              {collapsedRoles[role] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </IconButton>
+          </div>
         ),
       },
       ...data
-        .filter(item => item.role === role)
+        .filter(item => item.role === role && !collapsedRoles[role])
         .map(({ id, name, role }) => ({
           value: (
             <Field
