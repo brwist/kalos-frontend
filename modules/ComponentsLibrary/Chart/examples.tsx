@@ -184,6 +184,7 @@ export default () => (
       data={data}
       groupByKeys={GROUP_BY_KEYS}
       groupByLabels={GROUP_BY_LABELS}
+      loggedUserId={2}
     />
     <hr />
     <Chart

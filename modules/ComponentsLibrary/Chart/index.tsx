@@ -58,6 +58,7 @@ export interface Props extends Style {
   skipRatio?: boolean;
   groupByKeys?: Option[];
   groupByLabels?: { [key: string]: string };
+  loggedUserId?: number;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -145,19 +146,31 @@ export const Chart: FC<Props> = ({
   groupByKeys = [],
   groupByLabels = {},
   loading = false,
+  loggedUserId,
 }) => {
   const classes = useStyles({ loading });
   const roles = uniq(data.map(({ role }) => role));
+  const loggedUser = data.find(({ id }) => id === loggedUserId);
+  const loggedUserRole = loggedUser ? loggedUser.role : undefined;
   const initSelectedRoles = roles.reduce(
-    (aggr, key) => ({ ...aggr, [key]: 1 }),
+    (aggr, key) => ({
+      ...aggr,
+      [key]: loggedUserRole ? (loggedUserRole === key ? 1 : 0) : 1,
+    }),
     {},
   );
   const initCollapsedRoles = roles.reduce(
-    (aggr, key) => ({ ...aggr, [key]: 0 }),
+    (aggr, key) => ({
+      ...aggr,
+      [key]: loggedUserRole ? (loggedUserRole === key ? 0 : 1) : 0,
+    }),
     {},
   );
   const initSelectedData = data.reduce(
-    (aggr, { id }) => ({ ...aggr, [id]: 1 }),
+    (aggr, { id, role }) => ({
+      ...aggr,
+      [id]: loggedUserRole ? (loggedUserRole === role ? 1 : 0) : 1,
+    }),
     {},
   );
   const [initialized, setInitialized] = useState<boolean>(false);
