@@ -62,8 +62,14 @@ export interface Props extends Style {
 }
 
 const useStyles = makeStyles(theme => ({
+  form: {
+    marginBottom: theme.spacing(-2),
+  },
   panel: {
     display: 'flex',
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column',
+    },
   },
   role: {
     display: 'flex',
@@ -71,10 +77,20 @@ const useStyles = makeStyles(theme => ({
   },
   users: {
     width: 220,
-    marginRight: theme.spacing(0),
-    overflowY: 'auto',
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
+    },
+  },
+  filterButton: {
+    display: 'none',
+    [theme.breakpoints.down('sm')]: {
+      display: 'block',
+      marginTop: 0,
+      marginBottom: theme.spacing(2),
+    },
   },
   usersList: {
+    overflowX: 'hidden',
     overflowY: 'auto',
   },
   wrapper: ({ loading }: Style) => ({
@@ -436,6 +452,11 @@ export const Chart: FC<Props> = ({
         data={chartFormData}
         onChange={setChartFormData}
         disabled={loading}
+        className={classes.form}
+      />
+      <Button
+        label={`Filter (${selectedDataIds.length} selected)`}
+        className={classes.filterButton}
       />
       <div className={classes.panel}>
         <div className={classes.users}>
