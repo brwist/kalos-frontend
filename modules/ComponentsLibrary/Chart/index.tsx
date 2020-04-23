@@ -176,37 +176,54 @@ export const Chart: FC<Props> = ({
   const roles = uniq(data.map(({ role }) => role));
   const loggedUser = data.find(({ id }) => id === loggedUserId);
   const loggedUserRole = loggedUser ? loggedUser.role : undefined;
-  const initSelectedRoles = roles.reduce(
-    (aggr, key) => ({
-      ...aggr,
-      [key]: loggedUserRole ? (loggedUserRole === key ? 1 : 0) : 1,
-    }),
-    {},
-  );
-  const initCollapsedRoles = roles.reduce(
-    (aggr, key) => ({
-      ...aggr,
-      [key]: loggedUserRole ? (loggedUserRole === key ? 0 : 1) : 0,
-    }),
-    {},
-  );
-  const initSelectedData = data.reduce(
-    (aggr, { id, role }) => ({
-      ...aggr,
-      [id]: loggedUserRole ? (loggedUserRole === role ? 1 : 0) : 1,
-    }),
-    {},
-  );
+  const initSelectedRoles = (
+    loggedUserRole?: string,
+    defaultChecked: number = 1,
+  ) =>
+    roles.reduce(
+      (aggr, key) => ({
+        ...aggr,
+        [key]: loggedUserRole
+          ? loggedUserRole === key
+            ? 1
+            : 0
+          : defaultChecked,
+      }),
+      {},
+    );
+  const initCollapsedRoles = (loggedUserRole?: string) =>
+    roles.reduce(
+      (aggr, key) => ({
+        ...aggr,
+        [key]: loggedUserRole ? (loggedUserRole === key ? 0 : 1) : 0,
+      }),
+      {},
+    );
+  const initSelectedData = (
+    loggedUserRole?: string,
+    defaultChecked: number = 1,
+  ) =>
+    data.reduce(
+      (aggr, { id, role }) => ({
+        ...aggr,
+        [id]: loggedUserRole
+          ? loggedUserRole === role
+            ? 1
+            : 0
+          : defaultChecked,
+      }),
+      {},
+    );
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: number }>(
-    initSelectedRoles,
+    initSelectedRoles(loggedUserRole),
   );
   const [collapsedRoles, setCollapsedRoles] = useState<{
     [key: string]: number;
-  }>(initCollapsedRoles);
+  }>(initCollapsedRoles(loggedUserRole));
   const [selectedData, setSelectedData] = useState<{ [key: number]: number }>(
-    initSelectedData,
+    initSelectedData(loggedUserRole),
   );
   const [width, setWidth] = useState<number>(0);
   const wrapperRef = useCallback(
@@ -223,9 +240,9 @@ export const Chart: FC<Props> = ({
     printRef,
   ]);
   const initializeStates = useCallback(() => {
-    setSelectedRoles(initSelectedRoles);
-    setCollapsedRoles(initCollapsedRoles);
-    setSelectedData(initSelectedData);
+    setSelectedRoles(initSelectedRoles(loggedUserRole));
+    setCollapsedRoles(initCollapsedRoles(loggedUserRole));
+    setSelectedData(initSelectedData(loggedUserRole));
   }, [
     setSelectedRoles,
     initSelectedRoles,
@@ -288,6 +305,13 @@ export const Chart: FC<Props> = ({
       });
     },
     [collapsedRoles, setCollapsedRoles],
+  );
+  const handleAllUsersChange = useCallback(
+    (checked: number) => {
+      setSelectedRoles(initSelectedRoles(undefined, checked));
+      setSelectedData(initSelectedData(undefined, checked));
+    },
+    [setSelectedRoles, setSelectedData, initSelectedRoles, initSelectedData],
   );
   const { orderBy, ratio, groupBy } = chartFormData;
   const SCHEMA: Schema<ChartForm> = [
@@ -498,6 +522,11 @@ export const Chart: FC<Props> = ({
               loading ? 'Loading...' : `${selectedDataIds.length} selected`
             }
             small
+            onCheck={handleAllUsersChange}
+            checked={
+              loading ? 0 : data.length === selectedDataIds.length ? 1 : 0
+            }
+            loading={loading}
           />
           <div
             style={{ height: width / CHART_ASPECT_RATIO - 50 }}
