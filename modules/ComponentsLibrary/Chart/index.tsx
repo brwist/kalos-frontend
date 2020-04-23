@@ -343,17 +343,21 @@ export const Chart: FC<Props> = ({
   const selectedDataIds = Object.keys(selectedData)
     .filter(id => selectedData[+id])
     .map(id => +id);
+  const getRoleCount = (roleMatch: string, fraction: boolean = false) => {
+    const roleIds = data
+      .filter(({ role }) => role === roleMatch)
+      .map(({ id }) => +id);
+    const count = selectedDataIds.filter(id => roleIds.includes(id)).length;
+    if (fraction) return `${count}/${roleIds.length}`;
+    return count === roleIds.length ? 'all' : count;
+  };
   const groupedData = JSON.parse(
     JSON.stringify(data.filter(({ id }) => selectedDataIds.includes(id))),
   ).reduce((aggr: Data, item: DataItem) => {
     if (groupBy !== dataKey) {
-      const roleIds = data
-        .filter(({ role }) => role === item[groupBy])
-        .map(({ id }) => +id);
-      const count = selectedDataIds.filter(id => roleIds.includes(id)).length;
       item[groupBy] =
         (groupByLabels[item[groupBy]] || item[groupBy]) +
-        ` (${count === roleIds.length ? 'all' : count})`;
+        ` (${getRoleCount(item[groupBy], true)})`;
     }
     const element = aggr.find(el => el[groupBy] === item[groupBy]);
     if (element) {
@@ -431,7 +435,9 @@ export const Chart: FC<Props> = ({
             <Field
               name={`role-${role}`}
               value={selectedRoles[role]}
-              label={groupByLabels[role] || role}
+              label={
+                (groupByLabels[role] || role) + ` (${getRoleCount(role, true)})`
+              }
               type="checkbox"
               className={classes.checkboxRole + ' ' + 'checkboxRole'}
               onChange={handleChangeRole(role)}
