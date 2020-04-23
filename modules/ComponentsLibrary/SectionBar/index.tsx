@@ -10,7 +10,9 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import TablePagination from '@material-ui/core/TablePagination';
+import { Field, Value } from '../Field';
 import { Actions, ActionsProps } from '../Actions';
+import './styles.css';
 
 export type Pagination = {
   count: number;
@@ -37,6 +39,8 @@ interface Props {
   footer?: ReactNode;
   asideContent?: ReactNode;
   small?: boolean;
+  onCheck?: (checked: number) => void;
+  checked?: number;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -70,8 +74,8 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     alignItems: 'center',
     [theme.breakpoints.down('xs')]: {
-      flexDirection: 'column',
-      alignItems: 'flex-start',
+      // flexDirection: 'column',
+      // alignItems: 'flex-start',
     },
   },
   titleWrapper: ({ collapsable, small }: Styles) => ({
@@ -115,6 +119,10 @@ const useStyles = makeStyles(theme => ({
     marginBottom: theme.spacing(),
     ...theme.typography.body1,
   },
+  checkbox: {
+    marginBottom: 0,
+    width: 42,
+  },
 }));
 
 export const SectionBar: FC<Props> = ({
@@ -129,6 +137,8 @@ export const SectionBar: FC<Props> = ({
   asideContent,
   small = false,
   children,
+  onCheck,
+  checked,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const classes = useStyles({
@@ -149,11 +159,28 @@ export const SectionBar: FC<Props> = ({
     },
     [pagination],
   );
+  const handleCheckChange = useCallback(
+    (checked: Value) => {
+      if (onCheck) {
+        onCheck(+checked);
+      }
+    },
+    [onCheck],
+  );
   return (
     <>
       <div className={className + ' ' + classes.wrapper} style={styles}>
         <div className={classes.headerWrapper}>
           <div className={classes.header}>
+            {onCheck && (
+              <Field
+                name="check"
+                value={checked}
+                type="checkbox"
+                onChange={handleCheckChange}
+                className={classes.checkbox + ' ' + 'SectionBarCheckbox'}
+              />
+            )}
             <div className={classes.titleWrapper}>
               <Typography
                 variant="h5"
