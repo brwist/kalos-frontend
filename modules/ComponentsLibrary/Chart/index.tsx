@@ -21,7 +21,9 @@ import { Button } from '../Button';
 import { Field, Value } from '../Field';
 import { InfoTable, Data as InfoTableData } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
+import { Modal } from '../Modal';
 import { makeFakeRows } from '../../../helpers';
+import './styles.css';
 
 const PRINT_WIDTH = 1200;
 const CHART_ASPECT_RATIO = 16 / 9;
@@ -63,7 +65,7 @@ export interface Props extends Style {
 
 const useStyles = makeStyles(theme => ({
   form: {
-    marginBottom: theme.spacing(-2),
+    marginBottom: theme.spacing(-3),
   },
   panel: {
     display: 'flex',
@@ -86,7 +88,10 @@ const useStyles = makeStyles(theme => ({
     [theme.breakpoints.down('sm')]: {
       display: 'block',
       marginTop: 0,
-      marginBottom: theme.spacing(2),
+      marginBottom: theme.spacing(3),
+      position: 'relative',
+      left: `calc(100% - ${theme.spacing(3)}px)`,
+      transform: 'translateX(-100%)',
     },
   },
   usersList: {
@@ -190,6 +195,7 @@ export const Chart: FC<Props> = ({
     }),
     {},
   );
+  const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: number }>(
     initSelectedRoles,
@@ -238,6 +244,10 @@ export const Chart: FC<Props> = ({
     ratio: 0,
     groupBy: dataKey,
   });
+  const handleFilterOpenToggle = useCallback(() => setFilterOpen(!filterOpen), [
+    filterOpen,
+    setFilterOpen,
+  ]);
   const handleChangeData = useCallback(
     (id: number, role: string) => (checked: Value) => {
       const newSelectedData = { ...selectedData, [id]: +checked };
@@ -378,7 +388,12 @@ export const Chart: FC<Props> = ({
           return toPercent(+value / sum, 2);
         }}
       />
-      <Legend verticalAlign="top" height={36} iconType="circle" iconSize={16} />
+      <Legend
+        verticalAlign="top"
+        iconType="circle"
+        iconSize={14}
+        wrapperStyle={{ top: -5 }}
+      />
       {[
         bars.find(({ dataKey }) => dataKey === orderBy)!,
         ...bars.filter(({ dataKey }) => dataKey !== orderBy),
@@ -386,8 +401,9 @@ export const Chart: FC<Props> = ({
         <Bar
           key={props.dataKey}
           {...props}
-          name={`${props.name}${ratio ? ' %' : ''}`}
+          name={props.name}
           stackId={ratio ? '1' : undefined}
+          isAnimationActive={false}
         />
       ))}
     </BarChart>
@@ -457,6 +473,8 @@ export const Chart: FC<Props> = ({
       <Button
         label={`Filter (${selectedDataIds.length} selected)`}
         className={classes.filterButton}
+        onClick={handleFilterOpenToggle}
+        disabled={loading}
       />
       <div className={classes.panel}>
         <div className={classes.users}>
@@ -490,6 +508,18 @@ export const Chart: FC<Props> = ({
           {loading && <div className={classes.loading}>Loading...</div>}
         </div>
       </div>
+      {filterOpen && (
+        <Modal open onClose={handleFilterOpenToggle} fullScreen>
+          <SectionBar
+            title="Users"
+            subtitle={`${selectedDataIds.length} selected`}
+            small
+            actions={[{ label: 'Close', onClick: handleFilterOpenToggle }]}
+            fixedActions
+          />
+          <InfoTable data={usersData} />
+        </Modal>
+      )}
     </div>
   );
 };
