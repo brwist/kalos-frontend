@@ -557,8 +557,12 @@ export const Chart: FC<Props> = ({
             title="Users"
             subtitle={`${selectedDataIds.length} selected`}
             small
-            actions={[{ label: 'Close', onClick: handleFilterOpenToggle }]}
+            actions={[{ label: 'Apply', onClick: handleFilterOpenToggle }]}
             fixedActions
+            onCheck={handleAllUsersChange}
+            checked={
+              loading ? 0 : data.length === selectedDataIds.length ? 1 : 0
+            }
           />
           <InfoTable data={usersData} />
         </Modal>
