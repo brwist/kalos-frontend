@@ -36,6 +36,7 @@ const Examples = ({
         asideContent={<Button label="Custom" />}
         onCheck={withCheck ? setChecked : undefined}
         checked={withCheck ? checked : undefined}
+        loading
       />
       <hr />
       <SectionBar
