@@ -3,19 +3,39 @@ import { SectionBar } from './';
 import { Button } from '../Button';
 import { LoremIpsumList } from '../helpers';
 
-const Examples = ({ subtitle }: { subtitle?: string }) => {
+const Examples = ({
+  subtitle,
+  withCheck = false,
+}: {
+  subtitle?: string;
+  withCheck?: boolean;
+}) => {
   const [page, setPage] = useState(0);
+  const [checked, setChecked] = useState<number>(0);
   return (
     <>
-      <SectionBar title="Title" subtitle={subtitle} />
+      <SectionBar
+        title="Top Title"
+        subtitle={subtitle}
+        onCheck={withCheck ? setChecked : undefined}
+        checked={withCheck ? checked : undefined}
+      />
       <hr />
-      <SectionBar title="Small" subtitle={subtitle} small />
+      <SectionBar
+        title="Small"
+        subtitle={subtitle}
+        small
+        onCheck={withCheck ? setChecked : undefined}
+        checked={withCheck ? checked : undefined}
+      />
       <hr />
       <SectionBar
         actions={Array.from(Array(5)).map((_, idx) => ({
           label: `Button ${idx + 1}`,
         }))}
         asideContent={<Button label="Custom" />}
+        onCheck={withCheck ? setChecked : undefined}
+        checked={withCheck ? checked : undefined}
       />
       <hr />
       <SectionBar
@@ -55,6 +75,6 @@ const Examples = ({ subtitle }: { subtitle?: string }) => {
 export default () => (
   <>
     <Examples />
-    <Examples subtitle="Subtitle" />
+    <Examples subtitle="Subtitle below" withCheck />
   </>
 );
