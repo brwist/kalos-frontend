@@ -41,6 +41,7 @@ interface Props {
   small?: boolean;
   onCheck?: (checked: number) => void;
   checked?: number;
+  loading?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -139,6 +140,7 @@ export const SectionBar: FC<Props> = ({
   children,
   onCheck,
   checked,
+  loading = false,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const classes = useStyles({
@@ -179,6 +181,7 @@ export const SectionBar: FC<Props> = ({
                 type="checkbox"
                 onChange={handleCheckChange}
                 className={classes.checkbox + ' ' + 'SectionBarCheckbox'}
+                disabled={loading}
               />
             )}
             <div className={classes.titleWrapper}>
