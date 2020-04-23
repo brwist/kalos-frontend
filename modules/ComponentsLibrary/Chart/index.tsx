@@ -347,7 +347,13 @@ export const Chart: FC<Props> = ({
     JSON.stringify(data.filter(({ id }) => selectedDataIds.includes(id))),
   ).reduce((aggr: Data, item: DataItem) => {
     if (groupBy !== dataKey) {
-      item[groupBy] = groupByLabels[item[groupBy]] || item[groupBy];
+      const roleIds = data
+        .filter(({ role }) => role === item[groupBy])
+        .map(({ id }) => +id);
+      const count = selectedDataIds.filter(id => roleIds.includes(id)).length;
+      item[groupBy] =
+        (groupByLabels[item[groupBy]] || item[groupBy]) +
+        ` (${count === roleIds.length ? 'all' : count})`;
     }
     const element = aggr.find(el => el[groupBy] === item[groupBy]);
     if (element) {
