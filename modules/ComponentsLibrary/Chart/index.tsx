@@ -495,7 +495,9 @@ export const Chart: FC<Props> = ({
         title={title}
         asideContent={
           <ReactToPrint
-            trigger={() => <Button label="Print" disabled={loading} />}
+            trigger={() => (
+              <Button label="Print" disabled={loading} variant="outlined" />
+            )}
             content={() => printRef.current}
             bodyClass={classes.printBody}
           />
