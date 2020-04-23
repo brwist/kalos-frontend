@@ -5,7 +5,7 @@ import {
 import {
   TimesheetLine
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { format, differenceInHours } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
@@ -14,6 +14,7 @@ import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 import { colorsMapping } from '../constants';
 import { useEditTimesheet } from '../hooks';
+import { roundNumber } from '../../../helpers';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -32,6 +33,9 @@ const useStyles = makeStyles((theme: Theme) =>
     date: {
       fontSize: '0.75rem',
       fontWeight: 100,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     },
     colorIndicator: {
       display: 'block',
@@ -78,6 +82,9 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({ card }): JSX.Element
   } else {
     status = 'Pending';
   }
+
+  const payrollDiff =  classCode?.billable ? differenceInMinutes(new Date(timeFinished), new Date(timeStarted))/60 : 0;
+
   return (
     <Card
       className={classes.card}
@@ -91,21 +98,28 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({ card }): JSX.Element
           avatar={
             <ColorIndicator status={status} />
           }
-          title={`${status} ${classCode?.billable ? '(0.25)' : '' }`}
+          title={status}
         />
         <CardContent className={classes.cardContent}>
-          <Typography className={classes.date} variant="body2" color="textSecondary" component="p">
-            {format(new Date(timeStarted), 'p')}
-            {timeFinished && ` - ${format(new Date(timeFinished), 'p')}`}
+          <Typography className={classes.date} variant="body2" color="textSecondary">
+            <span>
+              {format(new Date(timeStarted), 'p')}
+              {timeFinished && ` - ${format(new Date(timeFinished), 'p')}`}
+            </span>
+            {payrollDiff > 0 && (
+              <strong>
+                {roundNumber(payrollDiff)}
+              </strong>
+            )}
           </Typography>
-          <Typography variant="body2" color="textSecondary" component="p">
+          <Typography variant="body2" color="textSecondary">
             {name}
           </Typography>
           <Typography>
             {classCode?.description}
           </Typography>
           {briefDescription && (
-            <Typography variant="body2" color="textSecondary" component="p">{briefDescription}</Typography>
+            <Typography variant="body2" color="textSecondary">{briefDescription}</Typography>
           )}
         </CardContent>
       </CardActionArea>
@@ -137,11 +151,11 @@ export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({ card }): JSX.E
           title={status}
         />
         <CardContent className={classes.cardContent}>
-          <Typography className={classes.date} variant="body2" color="textSecondary" component="p">
+          <Typography className={classes.date} variant="body2" color="textSecondary">
             {format(new Date(timeStarted), 'p')}
             {timeFinished && ` - ${format(new Date(timeFinished), 'p')}`}
           </Typography>
-          <Typography variant="body2" color="textSecondary" component="p">
+          <Typography variant="body2" color="textSecondary">
             {name}
           </Typography>
         </CardContent>

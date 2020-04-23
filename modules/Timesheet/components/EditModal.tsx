@@ -48,11 +48,6 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
     [{ label: 'Brief Description', name: 'briefDescription' },],
     [{ label: 'Class Code', name: 'classCodeId', type: 'classCode', required: true},],
     [{ label: 'Department', name: 'departmentCode', type: 'department', required: true},],
-    /*[
-      { label: 'Date', name: 'date', type: 'date', required: true },
-      { label: 'Started', name: 'timeStarted', type: 'time', required: true },
-      { label: 'Finished', name: 'timeFinished', type: 'time', required: true},
-    ],*/
     [
       { label: 'Date', name: 'date', type: 'mui-date', required: true },
       { label: 'Started', name: 'timeStarted', type: 'mui-time', required: true },
@@ -64,20 +59,14 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
   const data = {...entry};
   if (data.timeStarted) {
     data.date = new Date(data.timeStarted);
-    // formatting for time selects
-    /*
-    data.date = format(new Date(data.timeStarted), 'yyyy-MM-dd');
-    data.timeStarted = format(new Date(data.timeStarted), 'HH:mm');
-    data.timeFinished = format(new Date(data.timeFinished), 'HH:mm');
-    */
+  } else {
+    data.date = new Date();
+    data.timeStarted = new Date();
+    data.timeFinished = new Date();
   }
   const handleUpdate = useCallback(
     async (data: Entry) => {
       setSaving(true);
-      /*
-      data.timeStarted = `${data.date.trim()} ${format(new Date(data.timeFinished), 'HH:mm')}`;
-      data.timeFinished = `${data.date.trim()} ${format(new Date(data.timeFinished), 'HH:mm')}`;
-      */
       data.timeStarted = `${format(new Date(data.date), 'yyyy-MM-dd')} ${format(new Date(data.timeStarted), 'HH:mm')}`;
       data.timeFinished = `${format(new Date(data.date), 'yyyy-MM-dd')} ${format(new Date(data.timeFinished), 'HH:mm')}`;
       delete data.date;
@@ -104,8 +93,8 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
   const handleCreate = useCallback(
     async (data: Entry) => {
       setSaving(true);
-      data.timeStarted = `${data.date.trim()} ${data.timeStarted.trim()}`;
-      data.timeFinished = `${data.date.trim()} ${data.timeFinished.trim()}`;
+      data.timeStarted = `${format(new Date(data.date), 'yyyy-MM-dd')} ${format(new Date(data.timeStarted), 'HH:mm')}`;
+      data.timeFinished = `${format(new Date(data.date), 'yyyy-MM-dd')} ${format(new Date(data.timeFinished), 'HH:mm')}`;
       delete data.date;
       data.technicianUserId = timesheetOwnerId;
       data.servicesRenderedId = entry.servicesRenderedId;
@@ -136,7 +125,6 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
     async () => {
       confirm({
         catchOnCancel: true,
-        title: "Are you sure you want to Approve this Timesheet??",
         description: "Are you sure you want to Approve this Timesheet?"
       }).then( async () => {
         const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm');
@@ -146,23 +134,23 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
         if (timesheetAdministration) {
           req.setAdminApprovalUserId(userId);
           req.setAdminApprovalDatetime(dateTime);
-          req.setFieldMaskList(['adminApprovalUserId, adminApprovalDatetime']);
+          req.setFieldMaskList(['AdminApprovalUserId, AdminApprovalDatetime']);
         } else {
           req.setUserApprovalDatetime(dateTime);
-          req.setFieldMaskList(['userApprovalDatetime']);
+          req.setFieldMaskList(['UserApprovalDatetime']);
         }
         const result = await tslClient.Update(req);
         setSaving(false);
+        onSave(result);
       });
     },
-    [userId, timesheetAdministration]
+    [id, userId, timesheetAdministration]
   );
 
   const handleDelete = useCallback(
     async () => {
       confirm({
         catchOnCancel: true,
-        title: "Are you sure you want to delete this Timecard?",
         description: "Are you sure you want to delete this Timecard?"
       })
         .then( async () => {
@@ -210,13 +198,15 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
         {!!entry?.eventId && (
           <span>Source: {entry?.eventId}</span>
         )}
-        <ButtonGroup className={classes.buttonGroup}>
-          <Button label="Approve" onClick={handleApprove} />
-          {timesheetAdministration && (
-            <Button label="Reject" />
-          )}
-          <Button label="Delete" onClick={handleDelete} />
-        </ButtonGroup>
+        {action === 'update' && (
+          <ButtonGroup className={classes.buttonGroup}>
+            <Button label="Approve" onClick={handleApprove} />
+            {timesheetAdministration && (
+              <Button label="Reject" />
+            )}
+            <Button label="Delete" onClick={handleDelete} />
+          </ButtonGroup>
+        )}
       </Form>
     </Modal>
   )

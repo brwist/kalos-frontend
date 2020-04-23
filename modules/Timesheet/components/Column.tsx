@@ -1,6 +1,6 @@
 import React, {FC, useCallback, useLayoutEffect, useState} from 'react';
 import clsx from 'clsx';
-import { format } from "date-fns";
+import { differenceInMinutes, format } from "date-fns";
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import BackIcon from '@material-ui/icons/ArrowBack';
@@ -10,6 +10,7 @@ import IconButton from '@material-ui/core/IconButton';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { createStyles, makeStyles, Theme, useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
+
 import {
   ServicesRenderedClient,
   ServicesRendered,
@@ -22,9 +23,20 @@ import { ENDPOINT } from '../../../constants';
 import { useFetchAll } from '../../ComponentsLibrary/hooks';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
+import { roundNumber } from '../../../helpers';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    payroll: {
+      '& .total': {
+        textAlign: 'right',
+      },
+      '& .details': {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      },
+    },
     dayView: {
       position: 'fixed',
       top: '0',
@@ -144,6 +156,15 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
       }
     }
   });
+  const payroll = filteredTL.reduce((acc, item) => {
+    const payrollDiff = differenceInMinutes(new Date(item.timeFinished), new Date(item.timeStarted))/60;
+    return {
+      ...acc,
+      billable: item.classCode?.billable ? acc.billable + payrollDiff : acc.billable,
+      unbillable: item.classCode?.billable ? acc.unbillable : acc.unbillable + payrollDiff,
+      total: acc.total + payrollDiff,
+    }
+  }, { billable: 0, unbillable: 0, total: 0 });
   const cards = [...filteredSR, ...filteredTL];
   cards.sort((a, b) => new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime());
   return (
@@ -156,6 +177,19 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
           {`Back to Week View`}
         </Button>
       )}
+      <Box className={classes.payroll}>
+        <Typography className="total" variant="body2" color="textSecondary">
+          Payroll: <strong>{roundNumber(payroll.total)}</strong>
+        </Typography>
+        <div className="details">
+          <Typography variant="body2" color="textSecondary">
+            Billable: <strong>{roundNumber(payroll.billable)}</strong>
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Unbillable: <strong>{roundNumber(payroll.unbillable)}</strong>
+          </Typography>
+        </div>
+      </Box>
       <Box className={classes.dateHeading}>
         <>
           <Typography className={classes.dayCircle}>

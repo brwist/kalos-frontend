@@ -3,7 +3,7 @@ import { Confirm } from '../Confirm';
 
 export interface ConfirmOptions {
   catchOnCancel?: boolean;
-  title: string;
+  title?: string;
   description: string;
 }
 
@@ -58,7 +58,7 @@ export const ConfirmServiceProvider = ({ children }: ProviderProps): JSX.Element
 
       <Confirm
         open={Boolean(ConfirmState)}
-        title={ConfirmState?.title || "Are you sure?"}
+        title={ConfirmState?.title}
         onConfirm={handleConfirm}
         onClose={handleClose}
       >
