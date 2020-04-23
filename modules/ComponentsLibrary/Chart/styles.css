@@ -1,3 +1,6 @@
 .recharts-legend-item-text {
   vertical-align: middle;
 }
+.checkboxRole .MuiFormControlLabel-label {
+  font-weight: 900;
+}

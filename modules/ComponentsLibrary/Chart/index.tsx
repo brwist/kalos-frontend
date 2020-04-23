@@ -69,8 +69,10 @@ const useStyles = makeStyles(theme => ({
   },
   panel: {
     display: 'flex',
+    marginTop: theme.spacing(2),
     [theme.breakpoints.down('sm')]: {
       flexDirection: 'column',
+      marginTop: 0,
     },
   },
   role: {
@@ -135,7 +137,7 @@ const useStyles = makeStyles(theme => ({
   printBody: {
     width: PRINT_WIDTH,
   },
-  checkbox: {
+  checkboxRole: {
     marginTop: `${theme.spacing(-1.5)}px !important`,
     marginBottom: `${theme.spacing(-1.5)}px !important`,
   },
@@ -425,7 +427,7 @@ export const Chart: FC<Props> = ({
               value={selectedRoles[role]}
               label={groupByLabels[role] || role}
               type="checkbox"
-              className={classes.checkbox}
+              className={classes.checkboxRole + ' ' + 'checkboxRole'}
               onChange={handleChangeRole(role)}
             />
             <IconButton size="small" onClick={handleChangeCollapsedRole(role)}>
