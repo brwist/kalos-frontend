@@ -793,6 +793,15 @@ async function loadGeoLocationByAddress(address: string) {
   } catch (e) {}
 }
 
+/**
+ * Returns nicely formatted rounded number with 2 max fraction digits
+ * if needed.
+ */
+
+function roundNumber(num: number) {
+  return Math.round(num*100)/100;
+};
+
 export {
   cfURL,
   BASE_URL,
@@ -831,4 +840,5 @@ export {
   loadUsersByDepartmentId,
   loadMetricByUserId,
   loadMetricByUserIds,
+  roundNumber,
 };
