@@ -10,6 +10,7 @@ import Button from './Button/examples';
 import Chart from './Chart/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
+import ConfirmService from './ConfirmService/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import Field from './Field/examples';
 import Form from './Form/examples';
@@ -33,6 +34,7 @@ const COMPONENTS = {
   Chart,
   Confirm,
   ConfirmDelete,
+  ConfirmService,
   CustomerInformation,
   Field,
   Form,

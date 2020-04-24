@@ -199,7 +199,7 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
           <span>Source: {entry?.eventId}</span>
         )}
         {action === 'update' && (
-          <ButtonGroup className={classes.buttonGroup}>
+          <ButtonGroup className={classes.buttonGroup} disabled={saving}>
             <Button label="Approve" onClick={handleApprove} />
             {timesheetAdministration && (
               <Button label="Reject" />

@@ -16,8 +16,11 @@ import { ENDPOINT } from '../../constants';
 interface props<R, T> {
   selected: number;
   disabled?: boolean;
+  required?: boolean;
   withinForm?: boolean;
   hideInactive?: boolean;
+  fullWidth?: boolean;
+  className?: string;
   reqObj?: {
     new (): R;
   };
@@ -53,6 +56,8 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
   key: string;
   ver: number;
   label: string;
+  className?: string;
+  fullWidth?: boolean;
   constructor(props: props<R, T>, label: string, key: string, ver: number) {
     super(props);
     this.state = {
@@ -113,12 +118,16 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
     if (this.props.filter) {
       list = list.filter(this.props.filter);
     }
-
     return (
-      <FormControl style={{ marginBottom: 10 }}>
+      <FormControl
+        className={this.props.className}
+        required={this.props.required}
+        style={{ marginBottom: 10 }}
+        disabled={this.props.disabled}
+        fullWidth={this.props.fullWidth}
+      >
         <InputLabel htmlFor={`${this.label}-picker`}>{this.label}</InputLabel>
         <NativeSelect
-          disabled={this.props.disabled}
           value={this.props.selected}
           onChange={this.handleSelect}
           IconComponent={undefined}
