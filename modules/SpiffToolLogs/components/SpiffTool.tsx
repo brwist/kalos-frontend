@@ -1,10 +1,14 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
+import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { Option } from '../../ComponentsLibrary/Field';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { getRPCFields, timestamp } from '../../../helpers';
+import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
+import { getRPCFields, timestamp, formatDate } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
@@ -50,6 +54,18 @@ const SCHEMA: Schema<TaskType> = [
       type: 'number',
     },
   ],
+];
+
+const COLUMNS: Columns = [
+  { name: 'Claim Date' },
+  { name: 'Spiff ID #' },
+  { name: 'Spiff' },
+  { name: 'Job Date' },
+  { name: 'Technician' },
+  { name: 'Job #' },
+  { name: 'Status' },
+  { name: 'Amount' },
+  { name: 'Duplicates' },
 ];
 
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
@@ -128,6 +144,39 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     }
   }, [loaded, setLoaded]);
   console.log({ entries });
+  const data: Data = entries.map(
+    // TODO fakeRows
+    ({
+      id,
+      spiffAmount,
+      spiffJobNumber,
+      datePerformed,
+      briefDescription,
+      timeCreated,
+    }) => [
+      {
+        value: formatDate(timeCreated), // FIXME
+      },
+      { value: id }, // FIXME
+      { value: briefDescription },
+      { value: formatDate(datePerformed) },
+      { value: 'Krzysztof Olbinski' }, // FIXME
+      { value: spiffJobNumber }, // TODO: Link
+      { value: '' }, // FIXME
+      { value: '$' + spiffAmount },
+      {
+        value: '',
+        actions: [
+          <IconButton key={0} size="small">
+            <EditIcon />
+          </IconButton>,
+          <IconButton key={1} size="small">
+            <DeleteIcon />
+          </IconButton>,
+        ],
+      }, // FIXME
+    ],
+  );
   return (
     <div>
       <SectionBar
@@ -135,7 +184,9 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         actions={[
           { label: 'Add', onClick: handleSetEditing(new Task().toObject()) },
         ]}
+        fixedActions
       />
+      <InfoTable columns={COLUMNS} data={data} />
       {editing && (
         <Modal open onClose={handleSetEditing()}>
           <Form<TaskType>
