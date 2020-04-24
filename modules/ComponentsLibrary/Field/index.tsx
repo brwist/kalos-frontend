@@ -465,9 +465,12 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     return (
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <DatePicker
+          className={classes.field + ' ' + className}
           label={inputLabel}
           value={new Date(props.value as unknown as Date)}
           onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
+          disabled={disabled}
+          fullWidth
         />
       </MuiPickersUtilsProvider>
     );
@@ -477,10 +480,13 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     return (
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <TimePicker
+          className={classes.field + ' ' + className}
           label={inputLabel}
           value={roundToNearestMinutes(new Date(props.value as unknown as Date), {nearestTo: 15})}
           onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
           minutesStep={15}
+          disabled={disabled}
+          fullWidth
         />
       </MuiPickersUtilsProvider>
     );
@@ -693,20 +699,26 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }
   if (type === 'department') {
     return <DepartmentPicker
+      className={classes.field + ' ' + className}
       withinForm
       renderItem={renderSelectOptions}
       selected={props.value as unknown as number}
       onSelect={handleChange}
       disabled={disabled}
+      required={required}
+      fullWidth
     />
   }
   if (type === 'classCode') {
     return <ClassCodePicker
+      className={classes.field + ' ' + className}
       withinForm
       renderItem={renderSelectOptions}
       selected={props.value as unknown as number}
       onSelect={handleChange}
       disabled={disabled}
+      required={required}
+      fullWidth
     />
   }
   return (

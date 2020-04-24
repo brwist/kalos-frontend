@@ -92,7 +92,13 @@ export default () => (
       defaultValue="2020-03-02 00:00:00"
       type="date"
     />
+    <EnhancedField
+      label="Material Date"
+      defaultValue="2020-03-02 00:00:00"
+      type="mui-date"
+    />
     <EnhancedField label="Time" defaultValue="21:35" type="time" />
+    <EnhancedField label="Material Time" defaultValue="2020-03-02 21:35:00" type="mui-time" />
     <EnhancedField label="Signature" type="signature" />
     <EnhancedField
       label="With start adornment"
@@ -149,5 +155,7 @@ Amet`}
       validation="Error message..."
     />
     <EnhancedField label="With helper text" helperText="Helper text..." />
+    <EnhancedField label="ClassCode Picker" type="classCode" />
+    <EnhancedField label="Department Picker" type="department" />
   </div>
 );

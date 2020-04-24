@@ -5,7 +5,7 @@ import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 
 interface Props {
-  title: string;
+  title?: string;
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
