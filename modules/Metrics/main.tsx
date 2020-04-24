@@ -11,8 +11,6 @@ import {
 
 const GROUP_BY_KEYS = [{ label: 'Role', value: 'role' }];
 
-const METRIC_TYPES: MetricType[] = ['Billable', 'Callbacks', 'Revenue'];
-
 interface Props {
   title: string;
   metrics: {
@@ -20,9 +18,10 @@ interface Props {
     name: string;
     fill: string;
   }[];
+  loggedUserId?: number;
 }
 
-const loadData = async () => {
+const loadData = async (metrics: MetricType[]) => {
   const departments = await loadTimesheetDepartments();
   const departmentById: { [key: number]: string } = departments.reduce(
     (aggr, { id, value }) => ({ ...aggr, [id]: value }),
@@ -46,7 +45,7 @@ const loadData = async () => {
   const userIds = Object.keys(users).map(id => +id);
   (
     await Promise.all(
-      METRIC_TYPES.map(async metricType => ({
+      metrics.map(async metricType => ({
         metricType,
         values: await loadMetricByUserIds(userIds, metricType),
       })),
@@ -59,16 +58,16 @@ const loadData = async () => {
   return Object.values(users);
 };
 
-export const Metrics: FC<Props> = ({ title, metrics }) => {
+export const Metrics: FC<Props> = ({ metrics, ...props }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<Data>([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await loadData();
+    const data = await loadData(metrics.map(({ dataKey }) => dataKey));
     setData(data);
     setLoading(false);
-  }, [setData, setLoading]);
+  }, [setData, setLoading, metrics]);
   useEffect(() => {
     if (!loaded) {
       load();
@@ -78,7 +77,6 @@ export const Metrics: FC<Props> = ({ title, metrics }) => {
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
       <Chart
-        title={title}
         config={{
           x: {
             dataKey: 'name',
@@ -89,6 +87,7 @@ export const Metrics: FC<Props> = ({ title, metrics }) => {
         data={data}
         groupByKeys={GROUP_BY_KEYS}
         loading={loading}
+        {...props}
       />
     </ThemeProvider>
   );
