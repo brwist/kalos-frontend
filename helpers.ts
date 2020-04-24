@@ -25,12 +25,7 @@ import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import {
-  MetricsClient,
-  Billable,
-  Callbacks,
-  Revenue,
-} from '@kalos-core/kalos-rpc/Metrics';
+import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
 import { ENDPOINT } from './constants';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -799,8 +794,8 @@ async function loadGeoLocationByAddress(address: string) {
  */
 
 function roundNumber(num: number) {
-  return Math.round(num*100)/100;
-};
+  return Math.round(num * 100) / 100;
+}
 
 export {
   cfURL,
