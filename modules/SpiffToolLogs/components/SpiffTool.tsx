@@ -50,13 +50,11 @@ const SPIFF_TYPES: Option[] = [
 
 const SCHEMA: Schema<TaskType> = [
   [
-    // { name: 'datePerformed', label: 'Claim Date' }, // Claim Date
+    { name: 'timeDue', label: 'Claim Date', readOnly: true, type: 'date' },
     { name: 'spiffTypeId', label: 'Spiff Type', options: SPIFF_TYPES },
-    // Job Date
-    { name: 'briefDescription', label: 'Description' },
   ],
   [
-    { name: 'spiffJobNumber', label: 'Job #' },
+    { name: 'spiffJobNumber', label: 'Job #' }, // Job Date
     {
       name: 'spiffAmount',
       label: 'Amount',
@@ -64,6 +62,7 @@ const SCHEMA: Schema<TaskType> = [
       type: 'number',
     },
   ],
+  [{ name: 'briefDescription', label: 'Description' }],
 ];
 
 const COLUMNS: Columns = [
@@ -177,22 +176,25 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     }
   }, [loaded, setLoaded]);
   console.log({ entries });
+  const newTask = new Task();
+  newTask.setTimeDue(timestamp());
   const data: Data = loading
     ? makeFakeRows(9, 3)
     : entries.map(entry => {
         const {
           id,
+          spiffToolId,
           spiffAmount,
           spiffJobNumber,
           datePerformed,
           briefDescription,
-          timeCreated,
+          timeDue,
         } = entry;
         return [
           {
-            value: formatDate(timeCreated), // FIXME
+            value: formatDate(timeDue),
           },
-          { value: id }, // FIXME
+          { value: spiffToolId },
           { value: briefDescription },
           { value: formatDate(datePerformed) },
           { value: 'Krzysztof Olbinski' }, // FIXME
@@ -227,7 +229,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       <SectionBar
         title="Spiff Report"
         actions={[
-          { label: 'Add', onClick: handleSetEditing(new Task().toObject()) },
+          { label: 'Add', onClick: handleSetEditing(newTask.toObject()) },
         ]}
         fixedActions
       />
