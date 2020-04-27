@@ -11,6 +11,7 @@ import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { Option } from '../../ComponentsLibrary/Field';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
+import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import {
   getRPCFields,
   timestamp,
@@ -22,9 +23,15 @@ import {
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
+const SEARCH_PERIODS_TYPES = ['Monthly', 'Weekly'];
 
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
+type SearchType = {
+  description: string;
+  month: string;
+  periods: string;
+};
 
 export interface Props {
   loggedUserId: number;
@@ -114,6 +121,37 @@ const SCHEMA_EXTENDED: Schema<TaskType> = [
       required: true,
     },
     { name: 'spiffAddress', label: 'Address', multiline: true },
+  ],
+];
+
+const SCHEMA_SEARCH: Schema<SearchType> = [
+  [
+    { name: 'description', label: 'Search Spiffs' },
+
+    {
+      name: 'month',
+      label: 'Month',
+      options: [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ],
+    },
+    {
+      name: 'periods',
+      label: 'Periods',
+      options: SEARCH_PERIODS_TYPES,
+      actions: [{ label: 'Search' }],
+    },
   ],
 ];
 
@@ -326,6 +364,11 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           }, // FIXME
         ];
       });
+  const searchData: SearchType = {
+    description: '',
+    month: 'April', // TODO
+    periods: 'Monthly',
+  };
   return (
     <div>
       <SectionBar
@@ -340,6 +383,11 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: handleChangePage,
         }}
+      />
+      <PlainForm<SearchType>
+        data={searchData}
+        schema={SCHEMA_SEARCH}
+        onChange={() => {}} // TODO
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
       {editing && (
