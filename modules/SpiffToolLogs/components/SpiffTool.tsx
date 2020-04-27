@@ -1,5 +1,7 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { User } from '@kalos-core/kalos-rpc/User';
+import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
@@ -14,12 +16,14 @@ import {
   timestamp,
   formatDate,
   makeFakeRows,
+  loadUserById,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
 type TaskType = Task.AsObject;
+type UserType = User.AsObject;
 
 export interface Props {
   loggedUserId: number;
@@ -80,7 +84,13 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [editing, setEditing] = useState<TaskType>();
   const [deleting, setDeleting] = useState<TaskType>();
+  const [loggedInUser, setLoggedInUser] = useState<UserType>();
   const [entries, setEntries] = useState<TaskType[]>([]);
+  const loadLoggedInUser = useCallback(async () => {
+    const loggedInUser = await loadUserById(loggedUserId);
+    setLoggedInUser(loggedInUser);
+  }, [loggedUserId, setLoggedInUser]);
+  const isAdmin = loggedInUser && !!loggedInUser.isAdmin;
   const load = useCallback(async () => {
     setLoading(true);
     const req = new Task();
@@ -162,6 +172,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
+      loadLoggedInUser();
       load();
     }
   }, [loaded, setLoaded]);
@@ -190,18 +201,24 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           { value: '$' + spiffAmount },
           {
             value: '',
-            actions: [
-              <IconButton key={0} size="small">
-                <EditIcon />
-              </IconButton>,
-              <IconButton
-                key={1}
-                size="small"
-                onClick={handleSetDeleting(entry)}
-              >
-                <DeleteIcon />
-              </IconButton>,
-            ],
+            actions: isAdmin
+              ? [
+                  <IconButton key={0} size="small">
+                    <EditIcon />
+                  </IconButton>,
+                  <IconButton
+                    key={1}
+                    size="small"
+                    onClick={handleSetDeleting(entry)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>,
+                ]
+              : [
+                  <IconButton key={0} size="small">
+                    <SearchIcon />
+                  </IconButton>,
+                ],
           }, // FIXME
         ];
       });
