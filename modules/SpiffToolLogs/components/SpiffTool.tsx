@@ -55,7 +55,7 @@ const SCHEMA: Schema<TaskType> = [
     { name: 'spiffTypeId', label: 'Spiff Type', options: SPIFF_TYPES },
   ],
   [
-    { name: 'spiffJobNumber', label: 'Job #' }, // Job Date
+    { name: 'spiffJobNumber', label: 'Job #' },
     {
       name: 'spiffAmount',
       label: 'Amount',
@@ -64,6 +64,31 @@ const SCHEMA: Schema<TaskType> = [
     },
   ],
   [{ name: 'briefDescription', label: 'Description' }],
+];
+
+const SCHEMA_EXTENDED: Schema<TaskType> = [
+  [
+    { name: 'spiffToolId', label: 'Spiff ID #', readOnly: true },
+    { name: 'timeDue', label: 'Time due', readOnly: true, type: 'date' },
+  ],
+  [
+    { name: 'referenceUrl', label: 'External URL' },
+    { name: 'referenceNumber', label: 'Reference #' },
+  ],
+  [{ name: 'briefDescription', label: 'Description' }],
+  [
+    {
+      name: 'spiffAmount',
+      label: 'Amount',
+      startAdornment: '$',
+      type: 'number',
+    },
+    { name: 'spiffJobNumber', label: 'Job #' },
+
+    { name: 'datePerformed', label: 'Date Performed', type: 'date' },
+  ],
+  [{ name: 'spiffTypeId', label: 'Spiff Type', options: SPIFF_TYPES }],
+  [{ name: 'spiffAddress', label: 'Address', multiline: true }],
 ];
 
 const COLUMNS: Columns = [
@@ -83,6 +108,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [editing, setEditing] = useState<TaskType>();
+  const [extendedEditing, setExtendedEditing] = useState<TaskType>();
   const [deleting, setDeleting] = useState<TaskType>();
   const [loggedInUser, setLoggedInUser] = useState<UserType>();
   const [entries, setEntries] = useState<TaskType[]>([]);
@@ -91,7 +117,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
   }, [loggedUserId, setLoggedInUser]);
-  const isAdmin = loggedInUser && !!loggedInUser.isAdmin;
+  const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   const load = useCallback(async () => {
     setLoading(true);
     const req = new Task();
@@ -107,6 +133,10 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     setEntries(resultsList);
     setLoading(false);
   }, [setEntries, setLoading, setUsers]);
+  const handleSetExtendedEditing = useCallback(
+    (extendedEditing?: TaskType) => () => setExtendedEditing(extendedEditing),
+    [setExtendedEditing],
+  );
   const handleSetEditing = useCallback(
     (editing?: TaskType) => () => setEditing(editing),
     [setEditing],
@@ -133,29 +163,28 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         const now = timestamp();
         const isNew = !editing.id;
         const req = new Task();
-        req.setPriorityId(2);
-        req.setExternalCode('user');
-        req.setExternalId(loggedUserId.toString());
-        req.setBillableType('Spiff');
-        req.setReferenceNumber('');
-        req.setToolpurchaseCost(0);
-        const fieldMaskList = [
-          'PriorityId',
-          'ExternalCode',
-          'ExternalId',
-          'BillableType',
-          'ReferenceNumber',
-        ];
+        const fieldMaskList = [];
         if (isNew) {
           req.setTimeCreated(now);
           req.setTimeDue(now);
           req.setDatePerformed(now);
           req.setToolpurchaseDate(now);
+          req.setPriorityId(2);
+          req.setExternalCode('user');
+          req.setExternalId(loggedUserId.toString());
+          req.setBillableType('Spiff');
+          req.setReferenceNumber('');
+          req.setToolpurchaseCost(0);
           fieldMaskList.push(
             'TimeCreated',
             'TimeDue',
             'DatePerformed',
             'ToolpurchaseDate',
+            'PriorityId',
+            'ExternalCode',
+            'ExternalId',
+            'BillableType',
+            'ReferenceNumber',
           );
         }
         for (const fieldName in data) {
@@ -171,7 +200,29 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         await load();
       }
     },
-    [loggedUserId, editing],
+    [loggedUserId, editing, setSaving, setEditing],
+  );
+  const handleSaveExtended = useCallback(
+    async (data: TaskType) => {
+      if (extendedEditing) {
+        setSaving(true);
+        const req = new Task();
+        req.setId(extendedEditing.id);
+        const fieldMaskList = [];
+        for (const fieldName in data) {
+          const { upperCaseProp, methodName } = getRPCFields(fieldName);
+          // @ts-ignore
+          req[methodName](data[fieldName]);
+          fieldMaskList.push(upperCaseProp);
+        }
+        req.setFieldMaskList(fieldMaskList);
+        await TaskClientService.Update(req);
+        setSaving(false);
+        setExtendedEditing(undefined);
+        await load();
+      }
+    },
+    [extendedEditing, setSaving, setExtendedEditing],
   );
   useEffect(() => {
     if (!loaded) {
@@ -180,7 +231,6 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       load();
     }
   }, [loaded, setLoaded]);
-  console.log({ entries });
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
   const data: Data = loading
@@ -216,7 +266,11 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
             value: '',
             actions: isAdmin
               ? [
-                  <IconButton key={0} size="small">
+                  <IconButton
+                    key={0}
+                    size="small"
+                    onClick={handleSetExtendedEditing(entry)}
+                  >
                     <EditIcon />
                   </IconButton>,
                   <IconButton
@@ -253,6 +307,18 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
             onClose={handleSetEditing()}
             data={editing}
             onSave={handleSave}
+            disabled={saving}
+          />
+        </Modal>
+      )}
+      {extendedEditing && (
+        <Modal open onClose={handleSetExtendedEditing()}>
+          <Form<TaskType>
+            title="Spiff Request"
+            schema={SCHEMA_EXTENDED}
+            onClose={handleSetExtendedEditing()}
+            data={extendedEditing}
+            onSave={handleSaveExtended}
             disabled={saving}
           />
         </Modal>
