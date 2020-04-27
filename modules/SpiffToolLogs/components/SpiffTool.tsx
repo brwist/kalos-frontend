@@ -258,6 +258,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
   newTask.setDatePerformed(timestamp());
+  newTask.setSpiffTypeId(+SPIFF_TYPES[0].value);
   const data: Data = loading
     ? makeFakeRows(9, 3)
     : entries.map(entry => {
