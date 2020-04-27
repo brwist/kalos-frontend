@@ -19,7 +19,7 @@ import {
   loadUserById,
   loadUsersByIds,
 } from '../../../helpers';
-import { ENDPOINT } from '../../../constants';
+import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -139,6 +139,8 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [loggedInUser, setLoggedInUser] = useState<UserType>();
   const [entries, setEntries] = useState<TaskType[]>([]);
   const [users, setUsers] = useState<{ [key: number]: UserType }>({});
+  const [count, setCount] = useState<number>(0);
+  const [page, setPage] = useState<number>(0);
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -147,18 +149,26 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const load = useCallback(async () => {
     setLoading(true);
     const req = new Task();
-    req.setPageNumber(0);
+    req.setPageNumber(page);
     req.setIsActive(1);
     req.setExternalId(loggedUserId.toString());
-    const { resultsList, totalCount } = (
+    const { resultsList, totalCount: count } = (
       await TaskClientService.BatchGet(req)
     ).toObject();
     const userIds = resultsList.map(({ externalId }) => +externalId);
     const users = await loadUsersByIds(userIds);
+    setCount(count);
     setUsers(users);
     setEntries(resultsList);
     setLoading(false);
-  }, [setEntries, setLoading, setUsers]);
+  }, [setEntries, setLoading, setUsers, setCount, page]);
+  const handleChangePage = useCallback(
+    (page: number) => {
+      setPage(page);
+      setLoaded(false);
+    },
+    [setPage, setLoaded],
+  );
   const handleSetExtendedEditing = useCallback(
     (extendedEditing?: TaskType) => () => setExtendedEditing(extendedEditing),
     [setExtendedEditing],
@@ -324,6 +334,12 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           { label: 'Add', onClick: handleSetEditing(newTask.toObject()) },
         ]}
         fixedActions
+        pagination={{
+          count,
+          page,
+          rowsPerPage: ROWS_PER_PAGE,
+          onChangePage: handleChangePage,
+        }}
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
       {editing && (
