@@ -150,7 +150,7 @@ const SCHEMA_SEARCH: Schema<SearchType> = [
       name: 'periods',
       label: 'Periods',
       options: SEARCH_PERIODS_TYPES,
-      actions: [{ label: 'Search' }],
+      actions: [{ label: 'Reset', variant: 'outlined' }, { label: 'Search' }],
     },
   ],
 ];
