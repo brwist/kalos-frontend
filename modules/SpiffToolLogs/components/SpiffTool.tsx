@@ -17,6 +17,7 @@ import {
   formatDate,
   makeFakeRows,
   loadUserById,
+  loadUsersByIds,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
@@ -85,6 +86,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [deleting, setDeleting] = useState<TaskType>();
   const [loggedInUser, setLoggedInUser] = useState<UserType>();
   const [entries, setEntries] = useState<TaskType[]>([]);
+  const [users, setUsers] = useState<{ [key: number]: UserType }>({});
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -99,9 +101,12 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     const { resultsList, totalCount } = (
       await TaskClientService.BatchGet(req)
     ).toObject();
+    const userIds = resultsList.map(({ externalId }) => +externalId);
+    const users = await loadUsersByIds(userIds);
+    setUsers(users);
     setEntries(resultsList);
     setLoading(false);
-  }, [setEntries, setLoading]);
+  }, [setEntries, setLoading, setUsers]);
   const handleSetEditing = useCallback(
     (editing?: TaskType) => () => setEditing(editing),
     [setEditing],
@@ -189,7 +194,9 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           datePerformed,
           briefDescription,
           timeDue,
+          externalId,
         } = entry;
+        const technician = users[+externalId];
         return [
           {
             value: formatDate(timeDue),
@@ -197,7 +204,11 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           { value: spiffToolId },
           { value: briefDescription },
           { value: formatDate(datePerformed) },
-          { value: 'Krzysztof Olbinski' }, // FIXME
+          {
+            value: technician
+              ? `${technician.firstname} ${technician.lastname}`
+              : '',
+          },
           { value: spiffJobNumber }, // TODO: Link
           { value: '' }, // FIXME
           { value: '$' + spiffAmount },
