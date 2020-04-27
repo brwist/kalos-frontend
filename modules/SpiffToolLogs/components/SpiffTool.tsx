@@ -8,7 +8,12 @@ import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { Option } from '../../ComponentsLibrary/Field';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
-import { getRPCFields, timestamp, formatDate } from '../../../helpers';
+import {
+  getRPCFields,
+  timestamp,
+  formatDate,
+  makeFakeRows,
+} from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
@@ -144,39 +149,40 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     }
   }, [loaded, setLoaded]);
   console.log({ entries });
-  const data: Data = entries.map(
-    // TODO fakeRows
-    ({
-      id,
-      spiffAmount,
-      spiffJobNumber,
-      datePerformed,
-      briefDescription,
-      timeCreated,
-    }) => [
-      {
-        value: formatDate(timeCreated), // FIXME
-      },
-      { value: id }, // FIXME
-      { value: briefDescription },
-      { value: formatDate(datePerformed) },
-      { value: 'Krzysztof Olbinski' }, // FIXME
-      { value: spiffJobNumber }, // TODO: Link
-      { value: '' }, // FIXME
-      { value: '$' + spiffAmount },
-      {
-        value: '',
-        actions: [
-          <IconButton key={0} size="small">
-            <EditIcon />
-          </IconButton>,
-          <IconButton key={1} size="small">
-            <DeleteIcon />
-          </IconButton>,
+  const data: Data = loading
+    ? makeFakeRows(9, 3)
+    : entries.map(
+        ({
+          id,
+          spiffAmount,
+          spiffJobNumber,
+          datePerformed,
+          briefDescription,
+          timeCreated,
+        }) => [
+          {
+            value: formatDate(timeCreated), // FIXME
+          },
+          { value: id }, // FIXME
+          { value: briefDescription },
+          { value: formatDate(datePerformed) },
+          { value: 'Krzysztof Olbinski' }, // FIXME
+          { value: spiffJobNumber }, // TODO: Link
+          { value: '' }, // FIXME
+          { value: '$' + spiffAmount },
+          {
+            value: '',
+            actions: [
+              <IconButton key={0} size="small">
+                <EditIcon />
+              </IconButton>,
+              <IconButton key={1} size="small">
+                <DeleteIcon />
+              </IconButton>,
+            ],
+          }, // FIXME
         ],
-      }, // FIXME
-    ],
-  );
+      );
   return (
     <div>
       <SectionBar
@@ -186,7 +192,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         ]}
         fixedActions
       />
-      <InfoTable columns={COLUMNS} data={data} />
+      <InfoTable columns={COLUMNS} data={data} loading={loading} />
       {editing && (
         <Modal open onClose={handleSetEditing()}>
           <Form<TaskType>
