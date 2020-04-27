@@ -7,6 +7,7 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { Option } from '../../ComponentsLibrary/Field';
+import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import {
   getRPCFields,
@@ -78,6 +79,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [editing, setEditing] = useState<TaskType>();
+  const [deleting, setDeleting] = useState<TaskType>();
   const [entries, setEntries] = useState<TaskType[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,6 +97,21 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     (editing?: TaskType) => () => setEditing(editing),
     [setEditing],
   );
+  const handleSetDeleting = useCallback(
+    (deleting?: TaskType) => () => setDeleting(deleting),
+    [setDeleting],
+  );
+  const handleDelete = useCallback(async () => {
+    if (deleting) {
+      setLoading(true);
+      const req = new Task();
+      req.setId(deleting.id);
+      setDeleting(undefined);
+      await TaskClientService.Delete(req);
+      setLoading(false);
+      await load();
+    }
+  }, [deleting, setLoading, setDeleting, load]);
   const handleSave = useCallback(
     async (data: TaskType) => {
       if (editing) {
@@ -151,15 +168,16 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   console.log({ entries });
   const data: Data = loading
     ? makeFakeRows(9, 3)
-    : entries.map(
-        ({
+    : entries.map(entry => {
+        const {
           id,
           spiffAmount,
           spiffJobNumber,
           datePerformed,
           briefDescription,
           timeCreated,
-        }) => [
+        } = entry;
+        return [
           {
             value: formatDate(timeCreated), // FIXME
           },
@@ -176,13 +194,17 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
               <IconButton key={0} size="small">
                 <EditIcon />
               </IconButton>,
-              <IconButton key={1} size="small">
+              <IconButton
+                key={1}
+                size="small"
+                onClick={handleSetDeleting(entry)}
+              >
                 <DeleteIcon />
               </IconButton>,
             ],
           }, // FIXME
-        ],
-      );
+        ];
+      });
   return (
     <div>
       <SectionBar
@@ -204,6 +226,15 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
             disabled={saving}
           />
         </Modal>
+      )}
+      {deleting && (
+        <ConfirmDelete
+          open
+          kind="Spiff"
+          name={deleting.briefDescription}
+          onConfirm={handleDelete}
+          onClose={handleSetDeleting()}
+        />
       )}
     </div>
   );
