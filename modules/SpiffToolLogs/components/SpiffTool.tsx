@@ -53,21 +53,11 @@ const SCHEMA: Schema<TaskType> = [
   [
     { name: 'timeDue', label: 'Claim Date', readOnly: true, type: 'date' },
     {
-      name: 'spiffTypeId',
-      label: 'Spiff Type',
-      options: SPIFF_TYPES,
-      required: true,
-    },
-    { name: 'briefDescription', label: 'Description' },
-  ],
-  [
-    {
       name: 'datePerformed',
       label: 'Date Performed',
       type: 'date',
       required: true,
     },
-    { name: 'spiffJobNumber', label: 'Job #' },
     {
       name: 'spiffAmount',
       label: 'Amount',
@@ -75,32 +65,35 @@ const SCHEMA: Schema<TaskType> = [
       type: 'number',
       required: true,
     },
+  ],
+  [
+    {
+      name: 'spiffTypeId',
+      label: 'Spiff Type',
+      options: SPIFF_TYPES,
+      required: true,
+    },
+  ],
+  [
+    { name: 'briefDescription', label: 'Description' },
+    { name: 'spiffJobNumber', label: 'Job #' },
   ],
 ];
 
 const SCHEMA_EXTENDED: Schema<TaskType> = [
   [
     { name: 'spiffToolId', label: 'Spiff ID #', readOnly: true },
-    { name: 'timeDue', label: 'Time due', readOnly: true, type: 'date' },
-  ],
-  [
     { name: 'referenceUrl', label: 'External URL' },
     { name: 'referenceNumber', label: 'Reference #' },
   ],
-  [{ name: 'briefDescription', label: 'Description' }],
   [
+    { name: 'timeDue', label: 'Time due', readOnly: true, type: 'date' },
+    { name: 'briefDescription', label: 'Description', multiline: true },
     {
       name: 'spiffAmount',
       label: 'Amount',
       startAdornment: '$',
       type: 'number',
-      required: true,
-    },
-    { name: 'spiffJobNumber', label: 'Job #' },
-    {
-      name: 'datePerformed',
-      label: 'Date Performed',
-      type: 'date',
       required: true,
     },
   ],
@@ -112,7 +105,16 @@ const SCHEMA_EXTENDED: Schema<TaskType> = [
       required: true,
     },
   ],
-  [{ name: 'spiffAddress', label: 'Address', multiline: true }],
+  [
+    { name: 'spiffJobNumber', label: 'Job #' },
+    {
+      name: 'datePerformed',
+      label: 'Date Performed',
+      type: 'date',
+      required: true,
+    },
+    { name: 'spiffAddress', label: 'Address', multiline: true },
+  ],
 ];
 
 const COLUMNS: Columns = [
@@ -263,7 +265,6 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     ? makeFakeRows(9, 3)
     : entries.map(entry => {
         const {
-          id,
           spiffToolId,
           spiffAmount,
           spiffJobNumber,
