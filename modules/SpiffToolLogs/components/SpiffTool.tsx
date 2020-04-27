@@ -52,18 +52,30 @@ const SPIFF_TYPES: Option[] = [
 const SCHEMA: Schema<TaskType> = [
   [
     { name: 'timeDue', label: 'Claim Date', readOnly: true, type: 'date' },
-    { name: 'spiffTypeId', label: 'Spiff Type', options: SPIFF_TYPES },
+    {
+      name: 'spiffTypeId',
+      label: 'Spiff Type',
+      options: SPIFF_TYPES,
+      required: true,
+    },
+    { name: 'briefDescription', label: 'Description' },
   ],
   [
+    {
+      name: 'datePerformed',
+      label: 'Date Performed',
+      type: 'date',
+      required: true,
+    },
     { name: 'spiffJobNumber', label: 'Job #' },
     {
       name: 'spiffAmount',
       label: 'Amount',
       startAdornment: '$',
       type: 'number',
+      required: true,
     },
   ],
-  [{ name: 'briefDescription', label: 'Description' }],
 ];
 
 const SCHEMA_EXTENDED: Schema<TaskType> = [
@@ -82,12 +94,24 @@ const SCHEMA_EXTENDED: Schema<TaskType> = [
       label: 'Amount',
       startAdornment: '$',
       type: 'number',
+      required: true,
     },
     { name: 'spiffJobNumber', label: 'Job #' },
-
-    { name: 'datePerformed', label: 'Date Performed', type: 'date' },
+    {
+      name: 'datePerformed',
+      label: 'Date Performed',
+      type: 'date',
+      required: true,
+    },
   ],
-  [{ name: 'spiffTypeId', label: 'Spiff Type', options: SPIFF_TYPES }],
+  [
+    {
+      name: 'spiffTypeId',
+      label: 'Spiff Type',
+      options: SPIFF_TYPES,
+      required: true,
+    },
+  ],
   [{ name: 'spiffAddress', label: 'Address', multiline: true }],
 ];
 
@@ -233,6 +257,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   }, [loaded, setLoaded]);
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
+  newTask.setDatePerformed(timestamp());
   const data: Data = loading
     ? makeFakeRows(9, 3)
     : entries.map(entry => {
