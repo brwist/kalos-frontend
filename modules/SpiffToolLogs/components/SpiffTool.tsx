@@ -20,17 +20,19 @@ import {
   loadUserById,
   loadUsersByIds,
   trailingZero,
+  getWeekOptions,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS_OPTIONS } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 const SEARCH_PERIODS_TYPES = ['Monthly', 'Weekly'];
+const WEEK_OPTIONS = getWeekOptions();
 
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
 type SearchType = {
   description: string;
-  month: number;
+  month: number | string;
   periods: string;
 };
 
@@ -174,7 +176,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     if (description !== '') {
       req.setBriefDescription(`%${description}%`);
     }
-    req.setDatePerformed(`${currYear}-${trailingZero(month)}-%`);
+    req.setDatePerformed(`${currYear}-${trailingZero(+month)}-%`);
     const { resultsList, totalCount: count } = (
       await TaskClientService.BatchGet(req)
     ).toObject();
@@ -284,8 +286,23 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     [extendedEditing, setSaving, setExtendedEditing],
   );
   const handleSearchFormChange = useCallback(
-    (form: SearchType) => setSearchForm(form),
-    [],
+    (form: SearchType) => {
+      const isPeriodsChange = searchForm.periods !== form.periods;
+      setSearchForm({
+        ...form,
+        ...(isPeriodsChange
+          ? {
+              month: ((form.periods === 'Monthly'
+                ? MONTHS_OPTIONS[0]
+                : WEEK_OPTIONS[0]) as Option).value,
+            }
+          : {}),
+      });
+      if (isPeriodsChange) {
+        setSearchFormKey(searchFormKey + 1);
+      }
+    },
+    [searchForm, setSearchFormKey, searchFormKey],
   );
   const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleResetSearch = useCallback(() => {
@@ -365,8 +382,9 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
 
       {
         name: 'month',
-        label: 'Month',
-        options: MONTHS_OPTIONS,
+        label: searchForm.periods === 'Monthly' ? 'Month' : 'Week',
+        options:
+          searchForm.periods === 'Monthly' ? MONTHS_OPTIONS : WEEK_OPTIONS,
       },
       {
         name: 'periods',
