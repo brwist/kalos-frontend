@@ -32,7 +32,10 @@ const Toolbar: FC<Props> = ({
     <MuiToolbar className={classes.bar}>
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <WeekPicker
-          label="Set Period"
+          white
+          label="Set a Period"
+          inputVariant="outlined"
+          size="small"
           value={selectedDate}
           onChange={handleDateChange}
         />
