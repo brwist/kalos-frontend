@@ -1,4 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import { User } from '@kalos-core/kalos-rpc/User';
 import SearchIcon from '@material-ui/icons/Search';
@@ -29,6 +30,7 @@ const ALL = '-- All --';
 const MONTHLY = 'Monthly';
 const WEEKLY = 'Weekly';
 const WEEK_OPTIONS = getWeekOptions();
+const STATUSES = ['Approved', 'Not Approved', 'Revoked'];
 
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
@@ -36,6 +38,12 @@ type SearchType = {
   description: string;
   month: string;
   kind: string;
+};
+type StatusType = {
+  decisionDate: string;
+  reviewedBy: string;
+  status: string;
+  comments: string;
 };
 
 export interface Props {
@@ -141,7 +149,31 @@ const COLUMNS: Columns = [
   { name: 'Duplicates' },
 ];
 
+const SCHEMA_STATUS: Schema<StatusType> = [
+  [
+    {
+      name: 'decisionDate',
+      label: 'Decision Date',
+      required: true,
+      type: 'date',
+    },
+  ],
+  [{ name: 'reviewedBy', label: 'Reviewed By', required: true }],
+  [{ name: 'status', label: 'Status', options: STATUSES }],
+  [{ name: 'comments', label: 'Comments', multiline: true }],
+];
+
+const useStyles = makeStyles(theme => ({
+  form: {
+    display: 'flex',
+    [theme.breakpoints.down('xs')]: {
+      flexDirection: 'column',
+    },
+  },
+}));
+
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
+  const classes = useStyles();
   const today = new Date();
   const currMonth = today.getMonth() + 1;
   const MONTHS_OPTIONS: Option[] = [
@@ -175,6 +207,12 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [page, setPage] = useState<number>(0);
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
+  const [statusForm, setStatusForm] = useState<StatusType>({
+    decisionDate: '',
+    reviewedBy: '',
+    status: STATUSES[0],
+    comments: '',
+  });
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -190,7 +228,6 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     if (description !== '') {
       req.setBriefDescription(`%${description}%`);
     }
-    console.log({ month });
     if (month !== ALL) {
       req.setDatePerformed(month);
     }
@@ -450,14 +487,28 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       )}
       {extendedEditing && (
         <Modal open onClose={handleSetExtendedEditing()}>
-          <Form<TaskType>
-            title="Spiff Request"
-            schema={SCHEMA_EXTENDED}
-            onClose={handleSetExtendedEditing()}
-            data={extendedEditing}
-            onSave={handleSaveExtended}
-            disabled={saving}
-          />
+          <div className={classes.form}>
+            <Form<TaskType>
+              title="Spiff Request"
+              schema={SCHEMA_EXTENDED}
+              onClose={handleSetExtendedEditing()}
+              data={extendedEditing}
+              onSave={handleSaveExtended}
+              disabled={saving}
+            />
+            <div>
+              <SectionBar
+                title="Status"
+                actions={[{ label: 'Save' }]}
+                fixedActions
+              />
+              <PlainForm<StatusType>
+                schema={SCHEMA_STATUS}
+                data={statusForm}
+                onChange={setStatusForm}
+              />
+            </div>
+          </div>
         </Modal>
       )}
       {deleting && (
