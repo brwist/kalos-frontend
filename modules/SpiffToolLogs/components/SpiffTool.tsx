@@ -124,37 +124,6 @@ const SCHEMA_EXTENDED: Schema<TaskType> = [
   ],
 ];
 
-const SCHEMA_SEARCH: Schema<SearchType> = [
-  [
-    { name: 'description', label: 'Search Spiffs' },
-
-    {
-      name: 'month',
-      label: 'Month',
-      options: [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December',
-      ],
-    },
-    {
-      name: 'periods',
-      label: 'Periods',
-      options: SEARCH_PERIODS_TYPES,
-      actions: [{ label: 'Reset', variant: 'outlined' }, { label: 'Search' }],
-    },
-  ],
-];
-
 const COLUMNS: Columns = [
   { name: 'Claim Date' },
   { name: 'Spiff ID #' },
@@ -307,6 +276,10 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     (form: SearchType) => setSearchForm(form),
     [],
   );
+  const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
+  const handleResetSearch = useCallback(() => {
+    setLoaded(false);
+  }, [setLoaded]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -373,6 +346,39 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           }, // FIXME
         ];
       });
+  const SCHEMA_SEARCH: Schema<SearchType> = [
+    [
+      { name: 'description', label: 'Search Spiffs' },
+
+      {
+        name: 'month',
+        label: 'Month',
+        options: [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ],
+      },
+      {
+        name: 'periods',
+        label: 'Periods',
+        options: SEARCH_PERIODS_TYPES,
+        actions: [
+          { label: 'Reset', variant: 'outlined', onClick: handleResetSearch },
+          { label: 'Search', onClick: handleMakeSearch },
+        ],
+      },
+    ],
+  ];
   return (
     <div>
       <SectionBar
