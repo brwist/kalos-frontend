@@ -37,7 +37,6 @@ export const useFetchAll = (fetchFn: (page: number) => Promise<Response>) => {
         });
       })();
     } else if (fetchedCount === totalCount) {
-      console.log(fetchedCount, totalCount);
       setState({
         ...state,
         isLoading: false,

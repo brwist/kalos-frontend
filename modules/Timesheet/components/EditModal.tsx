@@ -28,13 +28,17 @@ const useStyles = makeStyles((theme: Theme) =>
 
 type Entry = TimesheetLine.AsObject;
 
+interface EntryWithDate extends Entry {
+  date?: string,
+}
+
 type Props = {
-  entry: Entry;
+  entry: EntryWithDate;
   timesheetOwnerId: number,
   userId: number,
   timesheetAdministration: boolean,
-  create: boolean,
-  action: 'create' | 'update' | 'convert' | '';
+  create?: boolean,
+  action: 'create' | 'update' | 'convert' | 'delete' | 'approve' | 'reject' | '',
   onSave: (entry: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => void;
   onClose: () => void;
 };
@@ -43,7 +47,7 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
   const confirm = useConfirm();
   const classes = useStyles();
   const [saving, setSaving] = useState<boolean>(false);
-  const SCHEMA: Schema<Entry> = [
+  const SCHEMA: Schema<EntryWithDate> = [
     [{ label: 'Reference', name: 'referenceNumber' },],
     [{ label: 'Brief Description', name: 'briefDescription' },],
     [{ label: 'Class Code', name: 'classCodeId', type: 'classCode', required: true},],
@@ -58,17 +62,19 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
   const { id = 0 } = entry;
   const data = {...entry};
   if (data.timeStarted) {
-    data.date = new Date(data.timeStarted);
+    data.date = format(new Date(data.timeStarted), 'yyyy-MM-dd');
+    data.timeStarted = format(roundToNearestMinutes(new Date(data.timeStarted), {nearestTo: 15}), 'yyyy-MM-dd HH:mm');
+    data.timeFinished = format(roundToNearestMinutes(new Date(data.timeFinished), {nearestTo: 15}), 'yyyy-MM-dd HH:mm');
   } else {
-    data.date = new Date();
-    data.timeStarted = new Date();
-    data.timeFinished = new Date();
+    data.date = format(new Date(), 'yyyy-MM-dd');
+    data.timeStarted = format(roundToNearestMinutes(new Date(), {nearestTo: 15}), 'yyyy-MM-dd HH:mm');
+    data.timeFinished = format(roundToNearestMinutes(new Date(), {nearestTo: 15}), 'yyyy-MM-dd HH:mm');
   }
   const handleUpdate = useCallback(
-    async (data: Entry) => {
+    async (data: EntryWithDate) => {
       setSaving(true);
-      data.timeStarted = `${format(new Date(data.date), 'yyyy-MM-dd')} ${format(new Date(data.timeStarted), 'HH:mm')}`;
-      data.timeFinished = `${format(new Date(data.date), 'yyyy-MM-dd')} ${format(new Date(data.timeFinished), 'HH:mm')}`;
+      data.timeStarted = `${format(new Date(data.date || ''), 'yyyy-MM-dd')} ${format(new Date(data.timeStarted), 'HH:mm')}`;
+      data.timeFinished = `${format(new Date(data.date || ''), 'yyyy-MM-dd')} ${format(new Date(data.timeFinished), 'HH:mm')}`;
       delete data.date;
       const req = new TimesheetLine();
       req.setId(id);
@@ -91,10 +97,10 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
   );
 
   const handleCreate = useCallback(
-    async (data: Entry) => {
+    async (data: EntryWithDate) => {
       setSaving(true);
-      data.timeStarted = `${format(new Date(data.date), 'yyyy-MM-dd')} ${format(new Date(data.timeStarted), 'HH:mm')}`;
-      data.timeFinished = `${format(new Date(data.date), 'yyyy-MM-dd')} ${format(new Date(data.timeFinished), 'HH:mm')}`;
+      data.timeStarted = `${format(new Date(data.date || ''), 'yyyy-MM-dd')} ${format(new Date(data.timeStarted), 'HH:mm')}`;
+      data.timeFinished = `${format(new Date(data.date || ''), 'yyyy-MM-dd')} ${format(new Date(data.timeFinished), 'HH:mm')}`;
       delete data.date;
       data.technicianUserId = timesheetOwnerId;
       data.servicesRenderedId = entry.servicesRenderedId;
@@ -187,7 +193,7 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
 
   return (
     <Modal open onClose={onClose}>
-      <Form<Entry>
+      <Form<EntryWithDate>
         title="Edit Timesheet Line"
         schema={SCHEMA}
         data={data}

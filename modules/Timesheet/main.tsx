@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useState } from "react";
-import { format, startOfWeek, eachDayOfInterval, addDays } from 'date-fns';
+import { format, startOfWeek, eachDayOfInterval, addDays, roundToNearestMinutes } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
@@ -59,7 +59,7 @@ type EditTimesheetContext = {
 type EditingState = {
   entry: TimesheetLine.AsObject,
   modalShown: boolean,
-  action: 'create' | 'update' | 'convert' | '',
+  action: 'create' | 'update' | 'convert' | 'delete' | 'approve' | 'reject' | '',
   editedEntries: TimesheetLine.AsObject[],
   hiddenSR: ServicesRendered.AsObject[],
   convertingSR?: ServicesRendered.AsObject,
@@ -129,12 +129,13 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     const entry = new TimesheetLine().toObject();
     Object.keys(entry).forEach(key => {
       if (card.hasOwnProperty(key)) {
+        // @ts-ignore
         entry[key] = card[key];
       }
     });
     entry.servicesRenderedId = card.id;
     if (card.status === 'Enroute') {
-      entry.classCode = 37;
+      entry.classCodeId = 37;
     }
 
     setEditingState({
@@ -183,7 +184,6 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   if (!user) {
     return null;
   }
-  console.log(user);
   const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
 
   return (

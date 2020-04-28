@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import clsx from 'clsx';
-import { DatePicker } from '@material-ui/pickers';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
 import { TextFieldProps } from '@material-ui/core/TextField';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
@@ -11,6 +10,7 @@ import isSameDay from 'date-fns/isSameDay';
 import endOfWeek from 'date-fns/endOfWeek';
 import startOfWeek from 'date-fns/startOfWeek';
 import isWithinInterval from 'date-fns/isWithinInterval';
+import { DatePicker } from '../CustomControls';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -62,7 +62,7 @@ type Props = {
   onChange: (value: Date) => void;
   inputVariant?: TextFieldProps['variant'];
   size?: 'small' | 'medium';
-  className?: any;
+  white?: boolean;
 };
 
 export const WeekPicker: FC<Props> = ({
@@ -71,7 +71,7 @@ export const WeekPicker: FC<Props> = ({
   onChange,
   inputVariant,
   size,
-  className,
+  white,
 }) => {
   const classes = useStyles();
   const handleWeekChange = (date: MaterialUiPickersDate) => {
@@ -126,7 +126,7 @@ export const WeekPicker: FC<Props> = ({
 
   return (
     <DatePicker
-      className={className}
+      white={true}
       label={label}
       inputVariant={inputVariant}
       size={size}

@@ -467,7 +467,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         <DatePicker
           className={classes.field + ' ' + className}
           label={inputLabel}
-          value={new Date(props.value as unknown as Date)}
+          value={new Date(props.value as unknown as string)}
           onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
           disabled={disabled}
           fullWidth
@@ -482,7 +482,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         <TimePicker
           className={classes.field + ' ' + className}
           label={inputLabel}
-          value={roundToNearestMinutes(new Date(props.value as unknown as Date), {nearestTo: 15})}
+          value={new Date(props.value as unknown as string)}
           onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
           minutesStep={15}
           disabled={disabled}

@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import clsx from 'clsx';
-import { DatePicker } from '@material-ui/pickers';
 import { DatePickerView } from '@material-ui/pickers/DatePicker/DatePicker';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
 import Toolbar from '@material-ui/core/Toolbar';
-import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
+import { TextField, DatePicker } from '../../ComponentsLibrary/CustomControls';
 import { WeekPicker } from '../../ComponentsLibrary/WeekPicker';
 import { Button } from '../../ComponentsLibrary/Button';
 import FilterDrawer from './FilterDrawer';
@@ -54,24 +52,6 @@ const useStyles = makeStyles((theme: Theme) =>
     select: {
       minWidth: 100,
     },
-    inputWhite: {
-      cursor: 'pointer',
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: theme.palette.grey.A100,
-      },
-      '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: 'white',
-      },
-      '& .MuiSelect-selectMenu, & .MuiOutlinedInput-input': {
-        color: 'white',
-      },
-      '& .MuiSelect-icon': {
-        color: 'white',
-      },
-      '& .MuiInputLabel-outlined': {
-        color: theme.palette.grey.A100,
-      },
-    },
   }),
 );
 
@@ -92,8 +72,9 @@ const Filter = ({
       <Box className={classes.dateControls}>
         <Box className={classes.viewByBox}>
           <TextField
+            white
+            className={classes.select}
             select
-            className={clsx(classes.select, classes.inputWhite)}
             label="View By"
             variant="outlined"
             size="small"
@@ -115,7 +96,7 @@ const Filter = ({
         </Box>
         {viewBy === 'week' ? (
           <WeekPicker
-            className={classes.inputWhite}
+            white
             label="Set a Period"
             value={selectedDate}
             inputVariant="outlined"
@@ -124,7 +105,7 @@ const Filter = ({
           />
         ) : (
           <DatePicker
-            className={classes.inputWhite}
+            white
             views={[getCalendarView()]}
             label="Set a Period"
             inputVariant="outlined"
