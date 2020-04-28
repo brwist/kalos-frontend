@@ -26,7 +26,8 @@ import {
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
-import { ENDPOINT } from './constants';
+import { ENDPOINT, MONTHS_OPTIONS } from './constants';
+import { Options, Option } from './modules/ComponentsLibrary/Field';
 
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -797,6 +798,27 @@ function roundNumber(num: number) {
   return Math.round(num * 100) / 100;
 }
 
+/**
+ * Returns options with weeks (starting Sunday) for the past year period
+ */
+function getWeekOptions(): Options {
+  const d = new Date();
+  return Array.from(Array(52)).map((_, week) => {
+    const w = new Date(
+      d.getFullYear(),
+      d.getMonth(),
+      d.getDate() - d.getDay() - week * 7,
+    );
+    const month = MONTHS_OPTIONS[w.getMonth()] as Option;
+    return {
+      label: `Week of ${month.label} ${w.getDate()}`,
+      value: `${w.getFullYear()}-${trailingZero(
+        w.getMonth() + 1,
+      )}-${trailingZero(w.getDate())}`,
+    };
+  });
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -836,4 +858,5 @@ export {
   loadMetricByUserId,
   loadMetricByUserIds,
   roundNumber,
+  getWeekOptions,
 };
