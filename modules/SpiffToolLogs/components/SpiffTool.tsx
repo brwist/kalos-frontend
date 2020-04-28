@@ -20,7 +20,7 @@ import {
   loadUserById,
   loadUsersByIds,
 } from '../../../helpers';
-import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
+import { ENDPOINT, ROWS_PER_PAGE, MONTHS_OPTIONS } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 const SEARCH_PERIODS_TYPES = ['Monthly', 'Weekly'];
@@ -29,7 +29,7 @@ type TaskType = Task.AsObject;
 type UserType = User.AsObject;
 type SearchType = {
   description: string;
-  month: string;
+  month: number;
   periods: string;
 };
 
@@ -139,7 +139,7 @@ const COLUMNS: Columns = [
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const getSearchFormInit = () => ({
     description: '',
-    month: 'April', // TODO
+    month: 4, // TODO
     periods: 'Monthly',
   });
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -357,20 +357,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       {
         name: 'month',
         label: 'Month',
-        options: [
-          'January',
-          'February',
-          'March',
-          'April',
-          'May',
-          'June',
-          'July',
-          'August',
-          'September',
-          'October',
-          'November',
-          'December',
-        ],
+        options: MONTHS_OPTIONS,
       },
       {
         name: 'periods',
