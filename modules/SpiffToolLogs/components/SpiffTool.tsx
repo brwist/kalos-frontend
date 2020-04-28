@@ -179,6 +179,11 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [users, setUsers] = useState<{ [key: number]: UserType }>({});
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
+  const [searchForm, setSearchForm] = useState<SearchType>({
+    description: '',
+    month: 'April', // TODO
+    periods: 'Monthly',
+  });
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -298,6 +303,10 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     },
     [extendedEditing, setSaving, setExtendedEditing],
   );
+  const handleSearchFormChange = useCallback(
+    (form: SearchType) => setSearchForm(form),
+    [],
+  );
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -364,11 +373,6 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           }, // FIXME
         ];
       });
-  const searchData: SearchType = {
-    description: '',
-    month: 'April', // TODO
-    periods: 'Monthly',
-  };
   return (
     <div>
       <SectionBar
@@ -385,9 +389,9 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         }}
       />
       <PlainForm<SearchType>
-        data={searchData}
+        data={searchForm}
         schema={SCHEMA_SEARCH}
-        onChange={() => {}} // TODO
+        onChange={handleSearchFormChange}
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
       {editing && (
