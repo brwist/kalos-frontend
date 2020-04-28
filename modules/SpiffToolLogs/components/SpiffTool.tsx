@@ -137,6 +137,11 @@ const COLUMNS: Columns = [
 ];
 
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
+  const getSearchFormInit = () => ({
+    description: '',
+    month: 'April', // TODO
+    periods: 'Monthly',
+  });
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -148,11 +153,8 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [users, setUsers] = useState<{ [key: number]: UserType }>({});
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
-  const [searchForm, setSearchForm] = useState<SearchType>({
-    description: '',
-    month: 'April', // TODO
-    periods: 'Monthly',
-  });
+  const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
+  const [searchFormKey, setSearchFormKey] = useState<number>(0);
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -278,8 +280,10 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   );
   const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleResetSearch = useCallback(() => {
+    setSearchForm(getSearchFormInit());
+    setSearchFormKey(searchFormKey + 1);
     setLoaded(false);
-  }, [setLoaded]);
+  }, [setLoaded, setSearchForm, searchFormKey, setSearchFormKey]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -395,6 +399,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         }}
       />
       <PlainForm<SearchType>
+        key={searchFormKey}
         data={searchForm}
         schema={SCHEMA_SEARCH}
         onChange={handleSearchFormChange}
