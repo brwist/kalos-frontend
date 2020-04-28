@@ -26,7 +26,7 @@ import {
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
-import { ENDPOINT, MONTHS_OPTIONS } from './constants';
+import { ENDPOINT, MONTHS } from './constants';
 import { Options, Option } from './modules/ComponentsLibrary/Field';
 
 const UserClientService = new UserClient(ENDPOINT);
@@ -801,7 +801,7 @@ function roundNumber(num: number) {
 /**
  * Returns options with weeks (starting Sunday) for the past year period
  */
-function getWeekOptions(): Options {
+function getWeekOptions(): Option[] {
   const d = new Date();
   return Array.from(Array(52)).map((_, week) => {
     const w = new Date(
@@ -809,9 +809,8 @@ function getWeekOptions(): Options {
       d.getMonth(),
       d.getDate() - d.getDay() - week * 7,
     );
-    const month = MONTHS_OPTIONS[w.getMonth()] as Option;
     return {
-      label: `Week of ${month.label} ${w.getDate()}`,
+      label: `Week of ${MONTHS[w.getMonth()]} ${w.getDate()}`,
       value: `${w.getFullYear()}-${trailingZero(
         w.getMonth() + 1,
       )}-${trailingZero(w.getDate())}`,
