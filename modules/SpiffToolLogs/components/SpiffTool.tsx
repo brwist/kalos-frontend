@@ -19,6 +19,7 @@ import {
   makeFakeRows,
   loadUserById,
   loadUsersByIds,
+  trailingZero,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS_OPTIONS } from '../../../constants';
 
@@ -137,9 +138,12 @@ const COLUMNS: Columns = [
 ];
 
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
+  const today = new Date();
+  const currMonth = today.getMonth() + 1;
+  const currYear = today.getFullYear();
   const getSearchFormInit = () => ({
     description: '',
-    month: new Date().getMonth() + 1,
+    month: currMonth,
     periods: 'Monthly',
   });
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -162,7 +166,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   const load = useCallback(async () => {
     setLoading(true);
-    const { description } = searchForm;
+    const { description, month } = searchForm;
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(1);
@@ -170,6 +174,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     if (description !== '') {
       req.setBriefDescription(`%${description}%`);
     }
+    req.setDatePerformed(`${currYear}-${trailingZero(month)}-%`);
     const { resultsList, totalCount: count } = (
       await TaskClientService.BatchGet(req)
     ).toObject();
