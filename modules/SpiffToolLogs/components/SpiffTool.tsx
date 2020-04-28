@@ -22,18 +22,20 @@ import {
   trailingZero,
   getWeekOptions,
 } from '../../../helpers';
-import { ENDPOINT, ROWS_PER_PAGE, MONTHS_OPTIONS } from '../../../constants';
+import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
-const SEARCH_PERIODS_TYPES = ['Monthly', 'Weekly'];
+const ALL = '-- All --';
+const MONTHLY = 'Monthly';
+const WEEKLY = 'Weekly';
 const WEEK_OPTIONS = getWeekOptions();
 
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
 type SearchType = {
   description: string;
-  month: number | string;
-  periods: string;
+  month: string;
+  kind: string;
 };
 
 export interface Props {
@@ -142,11 +144,23 @@ const COLUMNS: Columns = [
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const today = new Date();
   const currMonth = today.getMonth() + 1;
-  const currYear = today.getFullYear();
+  const MONTHS_OPTIONS: Option[] = [
+    { label: ALL, value: ALL },
+    ...MONTHS.slice(currMonth).map((label, idx) => ({
+      label,
+      value: `${today.getFullYear() - 1}-${trailingZero(
+        currMonth + idx + 1,
+      )}-%`,
+    })),
+    ...MONTHS.slice(0, currMonth).map((label, idx) => ({
+      label,
+      value: `${today.getFullYear()}-${trailingZero(idx + 1)}-%`,
+    })),
+  ].reverse();
   const getSearchFormInit = () => ({
     description: '',
-    month: currMonth,
-    periods: 'Monthly',
+    month: MONTHS_OPTIONS[0].value as string,
+    kind: MONTHLY,
   });
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -176,7 +190,10 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     if (description !== '') {
       req.setBriefDescription(`%${description}%`);
     }
-    req.setDatePerformed(`${currYear}-${trailingZero(+month)}-%`);
+    console.log({ month });
+    if (month !== ALL) {
+      req.setDatePerformed(month);
+    }
     const { resultsList, totalCount: count } = (
       await TaskClientService.BatchGet(req)
     ).toObject();
@@ -287,14 +304,15 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   );
   const handleSearchFormChange = useCallback(
     (form: SearchType) => {
-      const isPeriodsChange = searchForm.periods !== form.periods;
+      const isPeriodsChange = searchForm.kind !== form.kind;
       setSearchForm({
         ...form,
         ...(isPeriodsChange
           ? {
-              month: ((form.periods === 'Monthly'
+              month: (form.kind === MONTHLY
                 ? MONTHS_OPTIONS[0]
-                : WEEK_OPTIONS[0]) as Option).value,
+                : WEEK_OPTIONS[0]
+              ).value as string,
             }
           : {}),
       });
@@ -382,14 +400,13 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
 
       {
         name: 'month',
-        label: searchForm.periods === 'Monthly' ? 'Month' : 'Week',
-        options:
-          searchForm.periods === 'Monthly' ? MONTHS_OPTIONS : WEEK_OPTIONS,
+        label: searchForm.kind === MONTHLY ? 'Month' : 'Week',
+        options: searchForm.kind === MONTHLY ? MONTHS_OPTIONS : WEEK_OPTIONS,
       },
       {
-        name: 'periods',
+        name: 'kind',
         label: 'Periods',
-        options: SEARCH_PERIODS_TYPES,
+        options: [MONTHLY, WEEKLY],
         actions: [
           { label: 'Reset', variant: 'outlined', onClick: handleResetSearch },
           { label: 'Search', onClick: handleMakeSearch },
