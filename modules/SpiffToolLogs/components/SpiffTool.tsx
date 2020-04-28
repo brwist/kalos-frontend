@@ -139,7 +139,7 @@ const COLUMNS: Columns = [
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const getSearchFormInit = () => ({
     description: '',
-    month: 4, // TODO
+    month: new Date().getMonth() + 1,
     periods: 'Monthly',
   });
   const [loaded, setLoaded] = useState<boolean>(false);
