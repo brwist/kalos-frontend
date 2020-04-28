@@ -162,10 +162,14 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   const load = useCallback(async () => {
     setLoading(true);
+    const { description } = searchForm;
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(1);
     req.setExternalId(loggedUserId.toString());
+    if (description !== '') {
+      req.setBriefDescription(`%${description}%`);
+    }
     const { resultsList, totalCount: count } = (
       await TaskClientService.BatchGet(req)
     ).toObject();
@@ -175,7 +179,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     setUsers(users);
     setEntries(resultsList);
     setLoading(false);
-  }, [setEntries, setLoading, setUsers, setCount, page]);
+  }, [setEntries, setLoading, setUsers, setCount, page, searchForm]);
   const handleChangePage = useCallback(
     (page: number) => {
       setPage(page);
