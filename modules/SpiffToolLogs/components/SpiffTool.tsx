@@ -43,6 +43,10 @@ const STATUSES: Option[] = [
   { label: 'Not Approved', value: 2 },
   { label: 'Revoked', value: 3 },
 ];
+const STATUS_TXT: { [key: number]: string } = STATUSES.reduce(
+  (aggr, { label, value }) => ({ ...aggr, [value]: label }),
+  {},
+);
 
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
@@ -527,7 +531,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         return [
           { value: formatDate(decisionDate) },
           { value: reviewedBy },
-          { value: status },
+          { value: STATUS_TXT[status] },
           {
             value: reason,
             actions: [
