@@ -17,7 +17,7 @@ interface Props<T> extends PlainFormProps<T> {
   title: string;
   subtitle?: string;
   onSave: (data: T) => void;
-  onClose: () => void;
+  onClose?: () => void;
   actions?: ButtonProps[];
   pagination?: Pagination;
   submitLabel?: string;
@@ -109,12 +109,18 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   disabled,
                 },
               ]),
-          {
-            label: readOnly ? 'Close' : cancelLabel,
-            onClick: onClose,
-            disabled,
-            variant: readOnly ? 'contained' : 'outlined',
-          },
+          ...(onClose
+            ? [
+                {
+                  label: readOnly ? 'Close' : cancelLabel,
+                  onClick: onClose,
+                  disabled,
+                  variant: readOnly
+                    ? ('contained' as const)
+                    : ('outlined' as const),
+                },
+              ]
+            : []),
         ]}
         fixedActions
         pagination={pagination}

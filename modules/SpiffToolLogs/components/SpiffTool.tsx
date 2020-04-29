@@ -1,6 +1,7 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { User } from '@kalos-core/kalos-rpc/User';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
@@ -22,6 +23,7 @@ import {
   loadUsersByIds,
   trailingZero,
   getWeekOptions,
+  loadSpiffToolAdminActionsByTaskId,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
@@ -30,20 +32,19 @@ const ALL = '-- All --';
 const MONTHLY = 'Monthly';
 const WEEKLY = 'Weekly';
 const WEEK_OPTIONS = getWeekOptions();
-const STATUSES = ['Approved', 'Not Approved', 'Revoked'];
+const STATUSES: Option[] = [
+  { label: 'Approved', value: 1 },
+  { label: 'Not Approved', value: 2 },
+  { label: 'Revoked', value: 3 },
+];
 
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
+type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
 type SearchType = {
   description: string;
   month: string;
   kind: string;
-};
-type StatusType = {
-  decisionDate: string;
-  reviewedBy: string;
-  status: string;
-  comments: string;
 };
 
 export interface Props {
@@ -149,7 +150,7 @@ const COLUMNS: Columns = [
   { name: 'Duplicates' },
 ];
 
-const SCHEMA_STATUS: Schema<StatusType> = [
+const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
   [
     {
       name: 'decisionDate',
@@ -160,7 +161,7 @@ const SCHEMA_STATUS: Schema<StatusType> = [
   ],
   [{ name: 'reviewedBy', label: 'Reviewed By', required: true }],
   [{ name: 'status', label: 'Status', options: STATUSES }],
-  [{ name: 'comments', label: 'Comments', multiline: true }],
+  [{ name: 'reason', label: 'Reason', multiline: true }],
 ];
 
 const useStyles = makeStyles(theme => ({
@@ -194,6 +195,12 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     month: MONTHS_OPTIONS[0].value as string,
     kind: MONTHLY,
   });
+  const getStatusFormInit = () => {
+    const entry = new SpiffToolAdminAction();
+    entry.setDecisionDate(timestamp(true));
+    entry.setStatus(+STATUSES[0].value);
+    return entry.toObject();
+  };
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -207,12 +214,10 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [page, setPage] = useState<number>(0);
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
-  const [statusForm, setStatusForm] = useState<StatusType>({
-    decisionDate: '',
-    reviewedBy: '',
-    status: STATUSES[0],
-    comments: '',
-  });
+  const [statuses, setStatuses] = useState<SpiffToolAdminActionType[]>([]);
+  const [statusForm, setStatusForm] = useState<SpiffToolAdminActionType>(
+    getStatusFormInit(),
+  );
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -374,6 +379,18 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     setSearchFormKey(searchFormKey + 1);
     setLoaded(false);
   }, [setLoaded, setSearchForm, searchFormKey, setSearchFormKey]);
+  const handleSaveStatus = useCallback((data: SpiffToolAdminActionType) => {
+    const req = new SpiffToolAdminAction();
+    const fieldMaskList = [];
+    for (const fieldName in data) {
+      const { upperCaseProp, methodName } = getRPCFields(fieldName);
+      // @ts-ignore
+      req[methodName](data[fieldName]);
+      fieldMaskList.push(upperCaseProp);
+    }
+    req.setFieldMaskList(fieldMaskList);
+    console.log(req);
+  }, []);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -460,6 +477,14 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       },
     ],
   ];
+  const statusesData: Data = statuses.map(
+    ({ decisionDate, reviewedBy, status, reason }) => [
+      { value: decisionDate },
+      { value: reviewedBy },
+      { value: status },
+      { value: reason },
+    ],
+  );
   return (
     <div>
       <SectionBar
@@ -506,16 +531,13 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
               disabled={saving}
             />
             <div>
-              <SectionBar
+              <Form<SpiffToolAdminActionType>
                 title="Status"
-                actions={[{ label: 'Save' }]}
-                fixedActions
-              />
-              <PlainForm<StatusType>
                 schema={SCHEMA_STATUS}
                 data={statusForm}
-                onChange={setStatusForm}
+                onSave={handleSaveStatus}
               />
+              <InfoTable data={statusesData} />
             </div>
           </div>
         </Modal>
