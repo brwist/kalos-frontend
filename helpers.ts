@@ -26,8 +26,12 @@ import {
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
+import {
+  SpiffToolAdminAction,
+  SpiffToolAdminActionClient,
+} from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { ENDPOINT, MONTHS } from './constants';
-import { Options, Option } from './modules/ComponentsLibrary/Field';
+import { Option } from './modules/ComponentsLibrary/Field';
 
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -44,6 +48,9 @@ const TimesheetDepartmentClientService = new TimesheetDepartmentClient(
   ENDPOINT,
 );
 const MetricsClientService = new MetricsClient(ENDPOINT);
+const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
+  ENDPOINT,
+);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -489,6 +496,44 @@ async function loadUsersByDepartmentId(departmentId: number) {
   });
 }
 
+/** Returns loaded SpiffToolAdminActions by task id
+ * @param taskId: number
+ * @returns SpiffToolAdminAction[]
+ */
+async function loadSpiffToolAdminActionsByTaskId(taskId: number) {
+  const results: SpiffToolAdminAction.AsObject[] = [];
+  const req = new SpiffToolAdminAction();
+  req.setPageNumber(0);
+  req.setTaskId(taskId);
+  const { resultsList, totalCount } = (
+    await SpiffToolAdminActionClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (
+          await SpiffToolAdminActionClientService.BatchGet(req)
+        ).toObject().resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results.sort((a, b) => {
+    const A = a.decisionDate;
+    const B = b.decisionDate;
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+  });
+}
+
 /**
  * Returns loaded JobTypeSubtypes
  * @returns JobTypeSubtype[]
@@ -860,4 +905,5 @@ export {
   loadMetricByUserIds,
   roundNumber,
   getWeekOptions,
+  loadSpiffToolAdminActionsByTaskId,
 };
