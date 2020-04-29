@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import clsx from 'clsx';
 import {
   ServicesRendered,
 } from '@kalos-core/kalos-rpc/ServicesRendered';
@@ -20,6 +21,9 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     card: {
       margin: `${theme.spacing(1)}px 0`,
+      '&.servicesRendered': {
+        backgroundColor: theme.palette.primary.light,
+      },
     },
     cardHeader: {
       padding: theme.spacing(1),
@@ -137,7 +141,7 @@ export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({ card }): JSX.E
   const { timeStarted, timeFinished, status } = card;
   return (
     <Card
-      className={classes.card}
+      className={clsx(classes.card, 'servicesRendered')}
       onClick={() => {
         editServicesRenderedCard(card);
       }}

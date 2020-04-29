@@ -85,11 +85,15 @@ const useStyles = makeStyles((theme: Theme) =>
 const srClient = new ServicesRenderedClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
 
+interface EditedEntry extends TimesheetLine.AsObject {
+  action: string
+};
+
 type Props = {
   date: string,
   userId: number,
   timesheetOwnerId: number,
-  editedEntries: TimesheetLine.AsObject[],
+  editedEntries: EditedEntry[],
   hiddenSR: ServicesRendered.AsObject[],
 };
 
