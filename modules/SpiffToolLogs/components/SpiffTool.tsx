@@ -266,19 +266,23 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     },
     [setPage, setLoaded],
   );
+  const loadStatuses = useCallback(
+    async (taskId: number) => {
+      setLoadingStatuses(true);
+      const statuses = await loadSpiffToolAdminActionsByTaskId(taskId);
+      setStatuses(statuses);
+      setLoadingStatuses(false);
+    },
+    [setLoadingStatuses, setStatuses],
+  );
   const handleSetExtendedEditing = useCallback(
     (extendedEditing?: TaskType) => async () => {
       setExtendedEditing(extendedEditing);
       if (extendedEditing) {
-        setLoadingStatuses(true);
-        const statuses = await loadSpiffToolAdminActionsByTaskId(
-          extendedEditing.id,
-        );
-        setStatuses(statuses);
-        setLoadingStatuses(false);
+        loadStatuses(extendedEditing.id);
       }
     },
-    [setExtendedEditing, setStatuses, setLoadingStatuses],
+    [setExtendedEditing, loadStatuses],
   );
   const handleSetEditing = useCallback(
     (editing?: TaskType) => () => setEditing(editing),
@@ -395,11 +399,20 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   }, [setLoaded, setSearchForm, searchFormKey, setSearchFormKey]);
   const handleSaveStatus = useCallback(
     async (data: SpiffToolAdminActionType) => {
-      if (extendedEditing) {
+      if (extendedEditing && statusEditing) {
+        const isNew = !statusEditing.id;
+        const taskId = extendedEditing.id;
         const req = new SpiffToolAdminAction();
-        req.setCreatedDate(timestamp());
-        req.setTaskId(extendedEditing.id);
-        const fieldMaskList = ['CreatedDate', 'TaskId'];
+        const fieldMaskList = [];
+        if (isNew) {
+          req.setCreatedDate(timestamp());
+          req.setTaskId(taskId);
+          fieldMaskList.push('CreatedDate');
+          fieldMaskList.push('TaskId');
+        } else {
+          req.setId(statusEditing.id);
+          fieldMaskList.push('Id');
+        }
         for (const fieldName in data) {
           const { upperCaseProp, methodName } = getRPCFields(fieldName);
           // @ts-ignore
@@ -407,10 +420,15 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           fieldMaskList.push(upperCaseProp);
         }
         req.setFieldMaskList(fieldMaskList);
-        await SpiffToolAdminActionClientService.Create(req);
+        setStatusEditing(undefined);
+        await SpiffToolAdminActionClientService[isNew ? 'Create' : 'Update'](
+          req,
+        );
+        setLoadingStatuses(true);
+        loadStatuses(taskId);
       }
     },
-    [extendedEditing],
+    [extendedEditing, setStatusEditing, statusEditing],
   );
   const handleSetStatusEditing = useCallback(
     (statusEditing?: SpiffToolAdminActionType) => () =>
