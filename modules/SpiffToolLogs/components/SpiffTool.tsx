@@ -84,16 +84,17 @@ const SCHEMA: Schema<TaskType> = [
   [
     { name: 'timeDue', label: 'Claim Date', readOnly: true, type: 'date' },
     {
-      name: 'datePerformed',
-      label: 'Date Performed',
-      type: 'date',
-      required: true,
-    },
-    {
       name: 'spiffAmount',
       label: 'Amount',
       startAdornment: '$',
       type: 'number',
+      required: true,
+    },
+    { name: 'spiffJobNumber', label: 'Job #' },
+    {
+      name: 'datePerformed',
+      label: 'Date Performed',
+      type: 'date',
       required: true,
     },
   ],
@@ -104,10 +105,7 @@ const SCHEMA: Schema<TaskType> = [
       options: SPIFF_TYPES,
       required: true,
     },
-  ],
-  [
-    { name: 'briefDescription', label: 'Description' },
-    { name: 'spiffJobNumber', label: 'Job #' },
+    { name: 'briefDescription', label: 'Description', multiline: true },
   ],
 ];
 
@@ -116,10 +114,9 @@ const SCHEMA_EXTENDED: Schema<TaskType> = [
     { name: 'spiffToolId', label: 'Spiff ID #', readOnly: true },
     { name: 'referenceUrl', label: 'External URL' },
     { name: 'referenceNumber', label: 'Reference #' },
+    { name: 'timeDue', label: 'Time due', readOnly: true, type: 'date' },
   ],
   [
-    { name: 'timeDue', label: 'Time due', readOnly: true, type: 'date' },
-    { name: 'briefDescription', label: 'Description', multiline: true },
     {
       name: 'spiffAmount',
       label: 'Amount',
@@ -127,16 +124,6 @@ const SCHEMA_EXTENDED: Schema<TaskType> = [
       type: 'number',
       required: true,
     },
-  ],
-  [
-    {
-      name: 'spiffTypeId',
-      label: 'Spiff Type',
-      options: SPIFF_TYPES,
-      required: true,
-    },
-  ],
-  [
     { name: 'spiffJobNumber', label: 'Job #' },
     {
       name: 'datePerformed',
@@ -145,6 +132,15 @@ const SCHEMA_EXTENDED: Schema<TaskType> = [
       required: true,
     },
     { name: 'spiffAddress', label: 'Address', multiline: true },
+  ],
+  [
+    {
+      name: 'spiffTypeId',
+      label: 'Spiff Type',
+      options: SPIFF_TYPES,
+      required: true,
+    },
+    { name: 'briefDescription', label: 'Description', multiline: true },
   ],
 ];
 
@@ -225,6 +221,9 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [statuses, setStatuses] = useState<SpiffToolAdminActionType[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
   const [statusEditing, setStatusEditing] = useState<
+    SpiffToolAdminActionType
+  >();
+  const [statusDeleting, setStatusDeleting] = useState<
     SpiffToolAdminActionType
   >();
   const loadLoggedInUser = useCallback(async () => {
@@ -440,6 +439,27 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       setStatusEditing(statusEditing),
     [setStatusEditing],
   );
+  const handleSetStatusDeleting = useCallback(
+    (statusDeleting?: SpiffToolAdminActionType) => () =>
+      setStatusDeleting(statusDeleting),
+    [setStatusDeleting],
+  );
+  const handleDeleteStatus = useCallback(async () => {
+    if (extendedEditing && statusDeleting) {
+      const req = new SpiffToolAdminAction();
+      req.setId(statusDeleting.id);
+      setStatusDeleting(undefined);
+      setLoadingStatuses(true);
+      await SpiffToolAdminActionClientService.Delete(req);
+      loadStatuses(extendedEditing.id);
+    }
+  }, [
+    statusDeleting,
+    setStatusDeleting,
+    setLoadingStatuses,
+    loadStatuses,
+    extendedEditing,
+  ]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -547,7 +567,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
               <IconButton
                 key={1}
                 size="small"
-                // onClick={handleSetDeleting(entry)}
+                onClick={handleSetStatusDeleting(entry)}
               >
                 <DeleteIcon />
               </IconButton>,
@@ -635,6 +655,15 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
             onClose={handleSetStatusEditing()}
           />
         </Modal>
+      )}
+      {statusDeleting && (
+        <ConfirmDelete
+          open
+          kind="Status reviewed by"
+          name={statusDeleting.reviewedBy}
+          onClose={handleSetStatusDeleting()}
+          onConfirm={handleDeleteStatus}
+        />
       )}
     </div>
   );
