@@ -610,7 +610,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         </Modal>
       )}
       {extendedEditing && (
-        <Modal open onClose={handleSetExtendedEditing()}>
+        <Modal open onClose={handleSetExtendedEditing()} fullHeight>
           <Form<TaskType>
             title="Spiff Request"
             schema={SCHEMA_EXTENDED}
