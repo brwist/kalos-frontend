@@ -1,5 +1,4 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
   SpiffToolAdminAction,
@@ -165,23 +164,22 @@ const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
       required: true,
       type: 'date',
     },
+    { name: 'reviewedBy', label: 'Reviewed By', required: true },
   ],
-  [{ name: 'reviewedBy', label: 'Reviewed By', required: true }],
-  [{ name: 'status', label: 'Status', options: STATUSES }],
-  [{ name: 'reason', label: 'Reason', multiline: true }],
+  [
+    { name: 'status', label: 'Status', options: STATUSES },
+    { name: 'reason', label: 'Reason', multiline: true },
+  ],
 ];
 
-const useStyles = makeStyles(theme => ({
-  form: {
-    display: 'flex',
-    [theme.breakpoints.down('xs')]: {
-      flexDirection: 'column',
-    },
-  },
-}));
+const STATUSES_COLUMNS: Columns = [
+  { name: 'Date' },
+  { name: 'Reviewed By' },
+  { name: 'Status' },
+  { name: 'Reason' },
+];
 
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
-  const classes = useStyles();
   const today = new Date();
   const currMonth = today.getMonth() + 1;
   const MONTHS_OPTIONS: Option[] = [
@@ -270,8 +268,16 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     [setPage, setLoaded],
   );
   const handleSetExtendedEditing = useCallback(
-    (extendedEditing?: TaskType) => () => setExtendedEditing(extendedEditing),
-    [setExtendedEditing],
+    (extendedEditing?: TaskType) => async () => {
+      setExtendedEditing(extendedEditing);
+      if (extendedEditing) {
+        const statuses = await loadSpiffToolAdminActionsByTaskId(
+          extendedEditing.id,
+        );
+        setStatuses(statuses);
+      }
+    },
+    [setExtendedEditing, setStatuses],
   );
   const handleSetEditing = useCallback(
     (editing?: TaskType) => () => setEditing(editing),
@@ -493,7 +499,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   ];
   const statusesData: Data = statuses.map(
     ({ decisionDate, reviewedBy, status, reason }) => [
-      { value: decisionDate },
+      { value: formatDate(decisionDate) },
       { value: reviewedBy },
       { value: status },
       { value: reason },
@@ -535,25 +541,21 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       )}
       {extendedEditing && (
         <Modal open onClose={handleSetExtendedEditing()}>
-          <div className={classes.form}>
-            <Form<TaskType>
-              title="Spiff Request"
-              schema={SCHEMA_EXTENDED}
-              onClose={handleSetExtendedEditing()}
-              data={extendedEditing}
-              onSave={handleSaveExtended}
-              disabled={saving}
-            />
-            <div>
-              <Form<SpiffToolAdminActionType>
-                title="Status"
-                schema={SCHEMA_STATUS}
-                data={statusForm}
-                onSave={handleSaveStatus}
-              />
-              <InfoTable data={statusesData} />
-            </div>
-          </div>
+          <Form<TaskType>
+            title="Spiff Request"
+            schema={SCHEMA_EXTENDED}
+            onClose={handleSetExtendedEditing()}
+            data={extendedEditing}
+            onSave={handleSaveExtended}
+            disabled={saving}
+          />
+          <Form<SpiffToolAdminActionType>
+            title="Status"
+            schema={SCHEMA_STATUS}
+            data={statusForm}
+            onSave={handleSaveStatus}
+          />
+          <InfoTable columns={STATUSES_COLUMNS} data={statusesData} />
         </Modal>
       )}
       {deleting && (
