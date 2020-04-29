@@ -220,7 +220,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   const load = useCallback(async () => {
     setLoading(true);
-    const { description, month } = searchForm;
+    const { description, month, kind } = searchForm;
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(1);
@@ -228,8 +228,17 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     if (description !== '') {
       req.setBriefDescription(`%${description}%`);
     }
-    if (month !== ALL) {
-      req.setDatePerformed(month);
+    if (kind === MONTHLY) {
+      if (month !== ALL) {
+        req.setDatePerformed(month);
+      }
+    } else {
+      const [y, m, d] = month.split('-');
+      const n = new Date(+y, +m - 1, +d + 7);
+      const ltDate = `${n.getFullYear()}-${trailingZero(
+        n.getMonth() + 1,
+      )}-${trailingZero(n.getDate())}`;
+      req.setDateRangeList(['>=', month, '<', ltDate]);
     }
     const { resultsList, totalCount: count } = (
       await TaskClientService.BatchGet(req)
