@@ -19,14 +19,20 @@ const useStyles = makeStyles((theme: Theme) =>
       '&:hover .MuiOutlinedInput-notchedOutline': {
         borderColor: 'white',
       },
-      '& .MuiSelect-selectMenu, & .MuiOutlinedInput-input': {
+      '& .MuiSelect-selectMenu, & .MuiInputBase-input': {
         color: 'white',
       },
       '& .MuiSelect-icon': {
         color: 'white',
       },
-      '& .MuiInputLabel-outlined': {
+      '& .MuiFormLabel-root': {
         color: theme.palette.grey.A100,
+      },
+      '& .MuiInput-underline:before, .MuiFilledInput-underline:before': {
+        borderColor: 'rgba(255, 255, 255, .42)',
+      },
+      '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+        borderColor: 'rgba(255, 255, 255, .87)',
       },
     },
   }
