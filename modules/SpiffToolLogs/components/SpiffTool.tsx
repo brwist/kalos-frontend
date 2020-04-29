@@ -164,12 +164,10 @@ const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
       required: true,
       type: 'date',
     },
-    { name: 'reviewedBy', label: 'Reviewed By', required: true },
   ],
-  [
-    { name: 'status', label: 'Status', options: STATUSES },
-    { name: 'reason', label: 'Reason', multiline: true },
-  ],
+  [{ name: 'reviewedBy', label: 'Reviewed By', required: true }],
+  [{ name: 'status', label: 'Status', options: STATUSES }],
+  [{ name: 'reason', label: 'Reason', multiline: true }],
 ];
 
 const STATUSES_COLUMNS: Columns = [
@@ -221,6 +219,9 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
   const [statuses, setStatuses] = useState<SpiffToolAdminActionType[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
+  const [statusEditing, setStatusEditing] = useState<
+    SpiffToolAdminActionType
+  >();
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -411,6 +412,11 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     },
     [extendedEditing],
   );
+  const handleSetStatusEditing = useCallback(
+    (statusEditing?: SpiffToolAdminActionType) => () =>
+      setStatusEditing(statusEditing),
+    [setStatusEditing],
+  );
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -480,7 +486,6 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
       { name: 'description', label: 'Search Spiffs' },
-
       {
         name: 'month',
         label: searchForm.kind === MONTHLY ? 'Month' : 'Week',
@@ -499,12 +504,33 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   ];
   const statusesData: Data = loadingStatuses
     ? makeFakeRows(4, 3)
-    : statuses.map(({ decisionDate, reviewedBy, status, reason }) => [
-        { value: formatDate(decisionDate) },
-        { value: reviewedBy },
-        { value: status },
-        { value: reason },
-      ]);
+    : statuses.map(entry => {
+        const { decisionDate, reviewedBy, status, reason } = entry;
+        return [
+          { value: formatDate(decisionDate) },
+          { value: reviewedBy },
+          { value: status },
+          {
+            value: reason,
+            actions: [
+              <IconButton
+                key={0}
+                size="small"
+                onClick={handleSetStatusEditing(entry)}
+              >
+                <EditIcon />
+              </IconButton>,
+              <IconButton
+                key={1}
+                size="small"
+                // onClick={handleSetDeleting(entry)}
+              >
+                <DeleteIcon />
+              </IconButton>,
+            ],
+          },
+        ];
+      });
   return (
     <div>
       <SectionBar
@@ -549,11 +575,15 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
             onSave={handleSaveExtended}
             disabled={saving}
           />
-          <Form<SpiffToolAdminActionType>
+          <SectionBar
             title="Status"
-            schema={SCHEMA_STATUS}
-            data={getStatusFormInit()}
-            onSave={handleSaveStatus}
+            actions={[
+              {
+                label: 'Add',
+                onClick: handleSetStatusEditing(getStatusFormInit()),
+              },
+            ]}
+            fixedActions
           />
           <InfoTable
             columns={STATUSES_COLUMNS}
@@ -570,6 +600,17 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           onConfirm={handleDelete}
           onClose={handleSetDeleting()}
         />
+      )}
+      {statusEditing && (
+        <Modal open onClose={handleSetStatusEditing()}>
+          <Form<SpiffToolAdminActionType>
+            title={`${statusEditing.id ? 'Edit' : 'Add'} Status`}
+            schema={SCHEMA_STATUS}
+            data={statusEditing}
+            onSave={handleSaveStatus}
+            onClose={handleSetStatusEditing()}
+          />
+        </Modal>
       )}
     </div>
   );
