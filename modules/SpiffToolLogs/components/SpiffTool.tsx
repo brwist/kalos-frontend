@@ -220,9 +220,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
   const [statuses, setStatuses] = useState<SpiffToolAdminActionType[]>([]);
-  const [statusForm, setStatusForm] = useState<SpiffToolAdminActionType>(
-    getStatusFormInit(),
-  );
+  const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -271,13 +269,15 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     (extendedEditing?: TaskType) => async () => {
       setExtendedEditing(extendedEditing);
       if (extendedEditing) {
+        setLoadingStatuses(true);
         const statuses = await loadSpiffToolAdminActionsByTaskId(
           extendedEditing.id,
         );
         setStatuses(statuses);
+        setLoadingStatuses(false);
       }
     },
-    [setExtendedEditing, setStatuses],
+    [setExtendedEditing, setStatuses, setLoadingStatuses],
   );
   const handleSetEditing = useCallback(
     (editing?: TaskType) => () => setEditing(editing),
@@ -497,14 +497,14 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       },
     ],
   ];
-  const statusesData: Data = statuses.map(
-    ({ decisionDate, reviewedBy, status, reason }) => [
-      { value: formatDate(decisionDate) },
-      { value: reviewedBy },
-      { value: status },
-      { value: reason },
-    ],
-  );
+  const statusesData: Data = loadingStatuses
+    ? makeFakeRows(4, 3)
+    : statuses.map(({ decisionDate, reviewedBy, status, reason }) => [
+        { value: formatDate(decisionDate) },
+        { value: reviewedBy },
+        { value: status },
+        { value: reason },
+      ]);
   return (
     <div>
       <SectionBar
@@ -552,10 +552,14 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
           <Form<SpiffToolAdminActionType>
             title="Status"
             schema={SCHEMA_STATUS}
-            data={statusForm}
+            data={getStatusFormInit()}
             onSave={handleSaveStatus}
           />
-          <InfoTable columns={STATUSES_COLUMNS} data={statusesData} />
+          <InfoTable
+            columns={STATUSES_COLUMNS}
+            data={statusesData}
+            loading={loadingStatuses}
+          />
         </Modal>
       )}
       {deleting && (
