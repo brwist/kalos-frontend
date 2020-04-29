@@ -810,7 +810,9 @@ function getWeekOptions(): Option[] {
       d.getDate() - d.getDay() - week * 7,
     );
     return {
-      label: `Week of ${MONTHS[w.getMonth()]} ${w.getDate()}`,
+      label: `Week of ${
+        MONTHS[w.getMonth()]
+      } ${w.getDate()}, ${w.getFullYear()}`,
       value: `${w.getFullYear()}-${trailingZero(
         w.getMonth() + 1,
       )}-${trailingZero(w.getDate())}`,
