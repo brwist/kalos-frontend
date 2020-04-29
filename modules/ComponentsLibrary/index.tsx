@@ -11,6 +11,7 @@ import Chart from './Chart/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
 import ConfirmService from './ConfirmService/examples';
+import CustomControls from './CustomControls/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import Field from './Field/examples';
 import Form from './Form/examples';
@@ -35,6 +36,7 @@ const COMPONENTS = {
   Confirm,
   ConfirmDelete,
   ConfirmService,
+  CustomControls,
   CustomerInformation,
   Field,
   Form,
