@@ -178,14 +178,14 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   const currMonth = today.getMonth() + 1;
   const MONTHS_OPTIONS: Option[] = [
     { label: ALL, value: ALL },
-    ...MONTHS.slice(currMonth).map((label, idx) => ({
-      label,
+    ...MONTHS.slice(currMonth).map((month, idx) => ({
+      label: `${month}, ${today.getFullYear() - 1}`,
       value: `${today.getFullYear() - 1}-${trailingZero(
         currMonth + idx + 1,
       )}-%`,
     })),
-    ...MONTHS.slice(0, currMonth).map((label, idx) => ({
-      label,
+    ...MONTHS.slice(0, currMonth).map((month, idx) => ({
+      label: `${month}, ${today.getFullYear()}`,
       value: `${today.getFullYear()}-${trailingZero(idx + 1)}-%`,
     })),
   ].reverse();
