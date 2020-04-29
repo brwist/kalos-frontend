@@ -1,7 +1,10 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import {
+  SpiffToolAdminAction,
+  SpiffToolAdminActionClient,
+} from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { User } from '@kalos-core/kalos-rpc/User';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
@@ -28,6 +31,10 @@ import {
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
+const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
+  ENDPOINT,
+);
+
 const ALL = '-- All --';
 const MONTHLY = 'Monthly';
 const WEEKLY = 'Weekly';
@@ -379,18 +386,25 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     setSearchFormKey(searchFormKey + 1);
     setLoaded(false);
   }, [setLoaded, setSearchForm, searchFormKey, setSearchFormKey]);
-  const handleSaveStatus = useCallback((data: SpiffToolAdminActionType) => {
-    const req = new SpiffToolAdminAction();
-    const fieldMaskList = [];
-    for (const fieldName in data) {
-      const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      // @ts-ignore
-      req[methodName](data[fieldName]);
-      fieldMaskList.push(upperCaseProp);
-    }
-    req.setFieldMaskList(fieldMaskList);
-    console.log(req);
-  }, []);
+  const handleSaveStatus = useCallback(
+    async (data: SpiffToolAdminActionType) => {
+      if (extendedEditing) {
+        const req = new SpiffToolAdminAction();
+        req.setCreatedDate(timestamp());
+        req.setTaskId(extendedEditing.id);
+        const fieldMaskList = ['CreatedDate', 'TaskId'];
+        for (const fieldName in data) {
+          const { upperCaseProp, methodName } = getRPCFields(fieldName);
+          // @ts-ignore
+          req[methodName](data[fieldName]);
+          fieldMaskList.push(upperCaseProp);
+        }
+        req.setFieldMaskList(fieldMaskList);
+        await SpiffToolAdminActionClientService.Create(req);
+      }
+    },
+    [extendedEditing],
+  );
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
