@@ -179,6 +179,7 @@ const STATUSES_COLUMNS: Columns = [
   { name: 'Reviewed By' },
   { name: 'Status' },
   { name: 'Reason' },
+  { name: '' },
 ];
 
 export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
@@ -525,15 +526,16 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
     ],
   ];
   const statusesData: Data = loadingStatuses
-    ? makeFakeRows(4, 3)
+    ? makeFakeRows(5, 3)
     : statuses.map(entry => {
         const { decisionDate, reviewedBy, status, reason } = entry;
         return [
           { value: formatDate(decisionDate) },
           { value: reviewedBy },
           { value: STATUS_TXT[status] },
+          { value: reason },
           {
-            value: reason,
+            value: '',
             actions: [
               <IconButton
                 key={0}
