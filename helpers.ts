@@ -526,8 +526,8 @@ async function loadSpiffToolAdminActionsByTaskId(taskId: number) {
     );
   }
   return results.sort((a, b) => {
-    const A = a.decisionDate;
-    const B = b.decisionDate;
+    const A = a.id;
+    const B = b.id;
     if (A < B) return 1;
     if (A > B) return -1;
     return 0;
