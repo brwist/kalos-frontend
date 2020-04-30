@@ -145,18 +145,6 @@ const SCHEMA_EXTENDED: Schema<TaskType> = [
   ],
 ];
 
-const COLUMNS: Columns = [
-  { name: 'Claim Date' },
-  { name: 'Spiff ID #' },
-  { name: 'Spiff' },
-  { name: 'Job Date' },
-  { name: 'Technician' },
-  { name: 'Job #' },
-  { name: 'Status' },
-  { name: 'Amount' },
-  { name: 'Duplicates' },
-];
-
 const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
   [
     {
@@ -179,7 +167,7 @@ const STATUSES_COLUMNS: Columns = [
   { name: '' },
 ];
 
-export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
+export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const today = new Date();
   const currMonth = today.getMonth() + 1;
   const MONTHS_OPTIONS: Option[] = [
@@ -468,12 +456,23 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       load();
     }
   }, [loaded, setLoaded]);
+  const COLUMNS: Columns = [
+    { name: 'Claim Date' },
+    { name: `${type === 'Spiff' ? 'Spiff' : 'Tool'} ID #` },
+    { name: type === 'Spiff' ? 'Spiff' : 'Tool' },
+    ...(type === 'Spiff' ? [{ name: 'Job Date' }] : []),
+    { name: 'Technician' },
+    { name: 'Job #' },
+    { name: 'Status' },
+    { name: 'Amount' },
+    { name: 'Duplicates' },
+  ];
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
   newTask.setDatePerformed(timestamp());
   newTask.setSpiffTypeId(+SPIFF_TYPES[0].value);
   const data: Data = loading
-    ? makeFakeRows(9, 3)
+    ? makeFakeRows(type === 'Spiff' ? 9 : 8, 3)
     : entries.map(entry => {
         const {
           spiffToolId,
@@ -486,12 +485,10 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
         } = entry;
         const technician = users[+externalId];
         return [
-          {
-            value: formatDate(timeDue),
-          },
+          { value: formatDate(timeDue) },
           { value: spiffToolId },
           { value: briefDescription },
-          { value: formatDate(datePerformed) },
+          ...(type === 'Spiff' ? [{ value: formatDate(datePerformed) }] : []),
           {
             value: technician
               ? `${technician.firstname} ${technician.lastname}`
@@ -529,7 +526,10 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
       });
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
-      { name: 'description', label: 'Search Spiffs' },
+      {
+        name: 'description',
+        label: `Search ${type === 'Spiff' ? 'Spiffs' : 'Tool Purchases'}`,
+      },
       {
         name: 'month',
         label: searchForm.kind === MONTHLY ? 'Month' : 'Week',
@@ -579,7 +579,7 @@ export const SpiffTool: FC<Props> = ({ loggedUserId }) => {
   return (
     <div>
       <SectionBar
-        title="Spiff Report"
+        title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
         actions={[
           { label: 'Add', onClick: handleSetEditing(newTask.toObject()) },
         ]}
