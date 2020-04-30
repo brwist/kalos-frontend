@@ -252,6 +252,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
           req.setReferenceNumber('');
           req.setToolpurchaseCost(0);
+          req.setStatusId(1);
           fieldMaskList.push(
             'TimeCreated',
             'TimeDue',
@@ -545,6 +546,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           timeDue,
           externalId,
           toolpurchaseCost,
+          statusId,
         } = entry;
         const technician = users[+externalId];
         return [
@@ -558,7 +560,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
               : '',
           },
           { value: spiffJobNumber }, // TODO: Link
-          { value: '' }, // FIXME
+          { value: STATUS_TXT[statusId] },
           { value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost) },
           {
             value: '',
