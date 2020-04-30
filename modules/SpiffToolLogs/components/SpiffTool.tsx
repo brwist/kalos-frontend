@@ -58,6 +58,7 @@ type SearchType = {
 };
 
 export interface Props {
+  type: 'Spiff' | 'Tool';
   loggedUserId: number;
 }
 
