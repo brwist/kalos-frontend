@@ -81,70 +81,6 @@ const SPIFF_TYPES: Option[] = [
   { label: 'ROCK - Quoted Repairs Spiff 20', value: 20 },
 ];
 
-const SCHEMA: Schema<TaskType> = [
-  [
-    { name: 'timeDue', label: 'Claim Date', readOnly: true, type: 'date' },
-    {
-      name: 'spiffAmount',
-      label: 'Amount',
-      startAdornment: '$',
-      type: 'number',
-      required: true,
-    },
-    { name: 'spiffJobNumber', label: 'Job #' },
-    {
-      name: 'datePerformed',
-      label: 'Date Performed',
-      type: 'date',
-      required: true,
-    },
-  ],
-  [
-    {
-      name: 'spiffTypeId',
-      label: 'Spiff Type',
-      options: SPIFF_TYPES,
-      required: true,
-    },
-    { name: 'briefDescription', label: 'Description', multiline: true },
-  ],
-];
-
-const SCHEMA_EXTENDED: Schema<TaskType> = [
-  [
-    { name: 'spiffToolId', label: 'Spiff ID #', readOnly: true },
-    { name: 'referenceUrl', label: 'External URL' },
-    { name: 'referenceNumber', label: 'Reference #' },
-    { name: 'timeDue', label: 'Time due', readOnly: true, type: 'date' },
-  ],
-  [
-    {
-      name: 'spiffAmount',
-      label: 'Amount',
-      startAdornment: '$',
-      type: 'number',
-      required: true,
-    },
-    { name: 'spiffJobNumber', label: 'Job #' },
-    {
-      name: 'datePerformed',
-      label: 'Date Performed',
-      type: 'date',
-      required: true,
-    },
-    { name: 'spiffAddress', label: 'Address', multiline: true },
-  ],
-  [
-    {
-      name: 'spiffTypeId',
-      label: 'Spiff Type',
-      options: SPIFF_TYPES,
-      required: true,
-    },
-    { name: 'briefDescription', label: 'Description', multiline: true },
-  ],
-];
-
 const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
   [
     {
@@ -227,6 +163,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     req.setPageNumber(page);
     req.setIsActive(1);
     req.setExternalId(loggedUserId.toString());
+    req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
     if (description !== '') {
       req.setBriefDescription(`%${description}%`);
     }
@@ -251,7 +188,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     setUsers(users);
     setEntries(resultsList);
     setLoading(false);
-  }, [setEntries, setLoading, setUsers, setCount, page, searchForm]);
+  }, [setEntries, setLoading, setUsers, setCount, page, searchForm, type]);
   const handleChangePage = useCallback(
     (page: number) => {
       setPage(page);
@@ -312,7 +249,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           req.setPriorityId(2);
           req.setExternalCode('user');
           req.setExternalId(loggedUserId.toString());
-          req.setBillableType('Spiff');
+          req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
           req.setReferenceNumber('');
           req.setToolpurchaseCost(0);
           fieldMaskList.push(
@@ -340,7 +277,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         await load();
       }
     },
-    [loggedUserId, editing, setSaving, setEditing],
+    [loggedUserId, editing, setSaving, setEditing, type],
   );
   const handleSaveExtended = useCallback(
     async (data: TaskType) => {
@@ -456,6 +393,130 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       load();
     }
   }, [loaded, setLoaded]);
+  const SCHEMA: Schema<TaskType> =
+    type === 'Spiff'
+      ? [
+          [
+            {
+              name: 'timeDue',
+              label: 'Claim Date',
+              readOnly: true,
+              type: 'date',
+            },
+            {
+              name: 'spiffAmount',
+              label: 'Amount',
+              startAdornment: '$',
+              type: 'number',
+              required: true,
+            },
+            { name: 'spiffJobNumber', label: 'Job #' },
+            {
+              name: 'datePerformed',
+              label: 'Date Performed',
+              type: 'date',
+              required: true,
+            },
+          ],
+          [
+            {
+              name: 'spiffTypeId',
+              label: 'Spiff Type',
+              options: SPIFF_TYPES,
+              required: true,
+            },
+            { name: 'briefDescription', label: 'Description', multiline: true },
+          ],
+        ]
+      : [
+          [
+            {
+              name: 'timeDue',
+              label: 'Claim Date',
+              readOnly: true,
+              type: 'date',
+            },
+            {
+              name: 'toolpurchaseCost',
+              label: 'Tool Cost',
+              startAdornment: '$',
+              type: 'number',
+              required: true,
+            },
+
+            {
+              name: 'toolpurchaseDate',
+              label: 'Purchase Date',
+              type: 'date',
+              required: true,
+            },
+          ],
+          [
+            { name: 'spiffJobNumber', label: 'Job #' },
+            { name: 'briefDescription', label: 'Description', multiline: true },
+          ],
+        ];
+  const SCHEMA_EXTENDED: Schema<TaskType> =
+    type === 'Spiff'
+      ? [
+          [
+            { name: 'spiffToolId', label: 'Spiff ID #', readOnly: true },
+            { name: 'referenceUrl', label: 'External URL' },
+            { name: 'referenceNumber', label: 'Reference #' },
+            {
+              name: 'timeDue',
+              label: 'Time due',
+              readOnly: true,
+              type: 'date',
+            },
+          ],
+          [
+            {
+              name: 'spiffAmount',
+              label: 'Amount',
+              startAdornment: '$',
+              type: 'number',
+              required: true,
+            },
+            { name: 'spiffJobNumber', label: 'Job #' },
+            {
+              name: 'datePerformed',
+              label: 'Date Performed',
+              type: 'date',
+              required: true,
+            },
+            { name: 'spiffAddress', label: 'Address', multiline: true },
+          ],
+          [
+            {
+              name: 'spiffTypeId',
+              label: 'Spiff Type',
+              options: SPIFF_TYPES,
+              required: true,
+            },
+            { name: 'briefDescription', label: 'Description', multiline: true },
+          ],
+        ]
+      : [
+          [
+            { name: 'spiffToolId', label: 'Tool ID #', readOnly: true },
+            { name: 'referenceNumber', label: 'Reference #' },
+            {
+              name: 'toolpurchaseCost',
+              label: 'Tool Cost',
+              startAdornment: '$',
+              type: 'number',
+              required: true,
+            },
+            {
+              name: 'toolpurchaseDate',
+              label: 'Purchase Date',
+              type: 'date',
+              required: true,
+            },
+          ],
+          [{ name: 'briefDescription', label: 'Description', multiline: true }],
+        ];
   const COLUMNS: Columns = [
     { name: 'Claim Date' },
     { name: `${type === 'Spiff' ? 'Spiff' : 'Tool'} ID #` },
@@ -470,6 +531,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
   newTask.setDatePerformed(timestamp());
+  newTask.setToolpurchaseDate(timestamp());
   newTask.setSpiffTypeId(+SPIFF_TYPES[0].value);
   const data: Data = loading
     ? makeFakeRows(type === 'Spiff' ? 9 : 8, 3)
@@ -482,6 +544,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           briefDescription,
           timeDue,
           externalId,
+          toolpurchaseCost,
         } = entry;
         const technician = users[+externalId];
         return [
@@ -496,7 +559,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           },
           { value: spiffJobNumber }, // TODO: Link
           { value: '' }, // FIXME
-          { value: '$' + spiffAmount },
+          { value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost) },
           {
             value: '',
             actions: isAdmin
