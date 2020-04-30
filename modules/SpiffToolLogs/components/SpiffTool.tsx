@@ -335,11 +335,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         const taskId = extendedEditing.id;
         const req = new SpiffToolAdminAction();
         const fieldMaskList = [];
+        let newStatus;
         if (isNew) {
           req.setCreatedDate(timestamp());
           req.setTaskId(taskId);
           fieldMaskList.push('CreatedDate');
           fieldMaskList.push('TaskId');
+          newStatus = data.status;
         } else {
           req.setId(statusEditing.id);
           fieldMaskList.push('Id');
@@ -357,6 +359,14 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         );
         setLoadingStatuses(true);
         loadStatuses(taskId);
+        if (newStatus && extendedEditing.statusId !== newStatus) {
+          const task = new Task();
+          task.setId(extendedEditing.id);
+          task.setStatusId(newStatus);
+          task.setFieldMaskList(['StatusId']);
+          await TaskClientService.Update(task);
+          load();
+        }
       }
     },
     [extendedEditing, setStatusEditing, statusEditing],
