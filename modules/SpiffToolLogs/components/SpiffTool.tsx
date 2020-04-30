@@ -9,6 +9,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
+import FlagIcon from '@material-ui/icons/Flag';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -548,6 +549,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           toolpurchaseCost,
         } = entry;
         const technician = users[+externalId];
+        const isDuplicate = false;
         return [
           { value: formatDate(timeDue) },
           { value: spiffToolId },
@@ -562,7 +564,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           { value: '' }, // TODO
           { value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost) },
           {
-            value: '',
+            value: isDuplicate ? (
+              <IconButton size="small">
+                <FlagIcon />
+              </IconButton>
+            ) : (
+              ''
+            ),
             actions: isAdmin
               ? [
                   <IconButton
