@@ -124,7 +124,7 @@ const STATUSES_COLUMNS: Columns = [
 const useStyles = makeStyles(theme => ({
   unlinked: {
     ...theme.typography.body1,
-    margin: theme.spacing(),
+    margin: theme.spacing(2),
   },
 }));
 
@@ -174,7 +174,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
-  const [events, setEvents] = useState<{ [key: string]: Event }>({});
+  const [events, setEvents] = useState<{ [key: string]: EventType }>({});
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
@@ -468,6 +468,16 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       e.preventDefault();
       const event = events[spiffJobNumber];
       if (event) {
+        const url = [
+          'https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall',
+          `id=${event.id}`,
+          `user_id=${event.customer?.id}`,
+          `property_id=${event.propertyId}`,
+        ].join('&');
+        const win = window.open(url, '_blank');
+        if (win) {
+          win.focus();
+        }
       } else {
         setUnlinkedSpiffJobNumber(spiffJobNumber);
       }
