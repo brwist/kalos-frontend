@@ -25,6 +25,7 @@ import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
 import Tabs from './Tabs/examples';
+import Tooltip from './Tooltip/examples';
 import WeekPicker from './WeekPicker/examples';
 
 const DEFAULT_COMPONENT_IDX = 0;
@@ -50,6 +51,7 @@ const COMPONENTS = {
   ServiceItemReadings,
   ServiceItems,
   Tabs,
+  Tooltip,
   WeekPicker,
 };
 
