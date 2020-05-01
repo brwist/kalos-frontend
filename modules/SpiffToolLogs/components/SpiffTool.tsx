@@ -220,9 +220,10 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     ).toObject();
     const userIds = resultsList.map(({ externalId }) => +externalId);
     if (type === 'Spiff') {
-      const refNumbers = resultsList.map(
-        ({ spiffJobNumber }) => spiffJobNumber,
-      );
+      const existingRefNumbers = Object.keys(events);
+      const refNumbers = resultsList
+        .map(({ spiffJobNumber }) => spiffJobNumber)
+        .filter(el => !existingRefNumbers.includes(el));
       const newEvents = await loadEventsByJobOrContractNumbers(refNumbers);
       setEvents({ ...events, ...newEvents });
     }
