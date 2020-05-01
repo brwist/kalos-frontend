@@ -160,15 +160,18 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
-  }, [loggedUserId, setLoggedInUser]);
+    setSearchFormKey(searchFormKey + 1);
+  }, [loggedUserId, setLoggedInUser, searchFormKey, setSearchFormKey]);
   const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   const load = useCallback(async () => {
     setLoading(true);
-    const { description, month, kind } = searchForm;
+    const { description, month, kind, technician } = searchForm;
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(1);
-    req.setExternalId(loggedUserId.toString());
+    if (technician) {
+      req.setExternalId(technician.toString());
+    }
     req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
     if (description !== '') {
       req.setBriefDescription(`%${description}%`);
@@ -622,15 +625,18 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         name: 'description',
         label: `Search ${type === 'Spiff' ? 'Spiffs' : 'Tool Purchases'}`,
       },
-      ...(1
+      ...(isAdmin
         ? [
             {
               name: 'technician' as const,
               label: 'Technician',
-              options: technicians.map(({ id, firstname, lastname }) => ({
-                label: `${firstname} ${lastname}`,
-                value: id,
-              })),
+              options: [
+                ...technicians.map(({ id, firstname, lastname }) => ({
+                  label: `${firstname} ${lastname}`,
+                  value: id,
+                })),
+                { label: ALL, value: 0 },
+              ],
             },
           ]
         : []),
