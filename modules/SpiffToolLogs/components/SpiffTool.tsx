@@ -65,24 +65,34 @@ export interface Props {
   loggedUserId: number;
 }
 
-const SPIFF_TYPES: Option[] = [
-  { label: 'ACJM - A/C Job Manager 1', value: 1 },
-  { label: 'ACIN - A/C Install 2', value: 2 },
-  { label: 'CNCT - PM Contract / Contract Lead 3', value: 3 },
-  { label: 'CMSN - Commission 4', value: 4 },
-  { label: 'OUTO - Out of Town 5', value: 5 },
-  { label: 'PRMA - PM 6', value: 6 },
-  { label: 'PHJM - P/H Job Manager 7', value: 7 },
-  { label: 'PHIN - P/H Install 8', value: 8 },
-  { label: 'UNCT - Uncategorized 10', value: 10 },
-  { label: 'AIRU - Air Knight or UV Light Sales 14', value: 14 },
-  { label: 'FITY - Infinity Air Purifier Sale 15', value: 15 },
-  { label: 'SWAY - Prop Mngr PM Cnct Lead 16', value: 16 },
-  { label: 'CIND - Contract Creation Spiff 17', value: 17 },
-  { label: 'BENT - System Sales Commission 18', value: 18 },
-  { label: 'ACLD - AC Sale Lead 19', value: 19 },
-  { label: 'ROCK - Quoted Repairs Spiff 20', value: 20 },
+const SPIFF_TYPES = [
+  { ext: 'ACJM', label: 'ACJM - A/C Job Manager', value: 1 },
+  { ext: 'ACIN', label: 'ACIN - A/C Install', value: 2 },
+  { ext: 'CNCT', label: 'CNCT - PM Contract / Contract Lead', value: 3 },
+  { ext: 'CMSN', label: 'CMSN - Commission', value: 4 },
+  { ext: 'OUTO', label: 'OUTO - Out of Town', value: 5 },
+  { ext: 'PRMA', label: 'PRMA - PM', value: 6 },
+  { ext: 'PHJM', label: 'PHJM - P/H Job Manager', value: 7 },
+  { ext: 'PHIN', label: 'PHIN - P/H Install', value: 8 },
+  { ext: 'UNCT', label: 'UNCT - Uncategorized', value: 10 },
+  { ext: 'AIRU', label: 'AIRU - Air Knight or UV Light Sales', value: 14 },
+  { ext: 'FITY', label: 'FITY - Infinity Air Purifier Sale', value: 15 },
+  { ext: 'SWAY', label: 'SWAY - Prop Mngr PM Cnct Lead', value: 16 },
+  { ext: 'CIND', label: 'CIND - Contract Creation Spiff', value: 17 },
+  { ext: 'BENT', label: 'BENT - System Sales Commission', value: 18 },
+  { ext: 'ACLD', label: 'ACLD - AC Sale Lead', value: 19 },
+  { ext: 'ROCK', label: 'ROCK - Quoted Repairs Spiff', value: 20 },
 ];
+
+const SPIFF_TYPES_OPTIONS: Option[] = SPIFF_TYPES.map(({ label, value }) => ({
+  label,
+  value,
+}));
+
+const SPIFF_EXT: { [key: number]: string } = SPIFF_TYPES.reduce(
+  (aggr, { value, ext }) => ({ ...aggr, [value]: ext }),
+  {},
+);
 
 const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
   [
@@ -447,7 +457,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             {
               name: 'spiffTypeId',
               label: 'Spiff Type',
-              options: SPIFF_TYPES,
+              options: SPIFF_TYPES_OPTIONS,
               required: true,
             },
             { name: 'briefDescription', label: 'Description', multiline: true },
@@ -516,7 +526,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             {
               name: 'spiffTypeId',
               label: 'Spiff Type',
-              options: SPIFF_TYPES,
+              options: SPIFF_TYPES_OPTIONS,
               required: true,
             },
             { name: 'briefDescription', label: 'Description', multiline: true },
@@ -557,7 +567,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   newTask.setTimeDue(timestamp());
   newTask.setDatePerformed(timestamp());
   newTask.setToolpurchaseDate(timestamp());
-  newTask.setSpiffTypeId(+SPIFF_TYPES[0].value);
+  newTask.setSpiffTypeId(+SPIFF_TYPES_OPTIONS[0].value);
   const data: Data = loading
     ? makeFakeRows(type === 'Spiff' ? 9 : 8, 3)
     : entries.map(entry => {
@@ -570,13 +580,18 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           timeDue,
           externalId,
           toolpurchaseCost,
+          spiffTypeId,
         } = entry;
         const technician = users[+externalId];
         const isDuplicate = false;
         return [
           { value: formatDate(timeDue) },
           { value: spiffToolId },
-          { value: briefDescription },
+          {
+            value: `${
+              type === 'Spiff' ? `${SPIFF_EXT[spiffTypeId]} ` : ''
+            }${briefDescription}`,
+          },
           ...(type === 'Spiff' ? [{ value: formatDate(datePerformed) }] : []),
           {
             value: technician
