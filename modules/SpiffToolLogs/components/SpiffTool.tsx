@@ -673,7 +673,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       {editing && (
         <Modal open onClose={handleSetEditing()}>
           <Form<TaskType>
-            title="Spiff Request"
+            title={`${type === 'Spiff' ? 'Spiff' : 'Tool Purchase'} Request`}
             schema={SCHEMA}
             onClose={handleSetEditing()}
             data={editing}
@@ -685,7 +685,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       {extendedEditing && (
         <Modal open onClose={handleSetExtendedEditing()} fullHeight>
           <Form<TaskType>
-            title="Spiff Request"
+            title={`${type === 'Spiff' ? 'Spiff' : 'Tool Purchase'} Request`}
             schema={SCHEMA_EXTENDED}
             onClose={handleSetExtendedEditing()}
             data={extendedEditing}
@@ -712,7 +712,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       {deleting && (
         <ConfirmDelete
           open
-          kind="Spiff"
+          kind={type === 'Spiff' ? 'Spiff' : 'Tool Request'}
           name={deleting.briefDescription}
           onConfirm={handleDelete}
           onClose={handleSetDeleting()}
