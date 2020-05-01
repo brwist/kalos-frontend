@@ -112,6 +112,10 @@ export const SCHEMA_2: Schema<Model> = [
           label: 'Random',
           variant: 'outlined',
         },
+        {
+          label: 'Show',
+          variant: 'outlined',
+        },
       ],
     },
     {

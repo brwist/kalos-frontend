@@ -19,8 +19,12 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
 import DateFnsUtils from '@date-io/date-fns';
-import { format, roundToNearestMinutes } from "date-fns";
-import { MuiPickersUtilsProvider, DatePicker, TimePicker } from "@material-ui/pickers";
+import { format, roundToNearestMinutes } from 'date-fns';
+import {
+  MuiPickersUtilsProvider,
+  DatePicker,
+  TimePicker,
+} from '@material-ui/pickers';
 //@ts-ignore
 import SignatureCanvas from 'react-signature-pad-wrapper';
 import { Button } from '../Button';
@@ -467,8 +471,14 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         <DatePicker
           className={classes.field + ' ' + className}
           label={inputLabel}
-          value={new Date(props.value as unknown as string)}
-          onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
+          value={new Date((props.value as unknown) as string)}
+          onChange={value =>
+            handleChange({
+              target: {
+                value: format(value || new Date(), 'yyyy-MM-dd HH:mm'),
+              },
+            })
+          }
           disabled={disabled}
           fullWidth
         />
@@ -482,8 +492,14 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         <TimePicker
           className={classes.field + ' ' + className}
           label={inputLabel}
-          value={new Date(props.value as unknown as string)}
-          onChange={value => handleChange({ target: { value: format(value || new Date(), 'yyyy-MM-dd HH:mm') } })}
+          value={new Date((props.value as unknown) as string)}
+          onChange={value =>
+            handleChange({
+              target: {
+                value: format(value || new Date(), 'yyyy-MM-dd HH:mm'),
+              },
+            })
+          }
           minutesStep={15}
           disabled={disabled}
           fullWidth
@@ -681,7 +697,12 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           {helper && <FormHelperText>{helper}</FormHelperText>}{' '}
         </FormControl>
         {actions.length > 0 && !actionsInLabel && (
-          <Actions className={classes.actions} actions={actions} fixed />
+          <Actions
+            className={classes.actions}
+            actions={actions}
+            fixed
+            responsiveColumn
+          />
         )}
         {actions.length > 0 && actionsInLabel && (
           <Actions
@@ -698,28 +719,32 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     );
   }
   if (type === 'department') {
-    return <DepartmentPicker
-      className={classes.field + ' ' + className}
-      withinForm
-      renderItem={renderSelectOptions}
-      selected={props.value as unknown as number}
-      onSelect={handleChange}
-      disabled={disabled}
-      required={required}
-      fullWidth
-    />
+    return (
+      <DepartmentPicker
+        className={classes.field + ' ' + className}
+        withinForm
+        renderItem={renderSelectOptions}
+        selected={(props.value as unknown) as number}
+        onSelect={handleChange}
+        disabled={disabled}
+        required={required}
+        fullWidth
+      />
+    );
   }
   if (type === 'classCode') {
-    return <ClassCodePicker
-      className={classes.field + ' ' + className}
-      withinForm
-      renderItem={renderSelectOptions}
-      selected={props.value as unknown as number}
-      onSelect={handleChange}
-      disabled={disabled}
-      required={required}
-      fullWidth
-    />
+    return (
+      <ClassCodePicker
+        className={classes.field + ' ' + className}
+        withinForm
+        renderItem={renderSelectOptions}
+        selected={(props.value as unknown) as number}
+        onSelect={handleChange}
+        disabled={disabled}
+        required={required}
+        fullWidth
+      />
+    );
   }
   return (
     <div className={classes.fieldWrapper + ' ' + className}>
@@ -748,7 +773,12 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         helperText={helper}
       />
       {actions.length > 0 && !actionsInLabel && (
-        <Actions className={classes.actions} actions={actions} fixed />
+        <Actions
+          className={classes.actions}
+          actions={actions}
+          fixed
+          responsiveColumn
+        />
       )}
       {actions.length > 0 && actionsInLabel && (
         <Actions
