@@ -894,14 +894,15 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
  * @returns {[key: referenceNumber]: Event}
  */
 async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
+  const refNumbers = uniq(
+    referenceNumbers.map(el => (el || '').trim()).filter(el => el !== ''),
+  );
   return (
     await Promise.all(
-      uniq(referenceNumbers)
-        .map(el => el.trim())
-        .map(async referenceNumber => ({
-          referenceNumber,
-          data: await loadEventByJobOrContractNumber(referenceNumber),
-        })),
+      refNumbers.map(async referenceNumber => ({
+        referenceNumber,
+        data: await loadEventByJobOrContractNumber(referenceNumber),
+      })),
     )
   ).reduce(
     (aggr, { referenceNumber, data }) => ({ ...aggr, [referenceNumber]: data }),
