@@ -1,3 +1,4 @@
+import uniq from 'lodash/uniq';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
@@ -865,6 +866,49 @@ function getWeekOptions(): Option[] {
   });
 }
 
+/**
+ * Returns Event by job number or contract number
+ * @param referenceNumber job number or contract number
+ * @returns Event?
+ */
+async function loadEventByJobOrContractNumber(referenceNumber: string) {
+  const req = new Event();
+  req.setIsActive(1);
+  req.setLogJobNumber(`${referenceNumber}%`);
+  const { resultsList, totalCount } = (
+    await EventClientService.BatchGet(req)
+  ).toObject();
+  if (totalCount > 0) return resultsList[0];
+  req.setLogJobNumber('');
+  req.setContractNumber(referenceNumber);
+  const { resultsList: resultsList2, totalCount: totalCount2 } = (
+    await EventClientService.BatchGet(req)
+  ).toObject();
+  if (totalCount2 > 0) return resultsList2[0];
+  return undefined;
+}
+
+/**
+ * Returns Events by job number or contract numbers
+ * @param referenceNumbers job number or contract number
+ * @returns {[key: referenceNumber]: Event}
+ */
+async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
+  return (
+    await Promise.all(
+      uniq(referenceNumbers)
+        .map(el => el.trim())
+        .map(async referenceNumber => ({
+          referenceNumber,
+          data: await loadEventByJobOrContractNumber(referenceNumber),
+        })),
+    )
+  ).reduce(
+    (aggr, { referenceNumber, data }) => ({ ...aggr, [referenceNumber]: data }),
+    {},
+  );
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -906,4 +950,6 @@ export {
   roundNumber,
   getWeekOptions,
   loadSpiffToolAdminActionsByTaskId,
+  loadEventByJobOrContractNumber,
+  loadEventsByJobOrContractNumbers,
 };
