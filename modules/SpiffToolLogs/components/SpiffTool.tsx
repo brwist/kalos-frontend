@@ -505,7 +505,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             },
           ],
           [
-            { name: 'spiffJobNumber', label: 'Job #' },
+            { name: 'referenceNumber', label: 'Reference #' },
             { name: 'briefDescription', label: 'Description', multiline: true },
           ],
         ];
@@ -576,7 +576,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     { name: type === 'Spiff' ? 'Spiff' : 'Tool' },
     ...(type === 'Spiff' ? [{ name: 'Job Date' }] : []),
     { name: 'Technician' },
-    { name: 'Job #' },
+    { name: type === 'Spiff' ? 'Job #' : 'Reference #' },
     { name: 'Status' },
     { name: 'Amount' },
     { name: 'Duplicates' },
@@ -599,6 +599,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           externalId,
           toolpurchaseCost,
           spiffTypeId,
+          referenceNumber,
         } = entry;
         const technician = users[+externalId];
         const isDuplicate = false;
@@ -622,7 +623,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           {
             value: isAdmin ? technicianValue : technicianText,
           },
-          { value: spiffJobNumber }, // TODO: Link
+          { value: type === 'Spiff' ? spiffJobNumber : referenceNumber }, // TODO: Link
           { value: '' }, // TODO
           { value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost) },
           {
