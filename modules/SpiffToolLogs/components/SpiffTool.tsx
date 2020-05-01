@@ -603,7 +603,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         const technician = users[+externalId];
         const isDuplicate = false;
         const technicianText = technician
-          ? `${technician.firstname} ${technician.lastname}`
+          ? `${technician.firstname} ${technician.lastname.substr(0, 1)}.`
           : '';
         const technicianValue = (
           <Link onClick={handleClickTechnician(technician.id)}>
