@@ -1,4 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
+import { makeStyles } from '@material-ui/core';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
   SpiffToolAdminAction,
@@ -120,7 +121,15 @@ const STATUSES_COLUMNS: Columns = [
   { name: '' },
 ];
 
+const useStyles = makeStyles(theme => ({
+  unlinked: {
+    ...theme.typography.body1,
+    margin: theme.spacing(),
+  },
+}));
+
 export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
+  const classes = useStyles();
   const today = new Date();
   const currMonth = today.getMonth() + 1;
   const MONTHS_OPTIONS: Option[] = [
@@ -166,6 +175,9 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [events, setEvents] = useState<{ [key: string]: Event }>({});
+  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
+    '',
+  );
   const [statusEditing, setStatusEditing] = useState<
     SpiffToolAdminActionType
   >();
@@ -455,9 +467,16 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     ) => {
       e.preventDefault();
       const event = events[spiffJobNumber];
-      console.log(spiffJobNumber, event);
+      if (event) {
+      } else {
+        setUnlinkedSpiffJobNumber(spiffJobNumber);
+      }
     },
-    [events],
+    [events, setUnlinkedSpiffJobNumber],
+  );
+  const handleClearUnlinkedSpiffJobNumber = useCallback(
+    () => setUnlinkedSpiffJobNumber(''),
+    [setUnlinkedSpiffJobNumber],
   );
   useEffect(() => {
     if (!loaded) {
@@ -855,6 +874,21 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           onClose={handleSetStatusDeleting()}
           onConfirm={handleDeleteStatus}
         />
+      )}
+      {unlinkedSpiffJobNumber !== '' && (
+        <Modal open onClose={handleClearUnlinkedSpiffJobNumber}>
+          <SectionBar
+            title="Invalid Job #"
+            actions={[
+              { label: 'Close', onClick: handleClearUnlinkedSpiffJobNumber },
+            ]}
+            fixedActions
+          />
+          <div className={classes.unlinked}>
+            Job # <strong>{unlinkedSpiffJobNumber}</strong> does not appear to
+            be connected to a valid Service Call.
+          </div>
+        </Modal>
       )}
     </div>
   );
