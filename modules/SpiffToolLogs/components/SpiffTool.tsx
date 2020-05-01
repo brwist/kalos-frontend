@@ -14,6 +14,7 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { Option } from '../../ComponentsLibrary/Field';
+import { Link } from '../../ComponentsLibrary/Link';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
@@ -410,6 +411,23 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     loadStatuses,
     extendedEditing,
   ]);
+  const handleClickTechnician = useCallback(
+    (technician: number) => (
+      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    ) => {
+      event.preventDefault();
+      setSearchForm({ ...searchForm, technician });
+      setSearchFormKey(searchFormKey + 1);
+      handleMakeSearch();
+    },
+    [
+      searchForm,
+      setSearchForm,
+      searchFormKey,
+      setSearchFormKey,
+      handleMakeSearch,
+    ],
+  );
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -584,6 +602,14 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         } = entry;
         const technician = users[+externalId];
         const isDuplicate = false;
+        const technicianText = technician
+          ? `${technician.firstname} ${technician.lastname}`
+          : '';
+        const technicianValue = (
+          <Link onClick={handleClickTechnician(technician.id)}>
+            {technicianText}
+          </Link>
+        );
         return [
           { value: formatDate(timeDue) },
           { value: spiffToolId },
@@ -594,9 +620,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           },
           ...(type === 'Spiff' ? [{ value: formatDate(datePerformed) }] : []),
           {
-            value: technician
-              ? `${technician.firstname} ${technician.lastname}`
-              : '',
+            value: isAdmin ? technicianValue : technicianText,
           },
           { value: spiffJobNumber }, // TODO: Link
           { value: '' }, // TODO
