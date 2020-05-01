@@ -5,6 +5,7 @@ import {
   SpiffToolAdminActionClient,
 } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -29,6 +30,7 @@ import {
   getWeekOptions,
   loadSpiffToolAdminActionsByTaskId,
   loadTechnicians,
+  loadEventsByJobOrContractNumbers,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
@@ -53,6 +55,7 @@ const STATUS_TXT: { [key: number]: string } = STATUSES.reduce(
 
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
+type EventType = Event.AsObject;
 type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
 type SearchType = {
   description: string;
@@ -162,6 +165,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
+  const [events, setEvents] = useState<{ [key: string]: Event }>({});
   const [statusEditing, setStatusEditing] = useState<
     SpiffToolAdminActionType
   >();
@@ -203,12 +207,29 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       await TaskClientService.BatchGet(req)
     ).toObject();
     const userIds = resultsList.map(({ externalId }) => +externalId);
+    if (type === 'Spiff') {
+      const refNumbers = resultsList.map(
+        ({ spiffJobNumber }) => spiffJobNumber,
+      );
+      const newEvents = await loadEventsByJobOrContractNumbers(refNumbers);
+      setEvents({ ...events, ...newEvents });
+    }
     const users = await loadUsersByIds(userIds);
     setCount(count);
     setUsers(users);
     setEntries(resultsList);
     setLoading(false);
-  }, [setEntries, setLoading, setUsers, setCount, page, searchForm, type]);
+  }, [
+    setEntries,
+    setLoading,
+    setUsers,
+    setCount,
+    page,
+    searchForm,
+    type,
+    events,
+    setEvents,
+  ]);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
     setTechnicians(technicians);
@@ -428,6 +449,16 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       handleMakeSearch,
     ],
   );
+  const handleClickSpiffJobNumber = useCallback(
+    (spiffJobNumber: string) => (
+      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    ) => {
+      e.preventDefault();
+      const event = events[spiffJobNumber];
+      console.log(spiffJobNumber, event);
+    },
+    [events],
+  );
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -623,7 +654,16 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           {
             value: isAdmin ? technicianValue : technicianText,
           },
-          { value: type === 'Spiff' ? spiffJobNumber : referenceNumber }, // TODO: Link
+          {
+            value:
+              type === 'Spiff' ? (
+                <Link onClick={handleClickSpiffJobNumber(spiffJobNumber)}>
+                  {spiffJobNumber}
+                </Link>
+              ) : (
+                referenceNumber
+              ),
+          }, // TODO: Link
           { value: '' }, // TODO
           { value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost) },
           {
