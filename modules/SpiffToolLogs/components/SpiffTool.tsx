@@ -27,6 +27,7 @@ import {
   trailingZero,
   getWeekOptions,
   loadSpiffToolAdminActionsByTaskId,
+  loadTechnicians,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
@@ -56,6 +57,7 @@ type SearchType = {
   description: string;
   month: string;
   kind: string;
+  technician: number;
 };
 
 export interface Props {
@@ -124,6 +126,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     description: '',
     month: MONTHS_OPTIONS[0].value as string,
     kind: MONTHLY,
+    technician: loggedUserId,
   });
   const getStatusFormInit = () => {
     const entry = new SpiffToolAdminAction();
@@ -146,6 +149,8 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
   const [statuses, setStatuses] = useState<SpiffToolAdminActionType[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
+  const [technicians, setTechnicians] = useState<UserType[]>([]);
+  const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [statusEditing, setStatusEditing] = useState<
     SpiffToolAdminActionType
   >();
@@ -190,6 +195,10 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     setEntries(resultsList);
     setLoading(false);
   }, [setEntries, setLoading, setUsers, setCount, page, searchForm, type]);
+  const loadUserTechnicians = useCallback(async () => {
+    const technicians = await loadTechnicians();
+    setTechnicians(technicians);
+  }, [setLoadedTechnicians, setTechnicians]);
   const handleChangePage = useCallback(
     (page: number) => {
       setPage(page);
@@ -394,7 +403,18 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       loadLoggedInUser();
       load();
     }
-  }, [loaded, setLoaded]);
+    if (isAdmin && !loadedTechnicians) {
+      setLoadedTechnicians(true);
+      loadUserTechnicians();
+    }
+  }, [
+    loaded,
+    setLoaded,
+    isAdmin,
+    loadedTechnicians,
+    setLoadedTechnicians,
+    loadUserTechnicians,
+  ]);
   const SCHEMA: Schema<TaskType> =
     type === 'Spiff'
       ? [
@@ -602,6 +622,18 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         name: 'description',
         label: `Search ${type === 'Spiff' ? 'Spiffs' : 'Tool Purchases'}`,
       },
+      ...(1
+        ? [
+            {
+              name: 'technician' as const,
+              label: 'Technician',
+              options: technicians.map(({ id, firstname, lastname }) => ({
+                label: `${firstname} ${lastname}`,
+                value: id,
+              })),
+            },
+          ]
+        : []),
       {
         name: 'month',
         label: searchForm.kind === MONTHLY ? 'Month' : 'Week',
