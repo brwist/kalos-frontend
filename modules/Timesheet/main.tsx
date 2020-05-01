@@ -56,11 +56,15 @@ type EditTimesheetContext = {
   editServicesRenderedCard: (card: ServicesRendered.AsObject) => void;
 };
 
+interface EditedEntry extends TimesheetLine.AsObject {
+  action: string
+};
+
 type EditingState = {
   entry: TimesheetLine.AsObject,
   modalShown: boolean,
   action: 'create' | 'update' | 'convert' | 'delete' | 'approve' | 'reject' | '',
-  editedEntries: TimesheetLine.AsObject[],
+  editedEntries: EditedEntry[],
   hiddenSR: ServicesRendered.AsObject[],
   convertingSR?: ServicesRendered.AsObject,
 };
@@ -75,6 +79,7 @@ const emptyTimesheet = new TimesheetLine().toObject();
 const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   const classes = useStyles();
   const [user, setUser] = useState<User.AsObject>();
+  const [owner, setOwner] = useState<User.AsObject>();
   const [selectedDate, setSelectedDate] = useState<Date>(weekStart);
   const [editingState, setEditingState] = useState<EditingState>({
     entry: emptyTimesheet,
@@ -169,16 +174,25 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     setSelectedDate(value);
   };
 
-  const fetchUser = async () => {
-    const req = new User();
-    req.setId(userId);
-    const result = await userClient.Get(req);
-    setUser(result);
+  const fetchUsers = async () => {
+    const userReq = new User();
+    userReq.setId(userId);
+    const userResult = await userClient.Get(userReq);
+    if (userId === timesheetOwnerId) {
+      setUser(userResult);
+      setOwner(userResult)
+    } else {
+      const ownerReq = new User();
+      ownerReq.setId(timesheetOwnerId);
+      const ownerResult = await userClient.Get(ownerReq);
+      setUser(userResult);
+      setOwner(ownerResult)
+    }
   };
 
   useEffect(() => {
     userClient.GetToken('test', 'test');
-    fetchUser();
+    fetchUsers();
   }, []);
 
   if (!user) {
@@ -195,7 +209,12 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
             editServicesRenderedCard,
           }}
         >
-          <Toolbar selectedDate={selectedDate} handleDateChange={handleDateChange} />
+          <Toolbar
+            selectedDate={selectedDate}
+            handleDateChange={handleDateChange}
+            userName={`${owner?.firstname} ${owner?.lastname}`}
+            timesheetAdministration={!!user.timesheetAdministration}
+          />
           <Box className={classes.wrapper}>
               {hasAccess ? (
                 <Container className={classes.week} maxWidth={false}>
