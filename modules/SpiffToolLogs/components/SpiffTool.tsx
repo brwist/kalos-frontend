@@ -615,7 +615,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           { value: spiffToolId },
           {
             value: `${
-              type === 'Spiff' ? `${SPIFF_EXT[spiffTypeId]} ` : ''
+              type === 'Spiff' ? `${SPIFF_EXT[spiffTypeId] || ''} ` : ''
             }${briefDescription}`,
           },
           ...(type === 'Spiff' ? [{ value: formatDate(datePerformed) }] : []),
