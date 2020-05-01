@@ -10,23 +10,42 @@ export type ActionsProps = (ButtonProps & {
   desktop?: boolean;
 })[];
 
-interface Props {
+type Style = {
+  responsiveColumn?: boolean;
+};
+
+interface Props extends Style {
   fixed?: boolean;
   actions: ActionsProps;
   className?: string;
 }
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles(theme => ({
   wrapper: {
     flexShrink: 0,
   },
   burger: {
     cursor: 'pointer',
   },
+  actions: ({ responsiveColumn }: Style) => ({
+    display: 'flex',
+    [theme.breakpoints.down('sm')]: responsiveColumn
+      ? {
+          flexDirection: 'column',
+        }
+      : {},
+  }),
+  button: ({ responsiveColumn }: Style) =>
+    responsiveColumn ? { marginTop: 0 } : {},
 }));
 
-export const Actions: FC<Props> = ({ fixed = false, actions, className }) => {
-  const classes = useStyles();
+export const Actions: FC<Props> = ({
+  fixed = false,
+  actions,
+  className,
+  responsiveColumn = false,
+}) => {
+  const classes = useStyles({ responsiveColumn });
   const [anchorEl, setAnchorEl] = useState<(EventTarget & HTMLElement) | null>(
     null,
   );
@@ -101,11 +120,11 @@ export const Actions: FC<Props> = ({ fixed = false, actions, className }) => {
   return (
     <div className={className + ' ' + classes.wrapper}>
       {actions.length > 0 && (
-        <div>
+        <div className={classes.actions}>
           {actions
             .filter(({ desktop }) => desktop === undefined || desktop === true)
             .map(({ desktop, ...props }, idx) => (
-              <Button key={idx} {...props} />
+              <Button key={idx} {...props} className={classes.button} />
             ))}
         </div>
       )}
