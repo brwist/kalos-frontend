@@ -467,23 +467,9 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
     ) => {
       e.preventDefault();
-      const event = events[spiffJobNumber];
-      if (event) {
-        const url = [
-          'https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall',
-          `id=${event.id}`,
-          `user_id=${event.customer?.id}`,
-          `property_id=${event.propertyId}`,
-        ].join('&');
-        const win = window.open(url, '_blank');
-        if (win) {
-          win.focus();
-        }
-      } else {
-        setUnlinkedSpiffJobNumber(spiffJobNumber);
-      }
+      setUnlinkedSpiffJobNumber(spiffJobNumber);
     },
-    [events, setUnlinkedSpiffJobNumber],
+    [setUnlinkedSpiffJobNumber],
   );
   const handleClearUnlinkedSpiffJobNumber = useCallback(
     () => setUnlinkedSpiffJobNumber(''),
@@ -672,6 +658,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             {technicianText}
           </Link>
         );
+        const linkedEvent = events[spiffJobNumber];
         return [
           { value: formatDate(timeDue) },
           { value: spiffToolId },
@@ -687,9 +674,23 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           {
             value:
               type === 'Spiff' ? (
-                <Link onClick={handleClickSpiffJobNumber(spiffJobNumber)}>
-                  {spiffJobNumber}
-                </Link>
+                linkedEvent ? (
+                  <Link
+                    href={[
+                      'https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall',
+                      `id=${linkedEvent.id}`,
+                      `user_id=${linkedEvent.customer?.id}`,
+                      `property_id=${linkedEvent.propertyId}`,
+                    ].join('&')}
+                    blank
+                  >
+                    {spiffJobNumber}
+                  </Link>
+                ) : (
+                  <Link onClick={handleClickSpiffJobNumber(spiffJobNumber)}>
+                    {spiffJobNumber}
+                  </Link>
+                )
               ) : (
                 referenceNumber
               ),
