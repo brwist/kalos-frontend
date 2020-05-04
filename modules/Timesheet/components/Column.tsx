@@ -24,6 +24,7 @@ import { useFetchAll } from '../../ComponentsLibrary/hooks';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { roundNumber } from '../../../helpers';
+import { Payroll } from '../main';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -95,9 +96,10 @@ type Props = {
   timesheetOwnerId: number,
   editedEntries: EditedEntry[],
   hiddenSR: ServicesRendered.AsObject[],
+  onPayrollCalculated: (payroll: Payroll) => void,
 };
 
-const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hiddenSR}) => {
+const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hiddenSR, onPayrollCalculated}) => {
   const classes = useStyles();
   const [dayView, setDayView] = useState(false);
 
@@ -169,6 +171,11 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
       total: acc.total + payrollDiff,
     }
   }, { billable: 0, unbillable: 0, total: 0 });
+
+  if (!servicesRenderedLoading && !timesheetLineLoading) {
+    onPayrollCalculated(payroll);
+  }
+
   const cards = [...filteredSR, ...filteredTL];
   cards.sort((a, b) => new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime());
   return (
@@ -234,4 +241,4 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
   );
 };
 
-export default Column;
+export default React.memo(Column);

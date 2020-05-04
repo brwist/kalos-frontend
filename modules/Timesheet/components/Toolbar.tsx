@@ -4,9 +4,12 @@ import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import MuiToolbar from '@material-ui/core/Toolbar';
 import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
+import Skeleton from '@material-ui/lab/Skeleton';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { WeekPicker } from '../../ComponentsLibrary/WeekPicker';
-import {Button} from '../../ComponentsLibrary/Button';
+import { Button } from '../../ComponentsLibrary/Button';
+import { Payroll } from '../main';
+import { roundNumber } from '../../../helpers';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -67,6 +70,7 @@ type Props = {
   handleDateChange: (value: Date) => void;
   userName: string;
   timesheetAdministration: boolean;
+  payroll: Payroll | null;
 };
 
 const Toolbar: FC<Props> = ({
@@ -74,6 +78,7 @@ const Toolbar: FC<Props> = ({
   handleDateChange,
   userName,
   timesheetAdministration,
+  payroll,
 }): JSX.Element => {
   const classes = useStyles();
   return (
@@ -92,11 +97,21 @@ const Toolbar: FC<Props> = ({
         </Typography>
         <Box className={classes.info}>
           <Box className={classes.payroll}>
-            <Typography variant="subtitle2">Total: <strong>12.25</strong></Typography>
-            <Typography className={classes.details}>
-              <span>Bill: <strong>12.25</strong></span>
-              <span>Unbill: <strong>12.25</strong></span>
-            </Typography>
+            {payroll !== null ? (
+              <>
+                <Typography variant="subtitle2">Total: <strong>{roundNumber(payroll.total || 0)}</strong></Typography>
+                <Typography className={classes.details}>
+                  <span>Bill: <strong>{roundNumber(payroll.billable || 0)}</strong></span>
+                  <span>Unbill: <strong>{roundNumber(payroll.unbillable || 0)}</strong></span>
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Skeleton variant="text" width={75} height={16} />
+                <Skeleton variant="text" width={150} height={16} />
+              </>
+            )}
+
           </Box>
           <Button label={timesheetAdministration ? 'Approve Timesheet' : 'Submit Timesheet'} />
         </Box>

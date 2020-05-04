@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from "react";
+import React, {createContext, useCallback, useEffect, useState} from "react";
 import { format, startOfWeek, eachDayOfInterval, addDays, roundToNearestMinutes } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -20,6 +20,7 @@ import Toolbar from './components/Toolbar';
 import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
+import { loadUserById } from '../../helpers';
 
 const userClient = new UserClient(ENDPOINT);
 
@@ -69,6 +70,12 @@ type EditingState = {
   convertingSR?: ServicesRendered.AsObject,
 };
 
+export type Payroll = {
+  total: number | null,
+  billable: number | null,
+  unbillable: number | null,
+};
+
 export const EditTimesheetContext = createContext<EditTimesheetContext>({
   editTimesheetCard: (card: TimesheetLine.AsObject) => {},
   editServicesRenderedCard: (card: ServicesRendered.AsObject) => {},
@@ -88,6 +95,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     editedEntries: [],
     hiddenSR: [],
   });
+  const [payroll, setPayroll] = useState<Payroll | null>(null);
 
   const handleOnSave = (entry: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
     const editedEntries = [...editingState.editedEntries];
@@ -161,6 +169,32 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     })
   };
 
+  const onPayrollCalculated = useCallback((() => {
+    let counter = 0;
+    let acc = {
+      total: 0,
+      billable: 0,
+      unbillable: 0,
+    };
+    return (chunk: Payroll) => {
+      acc = {
+        total: acc.total + (chunk?.total || 0),
+        billable: acc.billable + (chunk?.billable || 0),
+        unbillable: acc.unbillable + (chunk?.unbillable || 0),
+      };
+      counter += 1;
+      if (counter === 7) {
+        counter = 0;
+        setPayroll({...acc});
+        acc = {
+          total: 0,
+          billable: 0,
+          unbillable: 0,
+        }
+      }
+    };
+  })(), []);
+
   const shownDates = getShownDates(selectedDate);
   const addNewOptions = [
     { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimeshetCardClicked },
@@ -172,19 +206,16 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
 
   const handleDateChange = (value: Date) => {
     setSelectedDate(value);
+    setPayroll(null);
   };
 
   const fetchUsers = async () => {
-    const userReq = new User();
-    userReq.setId(userId);
-    const userResult = await userClient.Get(userReq);
+    const userResult = await loadUserById(userId);
     if (userId === timesheetOwnerId) {
       setUser(userResult);
       setOwner(userResult)
     } else {
-      const ownerReq = new User();
-      ownerReq.setId(timesheetOwnerId);
-      const ownerResult = await userClient.Get(ownerReq);
+      const ownerResult = await loadUserById(timesheetOwnerId);
       setUser(userResult);
       setOwner(ownerResult)
     }
@@ -214,6 +245,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
             handleDateChange={handleDateChange}
             userName={`${owner?.firstname} ${owner?.lastname}`}
             timesheetAdministration={!!user.timesheetAdministration}
+            payroll={payroll}
           />
           <Box className={classes.wrapper}>
               {hasAccess ? (
@@ -226,6 +258,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
                       timesheetOwnerId={timesheetOwnerId}
                       editedEntries={editingState.editedEntries}
                       hiddenSR={editingState.hiddenSR}
+                      onPayrollCalculated={onPayrollCalculated}
                     />
                   ))}
                 </Container>
