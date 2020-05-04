@@ -626,7 +626,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     { name: type === 'Spiff' ? 'Job #' : 'Reference #' },
     { name: 'Status' },
     { name: 'Amount' },
-    { name: 'Duplicates' },
+    ...(type === 'Spiff' ? [{ name: 'Duplicates' }] : []),
   ];
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
@@ -659,6 +659,28 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           </Link>
         );
         const linkedEvent = events[spiffJobNumber];
+        const actions = isAdmin
+          ? [
+              <IconButton
+                key={0}
+                size="small"
+                onClick={handleSetExtendedEditing(entry)}
+              >
+                <EditIcon />
+              </IconButton>,
+              <IconButton
+                key={1}
+                size="small"
+                onClick={handleSetDeleting(entry)}
+              >
+                <DeleteIcon />
+              </IconButton>,
+            ]
+          : [
+              <IconButton key={0} size="small">
+                <SearchIcon />
+              </IconButton>,
+            ];
         return [
           { value: formatDate(timeDue) },
           { value: spiffToolId },
@@ -694,40 +716,26 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
               ) : (
                 referenceNumber
               ),
-          }, // TODO: Link
-          { value: '' }, // TODO
-          { value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost) },
+          },
+          { value: '' }, // TODO status
           {
-            value: isDuplicate ? (
-              <IconButton size="small">
-                <FlagIcon />
-              </IconButton>
-            ) : (
-              ''
-            ),
-            actions: isAdmin
-              ? [
-                  <IconButton
-                    key={0}
-                    size="small"
-                    onClick={handleSetExtendedEditing(entry)}
-                  >
-                    <EditIcon />
-                  </IconButton>,
-                  <IconButton
-                    key={1}
-                    size="small"
-                    onClick={handleSetDeleting(entry)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>,
-                ]
-              : [
-                  <IconButton key={0} size="small">
-                    <SearchIcon />
-                  </IconButton>,
-                ],
-          }, // FIXME
+            value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost),
+            actions: type === 'Spiff' ? [] : actions,
+          },
+          ...(type === 'Spiff'
+            ? [
+                {
+                  value: isDuplicate ? (
+                    <IconButton size="small">
+                      <FlagIcon />
+                    </IconButton>
+                  ) : (
+                    ''
+                  ),
+                  actions,
+                },
+              ]
+            : []),
         ];
       });
   const SCHEMA_SEARCH: Schema<SearchType> = [
