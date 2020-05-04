@@ -1,6 +1,7 @@
 import React, { FC, ReactElement } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import TooltipUI, { TooltipProps } from '@material-ui/core/Tooltip';
+import Fade from '@material-ui/core/Fade';
 
 interface Props extends Pick<TooltipProps, 'placement' | 'children'> {
   content: string | ReactElement;
@@ -30,6 +31,9 @@ export const Tooltip: FC<Props> = ({
       title={content}
       placement={placement}
       classes={{ tooltip: classes.tooltip }}
+      enterTouchDelay={50}
+      leaveTouchDelay={60000}
+      TransitionComponent={Fade}
     >
       {children}
     </TooltipUI>
