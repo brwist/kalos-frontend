@@ -12,6 +12,7 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import FlagIcon from '@material-ui/icons/Flag';
+import CheckIcon from '@material-ui/icons/CheckCircle';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -424,6 +425,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       setStatusEditing(statusEditing),
     [setStatusEditing],
   );
+  const handleClickAddStatus = useCallback(
+    (entry: TaskType) => () => {
+      handleSetExtendedEditing(entry)();
+      setStatusEditing(getStatusFormInit());
+    },
+    [setEditing, setStatusEditing, getStatusFormInit],
+  );
   const handleSetStatusDeleting = useCallback(
     (statusDeleting?: SpiffToolAdminActionType) => () =>
       setStatusDeleting(statusDeleting),
@@ -661,6 +669,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         const linkedEvent = events[spiffJobNumber];
         const actions = isAdmin
           ? [
+              <IconButton // TODO: not display when status is approved
+                key={2}
+                size="small"
+                onClick={handleClickAddStatus(entry)}
+              >
+                <CheckIcon />
+              </IconButton>,
               <IconButton
                 key={0}
                 size="small"
