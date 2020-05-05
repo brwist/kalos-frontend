@@ -6,7 +6,6 @@ import {
   SpiffToolAdminActionClient,
 } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { Event } from '@kalos-core/kalos-rpc/Event';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -32,7 +31,6 @@ import {
   getWeekOptions,
   loadSpiffToolAdminActionsByTaskId,
   loadTechnicians,
-  loadEventsByJobOrContractNumbers,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
@@ -57,7 +55,6 @@ const STATUS_TXT: { [key: number]: string } = STATUSES.reduce(
 
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
-type EventType = Event.AsObject;
 type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
 type SearchType = {
   description: string;
@@ -175,7 +172,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
-  const [events, setEvents] = useState<{ [key: string]: EventType }>({});
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
@@ -220,30 +216,12 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       await TaskClientService.BatchGet(req)
     ).toObject();
     const userIds = resultsList.map(({ externalId }) => +externalId);
-    if (type === 'Spiff') {
-      const existingRefNumbers = Object.keys(events);
-      const refNumbers = resultsList
-        .map(({ spiffJobNumber }) => spiffJobNumber)
-        .filter(el => !existingRefNumbers.includes(el));
-      const newEvents = await loadEventsByJobOrContractNumbers(refNumbers);
-      setEvents({ ...events, ...newEvents });
-    }
     const users = await loadUsersByIds(userIds);
     setCount(count);
     setUsers(users);
     setEntries(resultsList);
     setLoading(false);
-  }, [
-    setEntries,
-    setLoading,
-    setUsers,
-    setCount,
-    page,
-    searchForm,
-    type,
-    events,
-    setEvents,
-  ]);
+  }, [setEntries, setLoading, setUsers, setCount, page, searchForm, type]);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
     setTechnicians(technicians);
@@ -636,6 +614,10 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     { name: 'Amount' },
     ...(type === 'Spiff' ? [{ name: 'Duplicates' }] : []),
   ];
+  const renderStatus = (actionsList: SpiffToolAdminActionType[]) => {
+    if (actionsList.length === 0) return '';
+    return STATUS_TXT[actionsList[0].status];
+  };
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
   newTask.setDatePerformed(timestamp());
@@ -655,6 +637,8 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           toolpurchaseCost,
           spiffTypeId,
           referenceNumber,
+          actionsList,
+          event,
         } = entry;
         const technician = users[+externalId];
         const isDuplicate = false;
@@ -666,7 +650,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             {technicianText}
           </Link>
         );
-        const linkedEvent = events[spiffJobNumber];
         const actions = isAdmin
           ? [
               <IconButton // TODO: not display when status is approved
@@ -711,13 +694,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           {
             value:
               type === 'Spiff' ? (
-                linkedEvent ? (
+                event && event.id ? (
                   <Link
                     href={[
                       'https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall',
-                      `id=${linkedEvent.id}`,
-                      `user_id=${linkedEvent.customer?.id}`,
-                      `property_id=${linkedEvent.propertyId}`,
+                      `id=${event.id}`,
+                      `user_id=${event.customerId}`,
+                      `property_id=${event.propertyId}`,
                     ].join('&')}
                     blank
                   >
@@ -732,7 +715,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                 referenceNumber
               ),
           },
-          { value: '' }, // TODO status
+          { value: renderStatus(actionsList) },
           {
             value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost),
             actions: type === 'Spiff' ? [] : actions,
