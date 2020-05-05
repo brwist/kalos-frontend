@@ -42,12 +42,14 @@ const MONTHLY = 'Monthly';
 const WEEKLY = 'Weekly';
 const WEEK_OPTIONS = getWeekOptions();
 const STATUSES: Option[] = [
-  { label: 'Approved', value: 1 },
-  { label: 'Not Approved', value: 2 },
-  { label: 'Revoked', value: 3 },
+  { label: 'Approved', value: 1, color: 'green' },
+  { label: 'Not Approved', value: 2, color: 'red' },
+  { label: 'Revoked', value: 3, color: 'lightgray' },
 ];
-const STATUS_TXT: { [key: number]: string } = STATUSES.reduce(
-  (aggr, { label, value }) => ({ ...aggr, [value]: label }),
+const STATUS_TXT: {
+  [key: number]: { label: string; color: string };
+} = STATUSES.reduce(
+  (aggr, { label, value, color }) => ({ ...aggr, [value]: { label, color } }),
   {},
 );
 
@@ -121,6 +123,16 @@ const useStyles = makeStyles(theme => ({
   unlinked: {
     ...theme.typography.body1,
     margin: theme.spacing(2),
+  },
+  status: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  statusColor: {
+    width: theme.spacing(2),
+    height: theme.spacing(2),
+    borderRadius: '50%',
+    marginRight: theme.spacing(0.75),
   },
 }));
 
@@ -613,9 +625,18 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     { name: 'Amount' },
     ...(type === 'Spiff' ? [{ name: 'Duplicates' }] : []),
   ];
-  const renderStatus = (actionsList: SpiffToolAdminActionType[]) => {
+  const renderStatus = (status: number) => (
+    <div className={classes.status}>
+      <div
+        className={classes.statusColor}
+        style={{ backgroundColor: STATUS_TXT[status].color }}
+      />
+      {STATUS_TXT[status].label}
+    </div>
+  );
+  const renderActionsList = (actionsList: SpiffToolAdminActionType[]) => {
     if (actionsList.length === 0) return '';
-    return STATUS_TXT[actionsList[0].status];
+    return renderStatus(actionsList[0].status);
   };
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
@@ -709,7 +730,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                 referenceNumber
               ),
           },
-          { value: renderStatus(actionsList) },
+          { value: renderActionsList(actionsList) },
           {
             value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost),
             actions: type === 'Spiff' ? [] : actions,
@@ -775,7 +796,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           return [
             { value: formatDate(decisionDate) },
             { value: reviewedBy },
-            { value: STATUS_TXT[status] },
+            { value: renderStatus(status) },
             { value: reason },
             {
               value: '',
