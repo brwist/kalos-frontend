@@ -13,6 +13,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import FlagIcon from '@material-ui/icons/Flag';
 import CheckIcon from '@material-ui/icons/CheckCircle';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { Option } from '../../ComponentsLibrary/Field';
@@ -636,7 +637,26 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   );
   const renderActionsList = (actionsList: SpiffToolAdminActionType[]) => {
     if (actionsList.length === 0) return '';
-    return renderStatus(actionsList[0].status);
+    const { status, reason, reviewedBy } = actionsList[0];
+    return (
+      <Tooltip
+        content={
+          <>
+            <div>
+              <strong>Status:</strong> {STATUS_TXT[status].label}
+            </div>
+            <div>
+              <strong>Reviewed By:</strong> {reviewedBy}
+            </div>
+            <div>
+              <strong>Reason:</strong> {reason}
+            </div>
+          </>
+        }
+      >
+        {renderStatus(status)}
+      </Tooltip>
+    );
   };
   const newTask = new Task();
   newTask.setTimeDue(timestamp());
