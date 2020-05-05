@@ -28,7 +28,6 @@ import {
   loadUserById,
   trailingZero,
   getWeekOptions,
-  loadSpiffToolAdminActionsByTaskId,
   loadTechnicians,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
@@ -166,7 +165,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [page, setPage] = useState<number>(0);
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
-  const [statuses, setStatuses] = useState<SpiffToolAdminActionType[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
@@ -218,6 +216,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     setCount(count);
     setEntries(resultsList);
     setLoading(false);
+    return resultsList;
   }, [setEntries, setLoading, setCount, page, searchForm, type]);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
@@ -230,23 +229,10 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     },
     [setPage, setLoaded],
   );
-  const loadStatuses = useCallback(
-    async (taskId: number) => {
-      setLoadingStatuses(true);
-      const statuses = await loadSpiffToolAdminActionsByTaskId(taskId);
-      setStatuses(statuses);
-      setLoadingStatuses(false);
-    },
-    [setLoadingStatuses, setStatuses],
-  );
   const handleSetExtendedEditing = useCallback(
-    (extendedEditing?: TaskType) => async () => {
-      setExtendedEditing(extendedEditing);
-      if (extendedEditing) {
-        loadStatuses(extendedEditing.id);
-      }
-    },
-    [setExtendedEditing, loadStatuses],
+    (extendedEditing?: TaskType) => async () =>
+      setExtendedEditing(extendedEditing),
+    [setExtendedEditing],
   );
   const handleSetEditing = useCallback(
     (editing?: TaskType) => () => setEditing(editing),
@@ -364,6 +350,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     setSearchFormKey(searchFormKey + 1);
     setLoaded(false);
   }, [setLoaded, setSearchForm, searchFormKey, setSearchFormKey]);
+  const reloadExtendedEditing = useCallback(async () => {
+    if (extendedEditing) {
+      const entries = await load();
+      setExtendedEditing(entries.find(({ id }) => id === extendedEditing.id));
+      setLoadingStatuses(false);
+    }
+  }, [extendedEditing, load, setExtendedEditing, setLoadingStatuses]);
   const handleSaveStatus = useCallback(
     async (data: SpiffToolAdminActionType) => {
       if (extendedEditing && statusEditing) {
@@ -388,14 +381,21 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         }
         req.setFieldMaskList(fieldMaskList);
         setStatusEditing(undefined);
+        setLoadingStatuses(true);
         await SpiffToolAdminActionClientService[isNew ? 'Create' : 'Update'](
           req,
         );
-        setLoadingStatuses(true);
-        loadStatuses(taskId);
+        reloadExtendedEditing();
       }
     },
-    [extendedEditing, setStatusEditing, statusEditing],
+    [
+      extendedEditing,
+      setStatusEditing,
+      statusEditing,
+      load,
+      setLoadingStatuses,
+      reloadExtendedEditing,
+    ],
   );
   const handleSetStatusEditing = useCallback(
     (statusEditing?: SpiffToolAdminActionType) => () =>
@@ -421,14 +421,14 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       setStatusDeleting(undefined);
       setLoadingStatuses(true);
       await SpiffToolAdminActionClientService.Delete(req);
-      loadStatuses(extendedEditing.id);
+      reloadExtendedEditing();
     }
   }, [
     statusDeleting,
     setStatusDeleting,
     setLoadingStatuses,
-    loadStatuses,
     extendedEditing,
+    reloadExtendedEditing,
   ]);
   const handleClickTechnician = useCallback(
     (technician: number) => (
@@ -767,36 +767,37 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       },
     ],
   ];
-  const statusesData: Data = loadingStatuses
-    ? makeFakeRows(5, 3)
-    : statuses.map(entry => {
-        const { decisionDate, reviewedBy, status, reason } = entry;
-        return [
-          { value: formatDate(decisionDate) },
-          { value: reviewedBy },
-          { value: STATUS_TXT[status] },
-          { value: reason },
-          {
-            value: '',
-            actions: [
-              <IconButton
-                key={0}
-                size="small"
-                onClick={handleSetStatusEditing(entry)}
-              >
-                <EditIcon />
-              </IconButton>,
-              <IconButton
-                key={1}
-                size="small"
-                onClick={handleSetStatusDeleting(entry)}
-              >
-                <DeleteIcon />
-              </IconButton>,
-            ],
-          },
-        ];
-      });
+  const statusesData: Data =
+    !extendedEditing || loadingStatuses
+      ? makeFakeRows(5, 3)
+      : extendedEditing.actionsList.map(entry => {
+          const { decisionDate, reviewedBy, status, reason } = entry;
+          return [
+            { value: formatDate(decisionDate) },
+            { value: reviewedBy },
+            { value: STATUS_TXT[status] },
+            { value: reason },
+            {
+              value: '',
+              actions: [
+                <IconButton
+                  key={0}
+                  size="small"
+                  onClick={handleSetStatusEditing(entry)}
+                >
+                  <EditIcon />
+                </IconButton>,
+                <IconButton
+                  key={1}
+                  size="small"
+                  onClick={handleSetStatusDeleting(entry)}
+                >
+                  <DeleteIcon />
+                </IconButton>,
+              ],
+            },
+          ];
+        });
   return (
     <div>
       <SectionBar
