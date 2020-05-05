@@ -194,7 +194,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
     req.setOrderDir('ASC');
     if (technician) {
-      req.setExternalId(technician.toString());
+      req.setExternalId(technician);
     }
     req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
     if (description !== '') {
@@ -282,7 +282,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           req.setToolpurchaseDate(now);
           req.setPriorityId(2);
           req.setExternalCode('user');
-          req.setExternalId(loggedUserId.toString());
+          req.setExternalId(loggedUserId);
           req.setCreatorUserId(loggedUserId);
           req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
           req.setReferenceNumber('');
