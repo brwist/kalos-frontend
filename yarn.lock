@@ -319,9 +319,9 @@
     browser-headers "^0.4.0"
 
 "@kalos-core/kalos-rpc@^2.0.0":
-  version "2.21.0"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.21.0.tgz#a7206f2a9cc0dc03c7099e483a67638976e0c55d"
-  integrity sha512-FOlyMoX8l9p+CwMpRmBF4wnXXrRhxSfOZU8QXOGpBKm3Yh3/7Myd86Li8NEob1LRRsi2HZ01pAOHOcDimJRHUg==
+  version "2.23.0"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.23.0.tgz#4b2f5c1a923e2379fc1986134e3bd51acba97bef"
+  integrity sha512-uGZfIoz1BAboGGhGiliseuA7apnUd5UCxWpF2aNzEgJ9QyvYNKWtl+3t5KWndHCwh++dg7b03EkUNEz4IRjEzA==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
