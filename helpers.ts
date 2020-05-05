@@ -95,11 +95,15 @@ function timestamp(dateOnly = false) {
   if (minute.length === 1) {
     minute = `0${minute}`;
   }
+  let second = `${dateObj.getSeconds()}`;
+  if (second.length === 1) {
+    second = `0${second}`;
+  }
 
   if (dateOnly) {
     return `${dateObj.getFullYear()}-${month}-${day}`;
   }
-  return `${dateObj.getFullYear()}-${month}-${day} ${hour}:${minute}:00`;
+  return `${dateObj.getFullYear()}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
 async function slackNotify(id: string, text: string) {
