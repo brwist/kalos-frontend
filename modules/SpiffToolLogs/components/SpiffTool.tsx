@@ -191,7 +191,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(1);
-    req.setOrderBy('date_performed');
+    req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
     req.setOrderDir('ASC');
     if (technician) {
       req.setExternalId(technician.toString());
@@ -212,9 +212,9 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       )}-${trailingZero(n.getDate())}`;
       req.setDateRangeList(['>=', month, '<', ltDate]);
     }
-    const { resultsList, totalCount: count } = (
-      await TaskClientService.BatchGet(req)
-    ).toObject();
+    const res = await TaskClientService.BatchGet(req);
+    const resultsList = res.getResultsList().map(el => el.toObject());
+    const count = res.getTotalCount();
     setCount(count);
     setEntries(resultsList);
     setLoading(false);
