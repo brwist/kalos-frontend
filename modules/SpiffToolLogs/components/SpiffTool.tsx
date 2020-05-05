@@ -642,15 +642,9 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       <Tooltip
         content={
           <>
-            <div>
-              <strong>Status:</strong> {STATUS_TXT[status].label}
-            </div>
-            <div>
-              <strong>Reviewed By:</strong> {reviewedBy}
-            </div>
-            <div>
-              <strong>Reason:</strong> {reason}
-            </div>
+            <strong>Status:</strong> {STATUS_TXT[status].label} <br />
+            <strong>Reviewed By:</strong> {reviewedBy} <br />
+            <strong>Reason:</strong> {reason}
           </>
         }
       >
