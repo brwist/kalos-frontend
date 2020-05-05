@@ -26,7 +26,6 @@ import {
   formatDate,
   makeFakeRows,
   loadUserById,
-  loadUsersByIds,
   trailingZero,
   getWeekOptions,
   loadSpiffToolAdminActionsByTaskId,
@@ -163,7 +162,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [deleting, setDeleting] = useState<TaskType>();
   const [loggedInUser, setLoggedInUser] = useState<UserType>();
   const [entries, setEntries] = useState<TaskType[]>([]);
-  const [users, setUsers] = useState<{ [key: number]: UserType }>({});
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
@@ -193,6 +191,8 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(1);
+    req.setOrderBy('date_performed');
+    req.setOrderDir('ASC');
     if (technician) {
       req.setExternalId(technician.toString());
     }
@@ -215,13 +215,10 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     const { resultsList, totalCount: count } = (
       await TaskClientService.BatchGet(req)
     ).toObject();
-    const userIds = resultsList.map(({ externalId }) => +externalId);
-    const users = await loadUsersByIds(userIds);
     setCount(count);
-    setUsers(users);
     setEntries(resultsList);
     setLoading(false);
-  }, [setEntries, setLoading, setUsers, setCount, page, searchForm, type]);
+  }, [setEntries, setLoading, setCount, page, searchForm, type]);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
     setTechnicians(technicians);
@@ -286,6 +283,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           req.setPriorityId(2);
           req.setExternalCode('user');
           req.setExternalId(loggedUserId.toString());
+          req.setCreatorUserId(loggedUserId);
           req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
           req.setReferenceNumber('');
           req.setToolpurchaseCost(0);
@@ -298,6 +296,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             'PriorityId',
             'ExternalCode',
             'ExternalId',
+            'CreatorUserId',
             'BillableType',
             'ReferenceNumber',
           );
@@ -639,16 +638,11 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           referenceNumber,
           actionsList,
           event,
+          ownerName,
         } = entry;
-        const technician = users[+externalId];
         const isDuplicate = false;
-        const technicianText = technician
-          ? `${technician.firstname} ${technician.lastname.substr(0, 1)}.`
-          : '';
         const technicianValue = (
-          <Link onClick={handleClickTechnician(technician.id)}>
-            {technicianText}
-          </Link>
+          <Link onClick={handleClickTechnician(+externalId)}>{ownerName}</Link>
         );
         const actions = isAdmin
           ? [
@@ -689,7 +683,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           },
           ...(type === 'Spiff' ? [{ value: formatDate(datePerformed) }] : []),
           {
-            value: isAdmin ? technicianValue : technicianText,
+            value: isAdmin ? technicianValue : ownerName,
           },
           {
             value:
