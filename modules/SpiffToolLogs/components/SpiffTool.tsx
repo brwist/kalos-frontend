@@ -658,7 +658,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   newTask.setToolpurchaseDate(timestamp());
   newTask.setSpiffTypeId(+SPIFF_TYPES_OPTIONS[0].value);
   const data: Data = loading
-    ? makeFakeRows(type === 'Spiff' ? 9 : 8, 3)
+    ? makeFakeRows(type === 'Spiff' ? 9 : 7, 3)
     : entries.map(entry => {
         const {
           spiffToolId,
