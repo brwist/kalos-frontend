@@ -5,6 +5,7 @@ import {
   SpiffToolAdminAction,
   SpiffToolAdminActionClient,
 } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { SpiffType as SpiffTypeRpc } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import { User } from '@kalos-core/kalos-rpc/User';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
@@ -30,6 +31,7 @@ import {
   trailingZero,
   getWeekOptions,
   loadTechnicians,
+  escapeText,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
@@ -57,6 +59,7 @@ const STATUS_TXT: {
 type TaskType = Task.AsObject;
 type UserType = User.AsObject;
 type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
+type SpiffType = SpiffTypeRpc.AsObject;
 type SearchType = {
   description: string;
   month: string;
@@ -68,35 +71,6 @@ export interface Props {
   type: 'Spiff' | 'Tool';
   loggedUserId: number;
 }
-
-const SPIFF_TYPES = [
-  { ext: 'ACJM', label: 'ACJM - A/C Job Manager', value: 1 },
-  { ext: 'ACIN', label: 'ACIN - A/C Install', value: 2 },
-  { ext: 'CNCT', label: 'CNCT - PM Contract / Contract Lead', value: 3 },
-  { ext: 'CMSN', label: 'CMSN - Commission', value: 4 },
-  { ext: 'OUTO', label: 'OUTO - Out of Town', value: 5 },
-  { ext: 'PRMA', label: 'PRMA - PM', value: 6 },
-  { ext: 'PHJM', label: 'PHJM - P/H Job Manager', value: 7 },
-  { ext: 'PHIN', label: 'PHIN - P/H Install', value: 8 },
-  { ext: 'UNCT', label: 'UNCT - Uncategorized', value: 10 },
-  { ext: 'AIRU', label: 'AIRU - Air Knight or UV Light Sales', value: 14 },
-  { ext: 'FITY', label: 'FITY - Infinity Air Purifier Sale', value: 15 },
-  { ext: 'SWAY', label: 'SWAY - Prop Mngr PM Cnct Lead', value: 16 },
-  { ext: 'CIND', label: 'CIND - Contract Creation Spiff', value: 17 },
-  { ext: 'BENT', label: 'BENT - System Sales Commission', value: 18 },
-  { ext: 'ACLD', label: 'ACLD - AC Sale Lead', value: 19 },
-  { ext: 'ROCK', label: 'ROCK - Quoted Repairs Spiff', value: 20 },
-];
-
-const SPIFF_TYPES_OPTIONS: Option[] = SPIFF_TYPES.map(({ label, value }) => ({
-  label,
-  value,
-}));
-
-const SPIFF_EXT: { [key: number]: string } = SPIFF_TYPES.reduce(
-  (aggr, { value, ext }) => ({ ...aggr, [value]: ext }),
-  {},
-);
 
 const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
   [
@@ -181,6 +155,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
@@ -190,6 +165,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [statusDeleting, setStatusDeleting] = useState<
     SpiffToolAdminActionType
   >();
+  const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
+    ({ type, id: value }) => ({ label: escapeText(type), value }),
+  );
+  const SPIFF_EXT: { [key: number]: string } = spiffTypes.reduce(
+    (aggr, { id, ext }) => ({ ...aggr, [id]: ext }),
+    {},
+  );
   const loadLoggedInUser = useCallback(async () => {
     const loggedInUser = await loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
@@ -198,6 +180,12 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   const load = useCallback(async () => {
     setLoading(true);
+    if (type === 'Spiff' && spiffTypes.length === 0) {
+      const { resultsList: spiffTypes } = (
+        await TaskClientService.GetSpiffTypes()
+      ).toObject();
+      setSpiffTypes(spiffTypes);
+    }
     const { description, month, kind, technician } = searchForm;
     const req = new Task();
     req.setPageNumber(page);
@@ -230,7 +218,16 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     setEntries(resultsList);
     setLoading(false);
     return resultsList;
-  }, [setEntries, setLoading, setCount, page, searchForm, type]);
+  }, [
+    setEntries,
+    setLoading,
+    setCount,
+    page,
+    searchForm,
+    type,
+    setSpiffTypes,
+    spiffTypes,
+  ]);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
     setTechnicians(technicians);
@@ -656,12 +653,14 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     newTask.setTimeDue(timestamp());
     if (type === 'Spiff') {
       newTask.setDatePerformed(timestamp());
-      newTask.setSpiffTypeId(+SPIFF_TYPES_OPTIONS[0].value);
+      if (SPIFF_TYPES_OPTIONS.length > 0) {
+        newTask.setSpiffTypeId(+SPIFF_TYPES_OPTIONS[0].value);
+      }
     } else {
       newTask.setToolpurchaseDate(timestamp());
     }
     return newTask.toObject();
-  }, [type]);
+  }, [type, SPIFF_TYPES_OPTIONS]);
 
   const data: Data = loading
     ? makeFakeRows(type === 'Spiff' ? 9 : 7, 3)
