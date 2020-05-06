@@ -32,6 +32,7 @@ import {
   getWeekOptions,
   loadTechnicians,
   escapeText,
+  formatDay,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
@@ -45,9 +46,9 @@ const MONTHLY = 'Monthly';
 const WEEKLY = 'Weekly';
 const WEEK_OPTIONS = getWeekOptions();
 const STATUSES: Option[] = [
-  { label: 'Approved', value: 1, color: 'green' },
-  { label: 'Not Approved', value: 2, color: 'red' },
-  { label: 'Revoked', value: 3, color: 'lightgray' },
+  { label: 'Approved', value: 1, color: '#080' },
+  { label: 'Not Approved', value: 2, color: '#D00' },
+  { label: 'Revoked', value: 3, color: '#CCC' },
 ];
 const STATUS_TXT: {
   [key: number]: { label: string; color: string };
@@ -108,6 +109,9 @@ const useStyles = makeStyles(theme => ({
     height: theme.spacing(2),
     borderRadius: '50%',
     marginRight: theme.spacing(0.75),
+  },
+  duplicateIcon: {
+    color: '#B00',
   },
 }));
 
@@ -170,6 +174,10 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   );
   const SPIFF_EXT: { [key: number]: string } = spiffTypes.reduce(
     (aggr, { id, ext }) => ({ ...aggr, [id]: ext }),
+    {},
+  );
+  const SPIFF_TYPE: { [key: number]: string } = spiffTypes.reduce(
+    (aggr, { id, type }) => ({ ...aggr, [id]: type }),
     {},
   );
   const loadLoggedInUser = useCallback(async () => {
@@ -679,8 +687,11 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           actionsList,
           event,
           ownerName,
+          duplicatesList,
         } = entry;
-        const isDuplicate = false;
+        const isDuplicate =
+          duplicatesList.filter(({ actionsList }) => actionsList.length > 0)
+            .length > 0;
         const technicianValue = (
           <Link onClick={handleClickTechnician(+externalId)}>{ownerName}</Link>
         );
@@ -758,9 +769,51 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             ? [
                 {
                   value: isDuplicate ? (
-                    <IconButton size="small">
-                      <FlagIcon />
-                    </IconButton>
+                    <Tooltip
+                      content={
+                        <>
+                          {duplicatesList
+                            .filter(({ actionsList }) => actionsList.length > 0)
+                            .map(
+                              (
+                                {
+                                  id,
+                                  ownerName,
+                                  spiffTypeId,
+                                  timeDue,
+                                  actionsList,
+                                },
+                                idx,
+                              ) => (
+                                <div key={id}>
+                                  {idx !== 0 && <hr />}
+                                  <strong>Tech Name: </strong>
+                                  {ownerName}
+                                  <br />
+                                  <strong>Spiff: </strong>
+                                  {SPIFF_TYPE[spiffTypeId]}
+                                  <br />
+                                  <strong>Reviewed By: </strong>
+                                  {actionsList[0].reviewedBy.toUpperCase()}
+                                  <br />
+                                  <strong>Reason: </strong>
+                                  {actionsList[0].reason}
+                                  <br />
+                                  <strong>Date Claimed: </strong>
+                                  {formatDay(timeDue)} {formatDate(timeDue)}
+                                </div>
+                              ),
+                            )}
+                        </>
+                      }
+                    >
+                      <IconButton
+                        size="small"
+                        classes={{ root: classes.duplicateIcon }}
+                      >
+                        <FlagIcon />
+                      </IconButton>
+                    </Tooltip>
                   ) : (
                     ''
                   ),
