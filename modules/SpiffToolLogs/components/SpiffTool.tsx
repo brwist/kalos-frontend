@@ -277,21 +277,16 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         if (isNew) {
           req.setTimeCreated(now);
           req.setTimeDue(now);
-          req.setDatePerformed(now);
-          req.setToolpurchaseDate(now);
           req.setPriorityId(2);
           req.setExternalCode('user');
           req.setExternalId(loggedUserId);
           req.setCreatorUserId(loggedUserId);
           req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
           req.setReferenceNumber('');
-          req.setToolpurchaseCost(0);
           req.setStatusId(1);
           fieldMaskList.push(
             'TimeCreated',
             'TimeDue',
-            'DatePerformed',
-            'ToolpurchaseDate',
             'PriorityId',
             'ExternalCode',
             'ExternalId',
@@ -299,6 +294,10 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             'BillableType',
             'ReferenceNumber',
           );
+          if (type === 'Tool') {
+            req.setToolpurchaseDate(now);
+            fieldMaskList.push('ToolpurchaseDate');
+          }
         }
         for (const fieldName in data) {
           const { upperCaseProp, methodName } = getRPCFields(fieldName);
@@ -536,7 +535,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             },
             {
               name: 'toolpurchaseCost',
-              label: 'Tool Cost',
+              label: 'Tool Purchase Cost',
               startAdornment: '$',
               type: 'number',
               required: true,
@@ -652,11 +651,18 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       </Tooltip>
     );
   };
-  const newTask = new Task();
-  newTask.setTimeDue(timestamp());
-  newTask.setDatePerformed(timestamp());
-  newTask.setToolpurchaseDate(timestamp());
-  newTask.setSpiffTypeId(+SPIFF_TYPES_OPTIONS[0].value);
+  const makeNewTask = useCallback(() => {
+    const newTask = new Task();
+    newTask.setTimeDue(timestamp());
+    if (type === 'Spiff') {
+      newTask.setDatePerformed(timestamp());
+      newTask.setSpiffTypeId(+SPIFF_TYPES_OPTIONS[0].value);
+    } else {
+      newTask.setToolpurchaseDate(timestamp());
+    }
+    return newTask.toObject();
+  }, [type]);
+
   const data: Data = loading
     ? makeFakeRows(type === 'Spiff' ? 9 : 7, 3)
     : entries.map(entry => {
@@ -837,9 +843,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     <div>
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
-        actions={[
-          { label: 'Add', onClick: handleSetEditing(newTask.toObject()) },
-        ]}
+        actions={[{ label: 'Add', onClick: handleSetEditing(makeNewTask()) }]}
         fixedActions
         pagination={{
           count,
