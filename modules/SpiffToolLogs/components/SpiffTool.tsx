@@ -824,6 +824,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                   key={0}
                   size="small"
                   onClick={handleSetStatusEditing(entry)}
+                  disabled={saving}
                 >
                   <EditIcon />
                 </IconButton>,
@@ -831,6 +832,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                   key={1}
                   size="small"
                   onClick={handleSetStatusDeleting(entry)}
+                  disabled={saving}
                 >
                   <DeleteIcon />
                 </IconButton>,
@@ -886,6 +888,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
               {
                 label: 'Add',
                 onClick: handleSetStatusEditing(getStatusFormInit()),
+                disabled: saving,
               },
             ]}
             fixedActions
