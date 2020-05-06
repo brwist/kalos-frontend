@@ -914,6 +914,21 @@ async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
   );
 }
 
+/**
+ * Returns escaped text with special characters, ie. &#x2f; -> /
+ * @param encodedStr string
+ * @returns string
+ */
+
+function escapeText(encodedStr: string) {
+  const parser = new DOMParser();
+  const dom = parser.parseFromString(
+    '<!doctype html><body>' + encodedStr,
+    'text/html',
+  );
+  return dom.body.textContent || '';
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -957,4 +972,5 @@ export {
   loadSpiffToolAdminActionsByTaskId,
   loadEventByJobOrContractNumber,
   loadEventsByJobOrContractNumbers,
+  escapeText,
 };
