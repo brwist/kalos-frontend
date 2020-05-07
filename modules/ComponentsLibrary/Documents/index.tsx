@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   ReactElement,
+  ReactNode,
 } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -14,6 +15,7 @@ import { InfoTable, Data } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { Link } from '../Link';
 import { ConfirmDelete } from '../ConfirmDelete';
+import { Modal } from '../Modal';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { makeFakeRows } from '../../../helpers';
 
@@ -29,6 +31,7 @@ interface Props {
   actions?: (document: DocumentType) => ReactElement[];
   addUrl?: string;
   className?: string;
+  renderAdding?: (onClose: () => void) => ReactNode;
 }
 
 export const Documents: FC<Props> = ({
@@ -39,6 +42,7 @@ export const Documents: FC<Props> = ({
   actions = () => [],
   addUrl,
   className,
+  renderAdding,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -47,6 +51,7 @@ export const Documents: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
   const [deleting, setDeleting] = useState<DocumentType>();
+  const [adding, setAdding] = useState<boolean>(false);
   const load = useCallback(async () => {
     if (!propertyId && !taskId) {
       return;
@@ -137,6 +142,10 @@ export const Documents: FC<Props> = ({
       }
     }
   }, [deleting, setLoading, setError, setDeleting]);
+  const handleToggleAdding = useCallback(
+    (adding: boolean) => () => setAdding(adding),
+    [setAdding],
+  );
   const data: Data = loading
     ? makeFakeRows()
     : entries.map(entry => {
@@ -173,11 +182,13 @@ export const Documents: FC<Props> = ({
       <SectionBar
         title={title}
         actions={
-          addUrl
+          addUrl || renderAdding
             ? [
                 {
                   label: 'Add',
-                  url: addUrl,
+                  ...(addUrl
+                    ? { url: addUrl }
+                    : { onClick: handleToggleAdding(true) }),
                 },
               ]
             : []
@@ -205,6 +216,11 @@ export const Documents: FC<Props> = ({
           kind="Document"
           name={deleting.description}
         />
+      )}
+      {adding && renderAdding && (
+        <Modal open onClose={handleToggleAdding(false)}>
+          {renderAdding(handleToggleAdding(false))}
+        </Modal>
       )}
     </div>
   );
