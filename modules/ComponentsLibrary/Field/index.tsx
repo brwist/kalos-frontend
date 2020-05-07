@@ -61,6 +61,7 @@ export type Type =
   | 'mui-time'
   | 'technician'
   | 'signature'
+  | 'file'
   | 'department'
   | 'classCode'
   | 'hidden';
@@ -83,7 +84,6 @@ type Style = {
 export interface Props<T> extends SchemaProps<T> {
   value?: T[keyof T];
   disabled?: boolean;
-  onChange?: (value: Value) => void;
   validation?: string;
   readOnly?: boolean;
   className?: string;
@@ -124,6 +124,7 @@ const useStyles = makeStyles(theme => ({
     fontWeight: 600,
     flexGrow: 1,
     display: 'flex',
+    width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
     color: disabled ? theme.palette.grey[500] : theme.palette.common.black,
@@ -209,6 +210,13 @@ const useStyles = makeStyles(theme => ({
   canvas: {
     display: 'block',
   },
+  upload: {
+    marginLeft: 0,
+    height: 25,
+  },
+  file: {
+    display: 'none',
+  },
 }));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
@@ -217,6 +225,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   headline,
   options,
   onChange,
+  onFileLoad,
   disabled = false,
   required = false,
   validation = '',
@@ -240,6 +249,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const [techniciansIds, setTechniciansIds] = useState<number[]>(
     (value + '').split(',').map(id => +id),
   );
+  const [filename, setFilename] = useState<string>('');
   const [searchTechnician, setSearchTechnician] = useState<Value>('');
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
@@ -298,6 +308,26 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       }
     },
     [type, dateTimePart, onChange],
+  );
+  const handleFileChange = useCallback(
+    ({ target }) => {
+      const file = target.files[0];
+      if (file) {
+        const filename = file.name;
+        setFilename(filename);
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onload = () => {
+          if (onFileLoad) {
+            onFileLoad(fileReader.result, filename);
+          }
+          if (onChange) {
+            onChange(filename);
+          }
+        };
+      }
+    },
+    [setFilename, onFileLoad, onChange],
   );
   const handleChangeCheckbox = useCallback(
     (_, value) => {
@@ -748,6 +778,14 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }
   return (
     <div className={classes.fieldWrapper + ' ' + className}>
+      {type === 'file' && (
+        <input
+          id={name + '-file'}
+          onChange={handleFileChange}
+          type="file"
+          className={classes.file}
+        />
+      )}
       <TextField
         className={classes.field}
         disabled={disabled}
@@ -755,10 +793,24 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         label={inputLabel}
         fullWidth
         InputProps={{
-          readOnly,
-          startAdornment: startAdornment ? (
-            <InputAdornment position="start">{startAdornment}</InputAdornment>
-          ) : undefined,
+          readOnly: type === 'file' ? true : readOnly,
+          startAdornment:
+            startAdornment || type === 'file' ? (
+              <InputAdornment position="start">
+                {startAdornment}
+                {type === 'file' && (
+                  <label htmlFor={name + '-file'}>
+                    <Button
+                      label="Upload file"
+                      className={classes.upload}
+                      disabled={disabled}
+                      span
+                      compact
+                    />
+                  </label>
+                )}
+              </InputAdornment>
+            ) : undefined,
           endAdornment: endAdornment ? (
             <InputAdornment position="end">{endAdornment}</InputAdornment>
           ) : undefined,
@@ -768,8 +820,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         }}
         error={error}
         {...props}
-        type={type}
-        value={value}
+        type={type === 'file' ? 'text' : type}
+        value={type === 'file' ? filename : value}
         helperText={helper}
       />
       {actions.length > 0 && !actionsInLabel && (
