@@ -130,6 +130,7 @@ export const SCHEMA_2: Schema<Model> = [
       label: 'Cover Image',
       type: 'file',
       onFileLoad: file => console.log(file),
+      required: true,
     },
   ],
   [
