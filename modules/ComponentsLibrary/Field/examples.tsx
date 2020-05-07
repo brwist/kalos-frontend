@@ -59,11 +59,6 @@ const EnhancedField = ({
 
 export default () => (
   <div style={{ margin: 8 }}>
-    <EnhancedField
-      label="File Field"
-      type="file"
-      onFileLoad={(file, filename) => console.log({ file, filename })}
-    />
     <EnhancedField label="Text Field" />
     <EnhancedField
       label="With placeholder"
@@ -97,6 +92,11 @@ export default () => (
       label="Date"
       defaultValue="2020-03-02 00:00:00"
       type="date"
+    />
+    <EnhancedField
+      label="File Field"
+      type="file"
+      onFileLoad={(file, filename) => console.log({ file, filename })}
     />
     <EnhancedField
       label="Material Date"
