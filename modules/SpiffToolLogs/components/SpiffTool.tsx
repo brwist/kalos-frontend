@@ -22,6 +22,7 @@ import { Link } from '../../ComponentsLibrary/Link';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
+import { Documents } from '../../ComponentsLibrary/Documents';
 import {
   getRPCFields,
   timestamp,
@@ -66,6 +67,9 @@ type SearchType = {
   month: string;
   kind: string;
   technician: number;
+};
+type DocumentUplodad = {
+  filename: '';
 };
 
 export interface Props {
@@ -162,6 +166,12 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
+  );
+  const [documentForm, setDocumentFilename] = useState<DocumentUplodad>({
+    filename: '',
+  });
+  const [documentFile, setDocumentFile] = useState<string | ArrayBuffer | null>(
+    null,
   );
   const [statusEditing, setStatusEditing] = useState<
     SpiffToolAdminActionType
@@ -477,6 +487,20 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     () => setUnlinkedSpiffJobNumber(''),
     [setUnlinkedSpiffJobNumber],
   );
+  const handleDocumentUpload = useCallback(
+    onClose => () => {
+      console.log({ documentFile, documentForm });
+      onClose();
+    },
+    [documentForm, documentFile],
+  );
+  const handleFileLoad = useCallback(
+    (file, filename) => {
+      setDocumentFilename(filename);
+      setDocumentFile(file);
+    },
+    [setDocumentFilename, setDocumentFile],
+  );
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -495,6 +519,17 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     setLoadedTechnicians,
     loadUserTechnicians,
   ]);
+  const SCHEMA_DOCUMENT: Schema<DocumentUplodad> = [
+    [
+      {
+        name: 'filename',
+        label: 'File',
+        type: 'file',
+        required: true,
+        onFileLoad: handleFileLoad,
+      },
+    ],
+  ];
   const SCHEMA: Schema<TaskType> =
     type === 'Spiff'
       ? [
@@ -950,6 +985,19 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             columns={STATUSES_COLUMNS}
             data={statusesData}
             loading={loadingStatuses}
+          />
+          <Documents
+            title="Documents"
+            taskId={extendedEditing.id}
+            renderAdding={onClose => (
+              <Form<DocumentUplodad>
+                title="Add Document"
+                onClose={onClose}
+                onSave={handleDocumentUpload(onClose)}
+                data={documentForm}
+                schema={SCHEMA_DOCUMENT}
+              />
+            )}
           />
         </Modal>
       )}
