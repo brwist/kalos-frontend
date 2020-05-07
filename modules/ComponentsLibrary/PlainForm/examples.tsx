@@ -16,6 +16,7 @@ export type Model = {
   hour: string;
   technician: string;
   signature: string;
+  coverImage: string;
 };
 
 export const model: Model = {
@@ -32,6 +33,7 @@ amet`,
   hour: '21:45',
   technician: '0',
   signature: '',
+  coverImage: '',
 };
 
 export const SCHEMA_1: Schema<Model> = [
@@ -122,6 +124,12 @@ export const SCHEMA_2: Schema<Model> = [
       name: 'mailing',
       label: 'Mailing',
       type: 'checkbox',
+    },
+    {
+      name: 'coverImage',
+      label: 'Cover Image',
+      type: 'file',
+      onFileLoad: file => console.log(file),
     },
   ],
   [

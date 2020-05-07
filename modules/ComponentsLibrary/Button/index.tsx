@@ -17,9 +17,10 @@ export interface Props extends Style {
   color?: 'primary' | 'secondary';
   fullWidth?: boolean;
   className?: string;
+  span?: boolean;
 }
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   button: ({ compact, size, status }: Style) => ({
     marginTop: theme.spacing(compact ? 0 : 1),
     marginBottom: theme.spacing(compact ? 0 : 1),
@@ -51,6 +52,7 @@ export const Button = ({
   compact = false,
   size = 'small',
   color = 'primary',
+  span = false,
   status,
   className,
   ...props
@@ -63,6 +65,7 @@ export const Button = ({
       color={color}
       size={size === 'xsmall' ? 'small' : size}
       {...props}
+      component={span ? 'span' : 'button'}
     >
       {label}
     </ButtonUI>

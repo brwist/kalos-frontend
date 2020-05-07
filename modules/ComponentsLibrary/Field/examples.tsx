@@ -34,6 +34,7 @@ const EnhancedField = ({
   | 'endAdornment'
   | 'placeholder'
   | 'actionsInLabel'
+  | 'onFileLoad'
 > & {
   defaultValue?: Value;
 }) => {
@@ -58,6 +59,11 @@ const EnhancedField = ({
 
 export default () => (
   <div style={{ margin: 8 }}>
+    <EnhancedField
+      label="File Field"
+      type="file"
+      onFileLoad={(file, filename) => console.log({ file, filename })}
+    />
     <EnhancedField label="Text Field" />
     <EnhancedField
       label="With placeholder"
@@ -98,7 +104,11 @@ export default () => (
       type="mui-date"
     />
     <EnhancedField label="Time" defaultValue="21:35" type="time" />
-    <EnhancedField label="Material Time" defaultValue="2020-03-02 21:35:00" type="mui-time" />
+    <EnhancedField
+      label="Material Time"
+      defaultValue="2020-03-02 21:35:00"
+      type="mui-time"
+    />
     <EnhancedField label="Signature" type="signature" />
     <EnhancedField
       label="With start adornment"
