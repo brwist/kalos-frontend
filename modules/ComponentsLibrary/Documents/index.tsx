@@ -31,7 +31,10 @@ interface Props {
   actions?: (document: DocumentType) => ReactElement[];
   addUrl?: string;
   className?: string;
-  renderAdding?: (onClose: () => void) => ReactNode;
+  renderAdding?: (
+    onClose: () => void,
+    onReload: () => Promise<void>,
+  ) => ReactNode;
 }
 
 export const Documents: FC<Props> = ({
@@ -219,7 +222,7 @@ export const Documents: FC<Props> = ({
       )}
       {adding && renderAdding && (
         <Modal open onClose={handleToggleAdding(false)}>
-          {renderAdding(handleToggleAdding(false))}
+          {renderAdding(handleToggleAdding(false), load)}
         </Modal>
       )}
     </div>
