@@ -17,7 +17,7 @@ import { Link } from '../Link';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
-import { makeFakeRows } from '../../../helpers';
+import { makeFakeRows, formatDateTime } from '../../../helpers';
 
 const DocumentClientService = new DocumentClient(ENDPOINT);
 
@@ -35,6 +35,7 @@ interface Props {
     onClose: () => void,
     onReload: () => Promise<void>,
   ) => ReactNode;
+  withDateCreated?: boolean;
 }
 
 export const Documents: FC<Props> = ({
@@ -46,6 +47,7 @@ export const Documents: FC<Props> = ({
   addUrl,
   className,
   renderAdding,
+  withDateCreated = false,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -150,10 +152,17 @@ export const Documents: FC<Props> = ({
     [setAdding],
   );
   const data: Data = loading
-    ? makeFakeRows()
+    ? makeFakeRows(withDateCreated ? 2 : 1, 3)
     : entries.map(entry => {
-        const { id, filename, type, description: value } = entry;
+        const { id, filename, type, description: value, dateCreated } = entry;
         return [
+          ...(withDateCreated
+            ? [
+                {
+                  value: formatDateTime(dateCreated),
+                },
+              ]
+            : []),
           {
             value: (
               <Link onClick={handleDownload(filename, type)}>{value}</Link>
