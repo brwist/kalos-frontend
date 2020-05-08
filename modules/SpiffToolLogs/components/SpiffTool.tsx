@@ -1,5 +1,6 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import kebabCase from 'lodash/kebabCase';
+import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
@@ -36,8 +37,6 @@ import {
   loadTechnicians,
   escapeText,
   formatDay,
-  b64toBlob,
-  getMimeType,
   uploadFileToS3Bucket,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
@@ -77,6 +76,7 @@ type SearchType = {
 };
 type DocumentUplodad = {
   filename: '';
+  description: '';
 };
 
 export interface Props {
@@ -123,6 +123,12 @@ const useStyles = makeStyles(theme => ({
   },
   duplicateIcon: {
     color: '#B00',
+  },
+  uploading: {
+    backgroundColor: theme.palette.info.main,
+    color: theme.palette.info.contrastText,
+    padding: theme.spacing(),
+    borderRadius: theme.shape.borderRadius,
   },
 }));
 
@@ -176,6 +182,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   );
   const [documentForm, setDocumentForm] = useState<DocumentUplodad>({
     filename: '',
+    description: '',
   });
   const [documentFile, setDocumentFile] = useState<string>('');
   const [statusEditing, setStatusEditing] = useState<
@@ -184,6 +191,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [statusDeleting, setStatusDeleting] = useState<
     SpiffToolAdminActionType
   >();
+  const [uploading, setUploading] = useState<boolean>(false);
   const [uploadFailed, setUploadFailed] = useState<boolean>(false);
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
@@ -494,9 +502,10 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     [setUnlinkedSpiffJobNumber],
   );
   const handleDocumentUpload = useCallback(
-    onClose => async () => {
+    (onClose, onReload) => async () => {
       if (extendedEditing) {
         setUploadFailed(false);
+        setUploading(true);
         const ext = documentForm.filename.split('.').pop();
         const fileName =
           kebabCase(
@@ -525,8 +534,11 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           req.setType(5);
           await DocumentClientService.Create(req);
           onClose();
+          onReload();
+          setUploading(false);
         } else {
           setUploadFailed(true);
+          setUploading(false);
         }
       }
     },
@@ -536,14 +548,15 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       loggedUserId,
       extendedEditing,
       setUploadFailed,
+      setUploading,
     ],
   );
   const handleFileLoad = useCallback(
     (file, filename) => {
-      setDocumentForm({ filename });
+      setDocumentForm({ ...documentForm, filename });
       setDocumentFile(file);
     },
-    [setDocumentForm, setDocumentFile],
+    [setDocumentForm, setDocumentFile, documentForm],
   );
   useEffect(() => {
     if (!loaded) {
@@ -1033,11 +1046,11 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           <Documents
             title="Documents"
             taskId={extendedEditing.id}
-            renderAdding={onClose => (
+            renderAdding={(onClose, onReload) => (
               <Form<DocumentUplodad>
                 title="Add Document"
                 onClose={onClose}
-                onSave={handleDocumentUpload(onClose)}
+                onSave={handleDocumentUpload(onClose, onReload)}
                 data={documentForm}
                 schema={SCHEMA_DOCUMENT}
                 error={
@@ -1049,7 +1062,14 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                     </div>
                   ) : undefined
                 }
-              />
+                disabled={uploading}
+              >
+                {uploading && (
+                  <Typography className={classes.uploading}>
+                    Please wait, file is uploading...
+                  </Typography>
+                )}
+              </Form>
             )}
           />
         </Modal>
