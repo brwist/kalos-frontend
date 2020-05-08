@@ -34,6 +34,7 @@ export default () => (
         `user_id=2573`,
         `property_id=6552`,
       ].join('&')}
+      withDownloadIcon
     />
     <hr />
     <Documents
