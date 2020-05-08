@@ -41,6 +41,7 @@ export default () => (
       userId={2573}
       propertyId={6552}
       withDateCreated
+      onEdit={document => console.log(document)}
     />
     <hr />
     <Documents

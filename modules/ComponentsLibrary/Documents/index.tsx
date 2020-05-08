@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
 import DownloadIcon from '@material-ui/icons/OpenInNew';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { S3Client, URLObject, FileObject } from '@kalos-core/kalos-rpc/S3File';
@@ -35,6 +36,7 @@ interface Props {
     onClose: () => void,
     onReload: () => Promise<void>,
   ) => ReactNode;
+  onEdit?: (document: DocumentType) => void;
   withDateCreated?: boolean;
 }
 
@@ -48,6 +50,7 @@ export const Documents: FC<Props> = ({
   className,
   renderAdding,
   withDateCreated = false,
+  onEdit,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -151,6 +154,14 @@ export const Documents: FC<Props> = ({
     (adding: boolean) => () => setAdding(adding),
     [setAdding],
   );
+  const handleEditClick = useCallback(
+    (document: DocumentType) => () => {
+      if (onEdit) {
+        onEdit(document);
+      }
+    },
+    [onEdit],
+  );
   const data: Data = loading
     ? makeFakeRows(withDateCreated ? 2 : 1, 3)
     : entries.map(entry => {
@@ -177,6 +188,18 @@ export const Documents: FC<Props> = ({
                 <DownloadIcon />
               </IconButton>,
               ...actions(entry),
+              ...(onEdit
+                ? [
+                    <IconButton
+                      key="edit"
+                      style={{ marginLeft: 4 }}
+                      size="small"
+                      onClick={handleEditClick(entry)}
+                    >
+                      <EditIcon />
+                    </IconButton>,
+                  ]
+                : []),
               <IconButton
                 key="delete"
                 style={{ marginLeft: 4 }}
