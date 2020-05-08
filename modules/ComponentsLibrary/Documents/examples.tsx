@@ -37,6 +37,13 @@ export default () => (
     />
     <hr />
     <Documents
+      title="Property Documents"
+      userId={2573}
+      propertyId={6552}
+      withDateCreated
+    />
+    <hr />
+    <Documents
       title="Task Documents"
       taskId={104464}
       renderAdding={onClose => (
