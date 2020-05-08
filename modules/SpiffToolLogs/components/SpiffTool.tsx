@@ -79,6 +79,23 @@ type DocumentUplodad = {
   description: '';
 };
 
+const SCHEMA_DOCUMENT_EDIT: Schema<DocumentType> = [
+  [
+    {
+      name: 'filename',
+      label: 'File',
+      readOnly: true,
+    },
+  ],
+  [
+    {
+      name: 'description',
+      label: 'Title/Description',
+      helperText: 'Keep as short/descriptive as possible',
+    },
+  ],
+];
+
 export interface Props {
   type: 'Spiff' | 'Tool';
   loggedUserId: number;
@@ -180,10 +197,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
-  const [documentForm, setDocumentForm] = useState<DocumentUplodad>({
-    filename: '',
-    description: '',
-  });
   const [documentFile, setDocumentFile] = useState<string>('');
   const [statusEditing, setStatusEditing] = useState<
     SpiffToolAdminActionType
@@ -193,6 +206,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   >();
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadFailed, setUploadFailed] = useState<boolean>(false);
+  const [documentSaving, setDocumentSaving] = useState<boolean>(false);
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );
@@ -552,6 +566,21 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       setUploadFailed,
       setUploading,
     ],
+  );
+  const handleDocumentUpdate = useCallback(
+    (onClose, onReload, { id }) => async (form: DocumentType) => {
+      setDocumentSaving(true);
+      const { description } = form;
+      const req = new Document();
+      req.setId(id);
+      req.setDescription(description);
+      req.setFieldMaskList(['Description']);
+      await DocumentClientService.Update(req);
+      setDocumentSaving(false);
+      onClose();
+      onReload();
+    },
+    [setDocumentSaving],
   );
   const handleFileLoad = useCallback(file => setDocumentFile(file), [
     setDocumentFile,
@@ -1051,12 +1080,16 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           <Documents
             title="Documents"
             taskId={extendedEditing.id}
+            withDateCreated
             renderAdding={(onClose, onReload) => (
               <Form<DocumentUplodad>
                 title="Add Document"
                 onClose={onClose}
                 onSave={handleDocumentUpload(onClose, onReload)}
-                data={documentForm}
+                data={{
+                  filename: '',
+                  description: '',
+                }}
                 schema={SCHEMA_DOCUMENT}
                 error={
                   uploadFailed ? (
@@ -1075,6 +1108,16 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                   </Typography>
                 )}
               </Form>
+            )}
+            renderEditing={(onClose, onReload, document) => (
+              <Form<DocumentType>
+                title="Edit Document"
+                data={document}
+                schema={SCHEMA_DOCUMENT_EDIT}
+                onClose={onClose}
+                onSave={handleDocumentUpdate(onClose, onReload, document)}
+                disabled={documentSaving}
+              />
             )}
           />
         </Modal>
