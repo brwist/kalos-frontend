@@ -182,7 +182,11 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   );
   return (
     <div className={className + ' ' + classes.form}>
-      {error && <Typography className={classes.error}>{error}</Typography>}
+      {error && (
+        <Typography className={classes.error} component="div">
+          {error}
+        </Typography>
+      )}
       {Object.keys(validations).length > 0 && (
         <Typography className={classes.error}>
           Please correct the following validation errors and try again.
