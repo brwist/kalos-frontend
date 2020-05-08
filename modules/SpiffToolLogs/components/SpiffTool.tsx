@@ -502,18 +502,21 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     [setUnlinkedSpiffJobNumber],
   );
   const handleDocumentUpload = useCallback(
-    (onClose, onReload) => async () => {
+    (onClose, onReload) => async ({
+      filename,
+      description,
+    }: DocumentUplodad) => {
       if (extendedEditing) {
         setUploadFailed(false);
         setUploading(true);
-        const ext = documentForm.filename.split('.').pop();
+        const ext = filename.split('.').pop();
         const fileName =
           kebabCase(
             [
               extendedEditing.id,
               extendedEditing.referenceNumber,
               timestamp(true).split('-').reverse(),
-              documentForm.filename.replace('.' + ext, ''),
+              description.trim() || filename.replace('.' + ext, ''),
             ].join(' '),
           ) +
           '.' +
@@ -530,7 +533,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           req.setDateCreated(timestamp());
           req.setTaskId(extendedEditing.id);
           req.setUserId(loggedUserId);
-          req.setDescription(fileName);
+          req.setDescription(description);
           req.setType(5);
           await DocumentClientService.Create(req);
           onClose();
@@ -543,7 +546,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       }
     },
     [
-      documentForm,
       documentFile,
       loggedUserId,
       extendedEditing,
@@ -551,13 +553,9 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       setUploading,
     ],
   );
-  const handleFileLoad = useCallback(
-    (file, filename) => {
-      setDocumentForm({ ...documentForm, filename });
-      setDocumentFile(file);
-    },
-    [setDocumentForm, setDocumentFile, documentForm],
-  );
+  const handleFileLoad = useCallback(file => setDocumentFile(file), [
+    setDocumentFile,
+  ]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -584,6 +582,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         type: 'file',
         required: true,
         onFileLoad: handleFileLoad,
+      },
+    ],
+    [
+      {
+        name: 'description',
+        label: 'Title/Description',
+        helperText: 'Keep as short/descriptive as possible',
       },
     ],
   ];
