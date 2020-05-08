@@ -1,4 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
+import kebabCase from 'lodash/kebabCase';
 import { makeStyles } from '@material-ui/core';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
@@ -7,6 +8,7 @@ import {
 } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { SpiffType as SpiffTypeRpc } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -34,10 +36,14 @@ import {
   loadTechnicians,
   escapeText,
   formatDay,
+  b64toBlob,
+  getMimeType,
+  uploadFileToS3Bucket,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
+const DocumentClientService = new DocumentClient(ENDPOINT);
 const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
   ENDPOINT,
 );
@@ -62,6 +68,7 @@ type TaskType = Task.AsObject;
 type UserType = User.AsObject;
 type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
 type SpiffType = SpiffTypeRpc.AsObject;
+type DocumentType = Document.AsObject;
 type SearchType = {
   description: string;
   month: string;
@@ -167,18 +174,17 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
-  const [documentForm, setDocumentFilename] = useState<DocumentUplodad>({
+  const [documentForm, setDocumentForm] = useState<DocumentUplodad>({
     filename: '',
   });
-  const [documentFile, setDocumentFile] = useState<string | ArrayBuffer | null>(
-    null,
-  );
+  const [documentFile, setDocumentFile] = useState<string>('');
   const [statusEditing, setStatusEditing] = useState<
     SpiffToolAdminActionType
   >();
   const [statusDeleting, setStatusDeleting] = useState<
     SpiffToolAdminActionType
   >();
+  const [uploadFailed, setUploadFailed] = useState<boolean>(false);
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );
@@ -488,18 +494,56 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     [setUnlinkedSpiffJobNumber],
   );
   const handleDocumentUpload = useCallback(
-    onClose => () => {
-      console.log({ documentFile, documentForm });
-      onClose();
+    onClose => async () => {
+      if (extendedEditing) {
+        setUploadFailed(false);
+        const ext = documentForm.filename.split('.').pop();
+        const fileName =
+          kebabCase(
+            [
+              extendedEditing.id,
+              extendedEditing.referenceNumber,
+              timestamp(true).split('-').reverse(),
+              documentForm.filename.replace('.' + ext, ''),
+            ].join(' '),
+          ) +
+          '.' +
+          ext;
+        const fileData = documentFile.split(';base64,')[1];
+        const status = await uploadFileToS3Bucket(
+          fileName,
+          fileData,
+          'testbuckethelios', // FIXME is it correct bucket name for those docs?
+        );
+        if (status === 'ok') {
+          const req = new Document();
+          req.setFilename(fileName);
+          req.setDateCreated(timestamp());
+          req.setTaskId(extendedEditing.id);
+          req.setUserId(loggedUserId);
+          req.setDescription(fileName);
+          req.setType(5);
+          await DocumentClientService.Create(req);
+          onClose();
+        } else {
+          setUploadFailed(true);
+        }
+      }
     },
-    [documentForm, documentFile],
+    [
+      documentForm,
+      documentFile,
+      loggedUserId,
+      extendedEditing,
+      setUploadFailed,
+    ],
   );
   const handleFileLoad = useCallback(
     (file, filename) => {
-      setDocumentFilename(filename);
+      setDocumentForm({ filename });
       setDocumentFile(file);
     },
-    [setDocumentFilename, setDocumentFile],
+    [setDocumentForm, setDocumentFile],
   );
   useEffect(() => {
     if (!loaded) {
@@ -996,6 +1040,15 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                 onSave={handleDocumentUpload(onClose)}
                 data={documentForm}
                 schema={SCHEMA_DOCUMENT}
+                error={
+                  uploadFailed ? (
+                    <div>
+                      There was an error during file upload.
+                      <br />
+                      Please try again later or contact administrator.
+                    </div>
+                  ) : undefined
+                }
               />
             )}
           />

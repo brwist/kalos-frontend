@@ -1,4 +1,5 @@
 import uniq from 'lodash/uniq';
+import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
@@ -929,6 +930,39 @@ function escapeText(encodedStr: string) {
   return dom.body.textContent || '';
 }
 
+/**
+ * Upload file to S3 bucket
+ * @param fileName string
+ * @param fileData string
+ * @param bucketName string
+ * @returns status string: "ok" | "nok"
+ */
+async function uploadFileToS3Bucket(
+  fileName: string,
+  fileData: string,
+  bucketName: string,
+) {
+  try {
+    const S3 = new S3Client(ENDPOINT);
+    const urlObj = new URLObject();
+    urlObj.setKey(fileName);
+    urlObj.setBucket(bucketName);
+    const type = getMimeType(fileName);
+    urlObj.setContentType(type || '');
+    const urlRes = await S3.GetUploadURL(urlObj);
+    const uploadRes = await fetch(urlRes.url, {
+      body: b64toBlob(fileData, fileName),
+      method: 'PUT',
+    });
+    if (uploadRes.status === 200) {
+      return 'ok';
+    }
+    return 'nok';
+  } catch (e) {
+    return 'nok';
+  }
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -973,4 +1007,5 @@ export {
   loadEventByJobOrContractNumber,
   loadEventsByJobOrContractNumbers,
   escapeText,
+  uploadFileToS3Bucket,
 };
