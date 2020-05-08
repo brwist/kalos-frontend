@@ -41,7 +41,18 @@ export default () => (
       userId={2573}
       propertyId={6552}
       withDateCreated
-      onEdit={document => console.log(document)}
+      renderEditing={(onClose, onReload, document) => (
+        <div style={{ padding: 20 }}>
+          <button onClick={onClose}>CLOSE</button>{' '}
+          <button onClick={onReload}>RELOAD LISTING</button>
+          <hr />
+          <pre>
+            <strong>Edited Document JSON</strong>
+            <br />
+            {JSON.stringify(document, null, 4)}
+          </pre>
+        </div>
+      )}
     />
     <hr />
     <Documents

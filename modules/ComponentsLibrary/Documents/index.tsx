@@ -36,7 +36,11 @@ interface Props {
     onClose: () => void,
     onReload: () => Promise<void>,
   ) => ReactNode;
-  onEdit?: (document: DocumentType) => void;
+  renderEditing?: (
+    onClose: () => void,
+    onReload: () => Promise<void>,
+    document: DocumentType,
+  ) => ReactNode;
   withDateCreated?: boolean;
 }
 
@@ -49,8 +53,8 @@ export const Documents: FC<Props> = ({
   addUrl,
   className,
   renderAdding,
+  renderEditing,
   withDateCreated = false,
-  onEdit,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -60,6 +64,7 @@ export const Documents: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [deleting, setDeleting] = useState<DocumentType>();
   const [adding, setAdding] = useState<boolean>(false);
+  const [editing, setEditing] = useState<DocumentType>();
   const load = useCallback(async () => {
     if (!propertyId && !taskId) {
       return;
@@ -154,13 +159,9 @@ export const Documents: FC<Props> = ({
     (adding: boolean) => () => setAdding(adding),
     [setAdding],
   );
-  const handleEditClick = useCallback(
-    (document: DocumentType) => () => {
-      if (onEdit) {
-        onEdit(document);
-      }
-    },
-    [onEdit],
+  const handleToggleEditing = useCallback(
+    (editing?: DocumentType) => () => setEditing(editing),
+    [setEditing],
   );
   const data: Data = loading
     ? makeFakeRows(withDateCreated ? 2 : 1, 3)
@@ -188,13 +189,13 @@ export const Documents: FC<Props> = ({
                 <DownloadIcon />
               </IconButton>,
               ...actions(entry),
-              ...(onEdit
+              ...(renderEditing
                 ? [
                     <IconButton
                       key="edit"
                       style={{ marginLeft: 4 }}
                       size="small"
-                      onClick={handleEditClick(entry)}
+                      onClick={handleToggleEditing(entry)}
                     >
                       <EditIcon />
                     </IconButton>,
@@ -255,6 +256,11 @@ export const Documents: FC<Props> = ({
       {adding && renderAdding && (
         <Modal open onClose={handleToggleAdding(false)}>
           {renderAdding(handleToggleAdding(false), load)}
+        </Modal>
+      )}
+      {editing && renderEditing && (
+        <Modal open onClose={handleToggleEditing()}>
+          {renderEditing(handleToggleEditing(), load, editing)}
         </Modal>
       )}
     </div>
