@@ -9,7 +9,8 @@ import React, {
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
-import DownloadIcon from '@material-ui/icons/OpenInNew';
+import OpenIcon from '@material-ui/icons/OpenInNew';
+import DownloadIcon from '@material-ui/icons/CloudDownload';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { S3Client, URLObject, FileObject } from '@kalos-core/kalos-rpc/S3File';
 import { InfoTable, Data } from '../InfoTable';
@@ -42,6 +43,7 @@ interface Props {
     document: DocumentType,
   ) => ReactNode;
   withDateCreated?: boolean;
+  withDownloadIcon?: boolean;
 }
 
 export const Documents: FC<Props> = ({
@@ -55,6 +57,7 @@ export const Documents: FC<Props> = ({
   renderAdding,
   renderEditing,
   withDateCreated = false,
+  withDownloadIcon = false,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -101,7 +104,7 @@ export const Documents: FC<Props> = ({
     page,
   ]);
   const handleDownload = useCallback(
-    (filename: string, type: number) => async (
+    (filename: string, type: number, realDownload: boolean = false) => async (
       event: React.MouseEvent<
         HTMLButtonElement | HTMLAnchorElement,
         MouseEvent
@@ -113,7 +116,11 @@ export const Documents: FC<Props> = ({
       url.setKey(filename);
       url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
       const dlURL = await S3.GetDownloadURL(url);
-      window.open(dlURL.url, '_blank');
+      if (realDownload) {
+        window.open(dlURL.url, '_blank'); // TODO: implement real download, instead of opening in new tab
+      } else {
+        window.open(dlURL.url, '_blank');
+      }
     },
     [],
   );
@@ -181,14 +188,26 @@ export const Documents: FC<Props> = ({
             ),
             actions: [
               <IconButton
-                key="download"
+                key="open"
                 style={{ marginLeft: 4 }}
                 size="small"
                 onClick={handleDownload(filename, type)}
               >
-                <DownloadIcon />
+                <OpenIcon />
               </IconButton>,
               ...actions(entry),
+              ...(withDownloadIcon
+                ? [
+                    <IconButton
+                      key="download"
+                      style={{ marginLeft: 4 }}
+                      size="small"
+                      onClick={handleDownload(filename, type, true)}
+                    >
+                      <DownloadIcon />
+                    </IconButton>,
+                  ]
+                : []),
               ...(renderEditing
                 ? [
                     <IconButton
