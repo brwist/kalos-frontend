@@ -970,7 +970,7 @@ async function loadEventsByFilter({
   req.setIsActive(1);
   req.setPageNumber(page);
   const p = new Property();
-  // p.setIsActive(1);
+  p.setIsActive(1);
   if (searchPhrase !== '') {
     if (searchBy === 'Job Number') {
       req.setLogJobNumber(`%${searchPhrase}%`);

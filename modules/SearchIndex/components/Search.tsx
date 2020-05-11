@@ -244,42 +244,40 @@ export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
     if (kind === 'serviceCalls')
       return loading
         ? makeFakeRows(7, 3)
-        : events
-            .filter(({ propertyId }) => propertyId !== 0)
-            .map(entry => {
-              const {
-                dateStarted,
-                customer,
-                property,
-                logJobNumber,
-                jobType,
-                jobSubtype,
-                logJobStatus,
-              } = entry;
-              return customer
-                ? [
-                    { value: formatDate(dateStarted), onClick: onEventClick },
-                    {
-                      value: getCustomerName(customer),
-                      onClick: onEventClick(entry),
-                    },
-                    {
-                      value: getBusinessName(customer),
-                      onClick: onEventClick(entry),
-                    },
-                    {
-                      value: getPropertyAddress(property),
-                      onClick: onEventClick(entry),
-                    },
-                    { value: logJobNumber, onClick: onEventClick(entry) },
-                    {
-                      value: `${jobType} / ${jobSubtype}`,
-                      onClick: onEventClick(entry),
-                    },
-                    { value: logJobStatus, onClick: onEventClick(entry) },
-                  ]
-                : [];
-            });
+        : events.map(entry => {
+            const {
+              dateStarted,
+              customer,
+              property,
+              logJobNumber,
+              jobType,
+              jobSubtype,
+              logJobStatus,
+            } = entry;
+            return customer
+              ? [
+                  { value: formatDate(dateStarted), onClick: onEventClick },
+                  {
+                    value: getCustomerName(customer),
+                    onClick: onEventClick(entry),
+                  },
+                  {
+                    value: getBusinessName(customer),
+                    onClick: onEventClick(entry),
+                  },
+                  {
+                    value: getPropertyAddress(property),
+                    onClick: onEventClick(entry),
+                  },
+                  { value: logJobNumber, onClick: onEventClick(entry) },
+                  {
+                    value: `${jobType} / ${jobSubtype}`,
+                    onClick: onEventClick(entry),
+                  },
+                  { value: logJobStatus, onClick: onEventClick(entry) },
+                ]
+              : [];
+          });
     if (kind === 'customers')
       return loading
         ? makeFakeRows(5, 3)
