@@ -872,6 +872,138 @@ function getWeekOptions(): Option[] {
 }
 
 /**
+ * Returns Users by filter
+ * @param page number
+ * @param searchBy string
+ * @param searchPhrase string
+ * @returns {results: User[], totalCount: number}
+ */
+async function loadUsersByFilter({
+  page,
+  searchBy,
+  searchPhrase,
+}: {
+  page: number;
+  searchBy: string;
+  searchPhrase: string;
+}) {
+  const req = new User();
+  req.setIsEmployee(0);
+  req.setIsActive(1);
+  req.setPageNumber(page);
+  if (searchPhrase !== '') {
+    if (searchBy === 'Last Name') {
+      req.setLastname(`%${searchPhrase}%`);
+    } else if (searchBy === 'Business Name') {
+      req.setBusinessname(`%${searchPhrase}%`);
+    } else if (searchBy === 'Primary Phone') {
+      req.setPhone(`%${searchPhrase}%`);
+    } else if (searchBy === 'Email') {
+      req.setEmail(`%${searchPhrase}%`);
+    } else if (searchBy === 'First Name') {
+      req.setFirstname(`%${searchPhrase}%`);
+    }
+  }
+  const response = await UserClientService.BatchGet(req);
+  return {
+    results: response.getResultsList().map(item => item.toObject()),
+    totalCount: response.getTotalCount(),
+  };
+}
+
+/**
+ * Returns Properties by filter
+ * @param page number
+ * @param searchBy string
+ * @param searchPhrase string
+ * @returns {results: Property[], totalCount: number}
+ */
+async function loadPropertiesByFilter({
+  page,
+  searchBy,
+  searchPhrase,
+}: {
+  page: number;
+  searchBy: string;
+  searchPhrase: string;
+}) {
+  const req = new Property();
+  req.setIsActive(1);
+  req.setPageNumber(page);
+  if (searchPhrase !== '') {
+    if (searchBy === 'Address') {
+      req.setAddress(`%${searchPhrase}%`);
+    } else if (searchBy === 'Subdivision') {
+      req.setSubdivision(`%${searchPhrase}%`);
+    } else if (searchBy === 'City') {
+      req.setCity(`%${searchPhrase}%`);
+    } else if (searchBy === 'Zip Code') {
+      req.setZip(`%${searchPhrase}%`);
+    }
+  }
+  const response = await PropertyClientService.BatchGet(req);
+  return {
+    results: response.getResultsList().map(item => item.toObject()),
+    totalCount: response.getTotalCount(),
+  };
+}
+
+/**
+ * Returns Events by filter
+ * @param page number
+ * @param searchBy string
+ * @param searchPhrase string
+ * @returns {results: Event[], totalCount: number}
+ */
+async function loadEventsByFilter({
+  page,
+  searchBy,
+  searchPhrase,
+}: {
+  page: number;
+  searchBy: string;
+  searchPhrase: string;
+}) {
+  const req = new Event();
+  req.setOrderBy('date_started');
+  req.setOrderDir('desc');
+  req.setIsActive(1);
+  req.setPageNumber(page);
+  if (searchPhrase !== '') {
+    if (searchBy === 'Job Number') {
+      req.setLogJobNumber(`%${searchPhrase}%`);
+    } else if (searchBy === 'Start Date') {
+      req.setDateStarted(`%${searchPhrase}%`);
+    } else if (searchBy === 'Address') {
+      const p = new Property();
+      p.setAddress(`%${searchPhrase}%`);
+      req.setProperty(p);
+    } else if (searchBy === 'Zip Code') {
+      const p = new Property();
+      p.setZip(`%${searchPhrase}%`);
+      req.setProperty(p);
+    } else if (searchBy === 'City') {
+      const p = new Property();
+      p.setCity(`%${searchPhrase}%`);
+      req.setProperty(p);
+    } else if (searchBy === 'Business Name') {
+      const u = new User();
+      u.setBusinessname(`%${searchPhrase}%`);
+      req.setCustomer(u);
+    } else if (searchBy === 'Lastname') {
+      const u = new User();
+      u.setLastname(`%${searchPhrase}%`);
+      req.setCustomer(u);
+    }
+  }
+  const response = await EventClientService.BatchGet(req);
+  return {
+    results: response.getResultsList().map(item => item.toObject()),
+    totalCount: response.getTotalCount(),
+  };
+}
+
+/**
  * Returns Event by job number or contract number
  * @param referenceNumber job number or contract number
  * @returns Event?
@@ -963,6 +1095,22 @@ async function uploadFileToS3Bucket(
   }
 }
 
+function makeOptions(options: string[]): Option[] {
+  return options.map(label => ({ label, value: label }));
+}
+
+function getCustomerName(c?: User.AsObject): string {
+  return c ? `${c.firstname} ${c.lastname}` : '';
+}
+
+function getBusinessName(c?: User.AsObject): string {
+  return c ? c.businessname : '';
+}
+
+function getPropertyAddress(p?: Property.AsObject): string {
+  return p ? `${p.address}, ${p.city}, ${p.state} ${p.zip}` : '';
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -1008,4 +1156,11 @@ export {
   loadEventsByJobOrContractNumbers,
   escapeText,
   uploadFileToS3Bucket,
+  makeOptions,
+  loadEventsByFilter,
+  loadUsersByFilter,
+  loadPropertiesByFilter,
+  getCustomerName,
+  getBusinessName,
+  getPropertyAddress,
 };
