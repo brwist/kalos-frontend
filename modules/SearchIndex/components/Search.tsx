@@ -112,28 +112,32 @@ export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
   const [events, setEvents] = useState<EventType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [properties, setProperties] = useState<PropertyType[]>([]);
-  const load = useCallback(async () => {
-    setLoading(true);
-    const criteria = {
-      page,
-      searchBy: filter.searchBy,
-      searchPhrase: filter.searchPhrase,
-    };
-    if (filter.kind === 'serviceCalls') {
-      const { results, totalCount } = await loadEventsByFilter(criteria);
-      setCount(totalCount);
-      setEvents(results);
-    } else if (filter.kind === 'customers') {
-      const { results, totalCount } = await loadUsersByFilter(criteria);
-      setCount(totalCount);
-      setUsers(results);
-    } else if (filter.kind === 'properties') {
-      const { results, totalCount } = await loadPropertiesByFilter(criteria);
-      setCount(totalCount);
-      setProperties(results);
-    }
-    setLoading(false);
-  }, [filter, page, setCount, setEvents, setUsers, setProperties, setLoading]);
+  const load = useCallback(
+    async (_criteria?: SearchForm) => {
+      setLoading(true);
+      const _filter = _criteria || filter;
+      const criteria = {
+        page,
+        searchBy: _filter.searchBy,
+        searchPhrase: _filter.searchPhrase,
+      };
+      if (_filter.kind === 'serviceCalls') {
+        const { results, totalCount } = await loadEventsByFilter(criteria);
+        setCount(totalCount);
+        setEvents(results);
+      } else if (_filter.kind === 'customers') {
+        const { results, totalCount } = await loadUsersByFilter(criteria);
+        setCount(totalCount);
+        setUsers(results);
+      } else if (_filter.kind === 'properties') {
+        const { results, totalCount } = await loadPropertiesByFilter(criteria);
+        setCount(totalCount);
+        setProperties(results);
+      }
+      setLoading(false);
+    },
+    [filter, page, setCount, setEvents, setUsers, setProperties, setLoading],
+  );
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -147,24 +151,37 @@ export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
     },
     [setPage, load],
   );
+  const handleLoad = useCallback(() => load(), [load]);
   const handleFormChange = useCallback(
     (data: SearchForm) => {
-      const isTypeChange = data.kind !== filter.kind;
+      const isTypeChanged = data.kind !== filter.kind;
+      const isSearchByChanged = data.searchBy !== filter.searchBy;
       const searchBy = FIELDS[data.kind][0].value as string;
-      setFilter({
+      const criteria = {
         ...data,
-        ...(isTypeChange
+        ...(isTypeChanged
           ? {
               searchBy,
               searchPhrase: searchBy.endsWith('Date') ? timestamp(true) : '',
             }
           : {}),
-      });
-      if (isTypeChange) {
+        ...(isSearchByChanged
+          ? {
+              searchPhrase: data.searchBy.endsWith('Date')
+                ? timestamp(true)
+                : '',
+            }
+          : {}),
+      };
+      setFilter(criteria);
+      if (isTypeChanged || isSearchByChanged) {
         setFormKey(formKey + 1);
       }
+      if (isTypeChanged) {
+        load(criteria);
+      }
     },
-    [setFilter, filter, formKey, setFormKey],
+    [setFilter, filter, formKey, setFormKey, load],
   );
   const onEventClick = useCallback(
     ({ id, customer, propertyId }: EventType) => () =>
@@ -217,8 +234,8 @@ export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
       {
         name: 'searchPhrase',
         label: 'Search Phrase',
-        type: filter.searchBy.endsWith('Date') ? 'date' : 'text',
-        actions: [{ label: 'Search', onClick: load }],
+        type: filter.searchBy.endsWith('Date') ? 'date' : 'search',
+        actions: [{ label: 'Search', onClick: handleLoad }],
       },
     ],
   ];
