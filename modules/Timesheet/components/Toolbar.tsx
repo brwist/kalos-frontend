@@ -10,6 +10,7 @@ import { WeekPicker } from '../../ComponentsLibrary/WeekPicker';
 import { Button } from '../../ComponentsLibrary/Button';
 import { Payroll } from '../main';
 import { roundNumber } from '../../../helpers';
+import { useConfirm } from '../../ComponentsLibrary/ConfirmService';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -70,7 +71,8 @@ type Props = {
   handleDateChange: (value: Date) => void;
   userName: string;
   timesheetAdministration: boolean;
-  payroll: Payroll | null;
+  payroll: Payroll;
+  submitTimesheet: () => void;
 };
 
 const Toolbar: FC<Props> = ({
@@ -79,8 +81,24 @@ const Toolbar: FC<Props> = ({
   userName,
   timesheetAdministration,
   payroll,
+  submitTimesheet,
 }): JSX.Element => {
   const classes = useStyles();
+  const confirm = useConfirm();
+
+  const handleSubmit = () => {
+    if (timesheetAdministration) {
+      submitTimesheet();
+    } else {
+      confirm({
+        description: 'By submitting my timecard, I affirm that i have not been injured on the job during this work week.',
+      })
+        .then(() => {
+          submitTimesheet();
+        });
+    }
+  };
+
   return (
     <MuiToolbar className={classes.bar}>
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -97,7 +115,7 @@ const Toolbar: FC<Props> = ({
         </Typography>
         <Box className={classes.info}>
           <Box className={classes.payroll}>
-            {payroll !== null ? (
+            {payroll.total !== null ? (
               <>
                 <Typography variant="subtitle2">Total: <strong>{roundNumber(payroll.total || 0)}</strong></Typography>
                 <Typography className={classes.details}>
@@ -113,7 +131,7 @@ const Toolbar: FC<Props> = ({
             )}
 
           </Box>
-          <Button label={timesheetAdministration ? 'Approve Timesheet' : 'Submit Timesheet'} />
+          <Button onClick={handleSubmit} label={timesheetAdministration ? 'Approve Timesheet' : 'Submit Timesheet'} />
         </Box>
       </MuiPickersUtilsProvider>
     </MuiToolbar>

@@ -252,7 +252,6 @@ const ServiceCalendar = ({ userId }: Props) => {
     datesMap,
     customersMap,
     zipCodesMap,
-    speedDialOpen,
     viewBy,
     shownDates,
     selectedDate,
