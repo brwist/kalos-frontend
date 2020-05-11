@@ -969,23 +969,19 @@ async function loadEventsByFilter({
   req.setOrderDir('desc');
   req.setIsActive(1);
   req.setPageNumber(page);
+  const p = new Property();
+  // p.setIsActive(1);
   if (searchPhrase !== '') {
     if (searchBy === 'Job Number') {
       req.setLogJobNumber(`%${searchPhrase}%`);
     } else if (searchBy === 'Start Date') {
       req.setDateStarted(`%${searchPhrase}%`);
     } else if (searchBy === 'Address') {
-      const p = new Property();
       p.setAddress(`%${searchPhrase}%`);
-      req.setProperty(p);
     } else if (searchBy === 'Zip Code') {
-      const p = new Property();
       p.setZip(`%${searchPhrase}%`);
-      req.setProperty(p);
     } else if (searchBy === 'City') {
-      const p = new Property();
       p.setCity(`%${searchPhrase}%`);
-      req.setProperty(p);
     } else if (searchBy === 'Business Name') {
       const u = new User();
       u.setBusinessname(`%${searchPhrase}%`);
@@ -996,6 +992,7 @@ async function loadEventsByFilter({
       req.setCustomer(u);
     }
   }
+  req.setProperty(p);
   const response = await EventClientService.BatchGet(req);
   return {
     results: response.getResultsList().map(item => item.toObject()),
