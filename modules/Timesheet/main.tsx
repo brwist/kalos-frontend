@@ -1,5 +1,5 @@
-import React, {createContext, useCallback, useEffect, useState} from "react";
-import { format, startOfWeek, eachDayOfInterval, addDays, roundToNearestMinutes } from 'date-fns';
+import React, { createContext, useCallback, useEffect, useState, useReducer } from "react";
+import {format, startOfWeek, eachDayOfInterval, addDays, roundToNearestMinutes, differenceInMinutes} from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
@@ -12,7 +12,7 @@ import AssessmentIcon from '@material-ui/icons/Assessment';
 import Alert from '@material-ui/lab/Alert';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { TimesheetLineClient, TimesheetLine, TimesheetReq } from '@kalos-core/kalos-rpc/TimesheetLine';
 import customTheme from '../Theme/main';
 import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import { ConfirmServiceProvider } from '../ComponentsLibrary/ConfirmService';
@@ -21,8 +21,10 @@ import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
 import { loadUserById } from '../../helpers';
+import * as jspb from 'google-protobuf';
 
 const userClient = new UserClient(ENDPOINT);
+const tslClient = new TimesheetLineClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -82,34 +84,147 @@ export const EditTimesheetContext = createContext<EditTimesheetContext>({
 });
 
 const emptyTimesheet = new TimesheetLine().toObject();
+type DayData = {
+  servicesRenderedList: ServicesRendered.AsObject[],
+  timesheetLineList: TimesheetLine.AsObject[],
+};
 
-const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
-  const classes = useStyles();
-  const [user, setUser] = useState<User.AsObject>();
-  const [owner, setOwner] = useState<User.AsObject>();
-  const [selectedDate, setSelectedDate] = useState<Date>(weekStart);
-  const [editingState, setEditingState] = useState<EditingState>({
+type DataList = {
+  [key: string]: DayData,
+}
+
+type State = {
+  user?: User.AsObject;
+  owner?: User.AsObject;
+  fetchingTimesheetData: boolean;
+  data: DataList;
+  selectedDate: Date;
+  shownDates: string[];
+  payroll: {
+    total: number | null,
+    billable: number | null,
+    unbillable: number | null,
+  };
+  editing: EditingState;
+}
+
+type Action =
+  | { type: 'setUsers', data: {user: User.AsObject, owner: User.AsObject} }
+  | { type: 'fetchingTimesheetData' }
+  | { type: 'fetchedTimesheetData', data: TimesheetReq }
+  | { type: 'changeDate', value: Date };
+
+
+const reducer = (state: State, action: Action) => {
+  switch (action.type) {
+    case 'setUsers': {
+      return {
+        ...state,
+        user: action.data.user,
+        owner: action.data.owner
+      };
+    }
+    case 'fetchingTimesheetData': {
+      return {
+        ...state,
+        fetchingTimesheetData: true,
+      };
+    }
+    case 'fetchedTimesheetData': {
+      const datesMap = action.data.getDatesMap();
+      const { data, totalPayroll } = state.shownDates.reduce(({ data, totalPayroll }, date) => {
+        const dayData = datesMap.get(date);
+        const servicesRenderedList = dayData?.getServicesRenderedList().map(i => i.toObject()) || [];
+        const timesheetLineList = dayData?.getTimesheetLineList().map(i => i.toObject()) || [];
+
+        const payroll = timesheetLineList.reduce((acc, item) => {
+          const payrollDiff = differenceInMinutes(new Date(item.timeFinished), new Date(item.timeStarted)) / 60;
+          return {
+            ...acc,
+            billable: item.classCode?.billable ? acc.billable + payrollDiff : acc.billable,
+            unbillable: item.classCode?.billable ? acc.unbillable : acc.unbillable + payrollDiff,
+            total: acc.total + payrollDiff,
+          }
+        }, {billable: 0, unbillable: 0, total: 0});
+
+        data[date] = {
+          servicesRenderedList,
+          timesheetLineList,
+          payroll: payroll || {},
+        };
+        totalPayroll = {
+          billable: totalPayroll.billable + payroll.billable,
+          unbillable: totalPayroll.unbillable + payroll.unbillable,
+          total: totalPayroll.total + payroll.total,
+        };
+        return {data, totalPayroll};
+      }, {
+        data: [],
+        totalPayroll: {
+          billable: 0,
+          unbillable: 0,
+          total: 0
+        },
+      });
+
+      return {
+        ...state,
+        data,
+        payroll: totalPayroll,
+        fetchingTimesheetData: false,
+      };
+    }
+    case 'changeDate':
+      return {
+        ...state,
+        selectedDate: action.value,
+        shownDates: getShownDates(action.value),
+      };
+    default:
+      return state;
+  }
+};
+
+const initialState: State = {
+  user: undefined,
+  owner: undefined,
+  fetchingTimesheetData: true,
+  data: {},
+  selectedDate: weekStart,
+  shownDates: getShownDates(weekStart),
+  payroll: {
+    total: null,
+    billable: null,
+    unbillable: null,
+  },
+  editing: {
     entry: emptyTimesheet,
     modalShown: false,
     action: '',
     editedEntries: [],
     hiddenSR: [],
-  });
-  const [payroll, setPayroll] = useState<Payroll | null>(null);
+  },
+}
+
+const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
+  const classes = useStyles();
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { user, owner, fetchingTimesheetData, data, payroll, selectedDate, shownDates } = state;
+  const [editing, setEditingState] = useState(initialState.editing);
 
   const handleOnSave = (entry: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
-    const editedEntries = [...editingState.editedEntries];
+    const editedEntries = [...editing.editedEntries];
     const alreadyEditedIndex = editedEntries.findIndex(item => item.id === entry.id);
-    const data = { ...entry, action: action || editingState.action };
+    const data = { ...entry, action: action || editing.action };
     if (alreadyEditedIndex >= 0) {
       editedEntries[alreadyEditedIndex] = data;
     } else {
       editedEntries.push(data);
     }
 
-    const hiddenSR = [...editingState.hiddenSR];
-    if (editingState.convertingSR) {
-      hiddenSR.push(editingState.convertingSR);
+    const hiddenSR = [...editing.hiddenSR];
+    if (editing.convertingSR) {
+      hiddenSR.push(editing.convertingSR);
     }
 
     setEditingState({
@@ -123,7 +238,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
 
   const handleAddNewTimeshetCardClicked = () => {
     setEditingState({
-      ...editingState,
+      ...editing,
       entry: new TimesheetLine().toObject(),
       modalShown: true,
       action: 'create',
@@ -132,7 +247,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
 
   const editTimesheetCard = (card: TimesheetLine.AsObject) => {
     setEditingState({
-      ...editingState,
+      ...editing,
       entry: card,
       modalShown: true,
       action: 'update',
@@ -152,7 +267,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     }
 
     setEditingState({
-      ...editingState,
+      ...editing,
       modalShown: true,
       entry,
       action: 'convert',
@@ -162,40 +277,13 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
 
   const handleCloseModal = () => {
     setEditingState({
-      ...editingState,
+      ...editing,
       entry: emptyTimesheet,
       modalShown: false,
       action: '',
     })
   };
 
-  const onPayrollCalculated = useCallback((() => {
-    let counter = 0;
-    let acc = {
-      total: 0,
-      billable: 0,
-      unbillable: 0,
-    };
-    return (chunk: Payroll) => {
-      acc = {
-        total: acc.total + (chunk?.total || 0),
-        billable: acc.billable + (chunk?.billable || 0),
-        unbillable: acc.unbillable + (chunk?.unbillable || 0),
-      };
-      counter += 1;
-      if (counter === 7) {
-        counter = 0;
-        setPayroll({...acc});
-        acc = {
-          total: 0,
-          billable: 0,
-          unbillable: 0,
-        }
-      }
-    };
-  })(), []);
-
-  const shownDates = getShownDates(selectedDate);
   const addNewOptions = [
     { icon: <EventIcon />, name: 'Timecard', action: handleAddNewTimeshetCardClicked },
     { icon: <TimerOffIcon />, name: 'Request Off', url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest' },
@@ -205,19 +293,24 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   ];
 
   const handleDateChange = (value: Date) => {
-    setSelectedDate(value);
-    setPayroll(null);
+    dispatch({ type: 'changeDate', value })
+  };
+
+  const handleSubmitTimesheet = () => {
+    if (user?.timesheetAdministration) {
+      tslClient.Approve([], userId);
+    } else {
+      tslClient.Submit([]);
+    }
   };
 
   const fetchUsers = async () => {
     const userResult = await loadUserById(userId);
     if (userId === timesheetOwnerId) {
-      setUser(userResult);
-      setOwner(userResult)
+      dispatch({ type: 'setUsers', data: { user: userResult, owner: userResult }});
     } else {
       const ownerResult = await loadUserById(timesheetOwnerId);
-      setUser(userResult);
-      setOwner(ownerResult)
+      dispatch({ type: 'setUsers', data: { user: userResult, owner: ownerResult }});
     }
   };
 
@@ -225,6 +318,28 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     userClient.GetToken('test', 'test');
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if(shownDates.length) {
+      dispatch({ type: 'fetchingTimesheetData' });
+      (async () => {
+        const sr = new ServicesRendered();
+        sr.setIsActive(1);
+        sr.setHideFromTimesheet(0);
+        sr.setTechnicianUserId(timesheetOwnerId);
+        const tl = new TimesheetLine();
+        tl.setIsActive(1);
+        tl.setTechnicianUserId(timesheetOwnerId);
+        const req = new TimesheetReq();
+        req.setServicesRendered(sr);
+        req.setTimesheetLine(tl);
+        const result = await tslClient.GetTimesheet(req, `${shownDates[0]}%`, `${shownDates[shownDates.length - 1]}%`);
+        dispatch({type: 'fetchedTimesheetData', data: result });
+      })();
+    }
+  }, [shownDates]);
+
+  console.log(data);
 
   if (!user) {
     return null;
@@ -246,19 +361,21 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
             userName={`${owner?.firstname} ${owner?.lastname}`}
             timesheetAdministration={!!user.timesheetAdministration}
             payroll={payroll}
+            submitTimesheet={() => {}}
           />
           <Box className={classes.wrapper}>
               {hasAccess ? (
                 <Container className={classes.week} maxWidth={false}>
-                  {shownDates.map(date => (
+                  {shownDates.map((date: string) => (
                     <Column
                       key={date}
                       date={date}
                       userId={userId}
                       timesheetOwnerId={timesheetOwnerId}
-                      editedEntries={editingState.editedEntries}
-                      hiddenSR={editingState.hiddenSR}
-                      onPayrollCalculated={onPayrollCalculated}
+                      editedEntries={editing.editedEntries}
+                      hiddenSR={editing.hiddenSR}
+                      data={data[date]}
+                      loading={fetchingTimesheetData}
                     />
                   ))}
                 </Container>
@@ -269,15 +386,15 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
               )
             }
           </Box>
-          {editingState.modalShown && (
+          {editing.modalShown && (
             <EditTimesheetModal
-              entry={editingState.entry}
+              entry={editing.entry}
               timesheetOwnerId={timesheetOwnerId}
               userId={userId}
               timesheetAdministration={!!user.timesheetAdministration}
               onClose={handleCloseModal}
               onSave={handleOnSave}
-              action={editingState.action}
+              action={editing.action}
             />
           )}
           {hasAccess && (

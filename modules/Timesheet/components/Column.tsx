@@ -96,10 +96,11 @@ type Props = {
   timesheetOwnerId: number,
   editedEntries: EditedEntry[],
   hiddenSR: ServicesRendered.AsObject[],
-  onPayrollCalculated: (payroll: Payroll) => void,
+  data: any,
+  loading: boolean,
 };
 
-const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hiddenSR, onPayrollCalculated}) => {
+const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hiddenSR, data, loading }) => {
   const classes = useStyles();
   const [dayView, setDayView] = useState(false);
 
@@ -162,19 +163,6 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
       }
     }
   });
-  const payroll = filteredTL.reduce((acc, item) => {
-    const payrollDiff = differenceInMinutes(new Date(item.timeFinished), new Date(item.timeStarted))/60;
-    return {
-      ...acc,
-      billable: item.classCode?.billable ? acc.billable + payrollDiff : acc.billable,
-      unbillable: item.classCode?.billable ? acc.unbillable : acc.unbillable + payrollDiff,
-      total: acc.total + payrollDiff,
-    }
-  }, { billable: 0, unbillable: 0, total: 0 });
-
-  if (!servicesRenderedLoading && !timesheetLineLoading) {
-    onPayrollCalculated(payroll);
-  }
 
   const cards = [...filteredSR, ...filteredTL];
   cards.sort((a, b) => new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime());
@@ -190,14 +178,14 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
       )}
       <Box className={classes.payroll}>
         <Typography className="total" variant="body2" color="textSecondary">
-          Payroll: <strong>{roundNumber(payroll.total)}</strong>
+          Payroll: <strong>{roundNumber(data?.payroll?.total)}</strong>
         </Typography>
         <div className="details">
           <Typography variant="body2" color="textSecondary">
-            Billable: <strong>{roundNumber(payroll.billable)}</strong>
+            Billable: <strong>{roundNumber(data?.payroll?.billable)}</strong>
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Unbillable: <strong>{roundNumber(payroll.unbillable)}</strong>
+            Unbillable: <strong>{roundNumber(data?.payroll?.unbillable)}</strong>
           </Typography>
         </div>
       </Box>
@@ -221,7 +209,7 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
           </Tooltip>
         </>
       </Box>
-      {servicesRenderedLoading && timesheetLineLoading ? (
+      {loading ? (
         <>
           {[...Array(5)].map((e, i) => (
             <SkeletonCard key={`${date}-skeleton-${i}`} />
