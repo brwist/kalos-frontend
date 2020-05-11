@@ -1,4 +1,6 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
 import { makeStyles } from '@material-ui/core';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { User } from '@kalos-core/kalos-rpc/User';
@@ -24,11 +26,11 @@ type EventType = Event.AsObject;
 type UserType = User.AsObject;
 type PropertyType = Property.AsObject;
 
-export interface Props {}
-
 type Kind = 'serviceCalls' | 'customers' | 'properties' | 'contracts';
 
-const DEFAULT_KIND = 'serviceCalls';
+export interface Props {
+  defaultKind?: Kind;
+}
 
 type SearchForm = {
   kind: Kind;
@@ -94,15 +96,15 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Search: FC<Props> = () => {
+export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const searchBy = FIELDS[DEFAULT_KIND][0].value as string;
+  const searchBy = FIELDS[defaultKind][0].value as string;
   const [filter, setFilter] = useState<SearchForm>({
-    kind: DEFAULT_KIND,
+    kind: defaultKind,
     searchBy,
     searchPhrase: searchBy.endsWith('Date') ? timestamp(true) : '',
   });
@@ -164,6 +166,50 @@ export const Search: FC<Props> = () => {
     },
     [setFilter, filter, formKey, setFormKey],
   );
+  const onEventClick = useCallback(
+    ({ id, customer, propertyId }: EventType) => () =>
+      (window.location.href = [
+        'https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall',
+        `id=${id}`,
+        `user_id=${customer ? customer.id : 0}`,
+        `property_id=${propertyId}`,
+      ].join('&')),
+    [],
+  );
+  const onUserClick = useCallback(
+    ({ id }: UserType) => () =>
+      (window.location.href = [
+        'https://app.kalosflorida.com/index.cfm?action=admin:customers.details',
+        `id=${id}`,
+      ].join('&')),
+    [],
+  );
+  const onUserEditClick = useCallback(
+    ({ id }: UserType) => () =>
+      (window.location.href = [
+        'https://app.kalosflorida.com/index.cfm?action=admin:customers.edit',
+        `id=${id}`,
+      ].join('&')),
+    [],
+  );
+  const onPropertyClick = useCallback(
+    ({ id, userId }: PropertyType) => () =>
+      (window.location.href = [
+        'https://app.kalosflorida.com/index.cfm?action=admin:properties.details',
+        `user_id=${userId}`,
+        `property_id=${id}`,
+      ].join('&')),
+    [],
+  );
+  const onPropertyEditClick = useCallback(
+    ({ id, userId }: PropertyType) => () =>
+      (window.location.href = [
+        'https://app.kalosflorida.com/index.cfm?action=admin:properties.edit',
+        `user_id=${userId}`,
+        `property_id=${id}`,
+      ].join('&')),
+    [],
+  );
   const SCHEMA: Schema<SearchForm> = [
     [
       { name: 'kind', label: 'Search', options: TYPES },
@@ -183,8 +229,8 @@ export const Search: FC<Props> = () => {
         ? makeFakeRows(7, 3)
         : events
             .filter(({ propertyId }) => propertyId !== 0)
-            .map(
-              ({
+            .map(entry => {
+              const {
                 dateStarted,
                 customer,
                 property,
@@ -192,38 +238,80 @@ export const Search: FC<Props> = () => {
                 jobType,
                 jobSubtype,
                 logJobStatus,
-              }) =>
-                customer
-                  ? [
-                      { value: formatDate(dateStarted) },
-                      { value: getCustomerName(customer) },
-                      { value: getBusinessName(customer) },
-                      { value: getPropertyAddress(property) },
-                      { value: logJobNumber },
-                      { value: `${jobType} / ${jobSubtype}` },
-                      { value: logJobStatus },
-                    ]
-                  : [],
-            );
+              } = entry;
+              return customer
+                ? [
+                    { value: formatDate(dateStarted), onClick: onEventClick },
+                    {
+                      value: getCustomerName(customer),
+                      onClick: onEventClick(entry),
+                    },
+                    {
+                      value: getBusinessName(customer),
+                      onClick: onEventClick(entry),
+                    },
+                    {
+                      value: getPropertyAddress(property),
+                      onClick: onEventClick(entry),
+                    },
+                    { value: logJobNumber, onClick: onEventClick(entry) },
+                    {
+                      value: `${jobType} / ${jobSubtype}`,
+                      onClick: onEventClick(entry),
+                    },
+                    { value: logJobStatus, onClick: onEventClick(entry) },
+                  ]
+                : [];
+            });
     if (kind === 'customers')
       return loading
         ? makeFakeRows(5, 3)
-        : users.map(({ firstname, lastname, businessname, phone, email }) => [
-            { value: firstname },
-            { value: lastname },
-            { value: businessname },
-            { value: phone },
-            { value: email },
-          ]);
+        : users.map(entry => {
+            const { firstname, lastname, businessname, phone, email } = entry;
+            return [
+              { value: firstname, onClick: onUserClick(entry) },
+              { value: lastname, onClick: onUserClick(entry) },
+              { value: businessname, onClick: onUserClick(entry) },
+              { value: phone, onClick: onUserClick(entry) },
+              {
+                value: email,
+                onClick: onUserClick(entry),
+                actions: [
+                  <IconButton
+                    key={0}
+                    size="small"
+                    onClick={onUserEditClick(entry)}
+                  >
+                    <EditIcon />
+                  </IconButton>,
+                ],
+              },
+            ];
+          });
     if (kind === 'properties')
       return loading
         ? makeFakeRows(4, 3)
-        : properties.map(({ address, city, zip, subdivision }) => [
-            { value: address },
-            { value: subdivision },
-            { value: city },
-            { value: zip },
-          ]);
+        : properties.map(entry => {
+            const { address, city, zip, subdivision } = entry;
+            return [
+              { value: address, onClick: onPropertyClick(entry) },
+              { value: subdivision, onClick: onPropertyClick(entry) },
+              { value: city, onClick: onPropertyClick(entry) },
+              {
+                value: zip,
+                onClick: onPropertyClick(entry),
+                actions: [
+                  <IconButton
+                    key={0}
+                    size="small"
+                    onClick={onPropertyEditClick(entry)}
+                  >
+                    <EditIcon />
+                  </IconButton>,
+                ],
+              },
+            ];
+          });
     return [];
   }, [filter, loading, events]);
   return (
@@ -250,6 +338,7 @@ export const Search: FC<Props> = () => {
         columns={COLUMNS[filter.kind]}
         data={getData()}
         loading={loading}
+        hoverable
       />
     </div>
   );
