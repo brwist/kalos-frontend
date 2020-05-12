@@ -1,16 +1,9 @@
 import React, { FC, useState, useCallback } from 'react';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { Link } from '../../ComponentsLibrary/Link';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
-import {
-  loadUsersByFilter,
-  getCFAppUrl,
-  UserType,
-  makeFakeRows,
-  getCustomerNameAndBusinessName,
-  getPropertyAddress,
-} from '../../../helpers';
+import { loadUsersByFilter, UserType, makeFakeRows } from '../../../helpers';
 import { SearchForm, FormType, getFormInit } from './SearchForm';
+import { CustomerItem } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 
 export const AddServiceCall: FC = () => {
@@ -65,41 +58,7 @@ export const AddServiceCall: FC = () => {
       {loading ? (
         <InfoTable data={makeFakeRows()} loading />
       ) : (
-        entries.map(entry => (
-          <div key={entry.id}>
-            <InfoTable
-              columns={[
-                {
-                  name: (
-                    <Link
-                      href={[
-                        getCFAppUrl('admin:customers.details'),
-                        `id=${entry.id}`,
-                      ].join('&')}
-                    >
-                      <strong>{getCustomerNameAndBusinessName(entry)}</strong>
-                    </Link>
-                  ),
-                },
-              ]}
-              data={entry.propertiesList.map(property => [
-                {
-                  value: (
-                    <Link
-                      href={[
-                        getCFAppUrl('admin:service.addserviceCall'),
-                        `user_id=${entry.id}`,
-                        `property_id=${property.id}`,
-                      ].join('&')}
-                    >
-                      {getPropertyAddress(property)}
-                    </Link>
-                  ),
-                },
-              ])}
-            />
-          </div>
-        ))
+        entries.map(entry => <CustomerItem key={entry.id} {...entry} />)
       )}
     </div>
   );
