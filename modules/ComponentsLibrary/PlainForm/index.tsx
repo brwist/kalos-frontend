@@ -16,7 +16,7 @@ export type Option = OptionType;
 export type Options = OptionsType;
 
 export type SchemaProps<T> = {
-  label?: string;
+  label?: ReactNode;
   name?: keyof T;
   headline?: boolean;
   description?: string;
