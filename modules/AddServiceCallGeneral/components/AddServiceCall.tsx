@@ -3,10 +3,12 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { loadUsersByFilter, UserType, makeFakeRows } from '../../../helpers';
 import { SearchForm, FormType, getFormInit } from './SearchForm';
-import { CustomerItem } from './CustomerItem';
+import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 
-export const AddServiceCall: FC = () => {
+export type Props = Pick<CustomerItemProps, 'loggedUserId'>;
+
+export const AddServiceCall: FC<Props> = props => {
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -58,7 +60,9 @@ export const AddServiceCall: FC = () => {
       {loading ? (
         <InfoTable data={makeFakeRows()} loading />
       ) : (
-        entries.map(entry => <CustomerItem key={entry.id} {...entry} />)
+        entries.map(entry => (
+          <CustomerItem key={entry.id} customer={entry} {...props} />
+        ))
       )}
     </div>
   );
