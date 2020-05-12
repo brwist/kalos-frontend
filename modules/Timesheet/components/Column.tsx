@@ -11,16 +11,9 @@ import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { createStyles, makeStyles, Theme, useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
-import {
-  ServicesRenderedClient,
-  ServicesRendered,
-} from '@kalos-core/kalos-rpc/ServicesRendered';
-import {
-  TimesheetLineClient,
-  TimesheetLine
-} from '@kalos-core/kalos-rpc/TimesheetLine';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { ENDPOINT } from '../../../constants';
-import { useFetchAll } from '../../ComponentsLibrary/hooks';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { roundNumber } from '../../../helpers';
@@ -83,47 +76,22 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-const srClient = new ServicesRenderedClient(ENDPOINT);
-const tslClient = new TimesheetLineClient(ENDPOINT);
-
 interface EditedEntry extends TimesheetLine.AsObject {
   action: string
 };
 
 type Props = {
   date: string,
-  userId: number,
-  timesheetOwnerId: number,
-  editedEntries: EditedEntry[],
   hiddenSR: ServicesRendered.AsObject[],
   data: any,
   loading: boolean,
 };
 
-const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hiddenSR, data, loading }) => {
+const Column: FC<Props> = ({ date, data, loading }) => {
   const classes = useStyles();
   const [dayView, setDayView] = useState(false);
 
   const dateObj = new Date(date);
-
-  const fetchServicesRendered = useCallback( async (page) => {
-    const req = new ServicesRendered();
-    req.setIsActive(1);
-    req.setHideFromTimesheet(0);
-    req.setTimeStarted(`${date}%`);
-    req.setTechnicianUserId(timesheetOwnerId);
-    req.setPageNumber(page);
-    return (await srClient.BatchGet(req)).toObject();
-  }, []);
-
-  const fetchTimesheetLine = useCallback( async (page) => {
-    const req = new TimesheetLine();
-    req.setIsActive(1);
-    req.setTimeStarted(`${date}%`);
-    req.setTechnicianUserId(timesheetOwnerId);
-    req.setPageNumber(page);
-    return (await tslClient.BatchGet(req)).toObject();
-  }, []);
 
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('md'));
@@ -131,11 +99,7 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
     document.body.style.overflow = dayView ? 'hidden' : 'visible';
   }, [dayView]);
 
-  const { data:servicesRendered, isLoading:servicesRenderedLoading } = useFetchAll(fetchServicesRendered);
-  const { data:timesheetLine, isLoading:timesheetLineLoading } = useFetchAll(fetchTimesheetLine);
-
-  const filteredSR = [...servicesRendered].filter(item => !item.hideFromTimesheet && item.status !== 'Completed' && item.status !== 'Incomplete');
-  const filteredTL = [...timesheetLine];
+/*
   hiddenSR.forEach(entry => {
     if (format(new Date(entry.timeStarted), 'yyyy-MM-dd') === date) {
       const existingIndex = filteredSR.findIndex(item => item.id === entry.id);
@@ -162,9 +126,8 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
         }
       }
     }
-  });
-
-  const cards = [...filteredSR, ...filteredTL];
+  });*/
+  const cards = data ? [...data?.servicesRenderedList, ...data?.timesheetLineList] : [];
   cards.sort((a, b) => new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime());
   return (
     <Box className={clsx(dayView && classes.dayView)}>
@@ -178,14 +141,14 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
       )}
       <Box className={classes.payroll}>
         <Typography className="total" variant="body2" color="textSecondary">
-          Payroll: <strong>{roundNumber(data?.payroll?.total)}</strong>
+          Payroll: <strong>{roundNumber(data?.payroll?.total || 0)}</strong>
         </Typography>
         <div className="details">
           <Typography variant="body2" color="textSecondary">
-            Billable: <strong>{roundNumber(data?.payroll?.billable)}</strong>
+            Billable: <strong>{roundNumber(data?.payroll?.billable || 0)}</strong>
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Unbillable: <strong>{roundNumber(data?.payroll?.unbillable)}</strong>
+            Unbillable: <strong>{roundNumber(data?.payroll?.unbillable || 0)}</strong>
           </Typography>
         </div>
       </Box>
@@ -229,4 +192,4 @@ const Column: FC<Props> = ({ date, userId, timesheetOwnerId, editedEntries , hid
   );
 };
 
-export default React.memo(Column);
+export default Column;

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useEffect, useState, useReducer } from "react";
-import {format, startOfWeek, eachDayOfInterval, addDays, roundToNearestMinutes, differenceInMinutes} from 'date-fns';
+import {format, startOfWeek, eachDayOfInterval, addDays, subDays, differenceInMinutes} from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
@@ -45,10 +45,8 @@ type Props = {
   timesheetOwnerId: number;
 };
 
-const weekStart = startOfWeek(new Date());
-
-const getShownDates = (date?: Date): string[] => {
-  const firstDay = date || weekStart;
+const getShownDates = (date: Date): string[] => {
+  const firstDay = date;
   const lastDay = addDays(firstDay, 6);
   const days = eachDayOfInterval({ start: firstDay, end: lastDay });
   return days.map(date => format(date, 'yyyy-MM-dd'));
@@ -108,10 +106,14 @@ type State = {
   editing: EditingState;
 }
 
+type TimesheetData = {
+  getDatesMap(): jspb.Map<string, TimesheetReq>;
+};
+
 type Action =
   | { type: 'setUsers', data: {user: User.AsObject, owner: User.AsObject} }
   | { type: 'fetchingTimesheetData' }
-  | { type: 'fetchedTimesheetData', data: TimesheetReq }
+  | { type: 'fetchedTimesheetData', data: TimesheetData }
   | { type: 'changeDate', value: Date };
 
 
@@ -134,7 +136,8 @@ const reducer = (state: State, action: Action) => {
       const datesMap = action.data.getDatesMap();
       const { data, totalPayroll } = state.shownDates.reduce(({ data, totalPayroll }, date) => {
         const dayData = datesMap.get(date);
-        const servicesRenderedList = dayData?.getServicesRenderedList().map(i => i.toObject()) || [];
+        const srList = dayData?.getServicesRenderedList().map(i => i.toObject()) || [];
+        const servicesRenderedList = srList.filter((item: ServicesRendered) => !item.hideFromTimesheet && item.status !== 'Completed' && item.status !== 'Incomplete')
         const timesheetLineList = dayData?.getTimesheetLineList().map(i => i.toObject()) || [];
 
         const payroll = timesheetLineList.reduce((acc, item) => {
@@ -185,33 +188,37 @@ const reducer = (state: State, action: Action) => {
   }
 };
 
-const initialState: State = {
-  user: undefined,
-  owner: undefined,
-  fetchingTimesheetData: true,
-  data: {},
-  selectedDate: weekStart,
-  shownDates: getShownDates(weekStart),
-  payroll: {
-    total: null,
-    billable: null,
-    unbillable: null,
-  },
-  editing: {
-    entry: emptyTimesheet,
-    modalShown: false,
-    action: '',
-    editedEntries: [],
-    hiddenSR: [],
-  },
-}
+const getWeekStart = (userId: number, timesheetOwnerId: number) => {
+  const today = new Date();
+  return userId === timesheetOwnerId ?
+    startOfWeek(today) :
+    startOfWeek(subDays(today, 7));
+};
 
 const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   const classes = useStyles();
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, {
+    user: undefined,
+    owner: undefined,
+    fetchingTimesheetData: true,
+    data: {},
+    selectedDate: getWeekStart(userId, timesheetOwnerId),
+    shownDates: getShownDates(getWeekStart(userId, timesheetOwnerId)),
+    payroll: {
+      total: null,
+      billable: null,
+      unbillable: null,
+    },
+    editing: {
+      entry: emptyTimesheet,
+      modalShown: false,
+      action: '',
+      editedEntries: [],
+      hiddenSR: [],
+    },
+  });
   const { user, owner, fetchingTimesheetData, data, payroll, selectedDate, shownDates } = state;
-  const [editing, setEditingState] = useState(initialState.editing);
-
+  const [editing, setEditingState] = useState(state.editing);
   const handleOnSave = (entry: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
     const editedEntries = [...editing.editedEntries];
     const alreadyEditedIndex = editedEntries.findIndex(item => item.id === entry.id);
@@ -320,23 +327,21 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   }, []);
 
   useEffect(() => {
-    if(shownDates.length) {
-      dispatch({ type: 'fetchingTimesheetData' });
-      (async () => {
-        const sr = new ServicesRendered();
-        sr.setIsActive(1);
-        sr.setHideFromTimesheet(0);
-        sr.setTechnicianUserId(timesheetOwnerId);
-        const tl = new TimesheetLine();
-        tl.setIsActive(1);
-        tl.setTechnicianUserId(timesheetOwnerId);
-        const req = new TimesheetReq();
-        req.setServicesRendered(sr);
-        req.setTimesheetLine(tl);
-        const result = await tslClient.GetTimesheet(req, `${shownDates[0]}%`, `${shownDates[shownDates.length - 1]}%`);
-        dispatch({type: 'fetchedTimesheetData', data: result });
-      })();
-    }
+    dispatch({ type: 'fetchingTimesheetData' });
+    (async () => {
+      const sr = new ServicesRendered();
+      sr.setIsActive(1);
+      sr.setHideFromTimesheet(0);
+      sr.setTechnicianUserId(timesheetOwnerId);
+      const tl = new TimesheetLine();
+      tl.setIsActive(1);
+      tl.setTechnicianUserId(timesheetOwnerId);
+      const req = new TimesheetReq();
+      req.setServicesRendered(sr);
+      req.setTimesheetLine(tl);
+      const result = await tslClient.GetTimesheet(req, `${shownDates[0]}%`, `${shownDates[shownDates.length - 1]}%`);
+      dispatch({type: 'fetchedTimesheetData', data: result });
+    })();
   }, [shownDates]);
 
   console.log(data);
