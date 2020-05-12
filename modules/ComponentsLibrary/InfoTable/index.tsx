@@ -27,7 +27,7 @@ export type Data = {
 }[][];
 
 export type Columns = {
-  name: string;
+  name: ReactNode;
   dir?: Dir;
   onClick?: () => void;
   actions?: ActionsProps;

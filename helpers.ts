@@ -35,6 +35,9 @@ import {
 import { ENDPOINT, MONTHS } from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
 
+export type UserType = User.AsObject;
+export type PropertyType = Property.AsObject;
+
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
 const EventClientService = new EventClient(ENDPOINT);
@@ -57,6 +60,8 @@ const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
 const GOOGLE_MAPS_KEY = 'AIzaSyBufXfsM3nTanL9XsATgToVf5SgPkbWHkc';
+
+export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
 export type MetricType = 'Billable' | 'Callbacks' | 'Revenue';
 
@@ -431,7 +436,7 @@ async function loadTimesheetDepartments() {
  * @returns User[]
  */
 async function loadTechnicians() {
-  const results: User.AsObject[] = [];
+  const results: UserType[] = [];
   const req = new User();
   req.setPageNumber(0);
   req.setIsActive(1);
@@ -470,7 +475,7 @@ async function loadTechnicians() {
  * @returns User[]
  */
 async function loadUsersByDepartmentId(departmentId: number) {
-  const results: User.AsObject[] = [];
+  const results: UserType[] = [];
   const req = new User();
   req.setPageNumber(0);
   req.setIsActive(1);
@@ -773,7 +778,7 @@ async function loadUsersByIds(ids: number[]) {
   });
   const users = await Promise.all(uniqueIds.map(loadUserById));
   return users.reduce((aggr, user) => ({ ...aggr, [user.id]: user }), {}) as {
-    [key: number]: User.AsObject;
+    [key: number]: UserType;
   };
 }
 
@@ -882,15 +887,20 @@ async function loadUsersByFilter({
   page,
   searchBy,
   searchPhrase,
+  withProperties = false,
 }: {
   page: number;
   searchBy: string;
   searchPhrase: string;
+  withProperties?: boolean;
 }) {
   const req = new User();
   req.setIsEmployee(0);
   req.setIsActive(1);
   req.setPageNumber(page);
+  if (withProperties) {
+    req.setWithProperties(true);
+  }
   if (searchPhrase !== '') {
     if (searchBy === 'Last Name') {
       req.setLastname(`%${searchPhrase}%`);
@@ -1092,21 +1102,23 @@ async function uploadFileToS3Bucket(
   }
 }
 
-function makeOptions(options: string[]): Option[] {
-  return options.map(label => ({ label, value: label }));
-}
+export const makeOptions = (options: string[]): Option[] =>
+  options.map(label => ({ label, value: label }));
 
-function getCustomerName(c?: User.AsObject): string {
-  return c ? `${c.firstname} ${c.lastname}` : '';
-}
+export const getCustomerName = (c?: UserType): string =>
+  c ? `${c.firstname} ${c.lastname}` : '';
 
-function getBusinessName(c?: User.AsObject): string {
-  return c ? c.businessname : '';
-}
+export const getBusinessName = (c?: UserType): string =>
+  c ? c.businessname : '';
 
-function getPropertyAddress(p?: Property.AsObject): string {
-  return p ? `${p.address}, ${p.city}, ${p.state} ${p.zip}` : '';
-}
+export const getCustomerNameAndBusinessName = (c?: UserType): string => {
+  const name = getCustomerName(c);
+  const businessname = getBusinessName(c);
+  return `${name}${businessname ? ' - ' : ''}${businessname}`;
+};
+
+export const getPropertyAddress = (p?: PropertyType): string =>
+  p ? `${p.address}, ${p.city}, ${p.state} ${p.zip}` : '';
 
 export {
   cfURL,
@@ -1153,11 +1165,7 @@ export {
   loadEventsByJobOrContractNumbers,
   escapeText,
   uploadFileToS3Bucket,
-  makeOptions,
   loadEventsByFilter,
   loadUsersByFilter,
   loadPropertiesByFilter,
-  getCustomerName,
-  getBusinessName,
-  getPropertyAddress,
 };
