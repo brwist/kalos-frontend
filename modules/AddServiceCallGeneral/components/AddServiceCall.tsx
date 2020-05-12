@@ -1,10 +1,7 @@
 import React, { FC, useState, useCallback } from 'react';
-import { makeStyles } from '@material-ui/core';
-import { Button } from '../../ComponentsLibrary/Button';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Link } from '../../ComponentsLibrary/Link';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
-import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import {
   loadUsersByFilter,
   getCFAppUrl,
@@ -13,52 +10,20 @@ import {
   getCustomerNameAndBusinessName,
   getPropertyAddress,
 } from '../../../helpers';
+import { SearchForm, FormType, getFormInit } from './SearchForm';
 import { ROWS_PER_PAGE } from '../../../constants';
 
-type SearchBy =
-  | 'First Name'
-  | 'Last Name'
-  | 'Business Name'
-  | 'Email'
-  | 'Primary Phone';
-
-const SEARCH_BY: SearchBy[] = [
-  'First Name',
-  'Last Name',
-  'Business Name',
-  'Email',
-  'Primary Phone',
-];
-
-type Form = {
-  searchBy: SearchBy;
-  searchPhrase: string;
-};
-
-const getSearchInit = {
-  searchBy: SEARCH_BY[0],
-  searchPhrase: '',
-};
-
-const useStyles = makeStyles(theme => ({
-  form: {
-    marginTop: theme.spacing(),
-  },
-}));
-
 export const AddServiceCall: FC = () => {
-  const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [search, setSearch] = useState<Form>(getSearchInit);
+  const [search, setSearch] = useState<FormType>(getFormInit);
   const [entries, setEntries] = useState<UserType[]>([]);
-  const [formKey, setFormKey] = useState<number>(0);
   const load = useCallback(
-    async (_page?: number) => {
+    async (page: number, search: FormType) => {
       setLoading(true);
       const { results, totalCount } = await loadUsersByFilter({
-        page: _page === undefined ? page : _page,
+        page,
         ...search,
         withProperties: true,
       });
@@ -66,71 +31,25 @@ export const AddServiceCall: FC = () => {
       setCount(totalCount);
       setLoading(false);
     },
-    [search, page, setEntries, setCount, setLoading],
+    [setEntries, setCount, setLoading],
   );
   const handleReset = useCallback(() => {
-    setSearch(getSearchInit);
-    setFormKey(formKey + 1);
-  }, [setSearch, formKey, setFormKey]);
+    setEntries([]);
+  }, [setEntries]);
   const handlePageChange = useCallback(
     (page: number) => {
       setPage(page);
-      load(page);
+      load(page, search);
     },
-    [setPage, load],
+    [setPage, load, search],
   );
-  const handleSearch = useCallback(() => load(), [load]);
-  const SCHEMA: Schema<Form> = [
-    [
-      {
-        headline: true,
-        label: 'Search Customer',
-      },
-    ],
-    [
-      {
-        name: 'searchBy',
-        label: 'Search By',
-        options: SEARCH_BY,
-      },
-      {
-        name: 'searchPhrase',
-        label: 'Search Phrase',
-        type: 'search',
-        actions: [
-          {
-            label: 'Search',
-            onClick: handleSearch,
-          },
-          { label: 'Reset', variant: 'outlined', onClick: handleReset },
-        ],
-      },
-    ],
-    [
-      {
-        headline: true,
-        label: (
-          <div>
-            or
-            <Button
-              label="View Complete Customer Listing"
-              url={getCFAppUrl('admin:customers.dashboard')}
-              variant="text"
-              size="xsmall"
-              compact
-            />
-            <Button
-              label="Add Customer"
-              url={getCFAppUrl('admin:customers.add')}
-              variant="text"
-              size="xsmall"
-              compact
-            />
-          </div>
-        ),
-      },
-    ],
-  ];
+  const handleSearch = useCallback(
+    (search: FormType) => {
+      setSearch(search);
+      load(page, search);
+    },
+    [load, setSearch, page],
+  );
   return (
     <div>
       <SectionBar
@@ -142,14 +61,7 @@ export const AddServiceCall: FC = () => {
           page,
         }}
       />
-      <PlainForm<Form>
-        key={formKey}
-        schema={SCHEMA}
-        data={search}
-        onChange={setSearch}
-        compact
-        className={classes.form}
-      />
+      <SearchForm onSearch={handleSearch} onReset={handleReset} />
       {loading ? (
         <InfoTable data={makeFakeRows()} loading />
       ) : (
