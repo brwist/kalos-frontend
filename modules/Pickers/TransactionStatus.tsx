@@ -45,7 +45,7 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
   }
 
   addToList(item: TransactionStatus.AsObject) {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       list: prevState.list.concat(item),
     }));
   }
@@ -72,11 +72,13 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
           inputProps={{ id: 'txn-status-picker' }}
         >
           <option value={0}>Select Status</option>
-          {this.state.list.map(item => (
+          {this.state.list.map((item) => (
             <option value={item.id} key={`${item.description}-${item.id}`}>
               {item.description}
             </option>
           ))}
+          <option value={7}>Not Audited</option>
+          <option value={8}>Not Recorded</option>
         </NativeSelect>
       </FormControl>
     );

@@ -57,7 +57,7 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
           </TableHead>
           <TableBody>
             {isLoading &&
-              [0, 1, 2, 3, 4, 5, 6].map(i => (
+              [0, 1, 2, 3, 4, 5, 6].map((i) => (
                 <TableRow key={`${i}_skeleton`}>
                   <TableCell style={{ height: 80 }}>
                     <Skeleton variant="text" width={40} height={16} />
@@ -98,7 +98,7 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
                   const dateB = new Date(b.dateStarted.split(' ')[0]);
                   return dateB.valueOf() - dateA.valueOf();
                 })
-                .map(e => (
+                .map((e) => (
                   <TableRow key={`${e.id}_assignment_row`}>
                     <TableCell>
                       <Typography variant="body1" component="span">

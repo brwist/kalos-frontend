@@ -91,8 +91,8 @@ export class ContractSearch extends React.PureComponent<props, state> {
     });
   }
   updateSearchTarget(e: React.ChangeEvent<HTMLSelectElement>) {
-    //@ts-ignore
     this.setState({
+      //@ts-ignore
       searchBy: e.currentTarget.value,
     });
   }
@@ -180,13 +180,13 @@ export class ContractSearch extends React.PureComponent<props, state> {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {headers.map(h => (
+                {headers.map((h) => (
                   <TableCell key={`${h}_header`}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {this.state.contracts.map(c => (
+              {this.state.contracts.map((c) => (
                 <TableRow
                   key={`${c.id}-${c.dateCreated}`}
                   hover

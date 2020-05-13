@@ -74,9 +74,9 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   toggleLoading() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.setState(
-        prevState => ({
+        (prevState) => ({
           isLoading: !prevState.isLoading,
         }),
         resolve,
@@ -342,14 +342,16 @@ export class Dashboard extends React.PureComponent<props, state> {
           >
             Search
           </Typography>
-          <Search
-            containerStyle={{
-              width: '90%',
-              maxHeight: 400,
-              overflowY: 'scroll',
-              marginBottom: 20,
-            }}
-          />
+          {this.state.currentUser.isEmployee === 1 && (
+            <Search
+              containerStyle={{
+                width: '90%',
+                maxHeight: 400,
+                overflowY: 'scroll',
+                marginBottom: 20,
+              }}
+            />
+          )}
           {this.state.spiffs.length !== 0 && (
             <Spiffs
               spiffs={this.state.spiffs}
