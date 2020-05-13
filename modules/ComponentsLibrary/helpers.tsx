@@ -32,3 +32,17 @@ export const LoremIpsum: FC<Props> = ({ title = LOREM, style = {} }) => (
     {title}
   </Typography>
 );
+
+export const ExampleTitle: FC = ({ children }) => (
+  <div
+    style={{
+      backgroundColor: 'gold',
+      padding: 8,
+      marginBottom: 10,
+      fontFamily: 'sans-serif',
+      fontWeight: 900,
+    }}
+  >
+    {children}
+  </div>
+);

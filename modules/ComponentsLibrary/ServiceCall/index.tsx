@@ -373,7 +373,7 @@ export const ServiceCall: FC<Props> = props => {
             content: loading ? (
               <InfoTable data={makeFakeRows(4, 4)} loading />
             ) : (
-              <Equipment {...props} serviceItem={entry} />
+              <Equipment {...props} serviceItem={entry} customer={customer} />
             ),
           },
           ...(serviceCallId
@@ -413,7 +413,7 @@ export const ServiceCall: FC<Props> = props => {
                   content: loading ? (
                     <InfoTable data={makeFakeRows(2, 5)} loading />
                   ) : (
-                    <Proposal serviceItem={entry} />
+                    <Proposal serviceItem={entry} customer={customer} />
                   ),
                 },
               ]
