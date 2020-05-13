@@ -92,6 +92,7 @@ export interface Props<T> extends SchemaProps<T> {
 
 export const getDefaultValueByType = (type: Type) => {
   if (type === 'number') return 0;
+  if (type === 'time') return '00:00';
   return '';
 };
 
@@ -434,7 +435,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }
   if (type === 'time') {
     const { value } = props;
-    const [valHour, valMinutes] = String(value || '12:00').split(':');
+    const [valHour, valMinutes] = String(
+      value || getDefaultValueByType('time'),
+    ).split(':');
     let hour = +valHour === 0 ? 12 : +valHour > 12 ? +valHour - 12 : +valHour;
     let minutes = +valMinutes;
     if (minutes >= 45) {

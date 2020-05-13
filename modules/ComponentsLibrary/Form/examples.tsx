@@ -20,18 +20,16 @@ export default () => {
   }, [formRef]);
   return (
     <>
-      <ExampleTitle>
-        With external submit
-        <br />
-        <button onClick={handleSubmit}>Submit</button>
-      </ExampleTitle>
+      <ExampleTitle>With subtitle and custom button names</ExampleTitle>
       <Form<Model>
-        //@ts-ignore
-        ref={formRef}
+        title="Form"
+        subtitle="Subtitle"
         schema={SCHEMA_2}
         data={model}
         onSave={data => console.log(data)}
         onClose={() => console.log('CANCEL')}
+        submitLabel="Submit"
+        cancelLabel="Close"
       />
       <ExampleTitle>With actions and children</ExampleTitle>
       <Form<Model>
@@ -48,16 +46,18 @@ export default () => {
       >
         <LoremIpsumList />
       </Form>
-      <ExampleTitle>With subtitle and custom button names</ExampleTitle>
+      <ExampleTitle>
+        With external submit
+        <br />
+        <button onClick={handleSubmit}>Submit</button>
+      </ExampleTitle>
       <Form<Model>
-        title="Form"
-        subtitle="Subtitle"
+        //@ts-ignore
+        ref={formRef}
         schema={SCHEMA_2}
         data={model}
         onSave={data => console.log(data)}
         onClose={() => console.log('CANCEL')}
-        submitLabel="Submit"
-        cancelLabel="Close"
       />
       <ExampleTitle>With pagination and disabled</ExampleTitle>
       <Form<Model>
