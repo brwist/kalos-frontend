@@ -130,15 +130,21 @@ export class TxnLog extends React.PureComponent<props, state> {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {this.state.list.map((activity) => (
-                  <TableRow>
-                    <TableCell>{activity.timestamp}</TableCell>
-                    <TableCell>{activity.description}</TableCell>
-                    <TableCell>
-                      {this.state.actorMap.get(activity.id)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {this.state.list
+                  .filter(
+                    (activity) =>
+                      !activity.description.includes('[old.') ||
+                      !activity.description.includes('[new.'),
+                  )
+                  .map((activity) => (
+                    <TableRow>
+                      <TableCell>{activity.timestamp}</TableCell>
+                      <TableCell>{activity.description}</TableCell>
+                      <TableCell>
+                        {this.state.actorMap.get(activity.id)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </Paper>
