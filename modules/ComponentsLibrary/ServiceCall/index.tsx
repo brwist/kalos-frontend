@@ -15,6 +15,9 @@ import {
   makeFakeRows,
   loadUserById,
   loadServicesRendered,
+  loadPropertyById,
+  UserType,
+  PropertyType,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -32,22 +35,20 @@ import { Proposal } from './components/Proposal';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
-type Customer = User.AsObject;
 export type EventType = Event.AsObject;
 type JobTypeType = JobType.AsObject;
 type JobSubtypeType = JobSubtype.AsObject;
 export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
-export type UserType = User.AsObject;
 export type ServicesRenderedType = ServicesRendered.AsObject;
 
 export interface Props {
   userID: number;
   propertyId: number;
-  serviceCallId: number;
+  serviceCallId?: number;
   loggedUserId: number;
 }
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<Customer> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
   [
     {
       label: 'Notification',
@@ -59,8 +60,13 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<Customer> = [
 ];
 
 export const ServiceCall: FC<Props> = props => {
-  const { userID, propertyId, serviceCallId, loggedUserId } = props;
+  const { userID, propertyId, serviceCallId: eventId, loggedUserId } = props;
+  const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
+  const [property, setProperty] = useState<PropertyType>(
+    new Property().toObject(),
+  );
+  const [customer, setCustomer] = useState<UserType>(new User().toObject());
   const [propertyEvents, setPropertyEvents] = useState<EventType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -81,21 +87,35 @@ export const ServiceCall: FC<Props> = props => {
   const [notificationViewing, setNotificationViewing] = useState<boolean>(
     false,
   );
-  const loadEntry = useCallback(async () => {
-    const req = new Event();
-    req.setId(serviceCallId);
-    const entry = await EventClientService.Get(req);
-    setEntry(entry);
-  }, [setEntry, serviceCallId]);
-  const loadServicesRenderedData = useCallback(async () => {
-    setLoading(true);
-    const servicesRendered = await loadServicesRendered(serviceCallId);
-    setServicesRendered(servicesRendered);
-    setLoading(false);
-  }, [setServicesRendered, serviceCallId]);
+  const loadEntry = useCallback(
+    async (_serviceCallId = serviceCallId) => {
+      if (_serviceCallId) {
+        const req = new Event();
+        req.setId(_serviceCallId);
+        const entry = await EventClientService.Get(req);
+        setEntry(entry);
+      }
+    },
+    [setEntry, serviceCallId],
+  );
+  const loadServicesRenderedData = useCallback(
+    async (_serviceCallId = serviceCallId) => {
+      if (_serviceCallId) {
+        setLoading(true);
+        const servicesRendered = await loadServicesRendered(_serviceCallId);
+        setServicesRendered(servicesRendered);
+        setLoading(false);
+      }
+    },
+    [setServicesRendered, serviceCallId],
+  );
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const property = await loadPropertyById(propertyId);
+      setProperty(property);
+      const customer = await loadUserById(userID);
+      setCustomer(customer);
       const propertyEvents = await loadEventsByPropertyId(propertyId);
       setPropertyEvents(propertyEvents);
       const jobTypes = await loadJobTypes();
@@ -122,13 +142,20 @@ export const ServiceCall: FC<Props> = props => {
     setPropertyEvents,
     loggedUserId,
     setLoggedUser,
+    setProperty,
+    setCustomer,
   ]);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
     const req = new Event();
-    req.setId(serviceCallId);
     const fieldMaskList = [];
+    if (serviceCallId) {
+      req.setId(serviceCallId);
+      fieldMaskList.push('Id');
+    } else {
+      setLoading(true);
+    }
     for (const fieldName in entry) {
       if (['id', 'customer', 'property'].includes(fieldName)) continue;
       const { upperCaseProp, methodName } = getRPCFields(fieldName);
@@ -137,10 +164,17 @@ export const ServiceCall: FC<Props> = props => {
       fieldMaskList.push(upperCaseProp);
     }
     req.setFieldMaskList(fieldMaskList);
-    const res = await EventClientService.Update(req);
+    const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
+      req,
+    );
     setEntry(res);
     setSaving(false);
-  }, [entry, serviceCallId, setEntry, setSaving]);
+    if (!serviceCallId) {
+      setServiceCallId(res.id);
+      await loadEntry(res.id);
+      await loadServicesRenderedData(res.id);
+    }
+  }, [entry, serviceCallId, setEntry, setSaving, setLoading]);
 
   useEffect(() => {
     if (!loaded) {
@@ -170,7 +204,7 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleSaveCustomer = useCallback(
-    async (data: Customer) => {
+    async (data: UserType) => {
       setSaving(true);
       const entry = new User();
       entry.setId(userID);
@@ -204,7 +238,7 @@ export const ServiceCall: FC<Props> = props => {
       })),
   ];
 
-  const { id, logJobNumber, contractNumber, property, customer } = entry;
+  const { id, logJobNumber, contractNumber } = entry;
   const {
     firstname,
     lastname,
@@ -216,8 +250,8 @@ export const ServiceCall: FC<Props> = props => {
     email,
     billingTerms,
     notification,
-  } = customer || new User().toObject();
-  const { address, city, state, zip } = property || new Property().toObject();
+  } = customer;
+  const { address, city, state, zip } = property;
   const data: Data = [
     [
       { label: 'Customer', value: `${firstname} ${lastname}` },
@@ -232,56 +266,65 @@ export const ServiceCall: FC<Props> = props => {
       { label: 'Fax', value: fax, href: 'tel' },
     ],
     [
-      { label: 'Job Number', value: logJobNumber },
+      { label: 'Billing Terms', value: billingTerms },
       { label: 'Email', value: email, href: 'mailto' },
     ],
     [
       { label: 'Property', value: address },
       { label: 'City, State, Zip', value: `${city}, ${state} ${zip}` },
     ],
-    [
-      { label: 'Billing Terms', value: billingTerms },
-      { label: 'Contract Number', value: contractNumber },
-    ],
+    ...(serviceCallId
+      ? [
+          [
+            { label: 'Job Number', value: logJobNumber },
+            { label: 'Contract Number', value: contractNumber },
+          ],
+        ]
+      : []),
   ];
   return (
     <div>
       <SectionBar
         title="Service Call Details"
-        actions={[
-          {
-            label: 'Spiff Apply',
-            url: [
-              '/index.cfm?action=admin:tasks.addtask',
-              'type=Spiff',
-              `job_no=${logJobNumber}`,
-            ].join('&'),
-          },
-          {
-            label: 'Job Activity',
-            url: ['/index.cfm?action=admin:service.viewlogs', `id=${id}`].join(
-              '&',
-            ),
-          },
-          {
-            label: notification ? 'Notification' : 'Add Notification',
-            onClick: notification
-              ? handleSetNotificationViewing(true)
-              : handleSetNotificationEditing(true),
-          },
-          {
-            label: 'Service Call Search',
-            url: '/index.cfm?action=admin:service.calls',
-          },
-          {
-            label: 'Close',
-            url: [
-              '/index.cfm?action=admin:properties.details',
-              `property_id=${propertyId}`,
-              `user_id=${userID}`,
-            ].join('&'),
-          },
-        ]}
+        actions={
+          serviceCallId
+            ? [
+                {
+                  label: 'Spiff Apply',
+                  url: [
+                    '/index.cfm?action=admin:tasks.addtask',
+                    'type=Spiff',
+                    `job_no=${logJobNumber}`,
+                  ].join('&'),
+                },
+                {
+                  label: 'Job Activity',
+                  url: [
+                    '/index.cfm?action=admin:service.viewlogs',
+                    `id=${id}`,
+                  ].join('&'),
+                },
+                {
+                  label: notification ? 'Notification' : 'Add Notification',
+                  onClick: notification
+                    ? handleSetNotificationViewing(true)
+                    : handleSetNotificationEditing(true),
+                },
+                {
+                  label: 'Service Call Search',
+                  url: '/index.cfm?action=admin:service.calls',
+                },
+                {
+                  label: 'Close',
+                  url: [
+                    '/index.cfm?action=admin:properties.details',
+                    `property_id=${propertyId}`,
+                    `user_id=${userID}`,
+                  ].join('&'),
+                },
+              ]
+            : []
+        }
       >
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
@@ -333,20 +376,24 @@ export const ServiceCall: FC<Props> = props => {
               <Equipment {...props} serviceItem={entry} />
             ),
           },
-          {
-            label: 'Services',
-            content: loggedUser ? (
-              <Services
-                serviceCallId={serviceCallId}
-                servicesRendered={servicesRendered}
-                loggedUser={loggedUser}
-                loadServicesRendered={loadServicesRenderedData}
-                loading={loading}
-              />
-            ) : (
-              <InfoTable data={makeFakeRows(4, 4)} loading />
-            ),
-          },
+          ...(serviceCallId
+            ? [
+                {
+                  label: 'Services',
+                  content: loggedUser ? (
+                    <Services
+                      serviceCallId={serviceCallId}
+                      servicesRendered={servicesRendered}
+                      loggedUser={loggedUser}
+                      loadServicesRendered={loadServicesRenderedData}
+                      loading={loading}
+                    />
+                  ) : (
+                    <InfoTable data={makeFakeRows(4, 4)} loading />
+                  ),
+                },
+              ]
+            : []),
           {
             label: 'Invoice',
             content: loading ? (
@@ -359,18 +406,22 @@ export const ServiceCall: FC<Props> = props => {
               />
             ),
           },
-          {
-            label: 'Proposal',
-            content: loading ? (
-              <InfoTable data={makeFakeRows(2, 5)} loading />
-            ) : (
-              <Proposal serviceItem={entry} />
-            ),
-          },
+          ...(serviceCallId
+            ? [
+                {
+                  label: 'Proposal',
+                  content: loading ? (
+                    <InfoTable data={makeFakeRows(2, 5)} loading />
+                  ) : (
+                    <Proposal serviceItem={entry} />
+                  ),
+                },
+              ]
+            : []),
         ]}
         defaultOpenIdx={0}
       />
-      {customer && (
+      {customer && serviceCallId > 0 && (
         <Modal
           open={notificationEditing || notificationViewing}
           onClose={() => {
@@ -378,7 +429,7 @@ export const ServiceCall: FC<Props> = props => {
             handleSetNotificationEditing(false)();
           }}
         >
-          <Form<Customer>
+          <Form<UserType>
             title={
               notificationViewing
                 ? 'Customer Notification'
@@ -411,7 +462,7 @@ export const ServiceCall: FC<Props> = props => {
                       variant: 'outlined',
                       onClick: () => {
                         handleSetNotificationViewing(false)();
-                        handleSaveCustomer({ notification: '' } as Customer);
+                        handleSaveCustomer({ notification: '' } as UserType);
                       },
                     },
                   ]
