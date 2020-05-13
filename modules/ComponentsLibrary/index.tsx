@@ -22,6 +22,7 @@ import Modal from './Modal/examples';
 import PlainForm from './PlainForm/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
+import ServiceCall from './ServiceCall/examples';
 import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
@@ -49,6 +50,7 @@ const COMPONENTS = {
   PlainForm,
   Search,
   SectionBar,
+  ServiceCall,
   ServiceItemLinks,
   ServiceItemReadings,
   ServiceItems,

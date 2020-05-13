@@ -7,19 +7,19 @@ import {
   ServicesRenderedClient,
   ServicesRendered,
 } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
-import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
-import { Form } from '../../ComponentsLibrary/Form';
-import { Modal } from '../../ComponentsLibrary/Modal';
+import { SectionBar } from '../../SectionBar';
+import { ConfirmDelete } from '../../ConfirmDelete';
+import { InfoTable, Data, Columns } from '../../InfoTable';
+import { PlainForm, Schema } from '../../PlainForm';
+import { Form } from '../../Form';
+import { Modal } from '../../Modal';
 import {
   makeFakeRows,
   timestamp,
   formatDateTime,
   formatDateTimeDay,
   getRPCFields,
-} from '../../../helpers';
+} from '../../../../helpers';
 import {
   ENDPOINT,
   SERVICE_STATUSES,
@@ -27,8 +27,8 @@ import {
   PAYMENT_COLLECTED_LIST,
   PAYMENT_NOT_COLLECTED_LIST,
   OPTION_BLANK,
-} from '../../../constants';
-import { UserType, ServicesRenderedType } from './ServiceCallDetails';
+} from '../../../../constants';
+import { UserType, ServicesRenderedType } from '../';
 
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 

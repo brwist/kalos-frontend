@@ -1,15 +1,15 @@
 import React, { FC, useCallback, useState, useMemo } from 'react';
-import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
-import { InfoTable } from '../../ComponentsLibrary/InfoTable';
-import { makeFakeRows } from '../../../helpers';
+import { PlainForm, Schema, Option } from '../../PlainForm';
+import { InfoTable } from '../../InfoTable';
+import { makeFakeRows } from '../../../../helpers';
 import {
   RESIDENTIAL_OPTIONS,
   EVENT_STATUS_LIST,
   PAYMENT_TYPE_LIST,
   JOB_STATUS_COLORS,
   OPTION_BLANK,
-} from '../../../constants';
-import { EventType, JobTypeSubtypeType } from './ServiceCallDetails';
+} from '../../../../constants';
+import { EventType, JobTypeSubtypeType } from '../';
 
 const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
   label,
