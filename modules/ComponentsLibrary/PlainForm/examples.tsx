@@ -21,9 +21,9 @@ export type Model = {
 
 export const model: Model = {
   firstName: 'John',
-  lastName: 'Doe',
+  lastName: '',
   gender: GENDERS[0],
-  login: 'test',
+  login: '',
   password: '123456',
   note: `Lorem ipsum dolor sit amet. Abon fergo irgo fingo.
 dolor sit
