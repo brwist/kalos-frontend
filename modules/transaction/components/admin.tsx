@@ -37,6 +37,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../../constants';
 import { range } from '../../../helpers';
+import { RecordPageReq } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 interface props {
   userID: number;
@@ -92,12 +93,12 @@ export class TransactionAdminView extends React.Component<props, state> {
     super(props);
     this.state = {
       page: 0,
-      acceptOverride: ![1734, 9646].includes(props.userID),
+      acceptOverride: ![1734, 9646, 8418].includes(props.userID),
       isLoading: false,
       departmentView: !props.isSU,
       transactions: [],
       filters: {
-        statusID: props.isSU ? 3 : 2,
+        statusID: props.isSU ? 8 : 2,
         yearCreated: `${new Date().getFullYear()}`,
         sort: {
           sortBy: 'timestamp',
@@ -116,6 +117,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.checkFilters = this.checkFilters.bind(this);
     this.toggleView = this.toggleView.bind(this);
     this.altChangePage = this.altChangePage.bind(this);
+    this.handleRecordPage = this.handleRecordPage.bind(this);
     this.handleSubmitPage = this.handleSubmitPage.bind(this);
     this.copyPage = this.copyPage.bind(this);
     this.makeAddJobNumber = this.makeAddJobNumber.bind(this);
@@ -317,17 +319,26 @@ export class TransactionAdminView extends React.Component<props, state> {
       obj.setTimestamp(`${filters.yearCreated}-%`);
     }
     if (filters.statusID) {
-      if (filters.statusID === 5) {
-        obj.setIsRecorded(true);
-      } else if (filters.statusID === 6) {
-        obj.setIsAudited(true);
-      } else {
-        obj.setStatusId(filters.statusID);
-        if (filters.statusID === 3) {
-          console.log('status is 3');
+      switch (filters.statusID) {
+        case 5:
+          obj.setIsRecorded(true);
+          break;
+        case 6:
+          obj.setIsAudited(true);
+          break;
+        case 7:
+          obj.setIsAudited(false);
+          obj.setFieldMaskList(['IsAudited']);
+          obj.setStatusId(3);
+          break;
+        case 8:
+          obj.setIsRecorded(false);
           obj.setFieldMaskList(['IsRecorded']);
-          console.log(obj.getFieldMaskList());
-        }
+          obj.setStatusId(3);
+          break;
+        default:
+          obj.setStatusId(filters.statusID);
+          break;
       }
     }
     obj.setOrderBy(filters.sort.sortBy);
@@ -378,10 +389,15 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.setState(
       { isLoading: true },
       await (async () => {
-        const res = (await this.TxnClient.BatchGet(reqObj)).toObject();
+        const res = await this.TxnClient.BatchGet(reqObj);
+        const asObject = res.toObject();
+
+        console.log('fetch res: ', res);
+        console.log('as object: ', asObject);
+
         this.setState({
-          transactions: res.resultsList,
-          count: res.totalCount,
+          transactions: asObject.resultsList,
+          count: asObject.totalCount,
           isLoading: false,
         });
       }),
@@ -418,6 +434,38 @@ export class TransactionAdminView extends React.Component<props, state> {
     document.body.removeChild(el);
   }
 
+  async handleRecordPage() {
+    const ok = confirm(
+      'Are you sure want to mark the current page as recorded?',
+    );
+    if (ok) {
+      const ids = this.state.transactions.map((t) => t.id);
+      const req = new RecordPageReq();
+      req.setTransactionIdsList(ids);
+
+      console.log('ids: ', ids);
+      let reqObj = new Transaction();
+      reqObj = this.applyFilters(reqObj);
+      if (this.state.departmentView) {
+        reqObj.setDepartmentId(this.props.departmentId);
+      }
+      reqObj.setPageNumber(this.state.page);
+      reqObj.setIsActive(1);
+      req.setRequestData(reqObj);
+
+      this.toggleLoading(async () => {
+        const transactionList = (
+          await this.TxnClient.RecordPage(req)
+        ).toObject();
+        this.setState({
+          transactions: transactionList.resultsList,
+          count: transactionList.totalCount,
+          isLoading: false,
+        });
+      });
+    }
+  }
+
   async handleSubmitPage() {
     const ok = confirm(
       `Are you sure you want to mark the current page as ${
@@ -426,13 +474,13 @@ export class TransactionAdminView extends React.Component<props, state> {
     );
     if (ok) {
       const fns = this.state.transactions
-        .map((t) =>
-          this.makeUpdateStatus(
-            t.id,
-            this.state.acceptOverride ? 3 : 5,
-            this.state.acceptOverride ? 'accepted' : 'recorded',
-          ),
-        )
+        .map((t) => {
+          if (this.state.acceptOverride) {
+            return this.makeUpdateStatus(t.id, 3, 'accepted');
+          } else {
+            return this.makeRecordTransaction(t.id);
+          }
+        })
         .map((f) => f());
       this.setState({ isLoading: true }, async () => {
         try {
@@ -685,22 +733,29 @@ export class TransactionAdminView extends React.Component<props, state> {
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip
-            title={
-              this.state.acceptOverride
-                ? 'Mark current page as approved'
-                : 'Mark current page as entered'
-            }
-          >
-            <span>
-              <IconButton
-                onClick={this.handleSubmitPage}
-                disabled={this.state.isLoading}
-              >
-                <SubmitIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {this.state.acceptOverride ? (
+            <Tooltip title="Mark current page as approved">
+              <span>
+                <IconButton
+                  onClick={this.handleSubmitPage}
+                  disabled={this.state.isLoading}
+                >
+                  <SubmitIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Mark current page as recorded">
+              <span>
+                <IconButton
+                  onClick={this.handleRecordPage}
+                  disabled={this.state.isLoading}
+                >
+                  <SubmitIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
           {this.props.isSU && (
             <Tooltip
               title={
@@ -709,9 +764,11 @@ export class TransactionAdminView extends React.Component<props, state> {
                   : 'Show Your Department'
               }
             >
-              <IconButton onClick={this.toggleView}>
-                {this.state.departmentView ? <PeopleIcon /> : <PersonIcon />}
-              </IconButton>
+              <span>
+                <IconButton onClick={this.toggleView}>
+                  {this.state.departmentView ? <PeopleIcon /> : <PersonIcon />}
+                </IconButton>
+              </span>
             </Tooltip>
           )}
         </Toolbar>
@@ -789,6 +846,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               txns.map((t) => (
                 <TransactionRow
                   txn={t}
+                  userID={this.props.userID}
                   key={`txnRow-${t.id}`}
                   acceptOverride={this.state.acceptOverride}
                   departmentView={this.state.departmentView}

@@ -102,8 +102,8 @@ export class CustomerSearch extends React.PureComponent<props, state> {
     });
   }
   updateSearchTarget(e: React.ChangeEvent<HTMLSelectElement>) {
-    //@ts-ignore
     this.setState({
+      //@ts-ignore
       searchBy: e.currentTarget.value,
     });
   }
@@ -146,7 +146,7 @@ export class CustomerSearch extends React.PureComponent<props, state> {
               value={this.state.searchBy}
               onChange={this.updateSearchTarget}
             >
-              {headers.map(h => (
+              {headers.map((h) => (
                 <option value={h} key={`${h}_select`}>
                   {h}
                 </option>
@@ -199,13 +199,13 @@ export class CustomerSearch extends React.PureComponent<props, state> {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {headers.map(h => (
+                {headers.map((h) => (
                   <TableCell key={`${h}_header`}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {this.state.customers.map(u => (
+              {this.state.customers.map((u) => (
                 <TableRow
                   key={`${u.id}-${u.dateCreated}`}
                   hover

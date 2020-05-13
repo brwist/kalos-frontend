@@ -32,6 +32,7 @@ interface props {
   txn: Transaction.AsObject;
   departmentView: boolean;
   acceptOverride: boolean;
+  userID: number;
   enter(): Promise<void>;
   audit(): Promise<void>;
   accept(): Promise<void>;
@@ -60,8 +61,8 @@ export function TransactionRow({
   updateNotes,
   acceptOverride,
   updateCostCenter,
+  userID,
 }: props) {
-  console.log('will accept', acceptOverride);
   const [state, setState] = useState<state>({
     files: [],
   });
@@ -174,6 +175,7 @@ export function TransactionRow({
 
   const amount = prettyMoney(txn.amount);
   console.log(departmentView, 'is department');
+  console.log(txn.documentsList);
   return (
     <>
       <TableRow hover>
@@ -273,9 +275,16 @@ export function TransactionRow({
             notes={txn.notes}
             disabled={txn.notes === ''}
           />
-          {!departmentView && !txn.isAudited && (
-            <Tooltip title={'Mark as correct'} placement="top">
-              <IconButton onClick={auditTxn}>
+          {[9928, 9646, 1734].includes(userID) && (
+            <Tooltip
+              title={
+                txn.isAudited
+                  ? 'This transaction has already been aduited'
+                  : 'Mark as correct'
+              }
+              placement="top"
+            >
+              <IconButton onClick={auditTxn} disabled={txn.isAudited}>
                 <CheckIcon />
               </IconButton>
             </Tooltip>
@@ -333,7 +342,10 @@ async function fetchFiles(
       (obj) => obj.getKey().replace(`${txn.id}-`, '') === f.name,
     );
     if (docObj) {
+      console.log('found doc', docObj);
       f.data = docObj.getData() as Uint8Array;
+    } else {
+      console.log('could not find doc object', txn.id, f.name);
     }
     return f;
   });
