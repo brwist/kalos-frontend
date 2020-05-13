@@ -15,6 +15,7 @@ import {
   Schema as PlainFormSchema,
 } from '../PlainForm';
 import { Options as FieldOptions, Type } from '../Field';
+import { formatDate } from '../../../helpers';
 
 export type Schema<T> = PlainFormSchema<T>;
 
@@ -25,6 +26,7 @@ interface Props<T> extends PlainFormProps<T> {
   subtitle?: string;
   onSave: (data: T) => void;
   onClose: () => void;
+  onChange?: (data: T) => void;
   actions?: ButtonProps[];
   pagination?: Pagination;
   submitLabel?: string;
@@ -46,6 +48,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       data,
       onSave,
       onClose,
+      onChange,
       disabled = false,
       readOnly = false,
       actions = [],
@@ -81,8 +84,13 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
     );
     const [validations, setValidations] = useState<Validation>({});
     const handleChange = useCallback(
-      (formData: typeof data) => setFormData(formData),
-      [setFormData],
+      (formData: typeof data) => {
+        setFormData(formData);
+        if (onChange) {
+          onChange(formData);
+        }
+      },
+      [setFormData, onChange],
     );
     const handleSave = useCallback(() => {
       setValidations({});
