@@ -12,10 +12,11 @@ import { Form, Options } from '../../Form';
 import { Modal } from '../../Modal';
 import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
-import { loadStoredQuotes } from '../../../../helpers';
+import { loadStoredQuotes, UserType } from '../../../../helpers';
 
 interface Props {
   serviceItem: EventType;
+  customer: UserType;
 }
 
 type Form = {
@@ -86,9 +87,9 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Proposal: FC<Props> = ({ serviceItem }) => {
+export const Proposal: FC<Props> = ({ serviceItem, customer }) => {
   const classes = useStyles();
-  const { customer, notes } = serviceItem;
+  const { notes } = serviceItem;
   const [editing, setEditing] = useState<Entry>();
   const [file, setFile] = useState<File>({
     localCopyName: '',

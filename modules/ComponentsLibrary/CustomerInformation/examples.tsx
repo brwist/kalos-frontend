@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { CustomerInformation } from './';
 import { PlainForm, Schema } from '../PlainForm';
-import { LoremIpsumList } from '../helpers';
+import { LoremIpsumList, ExampleTitle } from '../helpers';
 
 type Entry = {
   userID: number;
@@ -34,9 +34,9 @@ export default () => {
 
   return (
     <>
-      <div style={{ border: '5px solid gold', marginBottom: 10 }}>
+      <ExampleTitle>
         <PlainForm schema={SCHEMA} data={data} onChange={handleChange} />
-      </div>
+      </ExampleTitle>
       <CustomerInformation
         key={`${userID}-${propertyId}`}
         userID={userID}

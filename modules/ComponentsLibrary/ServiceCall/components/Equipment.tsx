@@ -2,6 +2,7 @@ import React, { FC, useCallback, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { ServiceItems, Entry, Repair } from '../../ServiceItems';
 import { PlainForm, Schema } from '../../PlainForm';
+import { UserType } from '../../../../helpers';
 import { EventType } from '../';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
   loggedUserId: number;
   propertyId: number;
   serviceItem: EventType;
+  customer: UserType;
 }
 
 type Form = {
@@ -23,9 +25,9 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Equipment: FC<Props> = ({ serviceItem, ...props }) => {
+export const Equipment: FC<Props> = ({ serviceItem, customer, ...props }) => {
   const classes = useStyles();
-  const { customer, notes } = serviceItem;
+  const { notes } = serviceItem;
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
   const [selected, setSelected] = useState<Entry[]>([]);
   const [repairs, setRepairs] = useState<Repair[]>([]);
