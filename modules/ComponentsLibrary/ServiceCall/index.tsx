@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, useRef } from 'react';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
@@ -60,6 +60,11 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
 ];
 
 export const ServiceCall: FC<Props> = props => {
+  const requestRef = useRef(null);
+  const [tabIdx, setTabIdx] = useState<number>(0);
+  const [tabKey, setTabKey] = useState<number>(0);
+  const [pendingSave, setPendingSave] = useState<boolean>(false);
+  const [requestValid, setRequestValid] = useState<boolean>(false);
   const { userID, propertyId, serviceCallId: eventId, loggedUserId } = props;
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
@@ -147,6 +152,13 @@ export const ServiceCall: FC<Props> = props => {
   ]);
 
   const handleSave = useCallback(async () => {
+    setPendingSave(true);
+    if (tabIdx !== 0) {
+      setTabIdx(0);
+      setTabKey(tabKey + 1);
+    }
+  }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
+  const save = useCallback(async () => {
     setSaving(true);
     const req = new Event();
     const fieldMaskList = [];
@@ -184,11 +196,34 @@ export const ServiceCall: FC<Props> = props => {
     if (entry && entry.customer && entry.customer.notification !== '') {
       setNotificationViewing(true);
     }
-  }, [entry, loaded, load, setLoaded, setNotificationViewing]);
+    if (pendingSave && requestValid) {
+      setPendingSave(false);
+      save();
+    }
+    if (pendingSave && tabIdx === 0 && requestRef.current) {
+      //@ts-ignore
+      requestRef.current.click();
+    }
+  }, [
+    entry,
+    loaded,
+    load,
+    setLoaded,
+    setNotificationViewing,
+    pendingSave,
+    requestValid,
+    setPendingSave,
+    save,
+    tabIdx,
+    requestRef,
+  ]);
 
   const handleChangeEntry = useCallback(
-    (data: EventType) => setEntry({ ...entry, ...data }),
-    [entry, setEntry],
+    (data: EventType) => {
+      setEntry({ ...entry, ...data });
+      setPendingSave(false);
+    },
+    [entry, setEntry, setPendingSave],
   );
 
   const handleSetNotificationEditing = useCallback(
@@ -338,6 +373,7 @@ export const ServiceCall: FC<Props> = props => {
           },
           {
             label: 'Save and Invoice',
+            // onClick: // TODO
             disabled: loading || saving,
           },
           {
@@ -352,11 +388,16 @@ export const ServiceCall: FC<Props> = props => {
         ]}
       />
       <Tabs
+        key={tabKey}
+        defaultOpenIdx={tabIdx}
+        onChange={setTabIdx}
         tabs={[
           {
             label: 'Request',
             content: (
               <Request
+                //@ts-ignore
+                ref={requestRef}
                 serviceItem={entry}
                 propertyEvents={propertyEvents}
                 loading={loading}
@@ -365,6 +406,7 @@ export const ServiceCall: FC<Props> = props => {
                 jobTypeSubtypes={jobTypeSubtypes}
                 onChange={handleChangeEntry}
                 disabled={saving}
+                onValid={setRequestValid}
               />
             ),
           },
@@ -419,7 +461,6 @@ export const ServiceCall: FC<Props> = props => {
               ]
             : []),
         ]}
-        defaultOpenIdx={0}
       />
       {customer && serviceCallId > 0 && (
         <Modal

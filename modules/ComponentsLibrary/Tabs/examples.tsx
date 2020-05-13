@@ -4,7 +4,7 @@ import { LoremIpsumList } from '../helpers';
 
 export default () => (
   <Tabs
-    tabs={Array.from(Array(10)).map((_, idx) => ({
+    tabs={Array.from(Array(5)).map((_, idx) => ({
       label: `Tab ${idx + 1}`,
       content: (
         <LoremIpsumList
@@ -13,5 +13,7 @@ export default () => (
         />
       ),
     }))}
+    defaultOpenIdx={3}
+    onChange={idx => console.log({ idx })}
   />
 );
