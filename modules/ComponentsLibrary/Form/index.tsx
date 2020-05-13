@@ -1,11 +1,4 @@
-import React, {
-  ReactElement,
-  useCallback,
-  useState,
-  forwardRef,
-  ForwardRefExoticComponent,
-  RefAttributes,
-} from 'react';
+import React, { ReactElement, useCallback, useState, forwardRef } from 'react';
 import { SectionBar, Pagination } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
 import {
@@ -14,8 +7,7 @@ import {
   Validation,
   Schema as PlainFormSchema,
 } from '../PlainForm';
-import { Options as FieldOptions, Type } from '../Field';
-import { formatDate } from '../../../helpers';
+import { Options as FieldOptions, getDefaultValueByType } from '../Field';
 
 export type Schema<T> = PlainFormSchema<T>;
 
@@ -32,11 +24,6 @@ interface Props<T> extends PlainFormProps<T> {
   submitLabel?: string;
   cancelLabel?: string;
 }
-
-const getDefaultValueByType = (type: Type) => {
-  if (type === 'number') return 0;
-  return '';
-};
 
 //@ts-ignore
 export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
@@ -73,7 +60,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
                     ...aggr,
                     [name]:
                       data[name] !== undefined
-                        ? data[name]
+                        ? data[name] || getDefaultValueByType(type)
                         : getDefaultValueByType(type),
                   },
             {},

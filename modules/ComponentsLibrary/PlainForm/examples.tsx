@@ -30,7 +30,7 @@ dolor sit
 amet`,
   mailing: 1,
   dob: '1980-11-23 00:00:00',
-  hour: '21:45',
+  hour: '',
   technician: '0',
   signature: '',
   coverImage: '',
@@ -89,6 +89,7 @@ export const SCHEMA_2: Schema<Model> = [
       name: 'hour',
       label: 'Hour',
       type: 'time',
+      required: true,
     },
   ],
   [
