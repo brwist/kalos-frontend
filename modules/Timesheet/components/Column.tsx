@@ -82,7 +82,6 @@ interface EditedEntry extends TimesheetLine.AsObject {
 
 type Props = {
   date: string,
-  hiddenSR: ServicesRendered.AsObject[],
   data: any,
   loading: boolean,
 };

@@ -114,7 +114,12 @@ type Action =
   | { type: 'setUsers', data: {user: User.AsObject, owner: User.AsObject} }
   | { type: 'fetchingTimesheetData' }
   | { type: 'fetchedTimesheetData', data: TimesheetData }
-  | { type: 'changeDate', value: Date };
+  | { type: 'changeDate', value: Date }
+  | { type: 'addNewTimesheet' }
+  | { type: 'editTimesheetCard', data: TimesheetLine.AsObject }
+  | { type: 'editServicesRenderedCard', data: ServicesRendered.AsObject }
+  | { type: 'saveTimecard', data: TimesheetLine.AsObject, action: 'delete' | 'approve' | 'reject' }
+  | { type: 'closeEditingModal' };
 
 
 const reducer = (state: State, action: Action) => {
@@ -183,6 +188,70 @@ const reducer = (state: State, action: Action) => {
         selectedDate: action.value,
         shownDates: getShownDates(action.value),
       };
+    case 'addNewTimesheet':
+      return {
+        ...state,
+        editing: {
+          entry: new TimesheetLine().toObject(),
+          modalShown: true,
+          action: 'create',
+        },
+      };
+    case 'editTimesheetCard':
+      return {
+        ...state,
+        editing: {
+          entry: action.data,
+          modalShown: true,
+          action: 'update',
+        }
+      };
+    case 'editServicesRenderedCard': {
+      const card = action.data;
+      const entry = new TimesheetLine().toObject();
+      Object.keys(entry).forEach(key => {
+        if (card.hasOwnProperty(key)) {
+          // @ts-ignore
+          entry[key] = card[key];
+        }
+      });
+      entry.servicesRenderedId = card.id;
+      if (card.status === 'Enroute') {
+        entry.classCodeId = 37;
+      }
+
+      return {
+        ...state,
+        editing: {
+          modalShown: true,
+          entry,
+          action: 'convert',
+          convertingSR: card,
+        },
+      };
+    }
+    case 'saveTimecard': {
+      const data = [...state.data];
+
+      return {
+        ...state,
+        data,
+        editing: {
+          entry: emptyTimesheet,
+          modalShown: false,
+          action: '',
+        }
+      }
+    }
+    case 'closeEditingModal':
+      return {
+        ...state,
+        editing: {
+          entry: emptyTimesheet,
+          modalShown: false,
+          action: '',
+        },
+      };
     default:
       return state;
   }
@@ -217,78 +286,24 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       hiddenSR: [],
     },
   });
-  const { user, owner, fetchingTimesheetData, data, payroll, selectedDate, shownDates } = state;
-  const [editing, setEditingState] = useState(state.editing);
+  const { user, owner, fetchingTimesheetData, data, payroll, selectedDate, shownDates, editing } = state;
   const handleOnSave = (entry: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
-    const editedEntries = [...editing.editedEntries];
-    const alreadyEditedIndex = editedEntries.findIndex(item => item.id === entry.id);
-    const data = { ...entry, action: action || editing.action };
-    if (alreadyEditedIndex >= 0) {
-      editedEntries[alreadyEditedIndex] = data;
-    } else {
-      editedEntries.push(data);
-    }
-
-    const hiddenSR = [...editing.hiddenSR];
-    if (editing.convertingSR) {
-      hiddenSR.push(editing.convertingSR);
-    }
-
-    setEditingState({
-      entry: emptyTimesheet,
-      modalShown: false,
-      action: '',
-      editedEntries,
-      hiddenSR,
-    })
+    dispatch({ type: 'saveTimecard', data: entry, action });
   };
 
   const handleAddNewTimeshetCardClicked = () => {
-    setEditingState({
-      ...editing,
-      entry: new TimesheetLine().toObject(),
-      modalShown: true,
-      action: 'create',
-    });
+    dispatch({type: 'addNewTimesheet'});
   };
 
   const editTimesheetCard = (card: TimesheetLine.AsObject) => {
-    setEditingState({
-      ...editing,
-      entry: card,
-      modalShown: true,
-      action: 'update',
-    });
+    dispatch({ type: 'editTimesheetCard', data: card });
   };
   const editServicesRenderedCard = (card: ServicesRendered.AsObject) => {
-    const entry = new TimesheetLine().toObject();
-    Object.keys(entry).forEach(key => {
-      if (card.hasOwnProperty(key)) {
-        // @ts-ignore
-        entry[key] = card[key];
-      }
-    });
-    entry.servicesRenderedId = card.id;
-    if (card.status === 'Enroute') {
-      entry.classCodeId = 37;
-    }
-
-    setEditingState({
-      ...editing,
-      modalShown: true,
-      entry,
-      action: 'convert',
-      convertingSR: card,
-    });
+    dispatch({ type: 'editServicesRenderedCard', data: card });
   };
 
   const handleCloseModal = () => {
-    setEditingState({
-      ...editing,
-      entry: emptyTimesheet,
-      modalShown: false,
-      action: '',
-    })
+    dispatch({ type: 'closeEditingModal' });
   };
 
   const addNewOptions = [
@@ -344,8 +359,6 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     })();
   }, [shownDates]);
 
-  console.log(data);
-
   if (!user) {
     return null;
   }
@@ -375,10 +388,6 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
                     <Column
                       key={date}
                       date={date}
-                      userId={userId}
-                      timesheetOwnerId={timesheetOwnerId}
-                      editedEntries={editing.editedEntries}
-                      hiddenSR={editing.hiddenSR}
                       data={data[date]}
                       loading={fetchingTimesheetData}
                     />
