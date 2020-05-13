@@ -1,10 +1,9 @@
 import React, { FC, useState, useCallback } from 'react';
-import { EventType } from './ServiceCallDetails';
-import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
-import { Field } from '../../ComponentsLibrary/Field';
-import { ServicesRenderedType } from './ServiceCallDetails';
-import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../constants';
-import { formatDateTimeDay } from '../../../helpers';
+import { EventType, ServicesRenderedType } from '../';
+import { PlainForm, Schema } from '../../PlainForm';
+import { Field } from '../../Field';
+import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../../constants';
+import { formatDateTimeDay } from '../../../../helpers';
 
 const { COMPLETED, INCOMPLETE } = SERVICE_STATUSES;
 

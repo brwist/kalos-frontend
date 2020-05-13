@@ -1,12 +1,8 @@
 import React, { FC, useCallback, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import {
-  ServiceItems,
-  Entry,
-  Repair,
-} from '../../ComponentsLibrary/ServiceItems';
-import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
-import { EventType } from './ServiceCallDetails';
+import { ServiceItems, Entry, Repair } from '../../ServiceItems';
+import { PlainForm, Schema } from '../../PlainForm';
+import { EventType } from '../';
 
 interface Props {
   userID: number;

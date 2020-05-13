@@ -17,17 +17,17 @@ import {
   loadServicesRendered,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
-import { Modal } from '../../ComponentsLibrary/Modal';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { Tabs } from '../../ComponentsLibrary/Tabs';
-import { Option } from '../../ComponentsLibrary/Field';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
-import { Request } from './Request';
-import { Equipment } from './Equipment';
-import { Services } from './Services';
-import { Invoice } from './Invoice';
-import { Proposal } from './Proposal';
+import { Modal } from '../Modal';
+import { SectionBar } from '../SectionBar';
+import { InfoTable, Data } from '../InfoTable';
+import { Tabs } from '../Tabs';
+import { Option } from '../Field';
+import { Form, Schema } from '../Form';
+import { Request } from './components/Request';
+import { Equipment } from './components/Equipment';
+import { Services } from './components/Services';
+import { Invoice } from './components/Invoice';
+import { Proposal } from './components/Proposal';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -58,7 +58,7 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<Customer> = [
   ],
 ];
 
-export const ServiceCallDetails: FC<Props> = props => {
+export const ServiceCall: FC<Props> = props => {
   const { userID, propertyId, serviceCallId, loggedUserId } = props;
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
   const [propertyEvents, setPropertyEvents] = useState<EventType[]>([]);

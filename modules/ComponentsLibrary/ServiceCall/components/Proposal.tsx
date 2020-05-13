@@ -4,15 +4,15 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { StoredQuote } from '@kalos-core/kalos-rpc/StoredQuote';
-import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
-import { Field, Value } from '../../ComponentsLibrary/Field';
-import { InfoTable, Columns, Data } from '../../ComponentsLibrary/InfoTable';
-import { Form, Options } from '../../ComponentsLibrary/Form';
-import { Modal } from '../../ComponentsLibrary/Modal';
-import { StoredQuotes } from '../../ComponentsLibrary/StoredQuotes';
-import { EventType } from './ServiceCallDetails';
-import { loadStoredQuotes } from '../../../helpers';
+import { SectionBar } from '../../SectionBar';
+import { PlainForm, Schema } from '../../PlainForm';
+import { Field, Value } from '../../Field';
+import { InfoTable, Columns, Data } from '../../InfoTable';
+import { Form, Options } from '../../Form';
+import { Modal } from '../../Modal';
+import { StoredQuotes } from '../../StoredQuotes';
+import { EventType } from '../';
+import { loadStoredQuotes } from '../../../../helpers';
 
 interface Props {
   serviceItem: EventType;
