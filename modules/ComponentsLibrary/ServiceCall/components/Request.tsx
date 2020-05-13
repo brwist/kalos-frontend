@@ -1,5 +1,6 @@
-import React, { FC, useCallback, useState, useMemo } from 'react';
-import { PlainForm, Schema, Option } from '../../PlainForm';
+import React, { FC, useCallback, useState, useMemo, useRef } from 'react';
+import { PlainForm, Option } from '../../PlainForm';
+import { Form, Schema } from '../../Form';
 import { InfoTable } from '../../InfoTable';
 import { makeFakeRows } from '../../../../helpers';
 import {
@@ -37,6 +38,7 @@ export const Request: FC<Props> = ({
   jobSubtypeOptions,
   onChange,
 }) => {
+  const formRef = useRef(null);
   const [resetId, setResetId] = useState<number>(0);
   const handleChange = useCallback(
     (data: EventType) => {
@@ -206,11 +208,15 @@ export const Request: FC<Props> = ({
     ],
   ];
   return (
-    <PlainForm
+    <Form<EventType>
+      //@ts-ignore
+      ref={formRef}
       key={resetId}
       schema={SCHEMA}
       data={serviceItem}
       onChange={handleChange}
+      onClose={() => {}}
+      onSave={() => {}}
       disabled={disabled}
     />
   );
