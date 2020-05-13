@@ -193,10 +193,15 @@ export class TxnCard extends React.PureComponent<props, state> {
           let statusMessage = this.props.isManager
             ? 'manager receipt accepted automatically'
             : 'submitted for approval';
-          if (txn.costCenterId === 2 || txn.costCenter.id === 2) {
+          if (
+            txn.costCenterId === 2 ||
+            txn.costCenter.id === 2 ||
+            txn.costCenterId === 2 ||
+            txn.costCenter.id
+          ) {
             statusID = 3;
             statusMessage =
-              'receipt marked as fraud and sent directly to accounting for review';
+              'receipt marked as accidental or fraudeltn and sent directly to accounting for review';
             const mailBody = `A fraud transaction has been reported by ${
               txn.ownerName
             } (${txn.cardUsed}).

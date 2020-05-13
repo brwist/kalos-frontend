@@ -700,6 +700,7 @@ var NAMED_EXPORTS = {
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_pb.js': [
         'Transaction',
         'TransactionList',
+        'RecordPageReq',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_account_pb.js': [
         'TransactionAccount',
@@ -748,6 +749,11 @@ var NAMED_EXPORTS = {
         'TransactionData',
         'Prediction',
     ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/stored_quote_pb.js': [
+        'StoredQuote',
+        'StoredQuoteList',
+    ],
+    'node_modules/pako/index.js': ['inflate', 'deflate', 'gzip', 'ungzip'],
     'node_modules/prop-types/index.js': ['default'],
     'prop-types': [
         'array',
