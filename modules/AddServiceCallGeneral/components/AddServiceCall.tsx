@@ -104,7 +104,7 @@ export const AddServiceCall: FC<Props> = props => {
       setCustomerOpened(data);
       setPropertyOpened(data);
     },
-    [setCustomerOpened, setAddCustomer],
+    [setCustomerOpened, setAddCustomer, setPropertyOpened],
   );
   const handlePropertySave = useCallback(
     (data: PropertyType) => {
@@ -112,7 +112,14 @@ export const AddServiceCall: FC<Props> = props => {
       setCustomerOpened(undefined);
       setServiceCallOpened(data);
     },
-    [setPropertyOpened],
+    [setPropertyOpened, setCustomerOpened, setServiceCallOpened],
+  );
+  const handleAddProperty = useCallback(
+    (customer: UserType) => {
+      setCustomerOpened(customer);
+      setPropertyOpened(customer);
+    },
+    [setCustomerOpened, setPropertyOpened],
   );
   return (
     <div>
@@ -140,6 +147,7 @@ export const AddServiceCall: FC<Props> = props => {
             {...props}
             onAddServiceCall={setServiceCallOpened}
             onCustomerClick={handleSetCustomerOpened}
+            onAddProperty={handleAddProperty}
           />
         ))
       )}
