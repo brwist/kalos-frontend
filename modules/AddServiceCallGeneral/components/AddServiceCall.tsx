@@ -10,6 +10,7 @@ import {
 } from '../../../helpers';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { CustomerEdit } from '../../ComponentsLibrary/CustomerEdit';
+import { PropertyEdit } from '../../ComponentsLibrary/PropertyEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails';
 import { SearchForm, FormType, getFormInit } from './SearchForm';
@@ -41,7 +42,8 @@ export const AddServiceCall: FC<Props> = props => {
   const { loggedUserId } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [customerOpened, setCustomerOpened] = useState<UserType>();
-  const [propertyOpened, setPropertyOpened] = useState<PropertyType>();
+  const [propertyOpened, setPropertyOpened] = useState<UserType>();
+  const [serviceCallOpened, setServiceCallOpened] = useState<PropertyType>();
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -85,6 +87,10 @@ export const AddServiceCall: FC<Props> = props => {
   const handlePropertyClose = useCallback(() => setPropertyOpened(undefined), [
     setPropertyOpened,
   ]);
+  const handleServiceCallClose = useCallback(
+    () => setServiceCallOpened(undefined),
+    [setServiceCallOpened],
+  );
   const handleSetCustomerOpened = useCallback(
     (customerOpened?: UserType) => setCustomerOpened(customerOpened),
     [setCustomerOpened],
@@ -96,8 +102,17 @@ export const AddServiceCall: FC<Props> = props => {
     (data: UserType) => {
       setAddCustomer(false);
       setCustomerOpened(data);
+      setPropertyOpened(data);
     },
     [setCustomerOpened, setAddCustomer],
+  );
+  const handlePropertySave = useCallback(
+    (data: PropertyType) => {
+      setPropertyOpened(undefined);
+      setCustomerOpened(undefined);
+      setServiceCallOpened(data);
+    },
+    [setPropertyOpened],
   );
   return (
     <div>
@@ -123,7 +138,7 @@ export const AddServiceCall: FC<Props> = props => {
             key={entry.id}
             customer={entry}
             {...props}
-            onAddServiceCall={setPropertyOpened}
+            onAddServiceCall={setServiceCallOpened}
             onCustomerClick={handleSetCustomerOpened}
           />
         ))
@@ -148,19 +163,28 @@ export const AddServiceCall: FC<Props> = props => {
         </Modal>
       )}
       {propertyOpened && (
-        <Modal open onClose={handlePropertyClose} fullScreen>
+        <Modal open onClose={handlePropertyClose}>
+          <PropertyEdit
+            userId={propertyOpened.id}
+            onClose={handlePropertyClose}
+            onSave={handlePropertySave}
+          />
+        </Modal>
+      )}
+      {serviceCallOpened && (
+        <Modal open onClose={handleServiceCallClose} fullScreen>
           <div className={classes.wrapper}>
             <div className={classes.header}>
               <SectionBar
                 title="New Service Call"
-                actions={[{ label: 'Close', onClick: handlePropertyClose }]}
+                actions={[{ label: 'Close', onClick: handleServiceCallClose }]}
                 fixedActions
               />
             </div>
             <div className={classes.content}>
               <ServiceCall
-                propertyId={propertyOpened.id}
-                userID={propertyOpened.userId}
+                propertyId={serviceCallOpened.id}
+                userID={serviceCallOpened.userId}
                 loggedUserId={loggedUserId}
               />
             </div>
