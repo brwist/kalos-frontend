@@ -2,6 +2,8 @@ import React, { FC, useState, useCallback } from 'react';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { loadUsersByFilter, UserType, makeFakeRows } from '../../../helpers';
+import { Modal } from '../../ComponentsLibrary/Modal';
+import { CustomerEdit } from '../../ComponentsLibrary/CustomerEdit';
 import { SearchForm, FormType, getFormInit } from './SearchForm';
 import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
@@ -9,6 +11,7 @@ import { ROWS_PER_PAGE } from '../../../constants';
 export type Props = Pick<CustomerItemProps, 'loggedUserId'>;
 
 export const AddServiceCall: FC<Props> = props => {
+  const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -45,6 +48,10 @@ export const AddServiceCall: FC<Props> = props => {
     },
     [load, setSearch, page],
   );
+  const handleToggleAddCustomer = useCallback(
+    (addCustomer: boolean) => () => setAddCustomer(addCustomer),
+    [setAddCustomer],
+  );
   return (
     <div>
       <SectionBar
@@ -56,13 +63,22 @@ export const AddServiceCall: FC<Props> = props => {
           page,
         }}
       />
-      <SearchForm onSearch={handleSearch} onReset={handleReset} />
+      <SearchForm
+        onSearch={handleSearch}
+        onReset={handleReset}
+        onAddCustomer={handleToggleAddCustomer(true)}
+      />
       {loading ? (
         <InfoTable data={makeFakeRows()} loading />
       ) : (
         entries.map(entry => (
           <CustomerItem key={entry.id} customer={entry} {...props} />
         ))
+      )}
+      {addCustomer && (
+        <Modal open onClose={handleToggleAddCustomer(false)}>
+          <CustomerEdit onClose={handleToggleAddCustomer(false)} />
+        </Modal>
       )}
     </div>
   );

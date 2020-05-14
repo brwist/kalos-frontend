@@ -27,6 +27,7 @@ export type FormType = {
 interface Props {
   onSearch: (search: FormType) => void;
   onReset: () => void;
+  onAddCustomer: () => void;
 }
 
 export const getFormInit: FormType = {
@@ -40,7 +41,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const SearchForm: FC<Props> = ({ onSearch, onReset }) => {
+export const SearchForm: FC<Props> = ({ onSearch, onReset, onAddCustomer }) => {
   const classes = useStyles();
   const [formKey, setFormKey] = useState<number>(0);
   const [search, setSearch] = useState<FormType>(getFormInit);
@@ -91,7 +92,7 @@ export const SearchForm: FC<Props> = ({ onSearch, onReset }) => {
             />
             <Button
               label="Add Customer"
-              url={getCFAppUrl('admin:customers.add')}
+              onClick={onAddCustomer}
               variant="text"
               size="xsmall"
               compact
