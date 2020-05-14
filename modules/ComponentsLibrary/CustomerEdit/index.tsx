@@ -5,6 +5,7 @@ import { UserGroupLink } from '@kalos-core/kalos-rpc/UserGroupLink';
 import { SectionBar } from '../SectionBar';
 import { Form, Schema } from '../Form';
 import { Field, Value } from '../Field';
+import { InfoTable } from '../InfoTable';
 import {
   UserType,
   GroupType,
@@ -15,6 +16,7 @@ import {
   getRPCFields,
   UserClientService,
   UserGroupLinkClientService,
+  makeFakeRows,
 } from '../../../helpers';
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
 
@@ -280,20 +282,24 @@ export const CustomerEdit: FC<Props> = ({
       />
       <div className={classes.groups}>
         <SectionBar title="Groups" />
-        <div className={classes.groupLinks}>
-          {groups.map(({ id, name }) => (
-            <Field
-              key={id}
-              label={name}
-              type="checkbox"
-              onChange={handleChangeLinkGroup(id)}
-              value={groupLinks.find(({ groupId }) => groupId === id) ? 1 : 0}
-              name={`group_${id}`}
-              className={classes.group}
-              disabled={saving}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <InfoTable data={makeFakeRows(1, 8)} loading />
+        ) : (
+          <div className={classes.groupLinks}>
+            {groups.map(({ id, name }) => (
+              <Field
+                key={id}
+                label={name}
+                type="checkbox"
+                onChange={handleChangeLinkGroup(id)}
+                value={groupLinks.find(({ groupId }) => groupId === id) ? 1 : 0}
+                name={`group_${id}`}
+                className={classes.group}
+                disabled={saving}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
