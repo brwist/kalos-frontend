@@ -1,6 +1,7 @@
 import React, { FC, useCallback } from 'react';
 import { Link } from '../../ComponentsLibrary/Link';
-import { InfoTable } from '../../ComponentsLibrary/InfoTable';
+import { Button } from '../../ComponentsLibrary/Button';
+import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import {
   UserType,
   PropertyType,
@@ -13,12 +14,14 @@ export interface Props {
   customer: UserType;
   onAddServiceCall: (property: PropertyType) => void;
   onCustomerClick: (customer: UserType) => void;
+  onAddProperty: (customer: UserType) => void;
 }
 
 export const CustomerItem: FC<Props> = ({
   customer,
   onAddServiceCall,
   onCustomerClick,
+  onAddProperty,
 }) => {
   const { propertiesList } = customer;
   const handleCustomerClick = useCallback(
@@ -39,28 +42,42 @@ export const CustomerItem: FC<Props> = ({
     },
     [onAddServiceCall],
   );
+  const handleAddProperty = useCallback(
+    (customer: UserType) => () => onAddProperty(customer),
+    [onAddProperty],
+  );
+  const columns: Columns = [
+    {
+      name: (
+        <Link onClick={handleCustomerClick(customer)}>
+          <big>
+            <strong>{getCustomerNameAndBusinessName(customer)}</strong>
+          </big>
+        </Link>
+      ),
+      actions: [
+        {
+          label: 'Add Property',
+          size: 'xsmall',
+          variant: 'text',
+          compact: true,
+          onClick: handleAddProperty(customer),
+        },
+      ],
+    },
+  ];
+  const data: Data = propertiesList.map(property => [
+    {
+      value: (
+        <Link onClick={handlePropertyClick(property)}>
+          {getPropertyAddress(property)}
+        </Link>
+      ),
+    },
+  ]) as Data;
   return (
     <div>
-      <InfoTable
-        columns={[
-          {
-            name: (
-              <Link onClick={handleCustomerClick(customer)}>
-                <strong>{getCustomerNameAndBusinessName(customer)}</strong>
-              </Link>
-            ),
-          },
-        ]}
-        data={propertiesList.map(property => [
-          {
-            value: (
-              <Link onClick={handlePropertyClick(property)}>
-                {getPropertyAddress(property)}
-              </Link>
-            ),
-          },
-        ])}
-      />
+      <InfoTable columns={columns} data={data} />
     </div>
   );
 };
