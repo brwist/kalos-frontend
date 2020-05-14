@@ -12,6 +12,7 @@ import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
 import ConfirmService from './ConfirmService/examples';
 import CustomControls from './CustomControls/examples';
+import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import Documents from './Documents/examples';
 import Field from './Field/examples';
@@ -40,6 +41,7 @@ const COMPONENTS = {
   ConfirmDelete,
   ConfirmService,
   CustomControls,
+  CustomerEdit,
   CustomerInformation,
   Documents,
   Field,

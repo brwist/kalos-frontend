@@ -32,30 +32,41 @@ import {
   SpiffToolAdminAction,
   SpiffToolAdminActionClient,
 } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { Group, GroupClient } from '@kalos-core/kalos-rpc/Group';
+import {
+  UserGroupLink,
+  UserGroupLinkClient,
+} from '@kalos-core/kalos-rpc/UserGroupLink';
 import { ENDPOINT, MONTHS } from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
 
 export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
+export type GroupType = Group.AsObject;
+export type UserGroupLinkType = UserGroupLink.AsObject;
 
-const UserClientService = new UserClient(ENDPOINT);
-const PropertyClientService = new PropertyClient(ENDPOINT);
-const EventClientService = new EventClient(ENDPOINT);
-const JobTypeClientService = new JobTypeClient(ENDPOINT);
-const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
-const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
-const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
-const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
-const QuotePartClientService = new QuotePartClient(ENDPOINT);
-const QuoteLinePartClientService = new QuoteLinePartClient(ENDPOINT);
-const QuoteLineClientService = new QuoteLineClient(ENDPOINT);
-const TimesheetDepartmentClientService = new TimesheetDepartmentClient(
+export const UserClientService = new UserClient(ENDPOINT);
+export const PropertyClientService = new PropertyClient(ENDPOINT);
+export const EventClientService = new EventClient(ENDPOINT);
+export const JobTypeClientService = new JobTypeClient(ENDPOINT);
+export const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
+export const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
+export const ServicesRenderedClientService = new ServicesRenderedClient(
   ENDPOINT,
 );
-const MetricsClientService = new MetricsClient(ENDPOINT);
-const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
+export const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
+export const QuotePartClientService = new QuotePartClient(ENDPOINT);
+export const QuoteLinePartClientService = new QuoteLinePartClient(ENDPOINT);
+export const QuoteLineClientService = new QuoteLineClient(ENDPOINT);
+export const TimesheetDepartmentClientService = new TimesheetDepartmentClient(
   ENDPOINT,
 );
+export const MetricsClientService = new MetricsClient(ENDPOINT);
+export const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
+  ENDPOINT,
+);
+export const GroupClientService = new GroupClient(ENDPOINT);
+export const UserGroupLinkClientService = new UserGroupLinkClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -1119,6 +1130,21 @@ export const getCustomerNameAndBusinessName = (c?: UserType): string => {
 
 export const getPropertyAddress = (p?: PropertyType): string =>
   p ? `${p.address}, ${p.city}, ${p.state} ${p.zip}` : '';
+
+export const loadGroups = async () => {
+  const group = new Group();
+  const { resultsList } = (await GroupClientService.BatchGet(group)).toObject();
+  return resultsList;
+};
+
+export const loadUserGroupLinksByUserId = async (userId: number) => {
+  const groupLink = new UserGroupLink();
+  groupLink.setUserId(userId);
+  const { resultsList } = (
+    await UserGroupLinkClientService.BatchGet(groupLink)
+  ).toObject();
+  return resultsList;
+};
 
 export {
   cfURL,

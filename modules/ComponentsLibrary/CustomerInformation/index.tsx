@@ -21,18 +21,17 @@ import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Field, Value } from '../Field';
-import { getRPCFields, formatDateTime } from '../../../helpers';
+import { getRPCFields, formatDateTime, UserType } from '../../../helpers';
 
 const UserClientService = new UserClient(ENDPOINT);
 const UserGroupLinkClientService = new UserGroupLinkClient(ENDPOINT);
 const GroupClientService = new GroupClient(ENDPOINT);
 const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
 
-export type Customer = User.AsObject;
 type GroupLink = UserGroupLink.AsObject;
 type GroupType = Group.AsObject;
 
-const SCHEMA: Schema<Customer> = [
+const SCHEMA: Schema<UserType> = [
   [{ label: 'Personal Details', headline: true }],
   [
     { label: 'First Name', name: 'firstname', required: true },
@@ -117,7 +116,7 @@ const SCHEMA: Schema<Customer> = [
   ],
 ];
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<Customer> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
   [
     {
       label: 'Notification',
@@ -189,7 +188,7 @@ const useStyles = makeStyles(theme => ({
 interface Props {
   userID: number;
   propertyId?: number;
-  renderChildren?: (customer: Customer) => ReactNode;
+  renderChildren?: (customer: UserType) => ReactNode;
 }
 
 export const CustomerInformation: FC<Props> = ({
@@ -198,7 +197,7 @@ export const CustomerInformation: FC<Props> = ({
   renderChildren,
   children,
 }) => {
-  const [customer, setCustomer] = useState<Customer>(new User().toObject());
+  const [customer, setCustomer] = useState<UserType>(new User().toObject());
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
   const [groups, setGroups] = useState<GroupType[]>([]);
   const [groupLinks, setGroupLinks] = useState<GroupLink[]>([]);
@@ -319,7 +318,7 @@ export const CustomerInformation: FC<Props> = ({
   );
 
   const handleSave = useCallback(
-    async (data: Customer) => {
+    async (data: UserType) => {
       setSaving(true);
       const entry = new User();
       entry.setId(userID);
@@ -530,7 +529,7 @@ export const CustomerInformation: FC<Props> = ({
       {children}
       <Modal open={editing} onClose={handleToggleEditing}>
         <div className={classes.editForm}>
-          <Form<Customer>
+          <Form<UserType>
             title="Edit Customer Information"
             schema={SCHEMA}
             data={customer}
@@ -566,7 +565,7 @@ export const CustomerInformation: FC<Props> = ({
           handleSetNotificationEditing(false)();
         }}
       >
-        <Form<Customer>
+        <Form<UserType>
           title={
             notificationViewing
               ? 'Customer Notification'
@@ -597,7 +596,7 @@ export const CustomerInformation: FC<Props> = ({
                     variant: 'outlined',
                     onClick: () => {
                       handleSetNotificationViewing(false)();
-                      handleSave({ notification: '' } as Customer);
+                      handleSave({ notification: '' } as UserType);
                     },
                   },
                 ]
