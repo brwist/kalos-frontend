@@ -1146,6 +1146,27 @@ export const loadUserGroupLinksByUserId = async (userId: number) => {
   return resultsList;
 };
 
+export const saveProperty = async (
+  data: PropertyType,
+  userId: number,
+  propertyId?: number,
+) => {
+  const req = new Property();
+  req.setUserId(userId);
+  if (propertyId) {
+    req.setId(propertyId);
+  }
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return await PropertyClientService[propertyId ? 'Update' : 'Create'](req);
+};
+
 export {
   cfURL,
   BASE_URL,
