@@ -18,6 +18,7 @@ interface Props {
   onClose: () => void;
   userId: number;
   propertyId?: number;
+  property?: PropertyType;
 }
 
 export const PropertyEdit: FC<Props> = ({
@@ -25,22 +26,27 @@ export const PropertyEdit: FC<Props> = ({
   onSave,
   userId,
   propertyId: _propertyId = 0,
+  property: _property,
 }) => {
   const [propertyId, setPropertyId] = useState<number>(_propertyId);
   const [saving, setSaving] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [formKey, setFormKey] = useState<number>(0);
-  const [entry, setEntry] = useState<PropertyType>(new Property().toObject());
+  const [entry, setEntry] = useState<PropertyType>(
+    _property || new Property().toObject(),
+  );
   const load = useCallback(async () => {
     if (propertyId) {
-      setLoading(true);
-      const entry = await loadPropertyById(propertyId);
-      setEntry(entry);
-      setFormKey(formKey + 1);
+      if (!_property) {
+        setLoading(true);
+        const entry = await loadPropertyById(propertyId);
+        setEntry(entry);
+        setFormKey(formKey + 1);
+      }
     }
     setLoading(false);
-  }, [propertyId, setLoading, setFormKey, formKey]);
+  }, [propertyId, setLoading, setFormKey, formKey, _property]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
