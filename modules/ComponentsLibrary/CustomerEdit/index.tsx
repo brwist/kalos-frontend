@@ -13,10 +13,9 @@ import {
   loadGroups,
   loadUserById,
   loadUserGroupLinksByUserId,
-  getRPCFields,
-  UserClientService,
   UserGroupLinkClientService,
   makeFakeRows,
+  saveUser,
 } from '../../../helpers';
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
 
@@ -231,21 +230,7 @@ export const CustomerEdit: FC<Props> = ({
   const handleSave = useCallback(
     async (data: UserType) => {
       setSaving(true);
-      const entry = new User();
-      if (userId) {
-        entry.setId(userId);
-      }
-      const fieldMaskList = [];
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        entry[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      entry.setFieldMaskList(fieldMaskList);
-      const customer = await UserClientService[userId ? 'Update' : 'Create'](
-        entry,
-      );
+      const customer = await saveUser(data, userId);
       setCustomer(customer);
       setUserId(customer.id);
       await saveGroupLinks(groupLinks, groupLinksInitial, customer.id);
