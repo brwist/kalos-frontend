@@ -1,17 +1,30 @@
 import React, { FC, useState, useCallback } from 'react';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
-import { loadUsersByFilter, UserType, makeFakeRows } from '../../../helpers';
+import {
+  loadUsersByFilter,
+  UserType,
+  makeFakeRows,
+  PropertyType,
+} from '../../../helpers';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { CustomerEdit } from '../../ComponentsLibrary/CustomerEdit';
+import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import { SearchForm, FormType, getFormInit } from './SearchForm';
-import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
+import {
+  CustomerItem,
+  Props as CustomerItemProps,
+  useStyles,
+} from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 
 export type Props = Pick<CustomerItemProps, 'loggedUserId'>;
 
 export const AddServiceCall: FC<Props> = props => {
+  const classes = useStyles();
+  const { loggedUserId } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
+  const [propertyOpened, setPropertyOpened] = useState<PropertyType>();
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -52,6 +65,9 @@ export const AddServiceCall: FC<Props> = props => {
     (addCustomer: boolean) => () => setAddCustomer(addCustomer),
     [setAddCustomer],
   );
+  const handlePropertyClose = useCallback(() => setPropertyOpened(undefined), [
+    setPropertyOpened,
+  ]);
   return (
     <div>
       <SectionBar
@@ -72,8 +88,33 @@ export const AddServiceCall: FC<Props> = props => {
         <InfoTable data={makeFakeRows()} loading />
       ) : (
         entries.map(entry => (
-          <CustomerItem key={entry.id} customer={entry} {...props} />
+          <CustomerItem
+            key={entry.id}
+            customer={entry}
+            {...props}
+            onAddServiceCall={setPropertyOpened}
+          />
         ))
+      )}
+      {propertyOpened && (
+        <Modal open onClose={handlePropertyClose} fullScreen>
+          <div className={classes.wrapper}>
+            <div className={classes.header}>
+              <SectionBar
+                title="New Service Call"
+                actions={[{ label: 'Close', onClick: handlePropertyClose }]}
+                fixedActions
+              />
+            </div>
+            <div className={classes.content}>
+              <ServiceCall
+                propertyId={propertyOpened.id}
+                userID={propertyOpened.userId}
+                loggedUserId={loggedUserId}
+              />
+            </div>
+          </div>
+        </Modal>
       )}
       {addCustomer && (
         <Modal open onClose={handleToggleAddCustomer(false)}>

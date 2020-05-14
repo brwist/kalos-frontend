@@ -5,7 +5,6 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Link } from '../../ComponentsLibrary/Link';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails';
-import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import {
   UserType,
   PropertyType,
@@ -16,9 +15,10 @@ import {
 export interface Props {
   loggedUserId: number;
   customer: UserType;
+  onAddServiceCall: (property: PropertyType) => void;
 }
 
-const useStyles = makeStyles(theme => ({
+export const useStyles = makeStyles(theme => ({
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
@@ -36,11 +36,14 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const CustomerItem: FC<Props> = ({ customer, loggedUserId }) => {
+export const CustomerItem: FC<Props> = ({
+  customer,
+  loggedUserId,
+  onAddServiceCall,
+}) => {
   const classes = useStyles();
-  const { id, propertiesList } = customer;
+  const { propertiesList } = customer;
   const [customerOpened, setCustomerOpened] = useState<UserType>();
-  const [propertyOpened, setPropertyOpened] = useState<PropertyType>();
   const handleCustomerClick = useCallback(
     (customer: UserType) => (
       event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
@@ -58,13 +61,10 @@ export const CustomerItem: FC<Props> = ({ customer, loggedUserId }) => {
       event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
     ) => {
       event.preventDefault();
-      setPropertyOpened(property);
+      onAddServiceCall(property);
     },
-    [setPropertyOpened],
+    [onAddServiceCall],
   );
-  const handlePropertyClose = useCallback(() => setPropertyOpened(undefined), [
-    setPropertyOpened,
-  ]);
   return (
     <div>
       <InfoTable
@@ -100,27 +100,6 @@ export const CustomerItem: FC<Props> = ({ customer, loggedUserId }) => {
             <div className={classes.content}>
               <CustomerDetails
                 userID={customerOpened.id}
-                loggedUserId={loggedUserId}
-              />
-            </div>
-          </div>
-        </Modal>
-      )}
-      {propertyOpened && (
-        <Modal open onClose={handlePropertyClose} fullScreen>
-          <div className={classes.wrapper}>
-            <div className={classes.header}>
-              <SectionBar
-                title="New Service Call"
-                actions={[{ label: 'Close', onClick: handlePropertyClose }]}
-                fixedActions
-              />
-            </div>
-            <div className={classes.content}>
-              <ServiceCall
-                propertyId={propertyOpened.id}
-                userID={propertyOpened.userId}
-                serviceCallId={0}
                 loggedUserId={loggedUserId}
               />
             </div>
