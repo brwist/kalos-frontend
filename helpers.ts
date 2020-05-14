@@ -1167,6 +1167,22 @@ export const saveProperty = async (
   return await PropertyClientService[propertyId ? 'Update' : 'Create'](req);
 };
 
+export const saveUser = async (data: UserType, userId?: number) => {
+  const req = new User();
+  if (userId) {
+    req.setId(userId);
+  }
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    // @ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return await UserClientService[userId ? 'Update' : 'Create'](req);
+};
+
 export {
   cfURL,
   BASE_URL,
