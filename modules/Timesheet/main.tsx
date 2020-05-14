@@ -118,7 +118,7 @@ type Action =
   | { type: 'addNewTimesheet' }
   | { type: 'editTimesheetCard', data: TimesheetLine.AsObject }
   | { type: 'editServicesRenderedCard', data: ServicesRendered.AsObject }
-  | { type: 'saveTimecard', data: TimesheetLine.AsObject, action: 'delete' | 'approve' | 'reject' }
+  | { type: 'saveTimecard', data: TimesheetLine.AsObject, action: string }
   | { type: 'closeEditingModal' };
 
 
@@ -231,8 +231,51 @@ const reducer = (state: State, action: Action) => {
       };
     }
     case 'saveTimecard': {
-      const data = [...state.data];
-
+      const data = {...state.data};
+      const entry = state.editing.entry;
+      const card = action.data;
+      const entryDate = format(new Date(entry.timeStarted), 'yyyy-MM-dd');
+      const cardDate = format(new Date(card.timeStarted), 'yyyy-MM-dd');
+      const datePresented = state.shownDates.indexOf(cardDate) >= 0;
+      console.log('data: ', data);
+      console.log('entry: ', entry);
+      console.log('card: ', card);
+      console.log('entryDate: ', entryDate);
+      console.log('cardDate', cardDate);
+      console.log('datePresented', datePresented);
+      console.log('action: ', action.action);
+      if (action.action === 'create' && datePresented) {
+        data[cardDate].timesheetLineList.push(card);
+      } else if (action.action === 'convert') {
+        const sr = data[entryDate].servicesRenderedList.find(item => item.id === entry.servicesRenderedId);
+        sr.hideFromTimesheet! = 1;
+        if (datePresented) {
+          data[cardDate].timesheetLineList.push(card);
+        }
+      } else if (action.action === 'update') {
+        if (entryDate === cardDate) {
+          const list = data[entryDate].timesheetLineList;
+          const existingIndex = list.findIndex(item => item.id === card.id);
+          if (existingIndex >= 0) {
+            list[existingIndex] = {...list[existingIndex], ...card};
+          }
+        } else {
+          const oldList = data[entryDate].timesheetLineList;
+          const oldIndex = oldList.findIndex(item => item.id === card.id);
+          if (oldIndex >= 0) {
+            oldList.splice(oldIndex, 1);
+          }
+          if (datePresented) {
+            data[cardDate].timesheetLineList.push(card);
+          }
+        }
+      } else if (action.action === 'delete') {
+        const list = data[entryDate].timesheetLineList;
+        const existingIndex = list.findIndex(item => item.id === card.id);
+        if (existingIndex >= 0) {
+          list.splice(existingIndex, 1);
+        }
+      }
       return {
         ...state,
         data,
@@ -240,8 +283,8 @@ const reducer = (state: State, action: Action) => {
           entry: emptyTimesheet,
           modalShown: false,
           action: '',
-        }
-      }
+        },
+      };
     }
     case 'closeEditingModal':
       return {
@@ -287,8 +330,9 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     },
   });
   const { user, owner, fetchingTimesheetData, data, payroll, selectedDate, shownDates, editing } = state;
-  const handleOnSave = (entry: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
-    dispatch({ type: 'saveTimecard', data: entry, action });
+  console.log(data);
+  const handleOnSave = (card: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
+    dispatch({ type: 'saveTimecard', data: card, action: editing.action || action });
   };
 
   const handleAddNewTimeshetCardClicked = () => {
