@@ -91,8 +91,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
               if (
                 formData[name] === undefined ||
                 value === '' ||
-                type === 'classCode' ||
-                (type === 'department' && value === '0')
+                ((type === 'classCode' || type === 'department') && value === '0')
               ) {
                 validations[name as string] = 'This field is required.';
               }
