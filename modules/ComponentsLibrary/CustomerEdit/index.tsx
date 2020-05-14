@@ -236,7 +236,7 @@ export const CustomerEdit: FC<Props> = ({
       await saveGroupLinks(groupLinks, groupLinksInitial, customer.id);
       setSaving(false);
       if (onSave) {
-        onSave(data);
+        onSave(customer);
       }
     },
     [setSaving, userId, setCustomer, groupLinks, groupLinksInitial],
