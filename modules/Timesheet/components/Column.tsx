@@ -1,6 +1,6 @@
-import React, {FC, useCallback, useLayoutEffect, useState} from 'react';
+import React, {FC, useLayoutEffect, useState} from 'react';
 import clsx from 'clsx';
-import { differenceInMinutes, format } from "date-fns";
+import { format } from "date-fns";
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import BackIcon from '@material-ui/icons/ArrowBack';
@@ -11,13 +11,9 @@ import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { createStyles, makeStyles, Theme, useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { ENDPOINT } from '../../../constants';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { roundNumber } from '../../../helpers';
-import { Payroll } from '../main';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -76,10 +72,6 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-interface EditedEntry extends TimesheetLine.AsObject {
-  action: string
-};
-
 type Props = {
   date: string,
   data: any,
@@ -98,34 +90,6 @@ const Column: FC<Props> = ({ date, data, loading }) => {
     document.body.style.overflow = dayView ? 'hidden' : 'visible';
   }, [dayView]);
 
-/*
-  hiddenSR.forEach(entry => {
-    if (format(new Date(entry.timeStarted), 'yyyy-MM-dd') === date) {
-      const existingIndex = filteredSR.findIndex(item => item.id === entry.id);
-      if (existingIndex > -1) {
-        filteredSR.splice(existingIndex, 1);
-      }
-    }
-  });
-  editedEntries.forEach(entry => {
-    if (format(new Date(entry.timeStarted), 'yyyy-MM-dd') === date) {
-      if (entry.action === 'create' || entry.action === 'convert') {
-        filteredTL.push(entry);
-      } else if (entry.action === 'update') {
-        const existingIndex = filteredTL.findIndex(item => item.id === entry.id);
-        if (existingIndex > -1) {
-          filteredTL[existingIndex] = {...filteredTL[existingIndex], ...entry};
-        } else {
-          filteredTL.push(entry);
-        }
-      } else if (entry.action === 'delete') {
-        const existingIndex = filteredTL.findIndex(item => item.id === entry.id);
-        if (existingIndex > -1) {
-          filteredTL.splice(existingIndex, 1);
-        }
-      }
-    }
-  });*/
   const cards = data ? [...data?.servicesRenderedList, ...data?.timesheetLineList] : [];
   cards.sort((a, b) => new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime());
   return (
