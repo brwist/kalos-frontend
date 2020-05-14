@@ -93,6 +93,7 @@ export interface Props<T> extends SchemaProps<T> {
 export const getDefaultValueByType = (type: Type) => {
   if (type === 'number') return 0;
   if (type === 'time') return '00:00';
+  if (type === 'checkbox') return 0;
   return '';
 };
 

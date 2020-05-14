@@ -28,7 +28,7 @@ export const model: Model = {
   note: `Lorem ipsum dolor sit amet. Abon fergo irgo fingo.
 dolor sit
 amet`,
-  mailing: 1,
+  mailing: 0,
   dob: '1980-11-23 00:00:00',
   hour: '',
   technician: '0',
@@ -125,6 +125,7 @@ export const SCHEMA_2: Schema<Model> = [
       name: 'mailing',
       label: 'Mailing',
       type: 'checkbox',
+      required: true,
     },
     {
       name: 'coverImage',
