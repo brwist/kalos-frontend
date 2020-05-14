@@ -2,13 +2,8 @@ import React, { FC, useCallback, useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
-import {
-  ENDPOINT,
-  USA_STATES_OPTIONS,
-  RESIDENTIAL_OPTIONS,
-} from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -19,28 +14,30 @@ import { Search } from '../../ComponentsLibrary/Search';
 import { ServiceItemLinks } from '../../ComponentsLibrary/ServiceItemLinks';
 import { PropertyDocuments } from './PropertyDocuments';
 import { ServiceItems } from '../../ComponentsLibrary/ServiceItems';
+import { PropertyEdit } from '../../ComponentsLibrary/PropertyEdit';
 import { ServiceCalls } from './ServiceCalls';
 import {
-  getRPCFields,
   loadUsersByIds,
   makeFakeRows,
-  loadGeoLocationByAddress,
+  saveProperty,
+  PropertyClientService,
+  UserType,
+  PropertyType,
 } from '../../../helpers';
 
-const PropertyClientService = new PropertyClient(ENDPOINT);
-
-type Entry = Property.AsObject;
-type UserEntry = User.AsObject;
-
-const PROP_LEVEL = 'Used for property-level billing only';
-
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<Entry> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<PropertyType> = [
   [
     {
       label: 'Notification',
       name: 'notification',
       required: true,
       multiline: true,
+    },
+  ],
+  [
+    {
+      name: 'id',
+      type: 'hidden',
     },
   ],
 ];
@@ -73,8 +70,7 @@ const useStyles = makeStyles(theme => ({
 
 export const PropertyInfo: FC<Props> = props => {
   const { userID, propertyId } = props;
-  const [entry, setEntry] = useState<Entry>(new Property().toObject());
-  const [formKey, setFormKey] = useState<number>(0);
+  const [entry, setEntry] = useState<PropertyType>(new Property().toObject());
   const [user, setUser] = useState<User.AsObject>();
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
@@ -92,10 +88,10 @@ export const PropertyInfo: FC<Props> = props => {
   >(null);
   const [linksViewing, setLinksViewing] = useState<boolean>(false);
   const [changingOwner, setChangingOwner] = useState<boolean>(false);
-  const [pendingChangeOwner, setPendingChangeOwner] = useState<UserEntry>();
+  const [pendingChangeOwner, setPendingChangeOwner] = useState<UserType>();
   const [merging, setMerging] = useState<boolean>(false);
   const [pendingMerge, setPendingMerge] = useState<
-    Entry & { __user: UserEntry }
+    PropertyType & { __user: UserType }
   >();
   const classes = useStyles();
 
@@ -189,20 +185,9 @@ export const PropertyInfo: FC<Props> = props => {
   }, [entry, load, setNotificationViewing]);
 
   const handleSave = useCallback(
-    async (data: Entry) => {
+    async (data: PropertyType) => {
       setSaving(true);
-      const req = new Property();
-      req.setUserId(userID);
-      req.setId(propertyId);
-      const fieldMaskList = [];
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        //@ts-ignore
-        req[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      req.setFieldMaskList(fieldMaskList);
-      const entry = await PropertyClientService.Update(req);
+      const entry = await saveProperty(data, userID, propertyId);
       setEntry(entry);
       setSaving(false);
       setEditing(false);
@@ -259,71 +244,6 @@ export const PropertyInfo: FC<Props> = props => {
       ].join('&');
     }
   }, [pendingMerge, setPendingMerge, propertyId]);
-
-  const handleCheckLocation = useCallback(async () => {
-    const { address, city, state: addressState, zip } = entry;
-    const geo = await loadGeoLocationByAddress(
-      `${address}, ${city}, ${addressState} ${zip}`,
-    );
-    if (geo) {
-      setEntry({ ...entry, ...geo });
-      setFormKey(formKey + 1);
-    }
-  }, [entry, setEntry, formKey, setFormKey]);
-
-  const SCHEMA_PROPERTY_INFORMATION: Schema<Entry> = [
-    [{ label: 'Personal Details', headline: true, description: PROP_LEVEL }],
-    [
-      { label: 'First Name', name: 'firstname' },
-      { label: 'Last Name', name: 'lastname' },
-      { label: 'Business Name', name: 'businessname' },
-    ],
-    [{ label: 'Contact Details', headline: true, description: PROP_LEVEL }],
-    [
-      { label: 'Primary Phone', name: 'phone' },
-      { label: 'Alternate Phone', name: 'altphone' },
-      { label: 'Email', name: 'email' },
-    ],
-    [{ label: 'Address Details', headline: true }],
-    [
-      { label: 'Address', name: 'address', required: true, multiline: true },
-      { label: 'City', name: 'city', required: true },
-      {
-        label: 'State',
-        name: 'state',
-        options: USA_STATES_OPTIONS,
-        required: true,
-      },
-      { label: 'Zip Code', name: 'zip', required: true },
-    ],
-    [
-      {
-        label: 'Location Details',
-        headline: true,
-        actions: [
-          {
-            label: 'Check Location',
-            compact: true,
-            onClick: handleCheckLocation,
-            disabled: saving,
-            variant: 'outlined',
-            size: 'xsmall',
-          },
-        ],
-      },
-    ],
-    [
-      { label: 'Directions', name: 'directions', multiline: true },
-      { label: 'Subdivision', name: 'subdivision' },
-    ],
-    [
-      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL_OPTIONS },
-      { label: 'Latitude', name: 'geolocationLat', type: 'number' },
-      { label: 'Longitude', name: 'geolocationLng', type: 'number' },
-    ],
-    [{ label: 'Notes', headline: true }],
-    [{ label: 'Notes', name: 'notes', multiline: true }],
-  ];
 
   const {
     firstname,
@@ -433,14 +353,16 @@ export const PropertyInfo: FC<Props> = props => {
       </div>
       <ServiceCalls {...props} />
       <Modal open={editing} onClose={handleSetEditing(false)}>
-        <Form<Entry>
-          key={formKey}
-          title="Edit Property Information"
-          schema={SCHEMA_PROPERTY_INFORMATION}
-          data={entry}
-          onSave={handleSave}
+        <PropertyEdit
+          userId={userID}
+          propertyId={propertyId}
           onClose={handleSetEditing(false)}
-          disabled={saving}
+          onSave={entry => {
+            setEntry(entry);
+            setEditing(false);
+            setNotificationEditing(false);
+          }}
+          property={entry}
         />
       </Modal>
       <Modal
@@ -450,7 +372,7 @@ export const PropertyInfo: FC<Props> = props => {
           handleSetNotificationEditing(false)();
         }}
       >
-        <Form<Entry>
+        <Form<PropertyType>
           title={
             notificationViewing
               ? 'Property Notification'
@@ -481,7 +403,7 @@ export const PropertyInfo: FC<Props> = props => {
                     variant: 'outlined',
                     onClick: () => {
                       handleSetNotificationViewing(false)();
-                      handleSave({ notification: '' } as Entry);
+                      handleSave({ notification: '' } as PropertyType);
                     },
                   },
                 ]
