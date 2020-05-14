@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback } from 'react';
+import { makeStyles } from '@material-ui/core';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import {
@@ -10,20 +11,36 @@ import {
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { CustomerEdit } from '../../ComponentsLibrary/CustomerEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
+import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails';
 import { SearchForm, FormType, getFormInit } from './SearchForm';
-import {
-  CustomerItem,
-  Props as CustomerItemProps,
-  useStyles,
-} from './CustomerItem';
+import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 
 export type Props = Pick<CustomerItemProps, 'loggedUserId'>;
+
+export const useStyles = makeStyles(theme => ({
+  wrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  header: {
+    flexShrink: 0,
+  },
+  content: {
+    flexGrow: 1,
+    overflowY: 'auto',
+    height: 'calc(100vh - 54px)',
+    [theme.breakpoints.up('sm')]: {
+      height: 'calc(100vh - 46px)',
+    },
+  },
+}));
 
 export const AddServiceCall: FC<Props> = props => {
   const classes = useStyles();
   const { loggedUserId } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
+  const [customerOpened, setCustomerOpened] = useState<UserType>();
   const [propertyOpened, setPropertyOpened] = useState<PropertyType>();
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -68,6 +85,20 @@ export const AddServiceCall: FC<Props> = props => {
   const handlePropertyClose = useCallback(() => setPropertyOpened(undefined), [
     setPropertyOpened,
   ]);
+  const handleSetCustomerOpened = useCallback(
+    (customerOpened?: UserType) => setCustomerOpened(customerOpened),
+    [setCustomerOpened],
+  );
+  const handleCustomerClose = useCallback(() => setCustomerOpened(undefined), [
+    setCustomerOpened,
+  ]);
+  const handleCustomerSave = useCallback(
+    (data: UserType) => {
+      setAddCustomer(false);
+      setCustomerOpened(data);
+    },
+    [setCustomerOpened, setAddCustomer],
+  );
   return (
     <div>
       <SectionBar
@@ -93,8 +124,28 @@ export const AddServiceCall: FC<Props> = props => {
             customer={entry}
             {...props}
             onAddServiceCall={setPropertyOpened}
+            onCustomerClick={handleSetCustomerOpened}
           />
         ))
+      )}
+      {customerOpened && (
+        <Modal open onClose={handleCustomerClose} fullScreen>
+          <div className={classes.wrapper}>
+            <div className={classes.header}>
+              <SectionBar
+                title="Customer Details"
+                actions={[{ label: 'Close', onClick: handleCustomerClose }]}
+                fixedActions
+              />
+            </div>
+            <div className={classes.content}>
+              <CustomerDetails
+                userID={customerOpened.id}
+                loggedUserId={loggedUserId}
+              />
+            </div>
+          </div>
+        </Modal>
       )}
       {propertyOpened && (
         <Modal open onClose={handlePropertyClose} fullScreen>
@@ -118,7 +169,10 @@ export const AddServiceCall: FC<Props> = props => {
       )}
       {addCustomer && (
         <Modal open onClose={handleToggleAddCustomer(false)}>
-          <CustomerEdit onClose={handleToggleAddCustomer(false)} />
+          <CustomerEdit
+            onClose={handleToggleAddCustomer(false)}
+            onSave={handleCustomerSave}
+          />
         </Modal>
       )}
     </div>
