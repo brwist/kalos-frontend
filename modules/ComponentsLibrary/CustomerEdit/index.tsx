@@ -143,35 +143,51 @@ interface Props {
   onSave?: (data: UserType) => void;
   onClose: () => void;
   userId?: number;
+  customer?: UserType;
+  groups?: GroupType[];
+  groupLinks?: UserGroupLinkType[];
 }
 
 export const CustomerEdit: FC<Props> = ({
   onSave,
   onClose,
   userId: _userId = 0,
+  customer: _customer,
+  groups: _groups,
+  groupLinks: _groupLinks,
 }) => {
   const classes = useStyles();
   const [userId, setUserId] = useState<number>(_userId);
   const [formKey, setFormKey] = useState<number>(0);
-  const [customer, setCustomer] = useState<UserType>(new User().toObject());
-  const [groupLinks, setGroupLinks] = useState<UserGroupLinkType[]>([]);
+  const [customer, setCustomer] = useState<UserType>(
+    _customer || new User().toObject(),
+  );
+  const [groupLinks, setGroupLinks] = useState<UserGroupLinkType[]>(
+    _groupLinks || [],
+  );
   const [groupLinksInitial, setGroupLinksInitial] = useState<
     UserGroupLinkType[]
-  >([]);
+  >(_groupLinks || []);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [groups, setGroups] = useState<GroupType[]>([]);
+  const [groups, setGroups] = useState<GroupType[]>(_groups || []);
   const load = useCallback(async () => {
     if (userId) {
-      const customer = await loadUserById(userId);
-      setCustomer(customer);
-      const groupLinks = await loadUserGroupLinksByUserId(userId);
-      setGroupLinks(groupLinks);
-      setGroupLinksInitial(groupLinks);
+      if (!_customer) {
+        const customer = await loadUserById(userId);
+        setCustomer(customer);
+      }
+      if (!_groupLinks) {
+        const groupLinks = await loadUserGroupLinksByUserId(userId);
+        setGroupLinks(groupLinks);
+        setGroupLinksInitial(groupLinks);
+      }
     }
-    const groups = await loadGroups();
-    setGroups(groups);
+    if (!_groups) {
+      const groups = await loadGroups();
+      setGroups(groups);
+    }
     setFormKey(formKey + 1);
     setLoading(false);
   }, [
@@ -183,6 +199,9 @@ export const CustomerEdit: FC<Props> = ({
     setLoading,
     setGroupLinks,
     setGroupLinksInitial,
+    _customer,
+    _groups,
+    _groupLinks,
   ]);
   useEffect(() => {
     if (!loaded) {
