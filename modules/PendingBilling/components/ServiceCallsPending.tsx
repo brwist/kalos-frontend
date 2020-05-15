@@ -141,6 +141,10 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     },
     [setLoaded, setPage],
   );
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setLoaded(false);
+  }, [setPage, setLoaded]);
   const SCHEMA: Schema<SearchForm> = [
     [
       { name: 'searchBy', label: 'Search By', options: FIELDS },
@@ -148,19 +152,19 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         name: 'searchPhrase',
         label: 'Search Phrase',
         type: filter.searchBy.includes('Date') ? 'date' : 'search',
-        actions: [{ label: 'Search', onClick: load }],
+        actions: [{ label: 'Search', onClick: handleSearch }],
       },
     ],
   ];
   const data: Data = loading
     ? makeFakeRows(5, 3)
     : events.map(event => {
-        const { customer, property, logJobNumber, dateEnded } = event;
+        const { customer, property, logJobNumber, logDateCompleted } = event;
         return [
           { value: getCustomerName(customer) },
           { value: getBusinessName(customer) },
           { value: logJobNumber },
-          { value: formatDate(dateEnded) },
+          { value: formatDate(logDateCompleted) },
           {
             value: getPropertyAddress(property),
             actions: [

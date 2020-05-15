@@ -169,7 +169,8 @@ export const ServiceCall: FC<Props> = props => {
   const save = useCallback(async () => {
     setSaving(true);
     const req = new Event();
-    const fieldMaskList: string[] = [];
+    req.setIsActive(1);
+    const fieldMaskList: string[] = ['IsActive'];
     if (serviceCallId) {
       req.setId(serviceCallId);
     } else {
