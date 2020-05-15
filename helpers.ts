@@ -997,21 +997,28 @@ async function loadEventsByFilter({
   if (searchPhrase !== '') {
     if (searchBy === 'Job Number') {
       req.setLogJobNumber(`%${searchPhrase}%`);
-    } else if (searchBy === 'Start Date') {
+    }
+    if (searchBy === 'Start Date') {
       req.setDateStarted(`%${searchPhrase}%`);
-    } else if (searchBy === 'Address') {
+    }
+    if (searchBy === 'Address') {
       p.setAddress(`%${searchPhrase}%`);
-    } else if (searchBy === 'Zip Code') {
+    }
+    if (searchBy === 'Zip Code') {
       p.setZip(`%${searchPhrase}%`);
-    } else if (searchBy === 'Date Completed') {
+    }
+    if (searchBy === 'Date Completed') {
       req.setDateEnded(`${searchPhrase}%`);
-    } else if (searchBy === 'City') {
+    }
+    if (searchBy === 'City') {
       p.setCity(`%${searchPhrase}%`);
-    } else if (searchBy === 'Business Name') {
+    }
+    if (searchBy === 'Business Name') {
       const u = new User();
       u.setBusinessname(`%${searchPhrase}%`);
       req.setCustomer(u);
-    } else if (searchBy === 'Lastname') {
+    }
+    if (searchBy === 'Lastname') {
       const u = new User();
       u.setLastname(`%${searchPhrase}%`);
       req.setCustomer(u);
@@ -1185,6 +1192,12 @@ export const saveUser = async (data: UserType, userId?: number) => {
   }
   req.setFieldMaskList(fieldMaskList);
   return await UserClientService[userId ? 'Update' : 'Create'](req);
+};
+
+export const deleteServiceCallById = async (id: number) => {
+  const req = new Event();
+  req.setId(id);
+  await EventClientService.Delete(req);
 };
 
 export {
