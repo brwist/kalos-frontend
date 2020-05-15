@@ -171,12 +171,12 @@ export const ServiceCall: FC<Props> = props => {
     const fieldMaskList = [];
     if (serviceCallId) {
       req.setId(serviceCallId);
-      fieldMaskList.push('Id');
     } else {
       setLoading(true);
     }
     for (const fieldName in entry) {
-      if (['id', 'customer', 'property'].includes(fieldName)) continue;
+      //@ts-ignore
+      if (fieldName === 'id' || typeof entry[fieldName] === 'object') continue;
       const { upperCaseProp, methodName } = getRPCFields(fieldName);
       //@ts-ignore
       req[methodName](entry[fieldName]);
