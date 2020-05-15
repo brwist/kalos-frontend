@@ -44,6 +44,7 @@ export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
 export type GroupType = Group.AsObject;
 export type UserGroupLinkType = UserGroupLink.AsObject;
+export type EventType = Event.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -730,7 +731,7 @@ async function loadQuoteLines() {
  * @returns Event[]
  */
 async function loadEventsByPropertyId(propertyId: number) {
-  const results: Event.AsObject[] = [];
+  const results: EventType[] = [];
   const req = new Event();
   req.setIsActive(1);
   req.setPropertyId(propertyId);
@@ -979,12 +980,13 @@ async function loadPropertiesByFilter({
 async function loadEventsByFilter({
   page,
   searchBy,
-  searchPhrase,
+  searchPhrase: _searchPhrase,
 }: {
   page: number;
   searchBy: string;
   searchPhrase: string;
 }) {
+  const searchPhrase = _searchPhrase.trim();
   const req = new Event();
   req.setOrderBy('date_started');
   req.setOrderDir('desc');
@@ -1001,6 +1003,8 @@ async function loadEventsByFilter({
       p.setAddress(`%${searchPhrase}%`);
     } else if (searchBy === 'Zip Code') {
       p.setZip(`%${searchPhrase}%`);
+    } else if (searchBy === 'Date Completed') {
+      req.setDateEnded(`${searchPhrase}%`);
     } else if (searchBy === 'City') {
       p.setCity(`%${searchPhrase}%`);
     } else if (searchBy === 'Business Name') {
