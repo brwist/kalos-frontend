@@ -4,6 +4,7 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import {
@@ -17,6 +18,7 @@ import {
   formatDate,
   makeOptions,
   timestamp,
+  deleteServiceCallById,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -58,6 +60,7 @@ export const ServiceCallsPending: FC = () => {
   const [events, setEvents] = useState<EventType[]>([]);
   const searchBy = FIELDS[0].value as string;
   const [formKey, setFormKey] = useState<number>(0);
+  const [pendingDelete, setPendingDelete] = useState<EventType>();
   const [filter, setFilter] = useState<SearchForm>({
     searchBy,
     searchPhrase: searchBy.includes('Date') ? timestamp(true) : '',
@@ -101,6 +104,19 @@ export const ServiceCallsPending: FC = () => {
     },
     [setFilter, filter, formKey, setFormKey],
   );
+  const handleTogglePendingDelete = useCallback(
+    (pendingDelete?: EventType) => () => setPendingDelete(pendingDelete),
+    [],
+  );
+  const handleDeleteServiceCall = useCallback(async () => {
+    if (pendingDelete) {
+      const { id } = pendingDelete;
+      setPendingDelete(undefined);
+      setLoading(true);
+      await deleteServiceCallById(id);
+      load();
+    }
+  }, [pendingDelete, setLoading, setPendingDelete]);
   const SCHEMA: Schema<SearchForm> = [
     [
       { name: 'searchBy', label: 'Search By', options: FIELDS },
@@ -114,25 +130,31 @@ export const ServiceCallsPending: FC = () => {
   ];
   const data: Data = loading
     ? makeFakeRows(5, 3)
-    : events.map(({ customer, property, logJobNumber, dateEnded }) => [
-        { value: getCustomerName(customer) },
-        { value: getBusinessName(customer) },
-        { value: logJobNumber },
-        { value: formatDate(dateEnded) },
-        {
-          value: getPropertyAddress(property),
-          actions: [
-            <IconButton key="edit">
-              <EditIcon />
-            </IconButton>,
-            <IconButton key="delete">
-              <DeleteIcon />
-            </IconButton>,
-          ],
-        },
-      ]);
+    : events.map(event => {
+        const { customer, property, logJobNumber, dateEnded } = event;
+        return [
+          { value: getCustomerName(customer) },
+          { value: getBusinessName(customer) },
+          { value: logJobNumber },
+          { value: formatDate(dateEnded) },
+          {
+            value: getPropertyAddress(property),
+            actions: [
+              <IconButton key="edit">
+                <EditIcon />
+              </IconButton>,
+              <IconButton
+                key="delete"
+                onClick={handleTogglePendingDelete(event)}
+              >
+                <DeleteIcon />
+              </IconButton>,
+            ],
+          },
+        ];
+      });
   return (
-    <div>
+    <>
       <SectionBar
         actions={[
           {
@@ -176,6 +198,15 @@ export const ServiceCallsPending: FC = () => {
         className={classes.form}
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
-    </div>
+      {pendingDelete && (
+        <ConfirmDelete
+          open
+          onConfirm={handleDeleteServiceCall}
+          onClose={handleTogglePendingDelete(undefined)}
+          kind="Service Call"
+          name={`with Job Number ${pendingDelete.logJobNumber}`}
+        />
+      )}
+    </>
   );
 };
