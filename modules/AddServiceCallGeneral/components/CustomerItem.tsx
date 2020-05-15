@@ -1,6 +1,5 @@
 import React, { FC, useCallback } from 'react';
 import { Link } from '../../ComponentsLibrary/Link';
-import { Button } from '../../ComponentsLibrary/Button';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import {
   UserType,
