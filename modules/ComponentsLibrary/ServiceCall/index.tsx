@@ -46,6 +46,7 @@ export interface Props {
   propertyId: number;
   serviceCallId?: number;
   loggedUserId: number;
+  onClose?: () => void;
 }
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
@@ -60,12 +61,18 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
 ];
 
 export const ServiceCall: FC<Props> = props => {
+  const {
+    userID,
+    propertyId,
+    serviceCallId: eventId,
+    loggedUserId,
+    onClose,
+  } = props;
   const requestRef = useRef(null);
   const [tabIdx, setTabIdx] = useState<number>(0);
   const [tabKey, setTabKey] = useState<number>(0);
   const [pendingSave, setPendingSave] = useState<boolean>(false);
   const [requestValid, setRequestValid] = useState<boolean>(false);
-  const { userID, propertyId, serviceCallId: eventId, loggedUserId } = props;
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
   const [property, setProperty] = useState<PropertyType>(
@@ -351,11 +358,15 @@ export const ServiceCall: FC<Props> = props => {
                 },
                 {
                   label: 'Close',
-                  url: [
-                    '/index.cfm?action=admin:properties.details',
-                    `property_id=${propertyId}`,
-                    `user_id=${userID}`,
-                  ].join('&'),
+                  ...(onClose
+                    ? { onClick: onClose }
+                    : {
+                        url: [
+                          '/index.cfm?action=admin:properties.details',
+                          `property_id=${propertyId}`,
+                          `user_id=${userID}`,
+                        ].join('&'),
+                      }),
                 },
               ]
             : []
