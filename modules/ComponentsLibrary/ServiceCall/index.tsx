@@ -69,6 +69,7 @@ export const ServiceCall: FC<Props> = props => {
     onClose,
   } = props;
   const requestRef = useRef(null);
+  const [requestFields, setRequestfields] = useState<string[]>([]);
   const [tabIdx, setTabIdx] = useState<number>(0);
   const [tabKey, setTabKey] = useState<number>(0);
   const [pendingSave, setPendingSave] = useState<boolean>(false);
@@ -168,20 +169,20 @@ export const ServiceCall: FC<Props> = props => {
   const save = useCallback(async () => {
     setSaving(true);
     const req = new Event();
-    const fieldMaskList = [];
+    const fieldMaskList: string[] = [];
     if (serviceCallId) {
       req.setId(serviceCallId);
     } else {
       setLoading(true);
     }
-    for (const fieldName in entry) {
+    requestFields.forEach(fieldName => {
       //@ts-ignore
-      if (fieldName === 'id' || typeof entry[fieldName] === 'object') continue;
+      if (fieldName === 'id' || typeof entry[fieldName] === 'object') return;
       const { upperCaseProp, methodName } = getRPCFields(fieldName);
       //@ts-ignore
       req[methodName](entry[fieldName]);
       fieldMaskList.push(upperCaseProp);
-    }
+    });
     req.setFieldMaskList(fieldMaskList);
     const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
       req,
@@ -193,7 +194,7 @@ export const ServiceCall: FC<Props> = props => {
       await loadEntry(res.id);
       await loadServicesRenderedData(res.id);
     }
-  }, [entry, serviceCallId, setEntry, setSaving, setLoading]);
+  }, [entry, serviceCallId, setEntry, setSaving, setLoading, requestFields]);
 
   useEffect(() => {
     if (!loaded) {
@@ -418,6 +419,7 @@ export const ServiceCall: FC<Props> = props => {
                 onChange={handleChangeEntry}
                 disabled={saving}
                 onValid={setRequestValid}
+                onInitSchema={setRequestfields}
               />
             ),
           },
