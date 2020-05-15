@@ -322,7 +322,9 @@ function formatTime(time: string) {
  * @returns format M/D/YYYY (ie. 6/1/2020)
  */
 function formatDate(date: string) {
+  if (!date) return '';
   const [year, month, day] = date.substr(0, 10).split('-');
+  if (+month + +day + +year === 0) return '';
   return [+month, +day, +year].join('/');
 }
 
