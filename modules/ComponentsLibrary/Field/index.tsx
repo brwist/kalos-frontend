@@ -275,7 +275,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }, [loadedTechnicians, value]);
   const handleTechniciansSelect = useCallback(() => {
     if (onChange) {
-      onChange(techniciansIds.join(','));
+      onChange(techniciansIds.filter(id => id > 0).join(','));
     }
     setTechniciansOpened(false);
   }, [onChange, techniciansIds, setTechniciansOpened]);
