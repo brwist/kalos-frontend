@@ -10,6 +10,7 @@ export default () => (
       userID={2573}
       propertyId={6552}
       loggedUserId={101253}
+      onClose={() => console.log('CLOSE')}
     />
     <hr />
     <ExampleTitle>Create</ExampleTitle>

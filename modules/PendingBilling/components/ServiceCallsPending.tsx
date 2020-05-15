@@ -3,10 +3,12 @@ import { makeStyles } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
+import { Modal } from '../../ComponentsLibrary/Modal';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
+import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import {
   getCFAppUrl,
   loadEventsByFilter,
@@ -21,6 +23,10 @@ import {
   deleteServiceCallById,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
+
+export interface Props {
+  loggedUserId: number;
+}
 
 type SearchForm = {
   searchBy: string;
@@ -51,7 +57,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const ServiceCallsPending: FC = () => {
+export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -61,6 +67,7 @@ export const ServiceCallsPending: FC = () => {
   const searchBy = FIELDS[0].value as string;
   const [formKey, setFormKey] = useState<number>(0);
   const [pendingDelete, setPendingDelete] = useState<EventType>();
+  const [pendingEdit, setPendingEdit] = useState<EventType>();
   const [filter, setFilter] = useState<SearchForm>({
     searchBy,
     searchPhrase: searchBy.includes('Date') ? timestamp(true) : '',
@@ -108,6 +115,10 @@ export const ServiceCallsPending: FC = () => {
     (pendingDelete?: EventType) => () => setPendingDelete(pendingDelete),
     [],
   );
+  const handleTogglePendingEdit = useCallback(
+    (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
+    [],
+  );
   const handleDeleteServiceCall = useCallback(async () => {
     if (pendingDelete) {
       const { id } = pendingDelete;
@@ -140,7 +151,7 @@ export const ServiceCallsPending: FC = () => {
           {
             value: getPropertyAddress(property),
             actions: [
-              <IconButton key="edit">
+              <IconButton key="edit" onClick={handleTogglePendingEdit(event)}>
                 <EditIcon />
               </IconButton>,
               <IconButton
@@ -206,6 +217,17 @@ export const ServiceCallsPending: FC = () => {
           kind="Service Call"
           name={`with Job Number ${pendingDelete.logJobNumber}`}
         />
+      )}
+      {pendingEdit && pendingEdit.property && pendingEdit.customer && (
+        <Modal open onClose={handleTogglePendingEdit(undefined)} fullScreen>
+          <ServiceCall
+            loggedUserId={loggedUserId}
+            propertyId={pendingEdit.property.id}
+            userID={pendingEdit.customer.id}
+            serviceCallId={pendingEdit.id}
+            onClose={handleTogglePendingEdit(undefined)}
+          />
+        </Modal>
       )}
     </>
   );
