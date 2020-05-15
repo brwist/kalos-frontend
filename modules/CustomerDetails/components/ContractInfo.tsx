@@ -10,7 +10,6 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
-import { Customer } from '../../ComponentsLibrary/CustomerInformation';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -18,7 +17,7 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Field, Value } from '../../ComponentsLibrary/Field';
-import { getRPCFields, formatDate } from '../../../helpers';
+import { getRPCFields, formatDate, UserType } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
 
 const ContractClientService = new ContractClient(ENDPOINT);
@@ -84,10 +83,7 @@ const INVOICE_SCHEMA: Schema<InvoiceType> = [
 
 const makeContractNumber = (id: number) =>
   'C' +
-  new Date()
-    .getFullYear()
-    .toString()
-    .substr(2, 2) +
+  new Date().getFullYear().toString().substr(2, 2) +
   '-' +
   id.toString().padStart(5, '0');
 
@@ -144,7 +140,7 @@ const useStyles = makeStyles(theme => ({
 
 interface Props {
   userID: number;
-  customer: Customer;
+  customer: UserType;
 }
 
 export const ContractInfo: FC<Props> = props => {
