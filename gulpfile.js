@@ -40,6 +40,7 @@ var readline = require('readline');
 var fs = require('fs');
 var rollup = require('rollup');
 var typescript = require('@rollup/plugin-typescript');
+var scss = require('rollup-plugin-scss');
 var resolve = require('@rollup/plugin-node-resolve');
 var commonjs = require('@rollup/plugin-commonjs');
 var peerDependencies = require('rollup-plugin-peer-deps-external');
@@ -278,6 +279,7 @@ function rollupBuild() {
                                 typescript({
                                     module: 'ES2015'
                                 }),
+                                scss(),
                                 image(),
                                 jsonPlugin(),
                                 peerDependencies(),
