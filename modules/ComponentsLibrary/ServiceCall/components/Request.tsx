@@ -1,4 +1,11 @@
-import React, { FC, useCallback, useState, useMemo, forwardRef } from 'react';
+import React, {
+  FC,
+  useCallback,
+  useState,
+  useMemo,
+  forwardRef,
+  useEffect,
+} from 'react';
 import { PlainForm, Option } from '../../PlainForm';
 import { Form, Schema } from '../../Form';
 import { InfoTable } from '../../InfoTable';
@@ -28,6 +35,7 @@ interface Props {
   jobTypeSubtypes: JobTypeSubtypeType[];
   onChange: (serviceItem: EventType) => void;
   onValid: (valid: boolean) => void;
+  onInitSchema: (fields: string[]) => void;
 }
 
 export const Request: FC<Props> = forwardRef(
@@ -41,9 +49,11 @@ export const Request: FC<Props> = forwardRef(
       jobSubtypeOptions,
       onChange,
       onValid,
+      onInitSchema,
     },
     ref,
   ) => {
+    const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
     const [resetId, setResetId] = useState<number>(0);
     const handleChange = useCallback(
       (data: EventType) => {
@@ -91,7 +101,6 @@ export const Request: FC<Props> = forwardRef(
       ],
       [propertyEvents],
     );
-    if (loading) return <InfoTable data={makeFakeRows(4, 5)} loading />;
     const { isCallback } = serviceItem;
     const SCHEMA: Schema<EventType> = [
       [
@@ -216,6 +225,16 @@ export const Request: FC<Props> = forwardRef(
         },
       ],
     ];
+    useEffect(() => {
+      if (!initSchemaCalled) {
+        setInitSchemaCalled(true);
+        const fields = SCHEMA.map(item =>
+          item.map(({ name }) => name).filter(name => name),
+        ).reduce((aggr, item) => [...aggr, ...item], []);
+        onInitSchema(fields as string[]);
+      }
+    }, [initSchemaCalled, setInitSchemaCalled, onInitSchema, SCHEMA]);
+    if (loading) return <InfoTable data={makeFakeRows(4, 5)} loading />;
     return (
       <Form<EventType>
         //@ts-ignore
