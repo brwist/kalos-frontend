@@ -39,6 +39,7 @@ type State = {
     unbillable: number | null,
   };
   editing: EditingState;
+  error: '';
 }
 
 type TimesheetData = {
@@ -54,7 +55,8 @@ type Action =
   | { type: 'editTimesheetCard', data: TimesheetLine.AsObject }
   | { type: 'editServicesRenderedCard', data: ServicesRendered.AsObject }
   | { type: 'saveTimecard', data: TimesheetLine.AsObject, action: string }
-  | { type: 'closeEditingModal' };
+  | { type: 'closeEditingModal' }
+  | { type: 'error', text: string };
 
 
 export const getShownDates = (date: Date): string[] => {
@@ -176,12 +178,13 @@ export const reducer = (state: State, action: Action) => {
       const data = {...state.data};
       const entry = state.editing.entry;
       const card = action.data;
-      const entryDate = format(new Date(entry.timeStarted), 'yyyy-MM-dd');
+      const entryDate = entry?.timeStarted ? format(new Date(entry.timeStarted), 'yyyy-MM-dd') : '';
       const cardDate = format(new Date(card.timeStarted), 'yyyy-MM-dd');
       const datePresented = state.shownDates.indexOf(cardDate) >= 0;
       if (action.action === 'create' && datePresented) {
         data[cardDate].timesheetLineList.push(card);
-      } else if (action.action === 'convert') {
+      }
+      else if (action.action === 'convert') {
         const sr = data[entryDate].servicesRenderedList.find(item => item.id === entry.servicesRenderedId);
         sr.hideFromTimesheet! = 1;
         if (datePresented) {
@@ -230,6 +233,12 @@ export const reducer = (state: State, action: Action) => {
           action: '',
         },
       };
+    case 'error': {
+      return {
+        ...state,
+        error: action?.text || '',
+      };
+    }
     default:
       return state;
   }
