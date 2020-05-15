@@ -9,6 +9,7 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
+import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import {
   getCFAppUrl,
   loadEventsByFilter,
@@ -68,6 +69,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
   const [formKey, setFormKey] = useState<number>(0);
   const [pendingDelete, setPendingDelete] = useState<EventType>();
   const [pendingEdit, setPendingEdit] = useState<EventType>();
+  const [pendingCreate, setPendingCreate] = useState<boolean>(false);
   const [filter, setFilter] = useState<SearchForm>({
     searchBy,
     searchPhrase: searchBy.includes('Date') ? timestamp(true) : '',
@@ -83,7 +85,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     setEvents(results);
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, setEvents, setCount, setLoading, filter]);
+  }, [setLoading, setEvents, setCount, setLoading, filter, page]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -119,6 +121,10 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
     [],
   );
+  const handleTogglePendingCreate = useCallback(
+    (pendingCreate: boolean) => () => setPendingCreate(pendingCreate),
+    [],
+  );
   const handleDeleteServiceCall = useCallback(async () => {
     if (pendingDelete) {
       const { id } = pendingDelete;
@@ -128,6 +134,13 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       load();
     }
   }, [pendingDelete, setLoading, setPendingDelete]);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setPage(page);
+      setLoaded(false);
+    },
+    [setLoaded, setPage],
+  );
   const SCHEMA: Schema<SearchForm> = [
     [
       { name: 'searchBy', label: 'Search By', options: FIELDS },
@@ -170,7 +183,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         actions={[
           {
             label: 'New Service Call',
-            url: getCFAppUrl('admin:service.addServiceCallGeneral'),
+            onClick: handleTogglePendingCreate(true),
           },
           {
             label: 'Customers',
@@ -196,7 +209,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         pagination={{
           page,
           count,
-          onChangePage: setPage,
+          onChangePage: handlePageChange,
           rowsPerPage: ROWS_PER_PAGE,
         }}
       />
@@ -226,6 +239,14 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
             userID={pendingEdit.customer.id}
             serviceCallId={pendingEdit.id}
             onClose={handleTogglePendingEdit(undefined)}
+          />
+        </Modal>
+      )}
+      {pendingCreate && (
+        <Modal open onClose={handleTogglePendingCreate(false)} fullScreen>
+          <AddServiceCall
+            loggedUserId={loggedUserId}
+            onClose={handleTogglePendingCreate(false)}
           />
         </Modal>
       )}
