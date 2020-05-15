@@ -983,10 +983,12 @@ async function loadEventsByFilter({
   page,
   searchBy,
   searchPhrase: _searchPhrase,
+  pendingBilling = false,
 }: {
   page: number;
   searchBy: string;
   searchPhrase: string;
+  pendingBilling?: boolean;
 }) {
   const searchPhrase = _searchPhrase.trim();
   const req = new Event();
@@ -999,6 +1001,10 @@ async function loadEventsByFilter({
   if (searchPhrase !== '') {
     if (searchBy === 'Job Number') {
       req.setLogJobNumber(`%${searchPhrase}%`);
+    }
+    if (pendingBilling) {
+      req.setLogJobStatus('Completed');
+      req.setLogPaymentStatus('Pending');
     }
     if (searchBy === 'Start Date') {
       req.setDateStarted(`%${searchPhrase}%`);
