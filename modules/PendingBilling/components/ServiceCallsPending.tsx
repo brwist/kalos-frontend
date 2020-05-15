@@ -81,6 +81,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       page,
       searchBy,
       searchPhrase,
+      pendingBilling: true,
     });
     setEvents(results);
     setCount(totalCount);
