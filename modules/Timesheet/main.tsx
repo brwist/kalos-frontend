@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useReducer } from "react";
+import React, { createContext, useEffect, useReducer, useCallback } from "react";
 import { startOfWeek, subDays } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -90,8 +90,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       hiddenSR: [],
     },
   });
-  const { user, owner, fetchingTimesheetData, data, payroll, selectedDate, shownDates, editing } = state;
-  console.log(data);
+  const { user, owner, fetchingTimesheetData, data, payroll, selectedDate, shownDates, editing, error } = state;
   const handleOnSave = (card: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
     dispatch({ type: 'saveTimecard', data: card, action: editing.action || action });
   };
@@ -123,13 +122,54 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     dispatch({ type: 'changeDate', value })
   };
 
-  const handleSubmitTimesheet = () => {
-    if (user?.timesheetAdministration) {
-      tslClient.Approve([], userId);
-    } else {
-      tslClient.Submit([]);
-    }
-  };
+  const handleSubmitTimesheet = useCallback(() => {
+    (async () => {
+      const ids = [];
+      let overlapped = false;
+      for (let i = 0; i < shownDates.length; i++) {
+        let dayList = [...data[shownDates[i]].timesheetLineList]
+          .sort((a, b) =>
+            new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime()
+          );
+        let result = dayList.reduce((acc, current, idx, arr) => {
+          if (idx === 0) {
+            acc.idList.push(current.id);
+            return acc;
+          }
+          let previous = arr[idx-1];
+          let previousEnd = new Date(previous.timeFinished).getTime();
+          let currentStart = new Date(current.timeStarted).getTime();
+          let overlap = (previousEnd > currentStart);
+          if (overlap) {
+            overlapped = true;
+          } else {
+            acc.ranges.push({
+              previous: previous,
+              current: current
+            });
+            acc.idList.push(current.id)
+          }
+          return acc;
+        }, {ranges: [], idList: []});
+
+        if (overlapped) {
+          break;
+        } else {
+          ids.push(...result.idList);
+        }
+      }
+      if (overlapped) {
+        dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
+      } else {
+        let result;
+        if (user?.timesheetAdministration) {
+          result = await tslClient.Approve(ids, userId);
+        } else {
+          result = await tslClient.Submit(ids);
+        }
+      }
+    })();
+  }, [userId, data, shownDates, tslClient]);
 
   const fetchUsers = async () => {
     const userResult = await loadUserById(userId);
@@ -184,8 +224,13 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
             userName={`${owner?.firstname} ${owner?.lastname}`}
             timesheetAdministration={!!user.timesheetAdministration}
             payroll={payroll}
-            submitTimesheet={() => {}}
+            submitTimesheet={handleSubmitTimesheet}
           />
+          {error && (
+            <Alert severity="error" onClose={() => dispatch({ type: 'error', text: ''})}>
+              {error}
+            </Alert>
+          )}
           <Box className={classes.wrapper}>
               {hasAccess ? (
                 <Container className={classes.week} maxWidth={false}>
