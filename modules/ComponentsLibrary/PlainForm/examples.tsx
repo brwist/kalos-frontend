@@ -31,7 +31,7 @@ amet`,
   mailing: 0,
   dob: '1980-11-23 00:00:00',
   hour: '',
-  technician: '0',
+  technician: '',
   signature: '',
   coverImage: '',
 };
