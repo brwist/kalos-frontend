@@ -17,7 +17,9 @@ import { SearchForm, FormType, getFormInit } from './SearchForm';
 import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 
-export type Props = Pick<CustomerItemProps, 'loggedUserId'>;
+export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
+  onClose?: () => void;
+};
 
 export const useStyles = makeStyles(theme => ({
   wrapper: {
@@ -39,7 +41,7 @@ export const useStyles = makeStyles(theme => ({
 
 export const AddServiceCall: FC<Props> = props => {
   const classes = useStyles();
-  const { loggedUserId } = props;
+  const { loggedUserId, onClose } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [customerOpened, setCustomerOpened] = useState<UserType>();
   const [propertyOpened, setPropertyOpened] = useState<UserType>();
@@ -131,6 +133,8 @@ export const AddServiceCall: FC<Props> = props => {
           onChangePage: handlePageChange,
           page,
         }}
+        actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}
+        fixedActions
       />
       <SearchForm
         onSearch={handleSearch}
