@@ -200,10 +200,13 @@ export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
   const handleFormChange = useCallback(
     (data: SearchForm) => {
       const isTypeChanged = data.kind !== filter.kind;
-      setFilter(data);
       if (isTypeChanged) {
+        setFilter({ kind: data.kind });
+        setPage(0);
         setFormKey(formKey + 1);
         setLoaded(false);
+      } else {
+        setFilter(data);
       }
     },
     [setFilter, filter, formKey, setFormKey, setLoaded],
