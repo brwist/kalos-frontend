@@ -6,6 +6,7 @@ import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Typography from '@material-ui/core/Typography';
 import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
+import { OrderDir } from '../../../helpers';
 
 type Styles = {
   loading?: boolean;
@@ -15,8 +16,6 @@ type Styles = {
 };
 
 type Href = 'tel' | 'mailto';
-
-export type Dir = 'DESC' | 'ASC';
 
 export type Data = {
   label?: string;
@@ -28,7 +27,7 @@ export type Data = {
 
 export type Columns = {
   name: ReactNode;
-  dir?: Dir;
+  dir?: OrderDir;
   onClick?: () => void;
   actions?: ActionsProps;
   fixedActions?: boolean;

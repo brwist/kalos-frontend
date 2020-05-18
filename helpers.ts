@@ -891,19 +891,18 @@ function getWeekOptions(): Option[] {
   });
 }
 
-type OrderDir = 'asc' | 'desc';
-
+export type OrderDir = 'ASC' | 'DESC';
+export type UsersSort = {
+  orderByField: keyof UserType;
+  orderBy: string;
+  orderDir: OrderDir;
+};
 export type LoadUsersByFilter = {
   page: number;
   filter: UsersFilter;
-  sort: {
-    orderByField: keyof UserType;
-    orderBy: string;
-    orderDir: OrderDir;
-  };
+  sort: UsersSort;
   withProperties?: boolean;
 };
-
 export type UsersFilter = {
   firstname?: string;
   lastname?: string;
@@ -951,24 +950,24 @@ export const loadUsersByFilter = async ({
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'desc' ? 1 : -1;
-        if (A > B) return orderDir === 'desc' ? -1 : 1;
+        if (A < B) return orderDir === 'DESC' ? 1 : -1;
+        if (A > B) return orderDir === 'DESC' ? -1 : 1;
         return 0;
       }),
     totalCount: response.getTotalCount(),
   };
 };
 
+export type PropertiesSort = {
+  orderByField: keyof PropertyType;
+  orderBy: string;
+  orderDir: OrderDir;
+};
 export type LoadPropertiesByFilter = {
   page: number;
   filter: PropertiesFilter;
-  sort: {
-    orderByField: keyof PropertyType;
-    orderBy: string;
-    orderDir: OrderDir;
-  };
+  sort: PropertiesSort;
 };
-
 export type PropertiesFilter = {
   subdivision?: string;
   address?: string;
@@ -1009,14 +1008,19 @@ export const loadPropertiesByFilter = async ({
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'desc' ? 1 : -1;
-        if (A > B) return orderDir === 'desc' ? -1 : 1;
+        if (A < B) return orderDir === 'DESC' ? 1 : -1;
+        if (A > B) return orderDir === 'DESC' ? -1 : 1;
         return 0;
       }),
     totalCount: response.getTotalCount(),
   };
 };
 
+export type EventsSort = {
+  orderByField: keyof EventType;
+  orderBy: string;
+  orderDir: OrderDir;
+};
 export type EventsFilter = {
   firstname?: string;
   lastname?: string;
@@ -1028,17 +1032,13 @@ export type EventsFilter = {
   zip?: string;
   logDateCompleted?: string;
 };
-
 export type LoadEventsByFilter = {
   page: number;
   filter: EventsFilter;
-  sort: {
-    orderByField: keyof EventType;
-    orderBy: string;
-    orderDir: OrderDir;
-  };
+  sort: EventsSort;
   pendingBilling?: boolean;
 };
+
 /**
  * Returns Events by filter
  * @param page number
@@ -1113,8 +1113,8 @@ export const loadEventsByFilter = async ({
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'desc' ? 1 : -1;
-        if (A > B) return orderDir === 'desc' ? -1 : 1;
+        if (A < B) return orderDir === 'DESC' ? 1 : -1;
+        if (A > B) return orderDir === 'DESC' ? -1 : 1;
         return 0;
       }),
     totalCount: response.getTotalCount(),
