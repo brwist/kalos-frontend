@@ -21,7 +21,7 @@ import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
 import { loadUserById } from '../../helpers';
-import { getShownDates, reducer } from './reducer';
+import { getShownDates, reducer, State, Action } from './reducer';
 
 const userClient = new UserClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
@@ -50,12 +50,6 @@ type EditTimesheetContext = {
   editServicesRenderedCard: (card: ServicesRendered.AsObject) => void;
 };
 
-export type Payroll = {
-  total: number | null,
-  billable: number | null,
-  unbillable: number | null,
-};
-
 export const EditTimesheetContext = createContext<EditTimesheetContext>({
   editTimesheetCard: (card: TimesheetLine.AsObject) => {},
   editServicesRenderedCard: (card: ServicesRendered.AsObject) => {},
@@ -70,6 +64,7 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
 
 const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   const classes = useStyles();
+  // @ts-ignore
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
