@@ -285,9 +285,7 @@ function rollupBuild() {
                                 peerDependencies(),
                                 replace({
                                     'process.env.NODE_ENV': JSON.stringify('production'),
-                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com',
-                                    'bufferEs6.hasOwnProperty(key$2)': 'key$2 in bufferEs6',
-                                    '_a = _typeModule(_typeModule)': 'var _a = _typeModule(_typeModule);'
+                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com'
                                 }),
                             ]
                         })];
@@ -305,6 +303,8 @@ function rollupBuild() {
                         })];
                 case 6:
                     _a.sent();
+                    sh.sed('-i', 'bufferEs6.hasOwnProperty(key$2)', 'key$2 in bufferEs6', "build/modules/" + target + ".js");
+                    sh.sed('-i', '_a = _typeModule(_typeModule)', 'var _a = _typeModule(_typeModule);', "build/modules/" + target + ".js");
                     return [2 /*return*/];
             }
         });
@@ -656,6 +656,11 @@ var NAMED_EXPORTS = {
         'ToolFund',
         'SpiffList',
         'Spiff',
+        'SpiffType',
+        'TaskEventData',
+        'TaskStatus',
+        'SpiffDuplicate',
+        'SpiffTypeList',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/metrics_pb.js': [
         'MetricsClient',

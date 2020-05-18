@@ -1,5 +1,6 @@
 import uniq from 'lodash/uniq';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
+import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
@@ -168,7 +169,7 @@ async function getSlackID(
   if (count != 4) {
     try {
       let slackUsers = await getSlackList(skipCache);
-      let user = slackUsers.find(s => {
+      let user = slackUsers.find((s) => {
         if (s.real_name === userName) {
           return true;
         }
@@ -785,7 +786,7 @@ async function loadUserById(id: number) {
  */
 async function loadUsersByIds(ids: number[]) {
   const uniqueIds: number[] = [];
-  ids.forEach(id => {
+  ids.forEach((id) => {
     if (id > 0 && !uniqueIds.includes(id)) {
       uniqueIds.push(id);
     }
@@ -818,7 +819,7 @@ async function loadMetricByUserId(userId: number, metricType: MetricType) {
  */
 async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
   return await Promise.all(
-    userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
+    userIds.map(async (userId) => await loadMetricByUserId(userId, metricType)),
   );
 }
 
@@ -930,7 +931,7 @@ async function loadUsersByFilter({
   }
   const response = await UserClientService.BatchGet(req);
   return {
-    results: response.getResultsList().map(item => item.toObject()),
+    results: response.getResultsList().map((item) => item.toObject()),
     totalCount: response.getTotalCount(),
   };
 }
@@ -967,7 +968,7 @@ async function loadPropertiesByFilter({
   }
   const response = await PropertyClientService.BatchGet(req);
   return {
-    results: response.getResultsList().map(item => item.toObject()),
+    results: response.getResultsList().map((item) => item.toObject()),
     totalCount: response.getTotalCount(),
   };
 }
@@ -1035,7 +1036,7 @@ async function loadEventsByFilter({
   req.setProperty(p);
   const response = await EventClientService.BatchGet(req);
   return {
-    results: response.getResultsList().map(item => item.toObject()),
+    results: response.getResultsList().map((item) => item.toObject()),
     totalCount: response.getTotalCount(),
   };
 }
@@ -1069,11 +1070,11 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
  */
 async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
   const refNumbers = uniq(
-    referenceNumbers.map(el => (el || '').trim()).filter(el => el !== ''),
+    referenceNumbers.map((el) => (el || '').trim()).filter((el) => el !== ''),
   );
   return (
     await Promise.all(
-      refNumbers.map(async referenceNumber => ({
+      refNumbers.map(async (referenceNumber) => ({
         referenceNumber,
         data: await loadEventByJobOrContractNumber(referenceNumber),
       })),
@@ -1133,7 +1134,7 @@ async function uploadFileToS3Bucket(
 }
 
 export const makeOptions = (options: string[]): Option[] =>
-  options.map(label => ({ label, value: label }));
+  options.map((label) => ({ label, value: label }));
 
 export const getCustomerName = (c?: UserType): string =>
   c ? `${c.firstname} ${c.lastname}` : '';
@@ -1208,6 +1209,30 @@ export const deleteServiceCallById = async (id: number) => {
   await EventClientService.Delete(req);
 };
 
+const BUG_REPORT_LABEL = 'user submitted bug report';
+async function newBugReport(data: IBugReport) {
+  try {
+    const client = new ApiKeyClient(ENDPOINT);
+    const req = new ApiKey();
+    req.setTextId('github_key');
+    const key = await client.Get(req);
+    data.labels = [BUG_REPORT_LABEL];
+    const authString = `token ${key.apiKey}`;
+    const postData = {
+      method: 'POST',
+      headers: {
+        Authorization: authString,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    };
+    const fetchRes = await fetch(key.apiEndpoint, postData);
+    console.log(fetchRes);
+  } catch (err) {
+    console.log('error generating bug report', err);
+  }
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -1256,4 +1281,12 @@ export {
   loadEventsByFilter,
   loadUsersByFilter,
   loadPropertiesByFilter,
+  newBugReport,
+  IBugReport,
 };
+
+export interface IBugReport {
+  title: string;
+  body?: string;
+  labels?: string[];
+}
