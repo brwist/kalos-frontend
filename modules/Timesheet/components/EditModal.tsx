@@ -131,16 +131,16 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
     async () => {
       confirm({
         catchOnCancel: true,
-        description: "Are you sure you want to Approve this Timesheet?"
+        description: `Are you sure you want to ${timesheetAdministration ? 'Approve' : 'Submit'} this Timesheet?`
       }).then( async () => {
-        const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm');
+        const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
         setSaving(true);
         const req = new TimesheetLine();
         req.setId(id);
         if (timesheetAdministration) {
           req.setAdminApprovalUserId(userId);
           req.setAdminApprovalDatetime(dateTime);
-          req.setFieldMaskList(['AdminApprovalUserId, AdminApprovalDatetime']);
+          req.setFieldMaskList(['AdminApprovalUserId', 'AdminApprovalDatetime']);
         } else {
           req.setUserApprovalDatetime(dateTime);
           req.setFieldMaskList(['UserApprovalDatetime']);
@@ -206,10 +206,11 @@ const EditTimesheetModal: FC<Props> = ({ entry, timesheetOwnerId, userId, timesh
         )}
         {action === 'update' && (
           <ButtonGroup className={classes.buttonGroup} disabled={saving}>
-            <Button label="Approve" onClick={handleApprove} />
-            {timesheetAdministration && (
-              <Button label="Reject" />
-            )}
+            <Button
+              label={timesheetAdministration ? 'Approve' : 'Submit'}
+              onClick={handleApprove}
+              disabled={timesheetAdministration && !entry.userApprovalDatetime}
+            />
             <Button label="Delete" onClick={handleDelete} />
           </ButtonGroup>
         )}

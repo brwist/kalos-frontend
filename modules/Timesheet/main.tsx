@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useReducer, useCallback } from "react";
+import React, {createContext, useEffect, useReducer, useCallback, Reducer } from "react";
 import { startOfWeek, subDays } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -75,6 +75,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     owner: undefined,
     fetchingTimesheetData: true,
     data: {},
+    pendingEntries: false,
     selectedDate: getWeekStart(userId, timesheetOwnerId),
     shownDates: getShownDates(getWeekStart(userId, timesheetOwnerId)),
     payroll: {
@@ -89,10 +90,22 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       editedEntries: [],
       hiddenSR: [],
     },
+    error: '',
   });
-  const { user, owner, fetchingTimesheetData, data, payroll, selectedDate, shownDates, editing, error } = state;
+  const {
+    user,
+    owner,
+    fetchingTimesheetData,
+    data,
+    pendingEntries,
+    payroll,
+    selectedDate,
+    shownDates,
+    editing,
+    error
+  } = state;
   const handleOnSave = (card: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
-    dispatch({ type: 'saveTimecard', data: card, action: editing.action || action });
+    dispatch({ type: 'saveTimecard', data: card, action: action || editing.action });
   };
 
   const handleAddNewTimeshetCardClicked = () => {
@@ -147,7 +160,9 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
               previous: previous,
               current: current
             });
-            acc.idList.push(current.id)
+            if (!current.adminApprovalUserId) {
+              acc.idList.push(current.id)
+            }
           }
           return acc;
         }, {ranges: [], idList: []});
@@ -161,11 +176,12 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       if (overlapped) {
         dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
       } else {
-        let result;
         if (user?.timesheetAdministration) {
-          result = await tslClient.Approve(ids, userId);
+          await tslClient.Approve(ids, userId);
+          dispatch({ type: 'approveTimesheet' });
         } else {
-          result = await tslClient.Submit(ids);
+          await tslClient.Submit(ids);
+          dispatch({ type: 'submitTimesheet' });
         }
       }
     })();
@@ -200,7 +216,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       req.setServicesRendered(sr);
       req.setTimesheetLine(tl);
       const result = await tslClient.GetTimesheet(req, `${shownDates[0]}%`, `${shownDates[shownDates.length - 1]}%`);
-      dispatch({type: 'fetchedTimesheetData', data: result });
+      dispatch({ type: 'fetchedTimesheetData', data: result });
     })();
   }, [shownDates]);
 
@@ -225,9 +241,10 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
             timesheetAdministration={!!user.timesheetAdministration}
             payroll={payroll}
             submitTimesheet={handleSubmitTimesheet}
+            pendingEntries={pendingEntries}
           />
           {error && (
-            <Alert severity="error" onClose={() => dispatch({ type: 'error', text: ''})}>
+            <Alert severity="error" onClose={() => dispatch({ type: 'error', text: '' })}>
               {error}
             </Alert>
           )}

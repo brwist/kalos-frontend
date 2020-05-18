@@ -7,6 +7,8 @@ import { addDays, differenceInMinutes, eachDayOfInterval, format } from "date-fn
 type DayData = {
   servicesRenderedList: ServicesRendered.AsObject[],
   timesheetLineList: TimesheetLine.AsObject[],
+  getServicesRenderedList: () => ServicesRendered[],
+  getTimesheetLineList: () => TimesheetLine[],
 };
 
 type DataList = {
@@ -26,11 +28,12 @@ type EditingState = {
   convertingSR?: ServicesRendered.AsObject,
 };
 
-type State = {
+export type State = {
   user?: User.AsObject;
   owner?: User.AsObject;
   fetchingTimesheetData: boolean;
   data: DataList;
+  pendingEntries: boolean;
   selectedDate: Date;
   shownDates: string[];
   payroll: {
@@ -43,10 +46,10 @@ type State = {
 }
 
 type TimesheetData = {
-  getDatesMap(): jspb.Map<string, TimesheetReq>;
+  getDatesMap(): jspb.Map<string, DayData>;
 };
 
-type Action =
+export type Action =
   | { type: 'setUsers', data: {user: User.AsObject, owner: User.AsObject} }
   | { type: 'fetchingTimesheetData' }
   | { type: 'fetchedTimesheetData', data: TimesheetData }
@@ -56,7 +59,9 @@ type Action =
   | { type: 'editServicesRenderedCard', data: ServicesRendered.AsObject }
   | { type: 'saveTimecard', data: TimesheetLine.AsObject, action: string }
   | { type: 'closeEditingModal' }
-  | { type: 'error', text: string };
+  | { type: 'error', text: string }
+  | { type: 'submitTimesheet' }
+  | { type: 'approveTimesheet' }
 
 
 export const getShownDates = (date: Date): string[] => {
@@ -83,13 +88,18 @@ export const reducer = (state: State, action: Action) => {
     }
     case 'fetchedTimesheetData': {
       const datesMap = action.data.getDatesMap();
+      let pendingEntries = false;
       const { data, totalPayroll } = state.shownDates.reduce(({ data, totalPayroll }, date) => {
         const dayData = datesMap.get(date);
         const srList = dayData?.getServicesRenderedList().map(i => i.toObject()) || [];
-        const servicesRenderedList = srList.filter((item: ServicesRendered) => !item.hideFromTimesheet && item.status !== 'Completed' && item.status !== 'Incomplete')
+        const servicesRenderedList = srList.filter((item: ServicesRendered.AsObject) => 
+          !item.hideFromTimesheet && item.status !== 'Completed' && item.status !== 'Incomplete');
         const timesheetLineList = dayData?.getTimesheetLineList().map(i => i.toObject()) || [];
 
         const payroll = timesheetLineList.reduce((acc, item) => {
+          if (!item.userApprovalDatetime) {
+            pendingEntries = true;
+          }
           const payrollDiff = differenceInMinutes(new Date(item.timeFinished), new Date(item.timeStarted)) / 60;
           return {
             ...acc,
@@ -98,7 +108,7 @@ export const reducer = (state: State, action: Action) => {
             total: acc.total + payrollDiff,
           }
         }, {billable: 0, unbillable: 0, total: 0});
-
+        // @ts-ignore
         data[date] = {
           servicesRenderedList,
           timesheetLineList,
@@ -109,7 +119,7 @@ export const reducer = (state: State, action: Action) => {
           unbillable: totalPayroll.unbillable + payroll.unbillable,
           total: totalPayroll.total + payroll.total,
         };
-        return {data, totalPayroll};
+        return { data, totalPayroll };
       }, {
         data: [],
         totalPayroll: {
@@ -124,6 +134,7 @@ export const reducer = (state: State, action: Action) => {
         data,
         payroll: totalPayroll,
         fetchingTimesheetData: false,
+        pendingEntries,
       };
     }
     case 'changeDate':
@@ -186,7 +197,8 @@ export const reducer = (state: State, action: Action) => {
       }
       else if (action.action === 'convert') {
         const sr = data[entryDate].servicesRenderedList.find(item => item.id === entry.servicesRenderedId);
-        sr.hideFromTimesheet! = 1;
+        // @ts-ignore
+        sr.hideFromTimesheet = 1;
         if (datePresented) {
           data[cardDate].timesheetLineList.push(card);
         }
@@ -224,6 +236,41 @@ export const reducer = (state: State, action: Action) => {
         },
       };
     }
+    case 'submitTimesheet': {
+      const data = {...state.data};
+      const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm');
+      for (let i = 0; i < state.shownDates.length; i++) {
+        let dayList = [...data[state.shownDates[i]].timesheetLineList];
+        dayList.forEach(entry => {
+          if (!entry.userApprovalDatetime) {
+            entry.userApprovalDatetime = dateTime;
+          }
+        });
+      }
+      return {
+        ...state,
+        data,
+      };
+    }
+
+    case 'approveTimesheet': {
+      const data = {...state.data};
+      const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm');
+      for (let i = 0; i < state.shownDates.length; i++) {
+        let dayList = [...data[state.shownDates[i]].timesheetLineList];
+        dayList.forEach(entry => {
+          if (!entry.adminApprovalDatetime) {
+            entry.adminApprovalDatetime = dateTime;
+            entry.adminApprovalUserId = state.user!.id;
+          }
+        });
+      }
+      return {
+        ...state,
+        data,
+      };
+    }
+
     case 'closeEditingModal':
       return {
         ...state,
