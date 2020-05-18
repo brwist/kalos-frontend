@@ -2,38 +2,13 @@ import React, { FC, useState, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core';
 import { Button } from '../../ComponentsLibrary/Button';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
-import { getCFAppUrl } from '../../../helpers';
-
-type SearchBy =
-  | 'First Name'
-  | 'Last Name'
-  | 'Business Name'
-  | 'Email'
-  | 'Primary Phone';
-
-const SEARCH_BY: SearchBy[] = [
-  'First Name',
-  'Last Name',
-  'Business Name',
-  'Email',
-  'Primary Phone',
-];
-
-export type FormType = {
-  searchBy: SearchBy;
-  searchPhrase: string;
-};
+import { getCFAppUrl, UsersFilter } from '../../../helpers';
 
 interface Props {
-  onSearch: (search: FormType) => void;
+  onSearch: (search: UsersFilter) => void;
   onReset: () => void;
   onAddCustomer: () => void;
 }
-
-export const getFormInit: FormType = {
-  searchBy: SEARCH_BY[0],
-  searchPhrase: '',
-};
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -44,14 +19,14 @@ const useStyles = makeStyles(theme => ({
 export const SearchForm: FC<Props> = ({ onSearch, onReset, onAddCustomer }) => {
   const classes = useStyles();
   const [formKey, setFormKey] = useState<number>(0);
-  const [search, setSearch] = useState<FormType>(getFormInit);
+  const [search, setSearch] = useState<UsersFilter>({});
   const handleSearch = useCallback(() => onSearch(search), [onSearch, search]);
   const handleReset = useCallback(() => {
-    setSearch(getFormInit);
+    setSearch({});
     setFormKey(formKey + 1);
     onReset();
   }, [setSearch, setFormKey, formKey, onReset]);
-  const SCHEMA: Schema<FormType> = [
+  const SCHEMA: Schema<UsersFilter> = [
     [
       {
         headline: true,
@@ -60,20 +35,41 @@ export const SearchForm: FC<Props> = ({ onSearch, onReset, onAddCustomer }) => {
     ],
     [
       {
-        name: 'searchBy',
-        label: 'Search By',
-        options: SEARCH_BY,
+        name: 'firstname',
+        label: 'First Name',
+        type: 'search',
       },
       {
-        name: 'searchPhrase',
-        label: 'Search Phrase',
+        name: 'lastname',
+        label: 'Last Name',
+        type: 'search',
+      },
+      {
+        name: 'businessname',
+        label: 'Business Name',
+        type: 'search',
+      },
+    ],
+    [
+      {
+        name: 'email',
+        label: 'Email',
+        type: 'search',
+      },
+      {
+        name: 'phone',
+        label: 'Phone',
         type: 'search',
         actions: [
+          {
+            label: 'Reset',
+            variant: 'outlined',
+            onClick: handleReset,
+          },
           {
             label: 'Search',
             onClick: handleSearch,
           },
-          { label: 'Reset', variant: 'outlined', onClick: handleReset },
         ],
       },
     ],
@@ -103,7 +99,7 @@ export const SearchForm: FC<Props> = ({ onSearch, onReset, onAddCustomer }) => {
     ],
   ];
   return (
-    <PlainForm<FormType>
+    <PlainForm<UsersFilter>
       key={formKey}
       schema={SCHEMA}
       data={search}

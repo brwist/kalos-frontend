@@ -45,12 +45,15 @@ export const CustomerItem: FC<Props> = ({
     (customer: UserType) => () => onAddProperty(customer),
     [onAddProperty],
   );
+  const customerNameAndBusinessName = getCustomerNameAndBusinessName(customer);
+  console.log({ customerNameAndBusinessName });
   const columns: Columns = [
     {
       name: (
         <Link onClick={handleCustomerClick(customer)}>
           <big>
-            <strong>{getCustomerNameAndBusinessName(customer)}</strong>
+            <strong>{customerNameAndBusinessName}</strong>
+            {customerNameAndBusinessName === '' && <i>no name</i>}
           </big>
         </Link>
       ),

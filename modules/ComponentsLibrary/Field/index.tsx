@@ -400,6 +400,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     return (
       <div className={classes.field + ' ' + classes.content + ' ' + className}>
         {content}
+        {actions.length > 0 && <Actions actions={actions} fixed />}
       </div>
     );
   }

@@ -169,7 +169,7 @@ async function getSlackID(
   if (count != 4) {
     try {
       let slackUsers = await getSlackList(skipCache);
-      let user = slackUsers.find((s) => {
+      let user = slackUsers.find(s => {
         if (s.real_name === userName) {
           return true;
         }
@@ -786,7 +786,7 @@ async function loadUserById(id: number) {
  */
 async function loadUsersByIds(ids: number[]) {
   const uniqueIds: number[] = [];
-  ids.forEach((id) => {
+  ids.forEach(id => {
     if (id > 0 && !uniqueIds.includes(id)) {
       uniqueIds.push(id);
     }
@@ -819,7 +819,7 @@ async function loadMetricByUserId(userId: number, metricType: MetricType) {
  */
 async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
   return await Promise.all(
-    userIds.map(async (userId) => await loadMetricByUserId(userId, metricType)),
+    userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
   );
 }
 
@@ -891,51 +891,90 @@ function getWeekOptions(): Option[] {
   });
 }
 
+type OrderDir = 'asc' | 'desc';
+
+export type LoadUsersByFilter = {
+  page: number;
+  filter: UsersFilter;
+  sort: {
+    orderByField: keyof UserType;
+    orderBy: string;
+    orderDir: OrderDir;
+  };
+  withProperties?: boolean;
+};
+
+export type UsersFilter = {
+  firstname?: string;
+  lastname?: string;
+  businessname?: string;
+  phone?: string;
+  email?: string;
+};
+
 /**
  * Returns Users by filter
  * @param page number
- * @param searchBy string
- * @param searchPhrase string
+ * @param filter UsersFilter
+ * @param sort sort
  * @returns {results: User[], totalCount: number}
  */
-async function loadUsersByFilter({
+export const loadUsersByFilter = async ({
   page,
-  searchBy,
-  searchPhrase,
+  filter,
+  sort,
   withProperties = false,
-}: {
-  page: number;
-  searchBy: string;
-  searchPhrase: string;
-  withProperties?: boolean;
-}) {
+}: LoadUsersByFilter) => {
+  const { orderBy, orderDir, orderByField } = sort;
   const req = new User();
+  req.setOrderBy(orderBy);
+  req.setOrderDir(orderDir);
   req.setIsEmployee(0);
   req.setIsActive(1);
   req.setPageNumber(page);
   if (withProperties) {
     req.setWithProperties(true);
   }
-  if (searchPhrase !== '') {
-    if (searchBy === 'Last Name') {
-      req.setLastname(`%${searchPhrase}%`);
-    } else if (searchBy === 'Business Name') {
-      req.setBusinessname(`%${searchPhrase}%`);
-    } else if (searchBy === 'Primary Phone') {
-      req.setPhone(`%${searchPhrase}%`);
-    } else if (searchBy === 'Email') {
-      req.setEmail(`%${searchPhrase}%`);
-    } else if (searchBy === 'First Name') {
-      req.setFirstname(`%${searchPhrase}%`);
+  for (const fieldName in filter) {
+    const value = filter[fieldName as keyof UsersFilter];
+    if (value) {
+      const { methodName } = getRPCFields(fieldName);
+      //@ts-ignore
+      req[methodName](`%${value}%`);
     }
   }
   const response = await UserClientService.BatchGet(req);
   return {
-    results: response.getResultsList().map((item) => item.toObject()),
+    results: response
+      .getResultsList()
+      .map(item => item.toObject())
+      .sort((a, b) => {
+        const A = (a[orderByField] || '').toString().toLowerCase();
+        const B = (b[orderByField] || '').toString().toLowerCase();
+        if (A < B) return orderDir === 'desc' ? 1 : -1;
+        if (A > B) return orderDir === 'desc' ? -1 : 1;
+        return 0;
+      }),
     totalCount: response.getTotalCount(),
   };
-}
+};
 
+export type LoadPropertiesByFilter = {
+  page: number;
+  filter: PropertiesFilter;
+  sort: {
+    orderByField: keyof PropertyType;
+    orderBy: string;
+    orderDir: OrderDir;
+  };
+};
+
+export type PropertiesFilter = {
+  subdivision?: string;
+  address?: string;
+  city?: string;
+  zip?: string;
+};
 /**
  * Returns Properties by filter
  * @param page number
@@ -943,103 +982,144 @@ async function loadUsersByFilter({
  * @param searchPhrase string
  * @returns {results: Property[], totalCount: number}
  */
-async function loadPropertiesByFilter({
+export const loadPropertiesByFilter = async ({
   page,
-  searchBy,
-  searchPhrase,
-}: {
-  page: number;
-  searchBy: string;
-  searchPhrase: string;
-}) {
+  filter,
+  sort,
+}: LoadPropertiesByFilter) => {
+  const { orderBy, orderDir, orderByField } = sort;
   const req = new Property();
   req.setIsActive(1);
   req.setPageNumber(page);
-  if (searchPhrase !== '') {
-    if (searchBy === 'Address') {
-      req.setAddress(`%${searchPhrase}%`);
-    } else if (searchBy === 'Subdivision') {
-      req.setSubdivision(`%${searchPhrase}%`);
-    } else if (searchBy === 'City') {
-      req.setCity(`%${searchPhrase}%`);
-    } else if (searchBy === 'Zip Code') {
-      req.setZip(`%${searchPhrase}%`);
+  // req.setOrderBy(orderBy);
+  // req.setOrderDir(orderDir);
+  for (const fieldName in filter) {
+    const value = filter[fieldName as keyof PropertiesFilter];
+    if (value) {
+      const { methodName } = getRPCFields(fieldName);
+      //@ts-ignore
+      req[methodName](`%${value}%`);
     }
   }
   const response = await PropertyClientService.BatchGet(req);
   return {
-    results: response.getResultsList().map((item) => item.toObject()),
+    results: response
+      .getResultsList()
+      .map(item => item.toObject())
+      .sort((a, b) => {
+        const A = (a[orderByField] || '').toString().toLowerCase();
+        const B = (b[orderByField] || '').toString().toLowerCase();
+        if (A < B) return orderDir === 'desc' ? 1 : -1;
+        if (A > B) return orderDir === 'desc' ? -1 : 1;
+        return 0;
+      }),
     totalCount: response.getTotalCount(),
   };
-}
+};
 
+export type EventsFilter = {
+  firstname?: string;
+  lastname?: string;
+  businessname?: string;
+  logJobNumber?: string;
+  dateStarted?: string;
+  address?: string;
+  city?: string;
+  zip?: string;
+  logDateCompleted?: string;
+};
+
+export type LoadEventsByFilter = {
+  page: number;
+  filter: EventsFilter;
+  sort: {
+    orderByField: keyof EventType;
+    orderBy: string;
+    orderDir: OrderDir;
+  };
+  pendingBilling?: boolean;
+};
 /**
  * Returns Events by filter
  * @param page number
- * @param searchBy string
- * @param searchPhrase string
+ * @param filter EventsFilter
+ * @param sort Sort
  * @returns {results: Event[], totalCount: number}
  */
-async function loadEventsByFilter({
+export const loadEventsByFilter = async ({
   page,
-  searchBy,
-  searchPhrase: _searchPhrase,
+  filter,
+  sort,
   pendingBilling = false,
-}: {
-  page: number;
-  searchBy: string;
-  searchPhrase: string;
-  pendingBilling?: boolean;
-}) {
-  const searchPhrase = _searchPhrase.trim();
+}: LoadEventsByFilter) => {
+  const {
+    logJobNumber,
+    dateStarted,
+    address,
+    zip,
+    logDateCompleted,
+    city,
+    firstname,
+    lastname,
+    businessname,
+  } = filter;
+  const { orderBy, orderDir, orderByField } = sort;
   const req = new Event();
-  req.setOrderBy('date_started');
-  req.setOrderDir('desc');
+  req.setOrderBy(orderBy);
+  req.setOrderDir(orderDir);
   req.setIsActive(1);
   req.setPageNumber(page);
   const p = new Property();
+  const u = new User();
   p.setIsActive(1);
-  if (searchPhrase !== '') {
-    if (searchBy === 'Job Number') {
-      req.setLogJobNumber(`%${searchPhrase}%`);
-    }
-    if (pendingBilling) {
-      req.setLogJobStatus('Completed');
-      req.setLogPaymentStatus('Pending');
-    }
-    if (searchBy === 'Start Date') {
-      req.setDateStarted(`%${searchPhrase}%`);
-    }
-    if (searchBy === 'Address') {
-      p.setAddress(`%${searchPhrase}%`);
-    }
-    if (searchBy === 'Zip Code') {
-      p.setZip(`%${searchPhrase}%`);
-    }
-    if (searchBy === 'Date Completed') {
-      req.setDateEnded(`${searchPhrase}%`);
-    }
-    if (searchBy === 'City') {
-      p.setCity(`%${searchPhrase}%`);
-    }
-    if (searchBy === 'Business Name') {
-      const u = new User();
-      u.setBusinessname(`%${searchPhrase}%`);
-      req.setCustomer(u);
-    }
-    if (searchBy === 'Lastname') {
-      const u = new User();
-      u.setLastname(`%${searchPhrase}%`);
-      req.setCustomer(u);
-    }
+  if (pendingBilling) {
+    req.setLogJobStatus('Completed');
+    req.setLogPaymentStatus('Pending');
+  }
+  if (logJobNumber) {
+    req.setLogJobNumber(`%${logJobNumber}%`);
+  }
+  if (dateStarted) {
+    req.setDateStarted(`%${dateStarted}%`);
+  }
+  if (address) {
+    p.setAddress(`%${address}%`);
+  }
+  if (zip) {
+    p.setZip(`%${zip}%`);
+  }
+  if (logDateCompleted) {
+    req.setLogDateCompleted(`${logDateCompleted}%`);
+  }
+  if (city) {
+    p.setCity(`%${city}%`);
+  }
+  if (firstname) {
+    u.setFirstname(`%${firstname}%`);
+  }
+  if (lastname) {
+    u.setLastname(`%${lastname}%`);
+  }
+  if (businessname) {
+    u.setBusinessname(`%${businessname}%`);
   }
   req.setProperty(p);
+  req.setCustomer(u);
   const response = await EventClientService.BatchGet(req);
   return {
-    results: response.getResultsList().map((item) => item.toObject()),
+    results: response
+      .getResultsList()
+      .map(item => item.toObject())
+      .sort((a, b) => {
+        const A = (a[orderByField] || '').toString().toLowerCase();
+        const B = (b[orderByField] || '').toString().toLowerCase();
+        if (A < B) return orderDir === 'desc' ? 1 : -1;
+        if (A > B) return orderDir === 'desc' ? -1 : 1;
+        return 0;
+      }),
     totalCount: response.getTotalCount(),
   };
-}
+};
 
 /**
  * Returns Event by job number or contract number
@@ -1070,11 +1150,11 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
  */
 async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
   const refNumbers = uniq(
-    referenceNumbers.map((el) => (el || '').trim()).filter((el) => el !== ''),
+    referenceNumbers.map(el => (el || '').trim()).filter(el => el !== ''),
   );
   return (
     await Promise.all(
-      refNumbers.map(async (referenceNumber) => ({
+      refNumbers.map(async referenceNumber => ({
         referenceNumber,
         data: await loadEventByJobOrContractNumber(referenceNumber),
       })),
@@ -1134,18 +1214,18 @@ async function uploadFileToS3Bucket(
 }
 
 export const makeOptions = (options: string[]): Option[] =>
-  options.map((label) => ({ label, value: label }));
+  options.map(label => ({ label, value: label }));
 
 export const getCustomerName = (c?: UserType): string =>
-  c ? `${c.firstname} ${c.lastname}` : '';
+  c ? `${c.firstname} ${c.lastname}`.trim() : '';
 
 export const getBusinessName = (c?: UserType): string =>
-  c ? c.businessname : '';
+  c ? c.businessname.trim() : '';
 
 export const getCustomerNameAndBusinessName = (c?: UserType): string => {
   const name = getCustomerName(c);
   const businessname = getBusinessName(c);
-  return `${name}${businessname ? ' - ' : ''}${businessname}`;
+  return `${name}${businessname ? ' - ' : ''}${businessname}`.trim();
 };
 
 export const getPropertyAddress = (p?: PropertyType): string =>
@@ -1283,9 +1363,5 @@ export {
   loadEventsByJobOrContractNumbers,
   escapeText,
   uploadFileToS3Bucket,
-  loadEventsByFilter,
-  loadUsersByFilter,
-  loadPropertiesByFilter,
   newBugReport,
-  IBugReport,
 };

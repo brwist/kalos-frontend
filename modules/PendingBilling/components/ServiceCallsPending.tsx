@@ -19,9 +19,8 @@ import {
   getCustomerName,
   getPropertyAddress,
   formatDate,
-  makeOptions,
-  timestamp,
   deleteServiceCallById,
+  EventsFilter,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -29,23 +28,8 @@ export interface Props {
   loggedUserId: number;
 }
 
-type SearchForm = {
-  searchBy: string;
-  searchPhrase: string;
-};
-
-const FIELDS: Option[] = makeOptions([
-  'Lastname',
-  'Business Name',
-  'Job Number',
-  'Date Completed',
-  'Address',
-  'City',
-  'Zip Code',
-]);
-
 const COLUMNS: Columns = [
-  { name: 'Customer Name' },
+  { name: 'Firstname/Lastname' },
   { name: 'Business Name' },
   { name: 'Job #' },
   { name: 'Date Completed' },
@@ -65,22 +49,21 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [events, setEvents] = useState<EventType[]>([]);
-  const searchBy = FIELDS[0].value as string;
   const [formKey, setFormKey] = useState<number>(0);
   const [pendingDelete, setPendingDelete] = useState<EventType>();
   const [pendingEdit, setPendingEdit] = useState<EventType>();
   const [pendingCreate, setPendingCreate] = useState<boolean>(false);
-  const [filter, setFilter] = useState<SearchForm>({
-    searchBy,
-    searchPhrase: searchBy.includes('Date') ? timestamp(true) : '',
-  });
+  const [filter, setFilter] = useState<EventsFilter>({});
   const load = useCallback(async () => {
     setLoading(true);
-    const { searchBy, searchPhrase } = filter;
     const { results, totalCount } = await loadEventsByFilter({
       page,
-      searchBy,
-      searchPhrase,
+      filter,
+      sort: {
+        orderByField: 'logDateCompleted',
+        orderBy: 'log_dateCompleted',
+        orderDir: 'desc',
+      },
       pendingBilling: true,
     });
     setEvents(results);
@@ -93,27 +76,11 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       load();
     }
   }, [loaded, setLoaded, load]);
-  const handleFormChange = useCallback(
-    (data: SearchForm) => {
-      const isSearchByChanged = data.searchBy !== filter.searchBy;
-      const searchBy = FIELDS[0].value as string;
-      const criteria = {
-        ...data,
-        ...(isSearchByChanged
-          ? {
-              searchPhrase: data.searchBy.includes('Date')
-                ? timestamp(true)
-                : '',
-            }
-          : {}),
-      };
-      setFilter(criteria);
-      if (isSearchByChanged) {
-        setFormKey(formKey + 1);
-      }
-    },
-    [setFilter, filter, formKey, setFormKey],
-  );
+  const handleFilterClear = useCallback(() => {
+    setFilter({});
+    setFormKey(formKey + 1);
+    setLoaded(false);
+  }, [setFilter, formKey, setFormKey, setLoaded]);
   const handleTogglePendingDelete = useCallback(
     (pendingDelete?: EventType) => () => setPendingDelete(pendingDelete),
     [],
@@ -146,14 +113,60 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     setPage(0);
     setLoaded(false);
   }, [setPage, setLoaded]);
-  const SCHEMA: Schema<SearchForm> = [
+  const SCHEMA: Schema<EventsFilter> = [
     [
-      { name: 'searchBy', label: 'Search By', options: FIELDS },
       {
-        name: 'searchPhrase',
-        label: 'Search Phrase',
-        type: filter.searchBy.includes('Date') ? 'date' : 'search',
-        actions: [{ label: 'Search', onClick: handleSearch }],
+        name: 'firstname',
+        label: 'First Name',
+        type: 'search',
+      },
+      {
+        name: 'lastname',
+        label: 'Last Name',
+        type: 'search',
+      },
+      {
+        name: 'businessname',
+        label: 'Business Name',
+        type: 'search',
+      },
+      {
+        name: 'logJobNumber',
+        label: 'Job #',
+        type: 'search',
+      },
+    ],
+    [
+      {
+        name: 'address',
+        label: 'Address',
+        type: 'search',
+      },
+      {
+        name: 'city',
+        label: 'City',
+        type: 'search',
+      },
+      {
+        name: 'zip',
+        label: 'Zip',
+        type: 'search',
+      },
+      {
+        name: 'logDateCompleted',
+        label: 'Date Completed',
+        type: 'date',
+        actions: [
+          {
+            label: 'Reset',
+            variant: 'outlined',
+            onClick: handleFilterClear,
+          },
+          {
+            label: 'Search',
+            onClick: handleSearch,
+          },
+        ],
       },
     ],
   ];
@@ -222,7 +235,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         key={formKey}
         schema={SCHEMA}
         data={filter}
-        onChange={handleFormChange}
+        onChange={setFilter}
         compact
         className={classes.form}
       />

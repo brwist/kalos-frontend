@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback } from 'react';
+import React, { FC, useState, useCallback, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
@@ -7,13 +7,15 @@ import {
   UserType,
   makeFakeRows,
   PropertyType,
+  UsersFilter,
+  LoadUsersByFilter,
 } from '../../../helpers';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { CustomerEdit } from '../../ComponentsLibrary/CustomerEdit';
 import { PropertyEdit } from '../../ComponentsLibrary/PropertyEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails';
-import { SearchForm, FormType, getFormInit } from './SearchForm';
+import { SearchForm } from './SearchForm';
 import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -46,41 +48,51 @@ export const AddServiceCall: FC<Props> = props => {
   const [customerOpened, setCustomerOpened] = useState<UserType>();
   const [propertyOpened, setPropertyOpened] = useState<UserType>();
   const [serviceCallOpened, setServiceCallOpened] = useState<PropertyType>();
+  const [loaded, setLoaded] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [search, setSearch] = useState<FormType>(getFormInit);
+  const [search, setSearch] = useState<UsersFilter>({});
   const [entries, setEntries] = useState<UserType[]>([]);
-  const load = useCallback(
-    async (page: number, search: FormType) => {
-      setLoading(true);
-      const { results, totalCount } = await loadUsersByFilter({
-        page,
-        ...search,
-        withProperties: true,
-      });
-      setEntries(results);
-      setCount(totalCount);
-      setLoading(false);
-    },
-    [setEntries, setCount, setLoading],
-  );
+  const load = useCallback(async () => {
+    setLoading(true);
+    const criteria: LoadUsersByFilter = {
+      page,
+      filter: search,
+      sort: {
+        orderByField: 'firstname',
+        orderBy: 'user_firstname',
+        orderDir: 'asc',
+      },
+      withProperties: true,
+    };
+    const { results, totalCount } = await loadUsersByFilter(criteria);
+    setEntries(results);
+    setCount(totalCount);
+    setLoading(false);
+  }, [setEntries, setCount, setLoading, search]);
+  useEffect(() => {
+    if (!loaded) {
+      setLoaded(true);
+      load();
+    }
+  }, [loaded, setLoaded, load]);
   const handleReset = useCallback(() => {
     setEntries([]);
   }, [setEntries]);
   const handlePageChange = useCallback(
     (page: number) => {
       setPage(page);
-      load(page, search);
+      setLoaded(false);
     },
-    [setPage, load, search],
+    [setPage, setLoaded],
   );
   const handleSearch = useCallback(
-    (search: FormType) => {
+    (search: UsersFilter) => {
       setSearch(search);
-      load(page, search);
+      setLoaded(false);
     },
-    [load, setSearch, page],
+    [setSearch, setLoaded],
   );
   const handleToggleAddCustomer = useCallback(
     (addCustomer: boolean) => () => setAddCustomer(addCustomer),
