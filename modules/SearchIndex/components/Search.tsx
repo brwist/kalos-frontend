@@ -1,16 +1,13 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import cloneDeep from 'lodash/cloneDeep';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import { makeStyles } from '@material-ui/core';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { ActionsProps } from '../../ComponentsLibrary/Actions';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable, Columns, Data } from '../../ComponentsLibrary/InfoTable';
 import {
-  timestamp,
-  makeOptions,
   loadEventsByFilter,
   loadUsersByFilter,
   loadPropertiesByFilter,
@@ -19,60 +16,41 @@ import {
   getCustomerName,
   getBusinessName,
   getPropertyAddress,
+  EventsFilter,
+  LoadEventsByFilter,
+  UsersFilter,
+  LoadUsersByFilter,
+  PropertiesFilter,
+  LoadPropertiesByFilter,
+  EventType,
+  UserType,
+  PropertyType,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
-type EventType = Event.AsObject;
-type UserType = User.AsObject;
-type PropertyType = Property.AsObject;
-
-type Kind = 'serviceCalls' | 'customers' | 'properties' | 'contracts';
+type Kind = 'serviceCalls' | 'customers' | 'properties';
 
 export interface Props {
   defaultKind?: Kind;
 }
 
-type SearchForm = {
+type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
   kind: Kind;
-  searchBy: string;
-  searchPhrase: string;
 };
 
 const TYPES: Option[] = [
   { label: 'Service Calls', value: 'serviceCalls' },
   { label: 'Customers', value: 'customers' },
   { label: 'Properties', value: 'properties' },
-  //   { label: 'Contracts', value: 'contracts' },
 ];
 
 const makeColumn = (columns: string[]): Columns =>
   columns.map(name => ({ name }));
 
-const FIELDS: { [key in Kind]: Option[] } = {
-  serviceCalls: makeOptions([
-    'Start Date',
-    'Job Number',
-    'Business Name',
-    'Lastname',
-    'Address',
-    'City',
-    'Zip Code',
-  ]),
-  customers: makeOptions([
-    'First Name',
-    'Last Name',
-    'Business Name',
-    'Primary Phone',
-    'Email',
-  ]),
-  properties: makeOptions(['Address', 'Subdivision', 'City', 'Zip Code']),
-  contracts: makeOptions([]),
-};
-
 const COLUMNS: { [key in Kind]: Columns } = {
   serviceCalls: makeColumn([
     'Start Date',
-    'Customer Name',
+    'Firstname / Lastname',
     'Business Name',
     'Address',
     'Job Number',
@@ -87,7 +65,6 @@ const COLUMNS: { [key in Kind]: Columns } = {
     'Email',
   ]),
   properties: makeColumn(['Address', 'Subdivision', 'City', 'Zip Code']),
-  contracts: makeColumn([]),
 };
 
 const useStyles = makeStyles(theme => ({
@@ -96,48 +73,65 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
+export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const searchBy = FIELDS[defaultKind][0].value as string;
-  const [filter, setFilter] = useState<SearchForm>({
-    kind: defaultKind,
-    searchBy,
-    searchPhrase: searchBy.endsWith('Date') ? timestamp(true) : '',
-  });
+  const [filter, setFilter] = useState<SearchForm>({ kind: defaultKind });
   const [formKey, setFormKey] = useState<number>(0);
   const [events, setEvents] = useState<EventType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [properties, setProperties] = useState<PropertyType[]>([]);
-  const load = useCallback(
-    async (_criteria?: SearchForm) => {
-      setLoading(true);
-      const _filter = _criteria || filter;
-      const criteria = {
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { kind, ...filterCriteria } = filter;
+    if (kind === 'serviceCalls') {
+      const criteria: LoadEventsByFilter = {
         page,
-        searchBy: _filter.searchBy,
-        searchPhrase: _filter.searchPhrase,
+        filter: filterCriteria,
+        sort: {
+          orderByField: 'dateCreated',
+          orderBy: 'date_created',
+          orderDir: 'desc',
+        },
       };
-      if (_filter.kind === 'serviceCalls') {
-        const { results, totalCount } = await loadEventsByFilter(criteria);
-        setCount(totalCount);
-        setEvents(results);
-      } else if (_filter.kind === 'customers') {
-        const { results, totalCount } = await loadUsersByFilter(criteria);
-        setCount(totalCount);
-        setUsers(results);
-      } else if (_filter.kind === 'properties') {
-        const { results, totalCount } = await loadPropertiesByFilter(criteria);
-        setCount(totalCount);
-        setProperties(results);
-      }
-      setLoading(false);
-    },
-    [filter, page, setCount, setEvents, setUsers, setProperties, setLoading],
-  );
+      const { results, totalCount } = await loadEventsByFilter(criteria);
+      setCount(totalCount);
+      setEvents(results);
+    }
+    if (kind === 'customers') {
+      const criteria: LoadUsersByFilter = {
+        page,
+        filter: filterCriteria as UsersFilter,
+        sort: {
+          orderByField: 'lastname',
+          orderBy: 'user_lastname',
+          orderDir: 'asc',
+        },
+      };
+
+      const { results, totalCount } = await loadUsersByFilter(criteria);
+      setCount(totalCount);
+      setUsers(results);
+    }
+    if (kind === 'properties') {
+      const criteria: LoadPropertiesByFilter = {
+        page,
+        filter: filterCriteria as PropertiesFilter,
+        sort: {
+          orderByField: 'address',
+          orderBy: 'property_address',
+          orderDir: 'asc',
+        },
+      };
+      const { results, totalCount } = await loadPropertiesByFilter(criteria);
+      setCount(totalCount);
+      setProperties(results);
+    }
+    setLoading(false);
+  }, [filter, page, setCount, setEvents, setUsers, setProperties, setLoading]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -147,41 +141,28 @@ export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
   const handleChangePage = useCallback(
     (page: number) => {
       setPage(page);
-      load();
+      setLoaded(false);
     },
-    [setPage, load],
+    [setPage, setLoaded],
   );
-  const handleLoad = useCallback(() => load(), [load]);
+  const handleLoad = useCallback(() => setLoaded(false), [setLoaded]);
+  const handleResetSearchForm = useCallback(() => {
+    setFilter({
+      kind: filter.kind,
+    });
+    setFormKey(formKey + 1);
+    setLoaded(false);
+  }, [setFilter, setLoaded, filter, formKey, setFormKey]);
   const handleFormChange = useCallback(
     (data: SearchForm) => {
       const isTypeChanged = data.kind !== filter.kind;
-      const isSearchByChanged = data.searchBy !== filter.searchBy;
-      const searchBy = FIELDS[data.kind][0].value as string;
-      const criteria = {
-        ...data,
-        ...(isTypeChanged
-          ? {
-              searchBy,
-              searchPhrase: searchBy.endsWith('Date') ? timestamp(true) : '',
-            }
-          : {}),
-        ...(isSearchByChanged
-          ? {
-              searchPhrase: data.searchBy.endsWith('Date')
-                ? timestamp(true)
-                : '',
-            }
-          : {}),
-      };
-      setFilter(criteria);
-      if (isTypeChanged || isSearchByChanged) {
-        setFormKey(formKey + 1);
-      }
+      setFilter(data);
       if (isTypeChanged) {
-        load(criteria);
+        setFormKey(formKey + 1);
+        setLoaded(false);
       }
     },
-    [setFilter, filter, formKey, setFormKey, load],
+    [setFilter, filter, formKey, setFormKey, setLoaded],
   );
   const onEventClick = useCallback(
     ({ id, customer, propertyId }: EventType) => () =>
@@ -227,18 +208,145 @@ export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
       ].join('&')),
     [],
   );
-  const SCHEMA: Schema<SearchForm> = [
+  const searchActions: ActionsProps = [
+    {
+      label: 'Reset',
+      variant: 'outlined',
+      onClick: handleResetSearchForm,
+    },
+    {
+      label: 'Search',
+      onClick: handleLoad,
+    },
+  ];
+  const SCHEMA_KIND: Schema<SearchForm> = [
     [
-      { name: 'kind', label: 'Search', options: TYPES },
-      { name: 'searchBy', label: 'Search By', options: FIELDS[filter.kind] },
       {
-        name: 'searchPhrase',
-        label: 'Search Phrase',
-        type: filter.searchBy.endsWith('Date') ? 'date' : 'search',
-        actions: [{ label: 'Search', onClick: handleLoad }],
+        name: 'kind',
+        label: 'Search',
+        options: TYPES,
       },
     ],
   ];
+  const SCHEMA_EVENTS: Schema<EventsFilter> = [
+    [
+      {
+        name: 'firstname',
+        label: 'First Name',
+        type: 'search',
+      },
+      {
+        name: 'lastname',
+        label: 'Last Name',
+        type: 'search',
+      },
+      {
+        name: 'businessname',
+        label: 'Business Name',
+        type: 'search',
+      },
+    ],
+    [
+      {
+        name: 'logJobNumber',
+        label: 'Job #',
+        type: 'search',
+      },
+      {
+        name: 'dateStarted',
+        label: 'Start Date',
+        type: 'date',
+      },
+      {
+        name: 'address',
+        label: 'Address',
+        type: 'search',
+      },
+      {
+        name: 'city',
+        label: 'City',
+        type: 'search',
+      },
+      {
+        name: 'zip',
+        label: 'Zip Code',
+        type: 'search',
+        actions: searchActions,
+      },
+    ],
+  ];
+  const SCHEMA_USERS: Schema<UsersFilter> = [
+    [
+      {
+        name: 'firstname',
+        label: 'First Name',
+        type: 'search',
+      },
+      {
+        name: 'lastname',
+        label: 'Last Name',
+        type: 'search',
+      },
+      {
+        name: 'businessname',
+        label: 'Business Name',
+        type: 'search',
+      },
+    ],
+    [
+      {
+        name: 'email',
+        label: 'Email',
+        type: 'search',
+      },
+      {
+        name: 'phone',
+        label: 'Primary Phone',
+        type: 'search',
+        actions: searchActions,
+      },
+    ],
+  ];
+  const SCHEMA_PROPERTIES: Schema<PropertiesFilter> = [
+    [
+      {
+        name: 'subdivision',
+        label: 'Subdivision',
+        type: 'search',
+      },
+      {
+        name: 'address',
+        label: 'Address',
+        type: 'search',
+      },
+      {
+        name: 'city',
+        label: 'City',
+        type: 'search',
+      },
+      {
+        name: 'zip',
+        label: 'Zip',
+        type: 'search',
+        actions: searchActions,
+      },
+    ],
+  ];
+  const makeSchema = (schema: Schema<SearchForm>) => {
+    const clonedSchema = cloneDeep(schema);
+    clonedSchema[0].unshift(SCHEMA_KIND[0][0]);
+    return clonedSchema;
+  };
+  const getSchema = useCallback(() => {
+    const { kind } = filter;
+    if (kind === 'serviceCalls')
+      return makeSchema(SCHEMA_EVENTS as Schema<SearchForm>);
+    if (kind === 'customers')
+      return makeSchema(SCHEMA_USERS as Schema<SearchForm>);
+    if (kind === 'properties')
+      return makeSchema(SCHEMA_PROPERTIES as Schema<SearchForm>);
+    return [];
+  }, [filter]);
   const getData = useCallback((): Data => {
     const { kind } = filter;
     if (kind === 'serviceCalls')
@@ -343,7 +451,7 @@ export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
       />
       <PlainForm
         key={formKey}
-        schema={SCHEMA}
+        schema={getSchema()}
         data={filter}
         onChange={handleFormChange}
         compact
