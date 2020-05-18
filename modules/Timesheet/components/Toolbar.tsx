@@ -8,7 +8,7 @@ import Skeleton from '@material-ui/lab/Skeleton';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { WeekPicker } from '../../ComponentsLibrary/WeekPicker';
 import { Button } from '../../ComponentsLibrary/Button';
-import { Payroll } from '../main';
+import { Payroll } from '../reducer';
 import { roundNumber } from '../../../helpers';
 import { useConfirm } from '../../ComponentsLibrary/ConfirmService';
 

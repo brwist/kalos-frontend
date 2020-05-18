@@ -4,11 +4,23 @@ import { TimesheetLine, TimesheetReq } from '@kalos-core/kalos-rpc/TimesheetLine
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered/index';
 import { addDays, differenceInMinutes, eachDayOfInterval, format } from "date-fns";
 
-type DayData = {
+export type Payroll = {
+  total: number | null,
+  billable: number | null,
+  unbillable: number | null,
+};
+
+type RawDayData = {
   servicesRenderedList: ServicesRendered.AsObject[],
   timesheetLineList: TimesheetLine.AsObject[],
   getServicesRenderedList: () => ServicesRendered[],
   getTimesheetLineList: () => TimesheetLine[],
+};
+
+type DayData = {
+  servicesRenderedList: ServicesRendered.AsObject[],
+  timesheetLineList: TimesheetLine.AsObject[],
+  payroll: Payroll;
 };
 
 type DataList = {
@@ -46,7 +58,7 @@ export type State = {
 }
 
 type TimesheetData = {
-  getDatesMap(): jspb.Map<string, DayData>;
+  getDatesMap(): jspb.Map<string, RawDayData>;
 };
 
 export type Action =
