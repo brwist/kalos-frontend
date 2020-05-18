@@ -76,7 +76,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Search: FC<Props> = ({ defaultKind = 'properties' }) => {
+export const Search: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
