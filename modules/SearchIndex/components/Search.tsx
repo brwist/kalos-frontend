@@ -17,10 +17,13 @@ import {
   getBusinessName,
   getPropertyAddress,
   EventsFilter,
+  EventsSort,
   LoadEventsByFilter,
   UsersFilter,
+  UsersSort,
   LoadUsersByFilter,
   PropertiesFilter,
+  PropertiesSort,
   LoadPropertiesByFilter,
   EventType,
   UserType,
@@ -73,7 +76,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
+export const Search: FC<Props> = ({ defaultKind = 'properties' }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -84,6 +87,21 @@ export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
   const [events, setEvents] = useState<EventType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [properties, setProperties] = useState<PropertyType[]>([]);
+  const [eventsSort, setEventsSort] = useState<EventsSort>({
+    orderByField: 'dateStarted',
+    orderBy: 'date_started',
+    orderDir: 'DESC',
+  });
+  const [usersSort, setUsersSort] = useState<UsersSort>({
+    orderByField: 'lastname',
+    orderBy: 'user_lastname',
+    orderDir: 'ASC',
+  });
+  const [propertiesSort, setPropertiesSort] = useState<PropertiesSort>({
+    orderByField: 'address',
+    orderBy: 'property_address',
+    orderDir: 'ASC',
+  });
   const load = useCallback(async () => {
     setLoading(true);
     const { kind, ...filterCriteria } = filter;
@@ -91,11 +109,7 @@ export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
       const criteria: LoadEventsByFilter = {
         page,
         filter: filterCriteria,
-        sort: {
-          orderByField: 'dateCreated',
-          orderBy: 'date_created',
-          orderDir: 'desc',
-        },
+        sort: eventsSort,
       };
       const { results, totalCount } = await loadEventsByFilter(criteria);
       setCount(totalCount);
@@ -105,11 +119,7 @@ export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
       const criteria: LoadUsersByFilter = {
         page,
         filter: filterCriteria as UsersFilter,
-        sort: {
-          orderByField: 'lastname',
-          orderBy: 'user_lastname',
-          orderDir: 'asc',
-        },
+        sort: usersSort,
       };
 
       const { results, totalCount } = await loadUsersByFilter(criteria);
@@ -120,24 +130,55 @@ export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
       const criteria: LoadPropertiesByFilter = {
         page,
         filter: filterCriteria as PropertiesFilter,
-        sort: {
-          orderByField: 'address',
-          orderBy: 'property_address',
-          orderDir: 'asc',
-        },
+        sort: propertiesSort,
       };
       const { results, totalCount } = await loadPropertiesByFilter(criteria);
       setCount(totalCount);
       setProperties(results);
     }
     setLoading(false);
-  }, [filter, page, setCount, setEvents, setUsers, setProperties, setLoading]);
+  }, [
+    filter,
+    page,
+    setCount,
+    setEvents,
+    setUsers,
+    setProperties,
+    setLoading,
+    eventsSort,
+    usersSort,
+    propertiesSort,
+  ]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
       load();
     }
   }, [loaded, setLoaded, load]);
+  const handleEventsSortChange = useCallback(
+    (sort: EventsSort) => () => {
+      setEventsSort(sort);
+      setPage(0);
+      setLoaded(false);
+    },
+    [setEventsSort, setPage, setLoaded],
+  );
+  const handleUsersSortChange = useCallback(
+    (sort: UsersSort) => () => {
+      setUsersSort(sort);
+      setPage(0);
+      setLoaded(false);
+    },
+    [setUsersSort, setPage, setLoaded],
+  );
+  const handlePropertiesSortChange = useCallback(
+    (sort: PropertiesSort) => () => {
+      setPropertiesSort(sort);
+      setPage(0);
+      setLoaded(false);
+    },
+    [setPropertiesSort, setPage, setLoaded],
+  );
   const handleChangePage = useCallback(
     (page: number) => {
       setPage(page);
@@ -145,7 +186,10 @@ export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
     },
     [setPage, setLoaded],
   );
-  const handleLoad = useCallback(() => setLoaded(false), [setLoaded]);
+  const handleLoad = useCallback(() => {
+    setPage(0);
+    setLoaded(false);
+  }, [setLoaded]);
   const handleResetSearchForm = useCallback(() => {
     setFilter({
       kind: filter.kind,
@@ -326,7 +370,7 @@ export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
       },
       {
         name: 'zip',
-        label: 'Zip',
+        label: 'Zip Code',
         type: 'search',
         actions: searchActions,
       },
@@ -347,6 +391,196 @@ export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
       return makeSchema(SCHEMA_PROPERTIES as Schema<SearchForm>);
     return [];
   }, [filter]);
+  const getColumns = (kind: Kind): Columns => {
+    if (kind === 'serviceCalls')
+      return [
+        {
+          name: 'Start Date',
+          ...(eventsSort.orderByField === 'dateStarted'
+            ? {
+                dir: eventsSort.orderDir,
+              }
+            : {}),
+          onClick: handleEventsSortChange({
+            orderByField: 'dateStarted',
+            orderBy: 'date_started',
+            orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Firstname / Lastname',
+        },
+        {
+          name: 'Business Name',
+        },
+        {
+          name: 'Address',
+        },
+        {
+          name: 'Job Number',
+          ...(eventsSort.orderByField === 'logJobNumber'
+            ? {
+                dir: eventsSort.orderDir,
+              }
+            : {}),
+          onClick: handleEventsSortChange({
+            orderByField: 'logJobNumber',
+            orderBy: 'log_jobNumber',
+            orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Job Type / Subtype',
+          ...(eventsSort.orderByField === 'jobTypeId'
+            ? {
+                dir: eventsSort.orderDir,
+              }
+            : {}),
+          onClick: handleEventsSortChange({
+            orderByField: 'jobTypeId',
+            orderBy: 'job_type_id',
+            orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Job Status',
+          ...(eventsSort.orderByField === 'logJobStatus'
+            ? {
+                dir: eventsSort.orderDir,
+              }
+            : {}),
+          onClick: handleEventsSortChange({
+            orderByField: 'logJobStatus',
+            orderBy: 'log_jobStatus',
+            orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+      ];
+    if (kind === 'customers')
+      return [
+        {
+          name: 'First Name',
+          ...(usersSort.orderByField === 'firstname'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'firstname',
+            orderBy: 'user_firstname',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Last Name',
+          ...(usersSort.orderByField === 'lastname'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'lastname',
+            orderBy: 'user_lastname',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Business Name',
+          ...(usersSort.orderByField === 'businessname'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'businessname',
+            orderBy: 'user_businessname',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Primary Phone',
+          ...(usersSort.orderByField === 'phone'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'phone',
+            orderBy: 'user_phone',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Email',
+          ...(usersSort.orderByField === 'email'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'email',
+            orderBy: 'user_email',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+      ];
+    if (kind === 'properties')
+      return [
+        {
+          name: 'Address',
+          ...(propertiesSort.orderByField === 'address'
+            ? {
+                dir: propertiesSort.orderDir,
+              }
+            : {}),
+          onClick: handlePropertiesSortChange({
+            orderByField: 'address',
+            orderBy: 'property_address',
+            orderDir: propertiesSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Subdivision',
+          ...(propertiesSort.orderByField === 'subdivision'
+            ? {
+                dir: propertiesSort.orderDir,
+              }
+            : {}),
+          onClick: handlePropertiesSortChange({
+            orderByField: 'subdivision',
+            orderBy: 'property_subdivision',
+            orderDir: propertiesSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'City',
+          ...(propertiesSort.orderByField === 'city'
+            ? {
+                dir: propertiesSort.orderDir,
+              }
+            : {}),
+          onClick: handlePropertiesSortChange({
+            orderByField: 'city',
+            orderBy: 'property_City',
+            orderDir: propertiesSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Zip Code',
+          ...(propertiesSort.orderByField === 'zip'
+            ? {
+                dir: propertiesSort.orderDir,
+              }
+            : {}),
+          onClick: handlePropertiesSortChange({
+            orderByField: 'zip',
+            orderBy: 'property_zip',
+            orderDir: propertiesSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+      ];
+    return [];
+  };
   const getData = useCallback((): Data => {
     const { kind } = filter;
     if (kind === 'serviceCalls')
@@ -458,7 +692,7 @@ export const Search: FC<Props> = ({ defaultKind = 'customers' }) => {
         className={classes.form}
       />
       <InfoTable
-        columns={COLUMNS[filter.kind]}
+        columns={getColumns(filter.kind)}
         data={getData()}
         loading={loading}
         hoverable

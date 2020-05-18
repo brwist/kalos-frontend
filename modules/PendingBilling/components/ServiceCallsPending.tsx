@@ -6,7 +6,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { PlainForm, Schema, Option } from '../../ComponentsLibrary/PlainForm';
+import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
@@ -21,20 +21,13 @@ import {
   formatDate,
   deleteServiceCallById,
   EventsFilter,
+  EventsSort,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
 export interface Props {
   loggedUserId: number;
 }
-
-const COLUMNS: Columns = [
-  { name: 'Firstname/Lastname' },
-  { name: 'Business Name' },
-  { name: 'Job #' },
-  { name: 'Date Completed' },
-  { name: 'Address' },
-];
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -54,22 +47,23 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
   const [pendingEdit, setPendingEdit] = useState<EventType>();
   const [pendingCreate, setPendingCreate] = useState<boolean>(false);
   const [filter, setFilter] = useState<EventsFilter>({});
+  const [sort, setSort] = useState<EventsSort>({
+    orderByField: 'logDateCompleted',
+    orderBy: 'log_dateCompleted',
+    orderDir: 'DESC',
+  });
   const load = useCallback(async () => {
     setLoading(true);
     const { results, totalCount } = await loadEventsByFilter({
       page,
       filter,
-      sort: {
-        orderByField: 'logDateCompleted',
-        orderBy: 'log_dateCompleted',
-        orderDir: 'desc',
-      },
+      sort,
       pendingBilling: true,
     });
     setEvents(results);
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, setEvents, setCount, setLoading, filter, page]);
+  }, [setLoading, setEvents, setCount, setLoading, filter, page, sort]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -108,6 +102,14 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       setLoaded(false);
     },
     [setLoaded, setPage],
+  );
+  const handleSortChange = useCallback(
+    (sort: EventsSort) => () => {
+      setSort(sort);
+      setPage(0);
+      setLoaded(false);
+    },
+    [setSort, setPage, setLoaded],
   );
   const handleSearch = useCallback(() => {
     setPage(0);
@@ -149,7 +151,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       },
       {
         name: 'zip',
-        label: 'Zip',
+        label: 'Zip Code',
         type: 'search',
       },
       {
@@ -169,6 +171,43 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         ],
       },
     ],
+  ];
+  const COLUMNS: Columns = [
+    {
+      name: 'Firstname/Lastname',
+    },
+    {
+      name: 'Business Name',
+    },
+    {
+      name: 'Job #',
+      ...(sort.orderByField === 'logJobNumber'
+        ? {
+            dir: sort.orderDir,
+          }
+        : {}),
+      onClick: handleSortChange({
+        orderByField: 'logJobNumber',
+        orderBy: 'log_jobNumber',
+        orderDir: sort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+      }),
+    },
+    {
+      name: 'Date Completed',
+      ...(sort.orderByField === 'logDateCompleted'
+        ? {
+            dir: sort.orderDir,
+          }
+        : {}),
+      onClick: handleSortChange({
+        orderByField: 'logDateCompleted',
+        orderBy: 'log_dateCompleted',
+        orderDir: sort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+      }),
+    },
+    {
+      name: 'Address',
+    },
   ];
   const data: Data = loading
     ? makeFakeRows(5, 3)

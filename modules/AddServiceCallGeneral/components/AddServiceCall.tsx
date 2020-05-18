@@ -62,7 +62,7 @@ export const AddServiceCall: FC<Props> = props => {
       sort: {
         orderByField: 'firstname',
         orderBy: 'user_firstname',
-        orderDir: 'asc',
+        orderDir: 'ASC',
       },
       withProperties: true,
     };

@@ -46,7 +46,6 @@ export const CustomerItem: FC<Props> = ({
     [onAddProperty],
   );
   const customerNameAndBusinessName = getCustomerNameAndBusinessName(customer);
-  console.log({ customerNameAndBusinessName });
   const columns: Columns = [
     {
       name: (

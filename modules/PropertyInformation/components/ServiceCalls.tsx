@@ -3,15 +3,15 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
-import {
-  InfoTable,
-  Data,
-  Columns,
-  Dir,
-} from '../../ComponentsLibrary/InfoTable';
+import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { formatTime, formatDate, makeFakeRows } from '../../../helpers';
+import {
+  formatTime,
+  formatDate,
+  makeFakeRows,
+  OrderDir,
+} from '../../../helpers';
 
 type Entry = Event.AsObject;
 
@@ -28,7 +28,7 @@ interface State {
   deletingEntry?: Entry;
   orderByFields: (keyof Entry)[];
   orderByDBField: string;
-  dir: Dir;
+  dir: OrderDir;
   count: number;
   page: number;
 }
