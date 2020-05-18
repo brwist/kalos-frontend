@@ -1209,6 +1209,11 @@ export const deleteServiceCallById = async (id: number) => {
   await EventClientService.Delete(req);
 };
 
+interface IBugReport {
+  title: string;
+  body?: string;
+  labels?: string[];
+}
 const BUG_REPORT_LABEL = 'user submitted bug report';
 async function newBugReport(data: IBugReport) {
   try {
@@ -1284,9 +1289,3 @@ export {
   newBugReport,
   IBugReport,
 };
-
-export interface IBugReport {
-  title: string;
-  body?: string;
-  labels?: string[];
-}
