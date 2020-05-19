@@ -13,8 +13,6 @@ import {
   loadPropertiesByFilter,
   makeFakeRows,
   formatDate,
-  getCustomerName,
-  getBusinessName,
   getCustomerNameAndBusinessName,
   getPropertyAddress,
   EventsFilter,
@@ -29,24 +27,34 @@ import {
   EventType,
   UserType,
   PropertyType,
+  loadJobTypes,
+  loadJobSubtypes,
+  JobTypeType,
+  JobSubtypeType,
 } from '../../../helpers';
-import { ROWS_PER_PAGE } from '../../../constants';
+import {
+  ROWS_PER_PAGE,
+  OPTION_ALL,
+  EVENT_STATUS_LIST,
+} from '../../../constants';
 
 type Kind = 'serviceCalls' | 'customers' | 'properties';
 
 export interface Props {
   title: string;
-  defaultKind?: Kind;
+  kinds: Kind[];
 }
 
 type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
   kind: Kind;
 };
 
-const TYPES: Option[] = [
-  { label: 'Service Calls', value: 'serviceCalls' },
-  { label: 'Customers', value: 'customers' },
-  { label: 'Properties', value: 'properties' },
+const JOB_STATUS_OPTIONS: Option[] = [
+  { label: OPTION_ALL, value: 0 },
+  ...EVENT_STATUS_LIST.map(label => ({
+    label,
+    value: label,
+  })),
 ];
 
 const useStyles = makeStyles(theme => ({
@@ -55,13 +63,23 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
+export const AdvancedSearch: FC<Props> = ({ title, kinds }) => {
   const classes = useStyles();
+  const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
+  const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
+  const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
+  const [jobSubtypes, setJobSubtypes] = useState<JobSubtypeType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [filter, setFilter] = useState<SearchForm>({ kind: defaultKind });
+  const defaultFilter = {
+    kind: kinds[0],
+    jobTypeId: 0,
+    jobSubtypeId: 0,
+    logJobStatus: '',
+  };
+  const [filter, setFilter] = useState<SearchForm>(defaultFilter);
   const [formKey, setFormKey] = useState<number>(0);
   const [events, setEvents] = useState<EventType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
@@ -81,6 +99,15 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
     orderBy: 'property_address',
     orderDir: 'ASC',
   });
+  const loadDicts = useCallback(async () => {
+    setLoadingDicts(true);
+    const jobTypes = await loadJobTypes();
+    setJobTypes(jobTypes);
+    const jobSubtypes = await loadJobSubtypes();
+    setJobSubtypes(jobSubtypes);
+    setFormKey(formKey + 1);
+    setLoadingDicts(false);
+  }, [setLoadingDicts, setJobTypes, setJobSubtypes, setFormKey, formKey]);
   const load = useCallback(async () => {
     setLoading(true);
     const { kind, ...filterCriteria } = filter;
@@ -133,7 +160,11 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
       setLoaded(true);
       load();
     }
-  }, [loaded, setLoaded, load]);
+    if (!loadedDicts) {
+      setLoadedDicts(true);
+      loadDicts();
+    }
+  }, [loaded, setLoaded, load, loadedDicts, setLoadedDicts, loadDicts]);
   const handleEventsSortChange = useCallback(
     (sort: EventsSort) => () => {
       setEventsSort(sort);
@@ -171,6 +202,7 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
   }, [setLoaded]);
   const handleResetSearchForm = useCallback(() => {
     setFilter({
+      ...defaultFilter,
       kind: filter.kind,
     });
     setFormKey(formKey + 1);
@@ -178,17 +210,21 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
   }, [setFilter, setLoaded, filter, formKey, setFormKey]);
   const handleFormChange = useCallback(
     (data: SearchForm) => {
-      const isTypeChanged = data.kind !== filter.kind;
-      if (isTypeChanged) {
-        setFilter({ kind: data.kind });
-        setPage(0);
-        setFormKey(formKey + 1);
-        setLoaded(false);
+      if (!data.kind) {
+        setFilter({ ...defaultFilter, ...data });
       } else {
-        setFilter(data);
+        const isTypeChanged = data.kind !== filter.kind;
+        if (isTypeChanged) {
+          setFilter({ kind: data.kind });
+          setPage(0);
+          setFormKey(formKey + 1);
+          setLoaded(false);
+        } else {
+          setFilter(data);
+        }
       }
     },
-    [setFilter, filter, formKey, setFormKey, setLoaded],
+    [setFilter, filter, formKey, setFormKey, setLoaded, kinds],
   );
   const onEventClick = useCallback(
     ({ id, customer, propertyId }: EventType) => () =>
@@ -245,6 +281,17 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
       onClick: handleLoad,
     },
   ];
+  const TYPES: Option[] = [
+    ...(kinds.includes('serviceCalls')
+      ? [{ label: 'Service Calls', value: 'serviceCalls' }]
+      : []),
+    ...(kinds.includes('customers')
+      ? [{ label: 'Customers', value: 'customers' }]
+      : []),
+    ...(kinds.includes('properties')
+      ? [{ label: 'Properties', value: 'properties' }]
+      : []),
+  ];
   const SCHEMA_KIND: Schema<SearchForm> = [
     [
       {
@@ -278,6 +325,32 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
         label: 'Job #',
         type: 'search',
       },
+      {
+        name: 'jobTypeId',
+        label: 'Job Type',
+        options: [
+          { label: OPTION_ALL, value: 0 },
+          ...jobTypes.map(({ id: value, name: label }) => ({ label, value })),
+        ],
+      },
+      {
+        name: 'jobSubtypeId',
+        label: 'Job Subtype',
+        options: [
+          { label: OPTION_ALL, value: 0 },
+          ...jobSubtypes.map(({ id: value, name: label }) => ({
+            label,
+            value,
+          })),
+        ],
+      },
+      {
+        name: 'logJobStatus',
+        label: 'Job Status',
+        options: JOB_STATUS_OPTIONS,
+      },
+    ],
+    [
       {
         name: 'dateStarted',
         label: 'Date Started',
@@ -359,6 +432,8 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
     ],
   ];
   const makeSchema = (schema: Schema<SearchForm>) => {
+    const kindsAmount = SCHEMA_KIND[0][0].options?.length || 0;
+    if (kindsAmount <= 1) return schema;
     const clonedSchema = cloneDeep(schema);
     clonedSchema[0].unshift(SCHEMA_KIND[0][0]);
     return clonedSchema;
@@ -372,7 +447,7 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
     if (kind === 'properties')
       return makeSchema(SCHEMA_PROPERTIES as Schema<SearchForm>);
     return [];
-  }, [filter]);
+  }, [filter, jobTypes, jobSubtypes]);
   const getColumns = (kind: Kind): Columns => {
     if (kind === 'serviceCalls')
       return [
@@ -563,7 +638,7 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
   const getData = useCallback((): Data => {
     const { kind } = filter;
     if (kind === 'serviceCalls')
-      return loading
+      return loading || loadingDicts
         ? makeFakeRows(6, 3)
         : events.map(entry => {
             const {
@@ -645,18 +720,18 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
             ];
           });
     return [];
-  }, [filter, loading, events]);
+  }, [filter, loading, events, loadingDicts]);
   return (
     <div>
       <SectionBar
-        title="Search"
+        title={title}
         pagination={{
           count,
           page,
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: handleChangePage,
         }}
-        loading={loading}
+        loading={loading || loadingDicts}
       />
       <PlainForm
         key={formKey}
@@ -665,11 +740,12 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
         onChange={handleFormChange}
         compact
         className={classes.form}
+        disabled={loadingDicts}
       />
       <InfoTable
         columns={getColumns(filter.kind)}
         data={getData()}
-        loading={loading}
+        loading={loading || loadingDicts}
         hoverable
       />
     </div>

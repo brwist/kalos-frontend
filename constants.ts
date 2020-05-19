@@ -3,6 +3,7 @@ import { Options } from './modules/ComponentsLibrary/Field';
 export const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 
 export const OPTION_BLANK = '-- Select --';
+export const OPTION_ALL = '-- All --';
 
 export const PROP_LEVEL = 'Used for property-level billing only';
 
