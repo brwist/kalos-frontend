@@ -14,8 +14,8 @@ export default () => (
       title="Service Calls"
       loggedUserId={101253}
       kinds={['serviceCalls']}
-      editable
-      deletable
+      editableEvents
+      deletableEvents
     />
     {/* <ExampleTitle>Customers</ExampleTitle>
     <AdvancedSearch title="Customers" kinds={['customers']} />

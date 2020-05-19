@@ -2,12 +2,14 @@ import React, { FC, useState, useCallback, useEffect } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
+import DeleteIcon from '@material-ui/icons/Delete';
 import { makeStyles } from '@material-ui/core';
 import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { ServiceCall } from '../ServiceCall';
+import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
 import {
   loadEventsByFilter,
@@ -33,6 +35,7 @@ import {
   loadJobSubtypes,
   JobTypeType,
   JobSubtypeType,
+  deleteServiceCallById,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -46,8 +49,8 @@ export interface Props {
   loggedUserId: number;
   title: string;
   kinds: Kind[];
-  editable?: boolean;
-  deletable?: boolean;
+  editableEvents?: boolean;
+  deletableEvents?: boolean;
 }
 
 type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
@@ -72,8 +75,8 @@ export const AdvancedSearch: FC<Props> = ({
   loggedUserId,
   title,
   kinds,
-  editable,
-  deletable,
+  editableEvents,
+  deletableEvents,
 }) => {
   const classes = useStyles();
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
@@ -111,6 +114,7 @@ export const AdvancedSearch: FC<Props> = ({
     orderDir: 'ASC',
   });
   const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
+  const [pendingEventDeleting, setPendingEventDeleting] = useState<EventType>();
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await loadJobTypes();
@@ -243,6 +247,20 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingEventEditing(pendingEventEditing),
     [setPendingEventEditing],
   );
+  const handlePendingEventDeletingToggle = useCallback(
+    (pendingEventDeleting?: EventType) => () =>
+      setPendingEventDeleting(pendingEventDeleting),
+    [setPendingEventDeleting],
+  );
+  const handleDeleteServiceCall = useCallback(async () => {
+    if (pendingEventDeleting) {
+      const { id } = pendingEventDeleting;
+      setPendingEventDeleting(undefined);
+      setLoading(true);
+      await deleteServiceCallById(id);
+      setLoaded(false);
+    }
+  }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
   const onUserClick = useCallback(
     ({ id }: UserType) => () =>
       (window.location.href = [
@@ -478,7 +496,7 @@ export const AdvancedSearch: FC<Props> = ({
           name: 'Address',
         },
         {
-          name: 'Job Number',
+          name: 'Job #',
           ...(eventsSort.orderByField === 'logJobNumber'
             ? {
                 dir: eventsSort.orderDir,
@@ -667,7 +685,7 @@ export const AdvancedSearch: FC<Props> = ({
                   {
                     value: logJobStatus,
                     actions: [
-                      ...(editable
+                      ...(editableEvents
                         ? [
                             <IconButton
                               key="edit"
@@ -675,6 +693,17 @@ export const AdvancedSearch: FC<Props> = ({
                               onClick={handlePendingEventEditingToggle(entry)}
                             >
                               <EditIcon />
+                            </IconButton>,
+                          ]
+                        : []),
+                      ...(deletableEvents
+                        ? [
+                            <IconButton
+                              key="delete"
+                              size="small"
+                              onClick={handlePendingEventDeletingToggle(entry)}
+                            >
+                              <DeleteIcon />
                             </IconButton>,
                           ]
                         : []),
@@ -775,6 +804,15 @@ export const AdvancedSearch: FC<Props> = ({
             onClose={handlePendingEventEditingToggle(undefined)}
           />
         </Modal>
+      )}
+      {pendingEventDeleting && (
+        <ConfirmDelete
+          open
+          onClose={handlePendingEventDeletingToggle(undefined)}
+          onConfirm={handleDeleteServiceCall}
+          kind="Service Call"
+          name={`with Job # ${pendingEventDeleting.logJobNumber}`}
+        />
       )}
     </div>
   );
