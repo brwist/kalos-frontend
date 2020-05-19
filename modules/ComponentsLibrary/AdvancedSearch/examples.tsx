@@ -4,19 +4,19 @@ import { ExampleTitle } from '../helpers';
 
 export default () => (
   <>
-    {/* <ExampleTitle>Service Calls, Customers and Properties</ExampleTitle>
+    <ExampleTitle>Service Calls, Customers and Properties</ExampleTitle>
     <AdvancedSearch
       title="Search"
       kinds={['serviceCalls', 'customers', 'properties']}
-    /> */}
-    {/* <ExampleTitle>Service Calls</ExampleTitle>
+      loggedUserId={101253}
+    />
+    <ExampleTitle>Service Calls</ExampleTitle>
     <AdvancedSearch
       title="Service Calls"
       loggedUserId={101253}
       kinds={['serviceCalls']}
-      editableEvents
       deletableEvents
-    /> */}
+    />
     <ExampleTitle>Customers</ExampleTitle>
     <AdvancedSearch
       title="Customers"
@@ -25,13 +25,13 @@ export default () => (
       editableCustomers
       deletableCustomers
     />
-    {/* <ExampleTitle>Properties</ExampleTitle>
+    <ExampleTitle>Properties</ExampleTitle>
     <AdvancedSearch
       title="Properties"
       kinds={['properties']}
       loggedUserId={101253}
       editableProperties
       deletableProperties
-    /> */}
+    />
   </>
 );

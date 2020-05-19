@@ -6,6 +6,7 @@ import { ContractInfo } from './ContractInfo';
 export interface Props {
   userID: number;
   loggedUserId: number;
+  onClose?: () => void;
 }
 
 export const CustomerDetails = (props: Props) => (
