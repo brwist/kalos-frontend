@@ -6,6 +6,7 @@ import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ReactDOM from 'react-dom';
 import customTheme from '../Theme/main';
 import AddNewButton from './AddNewButton/examples';
+import AdvancedSearch from './AdvancedSearch/examples';
 import Button from './Button/examples';
 import Chart from './Chart/examples';
 import Confirm from './Confirm/examples';
@@ -36,6 +37,7 @@ const DEFAULT_COMPONENT_IDX = 0;
 
 const COMPONENTS = {
   AddNewButton,
+  AdvancedSearch,
   Button,
   Chart,
   Confirm,
@@ -75,6 +77,7 @@ const useStyles = makeStyles(theme => ({
     width: 185,
     padding: theme.spacing(),
     backgroundColor: theme.palette.grey[100],
+    flexShrink: 0,
   },
   list: {
     marginLeft: theme.spacing(2.5),
