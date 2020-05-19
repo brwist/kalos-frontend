@@ -19,7 +19,7 @@ import {
   getCustomerName,
   getPropertyAddress,
   formatDate,
-  deleteServiceCallById,
+  deleteEventById,
   EventsFilter,
   EventsSort,
 } from '../../../helpers';
@@ -92,7 +92,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       const { id } = pendingDelete;
       setPendingDelete(undefined);
       setLoading(true);
-      await deleteServiceCallById(id);
+      await deleteEventById(id);
       load();
     }
   }, [pendingDelete, setLoading, setPendingDelete]);

@@ -3,6 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import SearchIcon from '@material-ui/icons/Search';
 import { makeStyles } from '@material-ui/core';
 import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
@@ -11,6 +12,9 @@ import { InfoTable, Columns, Data } from '../InfoTable';
 import { ServiceCall } from '../ServiceCall';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
+import { CustomerInformation } from '../CustomerInformation';
+import { CustomerEdit } from '../CustomerEdit';
+import { PropertyEdit } from '../PropertyEdit';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -35,7 +39,9 @@ import {
   loadJobSubtypes,
   JobTypeType,
   JobSubtypeType,
-  deleteServiceCallById,
+  deleteEventById,
+  deleteUserById,
+  deletePropertyById,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -51,6 +57,10 @@ export interface Props {
   kinds: Kind[];
   editableEvents?: boolean;
   deletableEvents?: boolean;
+  editableCustomers?: boolean;
+  deletableCustomers?: boolean;
+  editableProperties?: boolean;
+  deletableProperties?: boolean;
 }
 
 type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
@@ -77,6 +87,10 @@ export const AdvancedSearch: FC<Props> = ({
   kinds,
   editableEvents,
   deletableEvents,
+  editableCustomers,
+  deletableCustomers,
+  editableProperties,
+  deletableProperties,
 }) => {
   const classes = useStyles();
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
@@ -115,6 +129,24 @@ export const AdvancedSearch: FC<Props> = ({
   });
   const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<EventType>();
+  const [pendingCustomerViewing, setPendingCustomerViewing] = useState<
+    UserType
+  >();
+  const [pendingCustomerEditing, setPendingCustomerEditing] = useState<
+    UserType
+  >();
+  const [pendingCustomerDeleting, setPendingCustomerDeleting] = useState<
+    UserType
+  >();
+  const [pendingPropertyViewing, setPendingPropertyViewing] = useState<
+    PropertyType
+  >();
+  const [pendingPropertyEditing, setPendingPropertyEditing] = useState<
+    PropertyType
+  >();
+  const [pendingPropertyDeleting, setPendingPropertyDeleting] = useState<
+    PropertyType
+  >();
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await loadJobTypes();
@@ -257,43 +289,65 @@ export const AdvancedSearch: FC<Props> = ({
       const { id } = pendingEventDeleting;
       setPendingEventDeleting(undefined);
       setLoading(true);
-      await deleteServiceCallById(id);
+      await deleteEventById(id);
       setLoaded(false);
     }
   }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
-  const onUserClick = useCallback(
-    ({ id }: UserType) => () =>
-      (window.location.href = [
-        'https://app.kalosflorida.com/index.cfm?action=admin:customers.details',
-        `id=${id}`,
-      ].join('&')),
-    [],
+  const handleDeleteCustomer = useCallback(async () => {
+    if (pendingCustomerDeleting) {
+      const { id } = pendingCustomerDeleting;
+      setPendingCustomerDeleting(undefined);
+      setLoading(true);
+      await deleteUserById(id);
+      setLoaded(false);
+    }
+  }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
+  const handleDeleteProperty = useCallback(async () => {
+    if (pendingPropertyDeleting) {
+      const { id } = pendingPropertyDeleting;
+      setPendingPropertyDeleting(undefined);
+      setLoading(true);
+      await deletePropertyById(id);
+      setLoaded(false);
+    }
+  }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
+  const handlePendingCustomerViewingToggle = useCallback(
+    (pendingCustomerViewing?: UserType) => () =>
+      setPendingCustomerViewing(pendingCustomerViewing),
+    [setPendingCustomerViewing],
   );
-  const onUserEditClick = useCallback(
-    ({ id }: UserType) => () =>
-      (window.location.href = [
-        'https://app.kalosflorida.com/index.cfm?action=admin:customers.edit',
-        `id=${id}`,
-      ].join('&')),
-    [],
+  const handlePendingCustomerEditingToggle = useCallback(
+    (pendingCustomerEditing?: UserType) => () =>
+      setPendingCustomerEditing(pendingCustomerEditing),
+    [setPendingCustomerEditing],
   );
-  const onPropertyClick = useCallback(
-    ({ id, userId }: PropertyType) => () =>
-      (window.location.href = [
-        'https://app.kalosflorida.com/index.cfm?action=admin:properties.details',
-        `user_id=${userId}`,
-        `property_id=${id}`,
-      ].join('&')),
-    [],
+  const onSaveCustomer = useCallback(() => {
+    setPendingCustomerEditing(undefined);
+    setLoaded(false);
+  }, [setPendingCustomerEditing, setLoaded]);
+  const handlePendingCustomerDeletingToggle = useCallback(
+    (pendingCustomerDeleting?: UserType) => () =>
+      setPendingCustomerDeleting(pendingCustomerDeleting),
+    [setPendingCustomerDeleting],
   );
-  const onPropertyEditClick = useCallback(
-    ({ id, userId }: PropertyType) => () =>
-      (window.location.href = [
-        'https://app.kalosflorida.com/index.cfm?action=admin:properties.edit',
-        `user_id=${userId}`,
-        `property_id=${id}`,
-      ].join('&')),
-    [],
+  const handlePendingPropertyViewingToggle = useCallback(
+    (pendingPropertyViewing?: PropertyType) => () =>
+      setPendingPropertyViewing(pendingPropertyViewing),
+    [setPendingPropertyViewing],
+  );
+  const handlePendingPropertyEditingToggle = useCallback(
+    (pendingPropertyEditing?: PropertyType) => () =>
+      setPendingPropertyEditing(pendingPropertyEditing),
+    [setPendingPropertyEditing],
+  );
+  const onSaveProperty = useCallback(() => {
+    setPendingPropertyEditing(undefined);
+    setLoaded(false);
+  }, [setPendingPropertyEditing, setLoaded]);
+  const handlePendingPropertyDeletingToggle = useCallback(
+    (pendingPropertyDeleting?: PropertyType) => () =>
+      setPendingPropertyDeleting(pendingPropertyDeleting),
+    [setPendingPropertyDeleting],
   );
   const searchActions: ActionsProps = [
     {
@@ -602,6 +656,7 @@ export const AdvancedSearch: FC<Props> = ({
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
+        { name: '' },
       ];
     if (kind === 'properties')
       return [
@@ -714,25 +769,47 @@ export const AdvancedSearch: FC<Props> = ({
           });
     if (kind === 'customers')
       return loading
-        ? makeFakeRows(5, 3)
+        ? makeFakeRows(6, 3)
         : users.map(entry => {
             const { firstname, lastname, businessname, phone, email } = entry;
             return [
-              { value: firstname, onClick: onUserClick(entry) },
-              { value: lastname, onClick: onUserClick(entry) },
-              { value: businessname, onClick: onUserClick(entry) },
-              { value: phone, onClick: onUserClick(entry) },
+              { value: firstname },
+              { value: lastname },
+              { value: businessname },
+              { value: phone },
+              { value: email },
               {
-                value: email,
-                onClick: onUserClick(entry),
+                value: '',
                 actions: [
                   <IconButton
-                    key="edit"
+                    key="view"
                     size="small"
-                    onClick={onUserEditClick(entry)}
+                    onClick={handlePendingCustomerViewingToggle(entry)}
                   >
-                    <EditIcon />
+                    <SearchIcon />
                   </IconButton>,
+                  ...(editableCustomers
+                    ? [
+                        <IconButton
+                          key="edit"
+                          size="small"
+                          onClick={handlePendingCustomerEditingToggle(entry)}
+                        >
+                          <EditIcon />
+                        </IconButton>,
+                      ]
+                    : []),
+                  ...(deletableCustomers
+                    ? [
+                        <IconButton
+                          key="delete"
+                          size="small"
+                          onClick={handlePendingCustomerDeletingToggle(entry)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>,
+                      ]
+                    : []),
                 ],
               },
             ];
@@ -743,20 +820,41 @@ export const AdvancedSearch: FC<Props> = ({
         : properties.map(entry => {
             const { address, city, zip, subdivision } = entry;
             return [
-              { value: address, onClick: onPropertyClick(entry) },
-              { value: subdivision, onClick: onPropertyClick(entry) },
-              { value: city, onClick: onPropertyClick(entry) },
+              { value: address },
+              { value: subdivision },
+              { value: city },
               {
                 value: zip,
-                onClick: onPropertyClick(entry),
                 actions: [
                   <IconButton
-                    key={0}
+                    key="view"
                     size="small"
-                    onClick={onPropertyEditClick(entry)}
+                    onClick={handlePendingPropertyViewingToggle(entry)}
                   >
-                    <EditIcon />
+                    <SearchIcon />
                   </IconButton>,
+                  ...(editableProperties
+                    ? [
+                        <IconButton
+                          key="edit"
+                          size="small"
+                          onClick={handlePendingPropertyEditingToggle(entry)}
+                        >
+                          <EditIcon />
+                        </IconButton>,
+                      ]
+                    : []),
+                  ...(deletableProperties
+                    ? [
+                        <IconButton
+                          key="edit"
+                          size="small"
+                          onClick={handlePendingPropertyDeletingToggle(entry)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>,
+                      ]
+                    : []),
                 ],
               },
             ];
@@ -812,6 +910,72 @@ export const AdvancedSearch: FC<Props> = ({
           onConfirm={handleDeleteServiceCall}
           kind="Service Call"
           name={`with Job # ${pendingEventDeleting.logJobNumber}`}
+        />
+      )}
+      {pendingCustomerViewing && (
+        <Modal
+          open
+          onClose={handlePendingCustomerViewingToggle(undefined)}
+          fullScreen
+        >
+          <SectionBar
+            actions={[
+              {
+                label: 'Close',
+                onClick: handlePendingCustomerViewingToggle(undefined),
+              },
+            ]}
+            fixedActions
+          />
+          <CustomerInformation userID={pendingCustomerViewing.id} />
+        </Modal>
+      )}
+      {pendingCustomerEditing && (
+        <Modal
+          open
+          onClose={handlePendingCustomerEditingToggle(undefined)}
+          fullScreen
+        >
+          <CustomerEdit
+            onClose={handlePendingCustomerEditingToggle(undefined)}
+            userId={pendingCustomerEditing.id}
+            customer={pendingCustomerEditing}
+            onSave={onSaveCustomer}
+          />
+        </Modal>
+      )}
+      {pendingCustomerDeleting && (
+        <ConfirmDelete
+          open
+          onClose={handlePendingCustomerDeletingToggle(undefined)}
+          onConfirm={handleDeleteCustomer}
+          kind="Customer"
+          name={getCustomerNameAndBusinessName(pendingCustomerDeleting)}
+        />
+      )}
+      {pendingPropertyEditing && (
+        <Modal
+          open
+          onClose={handlePendingPropertyEditingToggle(undefined)}
+          fullScreen
+        >
+          ...
+          {/* <ServiceCall
+            loggedUserId={loggedUserId}
+            serviceCallId={pendingEventEditing.id}
+            userID={pendingEventEditing.customer.id}
+            propertyId={pendingEventEditing.propertyId}
+            onClose={handlePendingEventEditingToggle(undefined)}
+          /> */}
+        </Modal>
+      )}
+      {pendingPropertyDeleting && (
+        <ConfirmDelete
+          open
+          onClose={handlePendingPropertyDeletingToggle(undefined)}
+          onConfirm={handleDeleteProperty}
+          kind="Property"
+          name={`with address ${getPropertyAddress(pendingPropertyDeleting)}`}
         />
       )}
     </div>
