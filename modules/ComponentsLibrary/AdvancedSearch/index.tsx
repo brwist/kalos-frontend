@@ -15,6 +15,7 @@ import {
   formatDate,
   getCustomerName,
   getBusinessName,
+  getCustomerNameAndBusinessName,
   getPropertyAddress,
   EventsFilter,
   EventsSort,
@@ -34,6 +35,7 @@ import { ROWS_PER_PAGE } from '../../../constants';
 type Kind = 'serviceCalls' | 'customers' | 'properties';
 
 export interface Props {
+  title: string;
   defaultKind?: Kind;
 }
 
@@ -46,29 +48,6 @@ const TYPES: Option[] = [
   { label: 'Customers', value: 'customers' },
   { label: 'Properties', value: 'properties' },
 ];
-
-const makeColumn = (columns: string[]): Columns =>
-  columns.map(name => ({ name }));
-
-const COLUMNS: { [key in Kind]: Columns } = {
-  serviceCalls: makeColumn([
-    'Start Date',
-    'Firstname / Lastname',
-    'Business Name',
-    'Address',
-    'Job Number',
-    'Job Type / Subtype',
-    'Job Status',
-  ]),
-  customers: makeColumn([
-    'First Name',
-    'Last Name',
-    'Business Name',
-    'Primary Phone',
-    'Email',
-  ]),
-  properties: makeColumn(['Address', 'Subdivision', 'City', 'Zip Code']),
-};
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -301,7 +280,7 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
       },
       {
         name: 'dateStarted',
-        label: 'Start Date',
+        label: 'Date Started',
         type: 'date',
       },
       {
@@ -398,7 +377,7 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
     if (kind === 'serviceCalls')
       return [
         {
-          name: 'Start Date',
+          name: 'Date Started',
           ...(eventsSort.orderByField === 'dateStarted'
             ? {
                 dir: eventsSort.orderDir,
@@ -411,10 +390,7 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
           }),
         },
         {
-          name: 'Firstname / Lastname',
-        },
-        {
-          name: 'Business Name',
+          name: 'Name / Business Name',
         },
         {
           name: 'Address',
@@ -588,7 +564,7 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
     const { kind } = filter;
     if (kind === 'serviceCalls')
       return loading
-        ? makeFakeRows(7, 3)
+        ? makeFakeRows(6, 3)
         : events.map(entry => {
             const {
               dateStarted,
@@ -603,11 +579,7 @@ export const AdvancedSearch: FC<Props> = ({ defaultKind = 'serviceCalls' }) => {
               ? [
                   { value: formatDate(dateStarted), onClick: onEventClick },
                   {
-                    value: getCustomerName(customer),
-                    onClick: onEventClick(entry),
-                  },
-                  {
-                    value: getBusinessName(customer),
+                    value: getCustomerNameAndBusinessName(customer),
                     onClick: onEventClick(entry),
                   },
                   {

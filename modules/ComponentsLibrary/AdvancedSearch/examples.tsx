@@ -1,8 +1,10 @@
 import React from 'react';
 import { AdvancedSearch } from './';
+import { ExampleTitle } from '../helpers';
 
 export default () => (
   <>
-    <AdvancedSearch />
+    <ExampleTitle>Default</ExampleTitle>
+    <AdvancedSearch title="Search" />
   </>
 );
