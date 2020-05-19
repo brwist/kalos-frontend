@@ -38,7 +38,7 @@ import {
   UserGroupLink,
   UserGroupLinkClient,
 } from '@kalos-core/kalos-rpc/UserGroupLink';
-import { ENDPOINT, MONTHS } from './constants';
+import { ENDPOINT, MONTHS, OPTION_ALL } from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
 
 export type UserType = User.AsObject;
@@ -46,6 +46,8 @@ export type PropertyType = Property.AsObject;
 export type GroupType = Group.AsObject;
 export type UserGroupLinkType = UserGroupLink.AsObject;
 export type EventType = Event.AsObject;
+export type JobTypeType = JobType.AsObject;
+export type JobSubtypeType = JobSubtype.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -1031,6 +1033,9 @@ export type EventsFilter = {
   city?: string;
   zip?: string;
   logDateCompleted?: string;
+  jobTypeId?: number;
+  jobSubtypeId?: number;
+  logJobStatus?: string;
 };
 export type LoadEventsByFilter = {
   page: number;
@@ -1062,6 +1067,9 @@ export const loadEventsByFilter = async ({
     firstname,
     lastname,
     businessname,
+    jobTypeId,
+    jobSubtypeId,
+    logJobStatus,
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Event();
@@ -1078,6 +1086,15 @@ export const loadEventsByFilter = async ({
   }
   if (logJobNumber) {
     req.setLogJobNumber(`%${logJobNumber}%`);
+  }
+  if (jobTypeId) {
+    req.setJobTypeId(jobTypeId);
+  }
+  if (jobSubtypeId) {
+    req.setJobSubtypeId(jobSubtypeId);
+  }
+  if (logJobStatus) {
+    req.setLogJobStatus(logJobStatus);
   }
   if (dateStarted) {
     req.setDateStarted(`%${dateStarted}%`);
