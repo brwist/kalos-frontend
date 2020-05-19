@@ -5,6 +5,7 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ReactDOM from 'react-dom';
 import customTheme from '../Theme/main';
+import Actions from './Actions/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
 import Button from './Button/examples';
@@ -36,6 +37,7 @@ import WeekPicker from './WeekPicker/examples';
 const DEFAULT_COMPONENT_IDX = 0;
 
 const COMPONENTS = {
+  Actions,
   AddNewButton,
   AdvancedSearch,
   Button,
