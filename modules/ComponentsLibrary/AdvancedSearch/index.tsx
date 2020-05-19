@@ -15,6 +15,8 @@ import { Modal } from '../Modal';
 import { CustomerInformation } from '../CustomerInformation';
 import { CustomerEdit } from '../CustomerEdit';
 import { PropertyEdit } from '../PropertyEdit';
+import { PropertyInfo } from '../../PropertyInformation/components/PropertyInfo'; // TODO move to ComponentsLibrary
+import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails'; // TODO move to ComponentsLibrary
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -55,7 +57,6 @@ export interface Props {
   loggedUserId: number;
   title: string;
   kinds: Kind[];
-  editableEvents?: boolean;
   deletableEvents?: boolean;
   editableCustomers?: boolean;
   deletableCustomers?: boolean;
@@ -85,7 +86,6 @@ export const AdvancedSearch: FC<Props> = ({
   loggedUserId,
   title,
   kinds,
-  editableEvents,
   deletableEvents,
   editableCustomers,
   deletableCustomers,
@@ -740,17 +740,14 @@ export const AdvancedSearch: FC<Props> = ({
                   {
                     value: logJobStatus,
                     actions: [
-                      ...(editableEvents
-                        ? [
-                            <IconButton
-                              key="edit"
-                              size="small"
-                              onClick={handlePendingEventEditingToggle(entry)}
-                            >
-                              <EditIcon />
-                            </IconButton>,
-                          ]
-                        : []),
+                      <IconButton
+                        key="edit"
+                        size="small"
+                        onClick={handlePendingEventEditingToggle(entry)}
+                      >
+                        <EditIcon />
+                      </IconButton>,
+                      ,
                       ...(deletableEvents
                         ? [
                             <IconButton
@@ -847,7 +844,7 @@ export const AdvancedSearch: FC<Props> = ({
                   ...(deletableProperties
                     ? [
                         <IconButton
-                          key="edit"
+                          key="delete"
                           size="small"
                           onClick={handlePendingPropertyDeletingToggle(entry)}
                         >
@@ -918,16 +915,11 @@ export const AdvancedSearch: FC<Props> = ({
           onClose={handlePendingCustomerViewingToggle(undefined)}
           fullScreen
         >
-          <SectionBar
-            actions={[
-              {
-                label: 'Close',
-                onClick: handlePendingCustomerViewingToggle(undefined),
-              },
-            ]}
-            fixedActions
+          <CustomerDetails
+            loggedUserId={loggedUserId}
+            userID={pendingCustomerViewing.id}
+            onClose={handlePendingCustomerViewingToggle(undefined)}
           />
-          <CustomerInformation userID={pendingCustomerViewing.id} />
         </Modal>
       )}
       {pendingCustomerEditing && (
@@ -953,20 +945,37 @@ export const AdvancedSearch: FC<Props> = ({
           name={getCustomerNameAndBusinessName(pendingCustomerDeleting)}
         />
       )}
+      {pendingPropertyViewing && (
+        <Modal
+          open
+          onClose={handlePendingPropertyViewingToggle(undefined)}
+          fullScreen
+        >
+          <CustomerInformation
+            userID={pendingPropertyViewing.userId}
+            propertyId={pendingPropertyViewing.id}
+            onClose={handlePendingPropertyViewingToggle(undefined)}
+          />
+          <PropertyInfo
+            loggedUserId={loggedUserId}
+            userID={pendingPropertyViewing.userId}
+            propertyId={pendingPropertyViewing.id}
+          />
+        </Modal>
+      )}
       {pendingPropertyEditing && (
         <Modal
           open
           onClose={handlePendingPropertyEditingToggle(undefined)}
           fullScreen
         >
-          ...
-          {/* <ServiceCall
-            loggedUserId={loggedUserId}
-            serviceCallId={pendingEventEditing.id}
-            userID={pendingEventEditing.customer.id}
-            propertyId={pendingEventEditing.propertyId}
-            onClose={handlePendingEventEditingToggle(undefined)}
-          /> */}
+          <PropertyEdit
+            userId={pendingPropertyEditing.userId}
+            propertyId={pendingPropertyEditing.id}
+            property={pendingPropertyEditing}
+            onSave={onSaveProperty}
+            onClose={handlePendingPropertyEditingToggle(undefined)}
+          />
         </Modal>
       )}
       {pendingPropertyDeleting && (

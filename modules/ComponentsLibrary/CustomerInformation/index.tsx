@@ -76,12 +76,14 @@ interface Props {
   userID: number;
   propertyId?: number;
   renderChildren?: (customer: UserType) => ReactNode;
+  onClose?: () => void;
 }
 
 export const CustomerInformation: FC<Props> = ({
   userID,
   propertyId,
   renderChildren,
+  onClose,
   children,
 }) => {
   const [customer, setCustomer] = useState<UserType>(new User().toObject());
@@ -314,6 +316,14 @@ export const CustomerInformation: FC<Props> = ({
                 label: 'Delete',
                 onClick: handleSetDeleting(true),
               },
+              ...(onClose
+                ? [
+                    {
+                      label: 'Close',
+                      onClick: onClose,
+                    },
+                  ]
+                : []),
             ]}
           >
             <InfoTable data={data} loading={id === 0} error={error} />

@@ -41,6 +41,7 @@ export default () => {
         key={`${userID}-${propertyId}`}
         userID={userID}
         propertyId={+propertyId}
+        onClose={() => console.log('CLOSE')}
       >
         {withChildren && <LoremIpsumList />}
       </CustomerInformation>
