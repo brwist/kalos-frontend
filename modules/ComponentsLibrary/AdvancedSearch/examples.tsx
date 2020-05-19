@@ -4,7 +4,22 @@ import { ExampleTitle } from '../helpers';
 
 export default () => (
   <>
-    <ExampleTitle>Default</ExampleTitle>
-    <AdvancedSearch title="Search" />
+    {/* <ExampleTitle>Service Calls, Customers and Properties</ExampleTitle>
+    <AdvancedSearch
+      title="Search"
+      kinds={['serviceCalls', 'customers', 'properties']}
+    /> */}
+    <ExampleTitle>Service Calls</ExampleTitle>
+    <AdvancedSearch
+      title="Service Calls"
+      loggedUserId={101253}
+      kinds={['serviceCalls']}
+      editable
+      deletable
+    />
+    {/* <ExampleTitle>Customers</ExampleTitle>
+    <AdvancedSearch title="Customers" kinds={['customers']} />
+    <ExampleTitle>Properties</ExampleTitle>
+    <AdvancedSearch title="Properties" kinds={['properties']} /> */}
   </>
 );

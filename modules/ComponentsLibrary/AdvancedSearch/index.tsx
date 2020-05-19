@@ -7,6 +7,8 @@ import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { InfoTable, Columns, Data } from '../InfoTable';
+import { ServiceCall } from '../ServiceCall';
+import { Modal } from '../Modal';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -41,8 +43,11 @@ import {
 type Kind = 'serviceCalls' | 'customers' | 'properties';
 
 export interface Props {
+  loggedUserId: number;
   title: string;
   kinds: Kind[];
+  editable?: boolean;
+  deletable?: boolean;
 }
 
 type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
@@ -63,7 +68,13 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const AdvancedSearch: FC<Props> = ({ title, kinds }) => {
+export const AdvancedSearch: FC<Props> = ({
+  loggedUserId,
+  title,
+  kinds,
+  editable,
+  deletable,
+}) => {
   const classes = useStyles();
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
@@ -99,6 +110,7 @@ export const AdvancedSearch: FC<Props> = ({ title, kinds }) => {
     orderBy: 'property_address',
     orderDir: 'ASC',
   });
+  const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await loadJobTypes();
@@ -226,15 +238,10 @@ export const AdvancedSearch: FC<Props> = ({ title, kinds }) => {
     },
     [setFilter, filter, formKey, setFormKey, setLoaded, kinds],
   );
-  const onEventClick = useCallback(
-    ({ id, customer, propertyId }: EventType) => () =>
-      (window.location.href = [
-        'https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall',
-        `id=${id}`,
-        `user_id=${customer ? customer.id : 0}`,
-        `property_id=${propertyId}`,
-      ].join('&')),
-    [],
+  const handlePendingEventEditingToggle = useCallback(
+    (pendingEventEditing?: EventType) => () =>
+      setPendingEventEditing(pendingEventEditing),
+    [setPendingEventEditing],
   );
   const onUserClick = useCallback(
     ({ id }: UserType) => () =>
@@ -652,21 +659,27 @@ export const AdvancedSearch: FC<Props> = ({ title, kinds }) => {
             } = entry;
             return customer
               ? [
-                  { value: formatDate(dateStarted), onClick: onEventClick },
+                  { value: formatDate(dateStarted) },
+                  { value: getCustomerNameAndBusinessName(customer) },
+                  { value: getPropertyAddress(property) },
+                  { value: logJobNumber },
+                  { value: `${jobType} / ${jobSubtype}` },
                   {
-                    value: getCustomerNameAndBusinessName(customer),
-                    onClick: onEventClick(entry),
+                    value: logJobStatus,
+                    actions: [
+                      ...(editable
+                        ? [
+                            <IconButton
+                              key="edit"
+                              size="small"
+                              onClick={handlePendingEventEditingToggle(entry)}
+                            >
+                              <EditIcon />
+                            </IconButton>,
+                          ]
+                        : []),
+                    ],
                   },
-                  {
-                    value: getPropertyAddress(property),
-                    onClick: onEventClick(entry),
-                  },
-                  { value: logJobNumber, onClick: onEventClick(entry) },
-                  {
-                    value: `${jobType} / ${jobSubtype}`,
-                    onClick: onEventClick(entry),
-                  },
-                  { value: logJobStatus, onClick: onEventClick(entry) },
                 ]
               : [];
           });
@@ -685,7 +698,7 @@ export const AdvancedSearch: FC<Props> = ({ title, kinds }) => {
                 onClick: onUserClick(entry),
                 actions: [
                   <IconButton
-                    key={0}
+                    key="edit"
                     size="small"
                     onClick={onUserEditClick(entry)}
                   >
@@ -748,6 +761,21 @@ export const AdvancedSearch: FC<Props> = ({ title, kinds }) => {
         loading={loading || loadingDicts}
         hoverable
       />
+      {pendingEventEditing && pendingEventEditing.customer && (
+        <Modal
+          open
+          onClose={handlePendingEventEditingToggle(undefined)}
+          fullScreen
+        >
+          <ServiceCall
+            loggedUserId={loggedUserId}
+            serviceCallId={pendingEventEditing.id}
+            userID={pendingEventEditing.customer.id}
+            propertyId={pendingEventEditing.propertyId}
+            onClose={handlePendingEventEditingToggle(undefined)}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
