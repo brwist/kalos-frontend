@@ -1300,10 +1300,22 @@ export const saveUser = async (data: UserType, userId?: number) => {
   return await UserClientService[userId ? 'Update' : 'Create'](req);
 };
 
-export const deleteServiceCallById = async (id: number) => {
+export const deleteEventById = async (id: number) => {
   const req = new Event();
   req.setId(id);
   await EventClientService.Delete(req);
+};
+
+export const deleteUserById = async (id: number) => {
+  const req = new User();
+  req.setId(id);
+  await UserClientService.Delete(req);
+};
+
+export const deletePropertyById = async (id: number) => {
+  const req = new Property();
+  req.setId(id);
+  await PropertyClientService.Delete(req);
 };
 
 interface IBugReport {

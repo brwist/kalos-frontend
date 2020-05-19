@@ -9,17 +9,29 @@ export default () => (
       title="Search"
       kinds={['serviceCalls', 'customers', 'properties']}
     /> */}
-    <ExampleTitle>Service Calls</ExampleTitle>
+    {/* <ExampleTitle>Service Calls</ExampleTitle>
     <AdvancedSearch
       title="Service Calls"
       loggedUserId={101253}
       kinds={['serviceCalls']}
       editableEvents
       deletableEvents
+    /> */}
+    <ExampleTitle>Customers</ExampleTitle>
+    <AdvancedSearch
+      title="Customers"
+      kinds={['customers']}
+      loggedUserId={101253}
+      editableCustomers
+      deletableCustomers
     />
-    {/* <ExampleTitle>Customers</ExampleTitle>
-    <AdvancedSearch title="Customers" kinds={['customers']} />
-    <ExampleTitle>Properties</ExampleTitle>
-    <AdvancedSearch title="Properties" kinds={['properties']} /> */}
+    {/* <ExampleTitle>Properties</ExampleTitle>
+    <AdvancedSearch
+      title="Properties"
+      kinds={['properties']}
+      loggedUserId={101253}
+      editableProperties
+      deletableProperties
+    /> */}
   </>
 );
