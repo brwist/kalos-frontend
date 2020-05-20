@@ -15,8 +15,9 @@ import { Modal } from '../Modal';
 import { CustomerInformation } from '../CustomerInformation';
 import { CustomerEdit } from '../CustomerEdit';
 import { PropertyEdit } from '../PropertyEdit';
-import { PropertyInfo } from '../../PropertyInformation/components/PropertyInfo'; // TODO move to ComponentsLibrary
-import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails'; // TODO move to ComponentsLibrary
+import { PropertyInfo } from '../../PropertyInformation/components/PropertyInfo';
+import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails';
+import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -66,6 +67,7 @@ export interface Props {
   editableProperties?: boolean;
   deletableProperties?: boolean;
   eventsWithAccounting?: boolean;
+  eventsWithAdd?: boolean;
 }
 
 type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
@@ -99,6 +101,7 @@ export const AdvancedSearch: FC<Props> = ({
   editableProperties,
   deletableProperties,
   eventsWithAccounting = false,
+  eventsWithAdd = false,
 }) => {
   const classes = useStyles();
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
@@ -136,6 +139,7 @@ export const AdvancedSearch: FC<Props> = ({
     orderBy: 'property_address',
     orderDir: 'ASC',
   });
+  const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<EventType>();
   const [pendingCustomerViewing, setPendingCustomerViewing] = useState<
@@ -222,6 +226,7 @@ export const AdvancedSearch: FC<Props> = ({
       loadDicts();
     }
   }, [loaded, setLoaded, load, loadedDicts, setLoadedDicts, loadDicts]);
+  const reload = useCallback(() => setLoaded(false), [setLoaded]);
   const handleEventsSortChange = useCallback(
     (sort: EventsSort) => () => {
       setEventsSort(sort);
@@ -282,6 +287,11 @@ export const AdvancedSearch: FC<Props> = ({
       }
     },
     [setFilter, filter, formKey, setFormKey, setLoaded, kinds],
+  );
+  const handlePendingEventAddingToggle = useCallback(
+    (pendingEventAdding: boolean) => () =>
+      setPendingEventAdding(pendingEventAdding),
+    [setPendingEventAdding],
   );
   const handlePendingEventEditingToggle = useCallback(
     (pendingEventEditing?: EventType) => () =>
@@ -964,6 +974,14 @@ export const AdvancedSearch: FC<Props> = ({
                 },
               ]
             : []),
+          ...(eventsWithAdd
+            ? [
+                {
+                  label: 'Add Service Call',
+                  onClick: handlePendingEventAddingToggle(true),
+                },
+              ]
+            : []),
         ]}
       />
       <PlainForm
@@ -981,6 +999,15 @@ export const AdvancedSearch: FC<Props> = ({
         loading={loading || loadingDicts}
         hoverable
       />
+      {pendingEventAdding && (
+        <Modal open onClose={handlePendingEventAddingToggle(false)} fullScreen>
+          <AddServiceCall
+            loggedUserId={loggedUserId}
+            onClose={handlePendingEventAddingToggle(false)}
+            onSave={reload}
+          />
+        </Modal>
+      )}
       {pendingEventEditing && pendingEventEditing.customer && (
         <Modal
           open
@@ -993,6 +1020,7 @@ export const AdvancedSearch: FC<Props> = ({
             userID={pendingEventEditing.customer.id}
             propertyId={pendingEventEditing.propertyId}
             onClose={handlePendingEventEditingToggle(undefined)}
+            onSave={reload}
           />
         </Modal>
       )}

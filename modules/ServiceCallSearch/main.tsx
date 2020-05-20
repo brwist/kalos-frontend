@@ -15,6 +15,7 @@ export const ServiceCallSearch: FC<Props> = props => (
       kinds={['serviceCalls']}
       deletableEvents
       eventsWithAccounting
+      eventsWithAdd
     />
   </ThemeProvider>
 );

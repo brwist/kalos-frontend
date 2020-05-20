@@ -21,6 +21,7 @@ import { ROWS_PER_PAGE } from '../../../constants';
 
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   onClose?: () => void;
+  onSave?: () => void;
 };
 
 export const useStyles = makeStyles(theme => ({
@@ -43,7 +44,7 @@ export const useStyles = makeStyles(theme => ({
 
 export const AddServiceCall: FC<Props> = props => {
   const classes = useStyles();
-  const { loggedUserId, onClose } = props;
+  const { loggedUserId, onClose, onSave } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [customerOpened, setCustomerOpened] = useState<UserType>();
   const [propertyOpened, setPropertyOpened] = useState<UserType>();
@@ -210,6 +211,7 @@ export const AddServiceCall: FC<Props> = props => {
                 propertyId={serviceCallOpened.id}
                 userID={serviceCallOpened.userId}
                 loggedUserId={loggedUserId}
+                onSave={onSave}
               />
             </div>
           </div>
