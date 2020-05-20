@@ -9,6 +9,7 @@ export default () => (
       title="Search"
       kinds={['serviceCalls', 'customers', 'properties']}
       loggedUserId={101253}
+      eventsWithAccounting
     />
     <ExampleTitle>Service Calls</ExampleTitle>
     <AdvancedSearch
