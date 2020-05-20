@@ -1239,6 +1239,9 @@ export const getCustomerName = (c?: UserType): string =>
 export const getBusinessName = (c?: UserType): string =>
   c ? c.businessname.trim() : '';
 
+export const getCustomerPhone = (c?: UserType): string =>
+  c ? c.phone.trim() : '';
+
 export const getCustomerNameAndBusinessName = (c?: UserType): string => {
   const name = getCustomerName(c);
   const businessname = getBusinessName(c);

@@ -23,8 +23,10 @@ import {
   loadPropertiesByFilter,
   makeFakeRows,
   formatDate,
+  getCustomerName,
   getCustomerNameAndBusinessName,
   getPropertyAddress,
+  getCustomerPhone,
   EventsFilter,
   EventsSort,
   LoadEventsByFilter,
@@ -44,6 +46,7 @@ import {
   deleteEventById,
   deleteUserById,
   deletePropertyById,
+  getBusinessName,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -62,6 +65,7 @@ export interface Props {
   deletableCustomers?: boolean;
   editableProperties?: boolean;
   deletableProperties?: boolean;
+  eventsWithAccounting?: boolean;
 }
 
 type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
@@ -75,6 +79,9 @@ const JOB_STATUS_OPTIONS: Option[] = [
     value: label,
   })),
 ];
+
+const ACCOUNTING = 'Accounting';
+const SERVICE = 'Service';
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -91,6 +98,7 @@ export const AdvancedSearch: FC<Props> = ({
   deletableCustomers,
   editableProperties,
   deletableProperties,
+  eventsWithAccounting = false,
 }) => {
   const classes = useStyles();
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
@@ -101,6 +109,7 @@ export const AdvancedSearch: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
+  const [accounting, setAccounting] = useState<boolean>(false);
   const defaultFilter = {
     kind: kinds[0],
     jobTypeId: 0,
@@ -349,6 +358,10 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingPropertyDeleting(pendingPropertyDeleting),
     [setPendingPropertyDeleting],
   );
+  const handleAccountingToggle = useCallback(() => setAccounting(!accounting), [
+    accounting,
+    setAccounting,
+  ]);
   const searchActions: ActionsProps = [
     {
       label: 'Reset',
@@ -529,66 +542,123 @@ export const AdvancedSearch: FC<Props> = ({
   }, [filter, jobTypes, jobSubtypes]);
   const getColumns = (kind: Kind): Columns => {
     if (kind === 'serviceCalls')
-      return [
-        {
-          name: 'Date Started',
-          ...(eventsSort.orderByField === 'dateStarted'
-            ? {
-                dir: eventsSort.orderDir,
-              }
-            : {}),
-          onClick: handleEventsSortChange({
-            orderByField: 'dateStarted',
-            orderBy: 'date_started',
-            orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
-          }),
-        },
-        {
-          name: 'Name / Business Name',
-        },
-        {
-          name: 'Address',
-        },
-        {
-          name: 'Job #',
-          ...(eventsSort.orderByField === 'logJobNumber'
-            ? {
-                dir: eventsSort.orderDir,
-              }
-            : {}),
-          onClick: handleEventsSortChange({
-            orderByField: 'logJobNumber',
-            orderBy: 'log_jobNumber',
-            orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
-          }),
-        },
-        {
-          name: 'Job Type / Subtype',
-          ...(eventsSort.orderByField === 'jobTypeId'
-            ? {
-                dir: eventsSort.orderDir,
-              }
-            : {}),
-          onClick: handleEventsSortChange({
-            orderByField: 'jobTypeId',
-            orderBy: 'job_type_id',
-            orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
-          }),
-        },
-        {
-          name: 'Job Status',
-          ...(eventsSort.orderByField === 'logJobStatus'
-            ? {
-                dir: eventsSort.orderDir,
-              }
-            : {}),
-          onClick: handleEventsSortChange({
-            orderByField: 'logJobStatus',
-            orderBy: 'log_jobStatus',
-            orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
-          }),
-        },
-      ];
+      return accounting
+        ? [
+            {
+              name: 'Date Started',
+              ...(eventsSort.orderByField === 'dateStarted'
+                ? {
+                    dir: eventsSort.orderDir,
+                  }
+                : {}),
+              onClick: handleEventsSortChange({
+                orderByField: 'dateStarted',
+                orderBy: 'date_started',
+                orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+              }),
+            },
+            { name: 'Customer Name' },
+            { name: 'Business Name' },
+            { name: 'Address' },
+            { name: 'City' },
+            { name: 'Zip' },
+            { name: 'Phone' },
+            {
+              name: 'Job #',
+              ...(eventsSort.orderByField === 'logJobNumber'
+                ? {
+                    dir: eventsSort.orderDir,
+                  }
+                : {}),
+              onClick: handleEventsSortChange({
+                orderByField: 'logJobNumber',
+                orderBy: 'log_jobNumber',
+                orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+              }),
+            },
+            {
+              name: 'Job Type',
+              ...(eventsSort.orderByField === 'jobTypeId'
+                ? {
+                    dir: eventsSort.orderDir,
+                  }
+                : {}),
+              onClick: handleEventsSortChange({
+                orderByField: 'jobTypeId',
+                orderBy: 'job_type_id',
+                orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+              }),
+            },
+            {
+              name: 'Subtype',
+              ...(eventsSort.orderByField === 'jobSubtypeId'
+                ? {
+                    dir: eventsSort.orderDir,
+                  }
+                : {}),
+              onClick: handleEventsSortChange({
+                orderByField: 'jobSubtypeId',
+                orderBy: 'job_subtype_id',
+                orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+              }),
+            },
+          ]
+        : [
+            {
+              name: 'Date Started',
+              ...(eventsSort.orderByField === 'dateStarted'
+                ? {
+                    dir: eventsSort.orderDir,
+                  }
+                : {}),
+              onClick: handleEventsSortChange({
+                orderByField: 'dateStarted',
+                orderBy: 'date_started',
+                orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+              }),
+            },
+            { name: 'Customer Name - Business Name' },
+            { name: 'Address City Zip Phone' },
+            {
+              name: 'Job #',
+              ...(eventsSort.orderByField === 'logJobNumber'
+                ? {
+                    dir: eventsSort.orderDir,
+                  }
+                : {}),
+              onClick: handleEventsSortChange({
+                orderByField: 'logJobNumber',
+                orderBy: 'log_jobNumber',
+                orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+              }),
+            },
+            {
+              name: 'Job Type / Subtype',
+              ...(eventsSort.orderByField === 'jobTypeId'
+                ? {
+                    dir: eventsSort.orderDir,
+                  }
+                : {}),
+              onClick: handleEventsSortChange({
+                orderByField: 'jobTypeId',
+                orderBy: 'job_type_id',
+                orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+              }),
+            },
+            {
+              name: 'Job Status',
+              ...(eventsSort.orderByField === 'logJobStatus'
+                ? {
+                    dir: eventsSort.orderDir,
+                  }
+                : {}),
+              onClick: handleEventsSortChange({
+                orderByField: 'logJobStatus',
+                orderBy: 'log_jobStatus',
+                orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+              }),
+            },
+          ];
     if (kind === 'customers')
       return [
         {
@@ -719,7 +789,7 @@ export const AdvancedSearch: FC<Props> = ({
     const { kind } = filter;
     if (kind === 'serviceCalls')
       return loading || loadingDicts
-        ? makeFakeRows(6, 3)
+        ? makeFakeRows(accounting ? 10 : 6, 3)
         : events.map(entry => {
             const {
               dateStarted,
@@ -733,12 +803,28 @@ export const AdvancedSearch: FC<Props> = ({
             return customer
               ? [
                   { value: formatDate(dateStarted) },
-                  { value: getCustomerNameAndBusinessName(customer) },
-                  { value: getPropertyAddress(property) },
-                  { value: logJobNumber },
-                  { value: `${jobType} / ${jobSubtype}` },
                   {
-                    value: logJobStatus,
+                    value: accounting
+                      ? getCustomerName(customer)
+                      : getCustomerNameAndBusinessName(customer),
+                  },
+                  ...(accounting ? [{ value: getBusinessName(customer) }] : []),
+                  {
+                    value: accounting
+                      ? property?.address || ''
+                      : `${getPropertyAddress(property)} ${getCustomerPhone(
+                          customer,
+                        )}`,
+                  },
+                  ...(accounting ? [{ value: property?.city || '' }] : []),
+                  ...(accounting ? [{ value: property?.zip || '' }] : []),
+                  ...(accounting ? [{ value: property?.phone || '' }] : []),
+                  { value: logJobNumber },
+                  {
+                    value: accounting ? jobType : `${jobType} / ${jobSubtype}`,
+                  },
+                  {
+                    value: accounting ? jobSubtype : logJobStatus,
                     actions: [
                       <IconButton
                         key="edit"
@@ -857,7 +943,7 @@ export const AdvancedSearch: FC<Props> = ({
             ];
           });
     return [];
-  }, [filter, loading, events, loadingDicts]);
+  }, [filter, loading, events, loadingDicts, accounting]);
   return (
     <div>
       <SectionBar
@@ -869,6 +955,16 @@ export const AdvancedSearch: FC<Props> = ({
           onChangePage: handleChangePage,
         }}
         loading={loading || loadingDicts}
+        actions={[
+          ...(eventsWithAccounting
+            ? [
+                {
+                  label: accounting ? ACCOUNTING : SERVICE,
+                  onClick: handleAccountingToggle,
+                },
+              ]
+            : []),
+        ]}
       />
       <PlainForm
         key={formKey}
