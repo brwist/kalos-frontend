@@ -21,8 +21,9 @@ rules:
   indent:
     - error
     - 2
-    - ignoredNodes: JSXElement
-    - SwitchCase
+    - ignoredNodes:
+        - JSXElement
+        - SwitchCase
   linebreak-style:
     - error
     - unix

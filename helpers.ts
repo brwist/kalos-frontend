@@ -171,7 +171,7 @@ async function getSlackID(
   if (count != 4) {
     try {
       let slackUsers = await getSlackList(skipCache);
-      let user = slackUsers.find(s => {
+      let user = slackUsers.find((s) => {
         if (s.real_name === userName) {
           return true;
         }
@@ -788,7 +788,7 @@ async function loadUserById(id: number) {
  */
 async function loadUsersByIds(ids: number[]) {
   const uniqueIds: number[] = [];
-  ids.forEach(id => {
+  ids.forEach((id) => {
     if (id > 0 && !uniqueIds.includes(id)) {
       uniqueIds.push(id);
     }
@@ -821,7 +821,7 @@ async function loadMetricByUserId(userId: number, metricType: MetricType) {
  */
 async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
   return await Promise.all(
-    userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
+    userIds.map(async (userId) => await loadMetricByUserId(userId, metricType)),
   );
 }
 
@@ -948,7 +948,7 @@ export const loadUsersByFilter = async ({
   return {
     results: response
       .getResultsList()
-      .map(item => item.toObject())
+      .map((item) => item.toObject())
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
@@ -1006,7 +1006,7 @@ export const loadPropertiesByFilter = async ({
   return {
     results: response
       .getResultsList()
-      .map(item => item.toObject())
+      .map((item) => item.toObject())
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
@@ -1126,7 +1126,7 @@ export const loadEventsByFilter = async ({
   return {
     results: response
       .getResultsList()
-      .map(item => item.toObject())
+      .map((item) => item.toObject())
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
@@ -1167,11 +1167,11 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
  */
 async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
   const refNumbers = uniq(
-    referenceNumbers.map(el => (el || '').trim()).filter(el => el !== ''),
+    referenceNumbers.map((el) => (el || '').trim()).filter((el) => el !== ''),
   );
   return (
     await Promise.all(
-      refNumbers.map(async referenceNumber => ({
+      refNumbers.map(async (referenceNumber) => ({
         referenceNumber,
         data: await loadEventByJobOrContractNumber(referenceNumber),
       })),
@@ -1231,7 +1231,7 @@ async function uploadFileToS3Bucket(
 }
 
 export const makeOptions = (options: string[]): Option[] =>
-  options.map(label => ({ label, value: label }));
+  options.map((label) => ({ label, value: label }));
 
 export const getCustomerName = (c?: UserType): string =>
   c ? `${c.firstname} ${c.lastname}`.trim() : '';
@@ -1350,6 +1350,26 @@ async function newBugReport(data: IBugReport) {
   }
 }
 
+/**
+ * Checks URL for http, and redirects to https appropriately
+ */
+function forceHTTPS() {
+  if (window.location.href.includes('http://')) {
+    window.location.href = window.location.href.replace('http://', 'https://');
+  }
+}
+
+/**
+ * A redundant hardening feature that redirects non-employees from admin views
+ * @param user
+ */
+function customerCheck(user: User.AsObject) {
+  if (window.location.href.includes('admin') && user.isEmployee === 0) {
+    window.location.href =
+      'https://app.kalosflorida.com/index.cfm?action=customer:account.dashboard';
+  }
+}
+
 export {
   cfURL,
   BASE_URL,
@@ -1396,4 +1416,6 @@ export {
   escapeText,
   uploadFileToS3Bucket,
   newBugReport,
+  forceHTTPS,
+  customerCheck,
 };
