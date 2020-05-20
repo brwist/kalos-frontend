@@ -1,496 +1,208 @@
-import React from 'react';
+import React, { useEffect, useReducer } from 'react';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
-import Divider from '@material-ui/core/Divider';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import PerDiemIcon from '@material-ui/icons/MonetizationOn';
 import Hidden from '@material-ui/core/Hidden';
 import IconButton from '@material-ui/core/IconButton';
-import HomeSharp from '@material-ui/icons/HomeSharp';
-import MoneySharp from '@material-ui/icons/MoneySharp';
-import AttachMoneySharp from '@material-ui/icons/AttachMoneySharp';
-import SearchSharp from '@material-ui/icons/SearchSharp';
-import MenuBookIcon from '@material-ui/icons/MenuBookSharp';
-import CalendarTodaySharp from '@material-ui/icons/CalendarTodaySharp';
-import PersonSharp from '@material-ui/icons/PersonSharp';
-import PictureAsPdfSharpIcon from '@material-ui/icons/PictureAsPdfSharp';
-import ReceiptIcon from '@material-ui/icons/ReceiptSharp';
 import MenuSharp from '@material-ui/icons/MenuSharp';
-import EventSharp from '@material-ui/icons/EventSharp';
-import LocationOnIcon from '@material-ui/icons/LocationOnSharp';
-import AccessTimeIcon from '@material-ui/icons/AccessTime';
-import AccountCircleIcon from '@material-ui/icons/AccountCircleSharp';
-import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
-import RoomServiceIcon from '@material-ui/icons/RoomServiceSharp';
-import BarChartSharp from '@material-ui/icons/BarChartSharp';
-import { cfURL } from '../../helpers';
+import { loadUserById } from '../../helpers';
 import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
+import KalosMenuItem from './components/KalosMenuItem';
+import ReportBugForm from './components/ReportBugForm';
+import { employeeItems, adminItems, managerItems, commonItems } from './constants';
 
-interface props {
-  userID: number;
-  imgURL: string;
-}
+const userClient = new UserClient(ENDPOINT);
+const deptClient = new TimesheetDepartmentClient(ENDPOINT);
 
-interface state {
-  isManager: boolean;
-  isOpen: boolean;
-  user: User.AsObject;
-}
+type Props = {
+  userId: number,
+  imgURL: string,
+};
 
-export class SideMenu extends React.PureComponent<props, state> {
-  DeptClient: TimesheetDepartmentClient;
-  UserClient: UserClient;
-  constructor(props: props) {
-    super(props);
-    this.state = {
-      isManager: false,
-      user: new User().toObject(),
-      isOpen: false,
-    };
-    this.UserClient = new UserClient(ENDPOINT);
-    this.DeptClient = new TimesheetDepartmentClient(ENDPOINT);
+type State = {
+  isManager: boolean,
+  isOpen: boolean,
+  user: User.AsObject,
+  reportBugFormShown: boolean,
+};
 
-    this.toggleMenu = this.toggleMenu.bind(this);
-    this.getIdentity = this.getIdentity.bind(this);
-    this.userManagerCheck = this.userManagerCheck.bind(this);
+type Action =
+  | { type: 'toggleMenu' }
+  | { type: 'fetchedUser', user: User.AsObject, isManager: boolean }
+  | { type: 'showReportBugForm' }
+  | { type: 'hideReportBugForm' };
+
+const reducer = (state: State, action: Action) => {
+  switch (action.type) {
+    case 'toggleMenu':
+      return {
+        ...state,
+        isOpen: !state.isOpen,
+      };
+    case 'fetchedUser':
+      return {
+        ...state,
+        user: action.user,
+        isManager: action.isManager,
+      };
+    case 'showReportBugForm':
+      return {
+        ...state,
+        reportBugFormShown: true,
+      };
+    case 'hideReportBugForm':
+      return {
+        ...state,
+        reportBugFormShown: false,
+      };
+    default:
+      return state;
   }
+};
+const SideMenu = ({ userId, imgURL}: Props) => {
+  const [state, dispatch] = useReducer(reducer, {
+    user: new User().toObject(),
+    isManager: false,
+    isOpen: false,
+    reportBugFormShown: false,
+  });
+  const { user, isManager, isOpen, reportBugFormShown } = state;
 
-  toggleMenu() {
-    this.setState(prevState => ({
-      isOpen: !prevState.isOpen,
-    }));
-  }
+  const toggleMenu = () => {
+    dispatch({ type: 'toggleMenu' });
+  };
 
-  async getIdentity() {
-    try {
-      const req = new User();
-      req.setId(this.props.userID);
-      const user = await this.UserClient.Get(req);
-      this.setState({ user }, this.userManagerCheck);
-    } catch (err) {
-      console.log(err);
-    }
-  }
+  const handleReportBugClicked = () => {
+    dispatch({ type: 'showReportBugForm'});
+  };
 
-  async userManagerCheck() {
-    try {
-      if (this.state.user.isSu) {
-        this.setState({
-          isManager: true,
-        });
+  const handleCloseReportBugForm = () => {
+    dispatch({ type: 'hideReportBugForm'});
+  };
+
+  useEffect(() => {
+    (async () => {
+      const href = window.location.href;
+      /*
+      if (href.includes('http://')) {
+        window.location.href = window.location.href.replace(
+          'http://',
+          'https://',
+        );
       } else {
-        const dpt = new TimesheetDepartment();
-        dpt.setManagerId(this.props.userID);
-        const res = await this.DeptClient.Get(dpt);
-        if (res.id !== 0) {
-          this.setState({
-            isManager: true,
-          });
+      */
+        userClient.GetToken('test', 'test');
+        const userResult = await loadUserById(userId);
+        //if (href.includes('admin') && user.isEmployee === 0) {
+        //  window.location.href =
+        //    'https://app.kalosflorida.com/index.cfm?action=customer:account.dashboard';
+        //}
+        if (userResult.isSu) {
+          dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
+        } else {
+          const dpt = new TimesheetDepartment();
+          dpt.setManagerId(userId);
+          const deptResult = await deptClient.Get(dpt);
+          if (deptResult.id !== 0) {
+            dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
+          } else {
+            dispatch({ type: 'fetchedUser', user: userResult, isManager: false });
+          }
         }
-      }
-    } catch (err) {
-      console.log(err);
-    }
+      // }
+    })();
+  }, []);
+
+  if (!user?.id) {
+    return null;
   }
 
-  async componentDidMount() {
-    const href = window.location.href;
-    if (href.includes('http://')) {
-      window.location.href = window.location.href.replace(
-        'http://',
-        'https://',
-      );
-    } else {
-      await this.UserClient.GetToken('test', 'test');
-      await this.getIdentity();
-      console.log(this.state.user);
-      //if (href.includes('admin') && this.state.user.isEmployee === 0) {
-      //  window.location.href =
-      //    'https://app.kalosflorida.com/index.cfm?action=customer:account.dashboard';
-      //}
-    }
-  }
+  return (
+    <ThemeProvider theme={customTheme.lightTheme}>
+      <Hidden mdDown>
+        <Button onClick={toggleMenu} style={{ margin: '10px' }}>
+          <img
+            src={imgURL}
+            alt="no img"
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
+        </Button>
+      </Hidden>
+      <Hidden lgUp>
+        <IconButton
+          onClick={toggleMenu}
+          style={{ color: 'white', margin: '10px' }}
+        >
+          <MenuSharp />
+        </IconButton>
+      </Hidden>
+      {user.isEmployee && (
+        <Drawer
+          open={isOpen}
+          onClose={toggleMenu}
+          style={{ width: 250, padding: 10 }}
+        >
+          <List style={{ width: 250 }}>
+            {employeeItems.map(item => (
+              <KalosMenuItem
+                item={item}
+                userId={userId}
+              />
+            ))}
+            {user.isAdmin && (
+              <>
+                {adminItems.map(item => (
+                  <KalosMenuItem
+                    item={item}
+                    userId={userId}
+                  />
+                ))}
+              </>
+            )}
+            {isManager && (
+              <>
+                {managerItems.map(item => (
+                  <KalosMenuItem
+                    item={item}
+                    userId={userId}
+                  />
+                ))}
+              </>
+            )}
+            {commonItems.map(item => {
+              if (item.title === 'Report a Bug') {
+                return (
+                  <KalosMenuItem
+                    item={item}
+                    userId={userId}
+                    onClick={handleReportBugClicked}
+                  />
+                );
+              } else {
+                return (
+                  <KalosMenuItem
+                    item={item}
+                    userId={userId}
+                  />
+                );
+              }
+            }
+            )}
+          </List>
+        </Drawer>
+      )}
+      {reportBugFormShown && (
+        <ReportBugForm onClose={handleCloseReportBugForm} />
+      )}
+    </ThemeProvider>
+  );
+};
 
-  render() {
-    const spiffLog = cfURL(
-      'tasks.spiff_tool_logs',
-      `&rt=all&type=spiff&reportUserId=${this.props.userID}`,
-    );
-    const toolLog = cfURL(
-      'tasks.spiff_tool_logs',
-      `&rt=all&type=tool&reportUserId=${this.props.userID}`,
-    );
-    const timesheet = cfURL(
-      'timesheet.timesheetview',
-      `&user_id=${this.props.userID}&timesheetAction=cardview`,
-    );
-    const employees = cfURL('user.employee');
-    const search = cfURL('search.index');
-    const calendar = cfURL('service.calendar');
-    const reports = cfURL('reports');
-    const documents = cfURL('document');
-    const serviceCalls = cfURL('service.calls');
-    const dispatch = cfURL('dispatch.newdash');
-    const productivity = cfURL('service.newmetrics');
-    const serviceBilling = cfURL('service.callsPending');
-    const profile = cfURL('account.editinformation');
-    const txnAdmin = cfURL('reports.transaction_admin');
-    const txnUser = cfURL('reports.transactions');
-    return (
-      <ThemeProvider theme={customTheme.lightTheme}>
-        <Hidden mdDown>
-          <Button onClick={this.toggleMenu} style={{ margin: '10px' }}>
-            <img
-              src={this.props.imgURL}
-              alt="no img"
-              style={{ maxWidth: '100%', height: 'auto' }}
-            />
-          </Button>
-        </Hidden>
-        <Hidden lgUp>
-          <IconButton
-            onClick={this.toggleMenu}
-            style={{ color: 'white', margin: '10px' }}
-          >
-            <MenuSharp />
-          </IconButton>
-        </Hidden>
-        {this.state.user.isEmployee === 1 && (
-          <Drawer
-            open={this.state.isOpen}
-            onClose={this.toggleMenu}
-            style={{ width: 250, padding: 10 }}
-          >
-            <List style={{ width: 250 }}>
-              <ListItem
-                button
-                href="https://app.kalosflorida.com/index.cfm"
-                component="a"
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <HomeSharp />
-                </ListItemIcon>
-                <ListItemText primary="Dashboard" />
-              </ListItem>
-              <ListItem
-                href={calendar}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <CalendarTodaySharp />
-                </ListItemIcon>
-                <ListItemText primary="Service Calendar" />
-              </ListItem>
-              <ListItem
-                href={serviceCalls}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <EventSharp />
-                </ListItemIcon>
-                <ListItemText primary="Service Call Search" />
-              </ListItem>
-              <ListItem
-                href={spiffLog}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <MoneySharp />
-                </ListItemIcon>
-                <ListItemText primary="Spiff Log" />
-              </ListItem>
-              <ListItem
-                href={toolLog}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <AttachMoneySharp />
-                </ListItemIcon>
-                <ListItemText primary="Tool Log" />
-              </ListItem>
-              <ListItem
-                href="https://www.kalosflorida.com/OT"
-                component="a"
-                target="_blank"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <PerDiemIcon />
-                </ListItemIcon>
-                <ListItemText primary="Per Diem" />
-              </ListItem>
-              <ListItem
-                href={timesheet}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <AccessTimeIcon />
-                </ListItemIcon>
-                <ListItemText primary="Timesheet" />
-              </ListItem>
-              <ListItem
-                href={txnUser}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <ReceiptIcon />
-                </ListItemIcon>
-                <ListItemText primary="Receipts" />
-              </ListItem>
-              <Divider />
-              <ListItem
-                href={employees}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <PersonSharp />
-                </ListItemIcon>
-                <ListItemText primary="Employee Directory" />
-              </ListItem>
-              <ListItem
-                href={search}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <SearchSharp />
-                </ListItemIcon>
-                <ListItemText primary="Customer Directory" />
-              </ListItem>
-              {this.state.user.isAdmin === 1 && (
-                <>
-                  <ListItem
-                    href={reports}
-                    component="a"
-                    button
-                    style={{
-                      minHeight: 44,
-                      paddingRight: 16,
-                      paddingLeft: 16,
-                      paddingTop: 8,
-                      paddingBottom: 8,
-                    }}
-                  >
-                    <ListItemIcon>
-                      <MenuBookIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Reports" />
-                  </ListItem>
-                  <ListItem
-                    href={dispatch}
-                    component="a"
-                    button
-                    style={{
-                      minHeight: 44,
-                      paddingRight: 16,
-                      paddingLeft: 16,
-                      paddingTop: 8,
-                      paddingBottom: 8,
-                    }}
-                  >
-                    <ListItemIcon>
-                      <LocationOnIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Dispatch" />
-                  </ListItem>
-                  <ListItem
-                    href={documents}
-                    component="a"
-                    button
-                    style={{
-                      minHeight: 44,
-                      paddingRight: 16,
-                      paddingLeft: 16,
-                      paddingTop: 8,
-                      paddingBottom: 8,
-                    }}
-                  >
-                    <ListItemIcon>
-                      <PictureAsPdfSharpIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Kalos Documents" />
-                  </ListItem>
-                  <ListItem
-                    href={productivity}
-                    component="a"
-                    button
-                    style={{
-                      minHeight: 44,
-                      paddingRight: 16,
-                      paddingLeft: 16,
-                      paddingTop: 8,
-                      paddingBottom: 8,
-                    }}
-                  >
-                    <ListItemIcon>
-                      <BarChartSharp />
-                    </ListItemIcon>
-                    <ListItemText primary="Productivity / Metrics" />
-                  </ListItem>
-                  <ListItem
-                    href={serviceBilling}
-                    component="a"
-                    button
-                    style={{
-                      minHeight: 44,
-                      paddingRight: 16,
-                      paddingLeft: 16,
-                      paddingTop: 8,
-                      paddingBottom: 8,
-                    }}
-                  >
-                    <ListItemIcon>
-                      <RoomServiceIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Service Billing" />
-                  </ListItem>
-                </>
-              )}
-              {this.state.isManager && (
-                <ListItem
-                  href={txnAdmin}
-                  component="a"
-                  button
-                  style={{
-                    minHeight: 44,
-                    paddingRight: 16,
-                    paddingLeft: 16,
-                    paddingTop: 8,
-                    paddingBottom: 8,
-                  }}
-                >
-                  <ListItemIcon>
-                    <ReceiptIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Receipt Review" />
-                </ListItem>
-              )}
-              <Divider />
-              <ListItem
-                href={profile}
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <AccountCircleIcon />
-                </ListItemIcon>
-                <ListItemText primary="Account Info" />
-              </ListItem>
-              <ListItem
-                href="https://app.kalosflorida.com/index.cfm?action=account.logout"
-                component="a"
-                button
-                style={{
-                  minHeight: 44,
-                  paddingRight: 16,
-                  paddingLeft: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                }}
-              >
-                <ListItemIcon>
-                  <ExitToAppIcon />
-                </ListItemIcon>
-                <ListItemText primary="Logout" />
-              </ListItem>
-            </List>
-          </Drawer>
-        )}
-      </ThemeProvider>
-    );
-  }
-}
+export default SideMenu;
