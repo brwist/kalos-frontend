@@ -1351,8 +1351,6 @@ export const saveDocumentKey = async (data: DocumentKeyType, id?: number) => {
   if (id) {
     req.setId(id);
   } else {
-    req.setIsActive(true);
-    req.setDateCreated(timestamp());
     fieldMaskList.push('DateCreated');
   }
   for (const fieldName in data) {
