@@ -19,6 +19,7 @@ import {
   formatDateTime,
   formatDateTimeDay,
   getRPCFields,
+  UserType,
 } from '../../../../helpers';
 import {
   ENDPOINT,
@@ -28,7 +29,7 @@ import {
   PAYMENT_NOT_COLLECTED_LIST,
   OPTION_BLANK,
 } from '../../../../constants';
-import { UserType, ServicesRenderedType } from '../';
+import { ServicesRenderedType } from '../';
 
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
