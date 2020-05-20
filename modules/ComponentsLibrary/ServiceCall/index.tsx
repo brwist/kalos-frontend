@@ -47,6 +47,7 @@ export interface Props {
   serviceCallId?: number;
   loggedUserId: number;
   onClose?: () => void;
+  onSave?: () => void;
 }
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
@@ -67,6 +68,7 @@ export const ServiceCall: FC<Props> = props => {
     serviceCallId: eventId,
     loggedUserId,
     onClose,
+    onSave,
   } = props;
   const requestRef = useRef(null);
   const [requestFields, setRequestfields] = useState<string[]>([]);
@@ -195,7 +197,18 @@ export const ServiceCall: FC<Props> = props => {
       await loadEntry(res.id);
       await loadServicesRenderedData(res.id);
     }
-  }, [entry, serviceCallId, setEntry, setSaving, setLoading, requestFields]);
+    if (onSave) {
+      onSave();
+    }
+  }, [
+    entry,
+    serviceCallId,
+    setEntry,
+    setSaving,
+    setLoading,
+    requestFields,
+    onSave,
+  ]);
 
   useEffect(() => {
     if (!loaded) {
