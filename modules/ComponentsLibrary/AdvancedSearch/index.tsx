@@ -810,6 +810,10 @@ export const AdvancedSearch: FC<Props> = ({
               jobSubtype,
               logJobStatus,
             } = entry;
+            const canceledStyle =
+              !accounting && logJobStatus === 'Canceled'
+                ? { color: 'red' }
+                : {};
             return customer
               ? [
                   { value: formatDate(dateStarted) },
@@ -829,12 +833,26 @@ export const AdvancedSearch: FC<Props> = ({
                   ...(accounting ? [{ value: property?.city || '' }] : []),
                   ...(accounting ? [{ value: property?.zip || '' }] : []),
                   ...(accounting ? [{ value: property?.phone || '' }] : []),
-                  { value: logJobNumber },
                   {
-                    value: accounting ? jobType : `${jobType} / ${jobSubtype}`,
+                    value: (
+                      <span style={canceledStyle}>
+                        {accounting ? logJobNumber.substr(0, 8) : logJobNumber}
+                      </span>
+                    ),
                   },
                   {
-                    value: accounting ? jobSubtype : logJobStatus,
+                    value: (
+                      <span style={canceledStyle}>
+                        {accounting ? jobType : `${jobType} / ${jobSubtype}`}
+                      </span>
+                    ),
+                  },
+                  {
+                    value: (
+                      <span style={canceledStyle}>
+                        {accounting ? jobSubtype : logJobStatus}
+                      </span>
+                    ),
                     actions: [
                       <IconButton
                         key="edit"
@@ -843,7 +861,6 @@ export const AdvancedSearch: FC<Props> = ({
                       >
                         <EditIcon />
                       </IconButton>,
-                      ,
                       ...(deletableEvents
                         ? [
                             <IconButton
@@ -969,7 +986,7 @@ export const AdvancedSearch: FC<Props> = ({
           ...(eventsWithAccounting
             ? [
                 {
-                  label: accounting ? ACCOUNTING : SERVICE,
+                  label: accounting ? SERVICE : ACCOUNTING,
                   onClick: handleAccountingToggle,
                 },
               ]
