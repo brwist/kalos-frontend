@@ -1,6 +1,8 @@
 import React from 'react';
 import { AddNewButton } from './';
-import { Facebook, Twitter, LinkedIn } from '@material-ui/icons';
+import Facebook from '@material-ui/icons/Facebook';
+import Twitter from '@material-ui/icons/Twitter';
+import LinkedIn from '@material-ui/icons/LinkedIn';
 
 const addNewOptions = [
   { icon: <Facebook />, name: 'Facebook', url: 'https://facebook.com' },
