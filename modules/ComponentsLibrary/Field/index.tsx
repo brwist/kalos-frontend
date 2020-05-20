@@ -35,6 +35,7 @@ import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { makeFakeRows, loadTechnicians, trailingZero } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../../Pickers/';
+import './styles.css';
 
 type SelectOption = {
   id: number;
@@ -64,7 +65,8 @@ export type Type =
   | 'file'
   | 'department'
   | 'classCode'
-  | 'hidden';
+  | 'hidden'
+  | 'color';
 
 export type Value = string | number;
 

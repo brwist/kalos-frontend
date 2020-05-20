@@ -17,6 +17,7 @@ export type Model = {
   technician: string;
   signature: string;
   coverImage: string;
+  color: string;
 };
 
 export const model: Model = {
@@ -34,6 +35,7 @@ amet`,
   technician: '',
   signature: '',
   coverImage: '',
+  color: '#9473f1',
 };
 
 export const SCHEMA_1: Schema<Model> = [
@@ -164,6 +166,11 @@ export const SCHEMA_2: Schema<Model> = [
       name: 'signature',
       label: 'Signature',
       type: 'signature',
+    },
+    {
+      name: 'color',
+      label: 'Color',
+      type: 'color',
     },
   ],
 ];

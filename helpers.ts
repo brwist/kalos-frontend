@@ -38,7 +38,12 @@ import {
   UserGroupLink,
   UserGroupLinkClient,
 } from '@kalos-core/kalos-rpc/UserGroupLink';
-import { ENDPOINT, MONTHS, OPTION_ALL } from './constants';
+import {
+  InternalDocument,
+  InternalDocumentClient,
+} from '@kalos-core/kalos-rpc/InternalDocument';
+import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
+import { ENDPOINT, MONTHS } from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
 
 export type UserType = User.AsObject;
@@ -48,6 +53,8 @@ export type UserGroupLinkType = UserGroupLink.AsObject;
 export type EventType = Event.AsObject;
 export type JobTypeType = JobType.AsObject;
 export type JobSubtypeType = JobSubtype.AsObject;
+export type InternalDocumentType = InternalDocument.AsObject;
+export type DocumentKeyType = DocumentKey.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -71,6 +78,9 @@ export const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
 );
 export const GroupClientService = new GroupClient(ENDPOINT);
 export const UserGroupLinkClientService = new UserGroupLinkClient(ENDPOINT);
+export const InternalDocumentClientService = new InternalDocumentClient(
+  ENDPOINT,
+);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -171,7 +181,7 @@ async function getSlackID(
   if (count != 4) {
     try {
       let slackUsers = await getSlackList(skipCache);
-      let user = slackUsers.find((s) => {
+      let user = slackUsers.find(s => {
         if (s.real_name === userName) {
           return true;
         }
@@ -788,7 +798,7 @@ async function loadUserById(id: number) {
  */
 async function loadUsersByIds(ids: number[]) {
   const uniqueIds: number[] = [];
-  ids.forEach((id) => {
+  ids.forEach(id => {
     if (id > 0 && !uniqueIds.includes(id)) {
       uniqueIds.push(id);
     }
@@ -821,7 +831,7 @@ async function loadMetricByUserId(userId: number, metricType: MetricType) {
  */
 async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
   return await Promise.all(
-    userIds.map(async (userId) => await loadMetricByUserId(userId, metricType)),
+    userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
   );
 }
 
@@ -948,7 +958,7 @@ export const loadUsersByFilter = async ({
   return {
     results: response
       .getResultsList()
-      .map((item) => item.toObject())
+      .map(item => item.toObject())
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
@@ -1006,7 +1016,7 @@ export const loadPropertiesByFilter = async ({
   return {
     results: response
       .getResultsList()
-      .map((item) => item.toObject())
+      .map(item => item.toObject())
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
@@ -1126,7 +1136,7 @@ export const loadEventsByFilter = async ({
   return {
     results: response
       .getResultsList()
-      .map((item) => item.toObject())
+      .map(item => item.toObject())
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
@@ -1167,11 +1177,11 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
  */
 async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
   const refNumbers = uniq(
-    referenceNumbers.map((el) => (el || '').trim()).filter((el) => el !== ''),
+    referenceNumbers.map(el => (el || '').trim()).filter(el => el !== ''),
   );
   return (
     await Promise.all(
-      refNumbers.map(async (referenceNumber) => ({
+      refNumbers.map(async referenceNumber => ({
         referenceNumber,
         data: await loadEventByJobOrContractNumber(referenceNumber),
       })),
@@ -1231,7 +1241,7 @@ async function uploadFileToS3Bucket(
 }
 
 export const makeOptions = (options: string[]): Option[] =>
-  options.map((label) => ({ label, value: label }));
+  options.map(label => ({ label, value: label }));
 
 export const getCustomerName = (c?: UserType): string =>
   c ? `${c.firstname} ${c.lastname}`.trim() : '';
@@ -1319,6 +1329,46 @@ export const deletePropertyById = async (id: number) => {
   const req = new Property();
   req.setId(id);
   await PropertyClientService.Delete(req);
+};
+
+export const loadInternalDocuments = async () => {
+  const req = new InternalDocument();
+  return (await InternalDocumentClientService.BatchGet(req)).toObject();
+};
+
+export const loadDocumentKeys = async () => {
+  const req = new DocumentKey();
+  req.setIsActive(true);
+  const { dataList } = (
+    await InternalDocumentClientService.GetDocumentKeys(req)
+  ).toObject();
+  return dataList;
+};
+
+export const saveDocumentKey = async (data: DocumentKeyType, id?: number) => {
+  const req = new DocumentKey();
+  const fieldMaskList = [];
+  if (id) {
+    req.setId(id);
+  } else {
+    req.setIsActive(true);
+    req.setDateCreated(timestamp());
+    fieldMaskList.push('DateCreated');
+  }
+  for (const fieldName in data) {
+    const { methodName, upperCaseProp } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  await InternalDocumentClientService.WriteDocumentKey(req);
+};
+
+export const deleteDocumentKey = async (id: number) => {
+  const req = new DocumentKey();
+  req.setId(id);
+  await InternalDocumentClientService.DeleteDocumentKey(req);
 };
 
 interface IBugReport {

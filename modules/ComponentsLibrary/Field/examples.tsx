@@ -93,6 +93,7 @@ export default () => (
       defaultValue="2020-03-02 00:00:00"
       type="date"
     />
+    <EnhancedField label="Color Field" type="color" defaultValue="#19a629" />
     <EnhancedField
       label="File Field"
       type="file"
