@@ -18,6 +18,7 @@ import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import Documents from './Documents/examples';
 import Field from './Field/examples';
+import FileTags from './FileTags/examples';
 import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
 import Link from './Link/examples';
@@ -50,6 +51,7 @@ const COMPONENTS = {
   CustomerInformation,
   Documents,
   Field,
+  FileTags,
   Form,
   InfoTable,
   Link,
