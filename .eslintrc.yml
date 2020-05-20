@@ -18,18 +18,11 @@ plugins:
   - react
   - '@typescript-eslint'
 rules:
-  indent:
-    - error
-    - 2
-    - ignoredNodes:
-        - JSXElement
-        - SwitchCase
+  indent: off
   linebreak-style:
     - error
     - unix
-  quotes:
-    - error
-    - single
-  semi:
-    - error
-    - always
+  quotes: off
+  semi: off
+  no-unused-vars: off
+  react/prop-types: off
