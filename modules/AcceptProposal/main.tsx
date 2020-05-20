@@ -110,7 +110,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       .replace(/-\w{11}-/g, "'")
       .replace(/-percent-/g, '%')
       .replace(/-and-/g, '&');
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       quoteLines: prevState.quoteLines.concat(ql),
     }));
   }
@@ -148,10 +148,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const val = parseInt(e.currentTarget.value);
-    this.setState(prevState => {
+    this.setState((prevState) => {
       if (prevState.selected.includes(val)) {
         return {
-          selected: prevState.selected.filter(v => v !== val),
+          selected: prevState.selected.filter((v) => v !== val),
         };
       } else
         return {
@@ -161,7 +161,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   }
 
   getTotal() {
-    const qls = this.state.quoteLines.filter(ql =>
+    const qls = this.state.quoteLines.filter((ql) =>
       this.state.selected.includes(ql.id),
     );
     return qls.reduce((acc: number, curr: QuoteLine.AsObject) => {
@@ -170,9 +170,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   }
 
   toggleLoading() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.setState(
-        prevState => ({
+        (prevState) => ({
           isLoading: !prevState.isLoading,
         }),
         resolve,
@@ -181,7 +181,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   }
 
   toggleModal() {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       isOpen: !prevState.isOpen,
     }));
   }
@@ -250,7 +250,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const blob = await ReactPDF.pdf(
       <ApprovedProposal
         sigURL={this.state.sigURL}
-        quoteLines={this.state.quoteLines.filter(ql =>
+        quoteLines={this.state.quoteLines.filter((ql) =>
           this.state.selected.includes(ql.id),
         )}
         jobNumber={this.props.jobNumber}
@@ -282,7 +282,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const fd = await ReactPDF.pdf(
       <ApprovedProposal
         sigURL={this.state.sigURL}
-        quoteLines={this.state.quoteLines.filter(ql =>
+        quoteLines={this.state.quoteLines.filter((ql) =>
           this.state.selected.includes(ql.id),
         )}
         jobNumber={this.props.jobNumber}
@@ -425,9 +425,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
           </Typography>
           <Typography variant="body1" component="span">
             Address:{' '}
-            {`${this.state.property.address}, ${
-              this.state.property.city
-            }, ${this.state.property.state || 'FL'}`}
+            {`${this.state.property.address}, ${this.state.property.city}, ${
+              this.state.property.state || 'FL'
+            }`}
           </Typography>
           {this.state.notes.length > 0 && (
             <Typography variant="body1" component="span">
@@ -457,7 +457,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {this.state.quoteLines.map(ql => (
+                {this.state.quoteLines.map((ql) => (
                   <QuoteLineRow
                     ql={ql}
                     key={`quote_line_row_${ql.id}`}
@@ -581,8 +581,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                   </TableHead>
                   <TableBody>
                     {this.state.quoteLines
-                      .filter(ql => this.state.selected.includes(ql.id))
-                      .map(ql => (
+                      .filter((ql) => this.state.selected.includes(ql.id))
+                      .map((ql) => (
                         <TableRow key={`quote_line_confirm_${ql.id}`}>
                           <TableCell>{ql.description}</TableCell>
                           <TableCell>${ql.adjustment}</TableCell>
