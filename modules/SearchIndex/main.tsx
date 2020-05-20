@@ -1,10 +1,20 @@
 import React, { FC } from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
-import { Search, Props } from './components/Search';
+import { AdvancedSearch } from '../ComponentsLibrary/AdvancedSearch';
 
-export const SearchIndex: FC<Props> = props => (
+interface Props {
+  loggedUserId: number;
+}
+
+export const SearchIndex: FC<Props> = ({ loggedUserId }) => (
   <ThemeProvider theme={customTheme.lightTheme}>
-    <Search {...props} />
+    <AdvancedSearch
+      loggedUserId={loggedUserId}
+      title="Search"
+      kinds={['serviceCalls', 'customers', 'properties']}
+      editableCustomers
+      editableProperties
+    />
   </ThemeProvider>
 );
