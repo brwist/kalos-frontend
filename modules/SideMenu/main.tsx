@@ -6,7 +6,7 @@ import List from '@material-ui/core/List';
 import Hidden from '@material-ui/core/Hidden';
 import IconButton from '@material-ui/core/IconButton';
 import MenuSharp from '@material-ui/icons/MenuSharp';
-import { loadUserById } from '../../helpers';
+import { loadUserById, forceHTTPS, customerCheck } from '../../helpers';
 import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
@@ -16,26 +16,31 @@ import { ENDPOINT } from '../../constants';
 import customTheme from '../Theme/main';
 import KalosMenuItem from './components/KalosMenuItem';
 import ReportBugForm from './components/ReportBugForm';
-import { employeeItems, adminItems, managerItems, commonItems } from './constants';
+import {
+  employeeItems,
+  adminItems,
+  managerItems,
+  commonItems,
+} from './constants';
 
 const userClient = new UserClient(ENDPOINT);
 const deptClient = new TimesheetDepartmentClient(ENDPOINT);
 
 type Props = {
-  userId: number,
-  imgURL: string,
+  userId: number;
+  imgURL: string;
 };
 
 type State = {
-  isManager: boolean,
-  isOpen: boolean,
-  user: User.AsObject,
-  reportBugFormShown: boolean,
+  isManager: boolean;
+  isOpen: boolean;
+  user: User.AsObject;
+  reportBugFormShown: boolean;
 };
 
 type Action =
   | { type: 'toggleMenu' }
-  | { type: 'fetchedUser', user: User.AsObject, isManager: boolean }
+  | { type: 'fetchedUser'; user: User.AsObject; isManager: boolean }
   | { type: 'showReportBugForm' }
   | { type: 'hideReportBugForm' };
 
@@ -66,7 +71,7 @@ const reducer = (state: State, action: Action) => {
       return state;
   }
 };
-const SideMenu = ({ userId, imgURL}: Props) => {
+const SideMenu = ({ userId, imgURL }: Props) => {
   const [state, dispatch] = useReducer(reducer, {
     user: new User().toObject(),
     isManager: false,
@@ -80,43 +85,31 @@ const SideMenu = ({ userId, imgURL}: Props) => {
   };
 
   const handleReportBugClicked = () => {
-    dispatch({ type: 'showReportBugForm'});
+    dispatch({ type: 'showReportBugForm' });
   };
 
   const handleCloseReportBugForm = () => {
-    dispatch({ type: 'hideReportBugForm'});
+    dispatch({ type: 'hideReportBugForm' });
   };
 
   useEffect(() => {
     (async () => {
-      const href = window.location.href;
-      /*
-      if (href.includes('http://')) {
-        window.location.href = window.location.href.replace(
-          'http://',
-          'https://',
-        );
+      //forceHTTPS(window.location.href);
+      userClient.GetToken('test', 'test');
+      const userResult = await loadUserById(userId);
+      //customerCheck(userResult);
+      if (userResult.isSu) {
+        dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
       } else {
-      */
-        userClient.GetToken('test', 'test');
-        const userResult = await loadUserById(userId);
-        //if (href.includes('admin') && user.isEmployee === 0) {
-        //  window.location.href =
-        //    'https://app.kalosflorida.com/index.cfm?action=customer:account.dashboard';
-        //}
-        if (userResult.isSu) {
+        const dpt = new TimesheetDepartment();
+        dpt.setManagerId(userId);
+        const deptResult = await deptClient.Get(dpt);
+        if (deptResult.id !== 0) {
           dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
         } else {
-          const dpt = new TimesheetDepartment();
-          dpt.setManagerId(userId);
-          const deptResult = await deptClient.Get(dpt);
-          if (deptResult.id !== 0) {
-            dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
-          } else {
-            dispatch({ type: 'fetchedUser', user: userResult, isManager: false });
-          }
+          dispatch({ type: 'fetchedUser', user: userResult, isManager: false });
         }
-      // }
+      }
     })();
   }, []);
 
@@ -150,33 +143,24 @@ const SideMenu = ({ userId, imgURL}: Props) => {
           style={{ width: 250, padding: 10 }}
         >
           <List style={{ width: 250 }}>
-            {employeeItems.map(item => (
-              <KalosMenuItem
-                item={item}
-                userId={userId}
-              />
+            {employeeItems.map((item) => (
+              <KalosMenuItem item={item} userId={userId} />
             ))}
             {user.isAdmin && (
               <>
-                {adminItems.map(item => (
-                  <KalosMenuItem
-                    item={item}
-                    userId={userId}
-                  />
+                {adminItems.map((item) => (
+                  <KalosMenuItem item={item} userId={userId} />
                 ))}
               </>
             )}
             {isManager && (
               <>
-                {managerItems.map(item => (
-                  <KalosMenuItem
-                    item={item}
-                    userId={userId}
-                  />
+                {managerItems.map((item) => (
+                  <KalosMenuItem item={item} userId={userId} />
                 ))}
               </>
             )}
-            {commonItems.map(item => {
+            {commonItems.map((item) => {
               if (item.title === 'Report a Bug') {
                 return (
                   <KalosMenuItem
@@ -186,15 +170,9 @@ const SideMenu = ({ userId, imgURL}: Props) => {
                   />
                 );
               } else {
-                return (
-                  <KalosMenuItem
-                    item={item}
-                    userId={userId}
-                  />
-                );
+                return <KalosMenuItem item={item} userId={userId} />;
               }
-            }
-            )}
+            })}
           </List>
         </Drawer>
       )}
