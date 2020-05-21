@@ -1,10 +1,16 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
+import DeleteIcon from '@material-ui/icons/Delete';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data, Columns } from '../InfoTable';
-import { PlainForm, Schema } from '../PlainForm';
+import { PlainForm, Schema, Option } from '../PlainForm';
 import { Modal } from '../Modal';
 import { FileTags } from '../FileTags';
+import { Form } from '../Form';
+import { ConfirmDelete } from '../ConfirmDelete';
 import {
   makeFakeRows,
   InternalDocumentType,
@@ -14,8 +20,12 @@ import {
   loadInternalDocuments,
   loadDocumentKeys,
   formatDate,
+  openFile,
+  updateInternalDocument,
+  deleteInternalDocument,
 } from '../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
+import { InternalDocument } from '@kalos-core/kalos-rpc/InternalDocument';
 
 const useStyles = makeStyles(theme => ({
   filter: {
@@ -47,6 +57,9 @@ export const InternalDocuments: FC = ({}) => {
   const [fileTags, setFileTags] = useState<DocumentKeyType[]>([]);
   const [filter, setFilter] = useState<InternalDocumentsFilter>(defaultFilter);
   const [fileTagsOpened, setFileTagsOpened] = useState<boolean>(false);
+  const [editing, setEditing] = useState<InternalDocumentType>();
+  const [deleting, setDeleting] = useState<InternalDocumentType>();
+  const [documentFile, setDocumentFile] = useState<string>('');
   const [sort, setSort] = useState<InternalDocumentsSort>({
     orderByField: 'name',
     orderBy: 'name',
@@ -114,6 +127,41 @@ export const InternalDocuments: FC = ({}) => {
     (fileTagsOpened: boolean) => () => setFileTagsOpened(fileTagsOpened),
     [setFileTagsOpened],
   );
+  const handleView = useCallback(
+    (entry: InternalDocumentType) => () => {
+      console.log({ entry });
+      openFile(entry.filename, 'kalos-internal-docs');
+    },
+    [],
+  );
+  const handleSetEditing = useCallback(
+    (editing?: InternalDocumentType) => () => setEditing(editing),
+    [setEditing],
+  );
+  const handleSetDeleting = useCallback(
+    (deleting?: InternalDocumentType) => () => setDeleting(deleting),
+    [setDeleting],
+  );
+  const handleSave = useCallback(
+    async (data: InternalDocumentType) => {
+      setEditing(undefined);
+      setLoading(true);
+      await updateInternalDocument(data);
+      setLoaded(false);
+    },
+    [setEditing, setLoading, setLoaded],
+  );
+  const handleDelete = useCallback(async () => {
+    if (deleting) {
+      setDeleting(undefined);
+      setLoading(true);
+      await deleteInternalDocument(deleting);
+      setLoaded(false);
+    }
+  }, [deleting, setDeleting, setLoading, setLoaded]);
+  const handleFileLoad = useCallback(file => setDocumentFile(file), [
+    setDocumentFile,
+  ]);
   const COLUMNS: Columns = useMemo(
     () =>
       [
@@ -168,21 +216,27 @@ export const InternalDocuments: FC = ({}) => {
       ] as Columns,
     [sort],
   );
-  const SCHEMA: Schema<InternalDocumentsFilter> = useMemo(
+  const getFileTagsOptions = useCallback(
+    (options = []) => [
+      ...options,
+      ...fileTags.map(({ id: value, name: label, color }) => ({
+        value,
+        label,
+        color,
+      })),
+    ],
+    [fileTags],
+  );
+  const SCHEMA_FILTER: Schema<InternalDocumentsFilter> = useMemo(
     () =>
       [
         [
           {
             name: 'tag',
             label: 'File Tag',
-            options: [
+            options: getFileTagsOptions([
               { label: OPTION_ALL, value: defaultFilter.tag },
-              ...fileTags.map(({ id: value, name: label, color }) => ({
-                value,
-                label,
-                color,
-              })),
-            ],
+            ]),
             actions: [
               {
                 label: 'View File Tags',
@@ -212,10 +266,41 @@ export const InternalDocuments: FC = ({}) => {
       ] as Schema<InternalDocumentsFilter>,
     [fileTags],
   );
+  const SCHEMA_EDIT: Schema<InternalDocumentType> = useMemo(
+    () =>
+      [
+        [
+          {
+            name: 'filename',
+            label: 'File',
+            type: 'file',
+            required: true,
+            onFileLoad: handleFileLoad,
+          },
+        ],
+        [
+          {
+            name: 'description',
+            label: 'Description',
+            helperText: '(Short and Descriptive)',
+            required: true,
+          },
+        ],
+        [
+          {
+            name: 'tag',
+            label: 'File Tag',
+            options: getFileTagsOptions(),
+            required: true,
+          },
+        ],
+      ] as Schema<InternalDocumentType>,
+    [fileTags],
+  );
   const data: Data =
     loading || loadingFileTags
       ? makeFakeRows(3, 5)
-      : entries.map(entry => {
+      : (entries.map(entry => {
           const { description, dateCreated, dateModified, tagData } = entry;
           const backgroundColor = tagData ? tagData.color : '';
           const tagName = tagData ? tagData.name : '';
@@ -228,15 +313,43 @@ export const InternalDocuments: FC = ({}) => {
                 </div>
               ),
             },
-            { value: formatDate(dateCreated) },
-            { value: formatDate(dateModified) },
+            {
+              value: formatDate(dateCreated),
+            },
+            {
+              value: formatDate(dateModified),
+              actions: [
+                <IconButton key="view" size="small" onClick={handleView(entry)}>
+                  <OpenInNewIcon />
+                </IconButton>,
+                <IconButton
+                  key="edit"
+                  size="small"
+                  onClick={handleSetEditing(entry)}
+                >
+                  <EditIcon />
+                </IconButton>,
+                <IconButton
+                  key="remove"
+                  size="small"
+                  onClick={handleSetDeleting(entry)}
+                >
+                  <DeleteIcon />
+                </IconButton>,
+              ],
+            },
           ];
-        });
+        }) as Data);
   return (
     <div>
       <SectionBar
         title="Kalos Documents"
-        actions={[{ label: 'Add Document' }]}
+        actions={[
+          {
+            label: 'Add Document',
+            onClick: handleSetEditing(new InternalDocument().toObject()),
+          },
+        ]}
         fixedActions
         pagination={{
           count,
@@ -248,7 +361,7 @@ export const InternalDocuments: FC = ({}) => {
       <PlainForm
         className={classes.filter}
         data={filter}
-        schema={SCHEMA}
+        schema={SCHEMA_FILTER}
         compact
         onChange={setFilter}
       />
@@ -265,6 +378,26 @@ export const InternalDocuments: FC = ({}) => {
             onFileTagsChange={setFileTags}
           />
         </Modal>
+      )}
+      {editing && (
+        <Modal open onClose={handleSetEditing(undefined)}>
+          <Form
+            title={`${editing.id ? 'Edit' : 'Add'} Kalos Document`}
+            schema={SCHEMA_EDIT}
+            data={editing}
+            onClose={handleSetEditing(undefined)}
+            onSave={handleSave}
+          />
+        </Modal>
+      )}
+      {deleting && (
+        <ConfirmDelete
+          open
+          kind="Internal Document"
+          name={`${deleting.tagData?.name} ${deleting.description}`}
+          onClose={handleSetDeleting(undefined)}
+          onConfirm={handleDelete}
+        />
       )}
     </div>
   );

@@ -81,6 +81,7 @@ export const UserGroupLinkClientService = new UserGroupLinkClient(ENDPOINT);
 export const InternalDocumentClientService = new InternalDocumentClient(
   ENDPOINT,
 );
+export const S3ClientService = new S3Client(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -1220,13 +1221,12 @@ async function uploadFileToS3Bucket(
   bucketName: string,
 ) {
   try {
-    const S3 = new S3Client(ENDPOINT);
     const urlObj = new URLObject();
     urlObj.setKey(fileName);
     urlObj.setBucket(bucketName);
     const type = getMimeType(fileName);
     urlObj.setContentType(type || '');
-    const urlRes = await S3.GetUploadURL(urlObj);
+    const urlRes = await S3ClientService.GetUploadURL(urlObj);
     const uploadRes = await fetch(urlRes.url, {
       body: b64toBlob(fileData, fileName),
       method: 'PUT',
@@ -1371,6 +1371,20 @@ export const loadInternalDocuments = async ({
   return (await InternalDocumentClientService.BatchGet(req)).toObject();
 };
 
+export const updateInternalDocument = async ({
+  id,
+  description,
+}: InternalDocumentType) => {
+  console.log('updateInternalDocument', id, description);
+};
+
+export const deleteInternalDocument = async ({
+  id,
+  description,
+}: InternalDocumentType) => {
+  console.log('deleteInternalDocument', id, description);
+};
+
 export const loadDocumentKeys = async () => {
   const req = new DocumentKey();
   req.setIsActive(true);
@@ -1402,6 +1416,19 @@ export const deleteDocumentKey = async (id: number) => {
   const req = new DocumentKey();
   req.setId(id);
   await InternalDocumentClientService.DeleteDocumentKey(req);
+};
+
+export const getFileS3BucketUrl = async (filename: string, bucket: string) => {
+  const url = new URLObject();
+  url.setKey(filename);
+  url.setBucket(bucket);
+  const dlURL = await S3ClientService.GetDownloadURL(url);
+  return dlURL.url;
+};
+
+export const openFile = async (filename: string, bucket: string) => {
+  const url = await getFileS3BucketUrl(filename, bucket);
+  window.open(url, '_blank');
 };
 
 interface IBugReport {
