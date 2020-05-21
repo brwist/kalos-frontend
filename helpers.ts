@@ -1331,8 +1331,37 @@ export const deletePropertyById = async (id: number) => {
   await PropertyClientService.Delete(req);
 };
 
-export const loadInternalDocuments = async () => {
+export type InternalDocumentsFilter = {
+  tag?: number;
+  description?: string;
+};
+
+export type InternalDocumentsSort = {
+  orderByField: keyof InternalDocumentType;
+  orderBy: string;
+  orderDir: OrderDir;
+};
+
+export type LoadInternalDocuments = {
+  page: number;
+  filter: InternalDocumentsFilter;
+  sort: InternalDocumentsSort;
+};
+export const loadInternalDocuments = async ({
+  page,
+  filter: { tag, description },
+  sort: { orderBy, orderDir },
+}: LoadInternalDocuments) => {
   const req = new InternalDocument();
+  req.setOrderBy(orderBy);
+  req.setOrderDir(orderDir);
+  req.setPageNumber(page);
+  if (tag && tag > 0) {
+    req.setTag(tag);
+  }
+  if (description) {
+    req.setDescription(`%${description}%`);
+  }
   return (await InternalDocumentClientService.BatchGet(req)).toObject();
 };
 

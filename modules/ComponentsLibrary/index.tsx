@@ -21,6 +21,7 @@ import Field from './Field/examples';
 import FileTags from './FileTags/examples';
 import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
+import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PlainForm from './PlainForm/examples';
@@ -54,6 +55,7 @@ const COMPONENTS = {
   FileTags,
   Form,
   InfoTable,
+  InternalDocuments,
   Link,
   Modal,
   PlainForm,
