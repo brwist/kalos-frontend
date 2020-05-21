@@ -42,11 +42,21 @@ const makeNewDocumentKey = () => {
   return entry;
 };
 
-export const FileTags: FC = () => {
+interface Props {
+  onClose?: () => void;
+  fileTags?: DocumentKeyType[];
+  onFileTagsChange?: (fileTags: DocumentKeyType[]) => void;
+}
+
+export const FileTags: FC<Props> = ({
+  onClose,
+  fileTags,
+  onFileTagsChange,
+}) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
-  const [entries, setEntries] = useState<DocumentKeyType[]>([]);
+  const [entries, setEntries] = useState<DocumentKeyType[]>(fileTags || []);
   const [pendingDelete, setPendingDelete] = useState<DocumentKeyType>();
   const [pendingEdit, setPendingEdit] = useState<DocumentKeyType>();
   const load = useCallback(async () => {
@@ -54,13 +64,16 @@ export const FileTags: FC = () => {
     const entries = await loadDocumentKeys();
     setEntries(entries);
     setLoading(false);
+    return entries;
   }, [setLoading, setEntries]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
-      load();
+      if (!fileTags) {
+        load();
+      }
     }
-  }, [loaded, load, setLoaded]);
+  }, [loaded, load, setLoaded, fileTags]);
   const handlePendingDelete = useCallback(
     (pendingDelete?: DocumentKeyType) => () => setPendingDelete(pendingDelete),
     [setPendingDelete],
@@ -78,10 +91,20 @@ export const FileTags: FC = () => {
         setPendingEdit(undefined);
         setLoading(true);
         setSaving(false);
-        setLoaded(false);
+        const fileTags = await load();
+        if (onFileTagsChange) {
+          onFileTagsChange(fileTags);
+        }
       }
     },
-    [pendingEdit, setPendingEdit, setLoading, setLoaded, setSaving],
+    [
+      pendingEdit,
+      setPendingEdit,
+      setLoading,
+      setSaving,
+      load,
+      onFileTagsChange,
+    ],
   );
   const handleDelete = useCallback(async () => {
     if (pendingDelete) {
@@ -89,9 +112,12 @@ export const FileTags: FC = () => {
       setPendingDelete(undefined);
       setLoading(true);
       await deleteDocumentKey(id);
-      setLoaded(false);
+      const fileTags = await load();
+      if (onFileTagsChange) {
+        onFileTagsChange(fileTags);
+      }
     }
-  }, [pendingDelete, setPendingDelete, setLoading]);
+  }, [pendingDelete, setPendingDelete, setLoading, load, onFileTagsChange]);
   const data: Data = loading
     ? makeFakeRows(2, 5)
     : entries.map(entry => {
@@ -138,6 +164,14 @@ export const FileTags: FC = () => {
             label: 'Add File Tag',
             onClick: handlePendingEdit(makeNewDocumentKey()),
           },
+          ...(onClose
+            ? [
+                {
+                  label: 'Close',
+                  onClick: onClose,
+                },
+              ]
+            : []),
         ]}
         fixedActions
       />

@@ -3,6 +3,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data, Columns } from '../InfoTable';
 import { PlainForm, Schema } from '../PlainForm';
+import { Modal } from '../Modal';
+import { FileTags } from '../FileTags';
 import {
   makeFakeRows,
   InternalDocumentType,
@@ -17,7 +19,7 @@ import { ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 
 const useStyles = makeStyles(theme => ({
   filter: {
-    marginTop: theme.spacing(),
+    marginTop: theme.spacing(2),
   },
   name: {
     display: 'flex',
@@ -44,6 +46,7 @@ export const InternalDocuments: FC = ({}) => {
   const [entries, setEntries] = useState<InternalDocumentType[]>([]);
   const [fileTags, setFileTags] = useState<DocumentKeyType[]>([]);
   const [filter, setFilter] = useState<InternalDocumentsFilter>(defaultFilter);
+  const [fileTagsOpened, setFileTagsOpened] = useState<boolean>(false);
   const [sort, setSort] = useState<InternalDocumentsSort>({
     orderByField: 'tag',
     orderBy: 'idocument_tag',
@@ -106,6 +109,10 @@ export const InternalDocuments: FC = ({}) => {
       handleSearch();
     },
     [setSort, handleSearch],
+  );
+  const handleFileTagsOpenedToggle = useCallback(
+    (fileTagsOpened: boolean) => () => setFileTagsOpened(fileTagsOpened),
+    [setFileTagsOpened],
   );
   const COLUMNS: Columns = useMemo(
     () =>
@@ -176,6 +183,14 @@ export const InternalDocuments: FC = ({}) => {
                 color,
               })),
             ],
+            actions: [
+              {
+                label: 'View File Tags',
+                onClick: handleFileTagsOpenedToggle(true),
+                variant: 'text',
+              },
+            ],
+            actionsInLabel: true,
           },
           {
             name: 'description',
@@ -242,6 +257,15 @@ export const InternalDocuments: FC = ({}) => {
         data={data}
         loading={loading || loadingFileTags}
       />
+      {fileTagsOpened && (
+        <Modal open onClose={handleFileTagsOpenedToggle(false)} fullScreen>
+          <FileTags
+            onClose={handleFileTagsOpenedToggle(false)}
+            fileTags={fileTags}
+            onFileTagsChange={setFileTags}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
