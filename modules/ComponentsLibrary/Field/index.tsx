@@ -828,7 +828,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         error={error}
         {...props}
         type={type === 'file' ? 'text' : type}
-        value={type === 'file' ? filename : value}
+        value={type === 'file' ? filename || value : value}
         helperText={helper}
       />
       {actions.length > 0 && !actionsInLabel && (
