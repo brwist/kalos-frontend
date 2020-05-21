@@ -247,9 +247,9 @@
     browser-headers "^0.4.0"
 
 "@kalos-core/kalos-rpc@^2.0.0":
-  version "2.29.2"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.29.2.tgz#9bc88a56acc22c697660a4b542b1ecae35c25f14"
-  integrity sha512-dY++qD0sR7rDMVRveTZX1RomRpLdCGwe/BY0U2t4hVOqOl79IygKeL4AQmV7E8jZH1iOf+wfagi7orjsDOxhTA==
+  version "2.29.3"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.29.3.tgz#0cbfab8ba0d3e5a76c8bef9317d45f919d724a76"
+  integrity sha512-ys9ETDZcbReNZQXF/66HibBYB92fNiuE5CyG2Ao1CsHkW/15RR6yeyQ77LxhxcmE2sB/0lYe08HRePpez6JOXg==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -3081,10 +3081,15 @@ glogg@^1.0.0:
   dependencies:
     sparkles "^1.0.0"
 
-google-protobuf@^3.10.0, google-protobuf@^3.9.0-rc.1:
+google-protobuf@^3.10.0:
   version "3.12.0"
   resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.12.0.tgz#02630b5fa3020fe9fd99a6a602e94e37a43b93bf"
   integrity sha512-7HZo4ZIcoL8alxDCYphAjsssJrvfD9XPg7rdd1XkQ4273yfyO4dCuPW88ydYcF382ik3Z06/NqMR3rRzldTK4A==
+
+google-protobuf@^3.9.0-rc.1:
+  version "3.12.1"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.12.1.tgz#d23a745d9a4365e1e0c5eb87bf17e859b4ffb841"
+  integrity sha512-tsWoKhSuLBrBm+BMDOLrwnSbfWurxZgLBDB7OO+yOIILfBZIlINgz9mrdqnn4YiGY64HwXg1TjaZ/26xgdJ3aQ==
 
 graceful-fs@^4.0.0, graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6, graceful-fs@^4.2.0:
   version "4.2.3"
