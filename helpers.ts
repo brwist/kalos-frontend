@@ -1337,7 +1337,7 @@ export type InternalDocumentsFilter = {
 };
 
 export type InternalDocumentsSort = {
-  orderByField: keyof InternalDocumentType;
+  orderByField: keyof InternalDocumentType | keyof DocumentKeyType;
   orderBy: string;
   orderDir: OrderDir;
 };
@@ -1353,7 +1353,13 @@ export const loadInternalDocuments = async ({
   sort: { orderBy, orderDir },
 }: LoadInternalDocuments) => {
   const req = new InternalDocument();
+  const keys = Object.keys(req.toObject());
   req.setOrderBy(orderBy);
+  if (!keys.includes(orderBy)) {
+    const dk = new DocumentKey();
+    dk.setIsActive(true);
+    req.setTagData(dk);
+  }
   req.setOrderDir(orderDir);
   req.setPageNumber(page);
   if (tag && tag > 0) {

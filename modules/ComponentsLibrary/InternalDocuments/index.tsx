@@ -48,8 +48,8 @@ export const InternalDocuments: FC = ({}) => {
   const [filter, setFilter] = useState<InternalDocumentsFilter>(defaultFilter);
   const [fileTagsOpened, setFileTagsOpened] = useState<boolean>(false);
   const [sort, setSort] = useState<InternalDocumentsSort>({
-    orderByField: 'tag',
-    orderBy: 'idocument_tag',
+    orderByField: 'name',
+    orderBy: 'name',
     orderDir: 'ASC',
   });
   const [count, setCount] = useState<number>(0);
@@ -119,16 +119,16 @@ export const InternalDocuments: FC = ({}) => {
       [
         {
           name: 'Document Description',
-          ...(sort.orderByField === 'tag'
+          ...(sort.orderByField === 'name'
             ? {
                 dir: sort.orderDir,
               }
             : {}),
           onClick: handleSortChange({
-            orderByField: 'tag',
-            orderBy: 'idocument_tag',
+            orderByField: 'name',
+            orderBy: 'name',
             orderDir:
-              sort.orderByField === 'tag' && sort.orderDir === 'ASC'
+              sort.orderByField === 'name' && sort.orderDir === 'ASC'
                 ? 'DESC'
                 : 'ASC',
           }),
