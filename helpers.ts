@@ -1371,15 +1371,31 @@ export const loadInternalDocuments = async ({
   return (await InternalDocumentClientService.BatchGet(req)).toObject();
 };
 
-export const upsertInternalDocument = async (entry: InternalDocumentType) => {
-  console.log('updateInternalDocument', entry);
+export const upsertInternalDocument = async (data: InternalDocumentType) => {
+  const req = new InternalDocument();
+  const fieldMaskList = [];
+  const { id } = data;
+  if (!id) {
+    req.setDateCreated(timestamp());
+    fieldMaskList.push('DateCreated');
+  }
+  req.setDateModified(timestamp());
+  fieldMaskList.push('DateModified');
+  for (const fieldName in data) {
+    if (data[fieldName as keyof InternalDocumentType] === undefined) continue;
+    const { methodName, upperCaseProp } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  await InternalDocumentClientService[id ? 'Update' : 'Create'](req);
 };
 
-export const deleteInternalDocument = async ({
-  id,
-  description,
-}: InternalDocumentType) => {
-  console.log('deleteInternalDocument', id, description);
+export const deleteInternalDocumentById = async (id: number) => {
+  const req = new InternalDocument();
+  req.setId(id);
+  await InternalDocumentClientService.Delete(req);
 };
 
 export const loadDocumentKeys = async () => {
@@ -1396,8 +1412,6 @@ export const saveDocumentKey = async (data: DocumentKeyType, id?: number) => {
   const fieldMaskList = [];
   if (id) {
     req.setId(id);
-  } else {
-    fieldMaskList.push('DateCreated');
   }
   for (const fieldName in data) {
     const { methodName, upperCaseProp } = getRPCFields(fieldName);
@@ -1409,7 +1423,7 @@ export const saveDocumentKey = async (data: DocumentKeyType, id?: number) => {
   await InternalDocumentClientService.WriteDocumentKey(req);
 };
 
-export const deleteDocumentKey = async (id: number) => {
+export const deleteDocumentKeyById = async (id: number) => {
   const req = new DocumentKey();
   req.setId(id);
   await InternalDocumentClientService.DeleteDocumentKey(req);
