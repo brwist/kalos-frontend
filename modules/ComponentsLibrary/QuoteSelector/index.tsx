@@ -56,7 +56,7 @@ export const QuoteSelector: FC<Props> = ({}) => {
   const handleToggleOpen = useCallback(() => setOpen(!open), [open, setOpen]);
   console.log({ quoteParts, quoteLines, quoteLineParts });
   const data: Data = loading
-    ? makeFakeRows(5, 20)
+    ? makeFakeRows(6, 20)
     : quoteParts.map(({ description, cost, availability }) => [
         { value: '' },
         { value: '' },
