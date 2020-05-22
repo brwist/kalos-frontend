@@ -21,7 +21,7 @@ import {
   loadDocumentKeys,
   formatDate,
   openFile,
-  updateInternalDocument,
+  upsertInternalDocument,
   deleteInternalDocument,
 } from '../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
@@ -60,6 +60,7 @@ export const InternalDocuments: FC = ({}) => {
   const [editing, setEditing] = useState<InternalDocumentType>();
   const [deleting, setDeleting] = useState<InternalDocumentType>();
   const [documentFile, setDocumentFile] = useState<string>('');
+  const [formKey, setFormKey] = useState<number>(0);
   const [sort, setSort] = useState<InternalDocumentsSort>({
     orderByField: 'name',
     orderBy: 'name',
@@ -107,8 +108,9 @@ export const InternalDocuments: FC = ({}) => {
   }, [setPage, setLoaded]);
   const handleReset = useCallback(() => {
     setFilter(defaultFilter);
+    setFormKey(formKey + 1);
     handleSearch();
-  }, [setFilter, handleSearch]);
+  }, [setFilter, handleSearch, formKey, setFormKey]);
   const handleChangePage = useCallback(
     (page: number) => {
       setPage(page);
@@ -129,7 +131,6 @@ export const InternalDocuments: FC = ({}) => {
   );
   const handleView = useCallback(
     (entry: InternalDocumentType) => () => {
-      console.log({ entry });
       openFile(entry.filename, 'kalos-internal-docs');
     },
     [],
@@ -146,7 +147,7 @@ export const InternalDocuments: FC = ({}) => {
     async (data: InternalDocumentType) => {
       setEditing(undefined);
       setLoading(true);
-      await updateInternalDocument(data);
+      await upsertInternalDocument(data);
       setLoaded(false);
     },
     [setEditing, setLoading, setLoaded],
@@ -264,7 +265,7 @@ export const InternalDocuments: FC = ({}) => {
           },
         ],
       ] as Schema<InternalDocumentsFilter>,
-    [fileTags],
+    [fileTags, formKey],
   );
   const SCHEMA_EDIT: Schema<InternalDocumentType> = useMemo(
     () =>
@@ -359,6 +360,7 @@ export const InternalDocuments: FC = ({}) => {
         }}
       />
       <PlainForm
+        key={formKey}
         className={classes.filter}
         data={filter}
         schema={SCHEMA_FILTER}

@@ -1371,11 +1371,8 @@ export const loadInternalDocuments = async ({
   return (await InternalDocumentClientService.BatchGet(req)).toObject();
 };
 
-export const updateInternalDocument = async ({
-  id,
-  description,
-}: InternalDocumentType) => {
-  console.log('updateInternalDocument', id, description);
+export const upsertInternalDocument = async (entry: InternalDocumentType) => {
+  console.log('updateInternalDocument', entry);
 };
 
 export const deleteInternalDocument = async ({
