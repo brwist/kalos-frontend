@@ -23,8 +23,13 @@ import {
   openFile,
   upsertInternalDocument,
   deleteInternalDocumentById,
+  deleteFileById,
 } from '../../../helpers';
-import { ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
+import {
+  ROWS_PER_PAGE,
+  OPTION_ALL,
+  INTERNAL_DOCUMENTS_BUCKET,
+} from '../../../constants';
 import { InternalDocument } from '@kalos-core/kalos-rpc/InternalDocument';
 
 const useStyles = makeStyles(theme => ({
@@ -131,7 +136,7 @@ export const InternalDocuments: FC = ({}) => {
   );
   const handleView = useCallback(
     (entry: InternalDocumentType) => () => {
-      openFile(entry.filename, 'kalos-internal-docs');
+      openFile(entry.filename, INTERNAL_DOCUMENTS_BUCKET);
     },
     [],
   );
@@ -155,9 +160,10 @@ export const InternalDocuments: FC = ({}) => {
   );
   const handleDelete = useCallback(async () => {
     if (deleting) {
-      const { id } = deleting;
+      const { id, fileId } = deleting;
       setDeleting(undefined);
       setLoading(true);
+      await deleteFileById(fileId);
       await deleteInternalDocumentById(id);
       setLoaded(false);
     }
@@ -276,6 +282,10 @@ export const InternalDocuments: FC = ({}) => {
         [
           {
             name: 'id',
+            type: 'hidden',
+          },
+          {
+            name: 'fileId',
             type: 'hidden',
           },
         ],

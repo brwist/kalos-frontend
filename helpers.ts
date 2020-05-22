@@ -1,5 +1,6 @@
 import uniq from 'lodash/uniq';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
+import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
@@ -43,7 +44,7 @@ import {
   InternalDocumentClient,
 } from '@kalos-core/kalos-rpc/InternalDocument';
 import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
-import { ENDPOINT, MONTHS } from './constants';
+import { ENDPOINT, MONTHS, INTERNAL_DOCUMENTS_BUCKET } from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
 
 export type UserType = User.AsObject;
@@ -54,6 +55,7 @@ export type EventType = Event.AsObject;
 export type JobTypeType = JobType.AsObject;
 export type JobSubtypeType = JobSubtype.AsObject;
 export type InternalDocumentType = InternalDocument.AsObject;
+export type FileType = File.AsObject;
 export type DocumentKeyType = DocumentKey.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
@@ -82,6 +84,7 @@ export const InternalDocumentClientService = new InternalDocumentClient(
   ENDPOINT,
 );
 export const S3ClientService = new S3Client(ENDPOINT);
+export const FileClientService = new FileClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -1372,13 +1375,9 @@ export const loadInternalDocuments = async ({
 };
 
 export const upsertInternalDocument = async (data: InternalDocumentType) => {
+  const { id } = data;
   const req = new InternalDocument();
   const fieldMaskList = [];
-  const { id } = data;
-  if (!id) {
-    req.setDateCreated(timestamp());
-    fieldMaskList.push('DateCreated');
-  }
   req.setDateModified(timestamp());
   fieldMaskList.push('DateModified');
   for (const fieldName in data) {
@@ -1388,14 +1387,49 @@ export const upsertInternalDocument = async (data: InternalDocumentType) => {
     req[methodName](data[fieldName]);
     fieldMaskList.push(upperCaseProp);
   }
+  const reqFile = new File();
+  reqFile.setBucket(INTERNAL_DOCUMENTS_BUCKET);
+  reqFile.setName(data.filename);
+  if (data.fileId) {
+    reqFile.setId(data.fileId);
+  }
+  const file = await upsertFile(reqFile.toObject());
+  if (!id) {
+    req.setDateCreated(timestamp());
+    req.setFileId(file.id);
+    fieldMaskList.push('DateCreated', 'FileId');
+  }
   req.setFieldMaskList(fieldMaskList);
-  await InternalDocumentClientService[id ? 'Update' : 'Create'](req);
+  return await InternalDocumentClientService[id ? 'Update' : 'Create'](req);
 };
 
 export const deleteInternalDocumentById = async (id: number) => {
   const req = new InternalDocument();
   req.setId(id);
   await InternalDocumentClientService.Delete(req);
+};
+
+export const upsertFile = async (data: FileType) => {
+  const req = new File();
+  const fieldMaskList = [];
+  const { id } = data;
+  if (!id) {
+    req.setCreateTime(timestamp());
+    fieldMaskList.push('DateCreated');
+  } else {
+    req.setId(id);
+  }
+  req.setName(data.name);
+  req.setBucket(data.bucket);
+  fieldMaskList.push('Name', 'Bucket');
+  req.setFieldMaskList(fieldMaskList);
+  return await FileClientService[id ? 'Update' : 'Create'](req);
+};
+
+export const deleteFileById = async (id: number) => {
+  const req = new File();
+  req.setId(id);
+  await FileClientService.Delete(req);
 };
 
 export const loadDocumentKeys = async () => {

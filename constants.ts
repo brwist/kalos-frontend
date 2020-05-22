@@ -6,6 +6,7 @@ export const OPTION_BLANK = '-- Select --';
 export const OPTION_ALL = '-- All --';
 
 export const PROP_LEVEL = 'Used for property-level billing only';
+export const INTERNAL_DOCUMENTS_BUCKET = 'kalos-internal-docs';
 
 export const EVENT_STATUS_LIST = [
   'Requested',
