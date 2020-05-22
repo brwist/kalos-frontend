@@ -13,7 +13,7 @@ import {
   loadDocumentKeys,
   makeFakeRows,
   saveDocumentKey,
-  deleteDocumentKey,
+  deleteDocumentKeyById,
 } from '../../../helpers';
 
 const COLUMNS: Columns = [{ name: 'Name' }, { name: 'Tag Color' }];
@@ -111,7 +111,7 @@ export const FileTags: FC<Props> = ({
       const { id } = pendingDelete;
       setPendingDelete(undefined);
       setLoading(true);
-      await deleteDocumentKey(id);
+      await deleteDocumentKeyById(id);
       const fileTags = await load();
       if (onFileTagsChange) {
         onFileTagsChange(fileTags);

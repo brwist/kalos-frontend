@@ -22,7 +22,7 @@ import {
   formatDate,
   openFile,
   upsertInternalDocument,
-  deleteInternalDocument,
+  deleteInternalDocumentById,
 } from '../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import { InternalDocument } from '@kalos-core/kalos-rpc/InternalDocument';
@@ -147,22 +147,25 @@ export const InternalDocuments: FC = ({}) => {
     async (data: InternalDocumentType) => {
       setEditing(undefined);
       setLoading(true);
+      // TODO upload documentFile into bucket
       await upsertInternalDocument(data);
       setLoaded(false);
     },
-    [setEditing, setLoading, setLoaded],
+    [setEditing, setLoading, setLoaded, documentFile],
   );
   const handleDelete = useCallback(async () => {
     if (deleting) {
+      const { id } = deleting;
       setDeleting(undefined);
       setLoading(true);
-      await deleteInternalDocument(deleting);
+      await deleteInternalDocumentById(id);
       setLoaded(false);
     }
   }, [deleting, setDeleting, setLoading, setLoaded]);
-  const handleFileLoad = useCallback(file => setDocumentFile(file), [
-    setDocumentFile,
-  ]);
+  const handleFileLoad = useCallback(
+    (documentFile: string) => setDocumentFile(documentFile),
+    [setDocumentFile],
+  );
   const COLUMNS: Columns = useMemo(
     () =>
       [
@@ -270,6 +273,12 @@ export const InternalDocuments: FC = ({}) => {
   const SCHEMA_EDIT: Schema<InternalDocumentType> = useMemo(
     () =>
       [
+        [
+          {
+            name: 'id',
+            type: 'hidden',
+          },
+        ],
         [
           {
             name: 'filename',
