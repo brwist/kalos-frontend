@@ -26,6 +26,8 @@ import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PlainForm from './PlainForm/examples';
 import PropertyEdit from './PropertyEdit/examples';
+import QuoteSelector from './QuoteSelector/examples';
+import Reports from './Reports/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
 import ServiceCall from './ServiceCall/examples';
@@ -60,6 +62,8 @@ const COMPONENTS = {
   Modal,
   PlainForm,
   PropertyEdit,
+  QuoteSelector,
+  Reports,
   Search,
   SectionBar,
   ServiceCall,
