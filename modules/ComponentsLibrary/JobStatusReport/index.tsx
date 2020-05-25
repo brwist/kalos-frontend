@@ -1,6 +1,7 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
+import AssignmentIcon from '@material-ui/icons/Assignment';
 import { FilterForm } from '../Reports';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data, Columns } from '../InfoTable';
@@ -14,17 +15,18 @@ import {
   getCustomerName,
   formatDate,
   EventsSort,
+  getCFAppUrl,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
 type Props = {
-  filter: FilterForm;
+  filter?: FilterForm;
   onClose?: () => void;
   loggedUserId: number;
 };
 
 export const JobStatusReport: FC<Props> = ({
-  filter: { status, startDate, endDate },
+  filter: { status, startDate, endDate } = {},
   onClose,
   loggedUserId,
 }) => {
@@ -44,6 +46,7 @@ export const JobStatusReport: FC<Props> = ({
     const { results, totalCount } = await loadEventsByFilter({
       page,
       filter: {
+        logJobStatus: status,
         dateStarted: startDate,
         dateEnded: endDate,
       },
@@ -87,6 +90,18 @@ export const JobStatusReport: FC<Props> = ({
   const handlePendingEditToggle = useCallback(
     (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
     [setPendingEdit],
+  );
+  const handleOpenTasks = useCallback(
+    (entry: EventType) => () => {
+      window.open(
+        [
+          getCFAppUrl('admin:tasks.list'),
+          'code=servicecall',
+          `id=${entry.id}`,
+        ].join('&'),
+      );
+    },
+    [],
   );
   const COLUMNS: Columns = [
     {
@@ -195,6 +210,13 @@ export const JobStatusReport: FC<Props> = ({
               >
                 <EditIcon />
               </IconButton>,
+              <IconButton
+                key="tasks"
+                size="small"
+                onClick={handleOpenTasks(entry)}
+              >
+                <AssignmentIcon />
+              </IconButton>,
             ],
           },
         ];
@@ -204,6 +226,9 @@ export const JobStatusReport: FC<Props> = ({
       <SectionBar
         title="Job Status Report"
         actions={[
+          { label: 'Export to Excel' },
+          { label: 'Tasks' },
+          { label: 'Print' },
           ...(onClose
             ? [
                 {
