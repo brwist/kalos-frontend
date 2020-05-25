@@ -8,7 +8,7 @@ export const OPTION_ALL = '-- All --';
 export const PROP_LEVEL = 'Used for property-level billing only';
 export const INTERNAL_DOCUMENTS_BUCKET = 'kalos-internal-docs';
 
-export const EVENT_STATUS_LIST = [
+export const JOB_STATUS_LIST = [
   'Requested',
   'Confirmed',
   'Enroute',
@@ -19,8 +19,22 @@ export const EVENT_STATUS_LIST = [
   'Pend Sched',
   'Canceled',
   'Completed',
-  'Admin Review',
 ];
+
+export const EVENT_STATUS_LIST = [...JOB_STATUS_LIST, 'Admin Review'];
+
+export const BILLING_STATUS_TYPE_LIST = [
+  'Pending',
+  'Billed',
+  'Cancelled',
+  'Paid',
+  'Charity',
+];
+
+export const NOTIFICATIONS_STATUS_TYPE_LIST = ['Deletions only'];
+
+export const SPIFF_KIND_TYPE_LIST = ['Monthly', 'Weekly'];
+
 export const PAYMENT_TYPE_LIST: Options = [
   'Pre-Paid',
   'Cash',

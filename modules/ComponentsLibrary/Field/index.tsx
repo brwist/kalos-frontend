@@ -306,7 +306,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       if (onChange) {
         let newValue = type === 'number' ? +value : value;
         if (type === 'date') {
-          newValue += ' ' + dateTimePart;
+          newValue = (newValue + ' ' + dateTimePart).trim();
         }
         onChange(newValue);
       }
