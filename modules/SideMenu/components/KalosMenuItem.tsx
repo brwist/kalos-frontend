@@ -30,7 +30,7 @@ type Props = {
   onClick?: () => void,
 };
 
-const KalosMenuItem: FC<Props> = ({ item, userId, onClick }): JSX.Element => {
+const KalosMenuItem: FC<Props> = ({ item, userId, onClick }: Props): JSX.Element => {
   const classes = useStyles();
   if (item.type === 'divider') {
     return <Divider />

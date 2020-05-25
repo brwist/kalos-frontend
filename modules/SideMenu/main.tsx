@@ -144,19 +144,19 @@ const SideMenu = ({ userId, imgURL }: Props) => {
         >
           <List style={{ width: 250 }}>
             {employeeItems.map((item) => (
-              <KalosMenuItem item={item} userId={userId} />
+              <KalosMenuItem key={`empl_${item?.title || 'divider'}`} item={item} userId={userId} />
             ))}
             {user.isAdmin && (
               <>
                 {adminItems.map((item) => (
-                  <KalosMenuItem item={item} userId={userId} />
+                  <KalosMenuItem key={`admin_${item?.title || 'divider'}`} item={item} userId={userId} />
                 ))}
               </>
             )}
             {isManager && (
               <>
                 {managerItems.map((item) => (
-                  <KalosMenuItem item={item} userId={userId} />
+                  <KalosMenuItem key={`manager_${item?.title || 'divider'}`} item={item} userId={userId} />
                 ))}
               </>
             )}
@@ -164,13 +164,14 @@ const SideMenu = ({ userId, imgURL }: Props) => {
               if (item.title === 'Report a Bug') {
                 return (
                   <KalosMenuItem
+                    key={`com_${item?.title}`}
                     item={item}
                     userId={userId}
                     onClick={handleReportBugClicked}
                   />
                 );
               } else {
-                return <KalosMenuItem item={item} userId={userId} />;
+                return <KalosMenuItem key={`com_${item?.title || 'divider'}`} item={item} userId={userId} />;
               }
             })}
           </List>
