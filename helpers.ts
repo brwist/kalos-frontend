@@ -1048,6 +1048,7 @@ export type EventsFilter = {
   businessname?: string;
   logJobNumber?: string;
   dateStarted?: string;
+  dateEnded?: string;
   address?: string;
   city?: string;
   zip?: string;
@@ -1079,6 +1080,7 @@ export const loadEventsByFilter = async ({
   const {
     logJobNumber,
     dateStarted,
+    dateEnded,
     address,
     zip,
     logDateCompleted,
@@ -1117,6 +1119,9 @@ export const loadEventsByFilter = async ({
   }
   if (dateStarted) {
     req.setDateStarted(`%${dateStarted}%`);
+  }
+  if (dateEnded) {
+    req.setDateEnded(`%${dateEnded}%`);
   }
   if (address) {
     p.setAddress(`%${address}%`);
