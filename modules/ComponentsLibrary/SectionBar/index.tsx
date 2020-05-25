@@ -33,7 +33,6 @@ interface Props {
   subtitle?: ReactNode;
   actions?: ActionsProps;
   className?: string;
-  classNameTitle?: string;
   pagination?: Pagination;
   styles?: CSSProperties;
   fixedActions?: boolean;
@@ -103,6 +102,7 @@ const useStyles = makeStyles(theme => ({
   }),
   subtitle: ({ small }: Styles) => ({
     marginTop: theme.spacing(0.25),
+    color: theme.palette.grey[500],
     ...theme.typography[small ? 'subtitle2' : 'subtitle1'],
     lineHeight: 1,
     [theme.breakpoints.down('xs')]: {
@@ -132,7 +132,6 @@ export const SectionBar: FC<Props> = ({
   subtitle,
   actions = [],
   className = '',
-  classNameTitle = '',
   pagination,
   styles,
   fixedActions = false,
@@ -189,7 +188,7 @@ export const SectionBar: FC<Props> = ({
             <div className={classes.titleWrapper}>
               <Typography
                 variant="h5"
-                className={classNameTitle + ' ' + classes.title}
+                className={classes.title}
                 onClick={handleToggleCollapsed}
               >
                 {title}{' '}
