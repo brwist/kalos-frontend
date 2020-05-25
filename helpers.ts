@@ -1038,7 +1038,7 @@ export const loadPropertiesByFilter = async ({
 };
 
 export type EventsSort = {
-  orderByField: keyof EventType;
+  orderByField: keyof EventType | keyof PropertyType | keyof UserType;
   orderBy: string;
   orderDir: OrderDir;
 };
@@ -1094,12 +1094,21 @@ export const loadEventsByFilter = async ({
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Event();
-  req.setOrderBy(orderBy);
-  req.setOrderDir(orderDir);
-  req.setIsActive(1);
-  req.setPageNumber(page);
   const p = new Property();
   const u = new User();
+  if (orderByField === 'lastname') {
+    u.setOrderBy(orderBy);
+    u.setOrderDir(orderDir);
+  } else if (orderByField === 'address') {
+    // FIXME - missing setOrderBy/setOrderDir in Property RPC
+    // p.setOrderBy(orderBy);
+    // p.setOrderDir(orderDir)
+  } else {
+    req.setOrderBy(orderBy);
+    req.setOrderDir(orderDir);
+  }
+  req.setIsActive(1);
+  req.setPageNumber(page);
   p.setIsActive(1);
   if (pendingBilling) {
     req.setLogJobStatus('Completed');
@@ -1148,16 +1157,17 @@ export const loadEventsByFilter = async ({
   req.setCustomer(u);
   const response = await EventClientService.BatchGet(req);
   return {
-    results: response
-      .getResultsList()
-      .map(item => item.toObject())
-      .sort((a, b) => {
-        const A = (a[orderByField] || '').toString().toLowerCase();
-        const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'DESC' ? 1 : -1;
-        if (A > B) return orderDir === 'DESC' ? -1 : 1;
-        return 0;
-      }),
+    results: response.getResultsList().map(item => item.toObject()),
+    // results: response
+    //   .getResultsList()
+    //   .map(item => item.toObject())
+    //   .sort((a, b) => {
+    //     const A = (a[orderByField] || '').toString().toLowerCase();
+    //     const B = (b[orderByField] || '').toString().toLowerCase();
+    //     if (A < B) return orderDir === 'DESC' ? 1 : -1;
+    //     if (A > B) return orderDir === 'DESC' ? -1 : 1;
+    //     return 0;
+    //   }),
     totalCount: response.getTotalCount(),
   };
 };
@@ -1261,8 +1271,16 @@ export const makeOptions = (
   ...options.map(label => ({ label, value: label })),
 ];
 
-export const getCustomerName = (c?: UserType): string =>
-  c ? `${c.firstname} ${c.lastname}`.trim() : '';
+export const getCustomerName = (
+  c?: UserType,
+  firstLastName: boolean = false,
+): string =>
+  c
+    ? (firstLastName
+        ? `${c.lastname}, ${c.firstname}`
+        : `${c.firstname} ${c.lastname}`
+      ).trim()
+    : '';
 
 export const getBusinessName = (c?: UserType): string =>
   c ? c.businessname.trim() : '';
