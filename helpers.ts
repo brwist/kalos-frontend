@@ -1505,6 +1505,36 @@ async function newBugReport(data: IBugReport) {
   }
 }
 
+async function newBugReportImage(imgBase64: string) {
+  try {
+    const client = new ApiKeyClient(ENDPOINT);
+    const req = new ApiKey();
+    req.setTextId('github_key');
+    const key = await client.Get(req);
+    const data = {
+      "message": "commit message",
+      "committer": {
+        "name": "Pavel Chernov",
+        "email": "pavel.chernov@toptal.com"
+      },
+      "content": imgBase64
+    };
+    const authString = `token ${key.apiKey}`;
+    const postData = {
+      method: 'PUT',
+      headers: {
+        Authorization: authString,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    };
+    const fetchRes = await fetch(key.apiEndpoint, postData);
+    console.log(fetchRes);
+  } catch (err) {
+    console.log('error generating bug report', err);
+  }
+}
+
 /**
  * Checks URL for http, and redirects to https appropriately
  */
@@ -1571,6 +1601,7 @@ export {
   escapeText,
   uploadFileToS3Bucket,
   newBugReport,
+  newBugReportImage,
   forceHTTPS,
   customerCheck,
 };
