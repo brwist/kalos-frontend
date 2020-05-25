@@ -351,6 +351,7 @@ export const Reports: FC = () => {
             label: 'Report',
           },
         ]}
+        fixedActions
       />
       <SectionBar
         title="Service Call Zip Code"
@@ -359,6 +360,7 @@ export const Reports: FC = () => {
             label: 'Report',
           },
         ]}
+        fixedActions
       />
       <SectionBar
         title="Warranty Report"
@@ -367,6 +369,7 @@ export const Reports: FC = () => {
             label: 'Report',
           },
         ]}
+        fixedActions
       />
       <Form
         title="Training Metrics"
@@ -407,6 +410,7 @@ export const Reports: FC = () => {
             label: 'Report',
           },
         ]}
+        fixedActions
       />
     </div>
   );
