@@ -44,7 +44,12 @@ import {
   InternalDocumentClient,
 } from '@kalos-core/kalos-rpc/InternalDocument';
 import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
-import { ENDPOINT, MONTHS, INTERNAL_DOCUMENTS_BUCKET } from './constants';
+import {
+  ENDPOINT,
+  MONTHS,
+  INTERNAL_DOCUMENTS_BUCKET,
+  OPTION_ALL,
+} from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
 
 export type UserType = User.AsObject;
@@ -888,13 +893,13 @@ function roundNumber(num: number) {
 /**
  * Returns options with weeks (starting Sunday) for the past year period
  */
-function getWeekOptions(): Option[] {
+function getWeekOptions(weeks = 52, offsetWeeks = 0): Option[] {
   const d = new Date();
-  return Array.from(Array(52)).map((_, week) => {
+  return Array.from(Array(weeks)).map((_, week) => {
     const w = new Date(
       d.getFullYear(),
       d.getMonth(),
-      d.getDate() - d.getDay() - week * 7,
+      d.getDate() - d.getDay() - (week + offsetWeeks) * 7,
     );
     return {
       label: `Week of ${
@@ -1243,8 +1248,13 @@ async function uploadFileToS3Bucket(
   }
 }
 
-export const makeOptions = (options: string[]): Option[] =>
-  options.map(label => ({ label, value: label }));
+export const makeOptions = (
+  options: string[],
+  withAllOption = false,
+): Option[] => [
+  ...(withAllOption ? [{ label: OPTION_ALL, value: OPTION_ALL }] : []),
+  ...options.map(label => ({ label, value: label })),
+];
 
 export const getCustomerName = (c?: UserType): string =>
   c ? `${c.firstname} ${c.lastname}`.trim() : '';
@@ -1476,6 +1486,27 @@ export const openFile = async (filename: string, bucket: string) => {
   window.open(url, '_blank');
 };
 
+export const makeLast12MonthsOptions = (
+  withAllOption: boolean,
+  monthOffset = 0,
+) => {
+  const today = new Date();
+  const currMonth = today.getMonth() + 1 + monthOffset;
+  return [
+    ...(withAllOption ? [{ label: OPTION_ALL, value: OPTION_ALL }] : []),
+    ...MONTHS.slice(currMonth).map((month, idx) => ({
+      label: `${month}, ${today.getFullYear() - 1}`,
+      value: `${today.getFullYear() - 1}-${trailingZero(
+        currMonth + idx + 1,
+      )}-%`,
+    })),
+    ...MONTHS.slice(0, currMonth).map((month, idx) => ({
+      label: `${month}, ${today.getFullYear()}`,
+      value: `${today.getFullYear()}-${trailingZero(idx + 1)}-%`,
+    })),
+  ].reverse();
+};
+
 interface IBugReport {
   title: string;
   body?: string;
@@ -1512,12 +1543,12 @@ async function newBugReportImage(imgBase64: string) {
     req.setTextId('github_key');
     const key = await client.Get(req);
     const data = {
-      "message": "commit message",
-      "committer": {
-        "name": "Pavel Chernov",
-        "email": "pavel.chernov@toptal.com"
+      message: 'commit message',
+      committer: {
+        name: 'Pavel Chernov',
+        email: 'pavel.chernov@toptal.com',
       },
-      "content": imgBase64
+      content: imgBase64,
     };
     const authString = `token ${key.apiKey}`;
     const postData = {

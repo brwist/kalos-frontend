@@ -38,8 +38,9 @@ import {
   escapeText,
   formatDay,
   uploadFileToS3Bucket,
+  makeLast12MonthsOptions,
 } from '../../../helpers';
-import { ENDPOINT, ROWS_PER_PAGE, MONTHS } from '../../../constants';
+import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 const DocumentClientService = new DocumentClient(ENDPOINT);
@@ -47,7 +48,6 @@ const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
   ENDPOINT,
 );
 
-const ALL = '-- All --';
 const MONTHLY = 'Monthly';
 const WEEKLY = 'Weekly';
 const WEEK_OPTIONS = getWeekOptions();
@@ -151,21 +151,7 @@ const useStyles = makeStyles(theme => ({
 
 export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const classes = useStyles();
-  const today = new Date();
-  const currMonth = today.getMonth() + 1;
-  const MONTHS_OPTIONS: Option[] = [
-    { label: ALL, value: ALL },
-    ...MONTHS.slice(currMonth).map((month, idx) => ({
-      label: `${month}, ${today.getFullYear() - 1}`,
-      value: `${today.getFullYear() - 1}-${trailingZero(
-        currMonth + idx + 1,
-      )}-%`,
-    })),
-    ...MONTHS.slice(0, currMonth).map((month, idx) => ({
-      label: `${month}, ${today.getFullYear()}`,
-      value: `${today.getFullYear()}-${trailingZero(idx + 1)}-%`,
-    })),
-  ].reverse();
+  const MONTHS_OPTIONS: Option[] = makeLast12MonthsOptions(true);
   const getSearchFormInit = () => ({
     description: '',
     month: MONTHS_OPTIONS[0].value as string,
@@ -246,7 +232,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       req.setBriefDescription(`%${description}%`);
     }
     if (kind === MONTHLY) {
-      if (month !== ALL) {
+      if (month !== OPTION_ALL) {
         req.setDatePerformed(month);
       }
     } else {
@@ -965,7 +951,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                   label: `${firstname} ${lastname}`,
                   value: id,
                 })),
-                { label: ALL, value: 0 },
+                { label: OPTION_ALL, value: 0 },
               ],
             },
           ]
