@@ -1,7 +1,11 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
 import { FilterForm } from '../Reports';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data, Columns } from '../InfoTable';
+import { Modal } from '../Modal';
+import { ServiceCall } from '../ServiceCall';
 import {
   makeFakeRows,
   loadEventsByFilter,
@@ -16,11 +20,13 @@ import { ROWS_PER_PAGE } from '../../../constants';
 type Props = {
   filter: FilterForm;
   onClose?: () => void;
+  loggedUserId: number;
 };
 
 export const JobStatusReport: FC<Props> = ({
   filter: { status, startDate, endDate },
   onClose,
+  loggedUserId,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -32,6 +38,7 @@ export const JobStatusReport: FC<Props> = ({
     orderByField: 'dateStarted',
     orderDir: 'DESC',
   });
+  const [pendingEdit, setPendingEdit] = useState<EventType>();
   const load = useCallback(async () => {
     setLoading(true);
     const { results, totalCount } = await loadEventsByFilter({
@@ -61,19 +68,25 @@ export const JobStatusReport: FC<Props> = ({
       load();
     }
   }, [loaded, setLoaded, load]);
+  const reload = useCallback(() => setLoaded(false), [setLoaded]);
   const handlePageChange = useCallback(
     (page: number) => {
       setPage(page);
-      setLoaded(false);
+      reload();
     },
-    [setPage, setLoaded],
+    [setPage, reload],
   );
   const handleSortChange = useCallback(
     (sort: EventsSort) => () => {
       setSort(sort);
-      setLoaded(false);
+      setPage(0);
+      reload();
     },
-    [setSort, setLoaded],
+    [setSort, reload],
+  );
+  const handlePendingEditToggle = useCallback(
+    (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
+    [setPendingEdit],
   );
   const COLUMNS: Columns = [
     {
@@ -172,7 +185,18 @@ export const JobStatusReport: FC<Props> = ({
           { value: getCustomerName(customer, true) },
           { value: logJobNumber },
           { value: formatDate(dateStarted) },
-          { value: logJobStatus },
+          {
+            value: logJobStatus,
+            actions: [
+              <IconButton
+                key="edit"
+                size="small"
+                onClick={handlePendingEditToggle(entry)}
+              >
+                <EditIcon />
+              </IconButton>,
+            ],
+          },
         ];
       });
   return (
@@ -197,6 +221,18 @@ export const JobStatusReport: FC<Props> = ({
         }}
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
+      {pendingEdit && pendingEdit.property && pendingEdit.customer && (
+        <Modal open onClose={handlePendingEditToggle(undefined)} fullScreen>
+          <ServiceCall
+            loggedUserId={loggedUserId}
+            onClose={handlePendingEditToggle(undefined)}
+            propertyId={pendingEdit.property.id}
+            userID={pendingEdit.customer.id}
+            serviceCallId={pendingEdit.id}
+            onSave={reload}
+          />
+        </Modal>
+      )}
     </>
   );
 };
