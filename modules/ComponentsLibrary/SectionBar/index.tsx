@@ -33,6 +33,7 @@ interface Props {
   subtitle?: ReactNode;
   actions?: ActionsProps;
   className?: string;
+  classNameTitle?: string;
   pagination?: Pagination;
   styles?: CSSProperties;
   fixedActions?: boolean;
@@ -131,6 +132,7 @@ export const SectionBar: FC<Props> = ({
   subtitle,
   actions = [],
   className = '',
+  classNameTitle = '',
   pagination,
   styles,
   fixedActions = false,
@@ -187,7 +189,7 @@ export const SectionBar: FC<Props> = ({
             <div className={classes.titleWrapper}>
               <Typography
                 variant="h5"
-                className={classes.title}
+                className={classNameTitle + ' ' + classes.title}
                 onClick={handleToggleCollapsed}
               >
                 {title}{' '}

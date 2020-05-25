@@ -8,16 +8,17 @@ import {
   Schema as PlainFormSchema,
 } from '../PlainForm';
 import { Options as FieldOptions, getDefaultValueByType } from '../Field';
+import { ActionsProps } from '../Actions';
 
 export type Schema<T> = PlainFormSchema<T>;
 
 export type Options = FieldOptions;
 
-interface Props<T> extends PlainFormProps<T> {
+export interface Props<T> extends PlainFormProps<T> {
   title?: string;
   subtitle?: string;
   onSave: (data: T) => void;
-  onClose: () => void;
+  onClose: (() => void) | null;
   onChange?: (data: T) => void;
   actions?: ButtonProps[];
   pagination?: Pagination;
@@ -91,7 +92,8 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
               if (
                 formData[name] === undefined ||
                 value === '' ||
-                ((type === 'classCode' || type === 'department') && value === '0')
+                ((type === 'classCode' || type === 'department') &&
+                  value === '0')
               ) {
                 validations[name as string] = 'This field is required.';
               }
@@ -121,12 +123,16 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
                       disabled,
                     },
                   ]),
-              {
-                label: readOnly ? 'Close' : cancelLabel,
-                onClick: onClose,
-                disabled,
-                variant: readOnly ? 'contained' : 'outlined',
-              },
+              ...(onClose !== null
+                ? ([
+                    {
+                      label: readOnly ? 'Close' : cancelLabel,
+                      onClick: onClose,
+                      disabled,
+                      variant: readOnly ? 'contained' : 'outlined',
+                    },
+                  ] as ActionsProps)
+                : []),
             ]}
             fixedActions
             pagination={pagination}
