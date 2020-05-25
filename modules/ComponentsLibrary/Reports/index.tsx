@@ -17,7 +17,7 @@ import {
   SPIFF_KIND_TYPE_LIST,
 } from '../../../constants';
 
-type FilterForm = {
+export type FilterForm = {
   status?: string;
   startDate?: string;
   endDate?: string;
