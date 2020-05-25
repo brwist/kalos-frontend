@@ -22,6 +22,7 @@ import FileTags from './FileTags/examples';
 import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
+import JobStatusReport from './JobStatusReport/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PlainForm from './PlainForm/examples';
@@ -58,6 +59,7 @@ const COMPONENTS = {
   Form,
   InfoTable,
   InternalDocuments,
+  JobStatusReport,
   Link,
   Modal,
   PlainForm,
