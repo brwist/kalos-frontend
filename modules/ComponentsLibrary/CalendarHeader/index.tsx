@@ -15,6 +15,7 @@ interface Props {
   onSubmit: () => void;
   submitLabel?: string;
   submitDisabled?: boolean;
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 }
 
 const useStyles = makeStyles(theme =>
@@ -73,6 +74,7 @@ export const CalendarHeader: FC<Props> = ({
   onSubmit,
   submitLabel = 'Submit',
   submitDisabled = false,
+  weekStartsOn = 0,
   children,
 }) => {
   const classes = useStyles();
@@ -86,6 +88,7 @@ export const CalendarHeader: FC<Props> = ({
           size="small"
           value={selectedDate}
           onChange={onDateChange}
+          weekStartsOn={weekStartsOn}
         />
         <Typography className={classes.userName} variant="subtitle1">
           {userName}

@@ -26,6 +26,11 @@ import {
 } from '@kalos-core/kalos-rpc/QuoteLinePart';
 import { QuoteLineClient, QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import {
+  PerDiemClient,
+  PerDiem,
+  PerDiemRow,
+} from '@kalos-core/kalos-rpc/PerDiem';
+import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
@@ -62,6 +67,7 @@ export type JobSubtypeType = JobSubtype.AsObject;
 export type InternalDocumentType = InternalDocument.AsObject;
 export type FileType = File.AsObject;
 export type DocumentKeyType = DocumentKey.AsObject;
+export type PerDiemType = PerDiem.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -69,6 +75,7 @@ export const EventClientService = new EventClient(ENDPOINT);
 export const JobTypeClientService = new JobTypeClient(ENDPOINT);
 export const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
 export const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
+export const PerDiemClientService = new PerDiemClient(ENDPOINT);
 export const ServicesRenderedClientService = new ServicesRenderedClient(
   ENDPOINT,
 );
@@ -843,6 +850,19 @@ async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
     userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
   );
 }
+
+export const loadPerDiemByUserIdAndDateStarted = async (
+  userId: number,
+  dateStarted: string,
+) => {
+  const req = new PerDiem();
+  req.setUserId(userId);
+  req.setWithRows(true);
+  req.setIsActive(true);
+  req.setPageNumber(0);
+  req.setDateStarted(`${dateStarted}%`);
+  return (await PerDiemClientService.BatchGet(req)).toObject();
+};
 
 /**
  * Returns an array of numbers from start to end inclusive

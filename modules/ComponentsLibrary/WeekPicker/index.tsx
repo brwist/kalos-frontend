@@ -63,6 +63,7 @@ type Props = {
   inputVariant?: TextFieldProps['variant'];
   size?: 'small' | 'medium';
   white?: boolean;
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
 };
 
 export const WeekPicker: FC<Props> = ({
@@ -72,10 +73,12 @@ export const WeekPicker: FC<Props> = ({
   inputVariant,
   size,
   white,
+  weekStartsOn = 0,
 }) => {
   const classes = useStyles();
+  const options = { weekStartsOn };
   const handleWeekChange = (date: MaterialUiPickersDate) => {
-    onChange(startOfWeek(date || value || new Date().valueOf()));
+    onChange(startOfWeek(date || value || new Date().valueOf(), options));
   };
 
   const formatWeekSelectLabel = (
@@ -85,7 +88,7 @@ export const WeekPicker: FC<Props> = ({
     let dateClone = new Date(date || value);
 
     return dateClone && isValid(dateClone)
-      ? `Week of ${format(startOfWeek(dateClone), 'MMM do')}`
+      ? `Week of ${format(startOfWeek(dateClone, options), 'MMM do')}`
       : invalidLabel;
   };
 
@@ -97,8 +100,8 @@ export const WeekPicker: FC<Props> = ({
     let dateClone = new Date(date || value);
     let selectedDateClone = new Date(selectedDate || value);
 
-    const start = startOfWeek(selectedDateClone);
-    const end = endOfWeek(selectedDateClone);
+    const start = startOfWeek(selectedDateClone, options);
+    const end = endOfWeek(selectedDateClone, options);
 
     const dayIsBetween = isWithinInterval(dateClone, { start, end });
     const isFirstDay = isSameDay(dateClone, start);
