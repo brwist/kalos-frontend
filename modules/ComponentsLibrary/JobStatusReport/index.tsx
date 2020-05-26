@@ -47,7 +47,7 @@ export const JobStatusReport: FC<Props> = ({
       page,
       filter: {
         logJobStatus: status,
-        dateStarted: startDate,
+        dateStarted: startDate, // TODO: use dateRangeList
         dateEnded: endDate,
       },
       sort,
