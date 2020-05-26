@@ -9,6 +9,7 @@ import Actions from './Actions/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
 import Button from './Button/examples';
+import Calendar from './Calendar/examples';
 import CalendarCard from './CalendarCard/examples';
 import CalendarColumn from './CalendarColumn/examples';
 import Chart from './Chart/examples';
@@ -48,6 +49,7 @@ const COMPONENTS = {
   AddNewButton,
   AdvancedSearch,
   Button,
+  Calendar,
   CalendarCard,
   CalendarColumn,
   Chart,
