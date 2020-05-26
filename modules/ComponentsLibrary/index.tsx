@@ -12,6 +12,7 @@ import Button from './Button/examples';
 import Calendar from './Calendar/examples';
 import CalendarCard from './CalendarCard/examples';
 import CalendarColumn from './CalendarColumn/examples';
+import CalendarHeader from './CalendarHeader/examples';
 import Chart from './Chart/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
@@ -52,6 +53,7 @@ const COMPONENTS = {
   Calendar,
   CalendarCard,
   CalendarColumn,
+  CalendarHeader,
   Chart,
   Confirm,
   ConfirmDelete,
