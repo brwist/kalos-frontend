@@ -3,6 +3,6 @@ import { PerDiem } from './';
 
 export default () => (
   <>
-    <PerDiem />
+    <PerDiem userId={101253} />
   </>
 );
