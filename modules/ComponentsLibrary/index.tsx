@@ -29,6 +29,7 @@ import InternalDocuments from './InternalDocuments/examples';
 import JobStatusReport from './JobStatusReport/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
+import PerDiem from './PerDiem/examples';
 import PlainForm from './PlainForm/examples';
 import PropertyEdit from './PropertyEdit/examples';
 import QuoteSelector from './QuoteSelector/examples';
@@ -70,6 +71,7 @@ const COMPONENTS = {
   JobStatusReport,
   Link,
   Modal,
+  PerDiem,
   PlainForm,
   PropertyEdit,
   QuoteSelector,
