@@ -10,6 +10,7 @@ import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
 import Button from './Button/examples';
 import CalendarCard from './CalendarCard/examples';
+import CalendarColumn from './CalendarColumn/examples';
 import Chart from './Chart/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
@@ -48,6 +49,7 @@ const COMPONENTS = {
   AdvancedSearch,
   Button,
   CalendarCard,
+  CalendarColumn,
   Chart,
   Confirm,
   ConfirmDelete,
