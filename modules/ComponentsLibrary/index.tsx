@@ -9,6 +9,7 @@ import Actions from './Actions/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
 import Button from './Button/examples';
+import CalendarCard from './CalendarCard/examples';
 import Chart from './Chart/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
@@ -46,6 +47,7 @@ const COMPONENTS = {
   AddNewButton,
   AdvancedSearch,
   Button,
+  CalendarCard,
   Chart,
   Confirm,
   ConfirmDelete,
