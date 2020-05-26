@@ -1,5 +1,6 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import { startOfWeek, format, addDays } from 'date-fns';
+import { PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 import { makeStyles } from '@material-ui/core/styles';
 import CardTravel from '@material-ui/icons/CardTravel';
 import { CalendarHeader } from '../CalendarHeader';
@@ -7,21 +8,72 @@ import { Calendar } from '../Calendar';
 import { CalendarColumn } from '../CalendarColumn';
 import { CalendarCard } from '../CalendarCard';
 import { AddNewButton } from '../AddNewButton';
+import { Form, Schema } from '../Form';
+import { Modal } from '../Modal';
 import {
   loadUserById,
   loadPerDiemByUserIdAndDateStarted,
   UserType,
   PerDiemType,
+  PerDiemRowType,
   getCustomerName,
 } from '../../../helpers';
+import { JOB_STATUS_COLORS } from '../../../constants';
 
 export interface Props {
   userId: number;
 }
 
-const useStyles = makeStyles(theme => ({}));
+const useStyles = makeStyles(theme => ({
+  row: {
+    marginBottom: theme.spacing(0.5),
+  },
+}));
 
 const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
+
+const SCHEMA: Schema<PerDiemRowType> = [
+  [
+    {
+      label: 'Date',
+      name: 'dateString',
+      type: 'date',
+      required: true,
+    },
+  ],
+  [
+    {
+      label: 'Zip Code',
+      name: 'zipCode',
+      required: true,
+    },
+  ],
+  [
+    {
+      label: 'Service Call',
+      name: 'serviceCallId',
+      required: true,
+    },
+  ],
+  [
+    {
+      label: 'Notes',
+      name: 'notes',
+      multiline: true,
+    },
+  ],
+  [
+    {
+      label: 'Meals Only',
+      name: 'mealsOnly',
+      type: 'checkbox',
+    },
+  ],
+];
+
+const APPROVED = 'APPROVED';
+const PENDING_APPROVE = 'PENDING_APPROVE';
+const PENDING_SUBMIT = 'PENDING_SUBMIT';
 
 export const PerDiem: FC<Props> = ({ userId }) => {
   const classes = useStyles();
@@ -34,6 +86,7 @@ export const PerDiem: FC<Props> = ({ userId }) => {
   const [dateStarted, setDateStarted] = useState<Date>(
     startOfWeek(new Date(), { weekStartsOn: 6 }),
   );
+  const [pendingEdit, setPendingEdit] = useState<PerDiemRowType>();
   const load = useCallback(async () => {
     setLoading(true);
     const { resultsList } = await loadPerDiemByUserIdAndDateStarted(
@@ -61,22 +114,32 @@ export const PerDiem: FC<Props> = ({ userId }) => {
       loadUser();
     }
   }, [userLoaded, setUserLoaded, loadUser]);
+  const handlePendingEditToggle = useCallback(
+    (pendingEdit?: PerDiemRowType) => () => setPendingEdit(pendingEdit),
+    [setPendingEdit],
+  );
   const status = useMemo(() => {
     if (perDiem) {
       if (perDiem.dateApproved)
         return {
+          status: APPROVED,
+          button: 'Approve Per Diems',
           text: 'Approved',
-          color: '#004400',
+          color: '#' + JOB_STATUS_COLORS['Completed'],
         };
       if (perDiem.dateSubmitted)
         return {
+          status: PENDING_APPROVE,
+          button: 'Approve Per Diems',
           text: 'Pending approve',
-          color: '#FFBB00',
+          color: '#' + JOB_STATUS_COLORS['Pend Sched'],
         };
     }
     return {
+      status: PENDING_SUBMIT,
+      button: 'Submit Per Diems',
       text: 'Pending submit',
-      color: '#888888',
+      color: '#' + JOB_STATUS_COLORS['Incomplete'],
     };
   }, [perDiem]);
   const rowsList = perDiem ? perDiem.rowsList : [];
@@ -88,6 +151,7 @@ export const PerDiem: FC<Props> = ({ userId }) => {
         selectedDate={dateStarted}
         userName={getCustomerName(user)}
         weekStartsOn={6}
+        submitLabel={status.button}
       />
       <Calendar>
         {[...Array(7)].map((_, dayOffset) => {
@@ -101,31 +165,34 @@ export const PerDiem: FC<Props> = ({ userId }) => {
               date={date}
               loading={loading || loadingUser}
             >
-              {rows.map(({ id, notes, zipCode, serviceCallId, mealsOnly }) => (
-                <CalendarCard
-                  key={id}
-                  title={status.text}
-                  statusColor={status.color}
-                  onClick={console.log}
-                >
-                  <div>
-                    <strong>Zip Code: </strong>
-                    {zipCode}
-                  </div>
-                  <div>
-                    <strong>Service Call Id: </strong>
-                    {serviceCallId}
-                  </div>
-                  <div>
-                    <strong>Meals only: </strong>
-                    {mealsOnly ? 'YES' : 'NO'}
-                  </div>
-                  <div>
-                    <strong>Notes: </strong>
-                    {notes}
-                  </div>
-                </CalendarCard>
-              ))}
+              {rows.map(entry => {
+                const { id, notes, zipCode, serviceCallId, mealsOnly } = entry;
+                return (
+                  <CalendarCard
+                    key={id}
+                    title={status.text.toUpperCase()}
+                    statusColor={status.color}
+                    onClick={handlePendingEditToggle(entry)}
+                  >
+                    <div className={classes.row}>
+                      <strong>Zip Code: </strong>
+                      {zipCode}
+                    </div>
+                    <div className={classes.row}>
+                      <strong>Service Call Id: </strong>
+                      {serviceCallId}
+                    </div>
+                    <div className={classes.row}>
+                      <strong>Meals only: </strong>
+                      {mealsOnly ? 'YES' : 'NO'}
+                    </div>
+                    <div className={classes.row}>
+                      <strong>Notes: </strong>
+                      {notes}
+                    </div>
+                  </CalendarCard>
+                );
+              })}
             </CalendarColumn>
           );
         })}
@@ -135,9 +202,21 @@ export const PerDiem: FC<Props> = ({ userId }) => {
           {
             name: 'Add Per Diem',
             icon: <CardTravel />,
+            action: handlePendingEditToggle(new PerDiemRow().toObject()),
           },
         ]}
       />
+      {pendingEdit && (
+        <Modal open onClose={handlePendingEditToggle(undefined)}>
+          <Form
+            title={`${pendingEdit.id ? 'Edit' : 'Add'} Per Diem Row`}
+            schema={SCHEMA}
+            data={pendingEdit}
+            onClose={handlePendingEditToggle(undefined)}
+            onSave={console.log}
+          />
+        </Modal>
+      )}
     </div>
   );
 };

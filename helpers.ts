@@ -68,6 +68,7 @@ export type InternalDocumentType = InternalDocument.AsObject;
 export type FileType = File.AsObject;
 export type DocumentKeyType = DocumentKey.AsObject;
 export type PerDiemType = PerDiem.AsObject;
+export type PerDiemRowType = PerDiemRow.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
