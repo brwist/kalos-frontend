@@ -3,6 +3,16 @@ import { CalendarColumn } from './';
 import CalendarCardExample from '../CalendarCard/examples';
 import { LoremIpsum, ExampleTitle } from '../helpers';
 
+export const CalendarColumnsExample = () => (
+  <>
+    {[...Array(7)].map((_, idx) => (
+      <CalendarColumn key={idx} date={`2020-03-1${idx}`}>
+        <CalendarCardExample />
+      </CalendarColumn>
+    ))}
+  </>
+);
+
 export default () => (
   <>
     <ExampleTitle>Default</ExampleTitle>
