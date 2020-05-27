@@ -65,7 +65,13 @@ const Examples = ({
         }}
       />
       <hr />
-      <SectionBar title="With content" subtitle={subtitle} footer="Footer">
+      <SectionBar
+        title="With content"
+        subtitle={subtitle}
+        footer="Footer"
+        actions={[{ label: 'Button' }]}
+        fixedActions
+      >
         <LoremIpsumList style={{ padding: 10, backgroundColor: '#eee' }} />
       </SectionBar>
       <hr />

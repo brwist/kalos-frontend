@@ -1,4 +1,5 @@
 import uniq from 'lodash/uniq';
+import { startOfWeek, format } from 'date-fns';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
@@ -69,6 +70,7 @@ export type FileType = File.AsObject;
 export type DocumentKeyType = DocumentKey.AsObject;
 export type PerDiemType = PerDiem.AsObject;
 export type PerDiemRowType = PerDiemRow.AsObject;
+export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -450,7 +452,7 @@ async function loadJobSubtypes() {
  * @returns TimesheetDepartment[]
  */
 async function loadTimesheetDepartments() {
-  const results: TimesheetDepartment.AsObject[] = [];
+  const results: TimesheetDepartmentType[] = [];
   const req = new TimesheetDepartment();
   req.setPageNumber(0);
   req.setIsActive(1);
@@ -863,6 +865,44 @@ export const loadPerDiemByUserIdAndDateStarted = async (
   req.setPageNumber(0);
   req.setDateStarted(`${dateStarted}%`);
   return (await PerDiemClientService.BatchGet(req)).toObject();
+};
+
+export const upsertPerDiem = async (data: PerDiemType) => {
+  const req = new PerDiem();
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return await PerDiemClientService[data.id ? 'Update' : 'Create'](req);
+};
+
+export const deletePerDiemById = async (id: number) => {
+  const req = new PerDiem();
+  req.setId(id);
+  await PerDiemClientService.Delete(req);
+};
+
+export const upsertPerDiemRow = async (data: PerDiemRowType) => {
+  const req = new PerDiemRow();
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  // return await PerDiemClientService[data.id ? 'UpdateRow' : 'CreateRow'](req);
+};
+
+export const deletePerDiemRowById = async (id: number) => {
+  const req = new PerDiemRow();
+  req.setId(id);
+  // await PerDiemClientService.DeleteRow(req);
 };
 
 /**
@@ -1291,6 +1331,9 @@ export const makeOptions = (
   ...(withAllOption ? [{ label: OPTION_ALL, value: OPTION_ALL }] : []),
   ...options.map(label => ({ label, value: label })),
 ];
+
+export const getDepartmentName = (d?: TimesheetDepartmentType): string =>
+  d ? `${d.value} - ${d.description}` : '';
 
 export const getCustomerName = (
   c?: UserType,

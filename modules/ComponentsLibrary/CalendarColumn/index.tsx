@@ -15,6 +15,7 @@ interface Props {
   date: string;
   header?: ReactNode;
   loading?: boolean;
+  loadingRows?: number;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -66,6 +67,7 @@ export const CalendarColumn: FC<Props> = ({
   date,
   header,
   loading,
+  loadingRows = 5,
   children,
 }) => {
   const classes = useStyles();
@@ -103,7 +105,7 @@ export const CalendarColumn: FC<Props> = ({
       </Box>
       {loading ? (
         <>
-          {[...Array(5)].map((e, i) => (
+          {[...Array(loadingRows)].map((e, i) => (
             <SkeletonCard key={`${date}-skeleton-${i}`} />
           ))}
         </>
