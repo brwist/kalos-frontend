@@ -6,6 +6,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 interface Props {
   error?: string;
+  className?: string;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -20,14 +21,14 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Calendar: FC<Props> = ({ error, children }) => {
+export const Calendar: FC<Props> = ({ error, className, children }) => {
   const classes = useStyles();
   return (
     <Box className={classes.wrapper}>
       {error ? (
         <Alert severity="error">{error}</Alert>
       ) : (
-        <Container className={classes.week} maxWidth={false}>
+        <Container className={className + ' ' + classes.week} maxWidth={false}>
           {children}
         </Container>
       )}

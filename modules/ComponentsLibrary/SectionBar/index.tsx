@@ -74,10 +74,11 @@ const useStyles = makeStyles(theme => ({
   header: {
     display: 'flex',
     alignItems: 'center',
-    [theme.breakpoints.down('xs')]: {
-      // flexDirection: 'column',
-      // alignItems: 'flex-start',
-    },
+  },
+  actions: {
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
   },
   titleWrapper: ({ collapsable, small }: Styles) => ({
     cursor: collapsable ? 'pointer' : 'default',
@@ -90,8 +91,8 @@ const useStyles = makeStyles(theme => ({
       marginBottom: theme.spacing(0.5),
     },
   }),
-  title: ({ fixedActions, small }: Styles) => ({
-    display: fixedActions ? 'block' : 'flex',
+  title: ({ small }: Styles) => ({
+    display: 'flex',
     alignItems: 'center',
     ...theme.typography[small ? 'subtitle1' : 'h6'],
     lineHeight: 1,
@@ -220,7 +221,7 @@ export const SectionBar: FC<Props> = ({
               />
             )}
           </div>
-          <div className={classes.header}>
+          <div className={classes.actions}>
             {actions.length > 0 && (
               <Actions actions={actions} fixed={fixedActions} />
             )}
