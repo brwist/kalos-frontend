@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import Alert from '@material-ui/lab/Alert';
 import sortBy from 'lodash/sortBy';
 import { startOfWeek, format, addDays } from 'date-fns';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
@@ -12,6 +13,7 @@ import { Form, Schema } from '../Form';
 import { Modal } from '../Modal';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { SectionBar } from '../SectionBar';
+import { Loader } from '../../Loader/main';
 import {
   loadUserById,
   loadPerDiemByUserIdAndDateStarted,
@@ -28,11 +30,13 @@ import {
   deletePerDiemRowById,
   submitPerDiemById,
   formatDate,
+  approvePerDiemById,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS } from '../../../constants';
 
 export interface Props {
   userId: number;
+  loggedUserId: number;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -68,20 +72,20 @@ const getStatus = (
   if (dateApproved)
     return {
       status: 'APPROVED',
-      button: 'Approve Per Diems',
+      button: 'Approve',
       text: 'Approved',
       color: '#' + JOB_STATUS_COLORS['Completed'],
     };
   if (dateSubmitted)
     return {
       status: 'PENDING_APPROVE',
-      button: 'Approve Per Diems',
+      button: 'Approve',
       text: 'Pending approve',
       color: '#' + JOB_STATUS_COLORS['Pend Sched'],
     };
   return {
     status: 'PENDING_SUBMIT',
-    button: 'Submit Per Diems',
+    button: 'Submit',
     text: 'Pending submit',
     color: '#' + JOB_STATUS_COLORS['Incomplete'],
   };
@@ -138,7 +142,7 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   ],
 ];
 
-export const PerDiemComponent: FC<Props> = ({ userId }) => {
+export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -146,6 +150,7 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
   const [userLoaded, setUserLoaded] = useState<boolean>(false);
   const [loadingUser, setLoadingUser] = useState<boolean>(false);
   const [user, setUser] = useState<UserType>();
+  const [manager, setManager] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [pendingPerDiemEdit, setPendingPerDiemEdit] = useState<PerDiemType>();
   const [pendingPerDiemDelete, setPendingPerDiemDelete] = useState<
@@ -173,11 +178,20 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
   const loadUser = useCallback(async () => {
     setLoadingUser(true);
     const user = await loadUserById(userId);
+    const manager = await loadUserById(loggedUserId);
     const departments = await loadTimesheetDepartments();
     setUser(user);
+    setManager(manager);
     setDepartments(sortBy(departments, getDepartmentName));
     setLoadingUser(false);
-  }, [userId, setLoadingUser, setUser, setDepartments]);
+  }, [
+    userId,
+    loggedUserId,
+    setLoadingUser,
+    setUser,
+    setManager,
+    setDepartments,
+  ]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -238,8 +252,7 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
       setPendingPerDiemEdit(pendingPerDiemEdit),
     [setPendingPerDiemEdit],
   );
-  console.log({ perDiems });
-  const handleSubmitPerRow = useCallback(
+  const handleSubmitPerDiem = useCallback(
     (perDiem: PerDiemType) => async () => {
       setSaving(true);
       await submitPerDiemById(perDiem.id);
@@ -247,6 +260,15 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
       setLoaded(false);
     },
     [setSaving, setLoaded],
+  );
+  const handleApprovePerDiem = useCallback(
+    (perDiem: PerDiemType) => async () => {
+      setSaving(true);
+      await approvePerDiemById(perDiem.id, loggedUserId);
+      setSaving(false);
+      setLoaded(false);
+    },
+    [setSaving, setLoaded, loggedUserId],
   );
   const handleDeletePerDiem = useCallback(async () => {
     if (pendingPerDiemDelete) {
@@ -350,7 +372,26 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
     },
     [],
   );
+  if (loadingUser) return <Loader />;
   const addPerDiemDisabled = availableDapartments.length === 0;
+  const isOwner = userId === loggedUserId;
+  const isAnyManager = departments
+    .map(({ managerId }) => managerId)
+    .includes(loggedUserId);
+  if (!isOwner && !isAnyManager)
+    return (
+      <Alert severity="error">
+        You don't have permission to view this page
+      </Alert>
+    );
+  const managerDepartmentsIds = departments
+    .filter(({ managerId }) => managerId === loggedUserId)
+    .map(({ id }) => id);
+  const filteredPerDiems = isOwner
+    ? perDiems
+    : perDiems.filter(({ departmentId }) =>
+        managerDepartmentsIds.includes(departmentId),
+      );
   return (
     <div>
       <CalendarHeader
@@ -362,7 +403,7 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
         submitLabel="Add Per Diem"
         submitDisabled={loading || saving || addPerDiemDisabled}
       />
-      {perDiems.map(entry => {
+      {filteredPerDiems.map(entry => {
         const {
           id,
           rowsList,
@@ -371,8 +412,15 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
           dateSubmitted,
           notes,
           approvedByName,
+          departmentId,
         } = entry;
         const status = getStatus(dateApproved, dateSubmitted);
+        const isManager = !isOwner;
+        const buttonDisabled =
+          saving ||
+          loading ||
+          status.status === 'APPROVED' ||
+          (isOwner && status.status !== 'PENDING_SUBMIT');
         return (
           <div key={id} className={classes.department}>
             <SectionBar
@@ -393,25 +441,30 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
                   label: 'Delete',
                   variant: 'outlined',
                   onClick: handlePendingPerDiemDeleteToggle(entry),
-                  disabled:
-                    saving || loading || status.status !== 'PENDING_SUBMIT',
+                  disabled: buttonDisabled,
                 },
                 {
                   label: 'Edit',
                   variant: 'outlined',
                   onClick: handlePendingPerDiemEditToggle(entry),
-                  disabled:
-                    saving || loading || status.status !== 'PENDING_SUBMIT',
+                  disabled: buttonDisabled,
                 },
                 {
-                  label: 'Submit',
-                  onClick: handleSubmitPerRow(entry),
-                  disabled:
-                    saving || loading || status.status !== 'PENDING_SUBMIT',
+                  label: status.button,
+                  onClick: isOwner
+                    ? handleSubmitPerDiem(entry)
+                    : handleApprovePerDiem(entry),
+                  disabled: buttonDisabled,
                 },
               ]}
-              fixedActions
-              footer={notes}
+              footer={
+                notes.trim() ? (
+                  <span>
+                    <strong>Notes: </strong>
+                    {notes}
+                  </span>
+                ) : null
+              }
             >
               <Calendar className={classes.calendar}>
                 {[...Array(7)].map((_, dayOffset) => {
@@ -426,7 +479,8 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
                       loading={loading || loadingUser}
                       loadingRows={2}
                     >
-                      {status.status === 'PENDING_SUBMIT' && (
+                      {((isOwner && status.status === 'PENDING_SUBMIT') ||
+                        (isManager && status.status !== 'APPROVED')) && (
                         <Button
                           label="Add Per Diem Row"
                           compact
@@ -454,7 +508,8 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
                             title={status.text.toUpperCase()}
                             statusColor={status.color}
                             onClick={
-                              status.status === 'PENDING_SUBMIT'
+                              (isOwner && status.status === 'PENDING_SUBMIT') ||
+                              (isManager && status.status !== 'APPROVED')
                                 ? handlePendingPerDiemRowEditToggle(entry)
                                 : undefined
                             }
