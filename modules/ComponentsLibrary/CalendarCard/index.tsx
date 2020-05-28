@@ -8,7 +8,7 @@ import { makeStyles } from '@material-ui/core/styles';
 interface Props {
   title: string;
   statusColor: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 const useStyles = makeStyles(theme => ({
