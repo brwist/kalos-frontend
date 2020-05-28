@@ -889,6 +889,16 @@ export const submitPerDiemById = async (id: number) => {
   return await PerDiemClientService.Update(req);
 };
 
+export const approvePerDiemById = async (id: number, approvedById: number) => {
+  const req = new PerDiem();
+  req.setId(id);
+  req.setDateApproved(timestamp());
+  req.setApprovedById(approvedById);
+  const fieldMaskList = ['DateApproved', 'ApprovedById'];
+  req.setFieldMaskList(fieldMaskList);
+  return await PerDiemClientService.Update(req);
+};
+
 export const deletePerDiemById = async (id: number) => {
   const req = new PerDiem();
   req.setId(id);

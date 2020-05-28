@@ -196,7 +196,7 @@ export const SectionBar: FC<Props> = ({
                 {children &&
                   (collapsed ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
               </Typography>
-              {subtitle && (
+              {!collapsed && subtitle && (
                 <Typography
                   variant="h6"
                   className={classes.subtitle}
