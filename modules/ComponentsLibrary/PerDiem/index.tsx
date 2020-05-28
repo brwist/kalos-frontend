@@ -254,18 +254,18 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
     setPendingPerDiemRowEdit,
     setLoaded,
   ]);
-  const departmentsOptions = useMemo(
-    () =>
-      sortBy(
-        departments.map(d => ({
-          // TODO: exclude already taken departments
+  const departmentsOptions = useMemo(() => {
+    const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
+    return sortBy(
+      departments
+        .filter(({ id }) => !usedDepartments.includes(id))
+        .map(d => ({
           value: d.id,
           label: getDepartmentName(d),
         })),
-        ({ label }) => label,
-      ),
-    [departments],
-  );
+      ({ label }) => label,
+    );
+  }, [departments, perDiems]);
   const SCHEMA_PER_DIEM: Schema<PerDiemType> = pendingPerDiemEdit
     ? [
         [
@@ -302,15 +302,32 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
         ],
       ]
     : [];
+  const usedDepartments = useMemo(
+    () => perDiems.map(({ departmentId }) => departmentId),
+    [perDiems],
+  );
+  const availableDapartments = useMemo(
+    () =>
+      sortBy(
+        departments.filter(({ id }) => !usedDepartments.includes(id)),
+        getDepartmentName,
+      ),
+    [usedDepartments, departments],
+  );
   const makeNewPerDiem = useCallback(() => {
     const req = new PerDiem();
     if (user) {
       req.setUserId(userId);
       req.setDateStarted(formatDateFns(dateStarted));
-      req.setDepartmentId(user.employeeDepartmentId);
+      const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
+      req.setDepartmentId(
+        usedDepartments.includes(user.employeeDepartmentId)
+          ? (availableDapartments[0] || [{}]).id
+          : user.employeeDepartmentId,
+      );
     }
     return req.toObject();
-  }, [userId, dateStarted, user]);
+  }, [userId, dateStarted, user, perDiems, departments, availableDapartments]);
   const makeNewPerDiemRow = useCallback(
     (perDiemId: number, dateString: string) => {
       const req = new PerDiemRow();
@@ -320,6 +337,7 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
     },
     [],
   );
+  const addPerDiemDisabled = availableDapartments.length === 0;
   return (
     <div>
       <CalendarHeader
@@ -329,6 +347,7 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
         userName={getCustomerName(user)}
         weekStartsOn={6}
         submitLabel="Add Per Diem"
+        submitDisabled={loading || saving || addPerDiemDisabled}
       />
       {perDiems.map(entry => {
         const {
