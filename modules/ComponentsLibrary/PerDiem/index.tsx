@@ -26,6 +26,8 @@ import {
   deletePerDiemById,
   upsertPerDiemRow,
   deletePerDiemRowById,
+  submitPerDiemById,
+  formatDate,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS } from '../../../constants';
 
@@ -54,23 +56,31 @@ const useStyles = makeStyles(theme => ({
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const getStatus = (dateApproved: string, dateSubmitted: string) => {
+const getStatus = (
+  dateApproved: string,
+  dateSubmitted: string,
+): {
+  status: 'APPROVED' | 'PENDING_APPROVE' | 'PENDING_SUBMIT';
+  button: string;
+  text: string;
+  color: string;
+} => {
   if (dateApproved)
     return {
-      status: APPROVED,
+      status: 'APPROVED',
       button: 'Approve Per Diems',
       text: 'Approved',
       color: '#' + JOB_STATUS_COLORS['Completed'],
     };
   if (dateSubmitted)
     return {
-      status: PENDING_APPROVE,
+      status: 'PENDING_APPROVE',
       button: 'Approve Per Diems',
       text: 'Pending approve',
       color: '#' + JOB_STATUS_COLORS['Pend Sched'],
     };
   return {
-    status: PENDING_SUBMIT,
+    status: 'PENDING_SUBMIT',
     button: 'Submit Per Diems',
     text: 'Pending submit',
     color: '#' + JOB_STATUS_COLORS['Incomplete'],
@@ -127,10 +137,6 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
     },
   ],
 ];
-
-const APPROVED = 'APPROVED';
-const PENDING_APPROVE = 'PENDING_APPROVE';
-const PENDING_SUBMIT = 'PENDING_SUBMIT';
 
 export const PerDiemComponent: FC<Props> = ({ userId }) => {
   const classes = useStyles();
@@ -231,6 +237,16 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
     (pendingPerDiemEdit?: PerDiemType) => () =>
       setPendingPerDiemEdit(pendingPerDiemEdit),
     [setPendingPerDiemEdit],
+  );
+  console.log({ perDiems });
+  const handleSubmitPerRow = useCallback(
+    (perDiem: PerDiemType) => async () => {
+      setSaving(true);
+      await submitPerDiemById(perDiem.id);
+      setSaving(false);
+      setLoaded(false);
+    },
+    [setSaving, setLoaded],
   );
   const handleDeletePerDiem = useCallback(async () => {
     if (pendingPerDiemDelete) {
@@ -354,23 +370,44 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
           dateApproved,
           dateSubmitted,
           notes,
+          approvedByName,
         } = entry;
         const status = getStatus(dateApproved, dateSubmitted);
         return (
           <div key={id} className={classes.department}>
             <SectionBar
               title={`Department: ${getDepartmentName(department)}`}
+              subtitle={
+                <>
+                  {+dateSubmitted[0] > 0 && (
+                    <div>Submited Date: {formatDate(dateSubmitted)}</div>
+                  )}
+                  {+dateApproved[0] > 0 && (
+                    <div>Approved Date: {formatDate(dateApproved)}</div>
+                  )}
+                  {approvedByName && <div>Approved By: {approvedByName}</div>}
+                </>
+              }
               actions={[
                 {
-                  label: 'Edit Per Diem',
-                  onClick: handlePendingPerDiemEditToggle(entry),
-                  disabled: saving || loading,
-                },
-                {
-                  label: 'Delete Per Diem',
+                  label: 'Delete',
                   variant: 'outlined',
                   onClick: handlePendingPerDiemDeleteToggle(entry),
-                  disabled: saving || loading,
+                  disabled:
+                    saving || loading || status.status !== 'PENDING_SUBMIT',
+                },
+                {
+                  label: 'Edit',
+                  variant: 'outlined',
+                  onClick: handlePendingPerDiemEditToggle(entry),
+                  disabled:
+                    saving || loading || status.status !== 'PENDING_SUBMIT',
+                },
+                {
+                  label: 'Submit',
+                  onClick: handleSubmitPerRow(entry),
+                  disabled:
+                    saving || loading || status.status !== 'PENDING_SUBMIT',
                 },
               ]}
               fixedActions
@@ -389,17 +426,20 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
                       loading={loading || loadingUser}
                       loadingRows={2}
                     >
-                      <Button
-                        label="Add Per Diem Row"
-                        compact
-                        variant="text"
-                        fullWidth
-                        className={classes.button}
-                        onClick={handlePendingPerDiemRowEditToggle(
-                          makeNewPerDiemRow(id, date),
-                        )}
-                        size="xsmall"
-                      />
+                      {status.status === 'PENDING_SUBMIT' && (
+                        <Button
+                          label="Add Per Diem Row"
+                          compact
+                          variant="text"
+                          fullWidth
+                          className={classes.button}
+                          onClick={handlePendingPerDiemRowEditToggle(
+                            makeNewPerDiemRow(id, date),
+                          )}
+                          size="xsmall"
+                          disabled={loading || saving}
+                        />
+                      )}
                       {rows.map(entry => {
                         const {
                           id,
@@ -413,7 +453,11 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
                             key={id}
                             title={status.text.toUpperCase()}
                             statusColor={status.color}
-                            onClick={handlePendingPerDiemRowEditToggle(entry)}
+                            onClick={
+                              status.status === 'PENDING_SUBMIT'
+                                ? handlePendingPerDiemRowEditToggle(entry)
+                                : undefined
+                            }
                           >
                             <div className={classes.row}>
                               <strong>Zip Code: </strong>

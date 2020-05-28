@@ -880,6 +880,15 @@ export const upsertPerDiem = async (data: PerDiemType) => {
   return await PerDiemClientService[data.id ? 'Update' : 'Create'](req);
 };
 
+export const submitPerDiemById = async (id: number) => {
+  const req = new PerDiem();
+  req.setId(id);
+  req.setDateSubmitted(timestamp());
+  const fieldMaskList = ['DateSubmitted'];
+  req.setFieldMaskList(fieldMaskList);
+  return await PerDiemClientService.Update(req);
+};
+
 export const deletePerDiemById = async (id: number) => {
   const req = new PerDiem();
   req.setId(id);
