@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { useState, FC } from 'react';
 import clsx from 'clsx';
 import { EditorState, RichUtils, ContentBlock } from 'draft-js';
 import Editor, { composeDecorators } from 'draft-js-plugins-editor';
@@ -6,9 +6,6 @@ import createImagePlugin from 'draft-js-image-plugin';
 import createBlockDndPlugin from 'draft-js-drag-n-drop-plugin';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
-import IconButton from '@material-ui/core/IconButton';
-import InsertPhotoIcon from '@material-ui/icons/InsertPhoto';
-import { newBugReportImage } from '../../../helpers';
 
 const blockDndPlugin = createBlockDndPlugin();
 const decorator = composeDecorators(
@@ -23,12 +20,21 @@ const plugins = [
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    container: {},
+    container: {
+      margin: `${theme.spacing(2)}px 0`,
+      border: `1px solid ${theme.palette.grey['400']}`,
+      borderRadius: theme.spacing(0.5),
+    },
     stylesBlock: {
-      background: theme.palette.primary.light,
+      background: theme.palette.grey['200'],
+      padding: theme.spacing(1),
+      borderBottom: `1px solid ${theme.palette.grey['400']}`,
+    },
+    editorWrapper: {
+      padding: theme.spacing(1),
     },
     styleButton: {
-      color: theme.palette.grey.A400,
+      color: theme.palette.grey['400'],
       cursor: 'pointer',
       marginRight: theme.spacing(2),
       padding: '2px 0',
@@ -86,7 +92,6 @@ const BLOCK_TYPES = [
 const BlockStyleControls: FC<StyleControlsProps> = ({
   editorState,
   onToggle,
-  handleUploadImage,
 }: StyleControlsProps): JSX.Element => {
   const selection = editorState.getSelection();
   const blockType = editorState
@@ -105,10 +110,6 @@ const BlockStyleControls: FC<StyleControlsProps> = ({
           style={type.style}
         />
       ))}
-      <label htmlFor="bug-report-image">
-        <InsertPhotoIcon />
-      </label>
-      <input type="file" id="bug-report-image" style={{display: 'none'}} onChange={handleUploadImage} />
     </div>
   );
 };
@@ -146,6 +147,7 @@ type Props = {
 
 const RichTextEditor: FC<Props> = ({ editorState, setEditorState }) => {
   const classes = useStyles();
+  const [attachedImages, setAttachedImages] = useState([]);
   const handleChange = (state: EditorState) => {
     setEditorState(state);
   };
@@ -161,37 +163,26 @@ const RichTextEditor: FC<Props> = ({ editorState, setEditorState }) => {
     );
   };
 
-  const handleUploadImage = e => {
-      const file = e.target.files[0],
-        reader = new FileReader();
-
-      reader.onloadend = function () {
-        const imgBase64 = reader.result.replace(/^data:.+;base64,/, '');
-        newBugReportImage(imgBase64);
-      };
-
-      reader.readAsDataURL(file);
-  };
-
   return (
     <Box className={classes.container}>
       <Box className={classes.stylesBlock}>
         <BlockStyleControls
           editorState={editorState}
           onToggle={toggleBlockType}
-          handleUploadImage={handleUploadImage}
         />
         <InlineStyleControls
           editorState={editorState}
           onToggle={toggleInlineStyle}
         />
       </Box>
-      <Editor
-        editorState={editorState}
-        onChange={setEditorState}
-        blockStyleFn={getBlockStyle}
-        plugins={plugins}
-      />
+      <Box className={classes.editorWrapper}>
+        <Editor
+          editorState={editorState}
+          onChange={setEditorState}
+          blockStyleFn={getBlockStyle}
+          plugins={plugins}
+        />
+      </Box>
     </Box>
   );
 };

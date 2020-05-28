@@ -79,7 +79,6 @@ const SideMenu = ({ userId, imgURL }: Props) => {
     reportBugFormShown: false,
   });
   const { user, isManager, isOpen, reportBugFormShown } = state;
-
   const toggleMenu = () => {
     dispatch({ type: 'toggleMenu' });
   };
@@ -178,7 +177,7 @@ const SideMenu = ({ userId, imgURL }: Props) => {
         </Drawer>
       )}
       {reportBugFormShown && (
-        <ReportBugForm onClose={handleCloseReportBugForm} />
+        <ReportBugForm onClose={handleCloseReportBugForm} user={user} />
       )}
     </ThemeProvider>
   );
