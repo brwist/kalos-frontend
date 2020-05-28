@@ -18,6 +18,7 @@ export interface Props extends Style {
   fullWidth?: boolean;
   className?: string;
   span?: boolean;
+  startIcon?: JSX.Element;
 }
 
 const useStyles = makeStyles(theme => ({

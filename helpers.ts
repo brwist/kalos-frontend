@@ -1623,33 +1623,51 @@ async function newBugReport(data: IBugReport) {
   }
 }
 
-async function newBugReportImage(imgBase64: string) {
+export type BugReportImage = {
+  label: string,
+  data: string,
+  url?: string,
+}
+
+async function newBugReportImage(user: User.AsObject, images: BugReportImage[]) {
   try {
+    const timestamp = new Date().getTime();
     const client = new ApiKeyClient(ENDPOINT);
     const req = new ApiKey();
-    req.setTextId('github_key');
+    req.setTextId('github_file_key');
     const key = await client.Get(req);
-    const data = {
-      message: 'commit message',
+    const common = {
+      message: 'bug report image',
       committer: {
-        name: 'Pavel Chernov',
-        email: 'pavel.chernov@toptal.com',
+        name: `${user.firstname} ${user.lastname}`,
+        email: user.email,
       },
-      content: imgBase64,
     };
     const authString = `token ${key.apiKey}`;
-    const postData = {
-      method: 'PUT',
-      headers: {
-        Authorization: authString,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    };
-    const fetchRes = await fetch(key.apiEndpoint, postData);
-    console.log(fetchRes);
+    const result: { filename: string; url: string; }[] = [];
+    for (const img of images) {
+      const data = {...common, content: img.data};
+      const putData = {
+        method: 'PUT',
+        headers: {
+          Authorization: authString,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      };
+      try {
+        await fetch(`${key.apiEndpoint}/images/${timestamp}/${img.label}`, putData);
+        result.push({
+          filename: img.label,
+          url: encodeURI(`https://github.com/rmilejcz/kalos-frontend-issues/raw/master/images/${timestamp}/${img.label}`),
+        });
+      } catch (e) {
+        console.log('error uploading image', e);
+      }
+    }
+    return result;
   } catch (err) {
-    console.log('error generating bug report', err);
+    console.log('error uploading image', err);
   }
 }
 
