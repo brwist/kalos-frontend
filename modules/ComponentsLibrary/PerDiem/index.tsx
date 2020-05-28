@@ -122,8 +122,9 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   ],
   [
     {
-      label: 'Service Call',
+      label: 'Service Call ID',
       name: 'serviceCallId',
+      type: 'eventId',
       required: true,
     },
   ],
