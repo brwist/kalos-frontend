@@ -19,6 +19,14 @@ export default () => (
       kinds={['serviceCalls']}
       deletableEvents
     />
+    <ExampleTitle>Service Calls Picker</ExampleTitle>
+    <AdvancedSearch
+      title="Service Calls"
+      loggedUserId={101253}
+      kinds={['serviceCalls']}
+      onSelectEvent={console.log}
+      onClose={() => console.log('CLOSE')}
+    />
     <ExampleTitle>Customers</ExampleTitle>
     <AdvancedSearch
       title="Customers"

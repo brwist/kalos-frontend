@@ -68,6 +68,8 @@ export interface Props {
   deletableProperties?: boolean;
   eventsWithAccounting?: boolean;
   eventsWithAdd?: boolean;
+  onSelectEvent?: (event: EventType) => void;
+  onClose?: () => void;
 }
 
 type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
@@ -102,6 +104,8 @@ export const AdvancedSearch: FC<Props> = ({
   deletableProperties,
   eventsWithAccounting = false,
   eventsWithAdd = false,
+  onSelectEvent,
+  onClose,
 }) => {
   const classes = useStyles();
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
@@ -372,6 +376,17 @@ export const AdvancedSearch: FC<Props> = ({
     accounting,
     setAccounting,
   ]);
+  const handleSelectEvent = useCallback(
+    (event: EventType) => () => {
+      if (onSelectEvent) {
+        onSelectEvent(event);
+      }
+      if (onClose) {
+        onClose();
+      }
+    },
+    [onSelectEvent, onClose],
+  );
   const searchActions: ActionsProps = [
     {
       label: 'Reset',
@@ -816,29 +831,79 @@ export const AdvancedSearch: FC<Props> = ({
                 : {};
             return customer
               ? [
-                  { value: formatDate(dateStarted) },
+                  {
+                    value: formatDate(dateStarted),
+                    onClick: onSelectEvent
+                      ? handleSelectEvent(entry)
+                      : undefined,
+                  },
                   {
                     value: accounting
                       ? getCustomerName(customer)
                       : getCustomerNameAndBusinessName(customer),
+                    onClick: onSelectEvent
+                      ? handleSelectEvent(entry)
+                      : undefined,
                   },
-                  ...(accounting ? [{ value: getBusinessName(customer) }] : []),
+                  ...(accounting
+                    ? [
+                        {
+                          value: getBusinessName(customer),
+                          onClick: onSelectEvent
+                            ? handleSelectEvent(entry)
+                            : undefined,
+                        },
+                      ]
+                    : []),
                   {
                     value: accounting
                       ? property?.address || ''
                       : `${getPropertyAddress(property)} ${getCustomerPhone(
                           customer,
                         )}`,
+                    onClick: onSelectEvent
+                      ? handleSelectEvent(entry)
+                      : undefined,
                   },
-                  ...(accounting ? [{ value: property?.city || '' }] : []),
-                  ...(accounting ? [{ value: property?.zip || '' }] : []),
-                  ...(accounting ? [{ value: property?.phone || '' }] : []),
+                  ...(accounting
+                    ? [
+                        {
+                          value: property?.city || '',
+                          onClick: onSelectEvent
+                            ? handleSelectEvent(entry)
+                            : undefined,
+                        },
+                      ]
+                    : []),
+                  ...(accounting
+                    ? [
+                        {
+                          value: property?.zip || '',
+                          onClick: onSelectEvent
+                            ? handleSelectEvent(entry)
+                            : undefined,
+                        },
+                      ]
+                    : []),
+                  ...(accounting
+                    ? [
+                        {
+                          value: property?.phone || '',
+                          onClick: onSelectEvent
+                            ? handleSelectEvent(entry)
+                            : undefined,
+                        },
+                      ]
+                    : []),
                   {
                     value: (
                       <span style={canceledStyle}>
                         {accounting ? logJobNumber.substr(0, 8) : logJobNumber}
                       </span>
                     ),
+                    onClick: onSelectEvent
+                      ? handleSelectEvent(entry)
+                      : undefined,
                   },
                   {
                     value: (
@@ -846,6 +911,9 @@ export const AdvancedSearch: FC<Props> = ({
                         {accounting ? jobType : `${jobType} / ${jobSubtype}`}
                       </span>
                     ),
+                    onClick: onSelectEvent
+                      ? handleSelectEvent(entry)
+                      : undefined,
                   },
                   {
                     value: (
@@ -853,14 +921,21 @@ export const AdvancedSearch: FC<Props> = ({
                         {accounting ? jobSubtype : logJobStatus}
                       </span>
                     ),
+                    onClick: onSelectEvent
+                      ? handleSelectEvent(entry)
+                      : undefined,
                     actions: [
-                      <IconButton
-                        key="edit"
-                        size="small"
-                        onClick={handlePendingEventEditingToggle(entry)}
-                      >
-                        <EditIcon />
-                      </IconButton>,
+                      ...(onSelectEvent
+                        ? []
+                        : [
+                            <IconButton
+                              key="edit"
+                              size="small"
+                              onClick={handlePendingEventEditingToggle(entry)}
+                            >
+                              <EditIcon />
+                            </IconButton>,
+                          ]),
                       ...(deletableEvents
                         ? [
                             <IconButton
@@ -970,7 +1045,7 @@ export const AdvancedSearch: FC<Props> = ({
             ];
           });
     return [];
-  }, [filter, loading, events, loadingDicts, accounting]);
+  }, [filter, loading, events, loadingDicts, accounting, onSelectEvent]);
   return (
     <div>
       <SectionBar
@@ -996,6 +1071,14 @@ export const AdvancedSearch: FC<Props> = ({
                 {
                   label: 'Add Service Call',
                   onClick: handlePendingEventAddingToggle(true),
+                },
+              ]
+            : []),
+          ...(onClose
+            ? [
+                {
+                  label: 'Close',
+                  onClick: onClose,
                 },
               ]
             : []),
