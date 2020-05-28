@@ -168,7 +168,7 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
   >(false);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [dateStarted, setDateStarted] = useState<Date>(
-    addDays(startOfWeek(new Date(), { weekStartsOn: 6 }), -7),
+    addDays(startOfWeek(new Date(), { weekStartsOn: 6 }), -0),
   );
   const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] = useState<
     PerDiemRowType
