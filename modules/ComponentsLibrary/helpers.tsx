@@ -38,6 +38,7 @@ export const ExampleTitle: FC = ({ children }) => (
     style={{
       backgroundColor: 'gold',
       padding: 8,
+      marginTop: 10,
       marginBottom: 10,
       fontFamily: 'sans-serif',
       fontWeight: 900,
