@@ -9,6 +9,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  submitLabel?: string;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -22,6 +23,7 @@ export const Confirm: FC<Props> = ({
   title,
   onClose,
   onConfirm,
+  submitLabel = 'Confirm',
   children,
 }) => {
   const classes = useStyles();
@@ -30,7 +32,7 @@ export const Confirm: FC<Props> = ({
       <SectionBar
         title={title}
         actions={[
-          { label: 'Confirm', onClick: onConfirm },
+          { label: submitLabel, onClick: onConfirm },
           { label: 'Cancel', onClick: onClose, variant: 'outlined' },
         ]}
         fixedActions

@@ -12,6 +12,7 @@ export default () => {
         open={open}
         onClose={toggleOpen(false)}
         onConfirm={() => alert('Confirmed')}
+        submitLabel="Custom label"
       >
         Are you sure, you want to do it?
       </Confirm>
