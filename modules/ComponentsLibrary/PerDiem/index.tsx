@@ -169,7 +169,7 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
     const user = await loadUserById(userId);
     const departments = await loadTimesheetDepartments();
     setUser(user);
-    setDepartments(departments);
+    setDepartments(sortBy(departments, getDepartmentName));
     setLoadingUser(false);
   }, [userId, setLoadingUser, setUser, setDepartments]);
   useEffect(() => {
@@ -256,15 +256,12 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
   ]);
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
-    return sortBy(
-      departments
-        .filter(({ id }) => !usedDepartments.includes(id))
-        .map(d => ({
-          value: d.id,
-          label: getDepartmentName(d),
-        })),
-      ({ label }) => label,
-    );
+    return departments
+      .filter(({ id }) => !usedDepartments.includes(id))
+      .map(d => ({
+        value: d.id,
+        label: getDepartmentName(d),
+      }));
   }, [departments, perDiems]);
   const SCHEMA_PER_DIEM: Schema<PerDiemType> = pendingPerDiemEdit
     ? [
@@ -367,11 +364,13 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
                 {
                   label: 'Edit Per Diem',
                   onClick: handlePendingPerDiemEditToggle(entry),
+                  disabled: saving || loading,
                 },
                 {
                   label: 'Delete Per Diem',
                   variant: 'outlined',
                   onClick: handlePendingPerDiemDeleteToggle(entry),
+                  disabled: saving || loading,
                 },
               ]}
               fixedActions
