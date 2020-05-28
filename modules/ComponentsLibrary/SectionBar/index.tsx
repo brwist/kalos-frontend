@@ -228,7 +228,7 @@ export const SectionBar: FC<Props> = ({
             {asideContent}
           </div>
         </div>
-        {footer && <div className={classes.footer}>{footer}</div>}
+        {!collapsed && footer && <div className={classes.footer}>{footer}</div>}
       </div>
       {!collapsed && children}
     </>

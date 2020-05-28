@@ -896,13 +896,11 @@ export const upsertPerDiemRow = async (data: PerDiemRowType) => {
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
-  // return await PerDiemClientService[data.id ? 'UpdateRow' : 'CreateRow'](req);
+  return await PerDiemClientService[data.id ? 'UpdateRow' : 'CreateRow'](req);
 };
 
 export const deletePerDiemRowById = async (id: number) => {
-  const req = new PerDiemRow();
-  req.setId(id);
-  // await PerDiemClientService.DeleteRow(req);
+  await PerDiemClientService.DeleteRow(id);
 };
 
 /**
@@ -1624,12 +1622,15 @@ async function newBugReport(data: IBugReport) {
 }
 
 export type BugReportImage = {
-  label: string,
-  data: string,
-  url?: string,
-}
+  label: string;
+  data: string;
+  url?: string;
+};
 
-async function newBugReportImage(user: User.AsObject, images: BugReportImage[]) {
+async function newBugReportImage(
+  user: User.AsObject,
+  images: BugReportImage[],
+) {
   try {
     const timestamp = new Date().getTime();
     const client = new ApiKeyClient(ENDPOINT);
@@ -1644,9 +1645,9 @@ async function newBugReportImage(user: User.AsObject, images: BugReportImage[]) 
       },
     };
     const authString = `token ${key.apiKey}`;
-    const result: { filename: string; url: string; }[] = [];
+    const result: { filename: string; url: string }[] = [];
     for (const img of images) {
-      const data = {...common, content: img.data};
+      const data = { ...common, content: img.data };
       const putData = {
         method: 'PUT',
         headers: {
@@ -1656,10 +1657,15 @@ async function newBugReportImage(user: User.AsObject, images: BugReportImage[]) 
         body: JSON.stringify(data),
       };
       try {
-        await fetch(`${key.apiEndpoint}/images/${timestamp}/${img.label}`, putData);
+        await fetch(
+          `${key.apiEndpoint}/images/${timestamp}/${img.label}`,
+          putData,
+        );
         result.push({
           filename: img.label,
-          url: encodeURI(`https://github.com/rmilejcz/kalos-frontend-issues/raw/master/images/${timestamp}/${img.label}`),
+          url: encodeURI(
+            `https://github.com/rmilejcz/kalos-frontend-issues/raw/master/images/${timestamp}/${img.label}`,
+          ),
         });
       } catch (e) {
         console.log('error uploading image', e);
