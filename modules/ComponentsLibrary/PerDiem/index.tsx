@@ -80,6 +80,18 @@ const getStatus = (dateApproved: string, dateSubmitted: string) => {
 const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   [
     {
+      name: 'id',
+      type: 'hidden',
+    },
+  ],
+  [
+    {
+      name: 'perDiemId',
+      type: 'hidden',
+    },
+  ],
+  [
+    {
       label: 'Date',
       name: 'dateString',
       type: 'date',
@@ -246,6 +258,7 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
     () =>
       sortBy(
         departments.map(d => ({
+          // TODO: exclude already taken departments
           value: d.id,
           label: getDepartmentName(d),
         })),
@@ -394,7 +407,7 @@ export const PerDiemComponent: FC<Props> = ({ userId }) => {
                             </div>
                             <div className={classes.row}>
                               <strong>Meals only: </strong>
-                              {mealsOnly ? 'YES' : 'NO'}
+                              {mealsOnly ? 'Yes' : 'No'}
                             </div>
                             <div className={classes.row}>
                               <strong>Notes: </strong>
