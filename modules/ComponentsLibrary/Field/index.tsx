@@ -33,8 +33,14 @@ import { Actions } from '../Actions';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
-import { makeFakeRows, loadTechnicians, trailingZero } from '../../../helpers';
+import {
+  makeFakeRows,
+  loadTechnicians,
+  trailingZero,
+  EventType,
+} from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../../Pickers/';
+import { AdvancedSearch } from '../AdvancedSearch';
 import './styles.css';
 
 type SelectOption = {
@@ -66,7 +72,8 @@ export type Type =
   | 'department'
   | 'classCode'
   | 'hidden'
-  | 'color';
+  | 'color'
+  | 'eventId';
 
 export type Value = string | number;
 
@@ -249,6 +256,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     type === 'date' ? (props.value + '').substr(0, 10) : props.value;
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
+  const [eventsOpened, setEventsOpened] = useState<boolean>(false);
   const [techniciansOpened, setTechniciansOpened] = useState<boolean>(false);
   const [techniciansIds, setTechniciansIds] = useState<number[]>(
     (value + '').split(',').map(id => +id),
@@ -260,6 +268,18 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     setLoadedTechnicians(true);
     setTechnicians(technicians);
   }, [setLoadedTechnicians, setTechnicians]);
+  const handleEventsOpenedToggle = useCallback(
+    (opened: boolean) => () => setEventsOpened(opened),
+    [setEventsOpened],
+  );
+  const handleEventSelect = useCallback(
+    (event: EventType) => {
+      if (onChange) {
+        onChange(event.id);
+      }
+    },
+    [onChange],
+  );
   const handleSetTechniciansOpened = useCallback(
     (opened: boolean) => () => {
       setTechniciansOpened(opened);
@@ -800,7 +820,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         label={inputLabel}
         fullWidth
         InputProps={{
-          readOnly: type === 'file' ? true : readOnly,
+          readOnly: type === 'file' || type === 'eventId' ? true : readOnly,
           startAdornment:
             startAdornment || type === 'file' ? (
               <InputAdornment position="start">
@@ -827,7 +847,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         }}
         error={error}
         {...props}
-        type={type === 'file' ? 'text' : type}
+        type={type === 'file' ? 'text' : type === 'eventId' ? 'number' : type}
         value={type === 'file' ? filename || value : value}
         helperText={helper}
       />
@@ -839,16 +859,38 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           responsiveColumn
         />
       )}
-      {actions.length > 0 && actionsInLabel && (
+      {((actions.length > 0 && actionsInLabel) || type === 'eventId') && (
         <Actions
           className={classes.actionsInLabel}
-          actions={actions.map(item => ({
+          actions={[
+            ...actions,
+            ...(type === 'eventId'
+              ? [
+                  {
+                    label: 'Search Service Calls',
+                    variant: 'outlined' as const,
+                    onClick: handleEventsOpenedToggle(true),
+                  },
+                ]
+              : []),
+          ].map(item => ({
             ...item,
-            size: 'xsmall',
+            size: 'xsmall' as const,
             compact: true,
           }))}
           fixed
         />
+      )}
+      {eventsOpened && (
+        <Modal open onClose={handleEventsOpenedToggle(false)} fullScreen>
+          <AdvancedSearch
+            title="Service Calls Search"
+            loggedUserId={0}
+            kinds={['serviceCalls']}
+            onSelectEvent={handleEventSelect}
+            onClose={handleEventsOpenedToggle(false)}
+          />
+        </Modal>
       )}
     </div>
   );
