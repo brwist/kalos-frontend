@@ -18,6 +18,7 @@ export type Model = {
   signature: string;
   coverImage: string;
   color: string;
+  serviceCallId: number;
 };
 
 export const model: Model = {
@@ -36,6 +37,7 @@ amet`,
   signature: '',
   coverImage: '',
   color: '#9473f1',
+  serviceCallId: 0,
 };
 
 export const SCHEMA_1: Schema<Model> = [
@@ -82,6 +84,8 @@ export const SCHEMA_2: Schema<Model> = [
       ],
       actionsInLabel: true,
     },
+  ],
+  [
     {
       name: 'dob',
       label: 'Date of birth',
@@ -91,6 +95,12 @@ export const SCHEMA_2: Schema<Model> = [
       name: 'hour',
       label: 'Hour',
       type: 'time',
+      required: true,
+    },
+    {
+      name: 'serviceCallId',
+      label: 'Service Call ID',
+      type: 'eventId',
       required: true,
     },
   ],

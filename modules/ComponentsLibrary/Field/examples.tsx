@@ -121,6 +121,11 @@ export default () => (
       endAdornment="USD"
       defaultValue={1432}
     />
+    <EnhancedField
+      label="Service Call ID"
+      defaultValue={86086}
+      type="eventId"
+    />
     <EnhancedField label="Technician" type="technician" defaultValue={'0'} />
     <EnhancedField
       label="Multiline"
