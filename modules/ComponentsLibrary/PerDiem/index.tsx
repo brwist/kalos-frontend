@@ -11,6 +11,7 @@ import { CalendarColumn } from '../CalendarColumn';
 import { CalendarCard } from '../CalendarCard';
 import { Form, Schema } from '../Form';
 import { Modal } from '../Modal';
+import { Confirm } from '../Confirm';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { SectionBar } from '../SectionBar';
 import { Loader } from '../../Loader/main';
@@ -150,8 +151,13 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
   const [userLoaded, setUserLoaded] = useState<boolean>(false);
   const [loadingUser, setLoadingUser] = useState<boolean>(false);
   const [user, setUser] = useState<UserType>();
-  const [manager, setManager] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [pendingPerDiemSubmit, setPendingPerDiemSubmit] = useState<
+    PerDiemType
+  >();
+  const [pendingPerDiemApprove, setPendingPerDiemApprove] = useState<
+    PerDiemType
+  >();
   const [pendingPerDiemEdit, setPendingPerDiemEdit] = useState<PerDiemType>();
   const [pendingPerDiemDelete, setPendingPerDiemDelete] = useState<
     PerDiemType
@@ -178,20 +184,11 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
   const loadUser = useCallback(async () => {
     setLoadingUser(true);
     const user = await loadUserById(userId);
-    const manager = await loadUserById(loggedUserId);
     const departments = await loadTimesheetDepartments();
     setUser(user);
-    setManager(manager);
     setDepartments(sortBy(departments, getDepartmentName));
     setLoadingUser(false);
-  }, [
-    userId,
-    loggedUserId,
-    setLoadingUser,
-    setUser,
-    setManager,
-    setDepartments,
-  ]);
+  }, [userId, loggedUserId, setLoadingUser, setUser, setDepartments]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -252,24 +249,36 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
       setPendingPerDiemEdit(pendingPerDiemEdit),
     [setPendingPerDiemEdit],
   );
-  const handleSubmitPerDiem = useCallback(
-    (perDiem: PerDiemType) => async () => {
+  const handlePendingPerDiemSubmitToggle = useCallback(
+    (pendingPerDiemSubmit?: PerDiemType) => () =>
+      setPendingPerDiemSubmit(pendingPerDiemSubmit),
+    [setPendingPerDiemSubmit],
+  );
+  const handlePendingPerDiemApproveToggle = useCallback(
+    (pendingPerDiemApprove?: PerDiemType) => () =>
+      setPendingPerDiemApprove(pendingPerDiemApprove),
+    [setPendingPerDiemApprove],
+  );
+  const submitPerDiem = useCallback(async () => {
+    if (pendingPerDiemSubmit) {
+      const { id } = pendingPerDiemSubmit;
+      setPendingPerDiemSubmit(undefined);
       setSaving(true);
-      await submitPerDiemById(perDiem.id);
+      await submitPerDiemById(id);
       setSaving(false);
       setLoaded(false);
-    },
-    [setSaving, setLoaded],
-  );
-  const handleApprovePerDiem = useCallback(
-    (perDiem: PerDiemType) => async () => {
+    }
+  }, [setSaving, setLoaded, pendingPerDiemSubmit]);
+  const approvePerDiem = useCallback(async () => {
+    if (pendingPerDiemApprove) {
+      const { id } = pendingPerDiemApprove;
+      setPendingPerDiemApprove(undefined);
       setSaving(true);
-      await approvePerDiemById(perDiem.id, loggedUserId);
+      await approvePerDiemById(id, loggedUserId);
       setSaving(false);
       setLoaded(false);
-    },
-    [setSaving, setLoaded, loggedUserId],
-  );
+    }
+  }, [setSaving, setLoaded, loggedUserId, pendingPerDiemApprove]);
   const handleDeletePerDiem = useCallback(async () => {
     if (pendingPerDiemDelete) {
       const { id } = pendingPerDiemDelete;
@@ -412,7 +421,6 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
           dateSubmitted,
           notes,
           approvedByName,
-          departmentId,
         } = entry;
         const status = getStatus(dateApproved, dateSubmitted);
         const isManager = !isOwner;
@@ -452,8 +460,8 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
                 {
                   label: status.button,
                   onClick: isOwner
-                    ? handleSubmitPerDiem(entry)
-                    : handleApprovePerDiem(entry),
+                    ? handlePendingPerDiemSubmitToggle(entry)
+                    : handlePendingPerDiemApproveToggle(entry),
                   disabled: buttonDisabled,
                 },
               ]}
@@ -597,6 +605,28 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
           kind="this Per Diem Row"
           name=""
         />
+      )}
+      {pendingPerDiemSubmit && (
+        <Confirm
+          open
+          onClose={handlePendingPerDiemSubmitToggle(undefined)}
+          onConfirm={submitPerDiem}
+          title="Confirm Submit"
+          submitLabel="Submit"
+        >
+          Are you sure, you want to submit this Per Diem?
+        </Confirm>
+      )}
+      {pendingPerDiemApprove && (
+        <Confirm
+          open
+          onClose={handlePendingPerDiemApproveToggle(undefined)}
+          onConfirm={approvePerDiem}
+          title="Confirm Approve"
+          submitLabel="Approve"
+        >
+          Are you sure, you want to approve this Per Diem?
+        </Confirm>
       )}
     </div>
   );
