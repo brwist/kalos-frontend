@@ -15,6 +15,7 @@ export type Model = {
   dob: string;
   hour: string;
   technician: string;
+  technicians: string;
   signature: string;
   coverImage: string;
   color: string;
@@ -34,6 +35,7 @@ amet`,
   dob: '1980-11-23 00:00:00',
   hour: '',
   technician: '',
+  technicians: '',
   signature: '',
   coverImage: '',
   color: '#9473f1',
@@ -169,6 +171,12 @@ export const SCHEMA_2: Schema<Model> = [
     {
       name: 'technician',
       label: 'Technician',
+      type: 'technician',
+      required: true,
+    },
+    {
+      name: 'technicians',
+      label: 'Technicians',
       type: 'technicians',
       required: true,
     },
