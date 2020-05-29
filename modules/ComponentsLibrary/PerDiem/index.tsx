@@ -176,6 +176,10 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] = useState<
     PerDiemRowType
   >();
+  const [
+    pendingPerDiemEditDuplicated,
+    setPendingPerDiemEditDuplicated,
+  ] = useState<boolean>(false);
   const initialize = useCallback(async () => {
     setInitializing(true);
     const user = await loadUserById(loggedUserId);
@@ -189,12 +193,14 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       setManagerDepartmentId(managerDepartment.id);
     }
     setInitializing(false);
+    setInitialized(true);
   }, [
     loggedUserId,
     setInitializing,
     setUser,
     setDepartments,
     setManagerDepartmentId,
+    setInitialized,
   ]);
   const load = useCallback(async () => {
     setLoading(true);
@@ -224,13 +230,12 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       setLoaded(true);
       load();
     }
-  }, [loaded, setLoaded, load]);
+  }, [loaded, setLoaded, load, initialized]);
   useEffect(() => {
     if (!initialized) {
-      setInitialized(true);
       initialize();
     }
-  }, [initialized, setInitialized, initialize]);
+  }, [initialized, initialize]);
   const handleSetDateStarted = useCallback(
     (value: Date) => {
       if (formatDateFns(value) === formatDateFns(dateStarted)) return;
@@ -246,13 +251,30 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   );
   const handleSavePerDiem = useCallback(
     async (data: PerDiemType) => {
+      data.userId = +data.userId;
+      setPendingPerDiemEditDuplicated(false);
+      if (
+        managerPerDiems.find(
+          ({ userId, departmentId }) =>
+            userId === data.userId && departmentId === data.departmentId,
+        )
+      ) {
+        setPendingPerDiemEditDuplicated(true);
+        return;
+      }
       setSaving(true);
       await upsertPerDiem(data);
       setPendingPerDiemEdit(undefined);
       setSaving(false);
       setLoaded(false);
     },
-    [setSaving, setPendingPerDiemEdit, setLoaded],
+    [
+      setSaving,
+      setPendingPerDiemEdit,
+      setLoaded,
+      setPendingPerDiemEditDuplicated,
+      managerPerDiems,
+    ],
   );
   const handleSavePerDiemRow = useCallback(
     async (perDiemRow: PerDiemRowType) => {
@@ -381,6 +403,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                   label: 'Department',
                   options: departmentsOptions,
                   required: true,
+                  type: isAnyManager ? ('hidden' as const) : ('text' as const),
                 },
               ]),
         ],
@@ -448,149 +471,151 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
           You don't have any entries for selected week
         </Alert>
       )}
-      {filteredPerDiems.map(entry => {
-        const {
-          id,
-          rowsList,
-          department,
-          dateApproved,
-          dateSubmitted,
-          notes,
-          approvedByName,
-          ownerName,
-          userId,
-        } = entry;
-        const status = getStatus(dateApproved, dateSubmitted);
-        const isManager = !isOwner;
-        const buttonDisabled =
-          saving ||
-          loading ||
-          status.status === 'APPROVED' ||
-          (isOwner && status.status !== 'PENDING_SUBMIT');
-        return (
-          <div key={id} className={classes.department}>
-            <SectionBar
-              title={
-                isAnyManager
-                  ? ownerName + ' (user id: ' + userId + ')'
-                  : `Department: ${getDepartmentName(department)}`
-              }
-              subtitle={
-                <>
-                  {+dateSubmitted[0] > 0 && (
-                    <div>Submited Date: {formatDate(dateSubmitted)}</div>
-                  )}
-                  {+dateApproved[0] > 0 && (
-                    <div>Approved Date: {formatDate(dateApproved)}</div>
-                  )}
-                  {approvedByName && <div>Approved By: {approvedByName}</div>}
-                </>
-              }
-              actions={[
-                {
-                  label: 'Delete',
-                  variant: 'outlined',
-                  onClick: handlePendingPerDiemDeleteToggle(entry),
-                  disabled: buttonDisabled,
-                },
-                {
-                  label: 'Edit',
-                  variant: 'outlined',
-                  onClick: handlePendingPerDiemEditToggle(entry),
-                  disabled: buttonDisabled,
-                },
-                {
-                  label: status.button,
-                  onClick: isOwner
-                    ? handlePendingPerDiemSubmitToggle(entry)
-                    : handlePendingPerDiemApproveToggle(entry),
-                  disabled: buttonDisabled,
-                },
-              ]}
-              footer={
-                notes.trim() ? (
-                  <span>
-                    <strong>Notes: </strong>
-                    {notes}
-                  </span>
-                ) : null
-              }
-            >
-              <Calendar className={classes.calendar}>
-                {[...Array(7)].map((_, dayOffset) => {
-                  const date = formatDateFns(addDays(dateStarted, dayOffset));
-                  const rows = rowsList.filter(({ dateString }) =>
-                    dateString.startsWith(date),
-                  );
-                  return (
-                    <CalendarColumn
-                      key={dayOffset}
-                      date={date}
-                      loading={loading}
-                      loadingRows={2}
-                    >
-                      {((isOwner && status.status === 'PENDING_SUBMIT') ||
-                        (isManager && status.status !== 'APPROVED')) && (
-                        <Button
-                          label="Add Per Diem Row"
-                          compact
-                          variant="text"
-                          fullWidth
-                          className={classes.button}
-                          onClick={handlePendingPerDiemRowEditToggle(
-                            makeNewPerDiemRow(id, date),
-                          )}
-                          size="xsmall"
-                          disabled={loading || saving}
-                        />
-                      )}
-                      {rows.map(entry => {
-                        const {
-                          id,
-                          notes,
-                          zipCode,
-                          serviceCallId,
-                          mealsOnly,
-                        } = entry;
-                        return (
-                          <CalendarCard
-                            key={id}
-                            title={status.text.toUpperCase()}
-                            statusColor={status.color}
-                            onClick={
-                              (isOwner && status.status === 'PENDING_SUBMIT') ||
-                              (isManager && status.status !== 'APPROVED')
-                                ? handlePendingPerDiemRowEditToggle(entry)
-                                : undefined
-                            }
-                          >
-                            <div className={classes.row}>
-                              <strong>Zip Code: </strong>
-                              {zipCode}
-                            </div>
-                            <div className={classes.row}>
-                              <strong>Service Call Id: </strong>
-                              {serviceCallId}
-                            </div>
-                            <div className={classes.row}>
-                              <strong>Meals only: </strong>
-                              {mealsOnly ? 'Yes' : 'No'}
-                            </div>
-                            <div className={classes.row}>
-                              <strong>Notes: </strong>
-                              {notes}
-                            </div>
-                          </CalendarCard>
-                        );
-                      })}
-                    </CalendarColumn>
-                  );
-                })}
-              </Calendar>
-            </SectionBar>
-          </div>
-        );
-      })}
+      {!loading &&
+        filteredPerDiems.map(entry => {
+          const {
+            id,
+            rowsList,
+            department,
+            dateApproved,
+            dateSubmitted,
+            notes,
+            approvedByName,
+            ownerName,
+            userId,
+          } = entry;
+          const status = getStatus(dateApproved, dateSubmitted);
+          const isManager = !isOwner;
+          const buttonDisabled =
+            saving ||
+            loading ||
+            status.status === 'APPROVED' ||
+            (isOwner && status.status !== 'PENDING_SUBMIT');
+          return (
+            <div key={id} className={classes.department}>
+              <SectionBar
+                title={
+                  isAnyManager
+                    ? ownerName + ' (user id: ' + userId + ')'
+                    : `Department: ${getDepartmentName(department)}`
+                }
+                subtitle={
+                  <>
+                    {+dateSubmitted[0] > 0 && (
+                      <div>Submited Date: {formatDate(dateSubmitted)}</div>
+                    )}
+                    {+dateApproved[0] > 0 && (
+                      <div>Approved Date: {formatDate(dateApproved)}</div>
+                    )}
+                    {approvedByName && <div>Approved By: {approvedByName}</div>}
+                  </>
+                }
+                actions={[
+                  {
+                    label: 'Delete',
+                    variant: 'outlined',
+                    onClick: handlePendingPerDiemDeleteToggle(entry),
+                    disabled: buttonDisabled,
+                  },
+                  {
+                    label: 'Edit',
+                    variant: 'outlined',
+                    onClick: handlePendingPerDiemEditToggle(entry),
+                    disabled: buttonDisabled,
+                  },
+                  {
+                    label: status.button,
+                    onClick: isOwner
+                      ? handlePendingPerDiemSubmitToggle(entry)
+                      : handlePendingPerDiemApproveToggle(entry),
+                    disabled: buttonDisabled,
+                  },
+                ]}
+                footer={
+                  notes.trim() ? (
+                    <span>
+                      <strong>Notes: </strong>
+                      {notes}
+                    </span>
+                  ) : null
+                }
+              >
+                <Calendar className={classes.calendar}>
+                  {[...Array(7)].map((_, dayOffset) => {
+                    const date = formatDateFns(addDays(dateStarted, dayOffset));
+                    const rows = rowsList.filter(({ dateString }) =>
+                      dateString.startsWith(date),
+                    );
+                    return (
+                      <CalendarColumn
+                        key={dayOffset}
+                        date={date}
+                        loading={loading}
+                        loadingRows={2}
+                      >
+                        {((isOwner && status.status === 'PENDING_SUBMIT') ||
+                          (isManager && status.status !== 'APPROVED')) && (
+                          <Button
+                            label="Add Per Diem Row"
+                            compact
+                            variant="text"
+                            fullWidth
+                            className={classes.button}
+                            onClick={handlePendingPerDiemRowEditToggle(
+                              makeNewPerDiemRow(id, date),
+                            )}
+                            size="xsmall"
+                            disabled={loading || saving}
+                          />
+                        )}
+                        {rows.map(entry => {
+                          const {
+                            id,
+                            notes,
+                            zipCode,
+                            serviceCallId,
+                            mealsOnly,
+                          } = entry;
+                          return (
+                            <CalendarCard
+                              key={id}
+                              title={status.text.toUpperCase()}
+                              statusColor={status.color}
+                              onClick={
+                                (isOwner &&
+                                  status.status === 'PENDING_SUBMIT') ||
+                                (isManager && status.status !== 'APPROVED')
+                                  ? handlePendingPerDiemRowEditToggle(entry)
+                                  : undefined
+                              }
+                            >
+                              <div className={classes.row}>
+                                <strong>Zip Code: </strong>
+                                {zipCode}
+                              </div>
+                              <div className={classes.row}>
+                                <strong>Service Call Id: </strong>
+                                {serviceCallId}
+                              </div>
+                              <div className={classes.row}>
+                                <strong>Meals only: </strong>
+                                {mealsOnly ? 'Yes' : 'No'}
+                              </div>
+                              <div className={classes.row}>
+                                <strong>Notes: </strong>
+                                {notes}
+                              </div>
+                            </CalendarCard>
+                          );
+                        })}
+                      </CalendarColumn>
+                    );
+                  })}
+                </Calendar>
+              </SectionBar>
+            </div>
+          );
+        })}
       {pendingPerDiemEdit && (
         <Modal open onClose={handlePendingPerDiemEditToggle(undefined)}>
           <Form
@@ -601,8 +626,8 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
             onSave={handleSavePerDiem}
             disabled={saving}
             error={
-              false
-                ? 'This technician already have Per Diem for that week.'
+              pendingPerDiemEditDuplicated
+                ? 'This technician already have Per Diem for that week in that department.'
                 : ''
             }
           />
