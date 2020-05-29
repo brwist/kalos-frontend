@@ -37,7 +37,6 @@ import {
 import { JOB_STATUS_COLORS } from '../../../constants';
 
 export interface Props {
-  userId: number;
   loggedUserId: number;
   onClose?: () => void;
 }
@@ -146,11 +145,7 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   ],
 ];
 
-export const PerDiemComponent: FC<Props> = ({
-  userId,
-  loggedUserId,
-  onClose,
-}) => {
+export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -183,7 +178,7 @@ export const PerDiemComponent: FC<Props> = ({
   >();
   const initialize = useCallback(async () => {
     setInitializing(true);
-    const user = await loadUserById(userId);
+    const user = await loadUserById(loggedUserId);
     setUser(user);
     const departments = await loadTimesheetDepartments();
     setDepartments(sortBy(departments, getDepartmentName));
@@ -195,7 +190,6 @@ export const PerDiemComponent: FC<Props> = ({
     }
     setInitializing(false);
   }, [
-    userId,
     loggedUserId,
     setInitializing,
     setUser,
@@ -205,7 +199,7 @@ export const PerDiemComponent: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     const { resultsList } = await loadPerDiemByUserIdAndDateStarted(
-      userId,
+      loggedUserId,
       formatDateFns(dateStarted),
     );
     setPerDiems(resultsList);
@@ -218,7 +212,7 @@ export const PerDiemComponent: FC<Props> = ({
     }
     setLoading(false);
   }, [
-    userId,
+    loggedUserId,
     setLoading,
     setPerDiems,
     dateStarted,
@@ -359,24 +353,10 @@ export const PerDiemComponent: FC<Props> = ({
     [usedDepartments, departments],
   );
   const addPerDiemDisabled = availableDapartments.length === 0;
-  const isOwner = userId === loggedUserId;
   const isAnyManager = departments
     .map(({ managerId }) => managerId)
     .includes(loggedUserId);
-  if (!isOwner && !isAnyManager)
-    return (
-      <div>
-        {onClose && (
-          <SectionBar
-            actions={[{ label: 'Close', onClick: onClose }]}
-            fixedActions
-          />
-        )}
-        <Alert severity="error">
-          You don't have permission to view this page
-        </Alert>
-      </div>
-    );
+  const isOwner = !isAnyManager;
   const SCHEMA_PER_DIEM: Schema<PerDiemType> = pendingPerDiemEdit
     ? [
         [
@@ -417,7 +397,7 @@ export const PerDiemComponent: FC<Props> = ({
     const req = new PerDiem();
     if (user) {
       if (!isAnyManager) {
-        req.setUserId(userId);
+        req.setUserId(loggedUserId);
       }
       req.setDateStarted(formatDateFns(dateStarted));
       const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
@@ -431,7 +411,7 @@ export const PerDiemComponent: FC<Props> = ({
     }
     return req.toObject();
   }, [
-    userId,
+    loggedUserId,
     dateStarted,
     user,
     perDiems,
@@ -449,9 +429,7 @@ export const PerDiemComponent: FC<Props> = ({
     [],
   );
   if (initializing) return <Loader />;
-  const filteredPerDiems = isAnyManager
-    ? [...perDiems, ...managerPerDiems]
-    : perDiems;
+  const filteredPerDiems = isAnyManager ? managerPerDiems : perDiems;
   return (
     <div>
       <CalendarHeader
@@ -622,6 +600,11 @@ export const PerDiemComponent: FC<Props> = ({
             onClose={handlePendingPerDiemEditToggle(undefined)}
             onSave={handleSavePerDiem}
             disabled={saving}
+            error={
+              false
+                ? 'This technician already have Per Diem for that week.'
+                : ''
+            }
           />
         </Modal>
       )}
