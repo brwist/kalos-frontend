@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import { Button } from '../Button';
 import { WeekPicker } from '../WeekPicker';
+import { Actions, ActionsProps } from '../Actions';
 
 interface Props {
   selectedDate: Date;
@@ -16,6 +17,7 @@ interface Props {
   submitLabel?: string;
   submitDisabled?: boolean;
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  actions?: ActionsProps;
 }
 
 const useStyles = makeStyles(theme =>
@@ -75,6 +77,7 @@ export const CalendarHeader: FC<Props> = ({
   submitLabel = 'Submit',
   submitDisabled = false,
   weekStartsOn = 0,
+  actions,
   children,
 }) => {
   const classes = useStyles();
@@ -100,6 +103,7 @@ export const CalendarHeader: FC<Props> = ({
             label={submitLabel}
             disabled={submitDisabled}
           />
+          {actions && <Actions actions={actions} />}
         </Box>
       </MuiPickersUtilsProvider>
     </MuiToolbar>
