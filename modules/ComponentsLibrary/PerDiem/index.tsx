@@ -346,13 +346,51 @@ export const PerDiemComponent: FC<Props> = ({
         label: getDepartmentName(d),
       }));
   }, [departments, perDiems]);
+  const usedDepartments = useMemo(
+    () => perDiems.map(({ departmentId }) => departmentId),
+    [perDiems],
+  );
+  const availableDapartments = useMemo(
+    () =>
+      sortBy(
+        departments.filter(({ id }) => !usedDepartments.includes(id)),
+        getDepartmentName,
+      ),
+    [usedDepartments, departments],
+  );
+  const addPerDiemDisabled = availableDapartments.length === 0;
+  const isOwner = userId === loggedUserId;
+  const isAnyManager = departments
+    .map(({ managerId }) => managerId)
+    .includes(loggedUserId);
+  if (!isOwner && !isAnyManager)
+    return (
+      <div>
+        {onClose && (
+          <SectionBar
+            actions={[{ label: 'Close', onClick: onClose }]}
+            fixedActions
+          />
+        )}
+        <Alert severity="error">
+          You don't have permission to view this page
+        </Alert>
+      </div>
+    );
   const SCHEMA_PER_DIEM: Schema<PerDiemType> = pendingPerDiemEdit
     ? [
         [
           { name: 'id', type: 'hidden' },
-          { name: 'userId', type: 'hidden' },
           { name: 'dateStarted', type: 'hidden' },
           { name: 'ownerName', type: 'hidden' },
+        ],
+        [
+          {
+            name: 'userId',
+            label: 'Technician',
+            type: isAnyManager ? 'technician' : 'hidden',
+            required: true,
+          },
         ],
         [
           ...(pendingPerDiemEdit.id
@@ -375,22 +413,12 @@ export const PerDiemComponent: FC<Props> = ({
         ],
       ]
     : [];
-  const usedDepartments = useMemo(
-    () => perDiems.map(({ departmentId }) => departmentId),
-    [perDiems],
-  );
-  const availableDapartments = useMemo(
-    () =>
-      sortBy(
-        departments.filter(({ id }) => !usedDepartments.includes(id)),
-        getDepartmentName,
-      ),
-    [usedDepartments, departments],
-  );
   const makeNewPerDiem = useCallback(() => {
     const req = new PerDiem();
     if (user) {
-      req.setUserId(userId);
+      if (!isAnyManager) {
+        req.setUserId(userId);
+      }
       req.setDateStarted(formatDateFns(dateStarted));
       const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
       req.setDepartmentId(
@@ -402,7 +430,15 @@ export const PerDiemComponent: FC<Props> = ({
       );
     }
     return req.toObject();
-  }, [userId, dateStarted, user, perDiems, departments, availableDapartments]);
+  }, [
+    userId,
+    dateStarted,
+    user,
+    perDiems,
+    departments,
+    availableDapartments,
+    isAnyManager,
+  ]);
   const makeNewPerDiemRow = useCallback(
     (perDiemId: number, dateString: string) => {
       const req = new PerDiemRow();
@@ -413,25 +449,6 @@ export const PerDiemComponent: FC<Props> = ({
     [],
   );
   if (initializing) return <Loader />;
-  const addPerDiemDisabled = availableDapartments.length === 0;
-  const isOwner = userId === loggedUserId;
-  const isAnyManager = departments
-    .map(({ managerId }) => managerId)
-    .includes(loggedUserId);
-  if (!isOwner && !isAnyManager)
-    return (
-      <div>
-        {onClose && (
-          <SectionBar
-            actions={[{ label: 'Close', onClick: onClose }]}
-            fixedActions
-          />
-        )}
-        <Alert severity="error">
-          You don't have permission to view this page
-        </Alert>
-      </div>
-    );
   const filteredPerDiems = isAnyManager
     ? [...perDiems, ...managerPerDiems]
     : perDiems;
@@ -449,7 +466,9 @@ export const PerDiemComponent: FC<Props> = ({
       />
       {loading && <Loader />}
       {!loading && filteredPerDiems.length === 0 && (
-        <Alert severity="info">No entries for selected week</Alert>
+        <Alert severity="info">
+          You don't have any entries for selected week
+        </Alert>
       )}
       {filteredPerDiems.map(entry => {
         const {
