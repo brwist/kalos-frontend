@@ -66,6 +66,7 @@ export type Type =
   | 'time'
   | 'mui-date'
   | 'mui-time'
+  | 'technician'
   | 'technicians'
   | 'signature'
   | 'file'
@@ -291,7 +292,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [setTechniciansOpened, setSearchTechnician, loadedTechnicians],
   );
   useEffect(() => {
-    if (type === 'technicians' && !loadedTechnicians && value !== '0') {
+    if (
+      (type === 'technicians' || type === 'technician') &&
+      !loadedTechnicians &&
+      value !== '0'
+    ) {
       loadUserTechnicians();
     }
   }, [loadedTechnicians, value]);
@@ -305,6 +310,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     (id: number) => (checked: Value) => {
       if (id === 0) {
         setTechniciansIds([0]);
+      } else if (type === 'technician') {
+        setTechniciansIds([id]);
       } else {
         const ids = [
           ...techniciansIds.filter(techId => {
@@ -317,7 +324,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         setTechniciansIds(ids.length > 0 ? ids : [0]);
       }
     },
-    [techniciansIds, setTechniciansIds],
+    [techniciansIds, setTechniciansIds, type],
   );
   const { actions = [], description } = props;
   const classes = useStyles({ type, disabled });
@@ -588,7 +595,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       </FormControl>
     );
   }
-  if (type === 'technicians') {
+  if (type === 'technicians' || type === 'technician') {
     const id = `${name}-technician-label`;
     const ids = (value + '').split(',').map(id => +id);
     const valueTechnicians =
@@ -678,7 +685,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         {techniciansOpened && (
           <Modal open onClose={handleSetTechniciansOpened(false)} fullHeight>
             <SectionBar
-              title="Select Technician(s)"
+              title={`Select Technician${type === 'technicians' ? '(s)' : ''}`}
               subtitle={
                 techniciansIds.length === 1 && techniciansIds[0] === 0
                   ? 'Unassigned'
