@@ -38,6 +38,7 @@ import { JOB_STATUS_COLORS } from '../../../constants';
 export interface Props {
   userId: number;
   loggedUserId: number;
+  onClose?: () => void;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -144,7 +145,11 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   ],
 ];
 
-export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
+export const PerDiemComponent: FC<Props> = ({
+  userId,
+  loggedUserId,
+  onClose,
+}) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -390,9 +395,17 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
     .includes(loggedUserId);
   if (!isOwner && !isAnyManager)
     return (
-      <Alert severity="error">
-        You don't have permission to view this page
-      </Alert>
+      <div>
+        {onClose && (
+          <SectionBar
+            actions={[{ label: 'Close', onClick: onClose }]}
+            fixedActions
+          />
+        )}
+        <Alert severity="error">
+          You don't have permission to view this page
+        </Alert>
+      </div>
     );
   const managerDepartmentsIds = departments
     .filter(({ managerId }) => managerId === loggedUserId)
@@ -412,6 +425,7 @@ export const PerDiemComponent: FC<Props> = ({ userId, loggedUserId }) => {
         weekStartsOn={6}
         submitLabel="Add Per Diem"
         submitDisabled={loading || saving || addPerDiemDisabled}
+        actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}
       />
       {filteredPerDiems.map(entry => {
         const {
