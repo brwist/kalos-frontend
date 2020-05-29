@@ -169,7 +169,7 @@ export const SCHEMA_2: Schema<Model> = [
     {
       name: 'technician',
       label: 'Technician',
-      type: 'technician',
+      type: 'technicians',
       required: true,
     },
     {

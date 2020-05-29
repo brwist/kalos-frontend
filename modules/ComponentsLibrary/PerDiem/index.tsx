@@ -390,7 +390,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
           {
             name: 'userId',
             label: 'Technician',
-            type: isAnyManager ? 'technician' : 'hidden',
+            type: isAnyManager ? 'technicians' : 'hidden',
             required: true,
           },
         ],

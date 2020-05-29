@@ -201,7 +201,7 @@ export const Request: FC<Props> = forwardRef(
         {
           label: 'Technician Assigned',
           name: 'logTechnicianAssigned',
-          type: 'technician',
+          type: 'technicians',
           required: true,
         },
         {

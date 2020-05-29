@@ -126,7 +126,7 @@ export default () => (
       defaultValue={86086}
       type="eventId"
     />
-    <EnhancedField label="Technician" type="technician" defaultValue={'0'} />
+    <EnhancedField label="Technician" type="technicians" defaultValue={'0'} />
     <EnhancedField
       label="Multiline"
       multiline
