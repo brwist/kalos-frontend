@@ -77,6 +77,7 @@
     "draft-js-plugins-utils": "^2.0.3",
     "google-protobuf": "^3.10.0",
     "lodash": "^4.17.15",
+    "pako": "^1.0.11",
     "react": "^16.10.1",
     "react-dom": "^16.10.1",
     "react-signature-pad-wrapper": "^1.2.8",

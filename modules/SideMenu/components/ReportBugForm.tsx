@@ -1,10 +1,12 @@
-import React, { FC, useState } from 'react';
+import React, {FC, useCallback, useState} from 'react';
 import { EditorState } from 'draft-js';
 // @ts-ignore
 import { stateToMarkdown } from 'draft-js-export-markdown';
 // @ts-ignore
 import { stateFromMarkdown } from 'draft-js-import-markdown';
 import 'draft-js/dist/Draft.css';
+import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
+import Box from '@material-ui/core/Box';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -33,35 +35,75 @@ const template = `## Steps To Reproduce
 ...
 `;
 
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    errors: {
+      backgroundColor: theme.palette.error.dark,
+    },
+    errorField: {
+      marginTop: theme.spacing(1),
+      color: theme.palette.error.contrastText,
+    },
+  }),
+);
+
 const ReportBugForm: FC<Props> = ({ user,  onClose }: Props): JSX.Element => {
+  const classes = useStyles();
   const [title, setTitle] = useState<string>('');
   const [editorState, setEditorState] = useState(
     () => EditorState.createWithContent(stateFromMarkdown(template)),
   );
   const [images, setImages] = useState<BugReportImage[]>([]);
-  const handleSubmit = async () => {
-    if (!title) {
+  const [ignoreImages, setIgnoreImages] = useState<boolean>(false);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
+  const isValid = useCallback((content) => {
+    const invalid = [];
+    if (!title) {
+      invalid.push('Title is a required field');
     }
-    let body = `_Submitted by ${user.firstname} ${user.lastname}_\n`;
-    body += stateToMarkdown(editorState.getCurrentContent());
-    if (images.length) {
-      const result = await newBugReportImage(user, images) || [];
-      const urls = result.map(i => `![${i.filename}](${i.url})`).join('\n');
-      body += `
-## Attached Images
-${urls}
-      `
-    };
-    const res = await newBugReport({
-      title: title,
-      body,
-    });
-    onClose();
+    if (!content.trim().length) {
+      invalid.push('Add description of the bug');
+    }
+    if (!ignoreImages && !images.length) {
+      invalid.push('Upload at least one screenshot');
+    }
+    setErrors(invalid);
+    return Boolean(!invalid.length);
+  },
+    [title, images, ignoreImages, setErrors]);
+
+  const handleSubmit = async () => {
+    const content = stateToMarkdown(editorState.getCurrentContent());
+    if (!isValid(content)) return;
+    setLoading(true);
+    try {
+      let body = `_Submitted by ${user.firstname} ${user.lastname}_\n`;
+      body += content;
+      if (!ignoreImages) {
+        const result = await newBugReportImage(user, images) || [];
+        const urls = result.map(i => `![${i.filename}](${i.url})`).join('\n');
+        body += `
+  ## Attached Images
+  ${urls}
+        `
+      };
+      await newBugReport({
+        title: title,
+        body,
+      });
+      onClose();
+    } catch (err) {
+      setErrors(err);
+      setLoading(false);
+    }
   };
+
   const handleCancel = () => {
     onClose();
   };
+
   const handleAttachImage = (img: BugReportImage) => {
     const data = [...images];
     data.unshift(img);
@@ -77,22 +119,50 @@ ${urls}
 
   return (
     <Dialog open onClose={onClose}>
+      {Boolean(errors.length) && (
+        <Box className={classes.errors}>
+          <ul>
+            {errors.map(err => (
+              <Typography key={err} component="li" className={classes.errorField}>
+                {err}
+              </Typography>
+            ))}
+          </ul>
+        </Box>
+      )}
       <DialogContent>
         <TextField
           fullWidth
           placeholder="Title"
           onChange={e => setTitle(e.target.value)}
           margin="normal"
+          disabled={loading}
         />
         <Typography variant="caption">
           Please provide a clear and concise description of what the bug is. Include screenshots if needed.
         </Typography>
-        <RichTextEditor editorState={editorState} setEditorState={setEditorState} />
-        <ImageUploader images={images} attachImage={handleAttachImage} detachImage={handleDetachImage} />
+        <RichTextEditor editorState={editorState} setEditorState={setEditorState} loading={loading} />
+        <ImageUploader
+          images={images}
+          attachImage={handleAttachImage}
+          detachImage={handleDetachImage}
+          ignoreImages={ignoreImages}
+          setIgnoreImages={setIgnoreImages}
+          loading={loading}
+        />
       </DialogContent>
       <DialogActions>
-        <Button label="Cancel" variant="outlined" onClick={handleCancel} />
-        <Button label="Submit" onClick={handleSubmit} />
+        <Button
+          label="Cancel"
+          variant="outlined"
+          onClick={handleCancel}
+          disabled={loading}
+        />
+        <Button
+          label="Submit"
+          onClick={handleSubmit}
+          disabled={loading}
+        />
       </DialogActions>
     </Dialog>
   );

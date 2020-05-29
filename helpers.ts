@@ -1646,8 +1646,7 @@ async function newBugReport(data: IBugReport) {
       },
       body: JSON.stringify(data),
     };
-    const fetchRes = await fetch(key.apiEndpoint, postData);
-    console.log(fetchRes);
+    await fetch(key.apiEndpoint, postData);
   } catch (err) {
     console.log('error generating bug report', err);
   }

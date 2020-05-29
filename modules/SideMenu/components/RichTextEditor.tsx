@@ -1,4 +1,4 @@
-import React, { useState, FC } from 'react';
+import React, { FC } from 'react';
 import clsx from 'clsx';
 import { EditorState, RichUtils, ContentBlock } from 'draft-js';
 import Editor, { composeDecorators } from 'draft-js-plugins-editor';
@@ -30,17 +30,48 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(1),
       borderBottom: `1px solid ${theme.palette.grey['400']}`,
     },
-    editorWrapper: {
-      padding: theme.spacing(1),
-    },
     styleButton: {
-      color: theme.palette.grey['400'],
       cursor: 'pointer',
       marginRight: theme.spacing(2),
-      padding: '2px 0',
       display: 'inline-block',
+      padding: `${theme.spacing(0.5)}px ${theme.spacing(1)}px`,
+      borderRadius: theme.spacing(0.5),
+      fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
       '&.active': {
-        color: 'red',
+        background: theme.palette.grey['400'],
+      },
+    },
+    editorWrapper: {
+      padding: theme.spacing(1),
+      fontSize: 14,
+      fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji',
+      '& p, & h1, & h2, & ol, & ul, & blockquote': {
+        marginBottom: 16,
+      },
+      '& h1, & h2': {
+        marginTop: 24,
+        marginBottom: 16,
+        fontWeight: 600,
+        lineHeight: 1.25,
+      },
+      '& h2': {
+        paddingBottom: '.3em',
+        borderBottom: '1px solid #eaecef',
+      },
+      '& ol, & ul': {
+        paddingLeft: '2em',
+        '& li': {
+          marginLeft: '0 !important',
+        },
+        '& li + li': {
+          marginTop: '.25em',
+        },
+      },
+      '& blockquote': {
+        margin: 0,
+        padding: '0 1em',
+        color: '#6a737d',
+        borderLeft: '.25em solid #dfe2e5',
       },
     },
   }),
@@ -51,7 +82,7 @@ function getBlockStyle(block: ContentBlock) {
     case 'blockquote':
       return 'RichEditor-blockquote';
     default:
-      return null;
+      return ''
   }
 }
 
@@ -143,14 +174,11 @@ const InlineStyleControls: FC<StyleControlsProps> = ({
 type Props = {
   editorState: EditorState,
   setEditorState: (state: EditorState) => void,
+  loading: boolean,
 };
 
-const RichTextEditor: FC<Props> = ({ editorState, setEditorState }) => {
+const RichTextEditor: FC<Props> = ({ editorState, setEditorState, loading }) => {
   const classes = useStyles();
-  const [attachedImages, setAttachedImages] = useState([]);
-  const handleChange = (state: EditorState) => {
-    setEditorState(state);
-  };
   const toggleBlockType = (blockType: string) => {
     setEditorState(
       RichUtils.toggleBlockType(editorState, blockType),
@@ -181,6 +209,7 @@ const RichTextEditor: FC<Props> = ({ editorState, setEditorState }) => {
           onChange={setEditorState}
           blockStyleFn={getBlockStyle}
           plugins={plugins}
+          readOnly={loading}
         />
       </Box>
     </Box>
