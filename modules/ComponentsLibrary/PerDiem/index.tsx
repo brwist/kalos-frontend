@@ -155,11 +155,12 @@ export const PerDiemComponent: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
-  const [userLoaded, setUserLoaded] = useState<boolean>(false);
-  const [loadingUser, setLoadingUser] = useState<boolean>(false);
+  const [initialized, setInitialized] = useState<boolean>(false);
+  const [initializing, setInitializing] = useState<boolean>(false);
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
+  const [managerDepartmentId, setManagerDepartmentId] = useState<number>();
   const [pendingPerDiemSubmit, setPendingPerDiemSubmit] = useState<
     PerDiemType
   >();
@@ -180,6 +181,27 @@ export const PerDiemComponent: FC<Props> = ({
   const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] = useState<
     PerDiemRowType
   >();
+  const initialize = useCallback(async () => {
+    setInitializing(true);
+    const user = await loadUserById(userId);
+    setUser(user);
+    const departments = await loadTimesheetDepartments();
+    setDepartments(sortBy(departments, getDepartmentName));
+    const managerDepartment = departments.find(
+      ({ managerId }) => managerId === loggedUserId,
+    );
+    if (managerDepartment) {
+      setManagerDepartmentId(managerDepartment.id);
+    }
+    setInitializing(false);
+  }, [
+    userId,
+    loggedUserId,
+    setInitializing,
+    setUser,
+    setDepartments,
+    setManagerDepartmentId,
+  ]);
   const load = useCallback(async () => {
     setLoading(true);
     const { resultsList } = await loadPerDiemByUserIdAndDateStarted(
@@ -187,45 +209,34 @@ export const PerDiemComponent: FC<Props> = ({
       formatDateFns(dateStarted),
     );
     setPerDiems(resultsList);
-    setLoading(false);
-  }, [userId, setLoading, setPerDiems, dateStarted]);
-  const loadUser = useCallback(async () => {
-    setLoadingUser(true);
-    const user = await loadUserById(userId);
-    const departments = await loadTimesheetDepartments();
-    const managerDepartment = departments.find(
-      ({ managerId }) => managerId === loggedUserId,
-    );
-    if (managerDepartment) {
+    if (managerDepartmentId) {
       const managerPerDiems = await loadPerDiemByDepartmentIdAndDateStarted(
-        managerDepartment.id,
+        managerDepartmentId,
         formatDateFns(dateStarted),
       );
       setManagerPerDiems(managerPerDiems.resultsList);
     }
-    setUser(user);
-    setDepartments(sortBy(departments, getDepartmentName));
-    setLoadingUser(false);
+    setLoading(false);
   }, [
     userId,
-    loggedUserId,
-    setLoadingUser,
-    setUser,
-    setDepartments,
+    setLoading,
+    setPerDiems,
+    dateStarted,
+    managerDepartmentId,
     setManagerPerDiems,
   ]);
   useEffect(() => {
-    if (!loaded) {
+    if (!loaded && initialized) {
       setLoaded(true);
       load();
     }
   }, [loaded, setLoaded, load]);
   useEffect(() => {
-    if (!userLoaded) {
-      setUserLoaded(true);
-      loadUser();
+    if (!initialized) {
+      setInitialized(true);
+      initialize();
     }
-  }, [userLoaded, setUserLoaded, loadUser]);
+  }, [initialized, setInitialized, initialize]);
   const handleSetDateStarted = useCallback(
     (value: Date) => {
       if (formatDateFns(value) === formatDateFns(dateStarted)) return;
@@ -338,18 +349,10 @@ export const PerDiemComponent: FC<Props> = ({
   const SCHEMA_PER_DIEM: Schema<PerDiemType> = pendingPerDiemEdit
     ? [
         [
-          {
-            name: 'id',
-            type: 'hidden',
-          },
-          {
-            name: 'userId',
-            type: 'hidden',
-          },
-          {
-            name: 'dateStarted',
-            type: 'hidden',
-          },
+          { name: 'id', type: 'hidden' },
+          { name: 'userId', type: 'hidden' },
+          { name: 'dateStarted', type: 'hidden' },
+          { name: 'ownerName', type: 'hidden' },
         ],
         [
           ...(pendingPerDiemEdit.id
@@ -409,7 +412,7 @@ export const PerDiemComponent: FC<Props> = ({
     },
     [],
   );
-  if (loadingUser) return <Loader />;
+  if (initializing) return <Loader />;
   const addPerDiemDisabled = availableDapartments.length === 0;
   const isOwner = userId === loggedUserId;
   const isAnyManager = departments
@@ -444,6 +447,10 @@ export const PerDiemComponent: FC<Props> = ({
         submitDisabled={loading || saving || addPerDiemDisabled}
         actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}
       />
+      {loading && <Loader />}
+      {!loading && filteredPerDiems.length === 0 && (
+        <Alert severity="info">No entries for selected week</Alert>
+      )}
       {filteredPerDiems.map(entry => {
         const {
           id,
@@ -454,8 +461,8 @@ export const PerDiemComponent: FC<Props> = ({
           notes,
           approvedByName,
           ownerName,
+          userId,
         } = entry;
-        console.log({ entry });
         const status = getStatus(dateApproved, dateSubmitted);
         const isManager = !isOwner;
         const buttonDisabled =
@@ -468,7 +475,7 @@ export const PerDiemComponent: FC<Props> = ({
             <SectionBar
               title={
                 isAnyManager
-                  ? ownerName
+                  ? ownerName + ' (user id: ' + userId + ')'
                   : `Department: ${getDepartmentName(department)}`
               }
               subtitle={
@@ -522,7 +529,7 @@ export const PerDiemComponent: FC<Props> = ({
                     <CalendarColumn
                       key={dayOffset}
                       date={date}
-                      loading={loading || loadingUser}
+                      loading={loading}
                       loadingRows={2}
                     >
                       {((isOwner && status.status === 'PENDING_SUBMIT') ||
