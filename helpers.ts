@@ -867,6 +867,19 @@ export const loadPerDiemByUserIdAndDateStarted = async (
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 
+export const loadPerDiemByDepartmentIdAndDateStarted = async (
+  departmentId: number,
+  dateStarted: string,
+) => {
+  const req = new PerDiem();
+  req.setDepartmentId(departmentId);
+  req.setWithRows(true);
+  req.setIsActive(true);
+  req.setPageNumber(0);
+  req.setDateStarted(`${dateStarted}%`);
+  return (await PerDiemClientService.BatchGet(req)).toObject();
+};
+
 export const upsertPerDiem = async (data: PerDiemType) => {
   const req = new PerDiem();
   const fieldMaskList = [];
