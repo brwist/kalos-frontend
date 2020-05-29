@@ -340,6 +340,7 @@ export const PerDiemComponent: FC<Props> = ({
                   name: 'departmentId' as const,
                   label: 'Department',
                   options: departmentsOptions,
+                  required: true,
                 },
               ]),
         ],
@@ -373,7 +374,9 @@ export const PerDiemComponent: FC<Props> = ({
       req.setDepartmentId(
         usedDepartments.includes(user.employeeDepartmentId)
           ? (availableDapartments[0] || [{}]).id
-          : user.employeeDepartmentId,
+          : departments.map(({ id }) => id).includes(user.employeeDepartmentId)
+          ? user.employeeDepartmentId
+          : departments[0].id,
       );
     }
     return req.toObject();
