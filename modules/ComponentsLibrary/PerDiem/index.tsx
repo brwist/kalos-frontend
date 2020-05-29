@@ -32,6 +32,7 @@ import {
   submitPerDiemById,
   formatDate,
   approvePerDiemById,
+  loadPerDiemByDepartmentIdAndDateStarted,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS } from '../../../constants';
 
@@ -158,6 +159,7 @@ export const PerDiemComponent: FC<Props> = ({
   const [loadingUser, setLoadingUser] = useState<boolean>(false);
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
   const [pendingPerDiemSubmit, setPendingPerDiemSubmit] = useState<
     PerDiemType
   >();
@@ -191,10 +193,27 @@ export const PerDiemComponent: FC<Props> = ({
     setLoadingUser(true);
     const user = await loadUserById(userId);
     const departments = await loadTimesheetDepartments();
+    const managerDepartment = departments.find(
+      ({ managerId }) => managerId === loggedUserId,
+    );
+    if (managerDepartment) {
+      const managerPerDiems = await loadPerDiemByDepartmentIdAndDateStarted(
+        managerDepartment.id,
+        formatDateFns(dateStarted),
+      );
+      setManagerPerDiems(managerPerDiems.resultsList);
+    }
     setUser(user);
     setDepartments(sortBy(departments, getDepartmentName));
     setLoadingUser(false);
-  }, [userId, loggedUserId, setLoadingUser, setUser, setDepartments]);
+  }, [
+    userId,
+    loggedUserId,
+    setLoadingUser,
+    setUser,
+    setDepartments,
+    setManagerPerDiems,
+  ]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -410,14 +429,9 @@ export const PerDiemComponent: FC<Props> = ({
         </Alert>
       </div>
     );
-  const managerDepartmentsIds = departments
-    .filter(({ managerId }) => managerId === loggedUserId)
-    .map(({ id }) => id);
-  const filteredPerDiems = isOwner
-    ? perDiems
-    : perDiems.filter(({ departmentId }) =>
-        managerDepartmentsIds.includes(departmentId),
-      );
+  const filteredPerDiems = isAnyManager
+    ? [...perDiems, ...managerPerDiems]
+    : perDiems;
   return (
     <div>
       <CalendarHeader
@@ -439,7 +453,9 @@ export const PerDiemComponent: FC<Props> = ({
           dateSubmitted,
           notes,
           approvedByName,
+          ownerName,
         } = entry;
+        console.log({ entry });
         const status = getStatus(dateApproved, dateSubmitted);
         const isManager = !isOwner;
         const buttonDisabled =
@@ -450,7 +466,11 @@ export const PerDiemComponent: FC<Props> = ({
         return (
           <div key={id} className={classes.department}>
             <SectionBar
-              title={`Department: ${getDepartmentName(department)}`}
+              title={
+                isAnyManager
+                  ? ownerName
+                  : `Department: ${getDepartmentName(department)}`
+              }
               subtitle={
                 <>
                   {+dateSubmitted[0] > 0 && (
