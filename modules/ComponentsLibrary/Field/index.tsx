@@ -66,7 +66,7 @@ export type Type =
   | 'time'
   | 'mui-date'
   | 'mui-time'
-  | 'technician'
+  | 'technicians'
   | 'signature'
   | 'file'
   | 'department'
@@ -291,7 +291,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [setTechniciansOpened, setSearchTechnician, loadedTechnicians],
   );
   useEffect(() => {
-    if (type === 'technician' && !loadedTechnicians && value !== '0') {
+    if (type === 'technicians' && !loadedTechnicians && value !== '0') {
       loadUserTechnicians();
     }
   }, [loadedTechnicians, value]);
@@ -588,7 +588,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       </FormControl>
     );
   }
-  if (type === 'technician') {
+  if (type === 'technicians') {
     const id = `${name}-technician-label`;
     const ids = (value + '').split(',').map(id => +id);
     const valueTechnicians =

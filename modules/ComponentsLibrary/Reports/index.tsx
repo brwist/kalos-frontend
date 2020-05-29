@@ -179,7 +179,7 @@ const SCHEMA_SPIFF_REPORT: Schema<FilterForm> = [
     {
       name: 'users',
       label: 'Select Users',
-      type: 'technician',
+      type: 'technicians',
       required: true,
     },
   ],
@@ -206,7 +206,7 @@ const SCHEMA_TRAINING_METRICS_REPORT: Schema<FilterForm> = [
     {
       name: 'users',
       label: 'Select Users',
-      type: 'technician',
+      type: 'technicians',
       required: true,
     },
   ],
