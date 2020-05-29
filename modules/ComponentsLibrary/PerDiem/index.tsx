@@ -65,6 +65,7 @@ const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 const getStatus = (
   dateApproved: string,
   dateSubmitted: string,
+  isManager: boolean,
 ): {
   status: 'APPROVED' | 'PENDING_APPROVE' | 'PENDING_SUBMIT';
   button: string;
@@ -74,14 +75,14 @@ const getStatus = (
   if (dateApproved)
     return {
       status: 'APPROVED',
-      button: 'Approve',
+      button: isManager ? 'Approve' : 'Submit',
       text: 'Approved',
       color: '#' + JOB_STATUS_COLORS['Completed'],
     };
   if (dateSubmitted)
     return {
       status: 'PENDING_APPROVE',
-      button: 'Approve',
+      button: isManager ? 'Approve' : 'Submit',
       text: 'Pending approve',
       color: '#' + JOB_STATUS_COLORS['Pend Sched'],
     };
@@ -297,9 +298,11 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     [setPendingPerDiemRowDelete],
   );
   const handlePendingPerDiemEditToggle = useCallback(
-    (pendingPerDiemEdit?: PerDiemType) => () =>
-      setPendingPerDiemEdit(pendingPerDiemEdit),
-    [setPendingPerDiemEdit],
+    (pendingPerDiemEdit?: PerDiemType) => () => {
+      setPendingPerDiemEditDuplicated(false);
+      setPendingPerDiemEdit(pendingPerDiemEdit);
+    },
+    [setPendingPerDiemEdit, setPendingPerDiemEditDuplicated],
   );
   const handlePendingPerDiemSubmitToggle = useCallback(
     (pendingPerDiemSubmit?: PerDiemType) => () =>
@@ -384,13 +387,13 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
         [
           { name: 'id', type: 'hidden' },
           { name: 'dateStarted', type: 'hidden' },
-          { name: 'ownerName', type: 'hidden' },
         ],
         [
           {
             name: 'userId',
             label: 'Technician',
-            type: isAnyManager ? 'technicians' : 'hidden',
+            type:
+              isAnyManager && !pendingPerDiemEdit.id ? 'technician' : 'hidden',
             required: true,
           },
         ],
@@ -484,8 +487,8 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
             ownerName,
             userId,
           } = entry;
-          const status = getStatus(dateApproved, dateSubmitted);
           const isManager = !isOwner;
+          const status = getStatus(dateApproved, dateSubmitted, isManager);
           const buttonDisabled =
             saving ||
             loading ||
@@ -525,9 +528,10 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                   },
                   {
                     label: status.button,
-                    onClick: isOwner
-                      ? handlePendingPerDiemSubmitToggle(entry)
-                      : handlePendingPerDiemApproveToggle(entry),
+                    onClick:
+                      isAnyManager && status.status === 'PENDING_APPROVE'
+                        ? handlePendingPerDiemApproveToggle(entry)
+                        : handlePendingPerDiemSubmitToggle(entry),
                     disabled: buttonDisabled,
                   },
                 ]}
