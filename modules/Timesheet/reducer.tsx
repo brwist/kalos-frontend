@@ -29,7 +29,7 @@ type DataList = {
 
 interface EditedEntry extends TimesheetLine.AsObject {
   action: string
-};
+}
 
 type EditingState = {
   entry: TimesheetLine.AsObject,
@@ -62,7 +62,12 @@ type TimesheetData = {
 };
 
 export type Action =
-  | { type: 'setUsers', data: {user: User.AsObject, owner: User.AsObject} }
+  | { type: 'setUsers', data: {
+    user: User.AsObject,
+    owner: User.AsObject,
+    hasReceiptsIssue: boolean,
+    receiptsIssueStr: string,
+  }}
   | { type: 'fetchingTimesheetData' }
   | { type: 'fetchedTimesheetData', data: TimesheetData }
   | { type: 'changeDate', value: Date }
@@ -89,7 +94,9 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         user: action.data.user,
-        owner: action.data.owner
+        owner: action.data.owner,
+        hasReceiptsIssue: action.data.hasReceiptsIssue,
+        receiptsIssueStr: action.data.receiptsIssueStr,
       };
     }
     case 'fetchingTimesheetData': {
@@ -177,7 +184,7 @@ export const reducer = (state: State, action: Action) => {
       const card = action.data;
       const entry = new TimesheetLine().toObject();
       Object.keys(entry).forEach(key => {
-        if (card.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(card, key)) {
           // @ts-ignore
           entry[key] = card[key];
         }
