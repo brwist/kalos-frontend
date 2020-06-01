@@ -1021,6 +1021,7 @@ export type UsersFilter = {
   businessname?: string;
   phone?: string;
   email?: string;
+  isEmployee?: number;
 };
 
 /**
@@ -1051,7 +1052,7 @@ export const loadUsersByFilter = async ({
     if (value) {
       const { methodName } = getRPCFields(fieldName);
       //@ts-ignore
-      req[methodName](`%${value}%`);
+      req[methodName](typeof value === 'number' ? value : `%${value}%`);
     }
   }
   const response = await UserClientService.BatchGet(req);
@@ -1381,6 +1382,9 @@ export const getBusinessName = (c?: UserType): string =>
 
 export const getCustomerPhone = (c?: UserType): string =>
   c ? c.phone.trim() : '';
+
+export const getCustomerPhoneWithExt = (c?: UserType): string =>
+  c ? `${c.phone.trim()}${c.ext ? `, ext: ${c.ext}` : ''}` : '';
 
 export const getCustomerNameAndBusinessName = (c?: UserType): string => {
   const name = getCustomerName(c);
