@@ -1,4 +1,4 @@
-import React, {createContext, useEffect, useReducer, useCallback, Reducer } from "react";
+import React, { createContext, useEffect, useReducer, useCallback } from "react";
 import { startOfWeek, subDays } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
@@ -13,6 +13,7 @@ import Alert from '@material-ui/lab/Alert';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { TimesheetLineClient, TimesheetLine, TimesheetReq } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
 import customTheme from '../Theme/main';
 import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import { ConfirmServiceProvider } from '../ComponentsLibrary/ConfirmService';
@@ -21,10 +22,12 @@ import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
 import { loadUserById } from '../../helpers';
-import { getShownDates, reducer, State, Action } from './reducer';
+import { getShownDates, reducer } from './reducer';
+import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 
 const userClient = new UserClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
+const txnClient = new TransactionClient(ENDPOINT);
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -64,7 +67,6 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
 
 const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   const classes = useStyles();
-  // @ts-ignore
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
@@ -86,6 +88,8 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       hiddenSR: [],
     },
     error: '',
+    hasReceiptsIssue: false,
+    receiptsIssueStr: '',
   });
   const {
     user,
@@ -97,7 +101,9 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     selectedDate,
     shownDates,
     editing,
-    error
+    error,
+    hasReceiptsIssue,
+    receiptsIssueStr,
   } = state;
   const handleOnSave = (card: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
     dispatch({ type: 'saveTimecard', data: card, action: action || editing.action });
@@ -128,6 +134,24 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
 
   const handleDateChange = (value: Date) => {
     dispatch({ type: 'changeDate', value })
+  };
+
+  const checkTimeout = (): Boolean => {
+    const lastTimeout = localStorage.getItem('TIMESHEET_TIMEOUT');
+    if (lastTimeout) {
+      const lastVal = parseInt(lastTimeout);
+      const currVal = new Date().valueOf();
+      return currVal - lastVal <= 86400;
+    }
+    return true;
+  };
+
+
+  const handleTimeout = () => {
+    const onTimeout = checkTimeout();
+    if (!onTimeout) {
+      localStorage.setItem('TIMESHEET_TIMEOUT', `${new Date().valueOf()}`);
+    }
   };
 
   const handleSubmitTimesheet = useCallback(() => {
@@ -184,17 +208,37 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
 
   const fetchUsers = async () => {
     const userResult = await loadUserById(userId);
+    const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
     if (userId === timesheetOwnerId) {
-      dispatch({ type: 'setUsers', data: { user: userResult, owner: userResult }});
+      dispatch({
+        type: 'setUsers',
+        data: {
+          user: userResult,
+          owner: userResult,
+          hasReceiptsIssue: hasIssue,
+          receiptsIssueStr: issueStr,
+        }
+      });
     } else {
       const ownerResult = await loadUserById(timesheetOwnerId);
-      dispatch({ type: 'setUsers', data: { user: userResult, owner: ownerResult }});
+      dispatch({
+        type: 'setUsers',
+        data: {
+          user: userResult,
+          owner: ownerResult,
+          hasReceiptsIssue: hasIssue,
+          receiptsIssueStr: issueStr,
+        }
+      });
     }
   };
 
   useEffect(() => {
-    userClient.GetToken('test', 'test');
-    fetchUsers();
+    (async () => {
+      await userClient.GetToken('test', 'test');
+      await txnClient.GetToken('test', 'test');
+      fetchUsers();
+    })();
   }, []);
 
   useEffect(() => {
@@ -278,6 +322,13 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
           )}
         </EditTimesheetContext.Provider>
       </ConfirmServiceProvider>
+      {hasReceiptsIssue && !checkTimeout() && (
+        <ReceiptsIssueDialog
+          isAdmin={user.timesheetAdministration}
+          receiptsIssueStr={receiptsIssueStr}
+          handleTimeout={handleTimeout}
+        />
+      )}
     </ThemeProvider>
   );
 };
