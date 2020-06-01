@@ -1,22 +1,8 @@
 import React, { FC } from 'react';
 import clsx from 'clsx';
-import { EditorState, RichUtils, ContentBlock } from 'draft-js';
-import Editor, { composeDecorators } from 'draft-js-plugins-editor';
-import createImagePlugin from 'draft-js-image-plugin';
-import createBlockDndPlugin from 'draft-js-drag-n-drop-plugin';
+import { Editor, EditorState, RichUtils, ContentBlock } from 'draft-js';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
-
-const blockDndPlugin = createBlockDndPlugin();
-const decorator = composeDecorators(
-  blockDndPlugin.decorator
-);
-const imagePlugin = createImagePlugin({ decorator });
-
-const plugins = [
-  blockDndPlugin,
-  imagePlugin
-];
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -208,7 +194,6 @@ const RichTextEditor: FC<Props> = ({ editorState, setEditorState, loading }) => 
           editorState={editorState}
           onChange={setEditorState}
           blockStyleFn={getBlockStyle}
-          plugins={plugins}
           readOnly={loading}
         />
       </Box>
