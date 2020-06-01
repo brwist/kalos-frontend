@@ -9,6 +9,7 @@ export default () => (
       title="Employees"
       kinds={['employees']}
       loggedUserId={101253}
+      printableEmployees
     />
     <ExampleTitle>Service Calls, Customers and Properties</ExampleTitle>
     <AdvancedSearch

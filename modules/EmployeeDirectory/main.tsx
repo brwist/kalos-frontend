@@ -10,11 +10,12 @@ interface Props {
 export const EmployeeDirectory: FC<Props> = ({ loggedUserId }) => (
   <ThemeProvider theme={customTheme.lightTheme}>
     <AdvancedSearch
-      title="EmployeeDirectory"
+      title="Employee Directory"
       kinds={['employees']}
       loggedUserId={loggedUserId}
       editableEmployees
       deletableEmployees
+      printableEmployees
     />
   </ThemeProvider>
 );

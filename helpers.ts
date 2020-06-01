@@ -1022,6 +1022,9 @@ export type UsersFilter = {
   phone?: string;
   email?: string;
   isEmployee?: number;
+  empTitle?: string;
+  employeeDepartmentId?: number;
+  ext?: string;
 };
 
 /**
@@ -1384,7 +1387,7 @@ export const getCustomerPhone = (c?: UserType): string =>
   c ? c.phone.trim() : '';
 
 export const getCustomerPhoneWithExt = (c?: UserType): string =>
-  c ? `${c.phone.trim()}${c.ext ? `, ext: ${c.ext}` : ''}` : '';
+  c ? `${c.phone.trim()}${c.ext ? `, ${c.ext}` : ''}` : '';
 
 export const getCustomerNameAndBusinessName = (c?: UserType): string => {
   const name = getCustomerName(c);
