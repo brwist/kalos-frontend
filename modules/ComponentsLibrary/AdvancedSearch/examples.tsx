@@ -4,6 +4,12 @@ import { ExampleTitle } from '../helpers';
 
 export default () => (
   <>
+    <ExampleTitle>Employees</ExampleTitle>
+    <AdvancedSearch
+      title="Employees"
+      kinds={['employees']}
+      loggedUserId={101253}
+    />
     <ExampleTitle>Service Calls, Customers and Properties</ExampleTitle>
     <AdvancedSearch
       title="Search"

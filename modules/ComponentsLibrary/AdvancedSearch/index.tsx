@@ -48,6 +48,7 @@ import {
   deleteUserById,
   deletePropertyById,
   getBusinessName,
+  getCustomerPhoneWithExt,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -55,7 +56,7 @@ import {
   EVENT_STATUS_LIST,
 } from '../../../constants';
 
-type Kind = 'serviceCalls' | 'customers' | 'properties';
+type Kind = 'serviceCalls' | 'customers' | 'properties' | 'employees';
 
 export interface Props {
   loggedUserId: number;
@@ -64,6 +65,8 @@ export interface Props {
   deletableEvents?: boolean;
   editableCustomers?: boolean;
   deletableCustomers?: boolean;
+  editableEmployees?: boolean;
+  deletableEmployees?: boolean;
   editableProperties?: boolean;
   deletableProperties?: boolean;
   eventsWithAccounting?: boolean;
@@ -100,6 +103,8 @@ export const AdvancedSearch: FC<Props> = ({
   deletableEvents,
   editableCustomers,
   deletableCustomers,
+  editableEmployees,
+  deletableEmployees,
   editableProperties,
   deletableProperties,
   eventsWithAccounting = false,
@@ -186,13 +191,15 @@ export const AdvancedSearch: FC<Props> = ({
       setCount(totalCount);
       setEvents(results);
     }
-    if (kind === 'customers') {
+    if (kind === 'customers' || kind === 'employees') {
       const criteria: LoadUsersByFilter = {
         page,
-        filter: filterCriteria as UsersFilter,
+        filter: {
+          ...filterCriteria,
+          ...(kind === 'employees' ? { isEmployee: 1 } : {}),
+        } as UsersFilter,
         sort: usersSort,
       };
-
       const { results, totalCount } = await loadUsersByFilter(criteria);
       setCount(totalCount);
       setUsers(results);
@@ -405,6 +412,9 @@ export const AdvancedSearch: FC<Props> = ({
     ...(kinds.includes('customers')
       ? [{ label: 'Customers', value: 'customers' }]
       : []),
+    ...(kinds.includes('employees')
+      ? [{ label: 'Employees', value: 'employees' }]
+      : []),
     ...(kinds.includes('properties')
       ? [{ label: 'Properties', value: 'properties' }]
       : []),
@@ -523,6 +533,33 @@ export const AdvancedSearch: FC<Props> = ({
       },
     ],
   ];
+  const SCHEMA_EMPLOYEES: Schema<UsersFilter> = [
+    [
+      {
+        name: 'firstname',
+        label: 'First Name',
+        type: 'search',
+      },
+      {
+        name: 'lastname',
+        label: 'Last Name',
+        type: 'search',
+      },
+    ],
+    [
+      {
+        name: 'email',
+        label: 'Email',
+        type: 'search',
+      },
+      {
+        name: 'phone',
+        label: 'Primary Phone',
+        type: 'search',
+        actions: searchActions,
+      },
+    ],
+  ];
   const SCHEMA_PROPERTIES: Schema<PropertiesFilter> = [
     [
       {
@@ -561,6 +598,8 @@ export const AdvancedSearch: FC<Props> = ({
       return makeSchema(SCHEMA_EVENTS as Schema<SearchForm>);
     if (kind === 'customers')
       return makeSchema(SCHEMA_USERS as Schema<SearchForm>);
+    if (kind === 'employees')
+      return makeSchema(SCHEMA_EMPLOYEES as Schema<SearchForm>);
     if (kind === 'properties')
       return makeSchema(SCHEMA_PROPERTIES as Schema<SearchForm>);
     return [];
@@ -752,6 +791,61 @@ export const AdvancedSearch: FC<Props> = ({
           }),
         },
         { name: '' },
+      ];
+    if (kind === 'employees')
+      return [
+        {
+          name: 'Name',
+          ...(usersSort.orderByField === 'lastname'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'lastname',
+            orderBy: 'user_lastname',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Title',
+          ...(usersSort.orderByField === 'businessname'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'businessname',
+            orderBy: 'user_businessname',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Email',
+          ...(usersSort.orderByField === 'email'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'email',
+            orderBy: 'user_email',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Phone',
+          ...(usersSort.orderByField === 'phone'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'phone',
+            orderBy: 'user_phone',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
       ];
     if (kind === 'properties')
       return [
@@ -985,6 +1079,51 @@ export const AdvancedSearch: FC<Props> = ({
                       ]
                     : []),
                   ...(deletableCustomers
+                    ? [
+                        <IconButton
+                          key="delete"
+                          size="small"
+                          onClick={handlePendingCustomerDeletingToggle(entry)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>,
+                      ]
+                    : []),
+                ],
+              },
+            ];
+          });
+    if (kind === 'employees')
+      return loading
+        ? makeFakeRows(4, 3)
+        : users.map(entry => {
+            const { empTitle, email } = entry;
+            return [
+              { value: getCustomerName(entry) },
+              { value: empTitle },
+              { value: email },
+              {
+                value: getCustomerPhoneWithExt(entry),
+                actions: [
+                  <IconButton
+                    key="view"
+                    size="small"
+                    onClick={handlePendingCustomerViewingToggle(entry)}
+                  >
+                    <SearchIcon />
+                  </IconButton>,
+                  ...(editableEmployees
+                    ? [
+                        <IconButton
+                          key="edit"
+                          size="small"
+                          onClick={handlePendingCustomerEditingToggle(entry)}
+                        >
+                          <EditIcon />
+                        </IconButton>,
+                      ]
+                    : []),
+                  ...(deletableEmployees
                     ? [
                         <IconButton
                           key="delete"
