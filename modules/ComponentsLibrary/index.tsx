@@ -31,6 +31,8 @@ import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PerDiem from './PerDiem/examples';
 import PlainForm from './PlainForm/examples';
+import PrintHeader from './PrintHeader/examples';
+import PrintTable from './PrintTable/examples';
 import PropertyEdit from './PropertyEdit/examples';
 import QuoteSelector from './QuoteSelector/examples';
 import Reports from './Reports/examples';
@@ -73,6 +75,8 @@ const COMPONENTS = {
   Modal,
   PerDiem,
   PlainForm,
+  PrintHeader,
+  PrintTable,
   PropertyEdit,
   QuoteSelector,
   Reports,

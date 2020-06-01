@@ -1,4 +1,5 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback, useEffect, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import cloneDeep from 'lodash/cloneDeep';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
@@ -18,6 +19,8 @@ import { PropertyEdit } from '../PropertyEdit';
 import { PropertyInfo } from '../../PropertyInformation/components/PropertyInfo';
 import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
+import { PrintHeader } from '../PrintHeader';
+import { PrintTable } from '../PrintTable';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -49,12 +52,17 @@ import {
   deletePropertyById,
   getBusinessName,
   getCustomerPhoneWithExt,
+  TimesheetDepartmentType,
+  loadTimesheetDepartments,
+  getDepartmentName,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
   OPTION_ALL,
   EVENT_STATUS_LIST,
 } from '../../../constants';
+//@ts-ignore
+import logoKalos from './kalos-logo-2019.png';
 
 type Kind = 'serviceCalls' | 'customers' | 'properties' | 'employees';
 
@@ -67,6 +75,7 @@ export interface Props {
   deletableCustomers?: boolean;
   editableEmployees?: boolean;
   deletableEmployees?: boolean;
+  printableEmployees?: boolean;
   editableProperties?: boolean;
   deletableProperties?: boolean;
   eventsWithAccounting?: boolean;
@@ -105,6 +114,7 @@ export const AdvancedSearch: FC<Props> = ({
   deletableCustomers,
   editableEmployees,
   deletableEmployees,
+  printableEmployees = false,
   editableProperties,
   deletableProperties,
   eventsWithAccounting = false,
@@ -113,6 +123,7 @@ export const AdvancedSearch: FC<Props> = ({
   onClose,
 }) => {
   const classes = useStyles();
+  const employeePrintRef = useRef(null);
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
@@ -122,11 +133,12 @@ export const AdvancedSearch: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [accounting, setAccounting] = useState<boolean>(false);
-  const defaultFilter = {
+  const defaultFilter: SearchForm = {
     kind: kinds[0],
     jobTypeId: 0,
     jobSubtypeId: 0,
     logJobStatus: '',
+    employeeDepartmentId: -1,
   };
   const [filter, setFilter] = useState<SearchForm>(defaultFilter);
   const [formKey, setFormKey] = useState<number>(0);
@@ -169,15 +181,30 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingPropertyDeleting, setPendingPropertyDeleting] = useState<
     PropertyType
   >();
+  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await loadJobTypes();
     setJobTypes(jobTypes);
     const jobSubtypes = await loadJobSubtypes();
     setJobSubtypes(jobSubtypes);
-    setFormKey(formKey + 1);
     setLoadingDicts(false);
-  }, [setLoadingDicts, setJobTypes, setJobSubtypes, setFormKey, formKey]);
+    if (kinds.includes('employees')) {
+      const departments = await loadTimesheetDepartments();
+      setDepartments(departments);
+    }
+    setFormKey(formKey + 1);
+    setLoadedDicts(true);
+  }, [
+    setLoadingDicts,
+    setJobTypes,
+    setJobSubtypes,
+    // setFormKey,
+    formKey,
+    kinds,
+    setDepartments,
+    setLoadedDicts,
+  ]);
   const load = useCallback(async () => {
     setLoading(true);
     const { kind, ...filterCriteria } = filter;
@@ -200,6 +227,12 @@ export const AdvancedSearch: FC<Props> = ({
         } as UsersFilter,
         sort: usersSort,
       };
+      if (
+        kind === 'customers' ||
+        (filterCriteria as UsersFilter).employeeDepartmentId! < 0
+      ) {
+        delete criteria.filter.employeeDepartmentId;
+      }
       const { results, totalCount } = await loadUsersByFilter(criteria);
       setCount(totalCount);
       setUsers(results);
@@ -210,6 +243,8 @@ export const AdvancedSearch: FC<Props> = ({
         filter: filterCriteria as PropertiesFilter,
         sort: propertiesSort,
       };
+      //@ts-ignore
+      delete criteria.filter.employeeDepartmentId;
       const { results, totalCount } = await loadPropertiesByFilter(criteria);
       setCount(totalCount);
       setProperties(results);
@@ -228,15 +263,14 @@ export const AdvancedSearch: FC<Props> = ({
     propertiesSort,
   ]);
   useEffect(() => {
-    if (!loaded) {
+    if (!loaded && loadedDicts) {
       setLoaded(true);
       load();
     }
     if (!loadedDicts) {
-      setLoadedDicts(true);
       loadDicts();
     }
-  }, [loaded, setLoaded, load, loadedDicts, setLoadedDicts, loadDicts]);
+  }, [loaded, setLoaded, load, loadedDicts, loadDicts]);
   const reload = useCallback(() => setLoaded(false), [setLoaded]);
   const handleEventsSortChange = useCallback(
     (sort: EventsSort) => () => {
@@ -394,6 +428,10 @@ export const AdvancedSearch: FC<Props> = ({
     },
     [onSelectEvent, onClose],
   );
+  const handlePrintEmployees = useReactToPrint({
+    content: () => employeePrintRef.current,
+    copyStyles: true,
+  });
   const searchActions: ActionsProps = [
     {
       label: 'Reset',
@@ -545,8 +583,24 @@ export const AdvancedSearch: FC<Props> = ({
         label: 'Last Name',
         type: 'search',
       },
+      {
+        name: 'employeeDepartmentId',
+        label: 'Department',
+        options: [
+          { label: OPTION_ALL, value: -1 },
+          ...departments.map(({ id, description, value }) => ({
+            label: `${value} - ${description}`,
+            value: id,
+          })),
+        ],
+      },
     ],
     [
+      {
+        name: 'empTitle',
+        label: 'Title',
+        type: 'search',
+      },
       {
         name: 'email',
         label: 'Email',
@@ -554,7 +608,12 @@ export const AdvancedSearch: FC<Props> = ({
       },
       {
         name: 'phone',
-        label: 'Primary Phone',
+        label: 'Phone',
+        type: 'search',
+      },
+      {
+        name: 'ext',
+        label: 'Ext.',
         type: 'search',
         actions: searchActions,
       },
@@ -834,7 +893,7 @@ export const AdvancedSearch: FC<Props> = ({
           }),
         },
         {
-          name: 'Phone',
+          name: 'Phone, ext.',
           ...(usersSort.orderByField === 'phone'
             ? {
                 dir: usersSort.orderDir,
@@ -1197,6 +1256,14 @@ export const AdvancedSearch: FC<Props> = ({
         }}
         loading={loading || loadingDicts}
         actions={[
+          ...(printableEmployees
+            ? [
+                {
+                  label: 'Print',
+                  onClick: handlePrintEmployees!,
+                },
+              ]
+            : []),
           ...(eventsWithAccounting
             ? [
                 {
@@ -1232,6 +1299,28 @@ export const AdvancedSearch: FC<Props> = ({
         className={classes.form}
         disabled={loadingDicts}
       />
+      <div style={{ display: 'none' }}>
+        <div ref={employeePrintRef}>
+          <PrintHeader
+            title="Employees"
+            subtitle={
+              (filter as UsersFilter).employeeDepartmentId! > 0
+                ? `Department: ${getDepartmentName(
+                    departments.find(
+                      ({ id }) =>
+                        id === (filter as UsersFilter).employeeDepartmentId,
+                    ),
+                  )}`
+                : ''
+            }
+            logo={logoKalos}
+          />
+          <PrintTable
+            columns={['Name', 'Title', 'Email', 'Phone, ext.']}
+            data={getData().map(rows => rows.map(row => row.value))}
+          />
+        </div>
+      </div>
       <InfoTable
         columns={getColumns(filter.kind)}
         data={getData()}
