@@ -621,21 +621,26 @@ export const AdvancedSearch: FC<Props> = ({
           })),
         ],
       },
-    ],
-    [
       {
         name: 'empTitle',
         label: 'Title',
         type: 'search',
       },
+    ],
+    [
       {
         name: 'email',
         label: 'Email',
         type: 'search',
       },
       {
+        name: 'cellphone',
+        label: 'Cell',
+        type: 'search',
+      },
+      {
         name: 'phone',
-        label: 'Phone',
+        label: 'Office',
         type: 'search',
       },
       {
@@ -978,7 +983,7 @@ export const AdvancedSearch: FC<Props> = ({
           }),
         },
         {
-          name: 'Phone, ext.',
+          name: 'Office, ext.',
           ...(usersSort.orderByField === 'phone'
             ? {
                 dir: usersSort.orderDir,
@@ -987,6 +992,19 @@ export const AdvancedSearch: FC<Props> = ({
           onClick: handleUsersSortChange({
             orderByField: 'phone',
             orderBy: 'user_phone',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Cell',
+          ...(usersSort.orderByField === 'cellphone'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'cellphone',
+            orderBy: 'user_cellphone',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
@@ -1239,15 +1257,16 @@ export const AdvancedSearch: FC<Props> = ({
           });
     if (kind === 'employees')
       return loading
-        ? makeFakeRows(4, 3)
+        ? makeFakeRows(5, 3)
         : users.map(entry => {
-            const { empTitle, email } = entry;
+            const { empTitle, email, cellphone } = entry;
             return [
               { value: getCustomerName(entry) },
               { value: empTitle },
               { value: email },
+              { value: getCustomerPhoneWithExt(entry) },
               {
-                value: getCustomerPhoneWithExt(entry),
+                value: cellphone,
                 actions: [
                   <IconButton
                     key="view"

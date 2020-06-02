@@ -1082,6 +1082,7 @@ export type UsersFilter = {
   empTitle?: string;
   employeeDepartmentId?: number;
   ext?: string;
+  cellphone?: string;
 };
 
 /**
