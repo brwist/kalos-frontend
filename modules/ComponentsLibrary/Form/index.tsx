@@ -61,7 +61,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
                     ...aggr,
                     [name]:
                       data[name] !== undefined
-                        ? data[name] || getDefaultValueByType(type)
+                        ? data[name]
                         : getDefaultValueByType(type),
                   },
             {},

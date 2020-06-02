@@ -7,6 +7,10 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
+import {
+  EmployeeFunctionClient,
+  EmployeeFunction,
+} from '@kalos-core/kalos-rpc/EmployeeFunction';
 import { JobSubtypeClient, JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import {
   JobTypeSubtypeClient,
@@ -71,6 +75,7 @@ export type DocumentKeyType = DocumentKey.AsObject;
 export type PerDiemType = PerDiem.AsObject;
 export type PerDiemRowType = PerDiemRow.AsObject;
 export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
+export type EmployeeFunctionType = EmployeeFunction.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -78,6 +83,9 @@ export const EventClientService = new EventClient(ENDPOINT);
 export const JobTypeClientService = new JobTypeClient(ENDPOINT);
 export const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
 export const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
+export const EmployeeFunctionClientService = new EmployeeFunctionClient(
+  ENDPOINT,
+);
 export const PerDiemClientService = new PerDiemClient(ENDPOINT);
 export const ServicesRenderedClientService = new ServicesRenderedClient(
   ENDPOINT,
@@ -853,6 +861,55 @@ async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
     userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
   );
 }
+
+export const loadEmployeeFunctions = async () => {
+  const req = new EmployeeFunction();
+  req.setIsdeleted(0);
+  const { resultsList } = (
+    await EmployeeFunctionClientService.BatchGet(req)
+  ).toObject();
+  return resultsList.sort((a, b) => {
+    const A = a.name.toLowerCase();
+    const B = b.name.toLowerCase();
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+  });
+};
+
+export const upsertEmployeeFunction = async (
+  data: EmployeeFunctionType,
+  userId: number,
+) => {
+  const req = new EmployeeFunction();
+  const fieldMaskList = ['Isdeleted'];
+  req.setIsdeleted(0);
+  if (data.id) {
+    req.setModifydate(timestamp());
+    req.setModifyuserid(userId);
+    fieldMaskList.push('Modifydate', 'Modifyuserid');
+  } else {
+    req.setAddeddate(timestamp());
+    req.setAddeduserid(userId);
+    fieldMaskList.push('Addeddate', 'Addeduserid');
+  }
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return await EmployeeFunctionClientService[data.id ? 'Update' : 'Create'](
+    req,
+  );
+};
+
+export const deleteEmployeeFunctionById = async (id: number) => {
+  const req = new EmployeeFunction();
+  req.setId(id);
+  await EmployeeFunctionClientService.Delete(req);
+};
 
 export const loadPerDiemByUserIdAndDateStarted = async (
   userId: number,
