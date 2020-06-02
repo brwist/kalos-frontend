@@ -716,7 +716,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       </>
     );
   }
-  if (options && !readOnly) {
+  if (options) {
     const id = `${name}-select-label`;
     return (
       <div className={classes.fieldWrapper + ' ' + className}>
@@ -733,6 +733,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             onChange={handleChange}
             {...props}
             value={value}
+            readOnly={readOnly}
           >
             {options.map(option => {
               const isStringOption = typeof option === 'string';

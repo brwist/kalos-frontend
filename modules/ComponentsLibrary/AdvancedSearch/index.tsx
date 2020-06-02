@@ -21,6 +21,7 @@ import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetail
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import { PrintHeader } from '../PrintHeader';
 import { PrintTable } from '../PrintTable';
+import { EmployeeDepartments } from '../EmployeeDepartments';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -55,6 +56,7 @@ import {
   TimesheetDepartmentType,
   loadTimesheetDepartments,
   getDepartmentName,
+  loadUserById,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -124,6 +126,7 @@ export const AdvancedSearch: FC<Props> = ({
 }) => {
   const classes = useStyles();
   const employeePrintRef = useRef(null);
+  const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
@@ -163,6 +166,15 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<EventType>();
+  const [pendingEmployeeViewing, setPendingEmployeeViewing] = useState<
+    UserType
+  >();
+  const [pendingEmployeeEditing, setPendingEmployeeEditing] = useState<
+    UserType
+  >();
+  const [pendingEmployeeDeleting, setPendingEmployeeDeleting] = useState<
+    UserType
+  >();
   const [pendingCustomerViewing, setPendingCustomerViewing] = useState<
     UserType
   >();
@@ -182,6 +194,9 @@ export const AdvancedSearch: FC<Props> = ({
     PropertyType
   >();
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [employeeDepartmentsOpen, setEmployeeDepartmentsOpen] = useState<
+    boolean
+  >(false);
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await loadJobTypes();
@@ -192,6 +207,8 @@ export const AdvancedSearch: FC<Props> = ({
     if (kinds.includes('employees')) {
       const departments = await loadTimesheetDepartments();
       setDepartments(departments);
+      const loggedUser = await loadUserById(loggedUserId);
+      setIsAdmin(loggedUser.isAdmin);
     }
     setFormKey(formKey + 1);
     setLoadedDicts(true);
@@ -204,6 +221,7 @@ export const AdvancedSearch: FC<Props> = ({
     kinds,
     setDepartments,
     setLoadedDicts,
+    setIsAdmin,
   ]);
   const load = useCallback(async () => {
     setLoading(true);
@@ -375,6 +393,11 @@ export const AdvancedSearch: FC<Props> = ({
       setLoaded(false);
     }
   }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
+  const handlePendingEmployeeViewingToggle = useCallback(
+    (pendingEmployeeViewing?: UserType) => () =>
+      setPendingEmployeeViewing(pendingEmployeeViewing),
+    [setPendingEmployeeViewing],
+  );
   const handlePendingCustomerViewingToggle = useCallback(
     (pendingCustomerViewing?: UserType) => () =>
       setPendingCustomerViewing(pendingCustomerViewing),
@@ -432,6 +455,10 @@ export const AdvancedSearch: FC<Props> = ({
     content: () => employeePrintRef.current,
     copyStyles: true,
   });
+  const handleEmployeeDepartmentsOpenToggle = useCallback(
+    (open: boolean) => () => setEmployeeDepartmentsOpen(open),
+    [setEmployeeDepartmentsOpen],
+  );
   const searchActions: ActionsProps = [
     {
       label: 'Reset',
@@ -616,6 +643,64 @@ export const AdvancedSearch: FC<Props> = ({
         label: 'Ext.',
         type: 'search',
         actions: searchActions,
+      },
+    ],
+  ];
+  const SCHEMA_EMPLOYEES_VIEW: Schema<UsersFilter> = [
+    [
+      {
+        name: 'email',
+        label: 'Email',
+        readOnly: true,
+      },
+    ],
+    [
+      {
+        name: 'firstname',
+        label: 'First Name',
+        readOnly: true,
+      },
+    ],
+    [
+      {
+        name: 'lastname',
+        label: 'Last Name',
+        readOnly: true,
+      },
+    ],
+    [
+      {
+        name: 'phone',
+        label: 'Phone',
+        readOnly: true,
+      },
+    ],
+    [
+      {
+        name: 'ext',
+        label: 'Phone ext.',
+        readOnly: true,
+      },
+    ],
+    [
+      {
+        name: 'empTitle',
+        label: 'Title',
+        readOnly: true,
+      },
+    ],
+    [
+      {
+        name: 'employeeDepartmentId',
+        label: 'Department',
+        options: [
+          { label: OPTION_ALL, value: -1 },
+          ...departments.map(({ id, description, value }) => ({
+            label: `${value} - ${description}`,
+            value: id,
+          })),
+        ],
+        readOnly: true,
       },
     ],
   ];
@@ -1167,11 +1252,11 @@ export const AdvancedSearch: FC<Props> = ({
                   <IconButton
                     key="view"
                     size="small"
-                    onClick={handlePendingCustomerViewingToggle(entry)}
+                    onClick={handlePendingEmployeeViewingToggle(entry)}
                   >
                     <SearchIcon />
                   </IconButton>,
-                  ...(editableEmployees
+                  ...(editableEmployees && isAdmin
                     ? [
                         <IconButton
                           key="edit"
@@ -1182,7 +1267,7 @@ export const AdvancedSearch: FC<Props> = ({
                         </IconButton>,
                       ]
                     : []),
-                  ...(deletableEmployees
+                  ...(deletableEmployees && isAdmin
                     ? [
                         <IconButton
                           key="delete"
@@ -1243,7 +1328,15 @@ export const AdvancedSearch: FC<Props> = ({
             ];
           });
     return [];
-  }, [filter, loading, events, loadingDicts, accounting, onSelectEvent]);
+  }, [
+    filter,
+    loading,
+    events,
+    loadingDicts,
+    accounting,
+    onSelectEvent,
+    isAdmin,
+  ]);
   return (
     <div>
       <SectionBar
@@ -1256,6 +1349,14 @@ export const AdvancedSearch: FC<Props> = ({
         }}
         loading={loading || loadingDicts}
         actions={[
+          ...(kinds.includes('employees')
+            ? [
+                {
+                  label: 'Employee Departments',
+                  onClick: handleEmployeeDepartmentsOpenToggle(true),
+                },
+              ]
+            : []),
           ...(printableEmployees
             ? [
                 {
@@ -1438,6 +1539,37 @@ export const AdvancedSearch: FC<Props> = ({
           kind="Property"
           name={`with address ${getPropertyAddress(pendingPropertyDeleting)}`}
         />
+      )}
+      {employeeDepartmentsOpen && (
+        <Modal
+          open
+          onClose={handleEmployeeDepartmentsOpenToggle(false)}
+          fullScreen
+        >
+          <EmployeeDepartments
+            loggedUserId={loggedUserId}
+            onClose={handleEmployeeDepartmentsOpenToggle(false)}
+          />
+        </Modal>
+      )}
+      {pendingEmployeeViewing && (
+        <Modal open onClose={handlePendingEmployeeViewingToggle(undefined)}>
+          <SectionBar
+            title="View Employee"
+            actions={[
+              {
+                label: 'Close',
+                onClick: handlePendingEmployeeViewingToggle(undefined),
+              },
+            ]}
+            fixedActions
+          />
+          <PlainForm
+            schema={SCHEMA_EMPLOYEES_VIEW}
+            data={pendingEmployeeViewing}
+            onChange={() => {}}
+          />
+        </Modal>
       )}
     </div>
   );
