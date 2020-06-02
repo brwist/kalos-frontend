@@ -1,5 +1,6 @@
 import React, { FC, useState, useCallback, useEffect, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import { User } from '@kalos-core/kalos-rpc/User';
 import cloneDeep from 'lodash/cloneDeep';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
@@ -22,6 +23,7 @@ import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServic
 import { PrintHeader } from '../PrintHeader';
 import { PrintTable } from '../PrintTable';
 import { EmployeeDepartments } from '../EmployeeDepartments';
+import { Form } from '../Form';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -57,6 +59,7 @@ import {
   loadTimesheetDepartments,
   getDepartmentName,
   loadUserById,
+  saveUser,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -163,6 +166,7 @@ export const AdvancedSearch: FC<Props> = ({
     orderBy: 'property_address',
     orderDir: 'ASC',
   });
+  const [saving, setSaving] = useState<boolean>(false);
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<EventType>();
@@ -383,7 +387,26 @@ export const AdvancedSearch: FC<Props> = ({
       await deleteUserById(id);
       setLoaded(false);
     }
-  }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
+  }, [
+    pendingCustomerDeleting,
+    setLoaded,
+    setPendingCustomerDeleting,
+    setLoading,
+  ]);
+  const handleDeleteEmployee = useCallback(async () => {
+    if (pendingEmployeeDeleting) {
+      const { id } = pendingEmployeeDeleting;
+      setPendingEmployeeDeleting(undefined);
+      setLoading(true);
+      await deleteUserById(id);
+      setLoaded(false);
+    }
+  }, [
+    pendingEmployeeDeleting,
+    setLoaded,
+    setPendingEmployeeDeleting,
+    setLoading,
+  ]);
   const handleDeleteProperty = useCallback(async () => {
     if (pendingPropertyDeleting) {
       const { id } = pendingPropertyDeleting;
@@ -392,11 +415,26 @@ export const AdvancedSearch: FC<Props> = ({
       await deletePropertyById(id);
       setLoaded(false);
     }
-  }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
+  }, [
+    pendingPropertyDeleting,
+    setLoaded,
+    setPendingPropertyDeleting,
+    setLoading,
+  ]);
   const handlePendingEmployeeViewingToggle = useCallback(
     (pendingEmployeeViewing?: UserType) => () =>
       setPendingEmployeeViewing(pendingEmployeeViewing),
     [setPendingEmployeeViewing],
+  );
+  const handlePendingEmployeeEditingToggle = useCallback(
+    (pendingEmployeeEditing?: UserType) => () =>
+      setPendingEmployeeEditing(pendingEmployeeEditing),
+    [setPendingEmployeeEditing],
+  );
+  const handlePendingEmployeeDeletingToggle = useCallback(
+    (pendingEmployeeDeleting?: UserType) => () =>
+      setPendingEmployeeDeleting(pendingEmployeeDeleting),
+    [setPendingEmployeeDeleting],
   );
   const handlePendingCustomerViewingToggle = useCallback(
     (pendingCustomerViewing?: UserType) => () =>
@@ -412,6 +450,18 @@ export const AdvancedSearch: FC<Props> = ({
     setPendingCustomerEditing(undefined);
     setLoaded(false);
   }, [setPendingCustomerEditing, setLoaded]);
+  const onSaveEmployee = useCallback(
+    async (data: UserType) => {
+      if (pendingEmployeeEditing) {
+        setSaving(true);
+        await saveUser(data, pendingEmployeeEditing.id);
+        setPendingEmployeeEditing(undefined);
+        setSaving(false);
+        setLoaded(false);
+      }
+    },
+    [setPendingEmployeeEditing, setLoaded, setSaving, pendingEmployeeEditing],
+  );
   const handlePendingCustomerDeletingToggle = useCallback(
     (pendingCustomerDeleting?: UserType) => () =>
       setPendingCustomerDeleting(pendingCustomerDeleting),
@@ -706,6 +756,58 @@ export const AdvancedSearch: FC<Props> = ({
           })),
         ],
         readOnly: true,
+      },
+    ],
+  ];
+  const SCHEMA_EMPLOYEES_EDIT: Schema<UsersFilter> = [
+    [{ name: 'isEmployee', type: 'hidden' }],
+    [
+      {
+        name: 'email',
+        label: 'Email',
+      },
+    ],
+    [
+      {
+        name: 'firstname',
+        label: 'First Name',
+      },
+    ],
+    [
+      {
+        name: 'lastname',
+        label: 'Last Name',
+      },
+    ],
+    [
+      {
+        name: 'phone',
+        label: 'Phone',
+      },
+    ],
+    [
+      {
+        name: 'ext',
+        label: 'Phone ext.',
+      },
+    ],
+    [
+      {
+        name: 'empTitle',
+        label: 'Title',
+      },
+    ],
+    [
+      {
+        name: 'employeeDepartmentId',
+        label: 'Department',
+        options: [
+          { label: OPTION_ALL, value: -1 },
+          ...departments.map(({ id, description, value }) => ({
+            label: `${value} - ${description}`,
+            value: id,
+          })),
+        ],
       },
     ],
   ];
@@ -1280,7 +1382,7 @@ export const AdvancedSearch: FC<Props> = ({
                         <IconButton
                           key="edit"
                           size="small"
-                          onClick={handlePendingCustomerEditingToggle(entry)}
+                          onClick={handlePendingEmployeeEditingToggle(entry)}
                         >
                           <EditIcon />
                         </IconButton>,
@@ -1291,7 +1393,7 @@ export const AdvancedSearch: FC<Props> = ({
                         <IconButton
                           key="delete"
                           size="small"
-                          onClick={handlePendingCustomerDeletingToggle(entry)}
+                          onClick={handlePendingEmployeeDeletingToggle(entry)}
                         >
                           <DeleteIcon />
                         </IconButton>,
@@ -1356,6 +1458,11 @@ export const AdvancedSearch: FC<Props> = ({
     onSelectEvent,
     isAdmin,
   ]);
+  const makeNewEmployee = () => {
+    const req = new User();
+    req.setIsEmployee(1);
+    return req.toObject();
+  };
   return (
     <div>
       <SectionBar
@@ -1373,6 +1480,16 @@ export const AdvancedSearch: FC<Props> = ({
                 {
                   label: 'Employee Departments',
                   onClick: handleEmployeeDepartmentsOpenToggle(true),
+                },
+              ]
+            : []),
+          ...(kinds.includes('employees') && isAdmin
+            ? [
+                {
+                  label: 'Add New Employee',
+                  onClick: handlePendingEmployeeEditingToggle(
+                    makeNewEmployee(),
+                  ),
                 },
               ]
             : []),
@@ -1589,6 +1706,31 @@ export const AdvancedSearch: FC<Props> = ({
             onChange={() => {}}
           />
         </Modal>
+      )}
+      {pendingEmployeeEditing && (
+        <Modal
+          open
+          onClose={handlePendingEmployeeEditingToggle(undefined)}
+          fullScreen
+        >
+          <Form
+            title={`${pendingEmployeeEditing.id ? 'Edit' : 'Add'} Employee`}
+            schema={SCHEMA_EMPLOYEES_EDIT}
+            data={pendingEmployeeEditing}
+            onClose={handlePendingEmployeeEditingToggle(undefined)}
+            onSave={onSaveEmployee}
+            disabled={saving}
+          />
+        </Modal>
+      )}
+      {pendingEmployeeDeleting && (
+        <ConfirmDelete
+          open
+          onClose={handlePendingEmployeeDeletingToggle(undefined)}
+          onConfirm={handleDeleteEmployee}
+          kind="Employee"
+          name={getCustomerNameAndBusinessName(pendingEmployeeDeleting)}
+        />
       )}
     </div>
   );
