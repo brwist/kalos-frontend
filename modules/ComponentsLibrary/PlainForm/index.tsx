@@ -157,7 +157,7 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   ...aggr,
                   [name]:
                     data[name] !== undefined
-                      ? data[name] || getDefaultValueByType(type)
+                      ? data[name]
                       : getDefaultValueByType(type),
                 },
           {},

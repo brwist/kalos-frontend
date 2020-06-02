@@ -21,6 +21,7 @@ import CustomControls from './CustomControls/examples';
 import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import Documents from './Documents/examples';
+import EmployeeDepartments from './EmployeeDepartments/examples';
 import Field from './Field/examples';
 import FileTags from './FileTags/examples';
 import Form from './Form/examples';
@@ -65,6 +66,7 @@ const COMPONENTS = {
   CustomerEdit,
   CustomerInformation,
   Documents,
+  EmployeeDepartments,
   Field,
   FileTags,
   Form,
