@@ -701,7 +701,7 @@ export const AdvancedSearch: FC<Props> = ({
       },
     ],
   ];
-  const SCHEMA_EMPLOYEES_VIEW: Schema<UsersFilter> = [
+  const SCHEMA_EMPLOYEES_VIEW: Schema<UserType> = [
     [
       {
         name: 'email',
@@ -759,36 +759,49 @@ export const AdvancedSearch: FC<Props> = ({
       },
     ],
   ];
-  const SCHEMA_EMPLOYEES_EDIT: Schema<UsersFilter> = [
+  const SCHEMA_EMPLOYEES_EDIT: Schema<UserType> = [
     [{ name: 'isEmployee', type: 'hidden' }],
-    [
-      {
-        name: 'email',
-        label: 'Email',
-      },
-    ],
+    [{ headline: true, label: 'Personal Details' }],
     [
       {
         name: 'firstname',
         label: 'First Name',
+        required: true,
       },
-    ],
-    [
       {
         name: 'lastname',
         label: 'Last Name',
+        required: true,
+      },
+      {
+        name: 'login',
+        label: 'Login',
+        required: true,
+      },
+      {
+        name: 'pwd',
+        label: 'Password',
+        type: 'password',
+        required: true,
       },
     ],
     [
       {
-        name: 'phone',
-        label: 'Phone',
+        name: 'address',
+        label: 'Street Address',
+        multiline: true,
       },
-    ],
-    [
       {
-        name: 'ext',
-        label: 'Phone ext.',
+        name: 'city',
+        label: 'City',
+      },
+      {
+        name: 'zip',
+        label: 'Zipcode',
+      },
+      {
+        name: 'state',
+        label: 'State', // TODO options
       },
     ],
     [
@@ -796,20 +809,239 @@ export const AdvancedSearch: FC<Props> = ({
         name: 'empTitle',
         label: 'Title',
       },
+      {
+        name: 'id', // FIXME
+        label: 'Hire Date',
+      },
+      {
+        name: 'employeeFunctionId', // FIXME
+        label: 'Employee Role',
+      },
+      {
+        name: 'employeeDepartmentId',
+        label: 'Employee Segment',
+        options: departments.map(({ id, description, value }) => ({
+          label: `${value} - ${description}`,
+          value: id,
+        })),
+        required: true,
+      },
     ],
     [
       {
-        name: 'employeeDepartmentId',
-        label: 'Department',
-        options: [
-          { label: OPTION_ALL, value: -1 },
-          ...departments.map(({ id, description, value }) => ({
-            label: `${value} - ${description}`,
-            value: id,
-          })),
-        ],
+        name: 'phone',
+        label: 'Primary Phone',
+      },
+      {
+        name: 'cellphone',
+        label: 'Cell Phone',
+      },
+      {
+        name: 'ext',
+        label: 'Ext',
+      },
+      {
+        name: 'toolFund',
+        label: 'Tool Fund Allowance',
       },
     ],
+    [
+      {
+        name: 'email',
+        label: 'Email',
+      },
+      {
+        name: 'phoneEmail',
+        label: 'Email-to-SMS',
+      },
+      {},
+      {},
+    ],
+    [{ headline: true, label: 'Employee Permission Details' }],
+    [
+      {
+        name: 'serviceCalls',
+        label: 'Runs Service Calls',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin',
+        label: 'Admin Menu Rights',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME include_in_pdf_list
+        label: 'Add To Directory PDF',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'isAdmin', // FIXME user_pwreset
+        label: 'Force P/W Reset',
+        type: 'checkbox',
+      },
+      {
+        name: 'paidServiceCallStatus',
+        label: '"Paid" Service Call Status',
+        type: 'checkbox',
+      },
+      {
+        name: 'showBilling',
+        label: 'Show billing to user',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'isAdmin', // FIXME can_delete_serviceItem_photo
+        label: 'Can delete service item photos',
+        type: 'checkbox',
+      },
+      {
+        name: 'isOfficeStaff',
+        label: 'Office Staff',
+        type: 'checkbox',
+      },
+      {
+        name: 'isHvacTech',
+        label: 'Hvac Tech',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'isAdmin', // FIXME can_access_reports
+        label: 'Access Reports',
+        type: 'checkbox',
+      },
+      {
+        name: 'techAssist',
+        label: 'Tech Assist',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME edit_directory_view
+        label: 'Edit Directory View',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'isAdmin', // FIXME have_roo_btn_access
+        label: 'Roo Button Access',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME can_approve_requestOff
+        label: 'Review and Approve Requests Off',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME userStatus
+        label: 'Activate User',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'isAdmin', // FIXME userStatus
+        label: 'Deactivate User',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME email_right
+        label: 'Send Emails',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME timesheet_right
+        label: 'Approve Time',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'isAdmin', // FIXME tasks_right
+        label: 'Handle Tasks',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME edit_right
+        label: 'Manage Employees',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME delete_right
+        label: 'Delete Customers',
+        type: 'checkbox',
+      },
+    ],
+    [{ headline: true, label: 'Kalos Special Features' }],
+    [
+      {
+        name: 'isColorMute',
+        label: 'Color Mute [2017]',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME admin_matrics
+        label: 'Admin Metrics',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME tech_matrics
+        label: 'Tech Metrics',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'isAdmin', // FIXME install_matrics
+        label: 'Install Metrics',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME garage_door_matrics
+        label: 'Garage Door Metrics',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME refrigeration_matrics
+        label: 'Refrigeration Metrics',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'isAdmin', // FIXME electrician_matrics
+        label: 'Electrician Metrics',
+        type: 'checkbox',
+      },
+      {},
+      {},
+    ],
+    [{ headline: true, label: 'Paid Time-Off' }],
+    [{}],
+    [{ headline: true, label: 'Dispatch Mode Permission' }],
+    [
+      {
+        name: 'isAdmin', // FIXME can_access_dispatch_mode
+        label: 'Access Dispatch Mode',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME access_dismiss_employee
+        label: 'Can Dismiss Employee',
+        type: 'checkbox',
+      },
+      {
+        name: 'isAdmin', // FIXME is_training_admin
+        label: 'Training Admin',
+        type: 'checkbox',
+      },
+    ],
+    [{ headline: true, label: 'Photo' }],
   ];
   const SCHEMA_PROPERTIES: Schema<PropertiesFilter> = [
     [
