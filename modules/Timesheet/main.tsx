@@ -88,8 +88,11 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       hiddenSR: [],
     },
     error: '',
-    hasReceiptsIssue: false,
-    receiptsIssueStr: '',
+    receiptsIssue: {
+      shown: false,
+      hasReceiptsIssue: false,
+      receiptsIssueStr: '',
+    }
   });
   const {
     user,
@@ -102,21 +105,23 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     shownDates,
     editing,
     error,
-    hasReceiptsIssue,
-    receiptsIssueStr,
+    receiptsIssue,
   } = state;
   const handleOnSave = (card: TimesheetLine.AsObject, action?: 'delete' | 'approve' | 'reject') => {
     dispatch({ type: 'saveTimecard', data: card, action: action || editing.action });
   };
 
   const handleAddNewTimeshetCardClicked = () => {
+    if (!checkReceiptIssue()) return;
     dispatch({type: 'addNewTimesheet'});
   };
 
   const editTimesheetCard = (card: TimesheetLine.AsObject) => {
+    if (!checkReceiptIssue()) return;
     dispatch({ type: 'editTimesheetCard', data: card });
   };
   const editServicesRenderedCard = (card: ServicesRendered.AsObject) => {
+    if (!checkReceiptIssue()) return;
     dispatch({ type: 'editServicesRenderedCard', data: card });
   };
 
@@ -136,26 +141,32 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
     dispatch({ type: 'changeDate', value })
   };
 
-  const checkTimeout = (): Boolean => {
+  const checkTimeout = (): boolean => {
     const lastTimeout = localStorage.getItem('TIMESHEET_TIMEOUT');
     if (lastTimeout) {
       const lastVal = parseInt(lastTimeout);
       const currVal = new Date().valueOf();
       return currVal - lastVal <= 86400;
     }
-    return true;
+    return false;
   };
 
+  const handleTimeout = (): void => {
+    localStorage.setItem('TIMESHEET_TIMEOUT', `${new Date().valueOf()}`);
+    dispatch({ type: 'showReceiptsIssueDialog', value: false });
+  };
 
-  const handleTimeout = () => {
-    const onTimeout = checkTimeout();
-    if (!onTimeout) {
-      localStorage.setItem('TIMESHEET_TIMEOUT', `${new Date().valueOf()}`);
+  const checkReceiptIssue = (): boolean => {
+    if (!receiptsIssue.hasReceiptsIssue && !checkTimeout()) {
+      dispatch({ type: 'showReceiptsIssueDialog', value: true });
+      return false;
     }
+    return true;
   };
 
   const handleSubmitTimesheet = useCallback(() => {
     (async () => {
+      if (!checkReceiptIssue()) return;
       const ids = [];
       let overlapped = false;
       for (let i = 0; i < shownDates.length; i++) {
@@ -322,10 +333,10 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
           )}
         </EditTimesheetContext.Provider>
       </ConfirmServiceProvider>
-      {hasReceiptsIssue && !checkTimeout() && (
+      {receiptsIssue.shown && (
         <ReceiptsIssueDialog
           isAdmin={user.timesheetAdministration}
-          receiptsIssueStr={receiptsIssueStr}
+          receiptsIssueStr={receiptsIssue.receiptsIssueStr}
           handleTimeout={handleTimeout}
         />
       )}

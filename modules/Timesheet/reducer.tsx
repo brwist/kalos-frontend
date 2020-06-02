@@ -55,6 +55,11 @@ export type State = {
   };
   editing: EditingState;
   error: '';
+  receiptsIssue: {
+    shown: boolean,
+    hasReceiptsIssue: boolean,
+    receiptsIssueStr: string,
+  }
 }
 
 type TimesheetData = {
@@ -79,7 +84,7 @@ export type Action =
   | { type: 'error', text: string }
   | { type: 'submitTimesheet' }
   | { type: 'approveTimesheet' }
-
+  | { type: 'showReceiptsIssueDialog', value: boolean };
 
 export const getShownDates = (date: Date): string[] => {
   const firstDay = date;
@@ -95,8 +100,11 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         user: action.data.user,
         owner: action.data.owner,
-        hasReceiptsIssue: action.data.hasReceiptsIssue,
-        receiptsIssueStr: action.data.receiptsIssueStr,
+        receiptsIssue: {
+          shown: false,
+          hasReceiptsIssue: action.data.hasReceiptsIssue,
+          receiptsIssueStr: action.data.receiptsIssueStr,
+        }
       };
     }
     case 'fetchingTimesheetData': {
@@ -305,6 +313,16 @@ export const reducer = (state: State, action: Action) => {
         error: action?.text || '',
       };
     }
+
+    case 'showReceiptsIssueDialog':
+      return {
+        ...state,
+        receiptsIssue: {
+          ...state.receiptsIssue,
+          shown: action.value,
+        },
+      };
+
     default:
       return state;
   }
