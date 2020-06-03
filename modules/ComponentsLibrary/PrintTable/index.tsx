@@ -13,29 +13,24 @@ const useStyles = makeStyles(theme => {
     borderColor: theme.palette.grey[300],
     borderLeftWidth: 0,
     borderRightWidth: 0,
-    '&:first-of-type': {
-      borderLeftWidth: 1,
-    },
-    '&:last-of-type': {
-      borderRightWidth: 1,
-    },
   };
   return {
     table: {
       width: '100%',
       ...theme.typography.body1,
-      fontSize: 12,
+      fontSize: 10,
       ...border,
       borderCollapse: 'collapse',
     },
     th: {
       ...border,
+      borderColor: theme.palette.common.black,
       textAlign: 'left',
-      padding: theme.spacing(0.5),
+      padding: theme.spacing(0.25),
     },
     td: {
       ...border,
-      padding: theme.spacing(0.5),
+      padding: theme.spacing(0.25),
     },
   };
 });
