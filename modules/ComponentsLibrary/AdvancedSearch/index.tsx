@@ -830,10 +830,10 @@ export const AdvancedSearch: FC<Props> = ({
         name: 'empTitle',
         label: 'Title',
       },
-      {
-        name: 'id', // FIXME
-        label: 'Hire Date',
-      },
+      // {
+      //   name: 'id', // TODO
+      //   label: 'Hire Date',
+      // },
       {
         name: 'employeeFunctionId',
         label: 'Employee Role',
