@@ -4,6 +4,7 @@ import { makeStyles } from '@material-ui/core/styles';
 interface Props {
   columns: string[];
   data: ReactNode[][];
+  noEntriesText?: string;
 }
 
 const useStyles = makeStyles(theme => {
@@ -35,7 +36,11 @@ const useStyles = makeStyles(theme => {
   };
 });
 
-export const PrintTable: FC<Props> = ({ columns, data }) => {
+export const PrintTable: FC<Props> = ({
+  columns,
+  data,
+  noEntriesText = 'No entries found.',
+}) => {
   const classes = useStyles();
   return (
     <table className={classes.table}>
@@ -58,6 +63,11 @@ export const PrintTable: FC<Props> = ({ columns, data }) => {
             ))}
           </tr>
         ))}
+        {data.length === 0 && (
+          <tr>
+            <td colSpan={columns.length}>{noEntriesText}</td>
+          </tr>
+        )}
       </tbody>
     </table>
   );
