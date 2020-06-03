@@ -247,9 +247,9 @@
     browser-headers "^0.4.0"
 
 "@kalos-core/kalos-rpc@^2.0.0":
-  version "2.30.0"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.30.0.tgz#9cd0a18b2d2a4326d64a110806badc031ce29fff"
-  integrity sha512-VkL53azrg27mv/h9UiqbpuX79ktdcGRLIPB5N+fG0U1Uhi36gCQRkgft05n+hDdsik8lcrMffqss///m/EyabA==
+  version "2.30.1"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.30.1.tgz#8e88bd4380a8032478c0ae7b1f3b8a7c57410a35"
+  integrity sha512-v/u/QYVbbOLKdQFOefSJn+4HXwHX9hUcLanyR06sZM1spG3f2CpdfAuVstDkuau3806AD7lbOytukMafAid5qA==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -2269,26 +2269,12 @@ dot-prop@^4.1.1:
   dependencies:
     is-obj "^1.0.0"
 
-draft-js-drag-n-drop-plugin@^2.0.4:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/draft-js-drag-n-drop-plugin/-/draft-js-drag-n-drop-plugin-2.0.4.tgz#082b72ab2f8201129a5d9ab527dc199c0d74fed6"
-  integrity sha512-kh/ew4jKpzlZPAdXNUTX4Zq1BtAGURdufUv1Iaki/qM9M1HjMPmv0Sy4jbi8tk7UcJ6rNZHX1ooN/vOts1iM1Q==
-  dependencies:
-    immutable "~3.7.4"
-
 draft-js-export-markdown@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/draft-js-export-markdown/-/draft-js-export-markdown-1.4.0.tgz#783731a0aaba4a5962d1d6a37293df7926ea6e45"
   integrity sha512-blfAvlhGhjVlHNaZ5WJKlrXhcftnwwC5VC+Eu3ztOGpGLaOom4hxhBjbKEWjvbQZJ9zL+xo57ukm39prYZMG5Q==
   dependencies:
     draft-js-utils "^1.4.0"
-
-draft-js-image-plugin@^2.0.7:
-  version "2.0.7"
-  resolved "https://registry.yarnpkg.com/draft-js-image-plugin/-/draft-js-image-plugin-2.0.7.tgz#1077304e00a22a561a5d4de1ba7b2749e545ff1f"
-  integrity sha512-yy3GXquNWZ7u5WpIvEf6J3QNArFYLOqpVfRoKopcRSze9CFHDO+VfeQlK95GfpTq7GykRy7tBD5qqq4tQcQ3bQ==
-  dependencies:
-    clsx "^1.0.4"
 
 draft-js-import-element@^1.4.0:
   version "1.4.0"
@@ -2305,19 +2291,6 @@ draft-js-import-markdown@^1.4.0:
   dependencies:
     draft-js-import-element "^1.4.0"
     synthetic-dom "^1.4.0"
-
-draft-js-plugins-editor@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/draft-js-plugins-editor/-/draft-js-plugins-editor-3.0.0.tgz#196d1e065e2c29faebaab4ec081b734fdef294a2"
-  integrity sha512-bFEL0FUIPg9VK3KSeBZ3D+uMqQEVe4Cv7++LWCMASRH02jy6x2f87NRxSZLzTQES5+oL6Qg+OEUlaTn409145A==
-  dependencies:
-    immutable "~3.7.4"
-    prop-types "^15.5.8"
-
-draft-js-plugins-utils@^2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/draft-js-plugins-utils/-/draft-js-plugins-utils-2.0.3.tgz#ba76c780bd097e05c4a4a02dfb2f72d1e238ab07"
-  integrity sha512-MjSIRjaCbSANjE0Fmg3wh4NsVF5y89AkrGxsJLOkMrPS0ZGymK1YHaqIelrBJt+6Kr46ALtHQieaOFxEbqbrdg==
 
 draft-js-utils@^1.4.0:
   version "1.4.0"
@@ -3195,9 +3168,9 @@ graceful-fs@^4.0.0, graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6,
   integrity sha512-a30VEBm4PEdx1dRB7MFK7BejejvCvBronbLjht+sHuGYj8PHs7M/5Z+rt5lw551vZ7yfTCj4Vuyy3mSJytDWRQ==
 
 grpc-web@^1.0.5:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/grpc-web/-/grpc-web-1.0.7.tgz#9e4fbcf63d3734515332ab59e42baa7d0d290015"
-  integrity sha512-Fkbz1nyvvt6GC6ODcxh9Fen6LLB3OTCgGHzHwM2Eni44SUhzqPz1UQgFp9sfBEfInOhx3yBdwo9ZLjZAmJ+TtA==
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/grpc-web/-/grpc-web-1.1.0.tgz#18f73583a0a8c0b6c44a5cba62e66376d0ad019e"
+  integrity sha512-oPoS4/E/EO0TA2ZOSf3AxV2AbWDeabwfbAo+8oXNenOw87RmKz4hME8Sy4KDu2dUnqK8cuGfzdQlJPAEQEygNQ==
 
 gulp-cli@^2.2.0:
   version "2.2.0"
@@ -5453,7 +5426,7 @@ promise@^7.1.1:
   dependencies:
     asap "~2.0.3"
 
-prop-types@^15.5.8, prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2:
+prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
