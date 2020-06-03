@@ -1,4 +1,11 @@
-import React, { FC, useState, useCallback, useEffect, useRef } from 'react';
+import React, {
+  FC,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { User } from '@kalos-core/kalos-rpc/User';
 import cloneDeep from 'lodash/cloneDeep';
@@ -24,6 +31,7 @@ import { PrintHeader } from '../PrintHeader';
 import { PrintTable } from '../PrintTable';
 import { EmployeeDepartments } from '../EmployeeDepartments';
 import { Form } from '../Form';
+import { SearchFormComponent } from './SearchForm';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -89,7 +97,7 @@ export interface Props {
   onClose?: () => void;
 }
 
-type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
+export type SearchForm = (EventsFilter | UsersFilter | PropertiesFilter) & {
   kind: Kind;
 };
 
@@ -335,8 +343,10 @@ export const AdvancedSearch: FC<Props> = ({
       kind: filter.kind,
     });
     setFormKey(formKey + 1);
-    setLoaded(false);
-  }, [setFilter, setLoaded, filter, formKey, setFormKey]);
+    if (!kinds.includes('employees')) {
+      setLoaded(false);
+    }
+  }, [setFilter, setLoaded, filter, formKey, setFormKey, kinds]);
   const handleFormChange = useCallback(
     (data: SearchForm) => {
       if (!data.kind) {
@@ -515,10 +525,14 @@ export const AdvancedSearch: FC<Props> = ({
       variant: 'outlined',
       onClick: handleResetSearchForm,
     },
-    {
-      label: 'Search',
-      onClick: handleLoad,
-    },
+    ...(kinds.includes('employees')
+      ? []
+      : [
+          {
+            label: 'Search',
+            onClick: handleLoad,
+          },
+        ]),
   ];
   const TYPES: Option[] = [
     ...(kinds.includes('serviceCalls')
@@ -1589,49 +1603,112 @@ export const AdvancedSearch: FC<Props> = ({
     if (kind === 'employees')
       return loading
         ? makeFakeRows(5, 3)
-        : users.map(entry => {
-            const { empTitle, email, cellphone } = entry;
-            return [
-              { value: getCustomerName(entry) },
-              { value: empTitle },
-              { value: email },
-              { value: getCustomerPhoneWithExt(entry) },
-              {
-                value: cellphone,
-                actions: [
-                  <IconButton
-                    key="view"
-                    size="small"
-                    onClick={handlePendingEmployeeViewingToggle(entry)}
-                  >
-                    <SearchIcon />
-                  </IconButton>,
-                  ...(editableEmployees && isAdmin
-                    ? [
-                        <IconButton
-                          key="edit"
-                          size="small"
-                          onClick={handlePendingEmployeeEditingToggle(entry)}
-                        >
-                          <EditIcon />
-                        </IconButton>,
-                      ]
-                    : []),
-                  ...(deletableEmployees && isAdmin
-                    ? [
-                        <IconButton
-                          key="delete"
-                          size="small"
-                          onClick={handlePendingEmployeeDeletingToggle(entry)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>,
-                      ]
-                    : []),
-                ],
+        : users
+            .filter(
+              ({
+                firstname,
+                lastname,
+                empTitle,
+                email,
+                phone,
+                ext,
+                cellphone,
+                employeeDepartmentId,
+              }) => {
+                const usersFilter = filter as UsersFilter;
+                const matchedFirstname = usersFilter.firstname
+                  ? firstname
+                      .toLowerCase()
+                      .includes(usersFilter.firstname.toLowerCase())
+                  : true;
+                const matchedLastname = usersFilter.lastname
+                  ? lastname
+                      .toLowerCase()
+                      .includes(usersFilter.lastname.toLowerCase())
+                  : true;
+                const matchedEmpTitle = usersFilter.empTitle
+                  ? empTitle
+                      .toLowerCase()
+                      .includes(usersFilter.empTitle.toLowerCase())
+                  : true;
+                const matchedEmail = usersFilter.email
+                  ? email
+                      .toLowerCase()
+                      .includes(usersFilter.email.toLowerCase())
+                  : true;
+                const matchedPhone = usersFilter.phone
+                  ? phone
+                      .toLowerCase()
+                      .includes(usersFilter.phone.toLowerCase())
+                  : true;
+                const matchedExt = usersFilter.ext
+                  ? ext.toLowerCase().includes(usersFilter.ext.toLowerCase())
+                  : true;
+                const matchedCellphone = usersFilter.cellphone
+                  ? cellphone
+                      .toLowerCase()
+                      .includes(usersFilter.cellphone.toLowerCase())
+                  : true;
+                const matchedDepartment =
+                  usersFilter.employeeDepartmentId &&
+                  usersFilter.employeeDepartmentId > 0
+                    ? employeeDepartmentId === usersFilter.employeeDepartmentId
+                    : true;
+                return (
+                  matchedFirstname &&
+                  matchedLastname &&
+                  matchedEmpTitle &&
+                  matchedEmail &&
+                  matchedPhone &&
+                  matchedExt &&
+                  matchedCellphone &&
+                  matchedDepartment
+                );
               },
-            ];
-          });
+            )
+            .map(entry => {
+              const { empTitle, email, cellphone } = entry;
+              return [
+                { value: getCustomerName(entry) },
+                { value: empTitle },
+                { value: email },
+                { value: getCustomerPhoneWithExt(entry) },
+                {
+                  value: cellphone,
+                  actions: [
+                    <IconButton
+                      key="view"
+                      size="small"
+                      onClick={handlePendingEmployeeViewingToggle(entry)}
+                    >
+                      <SearchIcon />
+                    </IconButton>,
+                    ...(editableEmployees && isAdmin
+                      ? [
+                          <IconButton
+                            key="edit"
+                            size="small"
+                            onClick={handlePendingEmployeeEditingToggle(entry)}
+                          >
+                            <EditIcon />
+                          </IconButton>,
+                        ]
+                      : []),
+                    ...(deletableEmployees && isAdmin
+                      ? [
+                          <IconButton
+                            key="delete"
+                            size="small"
+                            onClick={handlePendingEmployeeDeletingToggle(entry)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>,
+                        ]
+                      : []),
+                  ],
+                },
+              ];
+            });
     if (kind === 'properties')
       return loading
         ? makeFakeRows(4, 3)
@@ -1692,16 +1769,88 @@ export const AdvancedSearch: FC<Props> = ({
     req.setIsEmployee(1);
     return req.toObject();
   };
+  const printHeaderSubtitle = useMemo(() => {
+    const {
+      firstname,
+      lastname,
+      empTitle,
+      email,
+      phone,
+      ext,
+      cellphone,
+      employeeDepartmentId,
+    } = filter as UsersFilter;
+    const css = {
+      display: 'inline-block',
+      marginRight: 16,
+    };
+    return (
+      <div>
+        {employeeDepartmentId! > 0 && (
+          <span style={css}>
+            Department:{' '}
+            <strong>
+              {getDepartmentName(
+                departments.find(
+                  ({ id }) =>
+                    id === (filter as UsersFilter).employeeDepartmentId,
+                ),
+              )}
+            </strong>
+          </span>
+        )}
+        {!!firstname && (
+          <span style={css}>
+            Firstname with <strong>{firstname}</strong>
+          </span>
+        )}
+        {!!lastname && (
+          <span style={css}>
+            Lastname with <strong>{lastname}</strong>
+          </span>
+        )}
+        {!!empTitle && (
+          <span style={css}>
+            Title with <strong>{empTitle}</strong>
+          </span>
+        )}
+        {!!email && (
+          <span style={css}>
+            Email with <strong>{email}</strong>
+          </span>
+        )}
+        {!!phone && (
+          <span style={css}>
+            Phone with <strong>{phone}</strong>
+          </span>
+        )}
+        {!!ext && (
+          <span style={css}>
+            Ext. with <strong>{ext}</strong>
+          </span>
+        )}{' '}
+        {!!cellphone && (
+          <span style={css}>
+            Cell with <strong>{cellphone}</strong>
+          </span>
+        )}
+      </div>
+    );
+  }, [filter]);
   return (
     <div>
       <SectionBar
         title={title}
-        pagination={{
-          count,
-          page,
-          rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handleChangePage,
-        }}
+        pagination={
+          kinds.includes('employees')
+            ? undefined
+            : {
+                count,
+                page,
+                rowsPerPage: ROWS_PER_PAGE,
+                onChangePage: handleChangePage,
+              }
+        }
         loading={loading || loadingDicts}
         actions={[
           ...(kinds.includes('employees')
@@ -1756,12 +1905,11 @@ export const AdvancedSearch: FC<Props> = ({
             : []),
         ]}
       />
-      <PlainForm
+      <SearchFormComponent
         key={formKey}
         schema={getSchema()}
         data={filter}
         onChange={handleFormChange}
-        compact
         className={classes.form}
         disabled={loadingDicts}
       />
@@ -1769,16 +1917,7 @@ export const AdvancedSearch: FC<Props> = ({
         <div ref={employeePrintRef}>
           <PrintHeader
             title="Employees"
-            subtitle={
-              (filter as UsersFilter).employeeDepartmentId! > 0
-                ? `Department: ${getDepartmentName(
-                    departments.find(
-                      ({ id }) =>
-                        id === (filter as UsersFilter).employeeDepartmentId,
-                    ),
-                  )}`
-                : ''
-            }
+            subtitle={printHeaderSubtitle}
             logo={logoKalos}
           />
           <PrintTable
