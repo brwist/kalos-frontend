@@ -68,11 +68,14 @@ import {
   getDepartmentName,
   loadUserById,
   saveUser,
+  loadEmployeeFunctions,
+  EmployeeFunctionType,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
   OPTION_ALL,
   EVENT_STATUS_LIST,
+  USA_STATES_OPTIONS,
 } from '../../../constants';
 //@ts-ignore
 import logoKalos from './kalos-logo-2019.png';
@@ -206,6 +209,9 @@ export const AdvancedSearch: FC<Props> = ({
     PropertyType
   >();
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [employeeFunctions, setEmployeeFunctions] = useState<
+    EmployeeFunctionType[]
+  >([]);
   const [employeeDepartmentsOpen, setEmployeeDepartmentsOpen] = useState<
     boolean
   >(false);
@@ -219,6 +225,8 @@ export const AdvancedSearch: FC<Props> = ({
     if (kinds.includes('employees')) {
       const departments = await loadTimesheetDepartments();
       setDepartments(departments);
+      const employeeFunctions = await loadEmployeeFunctions();
+      setEmployeeFunctions(employeeFunctions);
       const loggedUser = await loadUserById(loggedUserId);
       setIsAdmin(loggedUser.isAdmin);
     }
@@ -234,6 +242,7 @@ export const AdvancedSearch: FC<Props> = ({
     setDepartments,
     setLoadedDicts,
     setIsAdmin,
+    setEmployeeFunctions,
   ]);
   const load = useCallback(async () => {
     setLoading(true);
@@ -762,13 +771,10 @@ export const AdvancedSearch: FC<Props> = ({
       {
         name: 'employeeDepartmentId',
         label: 'Department',
-        options: [
-          { label: OPTION_ALL, value: -1 },
-          ...departments.map(({ id, description, value }) => ({
-            label: `${value} - ${description}`,
-            value: id,
-          })),
-        ],
+        options: departments.map(({ id, description, value }) => ({
+          label: `${value} - ${description}`,
+          value: id,
+        })),
         readOnly: true,
       },
     ],
@@ -815,7 +821,8 @@ export const AdvancedSearch: FC<Props> = ({
       },
       {
         name: 'state',
-        label: 'State', // TODO options
+        label: 'State',
+        options: USA_STATES_OPTIONS,
       },
     ],
     [
@@ -828,8 +835,12 @@ export const AdvancedSearch: FC<Props> = ({
         label: 'Hire Date',
       },
       {
-        name: 'employeeFunctionId', // FIXME
+        name: 'employeeFunctionId',
         label: 'Employee Role',
+        options: employeeFunctions.map(({ id, name }) => ({
+          label: name,
+          value: id,
+        })),
       },
       {
         name: 'employeeDepartmentId',
