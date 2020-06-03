@@ -1104,7 +1104,7 @@ export const loadUsersByFilter = async ({
   req.setOrderDir(orderDir);
   req.setIsEmployee(0);
   req.setIsActive(1);
-  req.setPageNumber(page);
+  req.setPageNumber(page === -1 ? 0 : page);
   if (withProperties) {
     req.setWithProperties(true);
   }
@@ -1116,19 +1116,34 @@ export const loadUsersByFilter = async ({
       req[methodName](typeof value === 'number' ? value : `%${value}%`);
     }
   }
-  const response = await UserClientService.BatchGet(req);
-  return {
-    results: response
-      .getResultsList()
-      .map(item => item.toObject())
-      .sort((a, b) => {
-        const A = (a[orderByField] || '').toString().toLowerCase();
-        const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'DESC' ? 1 : -1;
-        if (A > B) return orderDir === 'DESC' ? -1 : 1;
-        return 0;
+  const results = [];
+  const { resultsList, totalCount } = (
+    await UserClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (page === -1 && totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await UserClientService.BatchGet(req)).toObject().resultsList;
       }),
-    totalCount: response.getTotalCount(),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return {
+    results: results.sort((a, b) => {
+      const A = (a[orderByField] || '').toString().toLowerCase();
+      const B = (b[orderByField] || '').toString().toLowerCase();
+      if (A < B) return orderDir === 'DESC' ? 1 : -1;
+      if (A > B) return orderDir === 'DESC' ? -1 : 1;
+      return 0;
+    }),
+    totalCount,
   };
 };
 
