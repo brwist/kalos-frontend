@@ -140,6 +140,7 @@ export const ELEVATION = {
 };
 
 export const ENDPOINT = 'https://core-dev.kalosflorida.com:8443';
+export const BUCKET = 'kalos-pdf-docs';
 
 export const QUOTE_PART_AVAILABILITY: { [key: number]: string } = {
   1: 'local',
