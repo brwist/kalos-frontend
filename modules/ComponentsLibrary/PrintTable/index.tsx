@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, CSSProperties } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 
 interface Props {
@@ -8,12 +8,10 @@ interface Props {
 }
 
 const useStyles = makeStyles(theme => {
-  const border = {
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: theme.palette.grey[300],
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
+  const border: CSSProperties = {
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
+    borderBottomColor: theme.palette.grey[300],
   };
   return {
     table: {
@@ -25,7 +23,7 @@ const useStyles = makeStyles(theme => {
     },
     th: {
       ...border,
-      borderColor: theme.palette.common.black,
+      borderBottomColor: theme.palette.grey[500],
       textAlign: 'left',
       padding: theme.spacing(0.25),
     },
