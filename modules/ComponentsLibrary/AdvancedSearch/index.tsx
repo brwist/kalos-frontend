@@ -69,8 +69,6 @@ import {
   EVENT_STATUS_LIST,
   USA_STATES_OPTIONS,
 } from '../../../constants';
-//@ts-ignore
-import logoKalos from './kalos-logo-2019.png';
 
 type Kind = 'serviceCalls' | 'customers' | 'properties' | 'employees';
 
@@ -1911,8 +1909,15 @@ export const AdvancedSearch: FC<Props> = ({
               }}
             >
               <PrintTable
-                columns={['Name', 'Title', 'Email', 'Office, ext.', 'Cell']}
+                columns={[
+                  'Name',
+                  'Title',
+                  'Email',
+                  'Office, ext.',
+                  { title: 'Cell', align: 'right' },
+                ]}
                 data={getData().map(rows => rows.map(row => row.value))}
+                noEntriesText="No employees matching criteria"
               />
             </PrintPage>
           ) : null
