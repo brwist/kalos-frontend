@@ -1,9 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-//@ts-ignore
-import logoKalos from './kalos-logo-2019.png';
 
-interface Props {
+export interface Props {
   title: string;
   subtitle?: ReactNode;
   logo?: string;
@@ -13,15 +11,12 @@ const useStyles = makeStyles(theme => ({
   wrapper: {
     display: 'flex',
     alignItems: 'center',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: theme.palette.common.black,
-    padding: theme.spacing(),
     marginBottom: theme.spacing(),
   },
   logo: {
     width: 'auto',
     height: 30,
+    filter: 'invert()',
   },
   content: {
     flexGrow: 1,
@@ -39,15 +34,15 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const PrintHeader: FC<Props> = ({
-  title,
-  logo = logoKalos,
-  subtitle,
-}) => {
+export const PrintHeader: FC<Props> = ({ title, subtitle }) => {
   const classes = useStyles();
   return (
     <div className={classes.wrapper}>
-      <img src={logo} alt="Kalos Service" className={classes.logo} />
+      <img
+        src="https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png"
+        alt="Kalos Service"
+        className={classes.logo}
+      />
       <div className={classes.content}>
         <div className={classes.title}>{title}</div>
         <div className={classes.subtitle}>{subtitle}</div>

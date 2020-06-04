@@ -32,7 +32,9 @@ import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PerDiem from './PerDiem/examples';
 import PlainForm from './PlainForm/examples';
+import PrintFooter from './PrintFooter/examples';
 import PrintHeader from './PrintHeader/examples';
+import PrintPage from './PrintPage/examples';
 import PrintTable from './PrintTable/examples';
 import PropertyEdit from './PropertyEdit/examples';
 import QuoteSelector from './QuoteSelector/examples';
@@ -77,7 +79,9 @@ const COMPONENTS = {
   Modal,
   PerDiem,
   PlainForm,
+  PrintFooter,
   PrintHeader,
+  PrintPage,
   PrintTable,
   PropertyEdit,
   QuoteSelector,

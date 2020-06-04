@@ -1,7 +1,7 @@
 import React, { FC, CSSProperties } from 'react';
 import Typography from '@material-ui/core/Typography';
 
-const LOREM = 'Lorem ipsum dolor sit amet';
+export const LOREM = 'Lorem ipsum dolor sit amet';
 
 interface Props {
   title?: string;
@@ -47,3 +47,58 @@ export const ExampleTitle: FC = ({ children }) => (
     {children}
   </div>
 );
+
+const FIRST_NAMES = [
+  'Mark',
+  'Jeanne',
+  'Steven',
+  'Chris',
+  'Peter',
+  'Jacob',
+  'Eve',
+  'Agatha',
+  'Jane',
+  'Adam',
+  'Hugh',
+  'Keanu',
+  'Robert',
+  'George',
+];
+
+const LAST_NAME_POSTFIXES = [
+  'sven',
+  'sten',
+  'sky',
+  'ski',
+  'son',
+  'ston',
+  'stein',
+];
+
+const JOB_TITLES = [
+  'Developer',
+  'Web Developer',
+  'Engineer',
+  'Admin',
+  'Technician',
+  'Finanse',
+  'Operational',
+  'Director',
+];
+
+export const getRandomFirstName = () =>
+  FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+
+export const getRandomLastName = () =>
+  getRandomFirstName() +
+  LAST_NAME_POSTFIXES[Math.floor(Math.random() * LAST_NAME_POSTFIXES.length)];
+
+export const getRandomAge = () => 18 + Math.floor(Math.random() * 50);
+
+export const getRandomJobTitle = () =>
+  JOB_TITLES[Math.floor(Math.random() * JOB_TITLES.length)];
+
+export const getRandomDigit = () => Math.floor(Math.random() * 10);
+
+export const getRandomPhone = () =>
+  `${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}-${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}-${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}`;
