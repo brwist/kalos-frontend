@@ -392,9 +392,6 @@ export class TransactionAdminView extends React.Component<props, state> {
         const res = await this.TxnClient.BatchGet(reqObj);
         const asObject = res.toObject();
 
-        console.log('fetch res: ', res);
-        console.log('as object: ', asObject);
-
         this.setState({
           transactions: asObject.resultsList,
           count: asObject.totalCount,
@@ -443,7 +440,6 @@ export class TransactionAdminView extends React.Component<props, state> {
       const req = new RecordPageReq();
       req.setTransactionIdsList(ids);
 
-      console.log('ids: ', ids);
       let reqObj = new Transaction();
       reqObj = this.applyFilters(reqObj);
       if (this.state.departmentView) {
@@ -534,7 +530,6 @@ export class TransactionAdminView extends React.Component<props, state> {
 
   sortTxns() {
     const { sortBy, sortDir } = this.state.filters.sort;
-    console.log(sortBy, sortDir);
     if (sortBy === 'timestamp') {
       return this.state.transactions.sort((a, b) => {
         const dateA = new Date(a.timestamp.split(' ')[0]);

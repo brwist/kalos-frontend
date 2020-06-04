@@ -41,7 +41,7 @@ export interface Props {
   onClose?: () => void;
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   department: {
     marginTop: theme.spacing(),
   },
@@ -186,10 +186,12 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     const user = await loadUserById(loggedUserId);
     setUser(user);
     const departments = await loadTimesheetDepartments();
+    console.log({ departments });
     setDepartments(sortBy(departments, getDepartmentName));
     const managerDepartment = departments.find(
       ({ managerId }) => managerId === loggedUserId,
     );
+    console.log({ managerDepartment, loggedUserId });
     if (managerDepartment) {
       setManagerDepartmentId(managerDepartment.id);
     }
@@ -360,7 +362,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
       .filter(({ id }) => !usedDepartments.includes(id))
-      .map(d => ({
+      .map((d) => ({
         value: d.id,
         label: getDepartmentName(d),
       }));
@@ -471,11 +473,11 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       {loading && <Loader />}
       {!loading && filteredPerDiems.length === 0 && (
         <Alert severity="info">
-          You don't have any entries for selected week
+          {"You don't have any entries for selected week"}
         </Alert>
       )}
       {!loading &&
-        filteredPerDiems.map(entry => {
+        filteredPerDiems.map((entry) => {
           const {
             id,
             rowsList,
@@ -572,7 +574,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                             disabled={loading || saving}
                           />
                         )}
-                        {rows.map(entry => {
+                        {rows.map((entry) => {
                           const {
                             id,
                             notes,

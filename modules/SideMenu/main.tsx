@@ -27,7 +27,7 @@ const userClient = new UserClient(ENDPOINT);
 const deptClient = new TimesheetDepartmentClient(ENDPOINT);
 
 type Props = {
-  userId: number;
+  userID: number;
   imgURL: string;
 };
 
@@ -71,7 +71,7 @@ const reducer = (state: State, action: Action) => {
       return state;
   }
 };
-const SideMenu = ({ userId, imgURL }: Props) => {
+const SideMenu = ({ userID, imgURL }: Props) => {
   const [state, dispatch] = useReducer(reducer, {
     user: new User().toObject(),
     isManager: false,
@@ -93,19 +93,31 @@ const SideMenu = ({ userId, imgURL }: Props) => {
 
   useEffect(() => {
     (async () => {
-      //forceHTTPS(window.location.href);
-      userClient.GetToken('test', 'test');
-      const userResult = await loadUserById(userId);
+      forceHTTPS();
+      await userClient.GetToken('test', 'test');
+      const userResult = await loadUserById(userID);
       //customerCheck(userResult);
-      if (userResult.isSu) {
+      if (userResult.isSu === 1) {
         dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
       } else {
-        const dpt = new TimesheetDepartment();
-        dpt.setManagerId(userId);
-        const deptResult = await deptClient.Get(dpt);
-        if (deptResult.id !== 0) {
-          dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
-        } else {
+        try {
+          const dpt = new TimesheetDepartment();
+          dpt.setManagerId(userID);
+          const deptResult = await deptClient.Get(dpt);
+          if (deptResult.id !== 0) {
+            dispatch({
+              type: 'fetchedUser',
+              user: userResult,
+              isManager: true,
+            });
+          } else {
+            dispatch({
+              type: 'fetchedUser',
+              user: userResult,
+              isManager: false,
+            });
+          }
+        } catch (err) {
           dispatch({ type: 'fetchedUser', user: userResult, isManager: false });
         }
       }
@@ -135,7 +147,7 @@ const SideMenu = ({ userId, imgURL }: Props) => {
           <MenuSharp />
         </IconButton>
       </Hidden>
-      {user.isEmployee && (
+      {user.isEmployee === 1 && (
         <Drawer
           open={isOpen}
           onClose={toggleMenu}
@@ -143,19 +155,31 @@ const SideMenu = ({ userId, imgURL }: Props) => {
         >
           <List style={{ width: 250 }}>
             {employeeItems.map((item) => (
-              <KalosMenuItem key={`empl_${item?.title || 'divider'}`} item={item} userId={userId} />
+              <KalosMenuItem
+                key={`empl_${item?.title || 'divider'}`}
+                item={item}
+                userId={userID}
+              />
             ))}
-            {user.isAdmin && (
+            {user.isAdmin === 1 && (
               <>
                 {adminItems.map((item) => (
-                  <KalosMenuItem key={`admin_${item?.title || 'divider'}`} item={item} userId={userId} />
+                  <KalosMenuItem
+                    key={`admin_${item?.title || 'divider'}`}
+                    item={item}
+                    userId={userID}
+                  />
                 ))}
               </>
             )}
             {isManager && (
               <>
                 {managerItems.map((item) => (
-                  <KalosMenuItem key={`manager_${item?.title || 'divider'}`} item={item} userId={userId} />
+                  <KalosMenuItem
+                    key={`manager_${item?.title || 'divider'}`}
+                    item={item}
+                    userId={userID}
+                  />
                 ))}
               </>
             )}
@@ -165,12 +189,18 @@ const SideMenu = ({ userId, imgURL }: Props) => {
                   <KalosMenuItem
                     key={`com_${item?.title}`}
                     item={item}
-                    userId={userId}
+                    userId={userID}
                     onClick={handleReportBugClicked}
                   />
                 );
               } else {
-                return <KalosMenuItem key={`com_${item?.title || 'divider'}`} item={item} userId={userId} />;
+                return (
+                  <KalosMenuItem
+                    key={`com_${item?.title || 'divider'}`}
+                    item={item}
+                    userId={userID}
+                  />
+                );
               }
             })}
           </List>

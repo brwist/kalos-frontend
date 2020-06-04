@@ -51,11 +51,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     return () => {
       if (!this.state.isLoading) {
         this.setState(
-          prevState => ({ page: prevState.page + changeAmount }),
+          (prevState) => ({ page: prevState.page + changeAmount }),
           this.fetchAllTxns,
         );
-      } else {
-        console.log('change page request while loading was ignored');
       }
     };
   }
@@ -65,9 +63,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
   nextPage = this.changePage(1);
 
   toggleLoading = (cb?: () => void): Promise<void> => {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.setState(
-        prevState => ({
+        (prevState) => ({
           isLoading: !prevState.isLoading,
         }),
         () => {
@@ -120,12 +118,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     for (const t of this.state.transactions) {
       if (t.vendor === txn.vendor) {
         IDList = [...IDList, t.id];
-      } else {
-        const editDistance = getEditDistance(txn.vendor, t.vendor);
-        console.log(editDistance);
       }
     }
-    const newTxns = this.state.transactions.slice().map(t => {
+    const newTxns = this.state.transactions.slice().map((t) => {
       if (IDList.includes(t.id)) {
         t.costCenterId = txn.costCenterId;
         return t;
@@ -152,7 +147,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     return (
       <>
         {isLoading && <Loader />}
-        {txns.map(t => (
+        {txns.map((t) => (
           <TxnCard
             txn={t}
             key={`${t.id}`}

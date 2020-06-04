@@ -138,9 +138,11 @@ export function Gallery({
 
   const button = iconButton ? (
     <Tooltip title={text} placement="top">
-      <IconButton onClick={toggleOpen} disabled={disabled}>
-        <ImageSearchTwoTone />
-      </IconButton>
+      <span>
+        <IconButton onClick={toggleOpen} disabled={disabled}>
+          <ImageSearchTwoTone />
+        </IconButton>
+      </span>
     </Tooltip>
   ) : (
     <Button

@@ -174,8 +174,6 @@ export function TransactionRow({
   };
 
   const amount = prettyMoney(txn.amount);
-  console.log(departmentView, 'is department');
-  console.log(txn.documentsList);
   return (
     <>
       <TableRow hover>
@@ -342,10 +340,7 @@ async function fetchFiles(
       (obj) => obj.getKey().replace(`${txn.id}-`, '') === f.name,
     );
     if (docObj) {
-      console.log('found doc', docObj);
       f.data = docObj.getData() as Uint8Array;
-    } else {
-      console.log('could not find doc object', txn.id, f.name);
     }
     return f;
   });

@@ -124,7 +124,6 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   }
 
   sign() {
-    console.log(this.SigPad);
     if (this.SigPad.current) {
       const dUrl = this.SigPad.current.toDataURL();
       const sUrl = URL.createObjectURL(
@@ -193,7 +192,6 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         `${this.props.jobNumber}_pending_proposal_${this.props.userID}%`,
       );
       const doc = await this.DocClient.Get(req);
-      console.log(doc);
       this.setState({
         docID: doc.id,
       });

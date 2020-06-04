@@ -167,12 +167,9 @@ export class TxnCard extends React.PureComponent<props, state> {
       );
       if (ok) {
         if (txn.jobId !== 0) {
-          console.log('trying job number...');
           try {
-            console.log('making event');
             const job = new Event();
             job.setId(txn.jobId);
-            console.log(job.toObject());
             //const res = await this.EventClient.Get(job);
             //console.log(res);
             //if (!res || res.id === 0) {
@@ -196,12 +193,12 @@ export class TxnCard extends React.PureComponent<props, state> {
           if (
             txn.costCenterId === 2 ||
             txn.costCenter.id === 2 ||
-            txn.costCenterId === 2 ||
-            txn.costCenter.id
+            txn.costCenterId === 1 ||
+            txn.costCenter.id === 1
           ) {
             statusID = 3;
             statusMessage =
-              'receipt marked as accidental or fraudeltn and sent directly to accounting for review';
+              'receipt marked as accidental or fraudelent and sent directly to accounting for review';
             const mailBody = `A fraud transaction has been reported by ${
               txn.ownerName
             } (${txn.cardUsed}).

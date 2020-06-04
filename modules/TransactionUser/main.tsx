@@ -6,6 +6,7 @@ import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 import { Loader } from '../Loader/main';
 import { TimesheetDepartmentClient } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { PDFClient, HTML } from '@kalos-core/kalos-rpc/PDF';
 import { ENDPOINT } from '../../constants';
 
 interface props {

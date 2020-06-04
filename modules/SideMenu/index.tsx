@@ -4,8 +4,8 @@ import SideMenu from './main';
 
 ReactDOM.render(
   <SideMenu
-    userId={8418}
-    imgURL='https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png'
+    userID={8418}
+    imgURL="https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png"
   />,
   document.getElementById('root'),
 );

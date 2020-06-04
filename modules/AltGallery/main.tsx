@@ -60,14 +60,14 @@ export class AltGallery extends React.PureComponent<props, state> {
   }
 
   toggleOpen() {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       isOpen: !prevState.isOpen,
     }));
   }
 
   changeImage(n: number) {
     return () => {
-      this.setState(prevState => {
+      this.setState((prevState) => {
         let newImg = prevState.activeImage + n;
         if (newImg < 0) {
           newImg = 0;
@@ -120,9 +120,11 @@ export class AltGallery extends React.PureComponent<props, state> {
 
     const button = iconButton ? (
       <Tooltip title={text} placement="top">
-        <IconButton onClick={this.toggleOpen} disabled={disabled}>
-          <ImageSearchTwoTone />
-        </IconButton>
+        <span>
+          <IconButton onClick={this.toggleOpen} disabled={disabled}>
+            <ImageSearchTwoTone />
+          </IconButton>
+        </span>
       </Tooltip>
     ) : (
       <Button
