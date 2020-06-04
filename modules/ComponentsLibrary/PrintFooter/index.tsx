@@ -7,6 +7,9 @@ export interface Props {
 
 const useStyles = makeStyles(theme => ({
   wrapper: {
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: theme.palette.grey[300],
     marginTop: theme.spacing(),
     ...theme.typography.body1,
     fontSize: 10,
