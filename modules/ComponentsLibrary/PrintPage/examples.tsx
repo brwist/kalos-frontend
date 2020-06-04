@@ -3,6 +3,8 @@ import { PrintPage } from './';
 import { LoremIpsumList, ExampleTitle, LOREM } from '../helpers';
 import PrintTableExample from '../PrintTable/examples';
 import PrintListExample from '../PrintList/examples';
+import PrintParagraphExample from '../PrintParagraph/examples';
+import { PrintParagraph } from '../PrintParagraph';
 
 export default () => (
   <>
@@ -13,9 +15,12 @@ export default () => (
     <ExampleTitle>with header, footer and example print table</ExampleTitle>
     <PrintPage
       headerProps={{ title: 'Lorem ipsum' }}
-      footerProps={{ children: LOREM }}
+      footerProps={{
+        children: <PrintParagraph align="center">{LOREM}</PrintParagraph>,
+      }}
     >
       <PrintTableExample />
+      <PrintParagraphExample />
       <PrintListExample />
     </PrintPage>
     <ExampleTitle>with long example print table</ExampleTitle>

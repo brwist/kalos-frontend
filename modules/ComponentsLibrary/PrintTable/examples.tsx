@@ -8,10 +8,17 @@ import {
   getRandomPhone,
 } from '../helpers';
 
-export default ({ rows = 40 }: { rows?: number }) => (
+export default ({ rows = 30 }: { rows?: number }) => (
   <>
     <PrintTable
-      columns={['First Name', 'Last Name', 'Age', 'Title', 'PTO', 'Phone']}
+      columns={[
+        'First Name',
+        'Last Name',
+        { title: 'Age', align: 'right' },
+        { title: 'Title', align: 'center' },
+        { title: 'PTO', align: 'right' },
+        { title: 'Phone', align: 'right' },
+      ]}
       data={[...Array(rows)].map(() => [
         getRandomFirstName(),
         getRandomLastName(),
@@ -20,6 +27,15 @@ export default ({ rows = 40 }: { rows?: number }) => (
         `${Math.ceil(Math.random() * 160)} hours`,
         getRandomPhone(),
       ])}
+    />
+    <PrintTable
+      columns={['First Name', 'Last Name', 'Age']}
+      data={[...Array(3)].map(() => [
+        getRandomFirstName(),
+        getRandomLastName(),
+        getRandomAge(),
+      ])}
+      noBorders
     />
   </>
 );
