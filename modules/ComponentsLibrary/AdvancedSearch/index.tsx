@@ -1,12 +1,4 @@
-import React, {
-  FC,
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  useMemo,
-} from 'react';
-import { useReactToPrint } from 'react-to-print';
+import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import { User } from '@kalos-core/kalos-rpc/User';
 import cloneDeep from 'lodash/cloneDeep';
 import IconButton from '@material-ui/core/IconButton';
@@ -27,11 +19,11 @@ import { PropertyEdit } from '../PropertyEdit';
 import { PropertyInfo } from '../../PropertyInformation/components/PropertyInfo';
 import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetails';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
-import { PrintHeader } from '../PrintHeader';
 import { PrintTable } from '../PrintTable';
 import { EmployeeDepartments } from '../EmployeeDepartments';
 import { Form } from '../Form';
 import { SearchFormComponent } from './SearchForm';
+import { PrintPage } from '../PrintPage';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -139,7 +131,6 @@ export const AdvancedSearch: FC<Props> = ({
   onClose,
 }) => {
   const classes = useStyles();
-  const employeePrintRef = useRef(null);
   const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
@@ -520,10 +511,6 @@ export const AdvancedSearch: FC<Props> = ({
     },
     [onSelectEvent, onClose],
   );
-  const handlePrintEmployees = useReactToPrint({
-    content: () => employeePrintRef.current,
-    copyStyles: true,
-  });
   const handleEmployeeDepartmentsOpenToggle = useCallback(
     (open: boolean) => () => setEmployeeDepartmentsOpen(open),
     [setEmployeeDepartmentsOpen],
@@ -1882,14 +1869,14 @@ export const AdvancedSearch: FC<Props> = ({
                 },
               ]
             : []),
-          ...(printableEmployees
-            ? [
-                {
-                  label: 'Print',
-                  onClick: handlePrintEmployees!,
-                },
-              ]
-            : []),
+          // ...(printableEmployees
+          //   ? [
+          //       {
+          //         label: 'Print',
+          //         onClick: handlePrintEmployees!,
+          //       },
+          //     ]
+          //   : []),
           ...(eventsWithAccounting
             ? [
                 {
@@ -1915,6 +1902,21 @@ export const AdvancedSearch: FC<Props> = ({
               ]
             : []),
         ]}
+        asideContent={
+          printableEmployees ? (
+            <PrintPage
+              headerProps={{
+                title: 'Employees',
+                subtitle: printHeaderSubtitle,
+              }}
+            >
+              <PrintTable
+                columns={['Name', 'Title', 'Email', 'Office, ext.', 'Cell']}
+                data={getData().map(rows => rows.map(row => row.value))}
+              />
+            </PrintPage>
+          ) : null
+        }
       />
       <SearchFormComponent
         key={formKey}
@@ -1924,19 +1926,6 @@ export const AdvancedSearch: FC<Props> = ({
         className={classes.form}
         disabled={loadingDicts}
       />
-      <div style={{ display: 'none' }}>
-        <div ref={employeePrintRef}>
-          <PrintHeader
-            title="Employees"
-            subtitle={printHeaderSubtitle}
-            logo={logoKalos}
-          />
-          <PrintTable
-            columns={['Name', 'Title', 'Email', 'Office, ext.', 'Cell']}
-            data={getData().map(rows => rows.map(row => row.value))}
-          />
-        </div>
-      </div>
       <InfoTable
         columns={getColumns(filter.kind)}
         data={getData()}
