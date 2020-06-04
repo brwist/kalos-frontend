@@ -92,19 +92,13 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
 
   async handleCache() {
     const cache = new Cache<T[]>(this.key, this.ver, this.fetchData);
-    console.log('checking cache');
     const data = cache.getItem();
     if (!data) {
-      console.log('no data found, busting and updating');
       const freshData = await cache.update();
       if (freshData) {
-        console.log('fresh data found! adding to state');
         this.setState({ list: freshData });
-      } else {
-        console.log('no data found?');
       }
     } else {
-      console.log('data found! adding to state');
       this.setState({ list: data });
     }
   }

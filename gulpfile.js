@@ -470,6 +470,11 @@ var NAMED_EXPORTS = {
         'CallAssociation',
         'CallAssociationList',
     ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/contract_frequency_pb.js': [
+        'ContractFrequency',
+        'ContractFrequencyList',
+    ],
+    'node_modules/react-to-print/lib/index.js': ['useReactToPrint'],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/contract_pb.js': [
         'Contract',
         'ContractList',
@@ -506,9 +511,29 @@ var NAMED_EXPORTS = {
         'FirstCalls',
         'FirstCallsList',
     ],
+    'node_modules/draft-js/lib/Draft.js': [
+        'SelectionState',
+        'EditorState',
+        'ContentBlock',
+        'genKey',
+        'ContentState',
+        'CharacterMetadata',
+        'RichUtils',
+        'Editor',
+    ],
+    'node_modules/immutable/dist/immutable.js': [
+        'OrderedSet',
+        'is',
+        'List',
+        'Seq',
+        'Map',
+        'Repeat',
+    ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/internal_document_pb.js': [
         'InternalDocument',
         'InternalDocumentList',
+        'DocumentKey',
+        'DocumentKeyList',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/invoice_pb.js': [
         'Invoice',
@@ -650,6 +675,7 @@ var NAMED_EXPORTS = {
         'SystemReadingsType',
         'SystemReadingsTypeList',
     ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/common_pb.js': ['Empty'],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_pb.js': [
         'Task',
         'TaskList',

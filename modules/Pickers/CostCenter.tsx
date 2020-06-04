@@ -65,19 +65,13 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
       CACHE_VERSION,
       this.fetchData,
     );
-    console.log('checking cache');
     const data = cache.getItem();
     if (!data) {
-      console.log('no data found, busting and updating');
       const freshData = await cache.update();
       if (freshData) {
-        console.log('fresh data found! adding to state');
         this.setState({ accountList: freshData });
-      } else {
-        console.log('no data found?');
       }
     } else {
-      console.log('data found! adding to state');
       this.setState({ accountList: data });
     }
   }
@@ -105,7 +99,7 @@ export class CostCenterPicker extends React.PureComponent<props, state> {
           inputProps={{ id: 'cost-center-picker' }}
         >
           <option value={0}>Select Purchase Type</option>
-          {accountList.map(acc => (
+          {accountList.map((acc) => (
             <option value={acc.id} key={`${acc.description}-${acc.id}`}>
               {acc.description}
             </option>

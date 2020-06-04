@@ -75,10 +75,8 @@ export class EventSearch extends React.PureComponent<props, state> {
   async fetchEvents() {
     const { searchBy, searchStr, page } = this.state;
     const req = new Event();
-    console.log(searchStr, searchBy);
     if (searchStr !== '') {
       if (searchBy === 'Job Number') {
-        console.log(`%${searchStr}%`);
         req.setLogJobNumber(`%${searchStr}%`);
       } else if (searchBy === 'Start Date') {
         req.setDateStarted(`%${searchStr}%`);

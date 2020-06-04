@@ -53,9 +53,11 @@ export function Prompt({
 
   const button = Icon ? (
     <Tooltip title={text} placement="top">
-      <IconButton onClick={toggleOpen} disabled={disabled}>
-        <Icon />
-      </IconButton>
+      <span>
+        <IconButton onClick={toggleOpen} disabled={disabled}>
+          <Icon />
+        </IconButton>
+      </span>
     </Tooltip>
   ) : (
     <Button
