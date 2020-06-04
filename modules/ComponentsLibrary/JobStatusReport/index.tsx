@@ -7,6 +7,8 @@ import { SectionBar } from '../SectionBar';
 import { InfoTable, Data, Columns } from '../InfoTable';
 import { Modal } from '../Modal';
 import { ServiceCall } from '../ServiceCall';
+import { PrintPage } from '../PrintPage';
+import { PrintTable } from '../PrintTable';
 import {
   makeFakeRows,
   loadEventsByFilter,
@@ -228,7 +230,6 @@ export const JobStatusReport: FC<Props> = ({
         actions={[
           { label: 'Export to Excel' },
           { label: 'Tasks' },
-          { label: 'Print' },
           ...(onClose
             ? [
                 {
@@ -244,6 +245,20 @@ export const JobStatusReport: FC<Props> = ({
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: handlePageChange,
         }}
+        asideContent={
+          <PrintPage headerProps={{ title: 'Job Status Report' }}>
+            <PrintTable
+              columns={[
+                'Property',
+                'Customer Name',
+                'Job #',
+                'Date',
+                { title: 'Job Status', align: 'right' },
+              ]}
+              data={data.map(row => row.map(({ value }) => value))}
+            />
+          </PrintPage>
+        }
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
       {pendingEdit && pendingEdit.property && pendingEdit.customer && (
