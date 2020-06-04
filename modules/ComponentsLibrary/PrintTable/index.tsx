@@ -26,10 +26,12 @@ const useStyles = makeStyles(theme => {
       borderBottomColor: theme.palette.grey[500],
       textAlign: 'left',
       padding: theme.spacing(0.25),
+      verticalAlign: 'top',
     },
     td: {
       ...border,
       padding: theme.spacing(0.25),
+      verticalAlign: 'top',
     },
   };
 });

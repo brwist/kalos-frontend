@@ -2,6 +2,7 @@ import React from 'react';
 import { PrintPage } from './';
 import { LoremIpsumList, ExampleTitle, LOREM } from '../helpers';
 import PrintTableExample from '../PrintTable/examples';
+import PrintListExample from '../PrintList/examples';
 
 export default () => (
   <>
@@ -15,6 +16,7 @@ export default () => (
       footerProps={{ children: LOREM }}
     >
       <PrintTableExample />
+      <PrintListExample />
     </PrintPage>
     <ExampleTitle>with long example print table</ExampleTitle>
     <PrintPage
