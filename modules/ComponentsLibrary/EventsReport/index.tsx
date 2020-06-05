@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import AssignmentIcon from '@material-ui/icons/Assignment';
@@ -18,16 +18,19 @@ import {
   formatDate,
   EventsSort,
   getCFAppUrl,
+  EventsFilter,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
 type Props = {
+  kind: 'jobStatus' | 'paymentStatus';
   filter?: FilterForm;
   onClose?: () => void;
   loggedUserId: number;
 };
 
-export const JobStatusReport: FC<Props> = ({
+export const EventsReport: FC<Props> = ({
+  kind,
   filter: { status, startDate, endDate } = {},
   onClose,
   loggedUserId,
@@ -47,13 +50,19 @@ export const JobStatusReport: FC<Props> = ({
   const [pendingEdit, setPendingEdit] = useState<EventType>();
   const load = useCallback(async () => {
     setLoading(true);
+    const filter: EventsFilter = {
+      dateStarted: startDate, // TODO: use dateRangeList
+      dateEnded: endDate,
+    };
+    if (kind === 'jobStatus') {
+      filter.logJobStatus = status;
+    }
+    if (kind === 'paymentStatus') {
+      filter.logPaymentStatus = status;
+    }
     const { results, totalCount } = await loadEventsByFilter({
       page,
-      filter: {
-        logJobStatus: status,
-        dateStarted: startDate, // TODO: use dateRangeList
-        dateEnded: endDate,
-      },
+      filter,
       sort,
     });
     setEntries(results);
@@ -68,6 +77,7 @@ export const JobStatusReport: FC<Props> = ({
     startDate,
     endDate,
     sort,
+    kind,
   ]);
   useEffect(() => {
     if (!loaded) {
@@ -186,22 +196,47 @@ export const JobStatusReport: FC<Props> = ({
             : 'ASC',
       }),
     },
-    {
-      name: 'Job Status',
-      ...(sort.orderByField === 'logJobStatus'
-        ? {
-            dir: sort.orderDir,
-          }
-        : {}),
-      onClick: handleSortChange({
-        orderByField: 'logJobStatus',
-        orderBy: 'log_jobStatus', // FIXME: RPC doesn't sort properly
-        orderDir:
-          sort.orderByField === 'logJobStatus' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
-    },
+    ...(kind === 'jobStatus'
+      ? [
+          {
+            name: 'Job Status',
+            ...(sort.orderByField === 'logJobStatus'
+              ? {
+                  dir: sort.orderDir,
+                }
+              : {}),
+            onClick: handleSortChange({
+              orderByField: 'logJobStatus',
+              orderBy: 'log_jobStatus', // FIXME: RPC doesn't sort properly
+              orderDir:
+                sort.orderByField === 'logJobStatus' && sort.orderDir === 'ASC'
+                  ? 'DESC'
+                  : 'ASC',
+            }),
+          },
+        ]
+      : []),
+    ...(kind === 'paymentStatus'
+      ? [
+          {
+            name: 'Payment Status',
+            ...(sort.orderByField === 'logPaymentStatus'
+              ? {
+                  dir: sort.orderDir,
+                }
+              : {}),
+            onClick: handleSortChange({
+              orderByField: 'logPaymentStatus',
+              orderBy: 'log_paymentStatus', // FIXME: RPC doesn't sort properly
+              orderDir:
+                sort.orderByField === 'logPaymentStatus' &&
+                sort.orderDir === 'ASC'
+                  ? 'DESC'
+                  : 'ASC',
+            }),
+          },
+        ]
+      : []),
   ];
   const getData = (entries: EventType[]): Data =>
     loading
@@ -213,6 +248,7 @@ export const JobStatusReport: FC<Props> = ({
             logJobNumber,
             dateStarted,
             logJobStatus,
+            logPaymentStatus,
           } = entry;
           return [
             { value: getPropertyAddress(property) },
@@ -220,7 +256,7 @@ export const JobStatusReport: FC<Props> = ({
             { value: logJobNumber },
             { value: formatDate(dateStarted) },
             {
-              value: logJobStatus,
+              value: kind === 'jobStatus' ? logJobStatus : logPaymentStatus,
               actions: [
                 <IconButton
                   key="edit"
@@ -241,10 +277,15 @@ export const JobStatusReport: FC<Props> = ({
           ];
         });
   const allPrintData = entries.length === count;
+  const title = useMemo(() => {
+    if (kind === 'jobStatus') return 'Job Status Report';
+    if (kind === 'paymentStatus') return 'Billing Status Report';
+    return '';
+  }, [kind]);
   return (
     <>
       <SectionBar
-        title="Job Status Report"
+        title={title}
         actions={[
           { label: 'Export to Excel' },
           { label: 'Tasks' },

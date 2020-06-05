@@ -1235,6 +1235,7 @@ export type EventsFilter = {
   jobTypeId?: number;
   jobSubtypeId?: number;
   logJobStatus?: string;
+  logPaymentStatus?: string;
 };
 export type LoadEventsByFilter = {
   page: number;
@@ -1270,6 +1271,7 @@ export const loadEventsByFilter = async ({
     jobTypeId,
     jobSubtypeId,
     logJobStatus,
+    logPaymentStatus,
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Event();
@@ -1304,6 +1306,9 @@ export const loadEventsByFilter = async ({
   }
   if (logJobStatus) {
     req.setLogJobStatus(logJobStatus);
+  }
+  if (logPaymentStatus) {
+    req.setLogPaymentStatus(logPaymentStatus);
   }
   if (dateStarted) {
     req.setDateStarted(`%${dateStarted}%`);

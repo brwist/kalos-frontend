@@ -4,7 +4,7 @@ import { SectionBar } from '../SectionBar';
 import { Form } from '../Form';
 import { Schema } from '../PlainForm';
 import { Modal } from '../Modal';
-import { JobStatusReport } from '../JobStatusReport';
+import { EventsReport } from '../EventsReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -252,6 +252,9 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [billingStatusReport, setBillingStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
+  const [billingStatusReportOpen, setBillingStatusReportOpen] = useState<
+    boolean
+  >(false);
   const [notificationsReport, setNotificationsReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
@@ -293,7 +296,16 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       }
       setJobStatusReportOpen(open);
     },
-    [setJobStatusReportOpen, setJobStatusReport],
+    [setJobStatusReport, setJobStatusReportOpen],
+  );
+  const handleOpenBillingStatusReportToggle = useCallback(
+    (open: boolean) => (data?: FilterForm) => {
+      if (data && data.status) {
+        setBillingStatusReport(data);
+      }
+      setBillingStatusReportOpen(open);
+    },
+    [setBillingStatusReport, setBillingStatusReportOpen],
   );
   return (
     <div className={classes.wrapper}>
@@ -309,7 +321,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         title="Billing Status Report"
         schema={SCHEMA_BILLING_STATUS_REPORT}
         data={billingStatusReport}
-        onSave={setBillingStatusReport}
+        onSave={handleOpenBillingStatusReportToggle(true)}
         submitLabel="Report"
         onClose={null}
       />
@@ -432,7 +444,8 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       />
       {jobStatusReportOpen && (
         <Modal open onClose={handleOpenJobStatusReportToggle(false)} fullScreen>
-          <JobStatusReport
+          <EventsReport
+            kind="jobStatus"
             loggedUserId={loggedUserId}
             filter={{
               ...jobStatusReport,
@@ -442,6 +455,26 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
                   : jobStatusReport.status,
             }}
             onClose={handleOpenJobStatusReportToggle(false)}
+          />
+        </Modal>
+      )}
+      {billingStatusReportOpen && (
+        <Modal
+          open
+          onClose={handleOpenBillingStatusReportToggle(false)}
+          fullScreen
+        >
+          <EventsReport
+            kind="paymentStatus"
+            loggedUserId={loggedUserId}
+            filter={{
+              ...billingStatusReport,
+              status:
+                billingStatusReport.status === OPTION_ALL
+                  ? undefined
+                  : billingStatusReport.status,
+            }}
+            onClose={handleOpenBillingStatusReportToggle(false)}
           />
         </Modal>
       )}
