@@ -19,7 +19,7 @@ const ResearchPDF = () => {
   const handleGetPDF = useCallback(async () => {
     const req = new HTML();
     req.setData(componentRef?.current?.outerHTML);
-    req.setKey('filename');
+    req.setKey('filename.pdf');
     req.setBucket(BUCKET);
     const url = await pdfClient.Create(req);
     setUrl(url);
@@ -31,7 +31,9 @@ const ResearchPDF = () => {
       <Button label="Print" onClick={handlePrint} />
       <hr />
       <Button label="Get PDF File url" onClick={handleGetPDF} />
-      {url}
+      {url && (
+        <a href={url} target="_blank" rel="noreferrer">filename.pdf</a>
+      )}
       <hr />
       <Button label="Get HTML string" onClick={() => setHtml(componentRef?.current?.outerHTML)} />
       {Boolean(html) && (
