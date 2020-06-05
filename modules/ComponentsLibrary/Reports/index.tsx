@@ -1,8 +1,10 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from '../SectionBar';
 import { Form } from '../Form';
 import { Schema } from '../PlainForm';
+import { Modal } from '../Modal';
+import { JobStatusReport } from '../JobStatusReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -27,6 +29,10 @@ export type FilterForm = {
   users?: string[];
   blank?: string;
 };
+
+interface Props {
+  loggedUserId: number;
+}
 
 const useStyles = makeStyles(theme => ({
   wrapper: {
@@ -234,12 +240,15 @@ const SCHEMA_LAST_12_MONTHS_REPORT: Schema<FilterForm> = [
   ],
 ];
 
-export const Reports: FC = () => {
+export const Reports: FC<Props> = ({ loggedUserId }) => {
   const classes = useStyles();
   const d = new Date();
   const [jobStatusReport, setJobStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
+  const [jobStatusReportOpen, setJobStatusReportOpen] = useState<boolean>(
+    false,
+  );
   const [billingStatusReport, setBillingStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
@@ -277,13 +286,22 @@ export const Reports: FC = () => {
   const [promptPaymentReport, setPromptPaymentReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_1[0].value,
   });
+  const handleOpenJobStatusReportToggle = useCallback(
+    (open: boolean) => (data?: FilterForm) => {
+      if (data && data.status) {
+        setJobStatusReport(data);
+      }
+      setJobStatusReportOpen(open);
+    },
+    [setJobStatusReportOpen, setJobStatusReport],
+  );
   return (
     <div className={classes.wrapper}>
       <Form
         title="Job Status Report"
         schema={SCHEMA_JOB_STATUS_REPORT}
         data={jobStatusReport}
-        onSave={setJobStatusReport}
+        onSave={handleOpenJobStatusReportToggle(true)}
         submitLabel="Report"
         onClose={null}
       />
@@ -412,6 +430,21 @@ export const Reports: FC = () => {
         ]}
         fixedActions
       />
+      {jobStatusReportOpen && (
+        <Modal open onClose={handleOpenJobStatusReportToggle(false)} fullScreen>
+          <JobStatusReport
+            loggedUserId={loggedUserId}
+            filter={{
+              ...jobStatusReport,
+              status:
+                jobStatusReport.status === OPTION_ALL
+                  ? undefined
+                  : jobStatusReport.status,
+            }}
+            onClose={handleOpenJobStatusReportToggle(false)}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
