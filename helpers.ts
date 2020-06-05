@@ -208,7 +208,7 @@ async function getSlackID(
   if (count != 4) {
     try {
       let slackUsers = await getSlackList(skipCache);
-      let user = slackUsers.find(s => {
+      let user = slackUsers.find((s) => {
         if (s.real_name === userName) {
           return true;
         }
@@ -812,10 +812,18 @@ async function loadPropertyById(id: number) {
  * @returns User
  */
 async function loadUserById(id: number) {
-  const req = new User();
-  req.setId(id);
-  req.setIsActive(1);
-  return await UserClientService.Get(req);
+  try {
+    const req = new User();
+    req.setId(id);
+    return await UserClientService.Get(req);
+  } catch (err) {
+    console.log('Failed to fetch user with id', id, err);
+    const res = new User();
+    res.setId(id);
+    res.setIsActive(1);
+    res.setIsEmployee(1);
+    return res.toObject();
+  }
 }
 
 /**
@@ -825,7 +833,7 @@ async function loadUserById(id: number) {
  */
 async function loadUsersByIds(ids: number[]) {
   const uniqueIds: number[] = [];
-  ids.forEach(id => {
+  ids.forEach((id) => {
     if (id > 0 && !uniqueIds.includes(id)) {
       uniqueIds.push(id);
     }
@@ -858,7 +866,7 @@ async function loadMetricByUserId(userId: number, metricType: MetricType) {
  */
 async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
   return await Promise.all(
-    userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
+    userIds.map(async (userId) => await loadMetricByUserId(userId, metricType)),
   );
 }
 
@@ -1026,7 +1034,9 @@ async function loadGeoLocationByAddress(address: string) {
       geolocationLat: +lat.toFixed(7),
       geolocationLng: +lng.toFixed(7),
     };
-  } catch (e) {}
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 /**
@@ -1104,7 +1114,7 @@ export const loadUsersByFilter = async ({
   req.setOrderDir(orderDir);
   req.setIsEmployee(0);
   req.setIsActive(1);
-  req.setPageNumber(page);
+  req.setPageNumber(page === -1 ? 0 : page);
   if (withProperties) {
     req.setWithProperties(true);
   }
@@ -1116,19 +1126,34 @@ export const loadUsersByFilter = async ({
       req[methodName](typeof value === 'number' ? value : `%${value}%`);
     }
   }
-  const response = await UserClientService.BatchGet(req);
-  return {
-    results: response
-      .getResultsList()
-      .map(item => item.toObject())
-      .sort((a, b) => {
-        const A = (a[orderByField] || '').toString().toLowerCase();
-        const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'DESC' ? 1 : -1;
-        if (A > B) return orderDir === 'DESC' ? -1 : 1;
-        return 0;
+  const results = [];
+  const { resultsList, totalCount } = (
+    await UserClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (page === -1 && totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await UserClientService.BatchGet(req)).toObject().resultsList;
       }),
-    totalCount: response.getTotalCount(),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return {
+    results: results.sort((a, b) => {
+      const A = (a[orderByField] || '').toString().toLowerCase();
+      const B = (b[orderByField] || '').toString().toLowerCase();
+      if (A < B) return orderDir === 'DESC' ? 1 : -1;
+      if (A > B) return orderDir === 'DESC' ? -1 : 1;
+      return 0;
+    }),
+    totalCount,
   };
 };
 
@@ -1178,7 +1203,7 @@ export const loadPropertiesByFilter = async ({
   return {
     results: response
       .getResultsList()
-      .map(item => item.toObject())
+      .map((item) => item.toObject())
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
@@ -1310,7 +1335,7 @@ export const loadEventsByFilter = async ({
   req.setCustomer(u);
   const response = await EventClientService.BatchGet(req);
   return {
-    results: response.getResultsList().map(item => item.toObject()),
+    results: response.getResultsList().map((item) => item.toObject()),
     // results: response
     //   .getResultsList()
     //   .map(item => item.toObject())
@@ -1354,11 +1379,11 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
  */
 async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
   const refNumbers = uniq(
-    referenceNumbers.map(el => (el || '').trim()).filter(el => el !== ''),
+    referenceNumbers.map((el) => (el || '').trim()).filter((el) => el !== ''),
   );
   return (
     await Promise.all(
-      refNumbers.map(async referenceNumber => ({
+      refNumbers.map(async (referenceNumber) => ({
         referenceNumber,
         data: await loadEventByJobOrContractNumber(referenceNumber),
       })),
@@ -1421,7 +1446,7 @@ export const makeOptions = (
   withAllOption = false,
 ): Option[] => [
   ...(withAllOption ? [{ label: OPTION_ALL, value: OPTION_ALL }] : []),
-  ...options.map(label => ({ label, value: label })),
+  ...options.map((label) => ({ label, value: label })),
 ];
 
 export const getDepartmentName = (d?: TimesheetDepartmentType): string =>
