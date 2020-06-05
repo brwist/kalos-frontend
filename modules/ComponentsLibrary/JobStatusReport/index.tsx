@@ -240,6 +240,7 @@ export const JobStatusReport: FC<Props> = ({
             },
           ];
         });
+  const allPrintData = entries.length === count;
   return (
     <>
       <SectionBar
@@ -265,7 +266,7 @@ export const JobStatusReport: FC<Props> = ({
         asideContent={
           <PrintPage
             headerProps={{ title: 'Job Status Report' }}
-            onPrint={handlePrint}
+            onPrint={allPrintData ? undefined : handlePrint}
             status={printStatus}
           >
             <PrintTable
@@ -276,7 +277,7 @@ export const JobStatusReport: FC<Props> = ({
                 'Date',
                 { title: 'Job Status', align: 'right' },
               ]}
-              data={getData(printEntries).map(row =>
+              data={getData(allPrintData ? entries : printEntries).map(row =>
                 row.map(({ value }) => value),
               )}
             />
