@@ -7,6 +7,11 @@ export interface Props {
   logo?: string;
 }
 
+interface SubtitleItemProps {
+  label: string;
+  value: ReactNode;
+}
+
 const useStyles = makeStyles(theme => ({
   wrapper: {
     display: 'flex',
@@ -32,6 +37,10 @@ const useStyles = makeStyles(theme => ({
     fontFamily: theme.typography.body1.fontFamily,
     fontSize: 10,
   },
+  subtitleItem: {
+    display: 'inline-block',
+    marginRight: theme.spacing(2),
+  },
 }));
 
 export const PrintHeader: FC<Props> = ({ title, subtitle }) => {
@@ -48,5 +57,17 @@ export const PrintHeader: FC<Props> = ({ title, subtitle }) => {
         <div className={classes.subtitle}>{subtitle}</div>
       </div>
     </div>
+  );
+};
+
+export const PrintHeaderSubtitleItem: FC<SubtitleItemProps> = ({
+  label,
+  value,
+}) => {
+  const classes = useStyles();
+  return (
+    <span className={classes.subtitleItem}>
+      {label} <strong>{value}</strong>
+    </span>
   );
 };

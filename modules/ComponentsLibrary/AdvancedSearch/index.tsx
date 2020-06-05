@@ -24,6 +24,7 @@ import { EmployeeDepartments } from '../EmployeeDepartments';
 import { Form } from '../Form';
 import { SearchFormComponent } from './SearchForm';
 import { PrintPage } from '../PrintPage';
+import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -109,6 +110,7 @@ const useStyles = makeStyles(theme => ({
   form: {
     marginTop: theme.spacing(),
   },
+  subtitleItem: {},
 }));
 
 export const AdvancedSearch: FC<Props> = ({
@@ -1781,56 +1783,37 @@ export const AdvancedSearch: FC<Props> = ({
       marginRight: 16,
     };
     return (
-      <div>
+      <>
         {employeeDepartmentId! > 0 && (
-          <span style={css}>
-            Department:{' '}
-            <strong>
-              {getDepartmentName(
-                departments.find(
-                  ({ id }) =>
-                    id === (filter as UsersFilter).employeeDepartmentId,
-                ),
-              )}
-            </strong>
-          </span>
+          <PrintHeaderSubtitleItem
+            label="Department"
+            value={getDepartmentName(
+              departments.find(
+                ({ id }) => id === (filter as UsersFilter).employeeDepartmentId,
+              ),
+            )}
+          />
         )}
         {!!firstname && (
-          <span style={css}>
-            Firstname with <strong>{firstname}</strong>
-          </span>
+          <PrintHeaderSubtitleItem label="Firstname with" value={firstname} />
         )}
         {!!lastname && (
-          <span style={css}>
-            Lastname with <strong>{lastname}</strong>
-          </span>
+          <PrintHeaderSubtitleItem label="Lastname with" value={lastname} />
         )}
         {!!empTitle && (
-          <span style={css}>
-            Title with <strong>{empTitle}</strong>
-          </span>
+          <PrintHeaderSubtitleItem label="Title with" value={empTitle} />
         )}
         {!!email && (
-          <span style={css}>
-            Email with <strong>{email}</strong>
-          </span>
+          <PrintHeaderSubtitleItem label="Email with" value={email} />
         )}
         {!!phone && (
-          <span style={css}>
-            Phone with <strong>{phone}</strong>
-          </span>
+          <PrintHeaderSubtitleItem label="Phone with" value={phone} />
         )}
-        {!!ext && (
-          <span style={css}>
-            Ext. with <strong>{ext}</strong>
-          </span>
-        )}{' '}
+        {!!ext && <PrintHeaderSubtitleItem label="Ext. with" value={ext} />}{' '}
         {!!cellphone && (
-          <span style={css}>
-            Cell with <strong>{cellphone}</strong>
-          </span>
+          <PrintHeaderSubtitleItem label="Cell with" value={cellphone} />
         )}
-      </div>
+      </>
     );
   }, [filter]);
   return (
