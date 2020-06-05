@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import { makeStyles } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import AssignmentIcon from '@material-ui/icons/Assignment';
@@ -9,6 +10,7 @@ import { Modal } from '../Modal';
 import { ServiceCall } from '../ServiceCall';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
+import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import {
   makeFakeRows,
   loadEventsByFilter,
@@ -282,6 +284,15 @@ export const EventsReport: FC<Props> = ({
     if (kind === 'paymentStatus') return 'Billing Status Report';
     return '';
   }, [kind]);
+  const printHeaderSubtitle = (
+    <>
+      {status && <PrintHeaderSubtitleItem label="Status" value={status} />}
+      {startDate && (
+        <PrintHeaderSubtitleItem label="Start date" value={startDate} />
+      )}
+      {endDate && <PrintHeaderSubtitleItem label="End date" value={endDate} />}
+    </>
+  );
   return (
     <>
       <SectionBar
@@ -306,7 +317,10 @@ export const EventsReport: FC<Props> = ({
         }}
         asideContent={
           <PrintPage
-            headerProps={{ title: 'Job Status Report' }}
+            headerProps={{
+              title: 'Job Status Report',
+              subtitle: printHeaderSubtitle,
+            }}
             onPrint={allPrintData ? undefined : handlePrint}
             status={printStatus}
           >
