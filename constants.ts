@@ -1,5 +1,7 @@
 import { Options } from './modules/ComponentsLibrary/Field';
 
+export const MAX_PAGES = 20;
+
 export const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 
 export const OPTION_BLANK = '-- Select --';

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
 import ButtonUI from '@material-ui/core/Button';
@@ -46,7 +46,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Button = ({
+export const Button: FC<Props> = ({
   label,
   url,
   variant = 'contained',
@@ -56,8 +56,9 @@ export const Button = ({
   span = false,
   status,
   className,
+  children,
   ...props
-}: Props) => {
+}) => {
   const classes = useStyles({ compact, size, status });
   const Component = (
     <ButtonUI
@@ -68,6 +69,7 @@ export const Button = ({
       {...props}
       component={span ? 'span' : 'button'}
     >
+      {children}
       {label}
     </ButtonUI>
   );

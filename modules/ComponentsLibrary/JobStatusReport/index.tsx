@@ -7,7 +7,7 @@ import { SectionBar } from '../SectionBar';
 import { InfoTable, Data, Columns } from '../InfoTable';
 import { Modal } from '../Modal';
 import { ServiceCall } from '../ServiceCall';
-import { PrintPage } from '../PrintPage';
+import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import {
   makeFakeRows,
@@ -35,6 +35,8 @@ export const JobStatusReport: FC<Props> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [entries, setEntries] = useState<EventType[]>([]);
+  const [printEntries, setPrintEntries] = useState<EventType[]>([]);
+  const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [sort, setSort] = useState<EventsSort>({
@@ -105,6 +107,20 @@ export const JobStatusReport: FC<Props> = ({
     },
     [],
   );
+  const handlePrint = useCallback(async () => {
+    setPrintStatus('loading');
+    const { results } = await loadEventsByFilter({
+      page: -1,
+      filter: {
+        logJobStatus: status,
+        dateStarted: startDate, // TODO: use dateRangeList
+        dateEnded: endDate,
+      },
+      sort,
+    });
+    setPrintEntries(results);
+    setPrintStatus('loaded');
+  }, [setPrintEntries, status, startDate, endDate, sort, setPrintStatus]);
   const COLUMNS: Columns = [
     {
       name: 'Property',
@@ -187,42 +203,43 @@ export const JobStatusReport: FC<Props> = ({
       }),
     },
   ];
-  const data: Data = loading
-    ? makeFakeRows(5, 5)
-    : entries.map(entry => {
-        const {
-          property,
-          customer,
-          logJobNumber,
-          dateStarted,
-          logJobStatus,
-        } = entry;
-        return [
-          { value: getPropertyAddress(property) },
-          { value: getCustomerName(customer, true) },
-          { value: logJobNumber },
-          { value: formatDate(dateStarted) },
-          {
-            value: logJobStatus,
-            actions: [
-              <IconButton
-                key="edit"
-                size="small"
-                onClick={handlePendingEditToggle(entry)}
-              >
-                <EditIcon />
-              </IconButton>,
-              <IconButton
-                key="tasks"
-                size="small"
-                onClick={handleOpenTasks(entry)}
-              >
-                <AssignmentIcon />
-              </IconButton>,
-            ],
-          },
-        ];
-      });
+  const getData = (entries: EventType[]): Data =>
+    loading
+      ? makeFakeRows(5, 5)
+      : entries.map(entry => {
+          const {
+            property,
+            customer,
+            logJobNumber,
+            dateStarted,
+            logJobStatus,
+          } = entry;
+          return [
+            { value: getPropertyAddress(property) },
+            { value: getCustomerName(customer, true) },
+            { value: logJobNumber },
+            { value: formatDate(dateStarted) },
+            {
+              value: logJobStatus,
+              actions: [
+                <IconButton
+                  key="edit"
+                  size="small"
+                  onClick={handlePendingEditToggle(entry)}
+                >
+                  <EditIcon />
+                </IconButton>,
+                <IconButton
+                  key="tasks"
+                  size="small"
+                  onClick={handleOpenTasks(entry)}
+                >
+                  <AssignmentIcon />
+                </IconButton>,
+              ],
+            },
+          ];
+        });
   return (
     <>
       <SectionBar
@@ -246,7 +263,11 @@ export const JobStatusReport: FC<Props> = ({
           onChangePage: handlePageChange,
         }}
         asideContent={
-          <PrintPage headerProps={{ title: 'Job Status Report' }}>
+          <PrintPage
+            headerProps={{ title: 'Job Status Report' }}
+            onPrint={handlePrint}
+            status={printStatus}
+          >
             <PrintTable
               columns={[
                 'Property',
@@ -255,12 +276,14 @@ export const JobStatusReport: FC<Props> = ({
                 'Date',
                 { title: 'Job Status', align: 'right' },
               ]}
-              data={data.map(row => row.map(({ value }) => value))}
+              data={getData(printEntries).map(row =>
+                row.map(({ value }) => value),
+              )}
             />
           </PrintPage>
         }
       />
-      <InfoTable columns={COLUMNS} data={data} loading={loading} />
+      <InfoTable columns={COLUMNS} data={getData(entries)} loading={loading} />
       {pendingEdit && pendingEdit.property && pendingEdit.customer && (
         <Modal open onClose={handlePendingEditToggle(undefined)} fullScreen>
           <ServiceCall
