@@ -27,6 +27,7 @@ export type Data = {
 
 export type Columns = {
   name: ReactNode;
+  width?: number;
   dir?: OrderDir;
   onClick?: () => void;
   actions?: ActionsProps;
@@ -168,32 +169,41 @@ export const InfoTable = ({
 }: Props) => {
   const classes = useStyles({ loading, error, compact, hoverable });
   const theme = useTheme();
-  const md = useMediaQuery(theme.breakpoints.down('md'));
+  const md = useMediaQuery(theme.breakpoints.down('xs'));
+  console.log({ md });
   return (
     <div className={className + ' ' + classes.wrapper} style={styles}>
       {columns.length > 0 && (
         <div className={classes.header}>
-          {columns.map(({ name, dir, onClick, actions, fixedActions }, idx) => {
-            const ArrowIcon =
-              dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
-            return (
-              <Typography
-                key={idx}
-                className={classes.column}
-                style={{ width: `${100 / (md ? 1 : columns.length)}%` }}
-                component="div"
-              >
-                <span
-                  onClick={onClick}
-                  className={classes.dir}
-                  style={{ cursor: onClick ? 'pointer' : 'default' }}
+          {columns.map(
+            ({ name, dir, onClick, actions, fixedActions, width }, idx) => {
+              const ArrowIcon =
+                dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
+              return (
+                <Typography
+                  key={idx}
+                  className={classes.column}
+                  style={{
+                    width: md ? '100%' : width || `${100 / columns.length}%`,
+                    flexGrow: md || width === -1 ? 1 : 0,
+                    flexShrink: width && width! > -1 ? 0 : 1,
+                  }}
+                  component="div"
                 >
-                  {name} {dir && <ArrowIcon />}
-                </span>
-                {actions && <Actions actions={actions} fixed={fixedActions} />}
-              </Typography>
-            );
-          })}
+                  <span
+                    onClick={onClick}
+                    className={classes.dir}
+                    style={{ cursor: onClick ? 'pointer' : 'default' }}
+                  >
+                    {name} {dir && <ArrowIcon />}
+                  </span>
+                  {actions && (
+                    <Actions actions={actions} fixed={fixedActions} />
+                  )}
+                </Typography>
+              );
+            },
+          )}
         </div>
       )}
       {data.map((items, idx) => (
@@ -204,7 +214,22 @@ export const InfoTable = ({
               className={classes.item}
               component="div"
               style={{
-                width: `${100 / (md ? 1 : items.length)}%`,
+                width: md
+                  ? '100%'
+                  : columns && columns[idx2] && columns[idx2].width
+                  ? columns[idx2].width
+                  : `${100 / items.length}%`,
+                flexGrow:
+                  md || (columns && columns[idx2] && columns[idx2].width === -1)
+                    ? 1
+                    : 0,
+                flexShrink:
+                  columns &&
+                  columns[idx2] &&
+                  columns[idx2].width &&
+                  columns[idx2].width! > -1
+                    ? 0
+                    : 1,
                 cursor: onClick ? 'pointer' : 'default',
               }}
               onClick={loading || error ? undefined : onClick}

@@ -82,6 +82,7 @@ export const ActivityLogReport: FC<Props> = ({
   const COLUMNS: Columns = [
     {
       name: 'Date',
+      width: 150,
       ...(sort.orderByField === 'activityDate'
         ? {
             dir: sort.orderDir,
@@ -99,9 +100,11 @@ export const ActivityLogReport: FC<Props> = ({
     },
     {
       name: 'User ID', // FIXME User
+      width: 200,
     },
     {
       name: 'Notification',
+      width: -1,
     },
   ];
   const getData = (entries: ActivityLogType[]): Data =>
