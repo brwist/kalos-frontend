@@ -6,6 +6,7 @@ import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ReactDOM from 'react-dom';
 import customTheme from '../Theme/main';
 import Actions from './Actions/examples';
+import ActivityLogReport from './ActivityLogReport/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
 import Button from './Button/examples';
@@ -55,6 +56,7 @@ const DEFAULT_COMPONENT_IDX = 0;
 
 const COMPONENTS = {
   Actions,
+  ActivityLogReport,
   AddNewButton,
   AdvancedSearch,
   Button,
