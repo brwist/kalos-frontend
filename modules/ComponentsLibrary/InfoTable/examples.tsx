@@ -2,7 +2,8 @@ import React from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import SearchIcon from '@material-ui/icons/Search';
 import EditIcon from '@material-ui/icons/Edit';
-import { InfoTable, Data } from './';
+import { InfoTable, Data, Columns } from './';
+import { ExampleTitle } from '../helpers';
 
 const onClick = () => console.log('Row clicked');
 const actions = [
@@ -49,7 +50,19 @@ const EXAMPLE_2: Data = [
 ];
 
 export default () => (
-  <strong>
+  <>
+    <ExampleTitle>Default</ExampleTitle>
+    <InfoTable data={EXAMPLE_2} />
+    <ExampleTitle>with columns fixed widths</ExampleTitle>
+    <InfoTable
+      data={EXAMPLE_1}
+      columns={[
+        { name: 'Column 1', width: 100 },
+        { name: 'Column 2', width: 200 },
+        { name: 'Column 3', width: -1 },
+      ]}
+    />
+    <ExampleTitle>with columns</ExampleTitle>
     <InfoTable
       data={EXAMPLE_1}
       columns={[
@@ -61,15 +74,13 @@ export default () => (
         },
       ]}
     />
-    <hr />
-    <InfoTable data={EXAMPLE_2} />
-    <hr />
+    <ExampleTitle>compact</ExampleTitle>
     <InfoTable data={EXAMPLE_2} compact />
-    <hr />
+    <ExampleTitle>hoverable</ExampleTitle>
     <InfoTable data={EXAMPLE_2} hoverable />
-    <hr />
+    <ExampleTitle>loading</ExampleTitle>
     <InfoTable data={EXAMPLE_2} loading />
-    <hr />
+    <ExampleTitle>error</ExampleTitle>
     <InfoTable data={EXAMPLE_2} error />
-  </strong>
+  </>
 );
