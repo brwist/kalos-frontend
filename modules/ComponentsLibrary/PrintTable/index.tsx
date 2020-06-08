@@ -9,6 +9,7 @@ type Column = { title: string; align: 'left' | 'center' | 'right' };
 
 interface Props extends Style {
   columns: (string | Column)[];
+  nowraps?: boolean[];
   data: ReactNode[][];
   noEntriesText?: string;
 }
@@ -45,6 +46,7 @@ const useStyles = makeStyles(theme => {
 
 export const PrintTable: FC<Props> = ({
   columns,
+  nowraps = [],
   data,
   noEntriesText = 'No entries found.',
   noBorders = false,
@@ -58,9 +60,12 @@ export const PrintTable: FC<Props> = ({
             <th
               key={idxColumn}
               className={classes.th}
-              style={
-                typeof column === 'object' ? { textAlign: column.align } : {}
-              }
+              style={{
+                ...(typeof column === 'object'
+                  ? { textAlign: column.align }
+                  : {}),
+                ...(nowraps[idxColumn] ? { whiteSpace: 'nowrap' } : {}),
+              }}
             >
               {typeof column === 'string' ? column : column.title}
             </th>
@@ -74,11 +79,12 @@ export const PrintTable: FC<Props> = ({
               <td
                 key={idxColumn}
                 className={classes.td}
-                style={
-                  typeof columns[idxColumn] === 'object'
+                style={{
+                  ...(typeof columns[idxColumn] === 'object'
                     ? { textAlign: (columns[idxColumn] as Column).align }
-                    : {}
-                }
+                    : {}),
+                  ...(nowraps[idxColumn] ? { whiteSpace: 'nowrap' } : {}),
+                }}
               >
                 {cell}
               </td>

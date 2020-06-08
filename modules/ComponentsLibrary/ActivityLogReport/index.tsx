@@ -2,6 +2,9 @@ import React, { FC, useState, useCallback, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Columns, Data } from '../InfoTable';
+import { PrintPage, Status } from '../PrintPage';
+import { PrintTable } from '../PrintTable';
+import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import {
   ActivityLogType,
   makeFakeRows,
@@ -31,15 +34,16 @@ export const ActivityLogReport: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [entries, setEntries] = useState<ActivityLogType[]>([]);
+  const [printEntries, setPrintEntries] = useState<ActivityLogType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
+  const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [sort, setSort] = useState<ActivityLogsSort>({
     orderBy: 'activity_date',
     orderByField: 'activityDate',
     orderDir: 'DESC',
   });
-  const load = useCallback(async () => {
-    setLoading(true);
+  const getFilter = useCallback(() => {
     const filter: ActivityLogsFilter = {
       activityDate: activityDateStart,
     };
@@ -48,15 +52,19 @@ export const ActivityLogReport: FC<Props> = ({
     } else {
       filter.activityName = 'Notification';
     }
+    return filter;
+  }, [activityDateStart, activityDateEnd, status]);
+  const load = useCallback(async () => {
+    setLoading(true);
     const { results, totalCount } = await loadActivityLogsByFilter({
       page,
-      filter,
+      filter: getFilter(),
       sort,
     });
     setEntries(results);
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, activityDateStart, status, sort, page]);
+  }, [setLoading, getFilter, sort, page]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -71,6 +79,16 @@ export const ActivityLogReport: FC<Props> = ({
     },
     [setPage, reload],
   );
+  const handlePrint = useCallback(async () => {
+    setPrintStatus('loading');
+    const { results } = await loadActivityLogsByFilter({
+      page: -1,
+      filter: getFilter(),
+      sort,
+    });
+    setPrintEntries(results);
+    setPrintStatus('loaded');
+  }, [setPrintEntries, status, getFilter, sort, setPrintStatus]);
   const handleSortChange = useCallback(
     (sort: ActivityLogsSort) => () => {
       setSort(sort);
@@ -124,13 +142,26 @@ export const ActivityLogReport: FC<Props> = ({
             },
           ];
         });
+  const allPrintData = entries.length === count;
+  const printHeaderSubtitle = (
+    <>
+      {status && (
+        <PrintHeaderSubtitleItem label="Status" value="Deletions only" />
+      )}
+      {activityDateStart && (
+        <PrintHeaderSubtitleItem label="Start date" value={activityDateStart} />
+      )}
+      {activityDateEnd && (
+        <PrintHeaderSubtitleItem label="End date" value={activityDateEnd} />
+      )}
+    </>
+  );
   return (
     <div>
       <SectionBar
         title="Notifications Report"
         actions={[
           { label: 'Export to Excel' },
-          { label: 'Tasks' },
           ...(onClose
             ? [
                 {
@@ -146,8 +177,31 @@ export const ActivityLogReport: FC<Props> = ({
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: handlePageChange,
         }}
+        asideContent={
+          <PrintPage
+            headerProps={{
+              title: 'Notifications Report',
+              subtitle: printHeaderSubtitle,
+            }}
+            onPrint={allPrintData ? undefined : handlePrint}
+            status={printStatus}
+          >
+            <PrintTable
+              columns={['Date', 'User ID', 'Notification']}
+              nowraps={[true, true]}
+              data={getData(allPrintData ? entries : printEntries).map(row =>
+                row.map(({ value }) => value),
+              )}
+            />
+          </PrintPage>
+        }
       />
-      <InfoTable columns={COLUMNS} data={getData(entries)} loading={loading} />
+      <InfoTable
+        columns={COLUMNS}
+        data={getData(entries)}
+        loading={loading}
+        skipPreLine
+      />
     </div>
   );
 };

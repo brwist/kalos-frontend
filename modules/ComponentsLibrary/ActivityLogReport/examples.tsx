@@ -6,15 +6,15 @@ export default () => (
   <>
     <ExampleTitle>default with onClose</ExampleTitle>
     <ActivityLogReport
-      activityDateStart="2020-01-27"
-      activityDateEnd="2020-01-29"
+      activityDateStart="2020-01-14"
+      activityDateEnd="2020-01-18"
       onClose={() => console.log('CLOSE')}
     />
     <ExampleTitle>Deleted</ExampleTitle>
     <ActivityLogReport
       status="Deleted"
-      activityDateStart="2020-01-27"
-      activityDateEnd="2020-01-29"
+      activityDateStart="2020-01-14"
+      activityDateEnd="2020-01-18"
       onClose={() => console.log('CLOSE')}
     />
   </>
