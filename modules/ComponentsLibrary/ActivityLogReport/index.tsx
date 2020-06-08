@@ -21,7 +21,7 @@ interface Props {
 
 const useStyles = makeStyles(theme => ({}));
 
-export const ActivityLog: FC<Props> = ({
+export const ActivityLogReport: FC<Props> = ({
   status,
   activityDateStart,
   activityDateEnd,

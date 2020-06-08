@@ -5,6 +5,7 @@ import { Form } from '../Form';
 import { Schema } from '../PlainForm';
 import { Modal } from '../Modal';
 import { EventsReport } from '../EventsReport';
+import { ActivityLogReport } from '../ActivityLogReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -30,7 +31,7 @@ export type FilterForm = {
   blank?: string;
 };
 
-interface Props {
+export interface Props {
   loggedUserId: number;
 }
 
@@ -258,6 +259,9 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [notificationsReport, setNotificationsReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
+  const [notificationsReportOpen, setNotificationsReportOpen] = useState<
+    boolean
+  >(false);
   const [performanceMetricsReport, setPerformanceMetricsReport] = useState<
     FilterForm
   >({});
@@ -307,6 +311,15 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     },
     [setBillingStatusReport, setBillingStatusReportOpen],
   );
+  const handleOpenNotificationsReportToggle = useCallback(
+    (open: boolean) => (data?: FilterForm) => {
+      if (data && data.status) {
+        setNotificationsReport(data);
+      }
+      setNotificationsReportOpen(open);
+    },
+    [setNotificationsReport, setNotificationsReportOpen],
+  );
   return (
     <div className={classes.wrapper}>
       <Form
@@ -329,7 +342,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         title="Notifications Report"
         schema={SCHEMA_NOTIFICATIONS_REPORT}
         data={notificationsReport}
-        onSave={setNotificationsReport}
+        onSave={handleOpenNotificationsReportToggle(true)}
         submitLabel="Report"
         onClose={null}
       />
@@ -475,6 +488,22 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
                   : billingStatusReport.status,
             }}
             onClose={handleOpenBillingStatusReportToggle(false)}
+          />
+        </Modal>
+      )}
+      {notificationsReportOpen && (
+        <Modal
+          open
+          onClose={handleOpenNotificationsReportToggle(false)}
+          fullScreen
+        >
+          <ActivityLogReport
+            status={
+              notificationsReport.status === 'Deletions only' ? 'Deleted' : ''
+            }
+            activityDateStart={notificationsReport.startDate!}
+            activityDateEnd={notificationsReport.endDate!}
+            onClose={handleOpenNotificationsReportToggle(false)}
           />
         </Modal>
       )}
