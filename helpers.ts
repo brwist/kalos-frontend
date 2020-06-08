@@ -1192,7 +1192,7 @@ export const loadActivityLogsByFilter = async ({
 }: LoadActivityLogsByFilter) => {
   const { orderBy, orderDir, orderByField } = sort;
   const req = new ActivityLog();
-  req.setPageNumber(page);
+  req.setPageNumber(page === -1 ? 0 : page);
   // req.setOrderBy(orderBy);
   // req.setOrderDir(orderDir);
   for (const fieldName in filter) {
@@ -1203,19 +1203,37 @@ export const loadActivityLogsByFilter = async ({
       req[methodName](`%${value}%`);
     }
   }
-  const response = await ActivityLogClientService.BatchGet(req);
-  return {
-    results: response
-      .getResultsList()
-      .map(item => item.toObject())
-      .sort((a, b) => {
-        const A = (a[orderByField] || '').toString().toLowerCase();
-        const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'DESC' ? 1 : -1;
-        if (A > B) return orderDir === 'DESC' ? -1 : 1;
-        return 0;
+  const results: ActivityLogType[] = [];
+  const { resultsList, totalCount } = (
+    await ActivityLogClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (page === -1 && totalCount > resultsList.length) {
+    const batchesAmount = Math.min(
+      MAX_PAGES,
+      Math.ceil((totalCount - resultsList.length) / resultsList.length),
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await ActivityLogClientService.BatchGet(req))
+          .getResultsList()
+          .map(item => item.toObject());
       }),
-    totalCount: response.getTotalCount(),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return {
+    results: results.sort((a, b) => {
+      const A = (a[orderByField] || '').toString().toLowerCase();
+      const B = (b[orderByField] || '').toString().toLowerCase();
+      if (A < B) return orderDir === 'DESC' ? 1 : -1;
+      if (A > B) return orderDir === 'DESC' ? -1 : 1;
+      return 0;
+    }),
+    totalCount,
   };
 };
 

@@ -39,6 +39,7 @@ interface Props extends Styles {
   data: Data;
   styles?: CSSProperties;
   className?: string;
+  skipPreLine?: boolean;
 }
 
 const useStyles = makeStyles(theme => {
@@ -164,13 +165,13 @@ export const InfoTable = ({
   error = false,
   compact = false,
   hoverable = false,
+  skipPreLine = false,
   className = '',
   styles,
 }: Props) => {
   const classes = useStyles({ loading, error, compact, hoverable });
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('xs'));
-  console.log({ md });
   return (
     <div className={className + ' ' + classes.wrapper} style={styles}>
       {columns.length > 0 && (
@@ -238,7 +239,12 @@ export const InfoTable = ({
               {loading || error ? (
                 <span className={classes.fake} />
               ) : (
-                <div className={classes.value}>
+                <div
+                  className={classes.value}
+                  style={{
+                    whiteSpace: skipPreLine ? 'initial' : 'pre-line',
+                  }}
+                >
                   {href ? (
                     <Link href={`${href}:${value}`}>{value}</Link>
                   ) : (
