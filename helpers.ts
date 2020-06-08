@@ -8,6 +8,10 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
 import {
+  ActivityLog,
+  ActivityLogClient,
+} from '@kalos-core/kalos-rpc/ActivityLog';
+import {
   EmployeeFunctionClient,
   EmployeeFunction,
 } from '@kalos-core/kalos-rpc/EmployeeFunction';
@@ -77,6 +81,7 @@ export type PerDiemType = PerDiem.AsObject;
 export type PerDiemRowType = PerDiemRow.AsObject;
 export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 export type EmployeeFunctionType = EmployeeFunction.AsObject;
+export type ActivityLogType = ActivityLog.AsObject;
 
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -84,6 +89,7 @@ export const EventClientService = new EventClient(ENDPOINT);
 export const JobTypeClientService = new JobTypeClient(ENDPOINT);
 export const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
 export const JobTypeSubtypeClientService = new JobTypeSubtypeClient(ENDPOINT);
+export const ActivityLogClientService = new ActivityLogClient(ENDPOINT);
 export const EmployeeFunctionClientService = new EmployeeFunctionClient(
   ENDPOINT,
 );
@@ -1155,6 +1161,61 @@ export const loadUsersByFilter = async ({
       return 0;
     }),
     totalCount,
+  };
+};
+
+export type ActivityLogsSort = {
+  orderByField: keyof ActivityLogType;
+  orderBy: string;
+  orderDir: OrderDir;
+};
+export type LoadActivityLogsByFilter = {
+  page: number;
+  filter: ActivityLogsFilter;
+  sort: ActivityLogsSort;
+};
+export type ActivityLogsFilter = {
+  activityDate?: string;
+  activityName?: string;
+};
+/**
+ * Returns Activity Logs by filter
+ * @param page number
+ * @param searchBy string
+ * @param searchPhrase string
+ * @returns {results: ActivityLog[], totalCount: number}
+ */
+export const loadActivityLogsByFilter = async ({
+  page,
+  filter,
+  sort,
+}: LoadActivityLogsByFilter) => {
+  const { orderBy, orderDir, orderByField } = sort;
+  const req = new ActivityLog();
+  req.setPageNumber(page);
+  // req.setOrderBy(orderBy);
+  // req.setOrderDir(orderDir);
+  for (const fieldName in filter) {
+    const value = filter[fieldName as keyof ActivityLogsFilter];
+    if (value) {
+      const { methodName } = getRPCFields(fieldName);
+      //@ts-ignore
+      req[methodName](`%${value}%`);
+    }
+  }
+  const response = await ActivityLogClientService.BatchGet(req);
+  return {
+    results: response
+      .getResultsList()
+      .map(item => item.toObject())
+      .sort((a, b) => {
+        const A = (a[orderByField] || '').toString().toLowerCase();
+        const B = (b[orderByField] || '').toString().toLowerCase();
+        if (A < B) return orderDir === 'DESC' ? 1 : -1;
+        if (A > B) return orderDir === 'DESC' ? -1 : 1;
+        return 0;
+      }),
+    totalCount: response.getTotalCount(),
   };
 };
 
