@@ -93,26 +93,31 @@ export const ActivityLogReport: FC<Props> = ({
     },
     [setPage, reload],
   );
+  const loadPrintEntries = useCallback(async () => {
+    if (printEntries.length === count) return;
+    const { results } = await loadActivityLogsByFilter({
+      page: -1,
+      filter: getFilter(),
+      sort,
+    });
+    setPrintEntries(results);
+  }, [setPrintEntries, sort, getFilter, printEntries, count]);
   const handleExport = useCallback(async () => {
     setExportStatus('loading');
-    const { results } = await loadActivityLogsByFilter({
-      page: -1,
-      filter: getFilter(),
-      sort,
-    });
-    setPrintEntries(results);
+    await loadPrintEntries();
     setExportStatus('loaded');
-  }, [setPrintEntries, status, getFilter, sort, setExportStatus]);
+  }, [loadPrintEntries, setExportStatus]);
+  const handleExported = useCallback(() => setExportStatus('idle'), [
+    setExportStatus,
+  ]);
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
-    const { results } = await loadActivityLogsByFilter({
-      page: -1,
-      filter: getFilter(),
-      sort,
-    });
-    setPrintEntries(results);
+    await loadPrintEntries();
     setPrintStatus('loaded');
-  }, [setPrintEntries, status, getFilter, sort, setPrintStatus]);
+  }, [loadPrintEntries, setPrintStatus]);
+  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
+    setPrintStatus,
+  ]);
   const handleSortChange = useCallback(
     (sort: ActivityLogsSort) => () => {
       setSort(sort);
@@ -215,6 +220,7 @@ export const ActivityLogReport: FC<Props> = ({
                 new Date().toISOString(),
               ).replace(/\//g, '-')}`}
               onExport={allPrintData ? undefined : handleExport}
+              onExported={handleExported}
               status={exportStatus}
             />
             <PrintPage
@@ -223,6 +229,7 @@ export const ActivityLogReport: FC<Props> = ({
                 subtitle: printHeaderSubtitle,
               }}
               onPrint={allPrintData ? undefined : handlePrint}
+              onPrinted={handlePrinted}
               status={printStatus}
             >
               <PrintTable

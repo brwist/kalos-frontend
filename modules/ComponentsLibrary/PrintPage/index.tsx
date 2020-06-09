@@ -13,6 +13,7 @@ interface Props {
   footerProps?: FooterProps;
   buttonProps?: ButtonProps;
   onPrint?: () => void;
+  onPrinted?: () => void;
   status?: Status;
 }
 
@@ -27,6 +28,7 @@ export const PrintPage: FC<Props> = ({
   footerProps,
   buttonProps = {},
   onPrint,
+  onPrinted,
   children,
   status,
 }) => {
@@ -40,8 +42,11 @@ export const PrintPage: FC<Props> = ({
   useEffect(() => {
     if (status === 'loaded') {
       handlePrint!();
+      if (onPrinted) {
+        onPrinted();
+      }
     }
-  }, [status, handlePrint]);
+  }, [status, handlePrint, onPrinted]);
   return (
     <div>
       <Button
