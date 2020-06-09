@@ -11,6 +11,7 @@ import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { ExportJSON } from '../ExportJSON';
+import { Button } from '../Button';
 import {
   makeFakeRows,
   loadEventsByFilter,
@@ -330,17 +331,7 @@ export const EventsReport: FC<Props> = ({
     <>
       <SectionBar
         title={title}
-        actions={[
-          { label: 'Tasks' },
-          ...(onClose
-            ? [
-                {
-                  label: 'Close',
-                  onClick: onClose,
-                },
-              ]
-            : []),
-        ]}
+        actions={[{ label: 'Tasks' }]}
         pagination={{
           page,
           count,
@@ -406,6 +397,7 @@ export const EventsReport: FC<Props> = ({
                 )}
               />
             </PrintPage>
+            {onClose && <Button label="Close" onClick={onClose} />}
           </>
         }
       />
