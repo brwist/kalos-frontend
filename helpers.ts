@@ -929,7 +929,10 @@ export const deleteEmployeeFunctionById = async (id: number) => {
 export const downloadCSV = (filename: string, csv: string) => {
   const link = document.createElement('a');
   link.setAttribute('download', `${filename}.csv`);
-  link.setAttribute('href', 'data:text/csv;charset=utf-8,' + csv);
+  link.setAttribute(
+    'href',
+    'data:text/csv;charset=utf-8,' + encodeURIComponent(csv),
+  );
   link.click();
 };
 

@@ -1,10 +1,10 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
+import { ExportJSON } from '../ExportJSON';
 import {
   ActivityLogType,
   makeFakeRows,
@@ -12,6 +12,7 @@ import {
   ActivityLogsSort,
   ActivityLogsFilter,
   formatDateTime,
+  formatDate,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -22,7 +23,20 @@ interface Props {
   activityDateEnd: string;
 }
 
-const useStyles = makeStyles(theme => ({}));
+const EXPORT_COLUMNS = [
+  {
+    label: 'Date',
+    value: 'date',
+  },
+  {
+    label: 'User ID', // FIXME should be username whenever accessible in rpc
+    value: 'user',
+  },
+  {
+    label: 'Notification',
+    value: 'notification',
+  },
+];
 
 export const ActivityLogReport: FC<Props> = ({
   status,
@@ -30,7 +44,6 @@ export const ActivityLogReport: FC<Props> = ({
   activityDateEnd,
   onClose,
 }) => {
-  const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [entries, setEntries] = useState<ActivityLogType[]>([]);
@@ -38,6 +51,7 @@ export const ActivityLogReport: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [printStatus, setPrintStatus] = useState<Status>('idle');
+  const [exportStatus, setExportStatus] = useState<Status>('idle');
   const [sort, setSort] = useState<ActivityLogsSort>({
     orderBy: 'activity_date',
     orderByField: 'activityDate',
@@ -79,6 +93,16 @@ export const ActivityLogReport: FC<Props> = ({
     },
     [setPage, reload],
   );
+  const handleExport = useCallback(async () => {
+    setExportStatus('loading');
+    const { results } = await loadActivityLogsByFilter({
+      page: -1,
+      filter: getFilter(),
+      sort,
+    });
+    setPrintEntries(results);
+    setExportStatus('loaded');
+  }, [setPrintEntries, status, getFilter, sort, setExportStatus]);
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
     const { results } = await loadActivityLogsByFilter({
@@ -161,7 +185,6 @@ export const ActivityLogReport: FC<Props> = ({
       <SectionBar
         title="Notifications Report"
         actions={[
-          { label: 'Export to Excel' },
           ...(onClose
             ? [
                 {
@@ -178,22 +201,39 @@ export const ActivityLogReport: FC<Props> = ({
           onChangePage: handlePageChange,
         }}
         asideContent={
-          <PrintPage
-            headerProps={{
-              title: 'Notifications Report',
-              subtitle: printHeaderSubtitle,
-            }}
-            onPrint={allPrintData ? undefined : handlePrint}
-            status={printStatus}
-          >
-            <PrintTable
-              columns={['Date', 'User ID', 'Notification']}
-              nowraps={[true, true]}
-              data={getData(allPrintData ? entries : printEntries).map(row =>
-                row.map(({ value }) => value),
+          <>
+            <ExportJSON
+              json={(allPrintData ? entries : printEntries).map(
+                ({ activityDate, userId, activityName }) => ({
+                  date: formatDateTime(activityDate),
+                  user: userId,
+                  notification: activityName,
+                }),
               )}
+              fields={EXPORT_COLUMNS}
+              filename={`Notification_Status_Report_${formatDate(
+                new Date().toISOString(),
+              ).replace(/\//g, '-')}`}
+              onExport={allPrintData ? undefined : handleExport}
+              status={exportStatus}
             />
-          </PrintPage>
+            <PrintPage
+              headerProps={{
+                title: 'Notifications Report',
+                subtitle: printHeaderSubtitle,
+              }}
+              onPrint={allPrintData ? undefined : handlePrint}
+              status={printStatus}
+            >
+              <PrintTable
+                columns={['Date', 'User ID', 'Notification']}
+                nowraps={[true, true]}
+                data={getData(allPrintData ? entries : printEntries).map(row =>
+                  row.map(({ value }) => value),
+                )}
+              />
+            </PrintPage>
+          </>
         }
       />
       <InfoTable
