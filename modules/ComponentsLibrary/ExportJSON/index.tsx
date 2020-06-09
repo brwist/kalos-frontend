@@ -16,7 +16,7 @@ interface Props {
   filename: string;
   json: Object[];
   fields: Column[];
-  onPrint?: () => void;
+  onExport?: () => void;
   status?: Status;
 }
 
@@ -25,22 +25,22 @@ export const ExportJSON: FC<Props> = ({
   json,
   fields,
   buttonProps,
-  onPrint,
+  onExport,
   status,
 }) => {
-  const handleDownload = useCallback(() => {
+  const handleExport = useCallback(() => {
     const csv = parse(json, { fields });
     downloadCSV(filename, csv);
   }, [json, filename]);
   useEffect(() => {
     if (status === 'loaded') {
-      handleDownload!();
+      handleExport();
     }
-  }, [status, handleDownload]);
+  }, [status, handleExport]);
   return (
     <Button
       label="Export to Excel"
-      onClick={onPrint || handleDownload}
+      onClick={onExport || handleExport}
       children={
         status === 'loading' && (
           <CircularProgress
