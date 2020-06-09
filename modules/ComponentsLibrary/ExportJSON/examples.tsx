@@ -29,6 +29,13 @@ export default () => (
   <>
     <ExampleTitle>default</ExampleTitle>
     <ExportJSON filename="example" json={DATA} fields={FIELDS} />
+    <ExampleTitle>status loading</ExampleTitle>
+    <ExportJSON
+      filename="example"
+      json={DATA}
+      fields={FIELDS}
+      status="loading"
+    />
     <ExampleTitle>custom button propd</ExampleTitle>
     <ExportJSON
       filename="example"
