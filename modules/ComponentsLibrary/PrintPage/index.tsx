@@ -41,7 +41,7 @@ export const PrintPage: FC<Props> = ({
     if (status === 'loaded') {
       handlePrint!();
     }
-  }, [status]);
+  }, [status, handlePrint]);
   return (
     <div>
       <Button
