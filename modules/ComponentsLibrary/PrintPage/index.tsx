@@ -35,6 +35,7 @@ export const PrintPage: FC<Props> = ({
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     copyStyles: true,
+    pageStyle: '',
   });
   useEffect(() => {
     if (status === 'loaded') {
