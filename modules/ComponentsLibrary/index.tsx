@@ -23,13 +23,13 @@ import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import Documents from './Documents/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
+import EventsReport from './EventsReport/examples';
 import ExportJSON from './ExportJSON/examples';
 import Field from './Field/examples';
 import FileTags from './FileTags/examples';
 import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
-import EventsReport from './EventsReport/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PerDiem from './PerDiem/examples';
@@ -74,13 +74,13 @@ const COMPONENTS = {
   CustomerInformation,
   Documents,
   EmployeeDepartments,
+  EventsReport,
   ExportJSON,
   Field,
   FileTags,
   Form,
   InfoTable,
   InternalDocuments,
-  EventsReport,
   Link,
   Modal,
   PerDiem,

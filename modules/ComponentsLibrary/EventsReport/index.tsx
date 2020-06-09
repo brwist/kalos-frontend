@@ -10,6 +10,7 @@ import { ServiceCall } from '../ServiceCall';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
+import { ExportJSON } from '../ExportJSON';
 import {
   makeFakeRows,
   loadEventsByFilter,
@@ -41,6 +42,7 @@ export const EventsReport: FC<Props> = ({
   const [entries, setEntries] = useState<EventType[]>([]);
   const [printEntries, setPrintEntries] = useState<EventType[]>([]);
   const [printStatus, setPrintStatus] = useState<Status>('idle');
+  const [exportStatus, setExportStatus] = useState<Status>('idle');
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [sort, setSort] = useState<EventsSort>({
@@ -118,20 +120,42 @@ export const EventsReport: FC<Props> = ({
     },
     [],
   );
-  const handlePrint = useCallback(async () => {
-    setPrintStatus('loading');
+  const loadPrintEntries = useCallback(async () => {
+    if (printEntries.length === count) return;
+    const filter: EventsFilter = {
+      logJobStatus: status,
+      dateStarted: startDate, // TODO: use dateRangeList
+      dateEnded: endDate,
+    };
+    if (kind === 'jobStatus') {
+      filter.logJobStatus = status;
+    }
+    if (kind === 'paymentStatus') {
+      filter.logPaymentStatus = status;
+    }
     const { results } = await loadEventsByFilter({
       page: -1,
-      filter: {
-        logJobStatus: status,
-        dateStarted: startDate, // TODO: use dateRangeList
-        dateEnded: endDate,
-      },
+      filter,
       sort,
     });
     setPrintEntries(results);
+  }, [status, startDate, endDate, sort, kind, printEntries, count]);
+  const handleExport = useCallback(async () => {
+    setExportStatus('loading');
+    await loadPrintEntries();
+    setExportStatus('loaded');
+  }, [loadPrintEntries, setExportStatus]);
+  const handleExported = useCallback(() => setExportStatus('idle'), [
+    setExportStatus,
+  ]);
+  const handlePrint = useCallback(async () => {
+    setPrintStatus('loading');
+    await loadPrintEntries();
     setPrintStatus('loaded');
-  }, [setPrintEntries, status, startDate, endDate, sort, setPrintStatus]);
+  }, [loadPrintEntries, setPrintStatus]);
+  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
+    setPrintStatus,
+  ]);
   const COLUMNS: Columns = [
     {
       name: 'Property',
@@ -277,6 +301,16 @@ export const EventsReport: FC<Props> = ({
             },
           ];
         });
+  const EXPORT_COLUMNS = [
+    { label: 'Property', value: 'property' },
+    { label: 'Customer', value: 'customer' },
+    { label: 'Job #', value: 'jobNumber' },
+    { label: 'Date', value: 'date' },
+    {
+      label: kind === 'jobStatus' ? 'Job Status' : 'Payment Status',
+      value: 'status',
+    },
+  ];
   const allPrintData = entries.length === count;
   const title = useMemo(() => {
     if (kind === 'jobStatus') return 'Job Status Report';
@@ -297,7 +331,6 @@ export const EventsReport: FC<Props> = ({
       <SectionBar
         title={title}
         actions={[
-          { label: 'Export to Excel' },
           { label: 'Tasks' },
           ...(onClose
             ? [
@@ -315,27 +348,65 @@ export const EventsReport: FC<Props> = ({
           onChangePage: handlePageChange,
         }}
         asideContent={
-          <PrintPage
-            headerProps={{
-              title: 'Job Status Report',
-              subtitle: printHeaderSubtitle,
-            }}
-            onPrint={allPrintData ? undefined : handlePrint}
-            status={printStatus}
-          >
-            <PrintTable
-              columns={[
-                'Property',
-                'Customer Name',
-                'Job #',
-                'Date',
-                { title: 'Job Status', align: 'right' },
-              ]}
-              data={getData(allPrintData ? entries : printEntries).map(row =>
-                row.map(({ value }) => value),
+          <>
+            <ExportJSON
+              json={(allPrintData ? entries : printEntries).map(
+                ({
+                  property,
+                  customer,
+                  logJobNumber,
+                  dateStarted,
+                  logJobStatus,
+                  logPaymentStatus,
+                }) => ({
+                  property: getPropertyAddress(property),
+                  customer: getCustomerName(customer),
+                  jobNumber: logJobNumber,
+                  date: formatDate(dateStarted),
+                  status:
+                    kind === 'jobStatus' ? logJobStatus : logPaymentStatus,
+                }),
               )}
+              fields={EXPORT_COLUMNS}
+              filename={`${
+                kind === 'jobStatus' ? 'Job' : 'Billing'
+              }_Status_Report_${formatDate(new Date().toISOString()).replace(
+                /\//g,
+                '-',
+              )}`}
+              onExport={allPrintData ? undefined : handleExport}
+              onExported={handleExported}
+              status={exportStatus}
             />
-          </PrintPage>
+            <PrintPage
+              headerProps={{
+                title: `${
+                  kind === 'jobStatus' ? 'Job' : 'Billing'
+                } Status Report`,
+                subtitle: printHeaderSubtitle,
+              }}
+              onPrint={allPrintData ? undefined : handlePrint}
+              onPrinted={handlePrinted}
+              status={printStatus}
+            >
+              <PrintTable
+                columns={[
+                  'Property',
+                  'Customer Name',
+                  'Job #',
+                  'Date',
+                  {
+                    title:
+                      kind === 'jobStatus' ? 'Job Status' : 'Payment Status',
+                    align: 'right',
+                  },
+                ]}
+                data={getData(allPrintData ? entries : printEntries).map(row =>
+                  row.map(({ value }) => value),
+                )}
+              />
+            </PrintPage>
+          </>
         }
       />
       <InfoTable columns={COLUMNS} data={getData(entries)} loading={loading} />

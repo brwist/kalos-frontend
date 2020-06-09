@@ -17,6 +17,7 @@ interface Props {
   json: Object[];
   fields: Column[];
   onExport?: () => void;
+  onExported?: () => void;
   status?: Status;
 }
 
@@ -26,6 +27,7 @@ export const ExportJSON: FC<Props> = ({
   fields,
   buttonProps,
   onExport,
+  onExported,
   status,
 }) => {
   const handleExport = useCallback(() => {
@@ -35,8 +37,11 @@ export const ExportJSON: FC<Props> = ({
   useEffect(() => {
     if (status === 'loaded') {
       handleExport();
+      if (onExported) {
+        onExported();
+      }
     }
-  }, [status, handleExport]);
+  }, [status, handleExport, onExported]);
   return (
     <Button
       label="Export to Excel"
