@@ -23,6 +23,7 @@ import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import Documents from './Documents/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
+import ExportJSON from './ExportJSON/examples';
 import Field from './Field/examples';
 import FileTags from './FileTags/examples';
 import Form from './Form/examples';
@@ -73,6 +74,7 @@ const COMPONENTS = {
   CustomerInformation,
   Documents,
   EmployeeDepartments,
+  ExportJSON,
   Field,
   FileTags,
   Form,

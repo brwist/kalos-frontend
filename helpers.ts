@@ -926,6 +926,13 @@ export const deleteEmployeeFunctionById = async (id: number) => {
   await EmployeeFunctionClientService.Delete(req);
 };
 
+export const downloadCSV = (filename: string, csv: string) => {
+  const link = document.createElement('a');
+  link.setAttribute('download', `${filename}.csv`);
+  link.setAttribute('href', 'data:text/csv;charset=utf-8,' + csv);
+  link.click();
+};
+
 export const loadPerDiemByUserIdAndDateStarted = async (
   userId: number,
   dateStarted: string,
