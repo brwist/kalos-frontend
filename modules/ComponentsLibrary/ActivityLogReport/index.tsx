@@ -5,6 +5,7 @@ import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { ExportJSON } from '../ExportJSON';
+import { Button } from '../Button';
 import {
   ActivityLogType,
   makeFakeRows,
@@ -189,16 +190,6 @@ export const ActivityLogReport: FC<Props> = ({
     <div>
       <SectionBar
         title="Notifications Report"
-        actions={[
-          ...(onClose
-            ? [
-                {
-                  label: 'Close',
-                  onClick: onClose,
-                },
-              ]
-            : []),
-        ]}
         pagination={{
           page,
           count,
@@ -240,6 +231,7 @@ export const ActivityLogReport: FC<Props> = ({
                 )}
               />
             </PrintPage>
+            {onClose && <Button label="Close" onClick={onClose} />}
           </>
         }
       />
