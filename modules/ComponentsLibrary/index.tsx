@@ -33,6 +33,7 @@ import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PerDiem from './PerDiem/examples';
+import PerformanceMetrics from './PerformanceMetrics/examples';
 import PlainForm from './PlainForm/examples';
 import PrintFooter from './PrintFooter/examples';
 import PrintHeader from './PrintHeader/examples';
@@ -84,6 +85,7 @@ const COMPONENTS = {
   Link,
   Modal,
   PerDiem,
+  PerformanceMetrics,
   PlainForm,
   PrintFooter,
   PrintHeader,

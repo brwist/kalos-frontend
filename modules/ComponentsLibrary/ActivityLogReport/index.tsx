@@ -149,7 +149,7 @@ export const ActivityLogReport: FC<Props> = ({
       }),
     },
     {
-      name: 'User', // FIXME User
+      name: 'User',
       width: 200,
       ...(sort.orderByField === 'lastname'
         ? {
@@ -252,7 +252,7 @@ export const ActivityLogReport: FC<Props> = ({
               status={printStatus}
             >
               <PrintTable
-                columns={['Date', 'User ID', 'Notification']}
+                columns={['Date', 'User', 'Notification']}
                 nowraps={[true, true]}
                 data={getData(allPrintData ? entries : printEntries).map(row =>
                   row.map(({ value }) => value),

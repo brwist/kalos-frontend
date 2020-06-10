@@ -1174,6 +1174,27 @@ export const loadUsersByFilter = async ({
   };
 };
 
+export type PerformanceMetricsFilter = {
+  dateStart?: string;
+  dateEnd?: string;
+};
+
+export type LoadPerformanceMetricsByFilter = {
+  page: number;
+  filter: PerformanceMetricsFilter;
+};
+
+export const loadPerformanceMetricsByFilter = async ({
+  page,
+  filter: { dateStart, dateEnd },
+}: LoadPerformanceMetricsByFilter) => {
+  console.log({ page, dateStart, dateEnd });
+  return {
+    results: [],
+    totalCount: 0,
+  };
+};
+
 export type ActivityLogsSort = {
   orderByField: keyof ActivityLogType | keyof UserType;
   orderBy: string;
