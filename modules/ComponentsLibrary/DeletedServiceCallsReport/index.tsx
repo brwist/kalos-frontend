@@ -9,17 +9,16 @@ import { Button } from '../Button';
 import {
   makeFakeRows,
   formatDate,
-  loadPerformanceMetricsByFilter,
+  loadDeletedServiceCallsByFilter,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
-type PerformanceMetricsType = {
-  technician: string;
-  incomePerHour: number;
-  percentageBillable: number;
-  serviceCallbackRate?: number;
-  installCallbackRate: string;
-  driveTime: number;
+type DeletedServiceCallsReportType = {
+  property: string;
+  customer: string;
+  job: string;
+  date: string;
+  jobStatus: string;
 };
 
 interface Props {
@@ -30,44 +29,40 @@ interface Props {
 
 const EXPORT_COLUMNS = [
   {
-    label: 'Technician',
-    value: 'technician',
+    label: 'Property',
+    value: 'property',
   },
   {
-    label: 'Income per hour',
-    value: 'incomePerHour',
+    label: 'Customer Name',
+    value: 'customer',
   },
   {
-    label: 'Percentage Billable',
-    value: 'percentageBillable',
+    label: 'Job',
+    value: 'job',
   },
   {
-    label: 'Service Callback rate',
-    value: 'serviceCallbackRate',
+    label: 'Date',
+    value: 'date',
   },
   {
-    label: 'Install Callback rate',
-    value: 'installCallbackRate',
-  },
-  {
-    label: 'Drive Time',
-    value: 'driveTime',
+    label: 'Job Status',
+    value: 'jobStatus',
   },
 ];
 
 const COLUMNS = EXPORT_COLUMNS.map(({ label }) => label);
 
-export const PerformanceMetrics: FC<Props> = ({
+export const DeletedServiceCallsReport: FC<Props> = ({
   dateStart,
   dateEnd,
   onClose,
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [entries, setEntries] = useState<PerformanceMetricsType[]>([]);
-  const [printEntries, setPrintEntries] = useState<PerformanceMetricsType[]>(
-    [],
-  );
+  const [entries, setEntries] = useState<DeletedServiceCallsReportType[]>([]);
+  const [printEntries, setPrintEntries] = useState<
+    DeletedServiceCallsReportType[]
+  >([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [printStatus, setPrintStatus] = useState<Status>('idle');
@@ -81,7 +76,7 @@ export const PerformanceMetrics: FC<Props> = ({
   );
   const load = useCallback(async () => {
     setLoading(true);
-    const { results, totalCount } = await loadPerformanceMetricsByFilter({
+    const { results, totalCount } = await loadDeletedServiceCallsByFilter({
       page,
       filter: getFilter(),
     });
@@ -105,7 +100,7 @@ export const PerformanceMetrics: FC<Props> = ({
   );
   const loadPrintEntries = useCallback(async () => {
     if (printEntries.length === count) return;
-    const { results } = await loadPerformanceMetricsByFilter({
+    const { results } = await loadDeletedServiceCallsByFilter({
       page: -1,
       filter: getFilter(),
     });
@@ -127,25 +122,17 @@ export const PerformanceMetrics: FC<Props> = ({
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
-  const getData = (entries: PerformanceMetricsType[]): Data =>
+  const getData = (entries: DeletedServiceCallsReportType[]): Data =>
     loading
       ? makeFakeRows(3, 5)
       : entries.map(entry => {
-          const {
-            technician,
-            incomePerHour,
-            percentageBillable,
-            serviceCallbackRate,
-            installCallbackRate,
-            driveTime,
-          } = entry;
+          const { property, customer, job, date, jobStatus } = entry;
           return [
-            { value: technician },
-            { value: incomePerHour },
-            { value: percentageBillable },
-            { value: serviceCallbackRate },
-            { value: installCallbackRate },
-            { value: driveTime },
+            { value: property },
+            { value: customer },
+            { value: job },
+            { value: date },
+            { value: jobStatus },
           ];
         });
   const allPrintData = entries.length === count;
@@ -160,7 +147,7 @@ export const PerformanceMetrics: FC<Props> = ({
   return (
     <div>
       <SectionBar
-        title="Performance Metrics"
+        title="Deleted Service Calls Report"
         pagination={{
           page,
           count,
@@ -172,7 +159,7 @@ export const PerformanceMetrics: FC<Props> = ({
             <ExportJSON
               json={allPrintData ? entries : printEntries}
               fields={EXPORT_COLUMNS}
-              filename={`Performance_Metrics_Report_${formatDate(
+              filename={`Deleted_Service_Calls_Report_${formatDate(
                 new Date().toISOString(),
               ).replace(/\//g, '-')}`}
               onExport={allPrintData ? undefined : handleExport}
@@ -181,7 +168,7 @@ export const PerformanceMetrics: FC<Props> = ({
             />
             <PrintPage
               headerProps={{
-                title: 'Performance Metrics',
+                title: 'Deleted Service Calls Report',
                 subtitle: printHeaderSubtitle,
               }}
               onPrint={allPrintData ? undefined : handlePrint}

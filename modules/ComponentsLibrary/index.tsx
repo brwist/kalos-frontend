@@ -21,6 +21,7 @@ import ConfirmService from './ConfirmService/examples';
 import CustomControls from './CustomControls/examples';
 import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
+import DeletedServiceCallsReport from './DeletedServiceCallsReport/examples';
 import Documents from './Documents/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
 import EventsReport from './EventsReport/examples';
@@ -73,6 +74,7 @@ const COMPONENTS = {
   CustomControls,
   CustomerEdit,
   CustomerInformation,
+  DeletedServiceCallsReport,
   Documents,
   EmployeeDepartments,
   EventsReport,
