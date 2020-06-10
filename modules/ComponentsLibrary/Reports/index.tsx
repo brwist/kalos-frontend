@@ -6,6 +6,7 @@ import { Schema } from '../PlainForm';
 import { Modal } from '../Modal';
 import { EventsReport } from '../EventsReport';
 import { ActivityLogReport } from '../ActivityLogReport';
+import { PerformanceMetrics } from '../PerformanceMetrics';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -436,7 +437,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         setPerformanceMetricsDatesError(true);
         return;
       }
-      if (data && data.status) {
+      if (data && data.startDate) {
         setPerformanceMetricsReport(data);
       }
       setPerformanceMetricsReportOpen(open);
@@ -459,7 +460,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         setDeletedServiceCallsDatesError(true);
         return;
       }
-      if (data && data.status) {
+      if (data && data.startDate) {
         setDeletedServiceCallsReport(data);
       }
       setDeletedServiceCallsReportOpen(open);
@@ -482,7 +483,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         setCallbackDatesError(true);
         return;
       }
-      if (data && data.status) {
+      if (data && data.startDate) {
         setCallbackReport(data);
       }
       setCallbackReportOpen(open);
@@ -777,18 +778,11 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           onClose={handleOpenPerformanceMetricsReportToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Performance Metrics"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () =>
-                  handleOpenPerformanceMetricsReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <PerformanceMetrics
+            onClose={handleOpenPerformanceMetricsReportToggle(false)}
+            dateStart={performanceMetricsReport.startDate!}
+            dateEnd={performanceMetricsReport.endDate!}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {deletedServiceCallsReportOpen && (
