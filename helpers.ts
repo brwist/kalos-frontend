@@ -1174,20 +1174,31 @@ export const loadUsersByFilter = async ({
   };
 };
 
-export type PerformanceMetricsFilter = {
+export type DateStartEndFilter = {
   dateStart?: string;
   dateEnd?: string;
 };
 
-export type LoadPerformanceMetricsByFilter = {
+export type LoadMetricsByFilter = {
   page: number;
-  filter: PerformanceMetricsFilter;
+  filter: DateStartEndFilter;
 };
 
 export const loadPerformanceMetricsByFilter = async ({
   page,
   filter: { dateStart, dateEnd },
-}: LoadPerformanceMetricsByFilter) => {
+}: LoadMetricsByFilter) => {
+  console.log({ page, dateStart, dateEnd });
+  return {
+    results: [],
+    totalCount: 0,
+  };
+};
+
+export const loadDeletedServiceCallsByFilter = async ({
+  page,
+  filter: { dateStart, dateEnd },
+}: LoadMetricsByFilter) => {
   console.log({ page, dateStart, dateEnd });
   return {
     results: [],
