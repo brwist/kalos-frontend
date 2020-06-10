@@ -1175,7 +1175,7 @@ export const loadUsersByFilter = async ({
 };
 
 export type ActivityLogsSort = {
-  orderByField: keyof ActivityLogType;
+  orderByField: keyof ActivityLogType | keyof UserType;
   orderBy: string;
   orderDir: OrderDir;
 };
@@ -1203,9 +1203,16 @@ export const loadActivityLogsByFilter = async ({
 }: LoadActivityLogsByFilter) => {
   const { orderBy, orderDir, orderByField } = sort;
   const req = new ActivityLog();
+  if (orderByField === 'lastname') {
+    const userReq = new User();
+    userReq.setOrderBy(orderBy);
+    userReq.setOrderDir(orderDir);
+    req.setUser(userReq);
+  } else {
+    req.setOrderBy(orderBy);
+    req.setOrderDir(orderDir);
+  }
   req.setPageNumber(page === -1 ? 0 : page);
-  // req.setOrderBy(orderBy);
-  // req.setOrderDir(orderDir);
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof ActivityLogsFilter];
     if (value) {
@@ -1236,16 +1243,7 @@ export const loadActivityLogsByFilter = async ({
       ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
     );
   }
-  return {
-    results: results.sort((a, b) => {
-      const A = (a[orderByField] || '').toString().toLowerCase();
-      const B = (b[orderByField] || '').toString().toLowerCase();
-      if (A < B) return orderDir === 'DESC' ? 1 : -1;
-      if (A > B) return orderDir === 'DESC' ? -1 : 1;
-      return 0;
-    }),
-    totalCount,
-  };
+  return { results, totalCount };
 };
 
 export type PropertiesSort = {
