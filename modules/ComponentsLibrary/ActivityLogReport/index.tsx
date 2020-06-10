@@ -138,23 +138,48 @@ export const ActivityLogReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      // FIXME  whenever ActivityLog is sortable
-      // onClick: handleSortChange({
-      //   orderByField: 'activityDate',
-      //   orderBy: 'activity_date',
-      //   orderDir:
-      //     sort.orderByField === 'activityDate' && sort.orderDir === 'ASC'
-      //       ? 'DESC'
-      //       : 'ASC',
-      // }),
+      onClick: handleSortChange({
+        orderByField: 'activityDate',
+        orderBy: 'activity_date',
+        orderDir:
+          sort.orderByField === 'activityDate' && sort.orderDir === 'ASC'
+            ? 'DESC'
+            : 'ASC',
+      }),
     },
     {
       name: 'User', // FIXME User
       width: 200,
+      ...(sort.orderByField === 'lastname'
+        ? {
+            dir: sort.orderDir,
+          }
+        : {}),
+      onClick: handleSortChange({
+        orderByField: 'lastname',
+        orderBy: 'user_lastname',
+        orderDir:
+          sort.orderByField === 'lastname' && sort.orderDir === 'ASC'
+            ? 'DESC'
+            : 'ASC',
+      }),
     },
     {
       name: 'Notification',
       width: -1,
+      ...(sort.orderByField === 'activityName'
+        ? {
+            dir: sort.orderDir,
+          }
+        : {}),
+      onClick: handleSortChange({
+        orderByField: 'activityName',
+        orderBy: 'activity_name',
+        orderDir:
+          sort.orderByField === 'activityName' && sort.orderDir === 'ASC'
+            ? 'DESC'
+            : 'ASC',
+      }),
     },
   ];
   const getData = (entries: ActivityLogType[]): Data =>
