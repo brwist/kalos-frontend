@@ -1187,6 +1187,7 @@ export type LoadActivityLogsByFilter = {
 export type ActivityLogsFilter = {
   activityDate?: string;
   activityName?: string;
+  withUser?: boolean;
 };
 /**
  * Returns Activity Logs by filter
