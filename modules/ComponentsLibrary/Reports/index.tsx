@@ -7,6 +7,7 @@ import { Modal } from '../Modal';
 import { EventsReport } from '../EventsReport';
 import { ActivityLogReport } from '../ActivityLogReport';
 import { PerformanceMetrics } from '../PerformanceMetrics';
+import { DeletedServiceCallsReport } from '../DeletedServiceCallsReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -791,18 +792,11 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           onClose={handleOpenDeletedServiceCallsReportToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Deleted Service Calls"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () =>
-                  handleOpenDeletedServiceCallsReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <DeletedServiceCallsReport
+            onClose={handleOpenDeletedServiceCallsReportToggle(false)}
+            dateStart={deletedServiceCallsReport.startDate!}
+            dateEnd={deletedServiceCallsReport.endDate!}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {callbackReportOpen && (

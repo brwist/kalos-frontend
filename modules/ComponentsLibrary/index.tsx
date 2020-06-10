@@ -122,6 +122,7 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(),
     backgroundColor: theme.palette.grey[100],
     flexShrink: 0,
+    overflow: 'hidden',
   },
   list: {
     marginLeft: theme.spacing(2.5),
