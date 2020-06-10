@@ -14,6 +14,7 @@ import {
   ActivityLogsFilter,
   formatDateTime,
   formatDate,
+  getCustomerName,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -30,7 +31,7 @@ const EXPORT_COLUMNS = [
     value: 'date',
   },
   {
-    label: 'User ID', // FIXME should be username whenever accessible in rpc
+    label: 'User',
     value: 'user',
   },
   {
@@ -61,6 +62,7 @@ export const ActivityLogReport: FC<Props> = ({
   const getFilter = useCallback(() => {
     const filter: ActivityLogsFilter = {
       activityDate: activityDateStart,
+      withUser: true,
     };
     if (status) {
       filter.activityName = status + ' % Notification';
@@ -147,7 +149,7 @@ export const ActivityLogReport: FC<Props> = ({
       // }),
     },
     {
-      name: 'User ID', // FIXME User
+      name: 'User', // FIXME User
       width: 200,
     },
     {
@@ -159,13 +161,13 @@ export const ActivityLogReport: FC<Props> = ({
     loading
       ? makeFakeRows(3, 5)
       : entries.map(entry => {
-          const { activityDate, userId, activityName } = entry;
+          const { activityDate, user, activityName } = entry;
           return [
             {
               value: formatDateTime(activityDate),
             },
             {
-              value: userId, // FIXME should be user name whenever it's returned in ActivityLog
+              value: getCustomerName(user, true),
             },
             {
               value: activityName,
@@ -200,9 +202,9 @@ export const ActivityLogReport: FC<Props> = ({
           <>
             <ExportJSON
               json={(allPrintData ? entries : printEntries).map(
-                ({ activityDate, userId, activityName }) => ({
+                ({ activityDate, user, activityName }) => ({
                   date: formatDateTime(activityDate),
-                  user: userId,
+                  user: getCustomerName(user, true),
                   notification: activityName,
                 }),
               )}
