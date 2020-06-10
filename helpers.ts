@@ -1185,7 +1185,8 @@ export type LoadActivityLogsByFilter = {
   sort: ActivityLogsSort;
 };
 export type ActivityLogsFilter = {
-  activityDate?: string;
+  activityDateStart?: string;
+  activityDateEnd?: string;
   activityName?: string;
   withUser?: boolean;
 };
@@ -1198,28 +1199,24 @@ export type ActivityLogsFilter = {
  */
 export const loadActivityLogsByFilter = async ({
   page,
-  filter,
+  filter: { activityDateStart, activityDateEnd, activityName, withUser },
   sort,
 }: LoadActivityLogsByFilter) => {
   const { orderBy, orderDir, orderByField } = sort;
   const req = new ActivityLog();
-  if (orderByField === 'lastname') {
-    const userReq = new User();
-    userReq.setOrderBy(orderBy);
-    userReq.setOrderDir(orderDir);
-    req.setUser(userReq);
-  } else {
-    req.setOrderBy(orderBy);
-    req.setOrderDir(orderDir);
-  }
+  const u = new User();
+  req.setUser(u);
+  req.setOrderBy(orderBy);
+  req.setOrderDir(orderDir);
   req.setPageNumber(page === -1 ? 0 : page);
-  for (const fieldName in filter) {
-    const value = filter[fieldName as keyof ActivityLogsFilter];
-    if (value) {
-      const { methodName } = getRPCFields(fieldName);
-      //@ts-ignore
-      req[methodName](`%${value}%`);
-    }
+  if (activityDateStart && activityDateEnd) {
+    req.setDateRangeList(['>=', activityDateStart, '<=', activityDateEnd]);
+  }
+  if (activityName) {
+    req.setActivityName(`%${activityName}%`);
+  }
+  if (withUser) {
+    req.setWithUser(true);
   }
   const results: ActivityLogType[] = [];
   const { resultsList, totalCount } = (

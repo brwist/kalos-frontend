@@ -61,7 +61,8 @@ export const ActivityLogReport: FC<Props> = ({
   });
   const getFilter = useCallback(() => {
     const filter: ActivityLogsFilter = {
-      activityDate: activityDateStart,
+      activityDateStart,
+      activityDateEnd,
       withUser: true,
     };
     if (status) {
@@ -157,7 +158,7 @@ export const ActivityLogReport: FC<Props> = ({
         : {}),
       onClick: handleSortChange({
         orderByField: 'lastname',
-        orderBy: 'user_lastname',
+        orderBy: 'userz.user_lastname',
         orderDir:
           sort.orderByField === 'lastname' && sort.orderDir === 'ASC'
             ? 'DESC'
