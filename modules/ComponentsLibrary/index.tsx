@@ -14,6 +14,7 @@ import Calendar from './Calendar/examples';
 import CalendarCard from './CalendarCard/examples';
 import CalendarColumn from './CalendarColumn/examples';
 import CalendarHeader from './CalendarHeader/examples';
+import CallbackReport from './CallbackReport/examples';
 import Chart from './Chart/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
@@ -67,6 +68,7 @@ const COMPONENTS = {
   CalendarCard,
   CalendarColumn,
   CalendarHeader,
+  CallbackReport,
   Chart,
   Confirm,
   ConfirmDelete,
