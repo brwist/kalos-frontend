@@ -49,6 +49,7 @@ import Reports from './Reports/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
 import ServiceCall from './ServiceCall/examples';
+import ServiceCallMetrics from './ServiceCallMetrics/examples';
 import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
@@ -103,6 +104,7 @@ const COMPONENTS = {
   Search,
   SectionBar,
   ServiceCall,
+  ServiceCallMetrics,
   ServiceItemLinks,
   ServiceItemReadings,
   ServiceItems,
