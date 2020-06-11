@@ -6,8 +6,7 @@ export default () => (
   <>
     <ExampleTitle>default with onClose</ExampleTitle>
     <ServiceCallMetrics
-      dateStart="2020-01-14"
-      dateEnd="2020-01-20"
+      week="2020-06-07"
       onClose={() => console.log('CLOSE')}
     />
   </>
