@@ -1471,11 +1471,16 @@ export const loadEventsByFilter = async ({
   if (logPaymentStatus) {
     req.setLogPaymentStatus(logPaymentStatus);
   }
-  if (dateStarted) {
-    req.setDateStarted(`%${dateStarted}%`);
-  }
-  if (dateEnded) {
-    req.setDateEnded(`%${dateEnded}%`);
+  if (dateStarted && dateEnded) {
+    req.setDateRangeList(['>=', dateStarted, '<=', dateEnded]);
+    req.setDateTargetList(['dateStarted', 'dateEnded']);
+  } else {
+    if (dateStarted) {
+      req.setDateStarted(`%${dateStarted}%`);
+    }
+    if (dateEnded) {
+      req.setDateEnded(`%${dateEnded}%`);
+    }
   }
   if (address) {
     p.setAddress(`%${address}%`);

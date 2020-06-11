@@ -11,7 +11,7 @@ export default () => (
       filter={{
         status: 'Completed',
         startDate: '2019-10-01',
-        endDate: '2019-10-01',
+        endDate: '2019-10-03',
       }}
       onClose={() => console.log('CLOSE')}
     />
@@ -22,7 +22,7 @@ export default () => (
       filter={{
         status: 'Paid',
         startDate: '2019-10-01',
-        endDate: '2019-10-01',
+        endDate: '2019-10-05',
       }}
       onClose={() => console.log('CLOSE')}
     />
