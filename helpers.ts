@@ -1206,6 +1206,17 @@ export const loadDeletedServiceCallsByFilter = async ({
   };
 };
 
+export const loadCallbackReportByFilter = async ({
+  page,
+  filter: { dateStart, dateEnd },
+}: LoadMetricsByFilter) => {
+  console.log({ page, dateStart, dateEnd });
+  return {
+    results: [],
+    totalCount: 0,
+  };
+};
+
 export type ActivityLogsSort = {
   orderByField: keyof ActivityLogType | keyof UserType;
   orderBy: string;
