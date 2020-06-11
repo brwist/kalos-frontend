@@ -9,6 +9,7 @@ import { ActivityLogReport } from '../ActivityLogReport';
 import { PerformanceMetrics } from '../PerformanceMetrics';
 import { DeletedServiceCallsReport } from '../DeletedServiceCallsReport';
 import { CallbackReport } from '../CallbackReport';
+import { ServiceCallMetrics } from '../ServiceCallMetrics';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -815,18 +816,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           onClose={handleOpenServiceCallMetricsReportToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Service Call Metrics"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () =>
-                  handleOpenServiceCallMetricsReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <ServiceCallMetrics
+            week={serviceCallMetricsReport.week!}
+            onClose={handleOpenServiceCallMetricsReportToggle(false)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {spiffReportOpen && (

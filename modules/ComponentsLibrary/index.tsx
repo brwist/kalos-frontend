@@ -53,6 +53,8 @@ import ServiceCallMetrics from './ServiceCallMetrics/examples';
 import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
+import SpiffReport from './SpiffReport/examples';
+import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
 import Tooltip from './Tooltip/examples';
 import WeekPicker from './WeekPicker/examples';
@@ -108,6 +110,8 @@ const COMPONENTS = {
   ServiceItemLinks,
   ServiceItemReadings,
   ServiceItems,
+  SpiffReport,
+  StoredQuotes,
   Tabs,
   Tooltip,
   WeekPicker,
