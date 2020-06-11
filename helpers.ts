@@ -66,6 +66,10 @@ import {
   MAX_PAGES,
 } from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
+import {
+  getRandomAge,
+  getRandomDigit,
+} from './modules/ComponentsLibrary/helpers';
 
 export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
@@ -1214,6 +1218,35 @@ export const loadCallbackReportByFilter = async ({
   return {
     results: [],
     totalCount: 0,
+  };
+};
+
+export type LoadMetricsByWeekFilter = {
+  filter: {
+    week: string;
+  };
+};
+
+export const loadServiceCallMetricsByFilter = async ({
+  filter: { week },
+}: LoadMetricsByWeekFilter) => {
+  // FIXME
+  return {
+    serviceCallInformation: [...Array(5 + getRandomDigit())].map(() => ({
+      averageCustomerAnnualValue: getRandomAge(),
+      averageCustomerLifeTime: getRandomAge(),
+      phoneCalls: getRandomAge(),
+      serviceCalls: getRandomAge(),
+      serviceCallDate: week,
+    })),
+    userInformation: [...Array(getRandomAge())].map(() => ({
+      activeCustomers: getRandomAge(),
+      contracts: getRandomAge(),
+      installationTypeCalls: getRandomAge(),
+      totalCustomers: getRandomAge(),
+      users: getRandomAge(),
+      serviceCallDate: week,
+    })),
   };
 };
 

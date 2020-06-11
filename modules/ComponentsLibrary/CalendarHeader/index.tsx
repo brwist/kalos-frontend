@@ -11,9 +11,9 @@ import { Actions, ActionsProps } from '../Actions';
 
 interface Props {
   selectedDate: Date;
-  userName: string;
+  title: string;
   onDateChange: (value: Date) => void;
-  onSubmit: () => void;
+  onSubmit?: () => void;
   submitLabel?: string;
   submitDisabled?: boolean;
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -35,7 +35,7 @@ const useStyles = makeStyles(theme =>
         alignItems: 'stretch',
       },
     },
-    userName: {
+    title: {
       margin: `0 ${theme.spacing(2)}px`,
       textAlign: 'center',
       [theme.breakpoints.down(400)]: {
@@ -71,7 +71,7 @@ const useStyles = makeStyles(theme =>
 
 export const CalendarHeader: FC<Props> = ({
   selectedDate,
-  userName,
+  title,
   onDateChange,
   onSubmit,
   submitLabel = 'Submit',
@@ -93,16 +93,18 @@ export const CalendarHeader: FC<Props> = ({
           onChange={onDateChange}
           weekStartsOn={weekStartsOn}
         />
-        <Typography className={classes.userName} variant="subtitle1">
-          {userName}
+        <Typography className={classes.title} variant="subtitle1">
+          {title}
         </Typography>
         <Box className={classes.info}>
           <Box className={classes.children}>{children}</Box>
-          <Button
-            onClick={onSubmit}
-            label={submitLabel}
-            disabled={submitDisabled}
-          />
+          {onSubmit && (
+            <Button
+              onClick={onSubmit}
+              label={submitLabel}
+              disabled={submitDisabled}
+            />
+          )}
           {actions && <Actions actions={actions} />}
         </Box>
       </MuiPickersUtilsProvider>

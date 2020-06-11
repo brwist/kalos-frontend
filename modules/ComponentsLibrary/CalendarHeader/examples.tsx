@@ -9,14 +9,14 @@ export default () => (
     <ExampleTitle>Default</ExampleTitle>
     <CalendarHeader
       selectedDate={startOfWeek(new Date())}
-      userName="John Smith"
+      title="John Smith"
       onDateChange={console.log}
       onSubmit={() => console.log('SUBMIT')}
     />
     <ExampleTitle>with submitLabel children</ExampleTitle>
     <CalendarHeader
       selectedDate={startOfWeek(new Date())}
-      userName="John Smith"
+      title="John Smith"
       onDateChange={console.log}
       onSubmit={() => console.log('SUBMIT')}
       submitLabel="Approve Entries"
@@ -31,7 +31,7 @@ export default () => (
     <ExampleTitle>with submitDisabled</ExampleTitle>
     <CalendarHeader
       selectedDate={startOfWeek(new Date())}
-      userName="John Smith"
+      title="John Smith"
       onDateChange={console.log}
       onSubmit={() => console.log('SUBMIT')}
       submitDisabled

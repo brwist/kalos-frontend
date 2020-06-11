@@ -41,7 +41,7 @@ export interface Props {
   onClose?: () => void;
 }
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   department: {
     marginTop: theme.spacing(),
   },
@@ -362,7 +362,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
       .filter(({ id }) => !usedDepartments.includes(id))
-      .map((d) => ({
+      .map(d => ({
         value: d.id,
         label: getDepartmentName(d),
       }));
@@ -464,7 +464,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
         onDateChange={handleSetDateStarted}
         onSubmit={handlePendingPerDiemEditToggle(makeNewPerDiem())}
         selectedDate={dateStarted}
-        userName={getCustomerName(user)}
+        title={getCustomerName(user)}
         weekStartsOn={6}
         submitLabel="Add Per Diem"
         submitDisabled={loading || saving || addPerDiemDisabled}
@@ -477,7 +477,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
         </Alert>
       )}
       {!loading &&
-        filteredPerDiems.map((entry) => {
+        filteredPerDiems.map(entry => {
           const {
             id,
             rowsList,
@@ -574,7 +574,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                             disabled={loading || saving}
                           />
                         )}
-                        {rows.map((entry) => {
+                        {rows.map(entry => {
                           const {
                             id,
                             notes,

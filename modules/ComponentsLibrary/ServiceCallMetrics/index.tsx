@@ -1,92 +1,120 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import { format } from 'date-fns';
 import { SectionBar } from '../SectionBar';
-import { InfoTable, Columns, Data } from '../InfoTable';
-import { PrintPage, Status } from '../PrintPage';
+import { InfoTable, Data } from '../InfoTable';
+import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
+import { PrintParagraph } from '../PrintParagraph';
 import { ExportJSON } from '../ExportJSON';
-import { Button } from '../Button';
+import { CalendarHeader } from '../CalendarHeader';
 import {
   makeFakeRows,
   formatDate,
-  loadCallbackReportByFilter,
+  loadServiceCallMetricsByFilter,
 } from '../../../helpers';
-import { ROWS_PER_PAGE } from '../../../constants';
 
-type CallbackReportType = {
-  property: string;
-  job: string;
-  originalJob: string;
-  date: string;
-  disposition: string;
-  timestamp: string;
+type ServiceCallInformationType = {
+  serviceCallDate: string;
+  serviceCalls: number;
+  phoneCalls: number;
+  averageCustomerLifeTime: number;
+  averageCustomerAnnualValue: number;
+};
+
+type UserInformationType = {
+  serviceCallDate: string;
+  users: number;
+  activeCustomers: number;
+  totalCustomers: number;
+  contracts: number;
+  installationTypeCalls: number;
 };
 
 interface Props {
   onClose?: () => void;
-  dateStart: string;
-  dateEnd: string;
+  week: string;
 }
 
-const EXPORT_COLUMNS = [
+const EXPORT_COLUMNS_SERVICE_CALL_INFORMATION = [
   {
-    label: 'Property',
-    value: 'property',
+    label: 'Service Call Date',
+    value: 'serviceCallDate',
   },
   {
-    label: 'Job',
-    value: 'job',
+    label: 'Service Calls',
+    value: 'serviceCalls',
   },
   {
-    label: 'Original Job',
-    value: 'originalJob',
+    label: 'Phone Calls',
+    value: 'phoneCalls',
   },
   {
-    label: 'Date',
-    value: 'date',
+    label: 'Average Customer Life Time',
+    value: 'averageCustomerLifeTime',
   },
   {
-    label: 'Disposition',
-    value: 'disposition',
-  },
-  {
-    label: 'Timestamp',
-    value: 'timestamp',
+    label: 'Average Customer Annual Value',
+    value: 'averageCustomerAnnualValue',
   },
 ];
 
-const COLUMNS = EXPORT_COLUMNS.map(({ label }) => label);
+const EXPORT_COLUMNS_USER_INFORMATION = [
+  {
+    label: 'Service Call Date',
+    value: 'serviceCallDate',
+  },
+  {
+    label: 'Users',
+    value: 'users',
+  },
+  {
+    label: 'Active Customers',
+    value: 'activeCustomers',
+  },
+  {
+    label: 'Total Customers',
+    value: 'totalCustomers',
+  },
+  {
+    label: 'Contracts',
+    value: 'contracts',
+  },
+  {
+    label: 'Intallation-type Calls',
+    value: 'installationTypeCalls',
+  },
+];
 
-export const ServiceCallMetrics: FC<Props> = ({
-  dateStart,
-  dateEnd,
-  onClose,
-}) => {
+const COLUMNS_SERVICE_CALL_INFORMATION = EXPORT_COLUMNS_SERVICE_CALL_INFORMATION.map(
+  ({ label }) => label,
+);
+const COLUMNS_USER_INFORMATION = EXPORT_COLUMNS_USER_INFORMATION.map(
+  ({ label }) => label,
+);
+
+export const ServiceCallMetrics: FC<Props> = ({ week, onClose }) => {
+  const [dateStarted, setDateStarted] = useState<Date>(new Date(week));
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [entries, setEntries] = useState<CallbackReportType[]>([]);
-  const [printEntries, setPrintEntries] = useState<CallbackReportType[]>([]);
-  const [page, setPage] = useState<number>(0);
-  const [count, setCount] = useState<number>(0);
-  const [printStatus, setPrintStatus] = useState<Status>('idle');
-  const [exportStatus, setExportStatus] = useState<Status>('idle');
-  const getFilter = useCallback(
-    () => ({
-      dateStart,
-      dateEnd,
-    }),
-    [dateStart, dateEnd],
-  );
+  const [serviceCallInformations, setServiceCallInformation] = useState<
+    ServiceCallInformationType[]
+  >([]);
+  const [userInformations, setUserInformations] = useState<
+    UserInformationType[]
+  >([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const { results, totalCount } = await loadCallbackReportByFilter({
-      page,
-      filter: getFilter(),
+    const {
+      serviceCallInformation,
+      userInformation,
+    } = await loadServiceCallMetricsByFilter({
+      filter: { week: format(dateStarted, 'yyyy-MM-dd') },
     });
-    setEntries(results);
-    setCount(totalCount);
+    setServiceCallInformation(serviceCallInformation);
+    setUserInformations(userInformation);
     setLoading(false);
-  }, [setLoading, getFilter, page]);
+  }, [setLoading, dateStarted, setServiceCallInformation, setUserInformations]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -94,114 +122,121 @@ export const ServiceCallMetrics: FC<Props> = ({
     }
   }, [setLoaded, loaded, load]);
   const reload = useCallback(() => setLoaded(false), [setLoaded]);
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setPage(page);
+  const handleWeekChange = useCallback(
+    (date: Date) => {
+      setDateStarted(date);
       reload();
     },
-    [setPage, reload],
+    [setDateStarted, reload],
   );
-  const loadPrintEntries = useCallback(async () => {
-    if (printEntries.length === count) return;
-    const { results } = await loadCallbackReportByFilter({
-      page: -1,
-      filter: getFilter(),
-    });
-    setPrintEntries(results);
-  }, [setPrintEntries, getFilter, printEntries, count]);
-  const handleExport = useCallback(async () => {
-    setExportStatus('loading');
-    await loadPrintEntries();
-    setExportStatus('loaded');
-  }, [loadPrintEntries, setExportStatus]);
-  const handleExported = useCallback(() => setExportStatus('idle'), [
-    setExportStatus,
-  ]);
-  const handlePrint = useCallback(async () => {
-    setPrintStatus('loading');
-    await loadPrintEntries();
-    setPrintStatus('loaded');
-  }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
-  const getData = (entries: CallbackReportType[]): Data =>
-    loading
-      ? makeFakeRows(3, 5)
-      : entries.map(entry => {
-          const {
-            property,
-            job,
-            originalJob,
-            date,
-            disposition,
-            timestamp,
-          } = entry;
-          return [
-            { value: property },
-            { value: job },
-            { value: originalJob },
-            { value: date },
-            { value: disposition },
-            { value: timestamp },
-          ];
-        });
-  const allPrintData = entries.length === count;
+  const serviceCallInformationData: Data = loading
+    ? makeFakeRows(5, 5)
+    : serviceCallInformations.map(entry => {
+        const {
+          serviceCallDate,
+          serviceCalls,
+          phoneCalls,
+          averageCustomerLifeTime,
+          averageCustomerAnnualValue,
+        } = entry;
+        return [
+          { value: serviceCallDate },
+          { value: serviceCalls },
+          { value: phoneCalls },
+          { value: averageCustomerLifeTime },
+          { value: averageCustomerAnnualValue },
+        ];
+      });
+  const userInformationData: Data = loading
+    ? makeFakeRows(6, 5)
+    : userInformations.map(entry => {
+        const {
+          serviceCallDate,
+          users,
+          activeCustomers,
+          totalCustomers,
+          contracts,
+          installationTypeCalls,
+        } = entry;
+        return [
+          { value: serviceCallDate },
+          { value: users },
+          { value: activeCustomers },
+          { value: totalCustomers },
+          { value: contracts },
+          { value: installationTypeCalls },
+        ];
+      });
   const printHeaderSubtitle = (
-    <>
-      {dateStart && (
-        <PrintHeaderSubtitleItem label="Start date" value={dateStart} />
-      )}
-      {dateEnd && <PrintHeaderSubtitleItem label="End date" value={dateEnd} />}
-    </>
+    <PrintHeaderSubtitleItem label="Week of" value={week} />
   );
   return (
     <div>
+      <CalendarHeader
+        title="Service Call Metrics"
+        selectedDate={dateStarted}
+        onDateChange={handleWeekChange}
+        onSubmit={onClose}
+        submitLabel="Close"
+      >
+        <PrintPage
+          headerProps={{
+            title: 'Service Call Metrics',
+            subtitle: printHeaderSubtitle,
+          }}
+        >
+          <PrintParagraph tag="h1">Service Call Information</PrintParagraph>
+          <PrintTable
+            columns={COLUMNS_SERVICE_CALL_INFORMATION.map((title, idx) =>
+              idx ? { title, align: 'right' } : title,
+            )}
+            data={serviceCallInformationData.map(row =>
+              row.map(({ value }) => value),
+            )}
+          />
+          <PrintParagraph tag="h1">User Information</PrintParagraph>
+          <PrintTable
+            columns={COLUMNS_USER_INFORMATION.map((title, idx) =>
+              idx ? { title, align: 'right' } : title,
+            )}
+            data={userInformationData.map(row => row.map(({ value }) => value))}
+          />
+        </PrintPage>
+      </CalendarHeader>
       <SectionBar
-        title="Callback Report"
-        pagination={{
-          page,
-          count,
-          rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handlePageChange,
-        }}
+        title="Service Call Information"
         asideContent={
-          <>
-            <ExportJSON
-              json={allPrintData ? entries : printEntries}
-              fields={EXPORT_COLUMNS}
-              filename={`Callback_Report_${formatDate(
-                new Date().toISOString(),
-              ).replace(/\//g, '-')}`}
-              onExport={allPrintData ? undefined : handleExport}
-              onExported={handleExported}
-              status={exportStatus}
-            />
-            <PrintPage
-              headerProps={{
-                title: 'Callback Report',
-                subtitle: printHeaderSubtitle,
-              }}
-              onPrint={allPrintData ? undefined : handlePrint}
-              onPrinted={handlePrinted}
-              status={printStatus}
-            >
-              <PrintTable
-                columns={COLUMNS}
-                data={getData(allPrintData ? entries : printEntries).map(row =>
-                  row.map(({ value }) => value),
-                )}
-              />
-            </PrintPage>
-            {onClose && <Button label="Close" onClick={onClose} />}
-          </>
+          <ExportJSON
+            key={serviceCallInformationData.length}
+            json={serviceCallInformations}
+            fields={EXPORT_COLUMNS_SERVICE_CALL_INFORMATION}
+            filename={`Service_Call_Information_${formatDate(
+              new Date().toISOString(),
+            ).replace(/\//g, '-')}`}
+          />
         }
       />
       <InfoTable
-        columns={COLUMNS.map(name => ({ name }))}
-        data={getData(entries)}
+        columns={COLUMNS_SERVICE_CALL_INFORMATION.map(name => ({ name }))}
+        data={serviceCallInformationData}
         loading={loading}
-        skipPreLine
+      />
+      <SectionBar
+        title="User Information"
+        asideContent={
+          <ExportJSON
+            json={userInformations}
+            fields={EXPORT_COLUMNS_USER_INFORMATION}
+            filename={`User_Information_${formatDate(
+              new Date().toISOString(),
+            ).replace(/\//g, '-')}`}
+          />
+        }
+      />
+      <InfoTable
+        columns={COLUMNS_USER_INFORMATION.map(name => ({ name }))}
+        data={userInformationData}
+        loading={loading}
       />
     </div>
   );
