@@ -9,16 +9,17 @@ import { Button } from '../Button';
 import {
   makeFakeRows,
   formatDate,
-  loadDeletedServiceCallsByFilter,
+  loadCallbackReportByFilter,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
-type DeletedServiceCallsReportType = {
+type CallbackReportType = {
   property: string;
-  customer: string;
   job: string;
+  originalJob: string;
   date: string;
-  jobStatus: string;
+  disposition: string;
+  timestamp: string;
 };
 
 interface Props {
@@ -33,20 +34,24 @@ const EXPORT_COLUMNS = [
     value: 'property',
   },
   {
-    label: 'Customer Name',
-    value: 'customer',
-  },
-  {
     label: 'Job',
     value: 'job',
+  },
+  {
+    label: 'Original Job',
+    value: 'originalJob',
   },
   {
     label: 'Date',
     value: 'date',
   },
   {
-    label: 'Job Status',
-    value: 'jobStatus',
+    label: 'Disposition',
+    value: 'disposition',
+  },
+  {
+    label: 'Timestamp',
+    value: 'timestamp',
   },
 ];
 
@@ -55,10 +60,8 @@ const COLUMNS = EXPORT_COLUMNS.map(({ label }) => label);
 export const CallbackReport: FC<Props> = ({ dateStart, dateEnd, onClose }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [entries, setEntries] = useState<DeletedServiceCallsReportType[]>([]);
-  const [printEntries, setPrintEntries] = useState<
-    DeletedServiceCallsReportType[]
-  >([]);
+  const [entries, setEntries] = useState<CallbackReportType[]>([]);
+  const [printEntries, setPrintEntries] = useState<CallbackReportType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [printStatus, setPrintStatus] = useState<Status>('idle');
@@ -72,7 +75,7 @@ export const CallbackReport: FC<Props> = ({ dateStart, dateEnd, onClose }) => {
   );
   const load = useCallback(async () => {
     setLoading(true);
-    const { results, totalCount } = await loadDeletedServiceCallsByFilter({
+    const { results, totalCount } = await loadCallbackReportByFilter({
       page,
       filter: getFilter(),
     });
@@ -96,7 +99,7 @@ export const CallbackReport: FC<Props> = ({ dateStart, dateEnd, onClose }) => {
   );
   const loadPrintEntries = useCallback(async () => {
     if (printEntries.length === count) return;
-    const { results } = await loadDeletedServiceCallsByFilter({
+    const { results } = await loadCallbackReportByFilter({
       page: -1,
       filter: getFilter(),
     });
@@ -118,17 +121,25 @@ export const CallbackReport: FC<Props> = ({ dateStart, dateEnd, onClose }) => {
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
-  const getData = (entries: DeletedServiceCallsReportType[]): Data =>
+  const getData = (entries: CallbackReportType[]): Data =>
     loading
       ? makeFakeRows(3, 5)
       : entries.map(entry => {
-          const { property, customer, job, date, jobStatus } = entry;
+          const {
+            property,
+            job,
+            originalJob,
+            date,
+            disposition,
+            timestamp,
+          } = entry;
           return [
             { value: property },
-            { value: customer },
             { value: job },
+            { value: originalJob },
             { value: date },
-            { value: jobStatus },
+            { value: disposition },
+            { value: timestamp },
           ];
         });
   const allPrintData = entries.length === count;
@@ -155,7 +166,7 @@ export const CallbackReport: FC<Props> = ({ dateStart, dateEnd, onClose }) => {
             <ExportJSON
               json={allPrintData ? entries : printEntries}
               fields={EXPORT_COLUMNS}
-              filename={`Deleted_Service_Calls_Report_${formatDate(
+              filename={`Callback_Report_${formatDate(
                 new Date().toISOString(),
               ).replace(/\//g, '-')}`}
               onExport={allPrintData ? undefined : handleExport}
@@ -164,7 +175,7 @@ export const CallbackReport: FC<Props> = ({ dateStart, dateEnd, onClose }) => {
             />
             <PrintPage
               headerProps={{
-                title: 'Deleted Service Calls Report',
+                title: 'Callback Report',
                 subtitle: printHeaderSubtitle,
               }}
               onPrint={allPrintData ? undefined : handlePrint}

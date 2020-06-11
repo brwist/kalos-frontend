@@ -8,6 +8,7 @@ import { EventsReport } from '../EventsReport';
 import { ActivityLogReport } from '../ActivityLogReport';
 import { PerformanceMetrics } from '../PerformanceMetrics';
 import { DeletedServiceCallsReport } from '../DeletedServiceCallsReport';
+import { CallbackReport } from '../CallbackReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -801,17 +802,11 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       )}
       {callbackReportOpen && (
         <Modal open onClose={handleOpenCallbackReportToggle(false)} fullScreen>
-          <SectionBar
-            title="Callback Report"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenCallbackReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <CallbackReport
+            onClose={handleOpenCallbackReportToggle(false)}
+            dateStart={callbackReport.startDate!}
+            dateEnd={callbackReport.endDate!}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {serviceCallMetricsReportOpen && (
