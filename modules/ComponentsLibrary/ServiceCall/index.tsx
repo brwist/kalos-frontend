@@ -240,6 +240,10 @@ export const ServiceCall: FC<Props> = props => {
     requestRef,
   ]);
 
+  const handleSetRequestfields = useCallback((fields) => {
+    setRequestfields([...requestFields, ...fields]);
+  }, [requestFields, setRequestfields]);
+
   const handleChangeEntry = useCallback(
     (data: EventType) => {
       setEntry({ ...entry, ...data });
@@ -433,7 +437,7 @@ export const ServiceCall: FC<Props> = props => {
                 onChange={handleChangeEntry}
                 disabled={saving}
                 onValid={setRequestValid}
-                onInitSchema={setRequestfields}
+                onInitSchema={handleSetRequestfields}
               />
             ),
           },
@@ -470,8 +474,10 @@ export const ServiceCall: FC<Props> = props => {
             ) : (
               <Invoice
                 serviceItem={entry}
+                onChange={handleChangeEntry}
                 disabled={saving}
                 servicesRendered={servicesRendered}
+                onInitSchema={handleSetRequestfields}
               />
             ),
           },
