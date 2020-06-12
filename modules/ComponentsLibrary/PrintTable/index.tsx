@@ -12,6 +12,8 @@ interface Props extends Style {
   nowraps?: boolean[];
   data: ReactNode[][];
   noEntriesText?: string;
+  className?: string;
+  styles?: CSSProperties;
 }
 
 const useStyles = makeStyles(theme => {
@@ -50,10 +52,12 @@ export const PrintTable: FC<Props> = ({
   data,
   noEntriesText = 'No entries found.',
   noBorders = false,
+  className,
+  styles = {},
 }) => {
   const classes = useStyles({ noBorders });
   return (
-    <table className={classes.table}>
+    <table className={className + ' ' + classes.table} style={styles}>
       <thead>
         <tr>
           {columns.map((column, idxColumn) => (

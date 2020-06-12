@@ -21,6 +21,12 @@ const useStyles = makeStyles(theme => ({
   printWrapper: {
     display: 'none',
   },
+  table: {
+    width: '100%',
+  },
+  tfoot: {
+    display: 'table-footer-group',
+  },
 }));
 
 export const PrintPage: FC<Props> = ({
@@ -66,8 +72,24 @@ export const PrintPage: FC<Props> = ({
       <div className={classes.printWrapper}>
         <div ref={printRef}>
           {headerProps && <PrintHeader {...headerProps} />}
-          {children}
-          {footerProps && <PrintFooter {...footerProps} />}
+          <table className={classes.table}>
+            <tbody>
+              <tr>
+                <td>{children}</td>
+              </tr>
+            </tbody>
+            {footerProps && (
+              <tfoot className={classes.tfoot}>
+                <tr>
+                  <td>
+                    <div style={{ height: footerProps.height }}>
+                      <PrintFooter {...footerProps} />
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
         </div>
       </div>
     </div>
