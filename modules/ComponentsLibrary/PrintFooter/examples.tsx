@@ -5,7 +5,7 @@ import { LOREM } from '../helpers';
 
 export default () => (
   <>
-    <PrintFooter>
+    <PrintFooter height={30}>
       <PrintParagraph align="center">{LOREM}</PrintParagraph>
     </PrintFooter>
   </>

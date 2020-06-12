@@ -69,6 +69,10 @@ import { Option } from './modules/ComponentsLibrary/Field';
 import {
   getRandomAge,
   getRandomDigit,
+  getRandomFirstName,
+  getRandomLastName,
+  getRandomJobTitle,
+  getRandomPhone,
 } from './modules/ComponentsLibrary/helpers';
 
 export type UserType = User.AsObject;
@@ -140,6 +144,13 @@ function cfURL(action: string, qs = '') {
 function trailingZero(val: number) {
   return `${val < 10 ? 0 : ''}${val}`;
 }
+
+/**
+ *
+ * @param number
+ * @returns string as usd amount, example 10.5 -> $10.50;
+ */
+export const usd = (val: number) => `$ ${val.toFixed(2)}`;
 
 /**
  *
@@ -1248,6 +1259,44 @@ export const loadServiceCallMetricsByFilter = async ({
       serviceCallDate: week,
     })),
   };
+};
+
+export type LoadSpiffReportByFilter = {
+  date: string;
+  type: 'Weekly' | 'Monthly';
+  users: number[];
+};
+export const loadSpiffReportByFilter = async ({
+  date,
+  type,
+  users,
+}: LoadSpiffReportByFilter) => {
+  return users.map(() => ({
+    user: `${getRandomFirstName()} ${getRandomLastName()}`,
+    toolAllowanceBreakdown: {
+      beginningBalance: 775.29,
+      endingBalance: 570.08,
+      overageMonth: getRandomDigit(),
+      overageYear: getRandomDigit(),
+      purchaseTotal: 215.43,
+      purchases: [...Array(getRandomDigit() * 3)].map(() => ({
+        name: `NRP ${getRandomDigit()}" ${getRandomJobTitle()} Set w/ ${getRandomLastName()}`,
+        date,
+        price: Math.random() * 200,
+      })),
+    },
+    incentiveBreakdown: {
+      revokedBonusMonth: getRandomDigit(),
+      revokedBonusYear: getRandomDigit(),
+      bonusTotal: getRandomDigit(),
+      items: [...Array(getRandomDigit())].map(() => ({
+        name: getRandomLastName(),
+        jobNumber: getRandomPhone(),
+        status: 'Completed',
+        amount: 300 * Math.random(),
+      })),
+    },
+  }));
 };
 
 export type ActivityLogsSort = {
