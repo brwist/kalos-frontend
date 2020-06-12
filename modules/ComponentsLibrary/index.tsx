@@ -41,6 +41,7 @@ import PrintFooter from './PrintFooter/examples';
 import PrintHeader from './PrintHeader/examples';
 import PrintList from './PrintList/examples';
 import PrintPage from './PrintPage/examples';
+import PrintPageBreak from './PrintPageBreak/examples';
 import PrintParagraph from './PrintParagraph/examples';
 import PrintTable from './PrintTable/examples';
 import PropertyEdit from './PropertyEdit/examples';
@@ -98,6 +99,7 @@ const COMPONENTS = {
   PrintHeader,
   PrintList,
   PrintPage,
+  PrintPageBreak,
   PrintParagraph,
   PrintTable,
   PropertyEdit,
