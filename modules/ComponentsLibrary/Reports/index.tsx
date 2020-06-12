@@ -10,6 +10,7 @@ import { PerformanceMetrics } from '../PerformanceMetrics';
 import { DeletedServiceCallsReport } from '../DeletedServiceCallsReport';
 import { CallbackReport } from '../CallbackReport';
 import { ServiceCallMetrics } from '../ServiceCallMetrics';
+import { SpiffReport } from '../SpiffReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -31,7 +32,7 @@ export type FilterForm = {
   week?: string;
   month?: string;
   monthlyWeekly?: string;
-  users?: string[];
+  users?: string;
   blank?: string;
 };
 
@@ -324,7 +325,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [spiffReport, setSpiffReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_1[0].value,
     monthlyWeekly: 'Monthly',
-    users: [],
+    users: '',
   });
   const [spiffReportOpen, setSpiffReportOpen] = useState<boolean>(false);
   const [finalizeApprovedSpiffsOpen, setFinalizeApprovedSpiffsOpen] = useState<
@@ -824,17 +825,12 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       )}
       {spiffReportOpen && (
         <Modal open onClose={handleOpenSpiffReportToggle(false)} fullScreen>
-          <SectionBar
-            title="Spiff Report"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenSpiffReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <SpiffReport
+            onClose={handleOpenSpiffReportToggle(false)}
+            date={spiffReport.month!}
+            type={spiffReport.monthlyWeekly!}
+            users={spiffReport.users!.split(',').map((id: string) => +id)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {finalizeApprovedSpiffsOpen && (

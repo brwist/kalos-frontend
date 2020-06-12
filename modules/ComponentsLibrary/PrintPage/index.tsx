@@ -58,7 +58,6 @@ export const PrintPage: FC<Props> = ({
       <Button
         label="Print"
         onClick={onPrint || handlePrint!}
-        {...buttonProps}
         children={
           status === 'loading' && (
             <CircularProgress
@@ -68,6 +67,7 @@ export const PrintPage: FC<Props> = ({
           )
         }
         disabled={status === 'loading'}
+        {...buttonProps}
       />
       <div className={classes.printWrapper}>
         <div ref={printRef}>
