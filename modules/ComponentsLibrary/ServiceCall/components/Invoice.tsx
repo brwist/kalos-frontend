@@ -1,10 +1,14 @@
-import React, { FC, useState, useCallback } from 'react';
+import React, {FC, useState, useCallback, useEffect} from 'react';
+import {ServiceItem, ServiceItemClient} from '@kalos-core/kalos-rpc/ServiceItem';
+import { InvoiceClient, Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
 import { EventType, ServicesRenderedType } from '../';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Field } from '../../Field';
 import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../../constants';
 import { formatDateTimeDay } from '../../../../helpers';
+import { ENDPOINT } from '../../../../constants';
 
+const sic = new ServiceItemClient(ENDPOINT);
 const { COMPLETED, INCOMPLETE } = SERVICE_STATUSES;
 
 type EventTypeExtended = EventType & {
@@ -15,9 +19,25 @@ interface Props {
   disabled: boolean;
   serviceItem: EventType;
   servicesRendered: ServicesRenderedType[];
+  onInitSchema: (fields: string[]) => void;
+  onChange: (serviceItem: EventType) => void;
 }
 
-export const Invoice: FC<Props> = ({ serviceItem, servicesRendered }) => {
+export const Invoice: FC<Props> = ({ serviceItem, servicesRendered, onInitSchema, onChange }) => {
+  /*
+    useEffect(() => {
+      (async () => {
+        const req = new ServiceItem();
+        req.setId(serviceItem.id);
+        console.log(req);
+        const entry = await sic.Get(req);
+        console.log('fetched: ', entry)
+      })();
+    }, []);
+  */
+
+  const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
+
   const transformData = (data: EventType) => {
     const {
       totalamountrow1,
@@ -38,14 +58,15 @@ export const Invoice: FC<Props> = ({ serviceItem, servicesRendered }) => {
       grandTotal,
     } as EventTypeExtended);
   };
-  const [data, setData] = useState<EventTypeExtended>(
-    transformData(serviceItem),
-  );
+
   const [formKey, setFormKey] = useState<number>(0);
+  const data = transformData(serviceItem);
+
   const handleChange = useCallback(
-    (data: EventTypeExtended) => setData(transformData(data)),
-    [setData],
+    (data: EventTypeExtended) => onChange(transformData(data)),
+    [onChange],
   );
+
   const handleCopyFromServicesRendered = useCallback(() => {
     const servicesRenderedNotes: string = servicesRendered
       .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
@@ -53,9 +74,10 @@ export const Invoice: FC<Props> = ({ serviceItem, servicesRendered }) => {
         [formatDateTimeDay(datetime), name, '-', serviceRendered].join(' '),
       )
       .join('\n');
-    setData({ ...data, notes: servicesRenderedNotes });
+    onChange({ ...data, notes: servicesRenderedNotes });
     setFormKey(formKey + 1);
-  }, [setData, data, setFormKey, formKey]);
+  }, [onChange, data, setFormKey, formKey]);
+
   const SCHEMA: Schema<EventTypeExtended> = [
     [
       {
@@ -194,6 +216,17 @@ export const Invoice: FC<Props> = ({ serviceItem, servicesRendered }) => {
       },
     ],
   ];
+
+  useEffect(() => {
+    if (!initSchemaCalled) {
+      setInitSchemaCalled(true);
+      const fields = SCHEMA.map(item =>
+        item.map(({ name }) => name).filter(name => name),
+      ).reduce((aggr, item) => [...aggr, ...item], []);
+      onInitSchema(fields as string[]);
+    }
+  }, [initSchemaCalled, setInitSchemaCalled, onInitSchema, SCHEMA]);
+
   return (
     <PlainForm
       key={formKey}
