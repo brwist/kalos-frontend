@@ -36,7 +36,7 @@ export type Columns = {
 
 interface Props extends Styles {
   columns?: Columns;
-  data: Data;
+  data?: Data;
   styles?: CSSProperties;
   className?: string;
   skipPreLine?: boolean;
@@ -207,64 +207,66 @@ export const InfoTable = ({
           )}
         </div>
       )}
-      {data.map((items, idx) => (
-        <div key={idx} className={classes.row}>
-          {items.map(({ label, value, href, actions, onClick }, idx2) => (
-            <Typography
-              key={idx2}
-              className={classes.item}
-              component="div"
-              style={{
-                width: md
-                  ? '100%'
-                  : columns && columns[idx2] && columns[idx2].width
-                  ? columns[idx2].width
-                  : `${100 / items.length}%`,
-                flexGrow:
-                  md || (columns && columns[idx2] && columns[idx2].width === -1)
-                    ? 1
-                    : 0,
-                flexShrink:
-                  columns &&
-                  columns[idx2] &&
-                  columns[idx2].width &&
-                  columns[idx2].width! > -1
-                    ? 0
-                    : 1,
-                cursor: onClick ? 'pointer' : 'default',
-              }}
-              onClick={loading || error ? undefined : onClick}
-            >
-              {label && <strong className={classes.label}>{label}: </strong>}
-              {loading || error ? (
-                <span className={classes.fake} />
-              ) : (
-                <div
-                  className={classes.value}
-                  style={{
-                    whiteSpace: skipPreLine ? 'initial' : 'pre-line',
-                  }}
-                >
-                  {href ? (
-                    <Link href={`${href}:${value}`}>{value}</Link>
-                  ) : (
-                    <div className={classes.valueContent}>{value}</div>
-                  )}
-                  {actions && (
-                    <span
-                      className={classes.actions}
-                      onClick={event => event.stopPropagation()}
-                    >
-                      {actions}
-                    </span>
-                  )}
-                </div>
-              )}
-            </Typography>
-          ))}
-        </div>
-      ))}
-      {!loading && !error && data.length === 0 && (
+      {data &&
+        data.map((items, idx) => (
+          <div key={idx} className={classes.row}>
+            {items.map(({ label, value, href, actions, onClick }, idx2) => (
+              <Typography
+                key={idx2}
+                className={classes.item}
+                component="div"
+                style={{
+                  width: md
+                    ? '100%'
+                    : columns && columns[idx2] && columns[idx2].width
+                    ? columns[idx2].width
+                    : `${100 / items.length}%`,
+                  flexGrow:
+                    md ||
+                    (columns && columns[idx2] && columns[idx2].width === -1)
+                      ? 1
+                      : 0,
+                  flexShrink:
+                    columns &&
+                    columns[idx2] &&
+                    columns[idx2].width &&
+                    columns[idx2].width! > -1
+                      ? 0
+                      : 1,
+                  cursor: onClick ? 'pointer' : 'default',
+                }}
+                onClick={loading || error ? undefined : onClick}
+              >
+                {label && <strong className={classes.label}>{label}: </strong>}
+                {loading || error ? (
+                  <span className={classes.fake} />
+                ) : (
+                  <div
+                    className={classes.value}
+                    style={{
+                      whiteSpace: skipPreLine ? 'initial' : 'pre-line',
+                    }}
+                  >
+                    {href ? (
+                      <Link href={`${href}:${value}`}>{value}</Link>
+                    ) : (
+                      <div className={classes.valueContent}>{value}</div>
+                    )}
+                    {actions && (
+                      <span
+                        className={classes.actions}
+                        onClick={event => event.stopPropagation()}
+                      >
+                        {actions}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </Typography>
+            ))}
+          </div>
+        ))}
+      {!loading && !error && data && data.length === 0 && (
         <div className={classes.row}>
           <Typography className={classes.noEntries}>
             No entries found.

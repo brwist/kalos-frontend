@@ -1263,7 +1263,7 @@ export const loadServiceCallMetricsByFilter = async ({
 
 export type LoadSpiffReportByFilter = {
   date: string;
-  type: 'Weekly' | 'Monthly';
+  type: string;
   users: number[];
 };
 export const loadSpiffReportByFilter = async ({
