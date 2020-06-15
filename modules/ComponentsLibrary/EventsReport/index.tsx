@@ -22,6 +22,7 @@ import {
   EventsSort,
   getCFAppUrl,
   EventsFilter,
+  getCurrDate,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -361,10 +362,7 @@ export const EventsReport: FC<Props> = ({
               fields={EXPORT_COLUMNS}
               filename={`${
                 kind === 'jobStatus' ? 'Job' : 'Billing'
-              }_Status_Report_${formatDate(new Date().toISOString()).replace(
-                /\//g,
-                '-',
-              )}`}
+              }_Status_Report_${getCurrDate()}`}
               onExport={allPrintData ? undefined : handleExport}
               onExported={handleExported}
               status={exportStatus}

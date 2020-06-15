@@ -9,7 +9,7 @@ import { PrintParagraph } from '../PrintParagraph';
 import { PrintPageBreak } from '../PrintPageBreak';
 import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
-import { loadSpiffReportByFilter, usd } from '../../../helpers';
+import { loadSpiffReportByFilter, usd, getCurrDate } from '../../../helpers';
 
 interface Props {
   date: string;
@@ -31,6 +31,34 @@ const useStyles = makeStyles(theme => ({
     marginBottom: theme.spacing(4),
   },
 }));
+
+const COLUMNS = ['', '', '', '', '', ''];
+const FOOTER_DATA = [
+  [
+    'ACIN - A/C Install',
+    'ACJM - A/C Job Manager',
+    'ACLD - AC Sale Lead',
+    'AIRU - Air Knight or UV Light Sales',
+    'BENT - System Sales Commission',
+    'CIND - Contract Creation Spiff',
+  ],
+  [
+    'CMSN - Commission',
+    'CNCT - PM Contract / Contract Lead',
+    'FITY - Infinity Air Purifier Sale',
+    'OUTO - Out of Town',
+    'PHIN - P/H Install',
+    'PHJM - P/H Job Manager',
+  ],
+  [
+    'PRMA - PM',
+    'ROCK - Quoted Repairs Spiff',
+    'SWAY - Prop Mngr PM Cnct Lead',
+    'UNCT - Uncategorized',
+    '',
+    '',
+  ],
+];
 
 export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
   const classes = useStyles();
@@ -168,37 +196,13 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
                 label: 'Print',
                 disabled: loading,
               }}
+              downloadPdfFilename={`Tool_Fund_Incentive_Program_Report_${getCurrDate()}`}
             >
               {getContent(false)}
               <PrintFooter height={40}>
                 <PrintTable
-                  columns={['', '', '', '', '', '']}
-                  data={[
-                    [
-                      'ACIN - A/C Install',
-                      'ACJM - A/C Job Manager',
-                      'ACLD - AC Sale Lead',
-                      'AIRU - Air Knight or UV Light Sales',
-                      'BENT - System Sales Commission',
-                      'CIND - Contract Creation Spiff',
-                    ],
-                    [
-                      'CMSN - Commission',
-                      'CNCT - PM Contract / Contract Lead',
-                      'FITY - Infinity Air Purifier Sale',
-                      'OUTO - Out of Town',
-                      'PHIN - P/H Install',
-                      'PHJM - P/H Job Manager',
-                    ],
-                    [
-                      'PRMA - PM',
-                      'ROCK - Quoted Repairs Spiff',
-                      'SWAY - Prop Mngr PM Cnct Lead',
-                      'UNCT - Uncategorized',
-                      '',
-                      '',
-                    ],
-                  ]}
+                  columns={COLUMNS}
+                  data={FOOTER_DATA}
                   noBorders
                   styles={{ fontSize: 7 }}
                 />

@@ -8,7 +8,7 @@ import { ExportJSON } from '../ExportJSON';
 import { Button } from '../Button';
 import {
   makeFakeRows,
-  formatDate,
+  getCurrDate,
   loadDeletedServiceCallsByFilter,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
@@ -159,9 +159,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
             <ExportJSON
               json={allPrintData ? entries : printEntries}
               fields={EXPORT_COLUMNS}
-              filename={`Deleted_Service_Calls_Report_${formatDate(
-                new Date().toISOString(),
-              ).replace(/\//g, '-')}`}
+              filename={`Deleted_Service_Calls_Report_${getCurrDate()}`}
               onExport={allPrintData ? undefined : handleExport}
               onExported={handleExported}
               status={exportStatus}

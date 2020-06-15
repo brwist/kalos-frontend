@@ -8,8 +8,8 @@ import { ExportJSON } from '../ExportJSON';
 import { Button } from '../Button';
 import {
   makeFakeRows,
-  formatDate,
   loadCallbackReportByFilter,
+  getCurrDate,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -166,9 +166,7 @@ export const CallbackReport: FC<Props> = ({ dateStart, dateEnd, onClose }) => {
             <ExportJSON
               json={allPrintData ? entries : printEntries}
               fields={EXPORT_COLUMNS}
-              filename={`Callback_Report_${formatDate(
-                new Date().toISOString(),
-              ).replace(/\//g, '-')}`}
+              filename={`Callback_Report_${getCurrDate()}`}
               onExport={allPrintData ? undefined : handleExport}
               onExported={handleExported}
               status={exportStatus}
