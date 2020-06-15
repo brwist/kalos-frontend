@@ -7,6 +7,7 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
+import { SpiffType, TaskClient } from '@kalos-core/kalos-rpc/Task';
 import {
   ActivityLog,
   ActivityLogClient,
@@ -91,7 +92,9 @@ export type PerDiemRowType = PerDiemRow.AsObject;
 export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 export type EmployeeFunctionType = EmployeeFunction.AsObject;
 export type ActivityLogType = ActivityLog.AsObject;
+export type SpiffTypeType = SpiffType.AsObject;
 
+export const TaskClientService = new TaskClient(ENDPOINT);
 export const PDFClientService = new PDFClient(ENDPOINT);
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -652,6 +655,21 @@ async function loadJobTypeSubtypes() {
   }
   return results;
 }
+
+export const loadSpiffTypes = async () => {
+  const req = new SpiffType();
+  req.setIsActive(true);
+  const { resultsList } = (
+    await TaskClientService.GetSpiffTypes(req)
+  ).toObject();
+  return resultsList
+    .filter(item => !!item.ext)
+    .sort((a, b) => {
+      if (a.ext < b.ext) return -1;
+      if (a.ext > b.ext) return 1;
+      return 0;
+    });
+};
 
 /**
  * Returns loaded StoredQuotes

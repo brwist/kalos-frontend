@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
@@ -9,7 +9,13 @@ import { PrintParagraph } from '../PrintParagraph';
 import { PrintPageBreak } from '../PrintPageBreak';
 import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
-import { loadSpiffReportByFilter, usd, getCurrDate } from '../../../helpers';
+import {
+  loadSpiffReportByFilter,
+  usd,
+  getCurrDate,
+  loadSpiffTypes,
+  SpiffTypeType,
+} from '../../../helpers';
 
 interface Props {
   date: string;
@@ -32,41 +38,20 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-const COLUMNS = ['', '', '', '', '', ''];
-const FOOTER_DATA = [
-  [
-    'ACIN - A/C Install',
-    'ACJM - A/C Job Manager',
-    'ACLD - AC Sale Lead',
-    'AIRU - Air Knight or UV Light Sales',
-    'BENT - System Sales Commission',
-    'CIND - Contract Creation Spiff',
-  ],
-  [
-    'CMSN - Commission',
-    'CNCT - PM Contract / Contract Lead',
-    'FITY - Infinity Air Purifier Sale',
-    'OUTO - Out of Town',
-    'PHIN - P/H Install',
-    'PHJM - P/H Job Manager',
-  ],
-  [
-    'PRMA - PM',
-    'ROCK - Quoted Repairs Spiff',
-    'SWAY - Prop Mngr PM Cnct Lead',
-    'UNCT - Uncategorized',
-    '',
-    '',
-  ],
-];
+const SPIFF_TABLE_COLS = 6;
+const COLUMNS = [...Array(SPIFF_TABLE_COLS)].map(() => '');
+const FOOTER_HEIGHT = 45;
 
 export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [entries, setEntries] = useState<any[]>([]);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
+    const spiffTypes = await loadSpiffTypes();
+    setSpiffTypes(spiffTypes);
     const entries = await loadSpiffReportByFilter({ date, type, users });
     setEntries(entries);
     setLoading(false);
@@ -76,7 +61,20 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
       setLoaded(true);
       load();
     }
-  }, [loaded, setLoaded, load]);
+  }, [loaded, setLoaded, load, setSpiffTypes]);
+  const spiffTypesTable = useMemo(() => {
+    const table: string[][] = [];
+    let subtable: string[] = [];
+    spiffTypes.forEach(({ type }, idx) => {
+      if (idx > 0 && idx % SPIFF_TABLE_COLS === 0) {
+        table.push(subtable);
+        subtable = [];
+      }
+      subtable.push(type);
+    });
+    table.push(subtable);
+    return table;
+  }, [spiffTypes, SPIFF_TABLE_COLS]);
   const getContent = (screen: boolean) =>
     entries.map(
       ({
@@ -180,7 +178,7 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
               ]}
             />
           </div>
-          <PrintPageBreak height={40} />
+          <PrintPageBreak height={FOOTER_HEIGHT} />
         </div>
       ),
     );
@@ -199,10 +197,10 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
               downloadPdfFilename={`Tool_Fund_Incentive_Program_Report_${getCurrDate()}`}
             >
               {getContent(false)}
-              <PrintFooter height={40}>
+              <PrintFooter height={FOOTER_HEIGHT}>
                 <PrintTable
                   columns={COLUMNS}
-                  data={FOOTER_DATA}
+                  data={spiffTypesTable}
                   noBorders
                   styles={{ fontSize: 7 }}
                 />
