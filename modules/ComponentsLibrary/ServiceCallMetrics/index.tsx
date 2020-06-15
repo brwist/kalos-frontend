@@ -213,12 +213,13 @@ export const ServiceCallMetrics: FC<Props> = ({ week, onClose }) => {
             filename={`Service_Call_Information_${getCurrDate()}`}
           />
         }
-      />
-      <InfoTable
-        columns={COLUMNS_SERVICE_CALL_INFORMATION.map(name => ({ name }))}
-        data={serviceCallInformationData}
-        loading={loading}
-      />
+      >
+        <InfoTable
+          columns={COLUMNS_SERVICE_CALL_INFORMATION.map(name => ({ name }))}
+          data={serviceCallInformationData}
+          loading={loading}
+        />
+      </SectionBar>
       <SectionBar
         title="User Information"
         asideContent={
@@ -228,12 +229,13 @@ export const ServiceCallMetrics: FC<Props> = ({ week, onClose }) => {
             filename={`User_Information_${getCurrDate()}`}
           />
         }
-      />
-      <InfoTable
-        columns={COLUMNS_USER_INFORMATION.map(name => ({ name }))}
-        data={userInformationData}
-        loading={loading}
-      />
+      >
+        <InfoTable
+          columns={COLUMNS_USER_INFORMATION.map(name => ({ name }))}
+          data={userInformationData}
+          loading={loading}
+        />
+      </SectionBar>
     </div>
   );
 };
