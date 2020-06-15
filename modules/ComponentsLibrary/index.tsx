@@ -51,6 +51,7 @@ import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
 import ServiceCall from './ServiceCall/examples';
 import ServiceCallMetrics from './ServiceCallMetrics/examples';
+import ServiceCallMetricsGraph from './ServiceCallMetricsGraph/examples';
 import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
@@ -109,6 +110,7 @@ const COMPONENTS = {
   SectionBar,
   ServiceCall,
   ServiceCallMetrics,
+  ServiceCallMetricsGraph,
   ServiceItemLinks,
   ServiceItemReadings,
   ServiceItems,
