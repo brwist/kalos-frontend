@@ -19,8 +19,10 @@ interface Props extends Style {
 const useStyles = makeStyles(theme => {
   const border = ({ noBorders }: Style): CSSProperties => ({
     borderBottomWidth: noBorders ? 0 : 1,
-    borderBottomStyle: 'solid',
-    borderBottomColor: theme.palette.grey[300],
+    borderBottomStyle: noBorders ? 'none' : 'solid',
+    borderBottomColor: noBorders
+      ? theme.palette.common.white
+      : theme.palette.grey[300],
   });
   return {
     table: style => ({

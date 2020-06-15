@@ -57,6 +57,7 @@ import {
   InternalDocument,
   InternalDocumentClient,
 } from '@kalos-core/kalos-rpc/InternalDocument';
+import { PDFClient, HTML } from '@kalos-core/kalos-rpc/PDF';
 import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
 import {
   ENDPOINT,
@@ -91,6 +92,7 @@ export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 export type EmployeeFunctionType = EmployeeFunction.AsObject;
 export type ActivityLogType = ActivityLog.AsObject;
 
+export const PDFClientService = new PDFClient(ENDPOINT);
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
 export const EventClientService = new EventClient(ENDPOINT);
@@ -1783,6 +1785,9 @@ export const deletePropertyById = async (id: number) => {
   await PropertyClientService.Delete(req);
 };
 
+export const getCurrDate = () =>
+  formatDate(new Date().toISOString()).replace(/\//g, '-');
+
 export type InternalDocumentsFilter = {
   tag?: number;
   description?: string;
@@ -1925,6 +1930,31 @@ export const openFile = async (filename: string, bucket: string) => {
   window.open(url, '_blank');
 };
 
+export const setInlineStyles = (theElement: Element) => {
+  const els = theElement.children;
+  for (let i = 0, maxi = els.length; i < maxi; i++) {
+    setInlineStyles(els[i]);
+    const defaultElem = document.createElement(els[i].nodeName);
+    const child = document.body.appendChild(defaultElem);
+    const defaultsStyles = window.getComputedStyle(defaultElem, null);
+    let computed = window.getComputedStyle(els[i], null).cssText;
+    for (let j = 0, maxj = defaultsStyles.length; j < maxj; j++) {
+      const defaultStyle =
+        defaultsStyles[j] +
+        ': ' +
+        defaultsStyles.getPropertyValue('' + defaultsStyles[j]) +
+        ';';
+      if (computed.startsWith(defaultStyle)) {
+        computed = computed.substring(defaultStyle.length);
+      } else {
+        computed = computed.replace(' ' + defaultStyle, '');
+      }
+    }
+    child.remove();
+    els[i].setAttribute('style', computed);
+  }
+};
+
 export const makeLast12MonthsOptions = (
   withAllOption: boolean,
   monthOffset = 0,
@@ -1944,6 +1974,20 @@ export const makeLast12MonthsOptions = (
       value: `${today.getFullYear()}-${trailingZero(idx + 1)}-%`,
     })),
   ].reverse();
+};
+
+export const getUploadedHTMLUrl = async (
+  HTMLString: string,
+  filename: string,
+  bucketName: string = 'testbuckethelios',
+) => {
+  const client = new PDFClient(ENDPOINT);
+  const req = new HTML();
+  req.setData(HTMLString);
+  req.setKey(filename);
+  req.setBucket(bucketName);
+  const url = await client.Create(req);
+  return url;
 };
 
 interface IBugReport {

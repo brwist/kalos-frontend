@@ -13,8 +13,8 @@ import {
   ActivityLogsSort,
   ActivityLogsFilter,
   formatDateTime,
-  formatDate,
   getCustomerName,
+  getCurrDate,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -235,9 +235,7 @@ export const ActivityLogReport: FC<Props> = ({
                 }),
               )}
               fields={EXPORT_COLUMNS}
-              filename={`Notification_Status_Report_${formatDate(
-                new Date().toISOString(),
-              ).replace(/\//g, '-')}`}
+              filename={`Notification_Status_Report_${getCurrDate()}`}
               onExport={allPrintData ? undefined : handleExport}
               onExported={handleExported}
               status={exportStatus}

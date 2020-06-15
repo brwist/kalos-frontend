@@ -24,6 +24,7 @@ export default () => (
           </PrintParagraph>
         ),
       }}
+      downloadPdfFilename="lorem_ipsum_1"
     >
       <PrintTableExample />
       <PrintParagraphExample />
@@ -35,6 +36,7 @@ export default () => (
       headerProps={{ title: 'Lorem ipsum' }}
       footerProps={{ height: 30, children: LOREM }}
       buttonProps={{ variant: 'outlined', label: 'Print me' }}
+      downloadPdfFilename="lorem_ipsum_2"
     >
       <PrintTableExample rows={200} />
     </PrintPage>

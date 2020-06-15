@@ -8,7 +8,7 @@ import { ExportJSON } from '../ExportJSON';
 import { Button } from '../Button';
 import {
   makeFakeRows,
-  formatDate,
+  getCurrDate,
   loadPerformanceMetricsByFilter,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
@@ -172,9 +172,7 @@ export const PerformanceMetrics: FC<Props> = ({
             <ExportJSON
               json={allPrintData ? entries : printEntries}
               fields={EXPORT_COLUMNS}
-              filename={`Performance_Metrics_Report_${formatDate(
-                new Date().toISOString(),
-              ).replace(/\//g, '-')}`}
+              filename={`Performance_Metrics_Report_${getCurrDate()}`}
               onExport={allPrintData ? undefined : handleExport}
               onExported={handleExported}
               status={exportStatus}

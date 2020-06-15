@@ -10,7 +10,7 @@ import { ExportJSON } from '../ExportJSON';
 import { CalendarHeader } from '../CalendarHeader';
 import {
   makeFakeRows,
-  formatDate,
+  getCurrDate,
   loadServiceCallMetricsByFilter,
 } from '../../../helpers';
 
@@ -210,9 +210,7 @@ export const ServiceCallMetrics: FC<Props> = ({ week, onClose }) => {
             key={serviceCallInformationData.length}
             json={serviceCallInformations}
             fields={EXPORT_COLUMNS_SERVICE_CALL_INFORMATION}
-            filename={`Service_Call_Information_${formatDate(
-              new Date().toISOString(),
-            ).replace(/\//g, '-')}`}
+            filename={`Service_Call_Information_${getCurrDate()}`}
           />
         }
       />
@@ -227,9 +225,7 @@ export const ServiceCallMetrics: FC<Props> = ({ week, onClose }) => {
           <ExportJSON
             json={userInformations}
             fields={EXPORT_COLUMNS_USER_INFORMATION}
-            filename={`User_Information_${formatDate(
-              new Date().toISOString(),
-            ).replace(/\//g, '-')}`}
+            filename={`User_Information_${getCurrDate()}`}
           />
         }
       />

@@ -1,10 +1,11 @@
-import React, { FC, useRef, useEffect } from 'react';
+import React, { FC, useRef, useEffect, useCallback, useState } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { makeStyles } from '@material-ui/core/styles';
 import { useReactToPrint } from 'react-to-print';
 import { PrintHeader, Props as HeaderProps } from '../PrintHeader';
 import { PrintFooter, Props as FooterProps } from '../PrintFooter';
 import { Button, Props as ButtonProps } from '../Button';
+import { getUploadedHTMLUrl, setInlineStyles } from '../../../helpers';
 
 export type Status = 'idle' | 'loading' | 'loaded';
 
@@ -15,6 +16,7 @@ interface Props {
   onPrint?: () => void;
   onPrinted?: () => void;
   status?: Status;
+  downloadPdfFilename?: string;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -37,9 +39,11 @@ export const PrintPage: FC<Props> = ({
   onPrinted,
   children,
   status,
+  downloadPdfFilename,
 }) => {
   const classes = useStyles();
   const printRef = useRef(null);
+  const [downloading, setDownloading] = useState<boolean>(false);
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     copyStyles: true,
@@ -53,8 +57,47 @@ export const PrintPage: FC<Props> = ({
       }
     }
   }, [status, handlePrint, onPrinted]);
+  const handleDownload = useCallback(async () => {
+    if (printRef.current) {
+      setDownloading(true);
+      // @ts-ignore
+      setInlineStyles(printRef.current);
+      // @ts-ignore
+      const content = printRef.current.innerHTML;
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${downloadPdfFilename}</title>
+          </head>
+          <body>
+            ${content}
+          </body>
+        </html>
+      `;
+      const url = await getUploadedHTMLUrl(html, `${downloadPdfFilename}.pdf`);
+      window.open(url, '_blank');
+      setDownloading(false);
+    }
+  }, [printRef, setDownloading, downloadPdfFilename]);
   return (
     <div>
+      {downloadPdfFilename && (
+        <Button
+          onClick={handleDownload}
+          children={
+            (status === 'loading' || downloading) && (
+              <CircularProgress
+                style={{ color: '#FFF', marginRight: 8 }}
+                size={16}
+              />
+            )
+          }
+          {...buttonProps}
+          disabled={status === 'loading' || downloading || buttonProps.disabled}
+          label="Download"
+        />
+      )}
       <Button
         label="Print"
         onClick={onPrint || handlePrint!}
@@ -66,9 +109,10 @@ export const PrintPage: FC<Props> = ({
             />
           )
         }
-        disabled={status === 'loading'}
         {...buttonProps}
+        disabled={status === 'loading' || buttonProps.disabled}
       />
+
       <div className={classes.printWrapper}>
         <div ref={printRef}>
           {headerProps && <PrintHeader {...headerProps} />}
