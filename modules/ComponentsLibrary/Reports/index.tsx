@@ -180,33 +180,6 @@ const SCHEMA_SERVICE_CALL_METRICS_REPORT: Schema<FilterForm> = [
   ],
 ];
 
-const SCHEMA_SPIFF_REPORT: Schema<FilterForm> = [
-  [
-    {
-      name: 'month',
-      label: 'Select Report Date',
-      options: LAST_12_MONTHS_1,
-      required: true,
-    },
-  ],
-  [
-    {
-      name: 'monthlyWeekly',
-      label: 'Type',
-      required: true,
-      options: makeOptions(SPIFF_KIND_TYPE_LIST),
-    },
-  ],
-  [
-    {
-      name: 'users',
-      label: 'Select Users',
-      type: 'technicians',
-      required: true,
-    },
-  ],
-];
-
 const SCHEMA_TRAINING_METRICS_REPORT: Schema<FilterForm> = [
   [
     {
@@ -256,9 +229,14 @@ const SCHEMA_LAST_12_MONTHS_REPORT: Schema<FilterForm> = [
   ],
 ];
 
+const getCurrWeek = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${trailingZero(d.getMonth() + 1)}-${trailingZero(
+    d.getDate() - d.getDay(),
+  )}`;
+};
 export const Reports: FC<Props> = ({ loggedUserId }) => {
   const classes = useStyles();
-  const d = new Date();
   const [jobStatusReport, setJobStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
@@ -314,9 +292,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [serviceCallMetricsReport, setServiceCallMetricsReport] = useState<
     FilterForm
   >({
-    week: `${d.getFullYear()}-${trailingZero(d.getMonth() + 1)}-${trailingZero(
-      d.getDate() - d.getDay(),
-    )}`,
+    week: getCurrWeek(),
   });
   const [
     serviceCallMetricsReportOpen,
@@ -327,6 +303,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     monthlyWeekly: 'Monthly',
     users: '',
   });
+  const [spiffReportKey, setSpiffReportKey] = useState<number>(0);
   const [spiffReportOpen, setSpiffReportOpen] = useState<boolean>(false);
   const [finalizeApprovedSpiffsOpen, setFinalizeApprovedSpiffsOpen] = useState<
     boolean
@@ -578,6 +555,53 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     (open: boolean) => () => setTimeoffSummaryReportOpen(open),
     [setTimeoffSummaryReportOpen],
   );
+  const handleSpiffReportChange = useCallback(
+    (data: FilterForm) => {
+      const spiffReportData: FilterForm = { ...data };
+      if (data.monthlyWeekly !== spiffReport.monthlyWeekly) {
+        setSpiffReportKey(spiffReportKey + 1);
+        spiffReportData.month = LAST_12_MONTHS_1[0].value;
+        spiffReportData.week = getCurrWeek();
+      }
+      setSpiffReport(spiffReportData);
+    },
+    [spiffReport, setSpiffReport, spiffReportKey, setSpiffReportKey],
+  );
+  const SCHEMA_SPIFF_REPORT: Schema<FilterForm> = [
+    spiffReport.monthlyWeekly === 'Monthly'
+      ? [
+          {
+            name: 'month',
+            label: 'Select Report Date',
+            options: LAST_12_MONTHS_1,
+            required: true,
+          },
+        ]
+      : [
+          {
+            name: 'week',
+            label: 'Select Report Date',
+            options: WEEK_OPTIONS,
+            required: true,
+          },
+        ],
+    [
+      {
+        name: 'monthlyWeekly',
+        label: 'Type',
+        required: true,
+        options: makeOptions(SPIFF_KIND_TYPE_LIST),
+      },
+    ],
+    [
+      {
+        name: 'users',
+        label: 'Select Users',
+        type: 'technicians',
+        required: true,
+      },
+    ],
+  ];
   return (
     <div className={classes.wrapper}>
       <Form
@@ -643,10 +667,12 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         onClose={null}
       />
       <Form
+        key={spiffReportKey}
         title="Spiff Report"
         schema={SCHEMA_SPIFF_REPORT}
         data={spiffReport}
         onSave={handleOpenSpiffReportToggle(true)}
+        onChange={handleSpiffReportChange}
         submitLabel="Report"
         onClose={null}
       />
@@ -827,7 +853,11 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         <Modal open onClose={handleOpenSpiffReportToggle(false)} fullScreen>
           <SpiffReport
             onClose={handleOpenSpiffReportToggle(false)}
-            date={spiffReport.month!}
+            date={
+              spiffReport.monthlyWeekly! === 'Monthly'
+                ? spiffReport.month!
+                : spiffReport.week!
+            }
             type={spiffReport.monthlyWeekly!}
             users={spiffReport.users!.split(',').map((id: string) => +id)}
           />
