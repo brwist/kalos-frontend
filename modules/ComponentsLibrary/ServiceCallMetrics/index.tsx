@@ -8,6 +8,7 @@ import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { PrintParagraph } from '../PrintParagraph';
 import { ExportJSON } from '../ExportJSON';
 import { CalendarHeader } from '../CalendarHeader';
+import { ServiceCallMetricsGraph } from '../ServiceCallMetricsGraph';
 import {
   makeFakeRows,
   getCurrDate,
@@ -235,6 +236,9 @@ export const ServiceCallMetrics: FC<Props> = ({ week, onClose }) => {
           data={userInformationData}
           loading={loading}
         />
+      </SectionBar>
+      <SectionBar title="Graph">
+        <ServiceCallMetricsGraph />
       </SectionBar>
     </div>
   );
