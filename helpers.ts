@@ -1301,7 +1301,10 @@ export const loadSpiffReportByFilter = async ({
       purchaseTotal: 215.43,
       purchases: [...Array(getRandomDigit() * 3)].map(() => ({
         name: `NRP ${getRandomDigit()}" ${getRandomJobTitle()} Set w/ ${getRandomLastName()}`,
-        date,
+        date:
+          type === 'Weekly'
+            ? date
+            : date.replace('%', trailingZero(getRandomDigit())),
         price: Math.random() * 200,
       })),
     },

@@ -1,5 +1,6 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import { format } from 'date-fns';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintHeader } from '../PrintHeader';
@@ -75,6 +76,17 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
     table.push(subtable);
     return table;
   }, [spiffTypes, SPIFF_TABLE_COLS]);
+  const subtitle = useMemo(() => {
+    if (type === 'Monthly') {
+      return [format(new Date(date.replace('%', '01')), 'MMMM yyyy')];
+    } else {
+      const d = new Date(date);
+      return [
+        `Week of ${format(d, 'MMMM d, yyyy')}`,
+        `Weekly ${format(d, 'w')}`,
+      ];
+    }
+  }, [type, date]);
   const getContent = (screen: boolean) =>
     entries.map(
       ({
@@ -107,9 +119,13 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
           )}
           {!screen && (
             <PrintParagraph tag="h2" align="right">
-              Week of June 7, 2020
-              <br />
-              Weekly 24
+              {subtitle[0]}
+              {type === 'Weekly' && (
+                <>
+                  <br />
+                  {subtitle[1]}
+                </>
+              )}
             </PrintParagraph>
           )}
           <div className={screen ? classes.content : ''}>
@@ -186,7 +202,7 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
     <>
       <SectionBar
         title="Tool Fund / Incentive Program Report"
-        subtitle={<>Week of June 7, 2020, Weekly 24</>}
+        subtitle={<>{subtitle.join(', ')}</>}
         asideContent={
           <>
             <PrintPage
