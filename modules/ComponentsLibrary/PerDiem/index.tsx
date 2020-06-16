@@ -552,6 +552,14 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                     const rows = rowsList.filter(({ dateString }) =>
                       dateString.startsWith(date),
                     );
+                    const isPerDiemRowUndefined =
+                      filteredPerDiems
+                        .reduce(
+                          (aggr, { rowsList }) => [...aggr, ...rowsList],
+                          [] as PerDiemRowType[],
+                        )
+                        .filter(({ dateString }) => dateString.startsWith(date))
+                        .length === 0;
                     return (
                       <CalendarColumn
                         key={dayOffset}
@@ -560,20 +568,21 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                         loadingRows={2}
                       >
                         {((isOwner && status.status === 'PENDING_SUBMIT') ||
-                          (isManager && status.status !== 'APPROVED')) && (
-                          <Button
-                            label="Add Per Diem Row"
-                            compact
-                            variant="text"
-                            fullWidth
-                            className={classes.button}
-                            onClick={handlePendingPerDiemRowEditToggle(
-                              makeNewPerDiemRow(id, date),
-                            )}
-                            size="xsmall"
-                            disabled={loading || saving}
-                          />
-                        )}
+                          (isManager && status.status !== 'APPROVED')) &&
+                          isPerDiemRowUndefined && (
+                            <Button
+                              label="Add Per Diem Row"
+                              compact
+                              variant="text"
+                              fullWidth
+                              className={classes.button}
+                              onClick={handlePendingPerDiemRowEditToggle(
+                                makeNewPerDiemRow(id, date),
+                              )}
+                              size="xsmall"
+                              disabled={loading || saving}
+                            />
+                          )}
                         {rows.map(entry => {
                           const {
                             id,
