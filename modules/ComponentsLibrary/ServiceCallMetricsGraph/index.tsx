@@ -10,9 +10,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import getMockedData from './getMockedData';
-
-interface Props {}
 
 export type Data = {
   name: string;
@@ -23,6 +20,10 @@ export type Data = {
   totalContracts: number;
   totalInstallationTypeCalls: number;
 }[];
+
+interface Props {
+  data: Data;
+}
 
 const useStyles = makeStyles(theme => ({
   wrapper: {
@@ -67,9 +68,8 @@ const CustomizedAxisTick: FC<{
   </g>
 );
 
-export const ServiceCallMetricsGraph: FC<Props> = () => {
+export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
   const classes = useStyles();
-  const data = getMockedData();
   return (
     <div className={classes.wrapper}>
       <ResponsiveContainer>

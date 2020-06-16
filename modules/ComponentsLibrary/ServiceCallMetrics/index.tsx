@@ -14,6 +14,7 @@ import {
   getCurrDate,
   loadServiceCallMetricsByFilter,
 } from '../../../helpers';
+import mockedData from '../ServiceCallMetricsGraph/getMockedData';
 
 type ServiceCallInformationType = {
   serviceCallDate: string;
@@ -238,7 +239,7 @@ export const ServiceCallMetrics: FC<Props> = ({ week, onClose }) => {
         />
       </SectionBar>
       <SectionBar title="Graph">
-        <ServiceCallMetricsGraph />
+        <ServiceCallMetricsGraph data={mockedData} />
       </SectionBar>
     </div>
   );

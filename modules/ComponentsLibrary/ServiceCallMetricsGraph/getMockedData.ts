@@ -3,7 +3,7 @@ import { getRandomDigit } from '../helpers';
 import { formatDate } from '../../../helpers';
 import { Data } from './';
 
-export default () => {
+export default (() => {
   const d = new Date();
   let serviceCalls = 0;
   let phoneCalls = 0;
@@ -30,4 +30,4 @@ export default () => {
     });
   });
   return data;
-};
+})();
