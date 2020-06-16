@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 
 export type Data = {
-  name: string;
+  date: string;
   serviceCalls: number;
   phoneCalls: number;
   activeCustomers: number;
@@ -76,7 +76,7 @@ export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
         <AreaChart data={data} className={classes.chart}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
-            dataKey="name"
+            dataKey="date"
             tick={props => <CustomizedAxisTick {...props} />}
             height={100}
             interval={0}
@@ -97,6 +97,7 @@ export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
             fill={COLORS.serviceCalls}
             dot
             activeDot={ACTIVE_DOT}
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -106,6 +107,7 @@ export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
             fill={COLORS.phoneCalls}
             dot
             activeDot={ACTIVE_DOT}
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -115,6 +117,7 @@ export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
             fill={COLORS.activeCustomers}
             dot
             activeDot={ACTIVE_DOT}
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -124,6 +127,7 @@ export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
             fill={COLORS.totalCustomers}
             dot
             activeDot={ACTIVE_DOT}
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -133,6 +137,7 @@ export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
             fill={COLORS.totalContracts}
             dot
             activeDot={ACTIVE_DOT}
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -142,6 +147,7 @@ export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
             fill={COLORS.totalInstallationTypeCalls}
             dot
             activeDot={ACTIVE_DOT}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
