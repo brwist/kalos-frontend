@@ -33,6 +33,8 @@ import {
   formatDate,
   approvePerDiemById,
   loadPerDiemByDepartmentIdAndDateStarted,
+  loadGovPerDiem,
+  usd,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS } from '../../../constants';
 
@@ -157,6 +159,12 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
   const [managerDepartmentId, setManagerDepartmentId] = useState<number>();
+  const [govPerDiems, setGovPerDiems] = useState<{
+    [key: string]: {
+      meals: number;
+      lodging: number;
+    };
+  }>({});
   const [pendingPerDiemSubmit, setPendingPerDiemSubmit] = useState<
     PerDiemType
   >();
@@ -186,12 +194,10 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     const user = await loadUserById(loggedUserId);
     setUser(user);
     const departments = await loadTimesheetDepartments();
-    console.log({ departments });
     setDepartments(sortBy(departments, getDepartmentName));
     const managerDepartment = departments.find(
       ({ managerId }) => managerId === loggedUserId,
     );
-    console.log({ managerDepartment, loggedUserId });
     if (managerDepartment) {
       setManagerDepartmentId(managerDepartment.id);
     }
@@ -212,6 +218,14 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       formatDateFns(dateStarted),
     );
     setPerDiems(resultsList);
+    const zipCodes = resultsList
+      .reduce(
+        (aggr, { rowsList }) => [...aggr, ...rowsList],
+        [] as PerDiemRowType[],
+      )
+      .map(({ zipCode }) => zipCode);
+    const govPerDiems = await loadGovPerDiem(zipCodes, 2020, 3);
+    setGovPerDiems(govPerDiems);
     if (managerDepartmentId) {
       const managerPerDiems = await loadPerDiemByDepartmentIdAndDateStarted(
         managerDepartmentId,
@@ -227,6 +241,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     dateStarted,
     managerDepartmentId,
     setManagerPerDiems,
+    setGovPerDiems,
   ]);
   useEffect(() => {
     if (!loaded && initialized) {
@@ -616,6 +631,18 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                                 <strong>Meals only: </strong>
                                 {mealsOnly ? 'Yes' : 'No'}
                               </div>
+                              {govPerDiems[zipCode] && (
+                                <div className={classes.row}>
+                                  <strong>Meals: </strong>
+                                  {usd(govPerDiems[zipCode].meals)}
+                                </div>
+                              )}
+                              {govPerDiems[zipCode] && (
+                                <div className={classes.row}>
+                                  <strong>Lodging: </strong>
+                                  {usd(govPerDiems[zipCode].lodging)}
+                                </div>
+                              )}
                               <div className={classes.row}>
                                 <strong>Notes: </strong>
                                 {notes}

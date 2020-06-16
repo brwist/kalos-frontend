@@ -2024,6 +2024,48 @@ export const getUploadedHTMLUrl = async (
   return url;
 };
 
+const loadGovPerDiemData = async (
+  apiEndpoint: string,
+  apiKey: string,
+  zipCode: string,
+  year: number,
+  month: number,
+) => {
+  try {
+    const endpoint = `${apiEndpoint.replace(
+      '{ZIP}',
+      zipCode,
+    )}${year}?api_key=${apiKey}`;
+    const {
+      rates: [
+        {
+          rate: [{ meals, months }],
+        },
+      ],
+    } = await (await fetch(endpoint)).json();
+    return { [zipCode]: { meals, lodging: months.month[month - 1].value } };
+  } catch (e) {
+    return { [zipCode]: { meals: 0, lodging: 0 } };
+  }
+};
+
+export const loadGovPerDiem = async (
+  zipCodes: string[],
+  year: number,
+  month: number,
+) => {
+  const client = new ApiKeyClient(ENDPOINT);
+  const req = new ApiKey();
+  req.setTextId('per_diem_key');
+  const { apiEndpoint, apiKey } = await client.Get(req);
+  const results = await Promise.all(
+    uniq(zipCodes).map(zipCode =>
+      loadGovPerDiemData(apiEndpoint, apiKey, zipCode, year, month),
+    ),
+  );
+  return results.reduce((aggr, item) => ({ ...aggr, ...item }), {});
+};
+
 interface IBugReport {
   title: string;
   body?: string;
