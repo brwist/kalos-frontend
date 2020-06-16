@@ -71,10 +71,11 @@ import { Option } from './modules/ComponentsLibrary/Field';
 import {
   getRandomAge,
   getRandomDigit,
-  getRandomFirstName,
+  getRandomName,
   getRandomLastName,
   getRandomJobTitle,
   getRandomPhone,
+  getRandomNumber,
 } from './modules/ComponentsLibrary/helpers';
 
 export type UserType = User.AsObject;
@@ -1252,6 +1253,18 @@ export const loadCallbackReportByFilter = async ({
   };
 };
 
+export const loadCharityReport = async (month: string) => {
+  return {
+    residentialServiceTotal: getRandomNumber(6),
+    residentialAorTotal: getRandomNumber(6),
+    items: [...Array(30)].map(() => ({
+      technician: getRandomName(),
+      contribution: getRandomNumber(5),
+      averageHourly: getRandomNumber(5) / 100,
+    })),
+  };
+};
+
 export type LoadMetricsByWeekFilter = {
   filter: {
     week: string;
@@ -1292,7 +1305,7 @@ export const loadSpiffReportByFilter = async ({
   users,
 }: LoadSpiffReportByFilter) => {
   return users.map(() => ({
-    user: `${getRandomFirstName()} ${getRandomLastName()}`,
+    user: getRandomName(),
     toolAllowanceBreakdown: {
       beginningBalance: 775.29,
       endingBalance: 570.08,
