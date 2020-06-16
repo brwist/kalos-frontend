@@ -27,6 +27,8 @@ export type Data = {
 const useStyles = makeStyles(theme => ({
   wrapper: {
     height: 600,
+    marginTop: theme.spacing(2),
+    marginRight: theme.spacing(),
   },
   chart: {
     ...theme.typography.body1,
@@ -44,6 +46,27 @@ const COLORS = {
   totalInstallationTypeCalls: '#990099',
 };
 
+const CustomizedAxisTick: FC<{
+  x: number;
+  y: number;
+  payload: {
+    value: string;
+  };
+}> = ({ x, y, payload: { value } }) => (
+  <g transform={`translate(${x},${y})`}>
+    <text
+      x={-4}
+      y={-12}
+      dy={16}
+      textAnchor="end"
+      fill="#000000"
+      transform="rotate(-90)"
+    >
+      {value}
+    </text>
+  </g>
+);
+
 export const ServiceCallMetricsGraph: FC<Props> = () => {
   const classes = useStyles();
   const data = getMockedData();
@@ -52,13 +75,24 @@ export const ServiceCallMetricsGraph: FC<Props> = () => {
       <ResponsiveContainer>
         <AreaChart data={data} className={classes.chart}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
+          <XAxis
+            dataKey="name"
+            tick={props => <CustomizedAxisTick {...props} />}
+            height={100}
+            interval={0}
+          />
           <YAxis />
           <Tooltip />
-          <Legend />
+          <Legend
+            verticalAlign="top"
+            iconType="circle"
+            iconSize={14}
+            wrapperStyle={{ top: -5 }}
+          />
           <Area
             type="monotone"
             dataKey="serviceCalls"
+            name="Service Calls"
             stroke={COLORS.serviceCalls}
             fill={COLORS.serviceCalls}
             dot
@@ -67,6 +101,7 @@ export const ServiceCallMetricsGraph: FC<Props> = () => {
           <Area
             type="monotone"
             dataKey="phoneCalls"
+            name="Phone Calls"
             stroke={COLORS.phoneCalls}
             fill={COLORS.phoneCalls}
             dot
@@ -75,6 +110,7 @@ export const ServiceCallMetricsGraph: FC<Props> = () => {
           <Area
             type="monotone"
             dataKey="activeCustomers"
+            name="Active Customers"
             stroke={COLORS.activeCustomers}
             fill={COLORS.activeCustomers}
             dot
@@ -83,6 +119,7 @@ export const ServiceCallMetricsGraph: FC<Props> = () => {
           <Area
             type="monotone"
             dataKey="totalCustomers"
+            name="Total Customers"
             stroke={COLORS.totalCustomers}
             fill={COLORS.totalCustomers}
             dot
@@ -91,6 +128,7 @@ export const ServiceCallMetricsGraph: FC<Props> = () => {
           <Area
             type="monotone"
             dataKey="totalContracts"
+            name="Total Contracts"
             stroke={COLORS.totalContracts}
             fill={COLORS.totalContracts}
             dot
@@ -99,6 +137,7 @@ export const ServiceCallMetricsGraph: FC<Props> = () => {
           <Area
             type="monotone"
             dataKey="totalInstallationTypeCalls"
+            name="Total Installation Type Calls"
             stroke={COLORS.totalInstallationTypeCalls}
             fill={COLORS.totalInstallationTypeCalls}
             dot

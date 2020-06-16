@@ -16,7 +16,7 @@ export default () => {
     serviceCalls += 4 * getRandomDigit();
     phoneCalls += 3 * getRandomDigit();
     activeCustomers += 2 * getRandomDigit();
-    totalCustomers += 1 * getRandomDigit();
+    totalCustomers += getRandomDigit();
     totalContracts = 30 * getRandomDigit();
     totalInstallationTypeCalls = 5 * getRandomDigit();
     data.push({
