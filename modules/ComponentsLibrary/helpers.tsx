@@ -93,6 +93,9 @@ export const getRandomLastName = () =>
   getRandomFirstName() +
   LAST_NAME_POSTFIXES[Math.floor(Math.random() * LAST_NAME_POSTFIXES.length)];
 
+export const getRandomName = () =>
+  `${getRandomFirstName()} ${getRandomLastName()}`;
+
 export const getRandomAge = () => 18 + Math.floor(Math.random() * 50);
 
 export const getRandomJobTitle = () =>
@@ -102,3 +105,6 @@ export const getRandomDigit = () => Math.floor(Math.random() * 10);
 
 export const getRandomPhone = () =>
   `${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}-${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}-${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}`;
+
+export const getRandomNumber = (digits: number) =>
+  +[...Array(digits)].map(() => getRandomDigit()).join('');
