@@ -28,6 +28,9 @@ const useStyles = makeStyles(theme => ({
   wrapper: {
     height: 600,
   },
+  chart: {
+    ...theme.typography.body1,
+  },
 }));
 
 const ACTIVE_DOT = { r: 6 };
@@ -47,17 +50,7 @@ export const ServiceCallMetricsGraph: FC<Props> = () => {
   return (
     <div className={classes.wrapper}>
       <ResponsiveContainer>
-        <AreaChart
-          width={500}
-          height={300}
-          data={data}
-          margin={{
-            top: 5,
-            right: 30,
-            left: 20,
-            bottom: 5,
-          }}
-        >
+        <AreaChart data={data} className={classes.chart}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
           <YAxis />
