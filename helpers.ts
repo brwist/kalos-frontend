@@ -985,6 +985,23 @@ export const loadPerDiemByUserIdAndDateStarted = async (
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 
+export const loadPerDiemByUserIdsAndDateStarted = async (
+  userIds: number[],
+  dateStarted: string,
+) => {
+  const response = await Promise.all(
+    uniq(userIds).map(async userId => ({
+      userId,
+      data: (await loadPerDiemByUserIdAndDateStarted(userId, dateStarted))
+        .resultsList,
+    })),
+  );
+  return response.reduce(
+    (aggr, { userId, data }) => ({ ...aggr, [userId]: data }),
+    {},
+  );
+};
+
 export const loadPerDiemByDepartmentIdAndDateStarted = async (
   departmentId: number,
   dateStarted: string,

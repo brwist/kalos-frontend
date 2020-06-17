@@ -19,6 +19,7 @@ import { Loader } from '../../Loader/main';
 import {
   loadUserById,
   loadPerDiemByUserIdAndDateStarted,
+  loadPerDiemByUserIdsAndDateStarted,
   UserType,
   PerDiemType,
   PerDiemRowType,
@@ -170,6 +171,9 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
+  const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
+    [key: number]: PerDiemType[];
+  }>({});
   const [managerDepartmentId, setManagerDepartmentId] = useState<number>();
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
@@ -230,12 +234,17 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       formatDateFns(dateStarted),
     );
     let managerPerDiemsList = [] as PerDiemType[];
+    let managerPerDiemsOther = {};
     if (managerDepartmentId) {
       const managerPerDiems = await loadPerDiemByDepartmentIdAndDateStarted(
         managerDepartmentId,
         formatDateFns(dateStarted),
       );
       managerPerDiemsList = managerPerDiems.resultsList;
+      managerPerDiemsOther = await loadPerDiemByUserIdsAndDateStarted(
+        managerPerDiemsList.map(({ userId }) => userId),
+        formatDateFns(dateStarted),
+      );
     }
     const year = +format(dateStarted, 'yyyy');
     const month = +format(dateStarted, 'M');
@@ -248,6 +257,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     const govPerDiems = await loadGovPerDiem(zipCodes, year, month);
     setGovPerDiems(govPerDiems);
     setPerDiems(resultsList);
+    setManagerPerDiemsOther(managerPerDiemsOther);
     setManagerPerDiems(managerPerDiemsList);
     setLoading(false);
   }, [
@@ -522,16 +532,16 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
         weekStartsOn={6}
         submitLabel="Add Per Diem"
         submitDisabled={loading || saving || addPerDiemDisabled}
-        actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}
+        actions={onClose ? [{ label: 'Close', onClick: onClose }] : undefined}
       >
         {!loading && (
           <>
             <Typography variant="subtitle2">
-              All Departments Total Meals:
+              All {isAnyManager ? 'Technicians' : 'Departments'} Total Meals:
               <strong> {usd(totalMeals)}</strong>
             </Typography>
             <Typography variant="subtitle2">
-              All Departments Total Lodging:
+              All {isAnyManager ? 'Technicians' : 'Departments'} Total Lodging:
               <strong> {usd(totalLodging)}</strong>
             </Typography>
           </>
@@ -630,7 +640,10 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                       dateString.startsWith(date),
                     );
                     const isPerDiemRowUndefined =
-                      filteredPerDiems
+                      (isAnyManager
+                        ? managerPerDiemsOther[userId]
+                        : filteredPerDiems
+                      )
                         .reduce(
                           (aggr, { rowsList }) => [...aggr, ...rowsList],
                           [] as PerDiemRowType[],
