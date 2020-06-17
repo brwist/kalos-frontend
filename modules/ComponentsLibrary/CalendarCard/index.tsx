@@ -9,6 +9,7 @@ interface Props {
   title: string;
   statusColor: string;
   onClick?: () => void;
+  className?: string;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -34,11 +35,12 @@ export const CalendarCard: FC<Props> = ({
   title,
   statusColor,
   onClick,
+  className = '',
   children,
 }) => {
   const classes = useStyles();
   return (
-    <Card className={classes.card} onClick={onClick}>
+    <Card className={classes.card + ' ' + className} onClick={onClick}>
       <CardActionArea>
         <CardHeader
           className={classes.cardHeader}
