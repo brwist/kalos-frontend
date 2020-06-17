@@ -61,6 +61,17 @@ const useStyles = makeStyles(theme => ({
   button: {
     marginLeft: 0,
   },
+  otherDepartmentCard: {
+    opacity: 0.3,
+    pointerEvents: 'none',
+  },
+  otherDepartmentText: {
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(5.75),
+    textAlign: 'center',
+    lineHeight: '20px',
+    fontStyle: 'italic',
+  },
 }));
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
@@ -633,6 +644,21 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                         loading={loading}
                         loadingRows={2}
                       >
+                        {!isPerDiemRowUndefined && rows.length === 0 && (
+                          <CalendarCard
+                            title=""
+                            statusColor="white"
+                            className={classes.otherDepartmentCard}
+                          >
+                            <div className={classes.otherDepartmentText}>
+                              Per Diem
+                              <br />
+                              in other
+                              <br />
+                              Department
+                            </div>
+                          </CalendarCard>
+                        )}
                         {((isOwner && status.status === 'PENDING_SUBMIT') ||
                           (isManager && status.status !== 'APPROVED')) &&
                           isPerDiemRowUndefined && (
