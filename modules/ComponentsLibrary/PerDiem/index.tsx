@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import Typography from '@material-ui/core/Typography';
 import Alert from '@material-ui/lab/Alert';
 import sortBy from 'lodash/sortBy';
 import { startOfWeek, format, addDays } from 'date-fns';
@@ -217,22 +218,26 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       loggedUserId,
       formatDateFns(dateStarted),
     );
-    setPerDiems(resultsList);
-    const zipCodes = resultsList
-      .reduce(
-        (aggr, { rowsList }) => [...aggr, ...rowsList],
-        [] as PerDiemRowType[],
-      )
-      .map(({ zipCode }) => zipCode);
-    const govPerDiems = await loadGovPerDiem(zipCodes, 2020, 3);
-    setGovPerDiems(govPerDiems);
+    let managerPerDiemsList = [] as PerDiemType[];
     if (managerDepartmentId) {
       const managerPerDiems = await loadPerDiemByDepartmentIdAndDateStarted(
         managerDepartmentId,
         formatDateFns(dateStarted),
       );
-      setManagerPerDiems(managerPerDiems.resultsList);
+      managerPerDiemsList = managerPerDiems.resultsList;
     }
+    const year = +format(dateStarted, 'yyyy');
+    const month = +format(dateStarted, 'M');
+    const zipCodes = [...resultsList, ...managerPerDiemsList]
+      .reduce(
+        (aggr, { rowsList }) => [...aggr, ...rowsList],
+        [] as PerDiemRowType[],
+      )
+      .map(({ zipCode }) => zipCode);
+    const govPerDiems = await loadGovPerDiem(zipCodes, year, month);
+    setGovPerDiems(govPerDiems);
+    setPerDiems(resultsList);
+    setManagerPerDiems(managerPerDiemsList);
     setLoading(false);
   }, [
     loggedUserId,
@@ -254,6 +259,17 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       initialize();
     }
   }, [initialized, initialize]);
+  const govPerDiemByZipCode = useCallback(
+    (zipCode: string) => {
+      const govPerDiem = govPerDiems[zipCode];
+      if (govPerDiem) return govPerDiem;
+      return {
+        meals: 0,
+        lodging: 0,
+      };
+    },
+    [govPerDiems],
+  );
   const handleSetDateStarted = useCallback(
     (value: Date) => {
       if (formatDateFns(value) === formatDateFns(dateStarted)) return;
@@ -473,6 +489,18 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   );
   if (initializing) return <Loader />;
   const filteredPerDiems = isAnyManager ? managerPerDiems : perDiems;
+  const allRowsList = filteredPerDiems.reduce(
+    (aggr, { rowsList }) => [...aggr, ...rowsList],
+    [] as PerDiemRowType[],
+  );
+  const totalMeals = allRowsList.reduce(
+    (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
+    0,
+  );
+  const totalLodging = allRowsList.reduce(
+    (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).lodging,
+    0,
+  );
   return (
     <div>
       <CalendarHeader
@@ -484,7 +512,20 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
         submitLabel="Add Per Diem"
         submitDisabled={loading || saving || addPerDiemDisabled}
         actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}
-      />
+      >
+        {!loading && (
+          <>
+            <Typography variant="subtitle2">
+              All Departments Total Meals:
+              <strong> {usd(totalMeals)}</strong>
+            </Typography>
+            <Typography variant="subtitle2">
+              All Departments Total Lodging:
+              <strong> {usd(totalLodging)}</strong>
+            </Typography>
+          </>
+        )}
+      </CalendarHeader>
       {loading && <Loader />}
       {!loading && filteredPerDiems.length === 0 && (
         <Alert severity="info">
@@ -511,6 +552,14 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
             loading ||
             status.status === 'APPROVED' ||
             (isOwner && status.status !== 'PENDING_SUBMIT');
+          const totalMeals = rowsList.reduce(
+            (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
+            0,
+          );
+          const totalLodging = rowsList.reduce(
+            (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).lodging,
+            0,
+          );
           return (
             <div key={id} className={classes.department}>
               <SectionBar
@@ -521,6 +570,8 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                 }
                 subtitle={
                   <>
+                    <div>Total Meals: {usd(totalMeals)}</div>
+                    <div>Total Lodging: {usd(totalLodging)}</div>
                     {+dateSubmitted[0] > 0 && (
                       <div>Submited Date: {formatDate(dateSubmitted)}</div>
                     )}
