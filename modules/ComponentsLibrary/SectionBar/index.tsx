@@ -103,7 +103,7 @@ const useStyles = makeStyles(theme => ({
   }),
   subtitle: ({ small }: Styles) => ({
     marginTop: theme.spacing(0.25),
-    color: theme.palette.grey[500],
+    color: theme.palette.grey[600],
     ...theme.typography[small ? 'subtitle2' : 'subtitle1'],
     lineHeight: 1,
     [theme.breakpoints.down('xs')]: {
