@@ -1017,16 +1017,22 @@ export const loadPerDiemByDepartmentIdAndDateStarted = async (
 
 export const loadPerDiemsNeedsAuditing = async (
   departmentId?: number,
-  dateStarted?: string,
   userId?: number,
+  dateStarted?: string,
 ) => {
   const req = new PerDiem();
   req.setNeedsAuditing(true);
-  // req.setDepartmentId(departmentId);
-  // req.setWithRows(true);
+  if (departmentId) {
+    req.setDepartmentId(departmentId);
+  }
+  if (userId) {
+    req.setUserId(userId);
+  }
+  if (dateStarted) {
+    req.setDateStarted(`${dateStarted}%`);
+  }
   req.setIsActive(true);
   req.setPageNumber(0);
-  // req.setDateStarted(`${dateStarted}%`);
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 
@@ -1041,6 +1047,14 @@ export const upsertPerDiem = async (data: PerDiemType) => {
   }
   req.setFieldMaskList(fieldMaskList);
   return await PerDiemClientService[data.id ? 'Update' : 'Create'](req);
+};
+
+export const updatePerDiemNeedsAudit = async (id: number) => {
+  const req = new PerDiem();
+  req.setId(id);
+  req.setNeedsAuditing(false);
+  req.setFieldMaskList(['Id', 'NeedsAuditing']);
+  await PerDiemClientService.Update(req);
 };
 
 export const submitPerDiemById = async (id: number) => {
@@ -1136,13 +1150,13 @@ function roundNumber(num: number) {
 /**
  * Returns options with weeks (starting Sunday) for the past year period
  */
-function getWeekOptions(weeks = 52, offsetWeeks = 0): Option[] {
+function getWeekOptions(weeks = 52, offsetWeeks = 0, offsetDays = 0): Option[] {
   const d = new Date();
   return Array.from(Array(weeks)).map((_, week) => {
     const w = new Date(
       d.getFullYear(),
       d.getMonth(),
-      d.getDate() - d.getDay() - (week + offsetWeeks) * 7,
+      d.getDate() - d.getDay() - (week + offsetWeeks) * 7 + offsetDays,
     );
     return {
       label: `Week of ${
