@@ -1,4 +1,5 @@
 import React, { FC, useRef, useEffect, useCallback, useState } from 'react';
+import clsx from 'clsx';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { makeStyles } from '@material-ui/core/styles';
 import { useReactToPrint } from 'react-to-print';
@@ -17,11 +18,15 @@ interface Props {
   onPrinted?: () => void;
   status?: Status;
   downloadPdfFilename?: string;
+  visible?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({
   printWrapper: {
     display: 'none',
+    '&.visible' : {
+      display: 'block',
+    },
   },
   table: {
     width: '100%',
@@ -40,6 +45,7 @@ export const PrintPage: FC<Props> = ({
   children,
   status,
   downloadPdfFilename,
+  visible,
 }) => {
   const classes = useStyles();
   const printRef = useRef(null);
@@ -113,7 +119,7 @@ export const PrintPage: FC<Props> = ({
         disabled={status === 'loading' || buttonProps.disabled}
       />
 
-      <div className={classes.printWrapper}>
+      <div className={clsx(classes.printWrapper, visible && 'visible')}>
         <div ref={printRef}>
           {headerProps && <PrintHeader {...headerProps} />}
           <table className={classes.table}>

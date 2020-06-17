@@ -1,6 +1,7 @@
 import React, { FC, useState, useEffect, useCallback, useRef } from 'react';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { Invoice, InvoiceClient } from '@kalos-core/kalos-rpc/Invoice';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
@@ -29,11 +30,13 @@ import { Form, Schema } from '../Form';
 import { Request } from './components/Request';
 import { Equipment } from './components/Equipment';
 import { Services } from './components/Services';
-import { Invoice } from './components/Invoice';
+import { Invoice as InvoiceTab } from './components/Invoice';
 import { Proposal } from './components/Proposal';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
+const InvoiceClientService = new InvoiceClient(ENDPOINT);
+
 
 export type EventType = Event.AsObject;
 type JobTypeType = JobType.AsObject;
@@ -61,6 +64,11 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
   ],
 ];
 
+type PendingSaveState = {
+  pending: boolean;
+  invoiceRequired?: boolean;
+};
+
 export const ServiceCall: FC<Props> = props => {
   const {
     userID,
@@ -74,7 +82,7 @@ export const ServiceCall: FC<Props> = props => {
   const [requestFields, setRequestfields] = useState<string[]>([]);
   const [tabIdx, setTabIdx] = useState<number>(0);
   const [tabKey, setTabKey] = useState<number>(0);
-  const [pendingSave, setPendingSave] = useState<boolean>(false);
+  const [pendingSave, setPendingSave] = useState<PendingSaveState>({ pending: false, invoiceRequired: false });
   const [requestValid, setRequestValid] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
@@ -161,14 +169,85 @@ export const ServiceCall: FC<Props> = props => {
     setCustomer,
   ]);
 
-  const handleSave = useCallback(async () => {
-    setPendingSave(true);
+  const handleSave = useCallback(async (invoiceRequired) => {
+    setPendingSave({pending: true, invoiceRequired });
     if (tabIdx !== 0) {
       setTabIdx(0);
       setTabKey(tabKey + 1);
     }
   }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
-  const save = useCallback(async () => {
+
+  const sendInvoice = useCallback(async () => {
+    alert(123);
+    const req = new Invoice();
+    const fieldMaskList: string[] = [];
+    ['id',
+      'eventId',
+      'contractId',
+      'userId',
+      'propertyId',
+      'systemType',
+      'systemType2',
+      'compressorAmps',
+      'model',
+      'brand',
+      'condensingFanAmps',
+      'serial',
+      'startDate',
+      'suctionPressure',
+      'headPressure',
+      'model2',
+      'brand2',
+      'returnTemperature',
+      'serial2',
+      'startDate2',
+      'supplyTemperature',
+      'tstatType',
+      'tstatBrand',
+      'subcool',
+      'filterSizes',
+      'superheat',
+      'notes',
+      'properties',
+      'terms',
+      'servicesperformedrow1',
+      'totalamountrow1',
+      'servicesperformedrow2',
+      'totalamountrow2',
+      'servicesperformedrow3',
+      'totalamountrow3',
+      'servicesperformedrow4',
+      'totalamountrow4',
+      'discount',
+      'discountcost',
+      'totalamounttotal',
+      'credit',
+      'cash',
+      'byCheck',
+      'billing',
+      'paymentYes',
+      'paymentNo',
+      'serviceItem',
+      'logPaymentType',
+      'logPaymentStatus',
+      'propertyBilling',
+      'materialUsed',
+      'materialTotal'].forEach(fieldName => {
+      //@ts-ignore
+      if (fieldName === 'id' || typeof entry[fieldName] === 'object') return;
+      const { upperCaseProp, methodName } = getRPCFields(fieldName);
+      //@ts-ignore
+      try {
+        req[methodName](entry[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+    });
+    req.setFieldMaskList(fieldMaskList);
+    const res = await InvoiceClientService.Create(req);
+    console.log(res);
+  }, []);
+
+  const save = useCallback(async (invoiceRequired) => {
     setSaving(true);
     const req = new Event();
     req.setIsActive(1);
@@ -190,6 +269,9 @@ export const ServiceCall: FC<Props> = props => {
     const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
       req,
     );
+    if (invoiceRequired) {
+      await sendInvoice();
+    }
     setEntry(res);
     setSaving(false);
     if (!serviceCallId) {
@@ -218,11 +300,12 @@ export const ServiceCall: FC<Props> = props => {
     if (entry && entry.customer && entry.customer.notification !== '') {
       setNotificationViewing(true);
     }
-    if (pendingSave && requestValid) {
-      setPendingSave(false);
-      save();
+    if (pendingSave.pending && requestValid) {
+      const { invoiceRequired } = pendingSave;
+      setPendingSave({ pending: false, invoiceRequired: false });
+      save(invoiceRequired);
     }
-    if (pendingSave && tabIdx === 0 && requestRef.current) {
+    if (pendingSave.pending && tabIdx === 0 && requestRef.current) {
       //@ts-ignore
       requestRef.current.click();
     }
@@ -247,7 +330,7 @@ export const ServiceCall: FC<Props> = props => {
   const handleChangeEntry = useCallback(
     (data: EventType) => {
       setEntry({ ...entry, ...data });
-      setPendingSave(false);
+      setPendingSave({ pending: false, invoiceRequired: false });
     },
     [entry, setEntry, setPendingSave],
   );
@@ -403,7 +486,7 @@ export const ServiceCall: FC<Props> = props => {
           },
           {
             label: 'Save and Invoice',
-            // onClick: // TODO
+            onClick: () => {handleSave(true)},
             disabled: loading || saving,
           },
           {
@@ -472,7 +555,7 @@ export const ServiceCall: FC<Props> = props => {
             content: loading ? (
               <InfoTable data={makeFakeRows(4, 5)} loading />
             ) : (
-              <Invoice
+              <InvoiceTab
                 serviceItem={entry}
                 onChange={handleChangeEntry}
                 disabled={saving}
