@@ -237,7 +237,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       }
     } else {
       const [y, m, d] = month.split('-');
-      const n = new Date(+y, +m - 1, +d + 7);
+      const n = new Date(+y, +m - 1, +d + 7, 0, 0, 0);
       const ltDate = `${n.getFullYear()}-${trailingZero(
         n.getMonth() + 1,
       )}-${trailingZero(n.getDate())}`;
