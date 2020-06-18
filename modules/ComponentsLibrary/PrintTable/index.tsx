@@ -12,6 +12,7 @@ interface Props extends Style {
   nowraps?: boolean[];
   data: ReactNode[][];
   noEntriesText?: string;
+  skipNoEntriesTest?: boolean;
   className?: string;
   styles?: CSSProperties;
 }
@@ -53,6 +54,7 @@ export const PrintTable: FC<Props> = ({
   nowraps = [],
   data,
   noEntriesText = 'No entries found.',
+  skipNoEntriesTest = false,
   noBorders = false,
   className,
   styles = {},
@@ -97,7 +99,7 @@ export const PrintTable: FC<Props> = ({
             ))}
           </tr>
         ))}
-        {data.length === 0 && (
+        {data.length === 0 && !skipNoEntriesTest && (
           <tr>
             <td colSpan={columns.length}>{noEntriesText}</td>
           </tr>
