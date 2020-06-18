@@ -1,12 +1,16 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import sortBy from 'lodash/sortBy';
 import { format } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import FlashOff from '@material-ui/icons/FlashOff';
+import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Confirm } from '../Confirm';
+import { Modal } from '../Modal';
+import { PerDiemComponent, getStatus } from '../PerDiem';
 import {
   loadPerDiemsNeedsAuditing,
   updatePerDiemNeedsAudit,
@@ -28,6 +32,7 @@ const COLUMNS: Columns = [
   { name: 'Technician' },
   { name: 'Department' },
   { name: 'Week' },
+  { name: 'Status' },
 ];
 
 type FormData = Pick<PerDiemType, 'dateStarted' | 'departmentId' | 'userId'>;
@@ -43,7 +48,22 @@ const formatWeek = (date: string) => {
   return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
 };
 
+export const useStyles = makeStyles(theme => ({
+  modalBar: {
+    marginBottom: theme.spacing(-2),
+  },
+  status: {
+    display: 'inline-block',
+    width: theme.spacing(2),
+    height: theme.spacing(2),
+    marginRight: theme.spacing(),
+    borderRadius: '50%',
+    verticalAlign: 'middle',
+  },
+}));
+
 export const PerDiemsNeedsAuditing: FC<Props> = () => {
+  const classes = useStyles();
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -55,6 +75,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
@@ -94,6 +115,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   const handlePendingAuditedToggle = useCallback(
     (perDiem?: PerDiemType) => () => setPendingAudited(perDiem),
     [setPendingAudited],
+  );
+  const handlePerDiemViewedToggle = useCallback(
+    (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
+    [setPerDiemViewed],
   );
   const handleAudit = useCallback(async () => {
     if (pendingAudited) {
@@ -165,15 +190,38 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     ],
   ];
   const data: Data = loading
-    ? makeFakeRows(3, 5)
+    ? makeFakeRows(4, 5)
     : perDiems.map(entry => {
-        const { dateStarted, ownerName, department } = entry;
+        const {
+          dateStarted,
+          ownerName,
+          department,
+          dateApproved,
+          dateSubmitted,
+        } = entry;
+        const { text, color } = getStatus(dateApproved, dateSubmitted, false);
         return [
           { value: ownerName },
           { value: getDepartmentName(department) },
+          { value: formatWeek(dateStarted) },
           {
-            value: formatWeek(dateStarted),
+            value: (
+              <>
+                <div
+                  className={classes.status}
+                  style={{ backgroundColor: color }}
+                />
+                {text}
+              </>
+            ),
             actions: [
+              <IconButton
+                key="view"
+                size="small"
+                onClick={handlePerDiemViewedToggle(entry)}
+              >
+                <Visibility />
+              </IconButton>,
               <IconButton
                 key="audit"
                 size="small"
@@ -214,9 +262,32 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
           Are you sure, Per Diem of <strong>{pendingAudited.ownerName}</strong>{' '}
           for department{' '}
           <strong>{getDepartmentName(pendingAudited.department)}</strong> for{' '}
-          <strong>Week of {formatWeek(pendingAudited.dateStarted)}</strong> no
-          longer needs auditing?
+          <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no longer
+          needs auditing?
         </Confirm>
+      )}
+      {perDiemViewed && (
+        <Modal open onClose={handlePerDiemViewedToggle(undefined)} fullScreen>
+          <SectionBar
+            title={`Per Diem: ${perDiemViewed.ownerName}`}
+            subtitle={
+              <>
+                Department: {getDepartmentName(perDiemViewed.department)}
+                <br />
+                {formatWeek(perDiemViewed.dateStarted)}
+              </>
+            }
+            actions={[
+              { label: 'Close', onClick: handlePerDiemViewedToggle(undefined) },
+            ]}
+            fixedActions
+            className={classes.modalBar}
+          />
+          <PerDiemComponent
+            onClose={handlePerDiemViewedToggle(undefined)}
+            perDiem={perDiemViewed}
+          />
+        </Modal>
       )}
     </div>
   );

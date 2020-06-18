@@ -41,8 +41,9 @@ import {
 import { JOB_STATUS_COLORS, MEALS_RATE } from '../../../constants';
 
 export interface Props {
-  loggedUserId: number;
+  loggedUserId?: number;
   onClose?: () => void;
+  perDiem?: PerDiemType;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -77,7 +78,7 @@ const useStyles = makeStyles(theme => ({
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const getStatus = (
+export const getStatus = (
   dateApproved: string,
   dateSubmitted: string,
   isManager: boolean,
@@ -161,7 +162,11 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   ],
 ];
 
-export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
+export const PerDiemComponent: FC<Props> = ({
+  loggedUserId = 0,
+  onClose,
+  perDiem,
+}) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -196,7 +201,12 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   >(false);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [dateStarted, setDateStarted] = useState<Date>(
-    addDays(startOfWeek(new Date(), { weekStartsOn: 6 }), -0),
+    addDays(
+      startOfWeek(perDiem ? new Date(perDiem.dateStarted) : new Date(), {
+        weekStartsOn: 6,
+      }),
+      -0,
+    ),
   );
   const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] = useState<
     PerDiemRowType
@@ -206,18 +216,32 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
   const initialize = useCallback(async () => {
-    setInitializing(true);
-    const user = await loadUserById(loggedUserId);
-    setUser(user);
-    const departments = await loadTimesheetDepartments();
-    setDepartments(sortBy(departments, getDepartmentName));
-    const managerDepartment = departments.find(
-      ({ managerId }) => managerId === loggedUserId,
-    );
-    if (managerDepartment) {
-      setManagerDepartmentId(managerDepartment.id);
+    if (perDiem) {
+      const year = +format(dateStarted, 'yyyy');
+      const month = +format(dateStarted, 'M');
+      const zipCodes = [perDiem]
+        .reduce(
+          (aggr, { rowsList }) => [...aggr, ...rowsList],
+          [] as PerDiemRowType[],
+        )
+        .map(({ zipCode }) => zipCode);
+      const govPerDiems = await loadGovPerDiem(zipCodes, year, month);
+      setGovPerDiems(govPerDiems);
     }
-    setInitializing(false);
+    if (loggedUserId) {
+      setInitializing(true);
+      const user = await loadUserById(loggedUserId);
+      setUser(user);
+      const departments = await loadTimesheetDepartments();
+      setDepartments(sortBy(departments, getDepartmentName));
+      const managerDepartment = departments.find(
+        ({ managerId }) => managerId === loggedUserId,
+      );
+      if (managerDepartment) {
+        setManagerDepartmentId(managerDepartment.id);
+      }
+      setInitializing(false);
+    }
     setInitialized(true);
   }, [
     loggedUserId,
@@ -226,8 +250,10 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     setDepartments,
     setManagerDepartmentId,
     setInitialized,
+    perDiem,
   ]);
   const load = useCallback(async () => {
+    if (!loggedUserId) return;
     setLoading(true);
     const { resultsList } = await loadPerDiemByUserIdAndDateStarted(
       loggedUserId,
@@ -509,7 +535,11 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     [],
   );
   if (initializing) return <Loader />;
-  const filteredPerDiems = isAnyManager ? managerPerDiems : perDiems;
+  const filteredPerDiems = perDiem
+    ? [perDiem]
+    : isAnyManager
+    ? managerPerDiems
+    : perDiems;
   const allRowsList = filteredPerDiems.reduce(
     (aggr, { rowsList }) => [...aggr, ...rowsList],
     [] as PerDiemRowType[],
@@ -525,29 +555,32 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   );
   return (
     <div>
-      <CalendarHeader
-        onDateChange={handleSetDateStarted}
-        onSubmit={handlePendingPerDiemEditToggle(makeNewPerDiem())}
-        selectedDate={dateStarted}
-        title={getCustomerName(user)}
-        weekStartsOn={6}
-        submitLabel="Add Per Diem"
-        submitDisabled={loading || saving || addPerDiemDisabled}
-        actions={onClose ? [{ label: 'Close', onClick: onClose }] : undefined}
-      >
-        {!loading && (
-          <>
-            <Typography variant="subtitle2">
-              All {isAnyManager ? 'Technicians' : 'Departments'} Total Meals:
-              <strong> {usd(totalMeals)}</strong>
-            </Typography>
-            <Typography variant="subtitle2">
-              All {isAnyManager ? 'Technicians' : 'Departments'} Total Lodging:
-              <strong> {usd(totalLodging)}</strong>
-            </Typography>
-          </>
-        )}
-      </CalendarHeader>
+      {loggedUserId > 0 && (
+        <CalendarHeader
+          onDateChange={handleSetDateStarted}
+          onSubmit={handlePendingPerDiemEditToggle(makeNewPerDiem())}
+          selectedDate={dateStarted}
+          title={getCustomerName(user)}
+          weekStartsOn={6}
+          submitLabel="Add Per Diem"
+          submitDisabled={loading || saving || addPerDiemDisabled}
+          actions={onClose ? [{ label: 'Close', onClick: onClose }] : undefined}
+        >
+          {!loading && (
+            <>
+              <Typography variant="subtitle2">
+                All {isAnyManager ? 'Technicians' : 'Departments'} Total Meals:
+                <strong> {usd(totalMeals)}</strong>
+              </Typography>
+              <Typography variant="subtitle2">
+                All {isAnyManager ? 'Technicians' : 'Departments'} Total
+                Lodging:
+                <strong> {usd(totalLodging)}</strong>
+              </Typography>
+            </>
+          )}
+        </CalendarHeader>
+      )}
       {loading && <Loader />}
       {!loading && filteredPerDiems.length === 0 && (
         <Alert severity="info">
@@ -587,7 +620,9 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
             <div key={id} className={classes.department}>
               <SectionBar
                 title={
-                  isAnyManager
+                  perDiem
+                    ? ''
+                    : isAnyManager
                     ? ownerName + ' (user id: ' + userId + ')'
                     : `Department: ${getDepartmentName(department)}`
                 }
@@ -604,28 +639,32 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                     {approvedByName && <div>Approved By: {approvedByName}</div>}
                   </>
                 }
-                actions={[
-                  {
-                    label: 'Delete',
-                    variant: 'outlined',
-                    onClick: handlePendingPerDiemDeleteToggle(entry),
-                    disabled: buttonDisabled,
-                  },
-                  {
-                    label: 'Edit',
-                    variant: 'outlined',
-                    onClick: handlePendingPerDiemEditToggle(entry),
-                    disabled: buttonDisabled,
-                  },
-                  {
-                    label: status.button,
-                    onClick:
-                      isAnyManager && status.status === 'PENDING_APPROVE'
-                        ? handlePendingPerDiemApproveToggle(entry)
-                        : handlePendingPerDiemSubmitToggle(entry),
-                    disabled: buttonDisabled,
-                  },
-                ]}
+                actions={
+                  perDiem
+                    ? []
+                    : [
+                        {
+                          label: 'Delete',
+                          variant: 'outlined',
+                          onClick: handlePendingPerDiemDeleteToggle(entry),
+                          disabled: buttonDisabled,
+                        },
+                        {
+                          label: 'Edit',
+                          variant: 'outlined',
+                          onClick: handlePendingPerDiemEditToggle(entry),
+                          disabled: buttonDisabled,
+                        },
+                        {
+                          label: status.button,
+                          onClick:
+                            isAnyManager && status.status === 'PENDING_APPROVE'
+                              ? handlePendingPerDiemApproveToggle(entry)
+                              : handlePendingPerDiemSubmitToggle(entry),
+                          disabled: buttonDisabled,
+                        },
+                      ]
+                }
                 footer={
                   notes.trim() ? (
                     <span>
@@ -634,6 +673,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                     </span>
                   ) : null
                 }
+                uncollapsable={!!perDiem}
               >
                 <Calendar className={classes.calendar}>
                   {[...Array(7)].map((_, dayOffset) => {
@@ -676,7 +716,8 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                         )}
                         {((isOwner && status.status === 'PENDING_SUBMIT') ||
                           (isManager && status.status !== 'APPROVED')) &&
-                          isPerDiemRowUndefined && (
+                          isPerDiemRowUndefined &&
+                          !perDiem && (
                             <Button
                               label="Add Per Diem Row"
                               compact
@@ -704,9 +745,10 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                               title={status.text.toUpperCase()}
                               statusColor={status.color}
                               onClick={
-                                (isOwner &&
+                                !perDiem &&
+                                ((isOwner &&
                                   status.status === 'PENDING_SUBMIT') ||
-                                (isManager && status.status !== 'APPROVED')
+                                  (isManager && status.status !== 'APPROVED'))
                                   ? handlePendingPerDiemRowEditToggle(entry)
                                   : undefined
                               }

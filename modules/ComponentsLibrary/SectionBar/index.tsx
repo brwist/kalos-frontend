@@ -42,6 +42,7 @@ interface Props {
   onCheck?: (checked: number) => void;
   checked?: number;
   loading?: boolean;
+  uncollapsable?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -143,18 +144,19 @@ export const SectionBar: FC<Props> = ({
   onCheck,
   checked,
   loading = false,
+  uncollapsable = false,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const classes = useStyles({
-    collapsable: !!children,
+    collapsable: !!children && !uncollapsable,
     collapsed,
     fixedActions,
     small,
   });
-  const handleToggleCollapsed = useCallback(() => setCollapsed(!collapsed), [
-    collapsed,
-    setCollapsed,
-  ]);
+  const handleToggleCollapsed = useCallback(
+    () => (uncollapsable ? 0 : setCollapsed(!collapsed)),
+    [collapsed, setCollapsed, uncollapsable],
+  );
   const handleChangePage = useCallback(
     (_, page) => {
       if (pagination) {
@@ -194,6 +196,7 @@ export const SectionBar: FC<Props> = ({
               >
                 {title}{' '}
                 {children &&
+                  !uncollapsable &&
                   (collapsed ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
               </Typography>
               {!collapsed && subtitle && (
