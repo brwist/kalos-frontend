@@ -1024,6 +1024,7 @@ export const loadPerDiemsNeedsAuditing = async (
   dateStarted?: string,
 ) => {
   const req = new PerDiem();
+  req.setWithRows(true);
   req.setPageNumber(page);
   req.setNeedsAuditing(true);
   if (departmentId) {
