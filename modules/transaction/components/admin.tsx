@@ -7,6 +7,7 @@ import { TransactionRow, prettyMoney } from './row';
 import TablePagination from '@material-ui/core/TablePagination';
 import Toolbar from '@material-ui/core/Toolbar';
 import CloseIcon from '@material-ui/icons/CloseSharp';
+import SearchIcon from '@material-ui/icons/SearchSharp';
 import SubmitIcon from '@material-ui/icons/SendSharp';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -37,7 +38,11 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../../constants';
 import { range } from '../../../helpers';
-import { RecordPageReq } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import {
+  RecordPageReq,
+  TransactionList,
+} from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { Prompt } from '../../Prompt/main';
 
 interface props {
   userID: number;
@@ -55,6 +60,7 @@ interface state {
   departmentView: boolean;
   count: number;
   acceptOverride: boolean;
+  search: string;
 }
 
 interface IFilter {
@@ -106,12 +112,14 @@ export class TransactionAdminView extends React.Component<props, state> {
         },
       },
       count: 0,
+      search: '',
     };
     this.TxnClient = new TransactionClient(ENDPOINT);
     this.EventClient = new EventClient(ENDPOINT);
     this.PropertyClient = new PropertyClient(ENDPOINT);
 
     this.fetchTxns = this.fetchTxns.bind(this);
+    this.search = this.search.bind(this);
     this.setFilter = this.setFilter.bind(this);
     this.clearFilters = this.clearFilters.bind(this);
     this.checkFilters = this.checkFilters.bind(this);
@@ -208,6 +216,7 @@ export class TransactionAdminView extends React.Component<props, state> {
         },
         page: 0,
         count: 0,
+        search: '',
       },
       this.fetchTxns,
     );
@@ -389,7 +398,14 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.setState(
       { isLoading: true },
       await (async () => {
-        const res = await this.TxnClient.BatchGet(reqObj);
+        let res: TransactionList;
+        if (this.state.search !== '') {
+          reqObj.setSearchPhrase(`%${this.state.search}%`);
+          res = await this.TxnClient.Search(reqObj);
+        } else {
+          res = await this.TxnClient.BatchGet(reqObj);
+        }
+
         const asObject = res.toObject();
 
         this.setState({
@@ -460,6 +476,15 @@ export class TransactionAdminView extends React.Component<props, state> {
         });
       });
     }
+  }
+
+  search(text: string) {
+    this.setState(
+      {
+        search: text,
+      },
+      this.fetchTxns,
+    );
   }
 
   async handleSubmitPage() {
@@ -718,6 +743,13 @@ export class TransactionAdminView extends React.Component<props, state> {
               </IconButton>
             </span>
           </Tooltip>
+          <Prompt
+            Icon={SearchIcon}
+            disabled={this.state.isLoading}
+            text="Search"
+            confirmFn={this.search}
+            prompt="Search for: "
+          />
           <Tooltip title="Copy current page as CSV">
             <span>
               <IconButton

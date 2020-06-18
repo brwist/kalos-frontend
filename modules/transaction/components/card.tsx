@@ -13,9 +13,8 @@ import {
 } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { AccountPicker, DepartmentPicker } from '../../Pickers';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { FileObject, S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { Gallery, IFile } from '../../Gallery/main';
-import { GalleryData } from '../../AltGallery/main';
+import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+import { GalleryData, AltGallery } from '../../AltGallery/main';
 import TextField from '@material-ui/core/TextField';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
@@ -34,6 +33,8 @@ import ReIcon from '@material-ui/icons/RefreshSharp';
 import { timestamp } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { Dialog } from '@material-ui/core';
+import { AdvancedSearch } from '../../ComponentsLibrary/AdvancedSearch';
 
 interface props {
   txn: Transaction.AsObject;
@@ -48,7 +49,7 @@ interface props {
 
 interface state {
   txn: Transaction.AsObject;
-  files: IFile[];
+  isSearchOpen: boolean;
 }
 
 const hardcodedList = [
@@ -78,7 +79,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     super(props);
     this.state = {
       txn: props.txn,
-      files: [],
+      isSearchOpen: false,
     };
 
     this.EmailClient = new EmailClient(ENDPOINT);
@@ -95,11 +96,11 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.openFilePrompt = this.openFilePrompt.bind(this);
     this.updateTransaction = this.updateTransaction.bind(this);
     this.handleFile = this.handleFile.bind(this);
-    this.fetchFiles = this.fetchFiles.bind(this);
-    this.fetchFile = this.fetchFile.bind(this);
     this.submit = this.submit.bind(this);
     this.deleteFile = this.deleteFile.bind(this);
     this.onPDFGenerate = this.onPDFGenerate.bind(this);
+    this.toggleSearch = this.toggleSearch.bind(this);
+    this.setJobNumber = this.setJobNumber.bind(this);
   }
 
   async makeLog<K extends keyof Transaction.AsObject>(
@@ -159,6 +160,15 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.handleJobNumber(jobNumber);
   }
 
+  setJobNumber(e: Event.AsObject) {
+    this.handleJobNumber(e.id);
+    this.toggleSearch();
+  }
+
+  toggleSearch() {
+    this.setState((prevState) => ({ isSearchOpen: !prevState.isSearchOpen }));
+  }
+
   async submit() {
     const { txn } = this.state;
     try {
@@ -181,11 +191,16 @@ export class TxnCard extends React.PureComponent<props, state> {
         }
         if (!txn.costCenter) {
           throw 'A purchase category must be assigned';
-        } else if (txn.documentsList.length === 0) {
-          throw 'This receipt requires a photo';
         } else if (txn.notes === '') {
           throw 'Please provide a brief description in the notes';
         } else {
+          try {
+            const d = new TransactionDocument();
+            d.setTransactionId(this.state.txn.id);
+            const res = await this.DocsClient.Get(d);
+          } catch (err) {
+            throw 'Please attach a photo to this receipt before submitting';
+          }
           let statusID = this.props.isManager ? 3 : 2;
           let statusMessage = this.props.isManager
             ? 'manager receipt accepted automatically'
@@ -229,7 +244,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               txn.timestamp,
             );
           }
-
+          console.log('submitted');
           await this.props.fetchFn();
         }
       }
@@ -265,15 +280,6 @@ export class TxnCard extends React.PureComponent<props, state> {
           <InfoSharp />
           <Typography style={{ color: 'white' }}>
             Please select a purchase category
-          </Typography>
-        </Grid>
-      );
-    } else if (txn.documentsList.length === 0) {
-      return (
-        <Grid container direction="row" style={style}>
-          <InfoSharp />
-          <Typography style={{ color: 'white' }}>
-            This transaction record requires a photo of your receipt
           </Typography>
         </Grid>
       );
@@ -380,54 +386,6 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
-  fetchFile(doc: TransactionDocument.AsObject) {
-    const fileObj = new FileObject();
-    fileObj.setBucket('kalos-transactions');
-    fileObj.setKey(`${this.state.txn.id}-${doc.reference}`);
-    return this.S3Client.Get(fileObj);
-  }
-
-  getGalleryData(): GalleryData[] {
-    return this.state.txn.documentsList.map((d) => {
-      return {
-        key: `${this.state.txn.id}-${d.reference}`,
-        bucket: 'kalos-transactions',
-      };
-    });
-  }
-
-  async fetchFiles() {
-    const filesList: IFile[] = this.state.txn.documentsList
-      .filter((d) => d.reference)
-      .map((d) => {
-        const arr = d.reference.split('.');
-        const mimeTypeStr = arr[arr.length - 1];
-        return {
-          name: d.reference,
-          mimeType: this.S3Client.getMimeType(mimeTypeStr) || '',
-        };
-      });
-
-    const promiseArr = this.state.txn.documentsList
-      .filter((d) => d.reference)
-      .map(this.fetchFile);
-
-    const fileObjects = await Promise.all(promiseArr);
-    const files = filesList.map((f) => {
-      const fileObj = fileObjects.find((obj) => obj.getKey().includes(f.name));
-      if (fileObj) {
-        f.data = fileObj.getData() as Uint8Array;
-      }
-
-      f.name = `${this.state.txn.id}-${f.name}`;
-      return f;
-    });
-
-    this.setState({
-      files,
-    });
-  }
-
   componentDidMount() {
     if (this.state.txn.departmentId === 0) {
       this.updateDepartmentID(this.props.userDepartmentID);
@@ -481,6 +439,17 @@ export class TxnCard extends React.PureComponent<props, state> {
                   </option>
                 )}
               />
+              {/*<Button
+                onClick={this.toggleSearch}
+                size="large"
+                fullWidth
+                style={{
+                  height: 44,
+                  marginBottom: 10,
+                }}
+              >
+                Job Number: {t.jobId || 'None'}
+              </Button>*/}
               <TextField
                 label="Job Number"
                 defaultValue={t.jobId}
@@ -520,13 +489,11 @@ export class TxnCard extends React.PureComponent<props, state> {
               >
                 Photo
               </Button>
-              <Gallery
+              <AltGallery
                 title="Receipt Photo(s)"
                 text="Photo(s)"
-                fileList={this.state.files}
-                onOpen={this.fetchFiles}
-                disabled={t.documentsList.length === 0}
-                deleteFn={this.deleteFile}
+                fileList={getGalleryData(this.state.txn)}
+                transactionID={this.state.txn.id}
               />
               <Button
                 startIcon={<SendTwoTone />}
@@ -570,6 +537,19 @@ export class TxnCard extends React.PureComponent<props, state> {
           onChange={this.handleFile}
           style={{ display: 'none' }}
         />
+        <Dialog
+          aria-labelledby="transition-modal-service-call-search"
+          open={this.state.isSearchOpen}
+          onClose={this.toggleSearch}
+          fullScreen
+        >
+          <AdvancedSearch
+            title="Service Calls"
+            kinds={['serviceCalls']}
+            loggedUserId={this.props.userID}
+            onSelectEvent={this.setJobNumber}
+          />
+        </Dialog>
       </>
     );
   }
@@ -606,3 +586,12 @@ const ALLOWED_ACCOUNT_IDS = [
   68500,
   66600,
 ];
+
+function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
+  return txn.documentsList.map((d) => {
+    return {
+      key: `${txn.id}-${d.reference}`,
+      bucket: 'kalos-transactions',
+    };
+  });
+}

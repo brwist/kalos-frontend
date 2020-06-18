@@ -126,6 +126,7 @@ export function Gallery({
     const blob = new Blob([img.data!], {
       type: S3.getMimeType(img.name) || '.png',
     });
+    console.log(img);
     return URL.createObjectURL(blob);
   };
 

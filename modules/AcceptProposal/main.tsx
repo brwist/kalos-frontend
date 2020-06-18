@@ -533,7 +533,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                     }}
                   />
                 </div>
-                {this.state.sigURL.length > 0 && (
+                {/*this.state.sigURL.length > 0 && (
                   <Button
                     onClick={this.clear}
                     variant="outlined"
@@ -541,7 +541,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                   >
                     Reset Signature
                   </Button>
-                )}
+                )*/}
                 {this.state.sigURL.length > 0 &&
                   this.state.selected.length > 0 && (
                     <Button
