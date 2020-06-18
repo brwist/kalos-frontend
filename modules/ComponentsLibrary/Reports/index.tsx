@@ -11,6 +11,7 @@ import { DeletedServiceCallsReport } from '../DeletedServiceCallsReport';
 import { CallbackReport } from '../CallbackReport';
 import { ServiceCallMetrics } from '../ServiceCallMetrics';
 import { SpiffReport } from '../SpiffReport';
+import { CharityReport } from '../CharityReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -938,17 +939,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       )}
       {charityReportOpen && (
         <Modal open onClose={handleOpenCharityReportToggle(false)} fullScreen>
-          <SectionBar
-            title="Charity Report"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenCharityReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <CharityReport
+            month={charityReport.month!}
+            onClose={handleOpenCharityReportToggle(false)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {billingAuditReportOpen && (
