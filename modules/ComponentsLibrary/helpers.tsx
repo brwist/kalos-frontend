@@ -108,3 +108,6 @@ export const getRandomPhone = () =>
 
 export const getRandomNumber = (digits: number) =>
   +[...Array(digits)].map(() => getRandomDigit()).join('');
+
+export const randomize = (values: string[]) =>
+  values[Math.floor(Math.random() * values.length)];

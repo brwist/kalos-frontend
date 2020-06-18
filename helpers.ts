@@ -76,6 +76,7 @@ import {
   getRandomJobTitle,
   getRandomPhone,
   getRandomNumber,
+  randomize,
 } from './modules/ComponentsLibrary/helpers';
 
 export type UserType = User.AsObject;
@@ -1310,6 +1311,23 @@ export const loadCharityReport = async (month: string) => {
       averageHourly: getRandomNumber(5) / 100,
     })),
   };
+};
+
+export const loadWarrantyReport = async () => {
+  return [...Array(130)].map(() => ({
+    briefDdescription: randomize([
+      'Broken',
+      'Not working',
+      'Noisy',
+      'Loud',
+      'Unpredictable',
+    ]),
+    externalId: getRandomNumber(7),
+    referenceNumber: getRandomNumber(6),
+    statusDesc: randomize(['Active', 'Inactive', 'Pending', 'Completed']),
+    priorityDesc: randomize(['Blocker', 'Urgent', 'Major', 'Minor']),
+    techName: getRandomName(),
+  }));
 };
 
 export type LoadMetricsByWeekFilter = {

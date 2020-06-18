@@ -12,6 +12,7 @@ import { CallbackReport } from '../CallbackReport';
 import { ServiceCallMetrics } from '../ServiceCallMetrics';
 import { SpiffReport } from '../SpiffReport';
 import { CharityReport } from '../CharityReport';
+import { WarrantyReport } from '../WarrantyReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -905,17 +906,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       )}
       {warrantyReportOpen && (
         <Modal open onClose={handleOpenWarrantyReportToggle(false)} fullScreen>
-          <SectionBar
-            title="Warranty Report"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenWarrantyReportToggle(false)(),
-              },
-            ]}
-            fixedActions
-          />
-          {UNDER_CONSTRUCTION}
+          <WarrantyReport onClose={handleOpenWarrantyReportToggle(false)} />
         </Modal>
       )}
       {trainingMetricsReportOpen && (
