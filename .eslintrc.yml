@@ -25,5 +25,6 @@ rules:
   quotes: off
   semi: off
   no-unused-vars: off
+  no-async-promise-executor: off
   react/prop-types: off
   react/display-name: off
