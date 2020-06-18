@@ -1016,11 +1016,13 @@ export const loadPerDiemByDepartmentIdAndDateStarted = async (
 };
 
 export const loadPerDiemsNeedsAuditing = async (
+  page: number,
   departmentId?: number,
   userId?: number,
   dateStarted?: string,
 ) => {
   const req = new PerDiem();
+  req.setPageNumber(page);
   req.setNeedsAuditing(true);
   if (departmentId) {
     req.setDepartmentId(departmentId);
@@ -1032,7 +1034,6 @@ export const loadPerDiemsNeedsAuditing = async (
     req.setDateStarted(`${dateStarted}%`);
   }
   req.setIsActive(true);
-  req.setPageNumber(0);
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 
