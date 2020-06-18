@@ -61,6 +61,7 @@ import SpiffReport from './SpiffReport/examples';
 import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
 import Tooltip from './Tooltip/examples';
+import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
 
 const DEFAULT_COMPONENT_IDX = 0;
@@ -122,6 +123,7 @@ const COMPONENTS = {
   StoredQuotes,
   Tabs,
   Tooltip,
+  WarrantyReport,
   WeekPicker,
 };
 
