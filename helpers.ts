@@ -66,6 +66,7 @@ import {
   INTERNAL_DOCUMENTS_BUCKET,
   OPTION_ALL,
   MAX_PAGES,
+  MEALS_RATE,
 } from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
 import {
@@ -2108,9 +2109,11 @@ const loadGovPerDiemData = async (
         },
       ],
     } = await (await fetch(endpoint)).json();
-    return { [zipCode]: { meals, lodging: months.month[month - 1].value } };
+    return {
+      [zipCode]: { meals: MEALS_RATE, lodging: months.month[month - 1].value },
+    };
   } catch (e) {
-    return { [zipCode]: { meals: 0, lodging: 0 } };
+    return { [zipCode]: { meals: MEALS_RATE, lodging: 0 } };
   }
 };
 

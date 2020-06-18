@@ -38,7 +38,7 @@ import {
   loadGovPerDiem,
   usd,
 } from '../../../helpers';
-import { JOB_STATUS_COLORS } from '../../../constants';
+import { JOB_STATUS_COLORS, MEALS_RATE } from '../../../constants';
 
 export interface Props {
   loggedUserId: number;
@@ -285,7 +285,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       const govPerDiem = govPerDiems[zipCode];
       if (govPerDiem) return govPerDiem;
       return {
-        meals: 0,
+        meals: MEALS_RATE,
         lodging: 0,
       };
     },
@@ -519,7 +519,8 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     0,
   );
   const totalLodging = allRowsList.reduce(
-    (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).lodging,
+    (aggr, { zipCode, mealsOnly }) =>
+      aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
     0,
   );
   return (
@@ -578,7 +579,8 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
             0,
           );
           const totalLodging = rowsList.reduce(
-            (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).lodging,
+            (aggr, { zipCode, mealsOnly }) =>
+              aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
             0,
           );
           return (
@@ -727,10 +729,14 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                                   {usd(govPerDiems[zipCode].meals)}
                                 </div>
                               )}
-                              {govPerDiems[zipCode] && (
+                              {(govPerDiems[zipCode] || mealsOnly) && (
                                 <div className={classes.row}>
                                   <strong>Lodging: </strong>
-                                  {usd(govPerDiems[zipCode].lodging)}
+                                  {usd(
+                                    mealsOnly
+                                      ? 0
+                                      : govPerDiems[zipCode].lodging,
+                                  )}
                                 </div>
                               )}
                               <div className={classes.row}>
