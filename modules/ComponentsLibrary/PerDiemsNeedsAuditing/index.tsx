@@ -20,7 +20,7 @@ import {
   loadTechnicians,
   UserType,
 } from '../../../helpers';
-import { OPTION_ALL } from '../../../constants';
+import { OPTION_ALL, ROWS_PER_PAGE } from '../../../constants';
 
 interface Props {}
 
@@ -38,6 +38,11 @@ const initialFormData: FormData = {
   userId: 0,
 };
 
+const formatWeek = (date: string) => {
+  const d = new Date(date);
+  return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
+};
+
 export const PerDiemsNeedsAuditing: FC<Props> = () => {
   const weekOptions = useMemo(
     () => [
@@ -50,6 +55,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
@@ -67,6 +73,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     setLoading(true);
     const { departmentId, userId, dateStarted } = formData;
     const { resultsList, totalCount } = await loadPerDiemsNeedsAuditing(
+      page,
       departmentId ? departmentId : undefined,
       userId ? userId : undefined,
       dateStarted !== OPTION_ALL ? dateStarted : undefined,
@@ -74,7 +81,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     setPerDiems(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, formData]);
+  }, [setLoading, formData, page]);
   useEffect(() => {
     if (!initialized) {
       initialize();
@@ -103,6 +110,13 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     setLoaded(false);
   }, [setFormData, setFormKey, formKey, setLoaded]);
   const handleSearch = useCallback(() => setLoaded(false), []);
+  const handleChangePage = useCallback(
+    (page: number) => {
+      setPage(page);
+      setLoaded(false);
+    },
+    [setPage, setLoaded],
+  );
   const techniciansOptions: Option[] = useMemo(
     () => [
       { label: OPTION_ALL, value: 0 },
@@ -154,12 +168,11 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     ? makeFakeRows(3, 5)
     : perDiems.map(entry => {
         const { dateStarted, ownerName, department } = entry;
-        const date = new Date(dateStarted);
         return [
           { value: ownerName },
           { value: getDepartmentName(department) },
           {
-            value: `Week of ${format(date, 'MMMM')}, ${format(date, 'do')}`,
+            value: formatWeek(dateStarted),
             actions: [
               <IconButton
                 key="audit"
@@ -174,7 +187,15 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
       });
   return (
     <div>
-      <SectionBar title="Per Diems Needs Auditing" />
+      <SectionBar
+        title="Per Diems Needs Auditing"
+        pagination={{
+          count,
+          page,
+          rowsPerPage: ROWS_PER_PAGE,
+          onChangePage: handleChangePage,
+        }}
+      />
       <PlainForm
         key={formKey}
         schema={SCHEMA}
@@ -190,7 +211,11 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
           onConfirm={handleAudit}
           // submitLabel="Custom label"
         >
-          Are you sure, this Per Diem no longer needs auditing?
+          Are you sure, Per Diem of <strong>{pendingAudited.ownerName}</strong>{' '}
+          for department{' '}
+          <strong>{getDepartmentName(pendingAudited.department)}</strong> for{' '}
+          <strong>Week of {formatWeek(pendingAudited.dateStarted)}</strong> no
+          longer needs auditing?
         </Confirm>
       )}
     </div>
