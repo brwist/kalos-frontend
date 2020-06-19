@@ -13,6 +13,11 @@ import {
   ActivityLogClient,
 } from '@kalos-core/kalos-rpc/ActivityLog';
 import {
+  ReportClient,
+  PromptPaymentReport,
+  PromptPaymentReportLine,
+} from '@kalos-core/kalos-rpc/Report';
+import {
   EmployeeFunctionClient,
   EmployeeFunction,
 } from '@kalos-core/kalos-rpc/EmployeeFunction';
@@ -96,7 +101,9 @@ export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 export type EmployeeFunctionType = EmployeeFunction.AsObject;
 export type ActivityLogType = ActivityLog.AsObject;
 export type SpiffTypeType = SpiffType.AsObject;
+export type PromptPaymentReportLineType = PromptPaymentReportLine.AsObject;
 
+export const ReportClientService = new ReportClient(ENDPOINT);
 export const TaskClientService = new TaskClient(ENDPOINT);
 export const PDFClientService = new PDFClient(ENDPOINT);
 export const UserClientService = new UserClient(ENDPOINT);
@@ -1359,6 +1366,21 @@ export const loadServiceCallMetricsByFilter = async ({
       serviceCallDate: week,
     })),
   };
+};
+
+export const loadPromptPaymentData = async () => {
+  return [...Array(100)].map(() => {
+    const allInvoices = getRandomNumber(2);
+    return {
+      customerName: getRandomLastName() + ' ' + getRandomLastName(),
+      payableAward: getRandomNumber(4),
+      forfeitedAward: getRandomNumber(3),
+      pendingAward: getRandomNumber(2),
+      averageDaysToPay: getRandomNumber(2),
+      paidInvoices: Math.floor(Math.random() * allInvoices),
+      allInvoices,
+    };
+  });
 };
 
 export type LoadSpiffReportByFilter = {

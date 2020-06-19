@@ -7,7 +7,7 @@ import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
-import { loadWarrantyReport, getCurrDate } from '../../../helpers';
+import { getCurrDate, loadPromptPaymentData, usd } from '../../../helpers';
 
 interface Props {
   onClose?: () => void;
@@ -19,14 +19,14 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const WarrantyReport: FC<Props> = ({ onClose }) => {
+export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<any[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await loadWarrantyReport();
+    const data = await loadPromptPaymentData();
     setData(data);
     setLoading(false);
   }, [setLoading, setData]);
@@ -40,47 +40,48 @@ export const WarrantyReport: FC<Props> = ({ onClose }) => {
   return (
     <div>
       <SectionBar
-        title="Warranty Report"
+        title="Prompt Payment Report"
         subtitle={subtitle}
         asideContent={
           <>
             <PrintPage
               headerProps={{
-                title: 'Warranty Report',
+                title: 'Prompt Payment Report',
                 subtitle,
               }}
               buttonProps={{
                 label: 'Print',
                 disabled: loading,
               }}
-              downloadPdfFilename={`Warranty_Report_${getCurrDate()}`}
+              downloadPdfFilename={`Prompt_Payment_Report_${getCurrDate()}`}
             >
               {!loading && (
                 <>
                   <PrintTable
                     columns={[
-                      'Description',
-                      'Job #',
-                      'Reference #',
-                      'Status',
-                      'Priority',
-                      'Assigned To',
+                      'Customer',
+                      { title: 'Payable Award', align: 'right' },
+                      { title: 'Forfeited Award', align: 'right' },
+                      { title: 'Pending Award', align: 'right' },
+                      { title: 'Average Days to Pay', align: 'right' },
+                      { title: 'Paid Invoices', align: 'right' },
                     ]}
                     data={data.map(
                       ({
-                        briefDdescription,
-                        externalId,
-                        referenceNumber,
-                        statusDesc,
-                        priorityDesc,
-                        techName,
+                        customerName,
+                        payableAward,
+                        forfeitedAward,
+                        pendingAward,
+                        averageDaysToPay,
+                        paidInvoices,
+                        allInvoices,
                       }) => [
-                        briefDdescription,
-                        externalId,
-                        referenceNumber,
-                        statusDesc,
-                        priorityDesc,
-                        techName,
+                        customerName,
+                        usd(payableAward),
+                        usd(forfeitedAward),
+                        usd(pendingAward),
+                        `${averageDaysToPay}/30`,
+                        `${paidInvoices}/${allInvoices}`,
                       ],
                     )}
                   />
@@ -97,28 +98,29 @@ export const WarrantyReport: FC<Props> = ({ onClose }) => {
         <>
           <InfoTable
             columns={[
-              { name: 'Description' },
-              { name: 'Job #' },
-              { name: 'Reference #' },
-              { name: 'Status' },
-              { name: 'Priority' },
-              { name: 'Assigned To' },
+              { name: 'Customer' },
+              { name: 'Payable Award' },
+              { name: 'Forfeited Award' },
+              { name: 'Pending Award' },
+              { name: 'Average Days to Pay' },
+              { name: 'Paid Invoices' },
             ]}
             data={data.map(
               ({
-                briefDdescription,
-                externalId,
-                referenceNumber,
-                statusDesc,
-                priorityDesc,
-                techName,
+                customerName,
+                payableAward,
+                forfeitedAward,
+                pendingAward,
+                averageDaysToPay,
+                paidInvoices,
+                allInvoices,
               }) => [
-                { value: briefDdescription },
-                { value: externalId },
-                { value: referenceNumber },
-                { value: statusDesc },
-                { value: priorityDesc },
-                { value: techName },
+                { value: customerName },
+                { value: usd(payableAward) },
+                { value: usd(forfeitedAward) },
+                { value: usd(pendingAward) },
+                { value: `${averageDaysToPay}/30` },
+                { value: `${paidInvoices}/${allInvoices}` },
               ],
             )}
           />
