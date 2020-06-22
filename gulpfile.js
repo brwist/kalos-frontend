@@ -75,6 +75,7 @@ function start() {
                     return [4 /*yield*/, getBranch()];
                 case 4:
                     branch = (_a.sent()).replace(/\n/g, '');
+                    console.log("awaiting parcel modules/" + branch + "/index.html");
                     return [4 /*yield*/, sh.exec("parcel modules/" + branch + "/index.html")];
                 case 5:
                     _a.sent();
@@ -277,7 +278,8 @@ function rollupBuild() {
                                 globals(),
                                 builtins(),
                                 typescript({
-                                    module: 'ES2015'
+                                    module: 'ES2015',
+                                    noEmitOnError: false
                                 }),
                                 scss(),
                                 image(),
@@ -494,6 +496,8 @@ var NAMED_EXPORTS = {
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/event_pb.js': [
         'Event',
         'EventList',
+        'Quotable',
+        'QuotableList',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/event_assignment_pb.js': [
         'EventAssignment',
@@ -705,6 +709,7 @@ var NAMED_EXPORTS = {
         'PerDiemRow',
         'PerDiemRowList',
     ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/pdf_pb.js': ['HTML'],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_event_pb.js': [
         'TaskEvent',
         'TaskEventList',
