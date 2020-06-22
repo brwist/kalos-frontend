@@ -16,6 +16,7 @@ import {
   getCurrDate,
   loadSpiffTypes,
   SpiffTypeType,
+  SpiffReportLineType,
 } from '../../../helpers';
 
 interface Props {
@@ -47,13 +48,19 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<{
+    [key: string]: {
+      spiffBonusTotal: number;
+      items: SpiffReportLineType[];
+    };
+  }>({});
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
     const spiffTypes = await loadSpiffTypes();
     setSpiffTypes(spiffTypes);
     const entries = await loadSpiffReportByFilter({ date, type, users });
+    console.log(entries);
     setEntries(entries);
     setLoading(false);
   }, [setLoading]);
@@ -90,120 +97,62 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
     }
   }, [type, date]);
   const getContent = (screen: boolean) =>
-    entries.map(
-      ({
-        user,
-        toolAllowanceBreakdown: {
-          beginningBalance,
-          endingBalance,
-          overageMonth,
-          overageYear,
-          purchases,
-          purchaseTotal,
-        },
-        incentiveBreakdown: {
-          revokedBonusMonth,
-          revokedBonusYear,
-          bonusTotal,
-          items,
-        },
-      }) => (
-        <div key={user}>
-          {!screen && (
-            <PrintHeader title="Tool Fund / Incentive Program Report" />
-          )}
-          {screen ? (
-            <InfoTable columns={[{ name: <big>{user}</big> }]} />
-          ) : (
-            <PrintParagraph tag="h1" align="right">
-              {user}
-            </PrintParagraph>
-          )}
-          {!screen && (
-            <PrintParagraph tag="h2" align="right">
-              {subtitle[0]}
-              {type === 'Weekly' && (
-                <>
-                  <br />
-                  {subtitle[1]}
-                </>
-              )}
-            </PrintParagraph>
-          )}
-          <div className={screen ? classes.content : ''}>
-            <PrintParagraph tag="h2">Tool Allowance Breakdown</PrintParagraph>
-            <PrintTable
-              className={screen ? classes.tableScreen : classes.table}
-              columns={[
-                'Tool Purchases',
-                {
-                  title: `Beginning Balance: ${usd(beginningBalance)}`,
-                  align: 'center',
-                },
-                {
-                  title: `Ending Balance: ${usd(endingBalance)}`,
-                  align: 'right',
-                },
-              ]}
-              data={[
-                //@ts-ignore
-                ...purchases.map(({ name, date, price }) => [
-                  name,
-                  date,
-                  usd(price),
-                ]),
-                [
-                  <strong>Tool Purchase Total:</strong>,
-                  '',
-                  <strong>{usd(purchaseTotal)}</strong>,
-                ],
-                [
-                  `Tool Purchase Overage This Month: ${usd(overageMonth)}`,
-                  '',
-                  `Tool Purchase Overage This Year: ${usd(overageYear)}`,
-                ],
-              ]}
-            />
-            <PrintParagraph tag="h2">Incentive Breakdown</PrintParagraph>
-            <PrintTable
-              className={screen ? classes.tableScreen : classes.table}
-              columns={[
-                'Detail',
-                'Job #',
-                'Status',
-                { title: 'Amount', align: 'right' },
-              ]}
-              data={[
-                //@ts-ignore
-                ...items.map(({ name, jobNumber, status, amount }) => [
-                  name,
-                  jobNumber,
-                  status,
-                  usd(amount),
-                ]),
-                [
-                  <strong>Spiff Bonus Total:</strong>,
-                  '',
-                  '',
-                  <strong>{usd(bonusTotal)}</strong>,
-                ],
-                [
-                  `Revoked Bonus This Month: ${usd(revokedBonusMonth)}`,
-                  '',
-                  '',
-                  `Revoked Bonus This Year: ${usd(revokedBonusYear)}`,
-                ],
-              ]}
-            />
-          </div>
-          <PrintPageBreak height={FOOTER_HEIGHT} />
+    Object.keys(entries).map(user => (
+      <div key={user}>
+        {!screen && <PrintHeader title="Incentive Program Report" />}
+        {screen ? (
+          <InfoTable columns={[{ name: <big>{user}</big> }]} />
+        ) : (
+          <PrintParagraph tag="h1" align="right">
+            {user}
+          </PrintParagraph>
+        )}
+        {!screen && (
+          <PrintParagraph tag="h2" align="right">
+            {subtitle[0]}
+            {type === 'Weekly' && (
+              <>
+                <br />
+                {subtitle[1]}
+              </>
+            )}
+          </PrintParagraph>
+        )}
+        <div className={screen ? classes.content : ''}>
+          <PrintParagraph tag="h2">Incentive Breakdown</PrintParagraph>
+          <PrintTable
+            className={screen ? classes.tableScreen : classes.table}
+            columns={[
+              'Detail',
+              'Job #',
+              'Status',
+              { title: 'Amount', align: 'right' },
+            ]}
+            data={[
+              ...entries[
+                user
+              ].items.map(({ ext, address, jobNumber, amount }) => [
+                `${ext} - ${address}`,
+                jobNumber,
+                '',
+                usd(amount),
+              ]),
+              [
+                <strong>Spiff Bonus Total:</strong>,
+                '',
+                '',
+                <strong>{usd(entries[user].spiffBonusTotal)}</strong>,
+              ],
+            ]}
+          />
         </div>
-      ),
-    );
+        <PrintPageBreak height={FOOTER_HEIGHT} />
+      </div>
+    ));
   return (
     <>
       <SectionBar
-        title="Tool Fund / Incentive Program Report"
+        title="Incentive Program Report"
         subtitle={<>{subtitle.join(', ')}</>}
         asideContent={
           <>
@@ -212,7 +161,7 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
                 label: 'Print',
                 disabled: loading,
               }}
-              downloadPdfFilename={`Tool_Fund_Incentive_Program_Report_${getCurrDate()}`}
+              downloadPdfFilename={`Incentive_Program_Report_${getCurrDate()}`}
             >
               {getContent(false)}
               <PrintFooter height={FOOTER_HEIGHT}>
