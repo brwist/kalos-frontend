@@ -4,7 +4,6 @@
   "description": "The one react boilerplate",
   "scripts": {
     "start": "gulp -LL start",
-    "build": "gulp -LL build",
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
     "release": "gulp -LL release",
