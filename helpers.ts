@@ -1,5 +1,5 @@
 import uniq from 'lodash/uniq';
-import { startOfWeek, format } from 'date-fns';
+import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
@@ -16,6 +16,7 @@ import {
   ReportClient,
   PromptPaymentReport,
   PromptPaymentReportLine,
+  SpiffReportLine,
 } from '@kalos-core/kalos-rpc/Report';
 import {
   EmployeeFunctionClient,
@@ -101,6 +102,7 @@ export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 export type EmployeeFunctionType = EmployeeFunction.AsObject;
 export type ActivityLogType = ActivityLog.AsObject;
 export type SpiffTypeType = SpiffType.AsObject;
+export type SpiffReportLineType = SpiffReportLine.AsObject;
 export type PromptPaymentReportLineType = PromptPaymentReportLine.AsObject;
 
 export const ReportClientService = new ReportClient(ENDPOINT);
@@ -1393,35 +1395,41 @@ export const loadSpiffReportByFilter = async ({
   type,
   users,
 }: LoadSpiffReportByFilter) => {
-  return users.map(() => ({
-    user: getRandomName(),
-    toolAllowanceBreakdown: {
-      beginningBalance: 775.29,
-      endingBalance: 570.08,
-      overageMonth: getRandomDigit(),
-      overageYear: getRandomDigit(),
-      purchaseTotal: 215.43,
-      purchases: [...Array(getRandomDigit() * 3)].map(() => ({
-        name: `NRP ${getRandomDigit()}" ${getRandomJobTitle()} Set w/ ${getRandomLastName()}`,
-        date:
-          type === 'Weekly'
-            ? date
-            : date.replace('%', trailingZero(getRandomDigit())),
-        price: Math.random() * 200,
-      })),
-    },
-    incentiveBreakdown: {
-      revokedBonusMonth: getRandomDigit(),
-      revokedBonusYear: getRandomDigit(),
-      bonusTotal: getRandomDigit(),
-      items: [...Array(getRandomDigit())].map(() => ({
-        name: getRandomLastName(),
-        jobNumber: getRandomPhone(),
-        status: 'Completed',
-        amount: 300 * Math.random(),
-      })),
-    },
-  }));
+  const req = new SpiffReportLine();
+  req.setIsActive(true);
+  req.setOrderBy('timestamp');
+  if (type === 'Monthly') {
+    const startDate = date.replace('%', '01');
+    const endDate = format(addMonths(new Date(startDate), 1), 'yyyy-MM-dd');
+    req.setDateRangeList(['>=', startDate, '<', endDate]);
+    req.setDateTargetList(['timestamp', 'timestamp']);
+  } else {
+    const startDate = date;
+    const endDate = format(addDays(new Date(startDate), 7), 'yyyy-MM-dd');
+    req.setDateRangeList(['>=', startDate, '<', endDate]);
+    req.setDateTargetList(['timestamp', 'timestamp']);
+  }
+  const { dataList } = (
+    await ReportClientService.GetSpiffReportData(req)
+  ).toObject();
+  const data: {
+    [key: string]: {
+      spiffBonusTotal: number;
+      items: SpiffReportLineType[];
+    };
+  } = {};
+  dataList.forEach(item => {
+    const { employeeName } = item;
+    if (!data[employeeName]) {
+      data[employeeName] = {
+        spiffBonusTotal: 0,
+        items: [],
+      };
+    }
+    data[employeeName].items.push(item);
+    data[employeeName].spiffBonusTotal += item.amount;
+  });
+  return data;
 };
 
 export type ActivityLogsSort = {
