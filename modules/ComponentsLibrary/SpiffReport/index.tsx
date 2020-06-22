@@ -78,9 +78,11 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
   }, [spiffTypes, SPIFF_TABLE_COLS]);
   const subtitle = useMemo(() => {
     if (type === 'Monthly') {
-      return [format(new Date(date.replace('%', '01')), 'MMMM yyyy')];
+      return [
+        format(new Date(`${date.replace('%', '01')} 00:00:00`), 'MMMM yyyy'),
+      ];
     } else {
-      const d = new Date(date);
+      const d = new Date(`${date} 00:00:00`);
       return [
         `Week of ${format(d, 'MMMM d, yyyy')}`,
         `Weekly ${format(d, 'w')}`,

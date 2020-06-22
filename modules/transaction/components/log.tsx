@@ -137,7 +137,7 @@ export class TxnLog extends React.PureComponent<props, state> {
                       !activity.description.includes('[new.'),
                   )
                   .map((activity) => (
-                    <TableRow>
+                    <TableRow key={`activity_${activity.id}`}>
                       <TableCell>{activity.timestamp}</TableCell>
                       <TableCell>{activity.description}</TableCell>
                       <TableCell>

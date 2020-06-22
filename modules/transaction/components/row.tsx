@@ -5,7 +5,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
-import { Gallery } from '../../Gallery/main';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
@@ -15,7 +14,7 @@ import Button from '@material-ui/core/Button';
 import { Prompt } from '../../Prompt/main';
 import { IFile } from '../../Gallery/main';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { S3Client, FileObject } from '@kalos-core/kalos-rpc/S3File';
+import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
   TransactionDocumentClient,
   TransactionDocument,
@@ -24,9 +23,10 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { TxnLog } from './log';
 import { TxnNotes } from './notes';
-import { getSlackID, slackNotify } from '../../../helpers';
+import { getSlackID, slackNotify, getMimeType } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
+import { AltGallery, GalleryData } from '../../AltGallery/main';
 
 interface props {
   txn: Transaction.AsObject;
@@ -45,13 +45,8 @@ interface props {
   toggleLoading(cb?: () => void): void;
 }
 
-interface state {
-  files: IFile[];
-}
-
 export function TransactionRow({
   txn,
-  departmentView,
   enter,
   accept,
   reject,
@@ -63,9 +58,6 @@ export function TransactionRow({
   updateCostCenter,
   userID,
 }: props) {
-  const [state, setState] = useState<state>({
-    files: [],
-  });
   const [isEditingCostCenter, setIsEditingCostCenter] = useState(false);
 
   const FileInput = React.createRef<HTMLInputElement>();
@@ -248,24 +240,13 @@ export function TransactionRow({
             defaultValue={txn.notes}
             multiline
           />
-          <Gallery
+          <AltGallery
             title="Receipt Photos"
-            fileList={state.files}
+            fileList={getGalleryData(txn)}
+            transactionID={txn.id}
             text="View receipt photos"
-            //@ts-ignore
-            onOpen={() => fetchFiles(txn, setState, clients.s3.getMimeType)}
-            disabled={txn.documentsList.length === 0}
             iconButton
           />
-          {/*<PopoverGallery
-            title="Receipt Photos"
-            fileList={state.files}
-            text="View receipt photos"
-            //@ts-ignore
-            onOpen={() => fetchFiles(txn, setState, clients.s3.getMimeType)}
-            disabled={txn.documentsList.length === 0}
-            iconButton
-          />*/}
           <TxnLog iconButton txnID={txn.id} />
           <TxnNotes
             iconButton
@@ -315,41 +296,6 @@ export function TransactionRow({
   );
 }
 
-async function fetchFiles(
-  txn: Transaction.AsObject,
-  setState: (state: state) => void,
-  getMimeType: (str: string) => string,
-) {
-  const filesList = txn.documentsList
-    .filter((d) => d.reference)
-    .map((d) => {
-      const arr = d.reference.split('.');
-      const mimeTypeStr = arr[arr.length - 1];
-      return {
-        name: d.reference,
-        mimeType: getMimeType(mimeTypeStr),
-        data: new Uint8Array(0),
-      };
-    });
-
-  const docsArr = txn.documentsList.filter((d) => d.reference).map(downloadDoc);
-  const docObjects = await Promise.all(docsArr);
-
-  const files = filesList.map((f) => {
-    const docObj = docObjects.find(
-      (obj) => obj.getKey().replace(`${txn.id}-`, '') === f.name,
-    );
-    if (docObj) {
-      f.data = docObj.getData() as Uint8Array;
-    }
-    return f;
-  });
-
-  setState({
-    files,
-  });
-}
-
 function copyToClipboard(text: string): void {
   const el = document.createElement('textarea');
   el.value = text;
@@ -370,7 +316,11 @@ export function prettyMoney(amount: number): string {
   }
 }
 
-async function downloadDoc(doc: TransactionDocument.AsObject) {
-  const docClient = new TransactionDocumentClient(ENDPOINT);
-  return await docClient.download(doc.transactionId, doc.reference);
+function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
+  return txn.documentsList.map((d) => {
+    return {
+      key: `${txn.id}-${d.reference}`,
+      bucket: 'kalos-transactions',
+    };
+  });
 }

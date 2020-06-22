@@ -10,9 +10,10 @@ import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
 import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
+import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ENDPOINT } from '../../constants';
+import { getMimeType } from '../../helpers';
 
 export interface GalleryData {
   key: string;
@@ -25,8 +26,8 @@ interface props {
   text: string;
   iconButton?: boolean;
   disabled?: boolean;
-  onOpen?(): void;
   onDelete?(): void;
+  transactionID: number;
 }
 
 interface state {
@@ -35,6 +36,14 @@ interface state {
   isOpen: boolean;
   isLoading: boolean;
   fileList: GalleryData[];
+  documentList: DocData[];
+  rotation: number;
+}
+
+interface DocData {
+  reference: string;
+  id: number;
+  data?: Uint8Array;
 }
 
 export class AltGallery extends React.PureComponent<props, state> {
@@ -49,20 +58,79 @@ export class AltGallery extends React.PureComponent<props, state> {
       isOpen: false,
       isLoading: false,
       fileList: props.fileList,
+      documentList: [],
+      rotation: 0,
     };
 
     this.S3Client = new S3Client(ENDPOINT);
     this.DocClient = new TransactionDocumentClient(ENDPOINT);
     this.toggleOpen = this.toggleOpen.bind(this);
+    this.download = this.download.bind(this);
     this.changeImage = this.changeImage.bind(this);
     this.fetch = this.fetch.bind(this);
     this.delete = this.delete.bind(this);
   }
 
+  setRotation(rotation: number) {
+    this.setState({ rotation });
+  }
+
+  rotateLeft = () => {
+    this.setRotation(this.state.rotation - 90);
+  };
+
+  rotateRight = () => {
+    this.setRotation(this.state.rotation + 90);
+  };
+
   toggleOpen() {
-    this.setState((prevState) => ({
-      isOpen: !prevState.isOpen,
-    }));
+    let wasClosed: boolean;
+    this.setState((prevState) => {
+      wasClosed = !prevState.isOpen;
+      return { isOpen: !prevState.isOpen };
+    });
+  }
+
+  fetchData() {
+    return new Promise(async (resolve) => {
+      const docs = await this.DocClient.byTransactionID(
+        this.props.transactionID,
+      );
+
+      const galleryData = docs.map((d) => {
+        return {
+          key: `${this.props.transactionID}-${d.reference}`,
+          bucket: 'kalos-transactions',
+        };
+      });
+
+      const documentList = docs.map((d) => ({
+        reference: d.reference,
+        id: d.transactionId,
+      }));
+      this.setState({ fileList: galleryData, documentList }, resolve);
+    });
+  }
+
+  fetchDocData(d: DocData) {
+    return new Promise<Uint8Array>(async (resolve) => {
+      const data = (
+        await this.DocClient.download(d.id, d.reference)
+      ).getData() as Uint8Array;
+      this.setState(
+        (prevState) => {
+          return {
+            documentList: prevState.documentList.map((doc) => {
+              if (doc.reference === d.reference) {
+                doc.data = data;
+              }
+              return doc;
+            }),
+          };
+        },
+        () => resolve(data),
+      );
+    });
   }
 
   changeImage(n: number) {
@@ -85,10 +153,29 @@ export class AltGallery extends React.PureComponent<props, state> {
   delete() {
     this.setState({ isLoading: true }, async () => {
       const { activeImage, fileList } = this.state;
-      const data = this.props.fileList[activeImage];
+      const data = fileList[activeImage];
       try {
         await this.DocClient.deleteByName(data.key, data.bucket);
-        this.prevImage();
+        this.setState((prevState) => {
+          const fileList = prevState.fileList.filter((f) => f.key !== data.key);
+          const documentList = prevState.documentList.filter(
+            (d) => `${this.props.transactionID}-${d.reference}` !== data.key,
+          );
+          let activeImg = prevState.activeImage - 1;
+          if (activeImg < 0) {
+            activeImg = 0;
+          }
+          let isOpen = prevState.isOpen;
+          if (fileList.length === 0 && documentList.length === 0) {
+            isOpen = false;
+          }
+          return {
+            fileList,
+            documentList,
+            activeImage,
+            isOpen,
+          };
+        });
       } catch (err) {
         alert('File could not be deleted');
         this.setState({ isLoading: false });
@@ -96,27 +183,52 @@ export class AltGallery extends React.PureComponent<props, state> {
     });
   }
 
+  download() {
+    const { documentList, activeImage } = this.state;
+    const img = documentList[activeImage];
+    const el = document.createElement('a');
+    el.download = img.reference;
+
+    const blob = new Blob([img.data!], {
+      type: this.S3Client.getMimeType(img.reference) || '.png',
+    });
+    el.href = URL.createObjectURL(blob);
+    el.click();
+    el.remove();
+  }
+
   fetch() {
     this.setState({ isLoading: true }, async () => {
-      const data = this.props.fileList[this.state.activeImage];
-      const req = new URLObject();
-      req.setBucket(data.bucket);
-      req.setKey(data.key);
-      const res = await this.S3Client.GetDownloadURL(req);
-      this.setState({
-        currentURL: res.url,
-        isLoading: false,
-      });
+      try {
+        let data: Uint8Array;
+        if (this.state.fileList.length === 0) {
+          await this.fetchData();
+        }
+        const doc = this.state.documentList[this.state.activeImage];
+        if (doc.data && doc.data.length > 0) {
+          data = doc.data;
+        } else {
+          data = await this.fetchDocData(doc);
+        }
+
+        const blob = new Blob([data], {
+          type: getMimeType(doc.reference) || '.png',
+        });
+        const currentURL = URL.createObjectURL(blob);
+        this.setState({
+          isLoading: false,
+          currentURL,
+        });
+      } catch (err) {
+        alert('No documents were found');
+        this.toggleOpen();
+      }
     });
   }
 
-  componentDidMount() {
-    this.fetch();
-  }
-
   render() {
-    const { iconButton, text, disabled, title, fileList } = this.props;
-    const { isOpen, activeImage, currentURL, isLoading } = this.state;
+    const { iconButton, text, disabled, title } = this.props;
+    const { isOpen, activeImage, currentURL, isLoading, fileList } = this.state;
 
     const button = iconButton ? (
       <Tooltip title={text} placement="top">
@@ -128,7 +240,6 @@ export class AltGallery extends React.PureComponent<props, state> {
       </Tooltip>
     ) : (
       <Button
-        variant="outlined"
         size="large"
         style={{ height: 44, marginBottom: 10 }}
         fullWidth
@@ -140,7 +251,13 @@ export class AltGallery extends React.PureComponent<props, state> {
       </Button>
     );
     const imgHeight = Math.floor(window.innerHeight * 0.8);
-    const mimeType = this.S3Client.getMimeType(fileList[activeImage].key);
+    const mimeType = this.S3Client.getMimeType(
+      fileList[activeImage]?.key || '',
+    );
+    let top = 0;
+    if ((this.state.rotation / 90) % 2 !== 0) {
+      top = 150;
+    }
     return (
       <>
         {button}
@@ -148,12 +265,13 @@ export class AltGallery extends React.PureComponent<props, state> {
           aria-labelledby="transition-modal-title"
           open={isOpen}
           onClose={this.toggleOpen}
+          onEnter={this.fetch}
           fullScreen
         >
           <Grid
             container
             direction="column"
-            alignItems="center"
+            alignItems="stretch"
             justify="flex-start"
             wrap="nowrap"
           >
@@ -177,9 +295,9 @@ export class AltGallery extends React.PureComponent<props, state> {
               >
                 Close
               </Button>
-              <Button onClick={this.delete} size="large" style={{ height: 44 }}>
+              {/*<Button onClick={this.delete} size="large" style={{ height: 44 }}>
                 Delete Image
-              </Button>
+              </Button>*/}
             </Grid>
             {!isLoading && (
               <Grid
@@ -187,23 +305,31 @@ export class AltGallery extends React.PureComponent<props, state> {
                 container
                 direction="column"
                 justify="center"
-                alignItems="center"
+                alignItems="stretch"
                 style={{
-                  maxHeight: imgHeight,
                   overflow: 'scroll',
-                  height: imgHeight,
+                  minHeight: imgHeight,
+                  maxHeight: window.innerHeight,
+                  width: '100%',
                 }}
               >
                 {mimeType === 'application/pdf' && (
                   <iframe
                     src={currentURL}
-                    style={{ maxWidth: '100%', height: 'auto' }}
+                    style={{ maxWidth: '100%', height: imgHeight }}
                   ></iframe>
                 )}
                 {mimeType !== 'application/pdf' && (
                   <img
                     src={currentURL}
-                    style={{ maxWidth: '100%', height: 'auto' }}
+                    style={{
+                      maxWidth: '100%',
+                      height: '100%',
+                      transform: `rotate(${this.state.rotation}deg)`,
+                      position: 'relative',
+                      top,
+                    }}
+                    onClick={this.rotateRight}
                   />
                 )}
               </Grid>
@@ -236,14 +362,16 @@ export class AltGallery extends React.PureComponent<props, state> {
               >
                 Prev
               </Button>
-              {/*<Button
-                onClick={this.download}
-                size="large"
-                className="title-text"
-                style={{ height: 44 }}
-              >
-                Download
-              </Button>*/}
+              {
+                <Button
+                  onClick={this.download}
+                  size="large"
+                  className="title-text"
+                  style={{ height: 44 }}
+                >
+                  Download
+                </Button>
+              }
               <Button
                 onClick={this.nextImage}
                 disabled={activeImage === fileList.length - 1}

@@ -13,6 +13,11 @@ import {
   ActivityLogClient,
 } from '@kalos-core/kalos-rpc/ActivityLog';
 import {
+  ReportClient,
+  PromptPaymentReport,
+  PromptPaymentReportLine,
+} from '@kalos-core/kalos-rpc/Report';
+import {
   EmployeeFunctionClient,
   EmployeeFunction,
 } from '@kalos-core/kalos-rpc/EmployeeFunction';
@@ -66,6 +71,7 @@ import {
   INTERNAL_DOCUMENTS_BUCKET,
   OPTION_ALL,
   MAX_PAGES,
+  MEALS_RATE,
 } from './constants';
 import { Option } from './modules/ComponentsLibrary/Field';
 import {
@@ -76,6 +82,7 @@ import {
   getRandomJobTitle,
   getRandomPhone,
   getRandomNumber,
+  randomize,
 } from './modules/ComponentsLibrary/helpers';
 
 export type UserType = User.AsObject;
@@ -94,7 +101,9 @@ export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 export type EmployeeFunctionType = EmployeeFunction.AsObject;
 export type ActivityLogType = ActivityLog.AsObject;
 export type SpiffTypeType = SpiffType.AsObject;
+export type PromptPaymentReportLineType = PromptPaymentReportLine.AsObject;
 
+export const ReportClientService = new ReportClient(ENDPOINT);
 export const TaskClientService = new TaskClient(ENDPOINT);
 export const PDFClientService = new PDFClient(ENDPOINT);
 export const UserClientService = new UserClient(ENDPOINT);
@@ -985,6 +994,23 @@ export const loadPerDiemByUserIdAndDateStarted = async (
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 
+export const loadPerDiemByUserIdsAndDateStarted = async (
+  userIds: number[],
+  dateStarted: string,
+) => {
+  const response = await Promise.all(
+    uniq(userIds).map(async userId => ({
+      userId,
+      data: (await loadPerDiemByUserIdAndDateStarted(userId, dateStarted))
+        .resultsList,
+    })),
+  );
+  return response.reduce(
+    (aggr, { userId, data }) => ({ ...aggr, [userId]: data }),
+    {},
+  );
+};
+
 export const loadPerDiemByDepartmentIdAndDateStarted = async (
   departmentId: number,
   dateStarted: string,
@@ -995,6 +1021,29 @@ export const loadPerDiemByDepartmentIdAndDateStarted = async (
   req.setIsActive(true);
   req.setPageNumber(0);
   req.setDateStarted(`${dateStarted}%`);
+  return (await PerDiemClientService.BatchGet(req)).toObject();
+};
+
+export const loadPerDiemsNeedsAuditing = async (
+  page: number,
+  departmentId?: number,
+  userId?: number,
+  dateStarted?: string,
+) => {
+  const req = new PerDiem();
+  req.setWithRows(true);
+  req.setPageNumber(page);
+  req.setNeedsAuditing(true);
+  if (departmentId) {
+    req.setDepartmentId(departmentId);
+  }
+  if (userId) {
+    req.setUserId(userId);
+  }
+  if (dateStarted) {
+    req.setDateStarted(`${dateStarted}%`);
+  }
+  req.setIsActive(true);
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 
@@ -1009,6 +1058,14 @@ export const upsertPerDiem = async (data: PerDiemType) => {
   }
   req.setFieldMaskList(fieldMaskList);
   return await PerDiemClientService[data.id ? 'Update' : 'Create'](req);
+};
+
+export const updatePerDiemNeedsAudit = async (id: number) => {
+  const req = new PerDiem();
+  req.setId(id);
+  req.setNeedsAuditing(false);
+  req.setFieldMaskList(['Id', 'NeedsAuditing']);
+  await PerDiemClientService.Update(req);
 };
 
 export const submitPerDiemById = async (id: number) => {
@@ -1104,13 +1161,13 @@ function roundNumber(num: number) {
 /**
  * Returns options with weeks (starting Sunday) for the past year period
  */
-function getWeekOptions(weeks = 52, offsetWeeks = 0): Option[] {
+function getWeekOptions(weeks = 52, offsetWeeks = 0, offsetDays = 0): Option[] {
   const d = new Date();
   return Array.from(Array(weeks)).map((_, week) => {
     const w = new Date(
       d.getFullYear(),
       d.getMonth(),
-      d.getDate() - d.getDay() - (week + offsetWeeks) * 7,
+      d.getDate() - d.getDay() - (week + offsetWeeks) * 7 + offsetDays,
     );
     return {
       label: `Week of ${
@@ -1265,6 +1322,23 @@ export const loadCharityReport = async (month: string) => {
   };
 };
 
+export const loadWarrantyReport = async () => {
+  return [...Array(130)].map(() => ({
+    briefDdescription: randomize([
+      'Broken',
+      'Not working',
+      'Noisy',
+      'Loud',
+      'Unpredictable',
+    ]),
+    externalId: getRandomNumber(7),
+    referenceNumber: getRandomNumber(6),
+    statusDesc: randomize(['Active', 'Inactive', 'Pending', 'Completed']),
+    priorityDesc: randomize(['Blocker', 'Urgent', 'Major', 'Minor']),
+    techName: getRandomName(),
+  }));
+};
+
 export type LoadMetricsByWeekFilter = {
   filter: {
     week: string;
@@ -1292,6 +1366,21 @@ export const loadServiceCallMetricsByFilter = async ({
       serviceCallDate: week,
     })),
   };
+};
+
+export const loadPromptPaymentData = async () => {
+  return [...Array(100)].map(() => {
+    const allInvoices = getRandomNumber(2);
+    return {
+      customerName: getRandomLastName() + ' ' + getRandomLastName(),
+      payableAward: getRandomNumber(4),
+      forfeitedAward: getRandomNumber(3),
+      pendingAward: getRandomNumber(2),
+      averageDaysToPay: getRandomNumber(2),
+      paidInvoices: Math.floor(Math.random() * allInvoices),
+      allInvoices,
+    };
+  });
 };
 
 export type LoadSpiffReportByFilter = {
@@ -2043,9 +2132,11 @@ const loadGovPerDiemData = async (
         },
       ],
     } = await (await fetch(endpoint)).json();
-    return { [zipCode]: { meals, lodging: months.month[month - 1].value } };
+    return {
+      [zipCode]: { meals: MEALS_RATE, lodging: months.month[month - 1].value },
+    };
   } catch (e) {
-    return { [zipCode]: { meals: 0, lodging: 0 } };
+    return { [zipCode]: { meals: MEALS_RATE, lodging: 0 } };
   }
 };
 

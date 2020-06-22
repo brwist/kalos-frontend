@@ -88,30 +88,32 @@ export class PDFMaker extends React.PureComponent<props, state> {
         this.props.pdfType === 'Missing Receipt'
           ? ReceiptAffadavit
           : RetrievableAffadavit;
-      const blob = await (
-        await ReactPDF.pdf(
-          <ThePDF
-            date={this.props.dateStr}
-            vendor={this.state.vendor}
-            name={this.props.name}
-            purpose={this.state.purpose}
-            sigURL={this.state.sigURL}
-            amount={this.props.amount}
-            jobNumber={this.state.jobNumber}
-          />,
-        ).toBlob()
-      ).arrayBuffer();
-      if (this.props.onCreate) {
-        this.props.onCreate(new Uint8Array(blob));
-        this.toggleModal();
-      } else {
-        const el = document.createElement('a');
-        el.download = 'affadavit.pdf';
-        el.href = URL.createObjectURL(blob);
-        el.target = '_blank';
-        el.click();
-        el.remove();
-      }
+      const blob = await await ReactPDF.pdf(
+        <ThePDF
+          date={this.props.dateStr}
+          vendor={this.state.vendor}
+          name={this.props.name}
+          purpose={this.state.purpose}
+          sigURL={this.state.sigURL}
+          amount={this.props.amount}
+          jobNumber={this.state.jobNumber}
+        />,
+      ).toBlob();
+      const fr = new FileReader();
+      fr.onload = () => {
+        if (this.props.onCreate) {
+          this.props.onCreate(new Uint8Array(fr.result as ArrayBuffer));
+          this.toggleModal();
+        } else {
+          const el = document.createElement('a');
+          el.download = 'affadavit.pdf';
+          el.href = URL.createObjectURL(blob);
+          el.target = '_blank';
+          el.click();
+          el.remove();
+        }
+      };
+      fr.readAsArrayBuffer(blob);
     }
   }
 

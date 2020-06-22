@@ -6,10 +6,12 @@ import {
   getRandomAge,
   getRandomJobTitle,
   getRandomPhone,
+  ExampleTitle,
 } from '../helpers';
 
 export default ({ rows = 30 }: { rows?: number }) => (
   <>
+    <ExampleTitle>with align</ExampleTitle>
     <PrintTable
       columns={[
         'First Name',
@@ -28,6 +30,7 @@ export default ({ rows = 30 }: { rows?: number }) => (
         getRandomPhone(),
       ])}
     />
+    <ExampleTitle>noBorders</ExampleTitle>
     <PrintTable
       columns={['First Name', 'Last Name', 'Age']}
       data={[...Array(3)].map(() => [
@@ -36,6 +39,20 @@ export default ({ rows = 30 }: { rows?: number }) => (
         getRandomAge(),
       ])}
       noBorders
+    />
+    <ExampleTitle>empty data</ExampleTitle>
+    <PrintTable columns={['First Name', 'Last Name', 'Age']} data={[]} />
+    <ExampleTitle>empty data with noEntriesText</ExampleTitle>
+    <PrintTable
+      columns={['First Name', 'Last Name', 'Age']}
+      data={[]}
+      noEntriesText="Lorem ipsum..."
+    />
+    <ExampleTitle>empty data with skipNoEntriesTest</ExampleTitle>
+    <PrintTable
+      columns={['First Name', 'Last Name', 'Age']}
+      data={[]}
+      skipNoEntriesTest
     />
   </>
 );

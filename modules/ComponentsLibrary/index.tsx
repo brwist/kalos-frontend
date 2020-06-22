@@ -36,6 +36,7 @@ import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
 import Modal from './Modal/examples';
 import PerDiem from './PerDiem/examples';
+import PerDiemsNeedsAuditing from './PerDiemsNeedsAuditing/examples';
 import PerformanceMetrics from './PerformanceMetrics/examples';
 import PlainForm from './PlainForm/examples';
 import PrintFooter from './PrintFooter/examples';
@@ -45,6 +46,7 @@ import PrintPage from './PrintPage/examples';
 import PrintPageBreak from './PrintPageBreak/examples';
 import PrintParagraph from './PrintParagraph/examples';
 import PrintTable from './PrintTable/examples';
+import PromptPaymentReport from './PromptPaymentReport/examples';
 import PropertyEdit from './PropertyEdit/examples';
 import QuoteSelector from './QuoteSelector/examples';
 import Reports from './Reports/examples';
@@ -60,6 +62,7 @@ import SpiffReport from './SpiffReport/examples';
 import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
 import Tooltip from './Tooltip/examples';
+import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
 
 const DEFAULT_COMPONENT_IDX = 0;
@@ -96,6 +99,7 @@ const COMPONENTS = {
   Link,
   Modal,
   PerDiem,
+  PerDiemsNeedsAuditing,
   PerformanceMetrics,
   PlainForm,
   PrintFooter,
@@ -105,6 +109,7 @@ const COMPONENTS = {
   PrintPageBreak,
   PrintParagraph,
   PrintTable,
+  PromptPaymentReport,
   PropertyEdit,
   QuoteSelector,
   Reports,
@@ -120,6 +125,7 @@ const COMPONENTS = {
   StoredQuotes,
   Tabs,
   Tooltip,
+  WarrantyReport,
   WeekPicker,
 };
 

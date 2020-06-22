@@ -7,7 +7,7 @@ import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
-import { loadCharityReport, usd } from '../../../helpers';
+import { loadCharityReport, usd, getCurrDate } from '../../../helpers';
 
 interface Props {
   month: string;
@@ -29,7 +29,6 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
     setLoading(true);
     const data = await loadCharityReport(month);
     setData(data);
-    console.log({ data });
     setLoading(false);
   }, [setLoading, setData]);
   useEffect(() => {
@@ -39,7 +38,7 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
     }
   }, [loaded, setLoaded, load]);
   const subtitle = useMemo(
-    () => format(new Date(month.replace('%', '01')), 'MMMM yyyy'),
+    () => format(new Date(`${month.replace('%', '01')} 00:00:00`), 'MMMM yyyy'),
     [month],
   );
   return (
@@ -48,7 +47,59 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
         title="Charity Report"
         subtitle={subtitle}
         asideContent={
-          <>{onClose && <Button label="Close" onClick={onClose} />}</>
+          <>
+            <PrintPage
+              headerProps={{
+                title: 'Charity Report',
+                subtitle,
+              }}
+              buttonProps={{
+                label: 'Print',
+                disabled: loading,
+              }}
+              downloadPdfFilename={`Charity_Report_${getCurrDate()}`}
+            >
+              {!loading && (
+                <>
+                  <PrintTable
+                    columns={[
+                      'Residential Service Total',
+                      {
+                        title: usd(data.residentialServiceTotal),
+                        align: 'right',
+                      },
+                    ]}
+                    data={[]}
+                    skipNoEntriesTest
+                  />
+                  <PrintTable
+                    columns={[
+                      'Residential AOR Total',
+                      { title: usd(data.residentialAorTotal), align: 'right' },
+                    ]}
+                    data={[]}
+                    skipNoEntriesTest
+                  />
+                  <PrintTable
+                    columns={[
+                      'Technician',
+                      { title: 'Contribution', align: 'right' },
+                      { title: 'Average Hourly', align: 'right' },
+                    ]}
+                    data={data.items.map(
+                      //@ts-ignore
+                      ({ technician, contribution, averageHourly }) => [
+                        technician,
+                        usd(contribution),
+                        usd(averageHourly),
+                      ],
+                    )}
+                  />
+                </>
+              )}
+            </PrintPage>
+            {onClose && <Button label="Close" onClick={onClose} />}
+          </>
         }
       />
       {loading ? (

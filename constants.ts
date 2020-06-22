@@ -1,5 +1,7 @@
 import { Options } from './modules/ComponentsLibrary/Field';
 
+export const MEALS_RATE = 35;
+
 export const MAX_PAGES = 20;
 
 export const BASE_URL = 'https://app.kalosflorida.com/index.cfm';

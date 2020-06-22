@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import Typography from '@material-ui/core/Typography';
 import Alert from '@material-ui/lab/Alert';
 import sortBy from 'lodash/sortBy';
 import { startOfWeek, format, addDays } from 'date-fns';
@@ -18,6 +19,7 @@ import { Loader } from '../../Loader/main';
 import {
   loadUserById,
   loadPerDiemByUserIdAndDateStarted,
+  loadPerDiemByUserIdsAndDateStarted,
   UserType,
   PerDiemType,
   PerDiemRowType,
@@ -36,11 +38,12 @@ import {
   loadGovPerDiem,
   usd,
 } from '../../../helpers';
-import { JOB_STATUS_COLORS } from '../../../constants';
+import { JOB_STATUS_COLORS, MEALS_RATE } from '../../../constants';
 
 export interface Props {
-  loggedUserId: number;
+  loggedUserId?: number;
   onClose?: () => void;
+  perDiem?: PerDiemType;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -60,11 +63,22 @@ const useStyles = makeStyles(theme => ({
   button: {
     marginLeft: 0,
   },
+  otherDepartmentCard: {
+    opacity: 0.3,
+    pointerEvents: 'none',
+  },
+  otherDepartmentText: {
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(5.75),
+    textAlign: 'center',
+    lineHeight: '20px',
+    fontStyle: 'italic',
+  },
 }));
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const getStatus = (
+export const getStatus = (
   dateApproved: string,
   dateSubmitted: string,
   isManager: boolean,
@@ -148,7 +162,11 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   ],
 ];
 
-export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
+export const PerDiemComponent: FC<Props> = ({
+  loggedUserId = 0,
+  onClose,
+  perDiem,
+}) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -158,6 +176,9 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
+  const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
+    [key: number]: PerDiemType[];
+  }>({});
   const [managerDepartmentId, setManagerDepartmentId] = useState<number>();
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
@@ -180,7 +201,12 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
   >(false);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [dateStarted, setDateStarted] = useState<Date>(
-    addDays(startOfWeek(new Date(), { weekStartsOn: 6 }), -0),
+    addDays(
+      startOfWeek(perDiem ? new Date(perDiem.dateStarted) : new Date(), {
+        weekStartsOn: 6,
+      }),
+      -0,
+    ),
   );
   const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] = useState<
     PerDiemRowType
@@ -190,18 +216,32 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
   const initialize = useCallback(async () => {
-    setInitializing(true);
-    const user = await loadUserById(loggedUserId);
-    setUser(user);
-    const departments = await loadTimesheetDepartments();
-    setDepartments(sortBy(departments, getDepartmentName));
-    const managerDepartment = departments.find(
-      ({ managerId }) => managerId === loggedUserId,
-    );
-    if (managerDepartment) {
-      setManagerDepartmentId(managerDepartment.id);
+    if (perDiem) {
+      const year = +format(dateStarted, 'yyyy');
+      const month = +format(dateStarted, 'M');
+      const zipCodes = [perDiem]
+        .reduce(
+          (aggr, { rowsList }) => [...aggr, ...rowsList],
+          [] as PerDiemRowType[],
+        )
+        .map(({ zipCode }) => zipCode);
+      const govPerDiems = await loadGovPerDiem(zipCodes, year, month);
+      setGovPerDiems(govPerDiems);
     }
-    setInitializing(false);
+    if (loggedUserId) {
+      setInitializing(true);
+      const user = await loadUserById(loggedUserId);
+      setUser(user);
+      const departments = await loadTimesheetDepartments();
+      setDepartments(sortBy(departments, getDepartmentName));
+      const managerDepartment = departments.find(
+        ({ managerId }) => managerId === loggedUserId,
+      );
+      if (managerDepartment) {
+        setManagerDepartmentId(managerDepartment.id);
+      }
+      setInitializing(false);
+    }
     setInitialized(true);
   }, [
     loggedUserId,
@@ -210,29 +250,41 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     setDepartments,
     setManagerDepartmentId,
     setInitialized,
+    perDiem,
   ]);
   const load = useCallback(async () => {
+    if (!loggedUserId) return;
     setLoading(true);
     const { resultsList } = await loadPerDiemByUserIdAndDateStarted(
       loggedUserId,
       formatDateFns(dateStarted),
     );
-    setPerDiems(resultsList);
-    const zipCodes = resultsList
-      .reduce(
-        (aggr, { rowsList }) => [...aggr, ...rowsList],
-        [] as PerDiemRowType[],
-      )
-      .map(({ zipCode }) => zipCode);
-    const govPerDiems = await loadGovPerDiem(zipCodes, 2020, 3);
-    setGovPerDiems(govPerDiems);
+    let managerPerDiemsList = [] as PerDiemType[];
+    let managerPerDiemsOther = {};
     if (managerDepartmentId) {
       const managerPerDiems = await loadPerDiemByDepartmentIdAndDateStarted(
         managerDepartmentId,
         formatDateFns(dateStarted),
       );
-      setManagerPerDiems(managerPerDiems.resultsList);
+      managerPerDiemsList = managerPerDiems.resultsList;
+      managerPerDiemsOther = await loadPerDiemByUserIdsAndDateStarted(
+        managerPerDiemsList.map(({ userId }) => userId),
+        formatDateFns(dateStarted),
+      );
     }
+    const year = +format(dateStarted, 'yyyy');
+    const month = +format(dateStarted, 'M');
+    const zipCodes = [...resultsList, ...managerPerDiemsList]
+      .reduce(
+        (aggr, { rowsList }) => [...aggr, ...rowsList],
+        [] as PerDiemRowType[],
+      )
+      .map(({ zipCode }) => zipCode);
+    const govPerDiems = await loadGovPerDiem(zipCodes, year, month);
+    setGovPerDiems(govPerDiems);
+    setPerDiems(resultsList);
+    setManagerPerDiemsOther(managerPerDiemsOther);
+    setManagerPerDiems(managerPerDiemsList);
     setLoading(false);
   }, [
     loggedUserId,
@@ -254,6 +306,17 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
       initialize();
     }
   }, [initialized, initialize]);
+  const govPerDiemByZipCode = useCallback(
+    (zipCode: string) => {
+      const govPerDiem = govPerDiems[zipCode];
+      if (govPerDiem) return govPerDiem;
+      return {
+        meals: MEALS_RATE,
+        lodging: 0,
+      };
+    },
+    [govPerDiems],
+  );
   const handleSetDateStarted = useCallback(
     (value: Date) => {
       if (formatDateFns(value) === formatDateFns(dateStarted)) return;
@@ -472,19 +535,52 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
     [],
   );
   if (initializing) return <Loader />;
-  const filteredPerDiems = isAnyManager ? managerPerDiems : perDiems;
+  const filteredPerDiems = perDiem
+    ? [perDiem]
+    : isAnyManager
+    ? managerPerDiems
+    : perDiems;
+  const allRowsList = filteredPerDiems.reduce(
+    (aggr, { rowsList }) => [...aggr, ...rowsList],
+    [] as PerDiemRowType[],
+  );
+  const totalMeals = allRowsList.reduce(
+    (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
+    0,
+  );
+  const totalLodging = allRowsList.reduce(
+    (aggr, { zipCode, mealsOnly }) =>
+      aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
+    0,
+  );
   return (
     <div>
-      <CalendarHeader
-        onDateChange={handleSetDateStarted}
-        onSubmit={handlePendingPerDiemEditToggle(makeNewPerDiem())}
-        selectedDate={dateStarted}
-        title={getCustomerName(user)}
-        weekStartsOn={6}
-        submitLabel="Add Per Diem"
-        submitDisabled={loading || saving || addPerDiemDisabled}
-        actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}
-      />
+      {loggedUserId > 0 && (
+        <CalendarHeader
+          onDateChange={handleSetDateStarted}
+          onSubmit={handlePendingPerDiemEditToggle(makeNewPerDiem())}
+          selectedDate={dateStarted}
+          title={getCustomerName(user)}
+          weekStartsOn={6}
+          submitLabel="Add Per Diem"
+          submitDisabled={loading || saving || addPerDiemDisabled}
+          actions={onClose ? [{ label: 'Close', onClick: onClose }] : undefined}
+        >
+          {!loading && (
+            <>
+              <Typography variant="subtitle2">
+                All {isAnyManager ? 'Technicians' : 'Departments'} Total Meals:
+                <strong> {usd(totalMeals)}</strong>
+              </Typography>
+              <Typography variant="subtitle2">
+                All {isAnyManager ? 'Technicians' : 'Departments'} Total
+                Lodging:
+                <strong> {usd(totalLodging)}</strong>
+              </Typography>
+            </>
+          )}
+        </CalendarHeader>
+      )}
       {loading && <Loader />}
       {!loading && filteredPerDiems.length === 0 && (
         <Alert severity="info">
@@ -511,16 +607,29 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
             loading ||
             status.status === 'APPROVED' ||
             (isOwner && status.status !== 'PENDING_SUBMIT');
+          const totalMeals = rowsList.reduce(
+            (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
+            0,
+          );
+          const totalLodging = rowsList.reduce(
+            (aggr, { zipCode, mealsOnly }) =>
+              aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
+            0,
+          );
           return (
             <div key={id} className={classes.department}>
               <SectionBar
                 title={
-                  isAnyManager
+                  perDiem
+                    ? ''
+                    : isAnyManager
                     ? ownerName + ' (user id: ' + userId + ')'
                     : `Department: ${getDepartmentName(department)}`
                 }
                 subtitle={
                   <>
+                    <div>Total Meals: {usd(totalMeals)}</div>
+                    <div>Total Lodging: {usd(totalLodging)}</div>
                     {+dateSubmitted[0] > 0 && (
                       <div>Submited Date: {formatDate(dateSubmitted)}</div>
                     )}
@@ -530,28 +639,32 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                     {approvedByName && <div>Approved By: {approvedByName}</div>}
                   </>
                 }
-                actions={[
-                  {
-                    label: 'Delete',
-                    variant: 'outlined',
-                    onClick: handlePendingPerDiemDeleteToggle(entry),
-                    disabled: buttonDisabled,
-                  },
-                  {
-                    label: 'Edit',
-                    variant: 'outlined',
-                    onClick: handlePendingPerDiemEditToggle(entry),
-                    disabled: buttonDisabled,
-                  },
-                  {
-                    label: status.button,
-                    onClick:
-                      isAnyManager && status.status === 'PENDING_APPROVE'
-                        ? handlePendingPerDiemApproveToggle(entry)
-                        : handlePendingPerDiemSubmitToggle(entry),
-                    disabled: buttonDisabled,
-                  },
-                ]}
+                actions={
+                  perDiem
+                    ? []
+                    : [
+                        {
+                          label: 'Delete',
+                          variant: 'outlined',
+                          onClick: handlePendingPerDiemDeleteToggle(entry),
+                          disabled: buttonDisabled,
+                        },
+                        {
+                          label: 'Edit',
+                          variant: 'outlined',
+                          onClick: handlePendingPerDiemEditToggle(entry),
+                          disabled: buttonDisabled,
+                        },
+                        {
+                          label: status.button,
+                          onClick:
+                            isAnyManager && status.status === 'PENDING_APPROVE'
+                              ? handlePendingPerDiemApproveToggle(entry)
+                              : handlePendingPerDiemSubmitToggle(entry),
+                          disabled: buttonDisabled,
+                        },
+                      ]
+                }
                 footer={
                   notes.trim() ? (
                     <span>
@@ -560,6 +673,7 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                     </span>
                   ) : null
                 }
+                uncollapsable={!!perDiem}
               >
                 <Calendar className={classes.calendar}>
                   {[...Array(7)].map((_, dayOffset) => {
@@ -568,7 +682,10 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                       dateString.startsWith(date),
                     );
                     const isPerDiemRowUndefined =
-                      filteredPerDiems
+                      (isAnyManager
+                        ? managerPerDiemsOther[userId]
+                        : filteredPerDiems
+                      )
                         .reduce(
                           (aggr, { rowsList }) => [...aggr, ...rowsList],
                           [] as PerDiemRowType[],
@@ -582,9 +699,25 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                         loading={loading}
                         loadingRows={2}
                       >
+                        {!isPerDiemRowUndefined && rows.length === 0 && (
+                          <CalendarCard
+                            title=""
+                            statusColor="white"
+                            className={classes.otherDepartmentCard}
+                          >
+                            <div className={classes.otherDepartmentText}>
+                              Per Diem
+                              <br />
+                              in other
+                              <br />
+                              Department
+                            </div>
+                          </CalendarCard>
+                        )}
                         {((isOwner && status.status === 'PENDING_SUBMIT') ||
                           (isManager && status.status !== 'APPROVED')) &&
-                          isPerDiemRowUndefined && (
+                          isPerDiemRowUndefined &&
+                          !perDiem && (
                             <Button
                               label="Add Per Diem Row"
                               compact
@@ -612,9 +745,10 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                               title={status.text.toUpperCase()}
                               statusColor={status.color}
                               onClick={
-                                (isOwner &&
+                                !perDiem &&
+                                ((isOwner &&
                                   status.status === 'PENDING_SUBMIT') ||
-                                (isManager && status.status !== 'APPROVED')
+                                  (isManager && status.status !== 'APPROVED'))
                                   ? handlePendingPerDiemRowEditToggle(entry)
                                   : undefined
                               }
@@ -637,10 +771,14 @@ export const PerDiemComponent: FC<Props> = ({ loggedUserId, onClose }) => {
                                   {usd(govPerDiems[zipCode].meals)}
                                 </div>
                               )}
-                              {govPerDiems[zipCode] && (
+                              {(govPerDiems[zipCode] || mealsOnly) && (
                                 <div className={classes.row}>
                                   <strong>Lodging: </strong>
-                                  {usd(govPerDiems[zipCode].lodging)}
+                                  {usd(
+                                    mealsOnly
+                                      ? 0
+                                      : govPerDiems[zipCode].lodging,
+                                  )}
                                 </div>
                               )}
                               <div className={classes.row}>

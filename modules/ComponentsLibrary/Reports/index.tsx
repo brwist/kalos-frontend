@@ -11,6 +11,8 @@ import { DeletedServiceCallsReport } from '../DeletedServiceCallsReport';
 import { CallbackReport } from '../CallbackReport';
 import { ServiceCallMetrics } from '../ServiceCallMetrics';
 import { SpiffReport } from '../SpiffReport';
+import { CharityReport } from '../CharityReport';
+import { WarrantyReport } from '../WarrantyReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -904,17 +906,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       )}
       {warrantyReportOpen && (
         <Modal open onClose={handleOpenWarrantyReportToggle(false)} fullScreen>
-          <SectionBar
-            title="Warranty Report"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenWarrantyReportToggle(false)(),
-              },
-            ]}
-            fixedActions
-          />
-          {UNDER_CONSTRUCTION}
+          <WarrantyReport onClose={handleOpenWarrantyReportToggle(false)} />
         </Modal>
       )}
       {trainingMetricsReportOpen && (
@@ -938,17 +930,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       )}
       {charityReportOpen && (
         <Modal open onClose={handleOpenCharityReportToggle(false)} fullScreen>
-          <SectionBar
-            title="Charity Report"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenCharityReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <CharityReport
+            month={charityReport.month!}
+            onClose={handleOpenCharityReportToggle(false)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {billingAuditReportOpen && (
