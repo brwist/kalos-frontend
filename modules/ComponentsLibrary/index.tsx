@@ -61,6 +61,7 @@ import ServiceItems from './ServiceItems/examples';
 import SpiffReport from './SpiffReport/examples';
 import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
+import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Tooltip from './Tooltip/examples';
 import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
@@ -124,6 +125,7 @@ const COMPONENTS = {
   SpiffReport,
   StoredQuotes,
   Tabs,
+  TimeoffSummaryReport,
   Tooltip,
   WarrantyReport,
   WeekPicker,

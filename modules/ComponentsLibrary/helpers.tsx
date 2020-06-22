@@ -109,5 +109,5 @@ export const getRandomPhone = () =>
 export const getRandomNumber = (digits: number) =>
   +[...Array(digits)].map(() => getRandomDigit()).join('');
 
-export const randomize = (values: string[]) =>
+export const randomize = (values: (string | number)[]) =>
   values[Math.floor(Math.random() * values.length)];

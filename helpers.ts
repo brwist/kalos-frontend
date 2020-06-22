@@ -1324,6 +1324,21 @@ export const loadCharityReport = async (month: string) => {
   };
 };
 
+export const loadTimeoffSummaryReport = async (year: number) => {
+  return [...Array(100)].map(() => ({
+    employeeName: getRandomName(),
+    hireDate: [
+      randomize([2015, 2016, 2017, 2018, 2019]),
+      trailingZero(+randomize([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])),
+      trailingZero(+randomize([...Array(30)].map((_, idx) => idx + 1))),
+    ].join('-'),
+    annualPtoAllowance: randomize([0, 40]),
+    pto: randomize([0, 8, 24, 32, 64]),
+    discretionary: randomize([0, 32, 40, 23, 14]),
+    mandatory: 0,
+  }));
+};
+
 export const loadWarrantyReport = async () => {
   return [...Array(130)].map(() => ({
     briefDdescription: randomize([
