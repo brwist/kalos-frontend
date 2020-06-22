@@ -1,17 +1,25 @@
-import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { format } from 'date-fns';
+import IconButton from '@material-ui/core/IconButton';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
+import { PlainForm, Schema } from '../PlainForm';
 import { loadTimeoffSummaryReport, formatDate } from '../../../helpers';
 
 interface Props {
   onClose?: () => void;
 }
+
+type FilterForm = {
+  year: number;
+  employeeName: string;
+};
 
 const useStyles = makeStyles(theme => ({}));
 
@@ -19,31 +27,75 @@ export const TimeoffSummaryReport: FC<Props> = ({ onClose }) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [year, setYear] = useState<number>(new Date().getFullYear());
   const [data, setData] = useState<any[]>([]);
+  const [form, setForm] = useState<FilterForm>({
+    year: new Date().getFullYear(),
+    employeeName: '',
+  });
+  const [formKey, setFormKey] = useState<number>(0);
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await loadTimeoffSummaryReport(year);
+    const data = await loadTimeoffSummaryReport(form.year);
     setData(data);
     setLoading(false);
-  }, [setLoading, setData, year]);
+  }, [setLoading, setData, form]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
       load();
     }
   }, [loaded, setLoaded, load]);
+  const handleYearChange = useCallback(
+    (step: number) => () => {
+      setForm({ employeeName: '', year: year + step });
+      setFormKey(formKey + 1);
+      setLoaded(false);
+    },
+    [setForm, formKey, setFormKey],
+  );
+  const SCHEMA: Schema<FilterForm> = [
+    [
+      {
+        name: 'employeeName',
+        label: 'Employee',
+        type: 'search',
+      },
+      {
+        name: 'year',
+        label: 'Year',
+        readOnly: true,
+        startAdornment: (
+          <IconButton size="small" onClick={handleYearChange(-1)}>
+            <ChevronLeftIcon />
+          </IconButton>
+        ),
+        endAdornment: (
+          <IconButton size="small" onClick={handleYearChange(1)}>
+            <ChevronRightIcon />
+          </IconButton>
+        ),
+      },
+    ],
+  ];
+  const { year, employeeName } = form;
+  const employeeNamePhrase = employeeName.toLowerCase();
+  const filteredData = data.filter(({ employeeName }) =>
+    employeeName.toLowerCase().includes(employeeNamePhrase),
+  );
   return (
     <div>
       <SectionBar
-        title="Timeoff Summary Report"
-        subtitle={year}
+        title={`Timeoff Summary Report for ${year}`}
         asideContent={
           <>
             <PrintPage
               headerProps={{
-                title: 'Timeoff Summary Report',
-                subtitle: year,
+                title: `Timeoff Summary Report for ${year}`,
+                subtitle: employeeName ? (
+                  <div>
+                    <strong>Employee Name includes: </strong> {employeeName}
+                  </div>
+                ) : null,
               }}
               buttonProps={{
                 label: 'Print',
@@ -61,7 +113,7 @@ export const TimeoffSummaryReport: FC<Props> = ({ onClose }) => {
                       { title: 'Discretionary', align: 'right' },
                       { title: 'Mandatory', align: 'right' },
                     ]}
-                    data={data.map(
+                    data={filteredData.map(
                       ({
                         employeeName,
                         hireDate,
@@ -90,6 +142,12 @@ export const TimeoffSummaryReport: FC<Props> = ({ onClose }) => {
         <Loader />
       ) : (
         <>
+          <PlainForm
+            key={formKey}
+            schema={SCHEMA}
+            data={form}
+            onChange={setForm}
+          />
           <InfoTable
             columns={[
               { name: 'Employee' },
@@ -99,7 +157,7 @@ export const TimeoffSummaryReport: FC<Props> = ({ onClose }) => {
               { name: 'Discretionary' },
               { name: 'Mandatory' },
             ]}
-            data={data.map(
+            data={filteredData.map(
               ({
                 employeeName,
                 hireDate,
