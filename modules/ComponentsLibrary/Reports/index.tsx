@@ -14,6 +14,7 @@ import { SpiffReport } from '../SpiffReport';
 import { CharityReport } from '../CharityReport';
 import { WarrantyReport } from '../WarrantyReport';
 import { PromptPaymentReport } from '../PromptPaymentReport';
+import { TimeoffSummaryReport } from '../TimeoffSummaryReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -976,17 +977,9 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           onClose={handleOpenTimeoffSummaryReportToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Timeoff Summary"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenTimeoffSummaryReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <TimeoffSummaryReport
+            onClose={handleOpenTimeoffSummaryReportToggle(false)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
     </div>
