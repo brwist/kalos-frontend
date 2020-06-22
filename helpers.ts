@@ -1371,6 +1371,11 @@ export const loadServiceCallMetricsByFilter = async ({
 };
 
 export const loadPromptPaymentData = async () => {
+  const req = new PromptPaymentReportLine();
+  const { dataList } = (
+    await ReportClientService.GetPromptPaymentData(req)
+  ).toObject();
+  console.log({ dataList });
   return [...Array(100)].map(() => {
     const allInvoices = getRandomNumber(2);
     return {
