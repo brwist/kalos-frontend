@@ -10,6 +10,7 @@ import { Loader } from '../../Loader/main';
 import { getCurrDate, loadPromptPaymentData, usd } from '../../../helpers';
 
 interface Props {
+  month: string;
   onClose?: () => void;
 }
 
@@ -19,7 +20,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
+export const PromptPaymentReport: FC<Props> = ({ month, onClose }) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -36,7 +37,10 @@ export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
       load();
     }
   }, [loaded, setLoaded, load]);
-  const subtitle = useMemo(() => format(new Date(), 'MMMM yyyy'), []);
+  const subtitle = useMemo(
+    () => format(new Date(month.replace('%', '01')), 'MMMM yyyy'),
+    [],
+  );
   return (
     <div>
       <SectionBar

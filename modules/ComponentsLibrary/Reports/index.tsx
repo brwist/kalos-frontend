@@ -13,6 +13,7 @@ import { ServiceCallMetrics } from '../ServiceCallMetrics';
 import { SpiffReport } from '../SpiffReport';
 import { CharityReport } from '../CharityReport';
 import { WarrantyReport } from '../WarrantyReport';
+import { PromptPaymentReport } from '../PromptPaymentReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -963,17 +964,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           onClose={handleOpenPromptPaymentReportToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Prompt Payment Report"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenPromptPaymentReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <PromptPaymentReport
+            month={promptPaymentReport.month!}
+            onClose={handleOpenPromptPaymentReportToggle(false)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {timeoffSummaryReportOpen && (
