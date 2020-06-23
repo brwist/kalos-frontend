@@ -1,5 +1,8 @@
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
 import { format, addMonths } from 'date-fns';
+import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
+import ListIcon from '@material-ui/icons/List';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
@@ -7,11 +10,13 @@ import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { PlainForm, Schema } from '../PlainForm';
+import { Modal } from '../Modal';
 import {
-  getCurrDate,
   loadPromptPaymentData,
   usd,
   PromptPaymentData,
+  PromptPaymentReportLineType,
+  formatDate,
 } from '../../../helpers';
 
 const FORM_LAST_MONTHS = 4 * 12;
@@ -23,6 +28,11 @@ interface Props {
 
 type FormData = {
   month: string;
+};
+
+type OpenedInvoices = {
+  customerName: string;
+  entries: PromptPaymentReportLineType[];
 };
 
 const today = Date.now();
@@ -51,6 +61,7 @@ export const PromptPaymentReport: FC<Props> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<PromptPaymentData[]>([]);
   const [form, setForm] = useState<FormData>({ month: initialMonth });
+  const [openedInvoices, setOpenedInvoices] = useState<OpenedInvoices>();
   const load = useCallback(async () => {
     setLoading(true);
     const data = await loadPromptPaymentData(form.month);
@@ -69,6 +80,11 @@ export const PromptPaymentReport: FC<Props> = ({
       setLoaded(false);
     },
     [setForm, setLoaded],
+  );
+  const handleSetOpenedInvoices = useCallback(
+    (openedInvoices?: OpenedInvoices) => () =>
+      setOpenedInvoices(openedInvoices),
+    [setOpenedInvoices],
   );
   const subtitle = useMemo(
     () => format(new Date(form.month.replace('%', '01')), 'MMMM yyyy'),
@@ -89,7 +105,6 @@ export const PromptPaymentReport: FC<Props> = ({
                 label: 'Print',
                 disabled: loading,
               }}
-              downloadPdfFilename={`Prompt_Payment_Report_${getCurrDate()}`}
             >
               {!loading && (
                 <>
@@ -153,17 +168,82 @@ export const PromptPaymentReport: FC<Props> = ({
                 daysToPay,
                 paidInvoices,
                 allInvoices,
+                entries,
               }) => [
                 { value: customerName },
                 { value: usd(payableAward) },
                 { value: usd(forfeitedAward) },
                 { value: usd(pendingAward) },
                 { value: `${averageDaysToPay}/${daysToPay}` },
-                { value: `${paidInvoices}/${allInvoices}` },
+                {
+                  value: `${paidInvoices}/${allInvoices}`,
+                  actions: [
+                    <IconButton
+                      key="view"
+                      size="small"
+                      onClick={handleSetOpenedInvoices({
+                        customerName,
+                        entries,
+                      })}
+                    >
+                      <ListIcon />
+                    </IconButton>,
+                  ],
+                },
               ],
             )}
           />
         </>
+      )}
+      {openedInvoices && (
+        <Modal open onClose={handleSetOpenedInvoices()} fullScreen>
+          <SectionBar
+            title={openedInvoices.customerName}
+            actions={[{ label: 'Close', onClick: handleSetOpenedInvoices() }]}
+            fixedActions
+          />
+          <InfoTable
+            columns={[
+              { name: 'Invoice Date' },
+              { name: 'Due Date' },
+              { name: 'Payment Date' },
+              { name: 'Invoice Number' },
+              { name: 'Payable' },
+              { name: 'Paid' },
+              { name: 'Days to Pay' },
+              { name: 'Award' },
+            ]}
+            data={openedInvoices.entries.map(entry => {
+              const {
+                billingdate,
+                dueDate,
+                paymentDate,
+                jobNumber,
+                payable,
+                payed,
+                daysToPay,
+                paymentTerms,
+              } = entry;
+              return [
+                { value: formatDate(billingdate) },
+                { value: formatDate(dueDate) },
+                { value: paymentDate ? formatDate(paymentDate) : '' },
+                { value: jobNumber },
+                { value: usd(payable) },
+                { value: usd(payed) },
+                { value: `${daysToPay}/${paymentTerms}` },
+                {
+                  value: usd(0), // FIXME
+                  actions: [
+                    <IconButton key="edit" size="small">
+                      <EditIcon />
+                    </IconButton>,
+                  ],
+                },
+              ];
+            })}
+          />
+        </Modal>
       )}
     </div>
   );
