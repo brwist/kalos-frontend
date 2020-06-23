@@ -9,6 +9,7 @@ import Actions from './Actions/examples';
 import ActivityLogReport from './ActivityLogReport/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
+import BillingAuditReport from './BillingAuditReport/examples';
 import Button from './Button/examples';
 import Calendar from './Calendar/examples';
 import CalendarCard from './CalendarCard/examples';
@@ -73,6 +74,7 @@ const COMPONENTS = {
   ActivityLogReport,
   AddNewButton,
   AdvancedSearch,
+  BillingAuditReport,
   Button,
   Calendar,
   CalendarCard,
