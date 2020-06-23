@@ -7,7 +7,12 @@ import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
-import { getCurrDate, loadPromptPaymentData, usd } from '../../../helpers';
+import {
+  getCurrDate,
+  loadPromptPaymentData,
+  usd,
+  PromptPaymentData,
+} from '../../../helpers';
 
 interface Props {
   month: string;
@@ -20,17 +25,21 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const PromptPaymentReport: FC<Props> = ({ month, onClose }) => {
+export const PromptPaymentReport: FC<Props> = ({
+  month: initialMonth,
+  onClose,
+}) => {
   const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [data, setData] = useState<any[]>([]);
+  const [month, setMonth] = useState<string>(initialMonth);
+  const [data, setData] = useState<PromptPaymentData[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await loadPromptPaymentData();
+    const data = await loadPromptPaymentData(month);
     setData(data);
     setLoading(false);
-  }, [setLoading, setData]);
+  }, [setLoading, setData, month]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -77,6 +86,7 @@ export const PromptPaymentReport: FC<Props> = ({ month, onClose }) => {
                         forfeitedAward,
                         pendingAward,
                         averageDaysToPay,
+                        daysToPay,
                         paidInvoices,
                         allInvoices,
                       }) => [
@@ -84,7 +94,7 @@ export const PromptPaymentReport: FC<Props> = ({ month, onClose }) => {
                         usd(payableAward),
                         usd(forfeitedAward),
                         usd(pendingAward),
-                        `${averageDaysToPay}/30`,
+                        `${averageDaysToPay}/${daysToPay}`,
                         `${paidInvoices}/${allInvoices}`,
                       ],
                     )}
@@ -116,6 +126,7 @@ export const PromptPaymentReport: FC<Props> = ({ month, onClose }) => {
                 forfeitedAward,
                 pendingAward,
                 averageDaysToPay,
+                daysToPay,
                 paidInvoices,
                 allInvoices,
               }) => [
@@ -123,7 +134,7 @@ export const PromptPaymentReport: FC<Props> = ({ month, onClose }) => {
                 { value: usd(payableAward) },
                 { value: usd(forfeitedAward) },
                 { value: usd(pendingAward) },
-                { value: `${averageDaysToPay}/30` },
+                { value: `${averageDaysToPay}/${daysToPay}` },
                 { value: `${paidInvoices}/${allInvoices}` },
               ],
             )}

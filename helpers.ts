@@ -1,4 +1,5 @@
 import uniq from 'lodash/uniq';
+import sortBy from 'lodash/sortBy';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
@@ -1385,24 +1386,63 @@ export const loadServiceCallMetricsByFilter = async ({
   };
 };
 
-export const loadPromptPaymentData = async () => {
+export type PromptPaymentData = {
+  customerName: string;
+  payableAward: number;
+  forfeitedAward: number;
+  pendingAward: number;
+  averageDaysToPay: number;
+  daysToPay: number;
+  paidInvoices: number;
+  allInvoices: number;
+};
+
+export const loadPromptPaymentData = async (month: string) => {
   const req = new PromptPaymentReportLine();
+  const date = `${month.replace('%', '01')} 00:00:00`;
+  const startDate = format(addDays(new Date(date), -1), 'yyyy-MM-dd');
+  const endDate = format(addMonths(new Date(date), 1), 'yyyy-MM-dd');
+  req.setDateRangeList(['>', startDate, '<', endDate]);
+  req.setDateTargetList(['log_billingDate', 'reportUntil']);
   const { dataList } = (
     await ReportClientService.GetPromptPaymentData(req)
   ).toObject();
-  console.log({ dataList });
-  return [...Array(100)].map(() => {
-    const allInvoices = getRandomNumber(2);
-    return {
-      customerName: getRandomLastName() + ' ' + getRandomLastName(),
-      payableAward: getRandomNumber(4),
-      forfeitedAward: getRandomNumber(3),
-      pendingAward: getRandomNumber(2),
-      averageDaysToPay: getRandomNumber(2),
-      paidInvoices: Math.floor(Math.random() * allInvoices),
-      allInvoices,
-    };
-  });
+  const data: {
+    [key: string]: PromptPaymentData;
+  } = {};
+  dataList.forEach(
+    ({ userBusinessName, paymentTerms, daysToPay, payable, payed }) => {
+      if (!data[userBusinessName]) {
+        data[userBusinessName] = {
+          customerName: userBusinessName,
+          payableAward: 0,
+          forfeitedAward: 0,
+          pendingAward: 0,
+          averageDaysToPay: 0,
+          daysToPay: paymentTerms,
+          paidInvoices: 0,
+          allInvoices: 0,
+        };
+      }
+      data[userBusinessName].averageDaysToPay += daysToPay;
+      data[userBusinessName].allInvoices += 1;
+      data[userBusinessName].paidInvoices += payable === payed ? 1 : 0;
+      // TODO calculate:
+      // payableAward
+      // forfeitedAward
+      // pendingAward
+    },
+  );
+
+  return sortBy(Object.values(data), ({ customerName }) =>
+    customerName.toLowerCase().trim(),
+  ).map(({ averageDaysToPay, ...item }) => ({
+    ...item,
+    averageDaysToPay:
+      item.paidInvoices === 0
+        ? 0
+        : Math.round(averageDaysToPay / item.paidInvoices),
+  }));
 };
 
 export type LoadSpiffReportByFilter = {
