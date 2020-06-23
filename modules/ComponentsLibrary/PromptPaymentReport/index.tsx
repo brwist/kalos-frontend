@@ -1,12 +1,12 @@
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { format } from 'date-fns';
+import { format, addMonths } from 'date-fns';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
+import { PlainForm, Schema } from '../PlainForm';
 import {
   getCurrDate,
   loadPromptPaymentData,
@@ -14,47 +14,70 @@ import {
   PromptPaymentData,
 } from '../../../helpers';
 
+const FORM_LAST_MONTHS = 4 * 12;
+
 interface Props {
   month: string;
   onClose?: () => void;
 }
 
-const useStyles = makeStyles(theme => ({
-  table: {
-    marginBottom: theme.spacing(0.25),
-  },
-}));
+type FormData = {
+  month: string;
+};
+
+const today = Date.now();
+
+const SCHEMA: Schema<FormData> = [
+  [
+    {
+      name: 'month',
+      label: 'Month',
+      options: [...Array(FORM_LAST_MONTHS)].map((_, idx) => {
+        const date = addMonths(today, -idx);
+        return {
+          value: format(date, 'yyyy-MM-%'),
+          label: format(date, 'MMMM, yyyy'),
+        };
+      }),
+    },
+  ],
+];
 
 export const PromptPaymentReport: FC<Props> = ({
   month: initialMonth,
   onClose,
 }) => {
-  const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [month, setMonth] = useState<string>(initialMonth);
   const [data, setData] = useState<PromptPaymentData[]>([]);
+  const [form, setForm] = useState<FormData>({ month: initialMonth });
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await loadPromptPaymentData(month);
+    const data = await loadPromptPaymentData(form.month);
     setData(data);
     setLoading(false);
-  }, [setLoading, setData, month]);
+  }, [setLoading, setData, form]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
       load();
     }
   }, [loaded, setLoaded, load]);
+  const handleFormChange = useCallback(
+    (data: FormData) => {
+      setForm(data);
+      setLoaded(false);
+    },
+    [setForm, setLoaded],
+  );
   const subtitle = useMemo(
-    () => format(new Date(month.replace('%', '01')), 'MMMM yyyy'),
-    [],
+    () => format(new Date(form.month.replace('%', '01')), 'MMMM yyyy'),
+    [form],
   );
   return (
     <div>
       <SectionBar
         title="Prompt Payment Report"
-        subtitle={subtitle}
         asideContent={
           <>
             <PrintPage
@@ -110,6 +133,7 @@ export const PromptPaymentReport: FC<Props> = ({
         <Loader />
       ) : (
         <>
+          <PlainForm schema={SCHEMA} data={form} onChange={handleFormChange} />
           <InfoTable
             columns={[
               { name: 'Customer' },
