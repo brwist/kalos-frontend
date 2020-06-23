@@ -1395,6 +1395,7 @@ export type PromptPaymentData = {
   daysToPay: number;
   paidInvoices: number;
   allInvoices: number;
+  entries: PromptPaymentReportLineType[];
 };
 
 export const loadPromptPaymentData = async (month: string) => {
@@ -1410,29 +1411,30 @@ export const loadPromptPaymentData = async (month: string) => {
   const data: {
     [key: string]: PromptPaymentData;
   } = {};
-  dataList.forEach(
-    ({ userBusinessName, paymentTerms, daysToPay, payable, payed }) => {
-      if (!data[userBusinessName]) {
-        data[userBusinessName] = {
-          customerName: userBusinessName,
-          payableAward: 0,
-          forfeitedAward: 0,
-          pendingAward: 0,
-          averageDaysToPay: 0,
-          daysToPay: paymentTerms,
-          paidInvoices: 0,
-          allInvoices: 0,
-        };
-      }
-      data[userBusinessName].averageDaysToPay += daysToPay;
-      data[userBusinessName].allInvoices += 1;
-      data[userBusinessName].paidInvoices += payable === payed ? 1 : 0;
-      // TODO calculate:
-      // payableAward
-      // forfeitedAward
-      // pendingAward
-    },
-  );
+  dataList.forEach(entry => {
+    const { userBusinessName, paymentTerms, daysToPay, payable, payed } = entry;
+    if (!data[userBusinessName]) {
+      data[userBusinessName] = {
+        customerName: userBusinessName,
+        payableAward: 0,
+        forfeitedAward: 0,
+        pendingAward: 0,
+        averageDaysToPay: 0,
+        daysToPay: paymentTerms,
+        paidInvoices: 0,
+        allInvoices: 0,
+        entries: [],
+      };
+    }
+    data[userBusinessName].entries.push(entry);
+    data[userBusinessName].averageDaysToPay += daysToPay;
+    data[userBusinessName].allInvoices += 1;
+    data[userBusinessName].paidInvoices += payable === payed ? 1 : 0;
+    // TODO calculate:
+    // payableAward
+    // forfeitedAward
+    // pendingAward
+  });
 
   return sortBy(Object.values(data), ({ customerName }) =>
     customerName.toLowerCase().trim(),
