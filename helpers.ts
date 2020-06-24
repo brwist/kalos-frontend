@@ -1029,14 +1029,16 @@ export const loadPerDiemByDepartmentIdAndDateStarted = async (
 
 export const loadPerDiemsNeedsAuditing = async (
   page: number,
+  needsAuditing: boolean,
   departmentId?: number,
   userId?: number,
   dateStarted?: string,
 ) => {
   const req = new PerDiem();
+  req.setFieldMaskList(['NeedsAuditing']);
   req.setWithRows(true);
   req.setPageNumber(page);
-  req.setNeedsAuditing(true);
+  req.setNeedsAuditing(needsAuditing);
   if (departmentId) {
     req.setDepartmentId(departmentId);
   }
