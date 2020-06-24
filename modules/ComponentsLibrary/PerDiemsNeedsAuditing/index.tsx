@@ -35,9 +35,13 @@ const COLUMNS: Columns = [
   { name: 'Status' },
 ];
 
-type FormData = Pick<PerDiemType, 'dateStarted' | 'departmentId' | 'userId'>;
+type FormData = Pick<
+  PerDiemType,
+  'dateStarted' | 'departmentId' | 'userId' | 'needsAuditing'
+>;
 
 const initialFormData: FormData = {
+  needsAuditing: true,
   dateStarted: OPTION_ALL,
   departmentId: 0,
   userId: 0,
@@ -92,9 +96,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   }, [setInitialized, setDepartments]);
   const load = useCallback(async () => {
     setLoading(true);
-    const { departmentId, userId, dateStarted } = formData;
+    const { departmentId, userId, dateStarted, needsAuditing } = formData;
     const { resultsList, totalCount } = await loadPerDiemsNeedsAuditing(
       page,
+      needsAuditing,
       departmentId ? departmentId : undefined,
       userId ? userId : undefined,
       dateStarted !== OPTION_ALL ? dateStarted : undefined,
@@ -130,11 +135,15 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     }
   }, [pendingAudited, setLoading, setPendingAudited, setLoaded]);
   const handleReset = useCallback(() => {
+    setPage(0);
     setFormData(initialFormData);
     setFormKey(formKey + 1);
     setLoaded(false);
-  }, [setFormData, setFormKey, formKey, setLoaded]);
-  const handleSearch = useCallback(() => setLoaded(false), []);
+  }, [setFormData, setFormKey, formKey, setLoaded, setPage]);
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setLoaded(false);
+  }, [setPage]);
   const handleChangePage = useCallback(
     (page: number) => {
       setPage(page);
@@ -161,6 +170,11 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   );
   const SCHEMA: Schema<FormData> = [
     [
+      {
+        name: 'needsAuditing',
+        label: 'Needs Auditing',
+        type: 'checkbox',
+      },
       {
         name: 'userId',
         label: 'Technician',
@@ -236,7 +250,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   return (
     <div>
       <SectionBar
-        title="Per Diems Needs Auditing"
+        title="Per Diems Auditing"
         pagination={{
           count,
           page,
