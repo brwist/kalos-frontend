@@ -1,7 +1,7 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import sortBy from 'lodash/sortBy';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import FlashOff from '@material-ui/icons/FlashOff';
 import Visibility from '@material-ui/icons/Visibility';
@@ -10,6 +10,10 @@ import { InfoTable, Columns, Data } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
+import { PrintPage, Status } from '../PrintPage';
+import { PrintTable } from '../PrintTable';
+import { PrintParagraph } from '../PrintParagraph';
+import { PrintList } from '../PrintList';
 import { PerDiemComponent, getStatus } from '../PerDiem';
 import {
   loadPerDiemsNeedsAuditing,
@@ -23,8 +27,12 @@ import {
   TimesheetDepartmentType,
   loadTechnicians,
   UserType,
+  usd,
+  loadGovPerDiem,
+  formatDate,
 } from '../../../helpers';
-import { OPTION_ALL, ROWS_PER_PAGE } from '../../../constants';
+import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
+import { LodgingByZipCode } from '../LodgingByZipCode';
 
 interface Props {}
 
@@ -39,6 +47,17 @@ type FormData = Pick<
   PerDiemType,
   'dateStarted' | 'departmentId' | 'userId' | 'needsAuditing'
 >;
+
+type GovPerDiemsByYearMonth = {
+  [key: number]: {
+    [key: number]: {
+      [key: string]: {
+        meals: number;
+        lodging: number;
+      };
+    };
+  };
+};
 
 const initialFormData: FormData = {
   needsAuditing: true,
@@ -64,6 +83,14 @@ export const useStyles = makeStyles(theme => ({
     borderRadius: '50%',
     verticalAlign: 'middle',
   },
+  printItem: {
+    marginTop: '0.5rem',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: theme.palette.grey[400],
+    padding: '0 0.5rem',
+    pageBreakInside: 'avoid',
+  },
 }));
 
 export const PerDiemsNeedsAuditing: FC<Props> = () => {
@@ -85,8 +112,12 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
+  const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [formKey, setFormKey] = useState<number>(0);
+  const [govPerDiemsByYearMonth, setGovPerDiemsByYearMonth] = useState<
+    GovPerDiemsByYearMonth
+  >({});
   const initialize = useCallback(async () => {
     const technicians = await loadTechnicians();
     setTechnicians(technicians);
@@ -108,6 +139,58 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     setCount(totalCount);
     setLoading(false);
   }, [setLoading, formData, page]);
+  const loadLodging = useCallback(async () => {
+    const zipCodesByYearMonth: {
+      [key: number]: {
+        [key: number]: string[];
+      };
+    } = {};
+    perDiems.forEach(({ rowsList }) =>
+      rowsList.forEach(({ dateString, zipCode }) => {
+        const [y, m] = dateString.split('-');
+        const year = +y;
+        const month = +m;
+        if (!zipCodesByYearMonth[year]) {
+          zipCodesByYearMonth[year] = {};
+        }
+        if (!zipCodesByYearMonth[year][month]) {
+          zipCodesByYearMonth[year][month] = [];
+        }
+        if (!zipCodesByYearMonth[year][month].includes(zipCode)) {
+          zipCodesByYearMonth[year][month].push(zipCode);
+        }
+      }),
+    );
+    const zipCodesArr: {
+      year: number;
+      month: number;
+      zipCodes: string[];
+    }[] = [];
+    Object.keys(zipCodesByYearMonth).forEach(year =>
+      Object.keys(zipCodesByYearMonth[+year]).forEach(month => {
+        zipCodesArr.push({
+          year: +year,
+          month: +month,
+          zipCodes: zipCodesByYearMonth[+year][+month],
+        });
+      }),
+    );
+    const govPerDiems = await Promise.all(
+      zipCodesArr.map(async ({ year, month, zipCodes }) => ({
+        year,
+        month,
+        data: await loadGovPerDiem(zipCodes, year, month),
+      })),
+    );
+    const govPerDiemsByYearMonth: GovPerDiemsByYearMonth = {};
+    govPerDiems.forEach(({ year, month, data }) => {
+      if (!govPerDiemsByYearMonth[year]) {
+        govPerDiemsByYearMonth[year] = {};
+      }
+      govPerDiemsByYearMonth[year][month] = data;
+    });
+    setGovPerDiemsByYearMonth(govPerDiemsByYearMonth);
+  }, [perDiems, setGovPerDiemsByYearMonth]);
   useEffect(() => {
     if (!initialized) {
       initialize();
@@ -151,6 +234,14 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     },
     [setPage, setLoaded],
   );
+  const handlePrint = useCallback(async () => {
+    setPrintStatus('loading');
+    await loadLodging();
+    setPrintStatus('loaded');
+  }, [setPrintStatus, loadLodging]);
+  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
+    setPrintStatus,
+  ]);
   const techniciansOptions: Option[] = useMemo(
     () => [
       { label: OPTION_ALL, value: 0 },
@@ -257,6 +348,123 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: handleChangePage,
         }}
+        asideContent={
+          <PrintPage
+            headerProps={{
+              title: 'Per Diems Auditing',
+              subtitle: `Needs Auditing: ${
+                formData.needsAuditing ? 'Yes' : 'No'
+              }`,
+            }}
+            buttonProps={{ label: 'Print', disabled: loading }}
+            onPrint={handlePrint}
+            onPrinted={handlePrinted}
+            status={printStatus}
+            key={printStatus}
+          >
+            {printStatus === 'loaded' &&
+              perDiems.map(
+                ({
+                  id,
+                  ownerName,
+                  department,
+                  dateStarted,
+                  rowsList,
+                  dateSubmitted,
+                  dateApproved,
+                }) => {
+                  const totalMeals = rowsList.length * MEALS_RATE;
+                  const totalLodging = rowsList
+                    .filter(({ mealsOnly }) => !mealsOnly)
+                    .reduce((aggr, { dateString, zipCode }) => {
+                      const [y, m] = dateString.split('-');
+                      const year = +y;
+                      const month = +m;
+                      return (
+                        aggr +
+                        govPerDiemsByYearMonth[year][month][zipCode].lodging
+                      );
+                    }, 0);
+                  return (
+                    <div key={id} className={classes.printItem}>
+                      <PrintParagraph tag="h3">
+                        {ownerName} / {getDepartmentName(department)} /{' '}
+                        {formatWeek(dateStarted)}
+                      </PrintParagraph>
+                      <PrintTable
+                        columns={[
+                          `Total Meals: ${usd(totalMeals)}`,
+                          `Total Lodging: ${usd(totalLodging)}`,
+                          dateSubmitted
+                            ? `Date submited: ${formatDate(dateSubmitted)}`
+                            : '',
+                          dateApproved
+                            ? `Date approved: ${formatDate(dateApproved)}`
+                            : '',
+                        ]}
+                        data={[]}
+                        skipNoEntriesTest
+                        equalColWidths
+                        noBorders
+                      />
+                      <PrintTable
+                        key={id}
+                        equalColWidths
+                        columns={[...Array(7)].map((_, idx) => {
+                          const date = format(
+                            addDays(new Date(dateStarted), idx),
+                            'do, iiii',
+                          );
+                          return date;
+                        })}
+                        data={[
+                          [...Array(7)].map((_, idx) => {
+                            const date = format(
+                              addDays(new Date(dateStarted), idx),
+                              'yyyy-MM-dd',
+                            );
+                            const row = rowsList.find(({ dateString }) =>
+                              dateString.includes(date),
+                            );
+                            if (!row) return '';
+                            const {
+                              dateString,
+                              zipCode,
+                              serviceCallId,
+                              mealsOnly,
+                              notes,
+                            } = row;
+                            const [y, m] = dateString.split('-');
+                            const year = +y;
+                            const month = +m;
+                            return (
+                              <>
+                                <div>Zip Code: {zipCode}</div>
+                                <div>Job Number: {serviceCallId}</div>
+                                <div>Meals: {usd(MEALS_RATE)}</div>
+                                {!mealsOnly && (
+                                  <div>
+                                    Lodging:{' '}
+                                    {usd(
+                                      govPerDiemsByYearMonth[year][month][
+                                        zipCode
+                                      ].lodging,
+                                    )}
+                                  </div>
+                                )}
+                                <div>Notes: {notes}</div>
+                              </>
+                            );
+                          }),
+                        ]}
+                        noBorders
+                      />
+                    </div>
+                  );
+                },
+              )}
+          </PrintPage>
+        }
       />
       <PlainForm
         key={formKey}

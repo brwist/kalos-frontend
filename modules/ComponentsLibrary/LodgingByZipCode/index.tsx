@@ -10,7 +10,7 @@ interface Props {
 }
 
 type Form = {
-  zip: number;
+  zip: string;
   year: number;
 };
 
@@ -27,7 +27,7 @@ export const LodgingByZipCode: FC<Props> = ({ onClose }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [form, setForm] = useState<Form>({ zip: 0, year: currYear });
+  const [form, setForm] = useState<Form>({ zip: '', year: currYear });
   const [lodging, setLodging] = useState<{
     state: string;
     city: string;
@@ -42,7 +42,7 @@ export const LodgingByZipCode: FC<Props> = ({ onClose }) => {
     setError(false);
     setLoading(true);
     setInitialized(true);
-    const lodging = await loadGovPerDiemByZipCode(form.zip, form.year);
+    const lodging = await loadGovPerDiemByZipCode(+form.zip, form.year);
     if (lodging) {
       setLodging(lodging);
     } else {
@@ -66,7 +66,6 @@ export const LodgingByZipCode: FC<Props> = ({ onClose }) => {
       {
         name: 'zip',
         label: 'Zip Code',
-        type: 'number',
       },
       {
         name: 'year',

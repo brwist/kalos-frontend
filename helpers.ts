@@ -1035,7 +1035,7 @@ export const loadPerDiemsNeedsAuditing = async (
   dateStarted?: string,
 ) => {
   const req = new PerDiem();
-  req.setFieldMaskList(['NeedsAuditing']);
+  req.setFieldMaskList(['NeedsAuditing', 'WithRows']);
   req.setWithRows(true);
   req.setPageNumber(page);
   req.setNeedsAuditing(needsAuditing);
