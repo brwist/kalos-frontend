@@ -15,6 +15,7 @@ import { Modal } from '../Modal';
 import { Confirm } from '../Confirm';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { SectionBar } from '../SectionBar';
+import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
 import {
   loadUserById,
@@ -176,6 +177,7 @@ export const PerDiemComponent: FC<Props> = ({
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
+  const [checkLodging, setCheckLodging] = useState<boolean>(false);
   const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
     [key: number]: PerDiemType[];
   }>({});
@@ -436,6 +438,10 @@ export const PerDiemComponent: FC<Props> = ({
     setPendingPerDiemRowEdit,
     setLoaded,
   ]);
+  const handleToggleCheckLodging = useCallback(
+    (checkLodging: boolean) => () => setCheckLodging(checkLodging),
+    [setCheckLodging],
+  );
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
@@ -564,7 +570,13 @@ export const PerDiemComponent: FC<Props> = ({
           weekStartsOn={6}
           submitLabel="Add Per Diem"
           submitDisabled={loading || saving || addPerDiemDisabled}
-          actions={onClose ? [{ label: 'Close', onClick: onClose }] : undefined}
+          actions={[
+            {
+              label: 'Check lodging by zip code',
+              onClick: handleToggleCheckLodging(true),
+            },
+            ...(onClose ? [{ label: 'Close', onClick: onClose }] : []),
+          ]}
         >
           {!loading && (
             <>
@@ -879,6 +891,11 @@ export const PerDiemComponent: FC<Props> = ({
         >
           Are you sure, you want to approve this Per Diem?
         </Confirm>
+      )}
+      {checkLodging && (
+        <Modal open onClose={handleToggleCheckLodging(false)} fullScreen>
+          <LodgingByZipCode onClose={handleToggleCheckLodging(false)} />
+        </Modal>
       )}
     </div>
   );
