@@ -2210,6 +2210,37 @@ const loadGovPerDiemData = async (
   }
 };
 
+export const loadGovPerDiemByZipCode = async (
+  zipCode: number,
+  year: number,
+) => {
+  const client = new ApiKeyClient(ENDPOINT);
+  const req = new ApiKey();
+  req.setTextId('per_diem_key');
+  const { apiEndpoint, apiKey } = await client.Get(req);
+  const endpoint = `${apiEndpoint.replace(
+    '{ZIP}',
+    zipCode.toString(),
+  )}${year}?api_key=${apiKey}`;
+  const response = await (await fetch(endpoint)).json();
+  if (response.rates.length === 0) return false;
+  const {
+    rates: [
+      {
+        rate: [
+          {
+            city,
+            county,
+            months: { month },
+          },
+        ],
+        state,
+      },
+    ],
+  } = response;
+  return { state, city, county, month };
+};
+
 export const loadGovPerDiem = async (
   zipCodes: string[],
   year: number,

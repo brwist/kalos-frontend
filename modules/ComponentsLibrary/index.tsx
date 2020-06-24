@@ -35,6 +35,7 @@ import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
+import LodgingByZipCode from './LodgingByZipCode/examples';
 import Modal from './Modal/examples';
 import PerDiem from './PerDiem/examples';
 import PerDiemsNeedsAuditing from './PerDiemsNeedsAuditing/examples';
@@ -100,6 +101,7 @@ const COMPONENTS = {
   InfoTable,
   InternalDocuments,
   Link,
+  LodgingByZipCode,
   Modal,
   PerDiem,
   PerDiemsNeedsAuditing,

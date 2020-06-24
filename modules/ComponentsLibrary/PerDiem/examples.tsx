@@ -7,7 +7,10 @@ export default () => (
     <ExampleTitle>Viewed as Technician</ExampleTitle>
     <PerDiemComponent loggedUserId={101253} />
     <ExampleTitle>Viewed as Sam</ExampleTitle>
-    <PerDiemComponent loggedUserId={2573} />
+    <PerDiemComponent
+      loggedUserId={2573}
+      onClose={() => console.log('CLOSE')}
+    />
     <ExampleTitle>Viewed as Manager</ExampleTitle>
     <PerDiemComponent loggedUserId={336} />
   </>
