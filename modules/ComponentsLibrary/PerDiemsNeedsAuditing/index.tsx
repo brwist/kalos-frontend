@@ -488,7 +488,6 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
             key={printStatus}
             className={classes.printBtn}
           >
-            <PrintParagraph tag="h1">Test Lorem Ipsum</PrintParagraph>
             {printStatus === 'loaded' &&
               perDiemsPrint.map(
                 ({
@@ -514,7 +513,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
                       );
                     }, 0);
                   return (
-                    <>
+                    <div key={id} className={classes.printItem}>
                       <PrintParagraph tag="h3">
                         {ownerName} / {getDepartmentName(department)} /{' '}
                         {formatWeek(dateStarted)}
@@ -588,7 +587,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
                         ]}
                         noBorders
                       />
-                    </>
+                    </div>
                   );
                 },
               )}
