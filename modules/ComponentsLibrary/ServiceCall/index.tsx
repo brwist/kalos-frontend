@@ -7,6 +7,7 @@ import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import {
   loadJobTypes,
   loadJobSubtypes,
@@ -36,6 +37,7 @@ import { Proposal } from './components/Proposal';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 const InvoiceClientService = new InvoiceClient(ENDPOINT);
+const EmailClientService = new EmailClient(ENDPOINT);
 
 
 export type EventType = Event.AsObject;
@@ -178,13 +180,24 @@ export const ServiceCall: FC<Props> = props => {
   }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
 
   const sendInvoice = useCallback(async () => {
-    alert(123);
+    console.log(entry);
     const req = new Invoice();
-    const fieldMaskList: string[] = [];
-    ['id',
-      'eventId',
+    req.setEventId(entry.id);
+    const invoices = (await InvoiceClientService.BatchGet(req)).toObject();
+    console.log('batchGet', invoices);
+    try {
+      const res = await InvoiceClientService.Delete(req);
+      console.log('delete: ', res);
+      const invoices = (await InvoiceClientService.BatchGet(req)).toObject();
+      console.log('batchGet', invoices);
+    } catch (e) {
+      console.log(e);
+    }
+
+    req.setUserId(loggedUserId);
+    const fieldMaskList: string[] = ['EventId', 'UserId'];
+    [
       'contractId',
-      'userId',
       'propertyId',
       'systemType',
       'systemType2',
@@ -240,12 +253,22 @@ export const ServiceCall: FC<Props> = props => {
       try {
         req[methodName](entry[fieldName]);
         fieldMaskList.push(upperCaseProp);
+      } catch (e) {
+        console.log(e);
       }
     });
     req.setFieldMaskList(fieldMaskList);
+    console.log(req);
     const res = await InvoiceClientService.Create(req);
     console.log(res);
-  }, []);
+    const mailBody = `New invoice created: ${res.id}`;
+    const mailConfig: EmailConfig = {
+      type: 'invoice',
+      recipient: 'pavel.chernov@toptal.com',
+      body: mailBody,
+    };
+    await EmailClientService.sendMail(mailConfig);
+  }, [entry]);
 
   const save = useCallback(async (invoiceRequired) => {
     setSaving(true);
