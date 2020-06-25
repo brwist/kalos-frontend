@@ -8,6 +8,8 @@ export type Model = {
   firstName: string;
   lastName: string;
   gender: string;
+  numbers: number[];
+  colors: string[];
   login: string;
   password: string;
   note: string;
@@ -26,6 +28,8 @@ export const model: Model = {
   firstName: 'John',
   lastName: '',
   gender: GENDERS[0],
+  numbers: [1, 4, 6],
+  colors: ['red', 'green'],
   login: '',
   password: '123456',
   note: `Lorem ipsum dolor sit amet. Abon fergo irgo fingo.
@@ -86,6 +90,15 @@ export const SCHEMA_2: Schema<Model> = [
       ],
       actionsInLabel: true,
     },
+    {
+      name: 'numbers',
+      label: 'Favorite Numbers',
+      options: [...Array(10)].map((_, idx) => ({
+        label: idx.toString(),
+        value: idx,
+      })),
+      type: 'multiselect',
+    },
   ],
   [
     {
@@ -104,6 +117,23 @@ export const SCHEMA_2: Schema<Model> = [
       label: 'Service Call ID',
       type: 'eventId',
       required: true,
+    },
+    {
+      name: 'colors',
+      label: 'Favorite Colors',
+      options: [
+        { label: 'Black', value: 'black' },
+        { label: 'White', value: 'white' },
+        { label: 'Yellow', value: 'yellow' },
+        { label: 'Red', value: 'red' },
+        { label: 'Green', value: 'green' },
+        { label: 'Blue', value: 'blue' },
+        { label: 'Pink', value: 'pink' },
+        { label: 'Brown', value: 'brown' },
+        { label: 'Silver', value: 'silver' },
+        { label: 'Gold', value: 'gold' },
+      ],
+      type: 'multiselect',
     },
   ],
   [

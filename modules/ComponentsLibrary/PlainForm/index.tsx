@@ -221,6 +221,11 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                 validation={validations[name as string]}
                 readOnly={readOnly || props.readOnly}
                 className={idx2 === 0 ? '' : classes.field}
+                style={{
+                  width: `calc((100% - ${(fields.length - 1) * 16}px) / ${
+                    fields.length
+                  })`,
+                }}
               />
             );
           })}
