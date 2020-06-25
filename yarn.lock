@@ -270,9 +270,9 @@
     browser-headers "^0.4.0"
 
 "@kalos-core/kalos-rpc@^2.0.0":
-  version "2.34.6"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.34.6.tgz#8010b0cfe0ad703a977b0d29cebd6155d0227f52"
-  integrity sha512-ThffGs7upt3tYkWfUHB3R+IIP5DCjvNbr+IEWnxSdNK2ImdXVPGKdTRWsWnn3FcxlT2bewSZ7+YJMS/0iGDuZQ==
+  version "2.35.0"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.35.0.tgz#c849b4ab12c5eb28b68ae29ca2bf8da38d15ce72"
+  integrity sha512-G/NUxQe7fp0Xj7qWjNJU4IsprpGSMb6iehy7fX2rtVUfe5t2TUeQVN2nqrLsIcS+NX2izAa5xj4PAp3hLLqakw==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -615,9 +615,9 @@
     "@types/node" "*"
 
 "@types/lodash@^4.14.149":
-  version "4.14.156"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.156.tgz#cbe30909c89a1feeb7c60803e785344ea0ec82d1"
-  integrity sha512-l2AgHXcKUwx2DsvP19wtRPqZ4NkONjmorOdq4sMcxIjqdIuuV/ULo2ftuv4NUpevwfW7Ju/UKLqo0ZXuEt/8lQ==
+  version "4.14.157"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.157.tgz#fdac1c52448861dfde1a2e1515dbc46e54926dc8"
+  integrity sha512-Ft5BNFmv2pHDgxV5JDsndOWTRJ+56zte0ZpYLowp03tW+K+t8u8YMOzAnpuqPgzX6WO1XpDIUm7u04M8vdDiVQ==
 
 "@types/minimatch@*":
   version "3.0.3"
@@ -664,26 +664,20 @@
     "@types/react" "*"
 
 "@types/react@*":
-  version "16.9.38"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-16.9.38.tgz#868405dace93a4095d3e054f4c4a1de7a1ac0680"
-  integrity sha512-pHAeZbjjNRa/hxyNuLrvbxhhnKyKNiLC6I5fRF2Zr/t/S6zS41MiyzH4+c+1I9vVfvuRt1VS2Lodjr4ZWnxrdA==
+  version "16.9.41"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-16.9.41.tgz#925137ee4d2ff406a0ecf29e8e9237390844002e"
+  integrity sha512-6cFei7F7L4wwuM+IND/Q2cV1koQUvJ8iSV+Gwn0c3kvABZ691g7sp3hfEQHOUBJtccl1gPi+EyNjMIl9nGA0ug==
   dependencies:
     "@types/prop-types" "*"
     csstype "^2.2.0"
 
-"@types/recharts-scale@*":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@types/recharts-scale/-/recharts-scale-1.0.0.tgz#348c9220d6d9062c44a9d585d686644a97f7e25d"
-  integrity sha512-HR/PrCcxYb2YHviTqH7CMdL1TUhUZLTUKzfrkMhxm1HTa5mg/QtP8XMiuSPz6dZ6wecazAOu8aYZ5DqkNlgHHQ==
-
 "@types/recharts@^1.8.9":
-  version "1.8.12"
-  resolved "https://registry.yarnpkg.com/@types/recharts/-/recharts-1.8.12.tgz#871eb975e713cbeda0413e0d10ea36cc8b76f812"
-  integrity sha512-n1Zzf20+wutXWBDYYhQdM8GaBJxqJHqLsevllXmt48CCiGM55LrKQ6/0OAwE97vfOqsJ7mFWSc/bKsq0mAj6jA==
+  version "1.8.13"
+  resolved "https://registry.yarnpkg.com/@types/recharts/-/recharts-1.8.13.tgz#9a024836e0b8be8882a48facd773552ba24c3184"
+  integrity sha512-m6R7ts9WEhyudxb739QA9B9nL82h/VEYlp3SKQRZxcAEzPU479ZvLjB+VOoeQGJ383XuysdJVjgftpeLtqs4Dg==
   dependencies:
     "@types/d3-shape" "*"
     "@types/react" "*"
-    "@types/recharts-scale" "*"
 
 "@types/resolve@0.0.8":
   version "0.0.8"
