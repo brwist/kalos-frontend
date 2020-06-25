@@ -9,6 +9,7 @@ import Actions from './Actions/examples';
 import ActivityLogReport from './ActivityLogReport/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
+import BillingAuditReport from './BillingAuditReport/examples';
 import Button from './Button/examples';
 import Calendar from './Calendar/examples';
 import CalendarCard from './CalendarCard/examples';
@@ -34,6 +35,7 @@ import Form from './Form/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
+import LodgingByZipCode from './LodgingByZipCode/examples';
 import Modal from './Modal/examples';
 import PerDiem from './PerDiem/examples';
 import PerDiemsNeedsAuditing from './PerDiemsNeedsAuditing/examples';
@@ -61,6 +63,7 @@ import ServiceItems from './ServiceItems/examples';
 import SpiffReport from './SpiffReport/examples';
 import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
+import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Tooltip from './Tooltip/examples';
 import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
@@ -72,6 +75,7 @@ const COMPONENTS = {
   ActivityLogReport,
   AddNewButton,
   AdvancedSearch,
+  BillingAuditReport,
   Button,
   Calendar,
   CalendarCard,
@@ -97,6 +101,7 @@ const COMPONENTS = {
   InfoTable,
   InternalDocuments,
   Link,
+  LodgingByZipCode,
   Modal,
   PerDiem,
   PerDiemsNeedsAuditing,
@@ -124,6 +129,7 @@ const COMPONENTS = {
   SpiffReport,
   StoredQuotes,
   Tabs,
+  TimeoffSummaryReport,
   Tooltip,
   WarrantyReport,
   WeekPicker,

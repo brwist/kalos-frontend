@@ -2,5 +2,5 @@ import React from 'react';
 import { PromptPaymentReport } from './';
 
 export default () => (
-  <PromptPaymentReport onClose={() => console.log('CLOSE')} />
+  <PromptPaymentReport month="2018-03-%" onClose={() => console.log('CLOSE')} />
 );

@@ -6,14 +6,14 @@ export default () => (
   <>
     <ExampleTitle>Monthly</ExampleTitle>
     <SpiffReport
-      date="2020-05-%"
+      date="2019-07-%"
       type="Monthly"
       users={[1, 2, 3]}
       onClose={() => console.log('CLOSE')}
     />
     <ExampleTitle>Weekly</ExampleTitle>
     <SpiffReport
-      date="2020-06-14"
+      date="2019-08-18"
       type="Weekly"
       users={[1, 2, 3, 4, 5, 6, 7, 8, 9]}
       onClose={() => console.log('CLOSE')}

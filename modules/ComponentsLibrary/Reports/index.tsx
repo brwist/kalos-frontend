@@ -13,6 +13,8 @@ import { ServiceCallMetrics } from '../ServiceCallMetrics';
 import { SpiffReport } from '../SpiffReport';
 import { CharityReport } from '../CharityReport';
 import { WarrantyReport } from '../WarrantyReport';
+import { PromptPaymentReport } from '../PromptPaymentReport';
+import { TimeoffSummaryReport } from '../TimeoffSummaryReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -67,7 +69,9 @@ const UNDER_CONSTRUCTION = (
   <div style={{ padding: 10, fontFamily: 'arial' }}>Under construction...</div>
 );
 
-const WEEK_OPTIONS = getWeekOptions(52, -31).reverse();
+const WEEK_OPTIONS_0 = getWeekOptions(52, -31).reverse();
+const WEEK_OPTIONS_1 = getWeekOptions(52);
+
 const LAST_12_MONTHS_0 = makeLast12MonthsOptions(false);
 const LAST_12_MONTHS_1 = makeLast12MonthsOptions(false, -1);
 
@@ -176,7 +180,7 @@ const SCHEMA_SERVICE_CALL_METRICS_REPORT: Schema<FilterForm> = [
     {
       name: 'week',
       label: 'Select Week',
-      options: WEEK_OPTIONS,
+      options: WEEK_OPTIONS_0,
       required: true,
     },
   ],
@@ -583,7 +587,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'week',
             label: 'Select Report Date',
-            options: WEEK_OPTIONS,
+            options: WEEK_OPTIONS_1,
             required: true,
           },
         ],
@@ -961,17 +965,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           onClose={handleOpenPromptPaymentReportToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Prompt Payment Report"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenPromptPaymentReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <PromptPaymentReport
+            month={promptPaymentReport.month!}
+            onClose={handleOpenPromptPaymentReportToggle(false)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {timeoffSummaryReportOpen && (
@@ -980,17 +977,9 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           onClose={handleOpenTimeoffSummaryReportToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Timeoff Summary"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenTimeoffSummaryReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <TimeoffSummaryReport
+            onClose={handleOpenTimeoffSummaryReportToggle(false)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
     </div>

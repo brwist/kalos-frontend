@@ -154,8 +154,8 @@ export const SectionBar: FC<Props> = ({
     small,
   });
   const handleToggleCollapsed = useCallback(
-    () => (uncollapsable ? 0 : setCollapsed(!collapsed)),
-    [collapsed, setCollapsed, uncollapsable],
+    () => (uncollapsable ? 0 : children ? setCollapsed(!collapsed) : 0),
+    [collapsed, setCollapsed, uncollapsable, children],
   );
   const handleChangePage = useCallback(
     (_, page) => {

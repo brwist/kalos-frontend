@@ -1,47 +1,99 @@
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { format } from 'date-fns';
+import { format, addMonths } from 'date-fns';
+import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
+import ListIcon from '@material-ui/icons/List';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
-import { getCurrDate, loadPromptPaymentData, usd } from '../../../helpers';
+import { PlainForm, Schema } from '../PlainForm';
+import { Modal } from '../Modal';
+import {
+  loadPromptPaymentData,
+  usd,
+  PromptPaymentData,
+  PromptPaymentReportLineType,
+  formatDate,
+} from '../../../helpers';
+
+const FORM_LAST_MONTHS = 4 * 12;
 
 interface Props {
+  month: string;
   onClose?: () => void;
 }
 
-const useStyles = makeStyles(theme => ({
-  table: {
-    marginBottom: theme.spacing(0.25),
-  },
-}));
+type FormData = {
+  month: string;
+};
 
-export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
-  const classes = useStyles();
+type OpenedInvoices = {
+  customerName: string;
+  entries: PromptPaymentReportLineType[];
+};
+
+const today = Date.now();
+
+const SCHEMA: Schema<FormData> = [
+  [
+    {
+      name: 'month',
+      label: 'Month',
+      options: [...Array(FORM_LAST_MONTHS)].map((_, idx) => {
+        const date = addMonths(today, -idx);
+        return {
+          value: format(date, 'yyyy-MM-%'),
+          label: format(date, 'MMMM, yyyy'),
+        };
+      }),
+    },
+  ],
+];
+
+export const PromptPaymentReport: FC<Props> = ({
+  month: initialMonth,
+  onClose,
+}) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<PromptPaymentData[]>([]);
+  const [form, setForm] = useState<FormData>({ month: initialMonth });
+  const [openedInvoices, setOpenedInvoices] = useState<OpenedInvoices>();
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await loadPromptPaymentData();
+    const data = await loadPromptPaymentData(form.month);
     setData(data);
     setLoading(false);
-  }, [setLoading, setData]);
+  }, [setLoading, setData, form]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
       load();
     }
   }, [loaded, setLoaded, load]);
-  const subtitle = useMemo(() => format(new Date(), 'MMMM yyyy'), []);
+  const handleFormChange = useCallback(
+    (data: FormData) => {
+      setForm(data);
+      setLoaded(false);
+    },
+    [setForm, setLoaded],
+  );
+  const handleSetOpenedInvoices = useCallback(
+    (openedInvoices?: OpenedInvoices) => () =>
+      setOpenedInvoices(openedInvoices),
+    [setOpenedInvoices],
+  );
+  const subtitle = useMemo(
+    () => format(new Date(form.month.replace('%', '01')), 'MMMM yyyy'),
+    [form],
+  );
   return (
     <div>
       <SectionBar
         title="Prompt Payment Report"
-        subtitle={subtitle}
         asideContent={
           <>
             <PrintPage
@@ -53,7 +105,6 @@ export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
                 label: 'Print',
                 disabled: loading,
               }}
-              downloadPdfFilename={`Prompt_Payment_Report_${getCurrDate()}`}
             >
               {!loading && (
                 <>
@@ -73,6 +124,7 @@ export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
                         forfeitedAward,
                         pendingAward,
                         averageDaysToPay,
+                        daysToPay,
                         paidInvoices,
                         allInvoices,
                       }) => [
@@ -80,7 +132,7 @@ export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
                         usd(payableAward),
                         usd(forfeitedAward),
                         usd(pendingAward),
-                        `${averageDaysToPay}/30`,
+                        `${averageDaysToPay}/${daysToPay}`,
                         `${paidInvoices}/${allInvoices}`,
                       ],
                     )}
@@ -96,6 +148,7 @@ export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
         <Loader />
       ) : (
         <>
+          <PlainForm schema={SCHEMA} data={form} onChange={handleFormChange} />
           <InfoTable
             columns={[
               { name: 'Customer' },
@@ -112,19 +165,85 @@ export const PromptPaymentReport: FC<Props> = ({ onClose }) => {
                 forfeitedAward,
                 pendingAward,
                 averageDaysToPay,
+                daysToPay,
                 paidInvoices,
                 allInvoices,
+                entries,
               }) => [
                 { value: customerName },
                 { value: usd(payableAward) },
                 { value: usd(forfeitedAward) },
                 { value: usd(pendingAward) },
-                { value: `${averageDaysToPay}/30` },
-                { value: `${paidInvoices}/${allInvoices}` },
+                { value: `${averageDaysToPay}/${daysToPay}` },
+                {
+                  value: `${paidInvoices}/${allInvoices}`,
+                  actions: [
+                    <IconButton
+                      key="view"
+                      size="small"
+                      onClick={handleSetOpenedInvoices({
+                        customerName,
+                        entries,
+                      })}
+                    >
+                      <ListIcon />
+                    </IconButton>,
+                  ],
+                },
               ],
             )}
           />
         </>
+      )}
+      {openedInvoices && (
+        <Modal open onClose={handleSetOpenedInvoices()} fullScreen>
+          <SectionBar
+            title={openedInvoices.customerName}
+            actions={[{ label: 'Close', onClick: handleSetOpenedInvoices() }]}
+            fixedActions
+          />
+          <InfoTable
+            columns={[
+              { name: 'Invoice Date' },
+              { name: 'Due Date' },
+              { name: 'Payment Date' },
+              { name: 'Invoice Number' },
+              { name: 'Payable' },
+              { name: 'Paid' },
+              { name: 'Days to Pay' },
+              { name: 'Award' },
+            ]}
+            data={openedInvoices.entries.map(entry => {
+              const {
+                billingdate,
+                dueDate,
+                paymentDate,
+                jobNumber,
+                payable,
+                payed,
+                daysToPay,
+                paymentTerms,
+              } = entry;
+              return [
+                { value: formatDate(billingdate) },
+                { value: formatDate(dueDate) },
+                { value: paymentDate ? formatDate(paymentDate) : '' },
+                { value: jobNumber },
+                { value: usd(payable) },
+                { value: usd(payed) },
+                { value: `${daysToPay}/${paymentTerms}` },
+                {
+                  value: usd(0), // FIXME
+                  actions: [
+                    <IconButton key="edit" size="small">
+                      <EditIcon />
+                    </IconButton>,
+                  ],
+                },
+              ];
+            })}
+          />
+        </Modal>
       )}
     </div>
   );

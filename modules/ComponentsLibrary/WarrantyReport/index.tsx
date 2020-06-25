@@ -1,5 +1,4 @@
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import { format } from 'date-fns';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
@@ -13,14 +12,7 @@ interface Props {
   onClose?: () => void;
 }
 
-const useStyles = makeStyles(theme => ({
-  table: {
-    marginBottom: theme.spacing(0.25),
-  },
-}));
-
 export const WarrantyReport: FC<Props> = ({ onClose }) => {
-  const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<any[]>([]);

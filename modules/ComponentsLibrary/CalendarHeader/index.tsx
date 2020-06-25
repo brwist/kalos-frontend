@@ -20,6 +20,8 @@ interface Props {
   actions?: ActionsProps;
 }
 
+const RWD_WIDTH = 750;
+
 const useStyles = makeStyles(theme =>
   createStyles({
     bar: {
@@ -30,7 +32,7 @@ const useStyles = makeStyles(theme =>
       [theme.breakpoints.down('sm')]: {
         padding: theme.spacing(2),
       },
-      [theme.breakpoints.down(400)]: {
+      [theme.breakpoints.down(RWD_WIDTH)]: {
         flexDirection: 'column',
         alignItems: 'stretch',
       },
@@ -38,7 +40,7 @@ const useStyles = makeStyles(theme =>
     title: {
       margin: `0 ${theme.spacing(2)}px`,
       textAlign: 'center',
-      [theme.breakpoints.down(400)]: {
+      [theme.breakpoints.down(RWD_WIDTH)]: {
         margin: theme.spacing(2),
       },
     },
@@ -51,7 +53,7 @@ const useStyles = makeStyles(theme =>
       '& p': {
         color: 'white',
       },
-      [theme.breakpoints.down(400)]: {
+      [theme.breakpoints.down(RWD_WIDTH)]: {
         flexDirection: 'column',
       },
     },
@@ -61,7 +63,7 @@ const useStyles = makeStyles(theme =>
       flexDirection: 'column',
       alignItems: 'flex-end',
       flexWrap: 'wrap',
-      [theme.breakpoints.down(400)]: {
+      [theme.breakpoints.down(RWD_WIDTH)]: {
         marginRight: 0,
         alignItems: 'center',
       },
@@ -105,7 +107,7 @@ export const CalendarHeader: FC<Props> = ({
               disabled={submitDisabled}
             />
           )}
-          {actions && <Actions actions={actions} />}
+          {actions && <Actions actions={actions} fixed />}
         </Box>
       </MuiPickersUtilsProvider>
     </MuiToolbar>

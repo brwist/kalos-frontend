@@ -15,6 +15,7 @@ interface Props extends Style {
   skipNoEntriesTest?: boolean;
   className?: string;
   styles?: CSSProperties;
+  equalColWidths?: boolean;
 }
 
 const useStyles = makeStyles(theme => {
@@ -58,6 +59,7 @@ export const PrintTable: FC<Props> = ({
   noBorders = false,
   className,
   styles = {},
+  equalColWidths = false,
 }) => {
   const classes = useStyles({ noBorders });
   return (
@@ -73,6 +75,9 @@ export const PrintTable: FC<Props> = ({
                   ? { textAlign: column.align }
                   : {}),
                 ...(nowraps[idxColumn] ? { whiteSpace: 'nowrap' } : {}),
+                ...(equalColWidths
+                  ? { width: `calc(100% / ${columns.length})` }
+                  : {}),
               }}
             >
               {typeof column === 'string' ? column : column.title}
@@ -92,6 +97,9 @@ export const PrintTable: FC<Props> = ({
                     ? { textAlign: (columns[idxColumn] as Column).align }
                     : {}),
                   ...(nowraps[idxColumn] ? { whiteSpace: 'nowrap' } : {}),
+                  ...(equalColWidths
+                    ? { width: `calc(100% / ${columns.length})` }
+                    : {}),
                 }}
               >
                 {cell}

@@ -1,5 +1,6 @@
 import uniq from 'lodash/uniq';
-import { startOfWeek, format } from 'date-fns';
+import sortBy from 'lodash/sortBy';
+import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
@@ -16,6 +17,7 @@ import {
   ReportClient,
   PromptPaymentReport,
   PromptPaymentReportLine,
+  SpiffReportLine,
 } from '@kalos-core/kalos-rpc/Report';
 import {
   EmployeeFunctionClient,
@@ -101,6 +103,7 @@ export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 export type EmployeeFunctionType = EmployeeFunction.AsObject;
 export type ActivityLogType = ActivityLog.AsObject;
 export type SpiffTypeType = SpiffType.AsObject;
+export type SpiffReportLineType = SpiffReportLine.AsObject;
 export type PromptPaymentReportLineType = PromptPaymentReportLine.AsObject;
 
 export const ReportClientService = new ReportClient(ENDPOINT);
@@ -1026,14 +1029,16 @@ export const loadPerDiemByDepartmentIdAndDateStarted = async (
 
 export const loadPerDiemsNeedsAuditing = async (
   page: number,
+  needsAuditing: boolean,
   departmentId?: number,
   userId?: number,
   dateStarted?: string,
 ) => {
   const req = new PerDiem();
+  req.setFieldMaskList(['NeedsAuditing', 'WithRows']);
   req.setWithRows(true);
   req.setPageNumber(page);
-  req.setNeedsAuditing(true);
+  req.setNeedsAuditing(needsAuditing);
   if (departmentId) {
     req.setDepartmentId(departmentId);
   }
@@ -1322,6 +1327,21 @@ export const loadCharityReport = async (month: string) => {
   };
 };
 
+export const loadTimeoffSummaryReport = async (year: number) => {
+  return [...Array(100)].map(() => ({
+    employeeName: getRandomName(),
+    hireDate: [
+      randomize([2015, 2016, 2017, 2018, 2019]),
+      trailingZero(+randomize([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])),
+      trailingZero(+randomize([...Array(30)].map((_, idx) => idx + 1))),
+    ].join('-'),
+    annualPtoAllowance: randomize([0, 40]),
+    pto: randomize([0, 8, 24, 32, 64]),
+    discretionary: randomize([0, 32, 40, 23, 14]),
+    mandatory: 0,
+  }));
+};
+
 export const loadWarrantyReport = async () => {
   return [...Array(130)].map(() => ({
     briefDdescription: randomize([
@@ -1368,19 +1388,65 @@ export const loadServiceCallMetricsByFilter = async ({
   };
 };
 
-export const loadPromptPaymentData = async () => {
-  return [...Array(100)].map(() => {
-    const allInvoices = getRandomNumber(2);
-    return {
-      customerName: getRandomLastName() + ' ' + getRandomLastName(),
-      payableAward: getRandomNumber(4),
-      forfeitedAward: getRandomNumber(3),
-      pendingAward: getRandomNumber(2),
-      averageDaysToPay: getRandomNumber(2),
-      paidInvoices: Math.floor(Math.random() * allInvoices),
-      allInvoices,
-    };
+export type PromptPaymentData = {
+  customerName: string;
+  payableAward: number;
+  forfeitedAward: number;
+  pendingAward: number;
+  averageDaysToPay: number;
+  daysToPay: number;
+  paidInvoices: number;
+  allInvoices: number;
+  entries: PromptPaymentReportLineType[];
+};
+
+export const loadPromptPaymentData = async (month: string) => {
+  const req = new PromptPaymentReportLine();
+  const date = `${month.replace('%', '01')} 00:00:00`;
+  const startDate = format(addDays(new Date(date), -1), 'yyyy-MM-dd');
+  const endDate = format(addMonths(new Date(date), 1), 'yyyy-MM-dd');
+  req.setDateRangeList(['>', startDate, '<', endDate]);
+  req.setDateTargetList(['log_billingDate', 'reportUntil']);
+  const { dataList } = (
+    await ReportClientService.GetPromptPaymentData(req)
+  ).toObject();
+  const data: {
+    [key: string]: PromptPaymentData;
+  } = {};
+  dataList.forEach(entry => {
+    const { userBusinessName, paymentTerms, daysToPay, payable, payed } = entry;
+    if (!data[userBusinessName]) {
+      data[userBusinessName] = {
+        customerName: userBusinessName,
+        payableAward: 0,
+        forfeitedAward: 0,
+        pendingAward: 0,
+        averageDaysToPay: 0,
+        daysToPay: paymentTerms,
+        paidInvoices: 0,
+        allInvoices: 0,
+        entries: [],
+      };
+    }
+    data[userBusinessName].entries.push(entry);
+    data[userBusinessName].averageDaysToPay += daysToPay;
+    data[userBusinessName].allInvoices += 1;
+    data[userBusinessName].paidInvoices += payable === payed ? 1 : 0;
+    // TODO calculate:
+    // payableAward
+    // forfeitedAward
+    // pendingAward
   });
+
+  return sortBy(Object.values(data), ({ customerName }) =>
+    customerName.toLowerCase().trim(),
+  ).map(({ averageDaysToPay, ...item }) => ({
+    ...item,
+    averageDaysToPay:
+      item.paidInvoices === 0
+        ? 0
+        : Math.round(averageDaysToPay / item.paidInvoices),
+  }));
 };
 
 export type LoadSpiffReportByFilter = {
@@ -1393,35 +1459,41 @@ export const loadSpiffReportByFilter = async ({
   type,
   users,
 }: LoadSpiffReportByFilter) => {
-  return users.map(() => ({
-    user: getRandomName(),
-    toolAllowanceBreakdown: {
-      beginningBalance: 775.29,
-      endingBalance: 570.08,
-      overageMonth: getRandomDigit(),
-      overageYear: getRandomDigit(),
-      purchaseTotal: 215.43,
-      purchases: [...Array(getRandomDigit() * 3)].map(() => ({
-        name: `NRP ${getRandomDigit()}" ${getRandomJobTitle()} Set w/ ${getRandomLastName()}`,
-        date:
-          type === 'Weekly'
-            ? date
-            : date.replace('%', trailingZero(getRandomDigit())),
-        price: Math.random() * 200,
-      })),
-    },
-    incentiveBreakdown: {
-      revokedBonusMonth: getRandomDigit(),
-      revokedBonusYear: getRandomDigit(),
-      bonusTotal: getRandomDigit(),
-      items: [...Array(getRandomDigit())].map(() => ({
-        name: getRandomLastName(),
-        jobNumber: getRandomPhone(),
-        status: 'Completed',
-        amount: 300 * Math.random(),
-      })),
-    },
-  }));
+  const req = new SpiffReportLine();
+  req.setIsActive(true);
+  req.setOrderBy('timestamp');
+  if (type === 'Monthly') {
+    const startDate = date.replace('%', '01');
+    const endDate = format(addMonths(new Date(startDate), 1), 'yyyy-MM-dd');
+    req.setDateRangeList(['>=', startDate, '<', endDate]);
+    req.setDateTargetList(['timestamp', 'timestamp']);
+  } else {
+    const startDate = date;
+    const endDate = format(addDays(new Date(startDate), 7), 'yyyy-MM-dd');
+    req.setDateRangeList(['>=', startDate, '<', endDate]);
+    req.setDateTargetList(['timestamp', 'timestamp']);
+  }
+  const { dataList } = (
+    await ReportClientService.GetSpiffReportData(req)
+  ).toObject();
+  const data: {
+    [key: string]: {
+      spiffBonusTotal: number;
+      items: SpiffReportLineType[];
+    };
+  } = {};
+  dataList.forEach(item => {
+    const { employeeName } = item;
+    if (!data[employeeName]) {
+      data[employeeName] = {
+        spiffBonusTotal: 0,
+        items: [],
+      };
+    }
+    data[employeeName].items.push(item);
+    data[employeeName].spiffBonusTotal += item.amount;
+  });
+  return data;
 };
 
 export type ActivityLogsSort = {
@@ -2138,6 +2210,37 @@ const loadGovPerDiemData = async (
   } catch (e) {
     return { [zipCode]: { meals: MEALS_RATE, lodging: 0 } };
   }
+};
+
+export const loadGovPerDiemByZipCode = async (
+  zipCode: number,
+  year: number,
+) => {
+  const client = new ApiKeyClient(ENDPOINT);
+  const req = new ApiKey();
+  req.setTextId('per_diem_key');
+  const { apiEndpoint, apiKey } = await client.Get(req);
+  const endpoint = `${apiEndpoint.replace(
+    '{ZIP}',
+    zipCode.toString(),
+  )}${year}?api_key=${apiKey}`;
+  const response = await (await fetch(endpoint)).json();
+  if (response.rates.length === 0) return false;
+  const {
+    rates: [
+      {
+        rate: [
+          {
+            city,
+            county,
+            months: { month },
+          },
+        ],
+        state,
+      },
+    ],
+  } = response;
+  return { state, city, county, month };
 };
 
 export const loadGovPerDiem = async (
