@@ -48,7 +48,7 @@ type FormData = Pick<
 >;
 
 type FormPrintData = {
-  userIds: number[];
+  userIds: string;
   departmentIds: number[];
   weeks: string[];
 };
@@ -73,7 +73,7 @@ const initialFormData: FormData = {
 
 const initialFormPrintData: FormPrintData = {
   departmentIds: [],
-  userIds: [],
+  userIds: '',
   weeks: [],
 };
 
@@ -220,7 +220,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     const { departmentIds, userIds, weeks } = formPrintData;
     const { resultsList } = await loadPerDiemsReport(
       departmentIds,
-      userIds,
+      userIds
+        .split(',')
+        .filter(id => !!id)
+        .map(id => +id),
       weeks,
     );
     setPerDiemsPrint(resultsList);
@@ -338,11 +341,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
       {
         name: 'userIds',
         label: 'Technician(s)',
-        options: technicians.map(el => ({
-          label: getCustomerName(el),
-          value: el.id,
-        })),
-        type: 'multiselect',
+        type: 'technicians',
       },
     ],
     [
