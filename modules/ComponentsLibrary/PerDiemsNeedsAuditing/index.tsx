@@ -16,6 +16,7 @@ import { PrintParagraph } from '../PrintParagraph';
 import { PerDiemComponent, getStatus } from '../PerDiem';
 import {
   loadPerDiemsNeedsAuditing,
+  loadPerDiemsReport,
   updatePerDiemNeedsAudit,
   PerDiemType,
   makeFakeRows,
@@ -46,6 +47,12 @@ type FormData = Pick<
   'dateStarted' | 'departmentId' | 'userId' | 'needsAuditing'
 >;
 
+type FormPrintData = {
+  userIds: number[];
+  departmentIds: number[];
+  weeks: string[];
+};
+
 type GovPerDiemsByYearMonth = {
   [key: number]: {
     [key: number]: {
@@ -64,6 +71,12 @@ const initialFormData: FormData = {
   userId: 0,
 };
 
+const initialFormPrintData: FormPrintData = {
+  departmentIds: [],
+  userIds: [],
+  weeks: [],
+};
+
 const formatWeek = (date: string) => {
   const d = new Date(date);
   return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
@@ -80,6 +93,12 @@ export const useStyles = makeStyles(theme => ({
     marginRight: theme.spacing(),
     borderRadius: '50%',
     verticalAlign: 'middle',
+  },
+  printBtn: {
+    marginTop: theme.spacing(-2),
+    marginBottom: theme.spacing(2),
+    display: 'flex',
+    justifyContent: 'center',
   },
   printItem: {
     marginTop: '0.5rem',
@@ -101,9 +120,11 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     [],
   );
   const [initialized, setInitialized] = useState<boolean>(false);
+  const [printing, setPrinting] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [perDiemsPrint, setPerDiemsPrint] = useState<PerDiemType[]>([]);
   const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -112,6 +133,9 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [formPrintData, setFormPrintData] = useState<FormPrintData>(
+    initialFormPrintData,
+  );
   const [formKey, setFormKey] = useState<number>(0);
   const [govPerDiemsByYearMonth, setGovPerDiemsByYearMonth] = useState<
     GovPerDiemsByYearMonth
@@ -137,58 +161,71 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
     setCount(totalCount);
     setLoading(false);
   }, [setLoading, formData, page]);
-  const loadLodging = useCallback(async () => {
-    const zipCodesByYearMonth: {
-      [key: number]: {
-        [key: number]: string[];
-      };
-    } = {};
-    perDiems.forEach(({ rowsList }) =>
-      rowsList.forEach(({ dateString, zipCode }) => {
-        const [y, m] = dateString.split('-');
-        const year = +y;
-        const month = +m;
-        if (!zipCodesByYearMonth[year]) {
-          zipCodesByYearMonth[year] = {};
+  const loadLodging = useCallback(
+    async (perDiems: PerDiemType[]) => {
+      const zipCodesByYearMonth: {
+        [key: number]: {
+          [key: number]: string[];
+        };
+      } = {};
+      perDiems.forEach(({ rowsList }) =>
+        rowsList.forEach(({ dateString, zipCode }) => {
+          const [y, m] = dateString.split('-');
+          const year = +y;
+          const month = +m;
+          if (!zipCodesByYearMonth[year]) {
+            zipCodesByYearMonth[year] = {};
+          }
+          if (!zipCodesByYearMonth[year][month]) {
+            zipCodesByYearMonth[year][month] = [];
+          }
+          if (!zipCodesByYearMonth[year][month].includes(zipCode)) {
+            zipCodesByYearMonth[year][month].push(zipCode);
+          }
+        }),
+      );
+      const zipCodesArr: {
+        year: number;
+        month: number;
+        zipCodes: string[];
+      }[] = [];
+      Object.keys(zipCodesByYearMonth).forEach(year =>
+        Object.keys(zipCodesByYearMonth[+year]).forEach(month => {
+          zipCodesArr.push({
+            year: +year,
+            month: +month,
+            zipCodes: zipCodesByYearMonth[+year][+month],
+          });
+        }),
+      );
+      const govPerDiems = await Promise.all(
+        zipCodesArr.map(async ({ year, month, zipCodes }) => ({
+          year,
+          month,
+          data: await loadGovPerDiem(zipCodes, year, month),
+        })),
+      );
+      const govPerDiemsByYearMonth: GovPerDiemsByYearMonth = {};
+      govPerDiems.forEach(({ year, month, data }) => {
+        if (!govPerDiemsByYearMonth[year]) {
+          govPerDiemsByYearMonth[year] = {};
         }
-        if (!zipCodesByYearMonth[year][month]) {
-          zipCodesByYearMonth[year][month] = [];
-        }
-        if (!zipCodesByYearMonth[year][month].includes(zipCode)) {
-          zipCodesByYearMonth[year][month].push(zipCode);
-        }
-      }),
+        govPerDiemsByYearMonth[year][month] = data;
+      });
+      setGovPerDiemsByYearMonth(govPerDiemsByYearMonth);
+    },
+    [setGovPerDiemsByYearMonth],
+  );
+  const loadPrintData = useCallback(async () => {
+    const { departmentIds, userIds, weeks } = formPrintData;
+    const { resultsList } = await loadPerDiemsReport(
+      departmentIds,
+      userIds,
+      weeks,
     );
-    const zipCodesArr: {
-      year: number;
-      month: number;
-      zipCodes: string[];
-    }[] = [];
-    Object.keys(zipCodesByYearMonth).forEach(year =>
-      Object.keys(zipCodesByYearMonth[+year]).forEach(month => {
-        zipCodesArr.push({
-          year: +year,
-          month: +month,
-          zipCodes: zipCodesByYearMonth[+year][+month],
-        });
-      }),
-    );
-    const govPerDiems = await Promise.all(
-      zipCodesArr.map(async ({ year, month, zipCodes }) => ({
-        year,
-        month,
-        data: await loadGovPerDiem(zipCodes, year, month),
-      })),
-    );
-    const govPerDiemsByYearMonth: GovPerDiemsByYearMonth = {};
-    govPerDiems.forEach(({ year, month, data }) => {
-      if (!govPerDiemsByYearMonth[year]) {
-        govPerDiemsByYearMonth[year] = {};
-      }
-      govPerDiemsByYearMonth[year][month] = data;
-    });
-    setGovPerDiemsByYearMonth(govPerDiemsByYearMonth);
-  }, [perDiems, setGovPerDiemsByYearMonth]);
+    setPerDiemsPrint(resultsList);
+    await loadLodging(resultsList);
+  }, [formPrintData, setPerDiemsPrint, loadLodging]);
   useEffect(() => {
     if (!initialized) {
       initialize();
@@ -234,12 +271,16 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
   );
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
-    await loadLodging();
+    await loadPrintData();
     setPrintStatus('loaded');
-  }, [setPrintStatus, loadLodging]);
+  }, [setPrintStatus, loadPrintData]);
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
+  const handleTogglePrinting = useCallback(
+    (printing: boolean) => () => setPrinting(printing),
+    [setPrinting],
+  );
   const techniciansOptions: Option[] = useMemo(
     () => [
       { label: OPTION_ALL, value: 0 },
@@ -289,6 +330,38 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
             onClick: handleSearch,
           },
         ],
+      },
+    ],
+  ];
+  const SCHEMA_PRINT: Schema<FormPrintData> = [
+    [
+      {
+        name: 'userIds',
+        label: 'Technician(s)',
+        options: technicians.map(el => ({
+          label: getCustomerName(el),
+          value: el.id,
+        })),
+        type: 'multiselect',
+      },
+    ],
+    [
+      {
+        name: 'departmentIds',
+        label: 'Department(s)',
+        options: departments.map(el => ({
+          label: getDepartmentName(el),
+          value: el.id,
+        })),
+        type: 'multiselect',
+      },
+    ],
+    [
+      {
+        name: 'weeks',
+        label: 'Week(s)',
+        options: getWeekOptions(52, 0, -1),
+        type: 'multiselect',
       },
     ],
   ];
@@ -346,22 +419,78 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: handleChangePage,
         }}
-        asideContent={
+        actions={[{ label: 'Print', onClick: handleTogglePrinting(true) }]}
+        fixedActions
+      />
+      <PlainForm
+        key={formKey}
+        schema={SCHEMA}
+        data={formData}
+        onChange={setFormData}
+      />
+      <InfoTable columns={COLUMNS} data={data} loading={loading} />
+      {pendingAudited && (
+        <Confirm
+          title="Confirm Auditing"
+          open
+          onClose={handlePendingAuditedToggle()}
+          onConfirm={handleAudit}
+        >
+          Are you sure, Per Diem of <strong>{pendingAudited.ownerName}</strong>{' '}
+          for department{' '}
+          <strong>{getDepartmentName(pendingAudited.department)}</strong> for{' '}
+          <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no longer
+          needs auditing?
+        </Confirm>
+      )}
+      {perDiemViewed && (
+        <Modal open onClose={handlePerDiemViewedToggle(undefined)} fullScreen>
+          <SectionBar
+            title={`Per Diem: ${perDiemViewed.ownerName}`}
+            subtitle={
+              <>
+                Department: {getDepartmentName(perDiemViewed.department)}
+                <br />
+                {formatWeek(perDiemViewed.dateStarted)}
+              </>
+            }
+            actions={[
+              { label: 'Close', onClick: handlePerDiemViewedToggle(undefined) },
+            ]}
+            fixedActions
+            className={classes.modalBar}
+          />
+          <PerDiemComponent
+            onClose={handlePerDiemViewedToggle(undefined)}
+            perDiem={perDiemViewed}
+          />
+        </Modal>
+      )}
+      {printing && (
+        <Modal open onClose={handleTogglePrinting(false)}>
+          <SectionBar
+            title="Per Diems Auditing Print"
+            actions={[{ label: 'Close', onClick: handleTogglePrinting(false) }]}
+            fixedActions
+          />
+          <PlainForm
+            schema={SCHEMA_PRINT}
+            data={formPrintData}
+            onChange={setFormPrintData}
+          />
           <PrintPage
             headerProps={{
-              title: 'Per Diems Auditing',
-              subtitle: `Needs Auditing: ${
-                formData.needsAuditing ? 'Yes' : 'No'
-              }`,
+              title: 'Per Diems',
             }}
             buttonProps={{ label: 'Print', disabled: loading }}
             onPrint={handlePrint}
             onPrinted={handlePrinted}
             status={printStatus}
             key={printStatus}
+            className={classes.printBtn}
           >
             {printStatus === 'loaded' &&
-              perDiems.map(
+              perDiemsPrint.map(
                 ({
                   id,
                   ownerName,
@@ -464,51 +593,6 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
                 },
               )}
           </PrintPage>
-        }
-      />
-      <PlainForm
-        key={formKey}
-        schema={SCHEMA}
-        data={formData}
-        onChange={setFormData}
-      />
-      <InfoTable columns={COLUMNS} data={data} loading={loading} />
-      {pendingAudited && (
-        <Confirm
-          title="Confirm Auditing"
-          open
-          onClose={handlePendingAuditedToggle()}
-          onConfirm={handleAudit}
-          // submitLabel="Custom label"
-        >
-          Are you sure, Per Diem of <strong>{pendingAudited.ownerName}</strong>{' '}
-          for department{' '}
-          <strong>{getDepartmentName(pendingAudited.department)}</strong> for{' '}
-          <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no longer
-          needs auditing?
-        </Confirm>
-      )}
-      {perDiemViewed && (
-        <Modal open onClose={handlePerDiemViewedToggle(undefined)} fullScreen>
-          <SectionBar
-            title={`Per Diem: ${perDiemViewed.ownerName}`}
-            subtitle={
-              <>
-                Department: {getDepartmentName(perDiemViewed.department)}
-                <br />
-                {formatWeek(perDiemViewed.dateStarted)}
-              </>
-            }
-            actions={[
-              { label: 'Close', onClick: handlePerDiemViewedToggle(undefined) },
-            ]}
-            fixedActions
-            className={classes.modalBar}
-          />
-          <PerDiemComponent
-            onClose={handlePerDiemViewedToggle(undefined)}
-            perDiem={perDiemViewed}
-          />
         </Modal>
       )}
     </div>
