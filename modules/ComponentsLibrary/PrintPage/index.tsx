@@ -83,12 +83,31 @@ export const PrintPage: FC<Props> = ({
     }
   }, [printRef, setDownloading, downloadPdfFilename]);
   return (
-    <div className={className}>
-      {downloadPdfFilename && (
+    <>
+      <div className={className}>
+        {downloadPdfFilename && (
+          <Button
+            onClick={handleDownload}
+            children={
+              (status === 'loading' || downloading) && (
+                <CircularProgress
+                  style={{ color: '#FFF', marginRight: 8 }}
+                  size={16}
+                />
+              )
+            }
+            {...buttonProps}
+            disabled={
+              status === 'loading' || downloading || buttonProps.disabled
+            }
+            label="Download"
+          />
+        )}
         <Button
-          onClick={handleDownload}
+          label="Print"
+          onClick={onPrint || handlePrint!}
           children={
-            (status === 'loading' || downloading) && (
+            status === 'loading' && (
               <CircularProgress
                 style={{ color: '#FFF', marginRight: 8 }}
                 size={16}
@@ -96,25 +115,9 @@ export const PrintPage: FC<Props> = ({
             )
           }
           {...buttonProps}
-          disabled={status === 'loading' || downloading || buttonProps.disabled}
-          label="Download"
+          disabled={status === 'loading' || buttonProps.disabled}
         />
-      )}
-      <Button
-        label="Print"
-        onClick={onPrint || handlePrint!}
-        children={
-          status === 'loading' && (
-            <CircularProgress
-              style={{ color: '#FFF', marginRight: 8 }}
-              size={16}
-            />
-          )
-        }
-        {...buttonProps}
-        disabled={status === 'loading' || buttonProps.disabled}
-      />
-
+      </div>
       <div className={classes.printWrapper}>
         <div ref={printRef}>
           {headerProps && <PrintHeader {...headerProps} />}
@@ -138,6 +141,6 @@ export const PrintPage: FC<Props> = ({
           </table>
         </div>
       </div>
-    </div>
+    </>
   );
 };
