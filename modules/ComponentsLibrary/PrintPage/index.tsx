@@ -17,6 +17,7 @@ interface Props {
   onPrinted?: () => void;
   status?: Status;
   downloadPdfFilename?: string;
+  className?: string;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -40,6 +41,7 @@ export const PrintPage: FC<Props> = ({
   children,
   status,
   downloadPdfFilename,
+  className = '',
 }) => {
   const classes = useStyles();
   const printRef = useRef(null);
@@ -81,7 +83,7 @@ export const PrintPage: FC<Props> = ({
     }
   }, [printRef, setDownloading, downloadPdfFilename]);
   return (
-    <div>
+    <div className={className}>
       {downloadPdfFilename && (
         <Button
           onClick={handleDownload}

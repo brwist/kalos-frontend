@@ -46,6 +46,7 @@ import {
   PerDiemClient,
   PerDiem,
   PerDiemRow,
+  PerDiemReportConfig,
 } from '@kalos-core/kalos-rpc/PerDiem';
 import {
   TimesheetDepartmentClient,
@@ -1050,6 +1051,19 @@ export const loadPerDiemsNeedsAuditing = async (
   }
   req.setIsActive(true);
   return (await PerDiemClientService.BatchGet(req)).toObject();
+};
+
+export const loadPerDiemsReport = async (
+  departmentIDs: number[],
+  userIDs: number[],
+  weeks: string[],
+) => {
+  const config: PerDiemReportConfig = {
+    departmentIDs,
+    userIDs,
+    weeks,
+  };
+  return (await PerDiemClientService.getPerDiemReportData(config)).toObject();
 };
 
 export const upsertPerDiem = async (data: PerDiemType) => {

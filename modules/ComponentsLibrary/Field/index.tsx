@@ -747,7 +747,10 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             multiple={type === 'multiselect'}
             renderValue={
               type === 'multiselect'
-                ? selected => (selected as Value[]).join(', ')
+                ? selected => {
+                    const { length } = selected as Value[];
+                    return `${length} item${length === 1 ? '' : 's'}`;
+                  }
                 : undefined
             }
           >
