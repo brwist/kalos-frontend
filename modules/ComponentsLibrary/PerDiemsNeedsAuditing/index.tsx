@@ -13,7 +13,6 @@ import { Modal } from '../Modal';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintParagraph } from '../PrintParagraph';
-import { PrintList } from '../PrintList';
 import { PerDiemComponent, getStatus } from '../PerDiem';
 import {
   loadPerDiemsNeedsAuditing,
@@ -32,7 +31,6 @@ import {
   formatDate,
 } from '../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
-import { LodgingByZipCode } from '../LodgingByZipCode';
 
 interface Props {}
 
@@ -372,6 +370,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
                   rowsList,
                   dateSubmitted,
                   dateApproved,
+                  notes,
                 }) => {
                   const totalMeals = rowsList.length * MEALS_RATE;
                   const totalLodging = rowsList
@@ -407,6 +406,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
                         equalColWidths
                         noBorders
                       />
+                      {notes && <PrintParagraph>Notes: {notes}</PrintParagraph>}
                       <PrintTable
                         key={id}
                         equalColWidths
@@ -452,7 +452,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
                                     )}
                                   </div>
                                 )}
-                                <div>Notes: {notes}</div>
+                                {notes && <div>Notes: {notes}</div>}
                               </>
                             );
                           }),

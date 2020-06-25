@@ -8,9 +8,12 @@ type Model = {
 
 const SELECT_OPTIONS_TXT: Options = ['red', 'green', 'blue'];
 const SELECT_OPTIONS_PAIRS: Option[] = [
+  { label: 'Yellow', value: 'yellow', color: '#FF0' },
   { label: 'Gold', value: 'gold', color: '#EC4' },
   { label: 'Brown', value: 'brown', color: '#A72' },
   { label: 'Orange', value: 'orange', color: '#E96' },
+  { label: 'Red', value: 'red', color: '#E44' },
+  { label: 'Blue', value: 'blue', color: '#11F' },
 ];
 
 const EnhancedField = ({
@@ -36,23 +39,25 @@ const EnhancedField = ({
   | 'actionsInLabel'
   | 'onFileLoad'
 > & {
-  defaultValue?: Value;
+  defaultValue?: Value | Value[];
 }) => {
   const [value, setValue] = useState(defaultValue);
   if (props.headline) return <Field {...props} />;
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <Field name="firstName" value={value} onChange={setValue} {...props} />
-      {props.options && typeof props.options[0] === 'string' && (
-        <div
-          style={{
-            width: 30,
-            height: 30,
-            background: value,
-            marginLeft: 20,
-          }}
-        />
-      )}
+      {props.options &&
+        typeof props.options[0] === 'string' &&
+        typeof value === 'string' && (
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              background: value,
+              marginLeft: 20,
+            }}
+          />
+        )}
     </div>
   );
 };
@@ -139,6 +144,15 @@ Amet`}
     />
     <EnhancedField label="Checkbox" type="checkbox" />
     <EnhancedField label="Headline" headline />
+    <EnhancedField
+      label="Multiselect"
+      options={SELECT_OPTIONS_PAIRS}
+      defaultValue={[
+        SELECT_OPTIONS_PAIRS[0].value,
+        SELECT_OPTIONS_PAIRS[2].value,
+      ]}
+      type="multiselect"
+    />
     <EnhancedField
       label="Select Field"
       options={SELECT_OPTIONS_TXT}
