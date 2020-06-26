@@ -15,7 +15,10 @@ export default () => (
     </PrintPage>
     <ExampleTitle>with header, footer and example print table</ExampleTitle>
     <PrintPage
-      headerProps={{ title: 'Lorem ipsum' }}
+      headerProps={{
+        title: 'Lorem ipsum',
+        withKalosAddress: true,
+      }}
       footerProps={{
         height: 230,
         children: (

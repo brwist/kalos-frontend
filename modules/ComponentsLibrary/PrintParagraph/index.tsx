@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, CSSProperties } from 'react';
 import clsx from 'clsx';
 import './styles.css';
 
@@ -10,17 +10,20 @@ type Style = {
 
 interface Props extends Style {
   align?: 'left' | 'center' | 'right';
+  style?: CSSProperties;
 }
 
 export const PrintParagraph: FC<Props> = ({
   tag = 'div',
   align = 'left',
   children,
+  style = {},
 }) => {
   return (
     <div
       style={{
         textAlign: align,
+        ...style,
       }}
       className={clsx('PrintParagraph', tag)}
     >

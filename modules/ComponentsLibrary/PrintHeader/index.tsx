@@ -1,10 +1,14 @@
 import React, { FC, ReactNode } from 'react';
+import clsx from 'clsx';
+import { PrintParagraph } from '../PrintParagraph';
 import './styles.css';
 
 export interface Props {
-  title: string;
+  title?: string;
   subtitle?: ReactNode;
   logo?: string;
+  withKalosAddress?: boolean;
+  bigLogo?: boolean;
 }
 
 interface SubtitleItemProps {
@@ -12,17 +16,31 @@ interface SubtitleItemProps {
   value: ReactNode;
 }
 
-export const PrintHeader: FC<Props> = ({ title, subtitle }) => (
+export const PrintHeader: FC<Props> = ({
+  title,
+  subtitle,
+  withKalosAddress = false,
+  bigLogo = false,
+}) => (
   <div className="PrintHeader">
-    <img
-      src="https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png"
-      alt="Kalos Service"
-      className="PrintHeader_logo"
-    />
+    <div className={clsx('PrintHeader_logo', { bigLogo })} />
     <div className="PrintHeader_content">
-      <div className="PrintHeader_title">{title}</div>
-      {subtitle && <div className="PrintHeader_subtitle">{subtitle}</div>}
+      {title && (
+        <PrintParagraph tag="h1" align="center" style={{ marginTop: 0 }}>
+          {title}
+        </PrintParagraph>
+      )}
+      {subtitle && <PrintParagraph align="center">{subtitle}</PrintParagraph>}
     </div>
+    {withKalosAddress && (
+      <PrintParagraph tag="h2" align="right" style={{ marginTop: 0 }}>
+        Kalos Services
+        <br />
+        236 Hatteras Ave
+        <br />
+        Clermont FL 34711
+      </PrintParagraph>
+    )}
   </div>
 );
 
