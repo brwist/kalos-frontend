@@ -17,7 +17,7 @@ export default () => (
     <PrintPage
       headerProps={{ title: 'Lorem ipsum' }}
       footerProps={{
-        height: 250,
+        height: 230,
         children: (
           <PrintParagraph>
             <LoremIpsumList />

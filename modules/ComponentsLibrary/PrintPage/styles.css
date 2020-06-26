@@ -1,0 +1,9 @@
+.PrintPage {
+  display: none;
+}
+.PrintPage_table {
+  width: 100%;
+}
+.PrintPage_tfoot {
+  display: table-footer-group;
+}
