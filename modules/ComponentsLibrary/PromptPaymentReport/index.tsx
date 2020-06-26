@@ -242,13 +242,13 @@ export const PromptPaymentReport: FC<Props> = ({
                   actions: [
                     <IconButton key="view" size="small">
                       <ZoomIcon />
-                    </IconButton>,
+                    </IconButton>, // TODO
                     <IconButton key="edit" size="small">
                       <EditIcon />
                     </IconButton>,
                     <IconButton key="download" size="small">
                       <DownloadIcon />
-                    </IconButton>,
+                    </IconButton>, // TODO
                   ],
                 },
               ];
