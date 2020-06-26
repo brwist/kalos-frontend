@@ -3,7 +3,7 @@ import { format, addMonths } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
-import ZoomIcon from '@material-ui/icons/Search';
+import AwardIcon from '@material-ui/icons/Loyalty';
 import ListIcon from '@material-ui/icons/List';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
@@ -13,6 +13,7 @@ import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { PlainForm, Schema } from '../PlainForm';
 import { Modal } from '../Modal';
+import { Form } from '../Form';
 import {
   loadPromptPaymentData,
   usd,
@@ -30,6 +31,11 @@ interface Props {
 
 type FormData = {
   month: string;
+};
+
+type AwardFormData = {
+  kind: 'award' | 'forfeit';
+  reason: string;
 };
 
 type OpenedInvoices = {
@@ -55,6 +61,23 @@ const SCHEMA: Schema<FormData> = [
   ],
 ];
 
+const SCHEMA_AWARD: Schema<AwardFormData> = [
+  [
+    {
+      name: 'kind',
+      label: 'Kind',
+      options: ['award', 'forfeit'],
+    },
+  ],
+  [
+    {
+      name: 'reason',
+      label: 'Reason',
+      multiline: true,
+    },
+  ],
+];
+
 export const PromptPaymentReport: FC<Props> = ({
   month: initialMonth,
   onClose,
@@ -64,6 +87,13 @@ export const PromptPaymentReport: FC<Props> = ({
   const [data, setData] = useState<PromptPaymentData[]>([]);
   const [form, setForm] = useState<FormData>({ month: initialMonth });
   const [openedInvoices, setOpenedInvoices] = useState<OpenedInvoices>();
+  const [awardEditData, setAwardEfitData] = useState<AwardFormData>({
+    kind: 'award',
+    reason: '',
+  });
+  const [editingAward, setEditingAward] = useState<
+    PromptPaymentReportLineType
+  >();
   const load = useCallback(async () => {
     setLoading(true);
     const data = await loadPromptPaymentData(form.month);
@@ -87,6 +117,18 @@ export const PromptPaymentReport: FC<Props> = ({
     (openedInvoices?: OpenedInvoices) => () =>
       setOpenedInvoices(openedInvoices),
     [setOpenedInvoices],
+  );
+  const handleToggleEditingAward = useCallback(
+    (editingAward?: PromptPaymentReportLineType) => () =>
+      setEditingAward(editingAward),
+    [setEditingAward],
+  );
+  const handleSaveAward = useCallback(
+    async (data: AwardFormData) => {
+      console.log(data); // TODO save data once api will have endpoint
+      setEditingAward(undefined);
+    },
+    [setEditingAward],
   );
   const subtitle = useMemo(
     () => format(new Date(form.month.replace('%', '01')), 'MMMM yyyy'),
@@ -228,6 +270,7 @@ export const PromptPaymentReport: FC<Props> = ({
                 payed,
                 daysToPay,
                 paymentTerms,
+                possibleAward,
               } = entry;
               return [
                 { value: formatDate(billingdate) },
@@ -238,11 +281,15 @@ export const PromptPaymentReport: FC<Props> = ({
                 { value: usd(payed) },
                 { value: `${daysToPay}/${paymentTerms}` },
                 {
-                  value: usd(0), // FIXME
+                  value: usd(possibleAward),
                   actions: [
-                    <IconButton key="view" size="small">
-                      <ZoomIcon />
-                    </IconButton>, // TODO
+                    <IconButton
+                      key="view"
+                      size="small"
+                      onClick={handleToggleEditingAward(entry)}
+                    >
+                      <AwardIcon />
+                    </IconButton>,
                     <IconButton key="edit" size="small">
                       <EditIcon />
                     </IconButton>,
@@ -253,6 +300,18 @@ export const PromptPaymentReport: FC<Props> = ({
                 },
               ];
             })}
+          />
+        </Modal>
+      )}
+      {editingAward && (
+        <Modal open onClose={handleToggleEditingAward()}>
+          <Form
+            title="Award Edit"
+            subtitle={editingAward.jobNumber}
+            schema={SCHEMA_AWARD}
+            data={awardEditData}
+            onClose={handleToggleEditingAward()}
+            onSave={handleSaveAward}
           />
         </Modal>
       )}
