@@ -9,6 +9,9 @@ import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
+import { PrintHeader } from '../PrintHeader';
+import { PrintPageBreak } from '../PrintPageBreak';
+import { PrintParagraph } from '../PrintParagraph';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { PlainForm, Schema } from '../PlainForm';
@@ -87,10 +90,6 @@ export const PromptPaymentReport: FC<Props> = ({
   const [data, setData] = useState<PromptPaymentData[]>([]);
   const [form, setForm] = useState<FormData>({ month: initialMonth });
   const [openedInvoices, setOpenedInvoices] = useState<OpenedInvoices>();
-  const [awardEditData, setAwardEfitData] = useState<AwardFormData>({
-    kind: 'award',
-    reason: '',
-  });
   const [editingAward, setEditingAward] = useState<
     PromptPaymentReportLineType
   >();
@@ -134,6 +133,10 @@ export const PromptPaymentReport: FC<Props> = ({
     () => format(new Date(form.month.replace('%', '01')), 'MMMM yyyy'),
     [form],
   );
+  const subtitleMonth = useMemo(
+    () => format(new Date(form.month.replace('%', '01')), 'MMMM'),
+    [form],
+  );
   return (
     <div>
       <SectionBar
@@ -141,47 +144,105 @@ export const PromptPaymentReport: FC<Props> = ({
         asideContent={
           <>
             <PrintPage
-              headerProps={{
-                title: 'Prompt Payment Report',
-                subtitle,
-              }}
               buttonProps={{
-                label: 'Print',
+                label: 'Print Payable Reports',
                 disabled: loading,
               }}
             >
-              {!loading && (
-                <>
-                  <PrintTable
-                    columns={[
-                      'Customer',
-                      { title: 'Payable Award', align: 'right' },
-                      { title: 'Forfeited Award', align: 'right' },
-                      { title: 'Pending Award', align: 'right' },
-                      { title: 'Average Days to Pay', align: 'right' },
-                      { title: 'Paid Invoices', align: 'right' },
-                    ]}
-                    data={data.map(
-                      ({
-                        customerName,
-                        payableAward,
-                        forfeitedAward,
-                        pendingAward,
-                        averageDaysToPay,
-                        daysToPay,
-                        paidInvoices,
-                        allInvoices,
-                      }) => [
-                        customerName,
-                        usd(payableAward),
-                        usd(forfeitedAward),
-                        usd(pendingAward),
-                        `${averageDaysToPay}/${daysToPay}`,
-                        `${paidInvoices}/${allInvoices}`,
-                      ],
-                    )}
-                  />
-                </>
+              {data.map(
+                ({
+                  customerId,
+                  customerName,
+                  entries,
+                  allInvoices,
+                  payableTotal,
+                  paidOnTime,
+                  paidInvoices,
+                  possibleAwardTotal,
+                }) => (
+                  <div key={customerId}>
+                    <PrintHeader withKalosAddress bigLogo />
+                    <PrintTable
+                      columns={[
+                        { title: '', align: 'left' },
+                        { title: '', align: 'right' },
+                      ]}
+                      data={[
+                        [
+                          <PrintParagraph
+                            style={{ fontStyle: 'italic', marginTop: 4 }}
+                          >
+                            To our friends at {customerName},
+                            <br />
+                            <br />
+                            in the month of {subtitleMonth}, we did{' '}
+                            {usd(payableTotal)} in work across
+                            <br />
+                            {allInvoices} invoices. With {paidOnTime} out of{' '}
+                            {paidInvoices} invoices paid within expected
+                            <br />
+                            terms, we are pleased to offer{' '}
+                            {usd(possibleAwardTotal)} as a thank you
+                            <br />
+                            for working with us.
+                          </PrintParagraph>,
+                          <>
+                            <PrintParagraph
+                              tag="h1"
+                              align="right"
+                              style={{ marginTop: 0, marginBottom: 2 }}
+                            >
+                              {customerName}
+                            </PrintParagraph>
+                            <PrintParagraph
+                              tag="h1"
+                              align="right"
+                              style={{ marginTop: 0 }}
+                            >
+                              {subtitle}
+                            </PrintParagraph>
+                          </>,
+                        ],
+                      ]}
+                      noBorders
+                      styles={{ marginTop: 20 }}
+                    />
+                    <PrintParagraph tag="h2" align="right">
+                      Invoice Details
+                    </PrintParagraph>
+                    <PrintTable
+                      columns={[
+                        { title: 'Invoice Number', align: 'left' },
+                        { title: 'Due Date', align: 'right' },
+                        { title: 'Payment Date', align: 'right' },
+                        { title: 'Days to Pay', align: 'right' },
+                        { title: 'Paid', align: 'right' },
+                        { title: 'Comments', align: 'center' },
+                        { title: 'Award', align: 'right' },
+                      ]}
+                      data={entries.map(
+                        ({
+                          jobNumber,
+                          dueDate,
+                          paymentDate,
+                          daysToPay,
+                          paymentTerms,
+                          payed,
+                          possibleAward,
+                        }) => [
+                          jobNumber,
+                          formatDate(dueDate),
+                          formatDate(paymentDate),
+                          `${daysToPay}/${paymentTerms}`,
+                          usd(payed),
+                          '', // TODO
+                          usd(possibleAward),
+                        ],
+                      )}
+                    />
+                    <PrintPageBreak height={0} />
+                  </div>
+                ),
               )}
             </PrintPage>
             {onClose && <Button label="Close" onClick={onClose} />}
@@ -309,7 +370,10 @@ export const PromptPaymentReport: FC<Props> = ({
             title="Award Edit"
             subtitle={editingAward.jobNumber}
             schema={SCHEMA_AWARD}
-            data={awardEditData}
+            data={{
+              kind: 'award',
+              reason: '',
+            }}
             onClose={handleToggleEditingAward()}
             onSave={handleSaveAward}
           />

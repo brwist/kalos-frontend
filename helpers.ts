@@ -1403,6 +1403,7 @@ export const loadServiceCallMetricsByFilter = async ({
 };
 
 export type PromptPaymentData = {
+  customerId: number;
   customerName: string;
   payableAward: number;
   forfeitedAward: number;
@@ -1411,6 +1412,9 @@ export type PromptPaymentData = {
   daysToPay: number;
   paidInvoices: number;
   allInvoices: number;
+  payableTotal: number;
+  paidOnTime: number;
+  possibleAwardTotal: number;
   entries: PromptPaymentReportLineType[];
 };
 
@@ -1428,9 +1432,20 @@ export const loadPromptPaymentData = async (month: string) => {
     [key: string]: PromptPaymentData;
   } = {};
   dataList.forEach(entry => {
-    const { userBusinessName, paymentTerms, daysToPay, payable, payed } = entry;
+    const {
+      userId,
+      userBusinessName,
+      paymentTerms,
+      daysToPay,
+      payable,
+      payed,
+      dueDate,
+      paymentDate,
+      possibleAward,
+    } = entry;
     if (!data[userBusinessName]) {
       data[userBusinessName] = {
+        customerId: userId,
         customerName: userBusinessName,
         payableAward: 0,
         forfeitedAward: 0,
@@ -1439,13 +1454,20 @@ export const loadPromptPaymentData = async (month: string) => {
         daysToPay: paymentTerms,
         paidInvoices: 0,
         allInvoices: 0,
+        payableTotal: 0,
+        paidOnTime: 0,
+        possibleAwardTotal: 0,
         entries: [],
       };
     }
     data[userBusinessName].entries.push(entry);
     data[userBusinessName].averageDaysToPay += daysToPay;
     data[userBusinessName].allInvoices += 1;
-    data[userBusinessName].paidInvoices += payable === payed ? 1 : 0;
+    data[userBusinessName].payableTotal += payable;
+    data[userBusinessName].paidInvoices += payable >= payed ? 1 : 0;
+    data[userBusinessName].paidOnTime +=
+      payable >= payed && dueDate >= paymentDate ? 1 : 0;
+    data[userBusinessName].possibleAwardTotal += possibleAward;
     // TODO calculate:
     // payableAward
     // forfeitedAward
