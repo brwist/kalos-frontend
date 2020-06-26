@@ -1,11 +1,11 @@
 import React, { FC, useRef, useEffect, useCallback, useState } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { makeStyles } from '@material-ui/core/styles';
 import { useReactToPrint } from 'react-to-print';
 import { PrintHeader, Props as HeaderProps } from '../PrintHeader';
 import { PrintFooter, Props as FooterProps } from '../PrintFooter';
 import { Button, Props as ButtonProps } from '../Button';
 import { getUploadedHTMLUrl, setInlineStyles } from '../../../helpers';
+import './styles.css';
 
 export type Status = 'idle' | 'loading' | 'loaded';
 
@@ -20,18 +20,6 @@ interface Props {
   className?: string;
 }
 
-const useStyles = makeStyles(theme => ({
-  printWrapper: {
-    display: 'none',
-  },
-  table: {
-    width: '100%',
-  },
-  tfoot: {
-    display: 'table-footer-group',
-  },
-}));
-
 export const PrintPage: FC<Props> = ({
   headerProps,
   footerProps,
@@ -43,7 +31,6 @@ export const PrintPage: FC<Props> = ({
   downloadPdfFilename,
   className = '',
 }) => {
-  const classes = useStyles();
   const printRef = useRef(null);
   const [downloading, setDownloading] = useState<boolean>(false);
   const handlePrint = useReactToPrint({
@@ -118,17 +105,17 @@ export const PrintPage: FC<Props> = ({
           disabled={status === 'loading' || buttonProps.disabled}
         />
       </div>
-      <div className={classes.printWrapper}>
+      <div className="PrintPage">
         <div ref={printRef}>
           {headerProps && <PrintHeader {...headerProps} />}
-          <table className={classes.table}>
+          <table className="PrintPage_table">
             <tbody>
               <tr>
                 <td>{children}</td>
               </tr>
             </tbody>
             {footerProps && (
-              <tfoot className={classes.tfoot}>
+              <tfoot className="PrintPage_tfoot">
                 <tr>
                   <td>
                     <div style={{ height: footerProps.height }}>
