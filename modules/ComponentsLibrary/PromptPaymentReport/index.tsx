@@ -1,5 +1,6 @@
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
 import { format, addMonths } from 'date-fns';
+import kebabCase from 'lodash/kebabCase';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
@@ -236,6 +237,8 @@ export const PromptPaymentReport: FC<Props> = ({
                 label: 'Print Payable Reports',
                 disabled: loading,
               }}
+              downloadPdfFilename={`PPR-Letter-elligible-customers-${subtitleMonth}`}
+              downloadLabel="Download Payable Reports"
             >
               {data.map(renderCustomerPayableReport)}
             </PrintPage>
@@ -257,8 +260,8 @@ export const PromptPaymentReport: FC<Props> = ({
               { name: 'Average Days to Pay' },
               { name: 'Paid Invoices' },
             ]}
-            data={data.map(
-              ({
+            data={data.map(entry => {
+              const {
                 customerName,
                 payableAward,
                 forfeitedAward,
@@ -268,7 +271,8 @@ export const PromptPaymentReport: FC<Props> = ({
                 paidInvoices,
                 allInvoices,
                 entries,
-              }) => [
+              } = entry;
+              return [
                 { value: customerName },
                 { value: usd(payableAward) },
                 { value: usd(forfeitedAward) },
@@ -287,13 +291,19 @@ export const PromptPaymentReport: FC<Props> = ({
                     >
                       <ListIcon />
                     </IconButton>,
-                    <IconButton key="download" size="small">
-                      <DownloadIcon />
-                    </IconButton>,
+                    <PrintPage
+                      key="print"
+                      downloadPdfFilename={`${kebabCase(
+                        customerName,
+                      )}-${subtitleMonth}`}
+                      icons
+                    >
+                      {renderCustomerPayableReport(entry)}
+                    </PrintPage>,
                   ],
                 },
-              ],
-            )}
+              ];
+            })}
           />
         </>
       )}

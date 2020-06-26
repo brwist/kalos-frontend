@@ -40,6 +40,15 @@ export default () => (
       footerProps={{ height: 30, children: LOREM }}
       buttonProps={{ variant: 'outlined', label: 'Print me' }}
       downloadPdfFilename="lorem_ipsum_2"
+      downloadLabel="Download me"
+    >
+      <PrintTableExample rows={200} />
+    </PrintPage>
+    <ExampleTitle>icons</ExampleTitle>
+    <PrintPage
+      headerProps={{ title: 'Lorem ipsum' }}
+      downloadPdfFilename="lorem_ipsum_2"
+      icons
     >
       <PrintTableExample rows={200} />
     </PrintPage>

@@ -3,6 +3,7 @@
 }
 .PrintPage_table {
   width: 100%;
+  line-height: 1.41;
 }
 .PrintPage_tfoot {
   display: table-footer-group;
