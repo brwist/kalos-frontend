@@ -1,0 +1,10 @@
+.PrintFooter {
+  font-size: 10px;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  page-break-before: always;
+  overflow: hidden;
+}
