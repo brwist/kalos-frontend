@@ -1,0 +1,11 @@
+.PrintList {
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-size: 10px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  padding-left: 20px;
+}
+
+.PrintList_item {
+  margin-bottom: 4px;
+}
