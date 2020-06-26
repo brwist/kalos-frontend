@@ -2,6 +2,8 @@ import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
 import { format, addMonths } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
+import DownloadIcon from '@material-ui/icons/CloudDownload';
+import ZoomIcon from '@material-ui/icons/Search';
 import ListIcon from '@material-ui/icons/List';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
@@ -188,6 +190,9 @@ export const PromptPaymentReport: FC<Props> = ({
                     >
                       <ListIcon />
                     </IconButton>,
+                    <IconButton key="download" size="small">
+                      <DownloadIcon />
+                    </IconButton>,
                   ],
                 },
               ],
@@ -235,8 +240,14 @@ export const PromptPaymentReport: FC<Props> = ({
                 {
                   value: usd(0), // FIXME
                   actions: [
+                    <IconButton key="view" size="small">
+                      <ZoomIcon />
+                    </IconButton>,
                     <IconButton key="edit" size="small">
                       <EditIcon />
+                    </IconButton>,
+                    <IconButton key="download" size="small">
+                      <DownloadIcon />
                     </IconButton>,
                   ],
                 },
