@@ -1,4 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
+import compact from 'lodash/compact';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
@@ -11,11 +12,23 @@ import { InfoTable, Columns, Data } from '../../InfoTable';
 import { Form, Options } from '../../Form';
 import { Modal } from '../../Modal';
 import { StoredQuotes } from '../../StoredQuotes';
+import { PrintPage } from '../../PrintPage';
+import { PrintParagraph } from '../../PrintParagraph';
+import { PrintTable } from '../../PrintTable';
 import { EventType } from '../';
-import { loadStoredQuotes, UserType } from '../../../../helpers';
+import {
+  loadStoredQuotes,
+  UserType,
+  usd,
+  formatDate,
+  getCustomerName,
+  getPropertyAddress,
+  PropertyType,
+} from '../../../../helpers';
 
 interface Props {
   serviceItem: EventType;
+  property: PropertyType;
   customer: UserType;
 }
 
@@ -87,9 +100,9 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Proposal: FC<Props> = ({ serviceItem, customer }) => {
+export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
   const classes = useStyles();
-  const { notes } = serviceItem;
+  const { notes, logJobNumber } = serviceItem;
   const [editing, setEditing] = useState<Entry>();
   const [file, setFile] = useState<File>({
     localCopyName: '',
@@ -162,7 +175,6 @@ export const Proposal: FC<Props> = ({ serviceItem, customer }) => {
     console.log({ data });
   }, [table, file, form]);
   const COLUMNS: Columns = [
-    { name: '' },
     { name: 'Description' },
     {
       name: 'Price',
@@ -247,7 +259,54 @@ export const Proposal: FC<Props> = ({ serviceItem, customer }) => {
   ]);
   return (
     <>
-      <SectionBar actions={[{ label: 'PDF Preview' }]} fixedActions />
+      <SectionBar
+        asideContent={
+          <PrintPage
+            headerProps={{
+              withKalosAddress: true,
+              withKalosContact: true,
+              bigLogo: true,
+            }}
+            downloadPdfFilename="Proposal"
+            downloadLabel="Download PDF Preview"
+          >
+            <PrintParagraph>
+              Date: {formatDate(new Date().toISOString())}
+              <br />
+              Job Number: {logJobNumber}
+            </PrintParagraph>
+            <PrintParagraph tag="h2">
+              {form.displayName}
+              <br />
+              {property.address}
+              <br />
+              {compact([property.city, property.state, property.zip]).join(
+                ', ',
+              )}
+            </PrintParagraph>
+            <PrintParagraph tag="h1" align="center">
+              Proposed Services
+            </PrintParagraph>
+            {form.notes && (
+              <PrintTable
+                columns={['Notes']}
+                data={[[form.notes]]} // TODO split \n
+              />
+            )}
+            <PrintTable
+              columns={[
+                { title: 'Description of Repair', align: 'left' },
+                { title: 'Price', align: 'right' },
+              ]}
+              data={table.map(({ description, price }) => [
+                description,
+                usd(price),
+              ])}
+              nowraps={[false, true]}
+            />
+          </PrintPage>
+        }
+      />
       <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
       <InfoTable columns={COLUMNS} data={data} />
       <SectionBar

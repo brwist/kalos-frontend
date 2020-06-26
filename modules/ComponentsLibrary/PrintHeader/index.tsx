@@ -6,8 +6,8 @@ import './styles.css';
 export interface Props {
   title?: string;
   subtitle?: ReactNode;
-  logo?: string;
   withKalosAddress?: boolean;
+  withKalosContact?: boolean;
   bigLogo?: boolean;
 }
 
@@ -20,6 +20,7 @@ export const PrintHeader: FC<Props> = ({
   title,
   subtitle,
   withKalosAddress = false,
+  withKalosContact = false,
   bigLogo = false,
 }) => (
   <div className="PrintHeader">
@@ -32,15 +33,26 @@ export const PrintHeader: FC<Props> = ({
       )}
       {subtitle && <PrintParagraph align="center">{subtitle}</PrintParagraph>}
     </div>
-    {withKalosAddress && (
-      <PrintParagraph tag="h2" align="right" style={{ marginTop: 0 }}>
-        Kalos Services
-        <br />
-        236 Hatteras Ave
-        <br />
-        Clermont FL 34711
-      </PrintParagraph>
-    )}
+    <div>
+      {withKalosAddress && (
+        <PrintParagraph tag="h2" align="right" style={{ marginTop: 0 }}>
+          Kalos Services
+          <br />
+          236 Hatteras Ave
+          <br />
+          Clermont FL 34711
+        </PrintParagraph>
+      )}
+      {withKalosContact && (
+        <PrintParagraph align="right" style={{ marginTop: 0 }}>
+          offce@kalosforida.com
+          <br />
+          Phone: (352) 243-7088
+          <br />
+          Fax: (352) 404-6907
+        </PrintParagraph>
+      )}
+    </div>
   </div>
 );
 
