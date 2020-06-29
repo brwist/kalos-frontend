@@ -1339,6 +1339,12 @@ export type BillingAuditType = {
   eventId: number;
   userId: number;
   propertyId: number;
+  items: {
+    id: number;
+    date: string;
+    payable: number;
+    payed: number;
+  }[];
 };
 
 export const loadBillingAuditReport = async (
@@ -1358,6 +1364,17 @@ export const loadBillingAuditReport = async (
     eventId: 86246,
     userId: 2573,
     propertyId: 6552,
+    items: [...Array(getRandomNumber(1, 5))].map((_, id) => {
+      const payable = getRandomDigits(4);
+      return {
+        id,
+        date: `2020-${trailingZero(getRandomNumber(1, 12))}-${trailingZero(
+          getRandomNumber(1, 30),
+        )}`,
+        payable,
+        payed: getRandomDigit() < 5 ? payable : 0,
+      };
+    }),
   }));
 };
 

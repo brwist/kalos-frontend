@@ -3,6 +3,7 @@ import { format, addMonths, addDays } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
 import EditIcon from '@material-ui/icons/Edit';
+import ListIcon from '@material-ui/icons/ListAlt';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
@@ -11,6 +12,7 @@ import { InfoTable, Data, Columns } from '../InfoTable';
 import { PlainForm, Schema } from '../PlainForm';
 import { ServiceCall } from '../ServiceCall';
 import { Modal } from '../Modal';
+import { Tooltip } from '../Tooltip';
 import {
   loadBillingAuditReport,
   formatDate,
@@ -36,6 +38,7 @@ const COLUMNS: Columns = [
   { name: 'Business Name' },
   { name: 'Job Number' },
   { name: 'Payable' },
+  { name: 'History' },
 ];
 
 export const BillingAuditReport: FC<Props> = ({
@@ -91,16 +94,44 @@ export const BillingAuditReport: FC<Props> = ({
     ],
   ];
   const data: Data = loading
-    ? makeFakeRows(5, 5)
+    ? makeFakeRows(6, 5)
     : (entries.map(entry => {
-        const { date, name, businessname, jobNumber, payable } = entry;
+        const { date, name, businessname, jobNumber, payable, items } = entry;
         return [
           { value: formatDate(date) },
           { value: name },
           { value: businessname },
           { value: jobNumber },
+          { value: usd(payable) },
           {
-            value: usd(payable),
+            value: (
+              <Tooltip
+                content={
+                  <>
+                    {items.map(({ id, date, payable, payed }) => (
+                      <div key={id}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            marginRight: 8,
+                            width: 80,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {formatDate(date)}
+                        </span>
+                        {payable === payed ? `Payed ${usd(payed)}` : 'Invoiced'}
+                      </div>
+                    ))}
+                  </>
+                }
+                placement="left-start"
+              >
+                <IconButton size="small">
+                  <ListIcon />
+                </IconButton>
+              </Tooltip>
+            ),
             actions: [
               // TODO clickable
               <IconButton key="download" size="small">
