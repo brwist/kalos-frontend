@@ -1,6 +1,9 @@
 .PrintPage {
   display: none;
 }
+.visible {
+  display: block;
+}
 .PrintPage_table {
   width: 100%;
   line-height: 1.41;

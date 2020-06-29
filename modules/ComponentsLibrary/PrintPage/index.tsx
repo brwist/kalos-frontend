@@ -1,4 +1,5 @@
 import React, { FC, useRef, useEffect, useCallback, useState } from 'react';
+import clsx from 'clsx';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import IconButton from '@material-ui/core/IconButton';
 import PrintIcon from '@material-ui/icons/Print';
@@ -23,6 +24,7 @@ interface Props {
   className?: string;
   downloadLabel?: string;
   icons?: boolean;
+  visible?: boolean;
 }
 
 export const PrintPage: FC<Props> = ({
@@ -37,6 +39,7 @@ export const PrintPage: FC<Props> = ({
   className = '',
   downloadLabel = 'Download',
   icons = false,
+  visible,
 }) => {
   const printRef = useRef(null);
   const [downloading, setDownloading] = useState<boolean>(false);
@@ -139,7 +142,7 @@ export const PrintPage: FC<Props> = ({
           />
         )}
       </span>
-      <div className="PrintPage">
+      <div className={clsx("PrintPage", visible && 'visible')}>
         <div ref={printRef}>
           {headerProps && <PrintHeader {...headerProps} />}
           <table className="PrintPage_table">

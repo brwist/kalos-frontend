@@ -1,10 +1,10 @@
 import React, {FC, useEffect, useReducer} from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import { InvoiceClient, Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { PrintPage } from '../ComponentsLibrary/PrintPage';
-import { PrintHeader } from '../ComponentsLibrary/PrintHeader';
 import { ENDPOINT } from '../../constants';
 import { PrintParagraph } from '../ComponentsLibrary/PrintParagraph';
 import { PrintTable } from '../ComponentsLibrary/PrintTable';
@@ -13,6 +13,24 @@ const userClient = new UserClient(ENDPOINT);
 const invoiceClient = new InvoiceClient(ENDPOINT);
 const propertyClient = new PropertyClient(ENDPOINT);
 const eventClient = new EventClient(ENDPOINT);
+
+const useStyles = makeStyles(theme => ({
+  header: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing(),
+    '& > div': {
+      marginTop: 0,
+    },
+  },
+  logo: {
+    width: 'auto',
+    height: 30,
+    filter: 'invert()',
+    marginTop: theme.spacing(2),
+  },
+}));
 
 type Props = {
   invoiceId: number,
@@ -56,6 +74,7 @@ const reducer = (state: State, action: Action) => {
 
 
 const InvoiceViewer: FC<Props> = ({ invoiceId }: Props) => {
+  const classes = useStyles();
   const [{ loading, invoice, customer, property, event }, dispatch] = useReducer(reducer, {
     loading: true,
     invoice: new Invoice(),
@@ -122,7 +141,28 @@ const InvoiceViewer: FC<Props> = ({ invoiceId }: Props) => {
 
   return (
     <PrintPage visible downloadPdfFilename="Invoice">
-      <PrintHeader title="Print Header" />
+      <div className={classes.header}>
+          <PrintParagraph>
+            State Licenses<br />
+            CAC1814620<br />
+            CBC057190<br />
+            EC0001523<br />
+            CFC1429840
+          </PrintParagraph>
+        <img
+          src="https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png"
+          alt="Kalos Service"
+          className={classes.logo}
+        />
+        <PrintParagraph align="right">
+          Kalos Services Inc<br />
+          236 Hatteras Ave<br />
+          Clermont, Fl 34711<br />
+          (352) 243-7088<br />
+          www.kalosflorida.com<br />
+          Office@Kalosflorida.com
+        </PrintParagraph>
+      </div>
       <PrintParagraph tag="h4">Site Address</PrintParagraph>
       <PrintParagraph>
         {property.firstname} {property.lastname}, {property.address}, {property.city}, {property.zip}, {property.phone}
@@ -134,7 +174,8 @@ const InvoiceViewer: FC<Props> = ({ invoiceId }: Props) => {
       <PrintParagraph tag="h4">Invoice</PrintParagraph>
       <PrintParagraph>
         Date: {event.dateCreated}<br />
-        Job #: {event.logJobNumber}
+        Job #: {event.logJobNumber}<br />
+        {event.logPO}
       </PrintParagraph>
       <PrintParagraph tag="h4">Services Rendered</PrintParagraph>
       <PrintParagraph>
