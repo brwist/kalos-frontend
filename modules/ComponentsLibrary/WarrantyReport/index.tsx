@@ -4,6 +4,7 @@ import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
+import { PrintParagraph } from '../PrintParagraph';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { loadWarrantyReport, getCurrDate } from '../../../helpers';
@@ -38,8 +39,8 @@ export const WarrantyReport: FC<Props> = ({ onClose }) => {
           <>
             <PrintPage
               headerProps={{
-                title: 'Warranty Report',
-                subtitle,
+                bigLogo: true,
+                withKalosAddress: true,
               }}
               buttonProps={{
                 label: 'Print',
@@ -47,6 +48,19 @@ export const WarrantyReport: FC<Props> = ({ onClose }) => {
               }}
               downloadPdfFilename={`Warranty_Report_${getCurrDate()}`}
             >
+              <PrintParagraph
+                tag="h1"
+                align="right"
+                style={{ marginBottom: 0 }}
+              >
+                Warranty Report
+              </PrintParagraph>
+              <PrintParagraph tag="h2" align="right" style={{ marginTop: 0 }}>
+                {subtitle}
+              </PrintParagraph>
+              <PrintParagraph tag="h2" align="center">
+                Active Warranty Claims
+              </PrintParagraph>
               {!loading && (
                 <>
                   <PrintTable
