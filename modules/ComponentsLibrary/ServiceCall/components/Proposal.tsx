@@ -290,7 +290,10 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
             {form.notes && (
               <PrintTable
                 columns={['Notes']}
-                data={[[form.notes]]} // TODO split \n
+                data={form.notes
+                  .split('\n')
+                  .filter(n => !!n)
+                  .map(n => [n])}
               />
             )}
             <PrintTable
