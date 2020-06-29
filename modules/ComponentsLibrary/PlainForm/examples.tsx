@@ -37,7 +37,7 @@ dolor sit
 amet`,
   mailing: 0,
   dob: '1980-11-23 00:00:00',
-  hour: '',
+  hour: '00:00',
   technician: '',
   technicians: '',
   signature: '',
