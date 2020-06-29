@@ -84,6 +84,7 @@ import {
   getRandomLastName,
   getRandomJobTitle,
   getRandomPhone,
+  getRandomDigits,
   getRandomNumber,
   randomize,
 } from './modules/ComponentsLibrary/helpers';
@@ -1329,14 +1330,31 @@ export const loadCallbackReportByFilter = async ({
   };
 };
 
+export const loadBillingAuditReport = async (
+  startDate: string,
+  endDate: string,
+) => {
+  const [year, month] = startDate.split('-');
+  return [...Array(160)].map(() => ({
+    date: `${year}-${month}-${getRandomNumber(1, 31)}`,
+    name: getRandomName(),
+    businessname:
+      getRandomDigit() < 5
+        ? `${getRandomLastName()} ${randomize(['Co.', 'and Son', 'SA'])}`
+        : '',
+    jobNumber: getRandomDigits(8),
+    payable: getRandomDigits(4),
+  }));
+};
+
 export const loadCharityReport = async (month: string) => {
   return {
-    residentialServiceTotal: getRandomNumber(6),
-    residentialAorTotal: getRandomNumber(6),
+    residentialServiceTotal: getRandomDigits(6),
+    residentialAorTotal: getRandomDigits(6),
     items: [...Array(30)].map(() => ({
       technician: getRandomName(),
-      contribution: getRandomNumber(5),
-      averageHourly: getRandomNumber(5) / 100,
+      contribution: getRandomDigits(5),
+      averageHourly: getRandomDigits(5) / 100,
     })),
   };
 };
@@ -1365,8 +1383,8 @@ export const loadWarrantyReport = async () => {
       'Loud',
       'Unpredictable',
     ]),
-    externalId: getRandomNumber(7),
-    referenceNumber: getRandomNumber(6),
+    externalId: getRandomDigits(7),
+    referenceNumber: getRandomDigits(6),
     statusDesc: randomize(['Active', 'Inactive', 'Pending', 'Completed']),
     priorityDesc: randomize(['Blocker', 'Urgent', 'Major', 'Minor']),
     techName: getRandomName(),

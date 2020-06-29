@@ -1,5 +1,4 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
@@ -10,32 +9,29 @@ import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { PlainForm, Schema } from '../PlainForm';
-import { loadTimeoffSummaryReport, formatDate } from '../../../helpers';
+import { loadBillingAuditReport, formatDate, usd } from '../../../helpers';
 
 interface Props {
   onClose?: () => void;
 }
 
 type FilterForm = {
-  year: number;
-  employeeName: string;
+  startDate: string;
+  endDate: string;
 };
 
-const useStyles = makeStyles(theme => ({}));
-
 export const BillingAuditReport: FC<Props> = ({ onClose }) => {
-  const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<any[]>([]);
   const [form, setForm] = useState<FilterForm>({
-    year: new Date().getFullYear(),
-    employeeName: '',
+    startDate: '2020-05-01',
+    endDate: '2020-05-31',
   });
   const [formKey, setFormKey] = useState<number>(0);
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await loadTimeoffSummaryReport(form.year);
+    const data = await loadBillingAuditReport(form.startDate, form.endDate);
     setData(data);
     setLoading(false);
   }, [setLoading, setData, form]);
@@ -45,43 +41,21 @@ export const BillingAuditReport: FC<Props> = ({ onClose }) => {
       load();
     }
   }, [loaded, setLoaded, load]);
-  const handleYearChange = useCallback(
-    (step: number) => () => {
-      setForm({ employeeName: '', year: year + step });
-      setFormKey(formKey + 1);
-      setLoaded(false);
-    },
-    [setForm, formKey, setFormKey],
-  );
   const SCHEMA: Schema<FilterForm> = [
     [
       {
-        name: 'employeeName',
-        label: 'Employee',
-        type: 'search',
+        name: 'startDate',
+        label: 'Start Date',
+        type: 'date',
       },
       {
-        name: 'year',
-        label: 'Year',
-        readOnly: true,
-        startAdornment: (
-          <IconButton size="small" onClick={handleYearChange(-1)}>
-            <ChevronLeftIcon />
-          </IconButton>
-        ),
-        endAdornment: (
-          <IconButton size="small" onClick={handleYearChange(1)}>
-            <ChevronRightIcon />
-          </IconButton>
-        ),
+        name: 'endDate',
+        label: 'End Date',
+        type: 'date',
       },
     ],
   ];
-  const { year, employeeName } = form;
-  const employeeNamePhrase = employeeName.toLowerCase();
-  const filteredData = data.filter(({ employeeName }) =>
-    employeeName.toLowerCase().includes(employeeNamePhrase),
-  );
+  const { startDate, endDate } = form;
   return (
     <div>
       <SectionBar
@@ -91,11 +65,6 @@ export const BillingAuditReport: FC<Props> = ({ onClose }) => {
             <PrintPage
               headerProps={{
                 title: 'Billing Audit',
-                subtitle: employeeName ? (
-                  <div>
-                    <strong>Employee Name includes: </strong> {employeeName}
-                  </div>
-                ) : null,
               }}
               buttonProps={{
                 label: 'Print',
@@ -106,28 +75,19 @@ export const BillingAuditReport: FC<Props> = ({ onClose }) => {
                 <>
                   <PrintTable
                     columns={[
-                      'Employee',
-                      { title: 'Hire Date', align: 'right' },
-                      { title: 'Annual PTO Allowance', align: 'right' },
-                      { title: 'PTO', align: 'right' },
-                      { title: 'Discretionary', align: 'right' },
-                      { title: 'Mandatory', align: 'right' },
+                      'Date',
+                      'Name',
+                      'Business Name',
+                      'Job Number',
+                      { title: 'Payable', align: 'right' },
                     ]}
-                    data={filteredData.map(
-                      ({
-                        employeeName,
-                        hireDate,
-                        annualPtoAllowance,
-                        pto,
-                        discretionary,
-                        mandatory,
-                      }) => [
-                        employeeName,
-                        formatDate(hireDate),
-                        annualPtoAllowance.toFixed(2),
-                        pto.toFixed(2),
-                        discretionary.toFixed(2),
-                        mandatory.toFixed(2),
+                    data={data.map(
+                      ({ date, name, businessname, jobNumber, payable }) => [
+                        date,
+                        name,
+                        businessname,
+                        jobNumber,
+                        usd(payable),
                       ],
                     )}
                   />
@@ -150,36 +110,19 @@ export const BillingAuditReport: FC<Props> = ({ onClose }) => {
           />
           <InfoTable
             columns={[
-              { name: 'Employee' },
-              { name: 'Hire Date' },
-              { name: 'Annual PTO Allowance' },
-              { name: 'PTO' },
-              { name: 'Discretionary' },
-              { name: 'Mandatory' },
+              { name: 'Date' },
+              { name: 'Name' },
+              { name: 'Business Name' },
+              { name: 'Job Number' },
+              { name: 'Payable' },
             ]}
-            data={filteredData.map(
-              ({
-                employeeName,
-                hireDate,
-                annualPtoAllowance,
-                pto,
-                discretionary,
-                mandatory,
-              }) => [
-                { value: employeeName },
-                { value: formatDate(hireDate) },
-                {
-                  value: (
-                    <span
-                      style={pto > annualPtoAllowance ? { color: 'red' } : {}}
-                    >
-                      {annualPtoAllowance.toFixed(2)}
-                    </span>
-                  ),
-                },
-                { value: pto.toFixed(2) },
-                { value: discretionary.toFixed(2) },
-                { value: mandatory.toFixed(2) },
+            data={data.map(
+              ({ date, name, businessname, jobNumber, payable }) => [
+                { value: formatDate(date) },
+                { value: name },
+                { value: businessname },
+                { value: jobNumber },
+                { value: usd(payable) },
               ],
             )}
           />

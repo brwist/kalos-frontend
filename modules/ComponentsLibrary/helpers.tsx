@@ -104,9 +104,12 @@ export const getRandomJobTitle = () =>
 export const getRandomDigit = () => Math.floor(Math.random() * 10);
 
 export const getRandomPhone = () =>
-  `${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}-${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}-${getRandomDigit()}${getRandomDigit()}${getRandomDigit()}`;
+  `${getRandomDigits(3)}-${getRandomDigits(3)}-${getRandomDigits(3)}`;
 
-export const getRandomNumber = (digits: number) =>
+export const getRandomNumber = (min: number, max: number) =>
+  min + Math.floor(Math.random() * (max - min + 1));
+
+export const getRandomDigits = (digits: number) =>
   +[...Array(digits)].map(() => getRandomDigit()).join('');
 
 export const randomize = (values: (string | number)[]) =>
