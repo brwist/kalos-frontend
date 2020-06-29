@@ -1339,11 +1339,14 @@ export const loadBillingAuditReport = async (
     date: `${year}-${month}-${getRandomNumber(1, 31)}`,
     name: getRandomName(),
     businessname:
-      getRandomDigit() < 5
+      getRandomDigit() < 4
         ? `${getRandomLastName()} ${randomize(['Co.', 'and Son', 'SA'])}`
         : '',
     jobNumber: getRandomDigits(8),
     payable: getRandomDigits(4),
+    eventId: 86246,
+    userId: 2573,
+    propertyId: 6552,
   }));
 };
 

@@ -948,6 +948,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           fullScreen
         >
           <BillingAuditReport
+            month={billingAuditReport.month!}
             onClose={handleOpenBillingAuditReportToggle(false)}
           />
         </Modal>

@@ -2,5 +2,5 @@ import React from 'react';
 import { BillingAuditReport } from './';
 
 export default () => (
-  <BillingAuditReport onClose={() => console.log('CLOSE')} />
+  <BillingAuditReport month="2020-05-%" onClose={() => console.log('CLOSE')} />
 );

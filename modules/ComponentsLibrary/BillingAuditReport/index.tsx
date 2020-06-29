@@ -1,17 +1,23 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
+import { format, addMonths, addDays } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import DownloadIcon from '@material-ui/icons/CloudDownload';
+import EditIcon from '@material-ui/icons/Edit';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
-import { InfoTable } from '../InfoTable';
-import { Loader } from '../../Loader/main';
+import { InfoTable, Data, Columns } from '../InfoTable';
 import { PlainForm, Schema } from '../PlainForm';
-import { loadBillingAuditReport, formatDate, usd } from '../../../helpers';
+import {
+  loadBillingAuditReport,
+  formatDate,
+  usd,
+  makeFakeRows,
+} from '../../../helpers';
 
 interface Props {
+  month: string;
   onClose?: () => void;
 }
 
@@ -20,27 +26,39 @@ type FilterForm = {
   endDate: string;
 };
 
-export const BillingAuditReport: FC<Props> = ({ onClose }) => {
+const COLUMNS: Columns = [
+  { name: 'Date' },
+  { name: 'Name' },
+  { name: 'Business Name' },
+  { name: 'Job Number' },
+  { name: 'Payable' },
+];
+
+export const BillingAuditReport: FC<Props> = ({ month, onClose }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [data, setData] = useState<any[]>([]);
+  const [entries, setEntries] = useState<any[]>([]);
+  const startDate = format(new Date(month.replace('%', '01')), 'yyyy-MM-dd');
   const [form, setForm] = useState<FilterForm>({
-    startDate: '2020-05-01',
-    endDate: '2020-05-31',
+    startDate,
+    endDate: format(
+      addDays(addMonths(new Date(startDate), 1), -1),
+      'yyyy-MM-dd',
+    ),
   });
-  const [formKey, setFormKey] = useState<number>(0);
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await loadBillingAuditReport(form.startDate, form.endDate);
-    setData(data);
+    const entries = await loadBillingAuditReport(form.startDate, form.endDate);
+    setEntries(entries);
     setLoading(false);
-  }, [setLoading, setData, form]);
+  }, [setLoading, setEntries, form]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
       load();
     }
   }, [loaded, setLoaded, load]);
+  const handleSearch = useCallback(() => setLoaded(false), [setForm]);
   const SCHEMA: Schema<FilterForm> = [
     [
       {
@@ -52,10 +70,30 @@ export const BillingAuditReport: FC<Props> = ({ onClose }) => {
         name: 'endDate',
         label: 'End Date',
         type: 'date',
+        actions: [{ label: 'Search', onClick: handleSearch }],
       },
     ],
   ];
-  const { startDate, endDate } = form;
+  const data: Data = loading
+    ? makeFakeRows(5, 5)
+    : (entries.map(({ date, name, businessname, jobNumber, payable }) => [
+        { value: formatDate(date) },
+        { value: name },
+        { value: businessname },
+        { value: jobNumber },
+        {
+          value: usd(payable),
+          actions: [
+            // TODO clickable
+            <IconButton key="download" size="small">
+              <DownloadIcon />
+            </IconButton>,
+            <IconButton key="edit" size="small">
+              <EditIcon />
+            </IconButton>,
+          ],
+        },
+      ]) as Data);
   return (
     <div>
       <SectionBar
@@ -81,9 +119,9 @@ export const BillingAuditReport: FC<Props> = ({ onClose }) => {
                       'Job Number',
                       { title: 'Payable', align: 'right' },
                     ]}
-                    data={data.map(
+                    data={entries.map(
                       ({ date, name, businessname, jobNumber, payable }) => [
-                        date,
+                        formatDate(date),
                         name,
                         businessname,
                         jobNumber,
@@ -98,36 +136,8 @@ export const BillingAuditReport: FC<Props> = ({ onClose }) => {
           </>
         }
       />
-      {loading ? (
-        <Loader />
-      ) : (
-        <>
-          <PlainForm
-            key={formKey}
-            schema={SCHEMA}
-            data={form}
-            onChange={setForm}
-          />
-          <InfoTable
-            columns={[
-              { name: 'Date' },
-              { name: 'Name' },
-              { name: 'Business Name' },
-              { name: 'Job Number' },
-              { name: 'Payable' },
-            ]}
-            data={data.map(
-              ({ date, name, businessname, jobNumber, payable }) => [
-                { value: formatDate(date) },
-                { value: name },
-                { value: businessname },
-                { value: jobNumber },
-                { value: usd(payable) },
-              ],
-            )}
-          />
-        </>
-      )}
+      <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
+      <InfoTable columns={COLUMNS} data={data} loading={loading} />
     </div>
   );
 };
