@@ -10,16 +10,12 @@ import {
   makeFakeRows,
   getCurrDate,
   loadDeletedServiceCallsByFilter,
+  EventType,
+  formatDate,
+  getPropertyAddress,
+  getCustomerName,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
-
-type DeletedServiceCallsReportType = {
-  property: string;
-  customer: string;
-  job: string;
-  date: string;
-  jobStatus: string;
-};
 
 interface Props {
   onClose?: () => void;
@@ -27,10 +23,11 @@ interface Props {
   dateEnd: string;
 }
 
+// FIXME props mapping
 const EXPORT_COLUMNS = [
   {
     label: 'Property',
-    value: 'property',
+    value: 'property', // TODO getPropertyAddress
   },
   {
     label: 'Customer Name',
@@ -59,10 +56,8 @@ export const DeletedServiceCallsReport: FC<Props> = ({
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [entries, setEntries] = useState<DeletedServiceCallsReportType[]>([]);
-  const [printEntries, setPrintEntries] = useState<
-    DeletedServiceCallsReportType[]
-  >([]);
+  const [entries, setEntries] = useState<EventType[]>([]);
+  const [printEntries, setPrintEntries] = useState<EventType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [printStatus, setPrintStatus] = useState<Status>('idle');
@@ -122,17 +117,23 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
-  const getData = (entries: DeletedServiceCallsReportType[]): Data =>
+  const getData = (entries: EventType[]): Data =>
     loading
-      ? makeFakeRows(3, 5)
+      ? makeFakeRows(5, 5)
       : entries.map(entry => {
-          const { property, customer, job, date, jobStatus } = entry;
+          const {
+            property,
+            customer,
+            logJobNumber,
+            dateStarted,
+            logJobStatus,
+          } = entry;
           return [
-            { value: property },
-            { value: customer },
-            { value: job },
-            { value: date },
-            { value: jobStatus },
+            { value: getPropertyAddress(property) },
+            { value: getCustomerName(customer) },
+            { value: logJobNumber },
+            { value: formatDate(dateStarted) },
+            { value: logJobStatus },
           ];
         });
   const allPrintData = entries.length === count;
@@ -156,14 +157,14 @@ export const DeletedServiceCallsReport: FC<Props> = ({
         }}
         asideContent={
           <>
-            <ExportJSON
+            {/* <ExportJSON // TODO fix props
               json={allPrintData ? entries : printEntries}
               fields={EXPORT_COLUMNS}
               filename={`Deleted_Service_Calls_Report_${getCurrDate()}`}
               onExport={allPrintData ? undefined : handleExport}
               onExported={handleExported}
               status={exportStatus}
-            />
+            /> */}
             <PrintPage
               headerProps={{
                 title: 'Deleted Service Calls Report',
