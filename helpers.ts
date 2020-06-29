@@ -1804,7 +1804,7 @@ export const loadEventsByFilter = async ({
   }
   if (dateStarted && dateEnded) {
     req.setDateRangeList(['>=', dateStarted, '<=', dateEnded]);
-    req.setDateTargetList(['dateStarted', 'dateEnded']);
+    req.setDateTargetList(['date_started', 'date_ended']);
   } else {
     if (dateStarted) {
       req.setDateStarted(`%${dateStarted}%`);
