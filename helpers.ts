@@ -1288,8 +1288,8 @@ export const loadUsersByFilter = async ({
 };
 
 export type DateStartEndFilter = {
-  dateStart?: string;
-  dateEnd?: string;
+  dateStart: string;
+  dateEnd: string;
 };
 
 export type LoadMetricsByFilter = {
@@ -1312,10 +1312,36 @@ export const loadDeletedServiceCallsByFilter = async ({
   page,
   filter: { dateStart, dateEnd },
 }: LoadMetricsByFilter) => {
-  console.log({ page, dateStart, dateEnd });
+  const req = new Event();
+  req.setPageNumber(page === -1 ? 0 : page);
+  req.setIsActive(0);
+  req.setDateRangeList(['>=', dateStart, '<=', dateEnd]);
+  req.setDateTargetList(['date_started', 'date_started']);
+  const results: EventType[] = [];
+  const { resultsList, totalCount } = (
+    await EventClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (page === -1 && totalCount > resultsList.length) {
+    const batchesAmount = Math.min(
+      MAX_PAGES,
+      Math.ceil((totalCount - resultsList.length) / resultsList.length),
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await EventClientService.BatchGet(req))
+          .getResultsList()
+          .map(item => item.toObject());
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
   return {
-    results: [],
-    totalCount: 0,
+    results,
+    totalCount,
   };
 };
 
