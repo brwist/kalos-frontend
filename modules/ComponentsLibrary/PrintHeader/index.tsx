@@ -1,10 +1,14 @@
 import React, { FC, ReactNode } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import clsx from 'clsx';
+import { PrintParagraph } from '../PrintParagraph';
+import './styles.css';
 
 export interface Props {
-  title: string;
+  title?: string;
   subtitle?: ReactNode;
-  logo?: string;
+  withKalosAddress?: boolean;
+  withKalosContact?: boolean;
+  bigLogo?: boolean;
 }
 
 interface SubtitleItemProps {
@@ -12,62 +16,51 @@ interface SubtitleItemProps {
   value: ReactNode;
 }
 
-const useStyles = makeStyles(theme => ({
-  wrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: theme.spacing(),
-  },
-  logo: {
-    width: 'auto',
-    height: 30,
-    filter: 'invert()',
-  },
-  content: {
-    flexGrow: 1,
-    marginLeft: theme.spacing(2),
-    textAlign: 'center',
-  },
-  title: {
-    ...theme.typography.body1,
-    fontSize: 20,
-    fontWeight: 900,
-  },
-  subtitle: {
-    fontFamily: theme.typography.body1.fontFamily,
-    fontSize: 10,
-  },
-  subtitleItem: {
-    display: 'inline-block',
-    marginRight: theme.spacing(2),
-  },
-}));
-
-export const PrintHeader: FC<Props> = ({ title, subtitle }) => {
-  const classes = useStyles();
-  return (
-    <div className={classes.wrapper}>
-      <img
-        src="https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png"
-        alt="Kalos Service"
-        className={classes.logo}
-      />
-      <div className={classes.content}>
-        <div className={classes.title}>{title}</div>
-        <div className={classes.subtitle}>{subtitle}</div>
-      </div>
+export const PrintHeader: FC<Props> = ({
+  title,
+  subtitle,
+  withKalosAddress = false,
+  withKalosContact = false,
+  bigLogo = false,
+}) => (
+  <div className="PrintHeader">
+    <div className={clsx('PrintHeader_logo', { bigLogo })} />
+    <div className="PrintHeader_content">
+      {title && (
+        <PrintParagraph tag="h1" align="center" style={{ marginTop: 0 }}>
+          {title}
+        </PrintParagraph>
+      )}
+      {subtitle && <PrintParagraph align="center">{subtitle}</PrintParagraph>}
     </div>
-  );
-};
+    <div>
+      {withKalosAddress && (
+        <PrintParagraph tag="h2" align="right" style={{ marginTop: 0 }}>
+          Kalos Services
+          <br />
+          236 Hatteras Ave
+          <br />
+          Clermont FL 34711
+        </PrintParagraph>
+      )}
+      {withKalosContact && (
+        <PrintParagraph align="right" style={{ marginTop: 0 }}>
+          offce@kalosforida.com
+          <br />
+          Phone: (352) 243-7088
+          <br />
+          Fax: (352) 404-6907
+        </PrintParagraph>
+      )}
+    </div>
+  </div>
+);
 
 export const PrintHeaderSubtitleItem: FC<SubtitleItemProps> = ({
   label,
   value,
-}) => {
-  const classes = useStyles();
-  return (
-    <span className={classes.subtitleItem}>
-      {label} <strong>{value}</strong>
-    </span>
-  );
-};
+}) => (
+  <span className="PrintHeader_subtitle_item">
+    {label} <strong>{value}</strong>
+  </span>
+);

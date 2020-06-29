@@ -1,12 +1,14 @@
 import React, { FC, useRef, useEffect, useCallback, useState } from 'react';
-import clsx from 'clsx';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { makeStyles } from '@material-ui/core/styles';
+import IconButton from '@material-ui/core/IconButton';
+import PrintIcon from '@material-ui/icons/Print';
+import DownloadIcon from '@material-ui/icons/CloudDownload';
 import { useReactToPrint } from 'react-to-print';
 import { PrintHeader, Props as HeaderProps } from '../PrintHeader';
 import { PrintFooter, Props as FooterProps } from '../PrintFooter';
 import { Button, Props as ButtonProps } from '../Button';
 import { getUploadedHTMLUrl, setInlineStyles } from '../../../helpers';
+import './styles.css';
 
 export type Status = 'idle' | 'loading' | 'loaded';
 
@@ -18,23 +20,10 @@ interface Props {
   onPrinted?: () => void;
   status?: Status;
   downloadPdfFilename?: string;
-  visible?: boolean;
+  className?: string;
+  downloadLabel?: string;
+  icons?: boolean;
 }
-
-const useStyles = makeStyles(theme => ({
-  printWrapper: {
-    display: 'none',
-    '&.visible' : {
-      display: 'block',
-    },
-  },
-  table: {
-    width: '100%',
-  },
-  tfoot: {
-    display: 'table-footer-group',
-  },
-}));
 
 export const PrintPage: FC<Props> = ({
   headerProps,
@@ -45,9 +34,10 @@ export const PrintPage: FC<Props> = ({
   children,
   status,
   downloadPdfFilename,
-  visible,
+  className = '',
+  downloadLabel = 'Download',
+  icons = false,
 }) => {
-  const classes = useStyles();
   const printRef = useRef(null);
   const [downloading, setDownloading] = useState<boolean>(false);
   const handlePrint = useReactToPrint({
@@ -87,49 +77,79 @@ export const PrintPage: FC<Props> = ({
     }
   }, [printRef, setDownloading, downloadPdfFilename]);
   return (
-    <div>
-      {downloadPdfFilename && (
-        <Button
-          onClick={handleDownload}
-          children={
-            (status === 'loading' || downloading) && (
-              <CircularProgress
-                style={{ color: '#FFF', marginRight: 8 }}
-                size={16}
-              />
-            )
-          }
-          {...buttonProps}
-          disabled={status === 'loading' || downloading || buttonProps.disabled}
-          label="Download"
-        />
-      )}
-      <Button
-        label="Print"
-        onClick={onPrint || handlePrint!}
-        children={
-          status === 'loading' && (
-            <CircularProgress
-              style={{ color: '#FFF', marginRight: 8 }}
-              size={16}
+    <>
+      <span className={className}>
+        {downloadPdfFilename &&
+          (icons ? (
+            <IconButton
+              onClick={handleDownload}
+              size="small"
+              disabled={
+                status === 'loading' || downloading || buttonProps.disabled
+              }
+            >
+              {(status === 'loading' || downloading) && (
+                <CircularProgress
+                  style={{ position: 'absolute', color: '#FFF' }}
+                  size={12}
+                />
+              )}
+              <DownloadIcon />
+            </IconButton>
+          ) : (
+            <Button
+              onClick={handleDownload}
+              children={
+                (status === 'loading' || downloading) && (
+                  <CircularProgress
+                    style={{ color: '#FFF', marginRight: 8 }}
+                    size={16}
+                  />
+                )
+              }
+              {...buttonProps}
+              disabled={
+                status === 'loading' || downloading || buttonProps.disabled
+              }
+              label={downloadLabel}
             />
-          )
-        }
-        {...buttonProps}
-        disabled={status === 'loading' || buttonProps.disabled}
-      />
-
-      <div className={clsx(classes.printWrapper, visible && 'visible')}>
+          ))}
+        {icons ? (
+          <IconButton
+            onClick={onPrint || handlePrint!}
+            size="small"
+            disabled={status === 'loading' || buttonProps.disabled}
+          >
+            <PrintIcon />
+          </IconButton>
+        ) : (
+          <Button
+            label="Print"
+            onClick={onPrint || handlePrint!}
+            children={
+              status === 'loading' && (
+                <CircularProgress
+                  style={{ color: '#FFF', marginRight: 8 }}
+                  size={16}
+                />
+              )
+            }
+            {...buttonProps}
+            disabled={status === 'loading' || buttonProps.disabled}
+          />
+        )}
+      </span>
+      <div className="PrintPage">
         <div ref={printRef}>
           {headerProps && <PrintHeader {...headerProps} />}
-          <table className={classes.table}>
+          <table className="PrintPage_table">
             <tbody>
               <tr>
                 <td>{children}</td>
               </tr>
             </tbody>
             {footerProps && (
-              <tfoot className={classes.tfoot}>
+              <tfoot className="PrintPage_tfoot">
                 <tr>
                   <td>
                     <div style={{ height: footerProps.height }}>
@@ -142,6 +162,6 @@ export const PrintPage: FC<Props> = ({
           </table>
         </div>
       </div>
-    </div>
+    </>
   );
 };

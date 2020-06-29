@@ -1,16 +1,23 @@
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
 import { format, addMonths } from 'date-fns';
+import kebabCase from 'lodash/kebabCase';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
+import DownloadIcon from '@material-ui/icons/CloudDownload';
+import AwardIcon from '@material-ui/icons/Loyalty';
 import ListIcon from '@material-ui/icons/List';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
+import { PrintHeader } from '../PrintHeader';
+import { PrintPageBreak } from '../PrintPageBreak';
+import { PrintParagraph } from '../PrintParagraph';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { PlainForm, Schema } from '../PlainForm';
 import { Modal } from '../Modal';
+import { Form } from '../Form';
 import {
   loadPromptPaymentData,
   usd,
@@ -28,6 +35,11 @@ interface Props {
 
 type FormData = {
   month: string;
+};
+
+type AwardFormData = {
+  kind: 'award' | 'forfeit';
+  reason: string;
 };
 
 type OpenedInvoices = {
@@ -53,6 +65,23 @@ const SCHEMA: Schema<FormData> = [
   ],
 ];
 
+const SCHEMA_AWARD: Schema<AwardFormData> = [
+  [
+    {
+      name: 'kind',
+      label: 'Kind',
+      options: ['award', 'forfeit'],
+    },
+  ],
+  [
+    {
+      name: 'reason',
+      label: 'Reason',
+      multiline: true,
+    },
+  ],
+];
+
 export const PromptPaymentReport: FC<Props> = ({
   month: initialMonth,
   onClose,
@@ -62,6 +91,9 @@ export const PromptPaymentReport: FC<Props> = ({
   const [data, setData] = useState<PromptPaymentData[]>([]);
   const [form, setForm] = useState<FormData>({ month: initialMonth });
   const [openedInvoices, setOpenedInvoices] = useState<OpenedInvoices>();
+  const [editingAward, setEditingAward] = useState<
+    PromptPaymentReportLineType
+  >();
   const load = useCallback(async () => {
     setLoading(true);
     const data = await loadPromptPaymentData(form.month);
@@ -86,10 +118,114 @@ export const PromptPaymentReport: FC<Props> = ({
       setOpenedInvoices(openedInvoices),
     [setOpenedInvoices],
   );
+  const handleToggleEditingAward = useCallback(
+    (editingAward?: PromptPaymentReportLineType) => () =>
+      setEditingAward(editingAward),
+    [setEditingAward],
+  );
+  const handleSaveAward = useCallback(
+    async (data: AwardFormData) => {
+      console.log(data); // TODO save data once api will have endpoint
+      setEditingAward(undefined);
+    },
+    [setEditingAward],
+  );
   const subtitle = useMemo(
     () => format(new Date(form.month.replace('%', '01')), 'MMMM yyyy'),
     [form],
   );
+  const subtitleMonth = useMemo(
+    () => format(new Date(form.month.replace('%', '01')), 'MMMM'),
+    [form],
+  );
+  const renderCustomerPayableReport = ({
+    customerId,
+    customerName,
+    entries,
+    allInvoices,
+    payableTotal,
+    paidOnTime,
+    paidInvoices,
+    possibleAwardTotal,
+  }: PromptPaymentData) => (
+    <div key={customerId}>
+      <PrintHeader withKalosAddress bigLogo />
+      <PrintTable
+        columns={[
+          { title: '', align: 'left' },
+          { title: '', align: 'right' },
+        ]}
+        data={[
+          [
+            <PrintParagraph style={{ fontStyle: 'italic', marginTop: 4 }}>
+              To our friends at {customerName},
+              <br />
+              <br />
+              in the month of {subtitleMonth}, we did {usd(payableTotal)} in
+              work across
+              <br />
+              {allInvoices} invoices. With {paidOnTime} out of {paidInvoices}{' '}
+              invoices paid within expected
+              <br />
+              terms, we are pleased to offer {usd(possibleAwardTotal)} as a
+              thank you
+              <br />
+              for working with us.
+            </PrintParagraph>,
+            <>
+              <PrintParagraph
+                tag="h1"
+                align="right"
+                style={{ marginTop: 0, marginBottom: 2 }}
+              >
+                {customerName}
+              </PrintParagraph>
+              <PrintParagraph tag="h1" align="right" style={{ marginTop: 0 }}>
+                {subtitle}
+              </PrintParagraph>
+            </>,
+          ],
+        ]}
+        noBorders
+        styles={{ marginTop: 20 }}
+      />
+      <PrintParagraph tag="h2" align="right">
+        Invoice Details
+      </PrintParagraph>
+      <PrintTable
+        columns={[
+          { title: 'Invoice Number', align: 'left' },
+          { title: 'Due Date', align: 'right' },
+          { title: 'Payment Date', align: 'right' },
+          { title: 'Days to Pay', align: 'right' },
+          { title: 'Paid', align: 'right' },
+          { title: 'Comments', align: 'center' },
+          { title: 'Award', align: 'right' },
+        ]}
+        data={entries.map(
+          ({
+            jobNumber,
+            dueDate,
+            paymentDate,
+            daysToPay,
+            paymentTerms,
+            payed,
+            possibleAward,
+          }) => [
+            jobNumber,
+            formatDate(dueDate),
+            formatDate(paymentDate),
+            `${daysToPay}/${paymentTerms}`,
+            usd(payed),
+            '', // TODO
+            usd(possibleAward),
+          ],
+        )}
+      />
+      <PrintPageBreak height={0} />
+    </div>
+  );
+
   return (
     <div>
       <SectionBar
@@ -97,48 +233,14 @@ export const PromptPaymentReport: FC<Props> = ({
         asideContent={
           <>
             <PrintPage
-              headerProps={{
-                title: 'Prompt Payment Report',
-                subtitle,
-              }}
               buttonProps={{
-                label: 'Print',
+                label: 'Print Payable Reports',
                 disabled: loading,
               }}
+              downloadPdfFilename={`PPR-Letter-elligible-customers-${subtitleMonth}`}
+              downloadLabel="Download Payable Reports"
             >
-              {!loading && (
-                <>
-                  <PrintTable
-                    columns={[
-                      'Customer',
-                      { title: 'Payable Award', align: 'right' },
-                      { title: 'Forfeited Award', align: 'right' },
-                      { title: 'Pending Award', align: 'right' },
-                      { title: 'Average Days to Pay', align: 'right' },
-                      { title: 'Paid Invoices', align: 'right' },
-                    ]}
-                    data={data.map(
-                      ({
-                        customerName,
-                        payableAward,
-                        forfeitedAward,
-                        pendingAward,
-                        averageDaysToPay,
-                        daysToPay,
-                        paidInvoices,
-                        allInvoices,
-                      }) => [
-                        customerName,
-                        usd(payableAward),
-                        usd(forfeitedAward),
-                        usd(pendingAward),
-                        `${averageDaysToPay}/${daysToPay}`,
-                        `${paidInvoices}/${allInvoices}`,
-                      ],
-                    )}
-                  />
-                </>
-              )}
+              {data.map(renderCustomerPayableReport)}
             </PrintPage>
             {onClose && <Button label="Close" onClick={onClose} />}
           </>
@@ -158,8 +260,8 @@ export const PromptPaymentReport: FC<Props> = ({
               { name: 'Average Days to Pay' },
               { name: 'Paid Invoices' },
             ]}
-            data={data.map(
-              ({
+            data={data.map(entry => {
+              const {
                 customerName,
                 payableAward,
                 forfeitedAward,
@@ -169,7 +271,8 @@ export const PromptPaymentReport: FC<Props> = ({
                 paidInvoices,
                 allInvoices,
                 entries,
-              }) => [
+              } = entry;
+              return [
                 { value: customerName },
                 { value: usd(payableAward) },
                 { value: usd(forfeitedAward) },
@@ -188,10 +291,19 @@ export const PromptPaymentReport: FC<Props> = ({
                     >
                       <ListIcon />
                     </IconButton>,
+                    <PrintPage
+                      key="print"
+                      downloadPdfFilename={`${kebabCase(
+                        customerName,
+                      )}-${subtitleMonth}`}
+                      icons
+                    >
+                      {renderCustomerPayableReport(entry)}
+                    </PrintPage>,
                   ],
                 },
-              ],
-            )}
+              ];
+            })}
           />
         </>
       )}
@@ -223,6 +335,7 @@ export const PromptPaymentReport: FC<Props> = ({
                 payed,
                 daysToPay,
                 paymentTerms,
+                possibleAward,
               } = entry;
               return [
                 { value: formatDate(billingdate) },
@@ -233,15 +346,40 @@ export const PromptPaymentReport: FC<Props> = ({
                 { value: usd(payed) },
                 { value: `${daysToPay}/${paymentTerms}` },
                 {
-                  value: usd(0), // FIXME
+                  value: usd(possibleAward),
                   actions: [
+                    <IconButton
+                      key="view"
+                      size="small"
+                      onClick={handleToggleEditingAward(entry)}
+                    >
+                      <AwardIcon />
+                    </IconButton>,
                     <IconButton key="edit" size="small">
                       <EditIcon />
                     </IconButton>,
+                    <IconButton key="download" size="small">
+                      <DownloadIcon />
+                    </IconButton>, // TODO
                   ],
                 },
               ];
             })}
+          />
+        </Modal>
+      )}
+      {editingAward && (
+        <Modal open onClose={handleToggleEditingAward()}>
+          <Form
+            title="Award Edit"
+            subtitle={editingAward.jobNumber}
+            schema={SCHEMA_AWARD}
+            data={{
+              kind: 'award',
+              reason: '',
+            }}
+            onClose={handleToggleEditingAward()}
+            onSave={handleSaveAward}
           />
         </Modal>
       )}

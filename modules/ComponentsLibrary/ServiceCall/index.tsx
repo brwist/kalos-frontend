@@ -346,9 +346,12 @@ export const ServiceCall: FC<Props> = props => {
     requestRef,
   ]);
 
-  const handleSetRequestfields = useCallback((fields) => {
-    setRequestfields([...requestFields, ...fields]);
-  }, [requestFields, setRequestfields]);
+  const handleSetRequestfields = useCallback(
+    fields => {
+      setRequestfields([...requestFields, ...fields]);
+    },
+    [requestFields, setRequestfields],
+  );
 
   const handleChangeEntry = useCallback(
     (data: EventType) => {
@@ -594,7 +597,11 @@ export const ServiceCall: FC<Props> = props => {
                   content: loading ? (
                     <InfoTable data={makeFakeRows(2, 5)} loading />
                   ) : (
-                    <Proposal serviceItem={entry} customer={customer} />
+                    <Proposal
+                      serviceItem={entry}
+                      customer={customer}
+                      property={property}
+                    />
                   ),
                 },
               ]

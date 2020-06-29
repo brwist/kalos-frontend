@@ -15,9 +15,12 @@ export default () => (
     </PrintPage>
     <ExampleTitle>with header, footer and example print table</ExampleTitle>
     <PrintPage
-      headerProps={{ title: 'Lorem ipsum' }}
+      headerProps={{
+        title: 'Lorem ipsum',
+        withKalosAddress: true,
+      }}
       footerProps={{
-        height: 250,
+        height: 230,
         children: (
           <PrintParagraph>
             <LoremIpsumList />
@@ -37,6 +40,15 @@ export default () => (
       footerProps={{ height: 30, children: LOREM }}
       buttonProps={{ variant: 'outlined', label: 'Print me' }}
       downloadPdfFilename="lorem_ipsum_2"
+      downloadLabel="Download me"
+    >
+      <PrintTableExample rows={200} />
+    </PrintPage>
+    <ExampleTitle>icons</ExampleTitle>
+    <PrintPage
+      headerProps={{ title: 'Lorem ipsum' }}
+      downloadPdfFilename="lorem_ipsum_2"
+      icons
     >
       <PrintTableExample rows={200} />
     </PrintPage>

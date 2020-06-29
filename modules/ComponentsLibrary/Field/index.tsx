@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   useRef,
+  CSSProperties,
 } from 'react';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { makeStyles } from '@material-ui/core/styles';
@@ -74,7 +75,8 @@ export type Type =
   | 'classCode'
   | 'hidden'
   | 'color'
-  | 'eventId';
+  | 'eventId'
+  | 'multiselect';
 
 export type Value = string | number;
 
@@ -98,6 +100,7 @@ export interface Props<T> extends SchemaProps<T> {
   readOnly?: boolean;
   className?: string;
   placeholder?: string;
+  style?: CSSProperties;
 }
 
 export const getDefaultValueByType = (type: Type) => {
@@ -113,6 +116,8 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     alignItems: 'center',
     position: 'relative',
+    flexShrink: 0,
+    flexGrow: 1,
   },
   field: ({ type, disabled }: Style) => ({
     marginTop: 0,
@@ -249,6 +254,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   endAdornment,
   content,
   actionsInLabel = false,
+  style = {},
   ...props
 }) => {
   const signatureRef = useRef(null);
@@ -435,7 +441,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }
   if (type === 'signature') {
     return (
-      <div className={classes.fieldWrapper + ' ' + className}>
+      <div className={classes.fieldWrapper + ' ' + className} style={style}>
         <div>
           <div className={classes.signatureHeader}>
             <InputLabel shrink>{inputLabel}</InputLabel>
@@ -486,6 +492,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         className={[classes.fieldWrapper, classes.hourWrapper, className].join(
           ' ',
         )}
+        style={style}
       >
         <InputLabel shrink>{inputLabel}</InputLabel>
         <div className={classes.hour}>
@@ -507,6 +514,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               '12',
             ]}
             onChange={hour => handleTimeChange(hour, minutes, ampm)}
+            style={{ width: 'calc(100% / 3' }}
           />
           <Field
             name={`${name}_minutes`}
@@ -515,6 +523,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             onChange={minutes =>
               handleTimeChange(trailingZero(hour), minutes, ampm)
             }
+            style={{ width: 'calc(100% / 3' }}
           />
           <Field
             name={`${name}_ampm`}
@@ -523,6 +532,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             onChange={ampm =>
               handleTimeChange(trailingZero(hour), minutes, ampm)
             }
+            style={{ width: 'calc(100% / 3' }}
           />
         </div>
       </div>
@@ -719,7 +729,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   if (options) {
     const id = `${name}-select-label`;
     return (
-      <div className={classes.fieldWrapper + ' ' + className}>
+      <div className={classes.fieldWrapper + ' ' + className} style={style}>
         <FormControl
           className={classes.field}
           fullWidth
@@ -734,20 +744,44 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             {...props}
             value={value}
             readOnly={readOnly}
+            multiple={type === 'multiselect'}
+            renderValue={
+              type === 'multiselect'
+                ? selected => {
+                    const { length } = selected as Value[];
+                    return `${length} item${length === 1 ? '' : 's'}`;
+                  }
+                : undefined
+            }
           >
             {options.map(option => {
               const isStringOption = typeof option === 'string';
               const label = isStringOption
                 ? (option as string)
                 : (option as Option).label;
-              const value = isStringOption
+              const valueOption = isStringOption
                 ? (option as string)
                 : (option as Option).value;
               const color = isStringOption
                 ? undefined
                 : (option as Option).color;
               return (
-                <MenuItem key={value} value={value} className={classes.option}>
+                <MenuItem
+                  key={valueOption}
+                  value={valueOption}
+                  className={classes.option}
+                  dense
+                >
+                  {type === 'multiselect' && (
+                    <Checkbox
+                      checked={
+                        //@ts-ignore
+                        value.indexOf(valueOption) > -1
+                      }
+                      // size="small"
+                      color="primary"
+                    />
+                  )}
                   {color && (
                     <div
                       className={classes.color}
@@ -812,7 +846,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     );
   }
   return (
-    <div className={classes.fieldWrapper + ' ' + className}>
+    <div className={classes.fieldWrapper + ' ' + className} style={style}>
       {type === 'file' && (
         <input
           id={name + '-file'}
