@@ -86,13 +86,14 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       schema.forEach(fields => {
         fields
           .filter(({ required }) => required)
-          .forEach(({ name, type, options }) => {
+          .forEach(({ name, type = 'text', options }) => {
             if (name) {
               const value: string = '' + formData[name];
               if (
                 formData[name] === undefined ||
                 value === '' ||
-                ((type === 'classCode' || type === 'department' || !!options) &&
+                ((['classCode', 'department', 'eventId'].includes(type) ||
+                  !!options) &&
                   value === '0')
               ) {
                 validations[name as string] = 'This field is required.';
