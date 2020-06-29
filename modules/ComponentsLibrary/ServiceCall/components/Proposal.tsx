@@ -267,6 +267,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
               withKalosContact: true,
               bigLogo: true,
             }}
+            buttonProps={{ label: 'Print Preview' }}
             downloadPdfFilename="Proposal"
             downloadLabel="Download PDF Preview"
           >
