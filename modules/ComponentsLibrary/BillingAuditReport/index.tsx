@@ -9,15 +9,19 @@ import { PrintPage } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { InfoTable, Data, Columns } from '../InfoTable';
 import { PlainForm, Schema } from '../PlainForm';
+import { ServiceCall } from '../ServiceCall';
+import { Modal } from '../Modal';
 import {
   loadBillingAuditReport,
   formatDate,
   usd,
   makeFakeRows,
+  BillingAuditType,
 } from '../../../helpers';
 
 interface Props {
   month: string;
+  loggedUserId: number;
   onClose?: () => void;
 }
 
@@ -34,10 +38,17 @@ const COLUMNS: Columns = [
   { name: 'Payable' },
 ];
 
-export const BillingAuditReport: FC<Props> = ({ month, onClose }) => {
+export const BillingAuditReport: FC<Props> = ({
+  month,
+  loggedUserId,
+  onClose,
+}) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<BillingAuditType[]>([]);
+  const [serviceCallEdited, setServiceCallEdited] = useState<
+    BillingAuditType
+  >();
   const startDate = format(new Date(month.replace('%', '01')), 'yyyy-MM-dd');
   const [form, setForm] = useState<FilterForm>({
     startDate,
@@ -59,6 +70,11 @@ export const BillingAuditReport: FC<Props> = ({ month, onClose }) => {
     }
   }, [loaded, setLoaded, load]);
   const handleSearch = useCallback(() => setLoaded(false), [setForm]);
+  const handleSetServiceCallEdited = useCallback(
+    (serviceCallEdited?: BillingAuditType) => () =>
+      setServiceCallEdited(serviceCallEdited),
+    [setServiceCallEdited],
+  );
   const SCHEMA: Schema<FilterForm> = [
     [
       {
@@ -76,26 +92,33 @@ export const BillingAuditReport: FC<Props> = ({ month, onClose }) => {
   ];
   const data: Data = loading
     ? makeFakeRows(5, 5)
-    : (entries.map(({ date, name, businessname, jobNumber, payable }) => [
-        { value: formatDate(date) },
-        { value: name },
-        { value: businessname },
-        { value: jobNumber },
-        {
-          value: usd(payable),
-          actions: [
-            // TODO clickable
-            <IconButton key="download" size="small">
-              <DownloadIcon />
-            </IconButton>,
-            <IconButton key="edit" size="small">
-              <EditIcon />
-            </IconButton>,
-          ],
-        },
-      ]) as Data);
+    : (entries.map(entry => {
+        const { date, name, businessname, jobNumber, payable } = entry;
+        return [
+          { value: formatDate(date) },
+          { value: name },
+          { value: businessname },
+          { value: jobNumber },
+          {
+            value: usd(payable),
+            actions: [
+              // TODO clickable
+              <IconButton key="download" size="small">
+                <DownloadIcon />
+              </IconButton>,
+              <IconButton
+                key="edit"
+                size="small"
+                onClick={handleSetServiceCallEdited(entry)}
+              >
+                <EditIcon />
+              </IconButton>,
+            ],
+          },
+        ];
+      }) as Data);
   return (
-    <div>
+    <>
       <SectionBar
         title="Billing Audit"
         asideContent={
@@ -138,6 +161,17 @@ export const BillingAuditReport: FC<Props> = ({ month, onClose }) => {
       />
       <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
-    </div>
+      {serviceCallEdited && (
+        <Modal open onClose={handleSetServiceCallEdited()} fullScreen>
+          <ServiceCall
+            onClose={handleSetServiceCallEdited()}
+            loggedUserId={loggedUserId}
+            serviceCallId={serviceCallEdited.eventId}
+            propertyId={serviceCallEdited.propertyId}
+            userID={serviceCallEdited.userId}
+          />
+        </Modal>
+      )}
+    </>
   );
 };

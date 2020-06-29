@@ -949,6 +949,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         >
           <BillingAuditReport
             month={billingAuditReport.month!}
+            loggedUserId={loggedUserId}
             onClose={handleOpenBillingAuditReportToggle(false)}
           />
         </Modal>

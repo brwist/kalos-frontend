@@ -1330,6 +1330,17 @@ export const loadCallbackReportByFilter = async ({
   };
 };
 
+export type BillingAuditType = {
+  date: string;
+  name: string;
+  businessname: string;
+  jobNumber: number;
+  payable: number;
+  eventId: number;
+  userId: number;
+  propertyId: number;
+};
+
 export const loadBillingAuditReport = async (
   startDate: string,
   endDate: string,
