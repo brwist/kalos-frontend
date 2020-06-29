@@ -15,6 +15,7 @@ import { CharityReport } from '../CharityReport';
 import { WarrantyReport } from '../WarrantyReport';
 import { PromptPaymentReport } from '../PromptPaymentReport';
 import { TimeoffSummaryReport } from '../TimeoffSummaryReport';
+import { BillingAuditReport } from '../BillingAuditReport';
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -946,17 +947,9 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           onClose={handleOpenBillingAuditReportToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Billing Audit"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenBillingAuditReportToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <BillingAuditReport
+            onClose={handleOpenBillingAuditReportToggle(false)}
           />
-          {UNDER_CONSTRUCTION}
         </Modal>
       )}
       {promptPaymentReportOpen && (
