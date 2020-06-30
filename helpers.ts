@@ -8,7 +8,7 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
-import { SpiffType, TaskClient } from '@kalos-core/kalos-rpc/Task';
+import { SpiffType, TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
   ActivityLog,
   ActivityLogClient,
@@ -107,6 +107,7 @@ export type ActivityLogType = ActivityLog.AsObject;
 export type SpiffTypeType = SpiffType.AsObject;
 export type SpiffReportLineType = SpiffReportLine.AsObject;
 export type PromptPaymentReportLineType = PromptPaymentReportLine.AsObject;
+export type TaskType = Task.AsObject;
 
 export const ReportClientService = new ReportClient(ENDPOINT);
 export const TaskClientService = new TaskClient(ENDPOINT);
@@ -684,6 +685,53 @@ export const loadSpiffTypes = async () => {
       if (a.ext > b.ext) return 1;
       return 0;
     });
+};
+
+export const loadSpiffToolLogs = async ({
+  page,
+  type,
+  technician,
+  description,
+  datePerformed,
+  beginDate,
+  endDate,
+  jobNumber,
+}: {
+  page: number;
+  type: 'Spiff' | 'Tool';
+  technician?: number;
+  description?: string;
+  datePerformed?: string;
+  beginDate?: string;
+  endDate?: string;
+  jobNumber?: string;
+}) => {
+  const req = new Task();
+  req.setPageNumber(page);
+  req.setIsActive(1);
+  req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
+  req.setOrderDir('ASC');
+  if (technician) {
+    req.setExternalId(technician);
+  }
+  req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
+  if (description) {
+    req.setBriefDescription(`%${description}%`);
+  }
+  if (datePerformed) {
+    req.setDatePerformed(datePerformed);
+  }
+  if (beginDate && endDate) {
+    req.setDateRangeList(['>=', beginDate, '<', endDate]);
+    req.setDateTargetList(['date_performed', 'date_performed']);
+  }
+  if (jobNumber) {
+    req.setSpiffJobNumber(`%${jobNumber}%`);
+  }
+  const res = await TaskClientService.BatchGet(req);
+  const resultsList = res.getResultsList().map(el => el.toObject());
+  const count = res.getTotalCount();
+  return { resultsList, count };
 };
 
 /**
