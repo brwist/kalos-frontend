@@ -829,6 +829,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           fullScreen
         >
           <DeletedServiceCallsReport
+            loggedUserId={loggedUserId}
             onClose={handleOpenDeletedServiceCallsReportToggle(false)}
             dateStart={deletedServiceCallsReport.startDate!}
             dateEnd={deletedServiceCallsReport.endDate!}
