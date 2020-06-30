@@ -1,6 +1,7 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
+import AssignmentIcon from '@material-ui/icons/Assignment';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { PrintPage, Status } from '../PrintPage';
@@ -17,6 +18,7 @@ import {
   formatDate,
   getPropertyAddress,
   getCustomerName,
+  getCFAppUrl,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -94,6 +96,19 @@ export const DeletedServiceCallsReport: FC<Props> = ({
     (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
+  const handleOpenTasks = useCallback(
+    (entry: EventType) => () => {
+      // TODO Replace with react Tasks module, once it's built
+      window.open(
+        [
+          getCFAppUrl('admin:tasks.list'),
+          'code=servicecall',
+          `id=${entry.id}`,
+        ].join('&'),
+      );
+    },
+    [],
+  );
   const SCHEMA: Schema<FilterForm> = [
     [
       {
@@ -130,6 +145,13 @@ export const DeletedServiceCallsReport: FC<Props> = ({
             {
               value: logJobStatus,
               actions: [
+                <IconButton
+                  key="tasks"
+                  size="small"
+                  onClick={handleOpenTasks(entry)}
+                >
+                  <AssignmentIcon />
+                </IconButton>,
                 <IconButton
                   key="edit"
                   size="small"
