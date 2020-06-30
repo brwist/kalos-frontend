@@ -1,4 +1,6 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { PrintPage, Status } from '../PrintPage';
@@ -6,9 +8,10 @@ import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { PlainForm, Schema } from '../PlainForm';
 import { Button } from '../Button';
+import { ServiceCall } from '../ServiceCall';
+import { Modal } from '../Modal';
 import {
   makeFakeRows,
-  getCurrDate,
   loadDeletedServiceCallsByFilter,
   EventType,
   formatDate,
@@ -18,6 +21,7 @@ import {
 import { ROWS_PER_PAGE } from '../../../constants';
 
 interface Props {
+  loggedUserId: number;
   onClose?: () => void;
   dateStart: string;
   dateEnd: string;
@@ -31,6 +35,7 @@ type FilterForm = {
 const COLUMNS = ['Property', 'Customer Name', 'Job', 'Date', 'Job Status'];
 
 export const DeletedServiceCallsReport: FC<Props> = ({
+  loggedUserId,
   dateStart,
   dateEnd,
   onClose,
@@ -43,6 +48,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [form, setForm] = useState<FilterForm>({ dateStart, dateEnd });
   const [printStatus, setPrintStatus] = useState<Status>('idle');
+  const [pendingEdit, setPendingEdit] = useState<EventType>();
   const load = useCallback(async () => {
     setLoading(true);
     const { results, totalCount } = await loadDeletedServiceCallsByFilter({
@@ -84,6 +90,10 @@ export const DeletedServiceCallsReport: FC<Props> = ({
     setPrintStatus,
   ]);
   const handleSearch = useCallback(() => setLoaded(false), [setForm]);
+  const handleSetPendingEdit = useCallback(
+    (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
+    [setPendingEdit],
+  );
   const SCHEMA: Schema<FilterForm> = [
     [
       {
@@ -104,18 +114,32 @@ export const DeletedServiceCallsReport: FC<Props> = ({
       ? makeFakeRows(5, 5)
       : entries.map(entry => {
           const {
+            id,
             property,
             customer,
             logJobNumber,
             dateStarted,
             logJobStatus,
           } = entry;
+          const disabled = !property || !customer;
           return [
             { value: getPropertyAddress(property) },
             { value: getCustomerName(customer) },
             { value: logJobNumber },
             { value: formatDate(dateStarted) },
-            { value: logJobStatus },
+            {
+              value: logJobStatus,
+              actions: [
+                <IconButton
+                  key="edit"
+                  size="small"
+                  disabled={disabled}
+                  onClick={handleSetPendingEdit(entry)}
+                >
+                  <EditIcon />
+                </IconButton>,
+              ],
+            },
           ];
         });
   const allPrintData = entries.length === count;
@@ -166,6 +190,17 @@ export const DeletedServiceCallsReport: FC<Props> = ({
         loading={loading}
         skipPreLine
       />
+      {pendingEdit && (
+        <Modal open onClose={handleSetPendingEdit()} fullScreen>
+          <ServiceCall
+            serviceCallId={pendingEdit.id}
+            userID={pendingEdit.customer!.id}
+            propertyId={pendingEdit.property!.id}
+            loggedUserId={loggedUserId}
+            onClose={handleSetPendingEdit()}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
