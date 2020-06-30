@@ -31,6 +31,7 @@ import { Equipment } from './components/Equipment';
 import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
 import { Proposal } from './components/Proposal';
+import { Spiffs } from './components/Spiffs';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -496,6 +497,18 @@ export const ServiceCall: FC<Props> = props => {
                       customer={customer}
                       property={property}
                     />
+                  ),
+                },
+              ]
+            : []),
+          ...(serviceCallId
+            ? [
+                {
+                  label: 'Spiffs',
+                  content: loading ? (
+                    <InfoTable data={makeFakeRows(7, 5)} loading />
+                  ) : (
+                    <Spiffs serviceItem={entry} />
                   ),
                 },
               ]
