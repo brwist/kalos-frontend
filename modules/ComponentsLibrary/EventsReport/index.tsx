@@ -112,6 +112,7 @@ export const EventsReport: FC<Props> = ({
   );
   const handleOpenTasks = useCallback(
     (entry: EventType) => () => {
+      // TODO Replace with react Tasks module, once it's built
       window.open(
         [
           getCFAppUrl('admin:tasks.list'),
