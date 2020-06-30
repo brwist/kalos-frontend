@@ -1314,6 +1314,8 @@ export const loadDeletedServiceCallsByFilter = async ({
 }: LoadMetricsByFilter) => {
   const req = new Event();
   req.setPageNumber(page === -1 ? 0 : page);
+  req.setOrderBy('date_started');
+  req.setOrderDir('ASC');
   req.setIsActive(0);
   req.setDateRangeList(['>=', dateStart, '<=', dateEnd]);
   req.setDateTargetList(['date_started', 'date_started']);

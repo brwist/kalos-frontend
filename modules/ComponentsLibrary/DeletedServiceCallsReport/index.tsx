@@ -1,10 +1,10 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import { SectionBar } from '../SectionBar';
-import { InfoTable, Columns, Data } from '../InfoTable';
+import { InfoTable, Data } from '../InfoTable';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
-import { ExportJSON } from '../ExportJSON';
+import { PlainForm, Schema } from '../PlainForm';
 import { Button } from '../Button';
 import {
   makeFakeRows,
@@ -23,31 +23,12 @@ interface Props {
   dateEnd: string;
 }
 
-// FIXME props mapping
-const EXPORT_COLUMNS = [
-  {
-    label: 'Property',
-    value: 'property', // TODO getPropertyAddress
-  },
-  {
-    label: 'Customer Name',
-    value: 'customer',
-  },
-  {
-    label: 'Job',
-    value: 'job',
-  },
-  {
-    label: 'Date',
-    value: 'date',
-  },
-  {
-    label: 'Job Status',
-    value: 'jobStatus',
-  },
-];
+type FilterForm = {
+  dateStart: string;
+  dateEnd: string;
+};
 
-const COLUMNS = EXPORT_COLUMNS.map(({ label }) => label);
+const COLUMNS = ['Property', 'Customer Name', 'Job', 'Date', 'Job Status'];
 
 export const DeletedServiceCallsReport: FC<Props> = ({
   dateStart,
@@ -60,25 +41,18 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   const [printEntries, setPrintEntries] = useState<EventType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
+  const [form, setForm] = useState<FilterForm>({ dateStart, dateEnd });
   const [printStatus, setPrintStatus] = useState<Status>('idle');
-  const [exportStatus, setExportStatus] = useState<Status>('idle');
-  const getFilter = useCallback(
-    () => ({
-      dateStart,
-      dateEnd,
-    }),
-    [dateStart, dateEnd],
-  );
   const load = useCallback(async () => {
     setLoading(true);
     const { results, totalCount } = await loadDeletedServiceCallsByFilter({
       page,
-      filter: getFilter(),
+      filter: form,
     });
     setEntries(results);
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, getFilter, page]);
+  }, [setLoading, form, page]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -97,18 +71,10 @@ export const DeletedServiceCallsReport: FC<Props> = ({
     if (printEntries.length === count) return;
     const { results } = await loadDeletedServiceCallsByFilter({
       page: -1,
-      filter: getFilter(),
+      filter: form,
     });
     setPrintEntries(results);
-  }, [setPrintEntries, getFilter, printEntries, count]);
-  const handleExport = useCallback(async () => {
-    setExportStatus('loading');
-    await loadPrintEntries();
-    setExportStatus('loaded');
-  }, [loadPrintEntries, setExportStatus]);
-  const handleExported = useCallback(() => setExportStatus('idle'), [
-    setExportStatus,
-  ]);
+  }, [setPrintEntries, form, printEntries, count]);
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
     await loadPrintEntries();
@@ -117,6 +83,22 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
+  const handleSearch = useCallback(() => setLoaded(false), [setForm]);
+  const SCHEMA: Schema<FilterForm> = [
+    [
+      {
+        name: 'dateStart',
+        label: 'Start Date',
+        type: 'date',
+      },
+      {
+        name: 'dateEnd',
+        label: 'End Date',
+        type: 'date',
+        actions: [{ label: 'Search', onClick: handleSearch }],
+      },
+    ],
+  ];
   const getData = (entries: EventType[]): Data =>
     loading
       ? makeFakeRows(5, 5)
@@ -157,14 +139,6 @@ export const DeletedServiceCallsReport: FC<Props> = ({
         }}
         asideContent={
           <>
-            {/* <ExportJSON // TODO fix props
-              json={allPrintData ? entries : printEntries}
-              fields={EXPORT_COLUMNS}
-              filename={`Deleted_Service_Calls_Report_${getCurrDate()}`}
-              onExport={allPrintData ? undefined : handleExport}
-              onExported={handleExported}
-              status={exportStatus}
-            /> */}
             <PrintPage
               headerProps={{
                 title: 'Deleted Service Calls Report',
@@ -185,6 +159,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
           </>
         }
       />
+      <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
       <InfoTable
         columns={COLUMNS.map(name => ({ name }))}
         data={getData(entries)}
