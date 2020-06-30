@@ -6,8 +6,9 @@ export default () => (
   <>
     <ExampleTitle>default with onClose</ExampleTitle>
     <DeletedServiceCallsReport
-      dateStart="2020-01-14"
-      dateEnd="2020-01-20"
+      loggedUserId={101253}
+      dateStart="2018-05-25"
+      dateEnd="2018-05-25"
       onClose={() => console.log('CLOSE')}
     />
   </>
