@@ -61,6 +61,7 @@ import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
 import SpiffReport from './SpiffReport/examples';
+import SpiffToolLogEdit from './SpiffToolLogEdit/examples';
 import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
@@ -127,6 +128,7 @@ const COMPONENTS = {
   ServiceItemReadings,
   ServiceItems,
   SpiffReport,
+  SpiffToolLogEdit,
   StoredQuotes,
   Tabs,
   TimeoffSummaryReport,
