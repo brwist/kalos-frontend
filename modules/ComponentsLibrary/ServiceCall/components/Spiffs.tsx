@@ -5,12 +5,12 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import RepeatIcon from '@material-ui/icons/History';
 import { SectionBar } from '../../SectionBar';
 import { InfoTable, Columns, Data } from '../../InfoTable';
+import { SpiffToolLogEdit, SpiffActionsList } from '../../SpiffToolLogEdit';
+import { Modal } from '../../Modal';
 import { EventType } from '../';
 import {
-  UserType,
   usd,
   formatDate,
-  PropertyType,
   loadSpiffToolLogs,
   makeFakeRows,
   TaskType,
@@ -21,16 +21,10 @@ import { ROWS_PER_PAGE } from '../../../../constants';
 
 interface Props {
   serviceItem: EventType;
+  loggedUserId: number;
 }
 
-const getStatusTxt = (statusId: number) => {
-  if (statusId === 1) return 'Approved';
-  if (statusId === 2) return 'Rejected';
-  if (statusId === 3) return 'Revoked';
-  return 'Pending';
-};
-
-export const Spiffs: FC<Props> = ({ serviceItem }) => {
+export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -39,6 +33,7 @@ export const Spiffs: FC<Props> = ({ serviceItem }) => {
   const [spiffTypes, setSpiffTypes] = useState<{
     [key: number]: SpiffTypeType;
   }>({});
+  const [edited, setEdited] = useState<TaskType>();
   const load = useCallback(async () => {
     setLoading(true);
     const spiffTypes = await loadSpiffTypes();
@@ -52,8 +47,11 @@ export const Spiffs: FC<Props> = ({ serviceItem }) => {
     });
     setEntries(resultsList);
     setCount(count);
+    if (edited) {
+      setEdited(resultsList.find(({ id }) => id === edited.id));
+    }
     setLoading(false);
-  }, [setLoading, setEntries, setCount, page]);
+  }, [setLoading, setEntries, setCount, page, edited, setEdited]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -66,6 +64,10 @@ export const Spiffs: FC<Props> = ({ serviceItem }) => {
       setLoaded(false);
     },
     [setPage],
+  );
+  const handleSetEdited = useCallback(
+    (edited?: TaskType) => () => setEdited(edited),
+    [setEdited],
   );
   const COLUMNS: Columns = [
     { name: 'Claim Date' },
@@ -84,9 +86,9 @@ export const Spiffs: FC<Props> = ({ serviceItem }) => {
           referenceNumber,
           briefDescription,
           spiffTypeId,
-          statusId,
           spiffAmount,
           ownerName,
+          actionsList,
         } = entry;
         return [
           { value: formatDate(datePerformed) },
@@ -94,7 +96,7 @@ export const Spiffs: FC<Props> = ({ serviceItem }) => {
           { value: briefDescription },
           { value: spiffTypes[spiffTypeId].ext },
           { value: ownerName },
-          { value: getStatusTxt(statusId) },
+          { value: <SpiffActionsList actionsList={actionsList} /> },
           {
             value: usd(spiffAmount),
             actions: [
@@ -106,8 +108,11 @@ export const Spiffs: FC<Props> = ({ serviceItem }) => {
               <IconButton key="delete" size="small">
                 <DeleteIcon />
               </IconButton>,
-              // TODO open spiff edit in modal
-              <IconButton key="edit" size="small">
+              <IconButton
+                key="edit"
+                size="small"
+                onClick={handleSetEdited(entry)}
+              >
                 <EditIcon />
               </IconButton>,
             ],
@@ -126,6 +131,23 @@ export const Spiffs: FC<Props> = ({ serviceItem }) => {
         }}
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
+      {edited && (
+        <Modal open onClose={handleSetEdited()} fullScreen>
+          <SpiffToolLogEdit
+            onClose={handleSetEdited()}
+            data={edited}
+            onSave={() => {
+              handleSetEdited()();
+              setLoaded(false);
+            }}
+            onStatusChange={() => setLoaded(false)}
+            type="Spiff"
+            loggedUserId={loggedUserId}
+            loading={loading}
+            cancelLabel="Close"
+          />
+        </Modal>
+      )}
     </>
   );
 };

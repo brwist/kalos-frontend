@@ -67,6 +67,7 @@ import {
   InternalDocumentClient,
 } from '@kalos-core/kalos-rpc/InternalDocument';
 import { PDFClient, HTML } from '@kalos-core/kalos-rpc/PDF';
+import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
 import {
   ENDPOINT,
@@ -108,7 +109,10 @@ export type SpiffTypeType = SpiffType.AsObject;
 export type SpiffReportLineType = SpiffReportLine.AsObject;
 export type PromptPaymentReportLineType = PromptPaymentReportLine.AsObject;
 export type TaskType = Task.AsObject;
+export type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
+export type DocumentType = Document.AsObject;
 
+export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
 export const TaskClientService = new TaskClient(ENDPOINT);
 export const PDFClientService = new PDFClient(ENDPOINT);
@@ -604,6 +608,35 @@ async function loadUsersByDepartmentId(departmentId: number) {
   });
 }
 
+export const upsertSpiffToolAdminAction = async (
+  data: SpiffToolAdminActionType,
+) => {
+  const req = new SpiffToolAdminAction();
+  const fieldMaskList = [];
+  const isNew = !data.id;
+  if (isNew) {
+    req.setCreatedDate(timestamp());
+    fieldMaskList.push('CreatedDate');
+  } else {
+    req.setId(data.id);
+    fieldMaskList.push('Id');
+  }
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    // @ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  await SpiffToolAdminActionClientService[isNew ? 'Create' : 'Update'](req);
+};
+
+export const deletetSpiffToolAdminAction = async (id: number) => {
+  const req = new SpiffToolAdminAction();
+  req.setId(id);
+  await SpiffToolAdminActionClientService.Delete(req);
+};
+
 /** Returns loaded SpiffToolAdminActions by task id
  * @param taskId: number
  * @returns SpiffToolAdminAction[]
@@ -685,6 +718,47 @@ export const loadSpiffTypes = async () => {
       if (a.ext > b.ext) return 1;
       return 0;
     });
+};
+
+export const createTaskDocument = async (
+  fileName: string,
+  taskId: number,
+  userId: number,
+  description: string,
+) => {
+  const req = new Document();
+  req.setFilename(fileName);
+  req.setDateCreated(timestamp());
+  req.setTaskId(taskId);
+  req.setUserId(userId);
+  req.setDescription(description);
+  req.setType(5);
+  await DocumentClientService.Create(req);
+};
+
+export const updateDocumentDescription = async (
+  id: number,
+  description: string,
+) => {
+  const req = new Document();
+  req.setId(id);
+  req.setDescription(description);
+  req.setFieldMaskList(['Description']);
+  await DocumentClientService.Update(req);
+};
+
+export const updateSpiffTool = async (data: TaskType) => {
+  const req = new Task();
+  req.setId(data.id);
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    // @ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  await TaskClientService.Update(req);
 };
 
 export const loadSpiffToolLogs = async ({
