@@ -1037,7 +1037,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           />
         </Modal>
       )}
-      {extendedEditing && (
+      {extendedEditing && ( // TODO replace with SpiffTollLogEdit from ComponentsLibrary
         <Modal open onClose={handleSetExtendedEditing()} fullHeight>
           <Form<TaskType>
             title={`${type === 'Spiff' ? 'Spiff' : 'Tool Purchase'} Request`}
