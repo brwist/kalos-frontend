@@ -23,6 +23,7 @@ interface Props {
 
 type Form = {
   displayName: string;
+  withJobNotes: number;
   notes: string;
 };
 
@@ -98,6 +99,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
   const [form, setForm] = useState<Form>({
     displayName: customerName,
+    withJobNotes: 0,
     notes,
   });
   const handleToggleQuickAdd = useCallback(
@@ -191,9 +193,15 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
         options: [customerName, customer?.businessname || ''],
       },
       {
+        name: 'withJobNotes',
+        label: 'With Job Notes',
+        type: 'checkbox',
+      },
+      {
         label: 'Job Notes',
         name: 'notes',
         multiline: true,
+        disabled: !form.withJobNotes,
       },
     ],
   ];
@@ -249,7 +257,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
             displayName={form.displayName}
             logJobNumber={logJobNumber}
             property={property}
-            notes={form.notes}
+            notes={form.withJobNotes ? form.notes : undefined}
             entries={table.map(({ description, price }) => ({
               description,
               price,
