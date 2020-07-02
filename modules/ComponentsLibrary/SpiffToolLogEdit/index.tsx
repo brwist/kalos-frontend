@@ -155,6 +155,16 @@ export const SpiffActionsList: FC<{
   );
 };
 
+export const getStatusFormInit = (status: number, reviewedBy?: string) => {
+  const entry = new SpiffToolAdminAction();
+  entry.setDecisionDate(timestamp(true));
+  entry.setStatus(status);
+  if (reviewedBy) {
+    entry.setReviewedBy(reviewedBy);
+  }
+  return entry.toObject();
+};
+
 export const SpiffToolLogEdit: FC<Props> = ({
   type,
   loggedUserId,
