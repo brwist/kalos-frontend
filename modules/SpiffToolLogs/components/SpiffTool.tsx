@@ -1,14 +1,7 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import kebabCase from 'lodash/kebabCase';
-import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import {
-  SpiffToolAdminAction,
-  SpiffToolAdminActionClient,
-} from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
+import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -24,8 +17,8 @@ import { Link } from '../../ComponentsLibrary/Link';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
-import { Documents } from '../../ComponentsLibrary/Documents';
 import { SpiffToolLogEdit } from '../../ComponentsLibrary/SpiffToolLogEdit';
+import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import {
   getRPCFields,
   timestamp,
@@ -42,6 +35,7 @@ import {
   UserType,
   SpiffTypeType,
   SpiffToolAdminActionType,
+  TaskEventDataType,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 
@@ -109,7 +103,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const MONTHS_OPTIONS: Option[] = makeLast12MonthsOptions(true);
   const getSearchFormInit = () => ({
     description: '',
-    month: MONTHS_OPTIONS[0].value as string,
+    month: MONTHS_OPTIONS[MONTHS_OPTIONS.length - 1].value as string,
     kind: MONTHLY,
     technician: loggedUserId,
   });
@@ -134,6 +128,9 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
+  const [serviceCallEditing, setServiceCallEditing] = useState<
+    TaskEventDataType
+  >();
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
@@ -354,6 +351,21 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       handleMakeSearch,
     ],
   );
+  const handleOpenServiceCall = useCallback(
+    (entry: TaskType) => (
+      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    ) => {
+      e.preventDefault();
+      const { event } = entry;
+      if (!event) return;
+      setServiceCallEditing(event);
+    },
+    [setServiceCallEditing],
+  );
+  const handleUnsetServiceCallEditing = useCallback(
+    () => setServiceCallEditing(undefined),
+    [setServiceCallEditing],
+  );
   const handleClickSpiffJobNumber = useCallback(
     (spiffJobNumber: string) => (
       e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
@@ -570,15 +582,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             value:
               type === 'Spiff' ? (
                 event && event.id ? (
-                  <Link
-                    href={[
-                      'https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall',
-                      `id=${event.id}`,
-                      `user_id=${event.customerId}`,
-                      `property_id=${event.propertyId}`,
-                    ].join('&')}
-                    blank
-                  >
+                  <Link onClick={handleOpenServiceCall(entry)}>
                     {spiffJobNumber}
                   </Link>
                 ) : (
@@ -758,6 +762,17 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             Job # <strong>{unlinkedSpiffJobNumber}</strong> does not appear to
             be connected to a valid Service Call.
           </div>
+        </Modal>
+      )}
+      {serviceCallEditing && (
+        <Modal open onClose={handleUnsetServiceCallEditing} fullScreen>
+          <ServiceCall
+            loggedUserId={loggedUserId}
+            serviceCallId={serviceCallEditing.id}
+            onClose={handleUnsetServiceCallEditing}
+            propertyId={serviceCallEditing.propertyId}
+            userID={serviceCallEditing.customerId}
+          />
         </Modal>
       )}
     </div>
