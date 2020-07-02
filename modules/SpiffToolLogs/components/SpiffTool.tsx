@@ -7,7 +7,6 @@ import {
   SpiffToolAdminAction,
   SpiffToolAdminActionClient,
 } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { SpiffType as SpiffTypeRpc } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import SearchIcon from '@material-ui/icons/Search';
@@ -26,6 +25,7 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Documents } from '../../ComponentsLibrary/Documents';
+import { SpiffToolLogEdit } from '../../ComponentsLibrary/SpiffToolLogEdit';
 import {
   getRPCFields,
   timestamp,
@@ -37,16 +37,15 @@ import {
   loadTechnicians,
   escapeText,
   formatDay,
-  uploadFileToS3Bucket,
   makeLast12MonthsOptions,
+  TaskType,
+  UserType,
+  SpiffTypeType,
+  SpiffToolAdminActionType,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
-const DocumentClientService = new DocumentClient(ENDPOINT);
-const SpiffToolAdminActionClientService = new SpiffToolAdminActionClient(
-  ENDPOINT,
-);
 
 const MONTHLY = 'Monthly';
 const WEEKLY = 'Weekly';
@@ -63,11 +62,6 @@ const STATUS_TXT: {
   {},
 );
 
-type TaskType = Task.AsObject;
-type UserType = User.AsObject;
-type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
-type SpiffType = SpiffTypeRpc.AsObject;
-type DocumentType = Document.AsObject;
 type SearchType = {
   description: string;
   month: string;
@@ -79,49 +73,10 @@ type DocumentUplodad = {
   description: '';
 };
 
-const SCHEMA_DOCUMENT_EDIT: Schema<DocumentType> = [
-  [
-    {
-      name: 'filename',
-      label: 'File',
-      readOnly: true,
-    },
-  ],
-  [
-    {
-      name: 'description',
-      label: 'Title/Description',
-      helperText: 'Keep as short/descriptive as possible',
-    },
-  ],
-];
-
 export interface Props {
   type: 'Spiff' | 'Tool';
   loggedUserId: number;
 }
-
-const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
-  [
-    {
-      name: 'decisionDate',
-      label: 'Decision Date',
-      required: true,
-      type: 'date',
-    },
-  ],
-  [{ name: 'reviewedBy', label: 'Reviewed By', required: true }],
-  [{ name: 'status', label: 'Status', options: STATUSES }],
-  [{ name: 'reason', label: 'Reason', multiline: true }],
-];
-
-const STATUSES_COLUMNS: Columns = [
-  { name: 'Date' },
-  { name: 'Reviewed By' },
-  { name: 'Status' },
-  { name: 'Reason' },
-  { name: '' },
-];
 
 const useStyles = makeStyles(theme => ({
   unlinked: {
@@ -176,23 +131,15 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [page, setPage] = useState<number>(0);
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
-  const [loadingStatuses, setLoadingStatuses] = useState<boolean>(false);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
-  const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
-  const [documentFile, setDocumentFile] = useState<string>('');
   const [statusEditing, setStatusEditing] = useState<
     SpiffToolAdminActionType
   >();
-  const [statusDeleting, setStatusDeleting] = useState<
-    SpiffToolAdminActionType
-  >();
-  const [uploading, setUploading] = useState<boolean>(false);
-  const [uploadFailed, setUploadFailed] = useState<boolean>(false);
-  const [documentSaving, setDocumentSaving] = useState<boolean>(false);
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );
@@ -272,9 +219,11 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     [setPage, setLoaded],
   );
   const handleSetExtendedEditing = useCallback(
-    (extendedEditing?: TaskType) => async () =>
-      setExtendedEditing(extendedEditing),
-    [setExtendedEditing],
+    (extendedEditing?: TaskType) => async () => {
+      setExtendedEditing(extendedEditing);
+      setStatusEditing(undefined);
+    },
+    [setExtendedEditing, setStatusEditing],
   );
   const handleSetEditing = useCallback(
     (editing?: TaskType) => () => setEditing(editing),
@@ -343,28 +292,12 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     },
     [loggedUserId, editing, setSaving, setEditing, type],
   );
-  const handleSaveExtended = useCallback(
-    async (data: TaskType) => {
-      if (extendedEditing) {
-        setSaving(true);
-        const req = new Task();
-        req.setId(extendedEditing.id);
-        const fieldMaskList = [];
-        for (const fieldName in data) {
-          const { upperCaseProp, methodName } = getRPCFields(fieldName);
-          // @ts-ignore
-          req[methodName](data[fieldName]);
-          fieldMaskList.push(upperCaseProp);
-        }
-        req.setFieldMaskList(fieldMaskList);
-        await TaskClientService.Update(req);
-        setSaving(false);
-        setExtendedEditing(undefined);
-        await load();
-      }
-    },
-    [extendedEditing, setSaving, setExtendedEditing],
-  );
+  const handleSaveExtended = useCallback(async () => {
+    if (extendedEditing) {
+      setExtendedEditing(undefined);
+      setLoaded(false);
+    }
+  }, [extendedEditing, setExtendedEditing, setLoaded]);
   const handleSearchFormChange = useCallback(
     (form: SearchType) => {
       const isPeriodsChange = searchForm.kind !== form.kind;
@@ -395,54 +328,8 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     if (extendedEditing) {
       const entries = await load();
       setExtendedEditing(entries.find(({ id }) => id === extendedEditing.id));
-      setLoadingStatuses(false);
     }
-  }, [extendedEditing, load, setExtendedEditing, setLoadingStatuses]);
-  const handleSaveStatus = useCallback(
-    async (data: SpiffToolAdminActionType) => {
-      if (extendedEditing && statusEditing) {
-        const isNew = !statusEditing.id;
-        const taskId = extendedEditing.id;
-        const req = new SpiffToolAdminAction();
-        const fieldMaskList = [];
-        if (isNew) {
-          req.setCreatedDate(timestamp());
-          req.setTaskId(taskId);
-          fieldMaskList.push('CreatedDate');
-          fieldMaskList.push('TaskId');
-        } else {
-          req.setId(statusEditing.id);
-          fieldMaskList.push('Id');
-        }
-        for (const fieldName in data) {
-          const { upperCaseProp, methodName } = getRPCFields(fieldName);
-          // @ts-ignore
-          req[methodName](data[fieldName]);
-          fieldMaskList.push(upperCaseProp);
-        }
-        req.setFieldMaskList(fieldMaskList);
-        setStatusEditing(undefined);
-        setLoadingStatuses(true);
-        await SpiffToolAdminActionClientService[isNew ? 'Create' : 'Update'](
-          req,
-        );
-        reloadExtendedEditing();
-      }
-    },
-    [
-      extendedEditing,
-      setStatusEditing,
-      statusEditing,
-      load,
-      setLoadingStatuses,
-      reloadExtendedEditing,
-    ],
-  );
-  const handleSetStatusEditing = useCallback(
-    (statusEditing?: SpiffToolAdminActionType) => () =>
-      setStatusEditing(statusEditing),
-    [setStatusEditing],
-  );
+  }, [extendedEditing, load, setExtendedEditing]);
   const handleClickAddStatus = useCallback(
     (entry: TaskType) => () => {
       handleSetExtendedEditing(entry)();
@@ -450,27 +337,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     },
     [setEditing, setStatusEditing, getStatusFormInit],
   );
-  const handleSetStatusDeleting = useCallback(
-    (statusDeleting?: SpiffToolAdminActionType) => () =>
-      setStatusDeleting(statusDeleting),
-    [setStatusDeleting],
-  );
-  const handleDeleteStatus = useCallback(async () => {
-    if (extendedEditing && statusDeleting) {
-      const req = new SpiffToolAdminAction();
-      req.setId(statusDeleting.id);
-      setStatusDeleting(undefined);
-      setLoadingStatuses(true);
-      await SpiffToolAdminActionClientService.Delete(req);
-      reloadExtendedEditing();
-    }
-  }, [
-    statusDeleting,
-    setStatusDeleting,
-    setLoadingStatuses,
-    extendedEditing,
-    reloadExtendedEditing,
-  ]);
   const handleClickTechnician = useCallback(
     (technician: number) => (
       event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
@@ -501,76 +367,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     () => setUnlinkedSpiffJobNumber(''),
     [setUnlinkedSpiffJobNumber],
   );
-  const handleDocumentUpload = useCallback(
-    (onClose, onReload) => async ({
-      filename,
-      description,
-    }: DocumentUplodad) => {
-      if (extendedEditing) {
-        setUploadFailed(false);
-        setUploading(true);
-        const ext = filename.split('.').pop();
-        const fileName =
-          kebabCase(
-            [
-              extendedEditing.id,
-              extendedEditing.referenceNumber,
-              timestamp(true).split('-').reverse(),
-              description.trim() || filename.replace('.' + ext, ''),
-            ].join(' '),
-          ) +
-          '.' +
-          ext;
-        const fileData = documentFile.split(';base64,')[1];
-        const status = await uploadFileToS3Bucket(
-          fileName,
-          fileData,
-          'testbuckethelios', // FIXME is it correct bucket name for those docs?
-        );
-        if (status === 'ok') {
-          const req = new Document();
-          req.setFilename(fileName);
-          req.setDateCreated(timestamp());
-          req.setTaskId(extendedEditing.id);
-          req.setUserId(loggedUserId);
-          req.setDescription(description);
-          req.setType(5);
-          await DocumentClientService.Create(req);
-          onClose();
-          onReload();
-          setUploading(false);
-        } else {
-          setUploadFailed(true);
-          setUploading(false);
-        }
-      }
-    },
-    [
-      documentFile,
-      loggedUserId,
-      extendedEditing,
-      setUploadFailed,
-      setUploading,
-    ],
-  );
-  const handleDocumentUpdate = useCallback(
-    (onClose, onReload, { id }) => async (form: DocumentType) => {
-      setDocumentSaving(true);
-      const { description } = form;
-      const req = new Document();
-      req.setId(id);
-      req.setDescription(description);
-      req.setFieldMaskList(['Description']);
-      await DocumentClientService.Update(req);
-      setDocumentSaving(false);
-      onClose();
-      onReload();
-    },
-    [setDocumentSaving],
-  );
-  const handleFileLoad = useCallback(file => setDocumentFile(file), [
-    setDocumentFile,
-  ]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -589,24 +385,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     setLoadedTechnicians,
     loadUserTechnicians,
   ]);
-  const SCHEMA_DOCUMENT: Schema<DocumentUplodad> = [
-    [
-      {
-        name: 'filename',
-        label: 'File',
-        type: 'file',
-        required: true,
-        onFileLoad: handleFileLoad,
-      },
-    ],
-    [
-      {
-        name: 'description',
-        label: 'Title/Description',
-        helperText: 'Keep as short/descriptive as possible',
-      },
-    ],
-  ];
   const SCHEMA: Schema<TaskType> =
     type === 'Spiff'
       ? [
@@ -669,67 +447,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             { name: 'referenceNumber', label: 'Reference #' },
             { name: 'briefDescription', label: 'Description', multiline: true },
           ],
-        ];
-  const SCHEMA_EXTENDED: Schema<TaskType> =
-    type === 'Spiff'
-      ? [
-          [
-            { name: 'spiffToolId', label: 'Spiff ID #', readOnly: true },
-            { name: 'referenceUrl', label: 'External URL' },
-            { name: 'referenceNumber', label: 'Reference #' },
-            {
-              name: 'timeDue',
-              label: 'Time due',
-              readOnly: true,
-              type: 'date',
-            },
-          ],
-          [
-            {
-              name: 'spiffAmount',
-              label: 'Amount',
-              startAdornment: '$',
-              type: 'number',
-              required: true,
-            },
-            { name: 'spiffJobNumber', label: 'Job #' },
-            {
-              name: 'datePerformed',
-              label: 'Date Performed',
-              type: 'date',
-              required: true,
-            },
-            { name: 'spiffAddress', label: 'Address', multiline: true },
-          ],
-          [
-            {
-              name: 'spiffTypeId',
-              label: 'Spiff Type',
-              options: SPIFF_TYPES_OPTIONS,
-              required: true,
-            },
-            { name: 'briefDescription', label: 'Description', multiline: true },
-          ],
-        ]
-      : [
-          [
-            { name: 'spiffToolId', label: 'Tool ID #', readOnly: true },
-            { name: 'referenceNumber', label: 'Reference #' },
-            {
-              name: 'toolpurchaseCost',
-              label: 'Tool Cost',
-              startAdornment: '$',
-              type: 'number',
-              required: true,
-            },
-            {
-              name: 'toolpurchaseDate',
-              label: 'Purchase Date',
-              type: 'date',
-              required: true,
-            },
-          ],
-          [{ name: 'briefDescription', label: 'Description', multiline: true }],
         ];
   const COLUMNS: Columns = [
     { name: 'Claim Date' },
@@ -809,10 +526,11 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
         );
         const actions = isAdmin
           ? [
-              <IconButton // TODO: not display when status is approved
+              <IconButton
                 key={2}
                 size="small"
                 onClick={handleClickAddStatus(entry)}
+                disabled={actionsList[0] && actionsList[0].status === 1}
               >
                 <CheckIcon />
               </IconButton>,
@@ -972,39 +690,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
       },
     ],
   ];
-  const statusesData: Data =
-    !extendedEditing || loadingStatuses
-      ? makeFakeRows(5, 3)
-      : extendedEditing.actionsList.map(entry => {
-          const { decisionDate, reviewedBy, status, reason } = entry;
-          return [
-            { value: formatDate(decisionDate) },
-            { value: reviewedBy },
-            { value: renderStatus(status) },
-            { value: reason },
-            {
-              value: '',
-              actions: [
-                <IconButton
-                  key={0}
-                  size="small"
-                  onClick={handleSetStatusEditing(entry)}
-                  disabled={saving}
-                >
-                  <EditIcon />
-                </IconButton>,
-                <IconButton
-                  key={1}
-                  size="small"
-                  onClick={handleSetStatusDeleting(entry)}
-                  disabled={saving}
-                >
-                  <DeleteIcon />
-                </IconButton>,
-              ],
-            },
-          ];
-        });
   return (
     <div>
       <SectionBar
@@ -1037,74 +722,17 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           />
         </Modal>
       )}
-      {extendedEditing && ( // TODO replace with SpiffTollLogEdit from ComponentsLibrary
-        <Modal open onClose={handleSetExtendedEditing()} fullHeight>
-          <Form<TaskType>
-            title={`${type === 'Spiff' ? 'Spiff' : 'Tool Purchase'} Request`}
-            schema={SCHEMA_EXTENDED}
+      {extendedEditing && (
+        <Modal open onClose={handleSetExtendedEditing()} fullScreen>
+          <SpiffToolLogEdit
             onClose={handleSetExtendedEditing()}
             data={extendedEditing}
+            loading={loading}
+            loggedUserId={loggedUserId}
             onSave={handleSaveExtended}
-            disabled={saving}
-          />
-          <SectionBar
-            title="Status"
-            actions={[
-              {
-                label: 'Add',
-                onClick: handleSetStatusEditing(getStatusFormInit()),
-                disabled: saving,
-              },
-            ]}
-            fixedActions
-          />
-          <InfoTable
-            columns={STATUSES_COLUMNS}
-            data={statusesData}
-            loading={loadingStatuses}
-          />
-          <Documents
-            title="Documents"
-            taskId={extendedEditing.id}
-            withDateCreated
-            renderAdding={(onClose, onReload) => (
-              <Form<DocumentUplodad>
-                title="Add Document"
-                onClose={onClose}
-                onSave={handleDocumentUpload(onClose, onReload)}
-                data={{
-                  filename: '',
-                  description: '',
-                }}
-                schema={SCHEMA_DOCUMENT}
-                error={
-                  uploadFailed ? (
-                    <div>
-                      There was an error during file upload.
-                      <br />
-                      Please try again later or contact administrator.
-                    </div>
-                  ) : undefined
-                }
-                disabled={uploading}
-              >
-                {uploading && (
-                  <Typography className={classes.uploading}>
-                    Please wait, file is uploading...
-                  </Typography>
-                )}
-              </Form>
-            )}
-            renderEditing={(onClose, onReload, document) => (
-              <Form<DocumentType>
-                title="Edit Document"
-                data={document}
-                schema={SCHEMA_DOCUMENT_EDIT}
-                onClose={onClose}
-                onSave={handleDocumentUpdate(onClose, onReload, document)}
-                disabled={documentSaving}
-              />
-            )}
+            onStatusChange={reloadExtendedEditing}
+            type={type}
+            statusEditing={statusEditing}
           />
         </Modal>
       )}
@@ -1115,26 +743,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
           name={deleting.briefDescription}
           onConfirm={handleDelete}
           onClose={handleSetDeleting()}
-        />
-      )}
-      {statusEditing && (
-        <Modal open onClose={handleSetStatusEditing()}>
-          <Form<SpiffToolAdminActionType>
-            title={`${statusEditing.id ? 'Edit' : 'Add'} Status`}
-            schema={SCHEMA_STATUS}
-            data={statusEditing}
-            onSave={handleSaveStatus}
-            onClose={handleSetStatusEditing()}
-          />
-        </Modal>
-      )}
-      {statusDeleting && (
-        <ConfirmDelete
-          open
-          kind="Status reviewed by"
-          name={statusDeleting.reviewedBy}
-          onClose={handleSetStatusDeleting()}
-          onConfirm={handleDeleteStatus}
         />
       )}
       {unlinkedSpiffJobNumber !== '' && (
