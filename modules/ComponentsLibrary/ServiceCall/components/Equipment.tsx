@@ -1,4 +1,5 @@
 import React, { FC, useCallback, useState } from 'react';
+import debounce from 'lodash/debounce';
 import { makeStyles } from '@material-ui/core/styles';
 import { ServiceItems, Entry, Repair } from '../../ServiceItems';
 import { PlainForm, Schema } from '../../PlainForm';
@@ -34,15 +35,27 @@ export const Equipment: FC<Props> = ({
   ...props
 }) => {
   const classes = useStyles();
-  const { notes, logJobNumber } = serviceItem;
+  const { notes, logJobNumber, id } = serviceItem;
+  const localStorageKey = `SERVICE_CALL_EQUIPMENT_${id}`;
+  let repairsInitial = [];
+  try {
+    repairsInitial = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
+  } catch (e) {}
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
   const [selected, setSelected] = useState<Entry[]>([]);
-  const [repairs, setRepairs] = useState<Repair[]>([]);
+  const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [data, setData] = useState<Form>({
     displayName: customerName,
     withJobNotes: 0,
     jobNotes: notes,
   });
+  const handleSetRepair = useCallback(
+    (repairs: Repair[]) => {
+      setRepairs(repairs);
+      localStorage.setItem(localStorageKey, JSON.stringify(repairs));
+    },
+    [setRepairs, localStorageKey],
+  );
   const SCHEMA: Schema<Form> = [
     [
       {
@@ -82,8 +95,9 @@ export const Equipment: FC<Props> = ({
       ]}
       selectable
       repair
+      repairs={repairs}
       onSelect={setSelected}
-      onRepairsChange={setRepairs}
+      onRepairsChange={debounce(handleSetRepair, 1000)}
       asideContent={
         <ProposalPrint
           displayName={data.displayName}
