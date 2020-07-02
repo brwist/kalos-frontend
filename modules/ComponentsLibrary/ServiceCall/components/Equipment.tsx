@@ -2,13 +2,15 @@ import React, { FC, useCallback, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { ServiceItems, Entry, Repair } from '../../ServiceItems';
 import { PlainForm, Schema } from '../../PlainForm';
-import { UserType } from '../../../../helpers';
+import { UserType, PropertyType } from '../../../../helpers';
 import { EventType } from '../';
+import { ProposalPrint } from './ProposalPrint';
 
 interface Props {
   userID: number;
   loggedUserId: number;
   propertyId: number;
+  property: PropertyType;
   serviceItem: EventType;
   customer: UserType;
 }
@@ -25,9 +27,14 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const Equipment: FC<Props> = ({ serviceItem, customer, ...props }) => {
+export const Equipment: FC<Props> = ({
+  serviceItem,
+  customer,
+  property,
+  ...props
+}) => {
   const classes = useStyles();
-  const { notes } = serviceItem;
+  const { notes, logJobNumber } = serviceItem;
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
   const [selected, setSelected] = useState<Entry[]>([]);
   const [repairs, setRepairs] = useState<Repair[]>([]);
@@ -57,6 +64,7 @@ export const Equipment: FC<Props> = ({ serviceItem, customer, ...props }) => {
     ],
   ];
   const handleSubmit = useCallback(() => {
+    // TODO handle submit
     console.log({
       ...data,
       selected,
@@ -68,9 +76,6 @@ export const Equipment: FC<Props> = ({ serviceItem, customer, ...props }) => {
       title="Property Service Items"
       actions={[
         {
-          label: 'PDF Preview',
-        },
-        {
           label: 'Submit',
           onClick: handleSubmit,
         },
@@ -79,6 +84,16 @@ export const Equipment: FC<Props> = ({ serviceItem, customer, ...props }) => {
       repair
       onSelect={setSelected}
       onRepairsChange={setRepairs}
+      asideContent={
+        <ProposalPrint
+          displayName={data.displayName}
+          notes={data.withJobNotes ? data.jobNotes : undefined}
+          logJobNumber={logJobNumber}
+          property={property}
+          entries={repairs}
+          withDiagnosis
+        />
+      }
       {...props}
     >
       <PlainForm

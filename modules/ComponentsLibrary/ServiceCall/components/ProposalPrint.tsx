@@ -8,9 +8,14 @@ import { UserType, usd, formatDate, PropertyType } from '../../../../helpers';
 interface Props {
   displayName: string;
   notes?: string;
-  entries: { description: string; price: number }[];
+  entries: {
+    diagnosis?: string;
+    description: string;
+    price: number;
+  }[];
   logJobNumber: string;
   property: PropertyType;
+  withDiagnosis?: boolean;
 }
 
 export const ProposalPrint: FC<Props> = ({
@@ -19,6 +24,7 @@ export const ProposalPrint: FC<Props> = ({
   logJobNumber,
   entries,
   property,
+  withDiagnosis = false,
 }) => (
   <PrintPage
     headerProps={{
@@ -56,10 +62,15 @@ export const ProposalPrint: FC<Props> = ({
     )}
     <PrintTable
       columns={[
-        { title: 'Description of Repair', align: 'left' },
+        ...(withDiagnosis ? ['Diagnosis'] : []),
+        'Description of Repair',
         { title: 'Price', align: 'right' },
       ]}
-      data={entries.map(({ description, price }) => [description, usd(price)])}
+      data={entries.map(({ diagnosis, description, price }) => [
+        ...(withDiagnosis ? [diagnosis] : []),
+        description,
+        usd(price),
+      ])}
       nowraps={[false, true]}
     />
   </PrintPage>

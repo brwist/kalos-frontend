@@ -451,7 +451,12 @@ export const ServiceCall: FC<Props> = props => {
             content: loading ? (
               <InfoTable data={makeFakeRows(4, 4)} loading />
             ) : (
-              <Equipment {...props} serviceItem={entry} customer={customer} />
+              <Equipment
+                {...props}
+                serviceItem={entry}
+                customer={customer}
+                property={property}
+              />
             ),
           },
           ...(serviceCallId
