@@ -7,6 +7,7 @@ import { SectionBar } from '../../SectionBar';
 import { InfoTable, Columns, Data } from '../../InfoTable';
 import { SpiffToolLogEdit, SpiffActionsList } from '../../SpiffToolLogEdit';
 import { Modal } from '../../Modal';
+import { ConfirmDelete } from '../../ConfirmDelete';
 import { EventType } from '../';
 import {
   usd,
@@ -16,6 +17,7 @@ import {
   TaskType,
   loadSpiffTypes,
   SpiffTypeType,
+  deletetSpiffTool,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE } from '../../../../constants';
 
@@ -30,6 +32,7 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [entries, setEntries] = useState<TaskType[]>([]);
+  const [deleting, setDeleting] = useState<TaskType>();
   const [spiffTypes, setSpiffTypes] = useState<{
     [key: number]: SpiffTypeType;
   }>({});
@@ -69,6 +72,19 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
     (edited?: TaskType) => () => setEdited(edited),
     [setEdited],
   );
+  const handleToggleDeleting = useCallback(
+    (entry?: TaskType) => () => setDeleting(entry),
+    [setDeleting],
+  );
+  const handleDelete = useCallback(async () => {
+    if (deleting) {
+      const { id } = deleting;
+      setDeleting(undefined);
+      setLoading(true);
+      await deletetSpiffTool(id);
+      setLoaded(false);
+    }
+  }, [deleting, setLoading, setLoaded, setDeleting]);
   const COLUMNS: Columns = [
     { name: 'Claim Date' },
     { name: 'Spiff ID' },
@@ -105,7 +121,11 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
                 <RepeatIcon />
               </IconButton>,
               // TODO handle delete action
-              <IconButton key="delete" size="small">
+              <IconButton
+                key="delete"
+                size="small"
+                onClick={handleToggleDeleting(entry)}
+              >
                 <DeleteIcon />
               </IconButton>,
               <IconButton
@@ -147,6 +167,15 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
             cancelLabel="Close"
           />
         </Modal>
+      )}
+      {deleting && (
+        <ConfirmDelete
+          open
+          onClose={handleToggleDeleting()}
+          kind="Spiff"
+          name={`claimed by ${deleting.ownerName}`}
+          onConfirm={handleDelete}
+        />
       )}
     </>
   );
