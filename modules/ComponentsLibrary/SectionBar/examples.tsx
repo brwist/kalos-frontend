@@ -42,6 +42,8 @@ const Examples = ({
       <SectionBar
         title="With title and actions"
         subtitle={subtitle}
+        asideContent={<Button label="Custom" />}
+        asideContentFirst
         actions={Array.from(Array(5)).map((_, idx) => ({
           label: `Button ${idx + 1}`,
         }))}

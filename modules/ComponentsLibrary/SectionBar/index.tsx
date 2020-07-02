@@ -38,6 +38,7 @@ interface Props {
   fixedActions?: boolean;
   footer?: ReactNode;
   asideContent?: ReactNode;
+  asideContentFirst?: boolean;
   small?: boolean;
   onCheck?: (checked: number) => void;
   checked?: number;
@@ -139,6 +140,7 @@ export const SectionBar: FC<Props> = ({
   fixedActions = false,
   footer,
   asideContent,
+  asideContentFirst = false,
   small = false,
   children,
   onCheck,
@@ -225,10 +227,11 @@ export const SectionBar: FC<Props> = ({
             )}
           </div>
           <div className={classes.actions}>
+            {asideContentFirst && asideContent}
             {actions.length > 0 && (
               <Actions actions={actions} fixed={fixedActions} />
             )}
-            {asideContent}
+            {!asideContentFirst && asideContent}
           </div>
         </div>
         {!collapsed && footer && <div className={classes.footer}>{footer}</div>}
