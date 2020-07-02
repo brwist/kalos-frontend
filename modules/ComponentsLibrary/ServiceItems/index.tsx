@@ -82,6 +82,7 @@ interface Props {
   selectable?: boolean;
   onSelect?: (entries: Entry[]) => void;
   repair?: boolean;
+  repairs?: Repair[];
   onRepairsChange?: (repairs: Repair[]) => void;
   actions?: ActionsProps;
   asideContent?: ReactNode;
@@ -149,6 +150,7 @@ export const ServiceItems: FC<Props> = props => {
     selectable,
     onSelect,
     repair,
+    repairs: repairsInitial = [],
     onRepairsChange,
     children,
     loading: loadingProp = false,
@@ -156,7 +158,7 @@ export const ServiceItems: FC<Props> = props => {
     asideContent,
   } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [repairs, setRepairs] = useState<Repair[]>([]);
+  const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [materials, setMaterials] = useState<MaterialType[]>([]);
   const [materialsIds, setMaterialsIds] = useState<number[]>([]);
   const [loadingMaterials, setLoadingMaterials] = useState<boolean>(false);
