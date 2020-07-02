@@ -18,6 +18,7 @@ import {
   loadPropertyById,
   UserType,
   PropertyType,
+  getCustomerName,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -508,7 +509,11 @@ export const ServiceCall: FC<Props> = props => {
                   content: loading ? (
                     <InfoTable data={makeFakeRows(8, 5)} loading />
                   ) : (
-                    <Spiffs serviceItem={entry} loggedUserId={loggedUserId} />
+                    <Spiffs
+                      serviceItem={entry}
+                      loggedUserId={loggedUserId}
+                      loggedUserName={getCustomerName(loggedUser)}
+                    />
                   ),
                 },
               ]

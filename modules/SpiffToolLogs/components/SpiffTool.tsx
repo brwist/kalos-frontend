@@ -1,13 +1,12 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import FlagIcon from '@material-ui/icons/Flag';
-import CheckIcon from '@material-ui/icons/CheckCircle';
+import CheckIcon from '@material-ui/icons/CheckCircleOutline';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Modal } from '../../ComponentsLibrary/Modal';
@@ -17,7 +16,10 @@ import { Link } from '../../ComponentsLibrary/Link';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
-import { SpiffToolLogEdit } from '../../ComponentsLibrary/SpiffToolLogEdit';
+import {
+  SpiffToolLogEdit,
+  getStatusFormInit,
+} from '../../ComponentsLibrary/SpiffToolLogEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import {
   getRPCFields,
@@ -107,12 +109,6 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     kind: MONTHLY,
     technician: loggedUserId,
   });
-  const getStatusFormInit = () => {
-    const entry = new SpiffToolAdminAction();
-    entry.setDecisionDate(timestamp(true));
-    entry.setStatus(+STATUSES[0].value);
-    return entry.toObject();
-  };
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -330,7 +326,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const handleClickAddStatus = useCallback(
     (entry: TaskType) => () => {
       handleSetExtendedEditing(entry)();
-      setStatusEditing(getStatusFormInit());
+      setStatusEditing(getStatusFormInit(+STATUSES[0].value));
     },
     [setEditing, setStatusEditing, getStatusFormInit],
   );

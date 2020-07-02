@@ -7,7 +7,11 @@ import RejectIcon from '@material-ui/icons/Block';
 import ApproveIcon from '@material-ui/icons/CheckCircleOutline';
 import { SectionBar } from '../../SectionBar';
 import { InfoTable, Columns, Data } from '../../InfoTable';
-import { SpiffToolLogEdit, SpiffActionsList } from '../../SpiffToolLogEdit';
+import {
+  SpiffToolLogEdit,
+  SpiffActionsList,
+  getStatusFormInit,
+} from '../../SpiffToolLogEdit';
 import { Modal } from '../../Modal';
 import { ConfirmDelete } from '../../ConfirmDelete';
 import { Tooltip } from '../../Tooltip';
@@ -27,9 +31,14 @@ import { ROWS_PER_PAGE } from '../../../../constants';
 interface Props {
   serviceItem: EventType;
   loggedUserId: number;
+  loggedUserName: string;
 }
 
-export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
+export const Spiffs: FC<Props> = ({
+  serviceItem,
+  loggedUserId,
+  loggedUserName,
+}) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -40,6 +49,7 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
     [key: number]: SpiffTypeType;
   }>({});
   const [edited, setEdited] = useState<TaskType>();
+  const [status, setStatus] = useState<number>();
   const load = useCallback(async () => {
     setLoading(true);
     const spiffTypes = await loadSpiffTypes();
@@ -72,8 +82,11 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
     [setPage],
   );
   const handleSetEdited = useCallback(
-    (edited?: TaskType) => () => setEdited(edited),
-    [setEdited],
+    (edited?: TaskType, status?: number) => () => {
+      setEdited(edited);
+      setStatus(status);
+    },
+    [setEdited, setStatus],
   );
   const handleToggleDeleting = useCallback(
     (entry?: TaskType) => () => setDeleting(entry),
@@ -127,7 +140,10 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
                 ? []
                 : [
                     <Tooltip key="approve" content="Approve" placement="bottom">
-                      <IconButton size="small">
+                      <IconButton
+                        size="small"
+                        onClick={handleSetEdited(entry, 1)}
+                      >
                         <ApproveIcon />
                       </IconButton>
                     </Tooltip>,
@@ -137,7 +153,10 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
                 ? []
                 : [
                     <Tooltip key="reject" content="Reject" placement="bottom">
-                      <IconButton size="small">
+                      <IconButton
+                        size="small"
+                        onClick={handleSetEdited(entry, 2)}
+                      >
                         <RejectIcon />
                       </IconButton>
                     </Tooltip>,
@@ -147,7 +166,10 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
                 ? []
                 : [
                     <Tooltip key="revoke" content="Revoke" placement="bottom">
-                      <IconButton size="small">
+                      <IconButton
+                        size="small"
+                        onClick={handleSetEdited(entry, 3)}
+                      >
                         <RevokeIcon />
                       </IconButton>
                     </Tooltip>,
@@ -196,6 +218,9 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
             loggedUserId={loggedUserId}
             loading={loading}
             cancelLabel="Close"
+            statusEditing={
+              status ? getStatusFormInit(status, loggedUserName) : undefined
+            }
           />
         </Modal>
       )}
@@ -204,7 +229,13 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
           open
           onClose={handleToggleDeleting()}
           kind="Spiff"
-          name={`claimed by ${deleting.ownerName}`}
+          name={[
+            `claimed by ${deleting.ownerName}`,
+            ...(deleting.datePerformed
+              ? [`at ${formatDate(deleting.datePerformed)}`]
+              : []),
+            `for amount ${usd(deleting.spiffAmount)}`,
+          ].join(' ')}
           onConfirm={handleDelete}
         />
       )}
