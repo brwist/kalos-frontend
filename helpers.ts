@@ -8,7 +8,12 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
-import { SpiffType, TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import {
+  SpiffType,
+  TaskClient,
+  Task,
+  TaskEventData,
+} from '@kalos-core/kalos-rpc/Task';
 import {
   ActivityLog,
   ActivityLogClient,
@@ -111,6 +116,7 @@ export type PromptPaymentReportLineType = PromptPaymentReportLine.AsObject;
 export type TaskType = Task.AsObject;
 export type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
 export type DocumentType = Document.AsObject;
+export type TaskEventDataType = TaskEventData.AsObject;
 
 export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
