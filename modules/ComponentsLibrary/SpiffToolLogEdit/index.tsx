@@ -98,6 +98,7 @@ interface Props {
   data: TaskType;
   loading: boolean;
   cancelLabel?: string;
+  statusEditing?: SpiffToolAdminActionType;
 }
 
 const useStyles = makeStyles(theme => ({
@@ -163,6 +164,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
   onStatusChange,
   loading: loadingInitial,
   cancelLabel = 'Cancel',
+  statusEditing: statusEditingInitial,
 }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(loadingInitial);
@@ -170,8 +172,8 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const [statusEditing, setStatusEditing] = useState<
-    SpiffToolAdminActionType
-  >();
+    SpiffToolAdminActionType | undefined
+  >(statusEditingInitial);
   const [statusDeleting, setStatusDeleting] = useState<
     SpiffToolAdminActionType
   >();
