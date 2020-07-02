@@ -135,7 +135,6 @@ export const Spiffs: FC<Props> = ({
           {
             value: '',
             actions: [
-              // TODO handle approve action
               ...(lastStatus === 1
                 ? []
                 : [
@@ -148,7 +147,6 @@ export const Spiffs: FC<Props> = ({
                       </IconButton>
                     </Tooltip>,
                   ]),
-              // TODO handle reject action
               ...(lastStatus === 2
                 ? []
                 : [
@@ -161,7 +159,6 @@ export const Spiffs: FC<Props> = ({
                       </IconButton>
                     </Tooltip>,
                   ]),
-              // TODO handle revoke action
               ...(lastStatus === 3
                 ? []
                 : [
