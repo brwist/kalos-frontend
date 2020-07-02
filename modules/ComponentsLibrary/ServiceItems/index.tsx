@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback, useEffect, ReactNode } from 'react';
 import uniqueId from 'lodash/uniqueId';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
@@ -84,6 +84,7 @@ interface Props {
   repair?: boolean;
   onRepairsChange?: (repairs: Repair[]) => void;
   actions?: ActionsProps;
+  asideContent?: ReactNode;
 }
 
 const REPAIR_SCHEMA: Schema<Repair> = [
@@ -152,6 +153,7 @@ export const ServiceItems: FC<Props> = props => {
     children,
     loading: loadingProp = false,
     actions = [],
+    asideContent,
   } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
   const [repairs, setRepairs] = useState<Repair[]>([]);
@@ -711,6 +713,8 @@ export const ServiceItems: FC<Props> = props => {
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: handleChangePage,
         }}
+        asideContent={asideContent}
+        asideContentFirst
       >
         {children}
         <InfoTable

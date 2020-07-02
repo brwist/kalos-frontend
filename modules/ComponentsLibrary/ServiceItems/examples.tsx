@@ -1,18 +1,32 @@
 import React from 'react';
 import { ServiceItems } from './';
-import { LoremIpsum } from '../helpers';
+import { PrintPage } from '../PrintPage';
+import { LoremIpsum, ExampleTitle } from '../helpers';
+
+const PrintExample = (
+  <PrintPage
+    headerProps={{
+      bigLogo: true,
+      withKalosAddress: true,
+      withKalosContact: true,
+    }}
+  >
+    <LoremIpsum />
+  </PrintPage>
+);
 
 export default () => (
   <>
+    <ExampleTitle>default</ExampleTitle>
     <ServiceItems userID={2573} propertyId={6552} loggedUserId={101253} />
-    <hr />
+    <ExampleTitle>loading</ExampleTitle>
     <ServiceItems
       userID={2573}
       propertyId={6552}
       loggedUserId={101253}
       loading
     />
-    <hr />
+    <ExampleTitle>selectable, actions, asideContent</ExampleTitle>
     <ServiceItems
       title="Lorem Ipsum"
       userID={2573}
@@ -21,8 +35,9 @@ export default () => (
       selectable
       onSelect={selected => console.log(selected)}
       actions={[{ label: 'Lorem' }, { label: 'Ipsum' }]}
+      asideContent={PrintExample}
     />
-    <hr />
+    <ExampleTitle>selectable, repair, asideContent</ExampleTitle>
     <ServiceItems
       title="Lorem Ipsum"
       userID={2573}
@@ -32,6 +47,7 @@ export default () => (
       repair
       onSelect={selected => console.log(selected)}
       onRepairsChange={repairs => console.log(repairs)}
+      asideContent={PrintExample}
     >
       <LoremIpsum />
     </ServiceItems>
