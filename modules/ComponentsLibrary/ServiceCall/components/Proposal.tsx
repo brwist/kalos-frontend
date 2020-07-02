@@ -1,5 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
-import compact from 'lodash/compact';
+import React, { FC, useState, useCallback } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
@@ -9,22 +8,12 @@ import { SectionBar } from '../../SectionBar';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Field, Value } from '../../Field';
 import { InfoTable, Columns, Data } from '../../InfoTable';
-import { Form, Options } from '../../Form';
+import { Form } from '../../Form';
 import { Modal } from '../../Modal';
 import { StoredQuotes } from '../../StoredQuotes';
-import { PrintPage } from '../../PrintPage';
-import { PrintParagraph } from '../../PrintParagraph';
-import { PrintTable } from '../../PrintTable';
 import { EventType } from '../';
-import {
-  loadStoredQuotes,
-  UserType,
-  usd,
-  formatDate,
-  getCustomerName,
-  getPropertyAddress,
-  PropertyType,
-} from '../../../../helpers';
+import { ProposalPrint } from './ProposalPrint';
+import { loadStoredQuotes, UserType, PropertyType } from '../../../../helpers';
 
 interface Props {
   serviceItem: EventType;
@@ -63,11 +52,6 @@ const SCHEMA_ENTRY: Schema<Entry> = [
   [{ label: 'Description', name: 'description', multiline: true }],
   [{ label: 'Price', name: 'price', type: 'number', startAdornment: '$' }],
 ];
-
-const SCHEMA_NOTES: Schema<Notes> = [
-  [{ label: 'Notes', name: 'notes', multiline: true }],
-];
-
 const SCHEMA_FILE: Schema<File> = [
   [{ label: 'File', headline: true }],
   [
@@ -261,54 +245,16 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
     <>
       <SectionBar
         asideContent={
-          <PrintPage
-            headerProps={{
-              withKalosAddress: true,
-              withKalosContact: true,
-              bigLogo: true,
-            }}
-            buttonProps={{ label: 'Print Preview' }}
-            downloadPdfFilename="Proposal"
-            downloadLabel="Download PDF Preview"
-          >
-            <PrintParagraph>
-              Date: {formatDate(new Date().toISOString())}
-              <br />
-              Job Number: {logJobNumber}
-            </PrintParagraph>
-            <PrintParagraph tag="h2">
-              {form.displayName}
-              <br />
-              {property.address}
-              <br />
-              {compact([property.city, property.state, property.zip]).join(
-                ', ',
-              )}
-            </PrintParagraph>
-            <PrintParagraph tag="h1" align="center">
-              Proposed Services
-            </PrintParagraph>
-            {form.notes && (
-              <PrintTable
-                columns={['Notes']}
-                data={form.notes
-                  .split('\n')
-                  .filter(n => !!n)
-                  .map(n => [n])}
-              />
-            )}
-            <PrintTable
-              columns={[
-                { title: 'Description of Repair', align: 'left' },
-                { title: 'Price', align: 'right' },
-              ]}
-              data={table.map(({ description, price }) => [
-                description,
-                usd(price),
-              ])}
-              nowraps={[false, true]}
-            />
-          </PrintPage>
+          <ProposalPrint
+            displayName={form.displayName}
+            logJobNumber={logJobNumber}
+            property={property}
+            notes={form.notes}
+            entries={table.map(({ description, price }) => ({
+              description,
+              price,
+            }))}
+          />
         }
       />
       <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
