@@ -51,5 +51,17 @@ export default () => (
     >
       <LoremIpsum />
     </ServiceItems>
+    <ExampleTitle>repair, disableRepair</ExampleTitle>
+    <ServiceItems
+      title="Lorem Ipsum"
+      userID={2573}
+      propertyId={6552}
+      loggedUserId={101253}
+      repair
+      disableRepair
+      onRepairsChange={repairs => console.log(repairs)}
+    >
+      <LoremIpsum />
+    </ServiceItems>
   </>
 );
