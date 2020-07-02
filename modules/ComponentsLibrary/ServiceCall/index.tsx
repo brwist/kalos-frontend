@@ -506,7 +506,7 @@ export const ServiceCall: FC<Props> = props => {
                 {
                   label: 'Spiffs',
                   content: loading ? (
-                    <InfoTable data={makeFakeRows(7, 5)} loading />
+                    <InfoTable data={makeFakeRows(8, 5)} loading />
                   ) : (
                     <Spiffs serviceItem={entry} loggedUserId={loggedUserId} />
                   ),
