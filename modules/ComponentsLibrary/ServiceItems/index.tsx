@@ -82,6 +82,7 @@ interface Props {
   selectable?: boolean;
   onSelect?: (entries: Entry[]) => void;
   repair?: boolean;
+  disableRepair?: boolean;
   repairs?: Repair[];
   onRepairsChange?: (repairs: Repair[]) => void;
   actions?: ActionsProps;
@@ -150,6 +151,7 @@ export const ServiceItems: FC<Props> = props => {
     selectable,
     onSelect,
     repair,
+    disableRepair = false,
     repairs: repairsInitial = [],
     onRepairsChange,
     children,
@@ -631,6 +633,7 @@ export const ServiceItems: FC<Props> = props => {
                     style={{ marginLeft: 4 }}
                     size="small"
                     onClick={handleAddRepair(entry)}
+                    disabled={disableRepair}
                   >
                     <AddIcon />
                   </IconButton>,

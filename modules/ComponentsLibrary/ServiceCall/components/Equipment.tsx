@@ -95,6 +95,7 @@ export const Equipment: FC<Props> = ({
       ]}
       selectable
       repair
+      disableRepair={!id}
       repairs={repairs}
       onSelect={setSelected}
       onRepairsChange={debounce(handleSetRepair, 1000)}
