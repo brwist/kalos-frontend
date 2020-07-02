@@ -2,12 +2,15 @@ import React, { FC, useState, useEffect, useCallback } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
-import RepeatIcon from '@material-ui/icons/History';
+import RevokeIcon from '@material-ui/icons/History';
+import RejectIcon from '@material-ui/icons/Block';
+import ApproveIcon from '@material-ui/icons/CheckCircleOutline';
 import { SectionBar } from '../../SectionBar';
 import { InfoTable, Columns, Data } from '../../InfoTable';
 import { SpiffToolLogEdit, SpiffActionsList } from '../../SpiffToolLogEdit';
 import { Modal } from '../../Modal';
 import { ConfirmDelete } from '../../ConfirmDelete';
+import { Tooltip } from '../../Tooltip';
 import { EventType } from '../';
 import {
   usd,
@@ -93,9 +96,10 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
     { name: 'Claimed By' },
     { name: 'Status' },
     { name: 'Amount' },
+    { name: '' },
   ];
   const data: Data = loading
-    ? makeFakeRows(7, 5)
+    ? makeFakeRows(8, 5)
     : entries.map(entry => {
         const {
           datePerformed,
@@ -106,6 +110,7 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
           ownerName,
           actionsList,
         } = entry;
+        const lastStatus = actionsList[0] ? actionsList[0].status : 0;
         return [
           { value: formatDate(datePerformed) },
           { value: referenceNumber },
@@ -113,14 +118,40 @@ export const Spiffs: FC<Props> = ({ serviceItem, loggedUserId }) => {
           { value: spiffTypes[spiffTypeId].ext },
           { value: ownerName },
           { value: <SpiffActionsList actionsList={actionsList} /> },
+          { value: usd(spiffAmount) },
           {
-            value: usd(spiffAmount),
+            value: '',
             actions: [
+              // TODO handle approve action
+              ...(lastStatus === 1
+                ? []
+                : [
+                    <Tooltip key="approve" content="Approve" placement="bottom">
+                      <IconButton size="small">
+                        <ApproveIcon />
+                      </IconButton>
+                    </Tooltip>,
+                  ]),
+              // TODO handle reject action
+              ...(lastStatus === 2
+                ? []
+                : [
+                    <Tooltip key="reject" content="Reject" placement="bottom">
+                      <IconButton size="small">
+                        <RejectIcon />
+                      </IconButton>
+                    </Tooltip>,
+                  ]),
               // TODO handle revoke action
-              <IconButton key="revoke" size="small">
-                <RepeatIcon />
-              </IconButton>,
-              // TODO handle delete action
+              ...(lastStatus === 3
+                ? []
+                : [
+                    <Tooltip key="revoke" content="Revoke" placement="bottom">
+                      <IconButton size="small">
+                        <RevokeIcon />
+                      </IconButton>
+                    </Tooltip>,
+                  ]),
               <IconButton
                 key="delete"
                 size="small"
