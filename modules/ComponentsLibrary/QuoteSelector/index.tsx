@@ -10,6 +10,9 @@ import {
   loadQuoteLines,
   loadQuoteLineParts,
   makeFakeRows,
+  QuotableType,
+  loadQuotable,
+  usd,
 } from '../../../helpers';
 import { QUOTE_PART_AVAILABILITY } from '../../../constants';
 
@@ -18,6 +21,7 @@ type QuoteLinePartType = QuoteLinePart.AsObject;
 type QuoteLineType = QuoteLine.AsObject;
 
 interface Props {
+  serviceCallId: number;
   onAdd?: () => void;
 }
 
@@ -30,33 +34,55 @@ const COLUMNS: Columns = [
   { name: 'Availability' },
 ];
 
-export const QuoteSelector: FC<Props> = ({ onAdd }) => {
+const COLUMNS_QUOTABLE: Columns = [
+  { name: 'Description' },
+  { name: 'Quantity' },
+  { name: 'Price' },
+  { name: 'Amount' },
+];
+
+export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
   const [open, setOpen] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [quotable, setQuotable] = useState<QuotableType[]>([]);
   const [quoteParts, setQuoteParts] = useState<QuotePartType[]>([]);
   const [quoteLineParts, setQuoteLineParts] = useState<QuoteLinePartType[]>([]);
   const [quoteLines, setQuoteLines] = useState<QuoteLineType[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const [quoteParts, quoteLines, quoteLineParts] = await Promise.all([
+    const [
+      quoteParts,
+      quoteLines,
+      quoteLineParts,
+      quotable,
+    ] = await Promise.all([
       loadQuoteParts(),
       loadQuoteLines(),
       loadQuoteLineParts(),
+      loadQuotable(serviceCallId),
     ]);
     setQuoteParts(quoteParts);
     setQuoteLineParts(quoteLineParts);
     setQuoteLines(quoteLines);
+    setQuotable(quotable);
     setLoaded(true);
     setLoading(false);
-  }, [setLoaded, setLoading]);
+  }, [
+    setLoaded,
+    setLoading,
+    serviceCallId,
+    setQuoteParts,
+    setQuoteLineParts,
+    setQuoteLines,
+    setQuotable,
+  ]);
   useEffect(() => {
     if (!loaded) {
       load();
     }
   }, [loaded, load]);
   const handleToggleOpen = useCallback(() => setOpen(!open), [open, setOpen]);
-  console.log({ quoteParts, quoteLines, quoteLineParts });
   const data: Data = loading
     ? makeFakeRows(6, 20)
     : quoteParts.map(({ description, cost, availability }) => [
@@ -67,22 +93,29 @@ export const QuoteSelector: FC<Props> = ({ onAdd }) => {
         { value: `$ ${cost}` },
         { value: QUOTE_PART_AVAILABILITY[availability] },
       ]);
-
-  const getQ = (quotePartId: number) => {
-    const quotePart = quoteParts.find(({ id }) => id === quotePartId);
-    const quoteLinePart = quotePart
-      ? quoteLineParts.find(({ quotePartId }) => quotePartId === quotePart.id)
-      : undefined;
-    const quoteLine = quoteLinePart
-      ? quoteLines.find(({ id }) => id === quoteLinePart.quoteLineId)
-      : undefined;
-    return { quotePart, quoteLinePart, quoteLine };
-  };
-  console.log(getQ(3));
+  // const getQ = (quotePartId: number) => {
+  //   const quotePart = quoteParts.find(({ id }) => id === quotePartId);
+  //   const quoteLinePart = quotePart
+  //     ? quoteLineParts.find(({ quotePartId }) => quotePartId === quotePart.id)
+  //     : undefined;
+  //   const quoteLine = quoteLinePart
+  //     ? quoteLines.find(({ id }) => id === quoteLinePart.quoteLineId)
+  //     : undefined;
+  //   return { quotePart, quoteLinePart, quoteLine };
+  // };
+  // console.log(getQ(3));
+  const dataQuotable: Data = loading
+    ? makeFakeRows(4, 5)
+    : quotable.map(({ description, quantity, quotedPrice, isBillable }) => [
+        { value: description },
+        { value: quantity },
+        { value: usd(quotedPrice) },
+        { value: usd(isBillable ? quantity * quotedPrice : 0) },
+      ]);
   return (
     <div>
       <SectionBar
-        title="Material used"
+        title="Materials Used"
         actions={
           onAdd
             ? [
@@ -95,10 +128,15 @@ export const QuoteSelector: FC<Props> = ({ onAdd }) => {
         }
         fixedActions
       />
+      <InfoTable
+        columns={COLUMNS_QUOTABLE}
+        data={dataQuotable}
+        loading={loading}
+      />
       {open && (
         <Modal open onClose={handleToggleOpen} fullScreen>
           <SectionBar
-            title="Select material(s)"
+            title="Select Material(s)"
             actions={[{ label: 'Close', onClick: handleToggleOpen }]}
             fixedActions
           />

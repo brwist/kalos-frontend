@@ -408,10 +408,10 @@ export const Services: FC<Props> = ({
   return (
     <>
       {[ON_CALL, ADMIN].includes(lastStatus) && (
-        <QuoteSelector onAdd={console.log} />
+        <QuoteSelector serviceCallId={serviceCallId} onAdd={console.log} />
       )}
       {[COMPLETED, INCOMPLETE, ENROUTE].includes(lastStatus) && (
-        <QuoteSelector />
+        <QuoteSelector serviceCallId={serviceCallId} />
       )}
       {[COMPLETED, INCOMPLETE, ENROUTE, ADMIN].includes(lastStatus) &&
         servicesRenderedData.length > 0 && (
