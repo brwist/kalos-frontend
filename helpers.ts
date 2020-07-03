@@ -6,7 +6,7 @@ import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
 import {
   SpiffType,
@@ -117,6 +117,7 @@ export type TaskType = Task.AsObject;
 export type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
 export type DocumentType = Document.AsObject;
 export type TaskEventDataType = TaskEventData.AsObject;
+export type QuotableType = Quotable.AsObject;
 
 export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
@@ -818,6 +819,15 @@ export const loadSpiffToolLogs = async ({
   const resultsList = res.getResultsList().map(el => el.toObject());
   const count = res.getTotalCount();
   return { resultsList, count };
+};
+
+export const loadQuotable = async (id: number) => {
+  const req = new Quotable();
+  req.setEventId(id);
+  req.setIsActive(false);
+  req.setFieldMaskList(['IsActive']);
+  const { dataList } = (await EventClientService.ReadQuotes(req)).toObject();
+  return dataList;
 };
 
 /**
