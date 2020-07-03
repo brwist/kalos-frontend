@@ -13,6 +13,7 @@ import { InfoTable, Data, Columns } from '../../InfoTable';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Form } from '../../Form';
 import { Modal } from '../../Modal';
+import { QuoteSelector } from '../../QuoteSelector';
 import {
   makeFakeRows,
   timestamp,
@@ -406,13 +407,22 @@ export const Services: FC<Props> = ({
   ];
   return (
     <>
+      {[ON_CALL, ADMIN].includes(lastStatus) && (
+        <QuoteSelector onAdd={console.log} />
+      )}
+      {[COMPLETED, INCOMPLETE, ENROUTE].includes(lastStatus) && (
+        <QuoteSelector />
+      )}
       {[COMPLETED, INCOMPLETE, ENROUTE, ADMIN].includes(lastStatus) &&
         servicesRenderedData.length > 0 && (
-          <InfoTable
-            columns={COLUMNS_SERVICES_RENDERED}
-            data={servicesRenderedData}
-            loading={saving}
-          />
+          <>
+            <SectionBar title="Services Rendered and Technician Notes" />
+            <InfoTable
+              columns={COLUMNS_SERVICES_RENDERED}
+              data={servicesRenderedData}
+              loading={saving}
+            />
+          </>
         )}
       <SectionBar
         title="Services Rendered History"

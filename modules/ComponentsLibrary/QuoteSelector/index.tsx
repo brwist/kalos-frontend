@@ -17,7 +17,9 @@ type QuotePartType = QuotePart.AsObject;
 type QuoteLinePartType = QuoteLinePart.AsObject;
 type QuoteLineType = QuoteLine.AsObject;
 
-interface Props {}
+interface Props {
+  onAdd?: () => void;
+}
 
 const COLUMNS: Columns = [
   { name: 'Selected' },
@@ -28,8 +30,8 @@ const COLUMNS: Columns = [
   { name: 'Availability' },
 ];
 
-export const QuoteSelector: FC<Props> = ({}) => {
-  const [open, setOpen] = useState<boolean>(true);
+export const QuoteSelector: FC<Props> = ({ onAdd }) => {
+  const [open, setOpen] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [quoteParts, setQuoteParts] = useState<QuotePartType[]>([]);
@@ -80,14 +82,23 @@ export const QuoteSelector: FC<Props> = ({}) => {
   return (
     <div>
       <SectionBar
-        title="Supplies / Services"
-        actions={[{ label: 'Add', onClick: handleToggleOpen }]}
+        title="Material used"
+        actions={
+          onAdd
+            ? [
+                {
+                  label: 'Add',
+                  onClick: handleToggleOpen,
+                },
+              ]
+            : undefined
+        }
         fixedActions
       />
       {open && (
         <Modal open onClose={handleToggleOpen} fullScreen>
           <SectionBar
-            title="Select Item(s)"
+            title="Select material(s)"
             actions={[{ label: 'Close', onClick: handleToggleOpen }]}
             fixedActions
           />
