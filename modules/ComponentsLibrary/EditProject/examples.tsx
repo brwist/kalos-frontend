@@ -3,6 +3,6 @@ import { EditProject } from './';
 
 export default () => (
   <>
-    <EditProject />
+    <EditProject serviceCallId={86246} />
   </>
 );
