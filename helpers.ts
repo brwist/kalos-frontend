@@ -968,6 +968,18 @@ async function loadQuoteLines() {
   return results;
 }
 
+export const loadEventById = async (serviceCallId: number) => {
+  const req = new Event();
+  req.setId(serviceCallId);
+  return await EventClientService.Get(req);
+};
+
+export const loadEventTasks = async (eventId: number) => {
+  const req = new Task();
+  req.setReferenceNumber(`%${eventId}`); // FIXME use new column eventId
+  return (await TaskClientService.BatchGet(req)).toObject();
+};
+
 /**
  * Returns loaded Events by property id
  * @param propertyId: property id
