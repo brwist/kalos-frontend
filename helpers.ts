@@ -824,7 +824,7 @@ export const loadSpiffToolLogs = async ({
 export const loadQuotable = async (id: number) => {
   const req = new Quotable();
   req.setEventId(id);
-  req.setIsActive(false);
+  req.setIsActive(true);
   req.setFieldMaskList(['IsActive']);
   const { dataList } = (await EventClientService.ReadQuotes(req)).toObject();
   return dataList;

@@ -5,6 +5,7 @@ import { InfoTable, Data, Columns } from '../InfoTable';
 import { QuotePart } from '@kalos-core/kalos-rpc/QuotePart';
 import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+import { Field, Value } from '../Field';
 import {
   loadQuoteParts,
   loadQuoteLines,
@@ -29,7 +30,7 @@ const COLUMNS: Columns = [
   { name: 'Selected' },
   { name: 'Billable' },
   { name: 'Part/Labor' },
-  { name: 'Qty' },
+  { name: 'Quantity' },
   { name: 'Price' },
   { name: 'Availability' },
 ];
@@ -49,6 +50,9 @@ export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
   const [quoteParts, setQuoteParts] = useState<QuotePartType[]>([]);
   const [quoteLineParts, setQuoteLineParts] = useState<QuoteLinePartType[]>([]);
   const [quoteLines, setQuoteLines] = useState<QuoteLineType[]>([]);
+  const [selectedQuoteLineIds, setSelectedQuoteLineIds] = useState<number[]>(
+    [],
+  );
   const load = useCallback(async () => {
     setLoading(true);
     const [
@@ -83,10 +87,32 @@ export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
     }
   }, [loaded, load]);
   const handleToggleOpen = useCallback(() => setOpen(!open), [open, setOpen]);
+  const handleToggleQuoteLineSelect = useCallback(
+    (id: number) => (value: Value) => {
+      const ids = [...selectedQuoteLineIds];
+      setSelectedQuoteLineIds(
+        value
+          ? [...selectedQuoteLineIds, id]
+          : selectedQuoteLineIds.filter(_id => _id !== id),
+      );
+    },
+    [selectedQuoteLineIds],
+  );
+  console.log({ quotable, quoteParts, quoteLines, quoteLineParts });
   const data: Data = loading
     ? makeFakeRows(6, 20)
-    : quoteParts.map(({ description, cost, availability }) => [
-        { value: '' },
+    : quoteParts.map(({ id, description, cost, availability }) => [
+        {
+          value: (
+            <Field
+              name="selected"
+              type="checkbox"
+              style={{ marginBottom: 0 }}
+              value={selectedQuoteLineIds.includes(id)}
+              onChange={handleToggleQuoteLineSelect(id)}
+            />
+          ),
+        },
         { value: '' },
         { value: description },
         { value: '' },
