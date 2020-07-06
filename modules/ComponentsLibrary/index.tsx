@@ -26,6 +26,7 @@ import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import DeletedServiceCallsReport from './DeletedServiceCallsReport/examples';
 import Documents from './Documents/examples';
+import EditProject from './EditProject/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
 import EventsReport from './EventsReport/examples';
 import ExportJSON from './ExportJSON/examples';
@@ -93,6 +94,7 @@ const COMPONENTS = {
   CustomerInformation,
   DeletedServiceCallsReport,
   Documents,
+  EditProject,
   EmployeeDepartments,
   EventsReport,
   ExportJSON,
