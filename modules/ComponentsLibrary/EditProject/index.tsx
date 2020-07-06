@@ -10,6 +10,8 @@ import {
   loadEventTasks,
   EventType,
   TaskType,
+  getPropertyAddress,
+  formatDate,
 } from '../../../helpers';
 import { EVENT_STATUS_LIST, JOB_STATUS_COLORS } from '../../../constants';
 
@@ -41,22 +43,6 @@ const SCHEMA: Schema<TaskType> = [
       name: 'briefDescription',
       label: 'Brief Description',
       multiline: true,
-    },
-  ],
-];
-
-const SCHEMA_SEARCH: Schema<SearchType> = [
-  [
-    {
-      name: 'technicians',
-      label: 'Technicians',
-      type: 'technicians',
-    },
-    {
-      name: 'jobStatus',
-      label: 'Job Status',
-      options: JOB_STATUS_OPTIONS,
-      actions: [{ label: 'Search' }],
     },
   ],
 ];
@@ -94,20 +80,58 @@ export const EditProject: FC<Props> = ({ serviceCallId }) => {
   const handleSaveTask = useCallback((formData: TaskType) => {
     console.log({ formData });
   }, []);
+  const SCHEMA_SEARCH: Schema<SearchType> = [
+    [
+      {
+        name: 'technicians',
+        label: 'Technicians',
+        type: 'technicians',
+      },
+      {
+        name: 'jobStatus',
+        label: 'Job Status',
+        options: JOB_STATUS_OPTIONS,
+        actions: [
+          {
+            label: 'Search',
+            disabled: loading,
+          },
+        ],
+      },
+    ],
+  ];
   console.log({ event });
   return (
     <div>
       <SectionBar
         title="Project Management"
+        subtitle={
+          event ? (
+            <>
+              <div>Address: {getPropertyAddress(event.property)}</div>
+              <div>Start date: {formatDate(event.dateStarted)}</div>
+              <div>End date: {formatDate(event.dateEnded)}</div>
+              <div>Job Number: {event.logJobNumber}</div>
+            </>
+          ) : (
+            'Loading...'
+          )
+        }
         actions={[
           {
             label: 'Add Task',
             onClick: handleSetEditing(new Task().toObject()),
+            disabled: loading,
           },
         ]}
         fixedActions
       />
-      <PlainForm schema={SCHEMA_SEARCH} data={search} onChange={setSearch} />
+      <PlainForm
+        schema={SCHEMA_SEARCH}
+        data={search}
+        onChange={setSearch}
+        disabled={loading}
+      />
       {editingTask && (
         <Modal open onClose={handleSetEditing()}>
           <Form
