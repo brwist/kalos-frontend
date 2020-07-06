@@ -589,6 +589,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         fullWidth
         disabled={disabled}
         error={error}
+        style={style}
       >
         <FormControlLabel
           control={
