@@ -13,6 +13,7 @@ import {
   TaskType,
   getPropertyAddress,
   formatDate,
+  upsertEventTask,
 } from '../../../helpers';
 import { EVENT_STATUS_LIST, JOB_STATUS_COLORS } from '../../../constants';
 
@@ -24,6 +25,7 @@ const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
 
 interface Props {
   serviceCallId: number;
+  loggedUserId: number;
 }
 
 type SearchType = {
@@ -44,43 +46,64 @@ const SCHEMA: Schema<TaskType> = [
       name: 'briefDescription',
       label: 'Brief Description',
       multiline: true,
+      required: true,
     },
   ],
 ];
 
 const useStyles = makeStyles(theme => ({}));
 
-export const EditProject: FC<Props> = ({ serviceCallId }) => {
+export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<TaskType>();
+  const [tasks, setTasks] = useState<TaskType[]>([]);
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     jobStatus: '',
   });
   const [event, setEvent] = useState<EventType>();
-  const load = useCallback(async () => {
-    setLoading(true);
+  const loadInit = useCallback(async () => {
     const event = await loadEventById(serviceCallId);
     setEvent(event);
-    const a = await loadEventTasks(serviceCallId); //event.logJobNumber);
-    console.log(a);
+  }, [setEvent]);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const tasks = await loadEventTasks(serviceCallId);
+    setTasks(tasks);
     setLoading(false);
-  }, [setLoading, serviceCallId, setEvent]);
+  }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
+    if (!loadedInit) {
+      setLoadedInit(true);
+      loadInit();
+    }
     if (!loaded) {
       setLoaded(true);
       load();
     }
-  });
+  }, [loadedInit, setLoadedInit, loadInit, loaded, setLoaded, load]);
   const handleSetEditing = useCallback(
     (editingTask?: TaskType) => () => setEditingTask(editingTask),
     [setEditingTask],
   );
-  const handleSaveTask = useCallback((formData: TaskType) => {
-    console.log({ formData });
-  }, []);
+  const handleSaveTask = useCallback(
+    async (formData: TaskType) => {
+      await upsertEventTask({
+        ...formData,
+        referenceNumber: serviceCallId.toString(),
+        creatorUserId: loggedUserId,
+        statusId: 1,
+        priorityId: 2,
+        datePerformed: '2020-07-07 12:30',
+        timeDue: '2020-07-09 18:45',
+      });
+      setLoaded(false);
+    },
+    [serviceCallId, loggedUserId, setLoaded],
+  );
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
       {
@@ -101,7 +124,6 @@ export const EditProject: FC<Props> = ({ serviceCallId }) => {
       },
     ],
   ];
-  console.log({ event });
   return (
     <div>
       <SectionBar
