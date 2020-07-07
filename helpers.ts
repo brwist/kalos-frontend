@@ -975,9 +975,85 @@ export const loadEventById = async (serviceCallId: number) => {
 };
 
 export const loadEventTasks = async (eventId: number) => {
+  const results: TaskType[] = [];
   const req = new Task();
-  req.setReferenceNumber(`%${eventId}`); // FIXME use new column eventId
-  return (await TaskClientService.BatchGet(req)).toObject();
+  req.setReferenceNumber(eventId.toString()); // FIXME use new column eventId when available
+  const { resultsList, totalCount } = (
+    await TaskClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await TaskClientService.BatchGet(req)).toObject().resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
+};
+
+export const upsertEventTask = async ({
+  id,
+  referenceNumber,
+  externalId,
+  briefDescription,
+  creatorUserId,
+  statusId,
+  datePerformed,
+  timeDue,
+  priorityId,
+}: Partial<TaskType>) => {
+  const req = new Task();
+  const fieldMaskList: string[] = ['ExternalCode', 'TimeCreated'];
+  req.setTimeCreated(timestamp());
+  if (referenceNumber) {
+    req.setReferenceNumber(referenceNumber);
+    fieldMaskList.push('ReferenceNumber');
+  }
+  if (id) {
+    req.setId(id);
+    fieldMaskList.push('Id');
+  }
+  if (externalId) {
+    req.setExternalId(externalId);
+    req.setExternalCode('user');
+    fieldMaskList.push('ExternalId');
+  } else {
+    req.setExternalCode('project');
+  }
+  if (briefDescription) {
+    req.setBriefDescription(briefDescription);
+    fieldMaskList.push('BriefDescription');
+  }
+  if (creatorUserId) {
+    req.setCreatorUserId(creatorUserId);
+    fieldMaskList.push('CreatorUserId');
+  }
+  if (statusId) {
+    req.setStatusId(statusId);
+    fieldMaskList.push('StatusId');
+  }
+  if (datePerformed) {
+    req.setDatePerformed(datePerformed);
+    fieldMaskList.push('DatePerformed');
+  }
+  if (timeDue) {
+    req.setTimeDue(timeDue);
+    fieldMaskList.push('TimeDue');
+  }
+  if (priorityId) {
+    req.setPriorityId(priorityId);
+    fieldMaskList.push('PriorityId');
+  }
+  req.setFieldMaskList(fieldMaskList);
+  await TaskClientService[id ? 'Update' : 'Create'](req);
 };
 
 /**
