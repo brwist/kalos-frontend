@@ -33,6 +33,7 @@ import ExportJSON from './ExportJSON/examples';
 import Field from './Field/examples';
 import FileTags from './FileTags/examples';
 import Form from './Form/examples';
+import GanttChart from './GanttChart/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
@@ -101,6 +102,7 @@ const COMPONENTS = {
   Field,
   FileTags,
   Form,
+  GanttChart,
   InfoTable,
   InternalDocuments,
   Link,
