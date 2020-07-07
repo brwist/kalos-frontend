@@ -1,8 +1,8 @@
 import React from 'react';
-import { GranttChart } from './';
+import { GanttChart } from './';
 
 export default () => (
   <>
-    <GranttChart />
+    <GanttChart />
   </>
 );

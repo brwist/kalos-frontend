@@ -5,7 +5,7 @@ interface Props {}
 
 const useStyles = makeStyles(theme => ({}));
 
-export const GranttChart: FC<Props> = ({}) => {
+export const GanttChart: FC<Props> = ({}) => {
   const classes = useStyles();
-  return <div>GranttChart</div>;
+  return <div>GanttChart</div>;
 };
