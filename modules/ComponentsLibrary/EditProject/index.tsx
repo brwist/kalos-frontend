@@ -5,6 +5,7 @@ import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { PlainForm, Option } from '../PlainForm';
+import { PrintPage } from '../PrintPage';
 import {
   loadEventById,
   loadEventTasks,
@@ -105,7 +106,7 @@ export const EditProject: FC<Props> = ({ serviceCallId }) => {
     <div>
       <SectionBar
         title="Project Management"
-        subtitle={
+        footer={
           event ? (
             <>
               <div>Address: {getPropertyAddress(event.property)}</div>
@@ -125,6 +126,16 @@ export const EditProject: FC<Props> = ({ serviceCallId }) => {
           },
         ]}
         fixedActions
+        asideContent={
+          <PrintPage
+            buttonProps={{ label: 'Print Cost Report', disabled: loading }}
+            downloadLabel="Download Cost Report"
+            downloadPdfFilename="Cost-Report"
+          >
+            ...
+          </PrintPage>
+        }
+        asideContentFirst
       />
       <PlainForm
         schema={SCHEMA_SEARCH}
