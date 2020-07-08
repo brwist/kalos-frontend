@@ -117,6 +117,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       endTime,
       ...formData
     }: ExtendedProjectTaskType) => {
+      setEditingTask(undefined);
+      setLoading(true);
       await upsertEventTask({
         ...formData,
         eventId: serviceCallId,
@@ -126,7 +128,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       });
       setLoaded(false);
     },
-    [serviceCallId, loggedUserId, setLoaded],
+    [serviceCallId, loggedUserId, setLoaded, setEditingTask, setLoading],
   );
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
@@ -144,16 +146,16 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         name: 'priorityId',
         label: 'Priority',
         options: priorityOptionsWithAll,
-        actions: [
-          {
-            label: 'Search',
-            disabled: loading,
-          },
-        ],
       },
     ],
   ];
   const SCHEMA: Schema<ExtendedProjectTaskType> = [
+    [
+      {
+        name: 'id',
+        type: 'hidden',
+      },
+    ],
     [
       {
         name: 'externalId',
@@ -263,27 +265,34 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         disabled={loading}
       />
       <CalendarEvents
-        events={tasks.map(
-          ({
+        events={tasks.map(task => {
+          const {
             briefDescription,
             startDate: dateStart,
             endDate: dateEnd,
             statusId,
             priorityId,
-          }) => {
-            const [startDate, startHour] = dateStart.split(' ');
-            const [endDate, endHour] = dateEnd.split(' ');
-            return {
+          } = task;
+          const [startDate, startHour] = dateStart.split(' ');
+          const [endDate, endHour] = dateEnd.split(' ');
+          return {
+            startDate,
+            endDate,
+            startHour,
+            endHour,
+            notes: briefDescription,
+            statusId,
+            priorityId,
+            onClick: handleSetEditing({
+              ...task,
               startDate,
               endDate,
-              startHour,
-              endHour,
-              notes: briefDescription,
-              statusId,
-              priorityId,
-            };
-          },
-        )}
+              startTime: startHour,
+              endTime: endHour,
+            }),
+          };
+        })}
+        loading={loading}
       />
       {editingTask && (
         <Modal open onClose={handleSetEditing()}>
