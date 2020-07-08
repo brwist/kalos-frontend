@@ -1,5 +1,6 @@
 import React, {
   ReactElement,
+  ReactNode,
   useCallback,
   useState,
   useEffect,
@@ -84,6 +85,7 @@ export type Option = {
   label: string;
   value: string | number;
   color?: string;
+  icon?: ReactNode;
 };
 
 export type Options = (string | Option)[];
@@ -233,6 +235,11 @@ const useStyles = makeStyles(theme => ({
   },
   file: {
     display: 'none',
+  },
+  icon: {
+    display: 'inline-flex',
+    marginRight: theme.spacing(),
+    verticalAlign: 'middle',
   },
 }));
 
@@ -766,6 +773,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               const color = isStringOption
                 ? undefined
                 : (option as Option).color;
+              const icon = isStringOption ? undefined : (option as Option).icon;
               return (
                 <MenuItem
                   key={valueOption}
@@ -789,6 +797,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                       style={{ backgroundColor: color }}
                     />
                   )}
+                  {icon && <div className={classes.icon}>{icon}</div>}
                   {label}
                 </MenuItem>
               );

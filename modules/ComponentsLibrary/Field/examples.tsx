@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import HighestIcon from '@material-ui/icons/Block';
+import HighIcon from '@material-ui/icons/ChangeHistory';
+import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
+import LowIcon from '@material-ui/icons/Details';
 import { Field, Props, Value, Options, Option } from './';
 
 type Model = {
@@ -14,6 +18,12 @@ const SELECT_OPTIONS_PAIRS: Option[] = [
   { label: 'Orange', value: 'orange', color: '#E96' },
   { label: 'Red', value: 'red', color: '#E44' },
   { label: 'Blue', value: 'blue', color: '#11F' },
+];
+const SELECT_OPTIONS_ICON: Option[] = [
+  { label: 'Highest', value: 1, icon: <HighestIcon /> },
+  { label: 'High', value: 2, icon: <HighIcon /> },
+  { label: 'Normal', value: 3, icon: <NormalIcon /> },
+  { label: 'Low', value: 4, icon: <LowIcon /> },
 ];
 
 const EnhancedField = ({
@@ -168,6 +178,11 @@ Amet`}
       label="Select Field With Color"
       options={SELECT_OPTIONS_PAIRS}
       defaultValue={SELECT_OPTIONS_PAIRS[0].value}
+    />
+    <EnhancedField
+      label="Select Field With Icon"
+      options={SELECT_OPTIONS_ICON}
+      defaultValue={SELECT_OPTIONS_ICON[0].value}
     />
     <EnhancedField
       label="With actions"
