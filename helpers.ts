@@ -401,12 +401,15 @@ function getMimeType(fileName: string) {
  * @param time time in format HH:MM (ie. 16:30)
  * @returns format h:MMa (ie. 4:30AM)
  */
-function formatTime(time: string) {
+function formatTime(time: string, forceMinutes: boolean = true) {
   const str = time.includes(' ') ? time.substr(11) : time;
   const [hourStr, minutes] = str.split(':');
   const hour = +hourStr;
+  const minute = +minutes;
   return (
-    (hour > 12 ? hour - 12 : hour) + ':' + minutes + (hour < 12 ? 'AM' : 'PM')
+    (hour > 12 ? hour - 12 : hour) +
+    (forceMinutes || minute ? `:${minutes}` : '') +
+    (hour < 12 ? ' AM' : ' PM')
   );
 }
 

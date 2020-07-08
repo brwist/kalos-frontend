@@ -6,6 +6,7 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { PlainForm, Option } from '../PlainForm';
 import { PrintPage } from '../PrintPage';
+import { GanttChart } from '../GanttChart';
 import {
   loadEventById,
   loadEventTasks,
@@ -158,12 +159,45 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           </PrintPage>
         }
         asideContentFirst
+        sticky={false}
       />
       <PlainForm
         schema={SCHEMA_SEARCH}
         data={search}
         onChange={setSearch}
         disabled={loading}
+      />
+      <GanttChart
+        events={[
+          {
+            startDate: '2020-01-05',
+            endDate: '2020-01-10',
+            startHour: '14:15:00',
+            endHour: '19:00:00',
+            notes: 'Task 1',
+          },
+          {
+            startDate: '2020-01-13',
+            endDate: '2020-01-15',
+            startHour: '04:00:00',
+            endHour: '09:00:00',
+            notes: 'Task 2',
+          },
+          {
+            startDate: '2020-01-08',
+            endDate: '2020-01-09',
+            startHour: '08:00:00',
+            endHour: '21:00:00',
+            notes: 'Task 3',
+          },
+          {
+            startDate: '2020-01-24',
+            endDate: '2020-01-24',
+            startHour: '08:00:00',
+            endHour: '21:00:00',
+            notes: 'Task 4',
+          },
+        ]}
       />
       {editingTask && (
         <Modal open onClose={handleSetEditing()}>
