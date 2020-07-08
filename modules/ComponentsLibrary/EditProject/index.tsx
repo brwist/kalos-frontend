@@ -20,7 +20,7 @@ import {
   TaskStatusType,
   TaskPriorityType,
 } from '../../../helpers';
-import { PROJECT_TASK_STATUS_COLORS } from '../../../constants';
+import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 
 interface Props {
   serviceCallId: number;
@@ -29,7 +29,7 @@ interface Props {
 
 type SearchType = {
   technicians: string;
-  jobStatus: string;
+  statusId: number;
 };
 
 type ExtendedProjectTaskType = ProjectTaskType & {
@@ -96,7 +96,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
-    jobStatus: '',
+    statusId: 0,
   });
   const [event, setEvent] = useState<EventType>();
   const loadInit = useCallback(async () => {
@@ -129,12 +129,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     [setEditingTask],
   );
   const statusOptions = useMemo(
-    () =>
-      statuses.map(({ id, description }) => ({
+    () => [
+      { label: OPTION_ALL, value: 0 },
+      ...statuses.map(({ id, description }) => ({
         value: id,
         label: description,
         color: PROJECT_TASK_STATUS_COLORS[id],
       })),
+    ],
     [statuses],
   );
   const handleSaveTask = useCallback(
@@ -166,8 +168,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         type: 'technicians',
       },
       {
-        name: 'jobStatus',
-        label: 'Job Status',
+        name: 'statusId',
+        label: 'Status',
         options: statusOptions,
         actions: [
           {
