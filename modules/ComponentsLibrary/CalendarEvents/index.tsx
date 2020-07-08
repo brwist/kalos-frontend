@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
 import { format, addDays, getDay, getDaysInYear } from 'date-fns';
 import { makeStyles } from '@material-ui/core/styles';
-import { formatTime } from '../../../helpers';
+import { Tooltip } from '../Tooltip';
+import { formatDate, formatTime } from '../../../helpers';
 import { WEEK_DAYS, PROJECT_TASK_STATUS_COLORS } from '../../../constants';
 
 export type CalendarEvent = {
@@ -100,35 +101,74 @@ export const CalendarEvents: FC<Props> = ({ events }) => {
               )
               .map(
                 (
-                  { startDate, endDate, notes, startHour, endHour, statusId },
+                  {
+                    notes,
+                    startDate,
+                    endDate,
+                    startHour,
+                    endHour,
+                    status,
+                    statusId,
+                    priorityId,
+                    priority,
+                  },
                   idx,
                 ) => (
-                  <div
+                  <Tooltip
                     key={idx}
-                    className={classes.event}
-                    style={{
-                      ...(statusId
-                        ? {
-                            backgroundColor:
-                              PROJECT_TASK_STATUS_COLORS[statusId],
-                          }
-                        : {}),
-                      ...(startDate === date ? { marginLeft: 4 } : {}),
-                      ...(endDate === date ? { marginRight: 4 } : {}),
-                    }}
+                    content={
+                      <>
+                        <div>
+                          <strong>Brief Description: </strong>
+                          {notes}
+                        </div>
+                        <div>
+                          <strong>Start Date: </strong>
+                          {formatDate(startDate)} {formatTime(startHour)}
+                        </div>
+                        <div>
+                          <strong>End Date: </strong>
+                          {formatDate(endDate)} {formatTime(endHour)}
+                        </div>
+                        <div>
+                          <strong>Status: </strong>
+                          {status}
+                        </div>
+                        <div>
+                          <strong>Priority: </strong>
+                          {priority}
+                        </div>
+                      </>
+                    }
+                    placement="bottom"
+                    maxWidth={300}
                   >
-                    {startDate === date && notes}
-                    {startDate === date && (
-                      <div className={classes.hour}>
-                        {formatTime(startHour, false)}
-                      </div>
-                    )}
-                    {endDate === date && startDate !== endDate && (
-                      <div className={classes.hour}>
-                        ends {formatTime(endHour, false)}
-                      </div>
-                    )}
-                  </div>
+                    <div
+                      className={classes.event}
+                      style={{
+                        ...(statusId
+                          ? {
+                              backgroundColor:
+                                PROJECT_TASK_STATUS_COLORS[statusId],
+                            }
+                          : {}),
+                        ...(startDate === date ? { marginLeft: 4 } : {}),
+                        ...(endDate === date ? { marginRight: 4 } : {}),
+                      }}
+                    >
+                      {startDate === date && notes}
+                      {startDate === date && (
+                        <div className={classes.hour}>
+                          {formatTime(startHour, false)}
+                        </div>
+                      )}
+                      {endDate === date && startDate !== endDate && (
+                        <div className={classes.hour}>
+                          ends {formatTime(endHour, false)}
+                        </div>
+                      )}
+                    </div>
+                  </Tooltip>
                 ),
               )}
           </div>
