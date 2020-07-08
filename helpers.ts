@@ -15,6 +15,7 @@ import {
   TaskEventData,
   ProjectTask,
   TaskStatus,
+  TaskPriority,
 } from '@kalos-core/kalos-rpc/Task';
 import {
   ActivityLog,
@@ -76,7 +77,6 @@ import {
 import { PDFClient, HTML } from '@kalos-core/kalos-rpc/PDF';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
-import { TaskPriority } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import {
   ENDPOINT,
   MONTHS,
@@ -999,6 +999,7 @@ export const loadProjectTaskStatuses = async () => {
   // const { resultsList } = (
   //   await TaskClientService.loadTaskStatuses()
   // ).toObject();
+  // console.log('s', { resultsList });
   // return resultsList;
   // FIXME when api will return statuses
   return [
@@ -1023,6 +1024,7 @@ export const loadProjectTaskPriorities = async () => {
   // const { resultsList } = (
   //   await TaskClientService.loadTaskPriorityList()
   // ).toObject();
+  // console.log('p', { resultsList });
   // return resultsList;
   // FIXME when api will return priorities
   return [
