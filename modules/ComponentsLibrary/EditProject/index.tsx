@@ -30,58 +30,13 @@ interface Props {
 type SearchType = {
   technicians: string;
   statusId: number;
+  priorityId: number;
 };
 
 type ExtendedProjectTaskType = ProjectTaskType & {
   startTime: string;
   endTime: string;
 };
-
-const SCHEMA: Schema<ExtendedProjectTaskType> = [
-  [
-    {
-      name: 'externalId',
-      label: 'Employee',
-      type: 'technician',
-    },
-  ],
-  [
-    {
-      name: 'briefDescription',
-      label: 'Brief Description',
-      multiline: true,
-      required: true,
-    },
-  ],
-  [
-    {
-      name: 'startDate',
-      label: 'Start Date',
-      type: 'date',
-      required: true,
-    },
-    {
-      name: 'startTime',
-      label: 'Start Time',
-      type: 'time',
-      required: true,
-    },
-  ],
-  [
-    {
-      name: 'endDate',
-      label: 'End Date',
-      type: 'date',
-      required: true,
-    },
-    {
-      name: 'endTime',
-      label: 'End Time',
-      type: 'time',
-      required: true,
-    },
-  ],
-];
 
 const useStyles = makeStyles(theme => ({}));
 
@@ -97,6 +52,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     statusId: 0,
+    priorityId: 0,
   });
   const [event, setEvent] = useState<EventType>();
   const loadInit = useCallback(async () => {
@@ -129,15 +85,29 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     [setEditingTask],
   );
   const statusOptions = useMemo(
-    () => [
-      { label: OPTION_ALL, value: 0 },
-      ...statuses.map(({ id, description }) => ({
+    () =>
+      statuses.map(({ id, description }) => ({
         value: id,
         label: description,
         color: PROJECT_TASK_STATUS_COLORS[id],
       })),
-    ],
     [statuses],
+  );
+  const statusOptionsWithAll = useMemo(
+    () => [{ label: OPTION_ALL, value: 0 }, ...statusOptions],
+    [statusOptions],
+  );
+  const priorityOptions = useMemo(
+    () =>
+      priorities.map(({ id, description }) => ({
+        value: id,
+        label: description,
+      })),
+    [priorities],
+  );
+  const priorityOptionsWithAll = useMemo(
+    () => [{ label: OPTION_ALL, value: 0 }, ...priorityOptions],
+    [priorityOptions],
   );
   const handleSaveTask = useCallback(
     async ({
@@ -151,8 +121,6 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         ...formData,
         eventId: serviceCallId,
         creatorUserId: loggedUserId,
-        statusId: 1,
-        priorityId: 2,
         startDate: `${startDate} ${startTime}:00`,
         endDate: `${endDate} ${endTime}:00`,
       });
@@ -170,13 +138,79 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       {
         name: 'statusId',
         label: 'Status',
-        options: statusOptions,
+        options: statusOptionsWithAll,
+      },
+      {
+        name: 'priorityId',
+        label: 'Priority',
+        options: priorityOptionsWithAll,
         actions: [
           {
             label: 'Search',
             disabled: loading,
           },
         ],
+      },
+    ],
+  ];
+  const SCHEMA: Schema<ExtendedProjectTaskType> = [
+    [
+      {
+        name: 'externalId',
+        label: 'Employee',
+        type: 'technician',
+      },
+    ],
+    [
+      {
+        name: 'briefDescription',
+        label: 'Brief Description',
+        multiline: true,
+        required: true,
+      },
+    ],
+    [
+      {
+        name: 'startDate',
+        label: 'Start Date',
+        type: 'date',
+        required: true,
+      },
+      {
+        name: 'startTime',
+        label: 'Start Time',
+        type: 'time',
+        required: true,
+      },
+    ],
+    [
+      {
+        name: 'endDate',
+        label: 'End Date',
+        type: 'date',
+        required: true,
+      },
+      {
+        name: 'endTime',
+        label: 'End Time',
+        type: 'time',
+        required: true,
+      },
+    ],
+    [
+      {
+        name: 'statusId',
+        label: 'Status',
+        required: true,
+        options: statusOptions,
+      },
+    ],
+    [
+      {
+        name: 'priorityId',
+        label: 'Priority',
+        required: true,
+        options: priorityOptions,
       },
     ],
   ];
@@ -203,6 +237,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               ...new ProjectTask().toObject(),
               startTime: '00:00',
               endTime: '00:00',
+              statusId: 1,
+              priorityId: 2,
             }),
             disabled: loading,
           },
