@@ -6,7 +6,7 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { PlainForm, Option } from '../PlainForm';
 import { PrintPage } from '../PrintPage';
-import { GanttChart } from '../GanttChart';
+import { CalendarEvents } from '../CalendarEvents';
 import {
   loadEventById,
   loadEventTasks,
@@ -167,7 +167,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         onChange={setSearch}
         disabled={loading}
       />
-      <GanttChart
+      <CalendarEvents
         events={[
           {
             startDate: '2020-01-05',
