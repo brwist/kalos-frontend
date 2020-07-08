@@ -996,28 +996,10 @@ export const loadProjectTasks = async (eventId: number) => {
 };
 
 export const loadProjectTaskStatuses = async () => {
-  // const { resultsList } = (
-  //   await TaskClientService.loadTaskStatuses()
-  // ).toObject();
-  // console.log('s', { resultsList });
-  // return resultsList;
-  // FIXME when api will return statuses
-  return [
-    { id: 1, code: 'NEW', description: 'New', weight: 1 },
-    { id: 2, code: 'IN_PROGRESS', description: 'In Progress', weight: 2 },
-    { id: 3, code: 'PAUSED', description: 'Paused', weight: 3 },
-    { id: 4, code: 'COMPLETED', description: 'Completed', weight: 5 },
-    { id: 5, code: 'NEEDS_REVIEW', description: 'Needs Review', weight: 4 },
-    { id: 6, code: 'DELAYED', description: 'Delayed', weight: 6 },
-    { id: 7, code: 'ACCEPTED', description: 'Accepted', weight: 7 },
-    {
-      id: 8,
-      code: 'PENDING PAYMENT',
-      description: 'Pending Payment',
-      weight: 8,
-    },
-    { id: 9, code: 'RECONCILED', description: 'Reconciled', weight: 9 },
-  ] as TaskStatusType[];
+  const { resultsList } = (
+    await TaskClientService.loadTaskStatuses()
+  ).toObject();
+  return resultsList;
 };
 
 export const loadProjectTaskPriorities = async () => {
