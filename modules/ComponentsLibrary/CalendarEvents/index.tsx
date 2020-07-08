@@ -15,16 +15,21 @@ export type CalendarEvent = {
   statusId?: number;
   priority?: string;
   priorityId?: number;
+  onClick?: () => void;
 };
 
-interface Props {
+type Style = {
+  loading?: boolean;
+};
+
+interface Props extends Style {
   events: CalendarEvent[];
 }
 
 const GAP = 1;
 
 const useStyles = makeStyles(theme => ({
-  calendar: {
+  calendar: ({ loading }: Style) => ({
     ...theme.typography.body1,
     display: 'grid',
     gridTemplateColumns: 'repeat(7, 1fr)',
@@ -33,7 +38,13 @@ const useStyles = makeStyles(theme => ({
     borderWidth: GAP,
     borderStyle: 'solid',
     borderColor: theme.palette.grey[300],
-  },
+    ...(loading
+      ? {
+          filter: 'grayscale(1)',
+          pointerEvents: 'none',
+        }
+      : {}),
+  }),
   day: {
     backgroundColor: theme.palette.common.white,
     paddingTop: theme.spacing(),
@@ -74,9 +85,9 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const CalendarEvents: FC<Props> = ({ events }) => {
-  const classes = useStyles();
-  const startDate = new Date('2020-01-01 00:00:00');
+export const CalendarEvents: FC<Props> = ({ events, loading }) => {
+  const classes = useStyles({ loading });
+  const startDate = new Date('2020-01-01 00:00:00'); // FIXME
   const offset = getDay(startDate);
   return (
     <div className={classes.calendar}>
@@ -111,6 +122,7 @@ export const CalendarEvents: FC<Props> = ({ events }) => {
                     statusId,
                     priorityId,
                     priority,
+                    onClick,
                   },
                   idx,
                 ) => (
@@ -155,6 +167,7 @@ export const CalendarEvents: FC<Props> = ({ events }) => {
                         ...(startDate === date ? { marginLeft: 4 } : {}),
                         ...(endDate === date ? { marginRight: 4 } : {}),
                       }}
+                      onClick={onClick}
                     >
                       {startDate === date && notes}
                       {startDate === date && (
