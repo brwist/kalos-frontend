@@ -13,6 +13,7 @@ import {
   TaskClient,
   Task,
   TaskEventData,
+  ProjectTask,
 } from '@kalos-core/kalos-rpc/Task';
 import {
   ActivityLog,
@@ -118,6 +119,7 @@ export type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
 export type DocumentType = Document.AsObject;
 export type TaskEventDataType = TaskEventData.AsObject;
 export type QuotableType = Quotable.AsObject;
+export type ProjectTaskType = ProjectTask.AsObject;
 
 export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
@@ -798,7 +800,7 @@ export const loadSpiffToolLogs = async ({
 }) => {
   const req = new Task();
   req.setPageNumber(page);
-  req.setIsActive(1);
+  req.setIsActive(true);
   req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
   req.setOrderDir('ASC');
   if (technician) {
@@ -977,48 +979,35 @@ export const loadEventById = async (serviceCallId: number) => {
   return await EventClientService.Get(req);
 };
 
-export const loadEventTasks = async (eventId: number) => {
-  const results: TaskType[] = [];
-  const req = new Task();
-  req.setReferenceNumber(eventId.toString()); // FIXME use new column eventId when available
-  const { resultsList, totalCount } = (
-    await TaskClientService.BatchGet(req)
+export const loadProjectTasks = async (eventId: number) => {
+  const { resultsList } = (
+    await EventClientService.loadTasksByEventID(eventId)
   ).toObject();
-  results.push(...resultsList);
-  if (totalCount > resultsList.length) {
-    const batchesAmount = Math.ceil(
-      (totalCount - resultsList.length) / resultsList.length,
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await TaskClientService.BatchGet(req)).toObject().resultsList;
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
-  return results;
+  return resultsList.map(({ endDate, ...props }) => ({
+    // TODO del once startDate will be returned
+    ...props,
+    endDate,
+    startDate: endDate.replace('-09', '-06'),
+  }));
 };
 
 export const upsertEventTask = async ({
   id,
-  referenceNumber,
+  eventId,
   externalId,
   briefDescription,
   creatorUserId,
   statusId,
-  datePerformed,
-  timeDue,
+  startDate,
+  endDate,
   priorityId,
-}: Partial<TaskType>) => {
-  const req = new Task();
+}: Partial<ProjectTaskType>) => {
+  const req = new ProjectTask();
   const fieldMaskList: string[] = ['ExternalCode', 'TimeCreated'];
   req.setTimeCreated(timestamp());
-  if (referenceNumber) {
-    req.setReferenceNumber(referenceNumber);
-    fieldMaskList.push('ReferenceNumber');
+  if (eventId) {
+    req.setEventId(eventId);
+    fieldMaskList.push('EventId');
   }
   if (id) {
     req.setId(id);
@@ -1043,20 +1032,32 @@ export const upsertEventTask = async ({
     req.setStatusId(statusId);
     fieldMaskList.push('StatusId');
   }
-  if (datePerformed) {
-    req.setDatePerformed(datePerformed);
-    fieldMaskList.push('DatePerformed');
+  if (startDate) {
+    req.setStartDate(startDate);
+    fieldMaskList.push('StartDate');
   }
-  if (timeDue) {
-    req.setTimeDue(timeDue);
-    fieldMaskList.push('TimeDue');
+  if (endDate) {
+    req.setEndDate(endDate);
+    fieldMaskList.push('EndDate');
   }
   if (priorityId) {
     req.setPriorityId(priorityId);
     fieldMaskList.push('PriorityId');
   }
   req.setFieldMaskList(fieldMaskList);
-  await TaskClientService[id ? 'Update' : 'Create'](req);
+  console.log({
+    id,
+    eventId,
+    externalId,
+    briefDescription,
+    creatorUserId,
+    statusId,
+    startDate,
+    endDate,
+    priorityId,
+    req,
+  });
+  await TaskClientService[id ? 'UpdateProjectTask' : 'CreateProjectTask'](req);
 };
 
 /**

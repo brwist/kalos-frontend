@@ -75,7 +75,6 @@ export const CalendarEvents: FC<Props> = ({ events }) => {
   const classes = useStyles();
   const startDate = new Date('2020-01-01 00:00:00');
   const offset = getDay(startDate);
-  console.log({ events });
   return (
     <div className={classes.calendar}>
       {[...Array(7)].map((_, idx) => (

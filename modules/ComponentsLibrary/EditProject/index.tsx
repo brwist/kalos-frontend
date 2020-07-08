@@ -1,6 +1,6 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Task } from '@kalos-core/kalos-rpc/Task';
+import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -9,9 +9,9 @@ import { PrintPage } from '../PrintPage';
 import { CalendarEvents } from '../CalendarEvents';
 import {
   loadEventById,
-  loadEventTasks,
+  loadProjectTasks,
   EventType,
-  TaskType,
+  ProjectTaskType,
   getPropertyAddress,
   formatDate,
   upsertEventTask,
@@ -34,7 +34,12 @@ type SearchType = {
   jobStatus: string;
 };
 
-const SCHEMA: Schema<TaskType> = [
+type ExtendedProjectTaskType = ProjectTaskType & {
+  startTime: string;
+  endTime: string;
+};
+
+const SCHEMA: Schema<ExtendedProjectTaskType> = [
   [
     {
       name: 'externalId',
@@ -50,6 +55,34 @@ const SCHEMA: Schema<TaskType> = [
       required: true,
     },
   ],
+  [
+    {
+      name: 'startDate',
+      label: 'Start Date',
+      type: 'date',
+      required: true,
+    },
+    {
+      name: 'startTime',
+      label: 'Start Time',
+      type: 'time',
+      required: true,
+    },
+  ],
+  [
+    {
+      name: 'endDate',
+      label: 'End Date',
+      type: 'date',
+      required: true,
+    },
+    {
+      name: 'endTime',
+      label: 'End Time',
+      type: 'time',
+      required: true,
+    },
+  ],
 ];
 
 const useStyles = makeStyles(theme => ({}));
@@ -59,8 +92,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
-  const [editingTask, setEditingTask] = useState<TaskType>();
-  const [tasks, setTasks] = useState<TaskType[]>([]);
+  const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
+  const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     jobStatus: '',
@@ -72,8 +105,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   }, [setEvent]);
   const load = useCallback(async () => {
     setLoading(true);
-    const tasks = await loadEventTasks(serviceCallId);
+    const tasks = await loadProjectTasks(serviceCallId);
     setTasks(tasks);
+    console.log({ tasks });
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
@@ -87,19 +121,26 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     }
   }, [loadedInit, setLoadedInit, loadInit, loaded, setLoaded, load]);
   const handleSetEditing = useCallback(
-    (editingTask?: TaskType) => () => setEditingTask(editingTask),
+    (editingTask?: ExtendedProjectTaskType) => () =>
+      setEditingTask(editingTask),
     [setEditingTask],
   );
   const handleSaveTask = useCallback(
-    async (formData: TaskType) => {
+    async ({
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      ...formData
+    }: ExtendedProjectTaskType) => {
       await upsertEventTask({
         ...formData,
-        referenceNumber: serviceCallId.toString(),
+        eventId: serviceCallId,
         creatorUserId: loggedUserId,
         statusId: 1,
         priorityId: 2,
-        datePerformed: '2020-07-07 12:30',
-        timeDue: '2020-07-09 18:45',
+        startDate: `${startDate} ${startTime}:00`,
+        endDate: `${endDate} ${endTime}:00`,
       });
       setLoaded(false);
     },
@@ -144,7 +185,11 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         actions={[
           {
             label: 'Add Task',
-            onClick: handleSetEditing(new Task().toObject()),
+            onClick: handleSetEditing({
+              ...new ProjectTask().toObject(),
+              startTime: '00:00',
+              endTime: '00:00',
+            }),
             disabled: loading,
           },
         ]}
@@ -168,36 +213,19 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         disabled={loading}
       />
       <CalendarEvents
-        events={[
-          {
-            startDate: '2020-01-05',
-            endDate: '2020-01-10',
-            startHour: '14:15:00',
-            endHour: '19:00:00',
-            notes: 'Task 1',
+        events={tasks.map(
+          ({ briefDescription, startDate: dateStart, endDate: dateEnd }) => {
+            const [startDate, startHour] = dateStart.split(' ');
+            const [endDate, endHour] = dateEnd.split(' ');
+            return {
+              startDate,
+              endDate,
+              startHour,
+              endHour,
+              notes: briefDescription,
+            };
           },
-          {
-            startDate: '2020-01-13',
-            endDate: '2020-01-15',
-            startHour: '04:00:00',
-            endHour: '09:00:00',
-            notes: 'Task 2',
-          },
-          {
-            startDate: '2020-01-08',
-            endDate: '2020-01-09',
-            startHour: '08:00:00',
-            endHour: '21:00:00',
-            notes: 'Task 3',
-          },
-          {
-            startDate: '2020-01-24',
-            endDate: '2020-01-24',
-            startHour: '08:00:00',
-            endHour: '21:00:00',
-            notes: 'Task 4',
-          },
-        ]}
+        )}
       />
       {editingTask && (
         <Modal open onClose={handleSetEditing()}>
