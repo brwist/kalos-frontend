@@ -216,6 +216,15 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       },
     ],
   ];
+  const filteredTasks = tasks.filter(({ statusId, priorityId }) => {
+    if (search.statusId) {
+      if (statusId !== search.statusId) return false;
+    }
+    if (search.priorityId) {
+      if (priorityId !== search.priorityId) return false;
+    }
+    return true;
+  });
   return (
     <div>
       <SectionBar
@@ -265,7 +274,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         disabled={loading}
       />
       <CalendarEvents
-        events={tasks.map(task => {
+        events={filteredTasks.map(task => {
           const {
             briefDescription,
             startDate: dateStart,
