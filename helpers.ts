@@ -413,7 +413,7 @@ function formatTime(time: string, forceMinutes: boolean = true) {
   const hour = +hourStr;
   const minute = +minutes;
   return (
-    (hour > 12 ? hour - 12 : hour) +
+    (hour > 12 ? hour - 12 : hour || 12) +
     (forceMinutes || minute ? `:${minutes}` : '') +
     (hour < 12 ? ' AM' : ' PM')
   );
