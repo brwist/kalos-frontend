@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
+import HighestIcon from '@material-ui/icons/Block';
 import { format, addDays, getDay, getDaysInYear } from 'date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 import { Tooltip } from '../Tooltip';
+import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { formatDate, formatTime } from '../../../helpers';
 import { WEEK_DAYS, PROJECT_TASK_STATUS_COLORS } from '../../../constants';
 
@@ -125,64 +127,91 @@ export const CalendarEvents: FC<Props> = ({ events, loading }) => {
                     onClick,
                   },
                   idx,
-                ) => (
-                  <Tooltip
-                    key={idx}
-                    content={
-                      <>
-                        <div>
-                          <strong>Brief Description: </strong>
-                          {notes}
-                        </div>
-                        <div>
-                          <strong>Start Date: </strong>
-                          {formatDate(startDate)} {formatTime(startHour)}
-                        </div>
-                        <div>
-                          <strong>End Date: </strong>
-                          {formatDate(endDate)} {formatTime(endHour)}
-                        </div>
-                        <div>
-                          <strong>Status: </strong>
-                          {status}
-                        </div>
-                        <div>
-                          <strong>Priority: </strong>
-                          {priority}
-                        </div>
-                      </>
-                    }
-                    placement="bottom"
-                    maxWidth={300}
-                  >
-                    <div
-                      className={classes.event}
-                      style={{
-                        ...(statusId
-                          ? {
-                              backgroundColor:
-                                PROJECT_TASK_STATUS_COLORS[statusId],
-                            }
-                          : {}),
-                        ...(startDate === date ? { marginLeft: 4 } : {}),
-                        ...(endDate === date ? { marginRight: 4 } : {}),
-                      }}
-                      onClick={onClick}
+                ) => {
+                  const PriorityIcon = priorityId
+                    ? PROJECT_TASK_PRIORITY_ICONS[priorityId]
+                    : null;
+                  return (
+                    <Tooltip
+                      key={idx}
+                      content={
+                        <>
+                          <div>
+                            <strong>Brief Description: </strong>
+                            {notes}
+                          </div>
+                          <div>
+                            <strong>Start Date: </strong>
+                            {formatDate(startDate)} {formatTime(startHour)}
+                          </div>
+                          <div>
+                            <strong>End Date: </strong>
+                            {formatDate(endDate)} {formatTime(endHour)}
+                          </div>
+                          <div>
+                            <strong>Status: </strong>
+                            {status}
+                          </div>
+                          <div>
+                            <strong>Priority: </strong>
+                            {PriorityIcon && (
+                              <PriorityIcon
+                                style={{
+                                  fontSize: 16,
+                                  marginRight: 4,
+                                  verticalAlign: 'middle',
+                                  display: 'inline-flex',
+                                }}
+                              />
+                            )}
+                            {priority}
+                          </div>
+                        </>
+                      }
+                      placement="bottom"
+                      maxWidth={300}
                     >
-                      {startDate === date && notes}
-                      {startDate === date && (
-                        <div className={classes.hour}>
-                          {formatTime(startHour, false)}
-                        </div>
-                      )}
-                      {endDate === date && startDate !== endDate && (
-                        <div className={classes.hour}>
-                          ends {formatTime(endHour, false)}
-                        </div>
-                      )}
-                    </div>
-                  </Tooltip>
-                ),
+                      <div
+                        className={classes.event}
+                        style={{
+                          ...(statusId
+                            ? {
+                                backgroundColor:
+                                  PROJECT_TASK_STATUS_COLORS[statusId],
+                              }
+                            : {}),
+                          ...(startDate === date ? { marginLeft: 4 } : {}),
+                          ...(endDate === date ? { marginRight: 4 } : {}),
+                        }}
+                        onClick={onClick}
+                      >
+                        {startDate === date && (
+                          <>
+                            {PriorityIcon && (
+                              <PriorityIcon
+                                style={{
+                                  fontSize: 16,
+                                  marginRight: 4,
+                                  verticalAlign: 'middle',
+                                  display: 'inline-flex',
+                                }}
+                              />
+                            )}
+                            {notes}
+                            <div className={classes.hour}>
+                              {formatTime(startHour, false)}
+                            </div>
+                          </>
+                        )}
+                        {endDate === date && startDate !== endDate && (
+                          <div className={classes.hour}>
+                            ends {formatTime(endHour, false)}
+                          </div>
+                        )}
+                      </div>
+                    </Tooltip>
+                  );
+                },
               )}
           </div>
         );

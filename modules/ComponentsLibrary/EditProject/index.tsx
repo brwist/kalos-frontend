@@ -6,6 +6,7 @@ import React, {
   useMemo,
   ReactNode,
 } from 'react';
+import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { makeStyles } from '@material-ui/core/styles';
 import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
@@ -49,11 +50,13 @@ type ExtendedProjectTaskType = ProjectTaskType & {
   endTime: string;
 };
 
-const ICONS: { [key: number]: ReactNode } = {
-  1: <LowIcon />,
-  2: <NormalIcon />,
-  3: <HighIcon />,
-  4: <HighestIcon />,
+export const PROJECT_TASK_PRIORITY_ICONS: {
+  [key: number]: FC<SvgIconProps>;
+} = {
+  1: LowIcon,
+  2: NormalIcon,
+  3: HighIcon,
+  4: HighestIcon,
 };
 
 const useStyles = makeStyles(theme => ({}));
@@ -120,7 +123,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       priorities.map(({ id, description }) => ({
         value: id,
         label: description,
-        icon: ICONS[id],
+        icon: PROJECT_TASK_PRIORITY_ICONS[id],
       })),
     [priorities],
   );
