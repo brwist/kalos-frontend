@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
@@ -15,14 +15,12 @@ import {
   getPropertyAddress,
   formatDate,
   upsertEventTask,
+  loadProjectTaskStatuses,
+  loadProjectTaskPriorities,
+  TaskStatusType,
+  TaskPriorityType,
 } from '../../../helpers';
-import { EVENT_STATUS_LIST, JOB_STATUS_COLORS } from '../../../constants';
-
-const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
-  label,
-  value: label,
-  color: `#${JOB_STATUS_COLORS[label]}`,
-}));
+import { PROJECT_TASK_STATUS_COLORS } from '../../../constants';
 
 interface Props {
   serviceCallId: number;
@@ -94,6 +92,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
+  const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
+  const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     jobStatus: '',
@@ -101,13 +101,16 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [event, setEvent] = useState<EventType>();
   const loadInit = useCallback(async () => {
     const event = await loadEventById(serviceCallId);
+    const statuses = await loadProjectTaskStatuses();
+    const priorities = await loadProjectTaskPriorities();
     setEvent(event);
-  }, [setEvent]);
+    setStatuses(statuses);
+    setPriorities(priorities);
+  }, [setEvent, setStatuses, setPriorities]);
   const load = useCallback(async () => {
     setLoading(true);
     const tasks = await loadProjectTasks(serviceCallId);
     setTasks(tasks);
-    console.log({ tasks });
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
@@ -124,6 +127,15 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     (editingTask?: ExtendedProjectTaskType) => () =>
       setEditingTask(editingTask),
     [setEditingTask],
+  );
+  const statusOptions = useMemo(
+    () =>
+      statuses.map(({ id, description }) => ({
+        value: id,
+        label: description,
+        color: PROJECT_TASK_STATUS_COLORS[id],
+      })),
+    [statuses],
   );
   const handleSaveTask = useCallback(
     async ({
@@ -156,7 +168,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       {
         name: 'jobStatus',
         label: 'Job Status',
-        options: JOB_STATUS_OPTIONS,
+        options: statusOptions,
         actions: [
           {
             label: 'Search',
@@ -214,7 +226,13 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       />
       <CalendarEvents
         events={tasks.map(
-          ({ briefDescription, startDate: dateStart, endDate: dateEnd }) => {
+          ({
+            briefDescription,
+            startDate: dateStart,
+            endDate: dateEnd,
+            statusId,
+            priorityId,
+          }) => {
             const [startDate, startHour] = dateStart.split(' ');
             const [endDate, endHour] = dateEnd.split(' ');
             return {
@@ -223,6 +241,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               startHour,
               endHour,
               notes: briefDescription,
+              statusId,
+              priorityId,
             };
           },
         )}

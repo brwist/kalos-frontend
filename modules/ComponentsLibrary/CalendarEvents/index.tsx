@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { format, addDays, getDay, getDaysInYear } from 'date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 import { formatTime } from '../../../helpers';
-import { WEEK_DAYS } from '../../../constants';
+import { WEEK_DAYS, PROJECT_TASK_STATUS_COLORS } from '../../../constants';
 
 export type CalendarEvent = {
   startDate: string;
@@ -10,8 +10,10 @@ export type CalendarEvent = {
   endDate: string;
   endHour: string;
   notes: string;
-  status?: number;
-  priority?: number;
+  status?: string;
+  statusId?: number;
+  priority?: string;
+  priorityId?: number;
 };
 
 interface Props {
@@ -55,13 +57,13 @@ const useStyles = makeStyles(theme => ({
     marginBottom: theme.spacing(0.5),
   },
   event: {
-    backgroundColor: '#1562a1',
+    backgroundColor: theme.palette.grey[200],
     marginRight: -GAP,
-    color: '#FFF',
     padding: theme.spacing(0.5),
     marginBottom: theme.spacing(0.25),
     minHeight: 20,
     position: 'relative',
+    cursor: 'pointer',
   },
   hour: {
     position: 'absolute',
@@ -96,28 +98,39 @@ export const CalendarEvents: FC<Props> = ({ events }) => {
                 ({ startDate, endDate }) =>
                   startDate <= date && date <= endDate,
               )
-              .map(({ startDate, endDate, notes, startHour, endHour }, idx) => (
-                <div
-                  key={idx}
-                  className={classes.event}
-                  style={{
-                    ...(startDate === date ? { marginLeft: 4 } : {}),
-                    ...(endDate === date ? { marginRight: 4 } : {}),
-                  }}
-                >
-                  {startDate === date && notes}
-                  {startDate === date && (
-                    <div className={classes.hour}>
-                      {formatTime(startHour, false)}
-                    </div>
-                  )}
-                  {endDate === date && startDate !== endDate && (
-                    <div className={classes.hour}>
-                      ends {formatTime(endHour, false)}
-                    </div>
-                  )}
-                </div>
-              ))}
+              .map(
+                (
+                  { startDate, endDate, notes, startHour, endHour, statusId },
+                  idx,
+                ) => (
+                  <div
+                    key={idx}
+                    className={classes.event}
+                    style={{
+                      ...(statusId
+                        ? {
+                            backgroundColor:
+                              PROJECT_TASK_STATUS_COLORS[statusId],
+                          }
+                        : {}),
+                      ...(startDate === date ? { marginLeft: 4 } : {}),
+                      ...(endDate === date ? { marginRight: 4 } : {}),
+                    }}
+                  >
+                    {startDate === date && notes}
+                    {startDate === date && (
+                      <div className={classes.hour}>
+                        {formatTime(startHour, false)}
+                      </div>
+                    )}
+                    {endDate === date && startDate !== endDate && (
+                      <div className={classes.hour}>
+                        ends {formatTime(endHour, false)}
+                      </div>
+                    )}
+                  </div>
+                ),
+              )}
           </div>
         );
       })}

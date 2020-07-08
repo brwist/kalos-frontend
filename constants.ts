@@ -134,6 +134,18 @@ export const JOB_STATUS_COLORS: { [key: string]: string } = {
   'Admin Review': 'e1e1e1',
 };
 
+export const PROJECT_TASK_STATUS_COLORS: { [key: number]: string } = {
+  1: '#efc281',
+  2: '#88edb3',
+  3: '#999',
+  4: '#55e552',
+  5: '#e1e1e1',
+  6: '#07ccec',
+  7: '#fefdb9',
+  8: '#fd9834',
+  9: '#789abc',
+};
+
 export const ELEVATION = {
   card: '0px 1px 2px #00000052',
   button: '0px 2px 4px #00000052',

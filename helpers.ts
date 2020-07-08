@@ -14,6 +14,7 @@ import {
   Task,
   TaskEventData,
   ProjectTask,
+  TaskStatus,
 } from '@kalos-core/kalos-rpc/Task';
 import {
   ActivityLog,
@@ -75,6 +76,7 @@ import {
 import { PDFClient, HTML } from '@kalos-core/kalos-rpc/PDF';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
+import { TaskPriority } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import {
   ENDPOINT,
   MONTHS,
@@ -120,6 +122,8 @@ export type DocumentType = Document.AsObject;
 export type TaskEventDataType = TaskEventData.AsObject;
 export type QuotableType = Quotable.AsObject;
 export type ProjectTaskType = ProjectTask.AsObject;
+export type TaskStatusType = TaskStatus.AsObject;
+export type TaskPriorityType = TaskPriority.AsObject;
 
 export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
@@ -989,6 +993,44 @@ export const loadProjectTasks = async (eventId: number) => {
     endDate,
     startDate: endDate.replace('-09', '-06'),
   }));
+};
+
+export const loadProjectTaskStatuses = async () => {
+  // const { resultsList } = (
+  //   await TaskClientService.loadTaskStatuses()
+  // ).toObject();
+  // return resultsList;
+  // FIXME when api will return statuses
+  return [
+    { id: 1, code: 'NEW', description: 'New', weight: 1 },
+    { id: 2, code: 'IN_PROGRESS', description: 'In Progress', weight: 2 },
+    { id: 3, code: 'PAUSED', description: 'Paused', weight: 3 },
+    { id: 4, code: 'COMPLETED', description: 'Completed', weight: 5 },
+    { id: 5, code: 'NEEDS_REVIEW', description: 'Needs Review', weight: 4 },
+    { id: 6, code: 'DELAYED', description: 'Delayed', weight: 6 },
+    { id: 7, code: 'ACCEPTED', description: 'Accepted', weight: 7 },
+    {
+      id: 8,
+      code: 'PENDING PAYMENT',
+      description: 'Pending Payment',
+      weight: 8,
+    },
+    { id: 9, code: 'RECONCILED', description: 'Reconciled', weight: 9 },
+  ] as TaskStatusType[];
+};
+
+export const loadProjectTaskPriorities = async () => {
+  // const { resultsList } = (
+  //   await TaskClientService.loadTaskPriorityList()
+  // ).toObject();
+  // return resultsList;
+  // FIXME when api will return priorities
+  return [
+    { id: 1, code: 'LOW', description: 'Low' },
+    { id: 2, code: 'NORMAL', description: 'Normal' },
+    { id: 3, code: 'HIGH', description: 'High' },
+    { id: 4, code: 'HIGHEST', description: 'Highest' },
+  ] as TaskPriorityType[];
 };
 
 export const upsertEventTask = async ({
