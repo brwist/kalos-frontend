@@ -1,5 +1,16 @@
-import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import React, {
+  FC,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  ReactNode,
+} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import HighestIcon from '@material-ui/icons/Block';
+import HighIcon from '@material-ui/icons/ChangeHistory';
+import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
+import LowIcon from '@material-ui/icons/Details';
 import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
@@ -36,6 +47,13 @@ type SearchType = {
 type ExtendedProjectTaskType = ProjectTaskType & {
   startTime: string;
   endTime: string;
+};
+
+const ICONS: { [key: number]: ReactNode } = {
+  1: <LowIcon />,
+  2: <NormalIcon />,
+  3: <HighIcon />,
+  4: <HighestIcon />,
 };
 
 const useStyles = makeStyles(theme => ({}));
@@ -102,6 +120,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       priorities.map(({ id, description }) => ({
         value: id,
         label: description,
+        icon: ICONS[id],
       })),
     [priorities],
   );
