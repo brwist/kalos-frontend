@@ -20,10 +20,10 @@ const SELECT_OPTIONS_PAIRS: Option[] = [
   { label: 'Blue', value: 'blue', color: '#11F' },
 ];
 const SELECT_OPTIONS_ICON: Option[] = [
-  { label: 'Highest', value: 1, icon: <HighestIcon /> },
-  { label: 'High', value: 2, icon: <HighIcon /> },
-  { label: 'Normal', value: 3, icon: <NormalIcon /> },
-  { label: 'Low', value: 4, icon: <LowIcon /> },
+  { label: 'Highest', value: 1, icon: HighestIcon },
+  { label: 'High', value: 2, icon: HighIcon },
+  { label: 'Normal', value: 3, icon: NormalIcon },
+  { label: 'Low', value: 4, icon: LowIcon },
 ];
 
 const EnhancedField = ({

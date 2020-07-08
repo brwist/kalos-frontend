@@ -1,12 +1,13 @@
 import React, {
   ReactElement,
-  ReactNode,
+  FC,
   useCallback,
   useState,
   useEffect,
   useRef,
   CSSProperties,
 } from 'react';
+import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -85,7 +86,7 @@ export type Option = {
   label: string;
   value: string | number;
   color?: string;
-  icon?: ReactNode;
+  icon?: FC<SvgIconProps>;
 };
 
 export type Options = (string | Option)[];
@@ -773,7 +774,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               const color = isStringOption
                 ? undefined
                 : (option as Option).color;
-              const icon = isStringOption ? undefined : (option as Option).icon;
+              const Icon = isStringOption ? undefined : (option as Option).icon;
               return (
                 <MenuItem
                   key={valueOption}
@@ -797,7 +798,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                       style={{ backgroundColor: color }}
                     />
                   )}
-                  {icon && <div className={classes.icon}>{icon}</div>}
+                  {Icon && (
+                    <div className={classes.icon}>
+                      <Icon />
+                    </div>
+                  )}
                   {label}
                 </MenuItem>
               );
