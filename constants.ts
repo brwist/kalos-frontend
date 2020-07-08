@@ -240,6 +240,8 @@ export const MONTHS = [
   'December',
 ];
 
+export const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export default {
   BASE_URL,
   EVENT_STATUS_LIST,

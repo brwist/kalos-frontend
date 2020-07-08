@@ -26,6 +26,7 @@ type Styles = {
   collapsed?: boolean;
   fixedActions?: boolean;
   small?: boolean;
+  sticky?: boolean;
 };
 
 interface Props {
@@ -44,11 +45,12 @@ interface Props {
   checked?: number;
   loading?: boolean;
   uncollapsable?: boolean;
+  sticky?: boolean;
 }
 
 const useStyles = makeStyles(theme => ({
-  wrapper: ({ collapsable, collapsed, small }: Styles) => ({
-    position: 'sticky',
+  wrapper: ({ collapsable, collapsed, small, sticky }: Styles) => ({
+    position: sticky ? 'sticky' : 'relative',
     top: 0,
     zIndex: 1,
     backgroundColor: theme.palette.grey[300],
@@ -147,6 +149,7 @@ export const SectionBar: FC<Props> = ({
   checked,
   loading = false,
   uncollapsable = false,
+  sticky = true,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const classes = useStyles({
@@ -154,6 +157,7 @@ export const SectionBar: FC<Props> = ({
     collapsed,
     fixedActions,
     small,
+    sticky,
   });
   const handleToggleCollapsed = useCallback(
     () => (uncollapsable ? 0 : children ? setCollapsed(!collapsed) : 0),
