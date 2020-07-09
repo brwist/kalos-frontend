@@ -987,7 +987,13 @@ export const loadProjectTasks = async (eventId: number) => {
   const { resultsList } = (
     await EventClientService.loadTasksByEventID(eventId)
   ).toObject();
-  return resultsList;
+  return resultsList.sort((a, b) => {
+    const A = a.startDate;
+    const B = b.startDate;
+    if (A < B) return -1;
+    if (A > B) return 1;
+    return 0;
+  });
 };
 
 export const loadProjectTaskStatuses = async () => {
@@ -1002,6 +1008,12 @@ export const loadProjectTaskPriorities = async () => {
     await TaskClientService.loadTaskPriorityList()
   ).toObject();
   return resultsList;
+};
+
+export const deleteProjectTaskById = async (id: number) => {
+  const req = new ProjectTask();
+  req.setId(id);
+  await TaskClientService.DeleteProjectTask(req);
 };
 
 export const upsertEventTask = async ({
