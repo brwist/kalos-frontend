@@ -1,5 +1,4 @@
-import React, { FC } from 'react';
-import HighestIcon from '@material-ui/icons/Block';
+import React, { FC, useCallback } from 'react';
 import { format, addDays, getDay, getDaysInYear } from 'date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 import { Tooltip } from '../Tooltip';
@@ -26,6 +25,7 @@ type Style = {
 
 interface Props extends Style {
   events: CalendarEvent[];
+  onAdd?: (startDate: string) => void;
 }
 
 const GAP = 1;
@@ -70,6 +70,9 @@ const useStyles = makeStyles(theme => ({
     paddingRight: theme.spacing(),
     marginBottom: theme.spacing(0.5),
   },
+  dayDateValue: {
+    cursor: 'pointer',
+  },
   event: {
     backgroundColor: theme.palette.grey[200],
     marginRight: -GAP,
@@ -87,10 +90,18 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const CalendarEvents: FC<Props> = ({ events, loading }) => {
+export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
   const classes = useStyles({ loading });
   const startDate = new Date('2020-01-01 00:00:00'); // FIXME
   const offset = getDay(startDate);
+  const handleAddClick = useCallback(
+    (startDate: string) => () => {
+      if (onAdd) {
+        onAdd(startDate);
+      }
+    },
+    [onAdd],
+  );
   return (
     <div className={classes.calendar}>
       {[...Array(7)].map((_, idx) => (
@@ -105,8 +116,13 @@ export const CalendarEvents: FC<Props> = ({ events, loading }) => {
         return (
           <div key={idx} className={classes.day}>
             <div className={classes.dayDate}>
-              {format(day, 'd') === '1' && format(day, 'MMMM ')}
-              {format(day, 'd')}
+              <span
+                className={classes.dayDateValue}
+                onClick={handleAddClick(date)}
+              >
+                {format(day, 'd') === '1' && format(day, 'MMMM ')}
+                {format(day, 'd')}
+              </span>
             </div>
             {events
               .filter(
