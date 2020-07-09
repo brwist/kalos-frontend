@@ -16,8 +16,10 @@ import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
-import { PlainForm, Option } from '../PlainForm';
+import { PlainForm } from '../PlainForm';
+import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
+import { ConfirmDelete } from '../ConfirmDelete';
 import { CalendarEvents } from '../CalendarEvents';
 import {
   loadEventById,
@@ -31,6 +33,7 @@ import {
   loadProjectTaskPriorities,
   TaskStatusType,
   TaskPriorityType,
+  deleteProjectTaskById,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 
@@ -59,7 +62,11 @@ export const PROJECT_TASK_PRIORITY_ICONS: {
   4: HighestIcon,
 };
 
-const useStyles = makeStyles(theme => ({}));
+const useStyles = makeStyles(theme => ({
+  btnDelete: {
+    textAlign: 'center',
+  },
+}));
 
 export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const classes = useStyles();
@@ -67,6 +74,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
+  const [pendingDelete, setPendingDelete] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
@@ -104,6 +112,11 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     (editingTask?: ExtendedProjectTaskType) => () =>
       setEditingTask(editingTask),
     [setEditingTask],
+  );
+  const handleSetPendingDelete = useCallback(
+    (pendingDelete?: ExtendedProjectTaskType) => () =>
+      setPendingDelete(pendingDelete),
+    [setPendingDelete],
   );
   const statusOptions = useMemo(
     () =>
@@ -152,6 +165,16 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     },
     [serviceCallId, loggedUserId, setLoaded, setEditingTask, setLoading],
   );
+  const handleDeleteTask = useCallback(async () => {
+    if (pendingDelete) {
+      const { id } = pendingDelete;
+      setPendingDelete(undefined);
+      setEditingTask(undefined);
+      setLoading(true);
+      await deleteProjectTaskById(id);
+      setLoaded(false);
+    }
+  }, [pendingDelete, setPendingDelete]);
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
       {
@@ -333,8 +356,27 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             onClose={handleSetEditing()}
             onSave={handleSaveTask}
             title={`${editingTask.id ? 'Edit' : 'Add'} Task`}
-          />
+          >
+            {editingTask.id > 0 && (
+              <div className={classes.btnDelete}>
+                <Button
+                  variant="outlined"
+                  label="Delete"
+                  onClick={handleSetPendingDelete(editingTask)}
+                />
+              </div>
+            )}
+          </Form>
         </Modal>
+      )}
+      {pendingDelete && (
+        <ConfirmDelete
+          open
+          kind="Task"
+          name={pendingDelete.briefDescription}
+          onClose={handleSetPendingDelete()}
+          onConfirm={handleDeleteTask}
+        />
       )}
     </div>
   );
