@@ -34,6 +34,7 @@ import {
   TaskStatusType,
   TaskPriorityType,
   deleteProjectTaskById,
+  timestamp,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 
@@ -175,6 +176,19 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       setLoaded(false);
     }
   }, [pendingDelete, setPendingDelete]);
+  const handleAddTask = useCallback(
+    (startDate: string) =>
+      setEditingTask({
+        ...new ProjectTask().toObject(),
+        startDate,
+        endDate: startDate,
+        startTime: '09:00',
+        endTime: '10:00',
+        statusId: 1,
+        priorityId: 2,
+      }),
+    [setEditingTask],
+  );
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
       {
@@ -291,8 +305,10 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             label: 'Add Task',
             onClick: handleSetEditing({
               ...new ProjectTask().toObject(),
-              startTime: '00:00',
-              endTime: '00:00',
+              startDate: timestamp(true),
+              endDate: timestamp(true),
+              startTime: '09:00',
+              endTime: '10:00',
               statusId: 1,
               priorityId: 2,
             }),
@@ -347,6 +363,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           };
         })}
         loading={loading}
+        onAdd={handleAddTask}
       />
       {editingTask && (
         <Modal open onClose={handleSetEditing()}>
