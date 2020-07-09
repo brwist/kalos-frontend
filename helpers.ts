@@ -987,12 +987,7 @@ export const loadProjectTasks = async (eventId: number) => {
   const { resultsList } = (
     await EventClientService.loadTasksByEventID(eventId)
   ).toObject();
-  return resultsList.map(({ endDate, ...props }) => ({
-    // TODO del once startDate will be returned
-    ...props,
-    endDate,
-    startDate: endDate.replace('-09', '-06'),
-  }));
+  return resultsList;
 };
 
 export const loadProjectTaskStatuses = async () => {
@@ -1003,18 +998,10 @@ export const loadProjectTaskStatuses = async () => {
 };
 
 export const loadProjectTaskPriorities = async () => {
-  // const { resultsList } = (
-  //   await TaskClientService.loadTaskPriorityList()
-  // ).toObject();
-  // console.log('p', { resultsList });
-  // return resultsList;
-  // FIXME when api will return priorities
-  return [
-    { id: 1, code: 'LOW', description: 'Low' },
-    { id: 2, code: 'NORMAL', description: 'Normal' },
-    { id: 3, code: 'HIGH', description: 'High' },
-    { id: 4, code: 'HIGHEST', description: 'Highest' },
-  ] as TaskPriorityType[];
+  const { resultsList } = (
+    await TaskClientService.loadTaskPriorityList()
+  ).toObject();
+  return resultsList;
 };
 
 export const upsertEventTask = async ({

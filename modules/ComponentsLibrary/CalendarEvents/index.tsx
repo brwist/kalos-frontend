@@ -101,6 +101,7 @@ export const CalendarEvents: FC<Props> = ({ events, loading }) => {
       {[...Array(getDaysInYear(2020) + offset + 1)].map((_, idx) => {
         const day = addDays(startDate, idx - offset);
         const date = format(day, 'yyyy-MM-dd');
+        const weekDay = +format(day, 'i');
         return (
           <div key={idx} className={classes.day}>
             <div className={classes.dayDate}>
@@ -185,7 +186,7 @@ export const CalendarEvents: FC<Props> = ({ events, loading }) => {
                         }}
                         onClick={onClick}
                       >
-                        {startDate === date && (
+                        {(startDate === date || weekDay === 7) && (
                           <>
                             {PriorityIcon && (
                               <PriorityIcon
@@ -198,9 +199,11 @@ export const CalendarEvents: FC<Props> = ({ events, loading }) => {
                               />
                             )}
                             {notes}
-                            <div className={classes.hour}>
-                              {formatTime(startHour, false)}
-                            </div>
+                            {startDate === date && (
+                              <div className={classes.hour}>
+                                {formatTime(startHour, false)}
+                              </div>
+                            )}
                           </>
                         )}
                         {endDate === date && startDate !== endDate && (
