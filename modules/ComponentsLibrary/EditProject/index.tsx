@@ -318,8 +318,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               ...task,
               startDate,
               endDate,
-              startTime: startHour,
-              endTime: endHour,
+              startTime: startHour.substr(0, 5),
+              endTime: endHour.substr(0, 5),
             }),
           };
         })}
