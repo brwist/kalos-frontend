@@ -1,4 +1,5 @@
 import React, { FC, useCallback } from 'react';
+import difference from 'lodash/difference';
 import { format, addDays, getDay, getDaysInYear } from 'date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 import { Tooltip } from '../Tooltip';
@@ -7,6 +8,7 @@ import { formatDate, formatTime } from '../../../helpers';
 import { WEEK_DAYS, PROJECT_TASK_STATUS_COLORS } from '../../../constants';
 
 export type CalendarEvent = {
+  id: number;
   startDate: string;
   startHour: string;
   endDate: string;
@@ -50,7 +52,7 @@ const useStyles = makeStyles(theme => ({
   day: {
     backgroundColor: theme.palette.common.white,
     paddingTop: theme.spacing(),
-    paddingBottom: theme.spacing(),
+    paddingBottom: theme.spacing(0.25),
     minHeight: 100,
   },
   weekDay: {
@@ -102,6 +104,7 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
     },
     [onAdd],
   );
+  let offsets: { [key: number]: number } = {};
   return (
     <div className={classes.calendar}>
       {[...Array(7)].map((_, idx) => (
@@ -113,6 +116,30 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
         const day = addDays(startDate, idx - offset);
         const date = format(day, 'yyyy-MM-dd');
         const weekDay = +format(day, 'i');
+        Object.keys(offsets).forEach(id => {
+          if (
+            !events
+              .filter(
+                ({ startDate, endDate }) =>
+                  startDate <= date && date <= endDate,
+              )
+              .map(({ id }) => id)
+              .includes(+id)
+          ) {
+            delete offsets[+id];
+          }
+        });
+        if (weekDay === 7) {
+          offsets = Object.keys(offsets)
+            .sort((a, b) => {
+              const A = offsets[+a];
+              const B = offsets[+b];
+              if (A < B) return -1;
+              if (A > B) return 1;
+              return 0;
+            })
+            .reduce((aggr, id, idx) => ({ ...aggr, [id]: idx }), {});
+        }
         return (
           <div key={idx} className={classes.day}>
             <div className={classes.dayDate}>
@@ -132,6 +159,7 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
               .map(
                 (
                   {
+                    id,
                     notes,
                     startDate,
                     endDate,
@@ -148,9 +176,19 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
                   const PriorityIcon = priorityId
                     ? PROJECT_TASK_PRIORITY_ICONS[priorityId]
                     : null;
+                  if (startDate === date) {
+                    const min = Math.min(
+                      ...difference(
+                        [...Array(100)].map((_, idx) => idx),
+                        Object.values(offsets).sort(),
+                      ),
+                    );
+                    offsets[id] = Object.keys(offsets).length ? min : 0;
+                  }
+                  const offset = offsets[id] || 0;
                   return (
                     <Tooltip
-                      key={idx}
+                      key={id}
                       content={
                         <>
                           <div>
@@ -199,6 +237,7 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
                             : {}),
                           ...(startDate === date ? { marginLeft: 4 } : {}),
                           ...(endDate === date ? { marginRight: 4 } : {}),
+                          top: offset !== idx ? (offset - idx) * 30 : 0,
                         }}
                         onClick={onClick}
                       >

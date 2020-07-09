@@ -337,6 +337,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       <CalendarEvents
         events={filteredTasks.map(task => {
           const {
+            id,
             briefDescription,
             startDate: dateStart,
             endDate: dateEnd,
@@ -346,6 +347,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           const [startDate, startHour] = dateStart.split(' ');
           const [endDate, endHour] = dateEnd.split(' ');
           return {
+            id,
             startDate,
             endDate,
             startHour,
