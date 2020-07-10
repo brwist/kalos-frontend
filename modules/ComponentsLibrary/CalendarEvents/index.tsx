@@ -87,7 +87,6 @@ const useStyles = makeStyles(theme => ({
     marginBottom: theme.spacing(0.25),
     minHeight: 20,
     position: 'relative',
-    cursor: 'pointer',
   },
   hour: {
     position: 'absolute',
@@ -266,6 +265,7 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
                           ...(startDate === date ? { marginLeft: 4 } : {}),
                           ...(endDate === date ? { marginRight: 4 } : {}),
                           top: offset !== idx ? (offset - idx) * 30 : 0,
+                          cursor: onClick ? 'pointer' : 'default',
                         }}
                         onClick={onClick}
                       >

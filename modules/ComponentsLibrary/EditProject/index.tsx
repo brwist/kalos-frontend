@@ -121,6 +121,10 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
     [departments],
   );
+  const isOwner = useMemo(
+    () => editingTask && editingTask.creatorUserId === loggedUserId,
+    [editingTask, loggedUserId],
+  );
   const statusOptions = useMemo(
     () =>
       statuses.map(({ id, description }) => ({
@@ -160,9 +164,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       await upsertEventTask({
         ...formData,
         eventId: serviceCallId,
-        creatorUserId: loggedUserId,
         startDate: `${startDate} ${startTime}:00`,
         endDate: `${endDate} ${endTime}:00`,
+        ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
       setLoaded(false);
     },
@@ -231,6 +235,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         label: 'Brief Description',
         multiline: true,
         required: true,
+        disabled: !isOwner,
       },
     ],
     [
@@ -239,12 +244,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         label: 'Start Date',
         type: 'date',
         required: true,
+        disabled: !isOwner,
       },
       {
         name: 'startTime',
         label: 'Start Time',
         type: 'time',
         required: true,
+        disabled: !isOwner,
       },
     ],
     [
@@ -253,12 +260,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         label: 'End Date',
         type: 'date',
         required: true,
+        disabled: !isOwner,
       },
       {
         name: 'endTime',
         label: 'End Time',
         type: 'time',
         required: true,
+        disabled: !isOwner,
       },
     ],
     [
@@ -267,6 +276,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         label: 'Status',
         required: true,
         options: statusOptions,
+        disabled: !isOwner,
       },
     ],
     [
@@ -275,6 +285,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         label: 'Priority',
         required: true,
         options: priorityOptions,
+        disabled: !isOwner,
       },
     ],
   ];
@@ -349,6 +360,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             priority,
             priorityId,
             ownerName,
+            creatorUserId,
           } = task;
           const [startDate, startHour] = dateStart.split(' ');
           const [endDate, endHour] = dateEnd.split(' ');
@@ -366,13 +378,16 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               ?.description,
             priorityId,
             assignee: ownerName,
-            onClick: handleSetEditing({
-              ...task,
-              startDate,
-              endDate,
-              startTime: startHour.substr(0, 5),
-              endTime: endHour.substr(0, 5),
-            }),
+            onClick:
+              creatorUserId === loggedUserId || isAnyManager
+                ? handleSetEditing({
+                    ...task,
+                    startDate,
+                    endDate,
+                    startTime: startHour.substr(0, 5),
+                    endTime: endHour.substr(0, 5),
+                  })
+                : undefined,
           };
         })}
         loading={loading}
@@ -387,7 +402,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             onSave={handleSaveTask}
             title={`${editingTask.id ? 'Edit' : 'Add'} Task`}
           >
-            {editingTask.id > 0 && (
+            {editingTask.id > 0 && editingTask.creatorUserId === loggedUserId && (
               <div className={classes.btnDelete}>
                 <Button
                   variant="outlined"
