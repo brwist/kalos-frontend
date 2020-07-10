@@ -92,6 +92,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [errorProject, setErrorProject] = useState<string>('');
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     statusId: 0,
@@ -227,13 +228,42 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const handleSaveProject = useCallback(
     async (formData: EventType) => {
       if (event) {
+        setErrorProject('');
+        if (
+          formData.dateEnded.substr(0, 10) < formData.dateStarted.substr(0, 10)
+        ) {
+          setErrorProject('Start Date cannot be after End date.');
+          return;
+        }
+        if (
+          tasks.some(
+            ({ startDate }) =>
+              startDate.substr(0, 10) < formData.dateStarted.substr(0, 10),
+          )
+        ) {
+          setErrorProject(
+            'Some existing tasks are already defined before new project Start Date.',
+          );
+          return;
+        }
+        if (
+          tasks.some(
+            ({ endDate }) =>
+              endDate.substr(0, 10) > formData.dateEnded.substr(0, 10),
+          )
+        ) {
+          setErrorProject(
+            'Some existing tasks are already defined after new project End Date.',
+          );
+          return;
+        }
         setEditingProject(false);
         setLoadingEvent(true);
         await upsertEvent({ ...formData, id: event.id });
         loadEvent();
       }
     },
-    [event, loadEvent, setEditingProject, setLoadingEvent],
+    [event, loadEvent, setEditingProject, setLoadingEvent, tasks],
   );
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
@@ -486,6 +516,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             onSave={handleSaveProject}
             schema={SCHEMA_PROJECT}
             data={event}
+            error={errorProject}
           />
         </Modal>
       )}
