@@ -57,6 +57,9 @@ const useStyles = makeStyles(theme => ({
     paddingBottom: theme.spacing(0.25),
     minHeight: 100,
   },
+  weekendDay: {
+    backgroundColor: theme.palette.grey[50],
+  },
   weekDay: {
     padding: theme.spacing(),
     textAlign: 'right',
@@ -150,7 +153,12 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
             .reduce((aggr, id, idx) => ({ ...aggr, [id]: idx }), {});
         }
         return (
-          <div key={idx} className={classes.day}>
+          <div
+            key={idx}
+            className={
+              classes.day + ' ' + (weekDay >= 6 ? classes.weekendDay : '')
+            }
+          >
             <div className={classes.dayDate}>
               <span
                 className={classes.dayDateValue}
