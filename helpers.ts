@@ -1070,18 +1070,6 @@ export const upsertEventTask = async ({
     fieldMaskList.push('PriorityId');
   }
   req.setFieldMaskList(fieldMaskList);
-  console.log({
-    id,
-    eventId,
-    externalId,
-    briefDescription,
-    creatorUserId,
-    statusId,
-    startDate,
-    endDate,
-    priorityId,
-    req,
-  });
   await TaskClientService[id ? 'UpdateProjectTask' : 'CreateProjectTask'](req);
 };
 
