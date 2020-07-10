@@ -27,7 +27,6 @@ import {
   TaskStatusType,
   TaskPriorityType,
   deleteProjectTaskById,
-  timestamp,
   loadTimesheetDepartments,
   TimesheetDepartmentType,
   upsertEvent,
@@ -146,7 +145,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     [departments],
   );
   const isOwner = useMemo(
-    () => editingTask && editingTask.creatorUserId === loggedUserId,
+    () =>
+      editingTask &&
+      (editingTask.creatorUserId === loggedUserId || !editingTask.id),
     [editingTask, loggedUserId],
   );
   const statusOptions = useMemo(
@@ -367,8 +368,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             label: 'Add Task',
             onClick: handleSetEditing({
               ...new ProjectTask().toObject(),
-              startDate: timestamp(true),
-              endDate: timestamp(true),
+              startDate: event ? event.dateStarted.substr(0, 10) : '',
+              endDate: event ? event.dateStarted.substr(0, 10) : '',
               startTime: '09:00',
               endTime: '10:00',
               statusId: 1,
@@ -398,51 +399,55 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         onChange={setSearch}
         disabled={loading || loadingEvent}
       />
-      <CalendarEvents
-        events={filteredTasks.map(task => {
-          const {
-            id,
-            briefDescription,
-            startDate: dateStart,
-            endDate: dateEnd,
-            status,
-            statusId,
-            priority,
-            priorityId,
-            ownerName,
-            creatorUserId,
-          } = task;
-          const [startDate, startHour] = dateStart.split(' ');
-          const [endDate, endHour] = dateEnd.split(' ');
-          return {
-            id,
-            startDate,
-            endDate,
-            startHour,
-            endHour,
-            notes: briefDescription,
-            status: statuses.find(({ id }) => id === statusId)?.description,
-            statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-            statusId,
-            priority: priorities.find(({ id }) => id === priorityId)
-              ?.description,
-            priorityId,
-            assignee: ownerName,
-            onClick:
-              creatorUserId === loggedUserId || isAnyManager
-                ? handleSetEditing({
-                    ...task,
-                    startDate,
-                    endDate,
-                    startTime: startHour.substr(0, 5),
-                    endTime: endHour.substr(0, 5),
-                  })
-                : undefined,
-          };
-        })}
-        loading={loading || loadingEvent}
-        onAdd={handleAddTask}
-      />
+      {event && (
+        <CalendarEvents
+          events={filteredTasks.map(task => {
+            const {
+              id,
+              briefDescription,
+              startDate: dateStart,
+              endDate: dateEnd,
+              status,
+              statusId,
+              priority,
+              priorityId,
+              ownerName,
+              creatorUserId,
+            } = task;
+            const [startDate, startHour] = dateStart.split(' ');
+            const [endDate, endHour] = dateEnd.split(' ');
+            return {
+              id,
+              startDate,
+              endDate,
+              startHour,
+              endHour,
+              notes: briefDescription,
+              status: statuses.find(({ id }) => id === statusId)?.description,
+              statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
+              statusId,
+              priority: priorities.find(({ id }) => id === priorityId)
+                ?.description,
+              priorityId,
+              assignee: ownerName,
+              onClick:
+                creatorUserId === loggedUserId || isAnyManager
+                  ? handleSetEditing({
+                      ...task,
+                      startDate,
+                      endDate,
+                      startTime: startHour.substr(0, 5),
+                      endTime: endHour.substr(0, 5),
+                    })
+                  : undefined,
+            };
+          })}
+          startDate={event.dateStarted.substr(0, 10)}
+          endDate={event.dateEnded.substr(0, 10)}
+          loading={loading || loadingEvent}
+          onAdd={handleAddTask}
+        />
+      )}
       {editingTask && (
         <Modal open onClose={handleSetEditing()}>
           <Form
