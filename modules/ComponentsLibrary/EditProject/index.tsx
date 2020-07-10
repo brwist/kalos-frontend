@@ -33,7 +33,7 @@ import {
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 
-interface Props {
+export interface Props {
   serviceCallId: number;
   loggedUserId: number;
 }
@@ -339,7 +339,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         name: 'briefDescription',
         label: 'Brief Description',
         multiline: true,
-        required: true,
+        required: !isAnyManager,
         disabled: !isOwner,
       },
     ],
