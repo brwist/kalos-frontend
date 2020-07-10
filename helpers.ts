@@ -2324,6 +2324,26 @@ export const saveUser = async (data: UserType, userId?: number) => {
   return await UserClientService[userId ? 'Update' : 'Create'](req);
 };
 
+export const upsertEvent = async (data: Partial<EventType>) => {
+  const req = new Event();
+  const fieldMaskList = [];
+  if (data.id) {
+    req.setDateUpdated(timestamp());
+    fieldMaskList.push('DateUpdated');
+  } else {
+    req.setDateCreated(timestamp());
+    fieldMaskList.push('DateCreated');
+  }
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return await EventClientService[data.id ? 'Update' : 'Create'](req);
+};
+
 export const deleteEventById = async (id: number) => {
   const req = new Event();
   req.setId(id);
