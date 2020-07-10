@@ -98,14 +98,27 @@ const useStyles = makeStyles(theme => ({
     marginRight: -GAP,
     padding: theme.spacing(0.5),
     marginBottom: theme.spacing(0.25),
-    minHeight: 20,
+    height: 20,
     position: 'relative',
+    display: 'flex',
+  },
+  eventDesc: {
+    height: 20,
+    flexGrow: 1,
+    display: 'flex',
+    alignItems: 'center',
+    width: 1,
+  },
+  eventName: {
+    height: 20,
+    flexGrow: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   hour: {
-    position: 'absolute',
-    top: theme.spacing(0.5),
-    right: theme.spacing(0.5),
     opacity: 0.5,
+    whiteSpace: 'nowrap',
   },
   status: {
     marginTop: theme.spacing(-0.5),
@@ -124,8 +137,8 @@ export const CalendarEvents: FC<Props> = ({
   onAdd,
 }) => {
   const classes = useStyles({ loading });
-  const startDate = new Date(`${dateStart} 00:00:00`);
-  const endDate = new Date(`${dateEnd} 00:00:00`);
+  const startDate = new Date(`${dateStart}T00:00:00`);
+  const endDate = new Date(`${dateEnd}T00:00:00`);
   const totalDays = differenceInDays(endDate, startDate);
   const offsetStart = getDay(startDate);
   const offsetEnd = 6 - getDay(endDate);
@@ -293,31 +306,31 @@ export const CalendarEvents: FC<Props> = ({
                         }}
                         onClick={onClick}
                       >
-                        {(startDate === date || weekDay === 7) && (
-                          <>
-                            {PriorityIcon && (
-                              <PriorityIcon
-                                style={{
-                                  fontSize: 16,
-                                  marginRight: 4,
-                                  verticalAlign: 'middle',
-                                  display: 'inline-flex',
-                                }}
-                              />
-                            )}
-                            {notes}
-                            {startDate === date && (
-                              <div className={classes.hour}>
-                                {formatTime(startHour, false)}
-                              </div>
-                            )}
-                          </>
-                        )}
-                        {endDate === date && startDate !== endDate && (
-                          <div className={classes.hour}>
-                            ends {formatTime(endHour, false)}
-                          </div>
-                        )}
+                        <div className={classes.eventDesc}>
+                          {(startDate === date || weekDay === 7) && (
+                            <>
+                              {PriorityIcon && (
+                                <PriorityIcon
+                                  style={{
+                                    fontSize: 16,
+                                    marginRight: 4,
+                                    verticalAlign: 'middle',
+                                    display: 'inline-flex',
+                                  }}
+                                />
+                              )}
+                              <span className={classes.eventName}>{notes}</span>
+                            </>
+                          )}
+                        </div>
+                        <div className={classes.hour}>
+                          {startDate === date && (
+                            <span>{formatTime(startHour, false)}</span>
+                          )}
+                          {endDate === date && startDate !== endDate && (
+                            <span>ends {formatTime(endHour, false)}</span>
+                          )}
+                        </div>
                       </div>
                     </Tooltip>
                   );
