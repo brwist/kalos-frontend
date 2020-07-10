@@ -193,7 +193,7 @@ function mainTemplate(title) {
 }
 function indexTemplate(title) {
     title = titleCase(title);
-    return ("\nimport React from 'react'\nimport ReactDOM from 'react-dom'\nimport { " + title + " } from './main'\n\nReactDOM.render(<" + title + " userID={8418} />, document.getElementById('root'))\n").replace('\n', '');
+    return ("\nimport React from 'react'\nimport ReactDOM from 'react-dom'\nimport { " + title + " } from './main'\nimport { UserClient } from '@kalos-core/kalos-rpc/User'\nimport { ENDPOINT } from '../../constants'\n\nconst u = new UserClient(ENDPOINT)\n\nu.GetToken('test','test').then(() => {\n  ReactDOM.render(<" + title + " userID={8418} />, document.getElementById('root'))\n})\n").replace('\n', '');
 }
 function cfmTemplate(title) {
     title = titleCase(title);
@@ -388,6 +388,28 @@ function upload() {
                 case 3: return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
                 case 4:
                     _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function cloneModule() {
+    return __awaiter(this, void 0, void 0, function () {
+        var target, err_6;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 1, , 3]);
+                    target = titleCase(process.argv[4].replace(/-/g, ''));
+                    return [3 /*break*/, 3];
+                case 1:
+                    err_6 = _a.sent();
+                    return [4 /*yield*/, getBranch()];
+                case 2:
+                    target = target = (_a.sent()).replace(/\n/g, '');
+                    return [3 /*break*/, 3];
+                case 3:
+                    sh.cp("modules");
                     return [2 /*return*/];
             }
         });
@@ -697,6 +719,9 @@ var NAMED_EXPORTS = {
         'TaskStatus',
         'SpiffDuplicate',
         'SpiffTypeList',
+        'ProjectTask',
+        'ProjectTaskList',
+        'TaskPriority',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/metrics_pb.js': [
         'MetricsClient',
