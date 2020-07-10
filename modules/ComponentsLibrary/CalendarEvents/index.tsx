@@ -15,9 +15,11 @@ export type CalendarEvent = {
   endHour: string;
   notes: string;
   status?: string;
+  statusColor?: string;
   statusId?: number;
   priority?: string;
   priorityId?: number;
+  assignee?: string;
   onClick?: () => void;
 };
 
@@ -89,6 +91,13 @@ const useStyles = makeStyles(theme => ({
     top: theme.spacing(0.5),
     right: theme.spacing(0.5),
     opacity: 0.5,
+  },
+  status: {
+    marginTop: theme.spacing(-0.5),
+    marginBottom: theme.spacing(-0.5),
+    marginLeft: theme.spacing(-1),
+    marginRight: theme.spacing(-1),
+    padding: theme.spacing(),
   },
 }));
 
@@ -167,8 +176,10 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
                     endHour,
                     status,
                     statusId,
+                    statusColor,
                     priorityId,
                     priority,
+                    assignee,
                     onClick,
                   },
                   idx,
@@ -190,7 +201,16 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
                     <Tooltip
                       key={id}
                       content={
-                        <>
+                        <div
+                          className={classes.status}
+                          style={{ backgroundColor: statusColor }}
+                        >
+                          {assignee && (
+                            <div>
+                              <strong>Assigned Employee: </strong>
+                              {assignee}
+                            </div>
+                          )}
                           <div>
                             <strong>Brief Description: </strong>
                             {notes}
@@ -221,7 +241,7 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
                             )}
                             {priority}
                           </div>
-                        </>
+                        </div>
                       }
                       placement="bottom"
                       maxWidth={300}
