@@ -502,7 +502,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         )}
         style={style}
       >
-        <InputLabel shrink>{inputLabel}</InputLabel>
+        <InputLabel shrink disabled={disabled}>
+          {inputLabel}
+        </InputLabel>
         <div className={classes.hour}>
           <Field
             name={`${name}_hour`}
@@ -523,6 +525,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             ]}
             onChange={hour => handleTimeChange(hour, minutes, ampm)}
             style={{ width: 'calc(100% / 3' }}
+            disabled={disabled}
           />
           <Field
             name={`${name}_minutes`}
@@ -532,6 +535,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               handleTimeChange(trailingZero(hour), minutes, ampm)
             }
             style={{ width: 'calc(100% / 3' }}
+            disabled={disabled}
           />
           <Field
             name={`${name}_ampm`}
@@ -541,6 +545,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               handleTimeChange(trailingZero(hour), minutes, ampm)
             }
             style={{ width: 'calc(100% / 3' }}
+            disabled={disabled}
           />
         </div>
       </div>
@@ -623,7 +628,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         : ids
             .map(id => {
               const technician = technicians.find(item => item.id === id);
-              if (!technician) return '...';
+              if (!technician) return 'Loading...';
               const { firstname, lastname } = technician;
               return `${firstname} ${lastname}`;
             })
