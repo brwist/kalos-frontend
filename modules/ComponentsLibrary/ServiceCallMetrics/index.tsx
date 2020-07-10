@@ -97,7 +97,7 @@ const COLUMNS_USER_INFORMATION = EXPORT_COLUMNS_USER_INFORMATION.map(
 
 export const ServiceCallMetrics: FC<Props> = ({ week, onClose }) => {
   const [dateStarted, setDateStarted] = useState<Date>(
-    new Date(`${week} 00:00:00`),
+    new Date(`${week}T00:00:00`),
   );
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);

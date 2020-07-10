@@ -38,7 +38,7 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
     }
   }, [loaded, setLoaded, load]);
   const subtitle = useMemo(
-    () => format(new Date(`${month.replace('%', '01')} 00:00:00`), 'MMMM yyyy'),
+    () => format(new Date(`${month.replace('%', '01')}T00:00:00`), 'MMMM yyyy'),
     [month],
   );
   return (
