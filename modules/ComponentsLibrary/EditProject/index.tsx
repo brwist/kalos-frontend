@@ -93,6 +93,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [errorProject, setErrorProject] = useState<string>('');
+  const [errorTask, setErrorTask] = useState<string>('');
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     statusId: 0,
@@ -132,8 +133,10 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     }
   }, [loadedInit, loadInit, loaded, setLoaded, load]);
   const handleSetEditing = useCallback(
-    (editingTask?: ExtendedProjectTaskType) => () =>
-      setEditingTask(editingTask),
+    (editingTask?: ExtendedProjectTaskType) => () => {
+      setErrorTask('');
+      setEditingTask(editingTask);
+    },
     [setEditingTask],
   );
   const handleSetPendingDelete = useCallback(
@@ -185,6 +188,21 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       endTime,
       ...formData
     }: ExtendedProjectTaskType) => {
+      if (!event) return;
+      if (startDate > endDate) {
+        setErrorTask('Start Date cannot be after End Date.');
+        return;
+      }
+      if (event.dateStarted.substr(0, 10) > startDate) {
+        setErrorTask(
+          "Task's Start Date cannot be before Project's Start Date.",
+        );
+        return;
+      }
+      if (event.dateEnded.substr(0, 10) < endDate) {
+        setErrorTask("Task's End Date cannot be after Project's End Date.");
+        return;
+      }
       setEditingTask(undefined);
       setLoading(true);
       await upsertEventTask({
@@ -196,7 +214,15 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       });
       setLoaded(false);
     },
-    [serviceCallId, loggedUserId, setLoaded, setEditingTask, setLoading],
+    [
+      event,
+      serviceCallId,
+      loggedUserId,
+      setLoaded,
+      setEditingTask,
+      setLoading,
+      setErrorTask,
+    ],
   );
   const handleDeleteTask = useCallback(async () => {
     if (pendingDelete) {
@@ -222,13 +248,15 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     [setEditingTask],
   );
   const handleSetEditingProject = useCallback(
-    (editingProject: boolean) => () => setEditingProject(editingProject),
+    (editingProject: boolean) => () => {
+      setErrorProject('');
+      setEditingProject(editingProject);
+    },
     [setEditingProject],
   );
   const handleSaveProject = useCallback(
     async (formData: EventType) => {
       if (event) {
-        setErrorProject('');
         if (
           formData.dateEnded.substr(0, 10) < formData.dateStarted.substr(0, 10)
         ) {
@@ -263,7 +291,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         loadEvent();
       }
     },
-    [event, loadEvent, setEditingProject, setLoadingEvent, tasks],
+    [
+      event,
+      loadEvent,
+      setEditingProject,
+      setLoadingEvent,
+      tasks,
+      setErrorProject,
+    ],
   );
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
@@ -486,6 +521,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             onClose={handleSetEditing()}
             onSave={handleSaveTask}
             title={`${editingTask.id ? 'Edit' : 'Add'} Task`}
+            error={errorTask}
           >
             {editingTask.id > 0 && editingTask.creatorUserId === loggedUserId && (
               <div className={classes.btnDelete}>
