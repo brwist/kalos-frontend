@@ -30,6 +30,7 @@ import {
   timestamp,
   loadTimesheetDepartments,
   TimesheetDepartmentType,
+  upsertEvent,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 
@@ -58,6 +59,22 @@ export const PROJECT_TASK_PRIORITY_ICONS: {
   4: HighestIcon,
 };
 
+const SCHEMA_PROJECT: Schema<EventType> = [
+  [
+    {
+      name: 'dateStarted',
+      label: 'Start Date',
+      type: 'date',
+    },
+
+    {
+      name: 'dateEnded',
+      label: 'End Date',
+      type: 'date',
+    },
+  ],
+];
+
 const useStyles = makeStyles(theme => ({
   btnDelete: {
     textAlign: 'center',
@@ -66,7 +83,8 @@ const useStyles = makeStyles(theme => ({
 
 export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const classes = useStyles();
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
@@ -81,17 +99,23 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     priorityId: 0,
   });
   const [event, setEvent] = useState<EventType>();
-  const loadInit = useCallback(async () => {
+  const [editingProject, setEditingProject] = useState<boolean>(false);
+  const loadEvent = useCallback(async () => {
+    setLoadingEvent(true);
     const event = await loadEventById(serviceCallId);
+    setEvent(event);
+    setLoadingEvent(false);
+  }, [setEvent, setLoadingEvent]);
+  const loadInit = useCallback(async () => {
+    await loadEvent();
     const statuses = await loadProjectTaskStatuses();
     const priorities = await loadProjectTaskPriorities();
     const departments = await loadTimesheetDepartments();
-    setEvent(event);
     setStatuses(statuses);
     setPriorities(priorities);
     setDepartments(departments);
     setLoadedInit(true);
-  }, [setEvent, setStatuses, setPriorities, setDepartments, setLoadedInit]);
+  }, [loadEvent, setStatuses, setPriorities, setDepartments, setLoadedInit]);
   const load = useCallback(async () => {
     setLoading(true);
     const tasks = await loadProjectTasks(serviceCallId);
@@ -194,6 +218,21 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         priorityId: 2,
       }),
     [setEditingTask],
+  );
+  const handleSetEditingProject = useCallback(
+    (editingProject: boolean) => () => setEditingProject(editingProject),
+    [setEditingProject],
+  );
+  const handleSaveProject = useCallback(
+    async (formData: EventType) => {
+      if (event) {
+        setEditingProject(false);
+        setLoadingEvent(true);
+        await upsertEvent({ ...formData, id: event.id });
+        loadEvent();
+      }
+    },
+    [event, loadEvent, setEditingProject, setLoadingEvent],
   );
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
@@ -303,7 +342,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       <SectionBar
         title="Project Management"
         footer={
-          event ? (
+          event && !loadingEvent ? (
             <>
               <div>Address: {getPropertyAddress(event.property)}</div>
               <div>Start date: {formatDate(event.dateStarted)}</div>
@@ -315,6 +354,15 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           )
         }
         actions={[
+          ...(isAnyManager
+            ? [
+                {
+                  label: 'Edit Project',
+                  onClick: handleSetEditingProject(true),
+                  disabled: loading || loadingEvent,
+                },
+              ]
+            : []),
           {
             label: 'Add Task',
             onClick: handleSetEditing({
@@ -326,13 +374,15 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               statusId: 1,
               priorityId: 2,
             }),
-            disabled: loading,
+            disabled: loading || loadingEvent,
           },
         ]}
-        fixedActions
         asideContent={
           <PrintPage
-            buttonProps={{ label: 'Print Cost Report', disabled: loading }}
+            buttonProps={{
+              label: 'Print Cost Report',
+              disabled: loading || loadingEvent,
+            }}
             downloadLabel="Download Cost Report"
             downloadPdfFilename="Cost-Report"
           >
@@ -346,7 +396,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         schema={SCHEMA_SEARCH}
         data={search}
         onChange={setSearch}
-        disabled={loading}
+        disabled={loading || loadingEvent}
       />
       <CalendarEvents
         events={filteredTasks.map(task => {
@@ -390,7 +440,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
                 : undefined,
           };
         })}
-        loading={loading}
+        loading={loading || loadingEvent}
         onAdd={handleAddTask}
       />
       {editingTask && (
@@ -422,6 +472,17 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           onClose={handleSetPendingDelete()}
           onConfirm={handleDeleteTask}
         />
+      )}
+      {editingProject && event && (
+        <Modal open onClose={handleSetEditingProject(false)}>
+          <Form
+            title="Edit Project"
+            onClose={handleSetEditingProject(false)}
+            onSave={handleSaveProject}
+            schema={SCHEMA_PROJECT}
+            data={event}
+          />
+        </Modal>
       )}
     </div>
   );
