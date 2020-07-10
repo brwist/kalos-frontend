@@ -19,18 +19,15 @@ import BugReportIcon from '@material-ui/icons/BugReport';
 import { cfURL } from '../../helpers';
 import React from 'react';
 
-const spiffLog = (userId: number) => cfURL(
-  'tasks.spiff_tool_logs',
-  `&rt=all&type=spiff&reportUserId=${userId}`,
-);
-const toolLog = (userId: number) => cfURL(
-  'tasks.spiff_tool_logs',
-  `&rt=all&type=tool&reportUserId=${userId}`,
-);
-const timesheet = (userId: number) => cfURL(
-  'timesheet.timesheetview',
-  `&user_id=${userId}&timesheetAction=cardview`,
-);
+const spiffLog = (userId: number) =>
+  cfURL('tasks.spiff_tool_logs', `&rt=all&type=spiff&reportUserId=${userId}`);
+const toolLog = (userId: number) =>
+  cfURL('tasks.spiff_tool_logs', `&rt=all&type=tool&reportUserId=${userId}`);
+const timesheet = (userId: number) =>
+  cfURL(
+    'timesheet.timesheetview',
+    `&user_id=${userId}&timesheetAction=cardview`,
+  );
 const employees = cfURL('user.employee');
 const search = cfURL('search.index');
 const calendar = cfURL('service.calendar');
@@ -43,6 +40,7 @@ const serviceBilling = cfURL('service.callsPending');
 const profile = cfURL('account.editinformation');
 const txnAdmin = cfURL('reports.transaction_admin');
 const txnUser = cfURL('reports.transactions');
+const perdiem = cfURL('reports.perdiem');
 
 export const employeeItems = [
   {
@@ -55,46 +53,45 @@ export const employeeItems = [
     href: calendar,
     icon: <CalendarTodaySharp />,
   },
-   {
+  {
     title: 'Service Call Search',
     href: serviceCalls,
     icon: <EventSharp />,
   },
-   {
+  {
     title: 'Spiff Log',
     href: (userId: number) => spiffLog(userId),
     icon: <MoneySharp />,
   },
-   {
+  {
     title: 'Tool Log',
     href: (userId: number) => toolLog(userId),
     icon: <AttachMoneySharp />,
   },
-   {
+  {
     title: 'Per Diem',
-    href: 'https://www.kalosflorida.com/OT',
+    href: perdiem,
     icon: <PerDiemIcon />,
-    target: '_blank',
   },
-   {
+  {
     title: 'Timesheet',
     href: (userId: number) => timesheet(userId),
     icon: <AccessTimeIcon />,
   },
-   {
+  {
     title: 'Receipts',
     href: txnUser,
     icon: <ReceiptIcon />,
   },
   {
-    type: 'divider'
+    type: 'divider',
   },
-   {
+  {
     title: 'Employee Directory',
     href: employees,
     icon: <PersonSharp />,
   },
-   {
+  {
     title: 'Customer Directory',
     href: search,
     icon: <SearchSharp />,
@@ -139,7 +136,7 @@ export const managerItems = [
 
 export const commonItems = [
   {
-    type: 'divider'
+    type: 'divider',
   },
   {
     title: 'Account Info',
@@ -149,7 +146,7 @@ export const commonItems = [
   {
     button: true,
     title: 'Report a Bug',
-    icon: <BugReportIcon />
+    icon: <BugReportIcon />,
   },
   {
     title: 'Logout',

@@ -533,6 +533,12 @@ var NAMED_EXPORTS = {
         'Map',
         'Repeat',
     ],
+    'node_modules/@kalos-core/kalos-rpc/compiled-protos/reports_pb.js': [
+        'SpiffReport',
+        'SpiffReportLine',
+        'PromptPaymentReport',
+        'PromptPaymentReportLine',
+    ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/internal_document_pb.js': [
         'InternalDocument',
         'InternalDocumentList',
@@ -708,6 +714,7 @@ var NAMED_EXPORTS = {
         'PerDiemList',
         'PerDiemRow',
         'PerDiemRowList',
+        'PerDiemReportRequest',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/pdf_pb.js': ['HTML'],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_event_pb.js': [
