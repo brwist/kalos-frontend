@@ -1,6 +1,7 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Alert from '@material-ui/lab/Alert';
+import { Alert as AlertPopup } from '../Alert';
 import sortBy from 'lodash/sortBy';
 import { startOfWeek, format, addDays } from 'date-fns';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
@@ -47,7 +48,7 @@ export interface Props {
   perDiem?: PerDiemType;
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   department: {
     marginTop: theme.spacing(),
   },
@@ -446,7 +447,7 @@ export const PerDiemComponent: FC<Props> = ({
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
       .filter(({ id }) => !usedDepartments.includes(id))
-      .map(d => ({
+      .map((d) => ({
         value: d.id,
         label: getDepartmentName(d),
       }));
@@ -600,7 +601,7 @@ export const PerDiemComponent: FC<Props> = ({
         </Alert>
       )}
       {!loading &&
-        filteredPerDiems.map(entry => {
+        filteredPerDiems.map((entry) => {
           const {
             id,
             rowsList,
@@ -731,7 +732,7 @@ export const PerDiemComponent: FC<Props> = ({
                           isPerDiemRowUndefined &&
                           !perDiem && (
                             <Button
-                              label="Add Per Diem Row"
+                              label="Add Per Diem Day"
                               compact
                               variant="text"
                               fullWidth
@@ -743,7 +744,7 @@ export const PerDiemComponent: FC<Props> = ({
                               disabled={loading || saving}
                             />
                           )}
-                        {rows.map(entry => {
+                        {rows.map((entry) => {
                           const {
                             id,
                             notes,
@@ -870,7 +871,18 @@ export const PerDiemComponent: FC<Props> = ({
           name=""
         />
       )}
-      {pendingPerDiemSubmit && (
+      {pendingPerDiemSubmit && pendingPerDiemSubmit.rowsList.length == 0 && (
+        <AlertPopup
+          open
+          onClose={handlePendingPerDiemSubmitToggle(undefined)}
+          title="Error"
+          label="Okay"
+        >
+          Empty per diems are not valid. Please add details to each day that you
+          are requesting per diems for by clicking the ADD PER DIEM DAY button.
+        </AlertPopup>
+      )}
+      {pendingPerDiemSubmit && pendingPerDiemSubmit.rowsList.length > 0 && (
         <Confirm
           open
           onClose={handlePendingPerDiemSubmitToggle(undefined)}

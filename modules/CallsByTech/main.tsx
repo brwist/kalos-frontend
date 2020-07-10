@@ -1,9 +1,7 @@
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import NativeSelect from '@material-ui/core/NativeSelect';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
+import { EmployeePicker } from '../Pickers';
 import DateFnsUtils from '@date-io/date-fns';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
@@ -49,9 +47,9 @@ export class CallsByTech extends React.PureComponent<{}, state> {
   }
 
   toggleLoading(): Promise<boolean> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.setState(
-        prevState => ({
+        (prevState) => ({
           isLoading: !prevState.isLoading,
         }),
         () => resolve(true),
@@ -75,8 +73,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
     }
   }
 
-  handleEmployeeSelect(e: React.SyntheticEvent<HTMLSelectElement>) {
-    const id = parseInt(e.currentTarget.value);
+  handleEmployeeSelect(id: number) {
     if (id) {
       this.setState(
         {
@@ -130,7 +127,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
     reqObj.setPageNumber(page);
     const res = (await this.UserClient.BatchGet(reqObj)).toObject();
     this.setState(
-      prevState => ({
+      (prevState) => ({
         employees: prevState.employees.concat(res.resultsList),
       }),
       async () => {
@@ -145,7 +142,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
   }
 
   clearCalls() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.setState(
         {
           calls: [],
@@ -165,7 +162,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
     reqObj.setLogTechnicianAssigned(`%${this.state.selectedID}%`);
     const res = (await this.EventClient.BatchGet(reqObj)).toObject();
     this.setState(
-      prevState => ({
+      (prevState) => ({
         calls: prevState.calls.concat(res.resultsList),
       }),
       async () => {
@@ -179,10 +176,23 @@ export class CallsByTech extends React.PureComponent<{}, state> {
     );
   }
 
+  sortUsersAlphabetically(a: User.AsObject, b: User.AsObject) {
+    return a.lastname.charCodeAt(0) - b.lastname.charCodeAt(0);
+  }
+
+  renderItem(emp: User.AsObject) {
+    return (
+      <option
+        key={`${emp.id}-${emp.lastname}`}
+        value={emp.id}
+      >{`${emp.lastname}, ${emp.firstname}`}</option>
+    );
+  }
+
   async componentDidMount() {
-    await this.toggleLoading();
+    //await this.toggleLoading();
     await this.UserClient.GetToken('test', 'test');
-    await this.fetchAllEmployees();
+    //await this.fetchAllEmployees();
   }
 
   render() {
@@ -196,7 +206,14 @@ export class CallsByTech extends React.PureComponent<{}, state> {
           justify="space-evenly"
         >
           <Typography>Service Calls by Employee</Typography>
-          <FormControl>
+          <EmployeePicker
+            selected={this.state.selectedID}
+            renderItem={this.renderItem}
+            sort={this.sortUsersAlphabetically}
+            onSelect={this.handleEmployeeSelect}
+            disabled={this.state.isLoading}
+          />
+          {/*<FormControl>
             <InputLabel htmlFor="employee-select">Employee</InputLabel>
             <NativeSelect
               value={this.state.selectedID}
@@ -209,14 +226,14 @@ export class CallsByTech extends React.PureComponent<{}, state> {
                 .sort(
                   (a, b) => a.lastname.charCodeAt(0) - b.lastname.charCodeAt(0),
                 )
-                .map(emp => (
+                .map((emp) => (
                   <option
                     key={`${emp.id}-${emp.lastname}`}
                     value={emp.id}
                   >{`${emp.lastname}, ${emp.firstname}`}</option>
                 ))}
             </NativeSelect>
-          </FormControl>
+                </FormControl>*/}
           <MuiPickersUtilsProvider utils={DateFnsUtils}>
             <DatePicker
               format="MM/dd/yyyy"
@@ -246,7 +263,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
           <TableBody>
             {this.state.calls
               .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
-              .map(c => (
+              .map((c) => (
                 <TableRow
                   hover
                   onClick={() => {

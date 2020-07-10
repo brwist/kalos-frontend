@@ -12,6 +12,7 @@ import {
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { ENDPOINT } from '../../constants';
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 
 interface props<R, T> {
   selected: number;
@@ -83,6 +84,7 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
 
   async fetchData() {
     const res = await this.Client?.BatchGet(this.req!);
+    console.log(res);
     return res!.toObject().resultsList;
   }
 
@@ -226,4 +228,22 @@ export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
     this.Client = new ClassCodeClient(ENDPOINT);
     this.req = new ClassCode();
   }
+}
+
+export class EmployeePicker extends Picker<User, User.AsObject> {
+  constructor(props: props<User, User.AsObject>) {
+    super(props, 'Employee', 'EMPLOYEE_LIST_X', 424);
+    this.Client = new UserClient(ENDPOINT);
+    this.req = new User();
+    this.req.setIsEmployee(1);
+    this.req.setIsActive(1);
+    this.req.setIsHvacTech(1);
+    this.req.setOverrideLimit(true);
+  }
+}
+
+function getRandomInt(min: number, max: number) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
