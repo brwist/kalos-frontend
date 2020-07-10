@@ -1,11 +1,4 @@
-import React, {
-  FC,
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-  ReactNode,
-} from 'react';
+import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { makeStyles } from '@material-ui/core/styles';
 import HighestIcon from '@material-ui/icons/Block';
@@ -35,6 +28,8 @@ import {
   TaskPriorityType,
   deleteProjectTaskById,
   timestamp,
+  loadTimesheetDepartments,
+  TimesheetDepartmentType,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 
@@ -79,6 +74,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
+  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     statusId: 0,
@@ -89,10 +85,13 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     const event = await loadEventById(serviceCallId);
     const statuses = await loadProjectTaskStatuses();
     const priorities = await loadProjectTaskPriorities();
+    const departments = await loadTimesheetDepartments();
     setEvent(event);
     setStatuses(statuses);
     setPriorities(priorities);
-  }, [setEvent, setStatuses, setPriorities]);
+    setDepartments(departments);
+    setLoadedInit(true);
+  }, [setEvent, setStatuses, setPriorities, setDepartments, setLoadedInit]);
   const load = useCallback(async () => {
     setLoading(true);
     const tasks = await loadProjectTasks(serviceCallId);
@@ -101,14 +100,13 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
     if (!loadedInit) {
-      setLoadedInit(true);
       loadInit();
     }
-    if (!loaded) {
+    if (loadedInit && !loaded) {
       setLoaded(true);
       load();
     }
-  }, [loadedInit, setLoadedInit, loadInit, loaded, setLoaded, load]);
+  }, [loadedInit, loadInit, loaded, setLoaded, load]);
   const handleSetEditing = useCallback(
     (editingTask?: ExtendedProjectTaskType) => () =>
       setEditingTask(editingTask),
@@ -118,6 +116,10 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     (pendingDelete?: ExtendedProjectTaskType) => () =>
       setPendingDelete(pendingDelete),
     [setPendingDelete],
+  );
+  const isAnyManager = useMemo(
+    () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
+    [departments],
   );
   const statusOptions = useMemo(
     () =>
@@ -218,8 +220,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     [
       {
         name: 'externalId',
-        label: 'Employee',
+        label: 'Assigned Employee',
         type: 'technician',
+        disabled: !isAnyManager,
       },
     ],
     [
@@ -341,8 +344,11 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             briefDescription,
             startDate: dateStart,
             endDate: dateEnd,
+            status,
             statusId,
+            priority,
             priorityId,
+            ownerName,
           } = task;
           const [startDate, startHour] = dateStart.split(' ');
           const [endDate, endHour] = dateEnd.split(' ');
@@ -353,8 +359,13 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             startHour,
             endHour,
             notes: briefDescription,
+            status: statuses.find(({ id }) => id === statusId)?.description,
+            statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
             statusId,
+            priority: priorities.find(({ id }) => id === priorityId)
+              ?.description,
             priorityId,
+            assignee: ownerName,
             onClick: handleSetEditing({
               ...task,
               startDate,
