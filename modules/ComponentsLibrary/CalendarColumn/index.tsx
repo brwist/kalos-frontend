@@ -75,7 +75,7 @@ export const CalendarColumn: FC<Props> = ({
   useLayoutEffect(() => {
     document.body.style.overflow = dayView ? 'hidden' : 'visible';
   }, [dayView]);
-  const dateObj = new Date(`${date} 00:00:00`);
+  const dateObj = new Date(`${date}T00:00:00`);
   return (
     <Box className={clsx(dayView && classes.dayView)}>
       {dayView && (
