@@ -1,11 +1,17 @@
 import React, { FC, useCallback } from 'react';
 import difference from 'lodash/difference';
-import { format, addDays, getDay, getDaysInYear } from 'date-fns';
+import {
+  format,
+  addDays,
+  getDay,
+  getDaysInYear,
+  differenceInDays,
+} from 'date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 import { Tooltip } from '../Tooltip';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { formatDate, formatTime } from '../../../helpers';
-import { WEEK_DAYS, PROJECT_TASK_STATUS_COLORS } from '../../../constants';
+import { WEEK_DAYS } from '../../../constants';
 
 export type CalendarEvent = {
   id: number;
@@ -29,6 +35,8 @@ type Style = {
 
 interface Props extends Style {
   events: CalendarEvent[];
+  startDate: string;
+  endDate: string;
   onAdd?: (startDate: string) => void;
 }
 
@@ -55,10 +63,15 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.common.white,
     paddingTop: theme.spacing(),
     paddingBottom: theme.spacing(0.25),
-    minHeight: 100,
+    minHeight: 114,
   },
   weekendDay: {
     backgroundColor: theme.palette.grey[50],
+  },
+  disabledDay: {
+    color: theme.palette.grey[300],
+    backgroundColor: theme.palette.grey[200],
+    pointerEvents: 'none',
   },
   weekDay: {
     padding: theme.spacing(),
@@ -103,10 +116,19 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
+export const CalendarEvents: FC<Props> = ({
+  events,
+  loading,
+  startDate: dateStart,
+  endDate: dateEnd,
+  onAdd,
+}) => {
   const classes = useStyles({ loading });
-  const startDate = new Date('2020-01-01 00:00:00'); // FIXME
-  const offset = getDay(startDate);
+  const startDate = new Date(`${dateStart} 00:00:00`);
+  const endDate = new Date(`${dateEnd} 00:00:00`);
+  const totalDays = differenceInDays(endDate, startDate);
+  const offsetStart = getDay(startDate);
+  const offsetEnd = 6 - getDay(endDate);
   const handleAddClick = useCallback(
     (startDate: string) => () => {
       if (onAdd) {
@@ -123,8 +145,8 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
           {WEEK_DAYS[idx]}
         </div>
       ))}
-      {[...Array(getDaysInYear(2020) + offset + 1)].map((_, idx) => {
-        const day = addDays(startDate, idx - offset);
+      {[...Array(totalDays + offsetStart + offsetEnd + 1)].map((_, idx) => {
+        const day = addDays(startDate, idx - offsetStart);
         const date = format(day, 'yyyy-MM-dd');
         const weekDay = +format(day, 'i');
         Object.keys(offsets).forEach(id => {
@@ -154,16 +176,21 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
         return (
           <div
             key={idx}
-            className={
-              classes.day + ' ' + (weekDay >= 6 ? classes.weekendDay : '')
-            }
+            className={[
+              classes.day,
+              weekDay >= 6 ? classes.weekendDay : '',
+              dateStart > date || date > dateEnd ? classes.disabledDay : '',
+            ].join(' ')}
           >
             <div className={classes.dayDate}>
               <span
                 className={classes.dayDateValue}
                 onClick={handleAddClick(date)}
               >
-                {format(day, 'd') === '1' && format(day, 'MMMM ')}
+                {(format(day, 'd') === '1' ||
+                  idx === 0 ||
+                  dateStart === date) &&
+                  format(day, 'MMMM ')}
                 {format(day, 'd')}
               </span>
             </div>
@@ -256,11 +283,8 @@ export const CalendarEvents: FC<Props> = ({ events, loading, onAdd }) => {
                       <div
                         className={classes.event}
                         style={{
-                          ...(statusId
-                            ? {
-                                backgroundColor:
-                                  PROJECT_TASK_STATUS_COLORS[statusId],
-                              }
+                          ...(statusColor
+                            ? { backgroundColor: statusColor }
                             : {}),
                           ...(startDate === date ? { marginLeft: 4 } : {}),
                           ...(endDate === date ? { marginRight: 4 } : {}),
