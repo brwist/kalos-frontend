@@ -34,7 +34,7 @@ export const Tabs: FC<Props> = ({ tabs, defaultOpenIdx = 0, onChange }) => {
   );
   return (
     <div>
-      <AppBar position="static" color="default">
+      <AppBar position="relative" color="default">
         <TabsUI
           value={tabIdx}
           onChange={handleChange}
