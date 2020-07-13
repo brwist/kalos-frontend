@@ -43,11 +43,17 @@ interface Props extends Style {
 const GAP = 1;
 
 const useStyles = makeStyles(theme => ({
-  wrapper: {
+  wrapper: ({ loading }: Style) => ({
     ...theme.typography.body1,
     display: 'flex',
     alignItems: 'flex-start',
-  },
+    ...(loading
+      ? {
+          filter: 'grayscale(1)',
+          pointerEvents: 'none',
+        }
+      : {}),
+  }),
   aside: {
     width: 250,
     flexShrink: 0,
