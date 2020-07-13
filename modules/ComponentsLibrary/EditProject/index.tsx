@@ -14,6 +14,7 @@ import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { CalendarEvents } from '../CalendarEvents';
+import { Tabs } from '../Tabs';
 import {
   loadEventById,
   loadProjectTasks,
@@ -443,6 +444,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             disabled: loading || loadingEvent,
           },
         ]}
+        fixedActions
         asideContent={
           <PrintPage
             buttonProps={{
@@ -464,55 +466,67 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         onChange={setSearch}
         disabled={loading || loadingEvent}
       />
-      {event && (
-        <CalendarEvents
-          events={filteredTasks.map(task => {
-            const {
-              id,
-              briefDescription,
-              startDate: dateStart,
-              endDate: dateEnd,
-              status,
-              statusId,
-              priority,
-              priorityId,
-              ownerName,
-              creatorUserId,
-            } = task;
-            const [startDate, startHour] = dateStart.split(' ');
-            const [endDate, endHour] = dateEnd.split(' ');
-            return {
-              id,
-              startDate,
-              endDate,
-              startHour,
-              endHour,
-              notes: briefDescription,
-              status: statuses.find(({ id }) => id === statusId)?.description,
-              statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-              statusId,
-              priority: priorities.find(({ id }) => id === priorityId)
-                ?.description,
-              priorityId,
-              assignee: ownerName,
-              onClick:
-                creatorUserId === loggedUserId || isAnyManager
-                  ? handleSetEditing({
-                      ...task,
-                      startDate,
-                      endDate,
-                      startTime: startHour.substr(0, 5),
-                      endTime: endHour.substr(0, 5),
-                    })
-                  : undefined,
-            };
-          })}
-          startDate={event.dateStarted.substr(0, 10)}
-          endDate={event.dateEnded.substr(0, 10)}
-          loading={loading || loadingEvent}
-          onAdd={handleAddTask}
-        />
-      )}
+      <Tabs
+        tabs={[
+          {
+            label: 'Calendar',
+            content: event ? (
+              <CalendarEvents
+                events={filteredTasks.map(task => {
+                  const {
+                    id,
+                    briefDescription,
+                    startDate: dateStart,
+                    endDate: dateEnd,
+                    status,
+                    statusId,
+                    priority,
+                    priorityId,
+                    ownerName,
+                    creatorUserId,
+                  } = task;
+                  const [startDate, startHour] = dateStart.split(' ');
+                  const [endDate, endHour] = dateEnd.split(' ');
+                  return {
+                    id,
+                    startDate,
+                    endDate,
+                    startHour,
+                    endHour,
+                    notes: briefDescription,
+                    status: statuses.find(({ id }) => id === statusId)
+                      ?.description,
+                    statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
+                    statusId,
+                    priority: priorities.find(({ id }) => id === priorityId)
+                      ?.description,
+                    priorityId,
+                    assignee: ownerName,
+                    onClick:
+                      creatorUserId === loggedUserId || isAnyManager
+                        ? handleSetEditing({
+                            ...task,
+                            startDate,
+                            endDate,
+                            startTime: startHour.substr(0, 5),
+                            endTime: endHour.substr(0, 5),
+                          })
+                        : undefined,
+                  };
+                })}
+                startDate={event.dateStarted.substr(0, 10)}
+                endDate={event.dateEnded.substr(0, 10)}
+                loading={loading || loadingEvent}
+                onAdd={handleAddTask}
+              />
+            ) : null,
+          },
+          {
+            label: 'Gantt Chart',
+            content: <div />,
+          },
+        ]}
+      />
       {editingTask && (
         <Modal open onClose={handleSetEditing()}>
           <Form
