@@ -723,6 +723,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   onClick: handleSetTechniciansOpened(false),
                 },
               ]}
+              fixedActions
               footer={
                 <Field
                   className={classes.searchTechnician}
