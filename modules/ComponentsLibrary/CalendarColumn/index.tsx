@@ -10,6 +10,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
+import { getDateArgs } from '../../../helpers';
 
 interface Props {
   date: string;
@@ -18,7 +19,7 @@ interface Props {
   loadingRows?: number;
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   dayView: {
     position: 'fixed',
     top: '0',
@@ -75,7 +76,7 @@ export const CalendarColumn: FC<Props> = ({
   useLayoutEffect(() => {
     document.body.style.overflow = dayView ? 'hidden' : 'visible';
   }, [dayView]);
-  const dateObj = new Date(`${date}T00:00:00`);
+  const dateObj = new Date(...getDateArgs(date));
   return (
     <Box className={clsx(dayView && classes.dayView)}>
       {dayView && (
