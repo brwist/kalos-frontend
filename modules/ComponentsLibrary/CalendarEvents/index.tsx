@@ -1,12 +1,6 @@
 import React, { FC, useCallback } from 'react';
 import difference from 'lodash/difference';
-import {
-  format,
-  addDays,
-  getDay,
-  getDaysInYear,
-  differenceInDays,
-} from 'date-fns';
+import { format, addDays, getDay, differenceInDays } from 'date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 import { Tooltip } from '../Tooltip';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';

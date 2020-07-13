@@ -396,15 +396,28 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       },
     ],
   ];
-  const filteredTasks = tasks.filter(({ statusId, priorityId }) => {
-    if (search.statusId) {
-      if (statusId !== search.statusId) return false;
-    }
-    if (search.priorityId) {
-      if (priorityId !== search.priorityId) return false;
-    }
-    return true;
-  });
+  const filteredTasks = tasks.filter(
+    ({ statusId, priorityId, externalCode, externalId }) => {
+      if (search.statusId) {
+        if (statusId !== search.statusId) return false;
+      }
+      if (search.priorityId) {
+        if (priorityId !== search.priorityId) return false;
+      }
+      if (search.technicians) {
+        if (
+          externalCode === 'project' ||
+          (externalCode === 'user' &&
+            !search.technicians
+              .split(',')
+              .map(id => +id)
+              .includes(externalId))
+        )
+          return false;
+      }
+      return true;
+    },
+  );
   return (
     <div>
       <SectionBar
