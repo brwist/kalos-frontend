@@ -9,6 +9,10 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
 import {
+  Transaction,
+  TransactionClient,
+} from '@kalos-core/kalos-rpc/Transaction';
+import {
   SpiffType,
   TaskClient,
   Task,
@@ -124,7 +128,9 @@ export type QuotableType = Quotable.AsObject;
 export type ProjectTaskType = ProjectTask.AsObject;
 export type TaskStatusType = TaskStatus.AsObject;
 export type TaskPriorityType = TaskPriority.AsObject;
+export type TransactionType = Transaction.AsObject;
 
+export const TransactionClientService = new TransactionClient(ENDPOINT);
 export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
 export const TaskClientService = new TaskClient(ENDPOINT);
@@ -1233,6 +1239,34 @@ export const downloadCSV = (filename: string, csv: string) => {
     'data:text/csv;charset=utf-8,' + encodeURIComponent(csv),
   );
   link.click();
+};
+
+export const loadTransactionsByEventId = async (eventId: number) => {
+  const results = [];
+  const req = new Transaction();
+  req.setJobId(eventId);
+  req.setIsActive(1);
+  req.setPageNumber(0);
+  const { resultsList, totalCount } = (
+    await TransactionClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await TransactionClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
 };
 
 export const loadPerDiemsByEventId = async (eventId: number) => {

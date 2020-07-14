@@ -41,6 +41,9 @@ import {
   getDepartmentName,
   usd,
   loadPerDiemsLodging,
+  loadTransactionsByEventId,
+  TransactionType,
+  formatDateTime,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -111,6 +114,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [errorTask, setErrorTask] = useState<string>('');
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
@@ -322,6 +326,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     const { resultsList } = await loadPerDiemsByEventId(serviceCallId);
     const lodgings = await loadPerDiemsLodging(resultsList);
     setLodgings(lodgings);
+    const transactions = await loadTransactionsByEventId(serviceCallId);
+    setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
   const handlePrint = useCallback(async () => {
@@ -458,6 +464,10 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     )
     .filter(({ mealsOnly }) => !mealsOnly)
     .reduce((aggr, { id }) => aggr + lodgings[id], 0);
+  const totalTransactions = transactions.reduce(
+    (aggr, { amount }) => aggr + amount,
+    0,
+  );
   return (
     <div>
       <SectionBar
@@ -543,10 +553,76 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
                 { title: 'Cost', align: 'right' },
               ]}
               data={[
+                ['Transactions', usd(totalTransactions)],
                 ['Meals', usd(totalMeals)],
                 ['Lodging', usd(totalLodging)],
-                [<strong>TOTAL</strong>, usd(totalMeals + totalLodging)],
+                [
+                  '',
+                  <strong>
+                    TOTAL: {usd(totalMeals + totalLodging + totalTransactions)}
+                  </strong>,
+                ],
               ]}
+            />
+            <PrintParagraph tag="h2">Transactions</PrintParagraph>
+            <PrintTable
+              columns={[
+                {
+                  title: 'Department',
+                  align: 'left',
+                },
+                {
+                  title: 'Owner',
+                  align: 'left',
+                },
+                {
+                  title: 'Cost Center / Vendor',
+                  align: 'left',
+                },
+                {
+                  title: 'Date',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Amount',
+                  align: 'right',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Notes',
+                  align: 'left',
+                  widthPercentage: 20,
+                },
+              ]}
+              data={transactions.map(
+                ({
+                  department,
+                  ownerName,
+                  amount,
+                  notes,
+                  costCenter,
+                  timestamp,
+                  vendor,
+                }) => [
+                  department ? (
+                    <>
+                      {department.classification} - {department.description}
+                    </>
+                  ) : (
+                    '-'
+                  ),
+                  ownerName,
+                  <>
+                    {costCenter ? costCenter.description : '-'}
+                    <br />
+                    {vendor}
+                  </>,
+                  formatDate(timestamp),
+                  usd(amount),
+                  notes,
+                ],
+              )}
             />
             <PrintParagraph tag="h2">Per Diems</PrintParagraph>
             {perDiems.map(
