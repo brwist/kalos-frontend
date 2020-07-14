@@ -14,6 +14,7 @@ import { Button } from '../Button';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintParagraph } from '../PrintParagraph';
+import { PrintList } from '../PrintList';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
@@ -512,6 +513,29 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             status={printStatus}
             key={printStatus}
           >
+            <PrintParagraph tag="h2">Project Details</PrintParagraph>
+            {event && (
+              <PrintList
+                items={[
+                  <>
+                    <strong>Address: </strong>
+                    {getPropertyAddress(event.property)}
+                  </>,
+                  <>
+                    <strong>Start Date: </strong>
+                    {formatDate(event.dateStarted)}
+                  </>,
+                  <>
+                    <strong>End Date: </strong>
+                    {formatDate(event.dateEnded)}
+                  </>,
+                  <>
+                    <strong>Job Number: </strong>
+                    {event.logJobNumber}
+                  </>,
+                ]}
+              />
+            )}
             <PrintParagraph tag="h2">Costs</PrintParagraph>
             <PrintTable
               columns={[
