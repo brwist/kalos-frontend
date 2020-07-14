@@ -6,7 +6,11 @@ type Style = {
   noBorders?: boolean;
 };
 
-type Column = { title: string; align: 'left' | 'center' | 'right' };
+type Column = {
+  title: string;
+  align: 'left' | 'center' | 'right';
+  widthPercentage?: number;
+};
 
 interface Props extends Style {
   columns: (string | Column)[];
@@ -42,7 +46,12 @@ export const PrintTable: FC<Props> = ({
               key={idxColumn}
               style={{
                 ...(typeof column === 'object'
-                  ? { textAlign: column.align }
+                  ? {
+                      textAlign: column.align,
+                      ...(column.widthPercentage
+                        ? { width: `${column.widthPercentage}%` }
+                        : {}),
+                    }
                   : {}),
                 ...(nowraps[idxColumn] ? { whiteSpace: 'nowrap' } : {}),
                 ...(equalColWidths
