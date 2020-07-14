@@ -11,7 +11,9 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { PlainForm } from '../PlainForm';
 import { Button } from '../Button';
-import { PrintPage } from '../PrintPage';
+import { PrintPage, Status } from '../PrintPage';
+import { PrintTable } from '../PrintTable';
+import { PrintParagraph } from '../PrintParagraph';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
@@ -32,8 +34,18 @@ import {
   loadTimesheetDepartments,
   TimesheetDepartmentType,
   upsertEvent,
+  loadPerDiemsByEventId,
+  PerDiemType,
+  PerDiemRowType,
+  getDepartmentName,
+  usd,
+  loadPerDiemsLodging,
 } from '../../../helpers';
-import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
+import {
+  PROJECT_TASK_STATUS_COLORS,
+  OPTION_ALL,
+  MEALS_RATE,
+} from '../../../constants';
 
 export interface Props {
   serviceCallId: number;
@@ -96,6 +108,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [errorProject, setErrorProject] = useState<string>('');
   const [errorTask, setErrorTask] = useState<string>('');
+  const [printStatus, setPrintStatus] = useState<Status>('idle');
+  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     statusId: 0,
@@ -302,6 +317,20 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       setErrorProject,
     ],
   );
+  const loadPrintData = useCallback(async () => {
+    const { resultsList } = await loadPerDiemsByEventId(serviceCallId);
+    const lodgings = await loadPerDiemsLodging(resultsList);
+    setLodgings(lodgings);
+    setPerDiems(resultsList);
+  }, [serviceCallId, setPerDiems, setLodgings]);
+  const handlePrint = useCallback(async () => {
+    setPrintStatus('loading');
+    await loadPrintData();
+    setPrintStatus('loaded');
+  }, [setPrintStatus, loadPrintData]);
+  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
+    setPrintStatus,
+  ]);
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
       {
@@ -418,6 +447,16 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       return true;
     },
   );
+  const totalMeals =
+    perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
+    MEALS_RATE;
+  const totalLodging = perDiems
+    .reduce(
+      (aggr, { rowsList }) => [...aggr, ...rowsList],
+      [] as PerDiemRowType[],
+    )
+    .filter(({ mealsOnly }) => !mealsOnly)
+    .reduce((aggr, { id }) => aggr + lodgings[id], 0);
   return (
     <div>
       <SectionBar
@@ -463,12 +502,156 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           <PrintPage
             buttonProps={{
               label: 'Print Cost Report',
-              disabled: loading || loadingEvent,
+              disabled: loading || loadingEvent || printStatus === 'loading',
             }}
             downloadLabel="Download Cost Report"
             downloadPdfFilename="Cost-Report"
+            headerProps={{ title: 'Project Cost Report' }}
+            onPrint={handlePrint}
+            onPrinted={handlePrinted}
+            status={printStatus}
+            key={printStatus}
           >
-            ...
+            <PrintParagraph tag="h2">Costs</PrintParagraph>
+            <PrintTable
+              columns={[
+                { title: 'Type', align: 'left' },
+                { title: 'Cost', align: 'right' },
+              ]}
+              data={[
+                ['Meals', usd(totalMeals)],
+                ['Lodging', usd(totalLodging)],
+                [<strong>TOTAL</strong>, usd(totalMeals + totalLodging)],
+              ]}
+            />
+            <PrintParagraph tag="h2">Per Diems</PrintParagraph>
+            {perDiems.map(
+              ({
+                id,
+                department,
+                ownerName,
+                dateSubmitted,
+                approvedByName,
+                dateApproved,
+                notes,
+                rowsList,
+              }) => {
+                const totalMeals = MEALS_RATE * rowsList.length;
+                const totalLodging = rowsList.reduce(
+                  (aggr, { id, mealsOnly }) =>
+                    aggr + (mealsOnly ? 0 : lodgings[id]),
+                  0,
+                );
+                return (
+                  <div key={id}>
+                    <PrintTable
+                      columns={[
+                        {
+                          title: 'Department',
+                          align: 'left',
+                        },
+                        {
+                          title: 'Owner',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Submited At',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Approved At',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Approved By',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Total Meals',
+                          align: 'right',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Total Lodging',
+                          align: 'right',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Notes',
+                          align: 'left',
+                          widthPercentage: 20,
+                        },
+                      ]}
+                      data={[
+                        [
+                          getDepartmentName(department),
+                          ownerName,
+                          formatDate(dateSubmitted) || '-',
+                          formatDate(dateApproved) || '-',
+                          approvedByName || '-',
+                          usd(totalMeals),
+                          usd(totalLodging),
+                          notes,
+                        ],
+                      ]}
+                    />
+                    <PrintTable
+                      columns={[
+                        {
+                          title: '',
+                          align: 'left',
+                          widthPercentage: 3,
+                        },
+                        {
+                          title: 'Date',
+                          align: 'left',
+                        },
+                        {
+                          title: 'Zip Code',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Meals Only',
+                          align: 'center',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Meals',
+                          align: 'right',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Lodging',
+                          align: 'right',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Notes',
+                          align: 'left',
+                          widthPercentage: 20,
+                        },
+                      ]}
+                      data={rowsList.map(
+                        ({ id, dateString, zipCode, mealsOnly, notes }) => [
+                          '',
+                          formatDate(dateString),
+                          zipCode,
+                          mealsOnly ? 'Yes' : 'No',
+                          usd(MEALS_RATE),
+                          usd(mealsOnly ? 0 : lodgings[id]),
+                          notes,
+                        ],
+                      )}
+                    />
+                  </div>
+                );
+              },
+            )}
           </PrintPage>
         }
         asideContentFirst
