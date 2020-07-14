@@ -30,6 +30,19 @@ export default ({ rows = 30 }: { rows?: number }) => (
         getRandomPhone(),
       ])}
     />
+    <ExampleTitle>with column widths</ExampleTitle>
+    <PrintTable
+      columns={[
+        { title: 'First Name', align: 'left', widthPercentage: 50 },
+        { title: 'Last Name', align: 'left', widthPercentage: 25 },
+        { title: 'Age', align: 'left' },
+      ]}
+      data={[...Array(3)].map(() => [
+        getRandomFirstName(),
+        getRandomLastName(),
+        getRandomAge(),
+      ])}
+    />
     <ExampleTitle>noBorders</ExampleTitle>
     <PrintTable
       columns={['First Name', 'Last Name', 'Age']}
