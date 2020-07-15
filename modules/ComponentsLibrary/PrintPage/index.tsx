@@ -23,6 +23,7 @@ interface Props {
   className?: string;
   downloadLabel?: string;
   icons?: boolean;
+  onFileCreated?: (file: Uint8Array) => void;
 }
 
 export const PrintPage: FC<Props> = ({
@@ -37,30 +38,25 @@ export const PrintPage: FC<Props> = ({
   className = '',
   downloadLabel = 'Download',
   icons = false,
+  onFileCreated,
 }) => {
   const printRef = useRef(null);
+  const [fileReturned, setFileReturned] = useState<boolean>(false);
   const [downloading, setDownloading] = useState<boolean>(false);
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     copyStyles: true,
     pageStyle: '',
   });
-  useEffect(() => {
-    if (status === 'loaded') {
-      handlePrint!();
-      if (onPrinted) {
-        onPrinted();
-      }
-    }
-  }, [status, handlePrint, onPrinted]);
-  const handleDownload = useCallback(async () => {
-    if (printRef.current) {
-      setDownloading(true);
-      // @ts-ignore
-      setInlineStyles(printRef.current);
-      // @ts-ignore
-      const content = printRef.current.innerHTML;
-      const html = `
+  const handleDownload = useCallback(
+    (open: boolean) => async () => {
+      if (printRef.current) {
+        setDownloading(true);
+        // @ts-ignore
+        setInlineStyles(printRef.current);
+        // @ts-ignore
+        const content = printRef.current.innerHTML;
+        const html = `
         <!DOCTYPE html>
         <html>
           <head>
@@ -71,18 +67,67 @@ export const PrintPage: FC<Props> = ({
           </body>
         </html>
       `;
-      const url = await getUploadedHTMLUrl(html, `${downloadPdfFilename}.pdf`);
-      window.open(url, '_blank');
-      setDownloading(false);
+        const url = await getUploadedHTMLUrl(
+          html,
+          `${downloadPdfFilename}.pdf`,
+        );
+        if (open) {
+          window.open(url, '_blank');
+        }
+        setDownloading(false);
+        return url;
+      }
+    },
+    [printRef, setDownloading, downloadPdfFilename],
+  );
+  const handleFileCreated = useCallback(async () => {
+    const url = await handleDownload(false)();
+    if (url) {
+      const file = await fetch(url);
+      const blob = await file.blob();
+      const fr = new FileReader();
+      fr.onload = () => {
+        if (onFileCreated) {
+          onFileCreated(new Uint8Array(fr.result as ArrayBuffer));
+        } else {
+          const el = document.createElement('a');
+          el.download = 'affadavit.pdf';
+          el.href = URL.createObjectURL(blob);
+          el.target = '_blank';
+          el.click();
+          el.remove();
+        }
+      };
+      fr.readAsArrayBuffer(blob);
     }
-  }, [printRef, setDownloading, downloadPdfFilename]);
+  }, [handleDownload]);
+  useEffect(() => {
+    if (status === 'loaded') {
+      handlePrint!();
+      if (onPrinted) {
+        onPrinted();
+      }
+    }
+    if (onFileCreated && !fileReturned) {
+      setFileReturned(true);
+      handleFileCreated();
+    }
+  }, [
+    status,
+    handlePrint,
+    onPrinted,
+    onFileCreated,
+    handleFileCreated,
+    fileReturned,
+    setFileReturned,
+  ]);
   return (
     <>
       <span className={className}>
         {downloadPdfFilename &&
           (icons ? (
             <IconButton
-              onClick={handleDownload}
+              onClick={handleDownload(true)}
               size="small"
               disabled={
                 status === 'loading' || downloading || buttonProps.disabled
@@ -98,7 +143,7 @@ export const PrintPage: FC<Props> = ({
             </IconButton>
           ) : (
             <Button
-              onClick={handleDownload}
+              onClick={handleDownload(true)}
               children={
                 (status === 'loading' || downloading) && (
                   <CircularProgress
@@ -114,7 +159,7 @@ export const PrintPage: FC<Props> = ({
               label={downloadLabel}
             />
           ))}
-        {icons ? (
+        {onFileCreated ? null : icons ? (
           <IconButton
             onClick={onPrint || handlePrint!}
             size="small"

@@ -28,7 +28,7 @@ import { red, green } from '@material-ui/core/colors';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 import { TaskClient } from '@kalos-core/kalos-rpc/Task';
 import CloseIcon from '@material-ui/icons/CloseSharp';
-import { PDFMaker } from '../../PDFMaker/main';
+import { PDFMaker } from '../../ComponentsLibrary/PDFMaker';
 import ReIcon from '@material-ui/icons/RefreshSharp';
 import { timestamp } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';

@@ -9,6 +9,7 @@ import {
   UserType,
   getDepartmentByManagerID,
   getCustomerName,
+  refreshToken,
 } from '../../helpers';
 
 interface Props {
@@ -31,6 +32,7 @@ const Transaction: FC<Props> = ({ userID }) => {
   }, [userID]);
   const load = useCallback(async () => {
     setLoading(true);
+    await refreshToken();
     const user = await loadUserById(userID);
     const isManager = await managerCheck();
     setUser(user);
