@@ -35,6 +35,7 @@ import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { Dialog } from '@material-ui/core';
 import { AdvancedSearch } from '../../ComponentsLibrary/AdvancedSearch';
+import { Field } from '../../ComponentsLibrary/Field';
 
 interface props {
   txn: Transaction.AsObject;
@@ -166,7 +167,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   toggleSearch() {
-    this.setState((prevState) => ({ isSearchOpen: !prevState.isSearchOpen }));
+    this.setState(prevState => ({ isSearchOpen: !prevState.isSearchOpen }));
   }
 
   async submit() {
@@ -420,11 +421,11 @@ export class TxnCard extends React.PureComponent<props, state> {
                 sort={costCenterSortByPopularity}
                 filter={
                   !isManager
-                    ? (a) => ALLOWED_ACCOUNT_IDS.includes(a.id)
+                    ? a => ALLOWED_ACCOUNT_IDS.includes(a.id)
                     : undefined
                 }
                 hideInactive
-                renderItem={(i) => (
+                renderItem={i => (
                   <option value={i.id} key={`${i.id}-${i.description}`}>
                     {i.description} ({i.id})
                   </option>
@@ -433,7 +434,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               <DepartmentPicker
                 onSelect={this.updateDepartmentID}
                 selected={t.departmentId || this.props.userDepartmentID}
-                renderItem={(i) => (
+                renderItem={i => (
                   <option value={i.id} key={`${i.id}-${i.description}`}>
                     {i.description}
                   </option>
@@ -450,19 +451,22 @@ export class TxnCard extends React.PureComponent<props, state> {
               >
                 Job Number: {t.jobId || 'None'}
               </Button>*/}
-              <TextField
+              <Field
+                name="jobNumber"
                 label="Job Number"
-                defaultValue={t.jobId}
-                onChange={(e) => this.updateJobNumber(e.currentTarget.value)}
-                variant="outlined"
-                margin="none"
-                style={{ marginBottom: 10 }}
+                value={t.jobId}
+                onChange={val => this.handleJobNumber(+val)}
+                type="eventId"
+                style={{
+                  alignItems: 'flex-start',
+                  flexGrow: 0,
+                }}
               />
               <TextField
                 label="Notes"
                 defaultValue={t.notes}
                 inputRef={this.NotesInput}
-                onChange={(e) => this.updateNotes(e.currentTarget.value)}
+                onChange={e => this.updateNotes(e.currentTarget.value)}
                 variant="outlined"
                 margin="none"
                 multiline
@@ -588,7 +592,7 @@ const ALLOWED_ACCOUNT_IDS = [
 ];
 
 function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
-  return txn.documentsList.map((d) => {
+  return txn.documentsList.map(d => {
     return {
       key: `${txn.id}-${d.reference}`,
       bucket: 'kalos-transactions',

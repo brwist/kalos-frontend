@@ -1883,6 +1883,7 @@ export const AdvancedSearch: FC<Props> = ({
               ]
             : []),
         ]}
+        fixedActions
         asideContent={
           printableEmployees ? (
             <PrintPage
