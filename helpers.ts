@@ -525,6 +525,9 @@ async function loadJobSubtypes() {
   return resultsList;
 }
 
+export const getDepartmentByManagerID = async (userId: number) =>
+  await TimesheetDepartmentClientService.getDepartmentByManagerID(userId);
+
 /** Returns loaded TimesheetDepartments
  * @returns TimesheetDepartment[]
  */
