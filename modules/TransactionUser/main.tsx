@@ -1,12 +1,11 @@
 import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { TransactionUserView } from '../Transaction/components/user';
+import { TransactionUserView } from './components/view';
 import Grid from '@material-ui/core/Grid';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 import { Loader } from '../Loader/main';
 import { TimesheetDepartmentClient } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { PDFClient, HTML } from '@kalos-core/kalos-rpc/PDF';
 import { ENDPOINT } from '../../constants';
 
 interface props {
