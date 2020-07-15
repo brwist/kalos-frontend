@@ -40,6 +40,7 @@ import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
 import LodgingByZipCode from './LodgingByZipCode/examples';
 import Modal from './Modal/examples';
+import PDFMaker from './PDFMaker/examples';
 import PerDiem from './PerDiem/examples';
 import PerDiemsNeedsAuditing from './PerDiemsNeedsAuditing/examples';
 import PerformanceMetrics from './PerformanceMetrics/examples';
@@ -110,6 +111,7 @@ const COMPONENTS = {
   Link,
   LodgingByZipCode,
   Modal,
+  PDFMaker,
   PerDiem,
   PerDiemsNeedsAuditing,
   PerformanceMetrics,
