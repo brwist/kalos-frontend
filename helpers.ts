@@ -1272,6 +1272,9 @@ export const loadTransactionsByEventId = async (eventId: number) => {
   return results;
 };
 
+export const refreshToken = async () =>
+  await UserClientService.GetToken('test', 'test');
+
 export const loadPerDiemsByEventId = async (eventId: number) => {
   const req = new PerDiem();
   req.setWithRows(true);
