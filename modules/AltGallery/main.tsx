@@ -12,6 +12,7 @@ import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { Button as ButtonLib } from '../ComponentsLibrary/Button';
 import { ENDPOINT } from '../../constants';
 import { getMimeType } from '../../helpers';
 
@@ -85,26 +86,26 @@ export class AltGallery extends React.PureComponent<props, state> {
 
   toggleOpen() {
     let wasClosed: boolean;
-    this.setState((prevState) => {
+    this.setState(prevState => {
       wasClosed = !prevState.isOpen;
       return { isOpen: !prevState.isOpen };
     });
   }
 
   fetchData() {
-    return new Promise(async (resolve) => {
+    return new Promise(async resolve => {
       const docs = await this.DocClient.byTransactionID(
         this.props.transactionID,
       );
 
-      const galleryData = docs.map((d) => {
+      const galleryData = docs.map(d => {
         return {
           key: `${this.props.transactionID}-${d.reference}`,
           bucket: 'kalos-transactions',
         };
       });
 
-      const documentList = docs.map((d) => ({
+      const documentList = docs.map(d => ({
         reference: d.reference,
         id: d.transactionId,
       }));
@@ -113,14 +114,14 @@ export class AltGallery extends React.PureComponent<props, state> {
   }
 
   fetchDocData(d: DocData) {
-    return new Promise<Uint8Array>(async (resolve) => {
+    return new Promise<Uint8Array>(async resolve => {
       const data = (
         await this.DocClient.download(d.id, d.reference)
       ).getData() as Uint8Array;
       this.setState(
-        (prevState) => {
+        prevState => {
           return {
-            documentList: prevState.documentList.map((doc) => {
+            documentList: prevState.documentList.map(doc => {
               if (doc.reference === d.reference) {
                 doc.data = data;
               }
@@ -135,7 +136,7 @@ export class AltGallery extends React.PureComponent<props, state> {
 
   changeImage(n: number) {
     return () => {
-      this.setState((prevState) => {
+      this.setState(prevState => {
         let newImg = prevState.activeImage + n;
         if (newImg < 0) {
           newImg = 0;
@@ -156,10 +157,10 @@ export class AltGallery extends React.PureComponent<props, state> {
       const data = fileList[activeImage];
       try {
         await this.DocClient.deleteByName(data.key, data.bucket);
-        this.setState((prevState) => {
-          const fileList = prevState.fileList.filter((f) => f.key !== data.key);
+        this.setState(prevState => {
+          const fileList = prevState.fileList.filter(f => f.key !== data.key);
           const documentList = prevState.documentList.filter(
-            (d) => `${this.props.transactionID}-${d.reference}` !== data.key,
+            d => `${this.props.transactionID}-${d.reference}` !== data.key,
           );
           let activeImg = prevState.activeImage - 1;
           if (activeImg < 0) {
@@ -239,16 +240,7 @@ export class AltGallery extends React.PureComponent<props, state> {
         </span>
       </Tooltip>
     ) : (
-      <Button
-        size="large"
-        style={{ height: 44, marginBottom: 10 }}
-        fullWidth
-        startIcon={<ImageSearchTwoTone />}
-        onClick={this.toggleOpen}
-        disabled={disabled}
-      >
-        {text}
-      </Button>
+      <ButtonLib onClick={this.toggleOpen} disabled={disabled} label={text} />
     );
     const imgHeight = Math.floor(window.innerHeight * 0.8);
     const mimeType = this.S3Client.getMimeType(

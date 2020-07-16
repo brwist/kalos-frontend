@@ -1,10 +1,10 @@
 import React, { FC, useState, useCallback } from 'react';
-import Button from '@material-ui/core/Button';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { PrintPage } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintTable } from '../PrintTable';
+import { Button } from '../Button';
 
 interface Props {
   dateStr: string;
@@ -115,15 +115,7 @@ export const PDFMaker: FC<Props> = ({
   };
   return (
     <>
-      <Button
-        onClick={toggleOpened}
-        size="large"
-        fullWidth
-        style={{ height: 44, marginBottom: 10 }}
-        startIcon={icon}
-      >
-        {title}
-      </Button>
+      <Button onClick={toggleOpened} label={title} />
       {opened && (
         <Modal open onClose={toggleOpened}>
           <div style={{ width: 300 }}>

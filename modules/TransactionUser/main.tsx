@@ -50,27 +50,12 @@ const Transaction: FC<Props> = ({ userID }) => {
       {loading || !user ? (
         <Loader />
       ) : (
-        <Grid
-          container
-          direction="column"
-          alignItems="center"
-          justify="flex-start"
-        >
-          <Grid
-            container
-            direction="column"
-            justify="flex-start"
-            alignItems="center"
-            style={{ maxHeight: '100%' }}
-          >
-            <TransactionUserView
-              userID={userID}
-              userName={getCustomerName(user)}
-              departmentId={user.employeeDepartmentId}
-              isManager={isManager}
-            />
-          </Grid>
-        </Grid>
+        <TransactionUserView
+          userID={userID}
+          userName={getCustomerName(user)}
+          departmentId={user.employeeDepartmentId}
+          isManager={isManager}
+        />
       )}
     </ThemeProvider>
   );

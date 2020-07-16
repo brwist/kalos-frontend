@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Alert from '@material-ui/lab/Alert';
 import {
   Transaction,
   TransactionClient,
@@ -11,20 +12,10 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { AccountPicker, DepartmentPicker } from '../../Pickers';
+import { AccountPicker } from '../../Pickers';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { GalleryData, AltGallery } from '../../AltGallery/main';
-import TextField from '@material-ui/core/TextField';
-import Card from '@material-ui/core/Card';
-import CardHeader from '@material-ui/core/CardHeader';
-import Button from '@material-ui/core/Button';
-import AddAPhotoTwoTone from '@material-ui/icons/AddAPhotoTwoTone';
-import SendTwoTone from '@material-ui/icons/SendTwoTone';
-import InfoSharp from '@material-ui/icons/InfoSharp';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import { red, green } from '@material-ui/core/colors';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 import { TaskClient } from '@kalos-core/kalos-rpc/Task';
 import CloseIcon from '@material-ui/icons/CloseSharp';
@@ -33,9 +24,9 @@ import ReIcon from '@material-ui/icons/RefreshSharp';
 import { timestamp } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
-import { Dialog } from '@material-ui/core';
-import { AdvancedSearch } from '../../ComponentsLibrary/AdvancedSearch';
 import { Field } from '../../ComponentsLibrary/Field';
+import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import { Button } from '../../ComponentsLibrary/Button';
 
 interface props {
   txn: Transaction.AsObject;
@@ -50,7 +41,6 @@ interface props {
 
 interface state {
   txn: Transaction.AsObject;
-  isSearchOpen: boolean;
 }
 
 const hardcodedList = [
@@ -80,9 +70,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     super(props);
     this.state = {
       txn: props.txn,
-      isSearchOpen: false,
     };
-
     this.EmailClient = new EmailClient(ENDPOINT);
     this.TxnClient = new TransactionClient(ENDPOINT);
     this.DocsClient = new TransactionDocumentClient(ENDPOINT);
@@ -90,18 +78,14 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.S3Client = new S3Client(ENDPOINT);
     this.EventClient = new EventClient(ENDPOINT);
     this.TaskClient = new TaskClient(ENDPOINT);
-
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
-
     this.openFilePrompt = this.openFilePrompt.bind(this);
     this.updateTransaction = this.updateTransaction.bind(this);
     this.handleFile = this.handleFile.bind(this);
     this.submit = this.submit.bind(this);
     this.deleteFile = this.deleteFile.bind(this);
     this.onPDFGenerate = this.onPDFGenerate.bind(this);
-    this.toggleSearch = this.toggleSearch.bind(this);
-    this.setJobNumber = this.setJobNumber.bind(this);
   }
 
   async makeLog<K extends keyof Transaction.AsObject>(
@@ -149,26 +133,6 @@ export class TxnCard extends React.PureComponent<props, state> {
   updateDepartmentID = this.updateTransaction('departmentId');
   updateStatus = this.updateTransaction('statusId');
   handleJobNumber = this.updateTransaction('jobId');
-
-  updateJobNumber(jobString: string) {
-    let jobNumber;
-    if (jobString.includes('-')) {
-      jobNumber = parseInt(jobString.split('-')[1]);
-    } else {
-      jobNumber = parseInt(jobString);
-    }
-
-    this.handleJobNumber(jobNumber);
-  }
-
-  setJobNumber(e: Event.AsObject) {
-    this.handleJobNumber(e.id);
-    this.toggleSearch();
-  }
-
-  toggleSearch() {
-    this.setState(prevState => ({ isSearchOpen: !prevState.isSearchOpen }));
-  }
 
   async submit() {
     const { txn } = this.state;
@@ -267,53 +231,28 @@ export class TxnCard extends React.PureComponent<props, state> {
     return hardcodedList.includes(acc.id);
   }
 
-  deriveCallout(txn: Transaction.AsObject) {
-    const style = {
-      backgroundColor: red[900],
-      color: 'white',
-      width: '100%',
-      borderRadius: '3px',
-      padding: '5px',
+  deriveCallout(
+    txn: Transaction.AsObject,
+  ): { severity: 'error' | 'success'; text: string } {
+    if (!txn.costCenter || txn.costCenter.id === 0)
+      return {
+        severity: 'error',
+        text: 'Please select a purchase category',
+      };
+    if (txn.costCenterId === 601002 && txn.notes === '')
+      return {
+        severity: 'error',
+        text: 'Fuel purchases must include mileage and gallons in the notes',
+      };
+    if (txn.notes === '')
+      return {
+        severity: 'error',
+        text: 'Purchases should include a brief description in the notes',
+      };
+    return {
+      severity: 'success',
+      text: 'This transaction is ready for submission',
     };
-    if (!txn.costCenter || txn.costCenter.id === 0) {
-      return (
-        <Grid container direction="row" style={style}>
-          <InfoSharp />
-          <Typography style={{ color: 'white' }}>
-            Please select a purchase category
-          </Typography>
-        </Grid>
-      );
-    } else if (txn.costCenterId === 601002 && txn.notes === '') {
-      return (
-        <Grid container direction="row" style={style}>
-          <InfoSharp />
-          <Typography style={{ color: 'white' }}>
-            Fuel purchases must include mileage and gallons in the notes
-          </Typography>
-        </Grid>
-      );
-    } else if (txn.notes === '') {
-      return (
-        <Grid container direction="row" style={style}>
-          <InfoSharp />
-          <Typography style={{ color: 'white' }}>
-            Purchases should include a brief description in the notes
-          </Typography>
-        </Grid>
-      );
-    } else {
-      //@ts-ignore
-      style.backgroundColor = green[700];
-      return (
-        <Grid container direction="row" style={style}>
-          <InfoSharp />
-          <Typography style={{ color: 'white' }}>
-            This transaction is ready for submission
-          </Typography>
-        </Grid>
-      );
-    }
   }
 
   openFilePrompt() {
@@ -349,7 +288,6 @@ export class TxnCard extends React.PureComponent<props, state> {
           alert('File could not be uploaded');
           console.log(err);
         }
-
         await this.refresh();
         this.props.toggleLoading(() => alert('Upload complete'));
       };
@@ -397,117 +335,24 @@ export class TxnCard extends React.PureComponent<props, state> {
     const t = this.state.txn;
     const { isManager } = this.props;
     let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
+    const deriveCallout = this.deriveCallout(t);
     return (
       <>
-        <Card elevation={3} className="card" key={`${t.id}`} id={`${t.id}`}>
-          {this.deriveCallout(t)}
-          <CardHeader
-            title={`${new Date(
-              t.timestamp.split(' ').join('T'),
-            ).toDateString()} - $${t.amount}`}
-            subheader={subheader}
-          />
-          <Grid container direction="row" wrap="nowrap" spacing={2}>
-            <Grid
-              container
-              item
-              direction="column"
-              justify="space-evenly"
-              alignItems="flex-start"
-            >
-              <AccountPicker
-                onSelect={this.updateCostCenterID}
-                selected={t.costCenterId}
-                sort={costCenterSortByPopularity}
-                filter={
-                  !isManager
-                    ? a => ALLOWED_ACCOUNT_IDS.includes(a.id)
-                    : undefined
-                }
-                hideInactive
-                renderItem={i => (
-                  <option value={i.id} key={`${i.id}-${i.description}`}>
-                    {i.description} ({i.id})
-                  </option>
-                )}
-              />
-              <DepartmentPicker
-                onSelect={this.updateDepartmentID}
-                selected={t.departmentId || this.props.userDepartmentID}
-                renderItem={i => (
-                  <option value={i.id} key={`${i.id}-${i.description}`}>
-                    {i.description}
-                  </option>
-                )}
-              />
-              {/*<Button
-                onClick={this.toggleSearch}
-                size="large"
-                fullWidth
-                style={{
-                  height: 44,
-                  marginBottom: 10,
-                }}
-              >
-                Job Number: {t.jobId || 'None'}
-              </Button>*/}
-              <Field
-                name="jobNumber"
-                label="Job Number"
-                value={t.jobId}
-                onChange={val => this.handleJobNumber(+val)}
-                type="eventId"
-                style={{
-                  alignItems: 'flex-start',
-                  flexGrow: 0,
-                }}
-              />
-              <TextField
-                label="Notes"
-                defaultValue={t.notes}
-                inputRef={this.NotesInput}
-                onChange={e => this.updateNotes(e.currentTarget.value)}
-                variant="outlined"
-                margin="none"
-                multiline
-                fullWidth
-                style={{ marginBottom: 10 }}
-              />
-            </Grid>
-            <Grid
-              container
-              item
-              direction="column"
-              justify="space-evenly"
-              alignItems="center"
-            >
-              <Button
-                onClick={this.openFilePrompt}
-                startIcon={<AddAPhotoTwoTone />}
-                size="large"
-                fullWidth
-                style={{
-                  height: 44,
-                  marginBottom: 10,
-                }}
-              >
-                Photo
-              </Button>
+        <SectionBar
+          title={`${new Date(
+            t.timestamp.split(' ').join('T'),
+          ).toDateString()} - $${t.amount}`}
+          subtitle={subheader}
+          asideContent={
+            <>
+              <Button label="Add Photo" onClick={this.openFilePrompt} />
               <AltGallery
                 title="Receipt Photo(s)"
-                text="Photo(s)"
+                text="View Photo(s)"
                 fileList={getGalleryData(this.state.txn)}
                 transactionID={this.state.txn.id}
               />
-              <Button
-                startIcon={<SendTwoTone />}
-                size="large"
-                fullWidth
-                style={{ height: 44, marginBottom: 10 }}
-                onClick={this.submit}
-              >
-                Submit
-              </Button>
+              <Button label="Submit" onClick={this.submit} />
               <PDFMaker
                 dateStr={t.timestamp}
                 name={t.ownerName}
@@ -532,28 +377,64 @@ export class TxnCard extends React.PureComponent<props, state> {
                   pdfType="Retrievable Receipt"
                 />
               )}
-            </Grid>
-          </Grid>
-        </Card>
+            </>
+          }
+        />
+        <Alert severity={deriveCallout.severity}>{deriveCallout.text}</Alert>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridGap: 16,
+            padding: 16,
+            paddingBottom: 0,
+          }}
+        >
+          <AccountPicker
+            onSelect={this.updateCostCenterID}
+            selected={t.costCenterId}
+            sort={costCenterSortByPopularity}
+            filter={
+              !isManager ? a => ALLOWED_ACCOUNT_IDS.includes(a.id) : undefined
+            }
+            hideInactive
+            renderItem={i => (
+              <option value={i.id} key={`${i.id}-${i.description}`}>
+                {i.description} ({i.id})
+              </option>
+            )}
+          />
+          <Field
+            name="department"
+            value={t.departmentId || this.props.userDepartmentID}
+            onChange={val => this.updateDepartmentID(+val)}
+            type="department"
+          />
+          <Field
+            name="jobNumber"
+            label="Job Number"
+            value={t.jobId}
+            onChange={val => this.handleJobNumber(+val)}
+            type="eventId"
+            style={{
+              alignItems: 'flex-start',
+              flexGrow: 0,
+            }}
+          />
+          <Field
+            name="notes"
+            label="Notes"
+            value={t.notes}
+            onChange={val => this.updateNotes(val.toString())}
+            multiline
+          />
+        </div>
         <input
           type="file"
           ref={this.FileInput}
           onChange={this.handleFile}
           style={{ display: 'none' }}
         />
-        <Dialog
-          aria-labelledby="transition-modal-service-call-search"
-          open={this.state.isSearchOpen}
-          onClose={this.toggleSearch}
-          fullScreen
-        >
-          <AdvancedSearch
-            title="Service Calls"
-            kinds={['serviceCalls']}
-            loggedUserId={this.props.userID}
-            onSelectEvent={this.setJobNumber}
-          />
-        </Dialog>
       </>
     );
   }
