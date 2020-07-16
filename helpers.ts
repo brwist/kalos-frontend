@@ -2559,6 +2559,19 @@ export const openFile = async (filename: string, bucket: string) => {
   window.open(url, '_blank');
 };
 
+const getComputedStyleCssText = (element: Element) => {
+  var style = window.getComputedStyle(element, null),
+    cssText;
+  if (style.cssText != '') {
+    return style.cssText;
+  }
+  cssText = '';
+  for (var i = 0; i < style.length; i++) {
+    cssText += style[i] + ': ' + style.getPropertyValue(style[i]) + '; ';
+  }
+  return cssText;
+};
+
 export const setInlineStyles = (theElement: Element) => {
   const els = theElement.children;
   for (let i = 0, maxi = els.length; i < maxi; i++) {
@@ -2566,7 +2579,7 @@ export const setInlineStyles = (theElement: Element) => {
     const defaultElem = document.createElement(els[i].nodeName);
     const child = document.body.appendChild(defaultElem);
     const defaultsStyles = window.getComputedStyle(defaultElem, null);
-    let computed = window.getComputedStyle(els[i], null).cssText;
+    let computed = getComputedStyleCssText(els[i]);
     for (let j = 0, maxj = defaultsStyles.length; j < maxj; j++) {
       const defaultStyle =
         defaultsStyles[j] +
