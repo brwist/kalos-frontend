@@ -27,6 +27,7 @@ import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { Field } from '../../ComponentsLibrary/Field';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Button } from '../../ComponentsLibrary/Button';
+import './card.css';
 
 interface props {
   txn: Transaction.AsObject;
@@ -344,7 +345,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           ).toDateString()} - $${t.amount}`}
           subtitle={subheader}
           asideContent={
-            <>
+            <div className="TransactionUser_Actions">
               <Button label="Add Photo" onClick={this.openFilePrompt} />
               <AltGallery
                 title="Receipt Photo(s)"
@@ -377,19 +378,11 @@ export class TxnCard extends React.PureComponent<props, state> {
                   pdfType="Retrievable Receipt"
                 />
               )}
-            </>
+            </div>
           }
         />
         <Alert severity={deriveCallout.severity}>{deriveCallout.text}</Alert>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gridGap: 16,
-            padding: 16,
-            paddingBottom: 0,
-          }}
-        >
+        <div className="TransactionUser_Cards">
           <AccountPicker
             onSelect={this.updateCostCenterID}
             selected={t.costCenterId}
