@@ -17,13 +17,16 @@ type Styles = {
 
 type Href = 'tel' | 'mailto';
 
-export type Data = {
+export type Row = {
   label?: string;
   value: ReactNode;
   href?: Href;
   actions?: ReactElement[];
   onClick?: () => void;
-}[][];
+  actionsFullWidth?: boolean;
+}[];
+
+export type Data = Row[];
 
 export type Columns = {
   name: ReactNode;
@@ -119,6 +122,7 @@ const useStyles = makeStyles(theme => {
     },
     valueContent: {
       flexGrow: 1,
+      wordBreak: 'break-word',
     },
     loader: {
       position: 'absolute',
@@ -210,60 +214,79 @@ export const InfoTable = ({
       {data &&
         data.map((items, idx) => (
           <div key={idx} className={classes.row}>
-            {items.map(({ label, value, href, actions, onClick }, idx2) => (
-              <Typography
-                key={idx2}
-                className={classes.item}
-                component="div"
-                style={{
-                  width: md
-                    ? '100%'
-                    : columns && columns[idx2] && columns[idx2].width
-                    ? columns[idx2].width
-                    : `${100 / items.length}%`,
-                  flexGrow:
-                    md ||
-                    (columns && columns[idx2] && columns[idx2].width === -1)
-                      ? 1
-                      : 0,
-                  flexShrink:
-                    columns &&
-                    columns[idx2] &&
-                    columns[idx2].width &&
-                    columns[idx2].width! > -1
-                      ? 0
-                      : 1,
-                  cursor: onClick ? 'pointer' : 'default',
-                }}
-                onClick={loading || error ? undefined : onClick}
-              >
-                {label && <strong className={classes.label}>{label}: </strong>}
-                {loading || error ? (
-                  <span className={classes.fake} />
-                ) : (
-                  <div
-                    className={classes.value}
-                    style={{
-                      whiteSpace: skipPreLine ? 'initial' : 'pre-line',
-                    }}
-                  >
-                    {href ? (
-                      <Link href={`${href}:${value}`}>{value}</Link>
-                    ) : (
-                      <div className={classes.valueContent}>{value}</div>
-                    )}
-                    {actions && (
-                      <span
-                        className={classes.actions}
-                        onClick={event => event.stopPropagation()}
-                      >
-                        {actions}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </Typography>
-            ))}
+            {items.map(
+              (
+                {
+                  label,
+                  value,
+                  href,
+                  actions,
+                  onClick,
+                  actionsFullWidth = false,
+                },
+                idx2,
+              ) => (
+                <Typography
+                  key={idx2}
+                  className={classes.item}
+                  component="div"
+                  style={{
+                    width: md
+                      ? '100%'
+                      : columns && columns[idx2] && columns[idx2].width
+                      ? columns[idx2].width
+                      : `${100 / items.length}%`,
+                    flexGrow:
+                      md ||
+                      (columns && columns[idx2] && columns[idx2].width === -1)
+                        ? 1
+                        : 0,
+                    flexShrink:
+                      columns &&
+                      columns[idx2] &&
+                      columns[idx2].width &&
+                      columns[idx2].width! > -1
+                        ? 0
+                        : 1,
+                    cursor: onClick ? 'pointer' : 'default',
+                  }}
+                  onClick={loading || error ? undefined : onClick}
+                >
+                  {label && (
+                    <strong className={classes.label}>{label}: </strong>
+                  )}
+                  {loading || error ? (
+                    <span className={classes.fake} />
+                  ) : (
+                    <div
+                      className={classes.value}
+                      style={{
+                        whiteSpace: skipPreLine ? 'initial' : 'pre-line',
+                      }}
+                    >
+                      {href ? (
+                        <Link href={`${href}:${value}`}>{value}</Link>
+                      ) : (
+                        <div className={classes.valueContent}>{value}</div>
+                      )}
+                      {actions && (
+                        <span
+                          className={classes.actions}
+                          onClick={event => event.stopPropagation()}
+                          style={
+                            actionsFullWidth
+                              ? { width: '100%', textAlign: 'right' }
+                              : {}
+                          }
+                        >
+                          {actions}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </Typography>
+              ),
+            )}
           </div>
         ))}
       {!loading && !error && data && data.length === 0 && (

@@ -94,6 +94,7 @@ export type Options = (string | Option)[];
 type Style = {
   type?: Type;
   disabled?: boolean;
+  compact?: boolean;
 };
 
 export interface Props<T> extends SchemaProps<T> {
@@ -104,6 +105,7 @@ export interface Props<T> extends SchemaProps<T> {
   className?: string;
   placeholder?: string;
   style?: CSSProperties;
+  compact?: boolean;
 }
 
 export const getDefaultValueByType = (type: Type) => {
@@ -122,9 +124,9 @@ const useStyles = makeStyles(theme => ({
     flexShrink: 0,
     flexGrow: 1,
   },
-  field: ({ type, disabled }: Style) => ({
+  field: ({ type, disabled, compact }: Style) => ({
     marginTop: 0,
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(compact ? 0 : 2),
     ...(type === 'hidden' ? { display: 'none' } : {}),
     ...(disabled ? { filter: 'grayscale(1)' } : {}),
   }),
@@ -263,6 +265,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   content,
   actionsInLabel = false,
   style = {},
+  compact = false,
   ...props
 }) => {
   const signatureRef = useRef(null);
@@ -341,7 +344,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [techniciansIds, setTechniciansIds, type],
   );
   const { actions = [], description } = props;
-  const classes = useStyles({ type, disabled });
+  const classes = useStyles({ type, disabled, compact });
   const handleChange = useCallback(
     ({ target: { value } }) => {
       if (onChange) {

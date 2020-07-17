@@ -1,11 +1,11 @@
 import React from 'react';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
-import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import NotesIcon from '@material-ui/icons/NotesSharp';
 import Typography from '@material-ui/core/Typography';
 import Popover from '@material-ui/core/Popover';
+import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 
 interface props {
   text: string;
@@ -34,9 +34,9 @@ export function TxnNotes({ text, onOpen, iconButton, disabled, notes }: props) {
   };
 
   const button = iconButton ? (
-    <Tooltip title={text} placement="top">
+    <Tooltip content={text}>
       <span>
-        <IconButton onClick={toggleOpen} disabled={disabled}>
+        <IconButton size="small" onClick={toggleOpen} disabled={disabled}>
           <NotesIcon />
         </IconButton>
       </span>

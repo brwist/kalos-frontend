@@ -2,7 +2,6 @@ import React from 'react';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Dialog from '@material-ui/core/Dialog';
-import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import ChevronLeftTwoTone from '@material-ui/icons/ChevronLeftTwoTone';
@@ -13,6 +12,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { Button as ButtonLib } from '../ComponentsLibrary/Button';
+import { Tooltip } from '../ComponentsLibrary/Tooltip';
 import { ENDPOINT } from '../../constants';
 import { getMimeType } from '../../helpers';
 
@@ -232,9 +232,13 @@ export class AltGallery extends React.PureComponent<props, state> {
     const { isOpen, activeImage, currentURL, isLoading, fileList } = this.state;
 
     const button = iconButton ? (
-      <Tooltip title={text} placement="top">
+      <Tooltip content={text}>
         <span>
-          <IconButton onClick={this.toggleOpen} disabled={disabled}>
+          <IconButton
+            size="small"
+            onClick={this.toggleOpen}
+            disabled={disabled}
+          >
             <ImageSearchTwoTone />
           </IconButton>
         </span>

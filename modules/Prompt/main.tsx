@@ -1,5 +1,4 @@
 import React from 'react';
-import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
@@ -7,6 +6,7 @@ import Popover from '@material-ui/core/Popover';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
+import { Tooltip } from '../ComponentsLibrary/Tooltip';
 
 interface props {
   disabled?: boolean;
@@ -52,9 +52,9 @@ export function Prompt({
   };
 
   const button = Icon ? (
-    <Tooltip title={text} placement="top">
+    <Tooltip content={text}>
       <span>
-        <IconButton onClick={toggleOpen} disabled={disabled}>
+        <IconButton size="small" onClick={toggleOpen} disabled={disabled}>
           <Icon />
         </IconButton>
       </span>

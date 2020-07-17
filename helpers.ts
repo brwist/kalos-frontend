@@ -2618,6 +2618,16 @@ export const makeLast12MonthsOptions = (
   ].reverse();
 };
 
+export const makeMonthsOptions = (withAllOption?: boolean) => {
+  return [
+    ...(withAllOption ? [{ label: OPTION_ALL, value: '0' }] : []),
+    ...MONTHS.map((month, idx) => ({
+      label: month,
+      value: trailingZero(idx + 1),
+    })),
+  ];
+};
+
 export const getUploadedHTMLUrl = async (
   HTMLString: string,
   filename: string,
