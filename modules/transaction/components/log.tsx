@@ -14,10 +14,9 @@ import Button from '@material-ui/core/Button';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import IconButton from '@material-ui/core/IconButton';
 import ListIcon from '@material-ui/icons/ListSharp';
-import Tooltip from '@material-ui/core/Tooltip';
-import Grid from '@material-ui/core/Grid';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../../constants';
+import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 
 interface props {
   txnID: number;
@@ -51,14 +50,14 @@ export class TxnLog extends React.PureComponent<props, state> {
   }
 
   toggleVisibility() {
-    this.setState((prevState) => ({ isOpen: !prevState.isOpen }));
+    this.setState(prevState => ({ isOpen: !prevState.isOpen }));
   }
 
   async addLog(log: TransactionActivity.AsObject) {
     const user = new User();
     user.setId(log.userId);
     const res = await this.UserClient.Get(user);
-    this.setState((prevState) => {
+    this.setState(prevState => {
       const map = new Map(prevState.actorMap);
       map.set(log.id, `${res.firstname} ${res.lastname} ${res.id}`);
       return {
@@ -86,8 +85,8 @@ export class TxnLog extends React.PureComponent<props, state> {
 
   render() {
     const button = this.props.iconButton ? (
-      <Tooltip title="View activity log" placement="top">
-        <IconButton onClick={this.toggleVisibility}>
+      <Tooltip content="View activity log">
+        <IconButton size="small" onClick={this.toggleVisibility}>
           <ListIcon />
         </IconButton>
       </Tooltip>
@@ -132,11 +131,11 @@ export class TxnLog extends React.PureComponent<props, state> {
               <TableBody>
                 {this.state.list
                   .filter(
-                    (activity) =>
+                    activity =>
                       !activity.description.includes('[old.') ||
                       !activity.description.includes('[new.'),
                   )
-                  .map((activity) => (
+                  .map(activity => (
                     <TableRow key={`activity_${activity.id}`}>
                       <TableCell>{activity.timestamp}</TableCell>
                       <TableCell>{activity.description}</TableCell>

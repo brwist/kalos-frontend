@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
-import Tooltip from '@material-ui/core/Tooltip';
+import React from 'react';
 import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
@@ -10,23 +8,21 @@ import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import NotesIcon from '@material-ui/icons/EditSharp';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
-import Button from '@material-ui/core/Button';
+import CloseIcon from '@material-ui/icons/Close';
 import { Prompt } from '../../Prompt/main';
-import { IFile } from '../../Gallery/main';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
-import {
-  TransactionDocumentClient,
-  TransactionDocument,
-} from '@kalos-core/kalos-rpc/TransactionDocument';
+import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { TxnLog } from './log';
 import { TxnNotes } from './notes';
-import { getSlackID, slackNotify, getMimeType } from '../../../helpers';
+import { getSlackID, slackNotify } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { AltGallery, GalleryData } from '../../AltGallery/main';
+import { Row } from '../../ComponentsLibrary/InfoTable';
+import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 
 interface props {
   txn: Transaction.AsObject;
@@ -43,6 +39,8 @@ interface props {
   updateCostCenter(id: number): Promise<void>;
   updateDepartment(id: number): Promise<void>;
   toggleLoading(cb?: () => void): void;
+  editingCostCenter: boolean;
+  toggleEditingCostCenter(): void;
 }
 
 export function TransactionRow({
@@ -57,9 +55,9 @@ export function TransactionRow({
   acceptOverride,
   updateCostCenter,
   userID,
-}: props) {
-  const [isEditingCostCenter, setIsEditingCostCenter] = useState(false);
-
+  editingCostCenter,
+  toggleEditingCostCenter,
+}: props): Row {
   const FileInput = React.createRef<HTMLInputElement>();
 
   const clients = {
@@ -162,138 +160,150 @@ export function TransactionRow({
 
   const handleCostCenterSelect = async (id: number) => {
     await updateCostCenter(id);
-    setIsEditingCostCenter(false);
+    toggleEditingCostCenter();
   };
 
   const amount = prettyMoney(txn.amount);
-  return (
-    <>
-      <TableRow hover>
-        <TableCell align="center" style={{ padding: 4 }}>
-          {new Date(txn.timestamp.split(' ').join('T')).toLocaleDateString()}
-        </TableCell>
-        <TableCell align="center" style={{ padding: 4 }}>
-          {`${txn.ownerName} (${txn.cardUsed})` || ''}
-        </TableCell>
-        <TableCell align="center" style={{ padding: 4 }}>
-          {isEditingCostCenter && (
-            <CostCenterPicker
-              selected={txn.costCenter ? txn.costCenter.id : 0}
-              onSelect={handleCostCenterSelect}
-              hideInactive
-            />
-          )}
-          {!isEditingCostCenter && (
-            <Button onClick={() => setIsEditingCostCenter(true)}>
-              {txn.costCenter
-                ? `${txn.costCenter.description} (${txn.costCenter.id})`
-                : ''}
-            </Button>
-          )}
-        </TableCell>
-        <TableCell align="center" style={{ padding: 4 }}>
-          {txn.department
-            ? `${txn.department.description} (${txn.department.classification})`
-            : ''}
-        </TableCell>
-        <TableCell align="center" style={{ padding: 4 }}>
-          {txn.jobId}
-        </TableCell>
-        <TableCell align="center" style={{ padding: 4 }}>
-          ${amount}
-        </TableCell>
-        <TableCell align="center" style={{ padding: 4 }}>
-          {txn.vendor}
-        </TableCell>
-        <TableCell align="right" colSpan={2} style={{ padding: 4 }}>
-          <Tooltip title="Copy data to clipboard" placement="top">
-            <IconButton
-              onClick={() =>
-                copyToClipboard(
-                  `${new Date(
-                    txn.timestamp.split(' ').join('T'),
-                  ).toLocaleDateString()},${txn.description},${amount},${
-                    txn.ownerName
-                  },${txn.vendor}`,
-                )
-              }
-            >
-              <CopyIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Upload File" placement="top">
-            <IconButton onClick={openFileInput}>
-              <UploadIcon />
-            </IconButton>
-          </Tooltip>
-          <Prompt
-            confirmFn={addJobNumber}
-            text="Update Job Number"
-            prompt="New Job Number: "
-            Icon={KeyboardIcon}
-          />
-          <Prompt
-            confirmFn={updateNotes}
-            text="Edit Notes"
-            prompt="Update Txn Notes: "
-            Icon={NotesIcon}
-            defaultValue={txn.notes}
-            multiline
-          />
-          <AltGallery
-            title="Receipt Photos"
-            fileList={getGalleryData(txn)}
-            transactionID={txn.id}
-            text="View receipt photos"
-            iconButton
-          />
-          <TxnLog iconButton txnID={txn.id} />
-          <TxnNotes
-            iconButton
-            text="View notes"
-            notes={txn.notes}
-            disabled={txn.notes === ''}
-          />
-          {[9928, 9646, 1734].includes(userID) && (
-            <Tooltip
-              title={
-                txn.isAudited
-                  ? 'This transaction has already been aduited'
-                  : 'Mark as correct'
-              }
-              placement="top"
-            >
-              <IconButton onClick={auditTxn} disabled={txn.isAudited}>
-                <CheckIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip
-            title={acceptOverride ? 'Mark as accepted' : 'Mark as entered'}
-            placement="top"
+  return [
+    {
+      value: new Date(txn.timestamp.split(' ').join('T')).toLocaleDateString(),
+    },
+    {
+      value: `${txn.ownerName} (${txn.cardUsed})` || '',
+    },
+    {
+      value: editingCostCenter ? (
+        <CostCenterPicker
+          selected={txn.costCenter ? txn.costCenter.id : 0}
+          onSelect={handleCostCenterSelect}
+          hideInactive
+        />
+      ) : txn.costCenter ? (
+        `${txn.costCenter.description} (${txn.costCenter.id})`
+      ) : (
+        ''
+      ),
+      actions: [
+        <IconButton key="edit" size="small" onClick={toggleEditingCostCenter}>
+          {editingCostCenter ? <CloseIcon /> : <EditIcon />}
+        </IconButton>,
+      ],
+    },
+    {
+      value: txn.department
+        ? `${txn.department.description} (${txn.department.classification})`
+        : '',
+    },
+    {
+      value: txn.jobId,
+    },
+    {
+      value: `$ ${amount}`,
+    },
+    {
+      value: txn.vendor,
+    },
+    {
+      value: '',
+      actions: [
+        <Tooltip key="copy" content="Copy data to clipboard">
+          <IconButton
+            size="small"
+            onClick={() =>
+              copyToClipboard(
+                `${new Date(
+                  txn.timestamp.split(' ').join('T'),
+                ).toLocaleDateString()},${txn.description},${amount},${
+                  txn.ownerName
+                },${txn.vendor}`,
+              )
+            }
           >
-            <IconButton onClick={updateStatus}>
-              <SubmitIcon />
-            </IconButton>
-          </Tooltip>
-          <Prompt
-            confirmFn={dispute}
-            text="Reject transaction"
-            prompt="Enter reason for rejection: "
-            Icon={RejectIcon}
-          />
-        </TableCell>
-        <TableCell style={{ display: 'none' }}>
-          <input
-            type="file"
-            ref={FileInput}
-            onChange={handleFile}
-            style={{ display: 'none' }}
-          />
-        </TableCell>
-      </TableRow>
-    </>
-  );
+            <CopyIcon />
+          </IconButton>
+        </Tooltip>,
+        <Tooltip key="upload" content="Upload File">
+          <IconButton size="small" onClick={openFileInput}>
+            <UploadIcon />
+            <input
+              type="file"
+              ref={FileInput}
+              onChange={handleFile}
+              style={{ display: 'none' }}
+            />
+          </IconButton>
+        </Tooltip>,
+        <Prompt
+          key="updateJobNumber"
+          confirmFn={addJobNumber}
+          text="Update Job Number"
+          prompt="New Job Number: "
+          Icon={KeyboardIcon}
+        />,
+        <Prompt
+          key="editNotes"
+          confirmFn={updateNotes}
+          text="Edit Notes"
+          prompt="Update Txn Notes: "
+          Icon={NotesIcon}
+          defaultValue={txn.notes}
+          multiline
+        />,
+        <AltGallery
+          key="receiptPhotos"
+          title="Receipt Photos"
+          fileList={getGalleryData(txn)}
+          transactionID={txn.id}
+          text="View receipt photos"
+          iconButton
+        />,
+        <TxnLog key="txnLog" iconButton txnID={txn.id} />,
+        <TxnNotes
+          key="viewNotes"
+          iconButton
+          text="View notes"
+          notes={txn.notes}
+          disabled={txn.notes === ''}
+        />,
+        ...([9928, 9646, 1734].includes(userID)
+          ? [
+              <Tooltip
+                key="audit"
+                content={
+                  txn.isAudited
+                    ? 'This transaction has already been aduited'
+                    : 'Mark as correct'
+                }
+              >
+                <IconButton
+                  size="small"
+                  onClick={auditTxn}
+                  disabled={txn.isAudited}
+                >
+                  <CheckIcon />
+                </IconButton>
+              </Tooltip>,
+            ]
+          : []),
+        <Tooltip
+          key="submit"
+          content={acceptOverride ? 'Mark as accepted' : 'Mark as entered'}
+        >
+          <IconButton size="small" onClick={updateStatus}>
+            <SubmitIcon />
+          </IconButton>
+        </Tooltip>,
+        <Prompt
+          key="reject"
+          confirmFn={dispute}
+          text="Reject transaction"
+          prompt="Enter reason for rejection: "
+          Icon={RejectIcon}
+        />,
+      ],
+      actionsFullWidth: true,
+    },
+  ];
 }
 
 function copyToClipboard(text: string): void {
@@ -317,7 +327,7 @@ export function prettyMoney(amount: number): string {
 }
 
 function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
-  return txn.documentsList.map((d) => {
+  return txn.documentsList.map(d => {
     return {
       key: `${txn.id}-${d.reference}`,
       bucket: 'kalos-transactions',

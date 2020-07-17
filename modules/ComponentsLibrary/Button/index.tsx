@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, CSSProperties } from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
 import ButtonUI from '@material-ui/core/Button';
@@ -19,6 +19,7 @@ export interface Props extends Style {
   className?: string;
   span?: boolean;
   startIcon?: JSX.Element;
+  style?: CSSProperties;
 }
 
 const useStyles = makeStyles(theme => ({
