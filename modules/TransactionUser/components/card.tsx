@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
 import {
   Transaction,
@@ -338,7 +339,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
     const deriveCallout = this.deriveCallout(t);
     return (
-      <>
+      <Paper elevation={4} style={{ margin: 16, marginTop: 32 }}>
         <SectionBar
           title={`${new Date(
             t.timestamp.split(' ').join('T'),
@@ -380,6 +381,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               )}
             </div>
           }
+          sticky={false}
         />
         <Alert severity={deriveCallout.severity}>{deriveCallout.text}</Alert>
         <div className="TransactionUser_Cards">
@@ -428,7 +430,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           onChange={this.handleFile}
           style={{ display: 'none' }}
         />
-      </>
+      </Paper>
     );
   }
 }
