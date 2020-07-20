@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import ModalUI from '@material-ui/core/Modal';
 import Paper from '@material-ui/core/Paper';
+import './styles.less';
 
 type Style = {
   compact?: boolean;
@@ -16,25 +16,6 @@ interface Props extends Style {
   children: ReactNode;
 }
 
-const useStyles = makeStyles(theme => ({
-  modal: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  paper: ({ maxWidth, fullScreen, fullHeight }: Style) => ({
-    position: 'relative',
-    width: fullScreen ? '100%' : 'auto',
-    height: fullScreen || fullHeight ? '100%' : 'auto',
-    maxWidth,
-    minWidth: 300,
-    outline: 'none',
-    maxHeight: '100%',
-    overflowX: 'hidden',
-    overflowY: 'auto',
-  }),
-}));
-
 export const Modal = ({
   open,
   onClose,
@@ -43,11 +24,17 @@ export const Modal = ({
   maxWidth = 'none',
   fullScreen = false,
   fullHeight = false,
-}: Props) => {
-  const classes = useStyles({ compact, maxWidth, fullScreen, fullHeight });
-  return (
-    <ModalUI open={open} onClose={onClose} className={classes.modal}>
-      <Paper className={classes.paper}>{children}</Paper>
-    </ModalUI>
-  );
-};
+}: Props) => (
+  <ModalUI open={open} onClose={onClose} className={'Modal'}>
+    <Paper
+      className={'ModalPaper'}
+      style={{
+        maxWidth,
+        width: fullScreen ? '100%' : 'auto',
+        height: fullScreen || fullHeight ? '100%' : 'auto',
+      }}
+    >
+      {children}
+    </Paper>
+  </ModalUI>
+);
