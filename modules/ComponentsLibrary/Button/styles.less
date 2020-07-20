@@ -1,0 +1,29 @@
+@import '../../../styles/index.less';
+
+.Button {
+  &Wrapper {
+    margin-top: .spacing() [] !important;
+    margin-bottom: .spacing() [] !important;
+    margin-left: .spacing() [] !important;
+    &.compact {
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
+    &.size-xsmall {
+      font-size: 11px;
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+    &.status {
+      background-color: red;
+      &-success {
+        background-color: green;
+      }
+    }
+  }
+  &Link {
+    text-decoration: inherit;
+  }
+}

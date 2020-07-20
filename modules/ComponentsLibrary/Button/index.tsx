@@ -1,7 +1,7 @@
 import React, { FC, CSSProperties } from 'react';
 import clsx from 'clsx';
-import { makeStyles } from '@material-ui/core/styles';
 import ButtonUI from '@material-ui/core/Button';
+import './styles.less';
 
 type Style = {
   compact?: boolean;
@@ -22,31 +22,6 @@ export interface Props extends Style {
   style?: CSSProperties;
 }
 
-const useStyles = makeStyles(theme => ({
-  button: ({ compact, size, status }: Style) => ({
-    marginTop: theme.spacing(compact ? 0 : 1),
-    marginBottom: theme.spacing(compact ? 0 : 1),
-    marginLeft: theme.spacing(1),
-    ...(size === 'xsmall'
-      ? {
-          fontSize: 11,
-          paddingTop: 0,
-          paddingBottom: 0,
-          paddingLeft: 6,
-          paddingRight: 6,
-        }
-      : {}),
-    ...(status
-      ? {
-          backgroundColor: status === 'success' ? 'green' : 'red',
-        }
-      : {}),
-  }),
-  link: {
-    textDecoration: 'inherit',
-  },
-}));
-
 export const Button: FC<Props> = ({
   label,
   url,
@@ -60,10 +35,15 @@ export const Button: FC<Props> = ({
   children,
   ...props
 }) => {
-  const classes = useStyles({ compact, size, status });
   const Component = (
     <ButtonUI
-      className={clsx(classes.button, className && className)}
+      className={clsx(
+        'ButtonWrapper',
+        className && className,
+        `size-${size}`,
+        `status-${status}`,
+        { compact, status },
+      )}
       variant={variant}
       color={color}
       size={size === 'xsmall' ? 'small' : size}
@@ -76,7 +56,7 @@ export const Button: FC<Props> = ({
   );
   if (url) {
     return (
-      <a href={url} className={classes.link}>
+      <a href={url} className="ButtonLink">
         {Component}
       </a>
     );

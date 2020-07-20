@@ -1,5 +1,6 @@
 import React, { FC, useState, useCallback } from 'react';
 import Typography from '@material-ui/core/Typography';
+import { SectionBar } from '../SectionBar';
 import { LoremIpsumList } from '../helpers';
 import { Modal } from './';
 
@@ -29,17 +30,11 @@ const EnhancedModal: FC<Props> = ({
         fullHeight={fullHeight}
         {...props}
       >
-        <div
-          style={{
-            position: 'sticky',
-            backgroundColor: 'gold',
-            padding: 10,
-            textAlign: 'right',
-            top: 0,
-          }}
-        >
-          <button onClick={handleToggleOpen(false)}>Close</button>
-        </div>
+        <SectionBar
+          title={button}
+          actions={[{ label: 'Close', onClick: handleToggleOpen(false) }]}
+          fixedActions
+        />
         <div style={{ padding: 20 }}>{children}</div>
       </Modal>
     </>
