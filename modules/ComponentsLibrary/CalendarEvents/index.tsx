@@ -95,6 +95,7 @@ const useStyles = makeStyles(theme => ({
     height: 20,
     position: 'relative',
     display: 'flex',
+    boxSizing: 'content-box',
   },
   eventDesc: {
     height: 20,

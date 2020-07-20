@@ -5,28 +5,20 @@ import React, {
   useState,
   ReactNode,
 } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import clsx from 'clsx';
 import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import TablePagination from '@material-ui/core/TablePagination';
 import { Field, Value } from '../Field';
 import { Actions, ActionsProps } from '../Actions';
-import './styles.css';
+import './styles.less';
 
 export type Pagination = {
   count: number;
   page: number;
   rowsPerPage: number;
   onChangePage: (page: number) => void;
-};
-
-type Styles = {
-  collapsable?: boolean;
-  collapsed?: boolean;
-  fixedActions?: boolean;
-  small?: boolean;
-  sticky?: boolean;
 };
 
 interface Props {
@@ -48,90 +40,6 @@ interface Props {
   sticky?: boolean;
 }
 
-const useStyles = makeStyles(theme => ({
-  wrapper: ({ collapsable, collapsed, small, sticky }: Styles) => ({
-    position: sticky ? 'sticky' : 'relative',
-    top: 0,
-    zIndex: 1,
-    backgroundColor: theme.palette.grey[300],
-    paddingLeft: theme.spacing(),
-    paddingRight: theme.spacing(),
-    display: 'flex',
-    justifyContent: 'space-between',
-    justifyItems: 'center',
-    minHeight: small ? 0 : 46,
-    flexDirection: 'column',
-    boxSizing: 'border-box',
-    marginBottom: collapsable && collapsed ? theme.spacing() : 0,
-    [theme.breakpoints.down('xs')]: {
-      paddingTop: theme.spacing(0.5),
-      paddingBottom: theme.spacing(0.5),
-      minHeight: 0,
-    },
-  }),
-  headerWrapper: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexGrow: 1,
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  actions: {
-    display: 'flex',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  titleWrapper: ({ collapsable, small }: Styles) => ({
-    cursor: collapsable ? 'pointer' : 'default',
-    userSelect: 'none',
-    width: '100%',
-    marginTop: theme.spacing(small ? 0.5 : 1),
-    marginBottom: theme.spacing(small ? 0.5 : 1),
-    [theme.breakpoints.down('xs')]: {
-      marginTop: theme.spacing(0.5),
-      marginBottom: theme.spacing(0.5),
-    },
-  }),
-  title: ({ small }: Styles) => ({
-    display: 'flex',
-    alignItems: 'center',
-    ...theme.typography[small ? 'subtitle1' : 'h6'],
-    lineHeight: 1,
-    [theme.breakpoints.down('xs')]: {
-      ...theme.typography.subtitle1,
-      lineHeight: 1,
-    },
-  }),
-  subtitle: ({ small }: Styles) => ({
-    marginTop: theme.spacing(0.25),
-    color: theme.palette.grey[600],
-    ...theme.typography[small ? 'subtitle2' : 'subtitle1'],
-    lineHeight: 1,
-    [theme.breakpoints.down('xs')]: {
-      ...theme.typography.subtitle2,
-      lineHeight: 1,
-    },
-  }),
-  toolbarRoot: {
-    flexShrink: 0,
-  },
-  toolbar: {
-    minHeight: 0,
-    color: theme.palette.common.black,
-  },
-  footer: {
-    marginBottom: theme.spacing(),
-    ...theme.typography.body1,
-  },
-  checkbox: {
-    marginBottom: 0,
-    width: 42,
-  },
-}));
-
 export const SectionBar: FC<Props> = ({
   title = '',
   subtitle,
@@ -152,13 +60,6 @@ export const SectionBar: FC<Props> = ({
   sticky = true,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const classes = useStyles({
-    collapsable: !!children && !uncollapsable,
-    collapsed,
-    fixedActions,
-    small,
-    sticky,
-  });
   const handleToggleCollapsed = useCallback(
     () => (uncollapsable ? 0 : children ? setCollapsed(!collapsed) : 0),
     [collapsed, setCollapsed, uncollapsable, children],
@@ -179,25 +80,37 @@ export const SectionBar: FC<Props> = ({
     },
     [onCheck],
   );
+  const collapsable = !!children && !uncollapsable;
   return (
     <>
-      <div className={className + ' ' + classes.wrapper} style={styles}>
-        <div className={classes.headerWrapper}>
-          <div className={classes.header}>
+      <div
+        className={clsx(className, 'SectionBar', {
+          collapsable,
+          collapsed,
+          fixedActions,
+          small,
+          sticky,
+        })}
+        style={styles}
+      >
+        <div className="SectionBarHeaderWrapper">
+          <div className="SectionBarHeader">
             {onCheck && (
               <Field
                 name="check"
                 value={checked}
                 type="checkbox"
                 onChange={handleCheckChange}
-                className={classes.checkbox + ' ' + 'SectionBarCheckbox'}
+                className="SectionBarCheckbox"
                 disabled={loading}
               />
             )}
-            <div className={classes.titleWrapper}>
+            <div
+              className={clsx('SectionBarTitleWrapper', { collapsable, small })}
+            >
               <Typography
                 variant="h5"
-                className={classes.title}
+                className={clsx('SectionBarTitle', { small })}
                 onClick={handleToggleCollapsed}
               >
                 {title}{' '}
@@ -208,7 +121,7 @@ export const SectionBar: FC<Props> = ({
               {!collapsed && subtitle && (
                 <Typography
                   variant="h6"
-                  className={classes.subtitle}
+                  className="SectionBarTitleSubtitle"
                   onClick={handleToggleCollapsed}
                 >
                   {subtitle}
@@ -218,8 +131,8 @@ export const SectionBar: FC<Props> = ({
             {pagination && pagination.count > 0 && !collapsed && (
               <TablePagination
                 classes={{
-                  root: classes.toolbarRoot,
-                  toolbar: classes.toolbar,
+                  root: 'SectionBarToolbarRoot',
+                  toolbar: 'SectionBarToolbar',
                 }}
                 component="div"
                 rowsPerPageOptions={[]}
@@ -230,7 +143,7 @@ export const SectionBar: FC<Props> = ({
               />
             )}
           </div>
-          <div className={classes.actions}>
+          <div className="SectionBarActions">
             {asideContentFirst && asideContent}
             {actions.length > 0 && (
               <Actions actions={actions} fixed={fixedActions} />
@@ -238,7 +151,9 @@ export const SectionBar: FC<Props> = ({
             {!asideContentFirst && asideContent}
           </div>
         </div>
-        {!collapsed && footer && <div className={classes.footer}>{footer}</div>}
+        {!collapsed && footer && (
+          <div className="SectionBarFooter">{footer}</div>
+        )}
       </div>
       {!collapsed && children}
     </>

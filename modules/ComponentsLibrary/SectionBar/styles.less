@@ -1,0 +1,106 @@
+@import '../../../styles/index.less';
+
+.SectionBar {
+  position: relative;
+  top: 0;
+  z-index: 1;
+  background-color: @grey-300;
+  padding-left: .spacing() [];
+  padding-right: .spacing() [];
+  display: flex;
+  justify-content: space-between;
+  justify-items: center;
+  min-height: 46px;
+  flex-direction: column;
+  box-sizing: border-box;
+  @media @bp-xs-down {
+    padding-top: .spacing(0.5) [];
+    padding-bottom: .spacing(0.5) [];
+    min-height: 0;
+  }
+  &.sticky {
+    position: sticky;
+  }
+  &.collapsable.collapsed {
+    margin-bottom: .spacing() [];
+  }
+  &.small {
+    min-height: 0;
+  }
+  &HeaderWrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-grow: 1;
+  }
+  &Header {
+    display: flex;
+    align-items: center;
+  }
+  &Actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  &TitleWrapper {
+    user-select: none;
+    width: 100%;
+    margin-top: .spacing() [];
+    margin-bottom: .spacing() [];
+    @media @bp-xs-down {
+      margin-top: .spacing(0.5) [];
+      margin-bottom: .spacing(0.5) [];
+    }
+    &.collapsable {
+      cursor: pointer;
+    }
+    &.small {
+      margin-top: .spacing(0.5) [];
+      margin-bottom: .spacing(0.5) [];
+    }
+  }
+  &Title {
+    display: flex;
+    align-items: center;
+    .h6() !important;
+    line-height: 1;
+    @media @bp-xs-down {
+      .subtitle1() !important;
+      line-height: 1 !important;
+    }
+    &.small {
+      .subtitle1() !important;
+    }
+  }
+  &Subtitle {
+    margin-top: .spacing(0.25) [];
+    color: @grey-600;
+    .subtitle1() !important;
+    line-height: 1;
+    &.small {
+      .subtitle2() !important;
+    }
+    @media @bp-xs-down {
+      .subtitle2() !important;
+      line-height: 1 !important;
+    }
+  }
+  &ToolbarRoot {
+    flex-shrink: 0;
+  }
+  &Toolbar {
+    min-height: 0;
+    color: @common-black;
+  }
+  &Footer {
+    margin-bottom: .spacing() [];
+    .body1();
+  }
+  &Checkbox {
+    margin-bottom: 0 !important;
+    width: 42px !important;
+    .MuiFormControlLabel-root {
+      margin-right: 0;
+    }
+  }
+}
