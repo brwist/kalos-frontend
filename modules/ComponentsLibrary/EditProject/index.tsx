@@ -1,6 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
-import { makeStyles } from '@material-ui/core/styles';
 import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
 import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
@@ -43,13 +42,13 @@ import {
   loadPerDiemsLodging,
   loadTransactionsByEventId,
   TransactionType,
-  formatDateTime,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
   OPTION_ALL,
   MEALS_RATE,
 } from '../../../constants';
+import './styles.less';
 
 export interface Props {
   serviceCallId: number;
@@ -92,14 +91,7 @@ const SCHEMA_PROJECT: Schema<EventType> = [
   ],
 ];
 
-const useStyles = makeStyles(theme => ({
-  btnDelete: {
-    textAlign: 'center',
-  },
-}));
-
 export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
-  const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -881,7 +873,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             error={errorTask}
           >
             {editingTask.id > 0 && editingTask.creatorUserId === loggedUserId && (
-              <div className={classes.btnDelete}>
+              <div className="EditProjectDelete">
                 <Button
                   variant="outlined"
                   label="Delete"
