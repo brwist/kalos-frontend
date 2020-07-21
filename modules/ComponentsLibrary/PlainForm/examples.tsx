@@ -1,6 +1,6 @@
 import React from 'react';
 import { PlainForm, Schema } from './';
-import { LoremIpsumList } from '../helpers';
+import { LoremIpsumList, ExampleTitle, LOREM } from '../helpers';
 
 const GENDERS = ['Male', 'Female', 'Other'];
 
@@ -234,6 +234,20 @@ export const SCHEMA_3: Schema<Model> = [
 
 export default () => (
   <>
+    <ExampleTitle>default</ExampleTitle>
+    <PlainForm<Model>
+      schema={SCHEMA_2}
+      data={model}
+      onChange={data => console.log(data)}
+    />
+    <ExampleTitle>with error</ExampleTitle>
+    <PlainForm<Model>
+      schema={SCHEMA_2}
+      data={model}
+      onChange={data => console.log(data)}
+      error={LOREM}
+    />
+    <ExampleTitle>with children</ExampleTitle>
     <PlainForm<Model>
       schema={SCHEMA_1}
       data={model}
@@ -242,7 +256,7 @@ export default () => (
     >
       <LoremIpsumList />
     </PlainForm>
-    <hr />
+    <ExampleTitle>with validations, compact</ExampleTitle>
     <PlainForm<Model>
       schema={SCHEMA_1}
       data={model}
@@ -253,13 +267,14 @@ export default () => (
       }}
       compact
     />
-    <hr />
+    <ExampleTitle>fullWidth</ExampleTitle>
     <PlainForm<Model>
-      schema={SCHEMA_2}
+      schema={SCHEMA_1}
       data={model}
       onChange={data => console.log(data)}
+      fullWidth
     />
-    <hr />
+    <ExampleTitle>disabled</ExampleTitle>
     <PlainForm<Model>
       schema={SCHEMA_3}
       data={model}

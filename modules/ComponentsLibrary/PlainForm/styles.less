@@ -1,0 +1,45 @@
+@import '../../../styles/index.less';
+
+.PlainForm {
+  padding: .spacing(2) [];
+  &.compact {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  &.fullWidth {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  &Error {
+    color: @error-contrastText !important;
+    background-color: @error-dark !important;
+    padding: .spacing(2) [] !important;
+    margin-top: .spacing(-1.5) [] !important;
+    margin-left: .spacing(-2) [] !important;
+    margin-right: .spacing(-2) [] !important;
+    margin-bottom: .spacing(2) [] !important;
+  }
+  &ErrorFields {
+    display: block;
+    margin: .spacing() [];
+    margin-bottom: 0;
+    padding-left: .spacing(2) [];
+  }
+  &ErrorField {
+    display: list-item;
+  }
+  &Group {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    box-sizing: content-box;
+    @media @bp-xs-down {
+      flex-direction: column;
+    }
+  }
+  &Field {
+    @media @bp-sm-up {
+      margin-left: .spacing(2) [] !important;
+    }
+  }
+}

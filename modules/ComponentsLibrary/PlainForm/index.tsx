@@ -1,6 +1,8 @@
 import React, { ReactElement, useCallback, useState, ReactNode } from 'react';
+import clsx from 'clsx';
 import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
+import { useTheme } from '@material-ui/core/styles';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { Props as ButtonProps } from '../Button';
 import {
   Field,
@@ -10,6 +12,7 @@ import {
   Type,
   getDefaultValueByType,
 } from '../Field';
+import './styles.less';
 
 export type Value = ValueType;
 export type Option = OptionType;
@@ -59,78 +62,6 @@ interface Props<T> extends PlainFormProps<T> {
   onChange: (data: T) => void;
   validations?: Validation;
 }
-
-const useStyles = makeStyles(theme => ({
-  form: ({ compact, fullWidth }: Style) => ({
-    padding: theme.spacing(2),
-    ...(compact
-      ? {
-          paddingTop: 0,
-          paddingBottom: 0,
-        }
-      : {}),
-    ...(fullWidth
-      ? {
-          paddingLeft: 0,
-          paddingRight: 0,
-        }
-      : {}),
-  }),
-  error: {
-    color: theme.palette.error.contrastText,
-    backgroundColor: theme.palette.error.dark,
-    padding: theme.spacing(2),
-    marginTop: theme.spacing(-1.5),
-    marginLeft: theme.spacing(-2),
-    marginRight: theme.spacing(-2),
-    marginBottom: theme.spacing(2),
-  },
-  errorFields: {
-    display: 'block',
-    margin: theme.spacing(),
-    marginBottom: 0,
-    paddingLeft: theme.spacing(2),
-  },
-  errorField: {
-    display: 'list-item',
-  },
-  headline: {
-    backgroundColor: theme.palette.grey[200],
-    paddingTop: theme.spacing(0.5),
-    paddingBottom: theme.spacing(0.5),
-    paddingLeft: theme.spacing(2),
-    paddingRight: theme.spacing(2),
-    marginTop: theme.spacing(-1),
-    marginLeft: theme.spacing(-2),
-    marginRight: theme.spacing(-2),
-    marginBottom: theme.spacing(),
-    fontWeight: 600,
-    flexGrow: 1,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  group: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    [theme.breakpoints.down('xs')]: {
-      flexDirection: 'column',
-    },
-  },
-  field: {
-    [theme.breakpoints.up('sm')]: {
-      marginLeft: theme.spacing(2),
-    },
-  },
-  description: {
-    fontWeight: 400,
-    marginLeft: theme.spacing(),
-    fontSize: 12,
-    color: theme.palette.grey[600],
-  },
-}));
-
 export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   schema,
   data,
@@ -144,7 +75,8 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   className = '',
   children,
 }) => {
-  const classes = useStyles({ compact, fullWidth });
+  const theme = useTheme();
+  const matches = useMediaQuery(theme.breakpoints.up('sm'));
   const [formData, setFormData] = useState(
     schema.reduce(
       (aggr, fields) => ({
@@ -181,18 +113,18 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [formData, setFormData, onChange],
   );
   return (
-    <div className={className + ' ' + classes.form}>
+    <div className={clsx(className, 'PlainForm', { compact, fullWidth })}>
       {error && (
-        <Typography className={classes.error} component="div">
+        <Typography className="PlainFormError" component="div">
           {error}
         </Typography>
       )}
       {Object.keys(validations).length > 0 && (
-        <Typography className={classes.error}>
+        <Typography className="PlainFormError">
           Please correct the following validation errors and try again.
-          <span className={classes.errorFields}>
+          <span className="PlainFormErrorFields">
             {Object.keys(validations).map(fieldName => (
-              <span key={fieldName} className={classes.errorField}>
+              <span key={fieldName} className="PlainFormErrorField">
                 <strong>
                   {
                     schema
@@ -208,7 +140,7 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         </Typography>
       )}
       {schema.map((fields, idx) => (
-        <div key={idx} className={classes.group}>
+        <div key={idx} className="PlainFormGroup">
           {fields.map((props, idx2) => {
             const { name } = props;
             return (
@@ -220,12 +152,16 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                 disabled={disabled || props.disabled}
                 validation={validations[name as string]}
                 readOnly={readOnly || props.readOnly}
-                className={idx2 === 0 ? '' : classes.field}
-                style={{
-                  width: `calc((100% - ${(fields.length - 1) * 16}px) / ${
-                    fields.length
-                  })`,
-                }}
+                className={idx2 === 0 ? '' : 'PlainFormField'}
+                style={
+                  matches
+                    ? {
+                        width: `calc((100% - ${(fields.length - 1) * 16}px) / ${
+                          fields.length
+                        })`,
+                      }
+                    : {}
+                }
               />
             );
           })}

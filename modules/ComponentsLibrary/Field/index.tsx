@@ -7,9 +7,9 @@ import React, {
   useRef,
   CSSProperties,
 } from 'react';
+import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
@@ -22,7 +22,7 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
 import DateFnsUtils from '@date-io/date-fns';
-import { format, roundToNearestMinutes } from 'date-fns';
+import { format } from 'date-fns';
 import {
   MuiPickersUtilsProvider,
   DatePicker,
@@ -44,7 +44,7 @@ import {
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../../Pickers/';
 import { AdvancedSearch } from '../AdvancedSearch';
-import './styles.css';
+import './styles.less';
 
 type SelectOption = {
   id: number;
@@ -114,137 +114,6 @@ export const getDefaultValueByType = (type: Type) => {
   if (type === 'checkbox') return 0;
   return '';
 };
-
-const useStyles = makeStyles(theme => ({
-  fieldWrapper: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    position: 'relative',
-    flexShrink: 0,
-    flexGrow: 1,
-  },
-  field: ({ type, disabled, compact }: Style) => ({
-    marginTop: 0,
-    marginBottom: theme.spacing(compact ? 0 : 2),
-    ...(type === 'hidden' ? { display: 'none' } : {}),
-    ...(disabled ? { filter: 'grayscale(1)' } : {}),
-  }),
-  required: {
-    color: theme.palette.error.main,
-  },
-  headline: ({ disabled }: Style) => ({
-    backgroundColor: theme.palette.grey[200],
-    paddingTop: theme.spacing(0.5),
-    paddingBottom: theme.spacing(0.5),
-    paddingLeft: theme.spacing(2),
-    paddingRight: theme.spacing(2),
-    marginTop: theme.spacing(-1),
-    marginLeft: theme.spacing(-2),
-    marginRight: theme.spacing(-2),
-    marginBottom: theme.spacing(),
-    fontWeight: 600,
-    flexGrow: 1,
-    display: 'flex',
-    width: '100%',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    color: disabled ? theme.palette.grey[500] : theme.palette.common.black,
-  }),
-  description: {
-    fontWeight: 400,
-    marginLeft: theme.spacing(),
-    fontSize: 12,
-    color: theme.palette.grey[600],
-  },
-  content: {
-    width: '100%',
-  },
-  technicians: {
-    marginTop: theme.spacing(2),
-  },
-  technician: {
-    marginTop: `${theme.spacing(-1.5)}px !important`,
-    marginBottom: `${theme.spacing(-1.5)}px !important`,
-  },
-  searchTechnician: {
-    marginTop: `${theme.spacing(-2.5)}px !important`,
-    marginBottom: `0px !important`,
-  },
-  technicalButton: {
-    alignSelf: 'flex-start',
-  },
-  color: {
-    width: theme.spacing(2),
-    height: theme.spacing(2),
-    borderRadius: '50%',
-    display: 'inline-flex',
-    marginRight: theme.spacing(),
-    verticalAlign: 'bottom',
-  },
-  option: {
-    whiteSpace: 'normal',
-  },
-  actions: {
-    marginLeft: theme.spacing(),
-  },
-  actionsInLabel: {
-    position: 'absolute',
-    top: -5,
-    right: 0,
-  },
-  hourWrapper: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-  },
-  hour: {
-    display: 'flex',
-    flexGrow: 1,
-    marginTop: theme.spacing(-2) + 3,
-  },
-  signatureHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing(0.5),
-  },
-  signature: {
-    display: 'block',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: theme.palette.grey[300],
-    position: 'relative',
-    boxSizing: 'content-box',
-    marginBottom: theme.spacing(2),
-    '&:before': {
-      display: 'block',
-      content: "' '",
-      position: 'absolute',
-      bottom: theme.spacing(4),
-      left: theme.spacing(),
-      right: theme.spacing(),
-      height: 2,
-      backgroundColor: theme.palette.grey[400],
-      pointerEvents: 'none',
-      zIndex: -1,
-    },
-  },
-  canvas: {
-    display: 'block',
-  },
-  upload: {
-    marginLeft: 0,
-    height: 25,
-  },
-  file: {
-    display: 'none',
-  },
-  icon: {
-    display: 'inline-flex',
-    marginRight: theme.spacing(),
-    verticalAlign: 'middle',
-  },
-}));
 
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   name,
@@ -344,7 +213,6 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [techniciansIds, setTechniciansIds, type],
   );
   const { actions = [], description } = props;
-  const classes = useStyles({ type, disabled, compact });
   const handleChange = useCallback(
     ({ target: { value } }) => {
       if (onChange) {
@@ -419,11 +287,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const inputLabel = (
     <>
       {label}
-      {required && !readOnly ? (
-        <span className={classes.required}> *</span>
-      ) : (
-        ''
-      )}
+      {required && !readOnly ? <span className="FieldRequired"> *</span> : ''}
     </>
   );
   const error = validation !== '';
@@ -434,17 +298,25 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   if (name === undefined || value === undefined) {
     if (headline) {
       return (
-        <Typography component="div" className={classes.headline}>
+        <Typography
+          component="div"
+          className={clsx('FieldHeadline', { disabled })}
+        >
           {label}
           {description && (
-            <span className={classes.description}>{description}</span>
+            <span className="FieldDescription">{description}</span>
           )}
           {actions.length > 0 && <Actions actions={actions} fixed />}
         </Typography>
       );
     }
     return (
-      <div className={classes.field + ' ' + classes.content + ' ' + className}>
+      <div
+        className={clsx('FieldInput', 'FieldContent', className, {
+          compact,
+          disabled,
+        })}
+      >
         {content}
         {actions.length > 0 && <Actions actions={actions} fixed />}
       </div>
@@ -452,9 +324,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }
   if (type === 'signature') {
     return (
-      <div className={classes.fieldWrapper + ' ' + className} style={style}>
+      <div className={clsx('Field', className)} style={style}>
         <div>
-          <div className={classes.signatureHeader}>
+          <div className="FieldSignatureHeader">
             <InputLabel shrink>{inputLabel}</InputLabel>
             <Button
               label="Clear"
@@ -464,13 +336,13 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               onClick={handleSignatureClear}
             />
           </div>
-          <span className={classes.signature}>
+          <span className="FieldSignature">
             <SignatureCanvas
               ref={signatureRef}
               canvasProps={{
                 width: 300,
                 height: 160,
-                className: classes.canvas,
+                className: 'FieldCanvas',
               }}
               options={{
                 onEnd: handleSignatureEnd,
@@ -500,15 +372,13 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     const ampm = +valHour < 12 ? 'AM' : 'PM';
     return (
       <div
-        className={[classes.fieldWrapper, classes.hourWrapper, className].join(
-          ' ',
-        )}
+        className={clsx('Field', 'FieldHourWrapper', className)}
         style={style}
       >
         <InputLabel shrink disabled={disabled}>
           {inputLabel}
         </InputLabel>
-        <div className={classes.hour}>
+        <div className="FieldHour">
           <Field
             name={`${name}_hour`}
             value={trailingZero(hour)}
@@ -559,7 +429,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     return (
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <DatePicker
-          className={classes.field + ' ' + className}
+          className={clsx('FieldInput', className, { compact, disabled })}
           label={inputLabel}
           value={new Date((props.value as unknown) as string)}
           onChange={value =>
@@ -580,7 +450,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     return (
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
         <TimePicker
-          className={classes.field + ' ' + className}
+          className={clsx('FieldInput', className, { compact, disabled })}
           label={inputLabel}
           value={new Date((props.value as unknown) as string)}
           onChange={value =>
@@ -601,7 +471,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   if (type === 'checkbox') {
     return (
       <FormControl
-        className={classes.field + ' ' + className}
+        className={clsx('FieldInput', className, { compact, disabled })}
         fullWidth
         disabled={disabled}
         error={error}
@@ -647,7 +517,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   value={techniciansIds.includes(0)}
                   label="Unassigned"
                   type="checkbox"
-                  className={classes.technician}
+                  className="FieldTechnician"
                   onChange={handleTechnicianChecked(0)}
                 />
               ),
@@ -667,7 +537,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                     value={techniciansIds.includes(id)}
                     label={`${firstname} ${lastname}`}
                     type="checkbox"
-                    className={classes.technician}
+                    className="FieldTechnician"
                     onChange={handleTechnicianChecked(id)}
                   />
                 ),
@@ -678,13 +548,13 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     return (
       <>
         <FormControl
-          className={classes.field + ' ' + className}
+          className={clsx('FieldInput', className, { compact, disabled })}
           fullWidth
           disabled={disabled}
           error={error}
         >
           <InputLabel htmlFor={id}>{inputLabel}</InputLabel>
-          <div className={classes.technicians}>
+          <div className="FieldTechnicians">
             <Input
               id={id}
               value={valueTechnicians}
@@ -694,7 +564,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               endAdornment={
                 <InputAdornment
                   position="end"
-                  className={classes.technicalButton}
+                  className="FieldTechnicianButton"
                 >
                   <Button
                     label="Change"
@@ -729,7 +599,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               fixedActions
               footer={
                 <Field
-                  className={classes.searchTechnician}
+                  className="FieldSearchTechnician"
                   name="searchTechnician"
                   value={searchTechnician}
                   placeholder="Search technician..."
@@ -747,9 +617,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   if (options) {
     const id = `${name}-select-label`;
     return (
-      <div className={classes.fieldWrapper + ' ' + className} style={style}>
+      <div className={clsx('Field', className)} style={style}>
         <FormControl
-          className={classes.field}
+          className={clsx('FieldInput', { compact, disabled })}
           fullWidth
           disabled={disabled}
           error={error}
@@ -788,7 +658,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                 <MenuItem
                   key={valueOption}
                   value={valueOption}
-                  className={classes.option}
+                  className="FieldOption"
                   dense
                 >
                   {type === 'multiselect' && (
@@ -803,12 +673,12 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   )}
                   {color && (
                     <div
-                      className={classes.color}
+                      className="FieldColor"
                       style={{ backgroundColor: color }}
                     />
                   )}
                   {Icon && (
-                    <div className={classes.icon}>
+                    <div className="FieldIcon">
                       <Icon />
                     </div>
                   )}
@@ -821,7 +691,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         </FormControl>
         {actions.length > 0 && !actionsInLabel && (
           <Actions
-            className={classes.actions}
+            className="FieldActions"
             actions={actions}
             fixed
             responsiveColumn
@@ -829,7 +699,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         )}
         {actions.length > 0 && actionsInLabel && (
           <Actions
-            className={classes.actionsInLabel}
+            className="FieldActionsInLabel"
             actions={actions.map(item => ({
               ...item,
               size: 'xsmall',
@@ -844,7 +714,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   if (type === 'department') {
     return (
       <DepartmentPicker
-        className={classes.field + ' ' + className}
+        className={clsx('FieldInput', className, { compact, disabled })}
         withinForm
         renderItem={renderSelectOptions}
         selected={(props.value as unknown) as number}
@@ -858,7 +728,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   if (type === 'classCode') {
     return (
       <ClassCodePicker
-        className={classes.field + ' ' + className}
+        className={clsx('FieldInput', className, { compact, disabled })}
         withinForm
         renderItem={renderSelectOptions}
         selected={(props.value as unknown) as number}
@@ -870,17 +740,17 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     );
   }
   return (
-    <div className={classes.fieldWrapper + ' ' + className} style={style}>
+    <div className={clsx('Field', className)} style={style}>
       {type === 'file' && (
         <input
           id={name + '-file'}
           onChange={handleFileChange}
           type="file"
-          className={classes.file}
+          className="FieldFile"
         />
       )}
       <TextField
-        className={classes.field}
+        className={clsx('FieldInput', { compact, disabled })}
         disabled={disabled}
         onChange={handleChange}
         label={inputLabel}
@@ -895,7 +765,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   <label htmlFor={name + '-file'}>
                     <Button
                       label="Upload file"
-                      className={classes.upload}
+                      className="FieldUpload"
                       disabled={disabled}
                       span
                       compact
@@ -919,7 +789,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       />
       {actions.length > 0 && !actionsInLabel && (
         <Actions
-          className={classes.actions}
+          className="FieldActions"
           actions={actions}
           fixed
           responsiveColumn
@@ -927,7 +797,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       )}
       {((actions.length > 0 && actionsInLabel) || type === 'eventId') && (
         <Actions
-          className={classes.actionsInLabel}
+          className="FieldActionsInLabel"
           actions={[
             ...actions,
             ...(type === 'eventId'
