@@ -1,5 +1,6 @@
 import React from 'react';
 import { CalendarEvents, CalendarEvent } from './';
+import { ExampleTitle } from '../helpers';
 
 const EVENTS: CalendarEvent[] = [
   {
@@ -42,10 +43,19 @@ const EVENTS: CalendarEvent[] = [
 
 export default () => (
   <>
+    <ExampleTitle>default</ExampleTitle>
     <CalendarEvents
       events={EVENTS}
       startDate="2019-12-30"
       endDate="2020-02-02"
+      onAdd={() => console.log('ADD')}
+    />
+    <ExampleTitle>loading</ExampleTitle>
+    <CalendarEvents
+      events={EVENTS}
+      startDate="2019-12-30"
+      endDate="2020-02-02"
+      loading
     />
   </>
 );
