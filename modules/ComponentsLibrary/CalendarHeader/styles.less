@@ -1,0 +1,48 @@
+@import '../../../styles/index.less';
+
+.CalendarHeader {
+  background: @primary-dark !important;
+  color: @common-white !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  padding-top: .spacing() [] !important;
+  padding-bottom: .spacing() [] !important;
+  @media @bp-sm-down {
+    padding: .spacing(2) [] !important;
+  }
+  @media @bp-rwd-down {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  &Title {
+    margin: 0 .spacing(2) [] !important;
+    text-align: center !important;
+    @media @bp-rwd-down {
+      margin: .spacing(2) [] !important;
+    }
+  }
+  &Info {
+    flex: 1 0 auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    & p {
+      color: white !important;
+    }
+    @media @bp-rwd-down {
+      flex-direction: column !important;
+    }
+  }
+  &Children {
+    margin-right: .spacing(2) [] !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    flex-wrap: wrap !important;
+    @media @bp-rwd-down {
+      margin-right: 0 !important;
+      align-items: center !important;
+    }
+  }
+}
