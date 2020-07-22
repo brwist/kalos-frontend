@@ -1,10 +1,11 @@
 import React from 'react';
 import { GanttChart, CalendarEvent } from './';
+import { ExampleTitle } from '../helpers';
 
 const EVENTS: CalendarEvent[] = [
   {
     id: 1,
-    startDate: '2020-01-05',
+    startDate: '2019-12-30',
     endDate: '2020-01-10',
     startHour: '14:15:00',
     endHour: '19:00:00',
@@ -42,6 +43,19 @@ const EVENTS: CalendarEvent[] = [
 
 export default () => (
   <>
-    <GanttChart events={EVENTS} startDate="2019-12-30" endDate="2020-02-02" />
+    <ExampleTitle>default</ExampleTitle>
+    <GanttChart
+      events={EVENTS}
+      startDate="2019-12-30"
+      endDate="2020-02-02"
+      onAdd={() => console.log('ADD')}
+    />
+    <ExampleTitle>loading</ExampleTitle>
+    <GanttChart
+      events={EVENTS}
+      startDate="2019-12-30"
+      endDate="2020-02-02"
+      loading
+    />
   </>
 );
