@@ -1,0 +1,88 @@
+@import '../../../styles/index.less';
+
+@GAP: 1px;
+
+.CalendarEvents {
+  .body1() !important;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-gap: @GAP;
+  background-color: @grey-300;
+  border-width: @GAP;
+  border-style: solid;
+  border-color: @grey-300;
+  position: relative;
+  &.loading {
+    filter: grayscale(1);
+    pointer-events: none;
+  }
+  &Day {
+    background-color: @common-white;
+    padding-top: .spacing() [];
+    padding-bottom: .spacing(0.25) [];
+    min-height: 114px;
+  }
+  &WeekendDay {
+    background-color: @grey-50;
+  }
+  &DisabledDay {
+    color: @grey-300;
+    background-color: @grey-200;
+    pointer-events: none;
+  }
+  &WeekDay {
+    padding: .spacing() [];
+    text-align: right;
+    background-color: @grey-100;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: @grey-300;
+    z-index: 1;
+  }
+  &DayDate {
+    text-align: right;
+    padding-right: .spacing() [];
+    margin-bottom: .spacing(0.5) [];
+  }
+  &DayDateValue {
+    cursor: pointer;
+  }
+  &Event {
+    background-color: @grey-200;
+    margin-right: -@GAP;
+    padding: .spacing(0.5) [];
+    margin-bottom: .spacing(0.25) [];
+    height: 20px;
+    position: relative;
+    display: flex;
+    box-sizing: content-box;
+  }
+  &EventDesc {
+    height: 20px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    width: 1px;
+  }
+  &eventname {
+    height: 20px;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  &Hour {
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+  &Status {
+    margin-top: .spacing(-0.5) [];
+    margin-bottom: .spacing(-0.5) [];
+    margin-left: .spacing(-1) [];
+    margin-right: .spacing(-1) [];
+    padding: .spacing() [];
+  }
+}

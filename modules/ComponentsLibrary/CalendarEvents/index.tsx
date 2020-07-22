@@ -1,11 +1,12 @@
 import React, { FC, useCallback } from 'react';
+import clsx from 'clsx';
 import difference from 'lodash/difference';
 import { format, addDays, getDay, differenceInDays } from 'date-fns';
-import { makeStyles } from '@material-ui/core/styles';
 import { Tooltip } from '../Tooltip';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { formatDate, formatTime } from '../../../helpers';
 import { WEEK_DAYS } from '../../../constants';
+import './styles.less';
 
 export type CalendarEvent = {
   id: number;
@@ -34,96 +35,6 @@ interface Props extends Style {
   onAdd?: (startDate: string) => void;
 }
 
-const GAP = 1;
-
-const useStyles = makeStyles(theme => ({
-  calendar: ({ loading }: Style) => ({
-    ...theme.typography.body1,
-    display: 'grid',
-    gridTemplateColumns: 'repeat(7, 1fr)',
-    gridGap: GAP,
-    backgroundColor: theme.palette.grey[300],
-    borderWidth: GAP,
-    borderStyle: 'solid',
-    borderColor: theme.palette.grey[300],
-    ...(loading
-      ? {
-          filter: 'grayscale(1)',
-          pointerEvents: 'none',
-        }
-      : {}),
-  }),
-  day: {
-    backgroundColor: theme.palette.common.white,
-    paddingTop: theme.spacing(),
-    paddingBottom: theme.spacing(0.25),
-    minHeight: 114,
-  },
-  weekendDay: {
-    backgroundColor: theme.palette.grey[50],
-  },
-  disabledDay: {
-    color: theme.palette.grey[300],
-    backgroundColor: theme.palette.grey[200],
-    pointerEvents: 'none',
-  },
-  weekDay: {
-    padding: theme.spacing(),
-    textAlign: 'right',
-    backgroundColor: theme.palette.grey[100],
-    textTransform: 'uppercase',
-    position: 'sticky',
-    top: 0,
-    borderBottomWidth: 1,
-    borderBottomStyle: 'solid',
-    borderBottomColor: theme.palette.grey[300],
-    zIndex: 1,
-  },
-  dayDate: {
-    textAlign: 'right',
-    paddingRight: theme.spacing(),
-    marginBottom: theme.spacing(0.5),
-  },
-  dayDateValue: {
-    cursor: 'pointer',
-  },
-  event: {
-    backgroundColor: theme.palette.grey[200],
-    marginRight: -GAP,
-    padding: theme.spacing(0.5),
-    marginBottom: theme.spacing(0.25),
-    height: 20,
-    position: 'relative',
-    display: 'flex',
-    boxSizing: 'content-box',
-  },
-  eventDesc: {
-    height: 20,
-    flexGrow: 1,
-    display: 'flex',
-    alignItems: 'center',
-    width: 1,
-  },
-  eventName: {
-    height: 20,
-    flexGrow: 1,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  hour: {
-    opacity: 0.5,
-    whiteSpace: 'nowrap',
-  },
-  status: {
-    marginTop: theme.spacing(-0.5),
-    marginBottom: theme.spacing(-0.5),
-    marginLeft: theme.spacing(-1),
-    marginRight: theme.spacing(-1),
-    padding: theme.spacing(),
-  },
-}));
-
 export const CalendarEvents: FC<Props> = ({
   events,
   loading,
@@ -131,7 +42,6 @@ export const CalendarEvents: FC<Props> = ({
   endDate: dateEnd,
   onAdd,
 }) => {
-  const classes = useStyles({ loading });
   const startDate = new Date(`${dateStart}T00:00:00`);
   const endDate = new Date(`${dateEnd}T00:00:00`);
   const totalDays = differenceInDays(endDate, startDate);
@@ -147,9 +57,9 @@ export const CalendarEvents: FC<Props> = ({
   );
   let offsets: { [key: number]: number } = {};
   return (
-    <div className={classes.calendar}>
+    <div className={clsx('CalendarEvents', { loading })}>
       {[...Array(7)].map((_, idx) => (
-        <div key={idx} className={classes.weekDay}>
+        <div key={idx} className="CalendarEventsWeekDay">
           {WEEK_DAYS[idx]}
         </div>
       ))}
@@ -184,15 +94,17 @@ export const CalendarEvents: FC<Props> = ({
         return (
           <div
             key={idx}
-            className={[
-              classes.day,
-              weekDay >= 6 ? classes.weekendDay : '',
-              dateStart > date || date > dateEnd ? classes.disabledDay : '',
-            ].join(' ')}
+            className={clsx(
+              'CalendarEventsDay',
+              weekDay >= 6 ? 'CalendarEventsWeekendDay' : '',
+              dateStart > date || date > dateEnd
+                ? 'CalendarEventsDisabledDay'
+                : '',
+            )}
           >
-            <div className={classes.dayDate}>
+            <div className="CalendarEventsDayDate">
               <span
-                className={classes.dayDateValue}
+                className="CalendarEventsDayDateValue"
                 onClick={handleAddClick(date)}
               >
                 {(format(day, 'd') === '1' ||
@@ -244,7 +156,7 @@ export const CalendarEvents: FC<Props> = ({
                       key={id}
                       content={
                         <div
-                          className={classes.status}
+                          className="CalendarEventsStatus"
                           style={{ backgroundColor: statusColor }}
                         >
                           {assignee && (
@@ -289,7 +201,7 @@ export const CalendarEvents: FC<Props> = ({
                       maxWidth={300}
                     >
                       <div
-                        className={classes.event}
+                        className="CalendarEventsEvent"
                         style={{
                           ...(statusColor
                             ? { backgroundColor: statusColor }
@@ -301,7 +213,7 @@ export const CalendarEvents: FC<Props> = ({
                         }}
                         onClick={onClick}
                       >
-                        <div className={classes.eventDesc}>
+                        <div className="CalendarEventsEventDesc">
                           {(startDate === date || weekDay === 7) && (
                             <>
                               {PriorityIcon && (
@@ -314,11 +226,13 @@ export const CalendarEvents: FC<Props> = ({
                                   }}
                                 />
                               )}
-                              <span className={classes.eventName}>{notes}</span>
+                              <span className="CalendarEventsEventName">
+                                {notes}
+                              </span>
                             </>
                           )}
                         </div>
-                        <div className={classes.hour}>
+                        <div className="CalendarEventsHour">
                           {startDate === date && (
                             <span>{formatTime(startHour, false)}</span>
                           )}
