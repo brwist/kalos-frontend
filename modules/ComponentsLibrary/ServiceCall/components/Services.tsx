@@ -1,5 +1,4 @@
 import React, { FC, useState, useCallback } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
@@ -31,6 +30,7 @@ import {
   OPTION_BLANK,
 } from '../../../../constants';
 import { ServicesRenderedType } from '../';
+import './services.less';
 
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
@@ -178,16 +178,6 @@ const PAYMENT_PART_INITIAL: PaymentPartType = {
   paymentType: OPTION_BLANK,
 };
 
-const useStyles = makeStyles(theme => ({
-  onCallForm: {
-    marginTop: theme.spacing(),
-  },
-  editing: {
-    width: 900,
-    maxWidth: '100vw',
-  },
-}));
-
 export const Services: FC<Props> = ({
   serviceCallId,
   loggedUser,
@@ -195,7 +185,6 @@ export const Services: FC<Props> = ({
   loadServicesRendered,
   loading,
 }) => {
-  const classes = useStyles();
   const { isAdmin } = loggedUser;
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
   const [serviceRenderedForm, setServicesRenderedForm] = useState<
@@ -540,7 +529,7 @@ export const Services: FC<Props> = ({
             data={serviceRenderedForm}
             onChange={setServicesRenderedForm}
             compact
-            className={classes.onCallForm}
+            className="ServicesOnCallForm"
           />
           <PlainForm
             key={paymentFormKey}
@@ -567,7 +556,7 @@ export const Services: FC<Props> = ({
       )}
       {editing && (
         <Modal open onClose={handleSetEditing()}>
-          <div className={classes.editing}>
+          <div className="ServicesEditing">
             <Form<ServicesRenderedType>
               title="Services Rendered Edit"
               schema={SCHEMA_ON_CALL}

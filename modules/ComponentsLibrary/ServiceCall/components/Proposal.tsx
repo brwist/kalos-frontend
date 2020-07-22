@@ -1,5 +1,4 @@
 import React, { FC, useState, useCallback } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -14,6 +13,7 @@ import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
 import { loadStoredQuotes, UserType, PropertyType } from '../../../../helpers';
+import './proposal.less';
 
 interface Props {
   serviceItem: EventType;
@@ -71,22 +71,7 @@ const SCHEMA_FILE: Schema<File> = [
   ],
 ];
 
-const useStyles = makeStyles(theme => ({
-  info: {
-    ...theme.typography.h6,
-    margin: theme.spacing(),
-    textAlign: 'center',
-  },
-  checkbox: {
-    marginBottom: 0,
-    display: 'inline-block',
-    verticalAlign: 'middle',
-    width: 'auto',
-  },
-}));
-
 export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
-  const classes = useStyles();
   const { notes, logJobNumber } = serviceItem;
   const [editing, setEditing] = useState<Entry>();
   const [file, setFile] = useState<File>({
@@ -217,7 +202,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
             : [
                 <Field
                   key={0}
-                  className={classes.checkbox}
+                  className="ProposalCheckbox"
                   name={`remember-${id}`}
                   type="checkbox"
                   label="Remember This Item"
@@ -301,7 +286,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
               },
             ]}
           />
-          <div className={classes.info}>
+          <div className="ProposalInfo">
             Submitting this proposal will send it to the customer.
             <br />
             Only send the proposal if you are certain it is correct.

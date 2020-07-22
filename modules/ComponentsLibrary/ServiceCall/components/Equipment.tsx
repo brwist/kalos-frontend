@@ -1,11 +1,11 @@
 import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
-import { makeStyles } from '@material-ui/core/styles';
 import { ServiceItems, Entry, Repair } from '../../ServiceItems';
 import { PlainForm, Schema } from '../../PlainForm';
 import { UserType, PropertyType } from '../../../../helpers';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
+import './equipment.less';
 
 interface Props {
   userID: number;
@@ -22,19 +22,12 @@ type Form = {
   jobNotes: string;
 };
 
-const useStyles = makeStyles(theme => ({
-  form: {
-    marginBottom: theme.spacing(-2),
-  },
-}));
-
 export const Equipment: FC<Props> = ({
   serviceItem,
   customer,
   property,
   ...props
 }) => {
-  const classes = useStyles();
   const { notes, logJobNumber, id } = serviceItem;
   const localStorageKey = `SERVICE_CALL_EQUIPMENT_${id}`;
   let repairsInitial = [];
@@ -115,7 +108,7 @@ export const Equipment: FC<Props> = ({
         schema={SCHEMA}
         data={data}
         onChange={setData}
-        className={classes.form}
+        className="EquipmentForm"
       />
     </ServiceItems>
   );
