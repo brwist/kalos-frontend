@@ -7,12 +7,12 @@
   position: relative;
   flex-shrink: 0;
   flex-grow: 1;
+  &.type-hidden {
+    display: none;
+  }
   &Input {
     margin-top: 0 !important;
     margin-bottom: .spacing(2) [] !important;
-    &[type='hidden'] {
-      display: none;
-    }
     &.compact {
       margin-bottom: 0 !important;
     }
