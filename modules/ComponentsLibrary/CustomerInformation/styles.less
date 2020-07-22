@@ -1,0 +1,28 @@
+@import '../../../styles/index.less';
+
+.CustomerInformation {
+  display: flex;
+  @media @bp-md-down {
+    flex-direction: column;
+  }
+  @media @bp-lg-up {
+    align-items: flex-start;
+  }
+  &CustomerInformation {
+    flex-grow: 1;
+  }
+  &AsidePanel {
+    flex-shrink: 0;
+    @media @bp-md-down {
+      flex-grow: 1;
+      margin-bottom: .spacing() [];
+    }
+    @media @bp-lg-up {
+      width: 470px;
+      margin-left: .spacing(2) [];
+    }
+  }
+  &PendingBilling {
+    margin-bottom: .spacing() [];
+  }
+}

@@ -4,7 +4,6 @@ import {
   PendingBillingClient,
   PendingBilling,
 } from '@kalos-core/kalos-rpc/PendingBilling';
-import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../InfoTable';
 import { Modal } from '../Modal';
@@ -23,6 +22,7 @@ import {
   UserGroupLinkType,
   UserClientService,
 } from '../../../helpers';
+import './styles.less';
 
 const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
 
@@ -42,35 +42,6 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
     },
   ],
 ];
-
-const useStyles = makeStyles(theme => ({
-  wrapper: {
-    display: 'flex',
-    [theme.breakpoints.down('md')]: {
-      flexDirection: 'column',
-    },
-    [theme.breakpoints.up('lg')]: {
-      alignItems: 'flex-start',
-    },
-  },
-  customerInformation: {
-    flexGrow: 1,
-  },
-  asidePanel: {
-    flexShrink: 0,
-    [theme.breakpoints.down('md')]: {
-      flexGrow: 1,
-      marginBottom: theme.spacing(),
-    },
-    [theme.breakpoints.up('lg')]: {
-      width: 470,
-      marginLeft: theme.spacing(2),
-    },
-  },
-  pendingBilling: {
-    marginBottom: theme.spacing(),
-  },
-}));
 
 interface Props {
   userID: number;
@@ -103,7 +74,6 @@ export const CustomerInformation: FC<Props> = ({
   const [notificationViewing, setNotificationViewing] = useState<boolean>(
     false,
   );
-  const classes = useStyles();
 
   const groupLinksInitialIds = groupLinksInitial.map(({ groupId }) => groupId);
 
@@ -285,8 +255,8 @@ export const CustomerInformation: FC<Props> = ({
   ];
   return (
     <>
-      <div className={classes.wrapper}>
-        <div className={classes.customerInformation}>
+      <div className="CustomerInformation">
+        <div className="CustomerInformationCustomerInformation">
           <SectionBar
             title="Customer Information"
             actions={[
@@ -329,14 +299,14 @@ export const CustomerInformation: FC<Props> = ({
             <InfoTable data={data} loading={id === 0} error={error} />
           </SectionBar>
         </div>
-        <div className={classes.asidePanel}>
+        <div className="CustomerInformationAsidePanel">
           <SectionBar title="System Information">
             <InfoTable data={systemData} loading={id === 0} error={error} />
           </SectionBar>
           {isPendingBilling && (
             <SectionBar
               title="Pending Billing"
-              className={classes.pendingBilling}
+              className="CustomerInformationPendingBilling"
               actions={[
                 {
                   label: 'View',
