@@ -1,10 +1,12 @@
 import React, { FC, useState, useCallback } from 'react';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import clsx from 'clsx';
+import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import MenuIcon from '@material-ui/icons/Menu';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { Button, Props as ButtonProps } from '../Button';
+import './styles.less';
 
 export type ActionsProps = (ButtonProps & {
   desktop?: boolean;
@@ -20,32 +22,12 @@ interface Props extends Style {
   className?: string;
 }
 
-const useStyles = makeStyles(theme => ({
-  wrapper: {
-    flexShrink: 0,
-  },
-  burger: {
-    cursor: 'pointer',
-  },
-  actions: ({ responsiveColumn }: Style) => ({
-    display: 'flex',
-    [theme.breakpoints.down('sm')]: responsiveColumn
-      ? {
-          flexDirection: 'column',
-        }
-      : {},
-  }),
-  button: ({ responsiveColumn }: Style) =>
-    responsiveColumn ? { marginTop: 0 } : {},
-}));
-
 export const Actions: FC<Props> = ({
   fixed = false,
   actions,
   className,
   responsiveColumn = false,
 }) => {
-  const classes = useStyles({ responsiveColumn });
   const [anchorEl, setAnchorEl] = useState<(EventTarget & HTMLElement) | null>(
     null,
   );
@@ -60,7 +42,7 @@ export const Actions: FC<Props> = ({
     return (
       <>
         <span
-          className={classes.burger}
+          className="ActionsBurger"
           onClick={({ currentTarget }: React.MouseEvent<HTMLElement>) =>
             handleSetAnchorEl(currentTarget)()
           }
@@ -118,13 +100,17 @@ export const Actions: FC<Props> = ({
       </>
     );
   return (
-    <div className={className + ' ' + classes.wrapper}>
+    <div className={clsx('Actions', className)}>
       {actions.length > 0 && (
-        <div className={classes.actions}>
+        <div className={clsx('ActionsActions', { responsiveColumn })}>
           {actions
             .filter(({ desktop }) => desktop === undefined || desktop === true)
             .map(({ desktop, ...props }, idx) => (
-              <Button key={idx} {...props} className={classes.button} />
+              <Button
+                key={idx}
+                {...props}
+                className={clsx('ActionsButton', { responsiveColumn })}
+              />
             ))}
         </div>
       )}

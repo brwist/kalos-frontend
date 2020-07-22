@@ -1,0 +1,21 @@
+@import '../../../styles/index.less';
+
+.Actions {
+  flex-shrink: 0;
+  &Burger {
+    cursor: pointer;
+  }
+  &Actions {
+    display: flex;
+    @media @bp-sm-down {
+      &.responsiveColumn {
+        flex-direction: column;
+      }
+    }
+  }
+  &Button {
+    &.responsiveColumn {
+      margin-top: 0 !important;
+    }
+  }
+}
