@@ -5,6 +5,7 @@ import { LoremIpsumList, ExampleTitle, LOREM } from '../helpers';
 const GENDERS = ['Male', 'Female', 'Other'];
 
 export type Model = {
+  id: number;
   firstName: string;
   lastName: string;
   gender: string;
@@ -25,6 +26,7 @@ export type Model = {
 };
 
 export const model: Model = {
+  id: 123,
   firstName: 'John',
   lastName: '',
   gender: GENDERS[0],
@@ -47,6 +49,12 @@ amet`,
 };
 
 export const SCHEMA_1: Schema<Model> = [
+  [
+    {
+      name: 'id',
+      type: 'hidden',
+    },
+  ],
   [
     {
       name: 'firstName',

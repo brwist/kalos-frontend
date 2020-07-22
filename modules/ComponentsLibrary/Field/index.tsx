@@ -740,7 +740,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     );
   }
   return (
-    <div className={clsx('Field', className)} style={style}>
+    <div className={clsx('Field', className, `type-${type}`)} style={style}>
       {type === 'file' && (
         <input
           id={name + '-file'}
