@@ -1,0 +1,34 @@
+@import '../../../styles/index.less';
+
+.CustomerEdit {
+  &EditForm {
+    display: flex;
+    @media @bp-sm-down {
+      flex-direction: column;
+    }
+  }
+  &Form {
+    flex-grow: 1;
+  }
+  &Groups {
+    @media @bp-md-up {
+      width: 250px;
+      margin-left: .spacing() [];
+    }
+  }
+  &GroupLinks {
+    padding-top: .spacing() [];
+    padding-bottom: .spacing() [];
+    padding-left: .spacing(2) [];
+  }
+  &Group {
+    margin-bottom: .spacing(-2) [];
+    @media @bp-sm-down {
+      display: inline-block;
+      width: calc(100% / 3);
+    }
+    @media @bp-xs-down {
+      width: 100%;
+    }
+  }
+}

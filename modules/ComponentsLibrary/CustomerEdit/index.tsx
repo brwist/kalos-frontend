@@ -1,5 +1,4 @@
 import React, { FC, useEffect, useCallback, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { UserGroupLink } from '@kalos-core/kalos-rpc/UserGroupLink';
 import { SectionBar } from '../SectionBar';
@@ -18,6 +17,7 @@ import {
   saveUser,
 } from '../../../helpers';
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
+import './styles.less';
 
 const SCHEMA: Schema<UserType> = [
   [{ label: 'Personal Details', headline: true }],
@@ -104,41 +104,6 @@ const SCHEMA: Schema<UserType> = [
   ],
 ];
 
-const useStyles = makeStyles(theme => ({
-  editForm: {
-    display: 'flex',
-    [theme.breakpoints.down('sm')]: {
-      flexDirection: 'column',
-    },
-  },
-  form: {
-    flexGrow: 1,
-  },
-  groups: {
-    [theme.breakpoints.up('md')]: {
-      width: 250,
-      marginLeft: theme.spacing(1),
-    },
-  },
-  groupLinks: {
-    paddingTop: theme.spacing(),
-    paddingBottom: theme.spacing(),
-    paddingLeft: theme.spacing(2),
-  },
-  group: {
-    marginBottom: 0,
-    [theme.breakpoints.down('sm')]: {
-      display: 'inline-block',
-      width: 'calc(100% / 3)',
-      marginBottom: theme.spacing(),
-    },
-    [theme.breakpoints.down('xs')]: {
-      width: '100%',
-      marginBottom: 0,
-    },
-  },
-}));
-
 interface Props {
   onSave?: (data: UserType) => void;
   onClose: () => void;
@@ -156,7 +121,6 @@ export const CustomerEdit: FC<Props> = ({
   groups: _groups,
   groupLinks: _groupLinks,
 }) => {
-  const classes = useStyles();
   const [userId, setUserId] = useState<number>(_userId);
   const [formKey, setFormKey] = useState<number>(0);
   const [customer, setCustomer] = useState<UserType>(
@@ -273,7 +237,7 @@ export const CustomerEdit: FC<Props> = ({
     [groupLinks, userId, setGroupLinks],
   );
   return (
-    <div className={classes.editForm}>
+    <div className="CustomerEditEditForm">
       <Form<UserType>
         key={formKey}
         title={userId ? 'Edit Customer Information' : 'Add Customer'}
@@ -282,25 +246,27 @@ export const CustomerEdit: FC<Props> = ({
         onSave={handleSave}
         onClose={onClose}
         disabled={saving || loading}
-        className={classes.form}
+        className="CustomerEditForm"
       />
-      <div className={classes.groups}>
+      <div className="CustomerEditGroups">
         <SectionBar title="Groups" />
         {loading ? (
           <InfoTable data={makeFakeRows(1, 8)} loading />
         ) : (
-          <div className={classes.groupLinks}>
+          <div className="CustomerEditGroupLinks">
             {groups.map(({ id, name }) => (
-              <Field
-                key={id}
-                label={name}
-                type="checkbox"
-                onChange={handleChangeLinkGroup(id)}
-                value={groupLinks.find(({ groupId }) => groupId === id) ? 1 : 0}
-                name={`group_${id}`}
-                className={classes.group}
-                disabled={saving}
-              />
+              <div key={id} className="CustomerEditGroup">
+                <Field
+                  label={name}
+                  type="checkbox"
+                  onChange={handleChangeLinkGroup(id)}
+                  value={
+                    groupLinks.find(({ groupId }) => groupId === id) ? 1 : 0
+                  }
+                  name={`group_${id}`}
+                  disabled={saving}
+                />
+              </div>
             ))}
           </div>
         )}
