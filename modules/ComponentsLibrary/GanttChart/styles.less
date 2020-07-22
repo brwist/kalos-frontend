@@ -1,0 +1,82 @@
+@import '../../../styles/index.less';
+
+@GAP: 1;
+
+.GanttChart {
+  .body1();
+  display: flex;
+  align-items: flex-start;
+  &.loading {
+    filter: grayscale(1);
+    pointer-events: none;
+  }
+  &Aside {
+    width: 250px;
+    flex-shrink: 0;
+    border-right: 1px solid @grey-200;
+    padding-top: 58px;
+    background-color: @grey-100;
+  }
+  &AsideRow {
+    border-bottom: 1px solid @grey-200;
+    background-color: @grey-300;
+    min-height: 28px;
+    padding: .spacing(0.5) [];
+    display: flex;
+    justify-items: center;
+    flex-direction: column;
+    word-break: break-word;
+    box-sizing: content-box;
+  }
+  &AsideRowTitle {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+  }
+  &AsideRowDesc {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  &Gantt {
+    flex-grow: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: .spacing(2) [];
+  }
+  &GanttRow {
+    display: flex;
+  }
+  &Day {
+    font-size: 12px;
+    background-color: @common-white;
+    padding-top: .spacing(0.5) [];
+    padding-bottom: .spacing(0.5) [];
+    width: 150px;
+    border-left: 1px solid @grey-200;
+    border-bottom: 1px solid @grey-200;
+    flex-shrink: 0;
+    box-sizing: content-box;
+  }
+  &WeekendDay {
+    background-color: @grey-50;
+  }
+  &WeekDay {
+    cursor: pointer;
+    text-align: center;
+    background-color: @grey-100;
+  }
+  &Event {
+    background-color: @grey-200;
+    margin-left: -@GAP;
+    padding: .spacing(0.5) [];
+    height: 20px;
+    display: flex;
+    justify-content: space-between;
+  }
+  &Hour {
+    opacity: 0.5;
+  }
+}
