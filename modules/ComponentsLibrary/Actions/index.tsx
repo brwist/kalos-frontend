@@ -73,7 +73,15 @@ export const Actions: FC<Props> = ({
                 )
                 .map(
                   (
-                    { label, onClick, url, desktop, className, ...props },
+                    {
+                      label,
+                      onClick,
+                      url,
+                      desktop,
+                      className,
+                      compact,
+                      ...props
+                    },
                     idx,
                   ) => (
                     <MenuItem
