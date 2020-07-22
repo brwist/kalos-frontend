@@ -1,6 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -49,10 +48,7 @@ const SCHEMA: Schema<EmployeeFunctionType> = [
   ],
 ];
 
-const useStyles = makeStyles(theme => ({}));
-
 export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
-  const classes = useStyles();
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
