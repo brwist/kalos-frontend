@@ -80,6 +80,25 @@ export default () => (
     <InfoTable data={EXAMPLE_2} hoverable />
     <ExampleTitle>loading</ExampleTitle>
     <InfoTable data={EXAMPLE_2} loading />
+    <ExampleTitle>loading compact</ExampleTitle>
+    <InfoTable data={EXAMPLE_2} loading compact />
+    <ExampleTitle>no entries</ExampleTitle>
+    <InfoTable
+      columns={[{ name: 'Column 1' }, { name: 'Column 2' }]}
+      data={[]}
+    />
+    <ExampleTitle>no entries compact</ExampleTitle>
+    <InfoTable
+      columns={[{ name: 'Column 1' }, { name: 'Column 2' }]}
+      data={[]}
+      compact
+    />
+    <ExampleTitle>no entries hoverable</ExampleTitle>
+    <InfoTable
+      columns={[{ name: 'Column 1' }, { name: 'Column 2' }]}
+      data={[]}
+      hoverable
+    />
     <ExampleTitle>error</ExampleTitle>
     <InfoTable data={EXAMPLE_2} error />
   </>

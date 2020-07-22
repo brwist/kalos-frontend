@@ -1,0 +1,120 @@
+@import '../../../styles/index.less';
+
+.commonCell() {
+  padding-left: .spacing() [];
+  padding-right: .spacing() [];
+  display: flex;
+  align-items: center;
+}
+.InfoTable {
+  position: relative;
+  margin-bottom: .spacing(2) [];
+  &Header {
+    background-color: @grey-200;
+    padding-top: .spacing() [];
+    padding-bottom: .spacing() [];
+    @media @bp-sm-up {
+      display: flex;
+    }
+  }
+  &Row {
+    &:nth-of-type(odd) {
+      background-color: @grey-50;
+    }
+    &:not(:last-of-type) {
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
+      border-bottom-color: @grey-400;
+    }
+    @media @bp-sm-up {
+      display: flex;
+      padding-top: .spacing() [];
+      padding-bottom: .spacing() [];
+      &.compact {
+        padding-top: 3px;
+        padding-bottom: 3px;
+      }
+      &:hover {
+        &.hoverable {
+          background-color: @grey-100 !important;
+        }
+      }
+    }
+  }
+  &Column {
+    .commonCell() !important;
+    box-sizing: border-box !important;
+    font-weight: 600 !important;
+    justify-content: space-between !important;
+  }
+  &Item {
+    .commonCell() !important;
+    box-sizing: border-box !important;
+    @media @bp-xs-down {
+      margin-top: .spacing(0.5) [] !important;
+      margin-bottom: .spacing(0.5) [] !important;
+      &.compact {
+        margin-top: 3px !important;
+        margin-bottom: 3px !important;
+      }
+    }
+  }
+  &NoEntries {
+    .commonCell() !important;
+    box-sizing: border-box !important;
+    color: @grey-600 !important;
+  }
+  &Dir {
+    display: flex;
+    align-items: center;
+  }
+  &Label {
+    margin-right: .spacing() [];
+  }
+  &Value {
+    white-space: pre-line;
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-grow: 1;
+  }
+  &ValueContent {
+    flex-grow: 1;
+    word-break: break-word;
+  }
+  &Loader {
+    position: absolute;
+    top: calc(50% - 20px);
+    left: calc(50% - 20px);
+  }
+  &Error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(@error-light, 27%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  &ErrorText {
+    background-color: @error-dark !important;
+    color: @common-white !important;
+    padding: .spacing(2) [] !important;
+    border-radius: @shape-borderRadius !important;
+  }
+  &Fake {
+    display: inline-block;
+    background-color: @grey-300;
+    height: .spacing() [];
+    width: 100%;
+    max-width: 100px;
+    border-radius: @shape-borderRadius;
+    margin-top: 6px;
+    margin-bottom: 6px;
+  }
+  &Actions {
+    flex-shrink: 0;
+  }
+}
