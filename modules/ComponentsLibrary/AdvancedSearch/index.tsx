@@ -5,7 +5,6 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
-import { makeStyles } from '@material-ui/core';
 import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema, Option } from '../PlainForm';
@@ -70,6 +69,7 @@ import {
   EVENT_STATUS_LIST,
   USA_STATES_OPTIONS,
 } from '../../../constants';
+import './styles.less';
 
 type Kind = 'serviceCalls' | 'customers' | 'properties' | 'employees';
 
@@ -106,13 +106,6 @@ const JOB_STATUS_OPTIONS: Option[] = [
 const ACCOUNTING = 'Accounting';
 const SERVICE = 'Service';
 
-const useStyles = makeStyles(theme => ({
-  form: {
-    marginTop: theme.spacing(),
-  },
-  subtitleItem: {},
-}));
-
 export const AdvancedSearch: FC<Props> = ({
   loggedUserId,
   title,
@@ -130,7 +123,6 @@ export const AdvancedSearch: FC<Props> = ({
   onSelectEvent,
   onClose,
 }) => {
-  const classes = useStyles();
   const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
@@ -1912,7 +1904,7 @@ export const AdvancedSearch: FC<Props> = ({
         schema={getSchema()}
         data={filter}
         onChange={handleFormChange}
-        className={classes.form}
+        className="AdvancedSearchForm"
         disabled={loadingDicts}
       />
       <InfoTable
