@@ -1,5 +1,4 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import sortBy from 'lodash/sortBy';
 import { format, addDays } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
@@ -32,6 +31,7 @@ import {
   formatDate,
 } from '../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
+import './styles.less';
 
 interface Props {}
 
@@ -82,36 +82,7 @@ const formatWeek = (date: string) => {
   return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
 };
 
-export const useStyles = makeStyles(theme => ({
-  modalBar: {
-    marginBottom: theme.spacing(-2),
-  },
-  status: {
-    display: 'inline-block',
-    width: theme.spacing(2),
-    height: theme.spacing(2),
-    marginRight: theme.spacing(),
-    borderRadius: '50%',
-    verticalAlign: 'middle',
-  },
-  printBtn: {
-    marginTop: theme.spacing(-2),
-    marginBottom: theme.spacing(2),
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  printItem: {
-    marginTop: '0.5rem',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: theme.palette.grey[400],
-    padding: '0 0.5rem',
-    pageBreakInside: 'avoid',
-  },
-}));
-
 export const PerDiemsNeedsAuditing: FC<Props> = () => {
-  const classes = useStyles();
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -383,7 +354,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
             value: (
               <>
                 <div
-                  className={classes.status}
+                  className="PerDiemNeedsAuditingStatus"
                   style={{ backgroundColor: color }}
                 />
                 {text}
@@ -457,7 +428,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
               { label: 'Close', onClick: handlePerDiemViewedToggle(undefined) },
             ]}
             fixedActions
-            className={classes.modalBar}
+            className="PerDiemNeedsAuditingModalBar"
           />
           <PerDiemComponent
             onClose={handlePerDiemViewedToggle(undefined)}
@@ -486,7 +457,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
             onPrinted={handlePrinted}
             status={printStatus}
             key={printStatus}
-            className={classes.printBtn}
+            className="PerDiemNeedsAuditingPrintBtn"
           >
             {printStatus === 'loaded' &&
               perDiemsPrint.map(
@@ -513,7 +484,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
                       );
                     }, 0);
                   return (
-                    <div key={id} className={classes.printItem}>
+                    <div key={id} className="PerDiemNeedsAuditingPrintItem">
                       <PrintParagraph tag="h3">
                         {ownerName} / {getDepartmentName(department)} /{' '}
                         {formatWeek(dateStarted)}
