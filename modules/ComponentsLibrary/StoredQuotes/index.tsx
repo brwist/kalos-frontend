@@ -1,5 +1,4 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
@@ -12,7 +11,7 @@ import {
   StoredQuoteClient,
   StoredQuote,
 } from '@kalos-core/kalos-rpc/StoredQuote';
-import { loadStoredQuotes, makeFakeRows } from '../../../helpers';
+import { loadStoredQuotes, makeFakeRows, usd } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
 const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
@@ -25,12 +24,6 @@ interface Props {
   onClose: () => void;
   onSelect: (storedQuote: StoredQuoteType) => void;
 }
-
-const useStyles = makeStyles(theme => ({
-  price: {
-    paddingLeft: theme.spacing(),
-  },
-}));
 
 const SCHEMA: Schema<StoredQuoteType> = [
   [
@@ -59,7 +52,6 @@ export const StoredQuotes: FC<Props> = ({
   onClose,
   onSelect,
 }) => {
-  const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [storedQuotes, setStoredQuotes] = useState<StoredQuoteType[]>([]);
   const [edit, setEdit] = useState<boolean>(false);
@@ -127,8 +119,8 @@ export const StoredQuotes: FC<Props> = ({
   const data: Data = loaded
     ? storedQuotes.map(storedQuote => {
         const price = (
-          <span key={0} className={classes.price}>
-            ${storedQuote.price}
+          <span key={0} className="StoredQuotesPrice">
+            {usd(storedQuote.price)}
           </span>
         );
         return [
