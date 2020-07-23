@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
+import './styles.less';
 
 interface Props {
   title?: string;
@@ -11,28 +11,19 @@ interface Props {
   label?: string;
 }
 
-const useStyles = makeStyles((theme) => ({
-  wrapper: {
-    padding: theme.spacing(3),
-  },
-}));
-
 export const Alert: FC<Props> = ({
   open,
   title,
   onClose,
   label = 'Okay',
   children,
-}) => {
-  const classes = useStyles();
-  return (
-    <Modal open={open} onClose={onClose} compact maxWidth={370}>
-      <SectionBar
-        title={title}
-        actions={[{ onClick: onClose, label }]}
-        fixedActions
-      />
-      <Typography className={classes.wrapper}>{children}</Typography>
-    </Modal>
-  );
-};
+}) => (
+  <Modal open={open} onClose={onClose} compact maxWidth={370}>
+    <SectionBar
+      title={title}
+      actions={[{ onClick: onClose, label }]}
+      fixedActions
+    />
+    <Typography className="Alert">{children}</Typography>
+  </Modal>
+);
