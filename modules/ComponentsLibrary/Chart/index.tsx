@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState, useRef, useEffect } from 'react';
+import clsx from 'clsx';
 import ReactToPrint from 'react-to-print';
 import uniq from 'lodash/uniq';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
@@ -23,7 +23,7 @@ import { InfoTable, Data as InfoTableData } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Modal } from '../Modal';
 import { makeFakeRows } from '../../../helpers';
-import './styles.css';
+import './styles.less';
 
 const PRINT_WIDTH = 1200;
 const CHART_ASPECT_RATIO = 16 / 9;
@@ -63,98 +63,6 @@ export interface Props extends Style {
   loggedUserId?: number;
 }
 
-const useStyles = makeStyles(theme => ({
-  form: {
-    marginBottom: theme.spacing(-3),
-  },
-  panel: {
-    display: 'flex',
-    marginTop: theme.spacing(2),
-    [theme.breakpoints.down('sm')]: {
-      flexDirection: 'column',
-      marginTop: 0,
-    },
-  },
-  role: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  users: {
-    width: 220,
-    [theme.breakpoints.down('sm')]: {
-      display: 'none',
-    },
-  },
-  filterButton: {
-    display: 'none',
-    [theme.breakpoints.down('sm')]: {
-      display: 'block',
-      marginTop: 0,
-      marginBottom: theme.spacing(3),
-      position: 'relative',
-      left: `calc(100% - ${theme.spacing(3)}px)`,
-      transform: 'translateX(-100%)',
-    },
-  },
-  usersList: {
-    overflowX: 'hidden',
-    overflowY: 'auto',
-  },
-  wrapper: ({ loading }: Style) => ({
-    flexGrow: 1,
-    position: 'relative',
-    filter: `grayscale(${loading ? 1 : 0})`,
-    pointerEvents: loading ? 'none' : 'auto',
-  }),
-  container: {
-    position: 'relative',
-    width: '100%',
-    '&:before': {
-      content: "' '",
-      display: 'block',
-      paddingTop: `${100 / CHART_ASPECT_RATIO}%`,
-    },
-  },
-  responsive: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-  chart: {
-    ...theme.typography.body1,
-  },
-  print: {
-    display: 'none',
-    '@media print': {
-      display: 'block',
-    },
-  },
-  printHeader: {
-    marginBottom: theme.spacing(),
-  },
-  printBody: {
-    width: PRINT_WIDTH,
-  },
-  checkboxRole: {
-    marginTop: `${theme.spacing(-1.5)}px !important`,
-    marginBottom: `${theme.spacing(-1.5)}px !important`,
-  },
-  checkboxUser: {
-    marginLeft: `${theme.spacing(2)}px !important`,
-    marginTop: `${theme.spacing(-1.5)}px !important`,
-    marginBottom: `${theme.spacing(-1.5)}px !important`,
-  },
-  loading: {
-    ...theme.typography.caption,
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-  },
-}));
-
 const toPercent = (decimal: number, fixed: number = 0) =>
   `${(decimal * 100).toFixed(fixed)}%`;
 
@@ -172,7 +80,6 @@ export const Chart: FC<Props> = ({
   loading = false,
   loggedUserId,
 }) => {
-  const classes = useStyles({ loading });
   const roles = uniq(data.map(({ role }) => role));
   const loggedUser = data.find(({ id }) => id === loggedUserId);
   const loggedUserRole = loggedUser ? loggedUser.role : undefined;
@@ -407,7 +314,7 @@ export const Chart: FC<Props> = ({
       width={print ? PRINT_WIDTH : width}
       height={print ? PRINT_WIDTH / CHART_ASPECT_RATIO : height}
       data={barCharData}
-      className={classes.chart}
+      className="Chart"
       stackOffset="expand"
     >
       <CartesianGrid strokeDasharray="3 3" />
@@ -445,8 +352,8 @@ export const Chart: FC<Props> = ({
     </BarChart>
   );
   const CustomResponsiveContainer = (props: ResponsiveContainerProps) => (
-    <div className={classes.container}>
-      <div className={classes.responsive}>
+    <div className="ChartContainer">
+      <div className="ChartResponsive">
         <ResponsiveContainer {...props} />
       </div>
     </div>
@@ -455,7 +362,7 @@ export const Chart: FC<Props> = ({
     .map(role => [
       {
         value: (
-          <div className={classes.role}>
+          <div className="ChartRole">
             <Field
               name={`role-${role}`}
               value={selectedRoles[role]}
@@ -463,7 +370,7 @@ export const Chart: FC<Props> = ({
                 (groupByLabels[role] || role) + ` (${getRoleCount(role, true)})`
               }
               type="checkbox"
-              className={classes.checkboxRole + ' ' + 'checkboxRole'}
+              className={'ChartCheckboxRole' + ' ' + 'checkboxRole'}
               onChange={handleChangeRole(role)}
             />
             <IconButton size="small" onClick={handleChangeCollapsedRole(role)}>
@@ -481,7 +388,7 @@ export const Chart: FC<Props> = ({
               value={selectedData[id]}
               label={name}
               type="checkbox"
-              className={classes.checkboxUser}
+              className="ChartCheckboxUser"
               onChange={handleChangeData(id, role)}
             />
           ),
@@ -499,7 +406,7 @@ export const Chart: FC<Props> = ({
               <Button label="Print" disabled={loading} variant="outlined" />
             )}
             content={() => printRef.current}
-            bodyClass={classes.printBody}
+            bodyClass="ChartPrintBody"
           />
         }
       />
@@ -508,16 +415,16 @@ export const Chart: FC<Props> = ({
         data={chartFormData}
         onChange={setChartFormData}
         disabled={loading}
-        className={classes.form}
+        className="ChartForm"
       />
       <Button
         label={`Filter (${selectedDataIds.length} selected)`}
-        className={classes.filterButton}
+        className="ChartFilterButton"
         onClick={handleFilterOpenToggle}
         disabled={loading}
       />
-      <div className={classes.panel}>
-        <div className={classes.users}>
+      <div className="ChartPanel">
+        <div className="ChartUsers">
           <SectionBar
             title="Users"
             subtitle={
@@ -532,7 +439,7 @@ export const Chart: FC<Props> = ({
           />
           <div
             style={{ height: width / CHART_ASPECT_RATIO - 50 }}
-            className={classes.usersList}
+            className="ChartUsersList"
           >
             <InfoTable
               data={loading ? makeFakeRows(1, 20) : usersData}
@@ -540,17 +447,17 @@ export const Chart: FC<Props> = ({
             />
           </div>
         </div>
-        <div ref={wrapperRef} className={classes.wrapper}>
+        <div ref={wrapperRef} className={clsx('ChartWrapper', { loading })}>
           <CustomResponsiveContainer aspect={CHART_ASPECT_RATIO}>
             <ChartContent />
           </CustomResponsiveContainer>
           <div ref={printRef}>
-            <div className={classes.print}>
-              <SectionBar title={title} className={classes.printHeader} />
+            <div className="ChartPrint">
+              <SectionBar title={title} className="ChartPrintHeader" />
               <ChartContent print />
             </div>
           </div>
-          {loading && <div className={classes.loading}>Loading...</div>}
+          {loading && <div className="ChartLoading">Loading...</div>}
         </div>
       </div>
       {filterOpen && (
