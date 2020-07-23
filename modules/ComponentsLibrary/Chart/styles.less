@@ -1,0 +1,102 @@
+@import '../../../styles/index.less';
+
+@PRINT_WIDTH: 1200px;
+
+.Chart {
+  .body1();
+  &Form {
+    margin-bottom: .spacing(-3) [];
+  }
+  &Panel {
+    display: flex;
+    margin-top: .spacing(2) [];
+    @media @bp-sm-down {
+      flex-direction: column;
+      margin-top: 0;
+    }
+  }
+  &Role {
+    display: flex;
+    align-items: center;
+  }
+  &Users {
+    width: 220px;
+    @media @bp-sm-down {
+      display: none;
+    }
+  }
+  &FilterButton {
+    display: none !important;
+    @media @bp-sm-down {
+      display: block !important;
+      margin-top: 0 !important;
+      margin-bottom: .spacing(3) [] !important;
+      position: relative !important;
+      left: calc(100% - .spacing(3) []) !important;
+      transform: translateX(-100%) !important;
+    }
+  }
+  &UsersList {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  &Wrapper {
+    flex-grow: 1;
+    position: relative;
+    &.loading {
+      filter: grayscale(1);
+      pointer-events: none;
+    }
+  }
+  &Container {
+    position: relative;
+    width: 100%;
+    &:before {
+      content: ' ';
+      display: block;
+      padding-top: 56.497%;
+    }
+  }
+  &Responsive {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  &Print {
+    display: none;
+    @media print {
+      display: block;
+    }
+  }
+  &PrintHeader {
+    margin-bottom: .spacing() [] !important;
+  }
+  &PrintBody {
+    width: @PRINT_WIDTH;
+  }
+  &CheckboxRole {
+    margin-top: .spacing(-1.5) [] !important;
+    margin-bottom: .spacing(-1.5) [] !important;
+  }
+  &CheckboxUser {
+    margin-left: .spacing(2) [] !important;
+    margin-top: .spacing(-1.5) [] !important;
+    margin-bottom: .spacing(-1.5) [] !important;
+  }
+  &Loading {
+    .caption();
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.recharts-legend-item-text {
+  vertical-align: middle;
+}
+.checkboxRole .MuiFormControlLabel-label {
+  font-weight: 900;
+}

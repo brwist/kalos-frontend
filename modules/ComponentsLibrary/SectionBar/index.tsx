@@ -121,7 +121,7 @@ export const SectionBar: FC<Props> = ({
               {!collapsed && subtitle && (
                 <Typography
                   variant="h6"
-                  className="SectionBarTitleSubtitle"
+                  className="SectionBarSubtitle"
                   onClick={handleToggleCollapsed}
                 >
                   {subtitle}
