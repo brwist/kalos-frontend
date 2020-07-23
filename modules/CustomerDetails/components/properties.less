@@ -1,0 +1,14 @@
+@import '../../../styles/index.less';
+
+.Properties {
+  &Wrapper {
+    display: flex;
+    justify-content: space-between;
+    @media @bp-md-down {
+      flex-direction: column;
+    }
+  }
+  &Properties {
+    flex-grow: 1;
+  }
+}

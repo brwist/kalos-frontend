@@ -7,7 +7,6 @@ import {
 } from '@kalos-core/kalos-rpc/ContractFrequency';
 import { InvoiceClient, Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import { makeStyles } from '@material-ui/core/styles';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
@@ -19,6 +18,7 @@ import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Field, Value } from '../../ComponentsLibrary/Field';
 import { getRPCFields, formatDate, UserType } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
+import './contractInfo.less';
 
 const ContractClientService = new ContractClient(ENDPOINT);
 const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
@@ -87,57 +87,6 @@ const makeContractNumber = (id: number) =>
   '-' +
   id.toString().padStart(5, '0');
 
-const useStyles = makeStyles(theme => ({
-  wrapper: {
-    display: 'flex',
-    [theme.breakpoints.down('md')]: {
-      flexDirection: 'column',
-    },
-    [theme.breakpoints.up('lg')]: {
-      alignItems: 'flex-start',
-    },
-  },
-  panel: {
-    flexGrow: 1,
-  },
-  asidePanel: {
-    flexShrink: 0,
-    [theme.breakpoints.down('md')]: {
-      flexGrow: 1,
-      marginBottom: theme.spacing(),
-    },
-    [theme.breakpoints.up('lg')]: {
-      width: 470,
-      marginLeft: theme.spacing(2),
-    },
-  },
-  addContract: {
-    marginBottom: theme.spacing(),
-  },
-  form: {
-    display: 'flex',
-    [theme.breakpoints.down('sm')]: {
-      flexDirection: 'column',
-    },
-  },
-  properties: {
-    [theme.breakpoints.up('md')]: {
-      marginLeft: theme.spacing(),
-    },
-  },
-  property: {
-    marginBottom: 0,
-  },
-  propertyPM: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  propertyAdd: {
-    cursor: 'pointer',
-    marginLeft: theme.spacing(),
-  },
-}));
-
 interface Props {
   userID: number;
   customer: UserType;
@@ -160,7 +109,6 @@ export const ContractInfo: FC<Props> = props => {
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [confirmNew, setConfirmNew] = useState<boolean>(false);
-  const classes = useStyles();
 
   const frequencyOptions: Options = useMemo(
     () => frequencies.map(({ id: value, name: label }) => ({ label, value })),
@@ -440,15 +388,15 @@ export const ContractInfo: FC<Props> = props => {
             type="checkbox"
             value={propertiesIds.includes(id)}
             onChange={handleChangePropertiesIds(id)}
-            className={classes.property}
+            className="ContractInfoProperty"
             disabled={saving}
           />
         ),
         actions: propertiesIds.includes(id)
           ? [
               // TODO: PM's count
-              <span key={0} className={classes.propertyPM}>
-                PM's: 1 <AddCircleIcon className={classes.propertyAdd} />
+              <span key={0} className="ContractInfoPropertyPM">
+                PM's: 1 <AddCircleIcon className="ContractInfoPropertyAdd" />
               </span>,
             ]
           : [],
@@ -457,8 +405,8 @@ export const ContractInfo: FC<Props> = props => {
   );
   return (
     <>
-      <div className={classes.wrapper}>
-        <div className={classes.panel}>
+      <div className="ContractInfo">
+        <div className="ContractInfoPanel">
           {entry.id === 0 ? (
             <SectionBar
               title="Contract Info"
@@ -472,7 +420,7 @@ export const ContractInfo: FC<Props> = props => {
                       },
                     ]
               }
-              className={classes.addContract}
+              className="ContractInfoAddContract"
             />
           ) : (
             <SectionBar
@@ -516,14 +464,14 @@ export const ContractInfo: FC<Props> = props => {
           )}
           {children}
         </div>
-        <div className={classes.asidePanel}>
+        <div className="ContractInfoAsidePanel">
           {entry.id > 0 && (
             <ContractDocuments contractId={entry.id} {...props} />
           )}
         </div>
       </div>
       <Modal open={editing} onClose={handleToggleEditing}>
-        <div className={classes.form}>
+        <div className="ContractInfoForm">
           <Form<Entry>
             title={`Customer: ${customer.firstname} ${customer.lastname}`}
             subtitle={
@@ -535,7 +483,7 @@ export const ContractInfo: FC<Props> = props => {
             onClose={handleToggleEditing}
             disabled={saving}
           />
-          <div className={classes.properties}>
+          <div className="ContractInfoProperties">
             <SectionBar title="Properties" />
             <InfoTable data={propertiesData} />
           </div>
