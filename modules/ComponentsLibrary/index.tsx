@@ -9,6 +9,7 @@ import Actions from './Actions/examples';
 import ActivityLogReport from './ActivityLogReport/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
+import Alert from './Alert/examples';
 import BillingAuditReport from './BillingAuditReport/examples';
 import Button from './Button/examples';
 import Calendar from './Calendar/examples';
@@ -64,6 +65,7 @@ import ServiceCallMetricsGraph from './ServiceCallMetricsGraph/examples';
 import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
+import SkeletonCard from './SkeletonCard/examples';
 import SpiffReport from './SpiffReport/examples';
 import SpiffToolLogEdit from './SpiffToolLogEdit/examples';
 import StoredQuotes from './StoredQuotes/examples';
@@ -80,6 +82,7 @@ const COMPONENTS = {
   ActivityLogReport,
   AddNewButton,
   AdvancedSearch,
+  Alert,
   BillingAuditReport,
   Button,
   Calendar,
@@ -135,6 +138,7 @@ const COMPONENTS = {
   ServiceItemLinks,
   ServiceItemReadings,
   ServiceItems,
+  SkeletonCard,
   SpiffReport,
   SpiffToolLogEdit,
   StoredQuotes,
