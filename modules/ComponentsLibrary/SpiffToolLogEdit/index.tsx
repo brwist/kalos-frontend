@@ -1,7 +1,6 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import kebabCase from 'lodash/kebabCase';
 import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -31,6 +30,7 @@ import {
   upsertSpiffToolAdminAction,
   deletetSpiffToolAdminAction,
 } from '../../../helpers';
+import './styles.less';
 
 type DocumentUplodad = {
   filename: '';
@@ -101,37 +101,15 @@ interface Props {
   statusEditing?: SpiffToolAdminActionType;
 }
 
-const useStyles = makeStyles(theme => ({
-  status: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  statusColor: {
-    width: theme.spacing(2),
-    height: theme.spacing(2),
-    borderRadius: '50%',
-    marginRight: theme.spacing(0.75),
-  },
-  uploading: {
-    backgroundColor: theme.palette.info.main,
-    color: theme.palette.info.contrastText,
-    padding: theme.spacing(),
-    borderRadius: theme.shape.borderRadius,
-  },
-}));
-
-export const SpiffStatus: FC<{ status: number }> = ({ status }) => {
-  const classes = useStyles();
-  return (
-    <div className={classes.status}>
-      <div
-        className={classes.statusColor}
-        style={{ backgroundColor: STATUS_TXT[status].color }}
-      />
-      {STATUS_TXT[status].label}
-    </div>
-  );
-};
+export const SpiffStatus: FC<{ status: number }> = ({ status }) => (
+  <div className="SpiffToolLogEditStatus">
+    <div
+      className="SpiffToolLogEditStatusColor"
+      style={{ backgroundColor: STATUS_TXT[status].color }}
+    />
+    {STATUS_TXT[status].label}
+  </div>
+);
 
 export const SpiffActionsList: FC<{
   actionsList: SpiffToolAdminActionType[];
@@ -176,7 +154,6 @@ export const SpiffToolLogEdit: FC<Props> = ({
   cancelLabel = 'Cancel',
   statusEditing: statusEditingInitial,
 }) => {
-  const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(loadingInitial);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -469,7 +446,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
             disabled={uploading}
           >
             {uploading && (
-              <Typography className={classes.uploading}>
+              <Typography className="SpiffToolLogEditUploading">
                 Please wait, file is uploading...
               </Typography>
             )}
