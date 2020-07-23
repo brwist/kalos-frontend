@@ -1,0 +1,17 @@
+@import '../../../styles/index.less';
+
+.AddServiceCall {
+  display: flex;
+  flex-direction: column;
+  &Header {
+    flex-shrink: 0;
+  }
+  &Content {
+    flex-grow: 1;
+    overflow-y: auto;
+    height: calc(100vh - 54px);
+    @media @bp-sm-up {
+      height: calc(100vh - 46px);
+    }
+  }
+}

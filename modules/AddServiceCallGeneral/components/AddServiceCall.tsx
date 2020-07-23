@@ -1,5 +1,4 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import {
@@ -18,32 +17,14 @@ import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetail
 import { SearchForm } from './SearchForm';
 import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
+import './addServiceCall.less';
 
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   onClose?: () => void;
   onSave?: () => void;
 };
 
-export const useStyles = makeStyles(theme => ({
-  wrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  header: {
-    flexShrink: 0,
-  },
-  content: {
-    flexGrow: 1,
-    overflowY: 'auto',
-    height: 'calc(100vh - 54px)',
-    [theme.breakpoints.up('sm')]: {
-      height: 'calc(100vh - 46px)',
-    },
-  },
-}));
-
 export const AddServiceCall: FC<Props> = props => {
-  const classes = useStyles();
   const { loggedUserId, onClose, onSave } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [customerOpened, setCustomerOpened] = useState<UserType>();
@@ -170,15 +151,15 @@ export const AddServiceCall: FC<Props> = props => {
       )}
       {customerOpened && (
         <Modal open onClose={handleCustomerClose} fullScreen>
-          <div className={classes.wrapper}>
-            <div className={classes.header}>
+          <div className="AddServiceCall">
+            <div className="AddServiceCallHeader">
               <SectionBar
                 title="Customer Details"
                 actions={[{ label: 'Close', onClick: handleCustomerClose }]}
                 fixedActions
               />
             </div>
-            <div className={classes.content}>
+            <div className="AddServiceCallContent">
               <CustomerDetails
                 userID={customerOpened.id}
                 loggedUserId={loggedUserId}
@@ -198,15 +179,15 @@ export const AddServiceCall: FC<Props> = props => {
       )}
       {serviceCallOpened && (
         <Modal open onClose={handleServiceCallClose} fullScreen>
-          <div className={classes.wrapper}>
-            <div className={classes.header}>
+          <div className="AddServiceCallWrapper">
+            <div className="AddServiceCallHeader">
               <SectionBar
                 title="New Service Call"
                 actions={[{ label: 'Close', onClick: handleServiceCallClose }]}
                 fixedActions
               />
             </div>
-            <div className={classes.content}>
+            <div className="AddServiceCallContent">
               <ServiceCall
                 propertyId={serviceCallOpened.id}
                 userID={serviceCallOpened.userId}

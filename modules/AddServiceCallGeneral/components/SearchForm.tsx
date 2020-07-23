@@ -1,8 +1,8 @@
 import React, { FC, useState, useCallback } from 'react';
-import { makeStyles } from '@material-ui/core';
 import { Button } from '../../ComponentsLibrary/Button';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { getCFAppUrl, UsersFilter } from '../../../helpers';
+import './searchForm.less';
 
 interface Props {
   onSearch: (search: UsersFilter) => void;
@@ -10,14 +10,7 @@ interface Props {
   onAddCustomer: () => void;
 }
 
-const useStyles = makeStyles(theme => ({
-  form: {
-    marginTop: theme.spacing(),
-  },
-}));
-
 export const SearchForm: FC<Props> = ({ onSearch, onReset, onAddCustomer }) => {
-  const classes = useStyles();
   const [formKey, setFormKey] = useState<number>(0);
   const [search, setSearch] = useState<UsersFilter>({});
   const handleSearch = useCallback(() => onSearch(search), [onSearch, search]);
@@ -105,7 +98,7 @@ export const SearchForm: FC<Props> = ({ onSearch, onReset, onAddCustomer }) => {
       data={search}
       onChange={setSearch}
       compact
-      className={classes.form}
+      className="AddServiceCallSearchForm"
     />
   );
 };
