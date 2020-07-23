@@ -5,7 +5,6 @@ import { Alert as AlertPopup } from '../Alert';
 import sortBy from 'lodash/sortBy';
 import { startOfWeek, format, addDays } from 'date-fns';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
-import { makeStyles } from '@material-ui/core/styles';
 import { Button } from '../Button';
 import { CalendarHeader } from '../CalendarHeader';
 import { Calendar } from '../Calendar';
@@ -39,44 +38,16 @@ import {
   loadPerDiemByDepartmentIdAndDateStarted,
   loadGovPerDiem,
   usd,
+  refreshToken,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE } from '../../../constants';
+import './styles.less';
 
 export interface Props {
   loggedUserId?: number;
   onClose?: () => void;
   perDiem?: PerDiemType;
 }
-
-const useStyles = makeStyles((theme) => ({
-  department: {
-    marginTop: theme.spacing(),
-  },
-  calendar: {
-    backgroundColor: theme.palette.grey[300],
-    paddingBottom: theme.spacing(),
-  },
-  row: {
-    marginBottom: theme.spacing(0.5),
-  },
-  formFooter: {
-    textAlign: 'center',
-  },
-  button: {
-    marginLeft: 0,
-  },
-  otherDepartmentCard: {
-    opacity: 0.3,
-    pointerEvents: 'none',
-  },
-  otherDepartmentText: {
-    marginTop: theme.spacing(2),
-    marginBottom: theme.spacing(5.75),
-    textAlign: 'center',
-    lineHeight: '20px',
-    fontStyle: 'italic',
-  },
-}));
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
@@ -169,7 +140,6 @@ export const PerDiemComponent: FC<Props> = ({
   onClose,
   perDiem,
 }) => {
-  const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -219,6 +189,7 @@ export const PerDiemComponent: FC<Props> = ({
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
   const initialize = useCallback(async () => {
+    await refreshToken();
     if (perDiem) {
       const year = +format(dateStarted, 'yyyy');
       const month = +format(dateStarted, 'M');
@@ -447,7 +418,7 @@ export const PerDiemComponent: FC<Props> = ({
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
       .filter(({ id }) => !usedDepartments.includes(id))
-      .map((d) => ({
+      .map(d => ({
         value: d.id,
         label: getDepartmentName(d),
       }));
@@ -601,7 +572,7 @@ export const PerDiemComponent: FC<Props> = ({
         </Alert>
       )}
       {!loading &&
-        filteredPerDiems.map((entry) => {
+        filteredPerDiems.map(entry => {
           const {
             id,
             rowsList,
@@ -630,7 +601,7 @@ export const PerDiemComponent: FC<Props> = ({
             0,
           );
           return (
-            <div key={id} className={classes.department}>
+            <div key={id} className="PerDiemDepartment">
               <SectionBar
                 title={
                   perDiem
@@ -688,7 +659,7 @@ export const PerDiemComponent: FC<Props> = ({
                 }
                 uncollapsable={!!perDiem}
               >
-                <Calendar className={classes.calendar}>
+                <Calendar className="PerDiemCalendar">
                   {[...Array(7)].map((_, dayOffset) => {
                     const date = formatDateFns(addDays(dateStarted, dayOffset));
                     const rows = rowsList.filter(({ dateString }) =>
@@ -716,9 +687,9 @@ export const PerDiemComponent: FC<Props> = ({
                           <CalendarCard
                             title=""
                             statusColor="white"
-                            className={classes.otherDepartmentCard}
+                            className="PerDiemOtherDepartmentCard"
                           >
-                            <div className={classes.otherDepartmentText}>
+                            <div className="PerDiemOtherDepartmentText">
                               Per Diem
                               <br />
                               in other
@@ -736,7 +707,7 @@ export const PerDiemComponent: FC<Props> = ({
                               compact
                               variant="text"
                               fullWidth
-                              className={classes.button}
+                              className="PerDiemButton"
                               onClick={handlePendingPerDiemRowEditToggle(
                                 makeNewPerDiemRow(id, date),
                               )}
@@ -744,7 +715,7 @@ export const PerDiemComponent: FC<Props> = ({
                               disabled={loading || saving}
                             />
                           )}
-                        {rows.map((entry) => {
+                        {rows.map(entry => {
                           const {
                             id,
                             notes,
@@ -766,26 +737,26 @@ export const PerDiemComponent: FC<Props> = ({
                                   : undefined
                               }
                             >
-                              <div className={classes.row}>
+                              <div className="PerDiemRow">
                                 <strong>Zip Code: </strong>
                                 {zipCode}
                               </div>
-                              <div className={classes.row}>
+                              <div className="PerDiemRow">
                                 <strong>Service Call Id: </strong>
                                 {serviceCallId}
                               </div>
-                              <div className={classes.row}>
+                              <div className="PerDiemRow">
                                 <strong>Meals only: </strong>
                                 {mealsOnly ? 'Yes' : 'No'}
                               </div>
                               {govPerDiems[zipCode] && (
-                                <div className={classes.row}>
+                                <div className="PerDiemRow">
                                   <strong>Meals: </strong>
                                   {usd(govPerDiems[zipCode].meals)}
                                 </div>
                               )}
                               {(govPerDiems[zipCode] || mealsOnly) && (
-                                <div className={classes.row}>
+                                <div className="PerDiemRow">
                                   <strong>Lodging: </strong>
                                   {usd(
                                     mealsOnly
@@ -794,7 +765,7 @@ export const PerDiemComponent: FC<Props> = ({
                                   )}
                                 </div>
                               )}
-                              <div className={classes.row}>
+                              <div className="PerDiemRow">
                                 <strong>Notes: </strong>
                                 {notes}
                               </div>
@@ -837,14 +808,14 @@ export const PerDiemComponent: FC<Props> = ({
             disabled={saving}
           >
             {!!pendingPerDiemRowEdit.id && (
-              <div className={classes.formFooter}>
+              <div className="PerDiemFormFooter">
                 <Button
                   label="Delete"
                   onClick={handlePendingPerDiemRowDeleteToggle(true)}
                   disabled={saving}
                   variant="outlined"
                   compact
-                  className={classes.button}
+                  className="PerDiemButton"
                 />
               </div>
             )}
