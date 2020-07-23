@@ -1,0 +1,29 @@
+@import '../../../styles/index.less';
+
+.PerDiemNeedsAuditing {
+  &ModalBar {
+    margin-bottom: .spacing(-2) [];
+  }
+  &Status {
+    display: inline-block;
+    width: .spacing(2) [];
+    height: .spacing(2) [];
+    margin-right: .spacing() [];
+    border-radius: 50%;
+    vertical-align: middle;
+  }
+  &PrintBtn {
+    margin-top: .spacing(-2) [];
+    margin-bottom: .spacing(2) [];
+    display: flex;
+    justify-content: center;
+  }
+  &PrintItem {
+    margin-top: 0.5rem;
+    border-width: 1;
+    border-style: solid;
+    border-color: grey-400;
+    padding: 0 0.5rem;
+    page-break-inside: avoid;
+  }
+}
