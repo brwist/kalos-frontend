@@ -1,24 +1,9 @@
 import React, { useState } from 'react';
-import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
 import SpeedDial from '@material-ui/lab/SpeedDial';
 import SpeedDialIcon from '@material-ui/lab/SpeedDialIcon';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-
 import Backdrop from '@material-ui/core/Backdrop';
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    speedDial: {
-      position: 'fixed',
-      bottom: theme.spacing(2),
-      right: theme.spacing(2),
-      cursor: 'pointer',
-    },
-    staticTooltipLabel: {
-      whiteSpace: 'nowrap',
-    },
-  }),
-);
+import './styles.less';
 
 type Option = {
   icon: JSX.Element;
@@ -33,7 +18,6 @@ type Props = {
 
 export const AddNewButton = ({ options }: Props) => {
   const [open, setOpen] = useState(false);
-  const classes = useStyles();
 
   const handleClick = (url?: string, action?: () => void) => {
     if (url) {
@@ -51,7 +35,7 @@ export const AddNewButton = ({ options }: Props) => {
       <Backdrop open={open} style={{ zIndex: 10 }} />
       <SpeedDial
         ariaLabel="Add new event"
-        className={classes.speedDial}
+        className="AddNewButtonSpeedDial"
         icon={<SpeedDialIcon />}
         onClick={() => setOpen(!open)}
         open={open}
@@ -65,7 +49,7 @@ export const AddNewButton = ({ options }: Props) => {
             onClick={() => {
               handleClick(option.url, option.action);
             }}
-            classes={{ staticTooltipLabel: classes.staticTooltipLabel }}
+            classes={{ staticTooltipLabel: 'AddNewButtonStaticTooltipLabel' }}
           />
         ))}
       </SpeedDial>
