@@ -1,0 +1,41 @@
+@import '../../../styles/index.less';
+
+.ServiceItems {
+  &Modal {
+    @media @bp-md-up {
+      display: flex;
+    }
+  }
+  &Form {
+    flex-grow: 1;
+  }
+  &Readings {
+    @media @bp-md-up {
+      width: 500px;
+      height: 100vh;
+      margin-left: .spacing() [];
+      overflow-y: auto;
+    }
+  }
+  &NoMaterials {
+    .body1();
+    padding-top: .spacing() [];
+    margin: 0;
+    margin-bottom: .spacing(3) [];
+  }
+  &LoadingMaterials {
+    padding-top: .spacing() [];
+    padding-bottom: .spacing() [];
+    margin-bottom: .spacing(3) [];
+  }
+  &Checkbox {
+    display: inline !important;
+    vertical-align: middle !important;
+    margin-right: .spacing(-2) [] !important;
+  }
+  &Repairs {
+    padding: .spacing() [];
+    padding-left: 0;
+    margin-bottom: .spacing(-2) [];
+  }
+}
