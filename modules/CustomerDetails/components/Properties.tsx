@@ -1,5 +1,4 @@
 import React, { FC, useCallback, useState, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import InfoIcon from '@material-ui/icons/Info';
@@ -16,6 +15,7 @@ import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { getRPCFields, loadGeoLocationByAddress } from '../../../helpers';
+import './properties.less';
 
 const PropertyClientService = new PropertyClient(ENDPOINT);
 
@@ -29,26 +29,6 @@ interface Props {
   userID: number;
 }
 
-const useStyles = makeStyles(theme => ({
-  propertiesWrapper: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    [theme.breakpoints.down('md')]: {
-      flexDirection: 'column',
-    },
-  },
-  properties: {
-    flexGrow: 1,
-  },
-  documents: {
-    flexShrink: 0,
-    [theme.breakpoints.up('lg')]: {
-      marginLeft: theme.spacing(2),
-      width: 470,
-    },
-  },
-}));
-
 export const Properties: FC<Props> = props => {
   const { userID } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -60,7 +40,6 @@ export const Properties: FC<Props> = props => {
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<Entry>();
   const [pendingDelete, setPendingDelete] = useState<boolean>(false);
-  const classes = useStyles();
 
   const handleSetEditing = useCallback(
     (editing?: Entry) => () => setEditing(editing),
@@ -255,8 +234,8 @@ export const Properties: FC<Props> = props => {
 
   return (
     <>
-      <div className={classes.propertiesWrapper}>
-        <div className={classes.properties}>
+      <div className="PropertiesWrapper">
+        <div className="PropertiesProperties">
           <SectionBar
             title="Properties"
             actions={[

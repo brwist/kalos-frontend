@@ -1,0 +1,50 @@
+@import '../../../styles/index.less';
+
+.ContractInfo {
+  display: flex;
+  @media @bp-md-down {
+    flex-direction: column;
+  }
+  @media @bp-lg-up {
+    align-items: flex-start;
+  }
+  &Panel {
+    flex-grow: 1;
+  }
+  &AsidePanel {
+    flex-shrink: 0;
+    @media @bp-md-down {
+      flex-grow: 1;
+      margin-bottom: .spacing() [];
+    }
+    @media @bp-lg-up {
+      width: 470px;
+      margin-left: .spacing(2) [];
+    }
+  }
+  &AddContract {
+    margin-bottom: .spacing() [];
+  }
+  &Form {
+    display: flex;
+    @media @bp-sm-down {
+      flex-direction: column;
+    }
+  }
+  &Properties {
+    @media @bp-md-up {
+      margin-left: .spacing() [];
+    }
+  }
+  &Property {
+    margin-bottom: 0 !important;
+  }
+  &PropertyPM {
+    display: flex;
+    align-items: center;
+  }
+  &PropertyAdd {
+    cursor: pointer;
+    margin-left: .spacing() [];
+  }
+}
