@@ -1,6 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, ReactNode } from 'react';
 import uniqueId from 'lodash/uniqueId';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import LinkIcon from '@material-ui/icons/Link';
 import AddIcon from '@material-ui/icons/Add';
@@ -30,6 +29,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 import { ServiceItemLinks } from '../ServiceItemLinks';
 import { ServiceItemReadings } from '../ServiceItemReadings';
+import './styles.less';
 
 const ServiceItemClientService = new ServiceItemClient(ENDPOINT);
 const ReadingClientService = new ReadingClient(ENDPOINT);
@@ -103,46 +103,6 @@ const sort = (a: Entry, b: Entry) => {
   return 0;
 };
 
-const useStyles = makeStyles(theme => ({
-  modal: {
-    [theme.breakpoints.up('md')]: {
-      display: 'flex',
-    },
-  },
-  form: {
-    flexGrow: 1,
-  },
-  readings: {
-    [theme.breakpoints.up('md')]: {
-      width: 500,
-      height: '100vh',
-      marginLeft: theme.spacing(),
-      overflowY: 'auto',
-    },
-  },
-  noMaterials: {
-    ...theme.typography.body1,
-    padding: theme.spacing(2),
-    margin: 0,
-    marginBottom: theme.spacing(3),
-  },
-  loadingMaterials: {
-    paddingTop: theme.spacing(),
-    paddingBottom: theme.spacing(),
-    marginBottom: theme.spacing(3),
-  },
-  checkbox: {
-    display: 'inline',
-    verticalAlign: 'middle',
-    marginRight: theme.spacing(-2),
-  },
-  repairs: {
-    padding: theme.spacing(),
-    paddingLeft: 0,
-    marginBottom: theme.spacing(-2),
-  },
-}));
-
 export const ServiceItems: FC<Props> = props => {
   const {
     propertyId,
@@ -174,7 +134,6 @@ export const ServiceItems: FC<Props> = props => {
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
   const [selected, setSelected] = useState<Entry[]>([]);
-  const classes = useStyles();
 
   const handleMaterialChange = useCallback(
     (idx: number) => (data: MaterialType) => {
@@ -303,7 +262,7 @@ export const ServiceItems: FC<Props> = props => {
             {
               content: (
                 <InfoTable
-                  className={classes.loadingMaterials}
+                  className="ServiceItemsLoadingMaterials"
                   data={makeFakeRows(4, 1)}
                   loading
                 />
@@ -312,7 +271,15 @@ export const ServiceItems: FC<Props> = props => {
           ],
         ]
       : MATERIALS_SCHEMA.length === 0
-      ? [[{ content: <div className={classes.noMaterials}>No materials</div> }]]
+      ? [
+          [
+            {
+              content: (
+                <div className="ServiceItemsNoMaterials">No materials</div>
+              ),
+            },
+          ],
+        ]
       : MATERIALS_SCHEMA),
     [{ label: 'Notes', headline: true }],
     [{ label: 'Additional Notes', name: 'notes', multiline: true }],
@@ -603,7 +570,7 @@ export const ServiceItems: FC<Props> = props => {
                   type="checkbox"
                   value={!!selected.find(item => item.id === id)}
                   onChange={handleSelectedChange(entry)}
-                  className={classes.checkbox}
+                  className="ServiceItemsCheckbox"
                 />
               )}
               <IconButton
@@ -677,7 +644,7 @@ export const ServiceItems: FC<Props> = props => {
                   schema={REPAIR_SCHEMA}
                   data={repair}
                   onChange={handleChangeRepair(repair)}
-                  className={classes.repairs}
+                  className="ServiceItemsRepairs"
                 />
               ),
               actions: [
@@ -742,7 +709,7 @@ export const ServiceItems: FC<Props> = props => {
       )}
       {editing && (
         <Modal open onClose={handleEditing()} fullScreen>
-          <div className={classes.modal}>
+          <div className="ServiceItemsModal">
             <Form<Entry>
               title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
               schema={SCHEMA}
@@ -750,10 +717,10 @@ export const ServiceItems: FC<Props> = props => {
               onSave={handleSave}
               onClose={handleEditing()}
               disabled={saving}
-              className={classes.form}
+              className="ServiceItemsForm"
             />
             {editing.id && (
-              <div className={classes.readings}>
+              <div className="ServiceItemsReadings">
                 <ServiceItemReadings {...props} serviceItemId={editing.id} />
               </div>
             )}
