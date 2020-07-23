@@ -1,5 +1,4 @@
 import React, { FC, useCallback, useState, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { Property } from '@kalos-core/kalos-rpc/Property';
@@ -24,6 +23,7 @@ import {
   UserType,
   PropertyType,
 } from '../../../helpers';
+import './propertyInfo.less';
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<PropertyType> = [
   [
@@ -47,26 +47,6 @@ interface Props {
   propertyId: number;
   loggedUserId: number;
 }
-
-const useStyles = makeStyles(theme => ({
-  propertiesWrapper: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    [theme.breakpoints.down('md')]: {
-      flexDirection: 'column',
-    },
-  },
-  properties: {
-    flexGrow: 1,
-  },
-  documents: {
-    flexShrink: 0,
-    [theme.breakpoints.up('lg')]: {
-      marginLeft: theme.spacing(2),
-      width: 470,
-    },
-  },
-}));
 
 export const PropertyInfo: FC<Props> = props => {
   const { userID, propertyId } = props;
@@ -93,7 +73,6 @@ export const PropertyInfo: FC<Props> = props => {
   const [pendingMerge, setPendingMerge] = useState<
     PropertyType & { __user: UserType }
   >();
-  const classes = useStyles();
 
   const handleSetEditing = useCallback(
     (editing: boolean) => () => setEditing(editing),
@@ -289,8 +268,8 @@ export const PropertyInfo: FC<Props> = props => {
   ];
   return (
     <>
-      <div className={classes.propertiesWrapper}>
-        <div className={classes.properties}>
+      <div className="PropertyInfoPropertiesWrapper">
+        <div className="PropertyInfoProperties">
           <SectionBar
             title="Property Information"
             actions={[
@@ -349,7 +328,7 @@ export const PropertyInfo: FC<Props> = props => {
           </SectionBar>
           <ServiceItems {...props} />
         </div>
-        <PropertyDocuments className={classes.documents} {...props} />
+        <PropertyDocuments className="PropertyInfoDocuments" {...props} />
       </div>
       <ServiceCalls {...props} />
       <Modal open={editing} onClose={handleSetEditing(false)}>

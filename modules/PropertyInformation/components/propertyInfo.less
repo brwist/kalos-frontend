@@ -1,0 +1,21 @@
+@import '../../../styles/index.less';
+
+.PropertyInfo {
+  &PropertiesWrapper {
+    display: flex;
+    justify-content: space-between;
+    @media @bp-md-down {
+      flex-direction: column;
+    }
+  }
+  &Properties {
+    flex-grow: 1;
+  }
+  &Documents {
+    flex-shrink: 0;
+    @media @bp-lg-up {
+      margin-left: .spacing(2) [];
+      width: 470px;
+    }
+  }
+}
