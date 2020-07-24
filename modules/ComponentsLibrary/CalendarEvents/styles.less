@@ -1,17 +1,16 @@
 @import '../../../styles/index.less';
 
-@GAP: 1px;
-
 .CalendarEvents {
   .body1() !important;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-gap: @GAP;
+  grid-gap: 1px;
   background-color: @grey-300;
-  border-width: @GAP;
+  border-width: 1px;
   border-style: solid;
   border-color: @grey-300;
   position: relative;
+  overflow-x: auto;
   &.loading {
     filter: grayscale(1);
     pointer-events: none;
@@ -21,6 +20,7 @@
     padding-top: .spacing() [];
     padding-bottom: .spacing(0.25) [];
     min-height: 114px;
+    min-width: 130px;
   }
   &WeekendDay {
     background-color: @grey-50;
@@ -52,7 +52,7 @@
   }
   &Event {
     background-color: @grey-200;
-    margin-right: -@GAP;
+    margin-right: -1px;
     padding: .spacing(0.5) [];
     margin-bottom: .spacing(0.25) [];
     height: 20px;
@@ -67,7 +67,7 @@
     align-items: center;
     width: 1px;
   }
-  &eventname {
+  &EventName {
     height: 20px;
     flex-grow: 1;
     overflow: hidden;
