@@ -203,7 +203,7 @@ export class AccountPicker extends Picker<
   TransactionAccount.AsObject
 > {
   constructor(props: props<TransactionAccount, TransactionAccount.AsObject>) {
-    super(props, 'Purchase Type', 'COST_CENTER_LIST', 7);
+    super(props, 'Purchase Type', 'COST_CENTER_LIST', getRandomInt(0, 9999));
     this.Client = new TransactionAccountClient(ENDPOINT);
     this.req = new TransactionAccount();
     this.req.setIsActive(1);
@@ -215,7 +215,7 @@ export class DepartmentPicker extends Picker<
   TimesheetDepartment.AsObject
 > {
   constructor(props: props<TimesheetDepartment, TimesheetDepartment.AsObject>) {
-    super(props, 'Department', 'DEPARTMENT_LIST', 4);
+    super(props, 'Department', 'DEPARTMENT_LIST', getRandomInt(0, 9999));
     this.Client = new TimesheetDepartmentClient(ENDPOINT);
     this.req = new TimesheetDepartment();
     this.req.setIsActive(1);
@@ -224,7 +224,7 @@ export class DepartmentPicker extends Picker<
 
 export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
   constructor(props: props<ClassCode, ClassCode.AsObject>) {
-    super(props, 'Class Code', 'CLASS_CODE_LIST', 2);
+    super(props, 'Class Code', 'CLASS_CODE_LIST', getRandomInt(0, 9999));
     this.Client = new ClassCodeClient(ENDPOINT);
     this.req = new ClassCode();
   }
@@ -232,7 +232,7 @@ export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
 
 export class EmployeePicker extends Picker<User, User.AsObject> {
   constructor(props: props<User, User.AsObject>) {
-    super(props, 'Employee', 'EMPLOYEE_LIST_X', 424);
+    super(props, 'Employee', 'EMPLOYEE_LIST_X', getRandomInt(0, 9999));
     this.Client = new UserClient(ENDPOINT);
     this.req = new User();
     this.req.setIsEmployee(1);

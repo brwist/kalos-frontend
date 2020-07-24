@@ -174,16 +174,18 @@ export class TxnCard extends React.PureComponent<props, state> {
             : 'submitted for approval';
           if (
             txn.costCenterId === 2 ||
-            txn.costCenter.id === 2 ||
+            txn.costCenter?.id === 2 ||
             txn.costCenterId === 1 ||
-            txn.costCenter.id === 1
+            txn.costCenter?.id === 1
           ) {
             statusID = 3;
             statusMessage =
-              'receipt marked as accidental or fraudelent and sent directly to accounting for review';
-            const mailBody = `A fraud transaction has been reported by ${
-              txn.ownerName
-            } (${txn.cardUsed}).
+              'receipt marked as accidental or fraudulent and sent directly to accounting for review';
+            const mailBody = `A${getTransactionTypeString(
+              txn,
+            )} transaction has been reported by ${txn.ownerName} (${
+              txn.cardUsed
+            }).
               Amount $${txn.amount} Vendor: ${txn.vendor} Post date: ${
               txn.timestamp
             }
@@ -390,10 +392,10 @@ export class TxnCard extends React.PureComponent<props, state> {
             selected={t.costCenterId}
             sort={costCenterSortByPopularity}
             filter={
-              !isManager ? a => ALLOWED_ACCOUNT_IDS.includes(a.id) : undefined
+              !isManager ? (a) => ALLOWED_ACCOUNT_IDS.includes(a.id) : undefined
             }
             hideInactive
-            renderItem={i => (
+            renderItem={(i) => (
               <option value={i.id} key={`${i.id}-${i.description}`}>
                 {i.description} ({i.id})
               </option>
@@ -402,14 +404,14 @@ export class TxnCard extends React.PureComponent<props, state> {
           <Field
             name="department"
             value={t.departmentId || this.props.userDepartmentID}
-            onChange={val => this.updateDepartmentID(+val)}
+            onChange={(val) => this.updateDepartmentID(+val)}
             type="department"
           />
           <Field
             name="jobNumber"
             label="Job Number"
             value={t.jobId}
-            onChange={val => this.handleJobNumber(+val)}
+            onChange={(val) => this.handleJobNumber(+val)}
             type="eventId"
             style={{
               alignItems: 'flex-start',
@@ -420,7 +422,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             name="notes"
             label="Notes"
             value={t.notes}
-            onChange={val => this.updateNotes(val.toString())}
+            onChange={(val) => this.updateNotes(val.toString())}
             multiline
           />
         </div>
@@ -468,10 +470,18 @@ const ALLOWED_ACCOUNT_IDS = [
 ];
 
 function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
-  return txn.documentsList.map(d => {
+  return txn.documentsList.map((d) => {
     return {
       key: `${txn.id}-${d.reference}`,
       bucket: 'kalos-transactions',
     };
   });
+}
+
+function getTransactionTypeString(txn: Transaction.AsObject) {
+  if (txn.costCenterId === 2 || txn.costCenter?.id === 2) {
+    return 'fraudulent';
+  } else if (txn.costCenterId === 1 || txn.costCenter?.id === 1) {
+    return 'n accidental';
+  }
 }

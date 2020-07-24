@@ -41,6 +41,8 @@
     "rollup-plugin-cleanup": "^3.1.1",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-image": "^1.0.2",
+    "rollup-plugin-less": "^1.1.2",
+    "rollup-plugin-less-modules": "^0.1.11",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-resolve": "^5.2.0",
@@ -86,5 +88,8 @@
     "google-protobuf": "^3.10.0",
     "react": "^16.10.1",
     "react-dom": "^16.10.1"
-  }
+  },
+  "files": [
+    "./build/modules"
+  ]
 }
