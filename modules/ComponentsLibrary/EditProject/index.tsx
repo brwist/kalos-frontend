@@ -501,6 +501,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           },
         ]}
         fixedActions
+        actionsAndAsideContentResponsive
         asideContent={
           <PrintPage
             buttonProps={{
@@ -514,6 +515,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             onPrinted={handlePrinted}
             status={printStatus}
             key={printStatus}
+            className="EditProjectAsideContent"
           >
             <PrintParagraph tag="h2">Project Details</PrintParagraph>
             {event && (

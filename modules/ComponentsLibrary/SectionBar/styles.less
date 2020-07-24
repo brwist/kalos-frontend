@@ -41,6 +41,12 @@
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    &.actionsAndAsideContentResponsive {
+      @media @bp-sm-down {
+        flex-direction: column;
+        align-items: flex-end;
+      }
+    }
   }
   &TitleWrapper {
     user-select: none;

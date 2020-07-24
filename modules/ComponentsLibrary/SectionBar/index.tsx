@@ -38,6 +38,7 @@ interface Props {
   loading?: boolean;
   uncollapsable?: boolean;
   sticky?: boolean;
+  actionsAndAsideContentResponsive?: boolean;
 }
 
 export const SectionBar: FC<Props> = ({
@@ -58,6 +59,7 @@ export const SectionBar: FC<Props> = ({
   loading = false,
   uncollapsable = false,
   sticky = true,
+  actionsAndAsideContentResponsive = false,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const handleToggleCollapsed = useCallback(
@@ -143,7 +145,11 @@ export const SectionBar: FC<Props> = ({
               />
             )}
           </div>
-          <div className="SectionBarActions">
+          <div
+            className={clsx('SectionBarActions', {
+              actionsAndAsideContentResponsive,
+            })}
+          >
             {asideContentFirst && asideContent}
             {actions.length > 0 && (
               <Actions actions={actions} fixed={fixedActions} />

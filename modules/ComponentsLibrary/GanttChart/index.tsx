@@ -9,6 +9,9 @@ import React, {
 import clsx from 'clsx';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import IconButton from '@material-ui/core/IconButton';
 import { format, addDays, getDay, differenceInDays } from 'date-fns';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { formatDate, formatTime } from '../../../helpers';
@@ -53,6 +56,7 @@ export const GanttChart: FC<Props> = ({
   );
   const [heights, setHeights] = useState<{ [key: number]: number }>({});
   const [elRefs, setElRefs] = useState<RefObject<HTMLDivElement>[]>([]);
+  const [collapsed, setCollapsed] = useState<boolean>(false);
   const startDate = new Date(`${dateStart}T00:00:00`);
   const endDate = new Date(`${dateEnd}T00:00:00`);
   const totalDays = differenceInDays(endDate, startDate);
@@ -85,9 +89,13 @@ export const GanttChart: FC<Props> = ({
     },
     [setUncollapsed, uncollapsed, elRefs, setHeights, heights],
   );
+  const handleToggleCollapsed = useCallback(() => setCollapsed(!collapsed), [
+    setCollapsed,
+    collapsed,
+  ]);
   return (
     <div className={clsx('GanttChart', { loading })}>
-      <div className="GanttChartAside">
+      <div className={clsx('GanttChartAside', { collapsed })}>
         {events.map(
           (
             {
@@ -272,6 +280,13 @@ export const GanttChart: FC<Props> = ({
           ),
         )}
       </div>
+      <IconButton
+        className="GanttChartToggle"
+        size="small"
+        onClick={handleToggleCollapsed}
+      >
+        {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+      </IconButton>
     </div>
   );
 };
