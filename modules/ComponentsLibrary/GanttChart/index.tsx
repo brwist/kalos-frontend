@@ -61,7 +61,7 @@ export const GanttChart: FC<Props> = ({
   const arrLength = events.length;
   useEffect(
     () =>
-      setElRefs(elRefs =>
+      setElRefs((elRefs) =>
         [...Array(arrLength)].map((_, i) => elRefs[i] || createRef()),
       ),
     [arrLength],

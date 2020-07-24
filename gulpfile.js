@@ -50,6 +50,7 @@ var builtins = require('rollup-plugin-node-builtins');
 var globals = require('rollup-plugin-node-globals');
 var terser = require('rollup-plugin-terser').terser;
 var jsonPlugin = require('@rollup/plugin-json');
+var less = require('rollup-plugin-less-modules');
 /**
  * Serves all modules to localhost:1234 via parcel
  */
@@ -282,6 +283,9 @@ function rollupBuild() {
                                     noEmitOnError: false
                                 }),
                                 scss(),
+                                less({
+                                    output: "build/modules/" + target + "Less.css"
+                                }),
                                 image(),
                                 jsonPlugin(),
                                 peerDependencies(),
@@ -365,7 +369,18 @@ function release() {
                 case 7:
                     //await patchCFC();
                     _a.sent();
-                    return [2 /*return*/];
+                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 9];
+                    return [4 /*yield*/, sh.exec("scp build.modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
+                case 8:
+                    _a.sent();
+                    _a.label = 9;
+                case 9:
+                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 11];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
+                case 10:
+                    _a.sent();
+                    _a.label = 11;
+                case 11: return [2 /*return*/];
             }
         });
     });
