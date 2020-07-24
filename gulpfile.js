@@ -370,7 +370,7 @@ function release() {
                     //await patchCFC();
                     _a.sent();
                     if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 9];
-                    return [4 /*yield*/, sh.exec("scp build.modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
                 case 8:
                     _a.sent();
                     _a.label = 9;
