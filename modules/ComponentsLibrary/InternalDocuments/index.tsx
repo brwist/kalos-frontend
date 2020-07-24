@@ -1,5 +1,4 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -31,29 +30,11 @@ import {
   INTERNAL_DOCUMENTS_BUCKET,
 } from '../../../constants';
 import { InternalDocument } from '@kalos-core/kalos-rpc/InternalDocument';
-
-const useStyles = makeStyles(theme => ({
-  filter: {
-    marginTop: theme.spacing(2),
-  },
-  name: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  tag: {
-    width: theme.spacing(2),
-    height: theme.spacing(2),
-    display: 'inline-block',
-    marginRight: theme.spacing(),
-    flexShrink: 0,
-    borderRadius: '50%',
-  },
-}));
+import './styles.less';
 
 const defaultFilter: InternalDocumentsFilter = { tag: -1 };
 
 export const InternalDocuments: FC = ({}) => {
-  const classes = useStyles();
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedFileTags, setLoadedFileTags] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -327,8 +308,11 @@ export const InternalDocuments: FC = ({}) => {
           return [
             {
               value: (
-                <div className={classes.name}>
-                  <span className={classes.tag} style={{ backgroundColor }} />
+                <div className="InternalDocumentsName">
+                  <span
+                    className="InternalDocumentsTag"
+                    style={{ backgroundColor }}
+                  />
                   {tagName} {description}
                 </div>
               ),
@@ -380,7 +364,7 @@ export const InternalDocuments: FC = ({}) => {
       />
       <PlainForm
         key={formKey}
-        className={classes.filter}
+        className="InternalDocumentsFilter"
         data={filter}
         schema={SCHEMA_FILTER}
         compact
