@@ -1,0 +1,30 @@
+@import '../../../styles/index.less';
+
+.CustomControls {
+  &InputWhite {
+    cursor: pointer;
+    & .MuiOutlinedInput-notchedOutline {
+      border-color: @grey-A100 !important;
+    }
+    &:hover .MuiOutlinedInput-notchedOutline {
+      border-color: white !important;
+    }
+    & .MuiSelect-selectMenu,
+    & .MuiInputBase-input {
+      color: white !important;
+    }
+    & .MuiSelect-icon {
+      color: white !important;
+    }
+    & .MuiFormLabel-root {
+      color: @grey-A100 !important;
+    }
+    & .MuiInput-underline:before,
+    .MuiFilledInput-underline:before {
+      border-color: rgba(255, 255, 255, 0.42) !important;
+    }
+    & .MuiInput-underline:hover:not(.Mui-disabled):before {
+      border-color: rgba(255, 255, 255, 0.87) !important;
+    }
+  }
+}
