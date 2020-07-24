@@ -1,5 +1,13 @@
+@import '../../../styles/index.less';
+
 .EditProject {
   &Delete {
     text-align: center;
+  }
+  &AsideContent {
+    display: flex;
+    @media @bp-sm-down {
+      flex-direction: column;
+    }
   }
 }
