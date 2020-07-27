@@ -1,0 +1,11 @@
+@import '../../styles/index.less';
+
+.Timesheet {
+  overflow: auto;
+  &Week {
+    min-width: 1500px;
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-gap: .spacing(2) [];
+  }
+}
