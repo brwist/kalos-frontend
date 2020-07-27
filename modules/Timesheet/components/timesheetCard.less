@@ -1,0 +1,32 @@
+@import '../../../styles/index.less';
+
+.TimesheetTimesheetCard {
+  &Card {
+    margin: .spacing() [] 0;
+    &.servicesRendered {
+      background-color: @primary-light;
+    }
+  }
+  &CardHeader {
+    padding: .spacing() [] !important;
+    &.jobNumber {
+      padding-top: .spacing(2.5) [] !important;
+    }
+  }
+  &CardContent {
+    padding: 0 .spacing() [] .spacing() [] !important;
+  }
+  &Date {
+    font-size: 0.75rem !important;
+    font-weight: 100 !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  &ColorIndicator {
+    display: block;
+    width: .spacing(2) [];
+    height: .spacing(2) [];
+    border-radius: .spacing() [];
+  }
+}
