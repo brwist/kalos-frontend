@@ -1,5 +1,4 @@
 import React, { useRef, FC } from 'react';
-import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -7,40 +6,24 @@ import Chip from '@material-ui/core/Chip';
 import InsertPhotoIcon from '@material-ui/icons/InsertPhoto';
 import { Button } from '../../ComponentsLibrary/Button';
 import { BugReportImage } from '../../../helpers';
+import './imageUploader.less';
 
 type Props = {
-  images: BugReportImage[],
-  attachImage: (img: BugReportImage) => void,
-  detachImage: (label: string) => void,
-  ignoreImages: boolean,
-  setIgnoreImages: (ignore: boolean) => void,
-  loading: boolean,
+  images: BugReportImage[];
+  attachImage: (img: BugReportImage) => void;
+  detachImage: (label: string) => void;
+  ignoreImages: boolean;
+  setIgnoreImages: (ignore: boolean) => void;
+  loading: boolean;
 };
 
-const acceptedFileTypes = ["image/x-png", "image/png", "image/jpg", "image/jpeg", "image/gif"];
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    controls: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      flexWrap: 'wrap',
-    },
-    button: {
-      margin: 0,
-    },
-    chips: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      justifyContent: 'flex-start',
-    },
-    chip: {
-      marginTop: theme.spacing(1),
-    },
-  }),
-);
+const acceptedFileTypes = [
+  'image/x-png',
+  'image/png',
+  'image/jpg',
+  'image/jpeg',
+  'image/gif',
+];
 
 const ImageUploader: FC<Props> = ({
   images,
@@ -50,7 +33,6 @@ const ImageUploader: FC<Props> = ({
   setIgnoreImages,
   loading,
 }: Props): JSX.Element => {
-  const classes = useStyles();
   const inputRef = useRef<HTMLInputElement>(null);
   const handleUploadImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     // @ts-ignore
@@ -65,16 +47,16 @@ const ImageUploader: FC<Props> = ({
       attachImage({
         label: file.name,
         data: imgBase64,
-      })
+      });
     };
 
     reader.readAsDataURL(file);
   };
   return (
     <>
-      <Box className={classes.controls}>
+      <Box className="ImageUploaderControls">
         <Button
-          className={classes.button}
+          className="ImageUploaderButton"
           label="Upload Image"
           startIcon={<InsertPhotoIcon />}
           onClick={() => inputRef?.current?.click()}
@@ -100,11 +82,11 @@ const ImageUploader: FC<Props> = ({
         />
       </Box>
       {!ignoreImages && (
-        <Box className={classes.chips}>
+        <Box className="ImageUploaderChips">
           {images.map(img => (
             <Chip
               key={img.label}
-              className={classes.chip}
+              className="ImageUploaderChip"
               label={img.label}
               onDelete={() => detachImage(img.label)}
             />
