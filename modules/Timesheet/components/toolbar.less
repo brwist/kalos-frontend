@@ -1,0 +1,53 @@
+@import '../../../styles/index.less';
+
+.TimesheetToolbar {
+  &Bar {
+    background: @primary-dark;
+    color: @common-white;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    @media @bp-sm-down {
+      padding: .spacing(2) [];
+    }
+    @media @bp-rwd400-down {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+  &UserName {
+    margin: 0 .spacing(2) [] !important;
+    text-align: center !important;
+    @media @bp-rwd400-down {
+      margin: .spacing(2) [] !important;
+    }
+  }
+  &Info {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    & p {
+      color: white;
+    }
+    @media @bp-rwd400-down {
+      flex-direction: column;
+    }
+  }
+  &Payroll {
+    margin-right: .spacing(2) [];
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    @media @bp-rwd400-down {
+      margin-right: 0;
+      align-items: center;
+    }
+  }
+  &Details {
+    & span:first-child {
+      margin-right: .spacing(2) [];
+    }
+  }
+}
