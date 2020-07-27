@@ -1,16 +1,19 @@
 {
-  "name": "the-react-starter",
-  "version": "0.0.1",
-  "description": "The one react boilerplate",
+  "name": "@kalos-core/kalos-frontend",
+  "version": "0.0.2",
+  "description": "Kalos frontend components rewritten in React",
   "scripts": {
+    "publish-pkg": "npm login && yarn publish --access restricted",
     "start": "gulp -LL start",
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
     "release": "gulp -LL release",
+    "distribute": "gulp -LL distribute",
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload"
   },
+  "author": "Robert Milejczak <robbie@kalosflorida.com>",
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.7.7",
@@ -90,6 +93,13 @@
     "react-dom": "^16.10.1"
   },
   "files": [
-    "./build/modules"
-  ]
+    "build/dist"
+  ],
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "jsxBracketSameLine": false
+  }
 }
