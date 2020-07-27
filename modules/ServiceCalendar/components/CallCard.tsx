@@ -2,7 +2,6 @@ import React from 'react';
 import clsx from 'clsx';
 import { isSameDay, format } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event';
-import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardHeader from '@material-ui/core/CardHeader';
@@ -11,58 +10,37 @@ import Typography from '@material-ui/core/Typography';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { useEmployees } from '../hooks';
-import { colorsMapping, repeatsMapping, requestTypeMappping } from '../constants';
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    card: {
-      margin: `${theme.spacing(1)}px 0`,
-    },
-    cardHeader: {
-      padding: theme.spacing(1),
-      '&.jobNumber': {
-        paddingTop: theme.spacing(2.5),
-      },
-    },
-    cardContent: {
-      padding: `0 ${theme.spacing(1)}px ${theme.spacing(1)}px`,
-    },
-    date: {
-      fontSize: '0.75rem',
-      fontWeight: 100,
-    },
-    colorIndicator: {
-      display: 'block',
-      width: theme.spacing(2),
-      height: theme.spacing(2),
-      borderRadius: theme.spacing(1),
-    },
-    jobNumber: {
-      position: 'absolute',
-      top: theme.spacing(0.5),
-      right: theme.spacing(1),
-    },
-  }),
-);
+import {
+  colorsMapping,
+  repeatsMapping,
+  requestTypeMappping,
+} from '../constants';
+import './callCard.less';
 
 type ColorIndicatorProps = {
   type?: string;
   requestType?: number;
   logJobStatus?: string;
   color?: string;
-}
+};
 
-const ColorIndicator = ({ type, requestType, logJobStatus, color }: ColorIndicatorProps) => {
-  const classes = useStyles();
+const ColorIndicator = ({
+  type,
+  requestType,
+  logJobStatus,
+  color,
+}: ColorIndicatorProps) => {
   let colorToUse;
   if (type === 'timeoff') {
-    colorToUse = requestType === 10 ? colorsMapping.timeoff10 : colorsMapping.timeoff;
+    colorToUse =
+      requestType === 10 ? colorsMapping.timeoff10 : colorsMapping.timeoff;
   } else {
-    colorToUse = colorsMapping[logJobStatus || '*'] || colorsMapping[color || '*'];
+    colorToUse =
+      colorsMapping[logJobStatus || '*'] || colorsMapping[color || '*'];
   }
   return (
     <span
-      className={classes.colorIndicator}
+      className="ServiceCalendarCallCardColorIndicator"
       style={{ backgroundColor: colorToUse }}
     />
   );
@@ -83,8 +61,6 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
     userId,
     allDayOff,
   } = card;
-
-  const classes = useStyles();
   const { employees, employeesLoading } = useEmployees();
 
   let title, subheader, dates, time;
@@ -114,9 +90,12 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
   }
   return (
     <Card
-      className={classes.card}
+      className="ServiceCalendarCallCardCard"
       onClick={() => {
-        const win = window.open(`https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`, '_blank');
+        const win = window.open(
+          `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`,
+          '_blank',
+        );
         if (win) {
           win.focus();
         }
@@ -124,19 +103,19 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
     >
       <CardActionArea>
         <CardHeader
-          className={classes.cardHeader}
-          avatar={
-            <ColorIndicator
-              type="timeoff"
-              requestType={requestType}
-            />
-          }
+          className="ServiceCalendarCallCardCardHeader"
+          avatar={<ColorIndicator type="timeoff" requestType={requestType} />}
           title={title}
           subheader={subheader}
         />
-        <CardContent className={classes.cardContent}>
+        <CardContent className="ServiceCalendarCallCardCardContent">
           {dates && (
-            <Typography className={classes.date} variant="body2" color="textSecondary" component="p">
+            <Typography
+              className="ServiceCalendarCallCardDate"
+              variant="body2"
+              color="textSecondary"
+              component="p"
+            >
               {dates} {time}
             </Typography>
           )}
@@ -144,7 +123,9 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
             {name}
           </Typography>
           {requestType && (
-            <Typography variant="body2" color="textSecondary" component="p">{requestTypeMappping[requestType]}</Typography>
+            <Typography variant="body2" color="textSecondary" component="p">
+              {requestTypeMappping[requestType]}
+            </Typography>
           )}
         </CardContent>
       </CardActionArea>
@@ -155,9 +136,9 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
 type CallProps = {
   card: Event.AsObject;
   type?: string;
-}
+};
 
-export const CallCard = ({ card, type}: CallProps): JSX.Element => {
+export const CallCard = ({ card, type }: CallProps): JSX.Element => {
   const {
     id,
     propertyId,
@@ -174,8 +155,6 @@ export const CallCard = ({ card, type}: CallProps): JSX.Element => {
     dateEnded,
     timeStarted,
   } = card;
-
-  const classes = useStyles();
   const { employees, employeesLoading } = useEmployees();
   const technicianIds =
     logTechnicianAssigned !== '0' && logTechnicianAssigned !== ''
@@ -186,7 +165,9 @@ export const CallCard = ({ card, type}: CallProps): JSX.Element => {
   }
 
   const title = logJobStatus ? logJobStatus : null;
-  const subheader = isAllDay ? 'All Day Event' : `${timeStarted} - ${timeEnded}`;
+  const subheader = isAllDay
+    ? 'All Day Event'
+    : `${timeStarted} - ${timeEnded}`;
 
   const technicianNames = technicianIds
     .map((id: string) => {
@@ -196,7 +177,7 @@ export const CallCard = ({ card, type}: CallProps): JSX.Element => {
     .join(', ');
   return (
     <Card
-      className={classes.card}
+      className="ServiceCalendarCallCardCard"
       onClick={() => {
         let url;
         if (type === 'reminder') {
@@ -212,7 +193,10 @@ export const CallCard = ({ card, type}: CallProps): JSX.Element => {
     >
       <CardActionArea>
         <CardHeader
-          className={clsx(classes.cardHeader, logJobNumber && 'jobNumber')}
+          className={clsx(
+            'ServiceCalendarCallCardCardHeader',
+            logJobNumber && 'jobNumber',
+          )}
           avatar={
             <ColorIndicator
               type={type}
@@ -222,9 +206,16 @@ export const CallCard = ({ card, type}: CallProps): JSX.Element => {
           }
           title={title}
           subheader={subheader}
-          action={<Typography variant="caption" className={classes.jobNumber}>{logJobNumber}</Typography>}
+          action={
+            <Typography
+              variant="caption"
+              className="ServiceCalendarCallCardJobNumber"
+            >
+              {logJobNumber}
+            </Typography>
+          }
         />
-        <CardContent className={classes.cardContent}>
+        <CardContent className="ServiceCalendarCallCardCardContent">
           {(!type || type === 'completed') && (
             <Typography variant="body2" color="textSecondary" component="p">
               Customer:{' '}

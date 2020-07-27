@@ -1,0 +1,31 @@
+@import '../../../styles/index.less';
+
+.ServiceCalendarCallCard {
+  &Card {
+    margin: .spacing() [] 0;
+  }
+  &CardHeader {
+    padding: .spacing() [] !important;
+    &.jobNumber {
+      padding-top: .spacing(2.5) [] !important;
+    }
+  }
+  &CardContent {
+    padding: 0 .spacing() [] .spacing() [] !important;
+  }
+  &Date {
+    font-size: 0.75rem !important;
+    font-weight: 100 !important;
+  }
+  &ColorIndicator {
+    display: block;
+    width: .spacing(2) [];
+    height: .spacing(2) [];
+    border-radius: .spacing() [];
+  }
+  &JobNumber {
+    position: absolute;
+    top: .spacing(0.5) [];
+    right: .spacing() [];
+  }
+}
