@@ -1,0 +1,66 @@
+@import '../../../styles/index.less';
+
+.BugReportRichTextEditor {
+  &Container {
+    margin: .spacing(2) [] 0;
+    border: 1px solid @grey-400;
+    border-radius: .spacing(0.5) [];
+  }
+  &Block {
+    background: @grey-200;
+    padding: .spacing() [];
+    border-bottom: 1px solid @grey-400;
+  }
+  &Button {
+    cursor: pointer;
+    margin-right: .spacing(2) [];
+    display: inline-block;
+    padding: .spacing(0.5) [] .spacing() [];
+    border-radius: .spacing(0.5) [];
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    &.active {
+      background: @grey-400;
+    }
+  }
+  &Wrapper {
+    padding: .spacing() [];
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial,
+      sans-serif, Apple Color Emoji, Segoe UI Emoji;
+    & p,
+    & h1,
+    & h2,
+    & ol,
+    & ul,
+    & blockquote {
+      margin-bottom: 16px;
+    }
+    & h1,
+    & h2 {
+      margin-top: 24px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    & h2 {
+      padding-bottom: 0.3em;
+      border-bottom: 1px solid #eaecef;
+    }
+    & ol,
+    & ul {
+      padding-left: 2em;
+      & li {
+        margin-left: 0 !important;
+      }
+      & li + li {
+        margin-top: 0.25em;
+      }
+    }
+    & blockquote {
+      margin: 0;
+      padding: 0 1em;
+      color: #6a737d;
+      border-left: 0.25em solid #dfe2e5;
+    }
+  }
+}
