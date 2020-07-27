@@ -1,0 +1,56 @@
+@import '../../../styles/index.less';
+
+.TimesheetColumn {
+  &Payroll {
+    & .total {
+      text-align: right;
+    }
+    & .details {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+  &DayView {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    height: 100%;
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 16px;
+    transition: width 1500ms;
+    z-index: 10000;
+  }
+  &DateHeading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: @grey-200;
+    margin: .spacing(1) [] 0;
+    padding: .spacing(1) [];
+    text-align: center;
+  }
+  &DayViewHeading {
+    flex: 1 0 auto;
+  }
+  &DayCircle {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.25);
+    color: #666 !important;
+    font-size: 12px !important;
+  }
+  &DayViewButton {
+    visibility: hidden !important;
+    &.visible {
+      visibility: visible !important;
+    }
+  }
+}
