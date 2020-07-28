@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import {
   AreaChart,
   Area,
@@ -10,6 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import './styles.less';
 
 export type Data = {
   date: string;
@@ -24,17 +24,6 @@ export type Data = {
 interface Props {
   data: Data;
 }
-
-const useStyles = makeStyles(theme => ({
-  wrapper: {
-    height: 600,
-    marginTop: theme.spacing(2),
-    marginRight: theme.spacing(),
-  },
-  chart: {
-    ...theme.typography.body1,
-  },
-}));
 
 const ACTIVE_DOT = { r: 6 };
 
@@ -68,89 +57,86 @@ const CustomizedAxisTick: FC<{
   </g>
 );
 
-export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => {
-  const classes = useStyles();
-  return (
-    <div className={classes.wrapper}>
-      <ResponsiveContainer>
-        <AreaChart data={data} className={classes.chart}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="date"
-            tick={props => <CustomizedAxisTick {...props} />}
-            height={100}
-            interval={0}
-          />
-          <YAxis />
-          <Tooltip />
-          <Legend
-            verticalAlign="top"
-            iconType="circle"
-            iconSize={14}
-            wrapperStyle={{ top: -5 }}
-          />
-          <Area
-            type="monotone"
-            dataKey="serviceCalls"
-            name="Service Calls"
-            stroke={COLORS.serviceCalls}
-            fill={COLORS.serviceCalls}
-            dot
-            activeDot={ACTIVE_DOT}
-            isAnimationActive={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="phoneCalls"
-            name="Phone Calls"
-            stroke={COLORS.phoneCalls}
-            fill={COLORS.phoneCalls}
-            dot
-            activeDot={ACTIVE_DOT}
-            isAnimationActive={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="activeCustomers"
-            name="Active Customers"
-            stroke={COLORS.activeCustomers}
-            fill={COLORS.activeCustomers}
-            dot
-            activeDot={ACTIVE_DOT}
-            isAnimationActive={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="totalCustomers"
-            name="Total Customers"
-            stroke={COLORS.totalCustomers}
-            fill={COLORS.totalCustomers}
-            dot
-            activeDot={ACTIVE_DOT}
-            isAnimationActive={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="totalContracts"
-            name="Total Contracts"
-            stroke={COLORS.totalContracts}
-            fill={COLORS.totalContracts}
-            dot
-            activeDot={ACTIVE_DOT}
-            isAnimationActive={false}
-          />
-          <Area
-            type="monotone"
-            dataKey="totalInstallationTypeCalls"
-            name="Total Installation Type Calls"
-            stroke={COLORS.totalInstallationTypeCalls}
-            fill={COLORS.totalInstallationTypeCalls}
-            dot
-            activeDot={ACTIVE_DOT}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
+export const ServiceCallMetricsGraph: FC<Props> = ({ data }) => (
+  <div className="ServiceCallMetricsGraph">
+    <ResponsiveContainer>
+      <AreaChart data={data} className="ServiceCallMetricsGraphChart">
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis
+          dataKey="date"
+          tick={props => <CustomizedAxisTick {...props} />}
+          height={100}
+          interval={0}
+        />
+        <YAxis />
+        <Tooltip />
+        <Legend
+          verticalAlign="top"
+          iconType="circle"
+          iconSize={14}
+          wrapperStyle={{ top: -5 }}
+        />
+        <Area
+          type="monotone"
+          dataKey="serviceCalls"
+          name="Service Calls"
+          stroke={COLORS.serviceCalls}
+          fill={COLORS.serviceCalls}
+          dot
+          activeDot={ACTIVE_DOT}
+          isAnimationActive={false}
+        />
+        <Area
+          type="monotone"
+          dataKey="phoneCalls"
+          name="Phone Calls"
+          stroke={COLORS.phoneCalls}
+          fill={COLORS.phoneCalls}
+          dot
+          activeDot={ACTIVE_DOT}
+          isAnimationActive={false}
+        />
+        <Area
+          type="monotone"
+          dataKey="activeCustomers"
+          name="Active Customers"
+          stroke={COLORS.activeCustomers}
+          fill={COLORS.activeCustomers}
+          dot
+          activeDot={ACTIVE_DOT}
+          isAnimationActive={false}
+        />
+        <Area
+          type="monotone"
+          dataKey="totalCustomers"
+          name="Total Customers"
+          stroke={COLORS.totalCustomers}
+          fill={COLORS.totalCustomers}
+          dot
+          activeDot={ACTIVE_DOT}
+          isAnimationActive={false}
+        />
+        <Area
+          type="monotone"
+          dataKey="totalContracts"
+          name="Total Contracts"
+          stroke={COLORS.totalContracts}
+          fill={COLORS.totalContracts}
+          dot
+          activeDot={ACTIVE_DOT}
+          isAnimationActive={false}
+        />
+        <Area
+          type="monotone"
+          dataKey="totalInstallationTypeCalls"
+          name="Total Installation Type Calls"
+          stroke={COLORS.totalInstallationTypeCalls}
+          fill={COLORS.totalInstallationTypeCalls}
+          dot
+          activeDot={ACTIVE_DOT}
+          isAnimationActive={false}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>
+);
