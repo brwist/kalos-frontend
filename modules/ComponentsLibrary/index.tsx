@@ -77,7 +77,7 @@ import WeekPicker from './WeekPicker/examples';
 
 import './styles.less';
 
-const DEFAULT_COMPONENT_IDX = 51;
+const DEFAULT_COMPONENT_IDX = 0;
 
 const COMPONENTS = {
   Actions,
