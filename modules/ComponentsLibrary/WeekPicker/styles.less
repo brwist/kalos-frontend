@@ -1,0 +1,43 @@
+@import '../../../styles/index.less';
+
+.WeekPicker {
+  &DayWrapper {
+    position: relative;
+  }
+  &Day {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 0.75rem !important;
+    margin: 0 2px !important;
+    color: inherit !important;
+  }
+  &CustomDayHighlight {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 2px;
+    right: 2px;
+    border: 1px solid @secondary-dark;
+    border-radius: 50%;
+  }
+  &NonCurrentMonthDay {
+    opacity: 0.25;
+  }
+  &HighlightNonCurrentMonthDay {
+    opacity: 0.5;
+  }
+  &Highlight,
+  &FirstHighlight,
+  &EndHighlight {
+    background: @primary;
+    color: @common-white;
+  }
+  &FirstHighlight {
+    border-top-left-radius: 50%;
+    border-bottom-left-radius: 50%;
+  }
+  &EndHighlight {
+    border-top-right-radius: 50%;
+    border-bottom-right-radius: 50%;
+  }
+}
