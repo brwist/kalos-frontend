@@ -1,23 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import { Button } from '../Button';
 import { ConfirmServiceProvider, useConfirm } from './';
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-    },
-  })
-);
+import './examples.less';
 
 const ButtonWithConfirm = () => {
-  const classes = useStyles();
   const [catchOnCancel, toggleCatchOnCancel] = useState(false);
   const confirm = useConfirm();
   const handleClick = useCallback(() => {
@@ -25,17 +14,19 @@ const ButtonWithConfirm = () => {
       catchOnCancel,
       title: 'Title',
       description: 'Are you sure you want to perform this action?',
-    }).then(() => {
-      // put here all the stuff needed if user confirms the action
-      alert('confirmed');
-    }).catch(() => {
-      // if catchOnCancel equals false it won't fall down here
-      alert('caught on cancel');
     })
+      .then(() => {
+        // put here all the stuff needed if user confirms the action
+        alert('confirmed');
+      })
+      .catch(() => {
+        // if catchOnCancel equals false it won't fall down here
+        alert('caught on cancel');
+      });
   }, [catchOnCancel]);
 
   return (
-    <Box className={classes.container}>
+    <Box className="ConfirmServiceContainer">
       <Button label="Some Action with Confirm" onClick={handleClick} />
       <FormControlLabel
         style={{ display: 'block' }}
@@ -53,8 +44,8 @@ const ButtonWithConfirm = () => {
 };
 
 /* ConfirmServiceProvider should wrap every component that uses confirm.
-*  Can wrap all the application when it's ready.
-* */
+ *  Can wrap all the application when it's ready.
+ * */
 export default () => (
   <ConfirmServiceProvider>
     <ButtonWithConfirm />
