@@ -1,0 +1,13 @@
+@import '../../styles/index.less';
+
+.ServiceCalendar {
+  &Wrapper {
+    overflow: auto !important;
+  }
+  &Week {
+    min-width: 1500px !important;
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    grid-gap: .spacing(2) [] !important;
+  }
+}
