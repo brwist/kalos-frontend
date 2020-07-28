@@ -4,31 +4,16 @@ import { WeekPicker } from '../WeekPicker';
 import { DatePicker, TextField } from './';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
-import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    bar: {
-      background: theme.palette.primary.dark,
-      color: theme.palette.primary.contrastText,
-      justifyContent: 'space-between',
-      [theme.breakpoints.only('xs')]: {
-        padding: theme.spacing(2),
-      },
-      marginBottom: theme.spacing(1),
-    },
-  })
-);
+import './examples.less';
 
 export default () => {
-  const classes = useStyles();
   const [week, setWeek] = useState(new Date());
   const [date, setDate] = useState(new Date());
   const [value, setValue] = useState('');
 
   return (
     <MuiPickersUtilsProvider utils={DateFnsUtils}>
-      <Toolbar className={classes.bar}>
+      <Toolbar className="CustomControlsExamplesBar">
         <WeekPicker
           white
           label="Standard Weekpicker"
@@ -54,7 +39,7 @@ export default () => {
           onChange={val => setWeek(val)}
         />
       </Toolbar>
-      <Toolbar className={classes.bar}>
+      <Toolbar className="CustomControlsExamplesBar">
         <DatePicker
           white
           label="Standard Datepicker"
@@ -80,7 +65,7 @@ export default () => {
           onChange={val => setDate(val || new Date())}
         />
       </Toolbar>
-      <Toolbar className={classes.bar}>
+      <Toolbar className="CustomControlsExamplesBar">
         <TextField
           white
           label="Standard Input"
