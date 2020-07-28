@@ -1,0 +1,40 @@
+@import '../../styles/index.less';
+
+.ComponentsLibrary {
+  display: flex;
+  min-height: 100vh;
+  font-family: @body-font;
+  @media @bp-md-down {
+    flex-direction: column;
+  }
+  &Menu {
+    width: 185px;
+    padding: .spacing() [];
+    background-color: @grey-100;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  &List {
+    margin-left: .spacing(2.5) [];
+    padding-inline-start: 0;
+    .body2();
+    user-select: none;
+  }
+  &Item {
+    cursor: pointer;
+  }
+  &ItemText {
+    padding: .spacing(0.5) [];
+  }
+  &Content {
+    padding: .spacing() [];
+    flex-grow: 1;
+  }
+  &Select {
+    margin: .spacing() [];
+    outline: none;
+    background: gold;
+    height: 30px;
+    .body1();
+  }
+}
