@@ -12,6 +12,7 @@ import {
   Transaction,
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
+import { TaskEvent, TaskEventClient } from '@kalos-core/kalos-rpc/TaskEvent';
 import {
   SpiffType,
   TaskClient,
@@ -129,7 +130,9 @@ export type ProjectTaskType = ProjectTask.AsObject;
 export type TaskStatusType = TaskStatus.AsObject;
 export type TaskPriorityType = TaskPriority.AsObject;
 export type TransactionType = Transaction.AsObject;
+export type TaskEventType = TaskEvent.AsObject;
 
+export const TaskEventClientService = new TaskEventClient(ENDPOINT);
 export const TransactionClientService = new TransactionClient(ENDPOINT);
 export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
@@ -274,7 +277,7 @@ async function getSlackID(
   if (count != 4) {
     try {
       let slackUsers = await getSlackList(skipCache);
-      let user = slackUsers.find((s) => {
+      let user = slackUsers.find(s => {
         if (s.real_name === userName) {
           return true;
         }
@@ -735,7 +738,7 @@ export const loadSpiffTypes = async () => {
     await TaskClientService.GetSpiffTypes(req)
   ).toObject();
   return resultsList
-    .filter((item) => !!item.ext)
+    .filter(item => !!item.ext)
     .sort((a, b) => {
       if (a.ext < b.ext) return -1;
       if (a.ext > b.ext) return 1;
@@ -832,7 +835,7 @@ export const loadSpiffToolLogs = async ({
     req.setSpiffJobNumber(`%${jobNumber}%`);
   }
   const res = await TaskClientService.BatchGet(req);
-  const resultsList = res.getResultsList().map((el) => el.toObject());
+  const resultsList = res.getResultsList().map(el => el.toObject());
   const count = res.getTotalCount();
   return { resultsList, count };
 };
@@ -1146,7 +1149,7 @@ async function loadUserById(id: number) {
  */
 async function loadUsersByIds(ids: number[]) {
   const uniqueIds: number[] = [];
-  ids.forEach((id) => {
+  ids.forEach(id => {
     if (id > 0 && !uniqueIds.includes(id)) {
       uniqueIds.push(id);
     }
@@ -1179,7 +1182,7 @@ async function loadMetricByUserId(userId: number, metricType: MetricType) {
  */
 async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
   return await Promise.all(
-    userIds.map(async (userId) => await loadMetricByUserId(userId, metricType)),
+    userIds.map(async userId => await loadMetricByUserId(userId, metricType)),
   );
 }
 
@@ -1303,7 +1306,7 @@ export const loadPerDiemByUserIdsAndDateStarted = async (
   dateStarted: string,
 ) => {
   const response = await Promise.all(
-    uniq(userIds).map(async (userId) => ({
+    uniq(userIds).map(async userId => ({
       userId,
       data: (await loadPerDiemByUserIdAndDateStarted(userId, dateStarted))
         .resultsList,
@@ -1633,7 +1636,7 @@ export const loadDeletedServiceCallsByFilter = async ({
         req.setPageNumber(idx + 1);
         return (await EventClientService.BatchGet(req))
           .getResultsList()
-          .map((item) => item.toObject());
+          .map(item => item.toObject());
       }),
     );
     results.push(
@@ -1807,7 +1810,7 @@ export const loadPromptPaymentData = async (month: string) => {
   const data: {
     [key: string]: PromptPaymentData;
   } = {};
-  dataList.forEach((entry) => {
+  dataList.forEach(entry => {
     const {
       userId,
       userBusinessName,
@@ -1894,7 +1897,7 @@ export const loadSpiffReportByFilter = async ({
       items: SpiffReportLineType[];
     };
   } = {};
-  dataList.forEach((item) => {
+  dataList.forEach(item => {
     const { employeeName } = item;
     if (!data[employeeName]) {
       data[employeeName] = {
@@ -1967,7 +1970,7 @@ export const loadActivityLogsByFilter = async ({
         req.setPageNumber(idx + 1);
         return (await ActivityLogClientService.BatchGet(req))
           .getResultsList()
-          .map((item) => item.toObject());
+          .map(item => item.toObject());
       }),
     );
     results.push(
@@ -2023,7 +2026,7 @@ export const loadPropertiesByFilter = async ({
   return {
     results: response
       .getResultsList()
-      .map((item) => item.toObject())
+      .map(item => item.toObject())
       .sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
@@ -2166,7 +2169,7 @@ export const loadEventsByFilter = async ({
   const results = [];
   const response = await EventClientService.BatchGet(req);
   const totalCount = response.getTotalCount();
-  const resultsList = response.getResultsList().map((item) => item.toObject());
+  const resultsList = response.getResultsList().map(item => item.toObject());
   results.push(...resultsList);
   if (page === -1 && totalCount > resultsList.length) {
     const batchesAmount = Math.min(
@@ -2178,7 +2181,7 @@ export const loadEventsByFilter = async ({
         req.setPageNumber(idx + 1);
         return (await EventClientService.BatchGet(req))
           .getResultsList()
-          .map((item) => item.toObject());
+          .map(item => item.toObject());
       }),
     );
     results.push(
@@ -2220,11 +2223,11 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
  */
 async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
   const refNumbers = uniq(
-    referenceNumbers.map((el) => (el || '').trim()).filter((el) => el !== ''),
+    referenceNumbers.map(el => (el || '').trim()).filter(el => el !== ''),
   );
   return (
     await Promise.all(
-      refNumbers.map(async (referenceNumber) => ({
+      refNumbers.map(async referenceNumber => ({
         referenceNumber,
         data: await loadEventByJobOrContractNumber(referenceNumber),
       })),
@@ -2287,7 +2290,7 @@ export const makeOptions = (
   withAllOption = false,
 ): Option[] => [
   ...(withAllOption ? [{ label: OPTION_ALL, value: OPTION_ALL }] : []),
-  ...options.map((label) => ({ label, value: label })),
+  ...options.map(label => ({ label, value: label })),
 ];
 
 export const getDepartmentName = (d?: TimesheetDepartmentType): string =>
@@ -2727,8 +2730,8 @@ export const loadPerDiemsLodging = async (perDiems: PerDiemType[]) => {
     month: number;
     zipCodes: string[];
   }[] = [];
-  Object.keys(zipCodesByYearMonth).forEach((year) =>
-    Object.keys(zipCodesByYearMonth[+year]).forEach((month) => {
+  Object.keys(zipCodesByYearMonth).forEach(year =>
+    Object.keys(zipCodesByYearMonth[+year]).forEach(month => {
       zipCodesArr.push({
         year: +year,
         month: +month,
@@ -2786,11 +2789,67 @@ export const loadGovPerDiem = async (
   req.setTextId('per_diem_key');
   const { apiEndpoint, apiKey } = await client.Get(req);
   const results = await Promise.all(
-    uniq(zipCodes).map((zipCode) =>
+    uniq(zipCodes).map(zipCode =>
       loadGovPerDiemData(apiEndpoint, apiKey, zipCode, year, month),
     ),
   );
   return results.reduce((aggr, item) => ({ ...aggr, ...item }), {});
+};
+
+export const loadTaskEventsByFilter = async ({
+  id,
+  technicianUserId,
+}: {
+  id: number;
+  technicianUserId?: number;
+}) => {
+  const req = new TaskEvent();
+  req.setTaskId(id);
+  if (technicianUserId) {
+    req.setTechnicianUserId(technicianUserId);
+  }
+  req.setIsActive(1);
+  req.setPageNumber(0);
+  const results: TaskEventType[] = [];
+  const { resultsList, totalCount } = (
+    await TaskEventClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await TaskEventClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results.sort((a, b) => {
+    const A = a.timeStarted;
+    const B = b.timeStarted;
+    if (A < B) return 1;
+    if (A > B) return -1;
+    return 0;
+  });
+};
+
+export const upsertTaskEvent = async (data: Partial<TaskEventType>) => {
+  const req = new TaskEvent();
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { methodName, upperCaseProp } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  await TaskEventClientService[data.id ? 'Update' : 'Create'](req);
 };
 
 interface IBugReport {

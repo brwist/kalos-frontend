@@ -42,6 +42,10 @@ import {
   loadPerDiemsLodging,
   loadTransactionsByEventId,
   TransactionType,
+  TaskEventType,
+  loadTaskEventsByFilter,
+  upsertTaskEvent,
+  timestamp,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -99,6 +103,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [pendingDelete, setPendingDelete] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
+  const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
+  const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
@@ -146,18 +152,50 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       load();
     }
   }, [loadedInit, loadInit, loaded, setLoaded, load]);
+  const loadTaskEvents = useCallback(
+    async (taskId: number) => {
+      setTaskEventsLoaded(false);
+      const taskEvents = await loadTaskEventsByFilter({
+        id: taskId,
+        technicianUserId: loggedUserId,
+      });
+      setTaskEvents(taskEvents);
+      setTaskEventsLoaded(true);
+    },
+    [setTaskEventsLoaded, setTaskEvents, loggedUserId],
+  );
   const handleSetEditing = useCallback(
-    (editingTask?: ExtendedProjectTaskType) => () => {
+    (editingTask?: ExtendedProjectTaskType) => async () => {
       setErrorTask('');
       setEditingTask(editingTask);
+      if (editingTask && editingTask.id) {
+        await loadTaskEvents(editingTask.id);
+      }
     },
-    [setEditingTask],
+    [setEditingTask, setTaskEvents, setTaskEventsLoaded],
   );
   const handleSetPendingDelete = useCallback(
     (pendingDelete?: ExtendedProjectTaskType) => () =>
       setPendingDelete(pendingDelete),
     [setPendingDelete],
   );
+  const handleCheckout = useCallback(async () => {
+    if (!editingTask) return;
+    const taskEvent: Partial<TaskEventType> =
+      taskEvents.length > 0 && taskEvents[0].timeFinished === ''
+        ? {
+            id: taskEvents[0].id,
+            timeFinished: timestamp(),
+          }
+        : {
+            taskId: editingTask.id,
+            technicianUserId: loggedUserId,
+            timeStarted: timestamp(),
+            statusId: 1,
+          };
+    await upsertTaskEvent(taskEvent);
+    await loadTaskEvents(editingTask.id);
+  }, [editingTask, taskEvents, loggedUserId]);
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
     [departments, loggedUserId],
@@ -885,15 +923,27 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             title={`${editingTask.id ? 'Edit' : 'Add'} Task`}
             error={errorTask}
           >
-            {editingTask.id > 0 && editingTask.creatorUserId === loggedUserId && (
-              <div className="EditProjectDelete">
+            <div className="EditProjectDelete">
+              {taskEventsLoaded && !isAnyManager && (
                 <Button
                   variant="outlined"
-                  label="Delete"
-                  onClick={handleSetPendingDelete(editingTask)}
+                  label={`Check ${
+                    taskEvents.length > 0 && taskEvents[0].timeFinished === ''
+                      ? 'Out'
+                      : 'In'
+                  }`}
+                  onClick={handleCheckout}
                 />
-              </div>
-            )}
+              )}
+              {editingTask.id > 0 &&
+                editingTask.creatorUserId === loggedUserId && (
+                  <Button
+                    variant="outlined"
+                    label="Delete"
+                    onClick={handleSetPendingDelete(editingTask)}
+                  />
+                )}
+            </div>
           </Form>
         </Modal>
       )}
