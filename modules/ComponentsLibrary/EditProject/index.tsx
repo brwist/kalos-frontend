@@ -334,8 +334,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     [
       {
         name: 'technicians',
-        label: 'Technicians',
+        label: 'Employees',
         type: 'technicians',
+        technicianAsEmployee: true,
       },
       {
         name: 'statusId',
@@ -362,6 +363,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         label: 'Assigned Employee',
         type: 'technician',
         disabled: !isAnyManager,
+        technicianAsEmployee: true,
       },
     ],
     [
