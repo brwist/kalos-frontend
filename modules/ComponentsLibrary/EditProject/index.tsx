@@ -15,6 +15,7 @@ import { PrintTable } from '../PrintTable';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintList } from '../PrintList';
 import { ConfirmDelete } from '../ConfirmDelete';
+import { Confirm } from '../Confirm';
 import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
 import { Tabs } from '../Tabs';
@@ -105,6 +106,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
   const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
   const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
+  const [pendingCheckout, setPendingCheckout] = useState<boolean>(false);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
@@ -181,6 +183,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   );
   const handleCheckout = useCallback(async () => {
     if (!editingTask) return;
+    setPendingCheckout(false);
     const taskEvent: Partial<TaskEventType> =
       taskEvents.length > 0 && taskEvents[0].timeFinished === ''
         ? {
@@ -195,7 +198,11 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           };
     await upsertTaskEvent(taskEvent);
     await loadTaskEvents(editingTask.id);
-  }, [editingTask, taskEvents, loggedUserId]);
+  }, [editingTask, taskEvents, loggedUserId, setPendingCheckout]);
+  const handleSetPendingCheckout = useCallback(
+    (pendingCheckout: boolean) => () => setPendingCheckout(pendingCheckout),
+    [setPendingCheckout],
+  );
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
     [departments, loggedUserId],
@@ -932,7 +939,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
                       ? 'Out'
                       : 'In'
                   }`}
-                  onClick={handleCheckout}
+                  onClick={handleSetPendingCheckout(true)}
                 />
               )}
               {editingTask.id > 0 &&
@@ -967,6 +974,24 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             error={errorProject}
           />
         </Modal>
+      )}
+      {pendingCheckout && (
+        <Confirm
+          open
+          title={`Confirm Check ${
+            taskEvents.length > 0 && taskEvents[0].timeFinished === ''
+              ? 'Out'
+              : 'In'
+          }`}
+          onClose={handleSetPendingCheckout(false)}
+          onConfirm={handleCheckout}
+        >
+          Are you sure, you want to Check{' '}
+          {taskEvents.length > 0 && taskEvents[0].timeFinished === ''
+            ? 'Out'
+            : 'In'}{' '}
+          and assign yourself to this task?
+        </Confirm>
       )}
     </div>
   );
