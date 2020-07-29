@@ -94,6 +94,13 @@ const SCHEMA_PROJECT: Schema<EventType> = [
       type: 'date',
     },
   ],
+  [
+    {
+      name: 'departmentId',
+      label: 'Department',
+      type: 'department',
+    },
+  ],
 ];
 
 export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
