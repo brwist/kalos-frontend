@@ -101,6 +101,14 @@ const SCHEMA_PROJECT: Schema<EventType> = [
       type: 'department',
     },
   ],
+  [
+    {
+      name: 'description',
+      label: 'Description',
+      type: 'text',
+      multiline: true,
+    },
+  ],
 ];
 
 export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
@@ -549,6 +557,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               <div>Start date: {formatDate(event.dateStarted)}</div>
               <div>End date: {formatDate(event.dateEnded)}</div>
               <div>Job Number: {event.logJobNumber}</div>
+              <div>Description: {event.description}</div>
             </>
           ) : (
             'Loading...'
