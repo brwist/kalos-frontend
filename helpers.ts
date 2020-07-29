@@ -1038,7 +1038,7 @@ export const upsertEventTask = async ({
   priorityId,
 }: Partial<ProjectTaskType>) => {
   const req = new ProjectTask();
-  const fieldMaskList: string[] = ['ExternalCode', 'TimeCreated'];
+  const fieldMaskList: string[] = ['ExternalCode', 'ExternalId', 'TimeCreated'];
   req.setTimeCreated(timestamp());
   if (eventId) {
     req.setEventId(eventId);
@@ -1051,8 +1051,8 @@ export const upsertEventTask = async ({
   if (externalId) {
     req.setExternalId(externalId);
     req.setExternalCode('user');
-    fieldMaskList.push('ExternalId');
   } else {
+    req.setExternalId(0);
     req.setExternalCode('project');
   }
   if (briefDescription) {

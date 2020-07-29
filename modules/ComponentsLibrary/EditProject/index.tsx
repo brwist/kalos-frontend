@@ -184,21 +184,36 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const handleCheckout = useCallback(async () => {
     if (!editingTask) return;
     setPendingCheckout(false);
-    const taskEvent: Partial<TaskEventType> =
-      taskEvents.length > 0 && taskEvents[0].timeFinished === ''
-        ? {
-            id: taskEvents[0].id,
-            timeFinished: timestamp(),
-          }
-        : {
-            taskId: editingTask.id,
-            technicianUserId: loggedUserId,
-            timeStarted: timestamp(),
-            statusId: 1,
-          };
+    const isCheckOut =
+      taskEvents.length > 0 && taskEvents[0].timeFinished === '';
+    const taskEvent: Partial<TaskEventType> = isCheckOut
+      ? {
+          id: taskEvents[0].id,
+          timeFinished: timestamp(),
+        }
+      : {
+          taskId: editingTask.id,
+          technicianUserId: loggedUserId,
+          timeStarted: timestamp(),
+          statusId: 1,
+        };
     await upsertTaskEvent(taskEvent);
     await loadTaskEvents(editingTask.id);
-  }, [editingTask, taskEvents, loggedUserId, setPendingCheckout]);
+    if (!isCheckOut) {
+      await upsertEventTask({
+        id: editingTask.id,
+        externalCode: 'user',
+        externalId: loggedUserId,
+      });
+      setEditingTask(undefined);
+      setEditingTask({
+        ...editingTask,
+        externalCode: 'user',
+        externalId: loggedUserId,
+      });
+      setLoaded(false);
+    }
+  }, [editingTask, taskEvents, loggedUserId, setPendingCheckout, setLoaded]);
   const handleSetPendingCheckout = useCallback(
     (pendingCheckout: boolean) => () => setPendingCheckout(pendingCheckout),
     [setPendingCheckout],
@@ -986,11 +1001,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           onClose={handleSetPendingCheckout(false)}
           onConfirm={handleCheckout}
         >
-          Are you sure, you want to Check{' '}
-          {taskEvents.length > 0 && taskEvents[0].timeFinished === ''
-            ? 'Out'
-            : 'In'}{' '}
-          and assign yourself to this task?
+          {taskEvents.length > 0 && taskEvents[0].timeFinished === '' ? (
+            <div>Are you sure, you want to Check Out from this task?</div>
+          ) : (
+            <div>
+              Are you sure, you want to Check In and assign yourself to this
+              task?
+            </div>
+          )}
         </Confirm>
       )}
     </div>
