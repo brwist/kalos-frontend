@@ -47,6 +47,8 @@ import {
   loadTaskEventsByFilter,
   upsertTaskEvent,
   timestamp,
+  UserType,
+  loadUserById,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -116,6 +118,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
+  const [loggedUser, setLoggedUser] = useState<UserType>();
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [pendingDelete, setPendingDelete] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
@@ -149,11 +152,20 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     const statuses = await loadProjectTaskStatuses();
     const priorities = await loadProjectTaskPriorities();
     const departments = await loadTimesheetDepartments();
+    const loggedUser = await loadUserById(loggedUserId);
     setStatuses(statuses);
     setPriorities(priorities);
     setDepartments(departments);
+    setLoggedUser(loggedUser);
     setLoadedInit(true);
-  }, [loadEvent, setStatuses, setPriorities, setDepartments, setLoadedInit]);
+  }, [
+    loadEvent,
+    setStatuses,
+    setPriorities,
+    setDepartments,
+    setLoadedInit,
+    loggedUserId,
+  ]);
   const load = useCallback(async () => {
     setLoading(true);
     const tasks = await loadProjectTasks(serviceCallId);
@@ -333,7 +345,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     }
   }, [pendingDelete, setPendingDelete]);
   const handleAddTask = useCallback(
-    (startDate: string) =>
+    (startDate: string) => {
+      if (!loggedUser || !event) return;
+      if (
+        !(
+          isAnyManager || event.departmentId === loggedUser.employeeDepartmentId
+        )
+      )
+        return;
       setEditingTask({
         ...new ProjectTask().toObject(),
         startDate,
@@ -342,8 +361,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         endTime: '10:00',
         statusId: 1,
         priorityId: 2,
-      }),
-    [setEditingTask],
+      });
+    },
+    [setEditingTask, loggedUser, event, isAnyManager],
   );
   const handleSetEditingProject = useCallback(
     (editingProject: boolean) => () => {
@@ -584,7 +604,15 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               statusId: 1,
               priorityId: 2,
             }),
-            disabled: loading || loadingEvent,
+            disabled:
+              loading ||
+              loadingEvent ||
+              !event ||
+              !loggedUser ||
+              !(
+                isAnyManager ||
+                event.departmentId === loggedUser.employeeDepartmentId
+              ),
           },
         ]}
         fixedActions
