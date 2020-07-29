@@ -160,8 +160,17 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
   );
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
-    [departments],
+    [departments, loggedUserId],
   );
+  const isAssignedToAnyTask = useMemo(
+    () =>
+      tasks.some(
+        ({ externalCode, externalId }) =>
+          externalCode === 'user' && externalId === loggedUserId,
+      ),
+    [tasks, loggedUserId],
+  );
+  const hasEditRights = isAnyManager || isAssignedToAnyTask;
   const isOwner = useMemo(
     () =>
       editingTask &&
@@ -362,7 +371,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         name: 'externalId',
         label: 'Assigned Employee',
         type: 'technician',
-        disabled: !isAnyManager,
+        disabled: !hasEditRights,
         technicianAsEmployee: true,
       },
     ],
@@ -371,7 +380,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         name: 'briefDescription',
         label: 'Brief Description',
         multiline: true,
-        required: !isAnyManager,
+        required: !hasEditRights,
         disabled: !isOwner,
       },
     ],
@@ -479,7 +488,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
           )
         }
         actions={[
-          ...(isAnyManager
+          ...(hasEditRights
             ? [
                 {
                   label: 'Edit Project',
@@ -795,7 +804,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
                     priorityId,
                     assignee: ownerName,
                     onClick:
-                      creatorUserId === loggedUserId || isAnyManager
+                      creatorUserId === loggedUserId || hasEditRights
                         ? handleSetEditing({
                             ...task,
                             startDate,
@@ -846,7 +855,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
                     priorityId,
                     assignee: ownerName,
                     onClick:
-                      creatorUserId === loggedUserId || isAnyManager
+                      creatorUserId === loggedUserId || hasEditRights
                         ? handleSetEditing({
                             ...task,
                             startDate,
