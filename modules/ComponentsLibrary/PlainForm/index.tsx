@@ -37,6 +37,7 @@ export type SchemaProps<T> = {
   content?: ReactNode;
   disabled?: boolean;
   readOnly?: boolean;
+  technicianAsEmployee?: boolean;
 };
 
 export type Schema<T> = SchemaProps<T>[][];
