@@ -84,7 +84,7 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
 
   async fetchData() {
     const res = await this.Client?.BatchGet(this.req!);
-    console.log(res);
+    // console.log(res);
     return res!.toObject().resultsList;
   }
 
