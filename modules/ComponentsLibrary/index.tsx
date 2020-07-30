@@ -53,6 +53,7 @@ import PrintPage from './PrintPage/examples';
 import PrintPageBreak from './PrintPageBreak/examples';
 import PrintParagraph from './PrintParagraph/examples';
 import PrintTable from './PrintTable/examples';
+import Projects from './Projects/examples';
 import PromptPaymentReport from './PromptPaymentReport/examples';
 import PropertyEdit from './PropertyEdit/examples';
 import QuoteSelector from './QuoteSelector/examples';
@@ -128,6 +129,7 @@ const COMPONENTS = {
   PrintPageBreak,
   PrintParagraph,
   PrintTable,
+  Projects,
   PromptPaymentReport,
   PropertyEdit,
   QuoteSelector,
