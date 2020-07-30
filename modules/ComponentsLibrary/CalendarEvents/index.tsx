@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, ReactElement } from 'react';
 import clsx from 'clsx';
 import difference from 'lodash/difference';
 import { format, addDays, getDay, differenceInDays } from 'date-fns';
@@ -11,9 +11,9 @@ import './styles.less';
 export type CalendarEvent = {
   id: number;
   startDate: string;
-  startHour: string;
+  startHour?: string;
   endDate: string;
-  endHour: string;
+  endHour?: string;
   notes: string;
   status?: string;
   statusColor?: string;
@@ -22,6 +22,7 @@ export type CalendarEvent = {
   priorityId?: number;
   assignee?: string;
   onClick?: () => void;
+  renderTooltip?: ReactElement;
 };
 
 type Style = {
@@ -108,7 +109,7 @@ export const CalendarEvents: FC<Props> = ({
                 onClick={handleAddClick(date)}
               >
                 {(format(day, 'd') === '1' ||
-                  idx === 0 ||
+                  weekDay === 7 ||
                   dateStart === date) &&
                   format(day, 'MMMM ')}
                 {format(day, 'd')}
@@ -135,6 +136,7 @@ export const CalendarEvents: FC<Props> = ({
                     priority,
                     assignee,
                     onClick,
+                    renderTooltip,
                   },
                   idx,
                 ) => {
@@ -155,47 +157,51 @@ export const CalendarEvents: FC<Props> = ({
                     <Tooltip
                       key={id}
                       content={
-                        <div
-                          className="CalendarEventsStatus"
-                          style={{ backgroundColor: statusColor }}
-                        >
-                          {assignee && (
-                            <div>
-                              <strong>Assigned Employee: </strong>
-                              {assignee}
-                            </div>
-                          )}
-                          <div>
-                            <strong>Brief Description: </strong>
-                            {notes}
-                          </div>
-                          <div>
-                            <strong>Start Date: </strong>
-                            {formatDate(startDate)} {formatTime(startHour)}
-                          </div>
-                          <div>
-                            <strong>End Date: </strong>
-                            {formatDate(endDate)} {formatTime(endHour)}
-                          </div>
-                          <div>
-                            <strong>Status: </strong>
-                            {status}
-                          </div>
-                          <div>
-                            <strong>Priority: </strong>
-                            {PriorityIcon && (
-                              <PriorityIcon
-                                style={{
-                                  fontSize: 16,
-                                  marginRight: 4,
-                                  verticalAlign: 'middle',
-                                  display: 'inline-flex',
-                                }}
-                              />
+                        renderTooltip || (
+                          <div
+                            className="CalendarEventsStatus"
+                            style={{ backgroundColor: statusColor }}
+                          >
+                            {assignee && (
+                              <div>
+                                <strong>Assigned Employee: </strong>
+                                {assignee}
+                              </div>
                             )}
-                            {priority}
+                            <div>
+                              <strong>Brief Description: </strong>
+                              {notes}
+                            </div>
+                            <div>
+                              <strong>Start Date: </strong>
+                              {formatDate(startDate)}{' '}
+                              {startHour && formatTime(startHour)}
+                            </div>
+                            <div>
+                              <strong>End Date: </strong>
+                              {formatDate(endDate)}{' '}
+                              {endHour && formatTime(endHour)}
+                            </div>
+                            <div>
+                              <strong>Status: </strong>
+                              {status}
+                            </div>
+                            <div>
+                              <strong>Priority: </strong>
+                              {PriorityIcon && (
+                                <PriorityIcon
+                                  style={{
+                                    fontSize: 16,
+                                    marginRight: 4,
+                                    verticalAlign: 'middle',
+                                    display: 'inline-flex',
+                                  }}
+                                />
+                              )}
+                              {priority}
+                            </div>
                           </div>
-                        </div>
+                        )
                       }
                       placement="bottom"
                       maxWidth={300}
@@ -233,12 +239,14 @@ export const CalendarEvents: FC<Props> = ({
                           )}
                         </div>
                         <div className="CalendarEventsHour">
-                          {startDate === date && (
+                          {startDate === date && startHour && (
                             <span>{formatTime(startHour, false)}</span>
                           )}
-                          {endDate === date && startDate !== endDate && (
-                            <span>ends {formatTime(endHour, false)}</span>
-                          )}
+                          {endDate === date &&
+                            startDate !== endDate &&
+                            endHour && (
+                              <span>ends {formatTime(endHour, false)}</span>
+                            )}
                         </div>
                       </div>
                     </Tooltip>

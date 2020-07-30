@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import { startOfMonth, lastDayOfMonth, format } from 'date-fns';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
 import { Tabs } from '../Tabs';
@@ -6,11 +7,20 @@ import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
 import { EditProject } from '../EditProject';
 import { Modal } from '../Modal';
-import { loadEventsByFilter, EventType } from '../../../helpers';
+import { Loader } from '../../Loader/main';
+import {
+  loadEventsByFilter,
+  EventType,
+  getPropertyAddress,
+  formatDate,
+} from '../../../helpers';
 import './styles.less';
 
 export interface Props {
   loggedUserId: number;
+  startDate?: string;
+  endDate?: string;
+  onClose?: () => void;
 }
 
 type Filter = {
@@ -19,19 +29,26 @@ type Filter = {
   departmentId: number;
 };
 
-export const Projects: FC<Props> = ({ loggedUserId }) => {
+export const Projects: FC<Props> = ({
+  loggedUserId,
+  startDate,
+  endDate,
+  onClose,
+}) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [tab, setTab] = useState<number>(0);
   const [filter, setFilter] = useState<Filter>({
-    dateStarted: '2020-07-01',
-    dateEnded: '2020-07-31',
+    dateStarted: startDate || format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+    dateEnded: endDate || format(lastDayOfMonth(new Date()), 'yyyy-MM-dd'),
     departmentId: 0,
   });
+  const [search, setSearch] = useState<Filter>(filter);
   const [events, setEvents] = useState<EventType[]>([]);
   const [openedEvent, setOpenedEvent] = useState<EventType>();
   const load = useCallback(async () => {
     setLoading(true);
+    setSearch(filter);
     const { dateStarted, dateEnded, departmentId } = filter;
     const { results } = await loadEventsByFilter({
       page: -1,
@@ -48,7 +65,7 @@ export const Projects: FC<Props> = ({ loggedUserId }) => {
     });
     setEvents(results);
     setLoading(false);
-  }, [filter, setLoading, setEvents]);
+  }, [filter, setLoading, setEvents, setSearch]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -85,10 +102,15 @@ export const Projects: FC<Props> = ({ loggedUserId }) => {
       },
     ],
   ];
-  const { dateStarted, dateEnded } = filter;
+  const { dateStarted, dateEnded } = search;
   return (
     <div>
-      <SectionBar title="Projects" />
+      <SectionBar
+        title="Projects"
+        sticky={false}
+        actions={onClose ? [{ label: 'Close', onClick: onClose }] : undefined}
+        fixedActions
+      />
       <PlainForm schema={SCHEMA_FILTER} data={filter} onChange={setFilter} />
       <Tabs
         defaultOpenIdx={tab}
@@ -104,17 +126,45 @@ export const Projects: FC<Props> = ({ loggedUserId }) => {
                     description,
                     dateStarted: dateStart,
                     dateEnded: dateEnd,
+                    property,
+                    departmentId,
                   } = event;
-                  const [startDate, startHour] = dateStart.split(' ');
-                  const [endDate, endHour] = dateEnd.split(' ');
+                  const [startDate] = dateStart.split(' ');
+                  const [endDate] = dateEnd.split(' ');
                   return {
                     id,
                     startDate,
                     endDate,
-                    startHour,
-                    endHour,
                     notes: [logJobNumber, description].join(', '),
                     onClick: handleOpenEvent(event),
+                    renderTooltip: (
+                      <div>
+                        <div>
+                          <strong>Address: </strong>
+                          {getPropertyAddress(property)}
+                        </div>
+                        <div>
+                          <strong>Start Date: </strong>
+                          {formatDate(dateStart)}
+                        </div>
+                        <div>
+                          <strong>End Date: </strong>
+                          {formatDate(dateEnd)}
+                        </div>
+                        <div>
+                          <strong>Job Number: </strong>
+                          {logJobNumber}
+                        </div>
+                        <div>
+                          <strong>Description: </strong>
+                          {description}
+                        </div>
+                        <div>
+                          <strong>Department: </strong>
+                          {departmentId} {/* TODO: show department */}
+                        </div>
+                      </div>
+                    ),
                   };
                 })}
                 startDate={dateStarted.substr(0, 10)}
@@ -134,17 +184,45 @@ export const Projects: FC<Props> = ({ loggedUserId }) => {
                     description,
                     dateStarted: dateStart,
                     dateEnded: dateEnd,
+                    property,
+                    departmentId,
                   } = event;
-                  const [startDate, startHour] = dateStart.split(' ');
-                  const [endDate, endHour] = dateEnd.split(' ');
+                  const [startDate] = dateStart.split(' ');
+                  const [endDate] = dateEnd.split(' ');
                   return {
                     id,
                     startDate,
                     endDate,
-                    startHour,
-                    endHour,
                     notes: [logJobNumber, description].join(', '),
                     onClick: handleOpenEvent(event),
+                    renderDetails: (
+                      <div>
+                        <div>
+                          <strong>Address: </strong>
+                          {getPropertyAddress(property)}
+                        </div>
+                        <div>
+                          <strong>Start Date: </strong>
+                          {formatDate(dateStart)}
+                        </div>
+                        <div>
+                          <strong>End Date: </strong>
+                          {formatDate(dateEnd)}
+                        </div>
+                        <div>
+                          <strong>Job Number: </strong>
+                          {logJobNumber}
+                        </div>
+                        <div>
+                          <strong>Description: </strong>
+                          {description}
+                        </div>
+                        <div>
+                          <strong>Department: </strong>
+                          {departmentId} {/* TODO: show department */}
+                        </div>
+                      </div>
+                    ),
                   };
                 })}
                 startDate={dateStarted.substr(0, 10)}
@@ -156,6 +234,7 @@ export const Projects: FC<Props> = ({ loggedUserId }) => {
         ]}
         onChange={setTab}
       />
+      {loading && <Loader zIndex={1200} />}
       {openedEvent && (
         <Modal open onClose={handleOpenEvent()} fullScreen>
           <EditProject

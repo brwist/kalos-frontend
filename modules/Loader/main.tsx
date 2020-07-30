@@ -1,18 +1,21 @@
-import React from 'react';
+import React, { FC, useEffect } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-function Loader() {
+interface Props {
+  zIndex?: number;
+}
+
+const Loader: FC<Props> = ({ zIndex = 100 }) => {
   const style: React.CSSProperties = {
     backgroundColor: 'grey',
     position: 'absolute',
     opacity: 0.2,
-    zIndex: 100,
+    zIndex,
     height: window.innerHeight,
     width: window.innerWidth,
     top: window.scrollY,
   };
-
-  React.useEffect(() => {
+  useEffect(() => {
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return function cleanup() {
@@ -28,7 +31,7 @@ function Loader() {
       <div style={style} />
       <CircularProgress
         style={{
-          zIndex: 300,
+          zIndex: zIndex + 300,
           position: 'absolute',
           top: window.innerHeight * 0.5 + window.scrollY,
           left: '50%',
@@ -38,6 +41,6 @@ function Loader() {
       />
     </>
   );
-}
+};
 
 export { Loader };
