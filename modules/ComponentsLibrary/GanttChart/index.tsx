@@ -5,6 +5,7 @@ import React, {
   useEffect,
   createRef,
   RefObject,
+  ReactElement,
 } from 'react';
 import clsx from 'clsx';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
@@ -20,9 +21,9 @@ import './styles.less';
 export type CalendarEvent = {
   id: number;
   startDate: string;
-  startHour: string;
+  startHour?: string;
   endDate: string;
-  endHour: string;
+  endHour?: string;
   notes: string;
   status?: string;
   statusColor?: string;
@@ -31,6 +32,7 @@ export type CalendarEvent = {
   priorityId?: number;
   assignee?: string;
   onClick?: () => void;
+  renderDetails?: ReactElement;
 };
 
 type Style = {
@@ -65,7 +67,7 @@ export const GanttChart: FC<Props> = ({
   const arrLength = events.length;
   useEffect(
     () =>
-      setElRefs((elRefs) =>
+      setElRefs(elRefs =>
         [...Array(arrLength)].map((_, i) => elRefs[i] || createRef()),
       ),
     [arrLength],
@@ -109,6 +111,7 @@ export const GanttChart: FC<Props> = ({
               endHour,
               priority,
               status,
+              renderDetails,
             },
             idx,
           ) => {
@@ -142,42 +145,47 @@ export const GanttChart: FC<Props> = ({
                   }}
                 >
                   <div ref={elRefs[idx]}>
-                    {assignee && (
-                      <div>
-                        <strong>Assigned Employee: </strong>
-                        {assignee}
-                      </div>
+                    {renderDetails || (
+                      <>
+                        {assignee && (
+                          <div>
+                            <strong>Assigned Employee: </strong>
+                            {assignee}
+                          </div>
+                        )}
+                        <div>
+                          <strong>Brief Description: </strong>
+                          {notes}
+                        </div>
+                        <div>
+                          <strong>Start Date: </strong>
+                          {formatDate(startDate)}{' '}
+                          {startHour && formatTime(startHour)}
+                        </div>
+                        <div>
+                          <strong>End Date: </strong>
+                          {formatDate(endDate)} {endHour && formatTime(endHour)}
+                        </div>
+                        <div>
+                          <strong>Status: </strong>
+                          {status}
+                        </div>
+                        <div>
+                          <strong>Priority: </strong>
+                          {PriorityIcon && (
+                            <PriorityIcon
+                              style={{
+                                fontSize: 16,
+                                marginRight: 4,
+                                verticalAlign: 'middle',
+                                display: 'inline-flex',
+                              }}
+                            />
+                          )}
+                          {priority}
+                        </div>
+                      </>
                     )}
-                    <div>
-                      <strong>Brief Description: </strong>
-                      {notes}
-                    </div>
-                    <div>
-                      <strong>Start Date: </strong>
-                      {formatDate(startDate)} {formatTime(startHour)}
-                    </div>
-                    <div>
-                      <strong>End Date: </strong>
-                      {formatDate(endDate)} {formatTime(endHour)}
-                    </div>
-                    <div>
-                      <strong>Status: </strong>
-                      {status}
-                    </div>
-                    <div>
-                      <strong>Priority: </strong>
-                      {PriorityIcon && (
-                        <PriorityIcon
-                          style={{
-                            fontSize: 16,
-                            marginRight: 4,
-                            verticalAlign: 'middle',
-                            display: 'inline-flex',
-                          }}
-                        />
-                      )}
-                      {priority}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -263,9 +271,11 @@ export const GanttChart: FC<Props> = ({
                           onClick={onClick}
                         >
                           <div className="GanttChartHour">
-                            {dateStart === date && formatTime(startHour, false)}
+                            {dateStart === date &&
+                              startHour &&
+                              formatTime(startHour, false)}
                           </div>
-                          {dateEnd === date && (
+                          {dateEnd === date && endHour && (
                             <div className="GanttChartHour">
                               ends {formatTime(endHour, false)}
                             </div>

@@ -50,6 +50,20 @@ export default () => (
       endDate="2020-02-02"
       onAdd={() => console.log('ADD')}
     />
+    <ExampleTitle>with renderTooltip</ExampleTitle>
+    <CalendarEvents
+      events={EVENTS.map(({ startHour, endHour, ...props }) => ({
+        ...props,
+        renderTooltip: (
+          <strong>
+            <pre>{JSON.stringify(props, null, 2)}</pre>
+          </strong>
+        ),
+      }))}
+      startDate="2019-12-30"
+      endDate="2020-02-02"
+      onAdd={() => console.log('ADD')}
+    />
     <ExampleTitle>loading</ExampleTitle>
     <CalendarEvents
       events={EVENTS}
