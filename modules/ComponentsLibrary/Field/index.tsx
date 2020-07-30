@@ -712,16 +712,26 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }
   if (type === 'department') {
     return (
-      <DepartmentPicker
-        className={clsx('FieldInput', className, { compact, disabled })}
-        withinForm
-        renderItem={renderSelectOptions}
-        selected={(props.value as unknown) as number}
-        onSelect={handleChange}
-        disabled={disabled}
-        required={required}
-        fullWidth
-      />
+      <div className={clsx('Field', className)} style={style}>
+        <DepartmentPicker
+          className={clsx('FieldInput', { compact, disabled })}
+          withinForm
+          renderItem={renderSelectOptions}
+          selected={(props.value as unknown) as number}
+          onSelect={handleChange}
+          disabled={disabled}
+          required={required}
+          fullWidth
+        />
+        {actions.length > 0 && !actionsInLabel && (
+          <Actions
+            className="FieldActions"
+            actions={actions}
+            fixed
+            responsiveColumn
+          />
+        )}
+      </div>
     );
   }
   if (type === 'classCode') {

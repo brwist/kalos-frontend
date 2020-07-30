@@ -60,6 +60,7 @@ import './styles.less';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
+  onClose?: () => void;
 }
 
 type SearchType = {
@@ -113,7 +114,11 @@ const SCHEMA_PROJECT: Schema<EventType> = [
   ],
 ];
 
-export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
+export const EditProject: FC<Props> = ({
+  serviceCallId,
+  loggedUserId,
+  onClose,
+}) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -614,6 +619,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
                 event.departmentId === loggedUser.employeeDepartmentId
               ),
           },
+          ...(onClose
+            ? [
+                {
+                  label: 'Close',
+                  onClick: onClose,
+                },
+              ]
+            : []),
         ]}
         fixedActions
         actionsAndAsideContentResponsive
