@@ -25,6 +25,7 @@ export interface Props {
 type Filter = {
   dateStarted: string;
   dateEnded: string;
+  logJobNumber: string;
   departmentId: number;
 };
 
@@ -40,6 +41,7 @@ export const Projects: FC<Props> = ({
   const [filter, setFilter] = useState<Filter>({
     dateStarted: startDate || format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     dateEnded: endDate || format(lastDayOfMonth(new Date()), 'yyyy-MM-dd'),
+    logJobNumber: '',
     departmentId: 0,
   });
   const [search, setSearch] = useState<Filter>(filter);
@@ -48,12 +50,13 @@ export const Projects: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     setSearch(filter);
-    const { dateStarted, dateEnded, departmentId } = filter;
+    const { dateStarted, dateEnded, departmentId, logJobNumber } = filter;
     const { results } = await loadEventsByFilter({
       page: -1,
       filter: {
         dateStarted,
         dateEnded,
+        logJobNumber,
         departmentId,
       },
       sort: {
@@ -87,6 +90,11 @@ export const Projects: FC<Props> = ({
         name: 'dateEnded',
         type: 'date',
         label: 'End Date',
+      },
+      {
+        name: 'logJobNumber',
+        type: 'search',
+        label: 'Job #',
       },
       {
         name: 'departmentId',
@@ -196,8 +204,10 @@ export const Projects: FC<Props> = ({
                     id,
                     startDate,
                     endDate,
-                    notes: [logJobNumber, description].join(', '),
+                    notes: description,
                     onClick: handleOpenEvent(event),
+                    label: logJobNumber,
+                    subtitle: getPropertyAddress(property),
                     renderDetails: (
                       <div>
                         <div>
@@ -231,6 +241,7 @@ export const Projects: FC<Props> = ({
                 startDate={dateStarted.substr(0, 10)}
                 endDate={dateEnded.substr(0, 10)}
                 loading={loading}
+                withLabels
               />
             ),
           },

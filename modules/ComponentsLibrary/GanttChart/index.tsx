@@ -32,6 +32,8 @@ export type CalendarEvent = {
   assignee?: string;
   onClick?: () => void;
   renderDetails?: ReactElement;
+  label?: string;
+  subtitle?: string;
 };
 
 type Style = {
@@ -43,6 +45,7 @@ interface Props extends Style {
   startDate: string;
   endDate: string;
   onAdd?: (startDate: string) => void;
+  withLabels?: boolean;
 }
 
 export const GanttChart: FC<Props> = ({
@@ -51,6 +54,7 @@ export const GanttChart: FC<Props> = ({
   startDate: dateStart,
   endDate: dateEnd,
   onAdd,
+  withLabels = false,
 }) => {
   const [uncollapsed, setUncollapsed] = useState<{ [key: number]: boolean }>(
     {},
@@ -111,6 +115,7 @@ export const GanttChart: FC<Props> = ({
               priority,
               status,
               renderDetails,
+              subtitle,
             },
             idx,
           ) => {
@@ -135,7 +140,14 @@ export const GanttChart: FC<Props> = ({
                       }}
                     />
                   )}
-                  <div className="GanttChartAsideRowDesc">{notes}</div>
+                  <div className={clsx('GanttChartAsideRowDesc', { subtitle })}>
+                    {subtitle && (
+                      <div className="GanttChartAsideRowSubtitle">
+                        {subtitle}
+                      </div>
+                    )}
+                    {notes}
+                  </div>
                 </div>
                 <div
                   style={{
@@ -242,6 +254,7 @@ export const GanttChart: FC<Props> = ({
             startHour,
             endHour,
             onClick,
+            label,
           }) => (
             <div key={id} className="GanttChartGanttRow">
               {[...Array(totalDays + offsetStart + offsetEnd + 1)].map(
@@ -262,6 +275,7 @@ export const GanttChart: FC<Props> = ({
                           className="GanttChartEvent"
                           style={{
                             backgroundColor: statusColor,
+                            color: '#000',
                             ...(dateStart === date ? { marginLeft: 4 } : {}),
                             ...(dateEnd === date ? { marginRight: 4 } : {}),
                             cursor: onClick ? 'pointer' : 'default',
@@ -269,10 +283,13 @@ export const GanttChart: FC<Props> = ({
                           }}
                           onClick={onClick}
                         >
-                          <div className="GanttChartHour">
+                          <div
+                            className={clsx('GanttChartHour', { withLabels })}
+                          >
                             {dateStart === date &&
                               startHour &&
                               formatTime(startHour, false)}
+                            {dateStart === date && withLabels && label}
                           </div>
                           {dateEnd === date && endHour && (
                             <div className="GanttChartHour">
