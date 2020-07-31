@@ -27,7 +27,6 @@ export type CalendarEvent = {
   notes: string;
   status?: string;
   statusColor?: string;
-  statusId?: number;
   priority?: string;
   priorityId?: number;
   assignee?: string;
