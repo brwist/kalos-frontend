@@ -64,7 +64,7 @@ export default () => (
       events={EVENTS.map(({ startHour, endHour, statusColor, ...props }) => ({
         ...props,
         label: `${getRandomPhone()}: ${[...Array(4)]
-          .map(_ => getRandomName())
+          .map(getRandomName)
           .join(', ')}`,
       }))}
       startDate="2019-12-30"
