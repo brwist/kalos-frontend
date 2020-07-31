@@ -9,8 +9,8 @@ export default () => (
     <ExampleTitle>with startDate, endDate, onClose</ExampleTitle>
     <Projects
       loggedUserId={101253}
-      startDate="2020-06-10"
-      endDate="2020-06-30"
+      startDate="2020-01-01"
+      endDate="2020-01-31"
       onClose={() => console.log('CLOSE')}
     />
   </>

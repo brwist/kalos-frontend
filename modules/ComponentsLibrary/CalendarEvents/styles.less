@@ -52,7 +52,8 @@
     cursor: pointer;
   }
   &Event {
-    background-color: @grey-200;
+    background-color: @primary;
+    color: #fff;
     margin-right: -1px;
     padding: .spacing(0.5) [];
     margin-bottom: .spacing(0.25) [];
@@ -60,6 +61,9 @@
     position: relative;
     display: flex;
     box-sizing: content-box;
+    &.withLabels {
+      height: 30px;
+    }
   }
   &EventDesc {
     height: 20px;
@@ -67,6 +71,21 @@
     display: flex;
     align-items: center;
     width: 1px;
+    &.withLabels {
+      flex-direction: column;
+      height: 30px;
+      align-items: flex-start;
+    }
+  }
+  &EventLabel {
+    font-size: 11px;
+    line-height: 13px;
+    height: 14px;
+    opacity: 0.65;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
   }
   &EventName {
     height: 20px;
@@ -74,6 +93,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    width: 100%;
   }
   &Hour {
     opacity: 0.5;

@@ -17,12 +17,12 @@ export type CalendarEvent = {
   notes: string;
   status?: string;
   statusColor?: string;
-  statusId?: number;
   priority?: string;
   priorityId?: number;
   assignee?: string;
   onClick?: () => void;
   renderTooltip?: ReactElement;
+  label?: string;
 };
 
 type Style = {
@@ -34,6 +34,7 @@ interface Props extends Style {
   startDate: string;
   endDate: string;
   onAdd?: (startDate: string) => void;
+  withLabels?: boolean;
 }
 
 export const CalendarEvents: FC<Props> = ({
@@ -42,7 +43,9 @@ export const CalendarEvents: FC<Props> = ({
   startDate: dateStart,
   endDate: dateEnd,
   onAdd,
+  withLabels = false,
 }) => {
+  const EVENT_HEIGHT = withLabels ? 40 : 30;
   const startDate = new Date(`${dateStart}T00:00:00`);
   const endDate = new Date(`${dateEnd}T00:00:00`);
   const totalDays = differenceInDays(endDate, startDate);
@@ -130,13 +133,13 @@ export const CalendarEvents: FC<Props> = ({
                     startHour,
                     endHour,
                     status,
-                    statusId,
                     statusColor,
                     priorityId,
                     priority,
                     assignee,
                     onClick,
                     renderTooltip,
+                    label,
                   },
                   idx,
                 ) => {
@@ -207,19 +210,27 @@ export const CalendarEvents: FC<Props> = ({
                       maxWidth={300}
                     >
                       <div
-                        className="CalendarEventsEvent"
+                        className={clsx('CalendarEventsEvent', { withLabels })}
                         style={{
                           ...(statusColor
-                            ? { backgroundColor: statusColor }
+                            ? {
+                                backgroundColor: statusColor,
+                                color: '#000',
+                              }
                             : {}),
                           ...(startDate === date ? { marginLeft: 4 } : {}),
                           ...(endDate === date ? { marginRight: 4 } : {}),
-                          top: offset !== idx ? (offset - idx) * 30 : 0,
+                          top:
+                            offset !== idx ? (offset - idx) * EVENT_HEIGHT : 0,
                           cursor: onClick ? 'pointer' : 'default',
                         }}
                         onClick={onClick}
                       >
-                        <div className="CalendarEventsEventDesc">
+                        <div
+                          className={clsx('CalendarEventsEventDesc', {
+                            withLabels,
+                          })}
+                        >
                           {(startDate === date || weekDay === 7) && (
                             <>
                               {PriorityIcon && (
@@ -231,6 +242,11 @@ export const CalendarEvents: FC<Props> = ({
                                     display: 'inline-flex',
                                   }}
                                 />
+                              )}
+                              {withLabels && (
+                                <div className="CalendarEventsEventLabel">
+                                  {label}
+                                </div>
                               )}
                               <span className="CalendarEventsEventName">
                                 {notes}

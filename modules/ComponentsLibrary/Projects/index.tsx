@@ -14,7 +14,6 @@ import {
   getPropertyAddress,
   formatDate,
 } from '../../../helpers';
-import './styles.less';
 
 export interface Props {
   loggedUserId: number;
@@ -135,10 +134,13 @@ export const Projects: FC<Props> = ({
                     id,
                     startDate,
                     endDate,
-                    notes: [logJobNumber, description].join(', '),
+                    notes: description,
                     onClick: handleOpenEvent(event),
+                    label: [logJobNumber, getPropertyAddress(property)].join(
+                      ', ',
+                    ),
                     renderTooltip: (
-                      <div>
+                      <div className="ProjectsTooltip">
                         <div>
                           <strong>Address: </strong>
                           {getPropertyAddress(property)}
@@ -170,6 +172,7 @@ export const Projects: FC<Props> = ({
                 startDate={dateStarted.substr(0, 10)}
                 endDate={dateEnded.substr(0, 10)}
                 loading={loading}
+                withLabels
               />
             ),
           },

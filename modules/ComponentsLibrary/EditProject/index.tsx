@@ -915,7 +915,6 @@ export const EditProject: FC<Props> = ({
                     status: statuses.find(({ id }) => id === statusId)
                       ?.description,
                     statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-                    statusId,
                     priority: priorities.find(({ id }) => id === priorityId)
                       ?.description,
                     priorityId,
@@ -966,7 +965,6 @@ export const EditProject: FC<Props> = ({
                     status: statuses.find(({ id }) => id === statusId)
                       ?.description,
                     statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-                    statusId,
                     priority: priorities.find(({ id }) => id === priorityId)
                       ?.description,
                     priorityId,
