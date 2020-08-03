@@ -2385,13 +2385,6 @@ export const saveUser = async (data: UserType, userId?: number) => {
 export const upsertEvent = async (data: Partial<EventType>) => {
   const req = new Event();
   const fieldMaskList = [];
-  if (data.id) {
-    req.setDateUpdated(timestamp());
-    fieldMaskList.push('DateUpdated');
-  } else {
-    req.setDateCreated(timestamp());
-    fieldMaskList.push('DateCreated');
-  }
   for (const fieldName in data) {
     const { upperCaseProp, methodName } = getRPCFields(fieldName);
     //@ts-ignore
