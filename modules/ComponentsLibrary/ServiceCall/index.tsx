@@ -19,6 +19,7 @@ import {
   UserType,
   PropertyType,
   getCustomerName,
+  upsertEvent,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -50,6 +51,7 @@ export interface Props {
   loggedUserId: number;
   onClose?: () => void;
   onSave?: () => void;
+  asProject?: boolean;
 }
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
@@ -71,6 +73,7 @@ export const ServiceCall: FC<Props> = props => {
     loggedUserId,
     onClose,
     onSave,
+    asProject = false,
   } = props;
   const requestRef = useRef(null);
   const [requestFields, setRequestfields] = useState<string[]>([]);
@@ -211,7 +214,20 @@ export const ServiceCall: FC<Props> = props => {
     requestFields,
     onSave,
   ]);
-
+  const saveProject = useCallback(
+    async (data: EventType) => {
+      setSaving(true);
+      await upsertEvent(data);
+      setSaving(false);
+      if (onSave) {
+        onSave();
+      }
+      if (onClose) {
+        onClose();
+      }
+    },
+    [onSave, onClose],
+  );
   useEffect(() => {
     if (!loaded) {
       load();
@@ -348,10 +364,43 @@ export const ServiceCall: FC<Props> = props => {
         ]
       : []),
   ];
+  const SCHEMA_PROJECT: Schema<EventType> = [
+    [
+      {
+        name: 'dateStarted',
+        label: 'Start Date',
+        type: 'date',
+        required: true,
+      },
+      {
+        name: 'dateEnded',
+        label: 'End Date',
+        type: 'date',
+        required: true,
+      },
+      {
+        name: 'departmentId',
+        label: 'Department',
+        type: 'department',
+        required: true,
+      },
+      {
+        name: 'description',
+        label: 'Description',
+        multiline: true,
+      },
+    ],
+    [
+      {
+        name: 'propertyId',
+        type: 'hidden',
+      },
+    ],
+  ];
   return (
     <div>
       <SectionBar
-        title="Service Call Details"
+        title={asProject ? 'Project Details' : 'Service Call Details'}
         actions={
           serviceCallId
             ? [
@@ -398,133 +447,145 @@ export const ServiceCall: FC<Props> = props => {
       >
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
-      <SectionBar
-        title="Service Call Data"
-        actions={[
-          {
-            label: 'Save Service Call Only',
-            onClick: handleSave,
-            disabled: loading || saving,
-          },
-          {
-            label: 'Save and Invoice',
-            // onClick: // TODO
-            disabled: loading || saving,
-          },
-          {
-            label: 'Cancel',
-            url: [
-              '/index.cfm?action=admin:properties.details',
-              `property_id=${propertyId}`,
-              `user_id=${userID}`,
-            ].join('&'),
-            disabled: loading || saving,
-          },
-        ]}
-      />
-      <Tabs
-        key={tabKey}
-        defaultOpenIdx={tabIdx}
-        onChange={setTabIdx}
-        tabs={[
-          {
-            label: 'Request',
-            content: (
-              <Request
-                //@ts-ignore
-                ref={requestRef}
-                serviceItem={entry}
-                propertyEvents={propertyEvents}
-                loading={loading}
-                jobTypeOptions={jobTypeOptions}
-                jobSubtypeOptions={jobSubtypeOptions}
-                jobTypeSubtypes={jobTypeSubtypes}
-                onChange={handleChangeEntry}
-                disabled={saving}
-                onValid={setRequestValid}
-                onInitSchema={handleSetRequestfields}
-              />
-            ),
-          },
-          {
-            label: 'Equipment',
-            content: loading ? (
-              <InfoTable data={makeFakeRows(4, 4)} loading />
-            ) : (
-              <Equipment
-                {...props}
-                serviceItem={entry}
-                customer={customer}
-                property={property}
-              />
-            ),
-          },
-          ...(serviceCallId
-            ? [
-                {
-                  label: 'Services',
-                  content: loggedUser ? (
-                    <Services
-                      serviceCallId={serviceCallId}
-                      servicesRendered={servicesRendered}
-                      loggedUser={loggedUser}
-                      loadServicesRendered={loadServicesRenderedData}
-                      loading={loading}
-                    />
-                  ) : (
-                    <InfoTable data={makeFakeRows(4, 4)} loading />
-                  ),
-                },
-              ]
-            : []),
-          {
-            label: 'Invoice',
-            content: loading ? (
-              <InfoTable data={makeFakeRows(4, 5)} loading />
-            ) : (
-              <Invoice
-                serviceItem={entry}
-                onChange={handleChangeEntry}
-                disabled={saving}
-                servicesRendered={servicesRendered}
-                onInitSchema={handleSetRequestfields}
-              />
-            ),
-          },
-          ...(serviceCallId
-            ? [
-                {
-                  label: 'Proposal',
-                  content: loading ? (
-                    <InfoTable data={makeFakeRows(2, 5)} loading />
-                  ) : (
-                    <Proposal
-                      serviceItem={entry}
-                      customer={customer}
-                      property={property}
-                    />
-                  ),
-                },
-              ]
-            : []),
-          ...(serviceCallId
-            ? [
-                {
-                  label: 'Spiffs',
-                  content: loading ? (
-                    <InfoTable data={makeFakeRows(8, 5)} loading />
-                  ) : (
-                    <Spiffs
-                      serviceItem={entry}
-                      loggedUserId={loggedUserId}
-                      loggedUserName={getCustomerName(loggedUser)}
-                    />
-                  ),
-                },
-              ]
-            : []),
-        ]}
-      />
+      {asProject ? (
+        <Form
+          title="Project Data"
+          schema={SCHEMA_PROJECT}
+          data={{ ...new Event().toObject(), propertyId }}
+          onClose={onClose || (() => {})}
+          onSave={saveProject}
+        />
+      ) : (
+        <>
+          <SectionBar
+            title="Service Call Data"
+            actions={[
+              {
+                label: 'Save Service Call Only',
+                onClick: handleSave,
+                disabled: loading || saving,
+              },
+              {
+                label: 'Save and Invoice',
+                // onClick: // TODO
+                disabled: loading || saving,
+              },
+              {
+                label: 'Cancel',
+                url: [
+                  '/index.cfm?action=admin:properties.details',
+                  `property_id=${propertyId}`,
+                  `user_id=${userID}`,
+                ].join('&'),
+                disabled: loading || saving,
+              },
+            ]}
+          />
+          <Tabs
+            key={tabKey}
+            defaultOpenIdx={tabIdx}
+            onChange={setTabIdx}
+            tabs={[
+              {
+                label: 'Request',
+                content: (
+                  <Request
+                    //@ts-ignore
+                    ref={requestRef}
+                    serviceItem={entry}
+                    propertyEvents={propertyEvents}
+                    loading={loading}
+                    jobTypeOptions={jobTypeOptions}
+                    jobSubtypeOptions={jobSubtypeOptions}
+                    jobTypeSubtypes={jobTypeSubtypes}
+                    onChange={handleChangeEntry}
+                    disabled={saving}
+                    onValid={setRequestValid}
+                    onInitSchema={handleSetRequestfields}
+                  />
+                ),
+              },
+              {
+                label: 'Equipment',
+                content: loading ? (
+                  <InfoTable data={makeFakeRows(4, 4)} loading />
+                ) : (
+                  <Equipment
+                    {...props}
+                    serviceItem={entry}
+                    customer={customer}
+                    property={property}
+                  />
+                ),
+              },
+              ...(serviceCallId
+                ? [
+                    {
+                      label: 'Services',
+                      content: loggedUser ? (
+                        <Services
+                          serviceCallId={serviceCallId}
+                          servicesRendered={servicesRendered}
+                          loggedUser={loggedUser}
+                          loadServicesRendered={loadServicesRenderedData}
+                          loading={loading}
+                        />
+                      ) : (
+                        <InfoTable data={makeFakeRows(4, 4)} loading />
+                      ),
+                    },
+                  ]
+                : []),
+              {
+                label: 'Invoice',
+                content: loading ? (
+                  <InfoTable data={makeFakeRows(4, 5)} loading />
+                ) : (
+                  <Invoice
+                    serviceItem={entry}
+                    onChange={handleChangeEntry}
+                    disabled={saving}
+                    servicesRendered={servicesRendered}
+                    onInitSchema={handleSetRequestfields}
+                  />
+                ),
+              },
+              ...(serviceCallId
+                ? [
+                    {
+                      label: 'Proposal',
+                      content: loading ? (
+                        <InfoTable data={makeFakeRows(2, 5)} loading />
+                      ) : (
+                        <Proposal
+                          serviceItem={entry}
+                          customer={customer}
+                          property={property}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
+              ...(serviceCallId
+                ? [
+                    {
+                      label: 'Spiffs',
+                      content: loading ? (
+                        <InfoTable data={makeFakeRows(8, 5)} loading />
+                      ) : (
+                        <Spiffs
+                          serviceItem={entry}
+                          loggedUserId={loggedUserId}
+                          loggedUserName={getCustomerName(loggedUser)}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </>
+      )}
       {customer && serviceCallId > 0 && (
         <Modal
           open={notificationEditing || notificationViewing}

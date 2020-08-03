@@ -1,5 +1,6 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import { startOfMonth, lastDayOfMonth, format } from 'date-fns';
+import compact from 'lodash/compact';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
 import { Tabs } from '../Tabs';
@@ -8,11 +9,14 @@ import { GanttChart } from '../GanttChart';
 import { EditProject } from '../EditProject';
 import { Modal } from '../Modal';
 import { Loader } from '../../Loader/main';
+import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import {
   loadEventsByFilter,
   EventType,
   getPropertyAddress,
   formatDate,
+  UserType,
+  loadUserById,
 } from '../../../helpers';
 
 export interface Props {
@@ -37,6 +41,10 @@ export const Projects: FC<Props> = ({
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [loadingInit, setLoadingInit] = useState<boolean>(false);
+  const [loadedInit, setLoadedInit] = useState<boolean>(false);
+  const [loggedInUser, setLoggedInUser] = useState<UserType>();
+  const [pendingNew, setPendingNew] = useState<boolean>(false);
   const [tab, setTab] = useState<number>(0);
   const [filter, setFilter] = useState<Filter>({
     dateStarted: startDate || format(startOfMonth(new Date()), 'yyyy-MM-dd'),
@@ -44,9 +52,34 @@ export const Projects: FC<Props> = ({
     logJobNumber: '',
     departmentId: 0,
   });
+  const [filterKey, setFilterKey] = useState<number>(0);
   const [search, setSearch] = useState<Filter>(filter);
   const [events, setEvents] = useState<EventType[]>([]);
   const [openedEvent, setOpenedEvent] = useState<EventType>();
+  const loadInit = useCallback(async () => {
+    setLoadingInit(true);
+    const loggedInUser = await loadUserById(loggedUserId);
+    const newFilter = {
+      ...filter,
+      departmentId: loggedInUser.employeeDepartmentId,
+    };
+    setFilter(newFilter);
+    setSearch(newFilter);
+    setFilterKey(filterKey + 1);
+    setLoggedInUser(loggedInUser);
+    setLoadingInit(false);
+    setLoadedInit(true);
+  }, [
+    loggedUserId,
+    setLoadingInit,
+    setLoggedInUser,
+    filter,
+    setFilter,
+    filterKey,
+    setFilterKey,
+    setSearch,
+    setLoadedInit,
+  ]);
   const load = useCallback(async () => {
     setLoading(true);
     setSearch(filter);
@@ -69,16 +102,27 @@ export const Projects: FC<Props> = ({
     setLoading(false);
   }, [filter, setLoading, setEvents, setSearch]);
   useEffect(() => {
-    if (!loaded) {
+    if (!loadedInit) {
+      loadInit();
+    }
+    if (loadedInit && !loaded) {
       setLoaded(true);
       load();
     }
-  }, [loaded, setLoaded, load]);
+  }, [loaded, setLoaded, load, loadedInit, setLoadedInit, loadInit]);
   const handleSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleOpenEvent = useCallback(
     (openedEvent?: EventType) => () => setOpenedEvent(openedEvent),
     [setOpenedEvent],
   );
+  const handleTogglePendingNew = useCallback(
+    (pendingNew: boolean) => () => setPendingNew(pendingNew),
+    [setPendingNew],
+  );
+  const handleSaveNewProject = useCallback(() => {
+    setPendingNew(false);
+    setLoaded(false);
+  }, [setPendingNew, setLoaded]);
   const SCHEMA_FILTER: Schema<Filter> = [
     [
       {
@@ -115,10 +159,28 @@ export const Projects: FC<Props> = ({
       <SectionBar
         title="Projects"
         sticky={false}
-        actions={onClose ? [{ label: 'Close', onClick: onClose }] : undefined}
+        actions={[
+          {
+            label: 'Add Project',
+            onClick: handleTogglePendingNew(true),
+          },
+          ...(onClose
+            ? [
+                {
+                  label: 'Close',
+                  onClick: onClose,
+                },
+              ]
+            : []),
+        ]}
         fixedActions
       />
-      <PlainForm schema={SCHEMA_FILTER} data={filter} onChange={setFilter} />
+      <PlainForm
+        key={filterKey}
+        schema={SCHEMA_FILTER}
+        data={filter}
+        onChange={setFilter}
+      />
       <Tabs
         defaultOpenIdx={tab}
         tabs={[
@@ -144,9 +206,10 @@ export const Projects: FC<Props> = ({
                     endDate,
                     notes: description,
                     onClick: handleOpenEvent(event),
-                    label: [logJobNumber, getPropertyAddress(property)].join(
-                      ', ',
-                    ),
+                    label: compact([
+                      logJobNumber,
+                      getPropertyAddress(property),
+                    ]).join(', '),
                     renderTooltip: (
                       <div className="ProjectsTooltip">
                         <div>
@@ -179,7 +242,7 @@ export const Projects: FC<Props> = ({
                 })}
                 startDate={dateStarted.substr(0, 10)}
                 endDate={dateEnded.substr(0, 10)}
-                loading={loading}
+                loading={loading || loadingInit}
                 withLabels
               />
             ),
@@ -240,7 +303,7 @@ export const Projects: FC<Props> = ({
                 })}
                 startDate={dateStarted.substr(0, 10)}
                 endDate={dateEnded.substr(0, 10)}
-                loading={loading}
+                loading={loading || loadingInit}
                 withLabels
               />
             ),
@@ -248,13 +311,23 @@ export const Projects: FC<Props> = ({
         ]}
         onChange={setTab}
       />
-      {loading && <Loader zIndex={1200} />}
+      {(loading || loadingInit) && <Loader zIndex={1200} />}
       {openedEvent && (
         <Modal open onClose={handleOpenEvent()} fullScreen>
           <EditProject
             serviceCallId={openedEvent.id}
             loggedUserId={loggedUserId}
             onClose={handleOpenEvent()}
+          />
+        </Modal>
+      )}
+      {pendingNew && (
+        <Modal open onClose={handleTogglePendingNew(false)} fullScreen>
+          <AddServiceCall
+            loggedUserId={loggedUserId}
+            onClose={handleTogglePendingNew(false)}
+            onSave={handleSaveNewProject}
+            asProject
           />
         </Modal>
       )}
