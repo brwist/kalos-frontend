@@ -2261,7 +2261,7 @@ function escapeText(encodedStr: string) {
 /**
  * Upload file to S3 bucket
  * @param fileName string
- * @param fileData string
+ * @param fileData string (starting with ie. `data:image/png;base64,`)
  * @param bucketName string
  * @returns status string: "ok" | "nok"
  */
@@ -2278,7 +2278,7 @@ async function uploadFileToS3Bucket(
     urlObj.setContentType(type || '');
     const urlRes = await S3ClientService.GetUploadURL(urlObj);
     const uploadRes = await fetch(urlRes.url, {
-      body: b64toBlob(fileData, fileName),
+      body: b64toBlob(fileData.split(';base64,')[1], fileName),
       method: 'PUT',
     });
     if (uploadRes.status === 200) {

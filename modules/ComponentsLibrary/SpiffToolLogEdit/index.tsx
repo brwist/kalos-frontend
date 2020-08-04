@@ -220,10 +220,9 @@ export const SpiffToolLogEdit: FC<Props> = ({
         ) +
         '.' +
         ext;
-      const fileData = documentFile.split(';base64,')[1];
       const status = await uploadFileToS3Bucket(
         fileName,
-        fileData,
+        documentFile,
         'testbuckethelios', // FIXME is it correct bucket name for those docs?
       );
       if (status === 'ok') {
