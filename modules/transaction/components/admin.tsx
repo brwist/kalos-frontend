@@ -684,6 +684,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               style={{
                 height: 46,
                 marginRight: 16,
+                marginBottom: 10,
                 display: 'inline-block',
                 float: 'left',
               }}
@@ -705,12 +706,7 @@ export class TransactionAdminView extends React.Component<props, state> {
             </div>
           )}
           {this.props.isSU && (
-            <Field
-              name="departmentView"
-              label="Show Your Departments"
-              value={this.state.departmentView ? 1 : 0}
-              type="checkbox"
-              onChange={this.toggleView}
+            <div
               style={{
                 height: 46,
                 marginBottom: 10,
@@ -718,7 +714,15 @@ export class TransactionAdminView extends React.Component<props, state> {
                 width: 'auto',
                 float: 'left',
               }}
-            />
+            >
+              <Field
+                name="departmentView"
+                label="Show Your Departments"
+                value={this.state.departmentView ? 1 : 0}
+                type="checkbox"
+                onChange={this.toggleView}
+              />
+            </div>
           )}
           <div
             style={{
