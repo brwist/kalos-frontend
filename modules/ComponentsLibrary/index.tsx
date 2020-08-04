@@ -71,6 +71,7 @@ import SpiffReport from './SpiffReport/examples';
 import SpiffToolLogEdit from './SpiffToolLogEdit/examples';
 import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
+import Tasks from './Tasks/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Tooltip from './Tooltip/examples';
 import WarrantyReport from './WarrantyReport/examples';
@@ -147,6 +148,7 @@ const COMPONENTS = {
   SpiffToolLogEdit,
   StoredQuotes,
   Tabs,
+  Tasks,
   TimeoffSummaryReport,
   Tooltip,
   WarrantyReport,
