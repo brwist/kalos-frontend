@@ -27,6 +27,7 @@ import {
   MuiPickersUtilsProvider,
   DatePicker,
   TimePicker,
+  DateTimePicker,
 } from '@material-ui/pickers';
 //@ts-ignore
 import SignatureCanvas from 'react-signature-pad-wrapper';
@@ -69,6 +70,7 @@ export type Type =
   | 'time'
   | 'mui-date'
   | 'mui-time'
+  | 'mui-datetime'
   | 'technician'
   | 'technicians'
   | 'signature'
@@ -417,6 +419,27 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           />
         </div>
       </div>
+    );
+  }
+
+  if (type === 'mui-datetime') {
+    return (
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <DateTimePicker
+          className={clsx('FieldInput', className, { compact, disabled })}
+          label={inputLabel}
+          value={new Date((props.value as unknown) as string)}
+          onChange={value =>
+            handleChange({
+              target: {
+                value: format(value || new Date(), 'yyyy-MM-dd HH:mm'),
+              },
+            })
+          }
+          disabled={disabled}
+          fullWidth
+        />
+      </MuiPickersUtilsProvider>
     );
   }
 
