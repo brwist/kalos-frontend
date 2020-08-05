@@ -1,6 +1,6 @@
 {
   "name": "@kalos-core/kalos-frontend",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Kalos frontend components rewritten in React",
   "scripts": {
     "publish-pkg": "npm login && yarn publish --access restricted",
@@ -93,7 +93,7 @@
     "react-dom": "^16.10.1"
   },
   "files": [
-    "build/dist"
+    "modules"
   ],
   "prettier": {
     "printWidth": 80,
