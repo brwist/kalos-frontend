@@ -773,6 +773,19 @@ export const updateDocumentDescription = async (
   await DocumentClientService.Update(req);
 };
 
+export const upsertTask = async (data: Partial<TaskType>) => {
+  const req = new Task();
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    // @ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  await TaskClientService[data.id ? 'Update' : 'Create'](req);
+};
+
 export const updateSpiffTool = async (data: TaskType) => {
   const req = new Task();
   req.setId(data.id);
@@ -838,6 +851,20 @@ export const loadSpiffToolLogs = async ({
   const resultsList = res.getResultsList().map(el => el.toObject());
   const count = res.getTotalCount();
   return { resultsList, count };
+};
+
+export const loadTasks = async (filter: Partial<TaskType>) => {
+  const req = new Task();
+  req.setIsActive(true);
+  for (const fieldName in filter) {
+    const value = filter[fieldName as keyof TaskType];
+    if (value) {
+      const { methodName } = getRPCFields(fieldName);
+      //@ts-ignore
+      req[methodName](typeof value === 'number' ? value : `%${value}%`);
+    }
+  }
+  return (await TaskClientService.BatchGet(req)).toObject();
 };
 
 export const loadQuotable = async (id: number) => {
@@ -1018,6 +1045,13 @@ export const loadProjectTaskPriorities = async () => {
     await TaskClientService.loadTaskPriorityList()
   ).toObject();
   return resultsList;
+};
+
+export const loadProjectTaskBillableTypes = async () => {
+  // const { resultsList } = (
+  //   await TaskClientService.loadTaskBillableTypeList() // FIXME when available in rpc
+  // ).toObject();
+  return ['Flat Rate', 'Hourly', 'Parts Run', 'Spiff', 'Tool Purchase'];
 };
 
 export const deleteProjectTaskById = async (id: number) => {
