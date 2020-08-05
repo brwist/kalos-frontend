@@ -62,12 +62,14 @@ import {
   saveUser,
   loadEmployeeFunctions,
   EmployeeFunctionType,
+  getFileS3BucketUrl,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
   OPTION_ALL,
   EVENT_STATUS_LIST,
   USA_STATES_OPTIONS,
+  APP_URL,
 } from '../../../constants';
 import './styles.less';
 
@@ -144,6 +146,9 @@ export const AdvancedSearch: FC<Props> = ({
   const [formKey, setFormKey] = useState<number>(0);
   const [events, setEvents] = useState<EventType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
+  const [employeeImages, setEmployeeImages] = useState<{
+    [key: string]: string;
+  }>({});
   const [properties, setProperties] = useState<PropertyType[]>([]);
   const [eventsSort, setEventsSort] = useState<EventsSort>({
     orderByField: 'dateStarted',
@@ -258,6 +263,22 @@ export const AdvancedSearch: FC<Props> = ({
       const { results, totalCount } = await loadUsersByFilter(criteria);
       setCount(totalCount);
       setUsers(results);
+      if (kind === 'employees') {
+        const images = await Promise.all(
+          results
+            .filter(({ image }) => !!image)
+            .map(async ({ image }) => ({
+              image,
+              url: await getFileS3BucketUrl(image, 'kalos-employee-images'),
+            })),
+        );
+        setEmployeeImages(
+          images.reduce(
+            (aggr, { image, url }) => ({ ...aggr, [image]: url }),
+            {},
+          ),
+        );
+      }
     }
     if (kind === 'properties') {
       const criteria: LoadPropertiesByFilter = {
@@ -283,6 +304,7 @@ export const AdvancedSearch: FC<Props> = ({
     eventsSort,
     usersSort,
     propertiesSort,
+    setEmployeeImages,
   ]);
   useEffect(() => {
     if (!loaded && loadedDicts) {
@@ -1657,9 +1679,25 @@ export const AdvancedSearch: FC<Props> = ({
               },
             )
             .map(entry => {
-              const { empTitle, email, cellphone } = entry;
+              const { empTitle, email, cellphone, image } = entry;
               return [
-                { value: getCustomerName(entry) },
+                {
+                  value: (
+                    <div className="AdvancedSearchEmployee">
+                      <div
+                        className="AdvancedSearchEmployeeImage"
+                        style={
+                          image
+                            ? {
+                                backgroundImage: `url('${employeeImages[image]}')`,
+                              }
+                            : {}
+                        }
+                      />
+                      {getCustomerName(entry)}
+                    </div>
+                  ),
+                },
                 { value: empTitle },
                 { value: email },
                 { value: getCustomerPhoneWithExt(entry) },
@@ -2048,6 +2086,18 @@ export const AdvancedSearch: FC<Props> = ({
               },
             ]}
             fixedActions
+          />
+          <div
+            className="AdvancedSearchEmployeeImageBig"
+            style={
+              pendingEmployeeViewing.image
+                ? {
+                    backgroundImage: `url('${
+                      employeeImages[pendingEmployeeViewing.image]
+                    }')`,
+                  }
+                : {}
+            }
           />
           <PlainForm
             schema={SCHEMA_EMPLOYEES_VIEW}
