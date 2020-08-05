@@ -39,11 +39,23 @@
     width: 100%;
     cursor: pointer;
   }
+  &AsideRowSubtitle {
+    font-size: 11px;
+    line-height: 11px;
+    opacity: 0.65;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 3px;
+  }
   &AsideRowDesc {
     flex-grow: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    &.subtitle {
+      line-height: 14px;
+    }
   }
   &Gantt {
     flex-grow: 1;
@@ -75,7 +87,7 @@
     background-color: @grey-100;
   }
   &Event {
-    background-color: @grey-200;
+    background-color: @primary;
     margin-left: -1px;
     padding: .spacing(0.5) [];
     height: 20px;
@@ -84,6 +96,9 @@
   }
   &Hour {
     opacity: 0.5;
+    &.withLabels {
+      color: @common-white;
+    }
   }
   &Toggle {
     position: absolute !important;

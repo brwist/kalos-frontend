@@ -1,5 +1,4 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { makeStyles } from '@material-ui/core';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
@@ -40,6 +39,7 @@ import {
   TaskEventDataType,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
+import './spiffTool.less';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -74,34 +74,7 @@ export interface Props {
   loggedUserId: number;
 }
 
-const useStyles = makeStyles(theme => ({
-  unlinked: {
-    ...theme.typography.body1,
-    margin: theme.spacing(2),
-  },
-  status: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  statusColor: {
-    width: theme.spacing(2),
-    height: theme.spacing(2),
-    borderRadius: '50%',
-    marginRight: theme.spacing(0.75),
-  },
-  duplicateIcon: {
-    color: '#B00',
-  },
-  uploading: {
-    backgroundColor: theme.palette.info.main,
-    color: theme.palette.info.contrastText,
-    padding: theme.spacing(),
-    borderRadius: theme.shape.borderRadius,
-  },
-}));
-
 export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
-  const classes = useStyles();
   const MONTHS_OPTIONS: Option[] = makeLast12MonthsOptions(true);
   const getSearchFormInit = () => ({
     description: '',
@@ -161,7 +134,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     const { description, month, kind, technician } = searchForm;
     const req = new Task();
     req.setPageNumber(page);
-    req.setIsActive(1);
+    req.setIsActive(true);
     req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
     req.setOrderDir('ASC');
     if (technician) {
@@ -468,9 +441,9 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     ...(type === 'Spiff' ? [{ name: 'Duplicates' }] : []),
   ];
   const renderStatus = (status: number) => (
-    <div className={classes.status}>
+    <div className="SpiffToolLogStatus">
       <div
-        className={classes.statusColor}
+        className="SpiffToolLogStatusColor"
         style={{ backgroundColor: STATUS_TXT[status].color }}
       />
       {STATUS_TXT[status].label}
@@ -639,7 +612,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                     >
                       <IconButton
                         size="small"
-                        classes={{ root: classes.duplicateIcon }}
+                        classes={{ root: 'SpiffToolLogDuplicateIcon' }}
                       >
                         <FlagIcon />
                       </IconButton>
@@ -754,7 +727,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
             ]}
             fixedActions
           />
-          <div className={classes.unlinked}>
+          <div className="SpiffToolLogUnlinked">
             Job # <strong>{unlinkedSpiffJobNumber}</strong> does not appear to
             be connected to a valid Service Call.
           </div>

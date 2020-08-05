@@ -1,0 +1,36 @@
+@import '../../../styles/index.less';
+
+.ServiceCalendarFilter {
+  &Bar {
+    background: @primary-dark;
+    color: @common-white;
+    justify-content: space-between;
+    @media @bp-xs-down {
+      padding: .spacing(2) [];
+    }
+  }
+  &DateControls {
+    display: flex;
+    align-items: center;
+    @media @bp-xs-down {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  &ViewByBox {
+    display: flex;
+    align-items: center;
+    @media @bp-xs-down {
+      margin-bottom: .spacing(2) [];
+    }
+  }
+  &SetDefaultViewButton {
+    margin: .spacing() [] !important;
+    line-height: 1.2 !important;
+    color: white !important;
+    font-weight: 100 !important;
+  }
+  &Select {
+    min-width: 100px !important;
+  }
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CalendarEvents, CalendarEvent } from './';
-import { ExampleTitle } from '../helpers';
+import { ExampleTitle, getRandomPhone, getRandomName } from '../helpers';
 
 const EVENTS: CalendarEvent[] = [
   {
@@ -39,6 +39,15 @@ const EVENTS: CalendarEvent[] = [
     notes: 'Task 4',
     statusColor: '#F8F',
   },
+  {
+    id: 5,
+    startDate: '2020-01-09',
+    endDate: '2020-01-13',
+    startHour: '08:00:00',
+    endHour: '21:00:00',
+    notes: 'Task 5',
+    statusColor: '#8FF',
+  },
 ];
 
 export default () => (
@@ -46,6 +55,33 @@ export default () => (
     <ExampleTitle>default</ExampleTitle>
     <CalendarEvents
       events={EVENTS}
+      startDate="2019-12-30"
+      endDate="2020-02-02"
+      onAdd={() => console.log('ADD')}
+    />
+    <ExampleTitle>withLabels</ExampleTitle>
+    <CalendarEvents
+      events={EVENTS.map(({ startHour, endHour, statusColor, ...props }) => ({
+        ...props,
+        label: `${getRandomPhone()}: ${[...Array(4)]
+          .map(getRandomName)
+          .join(', ')}`,
+      }))}
+      startDate="2019-12-30"
+      endDate="2020-02-02"
+      onAdd={() => console.log('ADD')}
+      withLabels
+    />
+    <ExampleTitle>with renderTooltip</ExampleTitle>
+    <CalendarEvents
+      events={EVENTS.map(({ startHour, endHour, ...props }) => ({
+        ...props,
+        renderTooltip: (
+          <strong>
+            <pre>{JSON.stringify(props, null, 2)}</pre>
+          </strong>
+        ),
+      }))}
       startDate="2019-12-30"
       endDate="2020-02-02"
       onAdd={() => console.log('ADD')}

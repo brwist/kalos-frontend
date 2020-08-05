@@ -91,12 +91,6 @@ export type Option = {
 
 export type Options = (string | Option)[];
 
-type Style = {
-  type?: Type;
-  disabled?: boolean;
-  compact?: boolean;
-};
-
 export interface Props<T> extends SchemaProps<T> {
   value?: T[keyof T];
   disabled?: boolean;
@@ -135,6 +129,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   actionsInLabel = false,
   style = {},
   compact = false,
+  technicianAsEmployee = false,
   ...props
 }) => {
   const signatureRef = useRef(null);
@@ -582,7 +577,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         {techniciansOpened && (
           <Modal open onClose={handleSetTechniciansOpened(false)} fullHeight>
             <SectionBar
-              title={`Select Technician${type === 'technicians' ? '(s)' : ''}`}
+              title={`Select ${
+                technicianAsEmployee ? 'Employee' : 'Technician'
+              }${type === 'technicians' ? '(s)' : ''}`}
               subtitle={
                 techniciansIds.length === 1 && techniciansIds[0] === 0
                   ? 'Unassigned'
@@ -602,7 +599,9 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   className="FieldSearchTechnician"
                   name="searchTechnician"
                   value={searchTechnician}
-                  placeholder="Search technician..."
+                  placeholder={`Search ${
+                    technicianAsEmployee ? 'employee' : 'technician'
+                  }...`}
                   type="search"
                   onChange={setSearchTechnician}
                 />
@@ -713,16 +712,26 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   }
   if (type === 'department') {
     return (
-      <DepartmentPicker
-        className={clsx('FieldInput', className, { compact, disabled })}
-        withinForm
-        renderItem={renderSelectOptions}
-        selected={(props.value as unknown) as number}
-        onSelect={handleChange}
-        disabled={disabled}
-        required={required}
-        fullWidth
-      />
+      <div className={clsx('Field', className)} style={style}>
+        <DepartmentPicker
+          className={clsx('FieldInput', { compact, disabled })}
+          withinForm
+          renderItem={renderSelectOptions}
+          selected={(props.value as unknown) as number}
+          onSelect={handleChange}
+          disabled={disabled}
+          required={required}
+          fullWidth
+        />
+        {actions.length > 0 && !actionsInLabel && (
+          <Actions
+            className="FieldActions"
+            actions={actions}
+            fixed
+            responsiveColumn
+          />
+        )}
+      </div>
     );
   }
   if (type === 'classCode') {

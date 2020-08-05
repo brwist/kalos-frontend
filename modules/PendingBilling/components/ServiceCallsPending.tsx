@@ -1,5 +1,4 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
@@ -24,19 +23,13 @@ import {
   EventsSort,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
+import './serviceCallsPending.less';
 
 export interface Props {
   loggedUserId: number;
 }
 
-const useStyles = makeStyles(theme => ({
-  form: {
-    marginTop: theme.spacing(),
-  },
-}));
-
 export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
-  const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -276,7 +269,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         data={filter}
         onChange={setFilter}
         compact
-        className={classes.form}
+        className="ServiceCallsPendingForm"
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
       {pendingDelete && (
