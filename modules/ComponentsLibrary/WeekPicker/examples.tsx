@@ -7,14 +7,21 @@ export default () => {
   const [value, setValue] = useState(new Date());
 
   return (
-    <MuiPickersUtilsProvider utils={DateFnsUtils}>
-      <WeekPicker
-        label="Set a Period"
-        value={value}
-        inputVariant="outlined"
-        size="small"
-        onChange={val => setValue(val)}
-      />
-    </MuiPickersUtilsProvider>
+    <div
+      style={{
+        backgroundColor: '#333',
+        padding: 16,
+      }}
+    >
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <WeekPicker
+          label="Set a Period"
+          value={value}
+          inputVariant="outlined"
+          size="small"
+          onChange={val => setValue(val)}
+        />
+      </MuiPickersUtilsProvider>
+    </div>
   );
 };

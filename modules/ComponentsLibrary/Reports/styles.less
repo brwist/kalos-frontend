@@ -1,0 +1,19 @@
+@import '../../../styles/index.less';
+
+.Reports {
+  &Wrapper {
+    display: grid;
+    align-items: flex-start;
+    grid-gap: .spacing() [];
+    @media @bp-sm-up {
+      grid-template-columns: 1fr 1fr;
+    }
+    @media @bp-md-up {
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-gap: .spacing(2) [];
+    }
+    @media @bp-xl-up {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+  }
+}

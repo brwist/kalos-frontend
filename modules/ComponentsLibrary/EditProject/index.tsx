@@ -15,6 +15,7 @@ import { PrintTable } from '../PrintTable';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintList } from '../PrintList';
 import { ConfirmDelete } from '../ConfirmDelete';
+import { Confirm } from '../Confirm';
 import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
 import { Tabs } from '../Tabs';
@@ -42,6 +43,12 @@ import {
   loadPerDiemsLodging,
   loadTransactionsByEventId,
   TransactionType,
+  TaskEventType,
+  loadTaskEventsByFilter,
+  upsertTaskEvent,
+  timestamp,
+  UserType,
+  loadUserById,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -53,6 +60,7 @@ import './styles.less';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
+  onClose?: () => void;
 }
 
 type SearchType = {
@@ -89,16 +97,39 @@ const SCHEMA_PROJECT: Schema<EventType> = [
       type: 'date',
     },
   ],
+  [
+    {
+      name: 'departmentId',
+      label: 'Department',
+      type: 'department',
+    },
+  ],
+  [
+    {
+      name: 'description',
+      label: 'Description',
+      type: 'text',
+      multiline: true,
+    },
+  ],
 ];
 
-export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
+export const EditProject: FC<Props> = ({
+  serviceCallId,
+  loggedUserId,
+  onClose,
+}) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
+  const [loggedUser, setLoggedUser] = useState<UserType>();
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [pendingDelete, setPendingDelete] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
+  const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
+  const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
+  const [pendingCheckout, setPendingCheckout] = useState<boolean>(false);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
@@ -126,11 +157,20 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     const statuses = await loadProjectTaskStatuses();
     const priorities = await loadProjectTaskPriorities();
     const departments = await loadTimesheetDepartments();
+    const loggedUser = await loadUserById(loggedUserId);
     setStatuses(statuses);
     setPriorities(priorities);
     setDepartments(departments);
+    setLoggedUser(loggedUser);
     setLoadedInit(true);
-  }, [loadEvent, setStatuses, setPriorities, setDepartments, setLoadedInit]);
+  }, [
+    loadEvent,
+    setStatuses,
+    setPriorities,
+    setDepartments,
+    setLoadedInit,
+    loggedUserId,
+  ]);
   const load = useCallback(async () => {
     setLoading(true);
     const tasks = await loadProjectTasks(serviceCallId);
@@ -146,22 +186,83 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
       load();
     }
   }, [loadedInit, loadInit, loaded, setLoaded, load]);
+  const loadTaskEvents = useCallback(
+    async (taskId: number) => {
+      setTaskEventsLoaded(false);
+      const taskEvents = await loadTaskEventsByFilter({
+        id: taskId,
+        technicianUserId: loggedUserId,
+      });
+      setTaskEvents(taskEvents);
+      setTaskEventsLoaded(true);
+    },
+    [setTaskEventsLoaded, setTaskEvents, loggedUserId],
+  );
   const handleSetEditing = useCallback(
-    (editingTask?: ExtendedProjectTaskType) => () => {
+    (editingTask?: ExtendedProjectTaskType) => async () => {
       setErrorTask('');
       setEditingTask(editingTask);
+      if (editingTask && editingTask.id) {
+        await loadTaskEvents(editingTask.id);
+      }
     },
-    [setEditingTask],
+    [setEditingTask, setTaskEvents, setTaskEventsLoaded],
   );
   const handleSetPendingDelete = useCallback(
     (pendingDelete?: ExtendedProjectTaskType) => () =>
       setPendingDelete(pendingDelete),
     [setPendingDelete],
   );
+  const handleCheckout = useCallback(async () => {
+    if (!editingTask) return;
+    setPendingCheckout(false);
+    const isCheckOut =
+      taskEvents.length > 0 && taskEvents[0].timeFinished === '';
+    const taskEvent: Partial<TaskEventType> = isCheckOut
+      ? {
+          id: taskEvents[0].id,
+          timeFinished: timestamp(),
+        }
+      : {
+          taskId: editingTask.id,
+          technicianUserId: loggedUserId,
+          timeStarted: timestamp(),
+          statusId: 1,
+        };
+    await upsertTaskEvent(taskEvent);
+    await loadTaskEvents(editingTask.id);
+    if (!isCheckOut) {
+      await upsertEventTask({
+        id: editingTask.id,
+        externalCode: 'user',
+        externalId: loggedUserId,
+      });
+      setEditingTask(undefined);
+      setEditingTask({
+        ...editingTask,
+        externalCode: 'user',
+        externalId: loggedUserId,
+      });
+      setLoaded(false);
+    }
+  }, [editingTask, taskEvents, loggedUserId, setPendingCheckout, setLoaded]);
+  const handleSetPendingCheckout = useCallback(
+    (pendingCheckout: boolean) => () => setPendingCheckout(pendingCheckout),
+    [setPendingCheckout],
+  );
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
-    [departments],
+    [departments, loggedUserId],
   );
+  const isAssignedToAnyTask = useMemo(
+    () =>
+      tasks.some(
+        ({ externalCode, externalId }) =>
+          externalCode === 'user' && externalId === loggedUserId,
+      ),
+    [tasks, loggedUserId],
+  );
+  const hasEditRights = isAnyManager || isAssignedToAnyTask;
   const isOwner = useMemo(
     () =>
       editingTask &&
@@ -249,7 +350,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     }
   }, [pendingDelete, setPendingDelete]);
   const handleAddTask = useCallback(
-    (startDate: string) =>
+    (startDate: string) => {
+      if (!loggedUser || !event) return;
+      if (
+        !(
+          isAnyManager || event.departmentId === loggedUser.employeeDepartmentId
+        )
+      )
+        return;
       setEditingTask({
         ...new ProjectTask().toObject(),
         startDate,
@@ -258,8 +366,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         endTime: '10:00',
         statusId: 1,
         priorityId: 2,
-      }),
-    [setEditingTask],
+      });
+    },
+    [setEditingTask, loggedUser, event, isAnyManager],
   );
   const handleSetEditingProject = useCallback(
     (editingProject: boolean) => () => {
@@ -334,8 +443,9 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
     [
       {
         name: 'technicians',
-        label: 'Technicians',
+        label: 'Employees',
         type: 'technicians',
+        technicianAsEmployee: true,
       },
       {
         name: 'statusId',
@@ -361,7 +471,8 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         name: 'externalId',
         label: 'Assigned Employee',
         type: 'technician',
-        disabled: !isAnyManager,
+        disabled: !hasEditRights,
+        technicianAsEmployee: true,
       },
     ],
     [
@@ -369,7 +480,7 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
         name: 'briefDescription',
         label: 'Brief Description',
         multiline: true,
-        required: !isAnyManager,
+        required: !hasEditRights,
         disabled: !isOwner,
       },
     ],
@@ -471,13 +582,14 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               <div>Start date: {formatDate(event.dateStarted)}</div>
               <div>End date: {formatDate(event.dateEnded)}</div>
               <div>Job Number: {event.logJobNumber}</div>
+              <div>Description: {event.description}</div>
             </>
           ) : (
             'Loading...'
           )
         }
         actions={[
-          ...(isAnyManager
+          ...(hasEditRights
             ? [
                 {
                   label: 'Edit Project',
@@ -497,8 +609,24 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
               statusId: 1,
               priorityId: 2,
             }),
-            disabled: loading || loadingEvent,
+            disabled:
+              loading ||
+              loadingEvent ||
+              !event ||
+              !loggedUser ||
+              !(
+                isAnyManager ||
+                event.departmentId === loggedUser.employeeDepartmentId
+              ),
           },
+          ...(onClose
+            ? [
+                {
+                  label: 'Close',
+                  onClick: onClose,
+                },
+              ]
+            : []),
         ]}
         fixedActions
         actionsAndAsideContentResponsive
@@ -787,13 +915,12 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
                     status: statuses.find(({ id }) => id === statusId)
                       ?.description,
                     statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-                    statusId,
                     priority: priorities.find(({ id }) => id === priorityId)
                       ?.description,
                     priorityId,
                     assignee: ownerName,
                     onClick:
-                      creatorUserId === loggedUserId || isAnyManager
+                      creatorUserId === loggedUserId || hasEditRights
                         ? handleSetEditing({
                             ...task,
                             startDate,
@@ -838,13 +965,12 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
                     status: statuses.find(({ id }) => id === statusId)
                       ?.description,
                     statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-                    statusId,
                     priority: priorities.find(({ id }) => id === priorityId)
                       ?.description,
                     priorityId,
                     assignee: ownerName,
                     onClick:
-                      creatorUserId === loggedUserId || isAnyManager
+                      creatorUserId === loggedUserId || hasEditRights
                         ? handleSetEditing({
                             ...task,
                             startDate,
@@ -874,15 +1000,27 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             title={`${editingTask.id ? 'Edit' : 'Add'} Task`}
             error={errorTask}
           >
-            {editingTask.id > 0 && editingTask.creatorUserId === loggedUserId && (
-              <div className="EditProjectDelete">
+            <div className="EditProjectDelete">
+              {taskEventsLoaded && !isAnyManager && (
                 <Button
                   variant="outlined"
-                  label="Delete"
-                  onClick={handleSetPendingDelete(editingTask)}
+                  label={`Check ${
+                    taskEvents.length > 0 && taskEvents[0].timeFinished === ''
+                      ? 'Out'
+                      : 'In'
+                  }`}
+                  onClick={handleSetPendingCheckout(true)}
                 />
-              </div>
-            )}
+              )}
+              {editingTask.id > 0 &&
+                editingTask.creatorUserId === loggedUserId && (
+                  <Button
+                    variant="outlined"
+                    label="Delete"
+                    onClick={handleSetPendingDelete(editingTask)}
+                  />
+                )}
+            </div>
           </Form>
         </Modal>
       )}
@@ -906,6 +1044,27 @@ export const EditProject: FC<Props> = ({ serviceCallId, loggedUserId }) => {
             error={errorProject}
           />
         </Modal>
+      )}
+      {pendingCheckout && (
+        <Confirm
+          open
+          title={`Confirm Check ${
+            taskEvents.length > 0 && taskEvents[0].timeFinished === ''
+              ? 'Out'
+              : 'In'
+          }`}
+          onClose={handleSetPendingCheckout(false)}
+          onConfirm={handleCheckout}
+        >
+          {taskEvents.length > 0 && taskEvents[0].timeFinished === '' ? (
+            <div>Are you sure, you want to Check Out from this task?</div>
+          ) : (
+            <div>
+              Are you sure, you want to Check In and assign yourself to this
+              task?
+            </div>
+          )}
+        </Confirm>
       )}
     </div>
   );

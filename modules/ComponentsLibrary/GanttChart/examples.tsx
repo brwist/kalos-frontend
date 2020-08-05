@@ -1,6 +1,6 @@
 import React from 'react';
 import { GanttChart, CalendarEvent } from './';
-import { ExampleTitle } from '../helpers';
+import { ExampleTitle, getRandomPhone, getRandomName } from '../helpers';
 
 const EVENTS: CalendarEvent[] = [
   {
@@ -46,6 +46,32 @@ export default () => (
     <ExampleTitle>default</ExampleTitle>
     <GanttChart
       events={EVENTS}
+      startDate="2019-12-30"
+      endDate="2020-02-02"
+      onAdd={() => console.log('ADD')}
+    />
+    <ExampleTitle>withLabels</ExampleTitle>
+    <GanttChart
+      events={EVENTS.map(({ startHour, endHour, statusColor, ...props }) => ({
+        ...props,
+        label: getRandomPhone(),
+        subtitle: [...Array(5)].map(getRandomName).join(', '),
+      }))}
+      startDate="2019-12-30"
+      endDate="2020-02-02"
+      onAdd={() => console.log('ADD')}
+      withLabels
+    />
+    <ExampleTitle>with renderDetails</ExampleTitle>
+    <GanttChart
+      events={EVENTS.map(({ startHour, endHour, ...props }) => ({
+        ...props,
+        renderDetails: (
+          <strong>
+            <pre>{JSON.stringify(props, null, 2)}</pre>
+          </strong>
+        ),
+      }))}
       startDate="2019-12-30"
       endDate="2020-02-02"
       onAdd={() => console.log('ADD')}

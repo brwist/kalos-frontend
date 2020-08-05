@@ -1,6 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { TransactionUserView } from './components/view';
-import Grid from '@material-ui/core/Grid';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
 import { Loader } from '../Loader/main';

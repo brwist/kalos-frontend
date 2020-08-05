@@ -1,5 +1,4 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import { format } from 'date-fns';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
@@ -18,6 +17,7 @@ import {
   SpiffTypeType,
   SpiffReportLineType,
 } from '../../../helpers';
+import './styles.less';
 
 interface Props {
   date: string;
@@ -26,26 +26,11 @@ interface Props {
   onClose?: () => void;
 }
 
-const useStyles = makeStyles(theme => ({
-  content: {
-    paddingLeft: theme.spacing(),
-    paddingRight: theme.spacing(),
-  },
-  tableScreen: {
-    fontSize: 14,
-    marginBottom: theme.spacing(4),
-  },
-  table: {
-    marginBottom: theme.spacing(4),
-  },
-}));
-
 const SPIFF_TABLE_COLS = 6;
 const COLUMNS = [...Array(SPIFF_TABLE_COLS)].map(() => '');
 const FOOTER_HEIGHT = 45;
 
 export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
-  const classes = useStyles();
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [entries, setEntries] = useState<{
@@ -118,10 +103,10 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
             )}
           </PrintParagraph>
         )}
-        <div className={screen ? classes.content : ''}>
+        <div className={screen ? 'SpiffReportContent' : ''}>
           <PrintParagraph tag="h2">Incentive Breakdown</PrintParagraph>
           <PrintTable
-            className={screen ? classes.tableScreen : classes.table}
+            className={screen ? 'SpiffReportTableScreen' : 'SpiffReportTable'}
             columns={[
               'Detail',
               'Job #',

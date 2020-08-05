@@ -1,5 +1,4 @@
 import React, { FC, useState, useCallback } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
 import { SectionBar } from '../SectionBar';
 import { Form } from '../Form';
 import { Schema } from '../PlainForm';
@@ -29,6 +28,7 @@ import {
   NOTIFICATIONS_STATUS_TYPE_LIST,
   SPIFF_KIND_TYPE_LIST,
 } from '../../../constants';
+import './styles.less';
 
 export type FilterForm = {
   status?: string;
@@ -44,21 +44,6 @@ export type FilterForm = {
 export interface Props {
   loggedUserId: number;
 }
-
-const useStyles = makeStyles(theme => ({
-  wrapper: {
-    display: 'grid',
-    alignItems: 'flex-start',
-    gridGap: theme.spacing(),
-    [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1fr 1fr',
-    },
-    [theme.breakpoints.up('md')]: {
-      gridTemplateColumns: '1fr 1fr 1fr',
-      gridGap: theme.spacing(2),
-    },
-  },
-}));
 
 const DATES_ERROR = (
   <>
@@ -243,7 +228,6 @@ const getCurrWeek = () => {
   )}`;
 };
 export const Reports: FC<Props> = ({ loggedUserId }) => {
-  const classes = useStyles();
   const [jobStatusReport, setJobStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
@@ -610,7 +594,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     ],
   ];
   return (
-    <div className={classes.wrapper}>
+    <div className="ReportsWrapper">
       <Form
         title="Job Status Report"
         schema={SCHEMA_JOB_STATUS_REPORT}

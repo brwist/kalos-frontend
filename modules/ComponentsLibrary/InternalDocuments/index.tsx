@@ -5,7 +5,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data, Columns } from '../InfoTable';
-import { PlainForm, Schema, Option } from '../PlainForm';
+import { PlainForm, Schema } from '../PlainForm';
 import { Modal } from '../Modal';
 import { FileTags } from '../FileTags';
 import { Form } from '../Form';
@@ -23,6 +23,7 @@ import {
   upsertInternalDocument,
   deleteInternalDocumentById,
   deleteFileById,
+  uploadFileToS3Bucket,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -34,7 +35,7 @@ import './styles.less';
 
 const defaultFilter: InternalDocumentsFilter = { tag: -1 };
 
-export const InternalDocuments: FC = ({}) => {
+export const InternalDocuments: FC = () => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedFileTags, setLoadedFileTags] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -133,7 +134,11 @@ export const InternalDocuments: FC = ({}) => {
     async (data: InternalDocumentType) => {
       setEditing(undefined);
       setLoading(true);
-      // TODO upload documentFile into bucket
+      await uploadFileToS3Bucket(
+        data.filename,
+        documentFile,
+        INTERNAL_DOCUMENTS_BUCKET,
+      );
       await upsertInternalDocument(data);
       setLoaded(false);
     },

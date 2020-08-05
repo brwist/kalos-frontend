@@ -22,10 +22,11 @@ import './addServiceCall.less';
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   onClose?: () => void;
   onSave?: () => void;
+  asProject?: boolean;
 };
 
 export const AddServiceCall: FC<Props> = props => {
-  const { loggedUserId, onClose, onSave } = props;
+  const { loggedUserId, onClose, onSave, asProject = false } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [customerOpened, setCustomerOpened] = useState<UserType>();
   const [propertyOpened, setPropertyOpened] = useState<UserType>();
@@ -117,10 +118,11 @@ export const AddServiceCall: FC<Props> = props => {
     },
     [setCustomerOpened, setPropertyOpened],
   );
+  const title = asProject ? 'New Project' : 'New Service Call';
   return (
     <div>
       <SectionBar
-        title="New Service Call"
+        title={title}
         pagination={{
           count,
           rowsPerPage: ROWS_PER_PAGE,
@@ -182,7 +184,7 @@ export const AddServiceCall: FC<Props> = props => {
           <div className="AddServiceCallWrapper">
             <div className="AddServiceCallHeader">
               <SectionBar
-                title="New Service Call"
+                title={title}
                 actions={[{ label: 'Close', onClick: handleServiceCallClose }]}
                 fixedActions
               />
@@ -193,6 +195,8 @@ export const AddServiceCall: FC<Props> = props => {
                 userID={serviceCallOpened.userId}
                 loggedUserId={loggedUserId}
                 onSave={onSave}
+                asProject={asProject}
+                onClose={handleServiceCallClose}
               />
             </div>
           </div>
