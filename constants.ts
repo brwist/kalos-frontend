@@ -4,7 +4,8 @@ export const MEALS_RATE = 35;
 
 export const MAX_PAGES = 20;
 
-export const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
+export const APP_URL = 'https://app.kalosflorida.com/';
+export const BASE_URL = `${APP_URL}index.cfm`;
 
 export const OPTION_BLANK = '-- Select --';
 export const OPTION_ALL = '-- All --';
