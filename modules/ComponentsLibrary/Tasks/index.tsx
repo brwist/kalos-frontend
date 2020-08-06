@@ -9,6 +9,7 @@ import { ActionsProps } from '../Actions';
 import { Modal } from '../Modal';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
+import { PlainForm } from '../PlainForm';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import {
   TaskType,
@@ -24,7 +25,11 @@ import {
   formatDateTime,
   deletetSpiffTool,
 } from '../../../helpers';
-import { ROWS_PER_PAGE, PROJECT_TASK_STATUS_COLORS } from '../../../constants';
+import {
+  ROWS_PER_PAGE,
+  PROJECT_TASK_STATUS_COLORS,
+  OPTION_ALL,
+} from '../../../constants';
 
 type ExternalCode = 'customers' | 'employee' | 'properties';
 interface Props {
@@ -44,6 +49,12 @@ const COLUMNS: Columns = [
 ];
 
 export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
+  const searchInit = useMemo(() => {
+    const req = new Task();
+    req.setStatusId(0);
+    req.setPriorityId(0);
+    return req.toObject();
+  }, []);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [loadingInit, setLoadingInit] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -51,6 +62,7 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
   const [saving, setSaving] = useState<boolean>(false);
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
+  const [search, setSearch] = useState<TaskType>(searchInit);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [billableTypes, setBillableTypes] = useState<string[]>([]);
   const [count, setCount] = useState<number>(0);
@@ -76,15 +88,20 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
   ]);
   const load = useCallback(async () => {
     setLoading(true);
+    const { referenceNumber, priorityId, briefDescription, statusId } = search;
     const { resultsList, totalCount } = await loadTasks({
       pageNumber: page,
       externalCode,
       externalId,
+      referenceNumber,
+      priorityId,
+      briefDescription,
+      statusId,
     });
     setTasks(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, setTasks, setCount, externalId, externalCode, page]);
+  }, [setLoading, setTasks, setCount, externalId, externalCode, page, search]);
   useEffect(() => {
     if (!loadedInit) {
       loadInit();
@@ -127,11 +144,12 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     (pendingDelete?: TaskType) => () => setPendingDelete(pendingDelete),
     [setPendingDelete],
   );
+  const handleSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const newTask = useMemo(() => {
     const req = new Task();
     req.setTimeDue(timestamp());
-    req.setStatusId(1); // status New
-    req.setPriorityId(2); // priority Normal
+    req.setStatusId(1); // New
+    req.setPriorityId(2); // Normal
     return req.toObject();
   }, []);
   const statusesMap: { [key: number]: string } = useMemo(
@@ -211,7 +229,31 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     //   }
     // ]
   ];
-  console.log({ tasks, count });
+  const SCHEMA_SEARCH: Schema<TaskType> = [
+    [
+      {
+        name: 'referenceNumber',
+        label: 'Reference #',
+        type: 'search',
+      },
+      {
+        name: 'priorityId',
+        label: 'Proprity',
+        options: [{ label: OPTION_ALL, value: 0 }, ...priorityOptions],
+      },
+      {
+        name: 'briefDescription',
+        label: 'Description',
+        type: 'search',
+      },
+      {
+        name: 'statusId',
+        label: 'Status',
+        options: [{ label: OPTION_ALL, value: 0 }, ...statusOptions],
+        actions: [{ label: 'Search', onClick: handleSearch }],
+      },
+    ],
+  ];
   return (
     <>
       <div>
@@ -236,6 +278,7 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
             onChangePage: handlePageChange,
           }}
         />
+        <PlainForm schema={SCHEMA_SEARCH} data={search} onChange={setSearch} />
         <InfoTable
           columns={COLUMNS}
           data={
