@@ -108,6 +108,12 @@ export default () => (
       defaultValue="2020-03-02 00:00:00"
       type="date"
     />
+    <EnhancedField label="Time" defaultValue="21:35" type="time" />
+    <EnhancedField
+      label="Date/Time"
+      defaultValue="2020-03-02 21:35"
+      type="datetime"
+    />
     <EnhancedField label="Color Field" type="color" defaultValue="#19a629" />
     <EnhancedField
       label="File Field"
@@ -119,7 +125,6 @@ export default () => (
       defaultValue="2020-03-02 00:00:00"
       type="mui-date"
     />
-    <EnhancedField label="Time" defaultValue="21:35" type="time" />
     <EnhancedField
       label="Material Time"
       defaultValue="2020-03-02 21:35:00"
