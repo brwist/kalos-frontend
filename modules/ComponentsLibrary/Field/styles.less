@@ -142,6 +142,17 @@
       height: .spacing(2) [];
     }
   }
+  &DateTime {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    & > .Field {
+      width: calc(50% - .spacing() []);
+      &:first-of-type {
+        margin-right: .spacing(2) [];
+      }
+    }
+  }
 }
 
 input[type='color'] {
