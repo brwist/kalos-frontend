@@ -1,5 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
-import { Task } from '@kalos-core/kalos-rpc/Task';
+import { Task, SpiffType } from '@kalos-core/kalos-rpc/Task';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -9,7 +9,7 @@ import { ActionsProps } from '../Actions';
 import { Modal } from '../Modal';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
-import { PlainForm, SchemaProps } from '../PlainForm';
+import { PlainForm, SchemaProps, Option } from '../PlainForm';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import {
   TaskType,
@@ -24,6 +24,9 @@ import {
   upsertTask,
   formatDateTime,
   deletetSpiffTool,
+  loadSpiffTypes,
+  SpiffTypeType,
+  escapeText,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -72,6 +75,7 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [search, setSearch] = useState<TaskEdit>(searchInit);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const [billableTypes, setBillableTypes] = useState<string[]>([]);
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
@@ -82,9 +86,11 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     const priorities = await loadProjectTaskPriorities();
     const statuses = await loadProjectTaskStatuses();
     const billableTypes = await loadProjectTaskBillableTypes();
+    const spiffTypes = await loadSpiffTypes();
     setPriorities(priorities);
     setStatuses(statuses);
     setBillableTypes(billableTypes);
+    setSpiffTypes(spiffTypes);
     setLoadingInit(false);
     setLoadedInit(true);
   }, [
@@ -93,6 +99,7 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     setPriorities,
     setStatuses,
     setBillableTypes,
+    setSpiffTypes,
   ]);
   const load = useCallback(async () => {
     setLoading(true);
@@ -171,6 +178,14 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     req.setBillableType(OPTION_BLANK);
     return { ...req.toObject(), assignedTechnicians: '' };
   }, []);
+  const SPIFF_TYPES_OPTIONS: Option[] = useMemo(
+    () =>
+      spiffTypes.map(({ type, id: value }) => ({
+        label: escapeText(type),
+        value,
+      })),
+    [spiffTypes],
+  );
   const statusesMap: { [key: number]: string } = useMemo(
     () =>
       statuses.reduce(
@@ -344,7 +359,7 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
               name: 'assignedTechnicians',
               label: 'Task Assignments(s)',
               type: 'technicians',
-              // required: true, // FIXME
+              required: true,
             } as SchemaProps<TaskEdit>,
           ],
         ]),
@@ -373,8 +388,9 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
           ],
           [
             {
-              name: 'spiffToolId',
+              name: 'spiffTypeId',
               label: 'Spiff Type',
+              options: SPIFF_TYPES_OPTIONS,
             } as SchemaProps<TaskEdit>,
           ],
           [
