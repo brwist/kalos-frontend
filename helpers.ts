@@ -23,6 +23,10 @@ import {
   TaskPriority,
 } from '@kalos-core/kalos-rpc/Task';
 import {
+  TaskAssignment,
+  TaskAssignmentClient,
+} from '@kalos-core/kalos-rpc/TaskAssignment';
+import {
   ActivityLog,
   ActivityLogClient,
 } from '@kalos-core/kalos-rpc/ActivityLog';
@@ -131,7 +135,9 @@ export type TaskStatusType = TaskStatus.AsObject;
 export type TaskPriorityType = TaskPriority.AsObject;
 export type TransactionType = Transaction.AsObject;
 export type TaskEventType = TaskEvent.AsObject;
+export type TaskAssignmentType = TaskAssignment.AsObject;
 
+export const TaskAssignmentClientService = new TaskAssignmentClient(ENDPOINT);
 export const TaskEventClientService = new TaskEventClient(ENDPOINT);
 export const TransactionClientService = new TransactionClient(ENDPOINT);
 export const DocumentClientService = new DocumentClient(ENDPOINT);
@@ -784,6 +790,33 @@ export const upsertTask = async (data: Partial<TaskType>) => {
   }
   req.setFieldMaskList(fieldMaskList);
   await TaskClientService[data.id ? 'Update' : 'Create'](req);
+};
+
+export const loadTaskAssignment = async (taskId: number) => {
+  const req = new TaskAssignment();
+  req.setIsActive(1);
+  req.setTaskId(taskId);
+  const results: TaskAssignmentType[] = [];
+  const { resultsList, totalCount } = (
+    await TaskAssignmentClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await TaskAssignmentClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
 };
 
 export const updateSpiffTool = async (data: TaskType) => {

@@ -9,7 +9,7 @@ import { ActionsProps } from '../Actions';
 import { Modal } from '../Modal';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
-import { PlainForm } from '../PlainForm';
+import { PlainForm, SchemaProps } from '../PlainForm';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import {
   TaskType,
@@ -29,6 +29,7 @@ import {
   ROWS_PER_PAGE,
   PROJECT_TASK_STATUS_COLORS,
   OPTION_ALL,
+  OPTION_BLANK,
 } from '../../../constants';
 
 type ExternalCode = 'customers' | 'employee' | 'properties';
@@ -37,6 +38,10 @@ interface Props {
   externalId: number;
   onClose?: () => void;
 }
+
+type TaskEdit = Partial<TaskType> & {
+  assignedTechnicians: string;
+};
 
 const COLUMNS: Columns = [
   { name: 'Id' },
@@ -53,7 +58,10 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     const req = new Task();
     req.setStatusId(0);
     req.setPriorityId(0);
-    return req.toObject();
+    return {
+      ...req.toObject(),
+      assignedTechnicians: '',
+    };
   }, []);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [loadingInit, setLoadingInit] = useState<boolean>(false);
@@ -62,12 +70,12 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
   const [saving, setSaving] = useState<boolean>(false);
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
-  const [search, setSearch] = useState<TaskType>(searchInit);
+  const [search, setSearch] = useState<TaskEdit>(searchInit);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [billableTypes, setBillableTypes] = useState<string[]>([]);
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
-  const [pendingEdit, setPendingEdit] = useState<TaskType>();
+  const [pendingEdit, setPendingEdit] = useState<TaskEdit>();
   const [pendingDelete, setPendingDelete] = useState<TaskType>();
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
@@ -112,9 +120,19 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     }
   }, [loadInit, loadedInit, loaded, setLoaded, load]);
   const handleSave = useCallback(
-    async (data: TaskType) => {
+    async ({ assignedTechnicians, ...data }: TaskEdit) => {
       setSaving(true);
-      await upsertTask({ ...data, externalCode, externalId });
+      const saveData = { ...data, externalCode, externalId };
+      if (saveData.billableType === OPTION_BLANK) {
+        saveData.billableType = '';
+      }
+      if (!saveData.hasOwnProperty('priorityId')) {
+        saveData.priorityId = 2;
+      }
+      const technicians = assignedTechnicians
+        ? assignedTechnicians.split(',').map(id => +id)
+        : []; // TODO save technicians to TaskAssignment
+      await upsertTask(saveData);
       setSaving(false);
       setPendingEdit(undefined);
       setLoaded(false);
@@ -137,7 +155,7 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     [setPage, setLoading],
   );
   const handleSetPendingEdit = useCallback(
-    (pendingEdit?: TaskType) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: TaskEdit) => () => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
   const handleSetPendingDelete = useCallback(
@@ -150,7 +168,8 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     req.setTimeDue(timestamp());
     req.setStatusId(1); // New
     req.setPriorityId(2); // Normal
-    return req.toObject();
+    req.setBillableType(OPTION_BLANK);
+    return { ...req.toObject(), assignedTechnicians: '' };
   }, []);
   const statusesMap: { [key: number]: string } = useMemo(
     () =>
@@ -192,44 +211,202 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     if (externalCode === 'properties') return 'Property';
     return '';
   }, [externalCode]);
-  const SCHEMA_TASK: Schema<TaskType> = [
+  const SCHEMA_TASK: Schema<TaskEdit> = [
     [{ name: 'id', type: 'hidden' }],
-    [{ name: 'referenceNumber', label: 'Reference #' }],
-    [{ name: 'timeDue', label: 'Time Due', type: 'mui-datetime' }],
-    [{ name: 'briefDescription', label: 'Brief Description', multiline: true }],
-    [{ name: 'details', label: 'Details', multiline: true }],
-    [{ name: 'notes', label: 'Notes', multiline: true }],
-    [
-      {
-        name: 'statusId',
-        label: 'Status',
-        options: statusOptions,
-        required: true,
-      },
-    ],
-    [
-      {
-        name: 'priorityId',
-        label: 'Proprity',
-        options: priorityOptions,
-        required: true,
-      },
-    ],
     [
       {
         name: 'billableType',
         label: 'Task type',
-        options: billableTypes,
+        options: [OPTION_BLANK, ...billableTypes],
       },
     ],
-    // [ // FIXME
-    //   {
-    //     name:'',
-    //     label:'Task Assignments(s)',
-    //   }
-    // ]
+    [
+      {
+        name: 'billable',
+        label: 'Billable?',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'referenceNumber',
+        label:
+          pendingEdit && pendingEdit.billableType === 'Parts Run'
+            ? 'Job / Reference #'
+            : 'Reference #',
+      },
+    ],
+    ...(pendingEdit &&
+    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
+      ? []
+      : [
+          [
+            {
+              name: 'timeDue',
+              label: 'Time Due',
+              type: 'datetime',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]),
+    ...(pendingEdit && pendingEdit.billableType === 'Parts Run'
+      ? [
+          [
+            {
+              name: 'address',
+              label: 'Destination',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'orderNum',
+              label: 'Order #',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
+    [
+      {
+        name: 'briefDescription',
+        label: 'Brief Description',
+        multiline: true,
+      },
+    ],
+    ...(pendingEdit &&
+    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
+      ? []
+      : [
+          [
+            {
+              name: 'details',
+              label: 'Details',
+              multiline: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'notes',
+              label: 'Notes',
+              multiline: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'statusId',
+              label: 'Status',
+              options: statusOptions,
+              required: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'priorityId',
+              label: 'Proprity',
+              options: priorityOptions,
+              required: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]),
+    ...(pendingEdit && pendingEdit.billableType === 'Flat Rate'
+      ? [
+          [
+            {
+              name: 'flatRate',
+              label: 'Flat Rate',
+              startAdornment: '$',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
+    ...(pendingEdit && pendingEdit.billableType === 'Hourly'
+      ? [
+          [
+            {
+              name: 'hourlyStart',
+              label: 'Time Start',
+              type: 'datetime',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'hourlyEnd',
+              label: 'Time End',
+              type: 'datetime',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
+    ...(pendingEdit &&
+    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
+      ? []
+      : [
+          [
+            {
+              name: 'assignedTechnicians',
+              label: 'Task Assignments(s)',
+              type: 'technicians',
+              // required: true, // FIXME
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]),
+    ...(pendingEdit && pendingEdit.billableType === 'Spiff'
+      ? [
+          [
+            {
+              name: 'spiffAmount',
+              label: 'Spiff Amount',
+              type: 'number',
+              startAdornment: '$',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'spiffJobNumber',
+              label: 'Job #',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'datePerformed',
+              label: 'Date Performed',
+              type: 'date',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'spiffToolId',
+              label: 'Spiff Type',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'spiffAddress',
+              label: 'Address',
+              multiline: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
+    ...(pendingEdit && pendingEdit.billableType === 'Tool Purchase'
+      ? [
+          [
+            {
+              name: 'toolpurchaseDate',
+              label: 'Purchase Date',
+              type: 'date',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'toolpurchaseCost',
+              label: 'Tool Cost',
+              type: 'number',
+              startAdornment: '$',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
   ];
-  const SCHEMA_SEARCH: Schema<TaskType> = [
+  const SCHEMA_SEARCH: Schema<TaskEdit> = [
     [
       {
         name: 'referenceNumber',
@@ -254,6 +431,13 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
       },
     ],
   ];
+  const formKey = useMemo(
+    () =>
+      SCHEMA_TASK.reduce((aggr, item) => [...aggr, ...item], [])
+        .map(({ name }) => name)
+        .join('_'),
+    [SCHEMA_TASK],
+  );
   return (
     <>
       <div>
@@ -307,7 +491,10 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
                         <IconButton
                           key="edit"
                           size="small"
-                          onClick={handleSetPendingEdit(task)}
+                          onClick={handleSetPendingEdit({
+                            ...task,
+                            assignedTechnicians: '',
+                          })} // FIXME
                         >
                           <EditIcon />
                         </IconButton>,
@@ -329,9 +516,11 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
       {pendingEdit && (
         <Modal open onClose={handleSetPendingEdit()}>
           <Form
+            key={formKey}
             title={`${pendingEdit.id ? 'Edit' : 'Add'} ${typeTitle} Task`}
             onClose={handleSetPendingEdit()}
             onSave={handleSave}
+            onChange={setPendingEdit}
             schema={SCHEMA_TASK}
             data={pendingEdit}
             disabled={saving}
