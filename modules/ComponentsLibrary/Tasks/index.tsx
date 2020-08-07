@@ -1,5 +1,7 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
-import { Task, SpiffType } from '@kalos-core/kalos-rpc/Task';
+import { Task } from '@kalos-core/kalos-rpc/Task';
+import kebabCase from 'lodash/kebabCase';
+import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -11,6 +13,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
 import { PlainForm, SchemaProps, Option } from '../PlainForm';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
+import { Documents } from '../Documents';
 import {
   TaskType,
   loadTasks,
@@ -27,6 +30,12 @@ import {
   loadSpiffTypes,
   SpiffTypeType,
   escapeText,
+  refreshToken,
+  upsertTaskAssignments,
+  uploadFileToS3Bucket,
+  createTaskDocument,
+  DocumentType,
+  updateDocumentDescription,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -34,9 +43,11 @@ import {
   OPTION_ALL,
   OPTION_BLANK,
 } from '../../../constants';
+import './Tasks.less';
 
 type ExternalCode = 'customers' | 'employee' | 'properties';
 interface Props {
+  loggedUserId: number;
   externalCode: ExternalCode;
   externalId: number;
   onClose?: () => void;
@@ -56,7 +67,34 @@ const COLUMNS: Columns = [
   { name: 'Due' },
 ];
 
-export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
+type DocumentUplodad = {
+  filename: '';
+  description: '';
+};
+
+const SCHEMA_DOCUMENT_EDIT: Schema<DocumentType> = [
+  [
+    {
+      name: 'filename',
+      label: 'File',
+      readOnly: true,
+    },
+  ],
+  [
+    {
+      name: 'description',
+      label: 'Title/Description',
+      helperText: 'Keep as short/descriptive as possible',
+    },
+  ],
+];
+
+export const Tasks: FC<Props> = ({
+  externalCode,
+  externalId,
+  loggedUserId,
+  onClose,
+}) => {
   const searchInit = useMemo(() => {
     const req = new Task();
     req.setStatusId(0);
@@ -81,8 +119,13 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
   const [page, setPage] = useState<number>(0);
   const [pendingEdit, setPendingEdit] = useState<TaskEdit>();
   const [pendingDelete, setPendingDelete] = useState<TaskType>();
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadFailed, setUploadFailed] = useState<boolean>(false);
+  const [documentFile, setDocumentFile] = useState<string>('');
+  const [documentSaving, setDocumentSaving] = useState<boolean>(false);
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
+    await refreshToken();
     const priorities = await loadProjectTaskPriorities();
     const statuses = await loadProjectTaskStatuses();
     const billableTypes = await loadProjectTaskBillableTypes();
@@ -136,10 +179,11 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
       if (!saveData.hasOwnProperty('priorityId')) {
         saveData.priorityId = 2;
       }
-      const technicians = assignedTechnicians
+      const technicianIds = assignedTechnicians
         ? assignedTechnicians.split(',').map(id => +id)
-        : []; // TODO save technicians to TaskAssignment
-      await upsertTask(saveData);
+        : [];
+      const id = await upsertTask(saveData);
+      await upsertTaskAssignments(id, technicianIds); // FIXME resolve when task will return TaskAssigment[]
       setSaving(false);
       setPendingEdit(undefined);
       setLoaded(false);
@@ -178,6 +222,61 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     req.setBillableType(OPTION_BLANK);
     return { ...req.toObject(), assignedTechnicians: '' };
   }, []);
+  const handleDocumentUpload = useCallback(
+    (onClose, onReload) => async ({
+      filename,
+      description,
+    }: DocumentUplodad) => {
+      if (!pendingEdit || !pendingEdit.id) return;
+      setUploadFailed(false);
+      setUploading(true);
+      const ext = filename.split('.').pop();
+      const fileName =
+        kebabCase(
+          [
+            pendingEdit.id,
+            timestamp(true).split('-').reverse(),
+            description.trim() || filename.replace('.' + ext, ''),
+          ].join(' '),
+        ) +
+        '.' +
+        ext;
+      const status = await uploadFileToS3Bucket(
+        fileName,
+        documentFile,
+        'testbuckethelios', // FIXME is it correct bucket name for those docs?
+      );
+      if (status === 'ok') {
+        await createTaskDocument(
+          fileName,
+          pendingEdit.id,
+          loggedUserId,
+          description,
+        );
+        onClose();
+        onReload();
+        setUploading(false);
+      } else {
+        setUploadFailed(true);
+        setUploading(false);
+      }
+    },
+    [documentFile, loggedUserId, pendingEdit, setUploadFailed, setUploading],
+  );
+  const handleFileLoad = useCallback(file => setDocumentFile(file), [
+    setDocumentFile,
+  ]);
+  const handleDocumentUpdate = useCallback(
+    (onClose, onReload, { id }) => async (form: DocumentType) => {
+      setDocumentSaving(true);
+      const { description } = form;
+      await updateDocumentDescription(id, description);
+      setDocumentSaving(false);
+      onClose();
+      onReload();
+    },
+    [setDocumentSaving],
+  );
   const SPIFF_TYPES_OPTIONS: Option[] = useMemo(
     () =>
       spiffTypes.map(({ type, id: value }) => ({
@@ -447,6 +546,24 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
       },
     ],
   ];
+  const SCHEMA_DOCUMENT: Schema<DocumentUplodad> = [
+    [
+      {
+        name: 'filename',
+        label: 'File',
+        type: 'file',
+        required: true,
+        onFileLoad: handleFileLoad,
+      },
+    ],
+    [
+      {
+        name: 'description',
+        label: 'Title/Description',
+        helperText: 'Keep as short/descriptive as possible',
+      },
+    ],
+  ];
   const formKey = useMemo(
     () =>
       SCHEMA_TASK.reduce((aggr, item) => [...aggr, ...item], [])
@@ -531,16 +648,67 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
       </div>
       {pendingEdit && (
         <Modal open onClose={handleSetPendingEdit()}>
-          <Form
-            key={formKey}
-            title={`${pendingEdit.id ? 'Edit' : 'Add'} ${typeTitle} Task`}
-            onClose={handleSetPendingEdit()}
-            onSave={handleSave}
-            onChange={setPendingEdit}
-            schema={SCHEMA_TASK}
-            data={pendingEdit}
-            disabled={saving}
-          />
+          <div className="TasksEdit">
+            <div className="TasksEditForm">
+              <Form
+                key={formKey}
+                title={`${pendingEdit.id ? 'Edit' : 'Add'} ${typeTitle} Task`}
+                onClose={handleSetPendingEdit()}
+                onSave={handleSave}
+                onChange={setPendingEdit}
+                schema={SCHEMA_TASK}
+                data={pendingEdit}
+                disabled={saving}
+              />
+            </div>
+            {!!pendingEdit.id && (
+              <Documents
+                className="TasksEditDocuments"
+                title="Documents"
+                taskId={pendingEdit.id}
+                withDownloadIcon
+                withDateCreated
+                renderAdding={(onClose, onReload) => (
+                  <Form<DocumentUplodad>
+                    title="Add Document"
+                    onClose={onClose}
+                    onSave={handleDocumentUpload(onClose, onReload)}
+                    data={{
+                      filename: '',
+                      description: '',
+                    }}
+                    schema={SCHEMA_DOCUMENT}
+                    error={
+                      uploadFailed ? (
+                        <div>
+                          There was an error during file upload.
+                          <br />
+                          Please try again later or contact administrator.
+                        </div>
+                      ) : undefined
+                    }
+                    disabled={uploading}
+                  >
+                    {uploading && (
+                      <Typography className="SpiffToolLogEditUploading">
+                        Please wait, file is uploading...
+                      </Typography>
+                    )}
+                  </Form>
+                )}
+                renderEditing={(onClose, onReload, document) => (
+                  <Form<DocumentType>
+                    title="Edit Document"
+                    data={document}
+                    schema={SCHEMA_DOCUMENT_EDIT}
+                    onClose={onClose}
+                    onSave={handleDocumentUpdate(onClose, onReload, document)}
+                    disabled={documentSaving}
+                  />
+                )}
+              />
+            )}
+          </div>
         </Modal>
       )}
       {pendingDelete && (
