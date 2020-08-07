@@ -764,7 +764,7 @@ export const createTaskDocument = async (
   req.setTaskId(taskId);
   req.setUserId(userId);
   req.setDescription(description);
-  req.setType(5);
+  req.setType(5); // FIXME is 5 correct?
   await DocumentClientService.Create(req);
 };
 
@@ -789,7 +789,8 @@ export const upsertTask = async (data: Partial<TaskType>) => {
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
-  await TaskClientService[data.id ? 'Update' : 'Create'](req);
+  const { id } = await TaskClientService[data.id ? 'Update' : 'Create'](req);
+  return id;
 };
 
 export const loadTaskAssignment = async (taskId: number) => {
@@ -817,6 +818,23 @@ export const loadTaskAssignment = async (taskId: number) => {
     );
   }
   return results;
+};
+
+export const upsertTaskAssignments = async (
+  taskId: number,
+  technicianIds: number[],
+) => {
+  const req = new TaskAssignment();
+  req.setTaskId(taskId);
+  await TaskAssignmentClientService.Delete(req); // FIXME deleting by taskId doesn't work - resolve when task will return TaskAssignment[]
+  await Promise.all(
+    technicianIds.map(id => {
+      const req = new TaskAssignment();
+      req.setTaskId(taskId);
+      req.setUserId(id);
+      TaskAssignmentClientService.Create(req);
+    }),
+  );
 };
 
 export const updateSpiffTool = async (data: TaskType) => {
