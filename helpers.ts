@@ -23,6 +23,10 @@ import {
   TaskPriority,
 } from '@kalos-core/kalos-rpc/Task';
 import {
+  TaskAssignment,
+  TaskAssignmentClient,
+} from '@kalos-core/kalos-rpc/TaskAssignment';
+import {
   ActivityLog,
   ActivityLogClient,
 } from '@kalos-core/kalos-rpc/ActivityLog';
@@ -131,7 +135,9 @@ export type TaskStatusType = TaskStatus.AsObject;
 export type TaskPriorityType = TaskPriority.AsObject;
 export type TransactionType = Transaction.AsObject;
 export type TaskEventType = TaskEvent.AsObject;
+export type TaskAssignmentType = TaskAssignment.AsObject;
 
+export const TaskAssignmentClientService = new TaskAssignmentClient(ENDPOINT);
 export const TaskEventClientService = new TaskEventClient(ENDPOINT);
 export const TransactionClientService = new TransactionClient(ENDPOINT);
 export const DocumentClientService = new DocumentClient(ENDPOINT);
@@ -758,7 +764,7 @@ export const createTaskDocument = async (
   req.setTaskId(taskId);
   req.setUserId(userId);
   req.setDescription(description);
-  req.setType(5);
+  req.setType(5); // FIXME is 5 correct?
   await DocumentClientService.Create(req);
 };
 
@@ -783,7 +789,52 @@ export const upsertTask = async (data: Partial<TaskType>) => {
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
-  await TaskClientService[data.id ? 'Update' : 'Create'](req);
+  const { id } = await TaskClientService[data.id ? 'Update' : 'Create'](req);
+  return id;
+};
+
+export const loadTaskAssignment = async (taskId: number) => {
+  const req = new TaskAssignment();
+  req.setIsActive(1);
+  req.setTaskId(taskId);
+  const results: TaskAssignmentType[] = [];
+  const { resultsList, totalCount } = (
+    await TaskAssignmentClientService.BatchGet(req)
+  ).toObject();
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await TaskAssignmentClientService.BatchGet(req)).toObject()
+          .resultsList;
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
+};
+
+export const upsertTaskAssignments = async (
+  taskId: number,
+  technicianIds: number[],
+) => {
+  const req = new TaskAssignment();
+  req.setTaskId(taskId);
+  await TaskAssignmentClientService.Delete(req); // FIXME deleting by taskId doesn't work - resolve when task will return TaskAssignment[]
+  await Promise.all(
+    technicianIds.map(id => {
+      const req = new TaskAssignment();
+      req.setTaskId(taskId);
+      req.setUserId(id);
+      TaskAssignmentClientService.Create(req);
+    }),
+  );
 };
 
 export const updateSpiffTool = async (data: TaskType) => {

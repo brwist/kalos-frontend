@@ -1,5 +1,7 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import { Task } from '@kalos-core/kalos-rpc/Task';
+import kebabCase from 'lodash/kebabCase';
+import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -9,7 +11,9 @@ import { ActionsProps } from '../Actions';
 import { Modal } from '../Modal';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
+import { PlainForm, SchemaProps, Option } from '../PlainForm';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
+import { Documents } from '../Documents';
 import {
   TaskType,
   loadTasks,
@@ -23,15 +27,35 @@ import {
   upsertTask,
   formatDateTime,
   deletetSpiffTool,
+  loadSpiffTypes,
+  SpiffTypeType,
+  escapeText,
+  refreshToken,
+  upsertTaskAssignments,
+  uploadFileToS3Bucket,
+  createTaskDocument,
+  DocumentType,
+  updateDocumentDescription,
 } from '../../../helpers';
-import { ROWS_PER_PAGE, PROJECT_TASK_STATUS_COLORS } from '../../../constants';
+import {
+  ROWS_PER_PAGE,
+  PROJECT_TASK_STATUS_COLORS,
+  OPTION_ALL,
+  OPTION_BLANK,
+} from '../../../constants';
+import './Tasks.less';
 
 type ExternalCode = 'customers' | 'employee' | 'properties';
 interface Props {
+  loggedUserId: number;
   externalCode: ExternalCode;
   externalId: number;
   onClose?: () => void;
 }
+
+type TaskEdit = Partial<TaskType> & {
+  assignedTechnicians: string;
+};
 
 const COLUMNS: Columns = [
   { name: 'Id' },
@@ -43,7 +67,43 @@ const COLUMNS: Columns = [
   { name: 'Due' },
 ];
 
-export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
+type DocumentUplodad = {
+  filename: '';
+  description: '';
+};
+
+const SCHEMA_DOCUMENT_EDIT: Schema<DocumentType> = [
+  [
+    {
+      name: 'filename',
+      label: 'File',
+      readOnly: true,
+    },
+  ],
+  [
+    {
+      name: 'description',
+      label: 'Title/Description',
+      helperText: 'Keep as short/descriptive as possible',
+    },
+  ],
+];
+
+export const Tasks: FC<Props> = ({
+  externalCode,
+  externalId,
+  loggedUserId,
+  onClose,
+}) => {
+  const searchInit = useMemo(() => {
+    const req = new Task();
+    req.setStatusId(0);
+    req.setPriorityId(0);
+    return {
+      ...req.toObject(),
+      assignedTechnicians: '',
+    };
+  }, []);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [loadingInit, setLoadingInit] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -51,20 +111,29 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
   const [saving, setSaving] = useState<boolean>(false);
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
+  const [search, setSearch] = useState<TaskEdit>(searchInit);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const [billableTypes, setBillableTypes] = useState<string[]>([]);
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
-  const [pendingEdit, setPendingEdit] = useState<TaskType>();
+  const [pendingEdit, setPendingEdit] = useState<TaskEdit>();
   const [pendingDelete, setPendingDelete] = useState<TaskType>();
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadFailed, setUploadFailed] = useState<boolean>(false);
+  const [documentFile, setDocumentFile] = useState<string>('');
+  const [documentSaving, setDocumentSaving] = useState<boolean>(false);
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
+    await refreshToken();
     const priorities = await loadProjectTaskPriorities();
     const statuses = await loadProjectTaskStatuses();
     const billableTypes = await loadProjectTaskBillableTypes();
+    const spiffTypes = await loadSpiffTypes();
     setPriorities(priorities);
     setStatuses(statuses);
     setBillableTypes(billableTypes);
+    setSpiffTypes(spiffTypes);
     setLoadingInit(false);
     setLoadedInit(true);
   }, [
@@ -73,18 +142,24 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     setPriorities,
     setStatuses,
     setBillableTypes,
+    setSpiffTypes,
   ]);
   const load = useCallback(async () => {
     setLoading(true);
+    const { referenceNumber, priorityId, briefDescription, statusId } = search;
     const { resultsList, totalCount } = await loadTasks({
       pageNumber: page,
       externalCode,
       externalId,
+      referenceNumber,
+      priorityId,
+      briefDescription,
+      statusId,
     });
     setTasks(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, setTasks, setCount, externalId, externalCode, page]);
+  }, [setLoading, setTasks, setCount, externalId, externalCode, page, search]);
   useEffect(() => {
     if (!loadedInit) {
       loadInit();
@@ -95,9 +170,20 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     }
   }, [loadInit, loadedInit, loaded, setLoaded, load]);
   const handleSave = useCallback(
-    async (data: TaskType) => {
+    async ({ assignedTechnicians, ...data }: TaskEdit) => {
       setSaving(true);
-      await upsertTask({ ...data, externalCode, externalId });
+      const saveData = { ...data, externalCode, externalId };
+      if (saveData.billableType === OPTION_BLANK) {
+        saveData.billableType = '';
+      }
+      if (!saveData.hasOwnProperty('priorityId')) {
+        saveData.priorityId = 2;
+      }
+      const technicianIds = assignedTechnicians
+        ? assignedTechnicians.split(',').map(id => +id)
+        : [];
+      const id = await upsertTask(saveData);
+      await upsertTaskAssignments(id, technicianIds); // FIXME resolve when task will return TaskAssigment[]
       setSaving(false);
       setPendingEdit(undefined);
       setLoaded(false);
@@ -120,20 +206,85 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     [setPage, setLoading],
   );
   const handleSetPendingEdit = useCallback(
-    (pendingEdit?: TaskType) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: TaskEdit) => () => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
   const handleSetPendingDelete = useCallback(
     (pendingDelete?: TaskType) => () => setPendingDelete(pendingDelete),
     [setPendingDelete],
   );
+  const handleSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const newTask = useMemo(() => {
     const req = new Task();
     req.setTimeDue(timestamp());
-    req.setStatusId(1); // status New
-    req.setPriorityId(2); // priority Normal
-    return req.toObject();
+    req.setStatusId(1); // New
+    req.setPriorityId(2); // Normal
+    req.setBillableType(OPTION_BLANK);
+    return { ...req.toObject(), assignedTechnicians: '' };
   }, []);
+  const handleDocumentUpload = useCallback(
+    (onClose, onReload) => async ({
+      filename,
+      description,
+    }: DocumentUplodad) => {
+      if (!pendingEdit || !pendingEdit.id) return;
+      setUploadFailed(false);
+      setUploading(true);
+      const ext = filename.split('.').pop();
+      const fileName =
+        kebabCase(
+          [
+            pendingEdit.id,
+            timestamp(true).split('-').reverse(),
+            description.trim() || filename.replace('.' + ext, ''),
+          ].join(' '),
+        ) +
+        '.' +
+        ext;
+      const status = await uploadFileToS3Bucket(
+        fileName,
+        documentFile,
+        'testbuckethelios', // FIXME is it correct bucket name for those docs?
+      );
+      if (status === 'ok') {
+        await createTaskDocument(
+          fileName,
+          pendingEdit.id,
+          loggedUserId,
+          description,
+        );
+        onClose();
+        onReload();
+        setUploading(false);
+      } else {
+        setUploadFailed(true);
+        setUploading(false);
+      }
+    },
+    [documentFile, loggedUserId, pendingEdit, setUploadFailed, setUploading],
+  );
+  const handleFileLoad = useCallback(file => setDocumentFile(file), [
+    setDocumentFile,
+  ]);
+  const handleDocumentUpdate = useCallback(
+    (onClose, onReload, { id }) => async (form: DocumentType) => {
+      setDocumentSaving(true);
+      const { description } = form;
+      await updateDocumentDescription(id, description);
+      setDocumentSaving(false);
+      onClose();
+      onReload();
+    },
+    [setDocumentSaving],
+  );
+  const SPIFF_TYPES_OPTIONS: Option[] = useMemo(
+    () =>
+      spiffTypes.map(({ type, id: value }) => ({
+        label: escapeText(type),
+        value,
+      })),
+    [spiffTypes],
+  );
   const statusesMap: { [key: number]: string } = useMemo(
     () =>
       statuses.reduce(
@@ -174,44 +325,252 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
     if (externalCode === 'properties') return 'Property';
     return '';
   }, [externalCode]);
-  const SCHEMA_TASK: Schema<TaskType> = [
+  const SCHEMA_TASK: Schema<TaskEdit> = [
     [{ name: 'id', type: 'hidden' }],
-    [{ name: 'referenceNumber', label: 'Reference #' }],
-    [{ name: 'timeDue', label: 'Time Due', type: 'mui-datetime' }],
-    [{ name: 'briefDescription', label: 'Brief Description', multiline: true }],
-    [{ name: 'details', label: 'Details', multiline: true }],
-    [{ name: 'notes', label: 'Notes', multiline: true }],
-    [
-      {
-        name: 'statusId',
-        label: 'Status',
-        options: statusOptions,
-        required: true,
-      },
-    ],
-    [
-      {
-        name: 'priorityId',
-        label: 'Proprity',
-        options: priorityOptions,
-        required: true,
-      },
-    ],
     [
       {
         name: 'billableType',
         label: 'Task type',
-        options: billableTypes,
+        options: [OPTION_BLANK, ...billableTypes],
       },
     ],
-    // [ // FIXME
-    //   {
-    //     name:'',
-    //     label:'Task Assignments(s)',
-    //   }
-    // ]
+    [
+      {
+        name: 'billable',
+        label: 'Billable?',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'referenceNumber',
+        label:
+          pendingEdit && pendingEdit.billableType === 'Parts Run'
+            ? 'Job / Reference #'
+            : 'Reference #',
+      },
+    ],
+    ...(pendingEdit &&
+    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
+      ? []
+      : [
+          [
+            {
+              name: 'timeDue',
+              label: 'Time Due',
+              type: 'datetime',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]),
+    ...(pendingEdit && pendingEdit.billableType === 'Parts Run'
+      ? [
+          [
+            {
+              name: 'address',
+              label: 'Destination',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'orderNum',
+              label: 'Order #',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
+    [
+      {
+        name: 'briefDescription',
+        label: 'Brief Description',
+        multiline: true,
+      },
+    ],
+    ...(pendingEdit &&
+    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
+      ? []
+      : [
+          [
+            {
+              name: 'details',
+              label: 'Details',
+              multiline: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'notes',
+              label: 'Notes',
+              multiline: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'statusId',
+              label: 'Status',
+              options: statusOptions,
+              required: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'priorityId',
+              label: 'Proprity',
+              options: priorityOptions,
+              required: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]),
+    ...(pendingEdit && pendingEdit.billableType === 'Flat Rate'
+      ? [
+          [
+            {
+              name: 'flatRate',
+              label: 'Flat Rate',
+              startAdornment: '$',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
+    ...(pendingEdit && pendingEdit.billableType === 'Hourly'
+      ? [
+          [
+            {
+              name: 'hourlyStart',
+              label: 'Time Start',
+              type: 'datetime',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'hourlyEnd',
+              label: 'Time End',
+              type: 'datetime',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
+    ...(pendingEdit &&
+    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
+      ? []
+      : [
+          [
+            {
+              name: 'assignedTechnicians',
+              label: 'Task Assignments(s)',
+              type: 'technicians',
+              required: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]),
+    ...(pendingEdit && pendingEdit.billableType === 'Spiff'
+      ? [
+          [
+            {
+              name: 'spiffAmount',
+              label: 'Spiff Amount',
+              type: 'number',
+              startAdornment: '$',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'spiffJobNumber',
+              label: 'Job #',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'datePerformed',
+              label: 'Date Performed',
+              type: 'date',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'spiffTypeId',
+              label: 'Spiff Type',
+              options: SPIFF_TYPES_OPTIONS,
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'spiffAddress',
+              label: 'Address',
+              multiline: true,
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
+    ...(pendingEdit && pendingEdit.billableType === 'Tool Purchase'
+      ? [
+          [
+            {
+              name: 'toolpurchaseDate',
+              label: 'Purchase Date',
+              type: 'date',
+            } as SchemaProps<TaskEdit>,
+          ],
+          [
+            {
+              name: 'toolpurchaseCost',
+              label: 'Tool Cost',
+              type: 'number',
+              startAdornment: '$',
+            } as SchemaProps<TaskEdit>,
+          ],
+        ]
+      : []),
   ];
-  console.log({ tasks, count });
+  const SCHEMA_SEARCH: Schema<TaskEdit> = [
+    [
+      {
+        name: 'referenceNumber',
+        label: 'Reference #',
+        type: 'search',
+      },
+      {
+        name: 'priorityId',
+        label: 'Proprity',
+        options: [{ label: OPTION_ALL, value: 0 }, ...priorityOptions],
+      },
+      {
+        name: 'briefDescription',
+        label: 'Description',
+        type: 'search',
+      },
+      {
+        name: 'statusId',
+        label: 'Status',
+        options: [{ label: OPTION_ALL, value: 0 }, ...statusOptions],
+        actions: [{ label: 'Search', onClick: handleSearch }],
+      },
+    ],
+  ];
+  const SCHEMA_DOCUMENT: Schema<DocumentUplodad> = [
+    [
+      {
+        name: 'filename',
+        label: 'File',
+        type: 'file',
+        required: true,
+        onFileLoad: handleFileLoad,
+      },
+    ],
+    [
+      {
+        name: 'description',
+        label: 'Title/Description',
+        helperText: 'Keep as short/descriptive as possible',
+      },
+    ],
+  ];
+  const formKey = useMemo(
+    () =>
+      SCHEMA_TASK.reduce((aggr, item) => [...aggr, ...item], [])
+        .map(({ name }) => name)
+        .join('_'),
+    [SCHEMA_TASK],
+  );
   return (
     <>
       <div>
@@ -236,6 +595,7 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
             onChangePage: handlePageChange,
           }}
         />
+        <PlainForm schema={SCHEMA_SEARCH} data={search} onChange={setSearch} />
         <InfoTable
           columns={COLUMNS}
           data={
@@ -264,7 +624,10 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
                         <IconButton
                           key="edit"
                           size="small"
-                          onClick={handleSetPendingEdit(task)}
+                          onClick={handleSetPendingEdit({
+                            ...task,
+                            assignedTechnicians: '',
+                          })} // FIXME
                         >
                           <EditIcon />
                         </IconButton>,
@@ -285,14 +648,67 @@ export const Tasks: FC<Props> = ({ externalCode, externalId, onClose }) => {
       </div>
       {pendingEdit && (
         <Modal open onClose={handleSetPendingEdit()}>
-          <Form
-            title={`${pendingEdit.id ? 'Edit' : 'Add'} ${typeTitle} Task`}
-            onClose={handleSetPendingEdit()}
-            onSave={handleSave}
-            schema={SCHEMA_TASK}
-            data={pendingEdit}
-            disabled={saving}
-          />
+          <div className="TasksEdit">
+            <div className="TasksEditForm">
+              <Form
+                key={formKey}
+                title={`${pendingEdit.id ? 'Edit' : 'Add'} ${typeTitle} Task`}
+                onClose={handleSetPendingEdit()}
+                onSave={handleSave}
+                onChange={setPendingEdit}
+                schema={SCHEMA_TASK}
+                data={pendingEdit}
+                disabled={saving}
+              />
+            </div>
+            {!!pendingEdit.id && (
+              <Documents
+                className="TasksEditDocuments"
+                title="Documents"
+                taskId={pendingEdit.id}
+                withDownloadIcon
+                withDateCreated
+                renderAdding={(onClose, onReload) => (
+                  <Form<DocumentUplodad>
+                    title="Add Document"
+                    onClose={onClose}
+                    onSave={handleDocumentUpload(onClose, onReload)}
+                    data={{
+                      filename: '',
+                      description: '',
+                    }}
+                    schema={SCHEMA_DOCUMENT}
+                    error={
+                      uploadFailed ? (
+                        <div>
+                          There was an error during file upload.
+                          <br />
+                          Please try again later or contact administrator.
+                        </div>
+                      ) : undefined
+                    }
+                    disabled={uploading}
+                  >
+                    {uploading && (
+                      <Typography className="SpiffToolLogEditUploading">
+                        Please wait, file is uploading...
+                      </Typography>
+                    )}
+                  </Form>
+                )}
+                renderEditing={(onClose, onReload, document) => (
+                  <Form<DocumentType>
+                    title="Edit Document"
+                    data={document}
+                    schema={SCHEMA_DOCUMENT_EDIT}
+                    onClose={onClose}
+                    onSave={handleDocumentUpdate(onClose, onReload, document)}
+                    disabled={documentSaving}
+                  />
+                )}
+              />
+            )}
+          </div>
         </Modal>
       )}
       {pendingDelete && (

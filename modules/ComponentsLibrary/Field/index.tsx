@@ -68,6 +68,7 @@ export type Type =
   | 'checkbox'
   | 'date'
   | 'time'
+  | 'datetime'
   | 'mui-date'
   | 'mui-time'
   | 'mui-datetime'
@@ -107,6 +108,7 @@ export interface Props<T> extends SchemaProps<T> {
 export const getDefaultValueByType = (type: Type) => {
   if (type === 'number') return 0;
   if (type === 'time') return '00:00';
+  if (type === 'datetime') return '0000-00-00 00:00';
   if (type === 'checkbox') return 0;
   return '';
 };
@@ -250,6 +252,14 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     },
     [onChange],
   );
+  const handleDateTimeChange = useCallback(
+    (date, hour) => {
+      if (onChange) {
+        onChange(`${date} ${hour}`);
+      }
+    },
+    [onChange],
+  );
   const handleTimeChange = useCallback(
     (hour, minutes, ampm) => {
       if (onChange) {
@@ -347,6 +357,30 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             />
           </span>
         </div>
+      </div>
+    );
+  }
+  if (type === 'datetime') {
+    const { value } = props;
+    const [valDate, valHour] = String(
+      value || getDefaultValueByType('datetime'),
+    ).split(' ');
+    return (
+      <div className="FieldDateTime">
+        <Field
+          value={valDate}
+          name={`${name}_date`}
+          type="date"
+          label={label}
+          onChange={date => handleDateTimeChange(date, valHour)}
+          required={required} // FIXME
+        />
+        <Field
+          value={valHour}
+          name={`${name}_hour`}
+          type="time"
+          onChange={hour => handleDateTimeChange(valDate, hour)}
+        />
       </div>
     );
   }
