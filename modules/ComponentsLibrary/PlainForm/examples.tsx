@@ -23,6 +23,7 @@ export type Model = {
   coverImage: string;
   color: string;
   serviceCallId: number;
+  start: string;
 };
 
 export const model: Model = {
@@ -46,6 +47,7 @@ amet`,
   coverImage: '',
   color: '#9473f1',
   serviceCallId: 0,
+  start: '2020-04-24 19:30:00',
 };
 
 export const SCHEMA_1: Schema<Model> = [
@@ -216,6 +218,14 @@ export const SCHEMA_2: Schema<Model> = [
       name: 'technicians',
       label: 'Technicians',
       type: 'technicians',
+      required: true,
+    },
+  ],
+  [
+    {
+      name: 'start',
+      label: 'Start',
+      type: 'datetime',
       required: true,
     },
     {
