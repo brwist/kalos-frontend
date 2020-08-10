@@ -1,5 +1,6 @@
 import uniq from 'lodash/uniq';
 import sortBy from 'lodash/sortBy';
+import compact from 'lodash/compact';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
@@ -134,7 +135,7 @@ export type ProjectTaskType = ProjectTask.AsObject;
 export type TaskStatusType = TaskStatus.AsObject;
 export type TaskPriorityType = TaskPriority.AsObject;
 export type TransactionType = Transaction.AsObject;
-export type TaskEventType = TaskEvent.AsObject;
+export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
 export type TaskAssignmentType = TaskAssignment.AsObject;
 
 export const TaskAssignmentClientService = new TaskAssignmentClient(ENDPOINT);
@@ -2882,9 +2883,11 @@ export const loadGovPerDiem = async (
 export const loadTaskEventsByFilter = async ({
   id,
   technicianUserId,
+  withTechnicianNames = false,
 }: {
   id: number;
   technicianUserId?: number;
+  withTechnicianNames?: boolean;
 }) => {
   const req = new TaskEvent();
   req.setTaskId(id);
@@ -2913,6 +2916,17 @@ export const loadTaskEventsByFilter = async ({
       ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
     );
   }
+  if (withTechnicianNames) {
+    const technicianIds = uniq(
+      compact(results.map(({ technicianUserId }) => technicianUserId)),
+    );
+    const technicianNames = await loadUsersByIds(technicianIds);
+    results.forEach(result => {
+      result.technicianName = technicianNames[result.technicianUserId]
+        ? getCustomerName(technicianNames[result.technicianUserId])
+        : '';
+    });
+  }
   return results.sort((a, b) => {
     const A = a.timeStarted;
     const B = b.timeStarted;
@@ -2932,7 +2946,13 @@ export const upsertTaskEvent = async (data: Partial<TaskEventType>) => {
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
-  await TaskEventClientService[data.id ? 'Update' : 'Create'](req);
+  return await TaskEventClientService[data.id ? 'Update' : 'Create'](req);
+};
+
+export const deleteTaskEvent = async (id: number) => {
+  const req = new TaskEvent();
+  req.setId(id);
+  await TaskEventClientService.Delete(req);
 };
 
 interface IBugReport {
