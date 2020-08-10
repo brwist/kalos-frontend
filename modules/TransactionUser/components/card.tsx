@@ -1,4 +1,5 @@
 import * as React from 'react';
+import debounce from 'lodash/debounce';
 import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
 import {
@@ -28,6 +29,7 @@ import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { Field } from '../../ComponentsLibrary/Field';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Button } from '../../ComponentsLibrary/Button';
+import { NoteField } from './NoteField';
 import './card.css';
 
 interface props {
@@ -129,7 +131,8 @@ export class TxnCard extends React.PureComponent<props, state> {
       }
     };
   }
-  updateNotes = this.updateTransaction('notes');
+  updateNotes = (val: React.ReactText) =>
+    this.updateTransaction('notes')(val.toString());
   updateVendor = this.updateTransaction('vendor');
   updateCostCenterID = this.updateTransaction('costCenterId');
   updateDepartmentID = this.updateTransaction('departmentId');
@@ -392,10 +395,10 @@ export class TxnCard extends React.PureComponent<props, state> {
             selected={t.costCenterId}
             sort={costCenterSortByPopularity}
             filter={
-              !isManager ? (a) => ALLOWED_ACCOUNT_IDS.includes(a.id) : undefined
+              !isManager ? a => ALLOWED_ACCOUNT_IDS.includes(a.id) : undefined
             }
             hideInactive
-            renderItem={(i) => (
+            renderItem={i => (
               <option value={i.id} key={`${i.id}-${i.description}`}>
                 {i.description} ({i.id})
               </option>
@@ -404,26 +407,23 @@ export class TxnCard extends React.PureComponent<props, state> {
           <Field
             name="department"
             value={t.departmentId || this.props.userDepartmentID}
-            onChange={(val) => this.updateDepartmentID(+val)}
+            onChange={val => this.updateDepartmentID(+val)}
             type="department"
           />
           <Field
             name="jobNumber"
             label="Job Number"
             value={t.jobId}
-            onChange={(val) => this.handleJobNumber(+val)}
+            onChange={val => this.handleJobNumber(+val)}
             type="eventId"
             style={{
               alignItems: 'flex-start',
               flexGrow: 0,
             }}
           />
-          <Field
-            name="notes"
-            label="Notes"
-            value={t.notes}
-            onChange={(val) => this.updateNotes(val.toString())}
-            multiline
+          <NoteField
+            initialValue={t.notes}
+            onChange={debounce(this.updateNotes, 500)}
           />
         </div>
         <input
@@ -470,7 +470,7 @@ const ALLOWED_ACCOUNT_IDS = [
 ];
 
 function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
-  return txn.documentsList.map((d) => {
+  return txn.documentsList.map(d => {
     return {
       key: `${txn.id}-${d.reference}`,
       bucket: 'kalos-transactions',
