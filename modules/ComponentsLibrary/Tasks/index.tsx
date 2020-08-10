@@ -36,6 +36,10 @@ import {
   createTaskDocument,
   DocumentType,
   updateDocumentDescription,
+  upsertTaskEvent,
+  TaskEventType,
+  loadTaskEventsByFilter,
+  deleteTaskEvent,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -89,6 +93,23 @@ const SCHEMA_DOCUMENT_EDIT: Schema<DocumentType> = [
   ],
 ];
 
+const SCHEMA_TASK_EVENT: Schema<TaskEventType> = [
+  [
+    {
+      name: 'actionTaken',
+      label: 'Action Taken',
+      multiline: true,
+    },
+  ],
+  [
+    {
+      name: 'actionNeeded',
+      label: 'Action Needed',
+      multiline: true,
+    },
+  ],
+];
+
 export const Tasks: FC<Props> = ({
   externalCode,
   externalId,
@@ -123,6 +144,10 @@ export const Tasks: FC<Props> = ({
   const [uploadFailed, setUploadFailed] = useState<boolean>(false);
   const [documentFile, setDocumentFile] = useState<string>('');
   const [documentSaving, setDocumentSaving] = useState<boolean>(false);
+  const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
+  const [taskEventsLoading, setTaskEventsLoading] = useState<boolean>(false);
+  const [taskEventDeleting, setTaskEventDeleting] = useState<TaskEventType>();
+  const [taskEventEditing, setTaskEventEditing] = useState<TaskEventType>();
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
     await refreshToken();
@@ -205,9 +230,26 @@ export const Tasks: FC<Props> = ({
     },
     [setPage, setLoading],
   );
+  const loadTaskEvents = useCallback(
+    async (id: number) => {
+      setTaskEventsLoading(true);
+      const taskEvents = await loadTaskEventsByFilter({
+        id,
+        withTechnicianNames: true,
+      });
+      setTaskEvents(taskEvents);
+      setTaskEventsLoading(false);
+    },
+    [setTaskEventsLoading, setTaskEvents],
+  );
   const handleSetPendingEdit = useCallback(
-    (pendingEdit?: TaskEdit) => () => setPendingEdit(pendingEdit),
-    [setPendingEdit],
+    (pendingEdit?: TaskEdit) => async () => {
+      setPendingEdit(pendingEdit);
+      if (pendingEdit && pendingEdit.id) {
+        loadTaskEvents(pendingEdit.id);
+      }
+    },
+    [setPendingEdit, loadTaskEvents],
   );
   const handleSetPendingDelete = useCallback(
     (pendingDelete?: TaskType) => () => setPendingDelete(pendingDelete),
@@ -325,6 +367,55 @@ export const Tasks: FC<Props> = ({
     if (externalCode === 'properties') return 'Property';
     return '';
   }, [externalCode]);
+  const handleStartTaskAction = useCallback(async () => {
+    if (!pendingEdit || !pendingEdit.id) return;
+    const data: Partial<TaskEventType> = {
+      taskId: pendingEdit.id,
+      technicianUserId: loggedUserId,
+      timeStarted: timestamp(),
+      statusId: 2,
+    };
+    setTaskEventsLoading(true);
+    await upsertTaskEvent(data);
+    loadTaskEvents(pendingEdit.id);
+  }, [pendingEdit, loggedUserId, setTaskEventsLoading, loadTaskEvents]);
+  const handleSetTaskEventEditing = useCallback(
+    (taskEventEditing?: TaskEventType) => () =>
+      setTaskEventEditing(taskEventEditing),
+    [setTaskEventEditing],
+  );
+  const handleSetTaskEventDeleting = useCallback(
+    (taskEventDeleting?: TaskEventType) => () =>
+      setTaskEventDeleting(taskEventDeleting),
+    [setTaskEventDeleting],
+  );
+  const handleDeleteTaskEvent = useCallback(async () => {
+    if (!taskEventDeleting || !pendingEdit || !pendingEdit.id) return;
+    const { id } = taskEventDeleting;
+    setTaskEventDeleting(undefined);
+    await deleteTaskEvent(id);
+    loadTaskEvents(pendingEdit.id);
+  }, [taskEventDeleting, loadTaskEvents, pendingEdit]);
+  const handleSaveTaskEvent = useCallback(
+    async (formData: Partial<TaskEventType>) => {
+      if (!taskEventEditing || !pendingEdit || !pendingEdit.id) return;
+      const data: Partial<TaskEventType> = {
+        id: taskEventEditing.id,
+        ...formData,
+        statusId: 4,
+        ...(taskEventEditing.timeFinished
+          ? {}
+          : {
+              timeFinished: timestamp(),
+            }),
+      };
+      setTaskEventEditing(undefined);
+      setTaskEventsLoading(true);
+      await upsertTaskEvent(data);
+      loadTaskEvents(pendingEdit.id);
+    },
+    [taskEventEditing, pendingEdit, setTaskEventsLoading, loadTaskEvents],
+  );
   const SCHEMA_TASK: Schema<TaskEdit> = [
     [{ name: 'id', type: 'hidden' }],
     [
@@ -571,6 +662,7 @@ export const Tasks: FC<Props> = ({
         .join('_'),
     [SCHEMA_TASK],
   );
+  const isLastTaskEventStarted = taskEvents[0] && taskEvents[0].statusId === 2;
   return (
     <>
       <div>
@@ -647,7 +739,11 @@ export const Tasks: FC<Props> = ({
         />
       </div>
       {pendingEdit && (
-        <Modal open onClose={handleSetPendingEdit()}>
+        <Modal
+          open
+          onClose={handleSetPendingEdit()}
+          fullScreen={!!pendingEdit.id}
+        >
           <div className="TasksEdit">
             <div className="TasksEditForm">
               <Form
@@ -662,51 +758,153 @@ export const Tasks: FC<Props> = ({
               />
             </div>
             {!!pendingEdit.id && (
-              <Documents
-                className="TasksEditDocuments"
-                title="Documents"
-                taskId={pendingEdit.id}
-                withDownloadIcon
-                withDateCreated
-                renderAdding={(onClose, onReload) => (
-                  <Form<DocumentUplodad>
-                    title="Add Document"
-                    onClose={onClose}
-                    onSave={handleDocumentUpload(onClose, onReload)}
-                    data={{
-                      filename: '',
-                      description: '',
-                    }}
-                    schema={SCHEMA_DOCUMENT}
-                    error={
-                      uploadFailed ? (
-                        <div>
-                          There was an error during file upload.
-                          <br />
-                          Please try again later or contact administrator.
-                        </div>
-                      ) : undefined
-                    }
-                    disabled={uploading}
-                  >
-                    {uploading && (
-                      <Typography className="SpiffToolLogEditUploading">
-                        Please wait, file is uploading...
-                      </Typography>
-                    )}
-                  </Form>
-                )}
-                renderEditing={(onClose, onReload, document) => (
-                  <Form<DocumentType>
-                    title="Edit Document"
-                    data={document}
-                    schema={SCHEMA_DOCUMENT_EDIT}
-                    onClose={onClose}
-                    onSave={handleDocumentUpdate(onClose, onReload, document)}
-                    disabled={documentSaving}
-                  />
-                )}
-              />
+              <div className="TasksEditAside">
+                <SectionBar
+                  title="Task Actions"
+                  actions={
+                    taskEventsLoading
+                      ? []
+                      : [
+                          {
+                            label: isLastTaskEventStarted
+                              ? 'Completed'
+                              : 'Start',
+                            onClick: isLastTaskEventStarted
+                              ? handleSetTaskEventEditing(taskEvents[0])
+                              : handleStartTaskAction,
+                          },
+                        ]
+                  }
+                  fixedActions
+                />
+                <InfoTable
+                  columns={[
+                    { name: 'Started / Finished' },
+                    { name: 'Action Taken' },
+                    { name: 'Action Needed' },
+                    { name: 'Technician / Status' },
+                  ]}
+                  data={
+                    taskEventsLoading
+                      ? makeFakeRows(4, 3)
+                      : taskEvents.map(taskEvent => {
+                          const {
+                            timeStarted,
+                            timeFinished,
+                            technicianName,
+                            actionTaken,
+                            actionNeeded,
+                            statusId,
+                          } = taskEvent;
+                          return [
+                            {
+                              value: (
+                                <>
+                                  <div>
+                                    {timeStarted
+                                      ? formatDateTime(timeStarted)
+                                      : '-'}
+                                  </div>
+                                  <div>
+                                    {timeFinished
+                                      ? formatDateTime(timeFinished)
+                                      : '-'}
+                                  </div>
+                                </>
+                              ),
+                            },
+                            { value: actionTaken },
+                            { value: actionNeeded },
+                            {
+                              value: (
+                                <>
+                                  <div>{technicianName}</div>
+                                  <div
+                                    style={{
+                                      color: statusId === 2 ? 'red' : 'green',
+                                    }}
+                                  >
+                                    {statusId === 2
+                                      ? 'In Progress'
+                                      : 'Completed'}
+                                  </div>
+                                </>
+                              ),
+                              actions: [
+                                ...(statusId === 2
+                                  ? []
+                                  : [
+                                      <IconButton
+                                        key="edit"
+                                        size="small"
+                                        onClick={handleSetTaskEventEditing(
+                                          taskEvent,
+                                        )}
+                                      >
+                                        <EditIcon />
+                                      </IconButton>,
+                                    ]),
+                                <IconButton
+                                  key="delete"
+                                  size="small"
+                                  onClick={handleSetTaskEventDeleting(
+                                    taskEvent,
+                                  )}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>,
+                              ],
+                            },
+                          ];
+                        })
+                  }
+                  loading={taskEventsLoading}
+                />
+                <Documents
+                  title="Documents"
+                  taskId={pendingEdit.id}
+                  withDownloadIcon
+                  withDateCreated
+                  renderAdding={(onClose, onReload) => (
+                    <Form<DocumentUplodad>
+                      title="Add Document"
+                      onClose={onClose}
+                      onSave={handleDocumentUpload(onClose, onReload)}
+                      data={{
+                        filename: '',
+                        description: '',
+                      }}
+                      schema={SCHEMA_DOCUMENT}
+                      error={
+                        uploadFailed ? (
+                          <div>
+                            There was an error during file upload.
+                            <br />
+                            Please try again later or contact administrator.
+                          </div>
+                        ) : undefined
+                      }
+                      disabled={uploading}
+                    >
+                      {uploading && (
+                        <Typography className="SpiffToolLogEditUploading">
+                          Please wait, file is uploading...
+                        </Typography>
+                      )}
+                    </Form>
+                  )}
+                  renderEditing={(onClose, onReload, document) => (
+                    <Form<DocumentType>
+                      title="Edit Document"
+                      data={document}
+                      schema={SCHEMA_DOCUMENT_EDIT}
+                      onClose={onClose}
+                      onSave={handleDocumentUpdate(onClose, onReload, document)}
+                      disabled={documentSaving}
+                    />
+                  )}
+                />
+              </div>
             )}
           </div>
         </Modal>
@@ -719,6 +917,28 @@ export const Tasks: FC<Props> = ({
           name={`${pendingDelete.id}`}
           onConfirm={handleDelete}
         />
+      )}
+      {taskEventDeleting && (
+        <ConfirmDelete
+          open
+          onClose={handleSetTaskEventDeleting()}
+          kind="Task Action"
+          name={`started at ${formatDateTime(taskEventDeleting.timeStarted)}`}
+          onConfirm={handleDeleteTaskEvent}
+        />
+      )}
+      {taskEventEditing && (
+        <Modal open onClose={handleSetTaskEventEditing()}>
+          <Form
+            title={`${
+              taskEventEditing.timeFinished ? 'Edit' : 'Complete'
+            } Task Action`}
+            schema={SCHEMA_TASK_EVENT}
+            data={taskEventEditing}
+            onClose={handleSetTaskEventEditing()}
+            onSave={handleSaveTaskEvent}
+          />
+        </Modal>
       )}
     </>
   );

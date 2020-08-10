@@ -5,18 +5,17 @@
     display: flex;
     align-items: flex-start;
     &Form {
-      width: 100%;
+      width: 500px;
     }
-    &Documents {
-      @media @bp-md-up {
-        min-width: 700px;
-      }
-      @media @bp-sm-down {
-        width: 100vw;
-      }
+    &Aside {
+      flex-grow: 1;
+      width: 100%;
     }
     @media @bp-md-down {
       flex-direction: column;
+      &Form {
+        width: 100%;
+      }
     }
   }
 }
