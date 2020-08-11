@@ -45,6 +45,7 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
 
 interface Props {
   userID: number;
+  readOnly?: boolean;
   propertyId?: number;
   renderChildren?: (customer: UserType) => ReactNode;
   onClose?: () => void;
@@ -56,6 +57,7 @@ export const CustomerInformation: FC<Props> = ({
   renderChildren,
   onClose,
   children,
+  readOnly = false,
 }) => {
   const [customer, setCustomer] = useState<UserType>(new User().toObject());
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
@@ -209,23 +211,27 @@ export const CustomerInformation: FC<Props> = ({
       },
       { label: 'Email', value: email, href: 'mailto' },
     ],
-    [{ label: 'Billing Terms', value: billingTerms }],
-    [
-      {
-        label: 'Customer Notes',
-        value: notes,
-      },
-      { label: 'Internal Notes', value: intNotes },
-    ],
-    [
-      {
-        label: 'Groups',
-        value: groups
-          .filter(({ id }) => groupLinksInitialIds.includes(id))
-          .map(({ name }) => name)
-          .join(', '),
-      },
-    ],
+    ...(readOnly
+      ? []
+      : [
+          [{ label: 'Billing Terms', value: billingTerms }],
+          [
+            {
+              label: 'Customer Notes',
+              value: notes,
+            },
+            { label: 'Internal Notes', value: intNotes },
+          ],
+          [
+            {
+              label: 'Groups',
+              value: groups
+                .filter(({ id }) => groupLinksInitialIds.includes(id))
+                .map(({ name }) => name)
+                .join(', '),
+            },
+          ],
+        ]),
   ];
   const systemData: Data = [
     [
@@ -259,67 +265,73 @@ export const CustomerInformation: FC<Props> = ({
         <div className="CustomerInformationCustomerInformation">
           <SectionBar
             title="Customer Information"
-            actions={[
-              {
-                label: 'Calendar',
-                url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
-              },
-              {
-                label: 'Call History',
-                url: `/index.cfm?action=admin:customers.listPhoneCallLogs&code=customers&id=${userID}`,
-              },
-              {
-                label: 'Tasks',
-                url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
-              },
-              {
-                label: notification ? 'Notification' : 'Add Notification',
-                onClick: notification
-                  ? handleSetNotificationViewing(true)
-                  : handleSetNotificationEditing(true),
-              },
-              {
-                label: 'Edit',
-                onClick: handleToggleEditing,
-              },
-              {
-                label: 'Delete',
-                onClick: handleSetDeleting(true),
-              },
-              ...(onClose
-                ? [
+            actions={
+              readOnly
+                ? []
+                : [
                     {
-                      label: 'Close',
-                      onClick: onClose,
+                      label: 'Calendar',
+                      url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
                     },
+                    {
+                      label: 'Call History',
+                      url: `/index.cfm?action=admin:customers.listPhoneCallLogs&code=customers&id=${userID}`,
+                    },
+                    {
+                      label: 'Tasks',
+                      url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
+                    },
+                    {
+                      label: notification ? 'Notification' : 'Add Notification',
+                      onClick: notification
+                        ? handleSetNotificationViewing(true)
+                        : handleSetNotificationEditing(true),
+                    },
+                    {
+                      label: 'Edit',
+                      onClick: handleToggleEditing,
+                    },
+                    {
+                      label: 'Delete',
+                      onClick: handleSetDeleting(true),
+                    },
+                    ...(onClose
+                      ? [
+                          {
+                            label: 'Close',
+                            onClick: onClose,
+                          },
+                        ]
+                      : []),
                   ]
-                : []),
-            ]}
+            }
           >
             <InfoTable data={data} loading={id === 0} error={error} />
           </SectionBar>
         </div>
-        <div className="CustomerInformationAsidePanel">
-          <SectionBar title="System Information">
-            <InfoTable data={systemData} loading={id === 0} error={error} />
-          </SectionBar>
-          {isPendingBilling && (
-            <SectionBar
-              title="Pending Billing"
-              className="CustomerInformationPendingBilling"
-              actions={[
-                {
-                  label: 'View',
-                  url: [
-                    '/index.cfm?action=admin:properties.customerpendingbilling',
-                    `user_id=${userID}`,
-                    `property_id=${propertyId}`,
-                  ].join('&'),
-                },
-              ]}
-            />
-          )}
-        </div>
+        {!readOnly && (
+          <div className="CustomerInformationAsidePanel">
+            <SectionBar title="System Information">
+              <InfoTable data={systemData} loading={id === 0} error={error} />
+            </SectionBar>
+            {isPendingBilling && (
+              <SectionBar
+                title="Pending Billing"
+                className="CustomerInformationPendingBilling"
+                actions={[
+                  {
+                    label: 'View',
+                    url: [
+                      '/index.cfm?action=admin:properties.customerpendingbilling',
+                      `user_id=${userID}`,
+                      `property_id=${propertyId}`,
+                    ].join('&'),
+                  },
+                ]}
+              />
+            )}
+          </div>
+        )}
       </div>
       {renderChildren && renderChildren(customer)}
       {children}

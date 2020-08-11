@@ -2081,6 +2081,7 @@ export type PropertiesFilter = {
   address?: string;
   city?: string;
   zip?: string;
+  userId?: number;
 };
 /**
  * Returns Properties by filter
@@ -2105,7 +2106,7 @@ export const loadPropertiesByFilter = async ({
     if (value) {
       const { methodName } = getRPCFields(fieldName);
       //@ts-ignore
-      req[methodName](`%${value}%`);
+      req[methodName](typeof value === 'string' ? `%${value}%` : value);
     }
   }
   const response = await PropertyClientService.BatchGet(req);
