@@ -98,6 +98,9 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
               ) {
                 validations[name as string] = 'This field is required.';
               }
+              if (type === 'eventId' && typeof formData[name] === 'string') {
+                validations[name as string] = 'Invalid Service Call ID.';
+              }
             }
           });
       });
