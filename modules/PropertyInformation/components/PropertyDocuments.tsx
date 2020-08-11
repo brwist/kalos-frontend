@@ -7,23 +7,29 @@ interface Props {
   className?: string;
   userID: number;
   propertyId: number;
+  viewedAsCustomer?: boolean;
 }
 
 export const PropertyDocuments: FC<Props> = ({
   className,
   userID,
   propertyId,
+  viewedAsCustomer = false,
 }) => (
   <Documents
     className={className}
     title="Property Documents"
     userId={userID}
     propertyId={propertyId}
-    addUrl={[
-      '/index.cfm?action=admin:properties.docaddS3',
-      `user_id=${userID}`,
-      `property_id=${propertyId}`,
-    ].join('&')}
+    addUrl={
+      viewedAsCustomer
+        ? undefined
+        : [
+            '/index.cfm?action=admin:properties.docaddS3',
+            `user_id=${userID}`,
+            `property_id=${propertyId}`,
+          ].join('&')
+    }
     actions={({ id }) => [
       <IconButton
         key={0}

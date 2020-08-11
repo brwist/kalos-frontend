@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { FC } from 'react';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
+import StylesProvider from '@material-ui/styles/StylesProvider';
+import customTheme from '../Theme/main';
+import {
+  CustomerAccountDashboard,
+  Props,
+} from '../ComponentsLibrary/CustomerAccountDashboard';
 
-interface props {
-  userId: number;
-}
-
-interface state {}
-
-export class CustomerDirectory extends React.PureComponent<props, state> {
-  constructor(props: props) {
-    super(props);
-  }
-  render() {
-    return <h1>CustomerDirectory!</h1>;
-  }
-}
+export const CustomerDirectory: FC<Props> = props => (
+  <StylesProvider injectFirst>
+    <ThemeProvider theme={customTheme.lightTheme}>
+      <CustomerAccountDashboard {...props} />
+    </ThemeProvider>
+  </StylesProvider>
+);
