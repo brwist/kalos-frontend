@@ -24,6 +24,7 @@ import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
 import ConfirmService from './ConfirmService/examples';
 import CustomControls from './CustomControls/examples';
+import CustomerAccountDashboard from './CustomerAccountDashboard/examples';
 import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import DeletedServiceCallsReport from './DeletedServiceCallsReport/examples';
@@ -101,6 +102,7 @@ const COMPONENTS = {
   ConfirmDelete,
   ConfirmService,
   CustomControls,
+  CustomerAccountDashboard,
   CustomerEdit,
   CustomerInformation,
   DeletedServiceCallsReport,
