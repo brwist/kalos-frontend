@@ -9,7 +9,7 @@ export interface Props {
 export const CustomerAccountDashboard: FC<Props> = ({ loggedUserId }) => {
   return (
     <div>
-      <CustomerInformation userID={loggedUserId} readOnly />
+      <CustomerInformation userID={loggedUserId} viewedAsCustomer />
       <AdvancedSearch
         kinds={['properties']}
         loggedUserId={loggedUserId}

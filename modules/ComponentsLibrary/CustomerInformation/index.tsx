@@ -45,7 +45,7 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
 
 interface Props {
   userID: number;
-  readOnly?: boolean;
+  viewedAsCustomer?: boolean;
   propertyId?: number;
   renderChildren?: (customer: UserType) => ReactNode;
   onClose?: () => void;
@@ -57,7 +57,7 @@ export const CustomerInformation: FC<Props> = ({
   renderChildren,
   onClose,
   children,
-  readOnly = false,
+  viewedAsCustomer = false,
 }) => {
   const [customer, setCustomer] = useState<UserType>(new User().toObject());
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
@@ -163,10 +163,10 @@ export const CustomerInformation: FC<Props> = ({
     if (!customer.id) {
       load();
     }
-    if (!readOnly && customer.notification !== '') {
+    if (!viewedAsCustomer && customer.notification !== '') {
       setNotificationViewing(true);
     }
-  }, [customer, load, setNotificationViewing, readOnly]);
+  }, [customer, load, setNotificationViewing, viewedAsCustomer]);
 
   const {
     id,
@@ -211,7 +211,7 @@ export const CustomerInformation: FC<Props> = ({
       },
       { label: 'Email', value: email, href: 'mailto' },
     ],
-    ...(readOnly
+    ...(viewedAsCustomer
       ? []
       : [
           [{ label: 'Billing Terms', value: billingTerms }],
@@ -266,7 +266,7 @@ export const CustomerInformation: FC<Props> = ({
           <SectionBar
             title="Customer Information"
             actions={
-              readOnly
+              viewedAsCustomer
                 ? []
                 : [
                     {
@@ -309,7 +309,7 @@ export const CustomerInformation: FC<Props> = ({
             <InfoTable data={data} loading={id === 0} error={error} />
           </SectionBar>
         </div>
-        {!readOnly && (
+        {!viewedAsCustomer && (
           <div className="CustomerInformationAsidePanel">
             <SectionBar title="System Information">
               <InfoTable data={systemData} loading={id === 0} error={error} />
