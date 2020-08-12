@@ -21,6 +21,7 @@ export const PropertyDocuments: FC<Props> = ({
     title="Property Documents"
     userId={userID}
     propertyId={propertyId}
+    deletable={false}
     addUrl={
       viewedAsCustomer
         ? undefined
@@ -30,23 +31,27 @@ export const PropertyDocuments: FC<Props> = ({
             `property_id=${propertyId}`,
           ].join('&')
     }
-    actions={({ id }) => [
-      <IconButton
-        key={0}
-        style={{ marginLeft: 4 }}
-        size="small"
-        onClick={() => {
-          document.location.href = [
-            '/index.cfm?action=admin:properties.docemail',
-            `user_id=${userID}`,
-            `document_id=${id}`,
-            `property_id=${propertyId}`,
-            `p=2`,
-          ].join('&');
-        }}
-      >
-        <MailIcon />
-      </IconButton>,
-    ]}
+    actions={
+      viewedAsCustomer
+        ? undefined
+        : ({ id }) => [
+            <IconButton
+              key={0}
+              style={{ marginLeft: 4 }}
+              size="small"
+              onClick={() => {
+                document.location.href = [
+                  '/index.cfm?action=admin:properties.docemail',
+                  `user_id=${userID}`,
+                  `document_id=${id}`,
+                  `property_id=${propertyId}`,
+                  `p=2`,
+                ].join('&');
+              }}
+            >
+              <MailIcon />
+            </IconButton>,
+          ]
+    }
   />
 );

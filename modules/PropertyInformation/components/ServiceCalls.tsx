@@ -19,6 +19,7 @@ interface Props {
   className?: string;
   userID: number;
   propertyId: number;
+  viewedAsCustomer?: boolean;
 }
 
 interface State {
@@ -140,7 +141,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
   };
 
   handleRowClick = (id: number) => () => {
-    const { userID, propertyId } = this.props;
+    const { userID, propertyId, viewedAsCustomer } = this.props;
     window.location.href = [
       '/index.cfm?action=admin:service.editServiceCall',
       `id=${id}`,
@@ -159,7 +160,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       setDeleting,
       handleDelete,
     } = this;
-    const { userID, propertyId, className } = props;
+    const { userID, propertyId, className, viewedAsCustomer = false } = props;
     const {
       entries,
       loading,
@@ -223,7 +224,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 formatTime(timeStarted) +
                 ' - ' +
                 formatTime(timeEnded),
-              onClick: handleRowClick(id),
+              onClick: viewedAsCustomer ? undefined : handleRowClick(id),
             },
             {
               value: (
@@ -241,29 +242,31 @@ export class ServiceCalls extends PureComponent<Props, State> {
                   {logJobStatus}
                 </>
               ),
-              onClick: handleRowClick(id),
+              onClick: viewedAsCustomer ? undefined : handleRowClick(id),
             },
             {
               value: jobType + (jobSubtype ? ' / ' + jobSubtype : ''),
-              onClick: handleRowClick(id),
+              onClick: viewedAsCustomer ? undefined : handleRowClick(id),
             },
             {
               value: logJobNumber,
-              onClick: handleRowClick(id),
+              onClick: viewedAsCustomer ? undefined : handleRowClick(id),
             },
             {
               value: contractNumber,
-              actions: [
-                <IconButton
-                  key={2}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={setDeleting(entry)}
-                >
-                  <DeleteIcon />
-                </IconButton>,
-              ],
-              onClick: handleRowClick(id),
+              actions: viewedAsCustomer
+                ? undefined
+                : [
+                    <IconButton
+                      key={2}
+                      style={{ marginLeft: 4 }}
+                      size="small"
+                      onClick={setDeleting(entry)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>,
+                  ],
+              onClick: viewedAsCustomer ? undefined : handleRowClick(id),
             },
           ];
         });
@@ -294,8 +297,6 @@ export class ServiceCalls extends PureComponent<Props, State> {
             data={data}
             loading={loading}
             error={error}
-            compact
-            hoverable
           />
         </SectionBar>
         {deletingEntry && (
