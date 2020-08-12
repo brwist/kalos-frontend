@@ -19,6 +19,7 @@ interface Props {
   userId: number;
   propertyId?: number;
   property?: PropertyType;
+  viewedAsCustomer?: boolean;
 }
 
 export const PropertyEdit: FC<Props> = ({
@@ -27,6 +28,7 @@ export const PropertyEdit: FC<Props> = ({
   userId,
   propertyId: _propertyId = 0,
   property: _property,
+  viewedAsCustomer = false,
 }) => {
   const [propertyId, setPropertyId] = useState<number>(_propertyId);
   const [saving, setSaving] = useState<boolean>(false);
@@ -77,18 +79,34 @@ export const PropertyEdit: FC<Props> = ({
     [userId, propertyId, onSave, setSaving, setPropertyId],
   );
   const SCHEMA_PROPERTY_INFORMATION: Schema<PropertyType> = [
-    [{ label: 'Personal Details', headline: true, description: PROP_LEVEL }],
-    [
-      { label: 'First Name', name: 'firstname' },
-      { label: 'Last Name', name: 'lastname' },
-      { label: 'Business Name', name: 'businessname' },
-    ],
-    [{ label: 'Contact Details', headline: true, description: PROP_LEVEL }],
-    [
-      { label: 'Primary Phone', name: 'phone' },
-      { label: 'Alternate Phone', name: 'altphone' },
-      { label: 'Email', name: 'email' },
-    ],
+    ...(viewedAsCustomer
+      ? []
+      : ([
+          [
+            {
+              label: 'Personal Details',
+              headline: true,
+              description: PROP_LEVEL,
+            },
+          ],
+          [
+            { label: 'First Name', name: 'firstname' },
+            { label: 'Last Name', name: 'lastname' },
+            { label: 'Business Name', name: 'businessname' },
+          ],
+          [
+            {
+              label: 'Contact Details',
+              headline: true,
+              description: PROP_LEVEL,
+            },
+          ],
+          [
+            { label: 'Primary Phone', name: 'phone' },
+            { label: 'Alternate Phone', name: 'altphone' },
+            { label: 'Email', name: 'email' },
+          ],
+        ] as Schema<PropertyType>)),
     [{ label: 'Address Details', headline: true }],
     [
       { label: 'Address', name: 'address', required: true, multiline: true },
@@ -105,27 +123,37 @@ export const PropertyEdit: FC<Props> = ({
       {
         label: 'Location Details',
         headline: true,
-        actions: [
-          {
-            label: 'Check Location',
-            compact: true,
-            onClick: handleCheckLocation,
-            disabled: saving,
-            variant: 'outlined',
-            size: 'xsmall',
-          },
-        ],
+        actions: viewedAsCustomer
+          ? undefined
+          : [
+              {
+                label: 'Check Location',
+                compact: true,
+                onClick: handleCheckLocation,
+                disabled: saving,
+                variant: 'outlined',
+                size: 'xsmall',
+              },
+            ],
       },
     ],
     [
       { label: 'Directions', name: 'directions', multiline: true },
       { label: 'Subdivision', name: 'subdivision' },
     ],
-    [
-      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL_OPTIONS },
-      { label: 'Latitude', name: 'geolocationLat', type: 'number' },
-      { label: 'Longitude', name: 'geolocationLng', type: 'number' },
-    ],
+    ...(viewedAsCustomer
+      ? []
+      : ([
+          [
+            {
+              label: 'Zoning',
+              name: 'isResidential',
+              options: RESIDENTIAL_OPTIONS,
+            },
+            { label: 'Latitude', name: 'geolocationLat', type: 'number' },
+            { label: 'Longitude', name: 'geolocationLng', type: 'number' },
+          ],
+        ] as Schema<PropertyType>)),
     [{ label: 'Notes', headline: true }],
     [{ label: 'Notes', name: 'notes', multiline: true }],
   ];

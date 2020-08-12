@@ -1,5 +1,6 @@
 export default {
   id: 104456,
+  eventId: 104456,
   externalId: 101253,
   externalCode: 'user',
   referenceNumber: '',
@@ -12,7 +13,7 @@ export default {
   statusId: 1,
   priorityId: 2,
   referenceUrl: '',
-  isActive: 1,
+  isActive: true,
   billable: 0,
   billableType: 'Tool Purchase',
   flatRate: 0,

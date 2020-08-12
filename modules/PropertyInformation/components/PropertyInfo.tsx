@@ -251,15 +251,19 @@ export const PropertyInfo: FC<Props> = props => {
       </>
     );
   const data: Data = [
-    [
-      { label: 'Name', value: `${firstname} ${lastname}` },
-      { label: 'Business Name', value: businessname },
-    ],
-    [
-      { label: 'Primary Phone', value: phone, href: 'tel' },
-      { label: 'Alternate Phone', value: altphone, href: 'tel' },
-    ],
-    [{ label: 'Email', value: email, href: 'mailto' }],
+    ...(viewedAsCustomer
+      ? []
+      : ([
+          [
+            { label: 'Name', value: `${firstname} ${lastname}` },
+            { label: 'Business Name', value: businessname },
+          ],
+          [
+            { label: 'Primary Phone', value: phone, href: 'tel' },
+            { label: 'Alternate Phone', value: altphone, href: 'tel' },
+          ],
+          [{ label: 'Email', value: email, href: 'mailto' }],
+        ] as Data)),
     [
       {
         label: 'Address',
@@ -363,6 +367,7 @@ export const PropertyInfo: FC<Props> = props => {
             setNotificationEditing(false);
           }}
           property={entry}
+          viewedAsCustomer
         />
       </Modal>
       <Modal
