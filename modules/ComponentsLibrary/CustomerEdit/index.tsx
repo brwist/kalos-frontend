@@ -19,91 +19,6 @@ import {
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
 import './styles.less';
 
-const SCHEMA: Schema<UserType> = [
-  [{ label: 'Personal Details', headline: true }],
-  [
-    { label: 'First Name', name: 'firstname', required: true },
-    { label: 'Last Name', name: 'lastname', required: true },
-    { label: 'Business Name', name: 'businessname', multiline: true },
-  ],
-  [{ label: 'Contact Details', headline: true }],
-  [
-    { label: 'Primary Phone', name: 'phone' },
-    { label: 'Alternate Phone', name: 'altphone' },
-    { label: 'Cell Phone', name: 'cellphone' },
-  ],
-  [
-    { label: 'Email', name: 'email', required: true },
-
-    {
-      label: 'Alternate Email(s)',
-      name: 'altEmail',
-      helperText: 'Separate multiple email addresses w/comma',
-    },
-    {
-      label: 'Wishes to receive promotional emails',
-      name: 'receiveemail',
-      type: 'checkbox',
-    },
-  ],
-  [{ label: 'Address Details', headline: true }],
-  [
-    { label: 'Bulling Address', name: 'address', multiline: true },
-    { label: 'Billing City', name: 'city' },
-    { label: 'Billing State', name: 'state', options: USA_STATES_OPTIONS },
-    { label: 'Billing Zip Code', name: 'zip' },
-  ],
-  [{ label: 'Billing Details', headline: true }],
-  [
-    {
-      label: 'Billing Terms',
-      name: 'billingTerms',
-      options: BILLING_TERMS_OPTIONS,
-    },
-    {
-      label: 'Discount',
-      name: 'discount',
-      required: true,
-      type: 'number',
-      endAdornment: '%',
-    },
-    {
-      label: 'Rebate',
-      name: 'rebate',
-      required: true,
-      type: 'number',
-      endAdornment: '%',
-    },
-  ],
-  [{ label: 'Notes', headline: true }],
-  [
-    {
-      label: 'Customer notes',
-      name: 'notes',
-      helperText: 'Visible to customer',
-      multiline: true,
-    },
-    {
-      label: 'Internal Notes',
-      name: 'intNotes',
-      helperText: 'NOT visible to customer',
-      multiline: true,
-    },
-  ],
-  // {label:'Who recommended us?', name:''}, // TODO
-  [{ label: 'Login details', headline: true }],
-  [
-    {
-      label: 'Login',
-      name: 'login',
-      required: true,
-      helperText:
-        'NOTE: If they have an email address, their login ID will automatically be their email address.',
-    },
-    { label: 'Password', name: 'pwd', type: 'password' },
-  ],
-];
-
 interface Props {
   onSave?: (data: UserType) => void;
   onClose: () => void;
@@ -111,6 +26,7 @@ interface Props {
   customer?: UserType;
   groups?: GroupType[];
   groupLinks?: UserGroupLinkType[];
+  viewedAsCustomer?: boolean;
 }
 
 export const CustomerEdit: FC<Props> = ({
@@ -120,6 +36,7 @@ export const CustomerEdit: FC<Props> = ({
   customer: _customer,
   groups: _groups,
   groupLinks: _groupLinks,
+  viewedAsCustomer = false,
 }) => {
   const [userId, setUserId] = useState<number>(_userId);
   const [formKey, setFormKey] = useState<number>(0);
@@ -173,6 +90,102 @@ export const CustomerEdit: FC<Props> = ({
       load();
     }
   }, [loaded, setLoaded, load]);
+  const SCHEMA: Schema<UserType> = [
+    [{ label: 'Personal Details', headline: true }],
+    [
+      { label: 'First Name', name: 'firstname', required: true },
+      { label: 'Last Name', name: 'lastname', required: true },
+      { label: 'Business Name', name: 'businessname', multiline: true },
+    ],
+    [{ label: 'Contact Details', headline: true }],
+    [
+      { label: 'Primary Phone', name: 'phone' },
+      { label: 'Alternate Phone', name: 'altphone' },
+      { label: 'Cell Phone', name: 'cellphone' },
+    ],
+    [
+      { label: 'Email', name: 'email', required: true },
+
+      {
+        label: 'Alternate Email(s)',
+        name: 'altEmail',
+        helperText: 'Separate multiple email addresses w/comma',
+      },
+      {
+        label: 'Wishes to receive promotional emails',
+        name: 'receiveemail',
+        type: 'checkbox',
+      },
+    ],
+    [{ label: 'Address Details', headline: true }],
+    [
+      { label: 'Bulling Address', name: 'address', multiline: true },
+      { label: 'Billing City', name: 'city' },
+      { label: 'Billing State', name: 'state', options: USA_STATES_OPTIONS },
+      { label: 'Billing Zip Code', name: 'zip' },
+    ],
+    ...(viewedAsCustomer
+      ? []
+      : ([
+          [{ label: 'Billing Details', headline: true }],
+          [
+            {
+              label: 'Billing Terms',
+              name: 'billingTerms',
+              options: BILLING_TERMS_OPTIONS,
+            },
+            {
+              label: 'Discount',
+              name: 'discount',
+              required: true,
+              type: 'number',
+              endAdornment: '%',
+            },
+            {
+              label: 'Rebate',
+              name: 'rebate',
+              required: true,
+              type: 'number',
+              endAdornment: '%',
+            },
+          ],
+        ] as Schema<UserType>)),
+    [{ label: 'Notes', headline: true }],
+    [
+      {
+        label: viewedAsCustomer ? 'Additional Notes' : 'Customer Notes',
+        name: 'notes',
+        helperText: viewedAsCustomer ? '' : 'Visible to customer',
+        multiline: true,
+      },
+      ...(viewedAsCustomer
+        ? []
+        : [
+            {
+              label: 'Internal Notes',
+              name: 'intNotes' as const,
+              helperText: 'NOT visible to customer',
+              multiline: true,
+            },
+          ]),
+    ],
+    // {label:'Who recommended us?', name:''}, // TODO
+    ...(viewedAsCustomer
+      ? []
+      : ([
+          [{ label: 'Login details', headline: true }],
+          [
+            {
+              label: 'Login',
+              name: 'login',
+              required: true,
+              helperText:
+                'NOTE: If they have an email address, their login ID will automatically be their email address.',
+            },
+            { label: 'Password', name: 'pwd', type: 'password' },
+          ],
+        ] as Schema<UserType>)),
+  ];
   const saveGroupLinks = useCallback(
     async (
       groupLinks: UserGroupLinkType[],
@@ -248,29 +261,31 @@ export const CustomerEdit: FC<Props> = ({
         disabled={saving || loading}
         className="CustomerEditForm"
       />
-      <div className="CustomerEditGroups">
-        <SectionBar title="Groups" />
-        {loading ? (
-          <InfoTable data={makeFakeRows(1, 8)} loading />
-        ) : (
-          <div className="CustomerEditGroupLinks">
-            {groups.map(({ id, name }) => (
-              <div key={id} className="CustomerEditGroup">
-                <Field
-                  label={name}
-                  type="checkbox"
-                  onChange={handleChangeLinkGroup(id)}
-                  value={
-                    groupLinks.find(({ groupId }) => groupId === id) ? 1 : 0
-                  }
-                  name={`group_${id}`}
-                  disabled={saving}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {!viewedAsCustomer && (
+        <div className="CustomerEditGroups">
+          <SectionBar title="Groups" />
+          {loading ? (
+            <InfoTable data={makeFakeRows(1, 8)} loading />
+          ) : (
+            <div className="CustomerEditGroupLinks">
+              {groups.map(({ id, name }) => (
+                <div key={id} className="CustomerEditGroup">
+                  <Field
+                    label={name}
+                    type="checkbox"
+                    onChange={handleChangeLinkGroup(id)}
+                    value={
+                      groupLinks.find(({ groupId }) => groupId === id) ? 1 : 0
+                    }
+                    name={`group_${id}`}
+                    disabled={saving}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
