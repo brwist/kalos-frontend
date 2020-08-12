@@ -351,7 +351,7 @@ export const PropertyInfo: FC<Props> = props => {
           >
             <InfoTable data={data} loading={loading} error={error} />
           </SectionBar>
-          {!viewedAsCustomer && <ServiceItems {...props} />}
+          <ServiceItems {...props} />
         </div>
         <PropertyDocuments className="PropertyInfoDocuments" {...props} />
       </div>
