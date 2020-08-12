@@ -15,6 +15,7 @@ export const CustomerAccountDashboard: FC<Props> = ({ loggedUserId }) => {
         loggedUserId={loggedUserId}
         title="Properties"
         propertyCustomerId={loggedUserId}
+        editableProperties
       />
     </div>
   );

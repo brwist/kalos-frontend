@@ -1,5 +1,6 @@
 export default {
   id: 104483,
+  eventId: 104483,
   externalId: 101253,
   externalCode: 'user',
   referenceNumber: '13541',
@@ -12,7 +13,7 @@ export default {
   statusId: 1,
   priorityId: 2,
   referenceUrl: 'http://test.com',
-  isActive: 1,
+  isActive: true,
   billable: 0,
   billableType: 'Spiff',
   flatRate: 0,

@@ -1079,13 +1079,13 @@ export const AdvancedSearch: FC<Props> = ({
   const SCHEMA_PROPERTIES: Schema<PropertiesFilter> = [
     [
       {
-        name: 'subdivision',
-        label: 'Subdivision',
+        name: 'address',
+        label: 'Address',
         type: 'search',
       },
       {
-        name: 'address',
-        label: 'Address',
+        name: 'subdivision',
+        label: 'Subdivision',
         type: 'search',
       },
       {
@@ -2062,17 +2062,14 @@ export const AdvancedSearch: FC<Props> = ({
         </Modal>
       )}
       {pendingPropertyEditing && (
-        <Modal
-          open
-          onClose={handlePendingPropertyEditingToggle(undefined)}
-          fullScreen
-        >
+        <Modal open onClose={handlePendingPropertyEditingToggle(undefined)}>
           <PropertyEdit
             userId={pendingPropertyEditing.userId}
             propertyId={pendingPropertyEditing.id}
             property={pendingPropertyEditing}
             onSave={onSaveProperty}
             onClose={handlePendingPropertyEditingToggle(undefined)}
+            viewedAsCustomer={!!propertyCustomerId}
           />
         </Modal>
       )}
@@ -2082,6 +2079,7 @@ export const AdvancedSearch: FC<Props> = ({
             userId={propertyCustomerId}
             onSave={onSaveProperty}
             onClose={handleTogglePendingAddProperty(false)}
+            viewedAsCustomer
           />
         </Modal>
       )}
