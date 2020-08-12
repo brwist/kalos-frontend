@@ -11,6 +11,7 @@ import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { CustomerEdit } from '../CustomerEdit';
+import { Documents } from '../Documents';
 import {
   formatDateTime,
   UserType,
@@ -21,6 +22,7 @@ import {
   GroupType,
   UserGroupLinkType,
   UserClientService,
+  getPropertyAddress,
 } from '../../../helpers';
 import './styles.less';
 
@@ -70,6 +72,7 @@ export const CustomerInformation: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [documentsOpened, setDocumentsOpened] = useState<boolean>(false);
   const [notificationEditing, setNotificationEditing] = useState<boolean>(
     false,
   );
@@ -100,7 +103,7 @@ export const CustomerInformation: FC<Props> = ({
     entry.setId(userID);
     entry.setIsActive(1);
     try {
-      const customer = await loadUserById(userID);
+      const customer = await loadUserById(userID, viewedAsCustomer);
       setCustomer(customer);
     } catch (e) {
       setError(true);
@@ -113,6 +116,7 @@ export const CustomerInformation: FC<Props> = ({
     setGroupLinks,
     setGroupLinksInitial,
     setGroups,
+    viewedAsCustomer,
   ]);
 
   const handleToggleEditing = useCallback(() => {
@@ -121,6 +125,11 @@ export const CustomerInformation: FC<Props> = ({
       setGroupLinks(groupLinksInitial);
     }
   }, [editing, setEditing, setGroupLinks, groupLinksInitial]);
+
+  const handleToggleDocuments = useCallback(
+    () => setDocumentsOpened(!documentsOpened),
+    [setDocumentsOpened, documentsOpened],
+  );
 
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
@@ -272,6 +281,10 @@ export const CustomerInformation: FC<Props> = ({
                       label: 'Edit',
                       onClick: handleToggleEditing,
                     },
+                    {
+                      label: 'Documents',
+                      onClick: handleToggleDocuments,
+                    },
                     ...(onClose
                       ? [
                           {
@@ -416,6 +429,23 @@ export const CustomerInformation: FC<Props> = ({
         kind="Customer"
         name={`${firstname} ${lastname}`}
       />
+      <Modal open={documentsOpened} onClose={handleToggleDocuments}>
+        <SectionBar
+          title="Documents"
+          actions={[{ label: 'Close', onClick: handleToggleDocuments }]}
+          fixedActions
+        />
+        {customer.propertiesList
+          .filter(({ isActive }) => !!isActive)
+          .map(prop => (
+            <Documents
+              key={prop.id}
+              title={getPropertyAddress(prop)}
+              propertyId={prop.id}
+              deletable={false}
+            />
+          ))}
+      </Modal>
     </>
   );
 };

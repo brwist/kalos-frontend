@@ -1213,10 +1213,13 @@ async function loadPropertyById(id: number) {
  * @param id: user id
  * @returns User
  */
-async function loadUserById(id: number) {
+async function loadUserById(id: number, withProperties?: boolean) {
   try {
     const req = new User();
     req.setId(id);
+    if (withProperties) {
+      req.setWithProperties(true);
+    }
     return await UserClientService.Get(req);
   } catch (err) {
     console.log('Failed to fetch user with id', id, err);
@@ -1240,7 +1243,7 @@ async function loadUsersByIds(ids: number[]) {
       uniqueIds.push(id);
     }
   });
-  const users = await Promise.all(uniqueIds.map(loadUserById));
+  const users = await Promise.all(uniqueIds.map(id => loadUserById(id)));
   return users.reduce((aggr, user) => ({ ...aggr, [user.id]: user }), {}) as {
     [key: number]: UserType;
   };
