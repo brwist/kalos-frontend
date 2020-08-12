@@ -7,7 +7,7 @@ type Entry = {
   userID: number;
   propertyId: string;
   withChildren: boolean;
-  readOnly: boolean;
+  viewedAsCustomer: boolean;
 };
 
 const SCHEMA: Schema<Entry> = [
@@ -15,7 +15,7 @@ const SCHEMA: Schema<Entry> = [
     { label: 'User ID', name: 'userID' },
     { label: 'Property ID', name: 'propertyId' },
     { label: 'With Children', name: 'withChildren', type: 'checkbox' },
-    { label: 'Read Only', name: 'readOnly', type: 'checkbox' },
+    { label: 'Viewed as Customer', name: 'viewedAsCustomer', type: 'checkbox' },
   ],
 ];
 
@@ -23,17 +23,17 @@ export default () => {
   const [userID, setUserID] = useState<number>(2573);
   const [propertyId, setPropertyId] = useState<string>('6552');
   const [withChildren, setWithChildren] = useState<boolean>(true);
-  const [readOnly, setReadonly] = useState<boolean>(false);
-  const data: Entry = { userID, propertyId, withChildren, readOnly };
+  const [viewedAsCustomer, setViewedAsCustomer] = useState<boolean>(false);
+  const data: Entry = { userID, propertyId, withChildren, viewedAsCustomer };
   const handleChange = useCallback(
     (data: Entry) => {
-      const { userID, propertyId, withChildren, readOnly } = data;
+      const { userID, propertyId, withChildren, viewedAsCustomer } = data;
       setUserID(userID);
       setPropertyId(propertyId);
       setWithChildren(+withChildren === 1);
-      setReadonly(+readOnly === 1);
+      setViewedAsCustomer(+viewedAsCustomer === 1);
     },
-    [setUserID, setPropertyId, setWithChildren],
+    [setUserID, setPropertyId, setWithChildren, setViewedAsCustomer],
   );
   return (
     <>
@@ -45,7 +45,7 @@ export default () => {
         userID={userID}
         propertyId={+propertyId}
         onClose={() => console.log('CLOSE')}
-        readOnly={readOnly}
+        viewedAsCustomer={viewedAsCustomer}
       >
         {withChildren && <LoremIpsumList />}
       </CustomerInformation>
