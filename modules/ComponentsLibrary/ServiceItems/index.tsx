@@ -724,6 +724,7 @@ export const ServiceItems: FC<Props> = props => {
             title={entries.find(({ id }) => id === linkId)?.type}
             serviceItemId={linkId}
             onClose={handleSetLinkId(undefined)}
+            viewedAsCustomer={viewedAsCustomer}
           />
         </Modal>
       )}
