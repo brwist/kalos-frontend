@@ -44,6 +44,7 @@ interface Props {
   ) => ReactNode;
   withDateCreated?: boolean;
   withDownloadIcon?: boolean;
+  deletable?: boolean;
 }
 
 export const Documents: FC<Props> = ({
@@ -58,6 +59,7 @@ export const Documents: FC<Props> = ({
   renderEditing,
   withDateCreated = false,
   withDownloadIcon = false,
+  deletable = true,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -220,14 +222,18 @@ export const Documents: FC<Props> = ({
                     </IconButton>,
                   ]
                 : []),
-              <IconButton
-                key="delete"
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={handleSetDeleting(entry)}
-              >
-                <DeleteIcon />
-              </IconButton>,
+              ...(deletable
+                ? [
+                    <IconButton
+                      key="delete"
+                      style={{ marginLeft: 4 }}
+                      size="small"
+                      onClick={handleSetDeleting(entry)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>,
+                  ]
+                : []),
             ],
           },
         ];
