@@ -160,10 +160,10 @@ export const PropertyInfo: FC<Props> = props => {
     if (!entry.id) {
       load();
     }
-    if (entry.notification !== '') {
+    if (!viewedAsCustomer && entry.notification !== '') {
       setNotificationViewing(true);
     }
-  }, [entry, load, setNotificationViewing]);
+  }, [entry, load, setNotificationViewing, viewedAsCustomer]);
 
   const handleSave = useCallback(
     async (data: PropertyType) => {
