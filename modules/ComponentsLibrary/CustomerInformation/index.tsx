@@ -163,10 +163,10 @@ export const CustomerInformation: FC<Props> = ({
     if (!customer.id) {
       load();
     }
-    if (customer.notification !== '') {
+    if (!readOnly && customer.notification !== '') {
       setNotificationViewing(true);
     }
-  }, [customer, load, setNotificationViewing]);
+  }, [customer, load, setNotificationViewing, readOnly]);
 
   const {
     id,
