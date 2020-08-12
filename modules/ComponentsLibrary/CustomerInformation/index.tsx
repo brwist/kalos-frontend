@@ -267,7 +267,20 @@ export const CustomerInformation: FC<Props> = ({
             title="Customer Information"
             actions={
               viewedAsCustomer
-                ? []
+                ? [
+                    {
+                      label: 'Edit',
+                      onClick: handleToggleEditing,
+                    },
+                    ...(onClose
+                      ? [
+                          {
+                            label: 'Close',
+                            onClick: onClose,
+                          },
+                        ]
+                      : []),
+                  ]
                 : [
                     {
                       label: 'Calendar',
@@ -347,6 +360,7 @@ export const CustomerInformation: FC<Props> = ({
           customer={customer}
           groups={groups}
           groupLinks={groupLinks}
+          viewedAsCustomer={viewedAsCustomer}
         />
       </Modal>
       <Modal
