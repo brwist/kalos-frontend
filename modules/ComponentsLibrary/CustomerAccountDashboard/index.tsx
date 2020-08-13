@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { CustomerInformation } from '../CustomerInformation';
 import { AdvancedSearch } from '../AdvancedSearch';
+import { ServiceCalls } from '../../PropertyInformation/components/ServiceCalls';
 
 export interface Props {
   loggedUserId: number;
@@ -17,6 +18,7 @@ export const CustomerAccountDashboard: FC<Props> = ({ loggedUserId }) => {
         propertyCustomerId={loggedUserId}
         editableProperties
       />
+      <ServiceCalls userID={loggedUserId} viewedAsCustomer />
     </div>
   );
 };
