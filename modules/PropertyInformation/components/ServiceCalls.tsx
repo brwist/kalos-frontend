@@ -302,7 +302,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
           title={`${viewedAsCustomer ? 'Active ' : ''}Service Calls`}
           actions={[
             {
-              label: 'Add',
+              label: 'Add Service Call',
               url: [
                 '/index.cfm?action=admin:service.addserviceCall',
                 `user_id=${userID}`,
@@ -317,6 +317,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             rowsPerPage: ROWS_PER_PAGE,
             onChangePage: handleChangePage,
           }}
+          fixedActions
         >
           <InfoTable
             columns={columns}
