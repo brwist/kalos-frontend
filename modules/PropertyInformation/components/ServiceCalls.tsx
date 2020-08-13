@@ -1,18 +1,21 @@
 import React, { PureComponent } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import SearchIcon from '@material-ui/icons/Search';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
+import { Modal } from '../../ComponentsLibrary/Modal';
 import {
   formatTime,
   formatDate,
   makeFakeRows,
   OrderDir,
   getPropertyAddress,
+  usd,
 } from '../../../helpers';
 
 type Entry = Event.AsObject;
@@ -29,6 +32,7 @@ interface State {
   loading: boolean;
   error: boolean;
   deletingEntry?: Entry;
+  viewingEntry?: Entry;
   orderByFields: (keyof Entry)[];
   orderByDBField: string;
   dir: OrderDir;
@@ -46,6 +50,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       loading: true,
       error: false,
       deletingEntry: undefined,
+      viewingEntry: undefined,
       dir: 'ASC',
       orderByFields: ['dateStarted'],
       orderByDBField: 'date_started',
@@ -140,6 +145,8 @@ export class ServiceCalls extends PureComponent<Props, State> {
   setDeleting = (deletingEntry?: Entry) => () =>
     this.setState({ deletingEntry });
 
+  setViewing = (viewingEntry?: Entry) => () => this.setState({ viewingEntry });
+
   handleChangePage = (page: number) => {
     this.setState({ page }, this.load);
   };
@@ -174,6 +181,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       count,
       page,
       deletingEntry,
+      viewingEntry,
     } = state;
     const columns: Columns = viewedAsCustomer
       ? [
@@ -261,7 +269,18 @@ export class ServiceCalls extends PureComponent<Props, State> {
               { value: dateValue },
               { value: getPropertyAddress(property) },
               { value: name },
-              { value: statusValue },
+              {
+                value: statusValue,
+                actions: [
+                  <IconButton
+                    key={2}
+                    size="small"
+                    onClick={this.setViewing(entry)}
+                  >
+                    <SearchIcon />
+                  </IconButton>,
+                ],
+              },
             ];
           return [
             {
@@ -345,6 +364,134 @@ export class ServiceCalls extends PureComponent<Props, State> {
               formatTime(deletingEntry.timeEnded)
             }
           />
+        )}
+        {viewingEntry && (
+          <Modal open onClose={this.setViewing()}>
+            <SectionBar
+              title="Service Call Details"
+              actions={[{ label: 'Close', onClick: this.setViewing() }]}
+              fixedActions
+            />
+            <InfoTable
+              data={[
+                [
+                  {
+                    label: 'Address',
+                    value: getPropertyAddress(viewingEntry.property),
+                  },
+                ],
+                [
+                  {
+                    label: 'Date/Time',
+                    value: `${formatDate(
+                      viewingEntry.dateStarted,
+                    )} ${formatTime(viewingEntry.timeStarted)} - ${formatTime(
+                      viewingEntry.timeEnded,
+                    )}`,
+                  },
+                ],
+                [
+                  {
+                    label: 'Technician(s) Assigned',
+                    value:
+                      viewingEntry.logTechnicianAssigned === '0'
+                        ? 'Unnassigned'
+                        : '...', // TODO
+                  },
+                ],
+                [
+                  {
+                    label: 'Invoice Number',
+                    value: viewingEntry.logJobNumber,
+                  },
+                ],
+                [
+                  {
+                    label: 'PO',
+                    value: viewingEntry.logPo,
+                  },
+                ],
+                [
+                  {
+                    label: 'Description of Service Needed',
+                    value: viewingEntry.description,
+                  },
+                ],
+                [
+                  {
+                    label: 'Service Rendered',
+                    value: viewingEntry.logServiceRendered, // TODO
+                  },
+                ],
+                [
+                  {
+                    label: 'Invoice Notes',
+                    value: viewingEntry.invoiceServiceItem, // TODO
+                  },
+                ],
+                [
+                  {
+                    label: 'Services Performed (1)',
+                    value: viewingEntry.servicesperformedrow1,
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount (1)',
+                    value: viewingEntry.totalamountrow1,
+                  },
+                ],
+                [
+                  {
+                    label: 'Services Performed (2)',
+                    value: viewingEntry.servicesperformedrow2,
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount (2)',
+                    value: viewingEntry.totalamountrow2,
+                  },
+                ],
+                [
+                  {
+                    label: 'Services Performed (3)',
+                    value: viewingEntry.servicesperformedrow3,
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount (3)',
+                    value: viewingEntry.totalamountrow3,
+                  },
+                ],
+                [
+                  {
+                    label: 'Services Performed (4)',
+                    value: viewingEntry.servicesperformedrow4,
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount (4)',
+                    value: viewingEntry.totalamountrow4,
+                  },
+                ],
+                [
+                  {
+                    label: 'Invoice Discount',
+                    value: viewingEntry.discount, // TODO
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount',
+                    value: usd(0), // TODO
+                  },
+                ],
+              ]}
+            />
+          </Modal>
         )}
       </div>
     );
