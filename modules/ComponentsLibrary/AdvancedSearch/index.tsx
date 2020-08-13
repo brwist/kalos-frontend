@@ -1955,14 +1955,16 @@ export const AdvancedSearch: FC<Props> = ({
           ) : null
         }
       />
-      <SearchFormComponent
-        key={formKey}
-        schema={getSchema()}
-        data={filter}
-        onChange={handleFormChange}
-        className="AdvancedSearchForm"
-        disabled={loadingDicts}
-      />
+      {!propertyCustomerId && (
+        <SearchFormComponent
+          key={formKey}
+          schema={getSchema()}
+          data={filter}
+          onChange={handleFormChange}
+          className="AdvancedSearchForm"
+          disabled={loadingDicts}
+        />
+      )}
       <InfoTable
         columns={getColumns(filter.kind)}
         data={getData()}
