@@ -285,6 +285,14 @@ export const CustomerInformation: FC<Props> = ({
                       label: 'Documents',
                       onClick: handleToggleDocuments,
                     },
+                    {
+                      label: 'Contact Us',
+                      onClick: () =>
+                        window.open(
+                          'http://www.kalosflorida.com/contacts/',
+                          '_blank',
+                        ),
+                    },
                     ...(onClose
                       ? [
                           {
