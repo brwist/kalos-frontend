@@ -1,14 +1,13 @@
 import React, { FC } from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { AdvancedSearch } from '../ComponentsLibrary/AdvancedSearch';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface Props {
   loggedUserId: number;
 }
 
-export const ServiceCallSearch: FC<Props> = props => (
-  <ThemeProvider theme={customTheme.lightTheme}>
+export const ServiceCallSearch: FC<Props> = (props) => (
+  <PageWrapper userID={props.loggedUserId}>
     <AdvancedSearch
       {...props}
       title="Service Calls"
@@ -17,5 +16,5 @@ export const ServiceCallSearch: FC<Props> = props => (
       eventsWithAccounting
       eventsWithAdd
     />
-  </ThemeProvider>
+  </PageWrapper>
 );
