@@ -21,6 +21,7 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Typography } from '@material-ui/core';
 import { Search } from '../Search/main';
 import { ENDPOINT } from '../../constants';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface props {
   userId: number;
@@ -79,7 +80,7 @@ export class Dashboard extends React.PureComponent<props, state> {
         (prevState) => ({
           isLoading: !prevState.isLoading,
         }),
-        resolve,
+        resolve
       );
     });
   }
@@ -161,7 +162,7 @@ export class Dashboard extends React.PureComponent<props, state> {
   async getToolfundBalance() {
     if (this.state.currentUser.toolFund > 0) {
       const res = await this.TaskClient.GetToolFundBalanceByID(
-        this.props.userId,
+        this.props.userId
       );
       this.setState({
         toolFundBalance: parseInt(res.getValue().toFixed(2)),
@@ -204,7 +205,7 @@ export class Dashboard extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <ThemeProvider theme={themes.lightTheme}>
+      <PageWrapper userID={this.props.userId}>
         <Grid
           container
           direction="column"
@@ -365,7 +366,7 @@ export class Dashboard extends React.PureComponent<props, state> {
             />
           )}
         </Grid>
-      </ThemeProvider>
+      </PageWrapper>
     );
   }
 }
