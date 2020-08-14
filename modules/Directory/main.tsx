@@ -7,6 +7,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import { ENDPOINT } from '../../constants';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface props {
   userId: number;
@@ -27,7 +28,7 @@ export class Directory extends React.PureComponent<props, state> {
   }
 
   addEmployee(emp: User.AsObject) {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       employees: prevState.employees.concat(emp),
     }));
   }
@@ -42,7 +43,7 @@ export class Directory extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <Paper style={{ width: '100%', overflowX: 'auto' }}>
+      <PageWrapper userID={this.props.userId}>
         <Table aria-label="employee table">
           <TableHead>
             <TableRow>
@@ -55,11 +56,11 @@ export class Directory extends React.PureComponent<props, state> {
             {this.state.employees
               .sort((a, b) =>
                 `${a.lastname} ${a.firstname}`.localeCompare(
-                  `${b.lastname} ${b.firstname}`,
-                ),
+                  `${b.lastname} ${b.firstname}`
+                )
               )
-              .map(emp => (
-                <TableRow hover>
+              .map((emp) => (
+                <TableRow hover key={emp.id}>
                   <TableCell>{emp.lastname}</TableCell>
                   <TableCell>{emp.firstname}</TableCell>
                   <TableCell>Actions go here</TableCell>
@@ -67,7 +68,7 @@ export class Directory extends React.PureComponent<props, state> {
               ))}
           </TableBody>
         </Table>
-      </Paper>
+      </PageWrapper>
     );
   }
 }
