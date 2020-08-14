@@ -26,9 +26,9 @@ import {
 const userClient = new UserClient(ENDPOINT);
 const deptClient = new TimesheetDepartmentClient(ENDPOINT);
 
-type Props = {
+export type Props = {
   userID: number;
-  imgURL: string;
+  imgURL?: string;
 };
 
 type State = {
@@ -71,7 +71,10 @@ const reducer = (state: State, action: Action) => {
       return state;
   }
 };
-const SideMenu = ({ userID, imgURL }: Props) => {
+const SideMenu = ({
+  userID,
+  imgURL = 'https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png',
+}: Props) => {
   const [state, dispatch] = useReducer(reducer, {
     user: new User().toObject(),
     isManager: false,

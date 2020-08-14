@@ -3047,6 +3047,7 @@ async function newBugReportImage(
  * Checks URL for http, and redirects to https appropriately
  */
 function forceHTTPS() {
+  if (window.location.hostname === 'localhost') return;
   if (window.location.href.includes('http://')) {
     window.location.href = window.location.href.replace('http://', 'https://');
   }
