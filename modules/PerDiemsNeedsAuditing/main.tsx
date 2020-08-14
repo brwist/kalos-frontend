@@ -1,10 +1,13 @@
 import React, { FC } from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { PerDiemsNeedsAuditing as PerDiemsNeedsAuditingComponent } from '../ComponentsLibrary/PerDiemsNeedsAuditing';
+import { PageWrapper } from '../PageWrapper/main';
 
-export const PerDiemsNeedsAuditing: FC = () => (
-  <ThemeProvider theme={customTheme.lightTheme}>
+interface Props {
+  userID: number;
+}
+
+export const PerDiemsNeedsAuditing: FC<Props> = ({ userID }) => (
+  <PageWrapper userID={userID}>
     <PerDiemsNeedsAuditingComponent />
-  </ThemeProvider>
+  </PageWrapper>
 );

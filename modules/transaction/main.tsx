@@ -2,9 +2,8 @@ import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TransactionAdminView } from './components/admin';
 import { Loader } from '../Loader/main';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { ENDPOINT } from '../../constants';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface props {
   userID: number;
@@ -55,7 +54,7 @@ export default class Transaction extends React.PureComponent<props, state> {
     return () => {
       if (typeof this.state[flag] === 'boolean') {
         //@ts-ignore
-        this.setState(prevState => ({
+        this.setState((prevState) => ({
           [flag]: !prevState[flag],
         }));
       }
@@ -74,20 +73,20 @@ export default class Transaction extends React.PureComponent<props, state> {
   render() {
     if (!this.state.isLoading) {
       return (
-        <ThemeProvider theme={customTheme.lightTheme}>
+        <PageWrapper userID={this.props.userID}>
           <TransactionAdminView
             userID={this.props.userID}
             userName={this.state.userName}
             departmentId={this.state.userDepartmentID}
             isSU={this.state.isSU}
           />
-        </ThemeProvider>
+        </PageWrapper>
       );
     } else {
       return (
-        <ThemeProvider theme={customTheme.lightTheme}>
+        <PageWrapper userID={this.props.userID}>
           <Loader />
-        </ThemeProvider>
+        </PageWrapper>
       );
     }
   }

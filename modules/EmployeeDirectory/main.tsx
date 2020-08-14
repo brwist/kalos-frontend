@@ -1,14 +1,13 @@
 import React, { FC } from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { AdvancedSearch } from '../ComponentsLibrary/AdvancedSearch';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface Props {
   loggedUserId: number;
 }
 
 export const EmployeeDirectory: FC<Props> = ({ loggedUserId }) => (
-  <ThemeProvider theme={customTheme.lightTheme}>
+  <PageWrapper userID={loggedUserId}>
     <AdvancedSearch
       title="Employee Directory"
       kinds={['employees']}
@@ -17,5 +16,5 @@ export const EmployeeDirectory: FC<Props> = ({ loggedUserId }) => (
       deletableEmployees
       printableEmployees
     />
-  </ThemeProvider>
+  </PageWrapper>
 );

@@ -7,11 +7,9 @@ import {
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { TaskClient } from '@kalos-core/kalos-rpc/Task';
 import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
-import themes from '../Theme/main';
 import { Spiff } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import { MetricTile } from './components/MetricTile';
 import { Widget } from './components/Widget';

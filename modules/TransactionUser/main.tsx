@@ -1,7 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { TransactionUserView } from './components/view';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { Loader } from '../Loader/main';
 import {
   loadUserById,
@@ -10,6 +8,7 @@ import {
   getCustomerName,
   refreshToken,
 } from '../../helpers';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface Props {
   userID: number;
@@ -45,7 +44,7 @@ const Transaction: FC<Props> = ({ userID }) => {
     }
   }, [loaded, setLoaded, load]);
   return (
-    <ThemeProvider theme={customTheme.lightTheme}>
+    <PageWrapper userID={userID}>
       {loading || !user ? (
         <Loader />
       ) : (
@@ -56,7 +55,7 @@ const Transaction: FC<Props> = ({ userID }) => {
           isManager={isManager}
         />
       )}
-    </ThemeProvider>
+    </PageWrapper>
   );
 };
 
