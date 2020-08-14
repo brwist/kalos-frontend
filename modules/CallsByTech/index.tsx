@@ -2,4 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { CallsByTech } from './main';
 
-ReactDOM.render(<CallsByTech />, document.getElementById('root'));
+ReactDOM.render(
+  <CallsByTech userId={100452} />,
+  document.getElementById('root')
+);
