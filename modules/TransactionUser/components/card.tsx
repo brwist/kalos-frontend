@@ -95,13 +95,13 @@ export class TxnCard extends React.PureComponent<props, state> {
   async makeLog<K extends keyof Transaction.AsObject>(
     prop: K,
     oldValue: Transaction.AsObject[K],
-    newValue: Transaction.AsObject[K],
+    newValue: Transaction.AsObject[K]
   ) {
     try {
       const log = new TransactionActivity();
       const { userID, userName } = this.props;
       log.setDescription(
-        `User ${userName} updated txn ${prop}: ${oldValue} changed to ${newValue} `,
+        `User ${userName} updated txn ${prop}: ${oldValue} changed to ${newValue} `
       );
       log.setUserId(userID);
       await this.LogClient.Create(log);
@@ -143,7 +143,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     const { txn } = this.state;
     try {
       const ok = confirm(
-        'Are you sure you want to submit this transaction? You will be unable to edit it again unless it is rejected, so please make sure all information is correct',
+        'Are you sure you want to submit this transaction? You will be unable to edit it again unless it is rejected, so please make sure all information is correct'
       );
       if (ok) {
         if (txn.jobId !== 0) {
@@ -185,7 +185,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             statusMessage =
               'receipt marked as accidental or fraudulent and sent directly to accounting for review';
             const mailBody = `A${getTransactionTypeString(
-              txn,
+              txn
             )} transaction has been reported by ${txn.ownerName} (${
               txn.cardUsed
             }).
@@ -213,7 +213,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               txn.ownerId,
               txn.vendor,
               txn.notes,
-              txn.timestamp,
+              txn.timestamp
             );
           }
           console.log('submitted');
@@ -239,7 +239,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   deriveCallout(
-    txn: Transaction.AsObject,
+    txn: Transaction.AsObject
   ): { severity: 'error' | 'success'; text: string } {
     if (!txn.costCenter || txn.costCenter.id === 0)
       return {
@@ -271,13 +271,13 @@ export class TxnCard extends React.PureComponent<props, state> {
     await this.DocsClient.upload(
       this.state.txn.id,
       `${timestamp()}-generated.pdf`,
-      fileData,
+      fileData
     );
     await this.refresh();
     await this.props.toggleLoading(() =>
       alert(
-        'A PDF has been generated and uploaded for you, it is recommended you review this document before proceeding',
-      ),
+        'A PDF has been generated and uploaded for you, it is recommended you review this document before proceeding'
+      )
     );
   }
 
@@ -289,7 +289,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           await this.DocsClient.upload(
             this.state.txn.id,
             this.FileInput.current!.files![0].name,
-            new Uint8Array(fr.result as ArrayBuffer),
+            new Uint8Array(fr.result as ArrayBuffer)
           );
         } catch (err) {
           alert('File could not be uploaded');
@@ -314,7 +314,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       });
     } catch (err) {
       alert(
-        'Network error, displayed information may be incorrect. Refresh is advised',
+        'Network error, displayed information may be incorrect. Refresh is advised'
       );
       console.log(err);
     }
@@ -347,7 +347,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       <Paper elevation={4} style={{ margin: 16, marginTop: 32 }}>
         <SectionBar
           title={`${new Date(
-            t.timestamp.split(' ').join('T'),
+            t.timestamp.split(' ').join('T')
           ).toDateString()} - $${t.amount}`}
           subtitle={subheader}
           asideContent={
@@ -358,6 +358,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 text="View Photo(s)"
                 fileList={getGalleryData(this.state.txn)}
                 transactionID={this.state.txn.id}
+                canDelete
               />
               <Button label="Submit" onClick={this.submit} />
               <PDFMaker
@@ -395,10 +396,10 @@ export class TxnCard extends React.PureComponent<props, state> {
             selected={t.costCenterId}
             sort={costCenterSortByPopularity}
             filter={
-              !isManager ? a => ALLOWED_ACCOUNT_IDS.includes(a.id) : undefined
+              !isManager ? (a) => ALLOWED_ACCOUNT_IDS.includes(a.id) : undefined
             }
             hideInactive
-            renderItem={i => (
+            renderItem={(i) => (
               <option value={i.id} key={`${i.id}-${i.description}`}>
                 {i.description} ({i.id})
               </option>
@@ -407,14 +408,14 @@ export class TxnCard extends React.PureComponent<props, state> {
           <Field
             name="department"
             value={t.departmentId || this.props.userDepartmentID}
-            onChange={val => this.updateDepartmentID(+val)}
+            onChange={(val) => this.updateDepartmentID(+val)}
             type="department"
           />
           <Field
             name="jobNumber"
             label="Job Number"
             value={t.jobId}
-            onChange={val => this.handleJobNumber(+val)}
+            onChange={(val) => this.handleJobNumber(+val)}
             type="eventId"
             style={{
               alignItems: 'flex-start',
@@ -449,7 +450,7 @@ export function getMimeType(fileType: string) {
 
 function costCenterSortByPopularity(
   a: TransactionAccount.AsObject,
-  b: TransactionAccount.AsObject,
+  b: TransactionAccount.AsObject
 ) {
   return b.popularity - a.popularity;
 }
@@ -470,7 +471,7 @@ const ALLOWED_ACCOUNT_IDS = [
 ];
 
 function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
-  return txn.documentsList.map(d => {
+  return txn.documentsList.map((d) => {
     return {
       key: `${txn.id}-${d.reference}`,
       bucket: 'kalos-transactions',

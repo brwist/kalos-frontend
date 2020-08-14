@@ -4,6 +4,7 @@
   "description": "Kalos frontend components rewritten in React",
   "scripts": {
     "publish-pkg": "npm login && yarn publish --access restricted",
+    "build-index": "gulp -LL index",
     "start": "gulp -LL start",
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
@@ -93,9 +94,8 @@
     "react-dom": "^16.10.1"
   },
   "files": [
-    "modules",
-    "constants.ts",
-    "helpers.ts"
+    "build/dist",
+    "index.js"
   ],
   "prettier": {
     "printWidth": 80,

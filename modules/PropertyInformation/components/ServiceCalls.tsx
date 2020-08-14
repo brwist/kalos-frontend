@@ -1,16 +1,21 @@
 import React, { PureComponent } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import SearchIcon from '@material-ui/icons/Search';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
+import { Modal } from '../../ComponentsLibrary/Modal';
 import {
   formatTime,
   formatDate,
   makeFakeRows,
   OrderDir,
+  getPropertyAddress,
+  usd,
 } from '../../../helpers';
 
 type Entry = Event.AsObject;
@@ -18,7 +23,8 @@ type Entry = Event.AsObject;
 interface Props {
   className?: string;
   userID: number;
-  propertyId: number;
+  propertyId?: number;
+  viewedAsCustomer?: boolean;
 }
 
 interface State {
@@ -26,6 +32,7 @@ interface State {
   loading: boolean;
   error: boolean;
   deletingEntry?: Entry;
+  viewingEntry?: Entry;
   orderByFields: (keyof Entry)[];
   orderByDBField: string;
   dir: OrderDir;
@@ -43,6 +50,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       loading: true,
       error: false,
       deletingEntry: undefined,
+      viewingEntry: undefined,
       dir: 'ASC',
       orderByFields: ['dateStarted'],
       orderByDBField: 'date_started',
@@ -54,10 +62,15 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   load = async () => {
     this.setState({ loading: true });
-    const { propertyId } = this.props;
+    const { propertyId, userID } = this.props;
     const { dir, orderByDBField, page } = this.state;
     const entry = new Event();
-    entry.setPropertyId(propertyId);
+    const reqCust = new User();
+    reqCust.setId(userID);
+    entry.setCustomer(reqCust);
+    if (propertyId) {
+      entry.setPropertyId(propertyId);
+    }
     entry.setOrderBy(orderByDBField);
     entry.setOrderDir(dir);
     entry.setPageNumber(page);
@@ -97,15 +110,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   handleDelete = async () => {
     // FIXME: service call is not actually deleted for some reason
-    const { propertyId } = this.props;
     const { deletingEntry } = this.state;
     this.setDeleting()();
     if (deletingEntry) {
       this.setState({ loading: true });
       const entry = new Event();
       entry.setId(deletingEntry.id);
-      entry.setPropertyId(propertyId);
-      entry.setFieldMaskList(['PropertyId']);
       await this.EventClient.Delete(entry);
       await this.load();
     }
@@ -135,6 +145,8 @@ export class ServiceCalls extends PureComponent<Props, State> {
   setDeleting = (deletingEntry?: Entry) => () =>
     this.setState({ deletingEntry });
 
+  setViewing = (viewingEntry?: Entry) => () => this.setState({ viewingEntry });
+
   handleChangePage = (page: number) => {
     this.setState({ page }, this.load);
   };
@@ -159,7 +171,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       setDeleting,
       handleDelete,
     } = this;
-    const { userID, propertyId, className } = props;
+    const { userID, propertyId, className, viewedAsCustomer = false } = props;
     const {
       entries,
       loading,
@@ -169,39 +181,53 @@ export class ServiceCalls extends PureComponent<Props, State> {
       count,
       page,
       deletingEntry,
+      viewingEntry,
     } = state;
-    const columns: Columns = [
-      {
-        name: 'Date / Time',
-        dir: orderByDBField === 'date_started' ? dir : undefined,
-        onClick: handleOrder('date_started', ['dateStarted', 'timeStarted']),
-      },
-      {
-        name: 'Job Status',
-        dir: orderByDBField === 'log_jobStatus' ? dir : undefined,
-        onClick: handleOrder('log_jobStatus', ['logJobStatus']),
-      },
-      {
-        name: 'Job Type / Subtype',
-        dir: orderByDBField === 'job_type_id, job_subtype_id' ? dir : undefined,
-        onClick: handleOrder('job_type_id, job_subtype_id', [
-          'jobType',
-          'jobSubtype',
-        ]),
-      },
-      {
-        name: 'Job Number',
-        dir: orderByDBField === 'log_jobNumber' ? dir : undefined,
-        onClick: handleOrder('log_jobNumber', ['logJobNumber']),
-      },
-      {
-        name: 'Contract Number',
-        dir: orderByDBField === 'contract_number' ? dir : undefined,
-        onClick: handleOrder('contract_number', ['contractNumber']),
-      },
-    ];
+    const columns: Columns = viewedAsCustomer
+      ? [
+          { name: 'Date / Time' },
+          { name: 'Address' },
+          { name: 'Bried Description' },
+          { name: 'Status' },
+        ]
+      : [
+          {
+            name: 'Date / Time',
+            dir: orderByDBField === 'date_started' ? dir : undefined,
+            onClick: handleOrder('date_started', [
+              'dateStarted',
+              'timeStarted',
+            ]),
+          },
+          {
+            name: 'Job Status',
+            dir: orderByDBField === 'log_jobStatus' ? dir : undefined,
+            onClick: handleOrder('log_jobStatus', ['logJobStatus']),
+          },
+          {
+            name: 'Job Type / Subtype',
+            dir:
+              orderByDBField === 'job_type_id, job_subtype_id'
+                ? dir
+                : undefined,
+            onClick: handleOrder('job_type_id, job_subtype_id', [
+              'jobType',
+              'jobSubtype',
+            ]),
+          },
+          {
+            name: 'Job Number',
+            dir: orderByDBField === 'log_jobNumber' ? dir : undefined,
+            onClick: handleOrder('log_jobNumber', ['logJobNumber']),
+          },
+          {
+            name: 'Contract Number',
+            dir: orderByDBField === 'contract_number' ? dir : undefined,
+            onClick: handleOrder('contract_number', ['contractNumber']),
+          },
+        ];
     const data: Data = loading
-      ? makeFakeRows(5)
+      ? makeFakeRows(viewedAsCustomer ? 4 : 5)
       : entries.map(entry => {
           const {
             id,
@@ -214,33 +240,55 @@ export class ServiceCalls extends PureComponent<Props, State> {
             logJobNumber,
             contractNumber,
             color,
+            property,
+            name,
           } = entry;
+          const dateValue =
+            formatDate(dateStarted) +
+            ' ' +
+            formatTime(timeStarted) +
+            ' - ' +
+            formatTime(timeEnded);
+          const statusValue = (
+            <>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 10,
+                  height: 10,
+                  backgroundColor: '#' + color,
+                  marginRight: 6,
+                  borderRadius: '50%',
+                }}
+              />
+              {logJobStatus}
+            </>
+          );
+          if (viewedAsCustomer)
+            return [
+              { value: dateValue },
+              { value: getPropertyAddress(property) },
+              { value: name },
+              {
+                value: statusValue,
+                actions: [
+                  <IconButton
+                    key={2}
+                    size="small"
+                    onClick={this.setViewing(entry)}
+                  >
+                    <SearchIcon />
+                  </IconButton>,
+                ],
+              },
+            ];
           return [
             {
-              value:
-                formatDate(dateStarted) +
-                ' ' +
-                formatTime(timeStarted) +
-                ' - ' +
-                formatTime(timeEnded),
+              value: dateValue,
               onClick: handleRowClick(id),
             },
             {
-              value: (
-                <>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      width: 10,
-                      height: 10,
-                      backgroundColor: '#' + color,
-                      marginRight: 6,
-                      borderRadius: '50%',
-                    }}
-                  />
-                  {logJobStatus}
-                </>
-              ),
+              value: statusValue,
               onClick: handleRowClick(id),
             },
             {
@@ -270,10 +318,10 @@ export class ServiceCalls extends PureComponent<Props, State> {
     return (
       <div className={className}>
         <SectionBar
-          title="Service Calls"
+          title={`${viewedAsCustomer ? 'Active ' : ''}Service Calls`}
           actions={[
             {
-              label: 'Add',
+              label: 'Add Service Call',
               url: [
                 '/index.cfm?action=admin:service.addserviceCall',
                 `user_id=${userID}`,
@@ -288,14 +336,13 @@ export class ServiceCalls extends PureComponent<Props, State> {
             rowsPerPage: ROWS_PER_PAGE,
             onChangePage: handleChangePage,
           }}
+          fixedActions
         >
           <InfoTable
             columns={columns}
             data={data}
             loading={loading}
             error={error}
-            compact
-            hoverable
           />
         </SectionBar>
         {deletingEntry && (
@@ -317,6 +364,134 @@ export class ServiceCalls extends PureComponent<Props, State> {
               formatTime(deletingEntry.timeEnded)
             }
           />
+        )}
+        {viewingEntry && (
+          <Modal open onClose={this.setViewing()}>
+            <SectionBar
+              title="Service Call Details"
+              actions={[{ label: 'Close', onClick: this.setViewing() }]}
+              fixedActions
+            />
+            <InfoTable
+              data={[
+                [
+                  {
+                    label: 'Address',
+                    value: getPropertyAddress(viewingEntry.property),
+                  },
+                ],
+                [
+                  {
+                    label: 'Date/Time',
+                    value: `${formatDate(
+                      viewingEntry.dateStarted,
+                    )} ${formatTime(viewingEntry.timeStarted)} - ${formatTime(
+                      viewingEntry.timeEnded,
+                    )}`,
+                  },
+                ],
+                [
+                  {
+                    label: 'Technician(s) Assigned',
+                    value:
+                      viewingEntry.logTechnicianAssigned === '0'
+                        ? 'Unnassigned'
+                        : '...', // TODO
+                  },
+                ],
+                [
+                  {
+                    label: 'Invoice Number',
+                    value: viewingEntry.logJobNumber,
+                  },
+                ],
+                [
+                  {
+                    label: 'PO',
+                    value: viewingEntry.logPo,
+                  },
+                ],
+                [
+                  {
+                    label: 'Description of Service Needed',
+                    value: viewingEntry.description,
+                  },
+                ],
+                [
+                  {
+                    label: 'Service Rendered',
+                    value: viewingEntry.logServiceRendered, // TODO
+                  },
+                ],
+                [
+                  {
+                    label: 'Invoice Notes',
+                    value: viewingEntry.invoiceServiceItem, // TODO
+                  },
+                ],
+                [
+                  {
+                    label: 'Services Performed (1)',
+                    value: viewingEntry.servicesperformedrow1,
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount (1)',
+                    value: viewingEntry.totalamountrow1,
+                  },
+                ],
+                [
+                  {
+                    label: 'Services Performed (2)',
+                    value: viewingEntry.servicesperformedrow2,
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount (2)',
+                    value: viewingEntry.totalamountrow2,
+                  },
+                ],
+                [
+                  {
+                    label: 'Services Performed (3)',
+                    value: viewingEntry.servicesperformedrow3,
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount (3)',
+                    value: viewingEntry.totalamountrow3,
+                  },
+                ],
+                [
+                  {
+                    label: 'Services Performed (4)',
+                    value: viewingEntry.servicesperformedrow4,
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount (4)',
+                    value: viewingEntry.totalamountrow4,
+                  },
+                ],
+                [
+                  {
+                    label: 'Invoice Discount',
+                    value: viewingEntry.discount, // TODO
+                  },
+                ],
+                [
+                  {
+                    label: 'Total Amount',
+                    value: usd(0), // TODO
+                  },
+                ],
+              ]}
+            />
+          </Modal>
         )}
       </div>
     );

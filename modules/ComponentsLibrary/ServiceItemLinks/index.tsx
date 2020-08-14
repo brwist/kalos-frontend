@@ -19,6 +19,7 @@ interface Props {
   title?: string;
   serviceItemId: number;
   onClose: () => void;
+  viewedAsCustomer?: boolean;
 }
 
 interface State {
@@ -134,7 +135,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
       handleDelete,
       setDeleting,
     } = this;
-    const { kind, title = '', onClose } = props;
+    const { kind, title = '', onClose, viewedAsCustomer = false } = props;
     const { entries, loading, saving, editedEntry, deletingEntry } = state;
     const data: Data = loading
       ? makeFakeRows()
@@ -144,27 +145,31 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
             {
               value: description || url,
               actions: [
-                <a key={0} href={url} target="_blank">
+                <a key="view" href={url} target="_blank">
                   <IconButton style={{ marginLeft: 4 }} size="small">
                     <SearchIcon />
                   </IconButton>
                 </a>,
-                <IconButton
-                  key={1}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={setEditing(entry)}
-                >
-                  <EditIcon />
-                </IconButton>,
-                <IconButton
-                  key={2}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={setDeleting(entry)}
-                >
-                  <DeleteIcon />
-                </IconButton>,
+                ...(viewedAsCustomer
+                  ? []
+                  : [
+                      <IconButton
+                        key="edit"
+                        style={{ marginLeft: 4 }}
+                        size="small"
+                        onClick={setEditing(entry)}
+                      >
+                        <EditIcon />
+                      </IconButton>,
+                      <IconButton
+                        key="delete"
+                        style={{ marginLeft: 4 }}
+                        size="small"
+                        onClick={setDeleting(entry)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>,
+                    ]),
               ],
             },
           ];
@@ -175,10 +180,14 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
           title={`${kind}s`}
           subtitle={title}
           actions={[
-            {
-              label: 'Add',
-              onClick: setEditing({} as Entry),
-            },
+            ...(viewedAsCustomer
+              ? []
+              : [
+                  {
+                    label: 'Add',
+                    onClick: setEditing({} as Entry),
+                  },
+                ]),
             {
               label: 'Close',
               onClick: onClose,

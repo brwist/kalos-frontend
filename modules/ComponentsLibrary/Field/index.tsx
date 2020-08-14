@@ -4,12 +4,16 @@ import React, {
   useCallback,
   useState,
   useEffect,
+  useMemo,
   useRef,
   CSSProperties,
 } from 'react';
 import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { User } from '@kalos-core/kalos-rpc/User';
+import CheckIcon from '@material-ui/icons/Check';
+import BlockIcon from '@material-ui/icons/Block';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
@@ -42,6 +46,7 @@ import {
   loadTechnicians,
   trailingZero,
   EventType,
+  loadEventById,
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../../Pickers/';
 import { AdvancedSearch } from '../AdvancedSearch';
@@ -149,6 +154,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   );
   const [filename, setFilename] = useState<string>('');
   const [searchTechnician, setSearchTechnician] = useState<Value>('');
+  const [eventStatus, setEventStatus] = useState<number>(-1);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
     setLoadedTechnicians(true);
@@ -158,13 +164,32 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     (opened: boolean) => () => setEventsOpened(opened),
     [setEventsOpened],
   );
+  const handleEventsSearchClicked = useCallback(async () => {
+    if (!value || Number.isNaN(+value) || +value === 0) {
+      setEventStatus(-1);
+      setEventsOpened(true);
+      return;
+    }
+    setEventStatus(0);
+    try {
+      const event = await loadEventById(+value);
+      if (onChange) {
+        onChange(event.id);
+      }
+      setEventStatus(1);
+    } catch (e) {
+      setEventStatus(-1);
+      setEventsOpened(true);
+    }
+  }, [setEventStatus, value, onChange, setEventsOpened]);
   const handleEventSelect = useCallback(
     (event: EventType) => {
       if (onChange) {
         onChange(event.id);
       }
+      setEventStatus(1);
     },
-    [onChange],
+    [onChange, setEventStatus],
   );
   const handleSetTechniciansOpened = useCallback(
     (opened: boolean) => () => {
@@ -805,6 +830,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       />
     );
   }
+  const eventAdornment = useMemo(() => {
+    if (eventStatus === -1) return <BlockIcon className="FieldEventFailure" />;
+    if (eventStatus === 0) return <CircularProgress size={20} />;
+    return <CheckIcon className="FieldEventSuccess" />;
+  }, [eventStatus]);
   return (
     <div className={clsx('Field', className, `type-${type}`)} style={style}>
       {type === 'file' && (
@@ -822,7 +852,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         label={inputLabel}
         fullWidth
         InputProps={{
-          readOnly: type === 'file' || type === 'eventId' ? true : readOnly,
+          readOnly: type === 'file' ? true : readOnly,
           startAdornment:
             startAdornment || type === 'file' ? (
               <InputAdornment position="start">
@@ -842,6 +872,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             ) : undefined,
           endAdornment: endAdornment ? (
             <InputAdornment position="end">{endAdornment}</InputAdornment>
+          ) : type === 'eventId' ? (
+            eventAdornment
           ) : undefined,
         }}
         InputLabelProps={{
@@ -871,7 +903,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
                   {
                     label: 'Search Service Calls',
                     variant: 'outlined' as const,
-                    onClick: handleEventsOpenedToggle(true),
+                    onClick: handleEventsSearchClicked,
                   },
                 ]
               : []),
