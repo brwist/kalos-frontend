@@ -51,21 +51,23 @@ var globals = require('rollup-plugin-node-globals');
 var terser = require('rollup-plugin-terser').terser;
 var jsonPlugin = require('@rollup/plugin-json');
 var less = require('rollup-plugin-less-modules');
+var target = process.argv[4];
+var minify = process.argv[5];
 /**
  * Serves all modules to localhost:1234 via parcel
  */
 function start() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_1, branch, err_2;
+        var target_1, err_1, branch, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 8]);
-                    target = titleCase(process.argv[4].replace(/-/g, ''));
-                    return [4 /*yield*/, sh.exec("parcel modules/" + target + "/index.html")];
+                    target_1 = titleCase(process.argv[4].replace(/-/g, ''));
+                    return [4 /*yield*/, sh.exec("parcel modules/" + target_1 + "/index.html")];
                 case 1:
                     _a.sent();
-                    console.log("parcel modules/" + target + "/index.html");
+                    console.log("parcel modules/" + target_1 + "/index.html");
                     return [3 /*break*/, 8];
                 case 2:
                     err_1 = _a.sent();
@@ -162,6 +164,26 @@ function getModulesList() {
         });
     });
 }
+function buildIndex() {
+    return __awaiter(this, void 0, void 0, function () {
+        var mods, idxFile, _i, mods_1, m, shStr;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getModulesList()];
+                case 1:
+                    mods = _a.sent();
+                    idxFile = 'export ';
+                    for (_i = 0, mods_1 = mods; _i < mods_1.length; _i++) {
+                        m = mods_1[_i];
+                        idxFile = idxFile + "export { " + m + " } from \"./build/dist/" + m + "\";\n";
+                    }
+                    shStr = new sh.ShellString(idxFile);
+                    shStr.to('index.js');
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
 function info(msg) {
     log('\x1b[2m')(msg);
 }
@@ -242,29 +264,150 @@ function getBranch() {
         });
     });
 }
-function rollupBuild() {
+function buildRelease() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_3, minify, modules, inputStr, bundle;
+        var modules, _i, modules_1, m, err_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getModulesList()];
+                case 1:
+                    modules = _a.sent();
+                    return [4 /*yield*/, sh.exec('tsc --jsx preserve --outdir build/dist --esModuleInterop constants.ts')];
+                case 2:
+                    _a.sent();
+                    _i = 0, modules_1 = modules;
+                    _a.label = 3;
+                case 3:
+                    if (!(_i < modules_1.length)) return [3 /*break*/, 8];
+                    m = modules_1[_i];
+                    _a.label = 4;
+                case 4:
+                    _a.trys.push([4, 6, , 7]);
+                    return [4 /*yield*/, releaseBuild(m)];
+                case 5:
+                    _a.sent();
+                    return [3 /*break*/, 7];
+                case 6:
+                    err_3 = _a.sent();
+                    warn("failed to build " + m);
+                    return [3 /*break*/, 7];
+                case 7:
+                    _i++;
+                    return [3 /*break*/, 3];
+                case 8: return [2 /*return*/];
+            }
+        });
+    });
+}
+function releaseBuild(target) {
+    return __awaiter(this, void 0, void 0, function () {
+        var inputStr, bundle, err_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 1, , 3]);
-                    target = titleCase(process.argv[4].replace(/-/g, ''));
-                    return [3 /*break*/, 3];
-                case 1:
-                    err_3 = _a.sent();
-                    return [4 /*yield*/, getBranch()];
-                case 2:
-                    target = target = (_a.sent()).replace(/\n/g, '');
-                    return [3 /*break*/, 3];
-                case 3:
-                    minify = process.argv[5];
-                    return [4 /*yield*/, getModulesList()];
-                case 4:
-                    modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
-                    if (!modules.includes(target.toLowerCase())) {
-                        throw "module " + target + " could not be found";
+                    inputStr = "modules/" + target + "/main.tsx";
+                    if (!fs.existsSync(inputStr)) {
+                        inputStr = "modules/" + target + "/main.ts";
                     }
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 7]);
+                    return [4 /*yield*/, rollup.rollup({
+                            input: inputStr,
+                            plugins: [
+                                resolve({ browser: false, preferBuiltins: true }),
+                                commonjs({
+                                    namedExports: NAMED_EXPORTS
+                                }),
+                                globals(),
+                                builtins(),
+                                typescript({
+                                    module: 'commonjs',
+                                    noEmitOnError: false
+                                }),
+                                scss(),
+                                less({
+                                    output: "build/modules/" + target + "Less.css"
+                                }),
+                                image(),
+                                jsonPlugin(),
+                                peerDependencies(),
+                                replace({
+                                    'process.env.NODE_ENV': JSON.stringify('production'),
+                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com'
+                                }),
+                            ]
+                        })];
+                case 2:
+                    bundle = _a.sent();
+                    return [4 /*yield*/, bundle.write({
+                            file: "build/dist/" + target + "/index.js",
+                            name: titleCase(target),
+                            format: 'cjs',
+                            globals: {
+                                react: 'React',
+                                'react-dom': 'ReactDOM'
+                            },
+                            plugins: minify ? [terser()] : []
+                        })];
+                case 3:
+                    _a.sent();
+                    return [3 /*break*/, 7];
+                case 4:
+                    err_4 = _a.sent();
+                    return [4 /*yield*/, rollup.rollup({
+                            input: inputStr,
+                            plugins: [
+                                resolve({ browser: false, preferBuiltins: true }),
+                                commonjs({
+                                    namedExports: NAMED_EXPORTS
+                                }),
+                                globals(),
+                                builtins(),
+                                typescript({
+                                    module: 'commonjs',
+                                    noEmitOnError: false
+                                }),
+                                scss(),
+                                image(),
+                                jsonPlugin(),
+                                peerDependencies(),
+                                replace({
+                                    'process.env.NODE_ENV': JSON.stringify('production'),
+                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com'
+                                }),
+                            ]
+                        })];
+                case 5:
+                    bundle = _a.sent();
+                    return [4 /*yield*/, bundle.write({
+                            file: "build/dist/" + target + "/index.js",
+                            name: titleCase(target),
+                            format: 'cjs',
+                            globals: {
+                                react: 'React',
+                                'react-dom': 'ReactDOM'
+                            },
+                            plugins: minify ? [terser()] : []
+                        })];
+                case 6:
+                    _a.sent();
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
+function rollupBuild() {
+    return __awaiter(this, void 0, void 0, function () {
+        var minify, inputStr, bundle;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (target.includes('-')) {
+                        target = process.argv[4].replace(/-/g, '');
+                    }
+                    minify = process.argv[5];
                     inputStr = "modules/" + target + "/main.tsx";
                     if (!fs.existsSync(inputStr)) {
                         inputStr = "modules/" + target + "/main.ts";
@@ -295,7 +438,7 @@ function rollupBuild() {
                                 }),
                             ]
                         })];
-                case 5:
+                case 1:
                     bundle = _a.sent();
                     return [4 /*yield*/, bundle.write({
                             file: "build/modules/" + target + ".js",
@@ -307,7 +450,7 @@ function rollupBuild() {
                             },
                             plugins: minify ? [terser()] : []
                         })];
-                case 6:
+                case 2:
                     _a.sent();
                     sh.sed('-i', 'bufferEs6.hasOwnProperty(key$2)', 'key$2 in bufferEs6', "build/modules/" + target + ".js");
                     sh.sed('-i', '_a = _typeModule(_typeModule)', 'var _a = _typeModule(_typeModule);', "build/modules/" + target + ".js");
@@ -341,7 +484,7 @@ function googBuild() {
 }
 function release() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_4, modules;
+        var target, err_5, modules;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, rollupBuild()];
@@ -353,7 +496,7 @@ function release() {
                     target = titleCase(process.argv[4].replace(/-/g, ''));
                     return [3 /*break*/, 5];
                 case 3:
-                    err_4 = _a.sent();
+                    err_5 = _a.sent();
                     return [4 /*yield*/, getBranch()];
                 case 4:
                     target = target = (_a.sent()).replace(/\n/g, '');
@@ -387,7 +530,7 @@ function release() {
 }
 function upload() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_5;
+        var target, err_6;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -395,7 +538,7 @@ function upload() {
                     target = titleCase(process.argv[4].replace(/-/g, ''));
                     return [3 /*break*/, 3];
                 case 1:
-                    err_5 = _a.sent();
+                    err_6 = _a.sent();
                     return [4 /*yield*/, getBranch()];
                 case 2:
                     target = target = (_a.sent()).replace(/\n/g, '');
@@ -410,7 +553,7 @@ function upload() {
 }
 function cloneModule() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_6;
+        var target, err_7;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -418,7 +561,7 @@ function cloneModule() {
                     target = titleCase(process.argv[4].replace(/-/g, ''));
                     return [3 /*break*/, 3];
                 case 1:
-                    err_6 = _a.sent();
+                    err_7 = _a.sent();
                     return [4 /*yield*/, getBranch()];
                 case 2:
                     target = target = (_a.sent()).replace(/\n/g, '');
@@ -465,9 +608,11 @@ function bustCache() {
         });
     });
 }
+task('index', buildIndex);
 task('bundle', rollupBuild);
 task('bust', bustCache);
 task('goog', googBuild);
+task('distribute', buildRelease);
 task(release);
 task('cfpatch', patchCFC);
 task(upload);

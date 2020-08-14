@@ -127,7 +127,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     if (this.SigPad.current) {
       const dUrl = this.SigPad.current.toDataURL();
       const sUrl = URL.createObjectURL(
-        b64toBlob(dUrl.replace('data:image/png;base64,', ''), 'sig.png'),
+        b64toBlob(dUrl.replace('data:image/png;base64,', ''), 'sig.png')
       );
       this.setState({
         sigURL: sUrl,
@@ -161,7 +161,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   getTotal() {
     const qls = this.state.quoteLines.filter((ql) =>
-      this.state.selected.includes(ql.id),
+      this.state.selected.includes(ql.id)
     );
     return qls.reduce((acc: number, curr: QuoteLine.AsObject) => {
       return acc + parseInt(curr.adjustment);
@@ -174,7 +174,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         (prevState) => ({
           isLoading: !prevState.isLoading,
         }),
-        resolve,
+        resolve
       );
     });
   }
@@ -189,7 +189,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     try {
       const req = new Document();
       req.setFilename(
-        `${this.props.jobNumber}_pending_proposal_${this.props.userID}%`,
+        `${this.props.jobNumber}_pending_proposal_${this.props.userID}%`
       );
       const doc = await this.DocClient.Get(req);
       this.setState({
@@ -205,10 +205,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       const req = new Document();
       req.setDateCreated(timestamp());
       req.setFilename(
-        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
+        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`
       );
       req.setDescription(
-        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
+        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`
       );
       req.setId(this.state.docID);
       req.setFieldMaskList(['DateCreated', 'Filename', 'Description']);
@@ -249,7 +249,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       <ApprovedProposal
         sigURL={this.state.sigURL}
         quoteLines={this.state.quoteLines.filter((ql) =>
-          this.state.selected.includes(ql.id),
+          this.state.selected.includes(ql.id)
         )}
         jobNumber={this.props.jobNumber}
         property={this.state.property}
@@ -260,7 +260,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         }
         total={this.getTotal()}
         notes={this.state.notes}
-      />,
+      />
     ).toBlob();
 
     const el = document.createElement('a');
@@ -281,7 +281,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       <ApprovedProposal
         sigURL={this.state.sigURL}
         quoteLines={this.state.quoteLines.filter((ql) =>
-          this.state.selected.includes(ql.id),
+          this.state.selected.includes(ql.id)
         )}
         jobNumber={this.props.jobNumber}
         property={this.state.property}
@@ -292,12 +292,12 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         }
         total={this.getTotal()}
         notes={this.state.notes}
-      />,
+      />
     ).toBlob();
     const urlObj = new URLObject();
     urlObj.setBucket('testbuckethelios');
     urlObj.setKey(
-      `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
+      `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`
     );
     urlObj.setContentType('pdf');
     const urlRes = await this.S3Client.GetUploadURL(urlObj);
@@ -315,7 +315,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     req.setUserId(this.props.userID);
     req.setPropertyId(this.props.propertyID);
     req.setActivityName(
-      `Customer Approved Proposal: Job ${this.props.jobNumber}`,
+      `Customer Approved Proposal: Job ${this.props.jobNumber}`
     );
     await this.LogClient.Create(req);
   }
@@ -324,7 +324,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const req = new FileObject();
     req.setBucket('testbuckethelios2');
     req.setKey(
-      `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`,
+      `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`
     );
     await this.S3Client.Delete(req);
   }
@@ -374,7 +374,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       },
     ];
     const slackUrl = `https://slack.com/api/chat.postMessage?token=${key}&text=<!here>, A proposal has been approved&channel=${channel}&icon_emoji=:white_check_mark:&as_user=false&username=Proposal&attachments=${encodeURIComponent(
-      JSON.stringify(post),
+      JSON.stringify(post)
     )}`;
     await fetch(slackUrl, { method: 'POST' });
   }
@@ -399,7 +399,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       window.location.href = `https://app.kalosflorida.com/index.cfm?action=customer:service.post_proposal&user_id=${this.props.userID}&username=${name}&jobNumber=${this.props.jobNumber}`;
     } catch (err) {
       alert(
-        'Something went wrong, please refresh and try again. If you continue to experience issues, please contact office@kalosflorida.com',
+        'Something went wrong, please refresh and try again. If you continue to experience issues, please contact office@kalosflorida.com'
       );
       await this.toggleLoading();
     }

@@ -5,6 +5,7 @@ import LinkIcon from '@material-ui/icons/Link';
 import AddIcon from '@material-ui/icons/Add';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import SearchIcon from '@material-ui/icons/Search';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import {
@@ -87,6 +88,7 @@ interface Props {
   onRepairsChange?: (repairs: Repair[]) => void;
   actions?: ActionsProps;
   asideContent?: ReactNode;
+  viewedAsCustomer?: boolean;
 }
 
 const REPAIR_SCHEMA: Schema<Repair> = [
@@ -118,6 +120,7 @@ export const ServiceItems: FC<Props> = props => {
     loading: loadingProp = false,
     actions = [],
     asideContent,
+    viewedAsCustomer = false,
   } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
@@ -165,16 +168,18 @@ export const ServiceItems: FC<Props> = props => {
           {
             label: `#${idx + 1}`,
             headline: true,
-            actions: [
-              {
-                label: 'Remove',
-                variant: 'outlined',
-                onClick: handleRemoveMaterial(idx),
-                compact: true,
-                size: 'xsmall',
-                disabled: saving,
-              },
-            ],
+            actions: viewedAsCustomer
+              ? undefined
+              : [
+                  {
+                    label: 'Remove',
+                    variant: 'outlined',
+                    onClick: handleRemoveMaterial(idx),
+                    compact: true,
+                    size: 'xsmall',
+                    disabled: saving,
+                  },
+                ],
           },
         ],
         [
@@ -186,6 +191,7 @@ export const ServiceItems: FC<Props> = props => {
                 data={materials[idx]}
                 onChange={handleMaterialChange(idx)}
                 disabled={saving}
+                readOnly={viewedAsCustomer}
               />
             ),
           },
@@ -244,16 +250,18 @@ export const ServiceItems: FC<Props> = props => {
       {
         label: 'Materials',
         headline: true,
-        actions: [
-          {
-            label: 'Add',
-            size: 'xsmall',
-            variant: 'outlined',
-            compact: true,
-            onClick: handleAddMaterial,
-            disabled: saving,
-          },
-        ],
+        actions: viewedAsCustomer
+          ? undefined
+          : [
+              {
+                label: 'Add',
+                size: 'xsmall',
+                variant: 'outlined',
+                compact: true,
+                onClick: handleAddMaterial,
+                disabled: saving,
+              },
+            ],
       },
     ],
     ...(loadingMaterials
@@ -275,7 +283,7 @@ export const ServiceItems: FC<Props> = props => {
           [
             {
               content: (
-                <div className="ServiceItemsNoMaterials">No materials</div>
+                <InfoTable className="ServiceItemsNoMaterials" data={[]} />
               ),
             },
           ],
@@ -573,22 +581,26 @@ export const ServiceItems: FC<Props> = props => {
                   className="ServiceItemsCheckbox"
                 />
               )}
-              <IconButton
-                style={{ marginRight: 4 }}
-                size="small"
-                disabled={idx === 0}
-                onClick={handleReorder(idx, -1)}
-              >
-                <ArrowUpwardIcon />
-              </IconButton>
-              <IconButton
-                style={{ marginRight: 4 }}
-                size="small"
-                disabled={idx === entries.length - 1}
-                onClick={handleReorder(idx, 1)}
-              >
-                <ArrowDownwardIcon />
-              </IconButton>
+              {!viewedAsCustomer && (
+                <>
+                  <IconButton
+                    style={{ marginRight: 4 }}
+                    size="small"
+                    disabled={idx === 0}
+                    onClick={handleReorder(idx, -1)}
+                  >
+                    <ArrowUpwardIcon />
+                  </IconButton>
+                  <IconButton
+                    style={{ marginRight: 4 }}
+                    size="small"
+                    disabled={idx === entries.length - 1}
+                    onClick={handleReorder(idx, 1)}
+                  >
+                    <ArrowDownwardIcon />
+                  </IconButton>
+                </>
+              )}
               <span>{value}</span>
             </>
           ),
@@ -620,16 +632,20 @@ export const ServiceItems: FC<Props> = props => {
               size="small"
               onClick={handleEditing(entry)}
             >
-              <EditIcon />
+              {viewedAsCustomer ? <SearchIcon /> : <EditIcon />}
             </IconButton>,
-            <IconButton
-              key={2}
-              style={{ marginLeft: 4 }}
-              size="small"
-              onClick={setDeleting(entry)}
-            >
-              <DeleteIcon />
-            </IconButton>,
+            ...(viewedAsCustomer
+              ? []
+              : [
+                  <IconButton
+                    key={2}
+                    style={{ marginLeft: 4 }}
+                    size="small"
+                    onClick={setDeleting(entry)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>,
+                ]),
           ],
         },
       ]);
@@ -668,17 +684,21 @@ export const ServiceItems: FC<Props> = props => {
     <div className={className}>
       <SectionBar
         title={title}
-        actions={[
-          ...actions.map(item => ({
-            ...item,
-            disabled: loading || loadingProp,
-          })),
-          {
-            label: 'Add',
-            onClick: handleEditing({} as Entry),
-            disabled: loading || loadingProp,
-          },
-        ]}
+        actions={
+          viewedAsCustomer
+            ? undefined
+            : [
+                ...actions.map(item => ({
+                  ...item,
+                  disabled: loading || loadingProp,
+                })),
+                {
+                  label: 'Add',
+                  onClick: handleEditing({} as Entry),
+                  disabled: loading || loadingProp,
+                },
+              ]
+        }
         pagination={{
           count,
           page,
@@ -704,22 +724,26 @@ export const ServiceItems: FC<Props> = props => {
             title={entries.find(({ id }) => id === linkId)?.type}
             serviceItemId={linkId}
             onClose={handleSetLinkId(undefined)}
+            viewedAsCustomer={viewedAsCustomer}
           />
         </Modal>
       )}
       {editing && (
-        <Modal open onClose={handleEditing()} fullScreen>
+        <Modal open onClose={handleEditing()} fullScreen={!viewedAsCustomer}>
           <div className="ServiceItemsModal">
             <Form<Entry>
-              title={`${editing.id ? 'Edit' : 'Add'} Service Item`}
+              title={`${
+                editing.id ? (viewedAsCustomer ? 'View' : 'Edit') : 'Add'
+              } Service Item`}
               schema={SCHEMA}
               data={editing}
               onSave={handleSave}
               onClose={handleEditing()}
               disabled={saving}
               className="ServiceItemsForm"
+              readOnly={viewedAsCustomer}
             />
-            {editing.id && (
+            {!viewedAsCustomer && editing.id && (
               <div className="ServiceItemsReadings">
                 <ServiceItemReadings {...props} serviceItemId={editing.id} />
               </div>

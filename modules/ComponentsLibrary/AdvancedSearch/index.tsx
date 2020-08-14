@@ -89,6 +89,7 @@ export interface Props {
   deletableProperties?: boolean;
   eventsWithAccounting?: boolean;
   eventsWithAdd?: boolean;
+  propertyCustomerId?: number;
   onSelectEvent?: (event: EventType) => void;
   onClose?: () => void;
 }
@@ -124,6 +125,7 @@ export const AdvancedSearch: FC<Props> = ({
   eventsWithAdd = false,
   onSelectEvent,
   onClose,
+  propertyCustomerId = 0,
 }) => {
   const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
@@ -141,6 +143,7 @@ export const AdvancedSearch: FC<Props> = ({
     jobSubtypeId: 0,
     logJobStatus: '',
     employeeDepartmentId: -1,
+    userId: propertyCustomerId,
   };
   const [filter, setFilter] = useState<SearchForm>(defaultFilter);
   const [formKey, setFormKey] = useState<number>(0);
@@ -203,6 +206,7 @@ export const AdvancedSearch: FC<Props> = ({
   const [employeeDepartmentsOpen, setEmployeeDepartmentsOpen] = useState<
     boolean
   >(false);
+  const [pendingAddProperty, setPendingAddProperty] = useState<boolean>(false);
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await loadJobTypes();
@@ -503,8 +507,9 @@ export const AdvancedSearch: FC<Props> = ({
   );
   const onSaveProperty = useCallback(() => {
     setPendingPropertyEditing(undefined);
+    setPendingAddProperty(false);
     setLoaded(false);
-  }, [setPendingPropertyEditing, setLoaded]);
+  }, [setPendingPropertyEditing, setLoaded, setPendingAddProperty]);
   const handlePendingPropertyDeletingToggle = useCallback(
     (pendingPropertyDeleting?: PropertyType) => () =>
       setPendingPropertyDeleting(pendingPropertyDeleting),
@@ -528,6 +533,11 @@ export const AdvancedSearch: FC<Props> = ({
   const handleEmployeeDepartmentsOpenToggle = useCallback(
     (open: boolean) => () => setEmployeeDepartmentsOpen(open),
     [setEmployeeDepartmentsOpen],
+  );
+  const handleTogglePendingAddProperty = useCallback(
+    (pendingAddProperty: boolean) => () =>
+      setPendingAddProperty(pendingAddProperty),
+    [setPendingAddProperty],
   );
   const searchActions: ActionsProps = [
     {
@@ -1069,13 +1079,13 @@ export const AdvancedSearch: FC<Props> = ({
   const SCHEMA_PROPERTIES: Schema<PropertiesFilter> = [
     [
       {
-        name: 'subdivision',
-        label: 'Subdivision',
+        name: 'address',
+        label: 'Address',
         type: 'search',
       },
       {
-        name: 'address',
-        label: 'Address',
+        name: 'subdivision',
+        label: 'Subdivision',
         type: 'search',
       },
       {
@@ -1904,6 +1914,14 @@ export const AdvancedSearch: FC<Props> = ({
                 },
               ]
             : []),
+          ...(propertyCustomerId
+            ? [
+                {
+                  label: 'Add Property',
+                  onClick: handleTogglePendingAddProperty(true),
+                },
+              ]
+            : []),
           ...(onClose
             ? [
                 {
@@ -1937,14 +1955,16 @@ export const AdvancedSearch: FC<Props> = ({
           ) : null
         }
       />
-      <SearchFormComponent
-        key={formKey}
-        schema={getSchema()}
-        data={filter}
-        onChange={handleFormChange}
-        className="AdvancedSearchForm"
-        disabled={loadingDicts}
-      />
+      {!propertyCustomerId && (
+        <SearchFormComponent
+          key={formKey}
+          schema={getSchema()}
+          data={filter}
+          onChange={handleFormChange}
+          className="AdvancedSearchForm"
+          disabled={loadingDicts}
+        />
+      )}
       <InfoTable
         columns={getColumns(filter.kind)}
         data={getData()}
@@ -2027,30 +2047,41 @@ export const AdvancedSearch: FC<Props> = ({
           onClose={handlePendingPropertyViewingToggle(undefined)}
           fullScreen
         >
-          <CustomerInformation
-            userID={pendingPropertyViewing.userId}
-            propertyId={pendingPropertyViewing.id}
-            onClose={handlePendingPropertyViewingToggle(undefined)}
-          />
+          {!propertyCustomerId && (
+            <CustomerInformation
+              userID={pendingPropertyViewing.userId}
+              propertyId={pendingPropertyViewing.id}
+              onClose={handlePendingPropertyViewingToggle(undefined)}
+            />
+          )}
           <PropertyInfo
             loggedUserId={loggedUserId}
             userID={pendingPropertyViewing.userId}
             propertyId={pendingPropertyViewing.id}
+            viewedAsCustomer={!!propertyCustomerId}
+            onClose={handlePendingPropertyViewingToggle(undefined)}
           />
         </Modal>
       )}
       {pendingPropertyEditing && (
-        <Modal
-          open
-          onClose={handlePendingPropertyEditingToggle(undefined)}
-          fullScreen
-        >
+        <Modal open onClose={handlePendingPropertyEditingToggle(undefined)}>
           <PropertyEdit
             userId={pendingPropertyEditing.userId}
             propertyId={pendingPropertyEditing.id}
             property={pendingPropertyEditing}
             onSave={onSaveProperty}
             onClose={handlePendingPropertyEditingToggle(undefined)}
+            viewedAsCustomer={!!propertyCustomerId}
+          />
+        </Modal>
+      )}
+      {pendingAddProperty && (
+        <Modal open onClose={handleTogglePendingAddProperty(false)}>
+          <PropertyEdit
+            userId={propertyCustomerId}
+            onSave={onSaveProperty}
+            onClose={handleTogglePendingAddProperty(false)}
+            viewedAsCustomer
           />
         </Modal>
       )}

@@ -46,10 +46,12 @@ interface Props {
   userID: number;
   propertyId: number;
   loggedUserId: number;
+  viewedAsCustomer?: boolean;
+  onClose?: () => void;
 }
 
 export const PropertyInfo: FC<Props> = props => {
-  const { userID, propertyId } = props;
+  const { userID, propertyId, viewedAsCustomer = false, onClose } = props;
   const [entry, setEntry] = useState<PropertyType>(new Property().toObject());
   const [user, setUser] = useState<User.AsObject>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -158,10 +160,10 @@ export const PropertyInfo: FC<Props> = props => {
     if (!entry.id) {
       load();
     }
-    if (entry.notification !== '') {
+    if (!viewedAsCustomer && entry.notification !== '') {
       setNotificationViewing(true);
     }
-  }, [entry, load, setNotificationViewing]);
+  }, [entry, load, setNotificationViewing, viewedAsCustomer]);
 
   const handleSave = useCallback(
     async (data: PropertyType) => {
@@ -238,6 +240,7 @@ export const PropertyInfo: FC<Props> = props => {
     subdivision,
     notes,
     notification,
+    directions,
   } = entry;
   if (entry.id === 0)
     return (
@@ -248,22 +251,29 @@ export const PropertyInfo: FC<Props> = props => {
       </>
     );
   const data: Data = [
-    [
-      { label: 'Name', value: `${firstname} ${lastname}` },
-      { label: 'Business Name', value: businessname },
-    ],
-    [
-      { label: 'Primary Phone', value: phone, href: 'tel' },
-      { label: 'Alternate Phone', value: altphone, href: 'tel' },
-    ],
-    [{ label: 'Email', value: email, href: 'mailto' }],
+    ...(viewedAsCustomer
+      ? []
+      : ([
+          [
+            { label: 'Name', value: `${firstname} ${lastname}` },
+            { label: 'Business Name', value: businessname },
+          ],
+          [
+            { label: 'Primary Phone', value: phone, href: 'tel' },
+            { label: 'Alternate Phone', value: altphone, href: 'tel' },
+          ],
+          [{ label: 'Email', value: email, href: 'mailto' }],
+        ] as Data)),
     [
       {
         label: 'Address',
         value: `${address}, ${city}, ${addressState} ${zip}`,
       },
     ],
-    [{ label: 'Subdivision', value: subdivision }],
+    [
+      { label: 'Directions', value: directions },
+      { label: 'Subdivision', value: subdivision },
+    ],
     [{ label: 'Notes', value: notes }],
   ];
   return (
@@ -272,57 +282,72 @@ export const PropertyInfo: FC<Props> = props => {
         <div className="PropertyInfoProperties">
           <SectionBar
             title="Property Information"
-            actions={[
-              {
-                label: 'Tasks',
-                url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
-              },
-              {
-                label: notification ? 'Notification' : 'Add Notification',
-                onClick: notification
-                  ? handleSetNotificationViewing(true)
-                  : handleSetNotificationEditing(true),
-              },
-              {
-                label: 'Change',
-                onClick: ({ currentTarget }: React.MouseEvent<HTMLElement>) =>
-                  handleSetEditEditMenuAnchorEl(currentTarget),
-                desktop: true,
-              },
-              {
-                label: 'Edit Property',
-                onClick: handleSetEditing(true),
-                desktop: false,
-              },
-              {
-                label: 'Activity',
-                url: `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`,
-                desktop: false,
-              },
-              {
-                label: 'Delete Property',
-                desktop: false,
-                onClick: handleSetDeleting(true),
-              },
-              {
-                label: 'Merge Property',
-                desktop: false,
-                onClick: handleSetMerging(true),
-              },
-              {
-                label: 'Change Owner',
-                desktop: false,
-                onClick: handleSetChangingOwner(true),
-              },
-              {
-                label: 'Owner Details',
-                url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
-              },
-              {
-                label: 'Links',
-                onClick: handleSetLinksViewing(true),
-              },
-            ]}
+            actions={
+              viewedAsCustomer
+                ? [
+                    {
+                      label: 'Edit Property',
+                      onClick: handleSetEditing(true),
+                    },
+                    {
+                      label: 'Close',
+                      onClick: onClose,
+                    },
+                  ]
+                : [
+                    {
+                      label: 'Tasks',
+                      url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
+                    },
+                    {
+                      label: notification ? 'Notification' : 'Add Notification',
+                      onClick: notification
+                        ? handleSetNotificationViewing(true)
+                        : handleSetNotificationEditing(true),
+                    },
+                    {
+                      label: 'Change',
+                      onClick: ({
+                        currentTarget,
+                      }: React.MouseEvent<HTMLElement>) =>
+                        handleSetEditEditMenuAnchorEl(currentTarget),
+                      desktop: true,
+                    },
+                    {
+                      label: 'Edit Property',
+                      onClick: handleSetEditing(true),
+                      desktop: false,
+                    },
+                    {
+                      label: 'Activity',
+                      url: `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`,
+                      desktop: false,
+                    },
+                    {
+                      label: 'Delete Property',
+                      desktop: false,
+                      onClick: handleSetDeleting(true),
+                    },
+                    {
+                      label: 'Merge Property',
+                      desktop: false,
+                      onClick: handleSetMerging(true),
+                    },
+                    {
+                      label: 'Change Owner',
+                      desktop: false,
+                      onClick: handleSetChangingOwner(true),
+                    },
+                    {
+                      label: 'Owner Details',
+                      url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
+                    },
+                    {
+                      label: 'Links',
+                      onClick: handleSetLinksViewing(true),
+                    },
+                  ]
+            }
           >
             <InfoTable data={data} loading={loading} error={error} />
           </SectionBar>
@@ -342,6 +367,7 @@ export const PropertyInfo: FC<Props> = props => {
             setNotificationEditing(false);
           }}
           property={entry}
+          viewedAsCustomer
         />
       </Modal>
       <Modal
