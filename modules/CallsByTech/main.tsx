@@ -13,6 +13,11 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../constants';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
+import { PageWrapper } from '../PageWrapper/main';
+
+interface Props {
+  userId: number;
+}
 
 interface state {
   selectedID: number;
@@ -23,10 +28,10 @@ interface state {
   isLoading: boolean;
 }
 
-export class CallsByTech extends React.PureComponent<{}, state> {
+export class CallsByTech extends React.PureComponent<Props, state> {
   EventClient: EventClient;
   UserClient: UserClient;
-  constructor(props: {}) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       selectedID: 0,
@@ -52,7 +57,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
         (prevState) => ({
           isLoading: !prevState.isLoading,
         }),
-        () => resolve(true),
+        () => resolve(true)
       );
     });
   }
@@ -68,7 +73,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
           if (this.state.selectedID !== 0) {
             await this.fetchCalls();
           }
-        },
+        }
       );
     }
   }
@@ -84,7 +89,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
             await this.clearCalls();
             await this.fetchCalls();
           }
-        },
+        }
       );
     }
   }
@@ -137,7 +142,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
         } else {
           await this.toggleLoading();
         }
-      },
+      }
     );
   }
 
@@ -147,7 +152,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
         {
           calls: [],
         },
-        resolve,
+        resolve
       );
     });
   }
@@ -172,7 +177,7 @@ export class CallsByTech extends React.PureComponent<{}, state> {
         } else {
           await this.toggleLoading();
         }
-      },
+      }
     );
   }
 
@@ -197,23 +202,24 @@ export class CallsByTech extends React.PureComponent<{}, state> {
 
   render() {
     return (
-      <Grid container direction="column" alignItems="center">
-        <Grid
-          container
-          item
-          direction="row"
-          alignItems="center"
-          justify="space-evenly"
-        >
-          <Typography>Service Calls by Employee</Typography>
-          <EmployeePicker
-            selected={this.state.selectedID}
-            renderItem={this.renderItem}
-            sort={this.sortUsersAlphabetically}
-            onSelect={this.handleEmployeeSelect}
-            disabled={this.state.isLoading}
-          />
-          {/*<FormControl>
+      <PageWrapper userID={this.props.userId}>
+        <Grid container direction="column" alignItems="center">
+          <Grid
+            container
+            item
+            direction="row"
+            alignItems="center"
+            justify="space-evenly"
+          >
+            <Typography>Service Calls by Employee</Typography>
+            <EmployeePicker
+              selected={this.state.selectedID}
+              renderItem={this.renderItem}
+              sort={this.sortUsersAlphabetically}
+              onSelect={this.handleEmployeeSelect}
+              disabled={this.state.isLoading}
+            />
+            {/*<FormControl>
             <InputLabel htmlFor="employee-select">Employee</InputLabel>
             <NativeSelect
               value={this.state.selectedID}
@@ -234,75 +240,80 @@ export class CallsByTech extends React.PureComponent<{}, state> {
                 ))}
             </NativeSelect>
                 </FormControl>*/}
-          <MuiPickersUtilsProvider utils={DateFnsUtils}>
-            <DatePicker
-              format="MM/dd/yyyy"
-              margin="normal"
-              id="date-picker-inline"
-              label="Date Started"
-              value={this.state.date || this.state.defaultDate}
-              onChange={this.handleDateChange}
-            />
-          </MuiPickersUtilsProvider>
-        </Grid>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Time</TableCell>
-              <TableCell>Customer</TableCell>
-              <TableCell>Business</TableCell>
-              <TableCell>Address</TableCell>
-              <TableCell>City</TableCell>
-              <TableCell>Zip</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Job #</TableCell>
-              <TableCell>Job Type</TableCell>
-              <TableCell>Job Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {this.state.calls
-              .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
-              .map((c) => (
-                <TableRow
-                  hover
-                  onClick={() => {
-                    if (c.customer) {
-                      const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${c.id}&property_id=${c.propertyId}&user_id=${c.customer.id}`;
-                      const win = window.open(url, '_blank');
-                      if (win) {
-                        win.focus();
+            <MuiPickersUtilsProvider utils={DateFnsUtils}>
+              <DatePicker
+                format="MM/dd/yyyy"
+                margin="normal"
+                id="date-picker-inline"
+                label="Date Started"
+                value={this.state.date || this.state.defaultDate}
+                onChange={this.handleDateChange}
+              />
+            </MuiPickersUtilsProvider>
+          </Grid>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Time</TableCell>
+                <TableCell>Customer</TableCell>
+                <TableCell>Business</TableCell>
+                <TableCell>Address</TableCell>
+                <TableCell>City</TableCell>
+                <TableCell>Zip</TableCell>
+                <TableCell>Phone</TableCell>
+                <TableCell>Job #</TableCell>
+                <TableCell>Job Type</TableCell>
+                <TableCell>Job Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {this.state.calls
+                .sort(
+                  (a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted)
+                )
+                .map((c) => (
+                  <TableRow
+                    hover
+                    onClick={() => {
+                      if (c.customer) {
+                        const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${c.id}&property_id=${c.propertyId}&user_id=${c.customer.id}`;
+                        const win = window.open(url, '_blank');
+                        if (win) {
+                          win.focus();
+                        }
                       }
-                    }
-                  }}
-                  key={c.name}
-                >
-                  <TableCell>
-                    {c.timeStarted} - {c.timeEnded}
-                  </TableCell>
-                  <TableCell>
-                    {c.customer
-                      ? `${c.customer.firstname} ${c.customer.lastname}`
-                      : ''}
-                  </TableCell>
-                  <TableCell>
-                    {c.customer ? c.customer.businessname : ''}
-                  </TableCell>
-                  <TableCell>{c.property ? c.property.address : ''}</TableCell>
-                  <TableCell>{c.property ? c.property.city : ''}</TableCell>
-                  <TableCell>{c.property ? c.property.zip : ''}</TableCell>
-                  <TableCell>{c.customer ? c.customer.phone : ''}</TableCell>
-                  <TableCell>{c.id}</TableCell>
-                  <TableCell>
-                    {c.jobType} / {c.jobSubtype}
-                  </TableCell>
-                  <TableCell>{c.logJobStatus}</TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        {this.renderIndicator()}
-      </Grid>
+                    }}
+                    key={c.name}
+                  >
+                    <TableCell>
+                      {c.timeStarted} - {c.timeEnded}
+                    </TableCell>
+                    <TableCell>
+                      {c.customer
+                        ? `${c.customer.firstname} ${c.customer.lastname}`
+                        : ''}
+                    </TableCell>
+                    <TableCell>
+                      {c.customer ? c.customer.businessname : ''}
+                    </TableCell>
+                    <TableCell>
+                      {c.property ? c.property.address : ''}
+                    </TableCell>
+                    <TableCell>{c.property ? c.property.city : ''}</TableCell>
+                    <TableCell>{c.property ? c.property.zip : ''}</TableCell>
+                    <TableCell>{c.customer ? c.customer.phone : ''}</TableCell>
+                    <TableCell>{c.id}</TableCell>
+                    <TableCell>
+                      {c.jobType} / {c.jobSubtype}
+                    </TableCell>
+                    <TableCell>{c.logJobStatus}</TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+          {this.renderIndicator()}
+        </Grid>
+      </PageWrapper>
     );
   }
 }
