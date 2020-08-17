@@ -28,61 +28,60 @@ export function PostProposal({
   const downloadPDF = async () => {
     await fetchPDF(userID, jobNumber);
   };
-  const content = (
-    <Grid
-      container
-      direction="column"
-      justify="space-around"
-      alignItems="center"
-      style={{ padding: 20, height: '100%' }}
-    >
-      <Typography
-        variant="h4"
-        component="span"
-        align="center"
-        style={{ marginBottom: 10 }}
+  return (
+    <PageWrapper userID={userID} withHeader={withPageHeader}>
+      <Grid
+        container
+        direction="column"
+        justify="space-around"
+        alignItems="center"
+        style={{ padding: 20, height: '100%' }}
       >
-        Thank you for reviewing your proposal {userName}!
-      </Typography>
-      <Button
-        onClick={downloadPDF}
-        variant="outlined"
-        style={{ marginBottom: 10 }}
-      >
-        Click to obtain a copy of the document for your records
-      </Button>
-      <Typography
-        variant="body1"
-        component="span"
-        align="center"
-        style={{ marginBottom: 10 }}
-      >
-        We appreciate your business. If you have any issues or concerns please
-        contact us and as to speak with our parts coordinator.
-      </Typography>
-      <Typography
-        variant="h5"
-        component="a"
-        align="center"
-        href="tel:3522437099"
-        style={{ marginBottom: 10 }}
-      >
-        Call us at: (352) 243-7099
-      </Typography>
-      <Typography
-        variant="h5"
-        component="a"
-        align="center"
-        href="mailto:office@kalosflorida.com"
-        style={{ marginBottom: 10 }}
-      >
-        Email us at: office@kalosflorida.com
-      </Typography>
-    </Grid>
+        <Typography
+          variant="h4"
+          component="span"
+          align="center"
+          style={{ marginBottom: 10 }}
+        >
+          Thank you for reviewing your proposal {userName}!
+        </Typography>
+        <Button
+          onClick={downloadPDF}
+          variant="outlined"
+          style={{ marginBottom: 10 }}
+        >
+          Click to obtain a copy of the document for your records
+        </Button>
+        <Typography
+          variant="body1"
+          component="span"
+          align="center"
+          style={{ marginBottom: 10 }}
+        >
+          We appreciate your business. If you have any issues or concerns please
+          contact us and as to speak with our parts coordinator.
+        </Typography>
+        <Typography
+          variant="h5"
+          component="a"
+          align="center"
+          href="tel:3522437099"
+          style={{ marginBottom: 10 }}
+        >
+          Call us at: (352) 243-7099
+        </Typography>
+        <Typography
+          variant="h5"
+          component="a"
+          align="center"
+          href="mailto:office@kalosflorida.com"
+          style={{ marginBottom: 10 }}
+        >
+          Email us at: office@kalosflorida.com
+        </Typography>
+      </Grid>
+    </PageWrapper>
   );
-  if (withPageHeader)
-    return <PageWrapper userID={userID}>{content}</PageWrapper>;
-  return content;
 }
 
 async function fetchPDF(userID: number, jobNumber: number) {
