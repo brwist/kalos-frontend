@@ -32,6 +32,7 @@ import { ENDPOINT } from '../../constants';
 import { loadUserById } from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
+import { PageWrapper } from '../PageWrapper/main';
 import './styles.less';
 
 const userClient = new UserClient(ENDPOINT);
@@ -103,7 +104,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   } = state;
   const handleOnSave = (
     card: TimesheetLine.AsObject,
-    action?: 'delete' | 'approve' | 'reject',
+    action?: 'delete' | 'approve' | 'reject'
   ) => {
     dispatch({
       type: 'saveTimecard',
@@ -198,7 +199,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
           (a, b) =>
             new Date(a.timeStarted).getTime() -
-            new Date(b.timeStarted).getTime(),
+            new Date(b.timeStarted).getTime()
         );
         let result = dayList.reduce(
           (acc, current, idx, arr) => {
@@ -223,7 +224,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
             }
             return acc;
           },
-          { ranges: [], idList: [] },
+          { ranges: [], idList: [] }
         );
 
         if (overlapped) {
@@ -297,7 +298,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       const result = await tslClient.GetTimesheet(
         req,
         `${shownDates[0]}%`,
-        `${shownDates[shownDates.length - 1]}%`,
+        `${shownDates[shownDates.length - 1]}%`
       );
       dispatch({ type: 'fetchedTimesheetData', data: result });
     })();
@@ -309,7 +310,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
 
   return (
-    <ThemeProvider theme={customTheme.lightTheme}>
+    <PageWrapper userID={userId}>
       <ConfirmServiceProvider>
         <EditTimesheetContext.Provider
           value={{
@@ -373,7 +374,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
           handleTimeout={handleTimeout}
         />
       )}
-    </ThemeProvider>
+    </PageWrapper>
   );
 };
 
