@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { Tasks } from '../ComponentsLibrary/Tasks';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface Props {
   loggedUserId: number;
@@ -9,11 +8,11 @@ interface Props {
 }
 
 export const EmployeeTasks: FC<Props> = ({ employeeId, loggedUserId }) => (
-  <ThemeProvider theme={customTheme.lightTheme}>
+  <PageWrapper userID={loggedUserId}>
     <Tasks
       externalCode="employee"
       externalId={employeeId}
       loggedUserId={loggedUserId}
     />
-  </ThemeProvider>
+  </PageWrapper>
 );
