@@ -188,7 +188,6 @@ export function Gallery({
             <Button
               onClick={toggleOpen}
               size="large"
-              className="title-text"
               style={{ height: 44 }}
               endIcon={<CloseTwoTone />}
             >
@@ -200,7 +199,7 @@ export function Gallery({
                   deleteFn(
                     fileList[activeImage].name,
                     'kalos-transactions',
-                    toggleOpen,
+                    toggleOpen
                   )
                 }
                 size="large"
@@ -267,25 +266,18 @@ export function Gallery({
               onClick={prevImage}
               disabled={activeImage === 0}
               size="large"
-              className="title-text"
               style={{ height: 44 }}
               startIcon={<ChevronLeftTwoTone />}
             >
               Prev
             </Button>
-            <Button
-              onClick={downloadImg}
-              size="large"
-              className="title-text"
-              style={{ height: 44 }}
-            >
+            <Button onClick={downloadImg} size="large" style={{ height: 44 }}>
               Download
             </Button>
             <Button
               onClick={nextImage}
               disabled={activeImage === fileList.length - 1}
               size="large"
-              className="title-text"
               style={{ height: 44 }}
               endIcon={<ChevronRightTwoTone />}
             >
