@@ -16,7 +16,7 @@ import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { useCalendarData } from '../hooks';
 import { CallCard, TimeoffCard } from './CallCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
-import { colorsMapping } from '../constants';
+import { colorsMapping } from './constants';
 import { CalendarDay } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import './column.less';
@@ -91,10 +91,10 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
           remindersList: [],
           serviceCallsList: [],
           timeoffRequestsList: [],
-        },
+        }
       );
     },
-    [filters],
+    [filters]
   );
 
   if (fetchingCalendarData || !datesMap?.get(date)) {
@@ -143,7 +143,7 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
               <IconButton
                 className={clsx(
                   'ServiceCalendarColumnDayViewButton',
-                  md && !dayView && 'visible',
+                  md && !dayView && 'visible'
                 )}
                 aria-label="dayview"
                 size="small"
@@ -172,23 +172,23 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
       <Collapse in={showCompleted}>
         {completedServiceCallsList
           .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
-          .map(call => (
+          .map((call) => (
             <CallCard key={call.id} card={call} type="completed" />
           ))}
       </Collapse>
       {timeoffRequestsList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
-        .map(call => (
+        .map((call) => (
           <TimeoffCard key={call.id} card={call} />
         ))}
       {remindersList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
-        .map(call => (
+        .map((call) => (
           <CallCard key={call.id} card={call} type="reminder" />
         ))}
       {serviceCallsList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
-        .map(call => (
+        .map((call) => (
           <CallCard key={call.id} card={call} />
         ))}
     </Box>

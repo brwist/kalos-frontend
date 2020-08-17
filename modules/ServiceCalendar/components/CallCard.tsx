@@ -14,7 +14,7 @@ import {
   colorsMapping,
   repeatsMapping,
   requestTypeMappping,
-} from '../constants';
+} from './constants';
 import './callCard.less';
 
 type ColorIndicatorProps = {
@@ -71,7 +71,7 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
     if (employeesLoading) {
       return <SkeletonCard />;
     }
-    const empl = employees.find(emp => emp.id === +userId);
+    const empl = employees.find((emp) => emp.id === +userId);
     title = 'Training:';
     subheader = `${empl?.firstname} ${empl?.lastname}`;
   } else {
@@ -94,7 +94,7 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
       onClick={() => {
         const win = window.open(
           `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`,
-          '_blank',
+          '_blank'
         );
         if (win) {
           win.focus();
@@ -171,7 +171,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
 
   const technicianNames = technicianIds
     .map((id: string) => {
-      const employee = employees.find(emp => emp.id === +id);
+      const employee = employees.find((emp) => emp.id === +id);
       return `${employee?.firstname} ${employee?.lastname}`;
     })
     .join(', ');
@@ -195,7 +195,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
         <CardHeader
           className={clsx(
             'ServiceCalendarCallCardCardHeader',
-            logJobNumber && 'jobNumber',
+            logJobNumber && 'jobNumber'
           )}
           avatar={
             <ColorIndicator

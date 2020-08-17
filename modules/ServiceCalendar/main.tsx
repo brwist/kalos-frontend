@@ -31,6 +31,7 @@ import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import EventIcon from '@material-ui/icons/Event';
+import { PageWrapper } from '../PageWrapper/main';
 import './styles.less';
 
 type Props = {
@@ -63,13 +64,13 @@ const getShownDates = (viewBy: string, date?: Date): string[] => {
       const firstDay = date || startOfWeek(today);
       const lastDay = addDays(firstDay, 6);
       const days = eachDayOfInterval({ start: firstDay, end: lastDay });
-      return days.map(date => format(date, 'yyyy-MM-dd'));
+      return days.map((date) => format(date, 'yyyy-MM-dd'));
     }
     case 'month': {
       const firstDay = date || startOfMonth(today);
       const lastDay = endOfMonth(date || today);
       const days = eachDayOfInterval({ start: firstDay, end: lastDay });
-      return days.map(date => format(date, 'yyyy-MM-dd'));
+      return days.map((date) => format(date, 'yyyy-MM-dd'));
     }
     default:
       return [];
@@ -288,7 +289,7 @@ const ServiceCalendar = ({ userId }: Props) => {
     dispatch({ type: 'viewBy', value: defaultView });
   }
 
-  const fetchEmployees = useCallback(async page => {
+  const fetchEmployees = useCallback(async (page) => {
     const user = new User();
     user.setIsActive(1);
     user.setIsEmployee(1);
@@ -297,7 +298,7 @@ const ServiceCalendar = ({ userId }: Props) => {
   }, []);
 
   const { data: employees, isLoading: employeesLoading } = useFetchAll(
-    fetchEmployees,
+    fetchEmployees
   );
 
   useEffect(() => {
@@ -318,7 +319,7 @@ const ServiceCalendar = ({ userId }: Props) => {
     }
   }, [shownDates]);
 
-  const changeViewBy = useCallback(value => {
+  const changeViewBy = useCallback((value) => {
     dispatch({ type: 'viewBy', value });
   }, []);
 
@@ -326,7 +327,7 @@ const ServiceCalendar = ({ userId }: Props) => {
     (value: Date): void => {
       dispatch({ type: 'changeSelectedDate', value });
     },
-    [viewBy],
+    [viewBy]
   );
 
   const changeFilters = useCallback((value: Filters): void => {
@@ -345,7 +346,7 @@ const ServiceCalendar = ({ userId }: Props) => {
   }, [viewBy]);
 
   return (
-    <ThemeProvider theme={customTheme.lightTheme}>
+    <PageWrapper userID={userId}>
       <CalendarDataContext.Provider
         value={{
           fetchingCalendarData,
@@ -373,7 +374,7 @@ const ServiceCalendar = ({ userId }: Props) => {
               className={clsx(viewBy !== 'day' && 'ServiceCalendarWeek')}
               maxWidth={false}
             >
-              {shownDates.map(date => (
+              {shownDates.map((date) => (
                 <Column
                   key={date}
                   date={date}
@@ -387,7 +388,7 @@ const ServiceCalendar = ({ userId }: Props) => {
         </EmployeesContext.Provider>
         <AddNewButton options={addNewOptions} />
       </CalendarDataContext.Provider>
-    </ThemeProvider>
+    </PageWrapper>
   );
 };
 
