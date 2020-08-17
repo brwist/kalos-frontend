@@ -1,13 +1,12 @@
 import React from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import {
   CustomerDetails as CustomerDetailsComponent,
   Props,
 } from './components/CustomerDetails';
+import { PageWrapper } from '../PageWrapper/main';
 
 export const CustomerDetails = (props: Props) => (
-  <ThemeProvider theme={customTheme.lightTheme}>
+  <PageWrapper userID={props.loggedUserId}>
     <CustomerDetailsComponent {...props} />
-  </ThemeProvider>
+  </PageWrapper>
 );
