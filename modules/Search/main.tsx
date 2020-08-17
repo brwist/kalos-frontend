@@ -1,6 +1,4 @@
 import React from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import InputLabel from '@material-ui/core/InputLabel';
 import { PropertySearch } from './components/PropertySearch';
@@ -8,9 +6,11 @@ import { CustomerSearch } from './components/CustomerSearch';
 import { EventSearch } from './components/ServiceCallSearch';
 import { EventClient } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../constants';
+import { PageWrapper } from '../PageWrapper/main';
 
 // add any prop types here
 interface props {
+  loggedUserId: number;
   containerStyle?: React.CSSProperties;
 }
 
@@ -62,7 +62,7 @@ export class Search extends React.PureComponent<props, state> {
   render() {
     const { target } = this.state;
     return (
-      <ThemeProvider theme={customTheme.lightTheme}>
+      <PageWrapper userID={this.props.loggedUserId} padding={1}>
         {target === 'Property' && (
           <PropertySearch
             selector={this.renderSelector()}
@@ -87,7 +87,7 @@ export class Search extends React.PureComponent<props, state> {
             containerStyle={this.props.containerStyle}
           />
         )*/}
-      </ThemeProvider>
+      </PageWrapper>
     );
   }
 }
