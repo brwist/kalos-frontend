@@ -1,9 +1,9 @@
 import React from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { EventClient } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../constants';
+import { PageWrapper } from '../PageWrapper/main';
+
 // add any prop types here
 interface props {
   userID: number;
@@ -24,9 +24,9 @@ export class Dispatch extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <ThemeProvider theme={customTheme.lightTheme}>
+      <PageWrapper userID={this.props.userID} padding={1}>
         <h1>Dispatch!</h1>
-      </ThemeProvider>
+      </PageWrapper>
     );
   }
 }
