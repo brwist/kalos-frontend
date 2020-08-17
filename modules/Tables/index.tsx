@@ -2,4 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { ServiceCallTable } from './ServiceCall';
 
-ReactDOM.render(<ServiceCallTable />, document.getElementById('root'));
+ReactDOM.render(
+  <ServiceCallTable loggedUserId={101253} withPageHeader />,
+  document.getElementById('root')
+);

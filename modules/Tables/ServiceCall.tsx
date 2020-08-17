@@ -9,8 +9,12 @@ import {
   TableBody,
 } from '@material-ui/core';
 import { ENDPOINT } from '../../constants';
+import { PageWrapper } from '../PageWrapper/main';
 
-interface props {}
+interface props {
+  loggedUserId: number;
+  withPageHeader: boolean;
+}
 
 interface state {
   list: Event.AsObject[];
@@ -40,7 +44,7 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
   }
 
   fetchCalls() {
-    return new Promise(async resolve => {
+    return new Promise(async (resolve) => {
       const dateStr = this.getDateString();
       const reqObj = new Event();
       reqObj.setDateStarted(`${dateStr}%`);
@@ -48,12 +52,12 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
       reqObj.setIsActive(1);
       const res = (await this.Client.BatchGet(reqObj)).toObject();
       this.setState(
-        prevState => ({
+        (prevState) => ({
           list: prevState.list.concat(res.resultsList),
           page: prevState.page + 1,
           totalCount: res.totalCount,
         }),
-        resolve,
+        resolve
       );
     });
   }
@@ -73,36 +77,42 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <Paper style={{ width: '100%', overflowX: 'scroll' }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Time</TableCell>
-              <TableCell>Technician(s)</TableCell>
-              <TableCell>Customer</TableCell>
-              <TableCell>Location</TableCell>
-              <TableCell>Job Type</TableCell>
-              <TableCell>Status</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {this.state.list.map(row => (
+      <PageWrapper
+        userID={this.props.loggedUserId}
+        withHeader={this.props.withPageHeader}
+        padding={1}
+      >
+        <Paper style={{ width: '100%', overflowX: 'scroll' }}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell>
-                  {row.timeStarted} - {row.timeEnded}
-                </TableCell>
-                <TableCell>{row.logTechnicianAssigned}</TableCell>
-                <TableCell>Wow!</TableCell>
-                <TableCell>{row.propertyId}</TableCell>
-                <TableCell>
-                  {row.jobTypeId} - {row.jobSubtypeId}
-                </TableCell>
-                <TableCell>{row.logJobStatus}</TableCell>
+                <TableCell>Time</TableCell>
+                <TableCell>Technician(s)</TableCell>
+                <TableCell>Customer</TableCell>
+                <TableCell>Location</TableCell>
+                <TableCell>Job Type</TableCell>
+                <TableCell>Status</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
+            </TableHead>
+            <TableBody>
+              {this.state.list.map((row) => (
+                <TableRow>
+                  <TableCell>
+                    {row.timeStarted} - {row.timeEnded}
+                  </TableCell>
+                  <TableCell>{row.logTechnicianAssigned}</TableCell>
+                  <TableCell>Wow!</TableCell>
+                  <TableCell>{row.propertyId}</TableCell>
+                  <TableCell>
+                    {row.jobTypeId} - {row.jobSubtypeId}
+                  </TableCell>
+                  <TableCell>{row.logJobStatus}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+      </PageWrapper>
     );
   }
 }
