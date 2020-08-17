@@ -28,6 +28,7 @@ import {
   PAYMENT_TYPE_LIST,
   ENDPOINT,
 } from '../../constants';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface props {
   eventID: number;
@@ -84,9 +85,9 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     req.setPageNumber(page);
     const result = await this.UserClient.BatchGet(req);
     this.setState(
-      prevState => ({
+      (prevState) => ({
         technicians: prevState.technicians.concat(
-          result.toObject().resultsList,
+          result.toObject().resultsList
         ),
       }),
       async () => {
@@ -94,11 +95,11 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
           page = page + 1;
           await this.fetchTechnicians(page);
         }
-      },
+      }
     );
   }
   toggleEditing() {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       isEditing: !prevState.isEditing,
     }));
   }
@@ -163,14 +164,14 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
 
   handleTechnicianSelect(
     e: ChangeEvent<{ name?: string | undefined; value: unknown }>,
-    child: ReactNode,
+    child: ReactNode
   ) {
     const { event } = this.state;
     let assigned = event.logTechnicianAssigned.split(',');
-    assigned = assigned.filter(a => a !== '0');
+    assigned = assigned.filter((a) => a !== '0');
     const id = e.currentTarget.name;
     if (assigned.includes(id!)) {
-      assigned = assigned.filter(a => a !== id);
+      assigned = assigned.filter((a) => a !== id);
     } else {
       assigned = assigned.concat(id!);
     }
@@ -187,8 +188,9 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       if (date) {
         const monthPrefix = date.getMonth() + 1 < 10 ? '0' : '';
         const dayPrefix = date.getDate() < 10 ? '0' : '';
-        const dateString = `${date.getFullYear()}-${monthPrefix}${date.getMonth() +
-          1}-${dayPrefix}${date.getDate()} 00:00:00`;
+        const dateString = `${date.getFullYear()}-${monthPrefix}${
+          date.getMonth() + 1
+        }-${dayPrefix}${date.getDate()} 00:00:00`;
         fn(dateString);
       }
     };
@@ -231,290 +233,301 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
 
     if (event.id) {
       return (
-        <Grid container direction="column" alignItems="center">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={this.state.isEditing}
-                onChange={this.toggleEditing}
-                value="isEditing"
-                color="primary"
-              />
-            }
-            label={
-              this.state.isEditing ? 'Editing Enabled' : 'Editing Disabled'
-            }
-          />
-          <Grid container direction="row" justify="space-evenly" wrap="nowrap">
-            <Grid container direction="column" style={{ padding: 5 }}>
-              <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                <DatePicker
-                  format="MM/dd/yyyy"
-                  margin="normal"
-                  id="date-picker-inline"
-                  label="Date Started"
-                  value={new Date(event.dateStarted.replace(' ', 'T'))}
-                  onChange={this.onStartDateChange}
-                  disabled={!isEditing}
+        <PageWrapper userID={this.props.userID} padding={1}>
+          <Grid container direction="column" alignItems="center">
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={this.state.isEditing}
+                  onChange={this.toggleEditing}
+                  value="isEditing"
+                  color="primary"
                 />
-                <DatePicker
-                  format="MM/dd/yyyy"
-                  margin="normal"
-                  id="date-picker-inline"
-                  label="Date Ended"
-                  value={new Date(event.dateEnded.replace(' ', 'T'))}
-                  onChange={this.onEndDateChange}
-                  disabled={!isEditing}
-                />
-              </MuiPickersUtilsProvider>
-              <JobTypePicker
-                disabled={!isEditing}
-                selected={event.jobTypeId}
-                onSelect={this.updateJobType}
-              />
-              <JobSubtypePicker
-                disabled={!isEditing}
-                onSelect={this.updateSubType}
-                selected={event.jobSubtypeId}
-                jobTypeID={event.jobTypeId}
-              />
-              <FormControl style={{ marginTop: 10 }}>
-                <InputLabel htmlFor="Status-select">Job Status</InputLabel>
-                <NativeSelect
-                  disabled={!isEditing}
-                  value={event.logJobStatus}
-                  onChange={e => this.updateStatus(e.currentTarget.value)}
-                  inputProps={{
-                    id: 'Status-select',
-                  }}
-                >
-                  {(EVENT_STATUS_LIST as string[]).map(status => (
-                    <option value={status} key={status}>
-                      {status}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </FormControl>
-              <FormControl style={{ marginTop: 10 }}>
-                <InputLabel htmlFor="Payment-select">Payment Type</InputLabel>
-                <NativeSelect
-                  disabled={!isEditing}
-                  value={event.logPaymentType}
-                  onChange={e => this.updatePaymentType(e.currentTarget.value)}
-                  inputProps={{
-                    id: 'Payment-select',
-                  }}
-                >
-                  {(PAYMENT_TYPE_LIST as string[]).map(type => (
-                    <option value={type} key={type}>
-                      {type}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </FormControl>
-              <TextField
-                disabled={!isEditing}
-                onChange={this.handleAmountQuoted}
-                label="Amount Quoted"
-                margin="normal"
-                variant="outlined"
-                defaultValue={event.amountQuoted}
-              />
-              <FormControl style={{ marginTop: 10 }}>
-                <InputLabel htmlFor="tech-select-input">
-                  Technician Assigned
-                </InputLabel>
-                <Select
-                  disabled={!isEditing}
-                  value={event.logTechnicianAssigned.split(',')}
-                  multiple
-                  onChange={this.handleTechnicianSelect}
-                  input={<Input id="tech-select-input" />}
-                  renderValue={selected => (
-                    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                      {(selected as string[]).map(s => {
-                        const tech = this.state.technicians.find(
-                          t => t.id === parseInt(s),
-                        );
-                        if (tech) {
-                          return (
-                            <Chip
-                              key={s}
-                              label={`${tech.firstname} ${tech.lastname}`}
-                              style={{ margin: 2 }}
-                            />
-                          );
-                        } else {
-                          return (
-                            <Chip
-                              key="unassigned"
-                              label="unassigned"
-                              style={{ margin: 2 }}
-                            />
-                          );
-                        }
-                      })}
-                    </div>
-                  )}
-                >
-                  {this.state.technicians.map(t => (
-                    <MenuItem
-                      key={`${t.firstname}-${t.lastname}-${t.id}`}
-                      value={`${t.id}`}
-                    >
-                      {t.firstname} {t.lastname}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
+              }
+              label={
+                this.state.isEditing ? 'Editing Enabled' : 'Editing Disabled'
+              }
+            />
             <Grid
               container
-              direction="column"
-              justify="space-between"
-              style={{ padding: 5 }}
+              direction="row"
+              justify="space-evenly"
+              wrap="nowrap"
             >
-              <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                <TimePicker
+              <Grid container direction="column" style={{ padding: 5 }}>
+                <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                  <DatePicker
+                    format="MM/dd/yyyy"
+                    margin="normal"
+                    id="date-picker-inline"
+                    label="Date Started"
+                    value={new Date(event.dateStarted.replace(' ', 'T'))}
+                    onChange={this.onStartDateChange}
+                    disabled={!isEditing}
+                  />
+                  <DatePicker
+                    format="MM/dd/yyyy"
+                    margin="normal"
+                    id="date-picker-inline"
+                    label="Date Ended"
+                    value={new Date(event.dateEnded.replace(' ', 'T'))}
+                    onChange={this.onEndDateChange}
+                    disabled={!isEditing}
+                  />
+                </MuiPickersUtilsProvider>
+                <JobTypePicker
                   disabled={!isEditing}
-                  label="Start Time"
-                  margin="normal"
-                  value={startTime}
-                  onChange={this.onStartTimeChange}
-                  minutesStep={5}
+                  selected={event.jobTypeId}
+                  onSelect={this.updateJobType}
                 />
-                <TimePicker
+                <JobSubtypePicker
                   disabled={!isEditing}
-                  label="End Time"
-                  margin="normal"
-                  value={endTime}
-                  onChange={this.onEndTimeChange}
-                  minutesStep={5}
+                  onSelect={this.updateSubType}
+                  selected={event.jobSubtypeId}
+                  jobTypeID={event.jobTypeId}
                 />
-              </MuiPickersUtilsProvider>
-              <FormControl style={{ marginTop: 10 }}>
-                <InputLabel htmlFor="age-native-helper">Sector</InputLabel>
-                <NativeSelect
+                <FormControl style={{ marginTop: 10 }}>
+                  <InputLabel htmlFor="Status-select">Job Status</InputLabel>
+                  <NativeSelect
+                    disabled={!isEditing}
+                    value={event.logJobStatus}
+                    onChange={(e) => this.updateStatus(e.currentTarget.value)}
+                    inputProps={{
+                      id: 'Status-select',
+                    }}
+                  >
+                    {(EVENT_STATUS_LIST as string[]).map((status) => (
+                      <option value={status} key={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </FormControl>
+                <FormControl style={{ marginTop: 10 }}>
+                  <InputLabel htmlFor="Payment-select">Payment Type</InputLabel>
+                  <NativeSelect
+                    disabled={!isEditing}
+                    value={event.logPaymentType}
+                    onChange={(e) =>
+                      this.updatePaymentType(e.currentTarget.value)
+                    }
+                    inputProps={{
+                      id: 'Payment-select',
+                    }}
+                  >
+                    {(PAYMENT_TYPE_LIST as string[]).map((type) => (
+                      <option value={type} key={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </FormControl>
+                <TextField
                   disabled={!isEditing}
-                  value={event.isResidential}
-                  onChange={this.handleIsResidentialChange}
-                  inputProps={{
-                    id: 'age-native-helper',
-                  }}
-                >
-                  <option value={0}>Commercial</option>
-                  <option value={1}>Residential</option>
-                </NativeSelect>
-              </FormControl>
-              <FormControl style={{ marginTop: 10 }}>
-                <InputLabel htmlFor="dq-select">Diagnostic Quoted</InputLabel>
-                <NativeSelect
-                  disabled={!isEditing}
-                  value={event.diagnosticQuoted}
-                  onChange={this.handleIsDiagnosticQuoted}
-                  inputProps={{
-                    id: 'dq-select',
-                  }}
-                >
-                  <option value={0}>No</option>
-                  <option value={1}>Yes</option>
-                </NativeSelect>
-              </FormControl>
-              <FormControl style={{ marginTop: 10 }}>
-                <InputLabel htmlFor="LMPC-select">Is LMPC?</InputLabel>
-                <NativeSelect
-                  disabled={!isEditing}
-                  value={event.isLmpc}
-                  onChange={this.handleIsLMPC}
-                  inputProps={{
-                    id: 'LMPC-select',
-                  }}
-                >
-                  <option value={0}>No</option>
-                  <option value={1}>Yes</option>
-                </NativeSelect>
-              </FormControl>
-              <FormControl style={{ marginTop: 10 }}>
-                <InputLabel htmlFor="IsCallback-select">
-                  Is Callback?
-                </InputLabel>
-                <NativeSelect
-                  disabled={!isEditing}
-                  value={event.isCallback}
-                  onChange={this.handleIsCallback}
-                  inputProps={{
-                    id: 'IsCallback-select',
-                  }}
-                >
-                  <option value={0}>No</option>
-                  <option value={1}>Yes</option>
-                </NativeSelect>
-              </FormControl>
-              <FormControl style={{ marginTop: 10 }}>
-                <InputLabel htmlFor="Callback-select">
-                  Reason Of Callback
-                </InputLabel>
-                <NativeSelect
-                  disabled={!event.isCallback}
-                  value={event.callbackOriginalId}
-                  onChange={this.handleCallbackSelect}
-                  inputProps={{
-                    id: 'Callback-select',
-                  }}
-                >
-                  <option value={0}>Select Original Call</option>
-                  {this.state.callbacks.map(cb => (
-                    <option value={cb.id} key={`${cb.name}-${cb.id}`}>
-                      {cb.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </FormControl>
+                  onChange={this.handleAmountQuoted}
+                  label="Amount Quoted"
+                  margin="normal"
+                  variant="outlined"
+                  defaultValue={event.amountQuoted}
+                />
+                <FormControl style={{ marginTop: 10 }}>
+                  <InputLabel htmlFor="tech-select-input">
+                    Technician Assigned
+                  </InputLabel>
+                  <Select
+                    disabled={!isEditing}
+                    value={event.logTechnicianAssigned.split(',')}
+                    multiple
+                    onChange={this.handleTechnicianSelect}
+                    input={<Input id="tech-select-input" />}
+                    renderValue={(selected) => (
+                      <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                        {(selected as string[]).map((s) => {
+                          const tech = this.state.technicians.find(
+                            (t) => t.id === parseInt(s)
+                          );
+                          if (tech) {
+                            return (
+                              <Chip
+                                key={s}
+                                label={`${tech.firstname} ${tech.lastname}`}
+                                style={{ margin: 2 }}
+                              />
+                            );
+                          } else {
+                            return (
+                              <Chip
+                                key="unassigned"
+                                label="unassigned"
+                                style={{ margin: 2 }}
+                              />
+                            );
+                          }
+                        })}
+                      </div>
+                    )}
+                  >
+                    {this.state.technicians.map((t) => (
+                      <MenuItem
+                        key={`${t.firstname}-${t.lastname}-${t.id}`}
+                        value={`${t.id}`}
+                      >
+                        {t.firstname} {t.lastname}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
+              <Grid
+                container
+                direction="column"
+                justify="space-between"
+                style={{ padding: 5 }}
+              >
+                <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                  <TimePicker
+                    disabled={!isEditing}
+                    label="Start Time"
+                    margin="normal"
+                    value={startTime}
+                    onChange={this.onStartTimeChange}
+                    minutesStep={5}
+                  />
+                  <TimePicker
+                    disabled={!isEditing}
+                    label="End Time"
+                    margin="normal"
+                    value={endTime}
+                    onChange={this.onEndTimeChange}
+                    minutesStep={5}
+                  />
+                </MuiPickersUtilsProvider>
+                <FormControl style={{ marginTop: 10 }}>
+                  <InputLabel htmlFor="age-native-helper">Sector</InputLabel>
+                  <NativeSelect
+                    disabled={!isEditing}
+                    value={event.isResidential}
+                    onChange={this.handleIsResidentialChange}
+                    inputProps={{
+                      id: 'age-native-helper',
+                    }}
+                  >
+                    <option value={0}>Commercial</option>
+                    <option value={1}>Residential</option>
+                  </NativeSelect>
+                </FormControl>
+                <FormControl style={{ marginTop: 10 }}>
+                  <InputLabel htmlFor="dq-select">Diagnostic Quoted</InputLabel>
+                  <NativeSelect
+                    disabled={!isEditing}
+                    value={event.diagnosticQuoted}
+                    onChange={this.handleIsDiagnosticQuoted}
+                    inputProps={{
+                      id: 'dq-select',
+                    }}
+                  >
+                    <option value={0}>No</option>
+                    <option value={1}>Yes</option>
+                  </NativeSelect>
+                </FormControl>
+                <FormControl style={{ marginTop: 10 }}>
+                  <InputLabel htmlFor="LMPC-select">Is LMPC?</InputLabel>
+                  <NativeSelect
+                    disabled={!isEditing}
+                    value={event.isLmpc}
+                    onChange={this.handleIsLMPC}
+                    inputProps={{
+                      id: 'LMPC-select',
+                    }}
+                  >
+                    <option value={0}>No</option>
+                    <option value={1}>Yes</option>
+                  </NativeSelect>
+                </FormControl>
+                <FormControl style={{ marginTop: 10 }}>
+                  <InputLabel htmlFor="IsCallback-select">
+                    Is Callback?
+                  </InputLabel>
+                  <NativeSelect
+                    disabled={!isEditing}
+                    value={event.isCallback}
+                    onChange={this.handleIsCallback}
+                    inputProps={{
+                      id: 'IsCallback-select',
+                    }}
+                  >
+                    <option value={0}>No</option>
+                    <option value={1}>Yes</option>
+                  </NativeSelect>
+                </FormControl>
+                <FormControl style={{ marginTop: 10 }}>
+                  <InputLabel htmlFor="Callback-select">
+                    Reason Of Callback
+                  </InputLabel>
+                  <NativeSelect
+                    disabled={!event.isCallback}
+                    value={event.callbackOriginalId}
+                    onChange={this.handleCallbackSelect}
+                    inputProps={{
+                      id: 'Callback-select',
+                    }}
+                  >
+                    <option value={0}>Select Original Call</option>
+                    {this.state.callbacks.map((cb) => (
+                      <option value={cb.id} key={`${cb.name}-${cb.id}`}>
+                        {cb.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </FormControl>
+
+                <TextField
+                  disabled={!isEditing}
+                  onChange={this.handleBriefDescription}
+                  label="Brief Description"
+                  margin="normal"
+                  variant="outlined"
+                  defaultValue={event.name}
+                />
+              </Grid>
+            </Grid>
+            <Grid
+              container
+              direction="row"
+              alignItems="center"
+              justify="space-evenly"
+              wrap="nowrap"
+            >
               <TextField
                 disabled={!isEditing}
-                onChange={this.handleBriefDescription}
-                label="Brief Description"
+                onChange={this.handleDescription}
+                label="Service Needed"
                 margin="normal"
                 variant="outlined"
-                defaultValue={event.name}
+                defaultValue={event.description}
+                multiline
+                fullWidth
+                style={{ padding: 5 }}
+              />
+              <TextField
+                disabled={!isEditing}
+                onChange={this.handleNotes}
+                label="Service Call Notes"
+                margin="normal"
+                variant="outlined"
+                defaultValue={event.logNotes}
+                multiline
+                fullWidth
+                style={{ padding: 5 }}
               />
             </Grid>
-          </Grid>
-          <Grid
-            container
-            direction="row"
-            alignItems="center"
-            justify="space-evenly"
-            wrap="nowrap"
-          >
-            <TextField
-              disabled={!isEditing}
-              onChange={this.handleDescription}
-              label="Service Needed"
-              margin="normal"
-              variant="outlined"
-              defaultValue={event.description}
-              multiline
-              fullWidth
-            />
-            <TextField
-              disabled={!isEditing}
-              onChange={this.handleNotes}
-              label="Service Call Notes"
-              margin="normal"
-              variant="outlined"
-              defaultValue={event.logNotes}
-              multiline
-              fullWidth
-            />
-          </Grid>
-          {/*<Button variant="contained" onClick={() => alert("No me likey")}>
+            {/*<Button variant="contained" onClick={() => alert("No me likey")}>
           Click
     </Button>*/}
-        </Grid>
+          </Grid>
+        </PageWrapper>
       );
-    } else return null;
+    } else return <PageWrapper userID={this.props.userID} />;
   }
 }
