@@ -1,5 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { List } from './main';
+import { TextList } from './main';
+import { StyledPage } from '../PageWrapper/styled';
 
-ReactDOM.render(<List userId={8418} />, document.getElementById('root'));
+ReactDOM.render(
+  <StyledPage>
+    <TextList
+      title="Example Title"
+      contents={[
+        { primary: 'First', secondary: 'Lorem ipsum' },
+        { primary: 'Second', secondary: 'Dolor sit amet' },
+        { primary: 'Third', secondary: 'Donec et iaculis augue' },
+      ]}
+    />
+  </StyledPage>,
+  document.getElementById('root')
+);
