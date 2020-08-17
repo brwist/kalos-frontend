@@ -31,13 +31,16 @@ import {
   ActivityLog,
   ActivityLogClient,
 } from '@kalos-core/kalos-rpc/ActivityLog';
+import { PageWrapper } from '../PageWrapper/main';
 
 // add any prop types here
 interface props {
   userID: number;
   jobNumber: number;
   propertyID: number;
+  loggedUserId: number;
   useBusinessName?: boolean;
+  withPageHeader: boolean;
 }
 
 // map your state here
@@ -415,7 +418,11 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <ThemeProvider theme={customTheme.lightTheme}>
+      <PageWrapper
+        userID={this.props.loggedUserId}
+        withHeader={this.props.withPageHeader}
+        padding={1}
+      >
         <Grid container direction="column" alignItems="flex-start">
           <Typography variant="body1" component="span">
             Proposal For:{' '}
@@ -611,7 +618,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
             </Grid>
           </Paper>
         </Dialog>
-      </ThemeProvider>
+      </PageWrapper>
     );
   }
 }
