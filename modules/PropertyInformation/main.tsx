@@ -1,8 +1,7 @@
 import React, { FC } from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { CustomerInformation } from '../ComponentsLibrary/CustomerInformation';
 import { PropertyInfo } from './components/PropertyInfo';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface Props {
   userID: number;
@@ -10,9 +9,9 @@ interface Props {
   loggedUserId: number;
 }
 
-export const PropertyInformation: FC<Props> = props => (
-  <ThemeProvider theme={customTheme.lightTheme}>
+export const PropertyInformation: FC<Props> = (props) => (
+  <PageWrapper userID={props.loggedUserId}>
     <CustomerInformation {...props} />
     <PropertyInfo {...props} />
-  </ThemeProvider>
+  </PageWrapper>
 );

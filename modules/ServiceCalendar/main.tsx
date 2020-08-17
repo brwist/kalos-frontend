@@ -18,11 +18,9 @@ import {
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Box from '@material-ui/core/Box';
 import Container from '@material-ui/core/Container';
 import * as jspb from 'google-protobuf';
-import customTheme from '../Theme/main';
 import { ENDPOINT } from '../../constants';
 import Filter from './components/Filter';
 import Column from './components/Column';
