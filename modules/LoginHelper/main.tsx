@@ -3,7 +3,6 @@ import { Login } from '../Login/main';
 import Button from '@material-ui/core/Button';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
-import { StyledPage } from '../PageWrapper/styled';
 import './styles.less';
 
 export function LoginHelper() {
@@ -19,7 +18,7 @@ export function LoginHelper() {
     }
   };
   return (
-    <StyledPage>
+    <>
       <Button onClick={toggleModal} variant="outlined">
         Login
       </Button>
@@ -33,6 +32,6 @@ export function LoginHelper() {
           <Login onSuccess={onSuccess} />
         </div>
       </Modal>
-    </StyledPage>
+    </>
   );
 }
