@@ -1,5 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Loader } from './main';
+import { StyledPage } from '../PageWrapper/styled';
 
-ReactDOM.render(<Loader />, document.getElementById('root'));
+ReactDOM.render(
+  <StyledPage>
+    <Loader />
+  </StyledPage>,
+  document.getElementById('root')
+);
