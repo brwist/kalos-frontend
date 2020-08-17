@@ -1,5 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { AltGallery } from './main';
+import { StyledPage } from '../PageWrapper/styled';
 
-ReactDOM.render(<AltGallery />, document.getElementById('root'));
+ReactDOM.render(
+  <StyledPage>
+    <AltGallery
+      title="Alt Gallery"
+      text="Lorem ipsum..."
+      fileList={[]}
+      transactionID={1}
+    />
+  </StyledPage>,
+  document.getElementById('root')
+);
