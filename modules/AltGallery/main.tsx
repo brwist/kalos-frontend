@@ -286,7 +286,6 @@ export class AltGallery extends React.PureComponent<props, state> {
               <Button
                 onClick={this.toggleOpen}
                 size="large"
-                className="title-text"
                 style={{ height: 44 }}
                 endIcon={<CloseTwoTone />}
               >
@@ -359,7 +358,6 @@ export class AltGallery extends React.PureComponent<props, state> {
                 onClick={this.prevImage}
                 disabled={activeImage === 0}
                 size="large"
-                className="title-text"
                 style={{ height: 44 }}
                 startIcon={<ChevronLeftTwoTone />}
               >
@@ -369,7 +367,6 @@ export class AltGallery extends React.PureComponent<props, state> {
                 <Button
                   onClick={this.download}
                   size="large"
-                  className="title-text"
                   style={{ height: 44 }}
                 >
                   Download
@@ -379,7 +376,6 @@ export class AltGallery extends React.PureComponent<props, state> {
                 onClick={this.nextImage}
                 disabled={activeImage === fileList.length - 1}
                 size="large"
-                className="title-text"
                 style={{ height: 44 }}
                 endIcon={<ChevronRightTwoTone />}
               >
