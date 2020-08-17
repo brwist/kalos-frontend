@@ -1,14 +1,13 @@
 import React, { FC } from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { AdvancedSearch } from '../ComponentsLibrary/AdvancedSearch';
+import { PageWrapper } from '../PageWrapper/main';
 
 interface Props {
   loggedUserId: number;
 }
 
 export const SearchIndex: FC<Props> = ({ loggedUserId }) => (
-  <ThemeProvider theme={customTheme.lightTheme}>
+  <PageWrapper userID={loggedUserId}>
     <AdvancedSearch
       loggedUserId={loggedUserId}
       title="Search"
@@ -16,5 +15,5 @@ export const SearchIndex: FC<Props> = ({ loggedUserId }) => (
       editableCustomers
       editableProperties
     />
-  </ThemeProvider>
+  </PageWrapper>
 );
