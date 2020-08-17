@@ -1,9 +1,9 @@
 import React from 'react';
 import { Login } from '../Login/main';
 import Button from '@material-ui/core/Button';
-import Modal from '@material-ui/core/Modal';
-import Backdrop from '@material-ui/core/Backdrop';
-import Fade from '@material-ui/core/Fade';
+import { Modal } from '../ComponentsLibrary/Modal';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
+import { StyledPage } from '../PageWrapper/styled';
 import './styles.less';
 
 export function LoginHelper() {
@@ -19,25 +19,20 @@ export function LoginHelper() {
     }
   };
   return (
-    <>
+    <StyledPage>
       <Button onClick={toggleModal} variant="outlined">
         Login
       </Button>
-      <Modal
-        aria-labelledby="transition-modal-title"
-        className="LoginHelperModal"
-        open={isOpen}
-        onClose={toggleModal}
-        closeAfterTransition
-        BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
-      >
-        <Fade in={isOpen}>
+      <Modal open={isOpen} onClose={toggleModal}>
+        <SectionBar
+          title="Login"
+          actions={[{ label: 'Close', onClick: toggleModal }]}
+          fixedActions
+        />
+        <div className="LoginHelperModal">
           <Login onSuccess={onSuccess} />
-        </Fade>
+        </div>
       </Modal>
-    </>
+    </StyledPage>
   );
 }
