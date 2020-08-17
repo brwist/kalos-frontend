@@ -1,16 +1,12 @@
 import React, { FC } from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import StylesProvider from '@material-ui/styles/StylesProvider';
-import customTheme from '../Theme/main';
 import {
   CustomerAccountDashboard,
   Props,
 } from '../ComponentsLibrary/CustomerAccountDashboard';
+import { StyledPage } from '../PageWrapper/styled';
 
-export const CustomerDirectory: FC<Props> = props => (
-  <StylesProvider injectFirst>
-    <ThemeProvider theme={customTheme.lightTheme}>
-      <CustomerAccountDashboard {...props} />
-    </ThemeProvider>
-  </StylesProvider>
+export const CustomerDirectory: FC<Props> = (props) => (
+  <StyledPage>
+    <CustomerAccountDashboard {...props} />
+  </StyledPage>
 );
