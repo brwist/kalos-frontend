@@ -1,10 +1,13 @@
 import React, { FC } from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
 import { InternalDocuments } from '../ComponentsLibrary/InternalDocuments';
+import { PageWrapper } from '../PageWrapper/main';
 
-export const Documents: FC = () => (
-  <ThemeProvider theme={customTheme.lightTheme}>
+interface Props {
+  userId: number;
+}
+
+export const Documents: FC<Props> = ({ userId }) => (
+  <PageWrapper userID={userId}>
     <InternalDocuments />
-  </ThemeProvider>
+  </PageWrapper>
 );
