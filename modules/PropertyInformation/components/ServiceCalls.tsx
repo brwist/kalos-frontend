@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { format, addHours } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
@@ -8,7 +9,9 @@ import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
+import { Link } from '../../ComponentsLibrary/Link';
 import { Modal } from '../../ComponentsLibrary/Modal';
+import { Form, Schema } from '../../ComponentsLibrary/Form';
 import {
   formatTime,
   formatDate,
@@ -16,7 +19,14 @@ import {
   OrderDir,
   getPropertyAddress,
   usd,
+  timestamp,
+  trailingZero,
+  PropertyType,
+  loadPropertiesByFilter,
+  upsertEvent,
 } from '../../../helpers';
+import { OPTION_BLANK } from '../../../constants';
+import './serviceCalls.less';
 
 type Entry = Event.AsObject;
 
@@ -33,11 +43,15 @@ interface State {
   error: boolean;
   deletingEntry?: Entry;
   viewingEntry?: Entry;
+  addingCustomerEntry?: Entry;
   orderByFields: (keyof Entry)[];
   orderByDBField: string;
   dir: OrderDir;
   count: number;
   page: number;
+  customerProperties: PropertyType[];
+  saving: boolean;
+  confirmingAdded: boolean;
 }
 
 export class ServiceCalls extends PureComponent<Props, State> {
@@ -51,18 +65,22 @@ export class ServiceCalls extends PureComponent<Props, State> {
       error: false,
       deletingEntry: undefined,
       viewingEntry: undefined,
+      addingCustomerEntry: undefined,
       dir: 'ASC',
       orderByFields: ['dateStarted'],
       orderByDBField: 'date_started',
       count: 0,
       page: 0,
+      customerProperties: [],
+      saving: false,
+      confirmingAdded: false,
     };
     this.EventClient = new EventClient(ENDPOINT);
   }
 
   load = async () => {
     this.setState({ loading: true });
-    const { propertyId, userID } = this.props;
+    const { propertyId, userID, viewedAsCustomer } = this.props;
     const { dir, orderByDBField, page } = this.state;
     const entry = new Event();
     const reqCust = new User();
@@ -86,11 +104,19 @@ export class ServiceCalls extends PureComponent<Props, State> {
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
+    if (viewedAsCustomer) {
+      const { results } = await loadPropertiesByFilter({
+        page: 0,
+        filter: { userId: userID },
+        sort: { orderBy: 'address', orderByField: 'address', orderDir: 'ASC' },
+      });
+      this.setState({ customerProperties: results });
+    }
   };
 
   handleOrder = (
     orderByDBField: string,
-    orderByFields: (keyof Entry)[],
+    orderByFields: (keyof Entry)[]
   ) => () => {
     this.setState(
       {
@@ -104,7 +130,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             ? 'DESC'
             : 'ASC',
       },
-      this.load,
+      this.load
     );
   };
 
@@ -128,12 +154,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
   sort = (a: Entry, b: Entry) => {
     const { orderByFields, dir } = this.state;
     const A = orderByFields
-      .map(field => a[field] as string)
+      .map((field) => a[field] as string)
       .join(' ')
       .trim()
       .toUpperCase();
     const B = orderByFields
-      .map(field => b[field] as string)
+      .map((field) => b[field] as string)
       .join(' ')
       .trim()
       .toUpperCase();
@@ -147,6 +173,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   setViewing = (viewingEntry?: Entry) => () => this.setState({ viewingEntry });
 
+  setAddingCustomerEntry = (addingCustomerEntry?: Entry) => () =>
+    this.setState({ addingCustomerEntry });
+
+  toggleConfirmingAdded = () =>
+    this.setState({ confirmingAdded: !this.state.confirmingAdded });
+
   handleChangePage = (page: number) => {
     this.setState({ page }, this.load);
   };
@@ -159,6 +191,53 @@ export class ServiceCalls extends PureComponent<Props, State> {
       `user_id=${userID}`,
       `property_id=${propertyId}`,
     ].join('&');
+  };
+
+  handleCustomerAddEvent = async (formData: Entry) => {
+    const { dateStarted, timeStarted, description, notes } = formData;
+    const [dateEnded, timeEnded] = format(
+      addHours(new Date(`${dateStarted} ${timeStarted}`), 1),
+      'yyyy-MM-dd HH:mm'
+    ).split(' ');
+    const data: Entry = {
+      ...formData,
+      dateEnded,
+      timeEnded,
+      name: 'Online Service Request',
+      logJobStatus: 'Requested',
+      color: 'efc281',
+      description: [description, notes].join(', '),
+      notes: '',
+    };
+    console.log(data);
+    this.setState({ saving: true });
+    await upsertEvent(data);
+    this.setState({ saving: false, addingCustomerEntry: undefined });
+    this.toggleConfirmingAdded();
+    this.load();
+  };
+
+  makeCustomerEntry = () => {
+    const req = new Event();
+    const { propertyId } = this.props;
+    if (propertyId) {
+      req.setPropertyId(propertyId);
+    }
+    req.setDescription('0');
+    req.setDateStarted(timestamp(true));
+    const [valHour, valMinutes] = timestamp().substr(11, 5).split(':');
+    let minutes = +valMinutes;
+    if (minutes >= 45) {
+      minutes = 45;
+    } else if (minutes >= 30) {
+      minutes = 30;
+    } else if (minutes >= 15) {
+      minutes = 15;
+    } else {
+      minutes = 0;
+    }
+    req.setTimeStarted(`${valHour}:${trailingZero(minutes)}`);
+    return req.toObject();
   };
 
   render() {
@@ -182,6 +261,9 @@ export class ServiceCalls extends PureComponent<Props, State> {
       page,
       deletingEntry,
       viewingEntry,
+      addingCustomerEntry,
+      saving,
+      confirmingAdded,
     } = state;
     const columns: Columns = viewedAsCustomer
       ? [
@@ -228,7 +310,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
         ];
     const data: Data = loading
       ? makeFakeRows(viewedAsCustomer ? 4 : 5)
-      : entries.map(entry => {
+      : entries.map((entry) => {
           const {
             id,
             dateStarted,
@@ -315,21 +397,87 @@ export class ServiceCalls extends PureComponent<Props, State> {
             },
           ];
         });
+    const SCHEMA_CUSTOMER_ENTRY: Schema<Entry> = [
+      [
+        {
+          name: 'propertyId',
+          label: 'Property',
+          required: true,
+          options: [
+            { value: '0', label: OPTION_BLANK },
+            ...this.state.customerProperties.map((p) => ({
+              value: p.id,
+              label: getPropertyAddress(p),
+            })),
+          ],
+        },
+      ],
+      [
+        {
+          name: 'description',
+          label: 'Service Requested',
+          options: [
+            { value: '0', label: OPTION_BLANK },
+            ...[
+              'A/C Repair',
+              'A/C Maintenance',
+              'Electrical Repair',
+              'Free Replacement/Upgrade Estimate',
+              'Pool Heater Repair',
+              'Construction',
+            ].map((value) => ({ value, label: value })),
+          ],
+          required: true,
+        },
+      ],
+      [
+        {
+          name: 'dateStarted',
+          label: 'Date Requested',
+          type: 'date',
+          required: true,
+        },
+        {
+          name: 'timeStarted',
+          label: 'Time Requested',
+          type: 'time',
+          required: true,
+        },
+      ],
+      [
+        {
+          name: 'notes',
+          label: 'Notes',
+          multiline: true,
+        },
+      ],
+    ];
     return (
       <div className={className}>
         <SectionBar
           title={`${viewedAsCustomer ? 'Active ' : ''}Service Calls`}
-          actions={[
-            {
-              label: 'Add Service Call',
-              url: [
-                '/index.cfm?action=admin:service.addserviceCall',
-                `user_id=${userID}`,
-                `property_id=${propertyId}`,
-                'unique=207D906B-05C0-B58E-B451566171C79356', // FIXME set proper unique
-              ].join('&'),
-            },
-          ]}
+          actions={
+            viewedAsCustomer
+              ? [
+                  {
+                    label: 'Add Service Call',
+                    onClick: this.setAddingCustomerEntry(
+                      this.makeCustomerEntry()
+                    ),
+                  },
+                ]
+              : [
+                  {
+                    label: 'Add Service Call',
+                    url: [
+                      '/index.cfm?action=admin:service.addserviceCall',
+                      `user_id=${userID}`,
+                      `property_id=${propertyId}`,
+                      'unique=207D906B-05C0-B58E-B451566171C79356', // FIXME set proper unique
+                    ].join('&'),
+                  },
+                ]
+          }
           pagination={{
             count,
             page,
@@ -366,7 +514,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
           />
         )}
         {viewingEntry && (
-          <Modal open onClose={this.setViewing()}>
+          <Modal open onClose={this.setViewing()} fullScreen>
             <SectionBar
               title="Service Call Details"
               actions={[{ label: 'Close', onClick: this.setViewing() }]}
@@ -384,9 +532,9 @@ export class ServiceCalls extends PureComponent<Props, State> {
                   {
                     label: 'Date/Time',
                     value: `${formatDate(
-                      viewingEntry.dateStarted,
+                      viewingEntry.dateStarted
                     )} ${formatTime(viewingEntry.timeStarted)} - ${formatTime(
-                      viewingEntry.timeEnded,
+                      viewingEntry.timeEnded
                     )}`,
                   },
                 ],
@@ -419,78 +567,153 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 ],
                 [
                   {
-                    label: 'Service Rendered',
+                    label: 'Services Rendered',
                     value: viewingEntry.logServiceRendered, // TODO
                   },
                 ],
-                [
-                  {
-                    label: 'Invoice Notes',
-                    value: viewingEntry.invoiceServiceItem, // TODO
-                  },
-                ],
-                [
-                  {
-                    label: 'Services Performed (1)',
-                    value: viewingEntry.servicesperformedrow1,
-                  },
-                ],
-                [
-                  {
-                    label: 'Total Amount (1)',
-                    value: viewingEntry.totalamountrow1,
-                  },
-                ],
-                [
-                  {
-                    label: 'Services Performed (2)',
-                    value: viewingEntry.servicesperformedrow2,
-                  },
-                ],
-                [
-                  {
-                    label: 'Total Amount (2)',
-                    value: viewingEntry.totalamountrow2,
-                  },
-                ],
-                [
-                  {
-                    label: 'Services Performed (3)',
-                    value: viewingEntry.servicesperformedrow3,
-                  },
-                ],
-                [
-                  {
-                    label: 'Total Amount (3)',
-                    value: viewingEntry.totalamountrow3,
-                  },
-                ],
-                [
-                  {
-                    label: 'Services Performed (4)',
-                    value: viewingEntry.servicesperformedrow4,
-                  },
-                ],
-                [
-                  {
-                    label: 'Total Amount (4)',
-                    value: viewingEntry.totalamountrow4,
-                  },
-                ],
-                [
-                  {
-                    label: 'Invoice Discount',
-                    value: viewingEntry.discount, // TODO
-                  },
-                ],
-                [
-                  {
-                    label: 'Total Amount',
-                    value: usd(0), // TODO
-                  },
-                ],
+                ...(!!viewingEntry.notes
+                  ? [
+                      [
+                        {
+                          label: 'Invoice Notes',
+                          value: viewingEntry.notes,
+                        },
+                      ],
+                    ]
+                  : []),
+                ...(!!viewingEntry.servicesperformedrow1 ||
+                !!viewingEntry.totalamountrow1
+                  ? [
+                      [
+                        {
+                          label: 'Services Performed (1)',
+                          value: viewingEntry.servicesperformedrow1,
+                        },
+                        {
+                          label: 'Total Amount (1)',
+                          value: viewingEntry.totalamountrow1,
+                        },
+                      ],
+                    ]
+                  : []),
+                ...(!!viewingEntry.servicesperformedrow2 ||
+                !!viewingEntry.totalamountrow2
+                  ? [
+                      [
+                        {
+                          label: 'Services Performed (2)',
+                          value: viewingEntry.servicesperformedrow2,
+                        },
+                        {
+                          label: 'Total Amount (2)',
+                          value: viewingEntry.totalamountrow2,
+                        },
+                      ],
+                    ]
+                  : []),
+                ...(!!viewingEntry.servicesperformedrow3 ||
+                !!viewingEntry.totalamountrow3
+                  ? [
+                      [
+                        {
+                          label: 'Services Performed (3)',
+                          value: viewingEntry.servicesperformedrow3,
+                        },
+                        {
+                          label: 'Total Amount (3)',
+                          value: viewingEntry.totalamountrow3,
+                        },
+                      ],
+                    ]
+                  : []),
+                ...(!!viewingEntry.servicesperformedrow4 ||
+                !!viewingEntry.totalamountrow4
+                  ? [
+                      [
+                        {
+                          label: 'Services Performed (4)',
+                          value: viewingEntry.servicesperformedrow4,
+                        },
+                        {
+                          label: 'Total Amount (4)',
+                          value: viewingEntry.totalamountrow4,
+                        },
+                      ],
+                    ]
+                  : []),
+                ...(!!viewingEntry.materialUsed
+                  ? [
+                      [
+                        {
+                          label: 'Material Used',
+                          value: viewingEntry.materialUsed,
+                        },
+                      ],
+                    ]
+                  : []),
+                ...(+viewingEntry.discountcost !== 0
+                  ? [
+                      [
+                        {
+                          label: 'Invoice Discount',
+                          value: usd(+viewingEntry.discountcost),
+                        },
+                      ],
+                    ]
+                  : []),
+                ...(+viewingEntry.logAmountCharged !== 0
+                  ? [
+                      [
+                        {
+                          label: 'Total Amount',
+                          value: usd(+viewingEntry.logAmountCharged),
+                        },
+                      ],
+                    ]
+                  : []),
               ]}
             />
+          </Modal>
+        )}
+        {addingCustomerEntry && (
+          <Modal open onClose={this.setAddingCustomerEntry(undefined)}>
+            <Form
+              title="Online Service Request"
+              data={addingCustomerEntry}
+              schema={SCHEMA_CUSTOMER_ENTRY}
+              onClose={this.setAddingCustomerEntry(undefined)}
+              onSave={this.handleCustomerAddEvent}
+              intro={
+                <div className="ServiceCallsCustomerIntro">
+                  The contact information from your online account will be used
+                  for this service request.
+                </div>
+              }
+              disabled={saving}
+            />
+          </Modal>
+        )}
+        {confirmingAdded && (
+          <Modal open onClose={this.toggleConfirmingAdded}>
+            <SectionBar
+              title="Thank you!"
+              actions={[
+                { label: 'Close', onClick: this.toggleConfirmingAdded },
+              ]}
+            />
+            <div className="ServiceCallsCustomerThank">
+              <p className="ServiceCallsCustomerThankIntro">
+                Your service request is now active on our schedule.
+              </p>
+              <p>
+                A Kalos Services representative will contact you shortly during
+                regular business hours to confirm scheduling.
+              </p>
+              <p>
+                For emergency requests please additionally call{' '}
+                <Link href="tel:3522437088">352-243-7088</Link>.
+              </p>
+            </div>
           </Modal>
         )}
       </div>

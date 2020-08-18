@@ -1,0 +1,19 @@
+@import '../../../styles/index.less';
+
+.ServiceCalls {
+  &Customer {
+    &Intro,
+    &Thank {
+      max-width: 340px;
+    }
+    &Thank {
+      padding: 0 .spacing(2) [];
+      &Intro {
+        padding: .spacing(2) [];
+        margin: 0 .spacing(-2) [];
+        background-color: rgba(@success-light, 0.35);
+        color: @success-dark;
+      }
+    }
+  }
+}
