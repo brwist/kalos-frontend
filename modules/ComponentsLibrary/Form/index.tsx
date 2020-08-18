@@ -1,4 +1,10 @@
-import React, { ReactElement, useCallback, useState, forwardRef } from 'react';
+import React, {
+  ReactElement,
+  ReactNode,
+  useCallback,
+  useState,
+  forwardRef,
+} from 'react';
 import { SectionBar, Pagination } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
 import {
@@ -9,6 +15,7 @@ import {
 } from '../PlainForm';
 import { Options as FieldOptions, getDefaultValueByType } from '../Field';
 import { ActionsProps } from '../Actions';
+import './styles.less';
 
 export type Schema<T> = PlainFormSchema<T>;
 
@@ -17,6 +24,7 @@ export type Options = FieldOptions;
 export interface Props<T> extends PlainFormProps<T> {
   title?: string;
   subtitle?: string;
+  intro?: ReactNode;
   onSave: (data: T) => void;
   onClose: (() => void) | null;
   onChange?: (data: T) => void;
@@ -32,6 +40,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
     {
       title,
       subtitle,
+      intro,
       schema,
       data,
       onSave,
@@ -47,7 +56,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       className = '',
       children,
     },
-    ref,
+    ref
   ) => {
     const [formData, setFormData] = useState(
       schema.reduce(
@@ -64,11 +73,11 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
                         ? data[name]
                         : getDefaultValueByType(type),
                   },
-            {},
+            {}
           ),
         }),
-        {} as typeof data,
-      ),
+        {} as typeof data
+      )
     );
     const [validations, setValidations] = useState<Validation>({});
     const handleChange = useCallback(
@@ -78,12 +87,12 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           onChange(formData);
         }
       },
-      [setFormData, onChange],
+      [setFormData, onChange]
     );
     const handleSave = useCallback(() => {
       setValidations({});
       const validations: Validation = {};
-      schema.forEach(fields => {
+      schema.forEach((fields) => {
         fields
           .filter(({ required }) => required)
           .forEach(({ name, type = 'text', options }) => {
@@ -142,6 +151,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
             pagination={pagination}
           />
         )}
+        {intro && <div className="FormIntro">{intro}</div>}
         <PlainForm<typeof data>
           schema={schema}
           data={data}
@@ -164,5 +174,5 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
         )}
       </div>
     );
-  },
+  }
 );
