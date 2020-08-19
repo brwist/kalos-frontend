@@ -6,11 +6,11 @@ import {
   loadMetricByUserIds,
   MetricType,
 } from '../../helpers';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 const GROUP_BY_KEYS = [{ label: 'Role', value: 'role' }];
 
-interface Props {
+interface Props extends PageWrapperProps {
   title: string;
   metrics: {
     dataKey: MetricType;
@@ -24,14 +24,14 @@ const loadData = async (metrics: MetricType[]) => {
   const departments = await loadTimesheetDepartments();
   const departmentById: { [key: number]: string } = departments.reduce(
     (aggr, { id, value }) => ({ ...aggr, [id]: value }),
-    {}
+    {},
   );
   const departmentIds = departments.map(({ id }) => id);
   const users: { [key: number]: any } = (
     await Promise.all(
       departmentIds.map(
-        async (departmentId) => await loadUsersByDepartmentId(departmentId)
-      )
+        async departmentId => await loadUsersByDepartmentId(departmentId),
+      ),
     )
   )
     .reduce((aggr, items) => [...aggr, ...items], [])
@@ -41,13 +41,13 @@ const loadData = async (metrics: MetricType[]) => {
       role: departmentById[employeeDepartmentId],
     }))
     .reduce((aggr, item) => ({ ...aggr, [item.id]: item }), {});
-  const userIds = Object.keys(users).map((id) => +id);
+  const userIds = Object.keys(users).map(id => +id);
   (
     await Promise.all(
-      metrics.map(async (metricType) => ({
+      metrics.map(async metricType => ({
         metricType,
         values: await loadMetricByUserIds(userIds, metricType),
-      }))
+      })),
     )
   ).forEach(({ metricType, values }) => {
     values.forEach(({ id, value }) => {
@@ -74,7 +74,7 @@ export const Metrics: FC<Props> = ({ metrics, ...props }) => {
     }
   }, [load, loaded, setLoaded]);
   return (
-    <PageWrapper userID={props.loggedUserId}>
+    <PageWrapper {...props} userID={props.loggedUserId}>
       <Chart
         config={{
           x: {

@@ -7,5 +7,5 @@ ReactDOM.render(
   <StyledPage>
     <Login />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );

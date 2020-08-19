@@ -7,7 +7,7 @@ import { ENDPOINT } from '../../constants';
 const c = new UserClient(ENDPOINT);
 c.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <PerDiem loggedUserId={7051} />,
+    <PerDiem loggedUserId={7051} withHeader />,
     document.getElementById('root'),
   );
 });

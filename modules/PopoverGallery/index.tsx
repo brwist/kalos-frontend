@@ -7,5 +7,5 @@ ReactDOM.render(
   <StyledPage>
     <PopoverGallery fileList={[]} text="Example Text" title="Example Title" />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );

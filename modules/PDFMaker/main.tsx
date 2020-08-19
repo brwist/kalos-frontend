@@ -118,7 +118,7 @@ export class PDFMaker extends React.PureComponent<props, state> {
   }
 
   toggleModal() {
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       isOpen: !prevState.isOpen,
     }));
   }
