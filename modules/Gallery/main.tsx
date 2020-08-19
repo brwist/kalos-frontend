@@ -199,7 +199,7 @@ export function Gallery({
                   deleteFn(
                     fileList[activeImage].name,
                     'kalos-transactions',
-                    toggleOpen
+                    toggleOpen,
                   )
                 }
                 size="large"

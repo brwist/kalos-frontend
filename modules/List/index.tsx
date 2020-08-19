@@ -14,5 +14,5 @@ ReactDOM.render(
       ]}
     />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );

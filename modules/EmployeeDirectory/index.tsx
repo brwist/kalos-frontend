@@ -3,6 +3,6 @@ import ReactDOM from 'react-dom';
 import { EmployeeDirectory } from './main';
 
 ReactDOM.render(
-  <EmployeeDirectory loggedUserId={101253} />,
+  <EmployeeDirectory loggedUserId={101253} withHeader />,
   document.getElementById('root'),
 );

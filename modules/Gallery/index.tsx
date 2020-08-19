@@ -7,5 +7,5 @@ ReactDOM.render(
   <StyledPage>
     <Gallery title="Example Title" fileList={[]} text="Example Text" />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );
