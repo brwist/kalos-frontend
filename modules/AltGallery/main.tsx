@@ -87,26 +87,26 @@ export class AltGallery extends React.PureComponent<props, state> {
 
   toggleOpen() {
     let wasClosed: boolean;
-    this.setState((prevState) => {
+    this.setState(prevState => {
       wasClosed = !prevState.isOpen;
       return { isOpen: !prevState.isOpen };
     });
   }
 
   fetchData() {
-    return new Promise(async (resolve) => {
+    return new Promise(async resolve => {
       const docs = await this.DocClient.byTransactionID(
-        this.props.transactionID
+        this.props.transactionID,
       );
 
-      const galleryData = docs.map((d) => {
+      const galleryData = docs.map(d => {
         return {
           key: `${this.props.transactionID}-${d.reference}`,
           bucket: 'kalos-transactions',
         };
       });
 
-      const documentList = docs.map((d) => ({
+      const documentList = docs.map(d => ({
         reference: d.reference,
         id: d.transactionId,
       }));
@@ -115,14 +115,14 @@ export class AltGallery extends React.PureComponent<props, state> {
   }
 
   fetchDocData(d: DocData) {
-    return new Promise<Uint8Array>(async (resolve) => {
+    return new Promise<Uint8Array>(async resolve => {
       const data = (
         await this.DocClient.download(d.id, d.reference)
       ).getData() as Uint8Array;
       this.setState(
-        (prevState) => {
+        prevState => {
           return {
-            documentList: prevState.documentList.map((doc) => {
+            documentList: prevState.documentList.map(doc => {
               if (doc.reference === d.reference) {
                 doc.data = data;
               }
@@ -130,14 +130,14 @@ export class AltGallery extends React.PureComponent<props, state> {
             }),
           };
         },
-        () => resolve(data)
+        () => resolve(data),
       );
     });
   }
 
   changeImage(n: number) {
     return () => {
-      this.setState((prevState) => {
+      this.setState(prevState => {
         let newImg = prevState.activeImage + n;
         if (newImg < 0) {
           newImg = 0;
@@ -158,10 +158,10 @@ export class AltGallery extends React.PureComponent<props, state> {
       const data = fileList[activeImage];
       try {
         await this.DocClient.deleteByName(data.key, data.bucket);
-        this.setState((prevState) => {
-          const fileList = prevState.fileList.filter((f) => f.key !== data.key);
+        this.setState(prevState => {
+          const fileList = prevState.fileList.filter(f => f.key !== data.key);
           const documentList = prevState.documentList.filter(
-            (d) => `${this.props.transactionID}-${d.reference}` !== data.key
+            d => `${this.props.transactionID}-${d.reference}` !== data.key,
           );
           let activeImg = prevState.activeImage - 1;
           if (activeImg < 0) {
@@ -249,7 +249,7 @@ export class AltGallery extends React.PureComponent<props, state> {
     );
     const imgHeight = Math.floor(window.innerHeight * 0.8);
     const mimeType = this.S3Client.getMimeType(
-      fileList[activeImage]?.key || ''
+      fileList[activeImage]?.key || '',
     );
     let top = 0;
     if ((this.state.rotation / 90) % 2 !== 0) {

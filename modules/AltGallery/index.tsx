@@ -12,5 +12,5 @@ ReactDOM.render(
       transactionID={1}
     />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );
