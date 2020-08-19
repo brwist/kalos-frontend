@@ -3,11 +3,6 @@ import ReactDOM from 'react-dom';
 import { PostProposal } from './main';
 
 ReactDOM.render(
-  <PostProposal
-    userID={4375}
-    jobNumber={99893}
-    userName="Bob"
-    withPageHeader
-  />,
-  document.getElementById('root')
+  <PostProposal userID={4375} jobNumber={99893} userName="Bob" withHeader />,
+  document.getElementById('root'),
 );

@@ -4,22 +4,16 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { ENDPOINT } from '../../constants';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 // add any prop types here
-interface props {
+interface props extends PageWrapperProps {
   userID: number;
   userName: string;
   jobNumber: number;
-  withPageHeader: boolean;
 }
 
-export function PostProposal({
-  userID,
-  userName,
-  jobNumber,
-  withPageHeader,
-}: props) {
+export function PostProposal({ userID, userName, jobNumber, ...props }: props) {
   const S3 = new S3Client(ENDPOINT);
   const req = new URLObject();
   req.setKey(`${jobNumber}_approved_proposal_${userID}.pdf`);
@@ -29,7 +23,7 @@ export function PostProposal({
     await fetchPDF(userID, jobNumber);
   };
   return (
-    <PageWrapper userID={userID} withHeader={withPageHeader}>
+    <PageWrapper {...props} userID={userID}>
       <Grid
         container
         direction="column"
