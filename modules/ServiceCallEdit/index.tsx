@@ -13,6 +13,7 @@ u.GetToken('test', 'test').then(() => {
       userID={2573}
       propertyId={6552}
       loggedUserId={101253}
+      withHeader
     />,
     document.getElementById('root'),
   );

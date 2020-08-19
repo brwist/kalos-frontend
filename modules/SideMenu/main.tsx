@@ -157,7 +157,7 @@ const SideMenu = ({
           style={{ width: 250, padding: 10 }}
         >
           <List style={{ width: 250 }}>
-            {employeeItems.map((item) => (
+            {employeeItems.map(item => (
               <KalosMenuItem
                 key={`empl_${item?.title || 'divider'}`}
                 item={item}
@@ -166,7 +166,7 @@ const SideMenu = ({
             ))}
             {user.isAdmin === 1 && (
               <>
-                {adminItems.map((item) => (
+                {adminItems.map(item => (
                   <KalosMenuItem
                     key={`admin_${item?.title || 'divider'}`}
                     item={item}
@@ -177,7 +177,7 @@ const SideMenu = ({
             )}
             {isManager && (
               <>
-                {managerItems.map((item) => (
+                {managerItems.map(item => (
                   <KalosMenuItem
                     key={`manager_${item?.title || 'divider'}`}
                     item={item}
@@ -186,7 +186,7 @@ const SideMenu = ({
                 ))}
               </>
             )}
-            {commonItems.map((item) => {
+            {commonItems.map(item => {
               if (item.title === 'Report a Bug') {
                 return (
                   <KalosMenuItem
