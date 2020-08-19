@@ -1,4 +1,5 @@
 import React, {
+  FC,
   createContext,
   useEffect,
   useReducer,
@@ -32,14 +33,14 @@ import { ENDPOINT } from '../../constants';
 import { loadUserById } from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import './styles.less';
 
 const userClient = new UserClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
 
-type Props = {
+type Props = PageWrapperProps & {
   userId: number;
   timesheetOwnerId: number;
 };
@@ -61,7 +62,8 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
     : startOfWeek(subDays(today, 7));
 };
 
-const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
+const Timesheet: FC<Props> = (props: Props) => {
+  const { userId, timesheetOwnerId } = props;
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
@@ -104,7 +106,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   } = state;
   const handleOnSave = (
     card: TimesheetLine.AsObject,
-    action?: 'delete' | 'approve' | 'reject'
+    action?: 'delete' | 'approve' | 'reject',
   ) => {
     dispatch({
       type: 'saveTimecard',
@@ -199,7 +201,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
           (a, b) =>
             new Date(a.timeStarted).getTime() -
-            new Date(b.timeStarted).getTime()
+            new Date(b.timeStarted).getTime(),
         );
         let result = dayList.reduce(
           (acc, current, idx, arr) => {
@@ -224,7 +226,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
             }
             return acc;
           },
-          { ranges: [], idList: [] }
+          { ranges: [], idList: [] },
         );
 
         if (overlapped) {
@@ -298,7 +300,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
       const result = await tslClient.GetTimesheet(
         req,
         `${shownDates[0]}%`,
-        `${shownDates[shownDates.length - 1]}%`
+        `${shownDates[shownDates.length - 1]}%`,
       );
       dispatch({ type: 'fetchedTimesheetData', data: result });
     })();
@@ -310,7 +312,7 @@ const Timesheet = ({ userId, timesheetOwnerId }: Props) => {
   const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
 
   return (
-    <PageWrapper userID={userId}>
+    <PageWrapper {...props} userID={userId}>
       <ConfirmServiceProvider>
         <EditTimesheetContext.Provider
           value={{

@@ -9,11 +9,10 @@ import {
   TableBody,
 } from '@material-ui/core';
 import { ENDPOINT } from '../../constants';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface props {
+interface props extends PageWrapperProps {
   loggedUserId: number;
-  withPageHeader: boolean;
 }
 
 interface state {
@@ -44,7 +43,7 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
   }
 
   fetchCalls() {
-    return new Promise(async (resolve) => {
+    return new Promise(async resolve => {
       const dateStr = this.getDateString();
       const reqObj = new Event();
       reqObj.setDateStarted(`${dateStr}%`);
@@ -52,12 +51,12 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
       reqObj.setIsActive(1);
       const res = (await this.Client.BatchGet(reqObj)).toObject();
       this.setState(
-        (prevState) => ({
+        prevState => ({
           list: prevState.list.concat(res.resultsList),
           page: prevState.page + 1,
           totalCount: res.totalCount,
         }),
-        resolve
+        resolve,
       );
     });
   }
@@ -77,11 +76,7 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <PageWrapper
-        userID={this.props.loggedUserId}
-        withHeader={this.props.withPageHeader}
-        padding={1}
-      >
+      <PageWrapper {...this.props} userID={this.props.loggedUserId}>
         <Paper style={{ width: '100%', overflowX: 'scroll' }}>
           <Table>
             <TableHead>
@@ -95,7 +90,7 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
               </TableRow>
             </TableHead>
             <TableBody>
-              {this.state.list.map((row) => (
+              {this.state.list.map(row => (
                 <TableRow>
                   <TableCell>
                     {row.timeStarted} - {row.timeEnded}
