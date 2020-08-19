@@ -26,6 +26,7 @@ ReactDOM.render(
       },
     ]}
     loggedUserId={101253}
+    withHeader
   />,
   document.getElementById('root'),
 );

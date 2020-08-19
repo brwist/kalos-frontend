@@ -13,5 +13,5 @@ ReactDOM.render(
       pdfType="Retrievable Receipt"
     />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );
