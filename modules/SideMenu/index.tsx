@@ -10,5 +10,5 @@ ReactDOM.render(
       imgURL="https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png"
     />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );
