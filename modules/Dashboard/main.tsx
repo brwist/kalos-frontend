@@ -19,9 +19,9 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Typography } from '@material-ui/core';
 import { Search } from '../Search/main';
 import { ENDPOINT } from '../../constants';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface props {
+interface props extends PageWrapperProps {
   userId: number;
 }
 
@@ -73,12 +73,12 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   toggleLoading() {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.setState(
-        (prevState) => ({
+        prevState => ({
           isLoading: !prevState.isLoading,
         }),
-        resolve
+        resolve,
       );
     });
   }
@@ -160,7 +160,7 @@ export class Dashboard extends React.PureComponent<props, state> {
   async getToolfundBalance() {
     if (this.state.currentUser.toolFund > 0) {
       const res = await this.TaskClient.GetToolFundBalanceByID(
-        this.props.userId
+        this.props.userId,
       );
       this.setState({
         toolFundBalance: parseInt(res.getValue().toFixed(2)),
@@ -203,7 +203,7 @@ export class Dashboard extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <PageWrapper userID={this.props.userId}>
+      <PageWrapper {...this.props} userID={this.props.userId}>
         <Grid
           container
           direction="column"
@@ -349,6 +349,7 @@ export class Dashboard extends React.PureComponent<props, state> {
                 overflowY: 'scroll',
                 marginBottom: 20,
               }}
+              loggedUserId={this.props.userId}
             />
           )}
           {this.state.spiffs.length !== 0 && (

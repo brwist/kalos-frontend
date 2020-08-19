@@ -6,9 +6,9 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import { ENDPOINT } from '../../constants';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface props {
+interface props extends PageWrapperProps {
   userId: number;
 }
 
@@ -27,7 +27,7 @@ export class Directory extends React.PureComponent<props, state> {
   }
 
   addEmployee(emp: User.AsObject) {
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       employees: prevState.employees.concat(emp),
     }));
   }
@@ -42,7 +42,7 @@ export class Directory extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <PageWrapper userID={this.props.userId}>
+      <PageWrapper {...this.props} userID={this.props.userId}>
         <Table aria-label="employee table">
           <TableHead>
             <TableRow>
@@ -55,10 +55,10 @@ export class Directory extends React.PureComponent<props, state> {
             {this.state.employees
               .sort((a, b) =>
                 `${a.lastname} ${a.firstname}`.localeCompare(
-                  `${b.lastname} ${b.firstname}`
-                )
+                  `${b.lastname} ${b.firstname}`,
+                ),
               )
-              .map((emp) => (
+              .map(emp => (
                 <TableRow hover key={emp.id}>
                   <TableCell>{emp.lastname}</TableCell>
                   <TableCell>{emp.firstname}</TableCell>
