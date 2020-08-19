@@ -4,7 +4,6 @@ import { EditorState } from 'draft-js';
 import { stateToMarkdown } from 'draft-js-export-markdown';
 // @ts-ignore
 import { stateFromMarkdown } from 'draft-js-import-markdown';
-import 'draft-js/dist/Draft.css';
 import Box from '@material-ui/core/Box';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
