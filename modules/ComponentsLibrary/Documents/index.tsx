@@ -45,6 +45,7 @@ interface Props {
   withDateCreated?: boolean;
   withDownloadIcon?: boolean;
   deletable?: boolean;
+  stickySectionBar?: boolean;
 }
 
 export const Documents: FC<Props> = ({
@@ -60,6 +61,7 @@ export const Documents: FC<Props> = ({
   withDateCreated = false,
   withDownloadIcon = false,
   deletable = true,
+  stickySectionBar = true,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -260,6 +262,7 @@ export const Documents: FC<Props> = ({
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: handleChangePage,
         }}
+        sticky={stickySectionBar}
       >
         <InfoTable
           data={data}

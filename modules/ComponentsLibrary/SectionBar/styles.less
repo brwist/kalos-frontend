@@ -3,7 +3,6 @@
 .SectionBar {
   position: relative;
   top: 0;
-  z-index: 1;
   background-color: @grey-300;
   padding-left: .spacing() [];
   padding-right: .spacing() [];
@@ -20,6 +19,7 @@
   }
   &.sticky {
     position: sticky;
+    z-index: 1;
   }
   &.collapsable.collapsed {
     margin-bottom: .spacing() [];

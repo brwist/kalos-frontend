@@ -16,8 +16,21 @@ import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
 import RoomServiceIcon from '@material-ui/icons/RoomServiceSharp';
 import BarChartSharp from '@material-ui/icons/BarChartSharp';
 import BugReportIcon from '@material-ui/icons/BugReport';
-import { cfURL } from '../../helpers';
+import HomeWorkIcon from '@material-ui/icons/HomeWork';
+import ImportContactsIcon from '@material-ui/icons/ImportContacts';
+import ContactPhoneIcon from '@material-ui/icons/ContactPhone';
+import { cfURL, CustomEventsHandler } from '../../helpers';
 import React from 'react';
+
+export type MenuItem = {
+  type?: string;
+  title?: string;
+  button?: boolean;
+  onClick?: () => void;
+  href?: string | ((userId: number) => string);
+  target?: string;
+  icon?: JSX.Element;
+};
 
 const spiffLog = (userId: number) =>
   cfURL('tasks.spiff_tool_logs', `&rt=all&type=spiff&reportUserId=${userId}`);
@@ -42,7 +55,7 @@ const txnAdmin = cfURL('reports.transaction_admin');
 const txnUser = cfURL('reports.transactions');
 const perdiem = cfURL('reports.perdiem');
 
-export const employeeItems = [
+export const employeeItems: MenuItem[] = [
   {
     title: 'Dashboard',
     href: 'https://app.kalosflorida.com/index.cfm',
@@ -98,7 +111,7 @@ export const employeeItems = [
   },
 ];
 
-export const adminItems = [
+export const adminItems: MenuItem[] = [
   {
     title: 'Reports',
     href: reports,
@@ -126,7 +139,7 @@ export const adminItems = [
   },
 ];
 
-export const managerItems = [
+export const managerItems: MenuItem[] = [
   {
     title: 'Receipt Review',
     href: txnAdmin,
@@ -134,7 +147,41 @@ export const managerItems = [
   },
 ];
 
-export const commonItems = [
+const logoutItem: MenuItem = {
+  title: 'Logout',
+  href: 'https://app.kalosflorida.com/index.cfm?action=account.logout',
+  icon: <ExitToAppIcon />,
+};
+
+export const customerItems: MenuItem[] = [
+  {
+    title: 'Add Property',
+    icon: <HomeWorkIcon />,
+    button: true,
+    onClick: () => CustomEventsHandler.emit('AddProperty'),
+  },
+  {
+    title: 'Add Service Call',
+    button: true,
+    icon: <EventSharp />,
+    onClick: () => CustomEventsHandler.emit('AddServiceCall'),
+  },
+  {
+    title: 'Documents',
+    button: true,
+    icon: <ImportContactsIcon />,
+    onClick: () => CustomEventsHandler.emit('ShowDocuments'),
+  },
+  {
+    title: 'Contact Us',
+    icon: <ContactPhoneIcon />,
+    href: 'http://www.kalosflorida.com/contacts/',
+    target: '_blank',
+  },
+  logoutItem,
+];
+
+export const commonItems: MenuItem[] = [
   {
     type: 'divider',
   },
@@ -148,9 +195,5 @@ export const commonItems = [
     title: 'Report a Bug',
     icon: <BugReportIcon />,
   },
-  {
-    title: 'Logout',
-    href: 'https://app.kalosflorida.com/index.cfm?action=account.logout',
-    icon: <ExitToAppIcon />,
-  },
+  logoutItem,
 ];

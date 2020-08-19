@@ -63,6 +63,7 @@ import {
   loadEmployeeFunctions,
   EmployeeFunctionType,
   getFileS3BucketUrl,
+  CustomEventsHandler,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -207,6 +208,11 @@ export const AdvancedSearch: FC<Props> = ({
     boolean
   >(false);
   const [pendingAddProperty, setPendingAddProperty] = useState<boolean>(false);
+  const handleTogglePendingAddProperty = useCallback(
+    (pendingAddProperty: boolean) => () =>
+      setPendingAddProperty(pendingAddProperty),
+    [setPendingAddProperty],
+  );
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await loadJobTypes();
@@ -224,6 +230,10 @@ export const AdvancedSearch: FC<Props> = ({
     }
     setFormKey(formKey + 1);
     setLoadedDicts(true);
+    CustomEventsHandler.listen(
+      'AddProperty',
+      handleTogglePendingAddProperty(true),
+    );
   }, [
     setLoadingDicts,
     setJobTypes,
@@ -235,6 +245,7 @@ export const AdvancedSearch: FC<Props> = ({
     setLoadedDicts,
     setIsAdmin,
     setEmployeeFunctions,
+    handleTogglePendingAddProperty,
   ]);
   const load = useCallback(async () => {
     setLoading(true);
@@ -533,11 +544,6 @@ export const AdvancedSearch: FC<Props> = ({
   const handleEmployeeDepartmentsOpenToggle = useCallback(
     (open: boolean) => () => setEmployeeDepartmentsOpen(open),
     [setEmployeeDepartmentsOpen],
-  );
-  const handleTogglePendingAddProperty = useCallback(
-    (pendingAddProperty: boolean) => () =>
-      setPendingAddProperty(pendingAddProperty),
-    [setPendingAddProperty],
   );
   const searchActions: ActionsProps = [
     {
