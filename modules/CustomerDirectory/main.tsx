@@ -5,7 +5,7 @@ import {
 } from '../ComponentsLibrary/CustomerAccountDashboard';
 import { StyledPage } from '../PageWrapper/styled';
 
-export const CustomerDirectory: FC<Props> = (props) => (
+export const CustomerDirectory: FC<Props> = props => (
   <StyledPage>
     <CustomerAccountDashboard {...props} />
   </StyledPage>

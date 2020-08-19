@@ -3,10 +3,10 @@ import {
   CustomerDetails as CustomerDetailsComponent,
   Props,
 } from './components/CustomerDetails';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-export const CustomerDetails = (props: Props) => (
-  <PageWrapper userID={props.loggedUserId}>
+export const CustomerDetails = (props: Props & PageWrapperProps) => (
+  <PageWrapper {...props} userID={props.loggedUserId}>
     <CustomerDetailsComponent {...props} />
   </PageWrapper>
 );

@@ -13,9 +13,9 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../constants';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface Props {
+interface Props extends PageWrapperProps {
   userId: number;
 }
 
@@ -52,12 +52,12 @@ export class CallsByTech extends React.PureComponent<Props, state> {
   }
 
   toggleLoading(): Promise<boolean> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.setState(
-        (prevState) => ({
+        prevState => ({
           isLoading: !prevState.isLoading,
         }),
-        () => resolve(true)
+        () => resolve(true),
       );
     });
   }
@@ -73,7 +73,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
           if (this.state.selectedID !== 0) {
             await this.fetchCalls();
           }
-        }
+        },
       );
     }
   }
@@ -89,7 +89,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
             await this.clearCalls();
             await this.fetchCalls();
           }
-        }
+        },
       );
     }
   }
@@ -132,7 +132,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
     reqObj.setPageNumber(page);
     const res = (await this.UserClient.BatchGet(reqObj)).toObject();
     this.setState(
-      (prevState) => ({
+      prevState => ({
         employees: prevState.employees.concat(res.resultsList),
       }),
       async () => {
@@ -142,17 +142,17 @@ export class CallsByTech extends React.PureComponent<Props, state> {
         } else {
           await this.toggleLoading();
         }
-      }
+      },
     );
   }
 
   clearCalls() {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.setState(
         {
           calls: [],
         },
-        resolve
+        resolve,
       );
     });
   }
@@ -167,7 +167,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
     reqObj.setLogTechnicianAssigned(`%${this.state.selectedID}%`);
     const res = (await this.EventClient.BatchGet(reqObj)).toObject();
     this.setState(
-      (prevState) => ({
+      prevState => ({
         calls: prevState.calls.concat(res.resultsList),
       }),
       async () => {
@@ -177,7 +177,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
         } else {
           await this.toggleLoading();
         }
-      }
+      },
     );
   }
 
@@ -202,7 +202,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
 
   render() {
     return (
-      <PageWrapper userID={this.props.userId}>
+      <PageWrapper {...this.props} userID={this.props.userId}>
         <Grid container direction="column" alignItems="center">
           <Grid
             container
@@ -269,9 +269,9 @@ export class CallsByTech extends React.PureComponent<Props, state> {
             <TableBody>
               {this.state.calls
                 .sort(
-                  (a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted)
+                  (a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted),
                 )
-                .map((c) => (
+                .map(c => (
                   <TableRow
                     hover
                     onClick={() => {
