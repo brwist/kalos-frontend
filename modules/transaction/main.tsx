@@ -3,9 +3,9 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TransactionAdminView } from './components/admin';
 import { Loader } from '../Loader/main';
 import { ENDPOINT } from '../../constants';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface props {
+interface props extends PageWrapperProps {
   userID: number;
   isAdmin: boolean;
 }
@@ -73,7 +73,7 @@ export default class Transaction extends React.PureComponent<props, state> {
   render() {
     if (!this.state.isLoading) {
       return (
-        <PageWrapper userID={this.props.userID}>
+        <PageWrapper {...this.props}>
           <TransactionAdminView
             userID={this.props.userID}
             userName={this.state.userName}
@@ -84,7 +84,7 @@ export default class Transaction extends React.PureComponent<props, state> {
       );
     } else {
       return (
-        <PageWrapper userID={this.props.userID}>
+        <PageWrapper {...this.props}>
           <Loader />
         </PageWrapper>
       );

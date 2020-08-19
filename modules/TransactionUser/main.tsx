@@ -8,14 +8,15 @@ import {
   getCustomerName,
   refreshToken,
 } from '../../helpers';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface Props {
+interface Props extends PageWrapperProps {
   userID: number;
   isProd?: boolean;
 }
 
-const Transaction: FC<Props> = ({ userID }) => {
+const Transaction: FC<Props> = props => {
+  const { userID } = props;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<UserType>();
@@ -44,7 +45,7 @@ const Transaction: FC<Props> = ({ userID }) => {
     }
   }, [loaded, setLoaded, load]);
   return (
-    <PageWrapper userID={userID}>
+    <PageWrapper {...props}>
       {loading || !user ? (
         <Loader />
       ) : (
