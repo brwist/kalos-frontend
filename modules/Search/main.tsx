@@ -6,10 +6,10 @@ import { CustomerSearch } from './components/CustomerSearch';
 import { EventSearch } from './components/ServiceCallSearch';
 import { EventClient } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../constants';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 // add any prop types here
-interface props {
+interface props extends PageWrapperProps {
   loggedUserId: number;
   containerStyle?: React.CSSProperties;
 }
@@ -62,7 +62,7 @@ export class Search extends React.PureComponent<props, state> {
   render() {
     const { target } = this.state;
     return (
-      <PageWrapper userID={this.props.loggedUserId} padding={1}>
+      <PageWrapper {...this.props} userID={this.props.loggedUserId}>
         {target === 'Property' && (
           <PropertySearch
             selector={this.renderSelector()}
