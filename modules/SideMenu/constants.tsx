@@ -153,24 +153,33 @@ const logoutItem: MenuItem = {
   icon: <ExitToAppIcon />,
 };
 
-export const customerItems: MenuItem[] = [
+export const customerItems = (toggleMenu: () => void): MenuItem[] => [
   {
     title: 'Add Property',
     icon: <HomeWorkIcon />,
     button: true,
-    onClick: () => CustomEventsHandler.emit('AddProperty'),
+    onClick: () => {
+      CustomEventsHandler.emit('AddProperty');
+      toggleMenu();
+    },
   },
   {
     title: 'Add Service Call',
     button: true,
     icon: <EventSharp />,
-    onClick: () => CustomEventsHandler.emit('AddServiceCall'),
+    onClick: () => {
+      CustomEventsHandler.emit('AddServiceCall');
+      toggleMenu();
+    },
   },
   {
     title: 'Documents',
     button: true,
     icon: <ImportContactsIcon />,
-    onClick: () => CustomEventsHandler.emit('ShowDocuments'),
+    onClick: () => {
+      CustomEventsHandler.emit('ShowDocuments');
+      toggleMenu();
+    },
   },
   {
     title: 'Contact Us',

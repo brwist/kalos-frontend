@@ -189,7 +189,7 @@ const SideMenu = ({
             </>
           )}
           {user.isEmployee === 0 &&
-            customerItems.map(item => (
+            customerItems(toggleMenu).map(item => (
               <KalosMenuItem
                 key={`customer_${item?.title || 'divider'}`}
                 item={item}
