@@ -11,5 +11,5 @@ ReactDOM.render(
       confirmFn={console.log}
     />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );

@@ -3,10 +3,10 @@ import {
   Projects as ProjectsComponent,
   Props,
 } from '../ComponentsLibrary/Projects';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-export const Projects: FC<Props> = (props) => (
-  <PageWrapper userID={props.loggedUserId}>
+export const Projects: FC<Props & PageWrapperProps> = props => (
+  <PageWrapper {...props} userID={props.loggedUserId}>
     <ProjectsComponent {...props} />
   </PageWrapper>
 );
