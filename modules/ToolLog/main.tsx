@@ -1,13 +1,13 @@
 import React, { FC } from 'react';
 import { SpiffTool } from '../SpiffToolLogs/components/SpiffTool';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface Props {
+interface Props extends PageWrapperProps {
   loggedUserId: number;
 }
 
-export const ToolLog: FC<Props> = (props) => (
-  <PageWrapper userID={props.loggedUserId}>
+export const ToolLog: FC<Props> = props => (
+  <PageWrapper {...props} userID={props.loggedUserId}>
     <SpiffTool type="Tool" {...props} />
   </PageWrapper>
 );

@@ -18,13 +18,13 @@ plugins:
   - react
   - '@typescript-eslint'
 rules:
-  indent: off
+  indent: 0
   linebreak-style:
     - error
     - unix
-  quotes: off
-  semi: off
-  no-unused-vars: off
+  quotes: 0
+  semi: 0
+  no-unused-vars: 0
   no-async-promise-executor: off
   react/prop-types: off
   react/display-name: off

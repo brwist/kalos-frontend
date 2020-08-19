@@ -3,15 +3,16 @@ import SideMenu, { Props as SideMenuProps } from '../SideMenu/main';
 import { StyledPage } from './styled';
 import './styles.less';
 
-interface Props extends SideMenuProps {
+export interface PageWrapperProps {
   padding?: number;
   withHeader?: boolean;
 }
+type Props = PageWrapperProps & SideMenuProps;
 
 export const PageWrapper: FC<Props> = ({
   children,
   padding = 0,
-  withHeader = true,
+  withHeader = false,
   ...props
 }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
