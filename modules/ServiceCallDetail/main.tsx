@@ -28,9 +28,9 @@ import {
   PAYMENT_TYPE_LIST,
   ENDPOINT,
 } from '../../constants';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface props {
+interface props extends PageWrapperProps {
   eventID: number;
   userID: number;
 }
@@ -85,9 +85,9 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     req.setPageNumber(page);
     const result = await this.UserClient.BatchGet(req);
     this.setState(
-      (prevState) => ({
+      prevState => ({
         technicians: prevState.technicians.concat(
-          result.toObject().resultsList
+          result.toObject().resultsList,
         ),
       }),
       async () => {
@@ -95,11 +95,11 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
           page = page + 1;
           await this.fetchTechnicians(page);
         }
-      }
+      },
     );
   }
   toggleEditing() {
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       isEditing: !prevState.isEditing,
     }));
   }
@@ -164,14 +164,14 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
 
   handleTechnicianSelect(
     e: ChangeEvent<{ name?: string | undefined; value: unknown }>,
-    child: ReactNode
+    child: ReactNode,
   ) {
     const { event } = this.state;
     let assigned = event.logTechnicianAssigned.split(',');
-    assigned = assigned.filter((a) => a !== '0');
+    assigned = assigned.filter(a => a !== '0');
     const id = e.currentTarget.name;
     if (assigned.includes(id!)) {
-      assigned = assigned.filter((a) => a !== id);
+      assigned = assigned.filter(a => a !== id);
     } else {
       assigned = assigned.concat(id!);
     }
@@ -233,7 +233,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
 
     if (event.id) {
       return (
-        <PageWrapper userID={this.props.userID} padding={1}>
+        <PageWrapper {...this.props} userID={this.props.userID}>
           <Grid container direction="column" alignItems="center">
             <FormControlLabel
               control={
@@ -291,12 +291,12 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   <NativeSelect
                     disabled={!isEditing}
                     value={event.logJobStatus}
-                    onChange={(e) => this.updateStatus(e.currentTarget.value)}
+                    onChange={e => this.updateStatus(e.currentTarget.value)}
                     inputProps={{
                       id: 'Status-select',
                     }}
                   >
-                    {(EVENT_STATUS_LIST as string[]).map((status) => (
+                    {(EVENT_STATUS_LIST as string[]).map(status => (
                       <option value={status} key={status}>
                         {status}
                       </option>
@@ -308,14 +308,14 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   <NativeSelect
                     disabled={!isEditing}
                     value={event.logPaymentType}
-                    onChange={(e) =>
+                    onChange={e =>
                       this.updatePaymentType(e.currentTarget.value)
                     }
                     inputProps={{
                       id: 'Payment-select',
                     }}
                   >
-                    {(PAYMENT_TYPE_LIST as string[]).map((type) => (
+                    {(PAYMENT_TYPE_LIST as string[]).map(type => (
                       <option value={type} key={type}>
                         {type}
                       </option>
@@ -340,11 +340,11 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                     multiple
                     onChange={this.handleTechnicianSelect}
                     input={<Input id="tech-select-input" />}
-                    renderValue={(selected) => (
+                    renderValue={selected => (
                       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                        {(selected as string[]).map((s) => {
+                        {(selected as string[]).map(s => {
                           const tech = this.state.technicians.find(
-                            (t) => t.id === parseInt(s)
+                            t => t.id === parseInt(s),
                           );
                           if (tech) {
                             return (
@@ -367,7 +367,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                       </div>
                     )}
                   >
-                    {this.state.technicians.map((t) => (
+                    {this.state.technicians.map(t => (
                       <MenuItem
                         key={`${t.firstname}-${t.lastname}-${t.id}`}
                         value={`${t.id}`}
@@ -474,7 +474,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                     }}
                   >
                     <option value={0}>Select Original Call</option>
-                    {this.state.callbacks.map((cb) => (
+                    {this.state.callbacks.map(cb => (
                       <option value={cb.id} key={`${cb.name}-${cb.id}`}>
                         {cb.name}
                       </option>
@@ -528,6 +528,6 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
           </Grid>
         </PageWrapper>
       );
-    } else return <PageWrapper userID={this.props.userID} />;
+    } else return <PageWrapper {...this.props} userID={this.props.userID} />;
   }
 }

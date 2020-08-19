@@ -1,13 +1,13 @@
 import React, { FC } from 'react';
 import { AdvancedSearch } from '../ComponentsLibrary/AdvancedSearch';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface Props {
+interface Props extends PageWrapperProps {
   loggedUserId: number;
 }
 
-export const SearchIndex: FC<Props> = ({ loggedUserId }) => (
-  <PageWrapper userID={loggedUserId}>
+export const SearchIndex: FC<Props> = ({ loggedUserId, ...props }) => (
+  <PageWrapper {...props} userID={loggedUserId}>
     <AdvancedSearch
       loggedUserId={loggedUserId}
       title="Search"

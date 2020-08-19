@@ -62,7 +62,7 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
     : startOfWeek(subDays(today, 7));
 };
 
-const Timesheet: FC<Props> = (props: Props) => {
+const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId } = props;
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
