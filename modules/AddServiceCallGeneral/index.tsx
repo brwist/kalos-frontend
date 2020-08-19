@@ -3,6 +3,6 @@ import ReactDOM from 'react-dom';
 import { AddServiceCallGeneral } from './main';
 
 ReactDOM.render(
-  <AddServiceCallGeneral loggedUserId={101253} />,
+  <AddServiceCallGeneral loggedUserId={101253} withHeader />,
   document.getElementById('root'),
 );

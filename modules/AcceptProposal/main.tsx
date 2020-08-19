@@ -31,16 +31,15 @@ import {
   ActivityLog,
   ActivityLogClient,
 } from '@kalos-core/kalos-rpc/ActivityLog';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 // add any prop types here
-interface props {
+interface props extends PageWrapperProps {
   userID: number;
   jobNumber: number;
   propertyID: number;
   loggedUserId: number;
   useBusinessName?: boolean;
-  withPageHeader: boolean;
 }
 
 // map your state here
@@ -113,7 +112,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       .replace(/-\w{11}-/g, "'")
       .replace(/-percent-/g, '%')
       .replace(/-and-/g, '&');
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       quoteLines: prevState.quoteLines.concat(ql),
     }));
   }
@@ -130,7 +129,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     if (this.SigPad.current) {
       const dUrl = this.SigPad.current.toDataURL();
       const sUrl = URL.createObjectURL(
-        b64toBlob(dUrl.replace('data:image/png;base64,', ''), 'sig.png')
+        b64toBlob(dUrl.replace('data:image/png;base64,', ''), 'sig.png'),
       );
       this.setState({
         sigURL: sUrl,
@@ -150,10 +149,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const val = parseInt(e.currentTarget.value);
-    this.setState((prevState) => {
+    this.setState(prevState => {
       if (prevState.selected.includes(val)) {
         return {
-          selected: prevState.selected.filter((v) => v !== val),
+          selected: prevState.selected.filter(v => v !== val),
         };
       } else
         return {
@@ -163,8 +162,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   }
 
   getTotal() {
-    const qls = this.state.quoteLines.filter((ql) =>
-      this.state.selected.includes(ql.id)
+    const qls = this.state.quoteLines.filter(ql =>
+      this.state.selected.includes(ql.id),
     );
     return qls.reduce((acc: number, curr: QuoteLine.AsObject) => {
       return acc + parseInt(curr.adjustment);
@@ -172,18 +171,18 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   }
 
   toggleLoading() {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.setState(
-        (prevState) => ({
+        prevState => ({
           isLoading: !prevState.isLoading,
         }),
-        resolve
+        resolve,
       );
     });
   }
 
   toggleModal() {
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       isOpen: !prevState.isOpen,
     }));
   }
@@ -192,7 +191,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     try {
       const req = new Document();
       req.setFilename(
-        `${this.props.jobNumber}_pending_proposal_${this.props.userID}%`
+        `${this.props.jobNumber}_pending_proposal_${this.props.userID}%`,
       );
       const doc = await this.DocClient.Get(req);
       this.setState({
@@ -208,10 +207,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       const req = new Document();
       req.setDateCreated(timestamp());
       req.setFilename(
-        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`
+        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
       );
       req.setDescription(
-        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`
+        `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
       );
       req.setId(this.state.docID);
       req.setFieldMaskList(['DateCreated', 'Filename', 'Description']);
@@ -251,8 +250,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const blob = await ReactPDF.pdf(
       <ApprovedProposal
         sigURL={this.state.sigURL}
-        quoteLines={this.state.quoteLines.filter((ql) =>
-          this.state.selected.includes(ql.id)
+        quoteLines={this.state.quoteLines.filter(ql =>
+          this.state.selected.includes(ql.id),
         )}
         jobNumber={this.props.jobNumber}
         property={this.state.property}
@@ -263,7 +262,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         }
         total={this.getTotal()}
         notes={this.state.notes}
-      />
+      />,
     ).toBlob();
 
     const el = document.createElement('a');
@@ -283,8 +282,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const fd = await ReactPDF.pdf(
       <ApprovedProposal
         sigURL={this.state.sigURL}
-        quoteLines={this.state.quoteLines.filter((ql) =>
-          this.state.selected.includes(ql.id)
+        quoteLines={this.state.quoteLines.filter(ql =>
+          this.state.selected.includes(ql.id),
         )}
         jobNumber={this.props.jobNumber}
         property={this.state.property}
@@ -295,12 +294,12 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         }
         total={this.getTotal()}
         notes={this.state.notes}
-      />
+      />,
     ).toBlob();
     const urlObj = new URLObject();
     urlObj.setBucket('testbuckethelios');
     urlObj.setKey(
-      `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`
+      `${this.props.jobNumber}_approved_proposal_${this.props.userID}.pdf`,
     );
     urlObj.setContentType('pdf');
     const urlRes = await this.S3Client.GetUploadURL(urlObj);
@@ -318,7 +317,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     req.setUserId(this.props.userID);
     req.setPropertyId(this.props.propertyID);
     req.setActivityName(
-      `Customer Approved Proposal: Job ${this.props.jobNumber}`
+      `Customer Approved Proposal: Job ${this.props.jobNumber}`,
     );
     await this.LogClient.Create(req);
   }
@@ -327,7 +326,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const req = new FileObject();
     req.setBucket('testbuckethelios2');
     req.setKey(
-      `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`
+      `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`,
     );
     await this.S3Client.Delete(req);
   }
@@ -377,7 +376,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       },
     ];
     const slackUrl = `https://slack.com/api/chat.postMessage?token=${key}&text=<!here>, A proposal has been approved&channel=${channel}&icon_emoji=:white_check_mark:&as_user=false&username=Proposal&attachments=${encodeURIComponent(
-      JSON.stringify(post)
+      JSON.stringify(post),
     )}`;
     await fetch(slackUrl, { method: 'POST' });
   }
@@ -402,7 +401,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       window.location.href = `https://app.kalosflorida.com/index.cfm?action=customer:service.post_proposal&user_id=${this.props.userID}&username=${name}&jobNumber=${this.props.jobNumber}`;
     } catch (err) {
       alert(
-        'Something went wrong, please refresh and try again. If you continue to experience issues, please contact office@kalosflorida.com'
+        'Something went wrong, please refresh and try again. If you continue to experience issues, please contact office@kalosflorida.com',
       );
       await this.toggleLoading();
     }
@@ -418,11 +417,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   render() {
     return (
-      <PageWrapper
-        userID={this.props.loggedUserId}
-        withHeader={this.props.withPageHeader}
-        padding={1}
-      >
+      <PageWrapper {...this.props} userID={this.props.loggedUserId}>
         <Grid container direction="column" alignItems="flex-start">
           <Typography variant="body1" component="span">
             Proposal For:{' '}
@@ -462,7 +457,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {this.state.quoteLines.map((ql) => (
+                {this.state.quoteLines.map(ql => (
                   <QuoteLineRow
                     ql={ql}
                     key={`quote_line_row_${ql.id}`}
@@ -586,8 +581,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                   </TableHead>
                   <TableBody>
                     {this.state.quoteLines
-                      .filter((ql) => this.state.selected.includes(ql.id))
-                      .map((ql) => (
+                      .filter(ql => this.state.selected.includes(ql.id))
+                      .map(ql => (
                         <TableRow key={`quote_line_confirm_${ql.id}`}>
                           <TableCell>{ql.description}</TableCell>
                           <TableCell>${ql.adjustment}</TableCell>

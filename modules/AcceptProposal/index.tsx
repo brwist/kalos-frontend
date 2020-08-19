@@ -8,7 +8,8 @@ ReactDOM.render(
     jobNumber={64153}
     propertyID={9437}
     loggedUserId={101253}
-    withPageHeader
+    withHeader
+    padding={1}
   />,
-  document.getElementById('root')
+  document.getElementById('root'),
 );

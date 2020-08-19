@@ -12,10 +12,10 @@ import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import CloseIcon from '@material-ui/icons/CloseSharp';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { ENDPOINT } from '../../constants';
 
-interface props {
+interface props extends PageWrapperProps {
   userId: number;
 }
 
@@ -70,13 +70,13 @@ export class AccountInfo extends React.PureComponent<props, state> {
   }
 
   toggleModal() {
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       isModalOpen: !prevState.isModalOpen,
     }));
   }
 
   toggleLoginModal() {
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       isLoginModalOpen: !prevState.isLoginModalOpen,
     }));
   }
@@ -145,7 +145,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
   }
 
   toggleEditing() {
-    this.setState((prevState) => ({
+    this.setState(prevState => ({
       isEditing: !prevState.isEditing,
     }));
   }
@@ -185,7 +185,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
       return null;
     }
     return (
-      <PageWrapper userID={this.props.userId} padding={1}>
+      <PageWrapper {...this.props} userID={this.props.userId}>
         <Grid
           style={{ paddingBottom: '20px' }}
           container
