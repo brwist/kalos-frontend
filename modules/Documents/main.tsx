@@ -1,13 +1,13 @@
 import React, { FC } from 'react';
 import { InternalDocuments } from '../ComponentsLibrary/InternalDocuments';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface Props {
+interface Props extends PageWrapperProps {
   userId: number;
 }
 
-export const Documents: FC<Props> = ({ userId }) => (
-  <PageWrapper userID={userId}>
+export const Documents: FC<Props> = ({ userId, ...props }) => (
+  <PageWrapper {...props} userID={userId}>
     <InternalDocuments />
   </PageWrapper>
 );

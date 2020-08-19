@@ -61,8 +61,8 @@ export class Search extends React.PureComponent<props, state> {
 
   render() {
     const { target } = this.state;
-    return (
-      <PageWrapper {...this.props} userID={this.props.loggedUserId}>
+    const content = (
+      <>
         {target === 'Property' && (
           <PropertySearch
             selector={this.renderSelector()}
@@ -87,7 +87,14 @@ export class Search extends React.PureComponent<props, state> {
             containerStyle={this.props.containerStyle}
           />
         )*/}
-      </PageWrapper>
+      </>
     );
+    if (this.props.withHeader)
+      return (
+        <PageWrapper {...this.props} userID={this.props.loggedUserId}>
+          {content}
+        </PageWrapper>
+      );
+    return content;
   }
 }
