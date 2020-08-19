@@ -23,6 +23,7 @@ import {
   UserGroupLinkType,
   UserClientService,
   getPropertyAddress,
+  CustomEventsHandler,
 } from '../../../helpers';
 import './styles.less';
 
@@ -82,6 +83,11 @@ export const CustomerInformation: FC<Props> = ({
 
   const groupLinksInitialIds = groupLinksInitial.map(({ groupId }) => groupId);
 
+  const handleToggleDocuments = useCallback(
+    () => setDocumentsOpened(!documentsOpened),
+    [setDocumentsOpened, documentsOpened],
+  );
+
   const load = useCallback(async () => {
     if (propertyId) {
       const pendingBilling = new PendingBilling();
@@ -108,6 +114,7 @@ export const CustomerInformation: FC<Props> = ({
     } catch (e) {
       setError(true);
     }
+    CustomEventsHandler.listen('ShowDocuments', handleToggleDocuments);
   }, [
     userID,
     propertyId,
@@ -117,6 +124,7 @@ export const CustomerInformation: FC<Props> = ({
     setGroupLinksInitial,
     setGroups,
     viewedAsCustomer,
+    handleToggleDocuments,
   ]);
 
   const handleToggleEditing = useCallback(() => {
@@ -125,11 +133,6 @@ export const CustomerInformation: FC<Props> = ({
       setGroupLinks(groupLinksInitial);
     }
   }, [editing, setEditing, setGroupLinks, groupLinksInitial]);
-
-  const handleToggleDocuments = useCallback(
-    () => setDocumentsOpened(!documentsOpened),
-    [setDocumentsOpened, documentsOpened],
-  );
 
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
@@ -281,18 +284,6 @@ export const CustomerInformation: FC<Props> = ({
                       label: 'Edit',
                       onClick: handleToggleEditing,
                     },
-                    {
-                      label: 'Documents',
-                      onClick: handleToggleDocuments,
-                    },
-                    {
-                      label: 'Contact Us',
-                      onClick: () =>
-                        window.open(
-                          'http://www.kalosflorida.com/contacts/',
-                          '_blank',
-                        ),
-                    },
                     ...(onClose
                       ? [
                           {
@@ -437,7 +428,7 @@ export const CustomerInformation: FC<Props> = ({
         kind="Customer"
         name={`${firstname} ${lastname}`}
       />
-      <Modal open={documentsOpened} onClose={handleToggleDocuments}>
+      <Modal open={documentsOpened} onClose={handleToggleDocuments} fullScreen>
         <SectionBar
           title="Documents"
           actions={[{ label: 'Close', onClick: handleToggleDocuments }]}
@@ -451,6 +442,7 @@ export const CustomerInformation: FC<Props> = ({
               title={getPropertyAddress(prop)}
               propertyId={prop.id}
               deletable={false}
+              stickySectionBar={false}
             />
           ))}
       </Modal>

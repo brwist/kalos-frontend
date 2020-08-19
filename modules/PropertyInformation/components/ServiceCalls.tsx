@@ -24,6 +24,7 @@ import {
   PropertyType,
   loadPropertiesByFilter,
   upsertEvent,
+  CustomEventsHandler,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
@@ -116,7 +117,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   handleOrder = (
     orderByDBField: string,
-    orderByFields: (keyof Entry)[]
+    orderByFields: (keyof Entry)[],
   ) => () => {
     this.setState(
       {
@@ -130,7 +131,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             ? 'DESC'
             : 'ASC',
       },
-      this.load
+      this.load,
     );
   };
 
@@ -149,17 +150,21 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   async componentDidMount() {
     await this.load();
+    CustomEventsHandler.listen(
+      'AddServiceCall',
+      this.setAddingCustomerEntry(this.makeCustomerEntry()),
+    );
   }
 
   sort = (a: Entry, b: Entry) => {
     const { orderByFields, dir } = this.state;
     const A = orderByFields
-      .map((field) => a[field] as string)
+      .map(field => a[field] as string)
       .join(' ')
       .trim()
       .toUpperCase();
     const B = orderByFields
-      .map((field) => b[field] as string)
+      .map(field => b[field] as string)
       .join(' ')
       .trim()
       .toUpperCase();
@@ -197,7 +202,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
     const { dateStarted, timeStarted, description, notes } = formData;
     const [dateEnded, timeEnded] = format(
       addHours(new Date(`${dateStarted} ${timeStarted}`), 1),
-      'yyyy-MM-dd HH:mm'
+      'yyyy-MM-dd HH:mm',
     ).split(' ');
     const data: Entry = {
       ...formData,
@@ -310,7 +315,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
         ];
     const data: Data = loading
       ? makeFakeRows(viewedAsCustomer ? 4 : 5)
-      : entries.map((entry) => {
+      : entries.map(entry => {
           const {
             id,
             dateStarted,
@@ -405,7 +410,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
           required: true,
           options: [
             { value: '0', label: OPTION_BLANK },
-            ...this.state.customerProperties.map((p) => ({
+            ...this.state.customerProperties.map(p => ({
               value: p.id,
               label: getPropertyAddress(p),
             })),
@@ -425,7 +430,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
               'Free Replacement/Upgrade Estimate',
               'Pool Heater Repair',
               'Construction',
-            ].map((value) => ({ value, label: value })),
+            ].map(value => ({ value, label: value })),
           ],
           required: true,
         },
@@ -462,7 +467,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
                   {
                     label: 'Add Service Call',
                     onClick: this.setAddingCustomerEntry(
-                      this.makeCustomerEntry()
+                      this.makeCustomerEntry(),
                     ),
                   },
                 ]
@@ -532,9 +537,9 @@ export class ServiceCalls extends PureComponent<Props, State> {
                   {
                     label: 'Date/Time',
                     value: `${formatDate(
-                      viewingEntry.dateStarted
+                      viewingEntry.dateStarted,
                     )} ${formatTime(viewingEntry.timeStarted)} - ${formatTime(
-                      viewingEntry.timeEnded
+                      viewingEntry.timeEnded,
                     )}`,
                   },
                 ],

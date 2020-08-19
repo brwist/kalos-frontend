@@ -21,6 +21,7 @@ import {
   adminItems,
   managerItems,
   commonItems,
+  customerItems,
 } from './constants';
 
 const userClient = new UserClient(ENDPOINT);
@@ -150,43 +151,53 @@ const SideMenu = ({
           <MenuSharp />
         </IconButton>
       </Hidden>
-      {user.isEmployee === 1 && (
-        <Drawer
-          open={isOpen}
-          onClose={toggleMenu}
-          style={{ width: 250, padding: 10 }}
-        >
-          <List style={{ width: 250 }}>
-            {employeeItems.map(item => (
+
+      <Drawer
+        open={isOpen}
+        onClose={toggleMenu}
+        style={{ width: 250, padding: 10 }}
+      >
+        <List style={{ width: 250 }}>
+          {user.isEmployee === 1 &&
+            employeeItems.map(item => (
               <KalosMenuItem
                 key={`empl_${item?.title || 'divider'}`}
                 item={item}
                 userId={userID}
               />
             ))}
-            {user.isAdmin === 1 && (
-              <>
-                {adminItems.map(item => (
-                  <KalosMenuItem
-                    key={`admin_${item?.title || 'divider'}`}
-                    item={item}
-                    userId={userID}
-                  />
-                ))}
-              </>
-            )}
-            {isManager && (
-              <>
-                {managerItems.map(item => (
-                  <KalosMenuItem
-                    key={`manager_${item?.title || 'divider'}`}
-                    item={item}
-                    userId={userID}
-                  />
-                ))}
-              </>
-            )}
-            {commonItems.map(item => {
+          {user.isAdmin === 1 && (
+            <>
+              {adminItems.map(item => (
+                <KalosMenuItem
+                  key={`admin_${item?.title || 'divider'}`}
+                  item={item}
+                  userId={userID}
+                />
+              ))}
+            </>
+          )}
+          {isManager && (
+            <>
+              {managerItems.map(item => (
+                <KalosMenuItem
+                  key={`manager_${item?.title || 'divider'}`}
+                  item={item}
+                  userId={userID}
+                />
+              ))}
+            </>
+          )}
+          {user.isEmployee === 0 &&
+            customerItems.map(item => (
+              <KalosMenuItem
+                key={`customer_${item?.title || 'divider'}`}
+                item={item}
+                userId={userID}
+              />
+            ))}
+          {user.isEmployee === 1 &&
+            commonItems.map(item => {
               if (item.title === 'Report a Bug') {
                 return (
                   <KalosMenuItem
@@ -206,9 +217,8 @@ const SideMenu = ({
                 );
               }
             })}
-          </List>
-        </Drawer>
-      )}
+        </List>
+      </Drawer>
       {reportBugFormShown && (
         <ReportBugForm onClose={handleCloseReportBugForm} user={user} />
       )}

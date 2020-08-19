@@ -3,10 +3,10 @@ import {
   CustomerAccountDashboard,
   Props,
 } from '../ComponentsLibrary/CustomerAccountDashboard';
-import { StyledPage } from '../PageWrapper/styled';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-export const CustomerDirectory: FC<Props> = props => (
-  <StyledPage>
+export const CustomerDirectory: FC<Props & PageWrapperProps> = props => (
+  <PageWrapper {...props} userID={props.loggedUserId}>
     <CustomerAccountDashboard {...props} />
-  </StyledPage>
+  </PageWrapper>
 );

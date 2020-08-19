@@ -3043,6 +3043,24 @@ async function newBugReportImage(
   }
 }
 
+export const CustomEventsHandler = (() => {
+  type EventName = 'AddProperty' | 'AddServiceCall' | 'ShowDocuments';
+  const customEvents: { [key in EventName]: boolean } = {
+    AddProperty: false,
+    AddServiceCall: false,
+    ShowDocuments: false,
+  };
+  return {
+    listen: (eventName: EventName, callback: () => void) => {
+      if (customEvents[eventName]) return;
+      customEvents[eventName] = true;
+      window.addEventListener(eventName, callback);
+    },
+    emit: (eventName: EventName) =>
+      window.dispatchEvent(new CustomEvent(eventName)),
+  };
+})();
+
 /**
  * Checks URL for http, and redirects to https appropriately
  */
