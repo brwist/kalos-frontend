@@ -7,5 +7,5 @@ ReactDOM.render(
   <StyledPage>
     <Loader />
   </StyledPage>,
-  document.getElementById('root')
+  document.getElementById('root'),
 );

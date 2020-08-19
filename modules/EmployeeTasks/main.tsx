@@ -1,14 +1,18 @@
 import React, { FC } from 'react';
 import { Tasks } from '../ComponentsLibrary/Tasks';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-interface Props {
+interface Props extends PageWrapperProps {
   loggedUserId: number;
   employeeId: number;
 }
 
-export const EmployeeTasks: FC<Props> = ({ employeeId, loggedUserId }) => (
-  <PageWrapper userID={loggedUserId}>
+export const EmployeeTasks: FC<Props> = ({
+  employeeId,
+  loggedUserId,
+  ...props
+}) => (
+  <PageWrapper {...props} userID={loggedUserId}>
     <Tasks
       externalCode="employee"
       externalId={employeeId}
