@@ -3044,11 +3044,16 @@ async function newBugReportImage(
 }
 
 export const CustomEventsHandler = (() => {
-  type EventName = 'AddProperty' | 'AddServiceCall' | 'ShowDocuments';
+  type EventName =
+    | 'AddProperty'
+    | 'AddServiceCall'
+    | 'ShowDocuments'
+    | 'EditCustomer';
   const customEvents: { [key in EventName]: boolean } = {
     AddProperty: false,
     AddServiceCall: false,
     ShowDocuments: false,
+    EditCustomer: false,
   };
   return {
     listen: (eventName: EventName, callback: () => void) => {
