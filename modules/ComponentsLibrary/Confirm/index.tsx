@@ -10,6 +10,8 @@ interface Props {
   onClose: () => void;
   onConfirm: () => void;
   submitLabel?: string;
+  submitDisabled?: boolean;
+  maxWidth?: number | 'none';
 }
 
 export const Confirm: FC<Props> = ({
@@ -18,17 +20,21 @@ export const Confirm: FC<Props> = ({
   onClose,
   onConfirm,
   submitLabel = 'Confirm',
+  submitDisabled = false,
+  maxWidth = 370,
   children,
 }) => (
-  <Modal open={open} onClose={onClose} compact maxWidth={370}>
+  <Modal open={open} onClose={onClose} compact maxWidth={maxWidth}>
     <SectionBar
       title={title}
       actions={[
-        { label: submitLabel, onClick: onConfirm },
+        { label: submitLabel, onClick: onConfirm, disabled: submitDisabled },
         { label: 'Cancel', onClick: onClose, variant: 'outlined' },
       ]}
       fixedActions
     />
-    <Typography className="Confirm">{children}</Typography>
+    <Typography component="div" className="Confirm">
+      {children}
+    </Typography>
   </Modal>
 );

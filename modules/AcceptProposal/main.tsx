@@ -1,25 +1,12 @@
-import React from 'react';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
-import Paper from '@material-ui/core/Paper';
-import Table from '@material-ui/core/Table';
-import TableHead from '@material-ui/core/TableHead';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableRow from '@material-ui/core/TableRow';
-import Typography from '@material-ui/core/Typography';
-import Grid from '@material-ui/core/Grid';
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
+import React, { ReactText } from 'react';
+import Checkbox from '@material-ui/core/Checkbox';
+import Alert from '@material-ui/lab/Alert';
 import ReactPDF from '@react-pdf/renderer';
-//@ts-ignore
-import SignaturePad from 'react-signature-pad-wrapper';
 import { QuoteLine, QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
 import { ENDPOINT } from '../../constants';
 import { b64toBlob, timestamp } from '../../helpers';
 import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { QuoteLineRow } from './components/QLRow';
 import { ApprovedProposal } from './components/ApprovedProposal';
 import { S3Client, FileObject, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { Document, DocumentClient } from '@kalos-core/kalos-rpc/Document';
@@ -31,6 +18,12 @@ import {
   ActivityLog,
   ActivityLogClient,
 } from '@kalos-core/kalos-rpc/ActivityLog';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
+import { InfoTable } from '../ComponentsLibrary/InfoTable';
+import { Confirm } from '../ComponentsLibrary/Confirm';
+import { Field } from '../ComponentsLibrary/Field';
+import { Loader } from '../Loader/main';
+import { getCustomerName, getPropertyAddress, usd } from '../../helpers';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 // add any prop types here
@@ -88,25 +81,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     this.QDClient = new QuoteDocumentClient(ENDPOINT);
     this.LogClient = new ActivityLogClient(ENDPOINT);
     this.DocClient = new DocumentClient(ENDPOINT);
-
     this.SigPad = React.createRef();
-
-    this.addQuoteLine = this.addQuoteLine.bind(this);
-    this.getQuoteLines = this.getQuoteLines.bind(this);
-    this.approveQuoteLine = this.approveQuoteLine.bind(this);
-    this.approveProposal = this.approveProposal.bind(this);
-    this.handleSelect = this.handleSelect.bind(this);
-    this.sign = this.sign.bind(this);
-    this.clear = this.clear.bind(this);
-    this.toggleModal = this.toggleModal.bind(this);
-    this.saveAsPDF = this.saveAsPDF.bind(this);
-    this.finalize = this.finalize.bind(this);
-    this.uploadPDF = this.uploadPDF.bind(this);
-    this.getDocumentID = this.getDocumentID.bind(this);
-    this.toggleLoading = this.toggleLoading.bind(this);
   }
 
-  addQuoteLine(ql: QuoteLine.AsObject) {
+  addQuoteLine = (ql: QuoteLine.AsObject) => {
     ql.description = ql.description
       .replace(/---\w{11}---/g, '"')
       .replace(/-\w{11}-/g, "'")
@@ -115,39 +93,29 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     this.setState(prevState => ({
       quoteLines: prevState.quoteLines.concat(ql),
     }));
-  }
+  };
 
-  approveQuoteLine(id: number) {
+  approveQuoteLine = (id: number) => {
     const ql = new QuoteLine();
     ql.setQuoteStatus(1);
     ql.setId(id);
     ql.setFieldMaskList(['QuoteStatus']);
     return this.QLClient.Update(ql);
-  }
+  };
 
-  sign() {
-    if (this.SigPad.current) {
-      const dUrl = this.SigPad.current.toDataURL();
-      const sUrl = URL.createObjectURL(
-        b64toBlob(dUrl.replace('data:image/png;base64,', ''), 'sig.png'),
-      );
-      this.setState({
-        sigURL: sUrl,
-      });
+  sign = (url: ReactText) => {
+    const dUrl = url.toString();
+    if (dUrl === '') {
+      this.setState({ sigURL: '' });
+      return;
     }
-  }
+    const sUrl = URL.createObjectURL(
+      b64toBlob(dUrl.replace('data:image/png;base64,', ''), 'sig.png'),
+    );
+    this.setState({ sigURL: sUrl });
+  };
 
-  clear() {
-    if (this.SigPad.current) {
-      //@ts-ignore
-      this.SigPad.current.clear();
-    }
-    this.setState({
-      sigURL: '',
-    });
-  }
-
-  handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.currentTarget.value);
     this.setState(prevState => {
       if (prevState.selected.includes(val)) {
@@ -159,18 +127,18 @@ export class AcceptProposal extends React.PureComponent<props, state> {
           selected: prevState.selected.concat(val),
         };
     });
-  }
+  };
 
-  getTotal() {
+  getTotal = () => {
     const qls = this.state.quoteLines.filter(ql =>
       this.state.selected.includes(ql.id),
     );
     return qls.reduce((acc: number, curr: QuoteLine.AsObject) => {
       return acc + parseInt(curr.adjustment);
     }, 0);
-  }
+  };
 
-  toggleLoading() {
+  toggleLoading = () => {
     return new Promise(resolve => {
       this.setState(
         prevState => ({
@@ -179,15 +147,15 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         resolve,
       );
     });
-  }
+  };
 
-  toggleModal() {
+  toggleModal = () => {
     this.setState(prevState => ({
       isOpen: !prevState.isOpen,
     }));
-  }
+  };
 
-  async getDocumentID() {
+  getDocumentID = async () => {
     try {
       const req = new Document();
       req.setFilename(
@@ -200,9 +168,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     } catch (err) {
       console.log(err);
     }
-  }
+  };
 
-  async updateDocument() {
+  updateDocument = async () => {
     try {
       const req = new Document();
       req.setDateCreated(timestamp());
@@ -218,35 +186,34 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     } catch (err) {
       console.log(err);
     }
-  }
+  };
 
-  async getQuoteLines() {
+  getQuoteLines = async () => {
     const ql = new QuoteLine();
     ql.setJobNumber(`${this.props.jobNumber}`);
     ql.setIsActive(1);
     await this.QLClient.List(ql, this.addQuoteLine);
-  }
+  };
 
-  async getCustomerData() {
+  getCustomerData = async () => {
     const p = new Property();
     p.setId(this.props.propertyID);
     const theProperty = await this.PropertyClient.Get(p);
     const u = new User();
     u.setId(this.props.userID);
     const theCustomer = await this.UserClient.Get(u);
-
     this.setState({
       customer: theCustomer,
       property: theProperty,
     });
-  }
+  };
 
-  async approveProposal() {
+  approveProposal = async () => {
     const promises = this.state.selected.map(this.approveQuoteLine);
     await Promise.all(promises);
-  }
+  };
 
-  async saveAsPDF() {
+  saveAsPDF = async () => {
     const blob = await ReactPDF.pdf(
       <ApprovedProposal
         sigURL={this.state.sigURL}
@@ -264,7 +231,6 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         notes={this.state.notes}
       />,
     ).toBlob();
-
     const el = document.createElement('a');
     el.style.display = 'none';
     el.download = `reviewed_proposal_${timestamp(true)}.pdf`;
@@ -276,9 +242,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     el.remove();
 
     return true;
-  }
+  };
 
-  async uploadPDF() {
+  uploadPDF = async () => {
     const fd = await ReactPDF.pdf(
       <ApprovedProposal
         sigURL={this.state.sigURL}
@@ -310,9 +276,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     if (uploadRes.status === 200) {
       console.log('ok');
     }
-  }
+  };
 
-  async createLog() {
+  createLog = async () => {
     const req = new ActivityLog();
     req.setUserId(this.props.userID);
     req.setPropertyId(this.props.propertyID);
@@ -320,18 +286,18 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       `Customer Approved Proposal: Job ${this.props.jobNumber}`,
     );
     await this.LogClient.Create(req);
-  }
+  };
 
-  async deleteOldPDF() {
+  deleteOldPDF = async () => {
     const req = new FileObject();
     req.setBucket('testbuckethelios2');
     req.setKey(
       `${this.props.jobNumber}_pending_proposal_${this.props.userID}.pdf`,
     );
     await this.S3Client.Delete(req);
-  }
+  };
 
-  async getJobNotes() {
+  getJobNotes = async () => {
     const qd = new QuoteDocument();
     qd.setDocumentId(this.state.docID);
     const res = await this.QDClient.Get(qd);
@@ -341,9 +307,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       .replace(/-percent-/g, '%')
       .replace(/-and-/g, '&');
     this.setState({ notes });
-  }
+  };
 
-  async pingSlack() {
+  pingSlack = async () => {
     const key =
       'xoxp-11208000564-192623057299-291949462161-5d0e9acdefe3167cee18172908134b9a';
     const channel = 'C0HMJ00P2';
@@ -379,9 +345,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       JSON.stringify(post),
     )}`;
     await fetch(slackUrl, { method: 'POST' });
-  }
+  };
 
-  async finalize() {
+  finalize = async () => {
     try {
       await this.toggleLoading();
       await this.approveProposal();
@@ -405,214 +371,148 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       );
       await this.toggleLoading();
     }
-  }
+  };
 
   async componentDidMount() {
     await this.PropertyClient.GetToken('test', 'test');
+    await this.toggleLoading();
     await this.getCustomerData();
     await this.getQuoteLines();
     await this.getDocumentID();
     await this.getJobNotes();
+    await this.toggleLoading();
   }
 
   render() {
     return (
       <PageWrapper {...this.props} userID={this.props.loggedUserId}>
-        <Grid container direction="column" alignItems="flex-start">
-          <Typography variant="body1" component="span">
-            Proposal For:{' '}
-            {`${this.state.customer.firstname} ${this.state.customer.lastname}`}
-          </Typography>
-          <Typography variant="body1" component="span">
-            Address:{' '}
-            {`${this.state.property.address}, ${this.state.property.city}, ${
-              this.state.property.state || 'FL'
-            }`}
-          </Typography>
-          {this.state.notes.length > 0 && (
-            <Typography variant="body1" component="span">
-              Notes: {this.state.notes}
-            </Typography>
-          )}
-          <Paper
-            elevation={10}
-            style={{
-              maxHeight: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              justifyContent: 'flex-start',
-              padding: 10,
-              marginBottom: 10,
-              marginTop: 10,
-            }}
-          >
-            <Table style={{ maxHeight: '100%' }} size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Repair</TableCell>
-                  <TableCell align="center">Price</TableCell>
-                  <TableCell align="center">Confirm</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {this.state.quoteLines.map(ql => (
-                  <QuoteLineRow
-                    ql={ql}
-                    key={`quote_line_row_${ql.id}`}
-                    isSelected={this.state.selected.includes(ql.id)}
-                    onSelect={this.handleSelect}
-                  />
-                ))}
-                <TableRow>
-                  <TableCell></TableCell>
-                  <TableCell align="center"></TableCell>
-                  <TableCell>Total: ${this.getTotal()}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-            <Typography
-              variant="subtitle1"
-              component="span"
-              style={{ alignSelf: 'flex-end' }}
+        {this.state.isLoading ? (
+          <Loader />
+        ) : (
+          <>
+            <SectionBar
+              title={`Proposal for ${getCustomerName(this.state.customer)}`}
+              subtitle={`Address: ${getPropertyAddress(this.state.property)}`}
+              footer={
+                this.state.notes.length > 0 ? `Notes: ${this.state.notes}` : ''
+              }
+              actions={[
+                {
+                  label: 'Submit',
+                  onClick: this.toggleModal,
+                  disabled: !(
+                    this.state.sigURL.length > 0 &&
+                    this.state.selected.length > 0
+                  ),
+                },
+              ]}
+              fixedActions
+            />
+            <InfoTable
+              columns={[
+                { name: 'Repair', width: -1 },
+                { name: 'Price', width: 150, align: 'right' },
+                { name: 'Confirm', width: 80, align: 'center' },
+              ]}
+              data={[
+                ...this.state.quoteLines.map(
+                  ({ id, description, adjustment }) => [
+                    { value: description },
+                    { value: usd(+adjustment) },
+                    {
+                      value: (
+                        <Checkbox
+                          checked={this.state.selected.includes(id)}
+                          value={id}
+                          onChange={this.handleSelect}
+                        />
+                      ),
+                    },
+                  ],
+                ),
+                [
+                  {
+                    value: (
+                      <div style={{ textAlign: 'right' }}>
+                        Your total reflects your currently selected services
+                      </div>
+                    ),
+                  },
+                  { value: <strong>Total: {usd(this.getTotal())}</strong> },
+                  { value: '' },
+                ],
+              ]}
+              skipPreLine
+            />
+            <Alert severity="warning">
+              By signing this document, you certify that you have the authority
+              to approve these repairs and that you are willing and able to
+              furnish payment for the work to be completed upon completion of
+              the work. You are also agreeing that you have read these terms and
+              agree to hold Kalos Services, inc. harmless for warranties offered
+              by the equipment manufacturer. Kalos Services, inc. offers a 1year
+              labor warranty on workmanship but this does not include consumable
+              items such as filters and bulbs. All additional warranties are
+              offered by the respective equipment or parts manufacturers and
+              subject to their terms. There is no warranty on refrigerant or
+              refrigerant recharge.
+            </Alert>
+            <div
+              style={{ display: 'flex', justifyContent: 'center', margin: 16 }}
             >
-              Your total reflects your currently selected services
-            </Typography>
-          </Paper>
-          <Typography variant="subtitle2" component="span">
-            By signing this document, you certify that you have the authority to
-            approve these repairs and that you are willing and able to furnish
-            payment for the work to be completed upon completion of the work.
-            You are also agreeing that you have read these terms and agree to
-            hold Kalos Services, inc. harmless for warranties offered by the
-            equipment manufacturer. Kalos Services, inc. offers a 1year labor
-            warranty on workmanship but this does not include consumable items
-            such as filters and bulbs. All additional warranties are offered by
-            the respective equipment or parts manufacturers and subject to their
-            terms. There is no warranty on refrigerant or refrigerant recharge.
-          </Typography>
-          <Paper
-            elevation={10}
-            style={{
-              maxHeight: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              alignSelf: 'center',
-              justifyContent: 'flex-start',
-              padding: 10,
-              marginBottom: 10,
-              marginTop: 10,
-            }}
-          >
-            <Grid
-              container
-              direction="row"
-              justify="center"
-              alignItems="center"
-            >
-              <Grid
-                container
-                item
-                direction="column"
-                alignItems="center"
-                justify="center"
-              >
-                <Typography variant="body1">Sign Below</Typography>
-                <div
-                  style={{
-                    height: 200,
-                    width: 300,
-                    border: '3px solid black',
-                  }}
-                >
-                  <SignaturePad
-                    ref={this.SigPad}
-                    options={{
-                      onEnd: this.sign,
-                    }}
-                  />
-                </div>
-                {/*this.state.sigURL.length > 0 && (
-                  <Button
-                    onClick={this.clear}
-                    variant="outlined"
-                    style={{ marginBottom: 10, marginTop: 10 }}
-                  >
-                    Reset Signature
-                  </Button>
-                )*/}
-                {this.state.sigURL.length > 0 &&
-                  this.state.selected.length > 0 && (
-                    <Button
-                      onClick={this.toggleModal}
-                      variant="outlined"
-                      style={{ marginBottom: 10, marginTop: 10 }}
-                    >
-                      Submit
-                    </Button>
-                  )}
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-        <Dialog open={this.state.isOpen} onClose={this.toggleModal} fullScreen>
-          <Paper style={{ height: '100%', padding: 15 }}>
-            <Grid container direction="column" alignItems="stretch">
-              <Grid
-                container
-                direction="row"
-                style={{ marginBottom: 10 }}
-                justify="center"
-                alignItems="center"
-              >
-                <Typography>
-                  You are approving Kalos Services to perform the following
-                  services for displayed total:{' '}
-                </Typography>
-                <Table style={{ maxHeight: '100%' }} size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Repair</TableCell>
-                      <TableCell align="center">Price</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {this.state.quoteLines
-                      .filter(ql => this.state.selected.includes(ql.id))
-                      .map(ql => (
-                        <TableRow key={`quote_line_confirm_${ql.id}`}>
-                          <TableCell>{ql.description}</TableCell>
-                          <TableCell>${ql.adjustment}</TableCell>
-                        </TableRow>
-                      ))}
-                    <TableRow>
-                      <TableCell></TableCell>
-                      <TableCell>Total: ${this.getTotal()}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </Grid>
-              <Button
-                onClick={this.toggleModal}
-                variant="outlined"
-                style={{ marginBottom: 10, marginTop: 10 }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={this.finalize}
-                disabled={this.state.isLoading}
-                variant="outlined"
-                style={{ marginBottom: 10, marginTop: 10 }}
-              >
-                Confirm
-              </Button>
-            </Grid>
-          </Paper>
-        </Dialog>
+              <Field
+                name="signature"
+                value=""
+                label="Sign Below"
+                type="signature"
+                onChange={this.sign}
+              />
+            </div>
+          </>
+        )}
+        <Confirm
+          title="Approving Kalos Services"
+          open={this.state.isOpen}
+          onConfirm={this.finalize}
+          onClose={this.toggleModal}
+          submitDisabled={this.state.isLoading}
+          maxWidth={800}
+        >
+          <Alert severity="info" style={{ marginBottom: 16 }}>
+            You are approving Kalos Services to perform the following services
+            for displayed total:
+          </Alert>
+          <InfoTable
+            columns={[
+              { name: 'Repair', width: -1 },
+              { name: 'Price', width: 150, align: 'right' },
+            ]}
+            data={[
+              ...this.state.quoteLines
+                .filter(ql => this.state.selected.includes(ql.id))
+                .map(({ description, adjustment }) => [
+                  { value: description },
+                  { value: usd(+adjustment) },
+                ]),
+              [
+                {
+                  value: (
+                    <>
+                      <div>Signature:</div>
+                      <img
+                        src={this.state.sigURL}
+                        alt="Signature"
+                        style={{ width: 150 }}
+                      />
+                    </>
+                  ),
+                },
+                { value: <strong>Total: {usd(this.getTotal())}</strong> },
+              ],
+            ]}
+            skipPreLine
+          />
+        </Confirm>
       </PageWrapper>
     );
   }

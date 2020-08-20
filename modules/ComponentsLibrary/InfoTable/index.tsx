@@ -37,6 +37,7 @@ export type Columns = {
   onClick?: () => void;
   actions?: ActionsProps;
   fixedActions?: boolean;
+  align?: 'left' | 'center' | 'right';
 }[];
 
 interface Props extends Styles {
@@ -65,7 +66,18 @@ export const InfoTable = ({
       {columns.length > 0 && (
         <div className="InfoTableHeader">
           {columns.map(
-            ({ name, dir, onClick, actions, fixedActions, width }, idx) => {
+            (
+              {
+                name,
+                dir,
+                onClick,
+                actions,
+                fixedActions,
+                width,
+                align = 'left',
+              },
+              idx,
+            ) => {
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
               return (
@@ -82,7 +94,15 @@ export const InfoTable = ({
                   <span
                     onClick={onClick}
                     className="InfoTableDir"
-                    style={{ cursor: onClick ? 'pointer' : 'default' }}
+                    style={{
+                      cursor: onClick ? 'pointer' : 'default',
+                      justifyContent:
+                        md || align === 'left'
+                          ? 'flex-start'
+                          : align === 'right'
+                          ? 'flex-end'
+                          : 'center',
+                    }}
                   >
                     {name} {dir && <ArrowIcon />}
                   </span>
@@ -154,7 +174,18 @@ export const InfoTable = ({
                       {href ? (
                         <Link href={`${href}:${value}`}>{value}</Link>
                       ) : (
-                        <div className="InfoTableValueContent">{value}</div>
+                        <div
+                          className="InfoTableValueContent"
+                          style={{
+                            textAlign: md
+                              ? 'left'
+                              : columns[idx2]
+                              ? columns[idx2].align || 'left'
+                              : 'left',
+                          }}
+                        >
+                          {value}
+                        </div>
                       )}
                       {actions && (
                         <span
