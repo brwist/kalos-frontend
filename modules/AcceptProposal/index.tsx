@@ -9,7 +9,6 @@ ReactDOM.render(
     propertyID={9437}
     loggedUserId={101253}
     withHeader
-    padding={1}
   />,
   document.getElementById('root'),
 );
