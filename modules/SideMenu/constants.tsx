@@ -155,6 +155,15 @@ const logoutItem: MenuItem = {
 
 export const customerItems = (toggleMenu: () => void): MenuItem[] => [
   {
+    title: 'Edit Account',
+    icon: <AccountCircleIcon />,
+    button: true,
+    onClick: () => {
+      CustomEventsHandler.emit('EditCustomer');
+      toggleMenu();
+    },
+  },
+  {
     title: 'Add Property',
     icon: <HomeWorkIcon />,
     button: true,

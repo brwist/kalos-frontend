@@ -83,6 +83,13 @@ export const CustomerInformation: FC<Props> = ({
 
   const groupLinksInitialIds = groupLinksInitial.map(({ groupId }) => groupId);
 
+  const handleToggleEditing = useCallback(() => {
+    setEditing(!editing);
+    if (!editing) {
+      setGroupLinks(groupLinksInitial);
+    }
+  }, [editing, setEditing, setGroupLinks, groupLinksInitial]);
+
   const handleToggleDocuments = useCallback(
     () => setDocumentsOpened(!documentsOpened),
     [setDocumentsOpened, documentsOpened],
@@ -115,6 +122,7 @@ export const CustomerInformation: FC<Props> = ({
       setError(true);
     }
     CustomEventsHandler.listen('ShowDocuments', handleToggleDocuments);
+    CustomEventsHandler.listen('EditCustomer', handleToggleEditing);
   }, [
     userID,
     propertyId,
@@ -126,13 +134,6 @@ export const CustomerInformation: FC<Props> = ({
     viewedAsCustomer,
     handleToggleDocuments,
   ]);
-
-  const handleToggleEditing = useCallback(() => {
-    setEditing(!editing);
-    if (!editing) {
-      setGroupLinks(groupLinksInitial);
-    }
-  }, [editing, setEditing, setGroupLinks, groupLinksInitial]);
 
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
@@ -428,7 +429,7 @@ export const CustomerInformation: FC<Props> = ({
         kind="Customer"
         name={`${firstname} ${lastname}`}
       />
-      <Modal open={documentsOpened} onClose={handleToggleDocuments} fullScreen>
+      <Modal open={documentsOpened} onClose={handleToggleDocuments}>
         <SectionBar
           title="Documents"
           actions={[{ label: 'Close', onClick: handleToggleDocuments }]}
