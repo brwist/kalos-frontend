@@ -1,12 +1,9 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import IconButton from '@material-ui/core/IconButton';
-import Button from '@material-ui/core/Button';
-import Grid from '@material-ui/core/Grid';
-import Popover from '@material-ui/core/Popover';
-import Typography from '@material-ui/core/Typography';
-import TextField from '@material-ui/core/TextField';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { Tooltip } from '../ComponentsLibrary/Tooltip';
+import { Button } from '../ComponentsLibrary/Button';
+import { Form, Schema } from '../ComponentsLibrary/Form';
 
 interface props {
   disabled?: boolean;
@@ -18,103 +15,69 @@ interface props {
   prompt: string;
 }
 
+type Form = {
+  value: string;
+};
+
 export function Prompt({
   disabled,
   text,
   Icon,
   prompt,
   confirmFn,
-  defaultValue,
-  multiline,
+  defaultValue = '',
+  multiline = false,
 }: props) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
-    null,
+
+  const toggleOpen = useCallback(() => setIsOpen(!isOpen), [setIsOpen, isOpen]);
+
+  const handleConfirm = useCallback(
+    ({ value }: Form) => {
+      confirmFn(value);
+      setIsOpen(false);
+    },
+    [confirmFn, setIsOpen],
   );
 
-  const answer = React.createRef<HTMLInputElement>();
-
-  const toggleOpen = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    setIsOpen(!isOpen);
-    setAnchorEl(event.currentTarget);
-    try {
-      answer.current && answer.current.focus();
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const handleConfirm = () => {
-    if (answer.current && answer.current.value !== '') {
-      setIsOpen(false);
-      confirmFn(answer.current.value);
-    }
-  };
+  const SCHEMA: Schema<Form> = [
+    [{ name: 'value', label: prompt, multiline, required: true }],
+  ];
 
   const button = Icon ? (
-    <Tooltip content={text}>
-      <span>
-        <IconButton size="small" onClick={toggleOpen} disabled={disabled}>
-          <Icon />
-        </IconButton>
-      </span>
+    <Tooltip content={text} placement="bottom">
+      <IconButton size="small" onClick={toggleOpen} disabled={disabled}>
+        <Icon />
+      </IconButton>
     </Tooltip>
   ) : (
     <Button
+      label={text}
       variant="outlined"
-      size="small"
       fullWidth
-      startIcon={Icon}
       onClick={toggleOpen}
       disabled={disabled}
-    >
-      {text}
-    </Button>
+      compact
+    />
   );
   return (
-    <>
-      {button}
-      <Popover
-        aria-labelledby="transition-modal-title"
-        open={isOpen}
-        anchorEl={anchorEl}
-        onClose={toggleOpen}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
-        }}
-      >
-        <Grid
-          container
-          direction="column"
-          justify="flex-start"
-          alignItems="center"
-          style={{ padding: 10 }}
-        >
-          <Typography>{prompt}</Typography>
-          <TextField
-            inputRef={answer}
-            variant="outlined"
-            defaultValue={defaultValue || ''}
-            multiline={multiline}
-          />
-          <Grid
-            container
-            item
-            direction="row"
-            justify="space-evenly"
-            align-items="center"
-            style={{ paddingTop: 10 }}
-          >
-            <Button onClick={toggleOpen}>Cancel</Button>
-            <Button onClick={handleConfirm}>Confirm</Button>
-          </Grid>
-        </Grid>
-      </Popover>
-    </>
+    <Tooltip
+      open={isOpen}
+      controlled
+      content={
+        <Form<Form>
+          title=" "
+          schema={SCHEMA}
+          data={{ value: defaultValue }}
+          onClose={toggleOpen}
+          onSave={handleConfirm}
+          submitLabel="Confirm"
+        />
+      }
+      placement="bottom"
+      noPadding
+    >
+      <span>{button}</span>
+    </Tooltip>
   );
 }

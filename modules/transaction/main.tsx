@@ -54,7 +54,7 @@ export default class Transaction extends React.PureComponent<props, state> {
     return () => {
       if (typeof this.state[flag] === 'boolean') {
         //@ts-ignore
-        this.setState((prevState) => ({
+        this.setState(prevState => ({
           [flag]: !prevState[flag],
         }));
       }
@@ -71,23 +71,19 @@ export default class Transaction extends React.PureComponent<props, state> {
   }
 
   render() {
-    if (!this.state.isLoading) {
-      return (
-        <PageWrapper {...this.props}>
+    return (
+      <PageWrapper {...this.props}>
+        {this.state.isLoading ? (
+          <Loader />
+        ) : (
           <TransactionAdminView
             userID={this.props.userID}
             userName={this.state.userName}
             departmentId={this.state.userDepartmentID}
             isSU={this.state.isSU}
           />
-        </PageWrapper>
-      );
-    } else {
-      return (
-        <PageWrapper {...this.props}>
-          <Loader />
-        </PageWrapper>
-      );
-    }
+        )}
+      </PageWrapper>
+    );
   }
 }
