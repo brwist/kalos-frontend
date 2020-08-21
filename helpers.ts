@@ -2461,7 +2461,7 @@ export const saveProperty = async (
   return await PropertyClientService[propertyId ? 'Update' : 'Create'](req);
 };
 
-export const saveUser = async (data: UserType, userId?: number) => {
+export const saveUser = async (data: Partial<UserType>, userId?: number) => {
   const req = new User();
   if (userId) {
     req.setId(userId);

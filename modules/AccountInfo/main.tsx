@@ -1,432 +1,243 @@
-import React, { ChangeEvent } from 'react';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import SendIcon from '@material-ui/icons/Send';
-import TextField from '@material-ui/core/TextField';
-import Grid from '@material-ui/core/Grid';
-import Modal from '@material-ui/core/Modal';
-import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
+import React from 'react';
+import Alert from '@material-ui/lab/Alert';
 import Switch from '@material-ui/core/Switch';
-import Typography from '@material-ui/core/Typography';
-import Divider from '@material-ui/core/Divider';
-import IconButton from '@material-ui/core/IconButton';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import CloseIcon from '@material-ui/icons/CloseSharp';
+import { Form, Schema } from '../ComponentsLibrary/Form';
+import { Modal } from '../ComponentsLibrary/Modal';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { ENDPOINT } from '../../constants';
+import { UserType, loadUserById, refreshToken, saveUser } from '../../helpers';
+import { Loader } from '../Loader/main';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
 interface props extends PageWrapperProps {
   userId: number;
 }
 
 interface state {
-  user: User.AsObject;
+  user: Partial<UserType>;
   isModalOpen: boolean;
   isEditing: boolean;
   isLoginModalOpen: boolean;
   searchString: string;
+  error: string;
+  saving: boolean;
+  saved: boolean;
 }
 
-export class AccountInfo extends React.PureComponent<props, state> {
-  UserClient: UserClient;
-  oldPassword: React.RefObject<HTMLInputElement>;
-  newPassword: React.RefObject<HTMLInputElement>;
-  reTypePassword: React.RefObject<HTMLInputElement>;
-  oldLogin: React.RefObject<HTMLInputElement>;
-  newLogin: React.RefObject<HTMLInputElement>;
-  reTypeLogin: React.RefObject<HTMLInputElement>;
+type ChangeProp = {
+  oldProp: string;
+  newProp: string;
+  newProp2: string;
+};
 
+const SCHEMA_USER: Schema<Partial<UserType>> = [
+  [
+    { name: 'firstname', label: 'First Name', required: true },
+    { name: 'lastname', label: 'Last Name', required: true },
+  ],
+  [
+    { name: 'phone', label: 'Phone Number' },
+    { name: 'email', label: 'Email' },
+  ],
+  [
+    { name: 'address', label: 'Street Address' },
+    { name: 'city', label: 'City' },
+    { name: 'zip', label: 'Zip Code' },
+    {},
+  ],
+];
+
+const makeSchema = (prop: 'Login' | 'Password'): Schema<ChangeProp> => {
+  const type = prop === 'Password' ? 'password' : 'text';
+  return [
+    [{ name: 'oldProp', label: `Old ${prop}`, required: true, type }],
+    [{ name: 'newProp', label: `New ${prop}`, required: true, type }],
+    [{ name: 'newProp2', label: `ReType ${prop}`, required: true, type }],
+  ];
+};
+
+export class AccountInfo extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      user: new User().toObject(),
+      user: {},
       isModalOpen: false,
       isEditing: false,
       isLoginModalOpen: false,
       searchString: '',
+      error: '',
+      saving: false,
+      saved: false,
     };
-    this.handleUpdateLogin = this.handleUpdateLogin.bind(this);
-    this.toggleLoginModal = this.toggleLoginModal.bind(this);
-    this.toggleEditing = this.toggleEditing.bind(this);
-    this.toggleModal = this.toggleModal.bind(this);
-    this.handleUpdatePassword = this.handleUpdatePassword.bind(this);
-    this.UserClient = new UserClient(ENDPOINT);
-    this.oldPassword = React.createRef();
-    this.newPassword = React.createRef();
-    this.reTypePassword = React.createRef();
-    this.oldLogin = React.createRef();
-    this.newLogin = React.createRef();
-    this.reTypeLogin = React.createRef();
   }
 
-  async fetchUser() {
-    const req = new User();
-    req.setId(this.props.userId);
+  fetchUser = async () => {
+    const user = await loadUserById(this.props.userId);
+    this.setState({ user });
+  };
 
-    const result = await this.UserClient.Get(req);
+  toggleEditing = () => this.setState({ isEditing: !this.state.isEditing });
+
+  toggleModal = () =>
     this.setState({
-      user: result,
+      isModalOpen: !this.state.isModalOpen,
+      saved: false,
     });
-  }
 
-  toggleModal() {
-    this.setState(prevState => ({
-      isModalOpen: !prevState.isModalOpen,
-    }));
-  }
+  toggleLoginModal = () =>
+    this.setState({
+      isLoginModalOpen: !this.state.isLoginModalOpen,
+      saved: false,
+    });
 
-  toggleLoginModal() {
-    this.setState(prevState => ({
-      isLoginModalOpen: !prevState.isLoginModalOpen,
-    }));
-  }
+  handleUpdateLogin = async ({ oldProp, newProp, newProp2 }: ChangeProp) => {
+    this.setState({ error: '' });
+    const { id, login } = this.state.user;
+    if (oldProp !== login)
+      return this.setState({ error: 'Old Login is incorrect' });
+    if (newProp !== newProp2)
+      return this.setState({ error: 'Logins do not match' });
+    this.setState({ saving: true });
+    await saveUser({ login: newProp }, id);
+    this.setState({ saving: false, saved: true });
+  };
 
-  async handleUpdateLogin() {
-    try {
-      if (
-        this.oldLogin.current &&
-        this.newLogin.current &&
-        this.reTypeLogin.current
-      ) {
-        const oldLogin = this.oldLogin.current.value;
-        const newLogin = this.newLogin.current.value;
-        const reTypeLogin = this.reTypeLogin.current.value;
+  handleUpdatePassword = async ({ oldProp, newProp, newProp2 }: ChangeProp) => {
+    this.setState({ error: '' });
+    const { id, pwd } = this.state.user;
+    if (oldProp !== pwd)
+      return this.setState({ error: 'Old Password is incorrect' });
+    if (newProp.length < 8)
+      return this.setState({
+        error: 'Password needs to be at least 8 characters long',
+      });
+    if (newProp !== newProp2)
+      return this.setState({ error: 'Passwords do not match' });
+    this.setState({ saving: true });
+    await saveUser({ pwd: newProp }, id);
+    this.setState({ saving: false, saved: true });
+  };
 
-        if (newLogin !== reTypeLogin) {
-          throw 'Usernames do not match';
-        }
-        if (oldLogin !== this.state.user.login) {
-          throw 'Old Login is incorrect';
-        }
-        const login = this.oldLogin.current.value;
-        const req = new User();
-        req.setLogin(newLogin);
-        req.setId(this.state.user.id);
-        req.setFieldMaskList(['Login']);
-        const updatedUser = await this.UserClient.Update(req);
-        this.setState({ user: updatedUser });
-
-        this.toggleLoginModal();
-      }
-    } catch (err) {
-      alert(err);
-    }
-  }
-
-  async handleUpdatePassword() {
-    try {
-      if (
-        this.oldPassword.current &&
-        this.newPassword.current &&
-        this.reTypePassword.current
-      ) {
-        const oldPassword = this.oldPassword.current.value;
-        const newPassword = this.newPassword.current.value;
-        const reTypePassword = this.reTypePassword.current.value;
-        if (newPassword.length < 8) {
-          throw 'Password needs to be 8 characters long';
-        }
-        if (newPassword !== reTypePassword) {
-          throw 'Passwords do not match';
-        }
-        if (oldPassword !== this.state.user.pwd) {
-          throw 'Old Password is incorrect';
-        }
-        const req = new User();
-        req.setPwd(newPassword);
-        req.setFieldMaskList(['Pwd']);
-        req.setId(this.state.user.id);
-        await this.UserClient.Update(req);
-        this.toggleModal();
-      }
-    } catch (err) {
-      alert(err);
-    }
-  }
-
-  toggleEditing() {
-    this.setState(prevState => ({
-      isEditing: !prevState.isEditing,
-    }));
-  }
-
-  updateUser<K extends keyof User.AsObject>(prop: K) {
-    return async (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const user = new User();
-      const upperCaseProp = `${prop[0].toUpperCase()}${prop.slice(1)}`;
-      const methodName = `set${upperCaseProp}`;
-      user.setId(this.state.user.id);
-      //@ts-ignore
-      user[methodName](e.target.value);
-      user.setFieldMaskList([upperCaseProp]);
-      const updatedUser = await this.UserClient.Update(user);
-      this.setState(() => ({ user: updatedUser }));
-    };
-  }
-  updatePassword = this.updateUser('pwd');
-  updateLogin = this.updateUser('login');
-  updateEmail = this.updateUser('email');
-  updateCellPhone = this.updateUser('cellphone');
-
-  updateZipCode = this.updateUser('zip');
-  updateCity = this.updateUser('city');
-  updateStreetAddress = this.updateUser('address');
-  updateFirstName = this.updateUser('firstname');
-  updateLastName = this.updateUser('lastname');
+  updateUser = async (data: Partial<UserType>) => {
+    const { id } = this.state.user;
+    this.setState({ saving: true });
+    const user = await saveUser(data, id);
+    this.setState({ user, saving: false, isEditing: false });
+  };
 
   async componentDidMount() {
-    await this.UserClient.GetToken('gavinorr', 'G@vin123');
+    await refreshToken();
     await this.fetchUser();
   }
 
   render() {
-    const { isEditing } = this.state;
-    if (this.state.user.id === 0) {
-      return null;
-    }
+    const {
+      isEditing,
+      user,
+      isModalOpen,
+      isLoginModalOpen,
+      error,
+      saving,
+      saved,
+    } = this.state;
     return (
       <PageWrapper {...this.props} userID={this.props.userId}>
-        <Grid
-          style={{ paddingBottom: '20px' }}
-          container
-          alignItems="stretch"
-          justify="center"
-          direction="column"
-        >
-          <Grid container direction="row" justify="space-evenly">
-            <TextField
-              disabled={!isEditing}
-              style={{ marginRight: '10px' }}
-              defaultValue={this.state.user.firstname}
-              onChange={this.updateFirstName}
-              label={'First Name'}
-            />
-            <TextField
-              disabled={!isEditing}
-              defaultValue={this.state.user.lastname}
-              onChange={this.updateLastName}
-              label={'Last Name'}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={this.state.isEditing}
-                  onChange={this.toggleEditing}
-                  value="isEditing"
-                  color="primary"
+        {!this.state.user.id ? (
+          <Loader />
+        ) : (
+          <Form<Partial<UserType>>
+            title="Account Information"
+            schema={SCHEMA_USER}
+            data={user}
+            onSave={this.updateUser}
+            onClose={null}
+            disabled={!isEditing || saving}
+            intro={
+              <div style={{ textAlign: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isEditing}
+                      onChange={this.toggleEditing}
+                      value="isEditing"
+                      color="primary"
+                      disabled={saving}
+                    />
+                  }
+                  label={isEditing ? 'Editing Enabled' : 'Editing Disabled'}
                 />
-              }
-              label={
-                this.state.isEditing ? 'Editing Enabled' : 'Editing Disabled'
-              }
-            />
-          </Grid>
-
-          <Grid
-            style={{ paddingBottom: '20px', paddingTop: '20px' }}
-            container
-            alignItems="stretch"
-            justify="flex-start"
-            direction="column"
-          >
-            <TextField
-              style={{ paddingBottom: '10px', paddingTop: '10px' }}
-              disabled={!isEditing}
-              defaultValue={this.state.user.address}
-              onChange={this.updateStreetAddress}
-              label={'Street Address'}
-            />
-            <TextField
-              style={{ paddingBottom: '10px', paddingTop: '10px' }}
-              disabled={!isEditing}
-              defaultValue={this.state.user.city}
-              onChange={this.updateCity}
-              label={'City'}
-            />
-            <TextField
-              style={{ paddingBottom: '10px', paddingTop: '10px' }}
-              disabled={!isEditing}
-              defaultValue={this.state.user.zip}
-              onChange={this.updateZipCode}
-              label={'Zip Code'}
-            />
-
-            <TextField
-              style={{ paddingBottom: '10px', paddingTop: '10px' }}
-              disabled={!isEditing}
-              defaultValue={this.state.user.cellphone}
-              onChange={this.updateCellPhone}
-              label={'Phone Number'}
-            />
-            <TextField
-              style={{
-                paddingBottom: '10px',
-                paddingTop: '10px',
-                paddingRight: 10,
-              }}
-              disabled
-              defaultValue={this.state.user.email}
-              onChange={this.updateEmail}
-              label={'Email'}
-            />
-          </Grid>
-          <Grid
-            container
-            direction="row"
-            justify="space-evenly"
-            style={{ marginTop: 10 }}
-          >
-            <Button
-              disabled={!isEditing}
-              onClick={this.toggleLoginModal}
-              variant="contained"
-              style={{ width: '30%' }}
-            >
-              Change Login
-            </Button>
-            <Button
-              disabled={!isEditing}
-              onClick={this.toggleModal}
-              variant="contained"
-              style={{ width: '30%' }}
-            >
-              Change Password
-            </Button>
-          </Grid>
-        </Grid>
-        <Modal
-          open={this.state.isModalOpen}
-          onClose={this.toggleModal}
-          style={{
-            margin: '10px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Paper
-            style={{
-              padding: 20,
-              width: '30%',
-            }}
-          >
-            <Grid container direction={'column'}>
-              <Grid
-                container
-                direction="row"
-                justify="space-between"
-                alignItems="center"
-              >
-                <Typography component="h2" variant="h6">
-                  Change Password
-                </Typography>
-                <IconButton onClick={this.toggleModal}>
-                  <CloseIcon />
-                </IconButton>
-              </Grid>
-              <Divider />
-              <TextField
-                disabled={!isEditing}
-                label={'Old Password'}
-                type="password"
-                inputProps={{ ref: this.oldPassword }}
-              />
-              <TextField
-                disabled={!isEditing}
-                label={'New Password'}
-                type="password"
-                inputProps={{
-                  ref: this.newPassword,
+              </div>
+            }
+            actions={[
+              {
+                label: 'Change Login',
+                disabled: !isEditing || saving,
+                onClick: this.toggleLoginModal,
+              },
+              {
+                label: 'Change Password',
+                disabled: !isEditing || saving,
+                onClick: this.toggleModal,
+              },
+            ]}
+          />
+        )}
+        {isLoginModalOpen && (
+          <Modal open onClose={this.toggleLoginModal}>
+            {saved ? (
+              <>
+                <SectionBar
+                  title="Change Login"
+                  actions={[{ label: 'Close', onClick: this.toggleLoginModal }]}
+                />
+                <Alert severity="success">Login changed successfully!</Alert>
+              </>
+            ) : (
+              <Form<ChangeProp>
+                title="Change Login"
+                schema={makeSchema('Login')}
+                data={{
+                  oldProp: '',
+                  newProp: '',
+                  newProp2: '',
                 }}
+                error={error}
+                onSave={this.handleUpdateLogin}
+                onClose={this.toggleLoginModal}
+                submitLabel="Change"
+                disabled={saving}
               />
-              <TextField
-                disabled={!isEditing}
-                label={'Repeat Password'}
-                type="password"
-                inputProps={{
-                  ref: this.reTypePassword,
+            )}
+          </Modal>
+        )}
+        {isModalOpen && (
+          <Modal open onClose={this.toggleModal}>
+            {saved ? (
+              <>
+                <SectionBar
+                  title="Change Password"
+                  actions={[{ label: 'Close', onClick: this.toggleModal }]}
+                />
+                <Alert severity="success">Password changed successfully!</Alert>
+              </>
+            ) : (
+              <Form<ChangeProp>
+                title="Change Password"
+                schema={makeSchema('Password')}
+                data={{
+                  oldProp: '',
+                  newProp: '',
+                  newProp2: '',
                 }}
+                error={error}
+                onSave={this.handleUpdatePassword}
+                onClose={this.toggleModal}
+                submitLabel="Change"
+                disabled={saving}
               />
-              <Button
-                endIcon={<SendIcon />}
-                variant="contained"
-                style={{ padding: 5, marginTop: 10 }}
-                onClick={this.handleUpdatePassword}
-              >
-                Submit
-              </Button>
-            </Grid>
-          </Paper>
-        </Modal>
-        <Modal
-          open={this.state.isLoginModalOpen}
-          onClose={this.toggleLoginModal}
-          style={{
-            margin: '10px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Paper
-            style={{
-              padding: 20,
-              width: '30%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Grid
-              container
-              direction="row"
-              justify="space-between"
-              alignItems="center"
-            >
-              <Typography component="h1" variant="h6">
-                Change Login
-              </Typography>
-              <IconButton onClick={this.toggleLoginModal}>
-                <CloseIcon />
-              </IconButton>
-            </Grid>
-            <Divider />
-            <TextField
-              fullWidth
-              defaultValue={this.state}
-              disabled={!isEditing}
-              label={'Old Login'}
-              inputProps={{
-                ref: this.oldLogin,
-              }}
-            />
-            <TextField
-              fullWidth
-              disabled={!isEditing}
-              label={'New Login'}
-              inputProps={{
-                ref: this.newLogin,
-              }}
-            />
-            <TextField
-              fullWidth
-              disabled={!isEditing}
-              label={' ReType Login'}
-              inputProps={{
-                ref: this.reTypeLogin,
-              }}
-            />
-            <Button
-              endIcon={<SendIcon />}
-              variant="contained"
-              style={{ padding: 5, marginTop: 10, width: '100%' }}
-              onClick={this.handleUpdateLogin}
-            >
-              Confirm
-            </Button>
-          </Paper>
-        </Modal>
+            )}
+          </Modal>
+        )}
       </PageWrapper>
     );
   }
