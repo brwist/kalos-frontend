@@ -1,97 +1,29 @@
-import React from 'react';
-import NativeSelect from '@material-ui/core/NativeSelect';
-import InputLabel from '@material-ui/core/InputLabel';
-import { PropertySearch } from './components/PropertySearch';
-import { CustomerSearch } from './components/CustomerSearch';
-import { EventSearch } from './components/ServiceCallSearch';
-import { EventClient } from '@kalos-core/kalos-rpc/Event';
-import { ENDPOINT } from '../../constants';
+import React, { PureComponent } from 'react';
+import { refreshToken } from '../../helpers';
+import { AdvancedSearch } from '../ComponentsLibrary/AdvancedSearch';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-// add any prop types here
-interface props extends PageWrapperProps {
+interface Props extends PageWrapperProps {
   loggedUserId: number;
-  containerStyle?: React.CSSProperties;
 }
 
-// map your state here
-interface state {
-  target: 'Service Call' | 'Customer' | 'Property';
-}
-
-export class Search extends React.PureComponent<props, state> {
-  Client: EventClient;
-  constructor(props: props) {
-    super(props);
-    this.state = {
-      target: 'Service Call',
-    };
-
-    this.Client = new EventClient(ENDPOINT);
-    this.renderSelector = this.renderSelector.bind(this);
-    this.setSearchTarget = this.setSearchTarget.bind(this);
-  }
-  setSearchTarget(e: React.ChangeEvent<HTMLSelectElement>) {
-    this.setState({
-      //@ts-ignore
-      target: e.currentTarget.value,
-    });
-  }
-  renderSelector() {
-    return (
-      <>
-        <InputLabel htmlFor="search-target-selector">Search</InputLabel>
-        <NativeSelect
-          onChange={this.setSearchTarget}
-          inputProps={{ id: 'search-target-selector' }}
-          value={this.state.target}
-        >
-          <option value="Service Call">Service Calls</option>
-          <option value="Property">Properties</option>
-          <option value="Customer">Customers</option>
-          {/*<option value="Contract">Contracts</option>*/}
-        </NativeSelect>
-      </>
-    );
-  }
-
+export class Search extends PureComponent<Props> {
   async componentDidMount() {
-    await this.Client.GetToken('test', 'test');
+    await refreshToken();
   }
-
   render() {
-    const { target } = this.state;
+    const { loggedUserId, withHeader } = this.props;
     const content = (
-      <>
-        {target === 'Property' && (
-          <PropertySearch
-            selector={this.renderSelector()}
-            containerStyle={this.props.containerStyle}
-          />
-        )}
-        {target === 'Service Call' && (
-          <EventSearch
-            selector={this.renderSelector()}
-            containerStyle={this.props.containerStyle}
-          />
-        )}
-        {target === 'Customer' && (
-          <CustomerSearch
-            selector={this.renderSelector()}
-            containerStyle={this.props.containerStyle}
-          />
-        )}
-        {/*target === 'Contract' && (
-          <ContractSearch
-            selector={this.renderSelector()}
-            containerStyle={this.props.containerStyle}
-          />
-        )*/}
-      </>
+      <AdvancedSearch
+        kinds={['serviceCalls', 'properties', 'customers']}
+        loggedUserId={loggedUserId}
+        title="Search"
+        editableCustomers
+      />
     );
-    if (this.props.withHeader)
+    if (withHeader)
       return (
-        <PageWrapper {...this.props} userID={this.props.loggedUserId}>
+        <PageWrapper {...this.props} userID={loggedUserId}>
           {content}
         </PageWrapper>
       );
