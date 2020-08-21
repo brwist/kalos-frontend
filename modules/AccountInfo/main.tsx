@@ -22,6 +22,7 @@ interface state {
   error: string;
   saving: boolean;
   saved: boolean;
+  formKey: number;
 }
 
 type ChangeProp = {
@@ -68,6 +69,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
       error: '',
       saving: false,
       saved: false,
+      formKey: 0,
     };
   }
 
@@ -76,7 +78,11 @@ export class AccountInfo extends React.PureComponent<props, state> {
     this.setState({ user });
   };
 
-  toggleEditing = () => this.setState({ isEditing: !this.state.isEditing });
+  toggleEditing = () =>
+    this.setState({
+      isEditing: !this.state.isEditing,
+      formKey: this.state.formKey + 1,
+    });
 
   toggleModal = () =>
     this.setState({
@@ -139,6 +145,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
       error,
       saving,
       saved,
+      formKey,
     } = this.state;
     return (
       <PageWrapper {...this.props} userID={this.props.userId}>
@@ -146,6 +153,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
           <Loader />
         ) : (
           <Form<Partial<UserType>>
+            key={formKey}
             title="Account Information"
             schema={SCHEMA_USER}
             data={user}
