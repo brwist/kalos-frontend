@@ -159,15 +159,15 @@ const ComponentsLibrary = () => {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
   const [component, setComponent] = useState<keyof typeof COMPONENTS>(
-    Object.keys(COMPONENTS)[DEFAULT_COMPONENT_IDX] as keyof typeof COMPONENTS
+    Object.keys(COMPONENTS)[DEFAULT_COMPONENT_IDX] as keyof typeof COMPONENTS,
   );
   const Component = COMPONENTS[component];
-  const handleClickMenuItem = useCallback((v) => () => setComponent(v), [
+  const handleClickMenuItem = useCallback(v => () => setComponent(v), [
     setComponent,
   ]);
   const handleSelect = useCallback(
     ({ target: { value } }) => setComponent(value),
-    [setComponent]
+    [setComponent],
   );
   return (
     <StyledPage>
@@ -178,7 +178,7 @@ const ComponentsLibrary = () => {
             value={component}
             onChange={handleSelect}
           >
-            {Object.keys(COMPONENTS).map((key) => (
+            {Object.keys(COMPONENTS).map(key => (
               <option key={key}>{key}</option>
             ))}
           </select>
@@ -186,7 +186,7 @@ const ComponentsLibrary = () => {
           <div className="ComponentsLibraryMenu">
             <div className="h6">Components Library</div>
             <ol className="ComponentsLibraryList">
-              {Object.keys(COMPONENTS).map((key) => (
+              {Object.keys(COMPONENTS).map(key => (
                 <li
                   key={key}
                   className="ComponentsLibraryItem"
