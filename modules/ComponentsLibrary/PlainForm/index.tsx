@@ -114,7 +114,9 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [formData, setFormData, onChange],
   );
   return (
-    <div className={clsx(className, 'PlainForm', { compact, fullWidth })}>
+    <div
+      className={clsx(className, 'PlainForm', { compact, fullWidth, disabled })}
+    >
       {error && (
         <Typography className="PlainFormError" component="div">
           {error}
