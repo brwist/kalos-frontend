@@ -2149,6 +2149,7 @@ export type EventsFilter = {
   logJobStatus?: string;
   logPaymentStatus?: string;
   departmentId?: number;
+  logTechnicianAssigned?: string;
 };
 export type LoadEventsByFilter = {
   page: number;
@@ -2186,6 +2187,7 @@ export const loadEventsByFilter = async ({
     logJobStatus,
     logPaymentStatus,
     departmentId,
+    logTechnicianAssigned,
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Event();
@@ -2226,6 +2228,9 @@ export const loadEventsByFilter = async ({
   }
   if (departmentId) {
     req.setDepartmentId(departmentId);
+  }
+  if (logTechnicianAssigned) {
+    req.setLogTechnicianAssigned(logTechnicianAssigned);
   }
   if (dateStarted && dateEnded) {
     req.setDateRangeList(['>=', dateStarted, '<=', dateEnded]);

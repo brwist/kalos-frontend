@@ -3,6 +3,6 @@ import ReactDOM from 'react-dom';
 import { CallsByTech } from './main';
 
 ReactDOM.render(
-  <CallsByTech userId={100452} withHeader padding={1} />,
+  <CallsByTech userId={100452} withHeader />,
   document.getElementById('root'),
 );
