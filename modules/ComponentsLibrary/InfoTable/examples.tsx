@@ -4,6 +4,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import EditIcon from '@material-ui/icons/Edit';
 import { InfoTable, Data, Columns } from './';
 import { ExampleTitle } from '../helpers';
+import { makeFakeRows } from '../../../helpers';
 
 const onClick = () => console.log('Row clicked');
 const actions = [
@@ -61,6 +62,25 @@ export default () => (
         { name: 'Column 2', width: 200 },
         { name: 'Column 3', width: -1 },
       ]}
+    />
+    <ExampleTitle>with columns and align</ExampleTitle>
+    <InfoTable
+      data={EXAMPLE_1}
+      columns={[
+        { name: 'Column 1', align: 'left' },
+        { name: 'Column 2', align: 'center' },
+        { name: 'Column 3', align: 'right' },
+      ]}
+    />
+    <ExampleTitle>loading with columns and align</ExampleTitle>
+    <InfoTable
+      data={makeFakeRows(3, 5)}
+      columns={[
+        { name: 'Column 1', align: 'left' },
+        { name: 'Column 2', align: 'center' },
+        { name: 'Column 3', align: 'right' },
+      ]}
+      loading
     />
     <ExampleTitle>with columns</ExampleTitle>
     <InfoTable

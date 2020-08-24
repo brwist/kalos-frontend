@@ -8,7 +8,6 @@ import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { TaskClient } from '@kalos-core/kalos-rpc/Task';
 import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import Grid from '@material-ui/core/Grid';
-import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import { Spiff } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import { MetricTile } from './components/MetricTile';
@@ -19,7 +18,11 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { Typography } from '@material-ui/core';
 import { Search } from '../Search/main';
 import { ENDPOINT } from '../../constants';
+import { usd, makeFakeRows, refreshToken } from '../../helpers';
+import { InfoTable } from '../ComponentsLibrary/InfoTable';
+import { Button } from '../ComponentsLibrary/Button';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import './styles.less';
 
 interface props extends PageWrapperProps {
   userId: number;
@@ -186,7 +189,7 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    await this.MetricsClient.GetToken('test', 'test');
+    await refreshToken();
     await this.toggleLoading();
     await this.getIdentity();
     await this.getPTO();
@@ -202,8 +205,91 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   render() {
+    const { userId } = this.props;
+    const {
+      isLoading,
+      availablePTO,
+      receiptCount,
+      toolFundBalance,
+      currentUser: { toolFund },
+    } = this.state;
     return (
       <PageWrapper {...this.props} userID={this.props.userId}>
+        <InfoTable
+          columns={[
+            { name: 'Available PTO', align: 'center' },
+            { name: 'Missing Receipts', align: 'center' },
+            ...(toolFund > 0
+              ? [{ name: 'Tool Fund Balance', align: 'center' as const }]
+              : []),
+          ]}
+          data={
+            isLoading
+              ? makeFakeRows(toolFund > 0 ? 3 : 2, 1)
+              : [
+                  [
+                    {
+                      value: (
+                        <>
+                          <big className="DashboardMetric">{availablePTO}</big>{' '}
+                          hours
+                          <br />
+                          <Button
+                            label="Request Time Off"
+                            disabled={isLoading && availablePTO === 0}
+                            onClick={() =>
+                              (document.location.href =
+                                'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest')
+                            }
+                          />
+                        </>
+                      ),
+                    },
+                    {
+                      value: (
+                        <>
+                          <big className="DashboardMetric">{receiptCount}</big>
+                          <br />
+                          <Button
+                            label="Go To Receipts"
+                            disabled={isLoading && receiptCount === 0}
+                            onClick={() =>
+                              (document.location.href =
+                                'https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions')
+                            }
+                          />
+                        </>
+                      ),
+                    },
+                    ...(toolFund > 0
+                      ? [
+                          {
+                            value: (
+                              <>
+                                <big className="DashboardMetric">
+                                  {usd(toolFundBalance)}
+                                </big>
+                                <br />
+                                <Button
+                                  label="Go To Tool Fund"
+                                  disabled={
+                                    isLoading &&
+                                    receiptCount === toolFundBalance
+                                  }
+                                  onClick={() =>
+                                    (document.location.href = `https://app.kalosflorida.com/index.cfm?action=admin:tasks.spiff_tool_logs&rt=all&type=tool&reportUserId=${userId}`)
+                                  }
+                                />
+                              </>
+                            ),
+                          },
+                        ]
+                      : []),
+                  ],
+                ]
+          }
+          loading={isLoading}
+        />
         <Grid
           container
           direction="column"
@@ -215,72 +301,6 @@ export class Dashboard extends React.PureComponent<props, state> {
             maxWidth: window.innerWidth,
           }}
         >
-          <Grid
-            container
-            direction="row"
-            justify="space-evenly"
-            alignItems="center"
-          >
-            <Widget
-              title="Available PTO"
-              subtitle=""
-              displayData={`${this.state.availablePTO}`}
-              displaySubtitle="hours"
-              isLoading={this.state.isLoading}
-              action={
-                <Button
-                  disabled={
-                    this.state.isLoading && this.state.availablePTO === 0
-                  }
-                  color="primary"
-                  variant="contained"
-                  href="https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest"
-                >
-                  Request Time Off
-                </Button>
-              }
-            />
-            <Widget
-              title="Missing Receipts"
-              subtitle=""
-              displayData={`${this.state.receiptCount}`}
-              displaySubtitle=""
-              isLoading={this.state.isLoading}
-              action={
-                <Button
-                  disabled={
-                    this.state.isLoading && this.state.receiptCount === 0
-                  }
-                  color="primary"
-                  variant="contained"
-                  href="https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions"
-                >
-                  Go To Receipts
-                </Button>
-              }
-            ></Widget>
-            {this.state.currentUser.toolFund > 0 && (
-              <Widget
-                title="Tool Fund Balance"
-                subtitle=""
-                displayData={`$${this.state.toolFundBalance}`}
-                displaySubtitle=""
-                isLoading={this.state.isLoading}
-                action={
-                  <Button
-                    disabled={
-                      this.state.isLoading && this.state.toolFundBalance === 0
-                    }
-                    color="primary"
-                    variant="contained"
-                    href={`https://app.kalosflorida.com/index.cfm?action=admin:tasks.spiff_tool_logs&rt=all&type=tool&reportUserId=${this.props.userId}`}
-                  >
-                    Go To Tool Fund
-                  </Button>
-                }
-              ></Widget>
-            )}
-          </Grid>
           {this.state.currentUser.isHvacTech === 1 && (
             <>
               <Typography
@@ -342,15 +362,16 @@ export class Dashboard extends React.PureComponent<props, state> {
             Search
           </Typography>
           {this.state.currentUser.isEmployee === 1 && (
-            <Search
-              containerStyle={{
+            <div
+              style={{
                 width: '90%',
                 maxHeight: 400,
                 overflowY: 'scroll',
                 marginBottom: 20,
               }}
-              loggedUserId={this.props.userId}
-            />
+            >
+              <Search loggedUserId={this.props.userId} />
+            </div>
           )}
           {this.state.spiffs.length !== 0 && (
             <Spiffs
