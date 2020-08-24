@@ -132,78 +132,90 @@ export const InfoTable = ({
                   actionsFullWidth = false,
                 },
                 idx2,
-              ) => (
-                <Typography
-                  key={idx2}
-                  className={clsx('InfoTableItem', { compact })}
-                  component="div"
-                  style={{
-                    width: md
-                      ? '100%'
-                      : columns && columns[idx2] && columns[idx2].width
-                      ? columns[idx2].width
-                      : `${100 / items.length}%`,
-                    flexGrow:
-                      md ||
-                      (columns && columns[idx2] && columns[idx2].width === -1)
-                        ? 1
-                        : 0,
-                    flexShrink:
-                      columns &&
-                      columns[idx2] &&
-                      columns[idx2].width &&
-                      columns[idx2].width! > -1
-                        ? 0
-                        : 1,
-                    cursor: onClick ? 'pointer' : 'default',
-                  }}
-                  onClick={loading || error ? undefined : onClick}
-                >
-                  {label && (
-                    <strong className="InfoTableLabel">{label}: </strong>
-                  )}
-                  {loading || error ? (
-                    <span className="InfoTableFake" />
-                  ) : (
-                    <div
-                      className="InfoTableValue"
-                      style={{
-                        whiteSpace: skipPreLine ? 'initial' : 'pre-line',
-                      }}
-                    >
-                      {href ? (
-                        <Link href={`${href}:${value}`}>{value}</Link>
-                      ) : (
-                        <div
-                          className="InfoTableValueContent"
-                          style={{
-                            textAlign: md
-                              ? 'left'
-                              : columns[idx2]
-                              ? columns[idx2].align || 'left'
-                              : 'left',
-                          }}
-                        >
-                          {value}
-                        </div>
-                      )}
-                      {actions && (
-                        <span
-                          className="InfoTableActions"
-                          onClick={event => event.stopPropagation()}
-                          style={
-                            actionsFullWidth
-                              ? { width: '100%', textAlign: 'right' }
-                              : {}
-                          }
-                        >
-                          {actions}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </Typography>
-              ),
+              ) => {
+                const align =
+                  columns && columns[idx2]
+                    ? columns[idx2].align || 'left'
+                    : 'left';
+                return (
+                  <Typography
+                    key={idx2}
+                    className={clsx('InfoTableItem', { compact })}
+                    component="div"
+                    style={{
+                      width: md
+                        ? '100%'
+                        : columns && columns[idx2] && columns[idx2].width
+                        ? columns[idx2].width
+                        : `${100 / items.length}%`,
+                      flexGrow:
+                        md ||
+                        (columns && columns[idx2] && columns[idx2].width === -1)
+                          ? 1
+                          : 0,
+                      flexShrink:
+                        columns &&
+                        columns[idx2] &&
+                        columns[idx2].width &&
+                        columns[idx2].width! > -1
+                          ? 0
+                          : 1,
+                      cursor: onClick ? 'pointer' : 'default',
+                      justifyContent:
+                        md || align === 'left'
+                          ? 'flex-start'
+                          : align === 'right'
+                          ? 'flex-end'
+                          : 'center',
+                    }}
+                    onClick={loading || error ? undefined : onClick}
+                  >
+                    {label && (
+                      <strong className="InfoTableLabel">{label}: </strong>
+                    )}
+                    {loading || error ? (
+                      <span className="InfoTableFake" />
+                    ) : (
+                      <div
+                        className="InfoTableValue"
+                        style={{
+                          whiteSpace: skipPreLine ? 'initial' : 'pre-line',
+                        }}
+                      >
+                        {href ? (
+                          <Link href={`${href}:${value}`}>{value}</Link>
+                        ) : (
+                          <div
+                            className="InfoTableValueContent"
+                            style={{
+                              textAlign: md
+                                ? 'left'
+                                : columns[idx2]
+                                ? columns[idx2].align || 'left'
+                                : 'left',
+                            }}
+                          >
+                            {value}
+                          </div>
+                        )}
+                        {actions && (
+                          <span
+                            className="InfoTableActions"
+                            onClick={event => event.stopPropagation()}
+                            style={
+                              actionsFullWidth
+                                ? { width: '100%', textAlign: 'right' }
+                                : {}
+                            }
+                          >
+                            {actions}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </Typography>
+                );
+              },
             )}
           </div>
         ))}
