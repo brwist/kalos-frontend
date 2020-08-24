@@ -5,6 +5,8 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
+import BuildIcon from '@material-ui/icons/Build';
+import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema, Option } from '../PlainForm';
@@ -24,6 +26,7 @@ import { Form } from '../Form';
 import { SearchFormComponent } from './SearchForm';
 import { PrintPage } from '../PrintPage';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
+import { Tooltip } from '../Tooltip';
 import {
   loadEventsByFilter,
   loadUsersByFilter,
@@ -1695,7 +1698,7 @@ export const AdvancedSearch: FC<Props> = ({
               },
             )
             .map(entry => {
-              const { empTitle, email, cellphone, image } = entry;
+              const { id, empTitle, email, cellphone, image } = entry;
               return [
                 {
                   value: (
@@ -1720,33 +1723,93 @@ export const AdvancedSearch: FC<Props> = ({
                 {
                   value: cellphone,
                   actions: [
-                    <IconButton
-                      key="view"
-                      size="small"
-                      onClick={handlePendingEmployeeViewingToggle(entry)}
-                    >
-                      <SearchIcon />
-                    </IconButton>,
+                    ...(isAdmin
+                      ? [
+                          <Tooltip
+                            key="spiff"
+                            content="View Spiff Log"
+                            placement="top"
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                // TODO replace with ComponentsLibrary
+                                document.location.href = [
+                                  '/index.cfm?action=admin:tasks.spiff_tool_logs',
+                                  `type=tool`,
+                                  `rt=all`,
+                                  `reportUserId=${id}`,
+                                ].join('&');
+                              }}
+                            >
+                              <BuildIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Tooltip
+                            key="timesheet"
+                            content="View Timesheet"
+                            placement="top"
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                // TODO replace with ComponentsLibrary
+                                document.location.href = [
+                                  '/index.cfm?action=admin:timesheet.timesheetview',
+                                  `timesheetAction=cardview`,
+                                  `user_id=${id}`,
+                                  `search_user_id=${id}`,
+                                  `timesheetadmin=${isAdmin}`,
+                                ].join('&');
+                              }}
+                            >
+                              <AccessTimeIcon />
+                            </IconButton>
+                          </Tooltip>,
+                        ]
+                      : []),
+                    <Tooltip key="view" content="View Employee" placement="top">
+                      <IconButton
+                        size="small"
+                        onClick={handlePendingEmployeeViewingToggle(entry)}
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </Tooltip>,
                     ...(editableEmployees && isAdmin
                       ? [
-                          <IconButton
+                          <Tooltip
                             key="edit"
-                            size="small"
-                            onClick={handlePendingEmployeeEditingToggle(entry)}
+                            content="Edit Employee"
+                            placement="top"
                           >
-                            <EditIcon />
-                          </IconButton>,
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingEmployeeEditingToggle(
+                                entry,
+                              )}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>,
                         ]
                       : []),
                     ...(deletableEmployees && isAdmin
                       ? [
-                          <IconButton
+                          <Tooltip
                             key="delete"
-                            size="small"
-                            onClick={handlePendingEmployeeDeletingToggle(entry)}
+                            content="Delete Employee"
+                            placement="top"
                           >
-                            <DeleteIcon />
-                          </IconButton>,
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingEmployeeDeletingToggle(
+                                entry,
+                              )}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>,
                         ]
                       : []),
                   ],
