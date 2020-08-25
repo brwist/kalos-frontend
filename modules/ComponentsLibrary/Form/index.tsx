@@ -32,6 +32,7 @@ export interface Props<T> extends PlainFormProps<T> {
   pagination?: Pagination;
   submitLabel?: string;
   cancelLabel?: string;
+  stickySectionBar?: boolean;
 }
 
 //@ts-ignore
@@ -54,9 +55,10 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       cancelLabel = 'Cancel',
       error,
       className = '',
+      stickySectionBar = false,
       children,
     },
-    ref
+    ref,
   ) => {
     const [formData, setFormData] = useState(
       schema.reduce(
@@ -73,11 +75,11 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
                         ? data[name]
                         : getDefaultValueByType(type),
                   },
-            {}
+            {},
           ),
         }),
-        {} as typeof data
-      )
+        {} as typeof data,
+      ),
     );
     const [validations, setValidations] = useState<Validation>({});
     const handleChange = useCallback(
@@ -87,12 +89,12 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           onChange(formData);
         }
       },
-      [setFormData, onChange]
+      [setFormData, onChange],
     );
     const handleSave = useCallback(() => {
       setValidations({});
       const validations: Validation = {};
-      schema.forEach((fields) => {
+      schema.forEach(fields => {
         fields
           .filter(({ required }) => required)
           .forEach(({ name, type = 'text', options }) => {
@@ -149,6 +151,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
             ]}
             fixedActions
             pagination={pagination}
+            sticky={stickySectionBar}
           />
         )}
         {intro && <div className="FormIntro">{intro}</div>}
@@ -174,5 +177,5 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
         )}
       </div>
     );
-  }
+  },
 );

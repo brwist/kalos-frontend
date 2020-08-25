@@ -72,6 +72,7 @@ export function Prompt({
           onClose={toggleOpen}
           onSave={handleConfirm}
           submitLabel="Confirm"
+          stickySectionBar={false}
         />
       }
       placement="bottom"
