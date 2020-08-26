@@ -10,6 +10,11 @@ export const BASE_URL = `${APP_URL}index.cfm`;
 export const OPTION_BLANK = '-- Select --';
 export const OPTION_ALL = '-- All --';
 
+export const CREDIT_CARD_ACCOUNTS = [
+  'Capital One (1974)',
+  'Capital One (1440)',
+];
+
 export const PROP_LEVEL = 'Used for property-level billing only';
 export const INTERNAL_DOCUMENTS_BUCKET = 'kalos-internal-docs';
 
