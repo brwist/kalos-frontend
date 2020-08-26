@@ -5,7 +5,7 @@ import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User, CardData } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
@@ -137,6 +137,7 @@ export type TaskPriorityType = TaskPriority.AsObject;
 export type TransactionType = Transaction.AsObject;
 export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
 export type TaskAssignmentType = TaskAssignment.AsObject;
+export type CardDataType = CardData.AsObject;
 
 export const TaskAssignmentClientService = new TaskAssignmentClient(ENDPOINT);
 export const TaskEventClientService = new TaskEventClient(ENDPOINT);
@@ -1065,6 +1066,13 @@ async function loadQuoteLines() {
   }
   return results;
 }
+
+export const loadCreditCard = async (account: string) => {
+  const req = new CardData();
+  req.setAccount(account);
+  req.setWithUser(true);
+  return await UserClientService.GetCardList(req);
+};
 
 export const loadEventById = async (serviceCallId: number) => {
   const req = new Event();
