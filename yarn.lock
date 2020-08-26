@@ -280,9 +280,9 @@
     browser-headers "^0.4.0"
 
 "@kalos-core/kalos-rpc@^2.0.0":
-  version "2.37.1"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.37.1.tgz#ae045805e77e3aa80bc92efcd1f3ce43191586f3"
-  integrity sha512-SJUBwKQfZVCUdLidWPtJOnJriC4LUrWDJ0+8Xc1jdMdpxoBEVF+sNbjKa1l+H8KarrNsKJOO6xvq9LvuWHlyjw==
+  version "2.37.2"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.37.2.tgz#6b62a155aa39be51a127e5b1e469c544bade3d89"
+  integrity sha512-gH5lmS0AlARThGqKcgE62OLSL/pQh0yOAGU3LDVCBytKvup9eqOdg/gwUnKw1PTKSGcrczRX1vESC53S1Agw6Q==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
