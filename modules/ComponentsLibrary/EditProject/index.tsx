@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import { ENROUTE, CHECKIN, CHECKOUT } from '@kalos-core/kalos-rpc/TaskEvent';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
@@ -49,6 +50,7 @@ import {
   timestamp,
   UserType,
   loadUserById,
+  deleteTaskEvent,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -130,6 +132,12 @@ export const EditProject: FC<Props> = ({
   const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
   const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
   const [pendingCheckout, setPendingCheckout] = useState<boolean>(false);
+  const [pendingCheckoutChange, setPendingCheckoutChange] = useState<boolean>(
+    false,
+  );
+  const [pendingCheckoutDelete, setPendingCheckoutDelete] = useState<boolean>(
+    false,
+  );
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
@@ -206,7 +214,7 @@ export const EditProject: FC<Props> = ({
         await loadTaskEvents(editingTask.id);
       }
     },
-    [setEditingTask, setTaskEvents, setTaskEventsLoaded],
+    [setEditingTask, setTaskEventsLoaded],
   );
   const handleSetPendingDelete = useCallback(
     (pendingDelete?: ExtendedProjectTaskType) => () =>
@@ -216,22 +224,40 @@ export const EditProject: FC<Props> = ({
   const handleCheckout = useCallback(async () => {
     if (!editingTask) return;
     setPendingCheckout(false);
-    const isCheckOut =
-      taskEvents.length > 0 && taskEvents[0].timeFinished === '';
-    const taskEvent: Partial<TaskEventType> = isCheckOut
-      ? {
-          id: taskEvents[0].id,
-          timeFinished: timestamp(),
-        }
-      : {
-          taskId: editingTask.id,
-          technicianUserId: loggedUserId,
-          timeStarted: timestamp(),
-          statusId: 1,
-        };
-    await upsertTaskEvent(taskEvent);
-    await loadTaskEvents(editingTask.id);
-    if (!isCheckOut) {
+    setPendingCheckoutChange(true);
+    const isEnroute =
+      taskEvents.length === 0 ||
+      (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT);
+    const isCheckIn =
+      taskEvents.length > 0 && taskEvents[0].actionTaken === ENROUTE;
+    const timeStarted = timestamp();
+    if (isEnroute) {
+      await upsertTaskEvent({
+        taskId: editingTask.id,
+        technicianUserId: loggedUserId,
+        timeStarted,
+        statusId: 1,
+        actionTaken: ENROUTE,
+      });
+    } else if (isCheckIn) {
+      await upsertTaskEvent({
+        taskId: editingTask.id,
+        technicianUserId: loggedUserId,
+        timeStarted,
+        statusId: 1,
+        actionTaken: CHECKIN,
+      });
+    } else {
+      await upsertTaskEvent({
+        taskId: editingTask.id,
+        technicianUserId: loggedUserId,
+        timeStarted,
+        timeFinished: timeStarted,
+        statusId: 1,
+        actionTaken: CHECKOUT,
+      });
+    }
+    if (isEnroute || isCheckIn) {
       await upsertEventTask({
         id: editingTask.id,
         externalCode: 'user',
@@ -245,10 +271,40 @@ export const EditProject: FC<Props> = ({
       });
       setLoaded(false);
     }
-  }, [editingTask, taskEvents, loggedUserId, setPendingCheckout, setLoaded]);
+    await loadTaskEvents(editingTask.id);
+    setPendingCheckoutChange(false);
+  }, [
+    editingTask,
+    taskEvents,
+    loggedUserId,
+    setPendingCheckout,
+    setLoaded,
+    loadTaskEvents,
+    setEditingTask,
+    setPendingCheckoutChange,
+  ]);
+  const handleCheckoutDelete = useCallback(async () => {
+    if (!editingTask || taskEvents.length === 0) return;
+    setPendingCheckoutDelete(false);
+    setPendingCheckoutChange(true);
+    await deleteTaskEvent(taskEvents[0].id);
+    await loadTaskEvents(editingTask.id);
+    setPendingCheckoutChange(false);
+  }, [
+    setPendingCheckoutChange,
+    taskEvents,
+    loadTaskEvents,
+    editingTask,
+    setPendingCheckoutDelete,
+  ]);
   const handleSetPendingCheckout = useCallback(
     (pendingCheckout: boolean) => () => setPendingCheckout(pendingCheckout),
     [setPendingCheckout],
+  );
+  const handleSetPendingCheckoutDelete = useCallback(
+    (pendingCheckoutDelete: boolean) => () =>
+      setPendingCheckoutDelete(pendingCheckoutDelete),
+    [setPendingCheckoutDelete],
   );
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
@@ -1002,21 +1058,38 @@ export const EditProject: FC<Props> = ({
           >
             <div className="EditProjectDelete">
               {taskEventsLoaded && !isAnyManager && (
-                <Button
-                  variant="outlined"
-                  label={`Check ${
-                    taskEvents.length > 0 && taskEvents[0].timeFinished === ''
-                      ? 'Out'
-                      : 'In'
-                  }`}
-                  onClick={handleSetPendingCheckout(true)}
-                />
+                <>
+                  <Button
+                    variant="outlined"
+                    label={
+                      taskEvents.length === 0 ||
+                      (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT)
+                        ? 'Enroute'
+                        : `Check ${
+                            taskEvents.length > 0 &&
+                            taskEvents[0].actionTaken === CHECKIN
+                              ? 'Out'
+                              : 'In'
+                          }`
+                    }
+                    onClick={handleSetPendingCheckout(true)}
+                    disabled={pendingCheckoutChange}
+                  />
+                  {taskEvents.length > 0 && (
+                    <Button
+                      variant="outlined"
+                      label={`Delete ${taskEvents[0].actionTaken}`}
+                      onClick={handleSetPendingCheckoutDelete(true)}
+                      disabled={pendingCheckoutChange}
+                    />
+                  )}
+                </>
               )}
               {editingTask.id > 0 &&
                 editingTask.creatorUserId === loggedUserId && (
                   <Button
                     variant="outlined"
-                    label="Delete"
+                    label="Delete Task"
                     onClick={handleSetPendingDelete(editingTask)}
                   />
                 )}
@@ -1048,15 +1121,26 @@ export const EditProject: FC<Props> = ({
       {pendingCheckout && (
         <Confirm
           open
-          title={`Confirm Check ${
-            taskEvents.length > 0 && taskEvents[0].timeFinished === ''
-              ? 'Out'
-              : 'In'
-          }`}
+          title={
+            taskEvents.length === 0 ||
+            (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT)
+              ? 'Confirm Enroute'
+              : `Confirm Check ${
+                  taskEvents.length > 0 && taskEvents[0].actionTaken === CHECKIN
+                    ? 'Out'
+                    : 'In'
+                }`
+          }
           onClose={handleSetPendingCheckout(false)}
           onConfirm={handleCheckout}
         >
-          {taskEvents.length > 0 && taskEvents[0].timeFinished === '' ? (
+          {taskEvents.length === 0 ||
+          (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT) ? (
+            <div>
+              Are you sure, you want to Enroute and assign yourself to this
+              task?
+            </div>
+          ) : taskEvents.length > 0 && taskEvents[0].actionTaken === CHECKIN ? (
             <div>Are you sure, you want to Check Out from this task?</div>
           ) : (
             <div>
@@ -1065,6 +1149,15 @@ export const EditProject: FC<Props> = ({
             </div>
           )}
         </Confirm>
+      )}
+      {pendingCheckoutDelete && taskEvents[0] && (
+        <ConfirmDelete
+          open
+          kind="action"
+          name={taskEvents[0].actionTaken}
+          onClose={handleSetPendingCheckoutDelete(false)}
+          onConfirm={handleCheckoutDelete}
+        />
       )}
     </div>
   );
