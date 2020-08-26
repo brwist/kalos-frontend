@@ -2911,7 +2911,7 @@ export const loadTaskEventsByFilter = async ({
   if (technicianUserId) {
     req.setTechnicianUserId(technicianUserId);
   }
-  req.setIsActive(1);
+  req.setIsActive(true);
   req.setPageNumber(0);
   const results: TaskEventType[] = [];
   const { resultsList, totalCount } = (
