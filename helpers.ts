@@ -405,9 +405,13 @@ function b64toBlob(b64Data: string, fileName: string) {
   return blob;
 }
 
-function getMimeType(fileName: string) {
-  const arr = fileName.split('.');
-  const ext = arr[arr.length - 1];
+export const getFileExt = (fileName: string) => {
+  const arr = fileName.toLowerCase().split('.');
+  return arr[arr.length - 1];
+};
+
+export const getMimeType = (fileName: string) => {
+  const ext = getFileExt(fileName);
   if (ext === 'pdf') {
     return 'application/pdf';
   } else if (ext === 'doc' || ext === 'docx') {
@@ -417,7 +421,7 @@ function getMimeType(fileName: string) {
   } else if (ext === 'jpg' || ext === 'jpeg') {
     return 'image/jpeg';
   }
-}
+};
 
 /**
  *
@@ -3148,7 +3152,6 @@ export {
   getEditDistance,
   getURLParams,
   b64toBlob,
-  getMimeType,
   formatTime,
   formatDate,
   formatDay,
