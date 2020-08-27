@@ -73,6 +73,7 @@ import Tabs from './Tabs/examples';
 import Tasks from './Tasks/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Tooltip from './Tooltip/examples';
+import UploadPhoto from './UploadPhoto/examples';
 import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
 
@@ -151,6 +152,7 @@ const COMPONENTS = {
   Tasks,
   TimeoffSummaryReport,
   Tooltip,
+  UploadPhoto,
   WarrantyReport,
   WeekPicker,
 };
