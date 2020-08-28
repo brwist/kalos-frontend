@@ -2598,19 +2598,34 @@ export const deleteInternalDocumentById = async (id: number) => {
   await InternalDocumentClientService.Delete(req);
 };
 
-export const upsertFile = async (data: FileType) => {
+export const loadFiles = async (filter: Partial<FileType>) => {
+  const req = new File();
+  const fieldMaskList = [];
+  for (const fieldName in filter) {
+    const { methodName, upperCaseProp } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](filter[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return (await FileClientService.BatchGet(req)).toObject();
+};
+
+export const upsertFile = async (
+  data: Pick<FileType, 'name' | 'bucket'> & Partial<FileType>,
+) => {
   const req = new File();
   const fieldMaskList = [];
   const { id } = data;
-  if (!id) {
-    req.setCreateTime(timestamp());
-    fieldMaskList.push('DateCreated');
-  } else {
+  if (id) {
     req.setId(id);
   }
-  req.setName(data.name);
-  req.setBucket(data.bucket);
-  fieldMaskList.push('Name', 'Bucket');
+  for (const fieldName in data) {
+    const { methodName, upperCaseProp } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
   req.setFieldMaskList(fieldMaskList);
   return await FileClientService[id ? 'Update' : 'Create'](req);
 };

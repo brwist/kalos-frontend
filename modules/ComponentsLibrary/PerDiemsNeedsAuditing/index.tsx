@@ -33,7 +33,9 @@ import {
 import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
 import './styles.less';
 
-interface Props {}
+interface Props {
+  loggedUserId: number;
+}
 
 const COLUMNS: Columns = [
   { name: 'Technician' },
@@ -82,7 +84,7 @@ const formatWeek = (date: string) => {
   return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
 };
 
-export const PerDiemsNeedsAuditing: FC<Props> = () => {
+export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -433,6 +435,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = () => {
           <PerDiemComponent
             onClose={handlePerDiemViewedToggle(undefined)}
             perDiem={perDiemViewed}
+            loggedUserId={loggedUserId}
           />
         </Modal>
       )}
