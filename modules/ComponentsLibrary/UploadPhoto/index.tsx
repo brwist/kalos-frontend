@@ -1,10 +1,16 @@
 import React, { FC, useState, useCallback } from 'react';
 import Alert from '@material-ui/lab/Alert';
 import { Form, Schema } from '../Form';
-import { uploadFileToS3Bucket, getFileExt } from '../../../helpers';
+import {
+  uploadFileToS3Bucket,
+  getFileExt,
+  getMimeType,
+  upsertFile,
+} from '../../../helpers';
 import './styles.less';
 
 interface Props {
+  loggedUserId: number;
   title?: string;
   bucket: string;
   onClose: (() => void) | null;
@@ -18,6 +24,7 @@ type Entry = {
 export const UploadPhoto: FC<Props> = ({
   onClose,
   bucket,
+  loggedUserId,
   title = 'Upload Photo',
 }) => {
   const [fileData, setFileData] = useState<string>('');
@@ -35,17 +42,23 @@ export const UploadPhoto: FC<Props> = ({
       setError(false);
       setSaving(true);
       const ext = getFileExt(data.file);
-      const filename = `${data.name}-${Date.now()}.${ext}`;
-      const status = await uploadFileToS3Bucket(filename, fileData, bucket);
+      const name = `${data.name}-${Math.floor(Date.now() / 1000)}.${ext}`;
+      const status = await uploadFileToS3Bucket(name, fileData, bucket);
       setSaving(false);
       if (status === 'ok') {
+        await upsertFile({
+          bucket,
+          name,
+          mimeType: getMimeType(data.file),
+          ownerId: loggedUserId,
+        });
         setSaved(true);
         setFormKey(formKey + 1);
       } else {
         setError(true);
       }
     },
-    [fileData, setSaving, setFormKey, formKey, bucket],
+    [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId],
   );
   const SCHEMA: Schema<Entry> = [
     [
@@ -77,6 +90,7 @@ export const UploadPhoto: FC<Props> = ({
       onClose={onClose}
       onSave={handleSubmit}
       submitLabel="Upload"
+      cancelLabel="Close"
       disabled={saving}
       intro={
         saved && (

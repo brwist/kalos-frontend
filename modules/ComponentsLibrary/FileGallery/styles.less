@@ -1,1 +1,19 @@
 @import '../../../styles/index.less';
+
+.FileGallery {
+  &Img {
+    width: 100%;
+    max-width: 300px;
+    background-color: #00000022;
+    background-repeat: no-repeat;
+    background-position-x: center;
+    background-position-y: center;
+    background-size: contain;
+    border-radius: @shape-borderRadius;
+    &:before {
+      display: block;
+      content: '';
+      padding-top: 100%;
+    }
+  }
+}
