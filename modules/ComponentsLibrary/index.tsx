@@ -32,6 +32,7 @@ import EmployeeDepartments from './EmployeeDepartments/examples';
 import EventsReport from './EventsReport/examples';
 import ExportJSON from './ExportJSON/examples';
 import Field from './Field/examples';
+import FileGallery from './FileGallery/examples';
 import FileTags from './FileTags/examples';
 import Form from './Form/examples';
 import GanttChart from './GanttChart/examples';
@@ -111,6 +112,7 @@ const COMPONENTS = {
   EventsReport,
   ExportJSON,
   Field,
+  FileGallery,
   FileTags,
   Form,
   GanttChart,
