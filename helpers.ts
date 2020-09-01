@@ -81,6 +81,10 @@ import {
   UserGroupLinkClient,
 } from '@kalos-core/kalos-rpc/UserGroupLink';
 import {
+  TransactionDocumentClient,
+  TransactionDocument,
+} from '@kalos-core/kalos-rpc/TransactionDocument';
+import {
   InternalDocument,
   InternalDocumentClient,
 } from '@kalos-core/kalos-rpc/InternalDocument';
@@ -138,7 +142,11 @@ export type TransactionType = Transaction.AsObject;
 export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
 export type TaskAssignmentType = TaskAssignment.AsObject;
 export type CardDataType = CardData.AsObject;
+export type TransactionDocumentType = TransactionDocument.AsObject;
 
+export const TransactionDocumentClientService = new TransactionDocumentClient(
+  ENDPOINT,
+);
 export const TaskAssignmentClientService = new TaskAssignmentClient(ENDPOINT);
 export const TaskEventClientService = new TaskEventClient(ENDPOINT);
 export const TransactionClientService = new TransactionClient(ENDPOINT);
@@ -382,6 +390,23 @@ function getURLParams() {
   });
   return res;
 }
+
+export const upsertTransactionDocument = async (
+  data: Partial<TransactionDocumentType>,
+) => {
+  const req = new TransactionDocument();
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { methodName, upperCaseProp } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return await TransactionDocumentClientService[data.id ? 'Update' : 'Create'](
+    req,
+  );
+};
 
 function b64toBlob(b64Data: string, fileName: string) {
   const sliceSize = 512;
@@ -2611,15 +2636,9 @@ export const loadFiles = async (filter: Partial<FileType>) => {
   return (await FileClientService.BatchGet(req)).toObject();
 };
 
-export const upsertFile = async (
-  data: Pick<FileType, 'name' | 'bucket'> & Partial<FileType>,
-) => {
+export const upsertFile = async (data: Partial<FileType>) => {
   const req = new File();
   const fieldMaskList = [];
-  const { id } = data;
-  if (id) {
-    req.setId(id);
-  }
   for (const fieldName in data) {
     const { methodName, upperCaseProp } = getRPCFields(fieldName);
     //@ts-ignore
@@ -2627,7 +2646,7 @@ export const upsertFile = async (
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
-  return await FileClientService[id ? 'Update' : 'Create'](req);
+  return await FileClientService[data.id ? 'Update' : 'Create'](req);
 };
 
 export const deleteFileById = async (id: number) => {
