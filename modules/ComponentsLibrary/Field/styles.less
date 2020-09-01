@@ -157,11 +157,16 @@
       }
     }
   }
-  &EventSuccess {
-    color: @success-main;
-  }
-  &EventFailure {
-    color: @error-main;
+  &Event {
+    &Success {
+      color: @success-main;
+    }
+    &Failure {
+      color: @error-main;
+    }
+    &Unknown {
+      color: @primary-dark-lg-text;
+    }
   }
 }
 
