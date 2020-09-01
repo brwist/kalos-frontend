@@ -10,15 +10,18 @@ import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import { Spiff } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
-import { MetricTile } from './components/MetricTile';
-import { Widget } from './components/Widget';
 import { Assignments } from './components/AssignmentsTable';
 import { Spiffs } from './components/SpiffsTable';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { Typography } from '@material-ui/core';
 import { Search } from '../Search/main';
 import { ENDPOINT } from '../../constants';
-import { usd, makeFakeRows, refreshToken } from '../../helpers';
+import {
+  usd,
+  makeFakeRows,
+  refreshToken,
+  EventType,
+  UserType,
+} from '../../helpers';
 import { InfoTable } from '../ComponentsLibrary/InfoTable';
 import { Button } from '../ComponentsLibrary/Button';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
@@ -36,12 +39,12 @@ interface state {
   callbacks: number;
   revenue: number;
   receiptCount: number;
-  recentEvents: Event.AsObject[];
-  todaysEvents: Event.AsObject[];
+  recentEvents: EventType[];
+  todaysEvents: EventType[];
   toolFundBalance: number;
   availablePTO: number;
   isLoading: boolean;
-  currentUser: User.AsObject;
+  currentUser: UserType;
   spiffs: Spiff.AsObject[];
 }
 
