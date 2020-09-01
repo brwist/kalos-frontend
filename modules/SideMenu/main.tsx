@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState, useCallback } from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
@@ -16,6 +16,8 @@ import { ENDPOINT } from '../../constants';
 import customTheme from '../Theme/main';
 import KalosMenuItem from './components/KalosMenuItem';
 import ReportBugForm from './components/ReportBugForm';
+import { Modal } from '../ComponentsLibrary/Modal';
+import { UploadPhoto } from '../ComponentsLibrary/UploadPhoto';
 import {
   employeeItems,
   adminItems,
@@ -41,6 +43,7 @@ type State = {
 
 type Action =
   | { type: 'toggleMenu' }
+  | { type: 'closeMenu' }
   | { type: 'fetchedUser'; user: User.AsObject; isManager: boolean }
   | { type: 'showReportBugForm' }
   | { type: 'hideReportBugForm' };
@@ -51,6 +54,11 @@ const reducer = (state: State, action: Action) => {
       return {
         ...state,
         isOpen: !state.isOpen,
+      };
+    case 'closeMenu':
+      return {
+        ...state,
+        isOpen: false,
       };
     case 'fetchedUser':
       return {
@@ -83,18 +91,20 @@ const SideMenu = ({
     reportBugFormShown: false,
   });
   const { user, isManager, isOpen, reportBugFormShown } = state;
+  const [openUploadReceipt, setOpenUploadReceipt] = useState<boolean>(false);
   const toggleMenu = () => {
     dispatch({ type: 'toggleMenu' });
   };
-
   const handleReportBugClicked = () => {
     dispatch({ type: 'showReportBugForm' });
   };
-
   const handleCloseReportBugForm = () => {
     dispatch({ type: 'hideReportBugForm' });
   };
-
+  const toggleOpenUploadReceipt = useCallback(() => {
+    dispatch({ type: 'closeMenu' });
+    setOpenUploadReceipt(!openUploadReceipt);
+  }, [setOpenUploadReceipt, openUploadReceipt, dispatch]);
   useEffect(() => {
     (async () => {
       forceHTTPS();
@@ -159,7 +169,9 @@ const SideMenu = ({
       >
         <List style={{ width: 250 }}>
           {user.isEmployee === 1 &&
-            employeeItems.map(item => (
+            employeeItems({
+              toggleUploadReceipt: toggleOpenUploadReceipt,
+            }).map(item => (
               <KalosMenuItem
                 key={`empl_${item?.title || 'divider'}`}
                 item={item}
@@ -221,6 +233,16 @@ const SideMenu = ({
       </Drawer>
       {reportBugFormShown && (
         <ReportBugForm onClose={handleCloseReportBugForm} user={user} />
+      )}
+      {openUploadReceipt && (
+        <Modal open onClose={toggleOpenUploadReceipt}>
+          <UploadPhoto
+            title="Upload Receipt Photo"
+            bucket="kalos-transactions"
+            onClose={toggleOpenUploadReceipt}
+            loggedUserId={userID}
+          />
+        </Modal>
       )}
     </ThemeProvider>
   );

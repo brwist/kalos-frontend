@@ -19,6 +19,7 @@ import BugReportIcon from '@material-ui/icons/BugReport';
 import HomeWorkIcon from '@material-ui/icons/HomeWork';
 import ImportContactsIcon from '@material-ui/icons/ImportContacts';
 import ContactPhoneIcon from '@material-ui/icons/ContactPhone';
+import AddPhotoIcon from '@material-ui/icons/AddAPhoto';
 import { cfURL, CustomEventsHandler } from '../../helpers';
 import React from 'react';
 
@@ -55,7 +56,11 @@ const txnAdmin = cfURL('reports.transaction_admin');
 const txnUser = cfURL('reports.transactions');
 const perdiem = cfURL('reports.perdiem');
 
-export const employeeItems: MenuItem[] = [
+export const employeeItems = ({
+  toggleUploadReceipt,
+}: {
+  toggleUploadReceipt: () => void;
+}): MenuItem[] => [
   {
     title: 'Dashboard',
     href: 'https://app.kalosflorida.com/index.cfm',
@@ -91,6 +96,13 @@ export const employeeItems: MenuItem[] = [
     href: (userId: number) => timesheet(userId),
     icon: <AccessTimeIcon />,
   },
+  // TODO ucomment after finishing https://github.com/rmilejcz/kalos-frontend/issues/38
+  // {
+  //   title: 'Upload Receipt Photo',
+  //   icon: <AddPhotoIcon />,
+  //   onClick: toggleUploadReceipt,
+  //   button: true,
+  // },
   {
     title: 'Receipts',
     href: txnUser,
