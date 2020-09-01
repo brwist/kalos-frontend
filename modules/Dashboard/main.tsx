@@ -21,6 +21,8 @@ import { ENDPOINT } from '../../constants';
 import { usd, makeFakeRows, refreshToken } from '../../helpers';
 import { InfoTable } from '../ComponentsLibrary/InfoTable';
 import { Button } from '../ComponentsLibrary/Button';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
+import { Tooltip } from '../ComponentsLibrary/Tooltip';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import './styles.less';
 
@@ -290,6 +292,76 @@ export class Dashboard extends React.PureComponent<props, state> {
           }
           loading={isLoading}
         />
+        {this.state.currentUser.isHvacTech === 1 && (
+          <>
+            <SectionBar title="30 Day Stats" />
+            <InfoTable
+              columns={[
+                { name: 'Billable per Hour', align: 'center' },
+                { name: 'Number of Callbacks', align: 'center' },
+                { name: 'Avg Ticket Amount', align: 'center' },
+                { name: 'Revenue Earned', align: 'center' },
+              ]}
+              data={
+                this.state.isLoading
+                  ? makeFakeRows(4, 1)
+                  : [
+                      [
+                        {
+                          value: (
+                            <Tooltip
+                              content="Average billable revenue earned per hour for the last 30 days"
+                              placement="bottom"
+                            >
+                              <big className="DashboardMetric">
+                                {usd(this.state.billable)}
+                              </big>
+                            </Tooltip>
+                          ),
+                        },
+                        {
+                          value: (
+                            <Tooltip
+                              content="Number of callbacks for the last 30 days"
+                              placement="bottom"
+                            >
+                              <big className="DashboardMetric">
+                                {this.state.callbacks}
+                              </big>
+                            </Tooltip>
+                          ),
+                        },
+                        {
+                          value: (
+                            <Tooltip
+                              content="Average amount invoiced per service call for the last 30 days"
+                              placement="bottom"
+                            >
+                              <big className="DashboardMetric">
+                                {usd(this.state.avgTicket)}
+                              </big>
+                            </Tooltip>
+                          ),
+                        },
+                        {
+                          value: (
+                            <Tooltip
+                              content="Total revenue earned for the company in the last 30 days"
+                              placement="bottom"
+                            >
+                              <big className="DashboardMetric">
+                                {usd(this.state.revenue)}
+                              </big>
+                            </Tooltip>
+                          ),
+                        },
+                      ],
+                    ]
+              }
+              loading={this.state.isLoading}
+            />
+          </>
+        )}
         <Grid
           container
           direction="column"
@@ -301,77 +373,18 @@ export class Dashboard extends React.PureComponent<props, state> {
             maxWidth: window.innerWidth,
           }}
         >
-          {this.state.currentUser.isHvacTech === 1 && (
-            <>
-              <Typography
-                variant="h5"
-                component="span"
-                style={{
-                  alignSelf: 'flex-start',
-                  marginLeft: '6%',
-                }}
-              >
-                30 Day Stats
-              </Typography>
-              <Paper
-                elevation={7}
-                style={{ width: '90%', marginBottom: 20, padding: 10 }}
-              >
-                <Grid
-                  container
-                  direction="row"
-                  justify="space-evenly"
-                  alignItems="center"
-                >
-                  <MetricTile
-                    title="Billable per Hour"
-                    subtitle={`$${this.state.billable}`}
-                    isLoading={this.state.isLoading}
-                    tooltip="Average billable revenue earned per hour for the last 30 days"
-                  />
-                  <MetricTile
-                    title="Number of Callbacks"
-                    subtitle={`${this.state.callbacks}`}
-                    isLoading={this.state.isLoading}
-                    tooltip="Number of callbacks for the last 30 days"
-                  />
-                  <MetricTile
-                    title="Avg Ticket Amount"
-                    subtitle={`$${this.state.avgTicket}`}
-                    isLoading={this.state.isLoading}
-                    tooltip="Average amount invoiced per service call for the last 30 days"
-                  />
-                  <MetricTile
-                    title="Revenue Earned"
-                    subtitle={`$${this.state.revenue}`}
-                    isLoading={this.state.isLoading}
-                    tooltip="Total revenue earned for the company in the last 30 days"
-                  />
-                </Grid>
-              </Paper>
-            </>
-          )}
-          <Typography
-            variant="h5"
-            component="span"
-            style={{
-              alignSelf: 'flex-start',
-              marginLeft: '6%',
-            }}
-          >
-            Search
-          </Typography>
           {this.state.currentUser.isEmployee === 1 && (
-            <div
+            <Paper
+              elevation={7}
               style={{
                 width: '90%',
-                maxHeight: 400,
+                maxHeight: 650,
                 overflowY: 'scroll',
                 marginBottom: 20,
               }}
             >
               <Search loggedUserId={this.props.userId} />
-            </div>
+            </Paper>
           )}
           {this.state.spiffs.length !== 0 && (
             <Spiffs
