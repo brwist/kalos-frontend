@@ -222,11 +222,9 @@ export class Dashboard extends React.PureComponent<props, state> {
       <PageWrapper {...this.props} userID={this.props.userId}>
         <InfoTable
           columns={[
-            { name: 'Available PTO', align: 'center' },
-            { name: 'Missing Receipts', align: 'center' },
-            ...(toolFund > 0
-              ? [{ name: 'Tool Fund Balance', align: 'center' as const }]
-              : []),
+            { name: '', align: 'center' },
+            { name: '', align: 'center' },
+            ...(toolFund > 0 ? [{ name: '', align: 'center' as const }] : []),
           ]}
           data={
             isLoading
@@ -236,7 +234,11 @@ export class Dashboard extends React.PureComponent<props, state> {
                     {
                       value: (
                         <>
-                          <big className="DashboardMetric">{availablePTO}</big>{' '}
+                          <strong>Available PTO</strong>
+                          <br />
+                          <big className="DashboardMetric">
+                            {availablePTO}
+                          </big>{' '}
                           hours
                           <br />
                           <Button
@@ -253,6 +255,8 @@ export class Dashboard extends React.PureComponent<props, state> {
                     {
                       value: (
                         <>
+                          <strong>Missing Receipts</strong>
+                          <br />
                           <big className="DashboardMetric">{receiptCount}</big>
                           <br />
                           <Button
@@ -271,6 +275,8 @@ export class Dashboard extends React.PureComponent<props, state> {
                           {
                             value: (
                               <>
+                                <strong>Tool Fund Balance</strong>
+                                <br />
                                 <big className="DashboardMetric">
                                   {usd(toolFundBalance)}
                                 </big>
@@ -297,13 +303,13 @@ export class Dashboard extends React.PureComponent<props, state> {
         />
         {this.state.currentUser.isHvacTech === 1 && (
           <>
-            <SectionBar title="30 Day Stats" />
+            <SectionBar title="30 Day Stats" sticky={false} />
             <InfoTable
               columns={[
-                { name: 'Billable per Hour', align: 'center' },
-                { name: 'Number of Callbacks', align: 'center' },
-                { name: 'Avg Ticket Amount', align: 'center' },
-                { name: 'Revenue Earned', align: 'center' },
+                { name: '', align: 'center' },
+                { name: '', align: 'center' },
+                { name: '', align: 'center' },
+                { name: '', align: 'center' },
               ]}
               data={
                 this.state.isLoading
@@ -316,9 +322,13 @@ export class Dashboard extends React.PureComponent<props, state> {
                               content="Average billable revenue earned per hour for the last 30 days"
                               placement="bottom"
                             >
-                              <big className="DashboardMetric">
-                                {usd(this.state.billable)}
-                              </big>
+                              <span>
+                                <strong>Billable per Hour</strong>
+                                <br />
+                                <big className="DashboardMetric">
+                                  {usd(this.state.billable)}
+                                </big>
+                              </span>
                             </Tooltip>
                           ),
                         },
@@ -328,9 +338,13 @@ export class Dashboard extends React.PureComponent<props, state> {
                               content="Number of callbacks for the last 30 days"
                               placement="bottom"
                             >
-                              <big className="DashboardMetric">
-                                {this.state.callbacks}
-                              </big>
+                              <span>
+                                <strong>Number of Callbacks</strong>
+                                <br />
+                                <big className="DashboardMetric">
+                                  {this.state.callbacks}
+                                </big>
+                              </span>
                             </Tooltip>
                           ),
                         },
@@ -340,9 +354,13 @@ export class Dashboard extends React.PureComponent<props, state> {
                               content="Average amount invoiced per service call for the last 30 days"
                               placement="bottom"
                             >
-                              <big className="DashboardMetric">
-                                {usd(this.state.avgTicket)}
-                              </big>
+                              <span>
+                                <strong>Avg Ticket Amount</strong>
+                                <br />
+                                <big className="DashboardMetric">
+                                  {usd(this.state.avgTicket)}
+                                </big>
+                              </span>
                             </Tooltip>
                           ),
                         },
@@ -352,9 +370,13 @@ export class Dashboard extends React.PureComponent<props, state> {
                               content="Total revenue earned for the company in the last 30 days"
                               placement="bottom"
                             >
-                              <big className="DashboardMetric">
-                                {usd(this.state.revenue)}
-                              </big>
+                              <span>
+                                <strong>Revenue Earned</strong>
+                                <br />
+                                <big className="DashboardMetric">
+                                  {usd(this.state.revenue)}
+                                </big>
+                              </span>
                             </Tooltip>
                           ),
                         },
