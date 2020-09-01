@@ -12,7 +12,6 @@ import {
   deleteFileById,
   getFileS3BucketUrl,
 } from '../../../helpers';
-import { ROWS_PER_PAGE } from '../../../constants';
 import './styles.less';
 
 interface Props {
@@ -20,7 +19,7 @@ interface Props {
   title: string;
   bucket: string;
   onClose: () => void;
-  onAdd: (file: FileType) => void;
+  onAdd: ({ file, url }: { file: FileType; url: string }) => void;
   removeFileOnAdd: boolean;
 }
 
@@ -75,14 +74,25 @@ export const FileGallery: FC<Props> = ({
   );
   const handleAdd = useCallback(async () => {
     if (!adding) return;
-    onAdd(adding);
+    onAdd({
+      file: adding,
+      url: images[adding.name],
+    });
     setAdding(undefined);
     if (removeFileOnAdd) {
       setLoading(true);
       await deleteFileById(adding.id);
       setLoaded(false);
     }
-  }, [adding, onAdd, removeFileOnAdd, setLoading, setLoaded]);
+  }, [
+    adding,
+    onAdd,
+    removeFileOnAdd,
+    setLoading,
+    setLoaded,
+    images,
+    setAdding,
+  ]);
   return (
     <div>
       <SectionBar
@@ -137,8 +147,14 @@ export const FileGallery: FC<Props> = ({
           title="Confirm adding"
           onConfirm={handleAdd}
         >
-          Are you sure, you want to add file{' '}
+          Are you sure, you want to add receipt{' '}
           <strong>{getFileName(adding.name)}</strong>?
+          <br />
+          <br />
+          <div
+            className="FileGalleryImg"
+            style={{ backgroundImage: `url(${images[adding.name]})` }}
+          />
         </Confirm>
       )}
     </div>

@@ -8,6 +8,6 @@ export default () => (
     bucket="testbuckethelios" //"kalos-pre-transaction"
     onClose={() => console.log('close')}
     onAdd={console.log}
-    removeFileOnAdd
+    removeFileOnAdd={false}
   />
 );
