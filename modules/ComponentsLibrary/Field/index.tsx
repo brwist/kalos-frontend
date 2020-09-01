@@ -14,6 +14,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import CheckIcon from '@material-ui/icons/Check';
 import BlockIcon from '@material-ui/icons/Block';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
@@ -154,7 +155,10 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   );
   const [filename, setFilename] = useState<string>('');
   const [searchTechnician, setSearchTechnician] = useState<Value>('');
-  const [eventStatus, setEventStatus] = useState<number>(-1);
+  const [eventStatus, setEventStatus] = useState<number>(
+    +(value || '') > 0 ? 1 : -1,
+  );
+  const [eventIdValue, setEventIdValue] = useState<number>(+(value || ''));
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
     setLoadedTechnicians(true);
@@ -165,14 +169,14 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [setEventsOpened],
   );
   const handleEventsSearchClicked = useCallback(async () => {
-    if (!value || Number.isNaN(+value) || +value === 0) {
+    if (eventIdValue === 0) {
       setEventStatus(-1);
       setEventsOpened(true);
       return;
     }
     setEventStatus(0);
     try {
-      const event = await loadEventById(+value);
+      const event = await loadEventById(eventIdValue);
       if (onChange) {
         onChange(event.id);
       }
@@ -181,15 +185,16 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       setEventStatus(-1);
       setEventsOpened(true);
     }
-  }, [setEventStatus, value, onChange, setEventsOpened]);
+  }, [setEventStatus, eventIdValue, onChange, setEventsOpened]);
   const handleEventSelect = useCallback(
     (event: EventType) => {
       if (onChange) {
         onChange(event.id);
       }
+      setEventIdValue(event.id);
       setEventStatus(1);
     },
-    [onChange, setEventStatus],
+    [onChange, setEventStatus, setEventIdValue],
   );
   const handleSetTechniciansOpened = useCallback(
     (opened: boolean) => () => {
@@ -239,6 +244,14 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const { actions = [], description } = props;
   const handleChange = useCallback(
     ({ target: { value } }) => {
+      if (type === 'eventId') {
+        setEventIdValue(+value);
+        setEventStatus(-2);
+        if (onChange) {
+          onChange('');
+        }
+        return;
+      }
       if (onChange) {
         let newValue = type === 'number' ? +value : value;
         if (type === 'date') {
@@ -247,7 +260,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         onChange(newValue);
       }
     },
-    [type, dateTimePart, onChange],
+    [type, setEventIdValue, dateTimePart, onChange],
   );
   const handleFileChange = useCallback(
     ({ target }) => {
@@ -833,6 +846,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const eventAdornment = useMemo(() => {
     if (eventStatus === -1) return <BlockIcon className="FieldEventFailure" />;
     if (eventStatus === 0) return <CircularProgress size={20} />;
+    if (eventStatus === -2)
+      return <HelpOutlineIcon className="FieldEventUnknown" />;
     return <CheckIcon className="FieldEventSuccess" />;
   }, [eventStatus]);
   return (
@@ -882,7 +897,13 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         error={error}
         {...props}
         type={type === 'file' ? 'text' : type === 'eventId' ? 'number' : type}
-        value={type === 'file' ? filename || value : value}
+        value={
+          type === 'file'
+            ? filename || value
+            : type === 'eventId'
+            ? eventIdValue
+            : value
+        }
         helperText={helper}
       />
       {actions.length > 0 && !actionsInLabel && (

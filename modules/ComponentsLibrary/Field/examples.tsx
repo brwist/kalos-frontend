@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
 import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
@@ -28,6 +28,7 @@ const SELECT_OPTIONS_ICON: Option[] = [
 
 const EnhancedField = ({
   defaultValue = 'John',
+  onChange,
   ...props
 }: Pick<
   Props<Model>,
@@ -48,14 +49,29 @@ const EnhancedField = ({
   | 'placeholder'
   | 'actionsInLabel'
   | 'onFileLoad'
+  | 'onChange'
 > & {
   defaultValue?: Value | Value[];
 }) => {
   const [value, setValue] = useState(defaultValue);
+  const handleChange = useCallback(
+    value => {
+      setValue(value);
+      if (onChange) {
+        onChange(value);
+      }
+    },
+    [setValue, onChange],
+  );
   if (props.headline) return <Field {...props} />;
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      <Field name="firstName" value={value} onChange={setValue} {...props} />
+      <Field
+        name="firstName"
+        value={value}
+        onChange={handleChange}
+        {...props}
+      />
       {props.options &&
         typeof props.options[0] === 'string' &&
         typeof value === 'string' && (
@@ -145,6 +161,7 @@ export default () => (
       label="Service Call ID"
       defaultValue={86086}
       type="eventId"
+      onChange={console.log}
     />
     <EnhancedField label="Technician" type="technician" defaultValue={'0'} />
     <EnhancedField label="Technicians" type="technicians" defaultValue={'0'} />
