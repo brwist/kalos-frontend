@@ -375,7 +375,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             title={`${new Date(
               t.timestamp.split(' ').join('T'),
             ).toDateString()} - $${t.amount}`}
-            subtitle={subheader + ' / ' + t.id}
+            subtitle={subheader}
             asideContent={
               <div className="TransactionUser_Actions">
                 <Button label="Upload Photo" onClick={this.openFilePrompt} />
