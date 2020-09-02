@@ -490,7 +490,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             <FileGallery
               loggedUserId={userID}
               title="Add Receipt from Gallery"
-              bucket="kalos-transactions"
+              bucket="kalos-pre-transactions"
               onClose={this.toggleAddFromGallery}
               onAdd={this.addFromGallery}
               removeFileOnAdd={false}

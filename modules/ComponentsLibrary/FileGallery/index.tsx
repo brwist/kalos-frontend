@@ -1,9 +1,9 @@
 import React, { FC, useCallback, useState, useEffect } from 'react';
-import IconButton from '@material-ui/core/IconButton';
-import AddCircleIcon from '@material-ui/icons/AddCircle';
 import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
 import { Confirm } from '../Confirm';
+import { ConfirmDelete } from '../ConfirmDelete';
+import { Button } from '../Button';
 import {
   FileType,
   loadFiles,
@@ -11,6 +11,7 @@ import {
   formatDateTime,
   deleteFileById,
   getFileS3BucketUrl,
+  deleteFileFromS3Buckets,
 } from '../../../helpers';
 import './styles.less';
 
@@ -25,8 +26,8 @@ interface Props {
 
 const getFileName = (fileName: string) => {
   const [_, ...nameReversed] = fileName.split('').reverse().join('').split('.');
-  const [__, ...name] = nameReversed.join('').split('-');
-  return name.join('').split('').reverse().join('');
+  const [__, ...name] = nameReversed.join('.').split('-');
+  return name.join('-').split('').reverse().join('');
 };
 
 export const FileGallery: FC<Props> = ({
@@ -41,6 +42,7 @@ export const FileGallery: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [files, setFiles] = useState<FileType[]>([]);
   const [adding, setAdding] = useState<FileType>();
+  const [deleting, setDeleting] = useState<FileType>();
   const [images, setImages] = useState<{
     [key: string]: string;
   }>({});
@@ -70,8 +72,21 @@ export const FileGallery: FC<Props> = ({
   }, [loaded, setLoaded, load]);
   const handleSetAdding = useCallback(
     (adding?: FileType) => () => setAdding(adding),
-    [setAdding, adding],
+    [setAdding],
   );
+  const handleSetDeleting = useCallback(
+    (deleting?: FileType) => () => setDeleting(deleting),
+    [setDeleting],
+  );
+  const deleteFile = useCallback(async () => {
+    if (!deleting) return;
+    const { name, bucket, id } = deleting;
+    setDeleting(undefined);
+    setLoading(true);
+    await deleteFileFromS3Buckets(name, bucket);
+    await deleteFileById(deleting.id);
+    setLoaded(false);
+  }, [deleting, setLoading, setLoaded, setDeleting]);
   const handleAdd = useCallback(async () => {
     if (!adding) return;
     onAdd({
@@ -126,13 +141,16 @@ export const FileGallery: FC<Props> = ({
                     value: formatDateTime(createTime),
                     onClick: handleSetAdding(file),
                     actions: [
-                      <IconButton
+                      <Button
                         key="add"
-                        size="small"
+                        label="Add"
                         onClick={handleSetAdding(file)}
-                      >
-                        <AddCircleIcon />
-                      </IconButton>,
+                      />,
+                      <Button
+                        key="delete"
+                        label="Delete"
+                        onClick={handleSetDeleting(file)}
+                      />,
                     ],
                   },
                 ];
@@ -156,6 +174,15 @@ export const FileGallery: FC<Props> = ({
             style={{ backgroundImage: `url(${images[adding.name]})` }}
           />
         </Confirm>
+      )}
+      {deleting && (
+        <ConfirmDelete
+          open
+          onClose={handleSetDeleting()}
+          kind="Recepit"
+          name={getFileName(deleting.name)}
+          onConfirm={deleteFile}
+        />
       )}
     </div>
   );

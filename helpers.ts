@@ -2,7 +2,7 @@ import uniq from 'lodash/uniq';
 import sortBy from 'lodash/sortBy';
 import compact from 'lodash/compact';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
-import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
+import { S3Client, URLObject, FileObject } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
 import { UserClient, User, CardData } from '@kalos-core/kalos-rpc/User';
@@ -2437,6 +2437,13 @@ export const moveFileBetweenS3Buckets = async (
   } catch (e) {
     return 'nok';
   }
+};
+
+export const deleteFileFromS3Buckets = async (key: string, bucket: string) => {
+  const req = new FileObject();
+  req.setKey(key);
+  req.setBucket(bucket);
+  await S3ClientService.Delete(req);
 };
 
 export const makeOptions = (
