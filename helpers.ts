@@ -143,6 +143,10 @@ export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
 export type TaskAssignmentType = TaskAssignment.AsObject;
 export type CardDataType = CardData.AsObject;
 export type TransactionDocumentType = TransactionDocument.AsObject;
+export type SimpleFile = {
+  key: string;
+  bucket: string;
+};
 
 export const TransactionDocumentClientService = new TransactionDocumentClient(
   ENDPOINT,
@@ -2397,11 +2401,11 @@ function escapeText(encodedStr: string) {
  * @param bucketName string
  * @returns status string: "ok" | "nok"
  */
-async function uploadFileToS3Bucket(
+export const uploadFileToS3Bucket = async (
   fileName: string,
   fileData: string,
   bucketName: string,
-) {
+) => {
   try {
     const urlObj = new URLObject();
     urlObj.setKey(fileName);
@@ -2420,7 +2424,20 @@ async function uploadFileToS3Bucket(
   } catch (e) {
     return 'nok';
   }
-}
+};
+
+export const moveFileBetweenS3Buckets = async (
+  from: SimpleFile,
+  to: SimpleFile,
+  preserveSource: boolean = false,
+) => {
+  try {
+    const res = await S3ClientService.Move(from, to, preserveSource);
+    return res ? 'ok' : 'nok';
+  } catch (e) {
+    return 'nok';
+  }
+};
 
 export const makeOptions = (
   options: string[],
@@ -3219,7 +3236,6 @@ export {
   loadEventByJobOrContractNumber,
   loadEventsByJobOrContractNumbers,
   escapeText,
-  uploadFileToS3Bucket,
   newBugReport,
   newBugReportImage,
   forceHTTPS,
