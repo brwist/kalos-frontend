@@ -96,13 +96,12 @@ export const employeeItems = ({
     href: (userId: number) => timesheet(userId),
     icon: <AccessTimeIcon />,
   },
-  // TODO ucomment after finishing https://github.com/rmilejcz/kalos-frontend/issues/38
-  // {
-  //   title: 'Upload Receipt Photo',
-  //   icon: <AddPhotoIcon />,
-  //   onClick: toggleUploadReceipt,
-  //   button: true,
-  // },
+  {
+    title: 'Upload Receipt Photo',
+    icon: <AddPhotoIcon />,
+    onClick: toggleUploadReceipt,
+    button: true,
+  },
   {
     title: 'Receipts',
     href: txnUser,

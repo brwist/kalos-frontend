@@ -28,6 +28,7 @@ import {
   FileType,
   upsertFile,
   upsertTransactionDocument,
+  moveFileBetweenS3Buckets,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
@@ -250,9 +251,29 @@ export class TxnCard extends React.PureComponent<props, state> {
   toggleAddFromGallery = () =>
     this.setState({ pendingAddFromGallery: !this.state.pendingAddFromGallery });
 
-  addFromGallery = async ({ file, url }: { file: FileType; url: string }) => {
+  addFromGallery = async ({ file }: { file: FileType; url: string }) => {
     this.setState({ pendingAddFromGallery: false });
-    await upsertFile({ id: file.id, ownerId: 0 });
+    const { id } = this.state.txn;
+    const bucket = 'kalos-transactions';
+    const status = await moveFileBetweenS3Buckets(
+      {
+        key: file.name,
+        bucket: file.bucket,
+      },
+      {
+        key: `${id}-${file.name}`,
+        bucket,
+      },
+    );
+    if (status === 'nok') {
+      alert('Upload faild. Please try again, or contact administrator');
+      return;
+    }
+    await upsertFile({
+      id: file.id,
+      ownerId: 0,
+      bucket,
+    });
     await upsertTransactionDocument({
       transactionId: this.state.txn.id,
       reference: file.name,
@@ -379,11 +400,10 @@ export class TxnCard extends React.PureComponent<props, state> {
             asideContent={
               <div className="TransactionUser_Actions">
                 <Button label="Upload Photo" onClick={this.openFilePrompt} />
-                {/* // TODO finish https://github.com/rmilejcz/kalos-frontend/issues/38
                 <Button
                   label="Add Photo "
                   onClick={this.toggleAddFromGallery}
-                /> */}
+                />
                 <AltGallery
                   title="Receipt Photo(s)"
                   text="View Photo(s)"
