@@ -1,4 +1,5 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import clsx from 'clsx';
 import { User } from '@kalos-core/kalos-rpc/User';
 import cloneDeep from 'lodash/cloneDeep';
 import IconButton from '@material-ui/core/IconButton';
@@ -67,6 +68,7 @@ import {
   EmployeeFunctionType,
   getFileS3BucketUrl,
   CustomEventsHandler,
+  uploadFileToS3Bucket,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -176,6 +178,10 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<EventType>();
+  const [employeeUploadedPhoto, setEmployeeUploadedPhoto] = useState<string>(
+    '',
+  );
+  const [employeeFormKey, setEmployeeFormKey] = useState<number>(0);
   const [pendingEmployeeViewing, setPendingEmployeeViewing] = useState<
     UserType
   >();
@@ -496,13 +502,26 @@ export const AdvancedSearch: FC<Props> = ({
     async (data: UserType) => {
       if (pendingEmployeeEditing) {
         setSaving(true);
+        if (employeeUploadedPhoto) {
+          await uploadFileToS3Bucket(
+            data.image,
+            employeeUploadedPhoto,
+            'kalos-employee-images',
+          );
+        }
         await saveUser(data, pendingEmployeeEditing.id);
         setPendingEmployeeEditing(undefined);
         setSaving(false);
         setLoaded(false);
       }
     },
-    [setPendingEmployeeEditing, setLoaded, setSaving, pendingEmployeeEditing],
+    [
+      setPendingEmployeeEditing,
+      setLoaded,
+      setSaving,
+      pendingEmployeeEditing,
+      employeeUploadedPhoto,
+    ],
   );
   const handlePendingCustomerDeletingToggle = useCallback(
     (pendingCustomerDeleting?: UserType) => () =>
@@ -548,6 +567,25 @@ export const AdvancedSearch: FC<Props> = ({
     (open: boolean) => () => setEmployeeDepartmentsOpen(open),
     [setEmployeeDepartmentsOpen],
   );
+  const handleEmployeePhotoUpload = useCallback(
+    (file: string | ArrayBuffer | null) => {
+      if (!file) return;
+      setEmployeeUploadedPhoto(file as string);
+    },
+    [setEmployeeUploadedPhoto],
+  );
+  const handleDeleteEmployeePhoto = useCallback(() => {
+    if (!pendingEmployeeEditing) return;
+    setEmployeeUploadedPhoto('');
+    setPendingEmployeeEditing({ ...pendingEmployeeEditing, image: '' });
+    setEmployeeFormKey(employeeFormKey + 1);
+  }, [
+    setEmployeeUploadedPhoto,
+    setPendingEmployeeEditing,
+    pendingEmployeeEditing,
+    employeeFormKey,
+    setEmployeeFormKey,
+  ]);
   const searchActions: ActionsProps = [
     {
       label: 'Reset',
@@ -799,7 +837,7 @@ export const AdvancedSearch: FC<Props> = ({
       },
     ],
   ];
-  const SCHEMA_EMPLOYEES_EDIT: Schema<UserType> = [
+  const makeSchemaEmployeesEdit = (entry: UserType): Schema<UserType> => [
     [{ name: 'isEmployee', type: 'hidden' }],
     [{ headline: true, label: 'Personal Details' }],
     [
@@ -1084,6 +1122,40 @@ export const AdvancedSearch: FC<Props> = ({
     //   },
     // ],
     [{ headline: true, label: 'Photo' }],
+    [
+      {
+        content: (
+          <div
+            className="AdvancedSearchEmployeeImageBig"
+            style={
+              employeeUploadedPhoto || entry.image
+                ? {
+                    backgroundImage: `url('${
+                      employeeUploadedPhoto || employeeImages[entry.image]
+                    }')`,
+                  }
+                : {}
+            }
+          />
+        ),
+      },
+      {
+        name: 'image',
+        type: 'file',
+        label: 'Photo',
+        actions: [
+          {
+            label: 'Delete',
+            variant: 'outlined',
+            onClick: handleDeleteEmployeePhoto,
+          },
+        ],
+        actionsInLabel: true,
+        onFileLoad: handleEmployeePhotoUpload,
+      },
+      {},
+      {},
+    ],
   ];
   const SCHEMA_PROPERTIES: Schema<PropertiesFilter> = [
     [
@@ -1442,435 +1514,443 @@ export const AdvancedSearch: FC<Props> = ({
       ];
     return [];
   };
-  const getData = useCallback((): Data => {
-    const { kind } = filter;
-    if (kind === 'serviceCalls')
-      return loading || loadingDicts
-        ? makeFakeRows(accounting ? 10 : 6, 3)
-        : events.map(entry => {
-            const {
-              dateStarted,
-              customer,
-              property,
-              logJobNumber,
-              jobType,
-              jobSubtype,
-              logJobStatus,
-            } = entry;
-            const canceledStyle =
-              !accounting && logJobStatus === 'Canceled'
-                ? { color: 'red' }
-                : {};
-            return customer
-              ? [
-                  {
-                    value: formatDate(dateStarted),
-                    onClick: onSelectEvent
-                      ? handleSelectEvent(entry)
-                      : undefined,
-                  },
-                  {
-                    value: accounting
-                      ? getCustomerName(customer)
-                      : getCustomerNameAndBusinessName(customer),
-                    onClick: onSelectEvent
-                      ? handleSelectEvent(entry)
-                      : undefined,
-                  },
-                  ...(accounting
-                    ? [
-                        {
-                          value: getBusinessName(customer),
-                          onClick: onSelectEvent
-                            ? handleSelectEvent(entry)
-                            : undefined,
-                        },
-                      ]
-                    : []),
-                  {
-                    value: accounting
-                      ? property?.address || ''
-                      : `${getPropertyAddress(property)} ${getCustomerPhone(
-                          customer,
-                        )}`,
-                    onClick: onSelectEvent
-                      ? handleSelectEvent(entry)
-                      : undefined,
-                  },
-                  ...(accounting
-                    ? [
-                        {
-                          value: property?.city || '',
-                          onClick: onSelectEvent
-                            ? handleSelectEvent(entry)
-                            : undefined,
-                        },
-                      ]
-                    : []),
-                  ...(accounting
-                    ? [
-                        {
-                          value: property?.zip || '',
-                          onClick: onSelectEvent
-                            ? handleSelectEvent(entry)
-                            : undefined,
-                        },
-                      ]
-                    : []),
-                  ...(accounting
-                    ? [
-                        {
-                          value: property?.phone || '',
-                          onClick: onSelectEvent
-                            ? handleSelectEvent(entry)
-                            : undefined,
-                        },
-                      ]
-                    : []),
-                  {
-                    value: (
-                      <span style={canceledStyle}>
-                        {accounting ? logJobNumber.substr(0, 8) : logJobNumber}
-                      </span>
-                    ),
-                    onClick: onSelectEvent
-                      ? handleSelectEvent(entry)
-                      : undefined,
-                  },
-                  {
-                    value: (
-                      <span style={canceledStyle}>
-                        {accounting ? jobType : `${jobType} / ${jobSubtype}`}
-                      </span>
-                    ),
-                    onClick: onSelectEvent
-                      ? handleSelectEvent(entry)
-                      : undefined,
-                  },
-                  {
-                    value: (
-                      <span style={canceledStyle}>
-                        {accounting ? jobSubtype : logJobStatus}
-                      </span>
-                    ),
-                    onClick: onSelectEvent
-                      ? handleSelectEvent(entry)
-                      : undefined,
-                    actions: [
-                      ...(onSelectEvent
-                        ? []
-                        : [
-                            <IconButton
-                              key="edit"
-                              size="small"
-                              onClick={handlePendingEventEditingToggle(entry)}
-                            >
-                              <EditIcon />
-                            </IconButton>,
-                          ]),
-                      ...(deletableEvents
-                        ? [
-                            <IconButton
-                              key="delete"
-                              size="small"
-                              onClick={handlePendingEventDeletingToggle(entry)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>,
-                          ]
-                        : []),
-                    ],
-                  },
-                ]
-              : [];
-          });
-    if (kind === 'customers')
-      return loading
-        ? makeFakeRows(6, 3)
-        : users.map(entry => {
-            const { firstname, lastname, businessname, phone, email } = entry;
-            return [
-              { value: firstname },
-              { value: lastname },
-              { value: businessname },
-              { value: phone },
-              { value: email },
-              {
-                value: '',
-                actions: [
-                  <IconButton
-                    key="view"
-                    size="small"
-                    onClick={handlePendingCustomerViewingToggle(entry)}
-                  >
-                    <SearchIcon />
-                  </IconButton>,
-                  ...(editableCustomers
-                    ? [
-                        <IconButton
-                          key="edit"
-                          size="small"
-                          onClick={handlePendingCustomerEditingToggle(entry)}
-                        >
-                          <EditIcon />
-                        </IconButton>,
-                      ]
-                    : []),
-                  ...(deletableCustomers
-                    ? [
-                        <IconButton
-                          key="delete"
-                          size="small"
-                          onClick={handlePendingCustomerDeletingToggle(entry)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>,
-                      ]
-                    : []),
-                ],
-              },
-            ];
-          });
-    if (kind === 'employees')
-      return loading
-        ? makeFakeRows(5, 3)
-        : users
-            .filter(
-              ({
-                firstname,
-                lastname,
-                empTitle,
-                email,
-                phone,
-                ext,
-                cellphone,
-                employeeDepartmentId,
-              }) => {
-                const usersFilter = filter as UsersFilter;
-                const matchedFirstname = usersFilter.firstname
-                  ? firstname
-                      .toLowerCase()
-                      .includes(usersFilter.firstname.toLowerCase())
-                  : true;
-                const matchedLastname = usersFilter.lastname
-                  ? lastname
-                      .toLowerCase()
-                      .includes(usersFilter.lastname.toLowerCase())
-                  : true;
-                const matchedEmpTitle = usersFilter.empTitle
-                  ? empTitle
-                      .toLowerCase()
-                      .includes(usersFilter.empTitle.toLowerCase())
-                  : true;
-                const matchedEmail = usersFilter.email
-                  ? email
-                      .toLowerCase()
-                      .includes(usersFilter.email.toLowerCase())
-                  : true;
-                const matchedPhone = usersFilter.phone
-                  ? phone
-                      .toLowerCase()
-                      .includes(usersFilter.phone.toLowerCase())
-                  : true;
-                const matchedExt = usersFilter.ext
-                  ? ext.toLowerCase().includes(usersFilter.ext.toLowerCase())
-                  : true;
-                const matchedCellphone = usersFilter.cellphone
-                  ? cellphone
-                      .toLowerCase()
-                      .includes(usersFilter.cellphone.toLowerCase())
-                  : true;
-                const matchedDepartment =
-                  usersFilter.employeeDepartmentId &&
-                  usersFilter.employeeDepartmentId > 0
-                    ? employeeDepartmentId === usersFilter.employeeDepartmentId
-                    : true;
-                return (
-                  matchedFirstname &&
-                  matchedLastname &&
-                  matchedEmpTitle &&
-                  matchedEmail &&
-                  matchedPhone &&
-                  matchedExt &&
-                  matchedCellphone &&
-                  matchedDepartment
-                );
-              },
-            )
-            .map(entry => {
-              const { id, empTitle, email, cellphone, image } = entry;
+  const getData = useCallback(
+    (forPrint: boolean = false): Data => {
+      const { kind } = filter;
+      if (kind === 'serviceCalls')
+        return loading || loadingDicts
+          ? makeFakeRows(accounting ? 10 : 6, 3)
+          : events.map(entry => {
+              const {
+                dateStarted,
+                customer,
+                property,
+                logJobNumber,
+                jobType,
+                jobSubtype,
+                logJobStatus,
+              } = entry;
+              const canceledStyle =
+                !accounting && logJobStatus === 'Canceled'
+                  ? { color: 'red' }
+                  : {};
+              return customer
+                ? [
+                    {
+                      value: formatDate(dateStarted),
+                      onClick: onSelectEvent
+                        ? handleSelectEvent(entry)
+                        : undefined,
+                    },
+                    {
+                      value: accounting
+                        ? getCustomerName(customer)
+                        : getCustomerNameAndBusinessName(customer),
+                      onClick: onSelectEvent
+                        ? handleSelectEvent(entry)
+                        : undefined,
+                    },
+                    ...(accounting
+                      ? [
+                          {
+                            value: getBusinessName(customer),
+                            onClick: onSelectEvent
+                              ? handleSelectEvent(entry)
+                              : undefined,
+                          },
+                        ]
+                      : []),
+                    {
+                      value: accounting
+                        ? property?.address || ''
+                        : `${getPropertyAddress(property)} ${getCustomerPhone(
+                            customer,
+                          )}`,
+                      onClick: onSelectEvent
+                        ? handleSelectEvent(entry)
+                        : undefined,
+                    },
+                    ...(accounting
+                      ? [
+                          {
+                            value: property?.city || '',
+                            onClick: onSelectEvent
+                              ? handleSelectEvent(entry)
+                              : undefined,
+                          },
+                        ]
+                      : []),
+                    ...(accounting
+                      ? [
+                          {
+                            value: property?.zip || '',
+                            onClick: onSelectEvent
+                              ? handleSelectEvent(entry)
+                              : undefined,
+                          },
+                        ]
+                      : []),
+                    ...(accounting
+                      ? [
+                          {
+                            value: property?.phone || '',
+                            onClick: onSelectEvent
+                              ? handleSelectEvent(entry)
+                              : undefined,
+                          },
+                        ]
+                      : []),
+                    {
+                      value: (
+                        <span style={canceledStyle}>
+                          {accounting
+                            ? logJobNumber.substr(0, 8)
+                            : logJobNumber}
+                        </span>
+                      ),
+                      onClick: onSelectEvent
+                        ? handleSelectEvent(entry)
+                        : undefined,
+                    },
+                    {
+                      value: (
+                        <span style={canceledStyle}>
+                          {accounting ? jobType : `${jobType} / ${jobSubtype}`}
+                        </span>
+                      ),
+                      onClick: onSelectEvent
+                        ? handleSelectEvent(entry)
+                        : undefined,
+                    },
+                    {
+                      value: (
+                        <span style={canceledStyle}>
+                          {accounting ? jobSubtype : logJobStatus}
+                        </span>
+                      ),
+                      onClick: onSelectEvent
+                        ? handleSelectEvent(entry)
+                        : undefined,
+                      actions: [
+                        ...(onSelectEvent
+                          ? []
+                          : [
+                              <IconButton
+                                key="edit"
+                                size="small"
+                                onClick={handlePendingEventEditingToggle(entry)}
+                              >
+                                <EditIcon />
+                              </IconButton>,
+                            ]),
+                        ...(deletableEvents
+                          ? [
+                              <IconButton
+                                key="delete"
+                                size="small"
+                                onClick={handlePendingEventDeletingToggle(
+                                  entry,
+                                )}
+                              >
+                                <DeleteIcon />
+                              </IconButton>,
+                            ]
+                          : []),
+                      ],
+                    },
+                  ]
+                : [];
+            });
+      if (kind === 'customers')
+        return loading
+          ? makeFakeRows(6, 3)
+          : users.map(entry => {
+              const { firstname, lastname, businessname, phone, email } = entry;
               return [
-                {
-                  value: (
-                    <div className="AdvancedSearchEmployee">
-                      <div
-                        className="AdvancedSearchEmployeeImage"
-                        style={
-                          image
-                            ? {
-                                backgroundImage: `url('${employeeImages[image]}')`,
-                              }
-                            : {}
-                        }
-                      />
-                      {getCustomerName(entry)}
-                    </div>
-                  ),
-                },
-                { value: empTitle },
+                { value: firstname },
+                { value: lastname },
+                { value: businessname },
+                { value: phone },
                 { value: email },
-                { value: getCustomerPhoneWithExt(entry) },
                 {
-                  value: cellphone,
+                  value: '',
                   actions: [
-                    ...(isAdmin
+                    <IconButton
+                      key="view"
+                      size="small"
+                      onClick={handlePendingCustomerViewingToggle(entry)}
+                    >
+                      <SearchIcon />
+                    </IconButton>,
+                    ...(editableCustomers
                       ? [
-                          <Tooltip
-                            key="spiff"
-                            content="View Spiff Log"
-                            placement="top"
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={() => {
-                                // TODO replace with ComponentsLibrary
-                                document.location.href = [
-                                  '/index.cfm?action=admin:tasks.spiff_tool_logs',
-                                  `type=tool`,
-                                  `rt=all`,
-                                  `reportUserId=${id}`,
-                                ].join('&');
-                              }}
-                            >
-                              <BuildIcon />
-                            </IconButton>
-                          </Tooltip>,
-                          <Tooltip
-                            key="timesheet"
-                            content="View Timesheet"
-                            placement="top"
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={() => {
-                                // TODO replace with ComponentsLibrary
-                                document.location.href = [
-                                  '/index.cfm?action=admin:timesheet.timesheetview',
-                                  `timesheetAction=cardview`,
-                                  `user_id=${id}`,
-                                  `search_user_id=${id}`,
-                                  `timesheetadmin=${isAdmin}`,
-                                ].join('&');
-                              }}
-                            >
-                              <AccessTimeIcon />
-                            </IconButton>
-                          </Tooltip>,
-                        ]
-                      : []),
-                    <Tooltip key="view" content="View Employee" placement="top">
-                      <IconButton
-                        size="small"
-                        onClick={handlePendingEmployeeViewingToggle(entry)}
-                      >
-                        <SearchIcon />
-                      </IconButton>
-                    </Tooltip>,
-                    ...(editableEmployees && isAdmin
-                      ? [
-                          <Tooltip
+                          <IconButton
                             key="edit"
-                            content="Edit Employee"
-                            placement="top"
+                            size="small"
+                            onClick={handlePendingCustomerEditingToggle(entry)}
                           >
-                            <IconButton
-                              size="small"
-                              onClick={handlePendingEmployeeEditingToggle(
-                                entry,
-                              )}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>,
+                            <EditIcon />
+                          </IconButton>,
                         ]
                       : []),
-                    ...(deletableEmployees && isAdmin
+                    ...(deletableCustomers
                       ? [
-                          <Tooltip
+                          <IconButton
                             key="delete"
-                            content="Delete Employee"
-                            placement="top"
+                            size="small"
+                            onClick={handlePendingCustomerDeletingToggle(entry)}
                           >
-                            <IconButton
-                              size="small"
-                              onClick={handlePendingEmployeeDeletingToggle(
-                                entry,
-                              )}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>,
+                            <DeleteIcon />
+                          </IconButton>,
                         ]
                       : []),
                   ],
                 },
               ];
             });
-    if (kind === 'properties')
-      return loading
-        ? makeFakeRows(4, 3)
-        : properties.map(entry => {
-            const { address, city, zip, subdivision } = entry;
-            return [
-              { value: address },
-              { value: subdivision },
-              { value: city },
-              {
-                value: zip,
-                actions: [
-                  <IconButton
-                    key="view"
-                    size="small"
-                    onClick={handlePendingPropertyViewingToggle(entry)}
-                  >
-                    <SearchIcon />
-                  </IconButton>,
-                  ...(editableProperties
-                    ? [
+      if (kind === 'employees')
+        return loading
+          ? makeFakeRows(5, 3)
+          : users
+              .filter(
+                ({
+                  firstname,
+                  lastname,
+                  empTitle,
+                  email,
+                  phone,
+                  ext,
+                  cellphone,
+                  employeeDepartmentId,
+                }) => {
+                  const usersFilter = filter as UsersFilter;
+                  const matchedFirstname = usersFilter.firstname
+                    ? firstname
+                        .toLowerCase()
+                        .includes(usersFilter.firstname.toLowerCase())
+                    : true;
+                  const matchedLastname = usersFilter.lastname
+                    ? lastname
+                        .toLowerCase()
+                        .includes(usersFilter.lastname.toLowerCase())
+                    : true;
+                  const matchedEmpTitle = usersFilter.empTitle
+                    ? empTitle
+                        .toLowerCase()
+                        .includes(usersFilter.empTitle.toLowerCase())
+                    : true;
+                  const matchedEmail = usersFilter.email
+                    ? email
+                        .toLowerCase()
+                        .includes(usersFilter.email.toLowerCase())
+                    : true;
+                  const matchedPhone = usersFilter.phone
+                    ? phone
+                        .toLowerCase()
+                        .includes(usersFilter.phone.toLowerCase())
+                    : true;
+                  const matchedExt = usersFilter.ext
+                    ? ext.toLowerCase().includes(usersFilter.ext.toLowerCase())
+                    : true;
+                  const matchedCellphone = usersFilter.cellphone
+                    ? cellphone
+                        .toLowerCase()
+                        .includes(usersFilter.cellphone.toLowerCase())
+                    : true;
+                  const matchedDepartment =
+                    usersFilter.employeeDepartmentId &&
+                    usersFilter.employeeDepartmentId > 0
+                      ? employeeDepartmentId ===
+                        usersFilter.employeeDepartmentId
+                      : true;
+                  return (
+                    matchedFirstname &&
+                    matchedLastname &&
+                    matchedEmpTitle &&
+                    matchedEmail &&
+                    matchedPhone &&
+                    matchedExt &&
+                    matchedCellphone &&
+                    matchedDepartment
+                  );
+                },
+              )
+              .map(entry => {
+                const { id, empTitle, email, cellphone, image } = entry;
+                return [
+                  {
+                    value: forPrint ? (
+                      getCustomerName(entry)
+                    ) : (
+                      <div className="AdvancedSearchEmployee">
+                        <div
+                          className={clsx('AdvancedSearchEmployeeImage', {
+                            image,
+                          })}
+                          style={
+                            image
+                              ? {
+                                  backgroundImage: `url('${employeeImages[image]}')`,
+                                }
+                              : {}
+                          }
+                        />
+                        {getCustomerName(entry)}
+                      </div>
+                    ),
+                  },
+                  { value: empTitle },
+                  { value: email },
+                  { value: getCustomerPhoneWithExt(entry) },
+                  {
+                    value: cellphone,
+                    actions: [
+                      ...(isAdmin
+                        ? [
+                            <Tooltip
+                              key="spiff"
+                              content="View Spiff Log"
+                              placement="top"
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  // TODO replace with ComponentsLibrary
+                                  document.location.href = [
+                                    '/index.cfm?action=admin:tasks.spiff_tool_logs',
+                                    `type=tool`,
+                                    `rt=all`,
+                                    `reportUserId=${id}`,
+                                  ].join('&');
+                                }}
+                              >
+                                <BuildIcon />
+                              </IconButton>
+                            </Tooltip>,
+                            <Tooltip
+                              key="timesheet"
+                              content="View Timesheet"
+                              placement="top"
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  // TODO replace with ComponentsLibrary
+                                  document.location.href = [
+                                    '/index.cfm?action=admin:timesheet.timesheetview',
+                                    `timesheetAction=cardview`,
+                                    `user_id=${id}`,
+                                    `search_user_id=${id}`,
+                                    `timesheetadmin=${isAdmin}`,
+                                  ].join('&');
+                                }}
+                              >
+                                <AccessTimeIcon />
+                              </IconButton>
+                            </Tooltip>,
+                          ]
+                        : []),
+                      <Tooltip
+                        key="view"
+                        content="View Employee"
+                        placement="top"
+                      >
                         <IconButton
-                          key="edit"
                           size="small"
-                          onClick={handlePendingPropertyEditingToggle(entry)}
+                          onClick={handlePendingEmployeeViewingToggle(entry)}
                         >
-                          <EditIcon />
-                        </IconButton>,
-                      ]
-                    : []),
-                  ...(deletableProperties
-                    ? [
-                        <IconButton
-                          key="delete"
-                          size="small"
-                          onClick={handlePendingPropertyDeletingToggle(entry)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>,
-                      ]
-                    : []),
-                ],
-              },
-            ];
-          });
-    return [];
-  }, [
-    filter,
-    loading,
-    events,
-    loadingDicts,
-    accounting,
-    onSelectEvent,
-    isAdmin,
-  ]);
+                          <SearchIcon />
+                        </IconButton>
+                      </Tooltip>,
+                      ...(editableEmployees && isAdmin
+                        ? [
+                            <Tooltip
+                              key="edit"
+                              content="Edit Employee"
+                              placement="top"
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={handlePendingEmployeeEditingToggle(
+                                  entry,
+                                )}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>,
+                          ]
+                        : []),
+                      ...(deletableEmployees && isAdmin
+                        ? [
+                            <Tooltip
+                              key="delete"
+                              content="Delete Employee"
+                              placement="top"
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={handlePendingEmployeeDeletingToggle(
+                                  entry,
+                                )}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>,
+                          ]
+                        : []),
+                    ],
+                  },
+                ];
+              });
+      if (kind === 'properties')
+        return loading
+          ? makeFakeRows(4, 3)
+          : properties.map(entry => {
+              const { address, city, zip, subdivision } = entry;
+              return [
+                { value: address },
+                { value: subdivision },
+                { value: city },
+                {
+                  value: zip,
+                  actions: [
+                    <IconButton
+                      key="view"
+                      size="small"
+                      onClick={handlePendingPropertyViewingToggle(entry)}
+                    >
+                      <SearchIcon />
+                    </IconButton>,
+                    ...(editableProperties
+                      ? [
+                          <IconButton
+                            key="edit"
+                            size="small"
+                            onClick={handlePendingPropertyEditingToggle(entry)}
+                          >
+                            <EditIcon />
+                          </IconButton>,
+                        ]
+                      : []),
+                    ...(deletableProperties
+                      ? [
+                          <IconButton
+                            key="delete"
+                            size="small"
+                            onClick={handlePendingPropertyDeletingToggle(entry)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>,
+                        ]
+                      : []),
+                  ],
+                },
+              ];
+            });
+      return [];
+    },
+    [filter, loading, events, loadingDicts, accounting, onSelectEvent, isAdmin],
+  );
   const makeNewEmployee = () => {
     const req = new User();
     req.setIsEmployee(1);
@@ -2017,7 +2097,7 @@ export const AdvancedSearch: FC<Props> = ({
                   'Office, ext.',
                   { title: 'Cell', align: 'right' },
                 ]}
-                data={getData().map(rows => rows.map(row => row.value))}
+                data={getData(true).map(rows => rows.map(row => row.value))}
                 noEntriesText="No employees matching criteria"
               />
             </PrintPage>
@@ -2213,12 +2293,14 @@ export const AdvancedSearch: FC<Props> = ({
           fullScreen
         >
           <Form
+            key={employeeFormKey}
             title={`${pendingEmployeeEditing.id ? 'Edit' : 'Add'} Employee`}
-            schema={SCHEMA_EMPLOYEES_EDIT}
+            schema={makeSchemaEmployeesEdit(pendingEmployeeEditing)}
             data={pendingEmployeeEditing}
             onClose={handlePendingEmployeeEditingToggle(undefined)}
             onSave={onSaveEmployee}
             disabled={saving}
+            stickySectionBar
           />
         </Modal>
       )}
