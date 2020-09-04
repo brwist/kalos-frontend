@@ -6,11 +6,14 @@ import React, {
   CSSProperties,
 } from 'react';
 
+export type Deg = 0 | 90 | 180 | 270;
+
 interface Props {
   url: string;
-  deg?: 0 | 90 | 180 | 270;
+  deg?: Deg;
   classname?: string;
   styles?: CSSProperties;
+  onImageSizeLoaded?: (width: number, height: number) => void;
 }
 
 export const RotatedImage: FC<Props> = ({
@@ -18,13 +21,18 @@ export const RotatedImage: FC<Props> = ({
   deg = 0,
   classname = '',
   styles = {},
+  onImageSizeLoaded,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const makeImage = useCallback(() => {
+  const processImage = useCallback(() => {
     const img = new Image();
     img.src = url;
     img.onload = image => {
-      const { width } = image.target as HTMLImageElement;
+      const { width, height } = image.target as HTMLImageElement;
+      if (onImageSizeLoaded) {
+        onImageSizeLoaded(width, height);
+      }
+      if ([0, 180].includes(deg)) return;
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -45,12 +53,8 @@ export const RotatedImage: FC<Props> = ({
       ctx.drawImage(img, 0, 0, w, h);
       ctx.save();
     };
-  }, [url, deg]);
-  useEffect(() => {
-    if ([90, 270].includes(deg)) {
-      makeImage();
-    }
-  }, [deg, makeImage]);
+  }, [url, deg, onImageSizeLoaded]);
+  useEffect(processImage, [deg, processImage]);
   if ([0, 180].includes(deg))
     return (
       <img

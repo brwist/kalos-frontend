@@ -30,6 +30,10 @@ const Examples = ({
       />
       <hr />
       <SectionBar
+        pagination={{ count: 11, onChangePage: console.log, page: 1 }}
+      />
+      <hr />
+      <SectionBar
         actions={Array.from(Array(5)).map((_, idx) => ({
           label: `Button ${idx + 1}`,
         }))}

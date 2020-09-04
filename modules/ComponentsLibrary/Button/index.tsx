@@ -42,7 +42,11 @@ export const Button: FC<Props> = ({
         className && className,
         `size-${size}`,
         `status-${status}`,
-        { compact, status },
+        {
+          compact,
+          status,
+          icon: !label,
+        },
       )}
       variant={variant}
       color={color}

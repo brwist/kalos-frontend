@@ -11,6 +11,7 @@ interface Props {
 
 export const ConfirmDelete: FC<Props> = ({ name, kind, ...props }) => (
   <Confirm title="Confirm delete" {...props}>
-    Are you sure, you want to delete {kind} <strong>{name}</strong>?
+    Are you sure, you want to delete {kind}
+    {name && <strong> {name}</strong>}?
   </Confirm>
 );

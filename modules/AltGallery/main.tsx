@@ -1,20 +1,20 @@
 import React from 'react';
-import Button from '@material-ui/core/Button';
-import Grid from '@material-ui/core/Grid';
-import Dialog from '@material-ui/core/Dialog';
+import CloudDownloadIcon from '@material-ui/icons/CloudDownload';
+import DeleteIcon from '@material-ui/icons/Delete';
 import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
-import ChevronLeftTwoTone from '@material-ui/icons/ChevronLeftTwoTone';
-import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
-import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { Button as ButtonLib } from '../ComponentsLibrary/Button';
 import { Tooltip } from '../ComponentsLibrary/Tooltip';
+import { Modal } from '../ComponentsLibrary/Modal';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
+import { ConfirmDelete } from '../ComponentsLibrary/ConfirmDelete';
+import { RotatedImage, Deg } from '../ComponentsLibrary/RotatedImage';
+import { Loader } from '../Loader/main';
 import { ENDPOINT } from '../../constants';
 import { getMimeType } from '../../helpers';
+import './styles.less';
 
 export interface GalleryData {
   key: string;
@@ -39,7 +39,10 @@ interface state {
   isLoading: boolean;
   fileList: GalleryData[];
   documentList: DocData[];
-  rotation: number;
+  rotation: Deg;
+  deleting: boolean;
+  imageWidth: number;
+  imageHeight: number;
 }
 
 interface DocData {
@@ -62,27 +65,29 @@ export class AltGallery extends React.PureComponent<props, state> {
       fileList: props.fileList,
       documentList: [],
       rotation: 0,
+      deleting: false,
+      imageWidth: 1,
+      imageHeight: 1,
     };
 
     this.S3Client = new S3Client(ENDPOINT);
     this.DocClient = new TransactionDocumentClient(ENDPOINT);
     this.toggleOpen = this.toggleOpen.bind(this);
     this.download = this.download.bind(this);
-    this.changeImage = this.changeImage.bind(this);
     this.fetch = this.fetch.bind(this);
     this.delete = this.delete.bind(this);
   }
 
-  setRotation(rotation: number) {
+  setRotation(rotation: Deg) {
     this.setState({ rotation });
   }
 
   rotateLeft = () => {
-    this.setRotation(this.state.rotation - 90);
+    this.setRotation(((this.state.rotation - 90) % 360) as Deg);
   };
 
   rotateRight = () => {
-    this.setRotation(this.state.rotation + 90);
+    this.setRotation(((this.state.rotation + 90) % 360) as Deg);
   };
 
   toggleOpen() {
@@ -98,14 +103,12 @@ export class AltGallery extends React.PureComponent<props, state> {
       const docs = await this.DocClient.byTransactionID(
         this.props.transactionID,
       );
-
       const galleryData = docs.map(d => {
         return {
           key: `${this.props.transactionID}-${d.reference}`,
           bucket: 'kalos-transactions',
         };
       });
-
       const documentList = docs.map(d => ({
         reference: d.reference,
         id: d.transactionId,
@@ -135,22 +138,11 @@ export class AltGallery extends React.PureComponent<props, state> {
     });
   }
 
-  changeImage(n: number) {
-    return () => {
-      this.setState(prevState => {
-        let newImg = prevState.activeImage + n;
-        if (newImg < 0) {
-          newImg = 0;
-        }
-        return {
-          activeImage: newImg,
-        };
-      }, this.fetch);
-    };
-  }
-
-  nextImage = this.changeImage(1);
-  prevImage = this.changeImage(-1);
+  changeImage = (activeImage: number) =>
+    this.setState(
+      { activeImage, rotation: 0, imageWidth: 1, imageHeight: 1 },
+      this.fetch,
+    );
 
   delete() {
     this.setState({ isLoading: true }, async () => {
@@ -190,7 +182,6 @@ export class AltGallery extends React.PureComponent<props, state> {
     const img = documentList[activeImage];
     const el = document.createElement('a');
     el.download = img.reference;
-
     const blob = new Blob([img.data!], {
       type: this.S3Client.getMimeType(img.reference) || '.png',
     });
@@ -212,7 +203,6 @@ export class AltGallery extends React.PureComponent<props, state> {
         } else {
           data = await this.fetchDocData(doc);
         }
-
         const blob = new Blob([data], {
           type: getMimeType(doc.reference) || '.png',
         });
@@ -228,10 +218,22 @@ export class AltGallery extends React.PureComponent<props, state> {
     });
   }
 
+  handleLoadImage = (imageWidth: number, imageHeight: number) =>
+    this.setState({ imageWidth, imageHeight });
+
   render() {
     const { iconButton, text, disabled, title, canDelete } = this.props;
-    const { isOpen, activeImage, currentURL, isLoading, fileList } = this.state;
-
+    const {
+      isOpen,
+      activeImage,
+      currentURL,
+      isLoading,
+      fileList,
+      imageHeight,
+      imageWidth,
+      rotation,
+    } = this.state;
+    const vertical = imageWidth < imageHeight;
     const button = iconButton ? (
       <Tooltip content={text}>
         <span>
@@ -247,143 +249,99 @@ export class AltGallery extends React.PureComponent<props, state> {
     ) : (
       <ButtonLib onClick={this.toggleOpen} disabled={disabled} label={text} />
     );
-    const imgHeight = Math.floor(window.innerHeight * 0.8);
     const mimeType = this.S3Client.getMimeType(
       fileList[activeImage]?.key || '',
     );
     let top = 0;
-    if ((this.state.rotation / 90) % 2 !== 0) {
+    if ((rotation / 90) % 2 !== 0) {
       top = 150;
     }
     return (
       <>
         {button}
-        <Dialog
-          aria-labelledby="transition-modal-title"
+        <Modal
           open={isOpen}
           onClose={this.toggleOpen}
-          onEnter={this.fetch}
+          onOpen={this.fetch}
           fullScreen
+          classname="AltGalleryModal"
         >
-          <Grid
-            container
-            direction="column"
-            alignItems="stretch"
-            justify="flex-start"
-            wrap="nowrap"
-          >
-            <Grid
-              container
-              item
-              direction="row"
-              justify="space-evenly"
-              alignItems="center"
-            >
-              {title && <Typography>{title}</Typography>}
-              <Typography>
-                {activeImage + 1} of {fileList.length}
-              </Typography>
-              <Button
-                onClick={this.toggleOpen}
-                size="large"
-                style={{ height: 44 }}
-                endIcon={<CloseTwoTone />}
-              >
-                Close
-              </Button>
-              {canDelete && (
-                <Button
-                  onClick={this.delete}
-                  size="large"
-                  style={{ height: 44 }}
-                >
-                  Delete Image
-                </Button>
-              )}
-            </Grid>
-            {!isLoading && (
-              <Grid
-                item
-                container
-                direction="column"
-                justify="center"
-                alignItems="stretch"
-                style={{
-                  overflow: 'scroll',
-                  minHeight: imgHeight,
-                  maxHeight: window.innerHeight,
-                  width: '100%',
-                }}
-              >
-                {mimeType === 'application/pdf' && (
-                  <iframe
-                    src={currentURL}
-                    style={{ maxWidth: '100%', height: imgHeight }}
-                  ></iframe>
-                )}
-                {mimeType !== 'application/pdf' && (
-                  <img
-                    src={currentURL}
-                    style={{
-                      maxWidth: '100%',
-                      height: '100%',
-                      transform: `rotate(${this.state.rotation}deg)`,
-                      position: 'relative',
-                      top,
-                    }}
-                    onClick={this.rotateRight}
-                  />
-                )}
-              </Grid>
-            )}
-            {isLoading && (
-              <Grid
-                container
-                direction="column"
-                justify="center"
-                alignItems="center"
-                style={{ height: imgHeight, width: '100%' }}
-              >
-                <CircularProgress />
-              </Grid>
-            )}
-            <Grid
-              container
-              item
-              direction="row"
-              justify="center"
-              alignItems="center"
-            >
-              <Button
-                onClick={this.prevImage}
-                disabled={activeImage === 0}
-                size="large"
-                style={{ height: 44 }}
-                startIcon={<ChevronLeftTwoTone />}
-              >
-                Prev
-              </Button>
+          <SectionBar
+            title={title}
+            actions={[
+              ...(canDelete
+                ? [
+                    {
+                      label: '',
+                      onClick: () => this.setState({ deleting: true }),
+                      startIcon: <DeleteIcon />,
+                    },
+                  ]
+                : []),
               {
-                <Button
-                  onClick={this.download}
-                  size="large"
-                  style={{ height: 44 }}
-                >
-                  Download
-                </Button>
-              }
-              <Button
-                onClick={this.nextImage}
-                disabled={activeImage === fileList.length - 1}
-                size="large"
-                style={{ height: 44 }}
-                endIcon={<ChevronRightTwoTone />}
-              >
-                Next
-              </Button>
-            </Grid>
-          </Grid>
-        </Dialog>
+                label: '',
+                onClick: this.download,
+                startIcon: <CloudDownloadIcon />,
+              },
+              { label: 'Close', onClick: this.toggleOpen },
+            ]}
+            fixedActions
+            className="AltGallerySectionBar"
+          />
+          {isLoading ? (
+            <Loader />
+          ) : mimeType === 'application/pdf' ? (
+            <iframe src={currentURL} className="AltGalleryIframe"></iframe>
+          ) : (
+            <table
+              key={`${rotation}-${imageWidth}-${imageHeight}`}
+              className="AltGalleryTable"
+              cellPadding={0}
+              cellSpacing={0}
+            >
+              <tbody>
+                <tr>
+                  <td
+                    align="center"
+                    valign="middle"
+                    className="AltGalleryTd"
+                    onClick={this.rotateRight}
+                  >
+                    <RotatedImage
+                      url={currentURL}
+                      deg={rotation}
+                      onImageSizeLoaded={this.handleLoadImage}
+                      styles={
+                        (vertical && [0, 180].includes(rotation)) ||
+                        (!vertical && [90, 270].includes(rotation))
+                          ? { maxWidth: '100vw' }
+                          : { maxHeight: 'calc(100vh - 94px)' }
+                      }
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+          <SectionBar
+            pagination={{
+              count: fileList.length,
+              page: activeImage,
+              onChangePage: this.changeImage,
+            }}
+            sticky={false}
+            className="AltGalleryFooter"
+          />
+        </Modal>
+        {this.state.deleting && (
+          <ConfirmDelete
+            open
+            onConfirm={this.delete}
+            onClose={() => this.setState({ deleting: false })}
+            kind="this file"
+            name=""
+          />
+        )}
       </>
     );
   }
