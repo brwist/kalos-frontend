@@ -10,14 +10,15 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import TablePagination from '@material-ui/core/TablePagination';
+import Pagination from '@material-ui/lab/Pagination';
 import { Field, Value } from '../Field';
 import { Actions, ActionsProps } from '../Actions';
 import './styles.less';
 
-export type Pagination = {
+export type PaginationType = {
   count: number;
   page: number;
-  rowsPerPage: number;
+  rowsPerPage?: number;
   onChangePage: (page: number) => void;
 };
 
@@ -26,7 +27,7 @@ interface Props {
   subtitle?: ReactNode;
   actions?: ActionsProps;
   className?: string;
-  pagination?: Pagination;
+  pagination?: PaginationType;
   styles?: CSSProperties;
   fixedActions?: boolean;
   footer?: ReactNode;
@@ -130,20 +131,35 @@ export const SectionBar: FC<Props> = ({
                 </Typography>
               )}
             </div>
-            {pagination && pagination.count > 0 && !collapsed && (
-              <TablePagination
-                classes={{
-                  root: 'SectionBarToolbarRoot',
-                  toolbar: 'SectionBarToolbar',
-                }}
-                component="div"
-                rowsPerPageOptions={[]}
-                {...pagination}
-                onChangePage={handleChangePage}
-                backIconButtonProps={{ size: 'small' }}
-                nextIconButtonProps={{ size: 'small' }}
-              />
-            )}
+            {pagination &&
+              pagination.count > 0 &&
+              !collapsed &&
+              (pagination.rowsPerPage ? (
+                <TablePagination
+                  classes={{
+                    root: 'SectionBarToolbarRoot',
+                    toolbar: 'SectionBarToolbar',
+                  }}
+                  component="div"
+                  rowsPerPageOptions={[]}
+                  {...pagination}
+                  rowsPerPage={pagination.rowsPerPage}
+                  onChangePage={handleChangePage}
+                  backIconButtonProps={{ size: 'small' }}
+                  nextIconButtonProps={{ size: 'small' }}
+                />
+              ) : (
+                <Pagination
+                  count={pagination.count}
+                  page={pagination.page + 1}
+                  onChange={(_, page) => pagination.onChangePage(page - 1)}
+                  siblingCount={1}
+                  boundaryCount={1}
+                  variant="outlined"
+                  color="primary"
+                  className="SectionBarPagination"
+                />
+              ))}
           </div>
           <div
             className={clsx('SectionBarActions', {

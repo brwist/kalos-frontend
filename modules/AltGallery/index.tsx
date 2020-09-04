@@ -9,7 +9,7 @@ ReactDOM.render(
       title="Alt Gallery"
       text="Lorem ipsum..."
       fileList={[]}
-      transactionID={1}
+      transactionID={8398}
     />
   </StyledPage>,
   document.getElementById('root'),

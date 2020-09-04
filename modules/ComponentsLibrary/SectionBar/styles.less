@@ -36,6 +36,12 @@
   &Header {
     display: flex;
     align-items: center;
+    flex-grow: 1;
+  }
+  &Pagination {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
   }
   &Actions {
     display: flex;
@@ -50,9 +56,9 @@
   }
   &TitleWrapper {
     user-select: none;
-    width: 100%;
     margin-top: .spacing() [];
     margin-bottom: .spacing() [];
+    margin-right: .spacing() [];
     @media @bp-xs-down {
       margin-top: .spacing(0.5) [];
       margin-bottom: .spacing(0.5) [];

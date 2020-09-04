@@ -1,0 +1,35 @@
+@import '../../styles/index.less';
+
+.AltGallery {
+  &Modal {
+    overflow-x: auto;
+  }
+  &SectionBar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+  &Iframe {
+    width: 100%;
+    height: calc(100vh - 96px);
+  }
+  &Table {
+    min-width: 100%;
+    min-height: 100%;
+    padding-top: 48px;
+    padding-bottom: 46px;
+    box-sizing: border-box;
+  }
+  &Td {
+    min-width: 100%;
+    min-height: 100%;
+  }
+  &Footer {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    position: fixed;
+  }
+}
