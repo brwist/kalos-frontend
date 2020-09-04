@@ -58,6 +58,7 @@ import PromptPaymentReport from './PromptPaymentReport/examples';
 import PropertyEdit from './PropertyEdit/examples';
 import QuoteSelector from './QuoteSelector/examples';
 import Reports from './Reports/examples';
+import RotatedImage from './RotatedImage/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
 import ServiceCall from './ServiceCall/examples';
@@ -138,6 +139,7 @@ const COMPONENTS = {
   PropertyEdit,
   QuoteSelector,
   Reports,
+  RotatedImage,
   Search,
   SectionBar,
   ServiceCall,
