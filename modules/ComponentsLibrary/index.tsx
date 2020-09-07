@@ -35,6 +35,7 @@ import Field from './Field/examples';
 import FileGallery from './FileGallery/examples';
 import FileTags from './FileTags/examples';
 import Form from './Form/examples';
+import Gallery from './Gallery/examples';
 import GanttChart from './GanttChart/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
@@ -116,6 +117,7 @@ const COMPONENTS = {
   FileGallery,
   FileTags,
   Form,
+  Gallery,
   GanttChart,
   InfoTable,
   InternalDocuments,
