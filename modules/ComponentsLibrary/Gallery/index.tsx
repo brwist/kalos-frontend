@@ -27,7 +27,6 @@ interface props {
   text: string;
   iconButton?: boolean;
   disabled?: boolean;
-  onDelete?(): void;
   canDelete?: boolean;
   transactionID: number;
 }
@@ -168,8 +167,10 @@ export class Gallery extends React.PureComponent<props, state> {
             documentList,
             activeImage,
             isOpen,
+            deleting: false,
+            isLoading: false,
           };
-        });
+        }, this.fetch);
       } catch (err) {
         alert('File could not be deleted');
         this.setState({ isLoading: false });
@@ -340,6 +341,7 @@ export class Gallery extends React.PureComponent<props, state> {
             onClose={() => this.setState({ deleting: false })}
             kind="this file"
             name=""
+            disabled={isLoading}
           />
         )}
       </>

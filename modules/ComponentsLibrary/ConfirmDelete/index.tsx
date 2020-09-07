@@ -1,10 +1,7 @@
 import React, { FC } from 'react';
-import { Confirm } from '../Confirm';
+import { Confirm, Props as ConfirmProps } from '../Confirm';
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
+interface Props extends ConfirmProps {
   kind: string;
   name: string;
 }

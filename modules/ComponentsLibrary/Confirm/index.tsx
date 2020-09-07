@@ -4,7 +4,7 @@ import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import './styles.less';
 
-interface Props {
+export interface Props {
   title?: string;
   open: boolean;
   onClose: () => void;
@@ -12,6 +12,7 @@ interface Props {
   submitLabel?: string;
   submitDisabled?: boolean;
   maxWidth?: number | 'none';
+  disabled?: boolean;
 }
 
 export const Confirm: FC<Props> = ({
@@ -23,13 +24,18 @@ export const Confirm: FC<Props> = ({
   submitDisabled = false,
   maxWidth = 370,
   children,
+  disabled = false,
 }) => (
   <Modal open={open} onClose={onClose} compact maxWidth={maxWidth}>
     <SectionBar
       title={title}
       actions={[
-        { label: submitLabel, onClick: onConfirm, disabled: submitDisabled },
-        { label: 'Cancel', onClick: onClose, variant: 'outlined' },
+        {
+          label: submitLabel,
+          onClick: onConfirm,
+          disabled: disabled || submitDisabled,
+        },
+        { label: 'Cancel', onClick: onClose, variant: 'outlined', disabled },
       ]}
       fixedActions
     />
