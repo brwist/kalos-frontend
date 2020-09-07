@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { AltGallery } from './main';
+import { Gallery } from '../ComponentsLibrary/Gallery';
 import { StyledPage } from '../PageWrapper/styled';
 
 ReactDOM.render(
   <StyledPage>
-    <AltGallery
+    <Gallery
       title="Alt Gallery"
       text="Lorem ipsum..."
       fileList={[]}
