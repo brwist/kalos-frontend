@@ -1,5 +1,6 @@
 import React, { FC, CSSProperties } from 'react';
 import clsx from 'clsx';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import ButtonUI from '@material-ui/core/Button';
 import './styles.less';
 
@@ -20,6 +21,7 @@ export interface Props extends Style {
   span?: boolean;
   startIcon?: JSX.Element;
   style?: CSSProperties;
+  loading?: boolean;
 }
 
 export const Button: FC<Props> = ({
@@ -33,6 +35,7 @@ export const Button: FC<Props> = ({
   status,
   className,
   children,
+  loading,
   ...props
 }) => {
   const Component = (
@@ -42,10 +45,12 @@ export const Button: FC<Props> = ({
         className && className,
         `size-${size}`,
         `status-${status}`,
+        `variant-${variant}`,
         {
           compact,
           status,
           icon: !label,
+          disabled: props.disabled,
         },
       )}
       variant={variant}
@@ -54,6 +59,12 @@ export const Button: FC<Props> = ({
       {...props}
       component={span ? 'span' : 'button'}
     >
+      {loading && (
+        <CircularProgress
+          className="ButtonWrapperLoader"
+          size={size === 'xsmall' ? 10 : 16}
+        />
+      )}
       {children}
       {label}
     </ButtonUI>
