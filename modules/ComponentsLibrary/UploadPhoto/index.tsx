@@ -19,6 +19,9 @@ interface Props {
 type Entry = {
   file: string;
   name: string;
+  eventId: number;
+  geolocationLat: number;
+  geolocationLng: number;
 };
 
 export const UploadPhoto: FC<Props> = ({
@@ -31,6 +34,14 @@ export const UploadPhoto: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const [geolocating, setGeolocating] = useState<boolean>(false);
+  const [formData, setFormData] = useState<Entry>({
+    file: '',
+    name: '',
+    eventId: 0,
+    geolocationLat: 0,
+    geolocationLng: 0,
+  });
   const [formKey, setFormKey] = useState<number>(0);
   const handleFileLoad = useCallback(
     (fileData: string) => setFileData(fileData),
@@ -60,6 +71,35 @@ export const UploadPhoto: FC<Props> = ({
     },
     [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId],
   );
+  const onLocationSuccess = useCallback(
+    ({
+      coords: { latitude: geolocationLat, longitude: geolocationLng },
+    }: Position) => {
+      setFormData({ ...formData, geolocationLat, geolocationLng });
+      setGeolocating(false);
+      setFormKey(formKey + 1);
+    },
+    [setGeolocating, setFormData, formData, setFormKey, formKey],
+  );
+  const onLocationError = useCallback(
+    ({ message }: PositionError) => {
+      setGeolocating(false);
+      alert(message);
+    },
+    [setGeolocating],
+  );
+  const handleCheckLocation = useCallback(() => {
+    setGeolocating(true);
+    navigator.geolocation.getCurrentPosition(
+      onLocationSuccess,
+      onLocationError,
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      },
+    );
+  }, [onLocationSuccess, onLocationError, setGeolocating]);
   const SCHEMA: Schema<Entry> = [
     [
       {
@@ -77,18 +117,52 @@ export const UploadPhoto: FC<Props> = ({
         required: true,
       },
     ],
+    [
+      {
+        name: 'eventId',
+        label: 'Service Call Id',
+        type: 'eventId',
+      },
+    ],
+    [
+      {
+        headline: true,
+        label: 'Location',
+        actions: [
+          {
+            label: 'Check Location',
+            compact: true,
+            onClick: handleCheckLocation,
+            disabled: saving || geolocating,
+            loading: geolocating,
+            variant: 'outlined',
+            size: 'xsmall',
+          },
+        ],
+      },
+    ],
+    [
+      {
+        name: 'geolocationLat',
+        label: 'Latitude',
+        type: 'number',
+      },
+      {
+        name: 'geolocationLng',
+        label: 'Longitude',
+        type: 'number',
+      },
+    ],
   ] as Schema<Entry>;
   return (
     <Form<Entry>
       key={formKey}
       title={title}
       schema={SCHEMA}
-      data={{
-        file: '',
-        name: '',
-      }}
+      data={formData}
       onClose={onClose}
       onSave={handleSubmit}
+      onChange={setFormData}
       submitLabel="Upload"
       cancelLabel="Close"
       disabled={saving}
