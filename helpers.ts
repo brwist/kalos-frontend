@@ -2507,11 +2507,11 @@ export const saveProperty = async (
   propertyId?: number,
 ) => {
   const req = new Property();
+  const fieldMaskList = ['UserId'];
   req.setUserId(userId);
   if (propertyId) {
     req.setId(propertyId);
   }
-  const fieldMaskList = [];
   for (const fieldName in data) {
     const { upperCaseProp, methodName } = getRPCFields(fieldName);
     //@ts-ignore

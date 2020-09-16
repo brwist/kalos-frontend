@@ -3,27 +3,37 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import InfoIcon from '@material-ui/icons/Info';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '@kalos-core/kalos-rpc/Property';
 import {
-  ENDPOINT,
   USA_STATES_OPTIONS,
   RESIDENTIAL_OPTIONS,
+  ROWS_PER_PAGE,
 } from '../../../constants';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
+import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
-import { getRPCFields, loadGeoLocationByAddress } from '../../../helpers';
+import {
+  loadGeoLocationByAddress,
+  PropertyType,
+  loadPropertiesByFilter,
+  PropertiesFilter,
+  saveProperty,
+  deletePropertyById,
+  getPropertyAddress,
+} from '../../../helpers';
 import './properties.less';
-
-const PropertyClientService = new PropertyClient(ENDPOINT);
-
-type Entry = Property.AsObject;
 
 const PROP_LEVEL = 'Used for property-level billing only';
 
-const COLUMNS: Columns = [{ name: 'Address' }, { name: 'Neighborhood' }];
+const COLUMNS: Columns = [
+  { name: 'Address' },
+  { name: 'Neighborhood' },
+  { name: 'City, State' },
+  { name: 'Zip' },
+];
 
 interface Props {
   userID: number;
@@ -31,23 +41,26 @@ interface Props {
 
 export const Properties: FC<Props> = props => {
   const { userID } = props;
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [entries, setEntries] = useState<PropertyType[]>([]);
+  const [count, setCount] = useState<number>(0);
+  const [page, setPage] = useState<number>(0);
+  const [filter, setFilter] = useState<PropertiesFilter>({});
   const [loaded, setLoaded] = useState<boolean>(false);
   const [formKey, setFormKey] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
-  const [editing, setEditing] = useState<Entry>();
+  const [editing, setEditing] = useState<PropertyType>();
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [deleting, setDeleting] = useState<Entry>();
+  const [deleting, setDeleting] = useState<PropertyType>();
   const [pendingDelete, setPendingDelete] = useState<boolean>(false);
 
   const handleSetEditing = useCallback(
-    (editing?: Entry) => () => setEditing(editing),
+    (editing?: PropertyType) => () => setEditing(editing),
     [setEditing],
   );
 
   const handleSetDeleting = useCallback(
-    (deleting?: Entry) => () => {
+    (deleting?: PropertyType) => () => {
       setDeleting(deleting);
       setPendingDelete(!!deleting);
     },
@@ -57,14 +70,21 @@ export const Properties: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoaded(false);
     setLoading(true);
-    const req = new Property();
-    req.setUserId(userID);
-    req.setIsActive(1);
     try {
-      const { resultsList } = (
-        await PropertyClientService.BatchGet(req)
-      ).toObject();
-      setEntries(resultsList);
+      const { results, totalCount } = await loadPropertiesByFilter({
+        page,
+        filter: {
+          ...filter,
+          userId: userID,
+        },
+        sort: {
+          orderBy: 'property_address',
+          orderByField: 'address',
+          orderDir: 'ASC',
+        },
+      });
+      setEntries(results);
+      setCount(totalCount);
       setLoading(false);
       setLoaded(true);
       return null;
@@ -72,7 +92,7 @@ export const Properties: FC<Props> = props => {
       setError(true);
     }
     setLoading(false);
-  }, [setLoading, userID, setEntries, setError]);
+  }, [setLoading, userID, setEntries, setError, setCount, page, filter]);
 
   useEffect(() => {
     if (!loaded) {
@@ -81,24 +101,14 @@ export const Properties: FC<Props> = props => {
   }, [loaded, load]);
 
   const handleSave = useCallback(
-    async (data: Entry) => {
+    async (data: PropertyType) => {
       if (editing) {
-        const isNew = editing.id === 0;
         setSaving(true);
-        const req = new Property();
-        req.setUserId(userID);
-        if (!isNew) {
-          req.setId(editing.id);
-        }
-        const fieldMaskList = [];
-        for (const fieldName in data) {
-          const { upperCaseProp, methodName } = getRPCFields(fieldName);
-          //@ts-ignore
-          req[methodName](data[fieldName]);
-          fieldMaskList.push(upperCaseProp);
-        }
-        req.setFieldMaskList(fieldMaskList);
-        await PropertyClientService[isNew ? 'Create' : 'Update'](req);
+        await saveProperty(
+          data,
+          userID,
+          editing.id === 0 ? undefined : editing.id,
+        );
         setSaving(false);
         handleSetEditing()();
         load();
@@ -108,11 +118,8 @@ export const Properties: FC<Props> = props => {
   );
 
   const handleDelete = useCallback(async () => {
-    // TODO: delete customer related data + redirect somewhere?
     if (deleting) {
-      const entry = new Property();
-      entry.setId(deleting.id);
-      await PropertyClientService.Delete(entry);
+      await deletePropertyById(deleting.id);
       handleSetDeleting()();
       load();
     }
@@ -131,7 +138,31 @@ export const Properties: FC<Props> = props => {
     }
   }, [editing, setEditing, formKey, setFormKey]);
 
-  const SCHEMA_PROPERTY_INFORMATION: Schema<Entry> = [
+  const handleViewEntry = useCallback(
+    (id: number) => () => {
+      document.location.href = [
+        '/index.cfm?action=admin:properties.details',
+        `user_id=${userID}`,
+        `property_id=${id}`,
+      ].join('&');
+    },
+    [userID],
+  );
+
+  const handlePageChange = useCallback(
+    page => {
+      setPage(page);
+      setLoaded(false);
+    },
+    [setPage, setLoaded],
+  );
+
+  const handleSearch = useCallback(() => {
+    setPage(0);
+    setLoaded(false);
+  }, [setPage, setLoaded]);
+
+  const SCHEMA_PROPERTY_INFORMATION: Schema<PropertyType> = [
     [{ label: 'Personal Details', headline: true, description: PROP_LEVEL }],
     [
       { label: 'First Name', name: 'firstname' },
@@ -185,43 +216,37 @@ export const Properties: FC<Props> = props => {
     [{ label: 'Notes', name: 'notes', multiline: true }],
   ];
 
-  const handleViewEntry = useCallback(
-    (id: number) => () => {
-      document.location.href = [
-        '/index.cfm?action=admin:properties.details',
-        `user_id=${userID}`,
-        `property_id=${id}`,
-      ].join('&');
-    },
-    [userID],
-  );
+  const SCHEMA_FILTER: Schema<PropertiesFilter> = [
+    [
+      { name: 'address', label: 'Address', type: 'search' },
+      { name: 'subdivision', label: 'Neighborhood', type: 'search' },
+      { name: 'city', label: 'City', type: 'search' },
+      {
+        name: 'zip',
+        label: 'Zip',
+        type: 'search',
+        actions: [{ label: 'Search', onClick: handleSearch }],
+      },
+    ],
+  ];
 
   const data: Data = entries.map(entry => {
     const { id, address, city, state, zip, subdivision } = entry;
     return [
-      { value: `${address}, ${city}, ${state} ${zip}` },
+      { value: address },
+      { value: subdivision },
+      { value: `${city}, ${state}` },
       {
-        value: subdivision,
+        value: zip,
         actions: [
-          <IconButton
-            key={0}
-            style={{ marginLeft: 4 }}
-            size="small"
-            onClick={handleViewEntry(id)}
-          >
+          <IconButton key="view" size="small" onClick={handleViewEntry(id)}>
             <InfoIcon />
           </IconButton>,
-          <IconButton
-            key={1}
-            style={{ marginLeft: 4 }}
-            size="small"
-            onClick={handleSetEditing(entry)}
-          >
+          <IconButton key="edit" size="small" onClick={handleSetEditing(entry)}>
             <EditIcon />
           </IconButton>,
           <IconButton
-            key={2}
-            style={{ marginLeft: 4 }}
+            key="delete"
             size="small"
             onClick={handleSetDeleting(entry)}
           >
@@ -244,7 +269,18 @@ export const Properties: FC<Props> = props => {
                 onClick: handleSetEditing(new Property().toObject()),
               },
             ]}
+            pagination={{
+              count,
+              onChangePage: handlePageChange,
+              page,
+              rowsPerPage: ROWS_PER_PAGE,
+            }}
           >
+            <PlainForm
+              data={filter}
+              schema={SCHEMA_FILTER}
+              onChange={setFilter}
+            />
             <InfoTable
               columns={COLUMNS}
               data={data}
@@ -256,7 +292,7 @@ export const Properties: FC<Props> = props => {
       </div>
       {editing && (
         <Modal open onClose={handleSetEditing()}>
-          <Form<Entry>
+          <Form<PropertyType>
             key={formKey}
             title={`${editing.id === 0 ? 'Add' : 'Edit'} Property Information`}
             schema={SCHEMA_PROPERTY_INFORMATION}
@@ -273,7 +309,7 @@ export const Properties: FC<Props> = props => {
           onClose={handleSetDeleting()}
           onConfirm={handleDelete}
           kind="Property"
-          name={`${deleting.address}`}
+          name={getPropertyAddress(deleting)}
         />
       )}
     </>
