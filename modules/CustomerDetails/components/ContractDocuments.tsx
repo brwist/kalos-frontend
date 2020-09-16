@@ -9,7 +9,7 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Link } from '../../ComponentsLibrary/Link';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
-import { makeFakeRows } from '../../../helpers';
+import { makeFakeRows, getCFAppUrl } from '../../../helpers';
 
 type Entry = Document.AsObject;
 
@@ -132,7 +132,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
                   size="small"
                   onClick={() => {
                     document.location.href = [
-                      '/index.cfm?action=admin:contracts.docemail',
+                      getCFAppUrl('admin:contracts.docemail'),
                       `user_id=${userID}`,
                       `document_id=${contractId}`,
                       'p=1',
@@ -161,7 +161,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
             {
               label: 'Add',
               url: [
-                '/index.cfm?action=admin:contracts.docaddS3',
+                getCFAppUrl('admin:contracts.docaddS3'),
                 `user_id=${userID}`,
                 `contract_id=${contractId}`,
                 'p=1',

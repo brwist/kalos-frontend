@@ -16,7 +16,12 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Field, Value } from '../../ComponentsLibrary/Field';
-import { getRPCFields, formatDate, UserType } from '../../../helpers';
+import {
+  getRPCFields,
+  formatDate,
+  UserType,
+  getCFAppUrl,
+} from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
 import './contractInfo.less';
 
@@ -288,7 +293,7 @@ export const ContractInfo: FC<Props> = props => {
   const handleNewContract = useCallback(
     () =>
       (document.location.href = [
-        '/index.cfm?action=admin:contracts.contractnew',
+        getCFAppUrl('admin:contracts.contractnew'),
         `contract_id=${entry.id}`,
       ].join('&')),
     [entry],
@@ -416,7 +421,11 @@ export const ContractInfo: FC<Props> = props => {
                   : [
                       {
                         label: 'Add',
-                        onClick: handleToggleEditing,
+                        // onClick: handleToggleEditing, // TODO finish edit form
+                        url: [
+                          getCFAppUrl('admin:contracts.add'),
+                          `user_id=${userID}`,
+                        ].join('&'),
                       },
                     ]
               }
@@ -428,19 +437,24 @@ export const ContractInfo: FC<Props> = props => {
               actions={[
                 {
                   label: 'Edit',
-                  onClick: handleToggleEditing,
+                  // onClick: handleToggleEditing, // TODO: finish edit form
+                  url: [
+                    getCFAppUrl('admin:contracts.edit'),
+                    `contract_id=${id}`,
+                    'p=1',
+                  ].join('&'),
                 },
                 {
                   label: 'Materials',
                   url: [
-                    '/index.cfm?action=admin:contracts.materials',
+                    getCFAppUrl('admin:contracts.materials'),
                     `contract_id=${id}`,
                   ].join('&'),
                 },
                 {
                   label: 'Summary',
                   url: [
-                    '/index.cfm?action=admin:contracts.summary',
+                    getCFAppUrl('admin:contracts.summary'),
                     `contract_id=${id}`,
                     'refpage=1',
                   ].join('&'),
