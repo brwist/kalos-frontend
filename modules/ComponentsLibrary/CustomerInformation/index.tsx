@@ -24,6 +24,7 @@ import {
   UserClientService,
   getPropertyAddress,
   CustomEventsHandler,
+  getCFAppUrl,
 } from '../../../helpers';
 import './styles.less';
 
@@ -297,15 +298,27 @@ export const CustomerInformation: FC<Props> = ({
                 : [
                     {
                       label: 'Calendar',
-                      url: `/index.cfm?action=admin:service.calendar&calendarAction=week&userIds=${userID}`,
+                      url: [
+                        getCFAppUrl('admin:service.calendar'),
+                        'calendarAction=week',
+                        `userIds=${userID}`,
+                      ].join('&'),
                     },
                     {
                       label: 'Call History',
-                      url: `/index.cfm?action=admin:customers.listPhoneCallLogs&code=customers&id=${userID}`,
+                      url: [
+                        getCFAppUrl('admin:customers.listPhoneCallLogs'),
+                        'code=customers',
+                        `id=${userID}`,
+                      ].join('&'),
                     },
                     {
                       label: 'Tasks',
-                      url: `/index.cfm?action=admin:tasks.list&code=customers&id=${userID}`,
+                      url: [
+                        getCFAppUrl('admin:tasks.list'),
+                        'code=customers',
+                        `id=${userID}`,
+                      ].join('&'),
                     },
                     {
                       label: notification ? 'Notification' : 'Add Notification',
@@ -348,7 +361,7 @@ export const CustomerInformation: FC<Props> = ({
                   {
                     label: 'View',
                     url: [
-                      '/index.cfm?action=admin:properties.customerpendingbilling',
+                      getCFAppUrl('admin:properties.customerpendingbilling'),
                       `user_id=${userID}`,
                       `property_id=${propertyId}`,
                     ].join('&'),

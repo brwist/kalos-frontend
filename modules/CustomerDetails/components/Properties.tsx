@@ -23,6 +23,7 @@ import {
   saveProperty,
   deletePropertyById,
   getPropertyAddress,
+  getCFAppUrl,
 } from '../../../helpers';
 import './properties.less';
 
@@ -141,7 +142,7 @@ export const Properties: FC<Props> = props => {
   const handleViewEntry = useCallback(
     (id: number) => () => {
       document.location.href = [
-        '/index.cfm?action=admin:properties.details',
+        getCFAppUrl('admin:properties.details'),
         `user_id=${userID}`,
         `property_id=${id}`,
       ].join('&');
