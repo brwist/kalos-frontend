@@ -251,10 +251,10 @@ export function TransactionRow({
         />,
         <AltGallery
           key="receiptPhotos"
-          title="Receipt Photos"
+          title="Transaction Photos"
           fileList={getGalleryData(txn)}
           transactionID={txn.id}
-          text="View receipt photos"
+          text="View photos"
           iconButton
         />,
         <TxnLog key="txnLog" iconButton txnID={txn.id} />,

@@ -405,7 +405,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                   onClick={this.toggleAddFromGallery}
                 />
                 <AltGallery
-                  title="Receipt Photo(s)"
+                  title="Transaction Photo(s)"
                   text="View Photo(s)"
                   fileList={getGalleryData(this.state.txn)}
                   transactionID={this.state.txn.id}
@@ -489,7 +489,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           <Modal open onClose={this.toggleAddFromGallery} fullScreen>
             <FileGallery
               loggedUserId={userID}
-              title="Add Receipt from Gallery"
+              title="Add Photo from Gallery"
               bucket="kalos-pre-transactions"
               onClose={this.toggleAddFromGallery}
               onAdd={this.addFromGallery}

@@ -4,7 +4,7 @@ import { FileGallery } from './';
 export default () => (
   <FileGallery
     loggedUserId={8418}
-    title="Add Receipt from Gallery"
+    title="Add Photo from Gallery"
     bucket="testbuckethelios" //"kalos-pre-transaction"
     onClose={() => console.log('close')}
     onAdd={console.log}

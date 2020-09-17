@@ -237,7 +237,7 @@ const SideMenu = ({
       {openUploadReceipt && (
         <Modal open onClose={toggleOpenUploadReceipt}>
           <UploadPhoto
-            title="Upload Receipt Photo"
+            title="Upload Photo"
             bucket="kalos-pre-transactions"
             onClose={toggleOpenUploadReceipt}
             loggedUserId={userID}
