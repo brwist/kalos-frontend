@@ -6,6 +6,7 @@ import {
   getFileExt,
   getMimeType,
   upsertFile,
+  SUBJECT_TAGS,
 } from '../../../helpers';
 import './styles.less';
 
@@ -14,6 +15,7 @@ interface Props {
   title?: string;
   bucket: string;
   onClose: (() => void) | null;
+  defaultTag?: string;
 }
 
 type Entry = {
@@ -22,6 +24,7 @@ type Entry = {
   eventId: number;
   geolocationLat: number;
   geolocationLng: number;
+  tag: string;
 };
 
 export const UploadPhoto: FC<Props> = ({
@@ -29,6 +32,7 @@ export const UploadPhoto: FC<Props> = ({
   bucket,
   loggedUserId,
   title = 'Upload Photo',
+  defaultTag = 'Receipt',
 }) => {
   const [fileData, setFileData] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
@@ -41,6 +45,11 @@ export const UploadPhoto: FC<Props> = ({
     eventId: 0,
     geolocationLat: 0,
     geolocationLng: 0,
+    tag: (
+      SUBJECT_TAGS.find(({ label }) => label === defaultTag) || {
+        value: '',
+      }
+    ).value,
   });
   const [formKey, setFormKey] = useState<number>(0);
   const handleFileLoad = useCallback(
@@ -54,7 +63,12 @@ export const UploadPhoto: FC<Props> = ({
       setSaving(true);
       const ext = getFileExt(data.file);
       const name = `${data.name}-${Math.floor(Date.now() / 1000)}.${ext}`;
-      const status = await uploadFileToS3Bucket(name, fileData, bucket);
+      const status = await uploadFileToS3Bucket(
+        name,
+        fileData,
+        bucket,
+        data.tag,
+      );
       setSaving(false);
       if (status === 'ok') {
         await upsertFile({
@@ -103,8 +117,16 @@ export const UploadPhoto: FC<Props> = ({
   const SCHEMA: Schema<Entry> = [
     [
       {
+        name: 'tag',
+        label: 'Tag',
+        required: true,
+        options: SUBJECT_TAGS,
+      },
+    ],
+    [
+      {
         name: 'file',
-        label: 'Receipt Photo',
+        label: 'Photo',
         type: 'file',
         required: true,
         onFileLoad: handleFileLoad,
@@ -113,7 +135,7 @@ export const UploadPhoto: FC<Props> = ({
     [
       {
         name: 'name',
-        label: 'Receipt Name',
+        label: 'Name',
         required: true,
       },
     ],

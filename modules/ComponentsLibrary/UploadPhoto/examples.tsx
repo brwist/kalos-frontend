@@ -5,8 +5,18 @@ import { ExampleTitle } from '../helpers';
 export default () => (
   <>
     <ExampleTitle>default</ExampleTitle>
-    <UploadPhoto bucket="testbuckethelios" onClose={console.log} />
-    <ExampleTitle>title, no close</ExampleTitle>
-    <UploadPhoto bucket="testbuckethelios" onClose={null} title="Lorem ipsum" />
+    <UploadPhoto
+      loggedUserId={101253}
+      bucket="testbuckethelios"
+      onClose={console.log}
+    />
+    <ExampleTitle>title, no close, with defaultSubjectTag</ExampleTitle>
+    <UploadPhoto
+      loggedUserId={101253}
+      bucket="testbuckethelios"
+      onClose={null}
+      title="Lorem ipsum"
+      defaultTag="Data Tag"
+    />
   </>
 );
