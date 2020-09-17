@@ -97,7 +97,7 @@ export const employeeItems = ({
     icon: <AccessTimeIcon />,
   },
   {
-    title: 'Upload Receipt Photo',
+    title: 'Upload Photo',
     icon: <AddPhotoIcon />,
     onClick: toggleUploadReceipt,
     button: true,
