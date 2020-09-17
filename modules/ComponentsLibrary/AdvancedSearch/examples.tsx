@@ -16,7 +16,6 @@ export default () => (
       title="Search"
       kinds={['serviceCalls', 'customers', 'properties']}
       loggedUserId={101253}
-      eventsWithAccounting
       eventsWithAdd
     />
     <ExampleTitle>Service Calls</ExampleTitle>
@@ -25,6 +24,13 @@ export default () => (
       loggedUserId={101253}
       kinds={['serviceCalls']}
       deletableEvents
+    />
+    <ExampleTitle>Service Calls, eventsWithAccounting</ExampleTitle>
+    <AdvancedSearch
+      title="Service Calls"
+      loggedUserId={101253}
+      kinds={['serviceCalls']}
+      eventsWithAccounting
     />
     <ExampleTitle>Service Calls Picker</ExampleTitle>
     <AdvancedSearch
