@@ -2,7 +2,12 @@ import uniq from 'lodash/uniq';
 import sortBy from 'lodash/sortBy';
 import compact from 'lodash/compact';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
-import { S3Client, URLObject, FileObject } from '@kalos-core/kalos-rpc/S3File';
+import {
+  S3Client,
+  URLObject,
+  FileObject,
+  SUBJECT_TAGS,
+} from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
 import { UserClient, User, CardData } from '@kalos-core/kalos-rpc/User';
@@ -2405,6 +2410,7 @@ export const uploadFileToS3Bucket = async (
   fileName: string,
   fileData: string,
   bucketName: string,
+  tagString?: string,
 ) => {
   try {
     const urlObj = new URLObject();
@@ -2412,10 +2418,18 @@ export const uploadFileToS3Bucket = async (
     urlObj.setBucket(bucketName);
     const type = getMimeType(fileName);
     urlObj.setContentType(type || '');
+    if (tagString) {
+      urlObj.setTagString(tagString);
+    }
     const urlRes = await S3ClientService.GetUploadURL(urlObj);
     const uploadRes = await fetch(urlRes.url, {
       body: b64toBlob(fileData.split(';base64,')[1], fileName),
       method: 'PUT',
+      headers: tagString
+        ? {
+            'x-amz-tagging': tagString,
+          }
+        : {},
     });
     if (uploadRes.status === 200) {
       return 'ok';
@@ -3199,6 +3213,7 @@ function getDateTimeArgs(str: string): dateTimeRes {
 }
 
 export {
+  SUBJECT_TAGS,
   getDateArgs,
   getDateTimeArgs,
   cfURL,
