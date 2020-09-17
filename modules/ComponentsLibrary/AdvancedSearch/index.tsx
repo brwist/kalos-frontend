@@ -69,6 +69,7 @@ import {
   getFileS3BucketUrl,
   CustomEventsHandler,
   uploadFileToS3Bucket,
+  getCFAppUrl,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -554,6 +555,15 @@ export const AdvancedSearch: FC<Props> = ({
   ]);
   const handleSelectEvent = useCallback(
     (event: EventType) => () => {
+      if (accounting) {
+        document.location.href = [
+          getCFAppUrl('admin:service.editServicecall'),
+          `id=${event.id}`,
+          `user_id=${event.customer!.id}`,
+          `property_id=${event.property!.id}`,
+        ].join('&');
+        return;
+      }
       if (onSelectEvent) {
         onSelectEvent(event);
       }
@@ -561,7 +571,7 @@ export const AdvancedSearch: FC<Props> = ({
         onClose();
       }
     },
-    [onSelectEvent, onClose],
+    [onSelectEvent, onClose, accounting],
   );
   const handleEmployeeDepartmentsOpenToggle = useCallback(
     (open: boolean) => () => setEmployeeDepartmentsOpen(open),
@@ -1538,25 +1548,28 @@ export const AdvancedSearch: FC<Props> = ({
                 ? [
                     {
                       value: formatDate(dateStarted),
-                      onClick: onSelectEvent
-                        ? handleSelectEvent(entry)
-                        : undefined,
+                      onClick:
+                        onSelectEvent || accounting
+                          ? handleSelectEvent(entry)
+                          : undefined,
                     },
                     {
                       value: accounting
                         ? getCustomerName(customer)
                         : getCustomerNameAndBusinessName(customer),
-                      onClick: onSelectEvent
-                        ? handleSelectEvent(entry)
-                        : undefined,
+                      onClick:
+                        onSelectEvent || accounting
+                          ? handleSelectEvent(entry)
+                          : undefined,
                     },
                     ...(accounting
                       ? [
                           {
                             value: getBusinessName(customer),
-                            onClick: onSelectEvent
-                              ? handleSelectEvent(entry)
-                              : undefined,
+                            onClick:
+                              onSelectEvent || accounting
+                                ? handleSelectEvent(entry)
+                                : undefined,
                           },
                         ]
                       : []),
@@ -1566,17 +1579,19 @@ export const AdvancedSearch: FC<Props> = ({
                         : `${getPropertyAddress(property)} ${getCustomerPhone(
                             customer,
                           )}`,
-                      onClick: onSelectEvent
-                        ? handleSelectEvent(entry)
-                        : undefined,
+                      onClick:
+                        onSelectEvent || accounting
+                          ? handleSelectEvent(entry)
+                          : undefined,
                     },
                     ...(accounting
                       ? [
                           {
                             value: property?.city || '',
-                            onClick: onSelectEvent
-                              ? handleSelectEvent(entry)
-                              : undefined,
+                            onClick:
+                              onSelectEvent || accounting
+                                ? handleSelectEvent(entry)
+                                : undefined,
                           },
                         ]
                       : []),
@@ -1584,9 +1599,10 @@ export const AdvancedSearch: FC<Props> = ({
                       ? [
                           {
                             value: property?.zip || '',
-                            onClick: onSelectEvent
-                              ? handleSelectEvent(entry)
-                              : undefined,
+                            onClick:
+                              onSelectEvent || accounting
+                                ? handleSelectEvent(entry)
+                                : undefined,
                           },
                         ]
                       : []),
@@ -1594,9 +1610,10 @@ export const AdvancedSearch: FC<Props> = ({
                       ? [
                           {
                             value: property?.phone || '',
-                            onClick: onSelectEvent
-                              ? handleSelectEvent(entry)
-                              : undefined,
+                            onClick:
+                              onSelectEvent || accounting
+                                ? handleSelectEvent(entry)
+                                : undefined,
                           },
                         ]
                       : []),
@@ -1608,9 +1625,10 @@ export const AdvancedSearch: FC<Props> = ({
                             : logJobNumber}
                         </span>
                       ),
-                      onClick: onSelectEvent
-                        ? handleSelectEvent(entry)
-                        : undefined,
+                      onClick:
+                        onSelectEvent || accounting
+                          ? handleSelectEvent(entry)
+                          : undefined,
                     },
                     {
                       value: (
@@ -1618,9 +1636,10 @@ export const AdvancedSearch: FC<Props> = ({
                           {accounting ? jobType : `${jobType} / ${jobSubtype}`}
                         </span>
                       ),
-                      onClick: onSelectEvent
-                        ? handleSelectEvent(entry)
-                        : undefined,
+                      onClick:
+                        onSelectEvent || accounting
+                          ? handleSelectEvent(entry)
+                          : undefined,
                     },
                     {
                       value: (
@@ -1628,9 +1647,10 @@ export const AdvancedSearch: FC<Props> = ({
                           {accounting ? jobSubtype : logJobStatus}
                         </span>
                       ),
-                      onClick: onSelectEvent
-                        ? handleSelectEvent(entry)
-                        : undefined,
+                      onClick:
+                        onSelectEvent || accounting
+                          ? handleSelectEvent(entry)
+                          : undefined,
                       actions: [
                         ...(onSelectEvent
                           ? []
