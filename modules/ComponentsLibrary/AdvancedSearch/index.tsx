@@ -2,6 +2,7 @@ import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import clsx from 'clsx';
 import { User } from '@kalos-core/kalos-rpc/User';
 import cloneDeep from 'lodash/cloneDeep';
+import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -1621,7 +1622,13 @@ export const AdvancedSearch: FC<Props> = ({
                       value: (
                         <span style={canceledStyle}>
                           {accounting
-                            ? logJobNumber.substr(0, 8)
+                            ? compact(
+                                logJobNumber
+                                  .replace(/[A-Za-z]/g, '')
+                                  .split('-'),
+                              )
+                                .join('-')
+                                .replace(/~/g, '')
                             : logJobNumber}
                         </span>
                       ),
