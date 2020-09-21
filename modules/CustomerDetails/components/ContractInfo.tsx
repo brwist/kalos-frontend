@@ -157,7 +157,7 @@ export const ContractInfo: FC<Props> = props => {
     const entry = new Contract();
     entry.setUserId(userID);
     entry.setIsActive(1);
-    entry.setOrderBy('contract_date_created');
+    entry.setOrderBy('contract_date_started');
     entry.setOrderDir('desc');
     try {
       await loadProperties();
