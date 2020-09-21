@@ -157,13 +157,15 @@ export const ContractInfo: FC<Props> = props => {
     const entry = new Contract();
     entry.setUserId(userID);
     entry.setIsActive(1);
+    entry.setOrderBy('contract_date_created');
+    entry.setOrderDir('desc');
     try {
       await loadProperties();
       await loadFrequencies();
       const { resultsList, totalCount } = (
         await ContractClientService.BatchGet(entry)
       ).toObject();
-      if (totalCount === 1) {
+      if (totalCount > 0) {
         const contract = resultsList[0];
         setPropertiesIds(contract.properties.split(',').map(id => +id));
         await loadInvoice(contract);
