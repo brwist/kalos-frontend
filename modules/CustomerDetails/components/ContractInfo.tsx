@@ -162,11 +162,8 @@ export const ContractInfo: FC<Props> = props => {
     try {
       await loadProperties();
       await loadFrequencies();
-      const { resultsList, totalCount } = (
-        await ContractClientService.BatchGet(entry)
-      ).toObject();
-      if (totalCount > 0) {
-        const contract = resultsList[0];
+      const contract = await ContractClientService.Get(entry);
+      if (contract) {
         setPropertiesIds(contract.properties.split(',').map(id => +id));
         await loadInvoice(contract);
         setEntry(contract);
