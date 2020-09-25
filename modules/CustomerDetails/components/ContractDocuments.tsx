@@ -46,10 +46,10 @@ export class ContractDocuments extends PureComponent<Props, State> {
 
   load = async () => {
     this.setState({ loading: true });
-    const { userID, contractId } = this.props;
+    const { userID } = this.props;
     const entry = new Document();
     entry.setUserId(userID);
-    entry.setContractId(contractId);
+    entry.setFieldMaskList(['PropertyId']);
     try {
       const response = await this.DocumentClient.BatchGet(entry);
       const { resultsList: entries, totalCount: count } = response.toObject();
