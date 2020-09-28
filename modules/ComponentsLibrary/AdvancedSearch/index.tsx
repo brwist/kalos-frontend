@@ -71,6 +71,7 @@ import {
   CustomEventsHandler,
   uploadFileToS3Bucket,
   getCFAppUrl,
+  refreshToken,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -225,6 +226,7 @@ export const AdvancedSearch: FC<Props> = ({
     [setPendingAddProperty],
   );
   const loadDicts = useCallback(async () => {
+    await refreshToken();
     setLoadingDicts(true);
     const jobTypes = await loadJobTypes();
     setJobTypes(jobTypes);
@@ -411,8 +413,17 @@ export const AdvancedSearch: FC<Props> = ({
     [setPendingEventAdding],
   );
   const handlePendingEventEditingToggle = useCallback(
-    (pendingEventEditing?: EventType) => () =>
-      setPendingEventEditing(pendingEventEditing),
+    (pendingEventEditing?: EventType) => () => {
+      if (pendingEventEditing) {
+        document.location.href = [
+          getCFAppUrl('admin:service.editServicecall'),
+          `id=${pendingEventEditing.id}`,
+          `user_id=${pendingEventEditing.customer!.id}`,
+          `property_id=${pendingEventEditing.property!.id}`,
+        ].join('&');
+      }
+      // setPendingEventEditing(pendingEventEditing); // TODO restore when EditServiceCall is finished
+    },
     [setPendingEventEditing],
   );
   const handlePendingEventDeletingToggle = useCallback(
@@ -660,6 +671,11 @@ export const AdvancedSearch: FC<Props> = ({
         type: 'search',
       },
       {
+        name: 'logPo',
+        label: 'PO',
+        type: 'search',
+      },
+      {
         name: 'jobTypeId',
         label: 'Job Type',
         options: [
@@ -686,8 +702,13 @@ export const AdvancedSearch: FC<Props> = ({
     ],
     [
       {
-        name: 'dateStarted',
-        label: 'Date Started',
+        name: 'dateStartedFrom',
+        label: 'Date Started - From',
+        type: 'date',
+      },
+      {
+        name: 'dateStartedTo',
+        label: 'Date Started - To',
         type: 'date',
       },
       {
@@ -1236,7 +1257,7 @@ export const AdvancedSearch: FC<Props> = ({
             { name: 'Zip' },
             { name: 'Phone' },
             {
-              name: 'Job #',
+              name: 'Job # / PO',
               ...(eventsSort.orderByField === 'logJobNumber'
                 ? {
                     dir: eventsSort.orderDir,
@@ -1292,7 +1313,7 @@ export const AdvancedSearch: FC<Props> = ({
             { name: 'Customer Name - Business Name' },
             { name: 'Address City Zip Phone' },
             {
-              name: 'Job #',
+              name: 'Job # / PO',
               ...(eventsSort.orderByField === 'logJobNumber'
                 ? {
                     dir: eventsSort.orderDir,
@@ -1540,6 +1561,7 @@ export const AdvancedSearch: FC<Props> = ({
                 jobType,
                 jobSubtype,
                 logJobStatus,
+                logPo,
               } = entry;
               const canceledStyle =
                 !accounting && logJobStatus === 'Canceled'
@@ -1630,6 +1652,8 @@ export const AdvancedSearch: FC<Props> = ({
                                 .join('-')
                                 .replace(/~/g, '')
                             : logJobNumber}
+                          {' / '}
+                          {logPo || '-'}
                         </span>
                       ),
                       onClick:
@@ -2137,6 +2161,7 @@ export const AdvancedSearch: FC<Props> = ({
           schema={getSchema()}
           data={filter}
           onChange={handleFormChange}
+          onSubmit={filter.kind === 'serviceCalls' ? handleLoad : undefined}
           className="AdvancedSearchForm"
           disabled={loadingDicts}
         />

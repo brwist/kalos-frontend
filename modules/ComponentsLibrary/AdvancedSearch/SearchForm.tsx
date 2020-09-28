@@ -7,6 +7,7 @@ interface Props {
   schema: Schema<SearchForm>;
   data: SearchForm;
   onChange: (data: SearchForm) => void;
+  onSubmit?: () => void;
   className: string;
   disabled: boolean;
 }
@@ -15,6 +16,7 @@ export const SearchFormComponent: FC<Props> = ({
   schema,
   data,
   onChange,
+  onSubmit,
   className,
   disabled,
 }) => {
@@ -31,6 +33,7 @@ export const SearchFormComponent: FC<Props> = ({
       schema={schema}
       data={formData}
       onChange={debounce(handleChange, 300)}
+      onSubmit={onSubmit}
       compact
       className={className}
       disabled={disabled}

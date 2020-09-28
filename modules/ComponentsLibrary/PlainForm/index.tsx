@@ -61,12 +61,14 @@ export interface PlainFormProps<T> extends Style {
 
 interface Props<T> extends PlainFormProps<T> {
   onChange: (data: T) => void;
+  onSubmit?: () => void;
   validations?: Validation;
 }
 export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   schema,
   data,
   onChange,
+  onSubmit,
   disabled = false,
   readOnly = false,
   compact = false,
@@ -114,8 +116,15 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     [formData, setFormData, onChange],
   );
   return (
-    <div
+    <form
       className={clsx(className, 'PlainForm', { compact, fullWidth, disabled })}
+      onSubmit={event => {
+        event.stopPropagation();
+        event.preventDefault();
+        if (onSubmit) {
+          onSubmit();
+        }
+      }}
     >
       {error && (
         <Typography className="PlainFormError" component="div">
@@ -171,6 +180,7 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         </div>
       ))}
       {children}
-    </div>
+      <button type="submit">submit</button>
+    </form>
   );
 };
