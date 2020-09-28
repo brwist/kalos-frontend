@@ -5,7 +5,7 @@ import React, {
   useState,
   forwardRef,
 } from 'react';
-import { SectionBar, Pagination } from '../SectionBar';
+import { SectionBar, PaginationType } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
 import {
   PlainForm,
@@ -29,7 +29,7 @@ export interface Props<T> extends PlainFormProps<T> {
   onClose: (() => void) | null;
   onChange?: (data: T) => void;
   actions?: ButtonProps[];
-  pagination?: Pagination;
+  pagination?: PaginationType;
   submitLabel?: string;
   cancelLabel?: string;
   stickySectionBar?: boolean;

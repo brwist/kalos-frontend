@@ -2184,7 +2184,10 @@ export type EventsFilter = {
   lastname?: string;
   businessname?: string;
   logJobNumber?: string;
+  logPo?: string;
   dateStarted?: string;
+  dateStartedFrom?: string;
+  dateStartedTo?: string;
   dateEnded?: string;
   address?: string;
   city?: string;
@@ -2220,6 +2223,8 @@ export const loadEventsByFilter = async ({
   const {
     logJobNumber,
     dateStarted,
+    dateStartedFrom,
+    dateStartedTo,
     dateEnded,
     address,
     zip,
@@ -2234,6 +2239,7 @@ export const loadEventsByFilter = async ({
     logPaymentStatus,
     departmentId,
     logTechnicianAssigned,
+    logPo,
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Event();
@@ -2263,6 +2269,9 @@ export const loadEventsByFilter = async ({
   if (jobTypeId) {
     req.setJobTypeId(jobTypeId);
   }
+  if (logPo) {
+    req.setLogPo(logPo);
+  }
   if (jobSubtypeId) {
     req.setJobSubtypeId(jobSubtypeId);
   }
@@ -2287,6 +2296,18 @@ export const loadEventsByFilter = async ({
     }
     if (dateEnded) {
       req.setDateEnded(`%${dateEnded}%`);
+    }
+  }
+  if (dateStartedFrom || dateStartedTo) {
+    if (dateStartedFrom && dateStartedTo) {
+      req.setDateRangeList(['>=', dateStartedFrom, '<=', dateStartedTo]);
+      req.setDateTargetList(['date_started', 'date_started']);
+    } else if (dateStartedFrom) {
+      req.setDateRangeList(['>=', dateStartedFrom]);
+      req.setDateTargetList(['date_started']);
+    } else if (dateStartedTo) {
+      req.setDateRangeList(['<=', dateStartedTo]);
+      req.setDateTargetList(['date_started']);
     }
   }
   if (address) {
