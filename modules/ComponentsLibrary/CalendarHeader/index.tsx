@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import MuiToolbar from '@material-ui/core/Toolbar';
@@ -18,11 +18,13 @@ interface Props {
   submitDisabled?: boolean;
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   actions?: ActionsProps;
+  asideTitle?: ReactNode;
 }
 
 export const CalendarHeader: FC<Props> = ({
   selectedDate,
   title,
+  asideTitle,
   onDateChange,
   onSubmit,
   submitLabel = 'Submit',
@@ -42,6 +44,7 @@ export const CalendarHeader: FC<Props> = ({
         onChange={onDateChange}
         weekStartsOn={weekStartsOn}
       />
+      {asideTitle}
       <Typography className="CalendarHeaderTitle" variant="subtitle1">
         {title}
       </Typography>

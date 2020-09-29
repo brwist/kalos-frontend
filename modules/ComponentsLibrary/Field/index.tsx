@@ -109,6 +109,7 @@ export interface Props<T> extends SchemaProps<T> {
   placeholder?: string;
   style?: CSSProperties;
   compact?: boolean;
+  white?: boolean;
 }
 
 export const getDefaultValueByType = (type: Type) => {
@@ -140,6 +141,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   style = {},
   compact = false,
   technicianAsEmployee = false,
+  white = false,
   ...props
 }) => {
   const signatureRef = useRef(null);
@@ -711,7 +713,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   if (options) {
     const id = `${name}-select-label`;
     return (
-      <div className={clsx('Field', className)} style={style}>
+      <div className={clsx('Field', className, { white })} style={style}>
         <FormControl
           className={clsx('FieldInput', { compact, disabled })}
           fullWidth

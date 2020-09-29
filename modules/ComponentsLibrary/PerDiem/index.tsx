@@ -11,6 +11,7 @@ import { Calendar } from '../Calendar';
 import { CalendarColumn } from '../CalendarColumn';
 import { CalendarCard } from '../CalendarCard';
 import { Form, Schema } from '../Form';
+import { Field } from '../Field';
 import { Modal } from '../Modal';
 import { Confirm } from '../Confirm';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -35,12 +36,12 @@ import {
   submitPerDiemById,
   formatDate,
   approvePerDiemById,
-  loadPerDiemByDepartmentIdAndDateStarted,
+  loadPerDiemByDepartmentIdsAndDateStarted,
   loadGovPerDiem,
   usd,
   refreshToken,
 } from '../../../helpers';
-import { JOB_STATUS_COLORS, MEALS_RATE } from '../../../constants';
+import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 
 export interface Props {
@@ -54,7 +55,7 @@ const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 export const getStatus = (
   dateApproved: string,
   dateSubmitted: string,
-  isManager: boolean
+  isManager: boolean,
 ): {
   status: 'APPROVED' | 'PENDING_APPROVE' | 'PENDING_SUBMIT';
   button: string;
@@ -152,7 +153,12 @@ export const PerDiemComponent: FC<Props> = ({
   const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
     [key: number]: PerDiemType[];
   }>({});
-  const [managerDepartmentId, setManagerDepartmentId] = useState<number>();
+  const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
+    [],
+  );
+  const [managerFilterDepartmentId, setManagerFilterDepartmentId] = useState<
+    number
+  >(0);
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
       meals: number;
@@ -178,8 +184,8 @@ export const PerDiemComponent: FC<Props> = ({
       startOfWeek(perDiem ? new Date(perDiem.dateStarted) : new Date(), {
         weekStartsOn: 6,
       }),
-      -0
-    )
+      -0,
+    ),
   );
   const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] = useState<
     PerDiemRowType
@@ -196,7 +202,7 @@ export const PerDiemComponent: FC<Props> = ({
       const zipCodes = [perDiem]
         .reduce(
           (aggr, { rowsList }) => [...aggr, ...rowsList],
-          [] as PerDiemRowType[]
+          [] as PerDiemRowType[],
         )
         .map(({ zipCode }) => zipCode);
       const govPerDiems = await loadGovPerDiem(zipCodes, year, month);
@@ -208,11 +214,11 @@ export const PerDiemComponent: FC<Props> = ({
       setUser(user);
       const departments = await loadTimesheetDepartments();
       setDepartments(sortBy(departments, getDepartmentName));
-      const managerDepartment = departments.find(
-        ({ managerId }) => managerId === loggedUserId
+      const managerDepartments = departments.filter(
+        ({ managerId }) => managerId === loggedUserId,
       );
-      if (managerDepartment) {
-        setManagerDepartmentId(managerDepartment.id);
+      if (managerDepartments.length > 0) {
+        setManagerDepartmentIds(managerDepartments.map(({ id }) => id));
       }
       setInitializing(false);
     }
@@ -222,7 +228,7 @@ export const PerDiemComponent: FC<Props> = ({
     setInitializing,
     setUser,
     setDepartments,
-    setManagerDepartmentId,
+    setManagerDepartmentIds,
     setInitialized,
     perDiem,
   ]);
@@ -231,19 +237,20 @@ export const PerDiemComponent: FC<Props> = ({
     setLoading(true);
     const { resultsList } = await loadPerDiemByUserIdAndDateStarted(
       loggedUserId,
-      formatDateFns(dateStarted)
+      formatDateFns(dateStarted),
     );
     let managerPerDiemsList = [] as PerDiemType[];
     let managerPerDiemsOther = {};
-    if (managerDepartmentId) {
-      const managerPerDiems = await loadPerDiemByDepartmentIdAndDateStarted(
-        managerDepartmentId,
-        formatDateFns(dateStarted)
+    if (managerDepartmentIds.length > 0) {
+      const managerPerDiems = await loadPerDiemByDepartmentIdsAndDateStarted(
+        managerDepartmentIds,
+        formatDateFns(dateStarted),
       );
-      managerPerDiemsList = managerPerDiems.resultsList;
+      managerPerDiemsList = managerPerDiems;
+      console.log({ managerPerDiemsList });
       managerPerDiemsOther = await loadPerDiemByUserIdsAndDateStarted(
         managerPerDiemsList.map(({ userId }) => userId),
-        formatDateFns(dateStarted)
+        formatDateFns(dateStarted),
       );
     }
     const year = +format(dateStarted, 'yyyy');
@@ -251,7 +258,7 @@ export const PerDiemComponent: FC<Props> = ({
     const zipCodes = [...resultsList, ...managerPerDiemsList]
       .reduce(
         (aggr, { rowsList }) => [...aggr, ...rowsList],
-        [] as PerDiemRowType[]
+        [] as PerDiemRowType[],
       )
       .map(({ zipCode }) => zipCode);
     const govPerDiems = await loadGovPerDiem(zipCodes, year, month);
@@ -265,7 +272,7 @@ export const PerDiemComponent: FC<Props> = ({
     setLoading,
     setPerDiems,
     dateStarted,
-    managerDepartmentId,
+    managerDepartmentIds,
     setManagerPerDiems,
     setGovPerDiems,
   ]);
@@ -289,7 +296,7 @@ export const PerDiemComponent: FC<Props> = ({
         lodging: 0,
       };
     },
-    [govPerDiems]
+    [govPerDiems],
   );
   const handleSetDateStarted = useCallback(
     (value: Date) => {
@@ -297,12 +304,12 @@ export const PerDiemComponent: FC<Props> = ({
       setDateStarted(value);
       setLoaded(false);
     },
-    [setDateStarted, setLoaded, dateStarted]
+    [setDateStarted, setLoaded, dateStarted],
   );
   const handlePendingPerDiemRowEditToggle = useCallback(
     (pendingPerDiemRowEdit?: PerDiemRowType) => () =>
       setPendingPerDiemRowEdit(pendingPerDiemRowEdit),
-    [setPendingPerDiemRowEdit]
+    [setPendingPerDiemRowEdit],
   );
   const handleSavePerDiem = useCallback(
     async (data: PerDiemType) => {
@@ -311,7 +318,7 @@ export const PerDiemComponent: FC<Props> = ({
       if (
         managerPerDiems.find(
           ({ userId, departmentId }) =>
-            userId === data.userId && departmentId === data.departmentId
+            userId === data.userId && departmentId === data.departmentId,
         )
       ) {
         setPendingPerDiemEditDuplicated(true);
@@ -329,7 +336,7 @@ export const PerDiemComponent: FC<Props> = ({
       setLoaded,
       setPendingPerDiemEditDuplicated,
       managerPerDiems,
-    ]
+    ],
   );
   const handleSavePerDiemRow = useCallback(
     async (perDiemRow: PerDiemRowType) => {
@@ -339,34 +346,34 @@ export const PerDiemComponent: FC<Props> = ({
       setSaving(false);
       setLoaded(false);
     },
-    [setSaving, setPendingPerDiemRowEdit, setLoaded]
+    [setSaving, setPendingPerDiemRowEdit, setLoaded],
   );
   const handlePendingPerDiemDeleteToggle = useCallback(
     (pendingPerDiemDelete?: PerDiemType) => () =>
       setPendingPerDiemDelete(pendingPerDiemDelete),
-    [setPendingPerDiemDelete]
+    [setPendingPerDiemDelete],
   );
   const handlePendingPerDiemRowDeleteToggle = useCallback(
     (pendingPerDiemRowDelete: boolean) => () =>
       setPendingPerDiemRowDelete(pendingPerDiemRowDelete),
-    [setPendingPerDiemRowDelete]
+    [setPendingPerDiemRowDelete],
   );
   const handlePendingPerDiemEditToggle = useCallback(
     (pendingPerDiemEdit?: PerDiemType) => () => {
       setPendingPerDiemEditDuplicated(false);
       setPendingPerDiemEdit(pendingPerDiemEdit);
     },
-    [setPendingPerDiemEdit, setPendingPerDiemEditDuplicated]
+    [setPendingPerDiemEdit, setPendingPerDiemEditDuplicated],
   );
   const handlePendingPerDiemSubmitToggle = useCallback(
     (pendingPerDiemSubmit?: PerDiemType) => () =>
       setPendingPerDiemSubmit(pendingPerDiemSubmit),
-    [setPendingPerDiemSubmit]
+    [setPendingPerDiemSubmit],
   );
   const handlePendingPerDiemApproveToggle = useCallback(
     (pendingPerDiemApprove?: PerDiemType) => () =>
       setPendingPerDiemApprove(pendingPerDiemApprove),
-    [setPendingPerDiemApprove]
+    [setPendingPerDiemApprove],
   );
   const submitPerDiem = useCallback(async () => {
     if (pendingPerDiemSubmit) {
@@ -412,28 +419,28 @@ export const PerDiemComponent: FC<Props> = ({
   ]);
   const handleToggleCheckLodging = useCallback(
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
-    [setCheckLodging]
+    [setCheckLodging],
   );
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
       .filter(({ id }) => !usedDepartments.includes(id))
-      .map((d) => ({
+      .map(d => ({
         value: d.id,
         label: getDepartmentName(d),
       }));
   }, [departments, perDiems]);
   const usedDepartments = useMemo(
     () => perDiems.map(({ departmentId }) => departmentId),
-    [perDiems]
+    [perDiems],
   );
   const availableDapartments = useMemo(
     () =>
       sortBy(
         departments.filter(({ id }) => !usedDepartments.includes(id)),
-        getDepartmentName
+        getDepartmentName,
       ),
-    [usedDepartments, departments]
+    [usedDepartments, departments],
   );
   const addPerDiemDisabled = availableDapartments.length === 0;
   const isAnyManager = departments
@@ -490,7 +497,7 @@ export const PerDiemComponent: FC<Props> = ({
           ? (availableDapartments[0] || [{}]).id
           : departments.map(({ id }) => id).includes(user.employeeDepartmentId)
           ? user.employeeDepartmentId
-          : departments[0].id
+          : departments[0].id,
       );
     }
     return req.toObject();
@@ -510,26 +517,29 @@ export const PerDiemComponent: FC<Props> = ({
       req.setDateString(dateString);
       return req.toObject();
     },
-    []
+    [],
   );
   if (initializing) return <Loader />;
   const filteredPerDiems = perDiem
     ? [perDiem]
     : isAnyManager
-    ? managerPerDiems
+    ? managerPerDiems.filter(({ departmentId }) => {
+        if (managerFilterDepartmentId === 0) return true;
+        return managerFilterDepartmentId === departmentId;
+      })
     : perDiems;
   const allRowsList = filteredPerDiems.reduce(
     (aggr, { rowsList }) => [...aggr, ...rowsList],
-    [] as PerDiemRowType[]
+    [] as PerDiemRowType[],
   );
   const totalMeals = allRowsList.reduce(
     (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
-    0
+    0,
   );
   const totalLodging = allRowsList.reduce(
     (aggr, { zipCode, mealsOnly }) =>
       aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
-    0
+    0,
   );
   return (
     <div>
@@ -549,6 +559,28 @@ export const PerDiemComponent: FC<Props> = ({
             },
             ...(onClose ? [{ label: 'Close', onClick: onClose }] : []),
           ]}
+          asideTitle={
+            isAnyManager ? (
+              <Field
+                label="Department"
+                className="PerDiemManagerDepartment"
+                name="managerDepartment"
+                value={managerFilterDepartmentId}
+                onChange={val => setManagerFilterDepartmentId(+val)}
+                options={[
+                  { label: OPTION_ALL, value: 0 },
+                  ...managerDepartmentIds.map(id => {
+                    const department = departments.find(d => d.id === id)!;
+                    return {
+                      label: getDepartmentName(department),
+                      value: department.id,
+                    };
+                  }),
+                ]}
+                white
+              />
+            ) : undefined
+          }
         >
           {!loading && (
             <>
@@ -572,7 +604,7 @@ export const PerDiemComponent: FC<Props> = ({
         </Alert>
       )}
       {!loading &&
-        filteredPerDiems.map((entry) => {
+        filteredPerDiems.map(entry => {
           const {
             id,
             rowsList,
@@ -593,12 +625,12 @@ export const PerDiemComponent: FC<Props> = ({
             (isOwner && status.status !== 'PENDING_SUBMIT');
           const totalMeals = rowsList.reduce(
             (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
-            0
+            0,
           );
           const totalLodging = rowsList.reduce(
             (aggr, { zipCode, mealsOnly }) =>
               aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
-            0
+            0,
           );
           return (
             <div key={id} className="PerDiemDepartment">
@@ -607,7 +639,9 @@ export const PerDiemComponent: FC<Props> = ({
                   perDiem
                     ? ''
                     : isAnyManager
-                    ? ownerName + ' (user id: ' + userId + ')'
+                    ? `Department: ${getDepartmentName(
+                        department,
+                      )}, User: ${ownerName}`
                     : `Department: ${getDepartmentName(department)}`
                 }
                 subtitle={
@@ -663,7 +697,7 @@ export const PerDiemComponent: FC<Props> = ({
                   {[...Array(7)].map((_, dayOffset) => {
                     const date = formatDateFns(addDays(dateStarted, dayOffset));
                     const rows = rowsList.filter(({ dateString }) =>
-                      dateString.startsWith(date)
+                      dateString.startsWith(date),
                     );
                     const isPerDiemRowUndefined =
                       (isAnyManager
@@ -672,7 +706,7 @@ export const PerDiemComponent: FC<Props> = ({
                       )
                         .reduce(
                           (aggr, { rowsList }) => [...aggr, ...rowsList],
-                          [] as PerDiemRowType[]
+                          [] as PerDiemRowType[],
                         )
                         .filter(({ dateString }) => dateString.startsWith(date))
                         .length === 0;
@@ -709,13 +743,13 @@ export const PerDiemComponent: FC<Props> = ({
                               fullWidth
                               className="PerDiemButton"
                               onClick={handlePendingPerDiemRowEditToggle(
-                                makeNewPerDiemRow(id, date)
+                                makeNewPerDiemRow(id, date),
                               )}
                               size="xsmall"
                               disabled={loading || saving}
                             />
                           )}
-                        {rows.map((entry) => {
+                        {rows.map(entry => {
                           const {
                             id,
                             notes,
@@ -759,7 +793,9 @@ export const PerDiemComponent: FC<Props> = ({
                                 <div className="PerDiemRow">
                                   <strong>Lodging: </strong>
                                   {usd(
-                                    mealsOnly ? 0 : govPerDiems[zipCode].lodging
+                                    mealsOnly
+                                      ? 0
+                                      : govPerDiems[zipCode].lodging,
                                   )}
                                 </div>
                               )}
@@ -827,7 +863,7 @@ export const PerDiemComponent: FC<Props> = ({
           onConfirm={handleDeletePerDiem}
           kind="Per Diem"
           name={`for department ${getDepartmentName(
-            pendingPerDiemDelete.department
+            pendingPerDiemDelete.department,
           )}`}
         />
       )}

@@ -1453,17 +1453,30 @@ export const loadPerDiemByUserIdsAndDateStarted = async (
   );
 };
 
-export const loadPerDiemByDepartmentIdAndDateStarted = async (
-  departmentId: number,
+export const loadPerDiemByDepartmentIdsAndDateStarted = async (
+  departmentIds: number[],
   dateStarted: string,
 ) => {
-  const req = new PerDiem();
-  req.setDepartmentId(departmentId);
-  req.setWithRows(true);
-  req.setIsActive(true);
-  req.setPageNumber(0);
-  req.setDateStarted(`${dateStarted}%`);
-  return (await PerDiemClientService.BatchGet(req)).toObject();
+  const results = await Promise.all(
+    departmentIds.map(async departmentId => {
+      const req = new PerDiem();
+      req.setDepartmentId(departmentId);
+      req.setWithRows(true);
+      req.setIsActive(true);
+      req.setPageNumber(0);
+      req.setDateStarted(`${dateStarted}%`);
+      return (await PerDiemClientService.BatchGet(req)).toObject().resultsList;
+    }),
+  );
+  return results
+    .reduce((aggr, item) => [...aggr, ...item], [])
+    .sort((a, b) => {
+      if (getDepartmentName(a.department) < getDepartmentName(b.department))
+        return -1;
+      if (getDepartmentName(a.department) > getDepartmentName(b.department))
+        return 1;
+      return 0;
+    });
 };
 
 export const loadPerDiemsNeedsAuditing = async (
