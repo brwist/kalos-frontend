@@ -180,7 +180,9 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         </div>
       ))}
       {children}
-      <button type="submit">submit</button>
+      <button type="submit" className="PlainFormSubmit">
+        Submit
+      </button>
     </form>
   );
 };
