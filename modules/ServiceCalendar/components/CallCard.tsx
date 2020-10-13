@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import clsx from 'clsx';
 import { isSameDay, format } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event';
@@ -62,7 +62,6 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
     allDayOff,
   } = card;
   const { employees, employeesLoading } = useEmployees();
-
   let title, subheader, dates, time;
   const started = new Date(timeStarted);
   const finished = new Date(timeFinished);
@@ -71,7 +70,7 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
     if (employeesLoading) {
       return <SkeletonCard />;
     }
-    const empl = employees.find((emp) => emp.id === +userId);
+    const empl = employees.find(emp => emp.id === +userId);
     title = 'Training:';
     subheader = `${empl?.firstname} ${empl?.lastname}`;
   } else {
@@ -94,7 +93,7 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
       onClick={() => {
         const win = window.open(
           `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`,
-          '_blank'
+          '_blank',
         );
         if (win) {
           win.focus();
@@ -156,6 +155,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
     timeStarted,
   } = card;
   const { employees, employeesLoading } = useEmployees();
+  const [contentTextCollapsed, setContentTextCollapsed] = useState(true);
   const technicianIds =
     logTechnicianAssigned !== '0' && logTechnicianAssigned !== ''
       ? logTechnicianAssigned.split(',')
@@ -171,7 +171,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
 
   const technicianNames = technicianIds
     .map((id: string) => {
-      const employee = employees.find((emp) => emp.id === +id);
+      const employee = employees.find(emp => emp.id === +id);
       return `${employee?.firstname} ${employee?.lastname}`;
     })
     .join(', ');
@@ -179,6 +179,9 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
     <Card
       className="ServiceCalendarCallCardCard"
       onClick={() => {
+        if (contentTextCollapsed) {
+          return setContentTextCollapsed(false);
+        }
         let url;
         if (type === 'reminder') {
           url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editReminder&id=${id}`;
@@ -195,7 +198,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
         <CardHeader
           className={clsx(
             'ServiceCalendarCallCardCardHeader',
-            logJobNumber && 'jobNumber'
+            logJobNumber && 'jobNumber',
           )}
           avatar={
             <ColorIndicator
@@ -215,7 +218,11 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
             </Typography>
           }
         />
-        <CardContent className="ServiceCalendarCallCardCardContent">
+        <CardContent
+          className={`ServiceCalendarCallCardCardContent ${
+            contentTextCollapsed ? 'collapsed' : ''
+          }`}
+        >
           {(!type || type === 'completed') && (
             <Typography variant="body2" color="textSecondary" component="p">
               Customer:{' '}
