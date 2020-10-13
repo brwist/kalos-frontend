@@ -11,6 +11,6 @@ export const PerDiemsNeedsAuditing: FC<Props & PageWrapperProps> = ({
   ...props
 }) => (
   <PageWrapper {...props} userID={userID}>
-    <PerDiemsNeedsAuditingComponent />
+    <PerDiemsNeedsAuditingComponent loggedUserId={userID} />
   </PageWrapper>
 );

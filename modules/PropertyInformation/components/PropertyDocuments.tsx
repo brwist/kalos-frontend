@@ -40,13 +40,15 @@ export const PropertyDocuments: FC<Props> = ({
               style={{ marginLeft: 4 }}
               size="small"
               onClick={() => {
-                document.location.href = [
-                  '/index.cfm?action=admin:properties.docemail',
-                  `user_id=${userID}`,
-                  `document_id=${id}`,
-                  `property_id=${propertyId}`,
-                  `p=2`,
-                ].join('&');
+                window.open(
+                  [
+                    '/index.cfm?action=admin:properties.docemail',
+                    `user_id=${userID}`,
+                    `document_id=${id}`,
+                    `property_id=${propertyId}`,
+                    `p=2`,
+                  ].join('&'),
+                );
               }}
             >
               <MailIcon />

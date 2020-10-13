@@ -621,6 +621,7 @@ var KALOS_ASSETS = KALOS_ROOT + "/app/assets";
 var MODULE_CFC = KALOS_ROOT + "/app/admin/controllers/module.cfc";
 var MODULE_CFM = KALOS_ROOT + "/app/admin/views/module";
 var NAMED_EXPORTS = {
+    'node_modules/throttle-debounce/index.umd.js': ['debounce'],
     'node_modules/scheduler/index.js': [
         'unstable_scheduleCallback',
         'unstable_cancelCallback',
@@ -640,6 +641,8 @@ var NAMED_EXPORTS = {
         'URLObject',
         'BucketObject',
         'S3Files',
+        'SUBJECT_TAGS',
+        'MoveConfig',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/activity_log_pb.js': [
         'ActivityLog',
@@ -918,6 +921,7 @@ var NAMED_EXPORTS = {
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb.js': [
         'TimesheetLine',
         'TimesheetLineList',
+        'SubmitApproveReq',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_classcode_pb.js': [
         'TimesheetClassCode',
@@ -955,6 +959,8 @@ var NAMED_EXPORTS = {
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/user_pb.js': [
         'User',
         'UserList',
+        'CardDataList',
+        'CardData',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/vendor_order_pb.js': [
         'VendorOrder',

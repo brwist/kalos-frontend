@@ -16,7 +16,7 @@ type Entry = Document.AsObject;
 interface Props {
   className?: string;
   userID: number;
-  contractId: number;
+  contractID: number;
 }
 
 interface State {
@@ -49,6 +49,8 @@ export class ContractDocuments extends PureComponent<Props, State> {
     const { userID } = this.props;
     const entry = new Document();
     entry.setUserId(userID);
+    entry.setOrderBy('document_date_created');
+    entry.setOrderDir('desc');
     entry.setFieldMaskList(['PropertyId']);
     try {
       const response = await this.DocumentClient.BatchGet(entry);
@@ -112,12 +114,12 @@ export class ContractDocuments extends PureComponent<Props, State> {
       handleSetDeleting,
       handleDelete,
     } = this;
-    const { className, userID, contractId } = props;
+    const { className, userID, contractID } = props;
     const { entries, loading, error, count, page, deleting } = state;
     const data: Data = loading
       ? makeFakeRows()
       : entries.map(entry => {
-          const { id, filename, type, description: value } = entry;
+          const { propertyId, filename, type, description: value } = entry;
           return [
             {
               value: (
@@ -134,7 +136,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
                     document.location.href = [
                       getCFAppUrl('admin:contracts.docemail'),
                       `user_id=${userID}`,
-                      `document_id=${contractId}`,
+                      `contract_id=${contractID}`,
                       'p=1',
                     ].join('&');
                   }}
@@ -156,14 +158,14 @@ export class ContractDocuments extends PureComponent<Props, State> {
     return (
       <div className={className}>
         <SectionBar
-          title="Property Documents"
+          title="Documents"
           actions={[
             {
               label: 'Add',
               url: [
                 getCFAppUrl('admin:contracts.docaddS3'),
                 `user_id=${userID}`,
-                `contract_id=${contractId}`,
+                `contract_id=${contractID}`,
                 'p=1',
               ].join('&'),
             },

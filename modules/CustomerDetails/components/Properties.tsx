@@ -141,11 +141,13 @@ export const Properties: FC<Props> = props => {
 
   const handleViewEntry = useCallback(
     (id: number) => () => {
-      document.location.href = [
-        getCFAppUrl('admin:properties.details'),
-        `user_id=${userID}`,
-        `property_id=${id}`,
-      ].join('&');
+      window.open(
+        [
+          getCFAppUrl('admin:properties.details'),
+          `user_id=${userID}`,
+          `property_id=${id}`,
+        ].join('&'),
+      );
     },
     [userID],
   );

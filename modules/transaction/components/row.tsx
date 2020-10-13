@@ -107,6 +107,15 @@ export function TransactionRow({
     }
   };
 
+  const forceAccept = async () => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as accepted?`,
+    );
+    if (ok) {
+      await accept();
+      await refresh();
+    }
+  };
   const auditTxn = async () => {
     const ok = confirm(
       'Are you sure you want to mark all the information on this transaction (including all attached photos) as correct? This action is irreversible.',
@@ -270,15 +279,15 @@ export function TransactionRow({
               <Tooltip
                 key="audit"
                 content={
-                  txn.isAudited
-                    ? 'This transaction has already been aduited'
+                  txn.isAudited && userID !== 1734
+                    ? 'This transaction has already been audited'
                     : 'Mark as correct'
                 }
               >
                 <IconButton
                   size="small"
-                  onClick={auditTxn}
-                  disabled={txn.isAudited}
+                  onClick={userID === 1734 ? forceAccept : auditTxn}
+                  disabled={txn.isAudited && userID !== 1734}
                 >
                   <CheckIcon />
                 </IconButton>

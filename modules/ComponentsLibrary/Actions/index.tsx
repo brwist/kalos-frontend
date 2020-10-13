@@ -94,7 +94,7 @@ export const Actions: FC<Props> = ({
                           onClick(event);
                         }
                         if (url) {
-                          document.location.href = url;
+                          window.open(url, '_blank');
                         }
                       }}
                     >

@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { refreshToken } from '../../helpers';
 import { AdvancedSearch } from '../ComponentsLibrary/AdvancedSearch';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
@@ -8,9 +7,6 @@ interface Props extends PageWrapperProps {
 }
 
 export class Search extends PureComponent<Props> {
-  async componentDidMount() {
-    await refreshToken();
-  }
   render() {
     const { loggedUserId, withHeader } = this.props;
     const content = (
@@ -19,6 +15,7 @@ export class Search extends PureComponent<Props> {
         loggedUserId={loggedUserId}
         title="Search"
         editableCustomers
+        editableProperties
       />
     );
     if (withHeader)

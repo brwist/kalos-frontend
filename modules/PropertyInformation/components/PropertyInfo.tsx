@@ -203,11 +203,13 @@ export const PropertyInfo: FC<Props> = props => {
       // entry.setFieldMaskList(['UserId']);
       try {
         await PropertyClientService.Update(entry); // FIXME: for some reason this call fails
-        document.location.href = [
-          '/index.cfm?action=admin:properties.details',
-          `property_id=${propertyId}`,
-          `user_id=${id}`,
-        ].join('&');
+        window.open(
+          [
+            '/index.cfm?action=admin:properties.details',
+            `property_id=${propertyId}`,
+            `user_id=${id}`,
+          ].join('&'),
+        );
       } catch (e) {
         setError(true);
       }
@@ -217,12 +219,14 @@ export const PropertyInfo: FC<Props> = props => {
   const handleMerge = useCallback(async () => {
     if (pendingMerge) {
       setPendingMerge(undefined);
-      document.location.href = [
-        '/index.cfm?action=admin:properties.mergeproperty',
-        `oldPropertyId=${propertyId}`,
-        `newPropertyId=${pendingMerge.id}`,
-        `newOwnerId=${pendingMerge.__user.id}`,
-      ].join('&');
+      window.open(
+        [
+          '/index.cfm?action=admin:properties.mergeproperty',
+          `oldPropertyId=${propertyId}`,
+          `newPropertyId=${pendingMerge.id}`,
+          `newOwnerId=${pendingMerge.__user.id}`,
+        ].join('&'),
+      );
     }
   }, [pendingMerge, setPendingMerge, propertyId]);
 
@@ -443,7 +447,9 @@ export const PropertyInfo: FC<Props> = props => {
         <MenuItem
           onClick={() => {
             handleSetEditEditMenuAnchorEl(null);
-            document.location.href = `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`;
+            window.open(
+              `/index.cfm?action=admin:report.activityproperty&property_id=${propertyId}`,
+            );
           }}
         >
           Activity

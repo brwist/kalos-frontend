@@ -63,7 +63,8 @@ const getShownDates = (viewBy: string, date?: Date): string[] => {
       const firstDay = date || startOfWeek(today);
       const lastDay = addDays(firstDay, 6);
       const days = eachDayOfInterval({ start: firstDay, end: lastDay });
-      return days.map(date => format(date, 'yyyy-MM-dd'));
+      const theDays = days.map(date => format(date, 'yyyy-MM-dd'));
+      return theDays;
     }
     case 'month': {
       const firstDay = date || startOfMonth(today);
@@ -260,7 +261,7 @@ const addNewOptions = [
   },
 ];
 
-const ServiceCalendar: FC<Props> = props => {
+export const ServiceCalendar: FC<Props> = props => {
   const { userId } = props;
   const [
     {
@@ -289,11 +290,11 @@ const ServiceCalendar: FC<Props> = props => {
     dispatch({ type: 'viewBy', value: defaultView });
   }
 
-  const fetchEmployees = useCallback(async page => {
+  const fetchEmployees = useCallback(async () => {
     const user = new User();
     user.setIsActive(1);
     user.setIsEmployee(1);
-    user.setPageNumber(page);
+    user.setOverrideLimit(true);
     return (await userClient.BatchGet(user)).toObject();
   }, []);
 
@@ -311,6 +312,7 @@ const ServiceCalendar: FC<Props> = props => {
       dispatch({ type: 'fetchingCalendarData' });
       (async () => {
         const req = new Event();
+        console.log(shownDates);
         req.setDateStarted(shownDates[0]);
         req.setDateEnded(shownDates[shownDates.length - 1]);
         const data = await eventClient.GetCalendarData(req);
@@ -391,5 +393,3 @@ const ServiceCalendar: FC<Props> = props => {
     </PageWrapper>
   );
 };
-
-export default ServiceCalendar;

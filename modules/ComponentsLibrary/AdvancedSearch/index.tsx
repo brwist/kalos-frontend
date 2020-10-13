@@ -4,6 +4,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import cloneDeep from 'lodash/cloneDeep';
 import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
+import MoneyIcon from '@material-ui/icons/Money';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
@@ -72,6 +73,7 @@ import {
   uploadFileToS3Bucket,
   getCFAppUrl,
   refreshToken,
+  cfURL,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -568,12 +570,15 @@ export const AdvancedSearch: FC<Props> = ({
   const handleSelectEvent = useCallback(
     (event: EventType) => () => {
       if (accounting) {
-        document.location.href = [
-          getCFAppUrl('admin:service.editServicecall'),
-          `id=${event.id}`,
-          `user_id=${event.customer!.id}`,
-          `property_id=${event.property!.id}`,
-        ].join('&');
+        window.open(
+          [
+            getCFAppUrl('admin:service.editServicecall'),
+            `id=${event.id}`,
+            `user_id=${event.customer!.id}`,
+            `property_id=${event.property!.id}`,
+          ].join('&'),
+          '_blank',
+        );
         return;
       }
       if (onSelectEvent) {
@@ -1689,7 +1694,17 @@ export const AdvancedSearch: FC<Props> = ({
                               <IconButton
                                 key="edit"
                                 size="small"
-                                onClick={handlePendingEventEditingToggle(entry)}
+                                onClick={
+                                  () => {
+                                    window.open(
+                                      cfURL(
+                                        'service.editServiceCall',
+                                        `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                      ),
+                                    );
+                                    /* TODO: complete edit service call module */
+                                  } /*handlePendingEventEditingToggle(entry)*/
+                                }
                               >
                                 <EditIcon />
                               </IconButton>,
@@ -1859,6 +1874,34 @@ export const AdvancedSearch: FC<Props> = ({
                       ...(isAdmin
                         ? [
                             <Tooltip
+                              key="tool"
+                              content="View Tool Log"
+                              placement="top"
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  window.open(
+                                    [
+                                      '/index.cfm?action=admin:tasks.spiff_tool_logs',
+                                      `type=tool`,
+                                      `rt=all`,
+                                      `reportUserId=${id}`,
+                                    ].join('&'),
+                                  );
+                                  // TODO replace with ComponentsLibrary
+                                  /*document.location.href = [
+                                    '/index.cfm?action=admin:tasks.spiff_tool_logs',
+                                    `type=tool`,
+                                    `rt=all`,
+                                    `reportUserId=${id}`,
+                                  ].join('&');*/
+                                }}
+                              >
+                                <BuildIcon />
+                              </IconButton>
+                            </Tooltip>,
+                            <Tooltip
                               key="spiff"
                               content="View Spiff Log"
                               placement="top"
@@ -1867,15 +1910,23 @@ export const AdvancedSearch: FC<Props> = ({
                                 size="small"
                                 onClick={() => {
                                   // TODO replace with ComponentsLibrary
-                                  document.location.href = [
+                                  window.open(
+                                    [
+                                      '/index.cfm?action=admin:tasks.spiff_tool_logs',
+                                      `type=spiff`,
+                                      `rt=all`,
+                                      `reportUserId=${id}`,
+                                    ].join('&'),
+                                  );
+                                  /*document.location.href = [
                                     '/index.cfm?action=admin:tasks.spiff_tool_logs',
-                                    `type=tool`,
+                                    `type=spiff`,
                                     `rt=all`,
                                     `reportUserId=${id}`,
-                                  ].join('&');
+                                  ].join('&');*/
                                 }}
                               >
-                                <BuildIcon />
+                                <MoneyIcon />
                               </IconButton>
                             </Tooltip>,
                             <Tooltip
@@ -1887,13 +1938,15 @@ export const AdvancedSearch: FC<Props> = ({
                                 size="small"
                                 onClick={() => {
                                   // TODO replace with ComponentsLibrary
-                                  document.location.href = [
-                                    '/index.cfm?action=admin:timesheet.timesheetview',
-                                    `timesheetAction=cardview`,
-                                    `user_id=${id}`,
-                                    `search_user_id=${id}`,
-                                    `timesheetadmin=${isAdmin}`,
-                                  ].join('&');
+                                  window.open(
+                                    [
+                                      '/index.cfm?action=admin:timesheet.timesheetview',
+                                      `timesheetAction=cardview`,
+                                      `user_id=${id}`,
+                                      `search_user_id=${id}`,
+                                      `timesheetadmin=${isAdmin}`,
+                                    ].join('&'),
+                                  );
                                 }}
                               >
                                 <AccessTimeIcon />
