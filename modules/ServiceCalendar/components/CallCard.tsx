@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import clsx from 'clsx';
-import { isSameDay, format } from 'date-fns';
+import isSameDay from 'date-fns/isSameDay';
+import parseISO from 'date-fns/parseISO';
+import format from 'date-fns/format';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
@@ -63,8 +65,8 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
   } = card;
   const { employees, employeesLoading } = useEmployees();
   let title, subheader, dates, time;
-  const started = new Date(timeStarted);
-  const finished = new Date(timeFinished);
+  const started = parseISO(timeStarted);
+  const finished = parseISO(timeFinished);
   const sameDay = isSameDay(started, finished);
   if (requestType === 10) {
     if (employeesLoading) {

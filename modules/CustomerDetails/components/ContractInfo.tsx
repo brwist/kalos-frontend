@@ -136,7 +136,9 @@ export const ContractInfo: FC<Props> = props => {
         const invoice = await InvoiceClientService.Get(entry);
         setInvoiceInitial(invoice);
         setInvoice(invoice);
-      } catch (e) {}
+      } catch (e) {
+        console.log(e);
+      }
     },
     [setInvoice, setInvoiceInitial],
   );
@@ -479,7 +481,7 @@ export const ContractInfo: FC<Props> = props => {
         </div>
         <div className="ContractInfoAsidePanel">
           {entry.id > 0 && (
-            <ContractDocuments contractId={entry.id} {...props} />
+            <ContractDocuments contractID={entry.id} {...props} />
           )}
         </div>
       </div>

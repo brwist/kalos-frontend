@@ -11,7 +11,7 @@ export const SearchIndex: FC<Props> = ({ loggedUserId, ...props }) => (
     <AdvancedSearch
       loggedUserId={loggedUserId}
       title="Search"
-      kinds={['serviceCalls', 'customers', 'properties']}
+      kinds={['customers', 'properties', 'serviceCalls']}
       editableCustomers
       editableProperties
     />

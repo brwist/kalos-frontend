@@ -811,12 +811,23 @@ export class TransactionAdminView extends React.Component<props, state> {
         <div style={{ content: '', clear: 'both', display: 'table' }} />
         <InfoTable
           columns={[
-            { name: 'Date' },
+            {
+              name: 'Date',
+              dir: 'DESC',
+              onClick: () => this.setSort('timestamp'),
+            },
             { name: 'Purchaser' },
-            { name: 'Account' },
-            { name: 'Department' },
-            { name: 'Job #' },
-            { name: 'Amount' },
+            { name: 'Account', onClick: () => this.setSort('cost_center_id') },
+            {
+              name: 'Department',
+              onClick: () => this.setSort('department_id'),
+            },
+            { name: 'Job #', onClick: () => this.setSort('job_number') },
+            {
+              name: 'Amount',
+              dir: 'DESC',
+              onClick: () => this.setSort('amount'),
+            },
             { name: 'Description' },
             { name: 'Actions' },
           ]}
