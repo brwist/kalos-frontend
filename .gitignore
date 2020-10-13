@@ -3,6 +3,5 @@ node_modules
 .parcel-cache
 dist
 build
-gulpfile.ts
 tmp/
 .idea
