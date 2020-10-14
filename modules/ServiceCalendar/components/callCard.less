@@ -12,6 +12,7 @@
   }
   &CardContent {
     padding: 0 .spacing() [] .spacing() [] !important;
+    position: relative;
     &.collapsed {
       max-height: 90px;
     }
@@ -30,5 +31,13 @@
     position: absolute;
     top: .spacing(0.5) [];
     right: .spacing() [];
+  }
+  &CollapseIcon {
+    position: absolute;
+    bottom: calc(100% - 4px);
+    right: 0.5rem;
+    // background-color: green;
+    width: 24px;
+    height: 24px;
   }
 }

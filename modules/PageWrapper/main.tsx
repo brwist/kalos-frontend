@@ -27,7 +27,7 @@ export const PageWrapper: FC<Props> = ({
   }, [initiated, setInitiated]);
   return (
     <StyledPage>
-      <div>
+      <div className="PageWrapper">
         {withHeader && (
           <div className="PageWrapperMenu">
             <SideMenu {...props} />

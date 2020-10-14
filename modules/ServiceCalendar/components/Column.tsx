@@ -1,4 +1,9 @@
-import React, { useState, useCallback, useLayoutEffect } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useLayoutEffect,
+  useEffect,
+} from 'react';
 import clsx from 'clsx';
 import { format, parseISO } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event/index';
@@ -46,6 +51,20 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
   const md = useMediaQuery(theme.breakpoints.down('md'));
   const { fetchingCalendarData, datesMap, filters } = useCalendarData();
   const dateObj = parseISO(date);
+  useEffect(() => {
+    if (!(fetchingCalendarData || !datesMap?.get(date))) {
+      const currBox = document.getElementById(
+        `ServiceCalendarColumnDateHeading_${format(new Date(), 'dd_MM_yyyy')}`,
+      );
+      if (currBox) {
+        currBox.scrollIntoView({
+          behavior: 'auto',
+          block: 'start',
+          inline: 'center',
+        });
+      }
+    }
+  }, [fetchingCalendarData, datesMap]);
 
   const filterCalls = useCallback(
     (calendarDay: CalendarDay): CallsList => {
@@ -123,7 +142,10 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
           {`Back to ${viewBy} View`}
         </Button>
       )}
-      <Box className="ServiceCalendarColumnDateHeading">
+      <Box
+        className="ServiceCalendarColumnDateHeading"
+        id={`ServiceCalendarColumnDateHeading_${format(dateObj, 'dd_MM_yyyy')}`}
+      >
         {viewBy === 'day' ? (
           <Typography
             className="ServiceCalendarColumnDayViewHeading"
