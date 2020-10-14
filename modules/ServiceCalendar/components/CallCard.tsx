@@ -19,8 +19,8 @@ import {
   repeatsMapping,
   requestTypeMappping,
 } from './constants';
+import { formatTime } from '../../../helpers';
 import './callCard.less';
-import { ExpandLess } from '@material-ui/icons';
 
 type ColorIndicatorProps = {
   type?: string;
@@ -172,7 +172,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
   const title = logJobStatus ? logJobStatus : null;
   const subheader = isAllDay
     ? 'All Day Event'
-    : `${timeStarted} - ${timeEnded}`;
+    : `${formatTime(timeStarted)} - ${formatTime(timeEnded)}`;
 
   const technicianNames = technicianIds
     .map((id: string) => {
@@ -180,8 +180,17 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
       return `${employee?.firstname} ${employee?.lastname}`;
     })
     .join(', ');
+  const isWhiteText = color === '000000';
   return (
     <Card
+      style={{
+        backgroundColor: `#${color}`,
+        ...(isWhiteText
+          ? {
+              filter: 'invert(1)',
+            }
+          : {}),
+      }}
       className="ServiceCalendarCallCardCard"
       onClick={() => {
         if (contentTextCollapsed) {
@@ -205,14 +214,11 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
             'ServiceCalendarCallCardCardHeader',
             logJobNumber && 'jobNumber',
           )}
-          avatar={
-            <ColorIndicator
-              type={type}
-              logJobStatus={logJobStatus}
-              color={color}
-            />
+          title={
+            <Typography variant="body2" color="textSecondary" component="p">
+              {title}
+            </Typography>
           }
-          title={title}
           subheader={subheader}
           action={
             <Typography
@@ -229,29 +235,30 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
           }`}
         >
           {(!type || type === 'completed') && (
-            <Typography variant="body2" color="textSecondary" component="p">
-              Customer:{' '}
-              {customer?.businessname ||
-                `${customer?.firstname} ${customer?.lastname}`}
+            <Typography variant="body1" color="textSecondary" component="p">
+              <strong>
+                {customer?.businessname ||
+                  `${customer?.firstname} ${customer?.lastname}`}
+              </strong>
             </Typography>
           )}
           {technicianNames.length ? (
-            <Typography variant="body2" color="textSecondary" component="p">
+            <Typography variant="body1" color="textSecondary" component="p">
               Technician: {technicianNames}
             </Typography>
           ) : null}
-          <Typography variant="body2" color="textSecondary" component="p">
+          <Typography variant="body1" color="textSecondary" component="p">
             {name}
           </Typography>
           {repeatType ? (
-            <Typography variant="body2" color="textSecondary" component="p">
+            <Typography variant="body1" color="textSecondary" component="p">
               Repeats {repeatsMapping[repeatType]}
               {dateEnded ? ` until ${dateEnded}` : ' forever'}
             </Typography>
           ) : null}
           {description ? (
             <Typography
-              variant="body2"
+              variant="body1"
               color="textSecondary"
               component="p"
               dangerouslySetInnerHTML={{

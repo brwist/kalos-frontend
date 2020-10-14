@@ -120,7 +120,7 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
     return (
       <>
         {[...Array(5)].map((e, i) => (
-          <SkeletonCard key={`${date}-skeleton-${i}`} />
+          <SkeletonCard key={`${date}-skeleton-${i}`} skipAvatar />
         ))}
       </>
     );
