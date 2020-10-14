@@ -6,6 +6,8 @@ import format from 'date-fns/format';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
@@ -18,6 +20,7 @@ import {
   requestTypeMappping,
 } from './constants';
 import './callCard.less';
+import { ExpandLess } from '@material-ui/icons';
 
 type ColorIndicatorProps = {
   type?: string;
@@ -256,6 +259,15 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
               }}
             />
           ) : null}
+          <span
+            className="ServiceCalendarCallCardCollapseIcon"
+            onClick={event => {
+              event.stopPropagation();
+              setContentTextCollapsed(!contentTextCollapsed);
+            }}
+          >
+            {contentTextCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+          </span>
         </CardContent>
       </CardActionArea>
     </Card>
