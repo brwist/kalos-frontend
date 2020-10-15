@@ -817,6 +817,9 @@ const NAMED_EXPORTS = {
     'TimesheetLine',
     'TimesheetLineList',
     'SubmitApproveReq',
+    'TimesheetReq',
+    'Timesheet',
+    'TimesheetDay',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_classcode_pb.js': [
     'TimesheetClassCode',

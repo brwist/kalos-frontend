@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useState } from 'react';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
-import { format, roundToNearestMinutes } from 'date-fns';
+import { format, roundToNearestMinutes, parseISO } from 'date-fns';
 import { Button } from '../../ComponentsLibrary/Button';
 import {
   TimesheetLine,
@@ -97,13 +97,13 @@ const EditTimesheetModal: FC<Props> = ({
   const { id = 0 } = entry;
   const data = { ...entry };
   if (data.timeStarted) {
-    data.date = format(new Date(data.timeStarted), 'yyyy-MM-dd');
+    data.date = format(parseISO(data.timeStarted), 'yyyy-MM-dd');
     data.timeStarted = format(
-      roundToNearestMinutes(new Date(data.timeStarted), { nearestTo: 15 }),
+      roundToNearestMinutes(parseISO(data.timeStarted), { nearestTo: 15 }),
       'yyyy-MM-dd HH:mm',
     );
     data.timeFinished = format(
-      roundToNearestMinutes(new Date(data.timeFinished), { nearestTo: 15 }),
+      roundToNearestMinutes(parseISO(data.timeFinished), { nearestTo: 15 }),
       'yyyy-MM-dd HH:mm',
     );
   } else {
@@ -121,13 +121,13 @@ const EditTimesheetModal: FC<Props> = ({
     async (data: EntryWithDate) => {
       setSaving(true);
       data.timeStarted = `${format(
-        new Date(data.date || ''),
+        parseISO(data.date || ''),
         'yyyy-MM-dd',
-      )} ${format(new Date(data.timeStarted), 'HH:mm')}`;
+      )} ${format(parseISO(data.timeStarted), 'HH:mm')}`;
       data.timeFinished = `${format(
-        new Date(data.date || ''),
+        parseISO(data.date || ''),
         'yyyy-MM-dd',
-      )} ${format(new Date(data.timeFinished), 'HH:mm')}`;
+      )} ${format(parseISO(data.timeFinished), 'HH:mm')}`;
       delete data.date;
       const req = new TimesheetLine();
       req.setId(id);
@@ -150,13 +150,13 @@ const EditTimesheetModal: FC<Props> = ({
     async (data: EntryWithDate) => {
       setSaving(true);
       data.timeStarted = `${format(
-        new Date(data.date || ''),
+        parseISO(data.date || ''),
         'yyyy-MM-dd',
-      )} ${format(new Date(data.timeStarted), 'HH:mm')}`;
+      )} ${format(parseISO(data.timeStarted), 'HH:mm')}`;
       data.timeFinished = `${format(
-        new Date(data.date || ''),
+        parseISO(data.date || ''),
         'yyyy-MM-dd',
-      )} ${format(new Date(data.timeFinished), 'HH:mm')}`;
+      )} ${format(parseISO(data.timeFinished), 'HH:mm')}`;
       delete data.date;
       data.technicianUserId = timesheetOwnerId;
       data.servicesRenderedId = entry.servicesRenderedId;

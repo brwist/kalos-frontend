@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import clsx from 'clsx';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { format, differenceInMinutes } from 'date-fns';
+import { format, differenceInMinutes, parseISO } from 'date-fns';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import CardHeader from '@material-ui/core/CardHeader';
@@ -50,7 +50,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
   }
 
   const payrollDiff = classCode?.billable
-    ? differenceInMinutes(new Date(timeFinished), new Date(timeStarted)) / 60
+    ? differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) / 60
     : 0;
 
   return (
@@ -73,8 +73,8 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
             color="textSecondary"
           >
             <span>
-              {format(new Date(timeStarted), 'p')}
-              {timeFinished && ` - ${format(new Date(timeFinished), 'p')}`}
+              {format(parseISO(timeStarted), 'p')}
+              {timeFinished && ` - ${format(parseISO(timeFinished), 'p')}`}
             </span>
             {payrollDiff > 0 && <strong>{roundNumber(payrollDiff)}</strong>}
           </Typography>
@@ -121,8 +121,8 @@ export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({
             variant="body2"
             color="textSecondary"
           >
-            {format(new Date(timeStarted), 'p')}
-            {timeFinished && ` - ${format(new Date(timeFinished), 'p')}`}
+            {format(parseISO(timeStarted), 'p')}
+            {timeFinished && ` - ${format(parseISO(timeFinished), 'p')}`}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             {name}

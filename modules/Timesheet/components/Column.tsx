@@ -1,6 +1,6 @@
 import React, { FC, useLayoutEffect, useState } from 'react';
 import clsx from 'clsx';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import BackIcon from '@material-ui/icons/ArrowBack';
@@ -25,7 +25,7 @@ type Props = {
 const Column: FC<Props> = ({ date, data, loading }) => {
   const [dayView, setDayView] = useState(false);
 
-  const dateObj = new Date(date);
+  const dateObj = parseISO(date);
 
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('md'));
@@ -38,7 +38,7 @@ const Column: FC<Props> = ({ date, data, loading }) => {
     : [];
   cards.sort(
     (a, b) =>
-      new Date(a.timeStarted).getTime() - new Date(b.timeStarted).getTime(),
+      parseISO(a.timeStarted).getTime() - parseISO(b.timeStarted).getTime(),
   );
   return (
     <Box className={clsx(dayView && 'TimesheetColumnDayView')}>

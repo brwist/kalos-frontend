@@ -5,7 +5,7 @@ import React, {
   useReducer,
   useCallback,
 } from 'react';
-import { startOfWeek, subDays } from 'date-fns';
+import { startOfWeek, subDays, parseISO } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Container from '@material-ui/core/Container';
 import Box from '@material-ui/core/Box';
@@ -62,7 +62,7 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
     : startOfWeek(subDays(today, 7));
 };
 
-const Timesheet: FC<Props> = props => {
+export const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId } = props;
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
@@ -156,13 +156,13 @@ const Timesheet: FC<Props> = props => {
       name: 'Task',
       url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
     },
-    {
+    /*{
       icon: <AssessmentIcon />,
       name: 'Timesheet Weekly Report',
       action: () => {
         console.log('Timesheet Weekly Report');
       },
-    },
+    },*/
   ];
 
   const handleDateChange = (value: Date) => {
@@ -200,8 +200,8 @@ const Timesheet: FC<Props> = props => {
       for (let i = 0; i < shownDates.length; i++) {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
           (a, b) =>
-            new Date(a.timeStarted).getTime() -
-            new Date(b.timeStarted).getTime(),
+            parseISO(a.timeStarted).getTime() -
+            parseISO(b.timeStarted).getTime(),
         );
         let result = dayList.reduce(
           (acc, current, idx, arr) => {
@@ -210,8 +210,8 @@ const Timesheet: FC<Props> = props => {
               return acc;
             }
             let previous = arr[idx - 1];
-            let previousEnd = new Date(previous.timeFinished).getTime();
-            let currentStart = new Date(current.timeStarted).getTime();
+            let previousEnd = parseISO(previous.timeFinished).getTime();
+            let currentStart = parseISO(current.timeStarted).getTime();
             let overlap = previousEnd > currentStart;
             if (overlap) {
               overlapped = true;
@@ -379,5 +379,3 @@ const Timesheet: FC<Props> = props => {
     </PageWrapper>
   );
 };
-
-export default Timesheet;
