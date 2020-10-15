@@ -483,12 +483,15 @@ async function bustCache() {
   );
   const res = await sh.cat(`tmp/${filename}.cfm`);
   if (res.stdout.includes('.js?version=')) {
-    const versionMatch = res.stdout.match(/\.js\?version=\d{1,}/);
+    const versionMatch = res.stdout.match(/\.js\?version=\d{1,}/g);
     if (versionMatch) {
-      const version = parseInt(versionMatch[0].replace(/\.js\?version=/, ''));
+      const version = parseInt(versionMatch[0].replace(/\.js\?version=/g, ''));
       const newVersion = version + 1;
       const newFile = new sh.ShellString(
-        res.stdout.replace(/\.js\?version=\d{1,}/, `.js?version=${newVersion}`),
+        res.stdout.replace(
+          /\.js\?version=\d{1,}/g,
+          `.js?version=${newVersion}`,
+        ),
       );
       await sh.rm(`tmp/${filename}.cfm`);
       await newFile.to(`tmp/${filename}.cfm`);
