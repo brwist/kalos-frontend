@@ -312,9 +312,9 @@ export const ServiceCalendar: FC<Props> = props => {
       dispatch({ type: 'fetchingCalendarData' });
       (async () => {
         const req = new Event();
-        console.log(shownDates);
         req.setDateStarted(shownDates[0]);
         req.setDateEnded(shownDates[shownDates.length - 1]);
+        req.setIsActive(1);
         const data = await eventClient.GetCalendarData(req);
         dispatch({ type: 'fetchedCalendarData', data });
       })();
