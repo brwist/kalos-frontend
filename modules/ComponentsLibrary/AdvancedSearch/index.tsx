@@ -1940,11 +1940,8 @@ export const AdvancedSearch: FC<Props> = ({
                                   // TODO replace with ComponentsLibrary
                                   window.open(
                                     [
-                                      '/index.cfm?action=admin:timesheet.timesheetview',
-                                      `timesheetAction=cardview`,
+                                      '/index.cfm?action=admin:timesheet.timesheetview_new',
                                       `user_id=${id}`,
-                                      `search_user_id=${id}`,
-                                      `timesheetadmin=${isAdmin}`,
                                     ].join('&'),
                                   );
                                 }}
