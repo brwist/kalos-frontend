@@ -38,10 +38,7 @@ const spiffLog = (userId: number) =>
 const toolLog = (userId: number) =>
   cfURL('tasks.spiff_tool_logs', `&rt=all&type=tool&reportUserId=${userId}`);
 const timesheet = (userId: number) =>
-  cfURL(
-    'timesheet.timesheetview',
-    `&user_id=${userId}&timesheetAction=cardview`,
-  );
+  cfURL('timesheet.timesheetview_new', `&user_id=${userId}`);
 const employees = cfURL('user.employee');
 const search = cfURL('search.index');
 const calendar = cfURL('service.calendar');
