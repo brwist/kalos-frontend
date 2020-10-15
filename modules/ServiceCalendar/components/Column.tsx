@@ -44,6 +44,7 @@ type CallsList = {
 const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [dayView, setDayView] = useState(false);
+  const [autoScrollInitialized, setAutoScrollInitialized] = useState(false);
   useLayoutEffect(() => {
     document.body.style.overflow = dayView ? 'hidden' : 'visible';
   }, [dayView]);
@@ -53,10 +54,14 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
   const dateObj = parseISO(date);
   useEffect(() => {
     if (!(fetchingCalendarData || !datesMap?.get(date))) {
-      const currBox = document.getElementById(
-        `ServiceCalendarColumnDateHeading_${format(new Date(), 'dd_MM_yyyy')}`,
-      );
-      if (currBox) {
+      const id = `ServiceCalendarColumnDateHeading_${format(
+        new Date(),
+        'dd_MM_yyyy',
+      )}`;
+      const currBox = document.getElementById(id);
+      if (!autoScrollInitialized && !dayView && currBox) {
+        console.log(1, id, { dayView });
+        setAutoScrollInitialized(true);
         currBox.scrollIntoView({
           behavior: 'auto',
           block: 'start',
@@ -64,7 +69,13 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
         });
       }
     }
-  }, [fetchingCalendarData, datesMap]);
+  }, [
+    fetchingCalendarData,
+    datesMap,
+    dayView,
+    autoScrollInitialized,
+    setAutoScrollInitialized,
+  ]);
 
   const filterCalls = useCallback(
     (calendarDay: CalendarDay): CallsList => {
