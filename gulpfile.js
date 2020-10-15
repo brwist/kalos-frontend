@@ -588,11 +588,11 @@ function bustCache() {
                 case 2:
                     res = _a.sent();
                     if (!res.stdout.includes('.js?version=')) return [3 /*break*/, 6];
-                    versionMatch = res.stdout.match(/\.js\?version=\d{1,}/);
+                    versionMatch = res.stdout.match(/\.js\?version=\d{1,}/g);
                     if (!versionMatch) return [3 /*break*/, 6];
-                    version = parseInt(versionMatch[0].replace(/\.js\?version=/, ''));
+                    version = parseInt(versionMatch[0].replace(/\.js\?version=/g, ''));
                     newVersion = version + 1;
-                    newFile = new sh.ShellString(res.stdout.replace(/\.js\?version=\d{1,}/, ".js?version=" + newVersion));
+                    newFile = new sh.ShellString(res.stdout.replace(/\.js\?version=\d{1,}/g, ".js?version=" + newVersion));
                     return [4 /*yield*/, sh.rm("tmp/" + filename + ".cfm")];
                 case 3:
                     _a.sent();
