@@ -3,6 +3,7 @@ import SpeedDial from '@material-ui/lab/SpeedDial';
 import SpeedDialIcon from '@material-ui/lab/SpeedDialIcon';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Backdrop from '@material-ui/core/Backdrop';
+import SearchIcon from '@material-ui/icons/Search';
 import './styles.less';
 
 type Option = {
@@ -14,9 +15,11 @@ type Option = {
 
 type Props = {
   options: Option[];
+  url?: string;
+  search?: boolean;
 };
 
-export const AddNewButton = ({ options }: Props) => {
+export const AddNewButton = ({ options, search, url }: Props) => {
   const [open, setOpen] = useState(false);
 
   const handleClick = (url?: string, action?: () => void) => {
@@ -36,8 +39,8 @@ export const AddNewButton = ({ options }: Props) => {
       <SpeedDial
         ariaLabel="Add new event"
         className="AddNewButtonSpeedDial"
-        icon={<SpeedDialIcon />}
-        onClick={() => setOpen(!open)}
+        icon={search ? <SearchIcon /> : <SpeedDialIcon />}
+        onClick={() => (url ? window.open(url, '_blank') : setOpen(!open))}
         open={open}
       >
         {options.map(option => (

@@ -31,6 +31,7 @@ import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import EventIcon from '@material-ui/icons/Event';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import { getCFAppUrl } from '../../helpers';
 import './styles.less';
 
 type Props = PageWrapperProps & {
@@ -395,7 +396,11 @@ export const ServiceCalendar: FC<Props> = props => {
             </Container>
           </Box>
         </EmployeesContext.Provider>
-        <AddNewButton options={addNewOptions} />
+        <AddNewButton
+          options={addNewOptions}
+          search
+          url={getCFAppUrl('admin:service.calls')}
+        />
       </CalendarDataContext.Provider>
     </PageWrapper>
   );
