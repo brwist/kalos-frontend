@@ -56,6 +56,7 @@ const Toolbar: FC<Props> = ({
           size="small"
           value={selectedDate}
           onChange={handleDateChange}
+          weekStartsOn={1}
         />
         <Typography className="TimesheetToolbarUserName" variant="subtitle1">
           {userName}
