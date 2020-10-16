@@ -95,6 +95,7 @@ type Filters = {
   jobSubType: number;
   zip: string[];
   propertyUse: string[];
+  techIds: string;
 };
 
 type State = {
@@ -193,6 +194,7 @@ const initialFilters: Filters = {
   jobSubType: 0,
   zip: [],
   propertyUse: [],
+  techIds: '0',
 };
 
 const initialState: State = {
