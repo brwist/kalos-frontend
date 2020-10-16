@@ -184,7 +184,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
   return (
     <Card
       style={{
-        backgroundColor: `#${color}`,
+        backgroundColor: `#${color === '55e552' ? '7ebf36' : color}`,
         ...(isWhiteText
           ? {
               filter: 'invert(1)',

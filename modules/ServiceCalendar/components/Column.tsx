@@ -128,12 +128,60 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
   );
 
   if (fetchingCalendarData || !datesMap?.get(date)) {
+    if (fetchingCalendarData)
+      return (
+        <>
+          {[...Array(5)].map((e, i) => (
+            <SkeletonCard key={`${date}-skeleton-${i}`} skipAvatar />
+          ))}
+        </>
+      );
     return (
-      <>
-        {[...Array(5)].map((e, i) => (
-          <SkeletonCard key={`${date}-skeleton-${i}`} skipAvatar />
-        ))}
-      </>
+      <Box className={clsx(dayView && 'ServiceCalendarColumnDayView')}>
+        {dayView && (
+          <Button startIcon={<BackIcon />} onClick={() => setDayView(false)}>
+            {`Back to ${viewBy} View`}
+          </Button>
+        )}
+        <Box
+          className="ServiceCalendarColumnDateHeading"
+          id={`ServiceCalendarColumnDateHeading_${format(
+            dateObj,
+            'dd_MM_yyyy',
+          )}`}
+        >
+          {viewBy === 'day' ? (
+            <Typography
+              className="ServiceCalendarColumnDayViewHeading"
+              variant="subtitle2"
+            >
+              {format(dateObj, 'cccc, MMMM d, yyyy')}
+            </Typography>
+          ) : (
+            <>
+              <Typography className="ServiceCalendarColumnDayCircle">
+                {format(dateObj, 'd')}
+              </Typography>
+              <Typography variant="subtitle2">
+                {format(dateObj, 'cccc')}
+              </Typography>
+              <Tooltip title="Day View">
+                <IconButton
+                  className={clsx(
+                    'ServiceCalendarColumnDayViewButton',
+                    md && !dayView && 'visible',
+                  )}
+                  aria-label="dayview"
+                  size="small"
+                  onClick={() => setDayView(true)}
+                >
+                  <ViewDayIcon fontSize="inherit" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
+      </Box>
     );
   }
 
