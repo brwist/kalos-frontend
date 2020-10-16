@@ -60,7 +60,7 @@ const getShownDates = (viewBy: string, date?: Date): string[] => {
     case 'day':
       return [format(date || today, 'yyyy-MM-dd')];
     case 'week': {
-      const firstDay = date || startOfWeek(today);
+      const firstDay = date || startOfWeek(today, { weekStartsOn: 1 });
       const lastDay = addDays(firstDay, 6);
       const days = eachDayOfInterval({ start: firstDay, end: lastDay });
       const theDays = days.map(date => format(date, 'yyyy-MM-dd'));
