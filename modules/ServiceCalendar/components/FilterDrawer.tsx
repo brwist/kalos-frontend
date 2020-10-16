@@ -128,6 +128,10 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
 
   const handleSave = () => {
     changeFilters(state);
+    window.localStorage.setItem(
+      'SERVICE_CALENDAR_FILTER',
+      JSON.stringify(state),
+    );
     toggleDrawer(false);
   };
 
