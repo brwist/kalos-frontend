@@ -64,6 +64,7 @@ const Filter = ({
             inputVariant="outlined"
             size="small"
             onChange={changeSelectedDate}
+            weekStartsOn={1}
           />
         ) : (
           <DatePicker
