@@ -58,8 +58,8 @@ export const EditTimesheetContext = createContext<EditTimesheetContext>({
 const getWeekStart = (userId: number, timesheetOwnerId: number) => {
   const today = new Date();
   return userId === timesheetOwnerId
-    ? startOfWeek(today, { weekStartsOn: 1 })
-    : startOfWeek(subDays(today, 7), { weekStartsOn: 1 });
+    ? startOfWeek(today, { weekStartsOn: 6 })
+    : startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
 };
 
 export const Timesheet: FC<Props> = props => {
