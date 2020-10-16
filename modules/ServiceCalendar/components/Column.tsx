@@ -5,6 +5,7 @@ import React, {
   useEffect,
 } from 'react';
 import clsx from 'clsx';
+import compact from 'lodash/compact';
 import { format, parseISO } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event/index';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -60,7 +61,6 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
       )}`;
       const currBox = document.getElementById(id);
       if (!autoScrollInitialized && !dayView && currBox) {
-        console.log(1, id, { dayView });
         setAutoScrollInitialized(true);
         currBox.scrollIntoView({
           behavior: 'auto',
@@ -79,13 +79,34 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
 
   const filterCalls = useCallback(
     (calendarDay: CalendarDay): CallsList => {
-      const { customers, zip, propertyUse, jobType, jobSubType } = filters!;
+      const {
+        customers,
+        zip,
+        propertyUse,
+        jobType,
+        jobSubType,
+        techIds: techIdsFilter,
+      } = filters!;
       return Object.keys(calendarDay).reduce(
         (acc: CallsList, key) => {
           // @ts-ignore
           let calls = calendarDay[key];
           acc[key] = calls.filter((call: Event.AsObject) => {
-            if (!isAdmin && call.logTechnicianAssigned) {
+            const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
+              .map(Number)
+              .filter(e => e !== 0);
+            if (techIdsFilterArr.length > 0) {
+              if (!+call.logTechnicianAssigned) return false;
+              const techIds = call.logTechnicianAssigned.split(',').map(Number);
+              if (
+                techIdsFilterArr.reduce(
+                  (aggr, item) => aggr && !techIds.includes(item),
+                  false,
+                )
+              ) {
+                return false;
+              }
+            } else if (!isAdmin && call.logTechnicianAssigned) {
               const techIds = call.logTechnicianAssigned.split(',').map(Number);
               if (!techIds.includes(userId)) {
                 return false;

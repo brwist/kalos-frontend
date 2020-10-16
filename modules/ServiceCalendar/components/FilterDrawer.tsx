@@ -1,4 +1,5 @@
 import React, { useState, useReducer, useCallback } from 'react';
+import compact from 'lodash/compact';
 import Box from '@material-ui/core/Box';
 import Drawer from '@material-ui/core/Drawer';
 import { Button } from '../../ComponentsLibrary/Button';
@@ -7,6 +8,7 @@ import SearchableList from './SearchableList';
 import { JobTypePicker } from '../../Pickers/JobType';
 import { JobSubtypePicker } from '../../Pickers/JobSubtype';
 import { useWindowSize } from '../../ComponentsLibrary/hooks';
+import { Field } from '../../ComponentsLibrary/Field';
 import { useCalendarData } from '../hooks';
 import './filterDrawer.less';
 
@@ -16,6 +18,7 @@ type State = {
   jobType: number;
   jobSubType: number;
   propertyUse: string[];
+  techIds: string;
 };
 
 type Action =
@@ -24,6 +27,7 @@ type Action =
   | { type: 'zip'; value: string }
   | { type: 'jobType'; value: number }
   | { type: 'jobSubType'; value: number }
+  | { type: 'techIds'; value: string }
   | { type: 'propertyUse'; value: string }
   | { type: 'resetFilters'; value: State };
 
@@ -74,6 +78,12 @@ const reducer = (state: State, action: Action): State => {
         jobSubType: action.value,
       };
     }
+    case 'techIds': {
+      return {
+        ...state,
+        techIds: action.value,
+      };
+    }
     case 'propertyUse': {
       const propertyUse = [...state.propertyUse];
       const currentIndex = propertyUse.indexOf(action.value);
@@ -111,7 +121,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
   } = useCalendarData();
   const [expanded, setExpanded] = useState('');
   const [state, dispatch] = useReducer(reducer, filters);
-  const { customers, zip, jobType, jobSubType, propertyUse } = state;
+  const { customers, zip, jobType, jobSubType, propertyUse, techIds } = state;
 
   const [, wHeight] = useWindowSize();
   const maxListHeight = wHeight - 64 * 4 - 46 - 46 - 32;
@@ -217,6 +227,26 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
               selected={jobSubType}
               jobTypeID={jobType}
               onSelect={value => dispatch({ type: 'jobSubType', value })}
+            />
+          </FilterPanel>
+          <FilterPanel
+            title="Technician Assigned"
+            expanded={expanded === 'techAssigned'}
+            handleChange={() => toggleExpanded('techAssigned')}
+            selectedCount={
+              compact((techIds || '0').split(','))
+                .map(Number)
+                .filter(e => e !== 0).length
+            }
+          >
+            <Field
+              name="techIds"
+              value={techIds || '0'}
+              type="technicians"
+              onChange={value =>
+                dispatch({ type: 'techIds', value: String(value) })
+              }
+              label=" "
             />
           </FilterPanel>
         </Box>
