@@ -184,6 +184,9 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
+const cachedInitialFilters = window.localStorage.getItem(
+  'SERVICE_CALENDAR_FILTER',
+);
 const initialFilters: Filters = {
   customers: [],
   jobType: 0,
@@ -198,7 +201,9 @@ const initialState: State = {
   viewBy: '',
   selectedDate: '',
   shownDates: [],
-  filters: initialFilters,
+  filters: cachedInitialFilters
+    ? JSON.parse(cachedInitialFilters)
+    : initialFilters,
   customersMap: {},
   zipCodesMap: {},
 };
