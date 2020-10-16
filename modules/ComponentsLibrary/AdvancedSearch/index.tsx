@@ -1588,7 +1588,7 @@ export const AdvancedSearch: FC<Props> = ({
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : undefined,
+                          : handlePendingCustomerViewingToggle(entry.customer),
                     },
                     ...(accounting
                       ? [
@@ -1610,7 +1610,7 @@ export const AdvancedSearch: FC<Props> = ({
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : undefined,
+                          : handlePendingPropertyViewingToggle(entry.property),
                     },
                     ...(accounting
                       ? [
@@ -1664,7 +1664,14 @@ export const AdvancedSearch: FC<Props> = ({
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : undefined,
+                          : () =>
+                              window.open(
+                                cfURL(
+                                  'service.editServiceCall',
+                                  `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                ),
+                                '_blank',
+                              ),
                     },
                     {
                       value: (
