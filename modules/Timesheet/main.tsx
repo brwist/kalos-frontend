@@ -185,7 +185,7 @@ export const Timesheet: FC<Props> = props => {
   };
 
   const checkReceiptIssue = (): boolean => {
-    if (!receiptsIssue.hasReceiptsIssue && !checkTimeout()) {
+    if (receiptsIssue.hasReceiptsIssue) {
       dispatch({ type: 'showReceiptsIssueDialog', value: true });
       return false;
     }
