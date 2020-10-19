@@ -290,9 +290,8 @@ export const Timesheet: FC<Props> = props => {
       const sr = new ServicesRendered();
       sr.setIsActive(1);
       sr.setHideFromTimesheet(0);
-      sr.setFieldMaskList(['hide_from_timesheet']);
       //sr.setEventId(123110101010101);
-      sr.setTimeStarted('%nevergonnamatchhopeitdoesntbreak%');
+      //sr.setTimeStarted('%nevergonnamatchhopeitdoesntbreak%');
       sr.setTechnicianUserId(timesheetOwnerId);
       const tl = new TimesheetLine();
       tl.setIsActive(1);
@@ -311,7 +310,7 @@ export const Timesheet: FC<Props> = props => {
       );
       dispatch({ type: 'fetchedTimesheetData', data: result });
     })();
-  }, [shownDates]);
+  }, [shownDates, fetchingTimesheetData]);
 
   if (!user) {
     return null;
