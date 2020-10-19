@@ -116,7 +116,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
               Ref #: {referenceNumber}
             </Typography>
           )}
-          {briefDescription && (
+          {notes && (
             <Typography variant="body2" color="textSecondary">
               Notes: {notes}
             </Typography>
