@@ -1,5 +1,5 @@
 type Colors = {
-  [key: string]: string,
+  [key: string]: string;
 };
 
 export const colorsMapping: Colors = {
@@ -7,10 +7,10 @@ export const colorsMapping: Colors = {
   Confirmed: '#FEFDB9',
   Enroute: '#FFFF00',
   Pending: '#F2EF60',
-  'User Submitted': '#B1CEFA',
+  Submitted: '#B1CEFA',
   Approved: '#A9E77C',
   'On Call': '#88EDB3',
-  Delayed:  '#07CCEC',
+  Delayed: '#07CCEC',
   Incomplete: '#BFD4FF',
   'Part on order': '#AA93EA',
   'Pend Sched': '#FD9834',

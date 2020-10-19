@@ -3,6 +3,7 @@
 .TimesheetTimesheetCard {
   &Card {
     margin: .spacing() [] 0;
+    position: relative;
     &.servicesRendered {
       background-color: @primary-light;
     }
@@ -28,5 +29,11 @@
     width: .spacing(2) [];
     height: .spacing(2) [];
     border-radius: .spacing() [];
+  }
+  &EventId {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 12px;
   }
 }
