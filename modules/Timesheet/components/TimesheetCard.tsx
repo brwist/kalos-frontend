@@ -41,6 +41,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
     classCode,
     referenceNumber,
     notes,
+    eventId,
   } = card;
   let status;
   if (adminApprovalDatetime) {
@@ -94,6 +95,11 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
           {briefDescription && (
             <Typography variant="body2" color="textSecondary">
               Notes: {notes}
+            </Typography>
+          )}
+          {!!eventId && (
+            <Typography variant="body2" color="textSecondary">
+              Service Call ID: {eventId}
             </Typography>
           )}
         </CardContent>
