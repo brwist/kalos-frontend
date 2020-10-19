@@ -292,7 +292,7 @@ export const Timesheet: FC<Props> = props => {
       sr.setHideFromTimesheet(0);
       sr.setFieldMaskList(['hide_from_timesheet']);
       //sr.setEventId(123110101010101);
-      //sr.setTimeStarted('%nevergonnamatchhopeitdoesntbreak%');
+      sr.setTimeStarted('%nevergonnamatchhopeitdoesntbreak%');
       sr.setTechnicianUserId(timesheetOwnerId);
       const tl = new TimesheetLine();
       tl.setIsActive(1);
