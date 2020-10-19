@@ -20,6 +20,7 @@ type Props = {
   payroll: Payroll;
   submitTimesheet: () => void;
   pendingEntries: boolean;
+  isTimesheetOwner: boolean;
 };
 
 const Toolbar: FC<Props> = ({
@@ -30,6 +31,7 @@ const Toolbar: FC<Props> = ({
   payroll,
   submitTimesheet,
   pendingEntries,
+  isTimesheetOwner,
 }): JSX.Element => {
   const confirm = useConfirm();
 
@@ -45,6 +47,14 @@ const Toolbar: FC<Props> = ({
       });
     }
   };
+
+  const submitText = 'Submit Timesheet';
+  let buttonLabel = 'Approve Timesheet';
+  if (!timesheetAdministration) {
+    buttonLabel = submitText;
+  } else if (isTimesheetOwner) {
+    buttonLabel = submitText;
+  }
 
   return (
     <MuiToolbar className="TimesheetToolbarBar">
@@ -87,10 +97,8 @@ const Toolbar: FC<Props> = ({
           </Box>
           <Button
             onClick={handleSubmit}
-            label={
-              timesheetAdministration ? 'Approve Timesheet' : 'Submit Timesheet'
-            }
-            disabled={timesheetAdministration && pendingEntries}
+            label={buttonLabel}
+            disabled={pendingEntries && !isTimesheetOwner}
           />
         </Box>
       </MuiPickersUtilsProvider>

@@ -64,6 +64,7 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
 
 export const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId } = props;
+  const isTimesheetOwner = userId === timesheetOwnerId;
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
@@ -239,7 +240,7 @@ export const Timesheet: FC<Props> = props => {
       if (overlapped) {
         dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
       } else {
-        if (user?.timesheetAdministration) {
+        if (user?.timesheetAdministration && !isTimesheetOwner) {
           await tslClient.Approve(ids, userId);
           dispatch({ type: 'approveTimesheet' });
         } else {
@@ -248,7 +249,7 @@ export const Timesheet: FC<Props> = props => {
         }
       }
     })();
-  }, [userId, data, shownDates, tslClient]);
+  }, [userId, data, shownDates, tslClient, timesheetOwnerId]);
 
   const fetchUsers = async () => {
     const userResult = await loadUserById(userId);
@@ -337,6 +338,7 @@ export const Timesheet: FC<Props> = props => {
             payroll={payroll}
             submitTimesheet={handleSubmitTimesheet}
             pendingEntries={pendingEntries}
+            isTimesheetOwner={isTimesheetOwner}
           />
           {error && (
             <Alert
