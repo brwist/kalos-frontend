@@ -113,6 +113,7 @@ export const Timesheet: FC<Props> = props => {
       data: card,
       action: action || editing.action,
     });
+    reload();
   };
 
   const handleAddNewTimeshetCardClicked = () => {
@@ -284,7 +285,7 @@ export const Timesheet: FC<Props> = props => {
     })();
   }, []);
 
-  useEffect(() => {
+  const reload = () => {
     dispatch({ type: 'fetchingTimesheetData' });
     (async () => {
       const sr = new ServicesRendered();
@@ -311,7 +312,9 @@ export const Timesheet: FC<Props> = props => {
       );
       dispatch({ type: 'fetchedTimesheetData', data: result });
     })();
-  }, [shownDates]);
+  };
+
+  useEffect(reload, [shownDates]);
 
   if (!user) {
     return null;
