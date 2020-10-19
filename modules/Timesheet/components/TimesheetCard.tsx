@@ -10,7 +10,7 @@ import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 import { colorsMapping } from '../constants';
 import { useEditTimesheet } from '../hooks';
-import { roundNumber } from '../../../helpers';
+import { roundNumber, getCFAppUrl } from '../../../helpers';
 import './timesheetCard.less';
 
 type ColorIndicatorProps = {
@@ -42,12 +42,14 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
     referenceNumber,
     notes,
     eventId,
+    eventUserId,
+    eventPropertyId,
   } = card;
   let status;
   if (adminApprovalDatetime) {
     status = 'Approved';
   } else if (userApprovalDatetime) {
-    status = 'User Submitted';
+    status = 'Submitted';
   } else {
     status = 'Pending';
   }
@@ -81,6 +83,28 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
             </span>
             {payrollDiff > 0 && <strong>{roundNumber(payrollDiff)}</strong>}
           </Typography>
+          {!!eventId && (
+            <Typography
+              variant="body2"
+              color="textSecondary"
+              className="TimesheetTimesheetCardEventId"
+              onClick={event => {
+                event.stopPropagation();
+                event.preventDefault();
+                window.open(
+                  [
+                    getCFAppUrl('admin:service.editServicecall'),
+                    `id=${eventId}`,
+                    `user_id=${eventUserId}`,
+                    `property_id=${eventPropertyId}`,
+                  ].join('&'),
+                  '_blank',
+                );
+              }}
+            >
+              {eventId}
+            </Typography>
+          )}
           <Typography>{classCode?.description}</Typography>
           {briefDescription && (
             <Typography variant="body2" color="textSecondary">
