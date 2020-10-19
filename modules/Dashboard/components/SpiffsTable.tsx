@@ -5,6 +5,7 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { makeFakeRows, formatDate, usd } from '../../../helpers';
+import { parseISO } from 'date-fns';
 
 interface SpiffProps {
   spiffs: Spiff.AsObject[];
@@ -39,8 +40,8 @@ export const Spiffs = ({ spiffs, isLoading }: SpiffProps) => {
               ? makeFakeRows(7, 5)
               : spiffs
                   .sort((a, b) => {
-                    const dateA = new Date(a.timeCreated.split(' ')[0]);
-                    const dateB = new Date(b.timeCreated.split(' ')[0]);
+                    const dateA = parseISO(a.timeCreated.split(' ')[0]);
+                    const dateB = parseISO(b.timeCreated.split(' ')[0]);
                     return dateB.valueOf() - dateA.valueOf();
                   })
                   .map(

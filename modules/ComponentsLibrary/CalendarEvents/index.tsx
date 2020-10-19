@@ -1,7 +1,7 @@
 import React, { FC, useCallback, ReactElement } from 'react';
 import clsx from 'clsx';
 import difference from 'lodash/difference';
-import { format, addDays, getDay, differenceInDays } from 'date-fns';
+import { format, addDays, getDay, differenceInDays, parseISO } from 'date-fns';
 import { Tooltip } from '../Tooltip';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { formatDate, formatTime } from '../../../helpers';
@@ -46,8 +46,8 @@ export const CalendarEvents: FC<Props> = ({
   withLabels = false,
 }) => {
   const EVENT_HEIGHT = withLabels ? 40 : 30;
-  const startDate = new Date(`${dateStart}T00:00:00`);
-  const endDate = new Date(`${dateEnd}T00:00:00`);
+  const startDate = parseISO(`${dateStart}T00:00:00`);
+  const endDate = parseISO(`${dateEnd}T00:00:00`);
   const totalDays = differenceInDays(endDate, startDate);
   const offsetStart = getDay(startDate);
   const offsetEnd = 6 - getDay(endDate);

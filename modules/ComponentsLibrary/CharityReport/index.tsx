@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { SectionBar } from '../SectionBar';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
@@ -31,7 +31,7 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
     }
   }, [loaded, setLoaded, load]);
   const subtitle = useMemo(
-    () => format(new Date(`${month.replace('%', '01')}T00:00:00`), 'MMMM yyyy'),
+    () => format(parseISO(`${month.replace('%', '01')}T00:00:00`), 'MMMM yyyy'),
     [month],
   );
   return (

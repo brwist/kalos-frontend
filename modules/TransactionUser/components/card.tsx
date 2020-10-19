@@ -39,6 +39,7 @@ import { NoteField } from './NoteField';
 import { FileGallery } from '../../ComponentsLibrary/FileGallery';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import './card.css';
+import { parseISO } from 'date-fns';
 
 interface props {
   txn: Transaction.AsObject;
@@ -397,7 +398,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       <>
         <Paper elevation={4} style={{ margin: 16, marginTop: 32 }}>
           <SectionBar
-            title={`${new Date(
+            title={`${parseISO(
               t.timestamp.split(' ').join('T'),
             ).toDateString()} - $${t.amount}`}
             subtitle={subheader}

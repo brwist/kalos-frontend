@@ -1,6 +1,12 @@
 import React, { FC, useCallback, useState } from 'react';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
-import { format, roundToNearestMinutes, parseISO } from 'date-fns';
+import {
+  format,
+  roundToNearestMinutes,
+  parseISO,
+  isBefore,
+  addDays,
+} from 'date-fns';
 import { Button } from '../../ComponentsLibrary/Button';
 import {
   TimesheetLine,
@@ -131,6 +137,9 @@ const EditTimesheetModal: FC<Props> = ({
         data.date ? parseISO(data.date) : new Date(),
         'yyyy-MM-dd',
       )} ${format(parseISO(data.timeFinished), 'HH:mm')}`;
+      if (isBefore(parseISO(data.timeFinished), parseISO(data.timeStarted))) {
+        console.log('caught a negative time, lets do something about it here');
+      }
       delete data.date;
       const req = new TimesheetLine();
       req.setId(id);

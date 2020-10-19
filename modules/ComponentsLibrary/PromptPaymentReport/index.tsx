@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react';
-import { format, addMonths } from 'date-fns';
+import { format, addMonths, parseISO } from 'date-fns';
 import kebabCase from 'lodash/kebabCase';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
@@ -131,11 +131,11 @@ export const PromptPaymentReport: FC<Props> = ({
     [setEditingAward],
   );
   const subtitle = useMemo(
-    () => format(new Date(form.month.replace('%', '01')), 'MMMM yyyy'),
+    () => format(parseISO(form.month.replace('%', '01')), 'MMMM yyyy'),
     [form],
   );
   const subtitleMonth = useMemo(
-    () => format(new Date(form.month.replace('%', '01')), 'MMMM'),
+    () => format(parseISO(form.month.replace('%', '01')), 'MMMM'),
     [form],
   );
   const renderCustomerPayableReport = ({

@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Button } from '../Button';
 import { PrintPage } from '../PrintPage';
 import { PrintHeader } from '../PrintHeader';
@@ -71,10 +71,10 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
   const subtitle = useMemo(() => {
     if (type === 'Monthly') {
       return [
-        format(new Date(`${date.replace('%', '01')}T00:00:00`), 'MMMM yyyy'),
+        format(parseISO(`${date.replace('%', '01')}T00:00:00`), 'MMMM yyyy'),
       ];
     } else {
-      const d = new Date(`${date}T00:00:00`);
+      const d = parseISO(`${date}T00:00:00`);
       return [
         `Week of ${format(d, 'MMMM d, yyyy')}`,
         `Weekly ${format(d, 'w')}`,

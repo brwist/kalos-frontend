@@ -12,6 +12,7 @@ import {
   getPropertyAddress,
   EventType,
 } from '../../../helpers';
+import { parseISO } from 'date-fns';
 
 interface AssignmentProps {
   events: EventType[];
@@ -47,8 +48,8 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
               ? makeFakeRows(8, 5)
               : events
                   .sort((a, b) => {
-                    const dateA = new Date(a.dateStarted.split(' ')[0]);
-                    const dateB = new Date(b.dateStarted.split(' ')[0]);
+                    const dateA = parseISO(a.dateStarted.split(' ')[0]);
+                    const dateB = parseISO(b.dateStarted.split(' ')[0]);
                     return dateB.valueOf() - dateA.valueOf();
                   })
                   .map(e => {

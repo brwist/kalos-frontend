@@ -23,6 +23,7 @@ import { CostCenterPicker } from '../../Pickers/CostCenter';
 import { AltGallery, GalleryData } from '../../AltGallery/main';
 import { Row } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
+import { parseISO } from 'date-fns';
 
 interface props {
   txn: Transaction.AsObject;
@@ -175,7 +176,7 @@ export function TransactionRow({
   const amount = prettyMoney(txn.amount);
   return [
     {
-      value: new Date(txn.timestamp.split(' ').join('T')).toLocaleDateString(),
+      value: parseISO(txn.timestamp.split(' ').join('T')).toLocaleDateString(),
     },
     {
       value: `${txn.ownerName} (${txn.cardUsed})` || '',
@@ -220,7 +221,7 @@ export function TransactionRow({
             size="small"
             onClick={() =>
               copyToClipboard(
-                `${new Date(
+                `${parseISO(
                   txn.timestamp.split(' ').join('T'),
                 ).toLocaleDateString()},${txn.description},${amount},${
                   txn.ownerName
