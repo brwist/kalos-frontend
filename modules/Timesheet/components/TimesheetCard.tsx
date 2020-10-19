@@ -39,6 +39,9 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
     adminApprovalDatetime,
     briefDescription,
     classCode,
+    referenceNumber,
+    notes,
+    eventId,
   } = card;
   let status;
   if (adminApprovalDatetime) {
@@ -78,13 +81,25 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
             </span>
             {payrollDiff > 0 && <strong>{roundNumber(payrollDiff)}</strong>}
           </Typography>
-          <Typography variant="body2" color="textSecondary">
-            {name}
-          </Typography>
           <Typography>{classCode?.description}</Typography>
           {briefDescription && (
             <Typography variant="body2" color="textSecondary">
-              {briefDescription}
+              Brief desc: {briefDescription}
+            </Typography>
+          )}
+          {referenceNumber && (
+            <Typography variant="body2" color="textSecondary">
+              Ref #: {referenceNumber}
+            </Typography>
+          )}
+          {briefDescription && (
+            <Typography variant="body2" color="textSecondary">
+              Notes: {notes}
+            </Typography>
+          )}
+          {!!eventId && (
+            <Typography variant="body2" color="textSecondary">
+              Service Call ID: {eventId}
             </Typography>
           )}
         </CardContent>
@@ -123,9 +138,6 @@ export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({
           >
             {format(parseISO(timeStarted), 'p')}
             {timeFinished && ` - ${format(parseISO(timeFinished), 'p')}`}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            {name}
           </Typography>
         </CardContent>
       </CardActionArea>
