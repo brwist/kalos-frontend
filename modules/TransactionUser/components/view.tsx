@@ -8,6 +8,7 @@ import { Loader } from '../../Loader/main';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { getEditDistance } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
+import { parseISO } from 'date-fns/esm';
 
 const MISSING_RECEIPT_KEY = 'KALOS MISSING RECIEPT AFFADAVIT';
 
@@ -51,7 +52,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     return () => {
       if (!this.state.isLoading) {
         this.setState(
-          (prevState) => ({ page: prevState.page + changeAmount }),
+          prevState => ({ page: prevState.page + changeAmount }),
           this.fetchAllTxns,
         );
       }
@@ -63,9 +64,9 @@ export class TransactionUserView extends React.PureComponent<props, state> {
   nextPage = this.changePage(1);
 
   toggleLoading = (cb?: () => void): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.setState(
-        (prevState) => ({
+        prevState => ({
           isLoading: !prevState.isLoading,
         }),
         () => {
@@ -120,7 +121,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
         IDList = [...IDList, t.id];
       }
     }
-    const newTxns = this.state.transactions.slice().map((t) => {
+    const newTxns = this.state.transactions.slice().map(t => {
       if (IDList.includes(t.id)) {
         t.costCenterId = txn.costCenterId;
         return t;
@@ -139,15 +140,15 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   render() {
     const txns = this.state.transactions.sort((a, b) => {
-      const dateA = new Date(a.timestamp.split(' ').join('T'));
-      const dateB = new Date(b.timestamp.split(' ').join('T'));
+      const dateA = parseISO(a.timestamp.split(' ').join('T'));
+      const dateB = parseISO(b.timestamp.split(' ').join('T'));
       return dateA.getTime() - dateB.getTime();
     });
     const { isLoading } = this.state;
     return (
       <>
         {isLoading && <Loader />}
-        {txns.map((t) => (
+        {txns.map(t => (
           <TxnCard
             txn={t}
             key={`${t.id}`}

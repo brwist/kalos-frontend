@@ -27,7 +27,7 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
 import DateFnsUtils from '@date-io/date-fns';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import {
   MuiPickersUtilsProvider,
   DatePicker,
@@ -418,7 +418,6 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         <Field
           value={valHour}
           name={`${name}_hour`}
-          type="time"
           onChange={hour => handleDateTimeChange(valDate, hour)}
         />
       </div>
@@ -502,7 +501,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         <DateTimePicker
           className={clsx('FieldInput', className, { compact, disabled })}
           label={inputLabel}
-          value={new Date((props.value as unknown) as string)}
+          value={parseISO((props.value as unknown) as string)}
           onChange={value =>
             handleChange({
               target: {
@@ -523,7 +522,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         <DatePicker
           className={clsx('FieldInput', className, { compact, disabled })}
           label={inputLabel}
-          value={new Date((props.value as unknown) as string)}
+          value={parseISO((props.value as unknown) as string)}
           onChange={value =>
             handleChange({
               target: {
@@ -544,7 +543,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
         <TimePicker
           className={clsx('FieldInput', className, { compact, disabled })}
           label={inputLabel}
-          value={new Date((props.value as unknown) as string)}
+          value={parseISO((props.value as unknown) as string)}
           onChange={value =>
             handleChange({
               target: {

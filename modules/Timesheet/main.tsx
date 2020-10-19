@@ -5,7 +5,7 @@ import React, {
   useReducer,
   useCallback,
 } from 'react';
-import { startOfWeek, subDays, parseISO } from 'date-fns';
+import { startOfWeek, subDays, parseISO, addDays, format } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Container from '@material-ui/core/Container';
 import Box from '@material-ui/core/Box';
@@ -186,7 +186,7 @@ export const Timesheet: FC<Props> = props => {
 
   const checkReceiptIssue = (): boolean => {
     if (receiptsIssue.hasReceiptsIssue) {
-      dispatch({ type: 'showReceiptsIssueDialog', value: true });
+      //dispatch({ type: 'showReceiptsIssueDialog', value: true });
       return false;
     }
     return true;
@@ -290,6 +290,9 @@ export const Timesheet: FC<Props> = props => {
       const sr = new ServicesRendered();
       sr.setIsActive(1);
       sr.setHideFromTimesheet(0);
+      sr.setFieldMaskList(['hide_from_timesheet']);
+      //sr.setEventId(123110101010101);
+      //sr.setTimeStarted('%nevergonnamatchhopeitdoesntbreak%');
       sr.setTechnicianUserId(timesheetOwnerId);
       const tl = new TimesheetLine();
       tl.setIsActive(1);
@@ -297,10 +300,14 @@ export const Timesheet: FC<Props> = props => {
       const req = new TimesheetReq();
       req.setServicesRendered(sr);
       req.setTimesheetLine(tl);
+      console.log(shownDates);
       const result = await tslClient.GetTimesheet(
         req,
         `${shownDates[0]}%`,
-        `${shownDates[shownDates.length - 1]}%`,
+        `${format(
+          addDays(parseISO(shownDates[shownDates.length - 1]), 1),
+          'yyyy-MM-dd',
+        )}%`,
       );
       dispatch({ type: 'fetchedTimesheetData', data: result });
     })();

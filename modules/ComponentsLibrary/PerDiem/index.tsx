@@ -3,7 +3,7 @@ import Typography from '@material-ui/core/Typography';
 import Alert from '@material-ui/lab/Alert';
 import { Alert as AlertPopup } from '../Alert';
 import sortBy from 'lodash/sortBy';
-import { startOfWeek, format, addDays } from 'date-fns';
+import { startOfWeek, format, addDays, parseISO } from 'date-fns';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 import { Button } from '../Button';
 import { CalendarHeader } from '../CalendarHeader';
@@ -181,7 +181,7 @@ export const PerDiemComponent: FC<Props> = ({
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
-      startOfWeek(perDiem ? new Date(perDiem.dateStarted) : new Date(), {
+      startOfWeek(perDiem ? parseISO(perDiem.dateStarted) : new Date(), {
         weekStartsOn: 6,
       }),
       -0,

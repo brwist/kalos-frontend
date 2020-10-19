@@ -135,8 +135,10 @@ export const reducer = (state: State, action: Action) => {
     case 'fetchedTimesheetData': {
       const datesMap = action.data.getDatesMap();
       let pendingEntries = false;
+      console.log(datesMap);
       const { data, totalPayroll } = state.shownDates.reduce(
         ({ data, totalPayroll }, date) => {
+          console.log(date);
           const dayData = datesMap.get(date);
           const srList =
             dayData?.getServicesRenderedList().map(i => i.toObject()) || [];

@@ -13,6 +13,7 @@ import TableCell from '@material-ui/core/TableCell';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { parseISO } from 'date-fns';
 
 interface EventProps {
   events: Event.AsObject[];
@@ -97,8 +98,8 @@ export const EventTable = ({ events, isLoading, title }: EventProps) => {
             {!isLoading &&
               events
                 .sort((a, b) => {
-                  const dateA = new Date(a.dateStarted.split(' ')[0]);
-                  const dateB = new Date(b.dateStarted.split(' ')[0]);
+                  const dateA = parseISO(a.dateStarted.split(' ')[0]);
+                  const dateB = parseISO(b.dateStarted.split(' ')[0]);
                   return dateB.valueOf() - dateA.valueOf();
                 })
                 .map(e => (

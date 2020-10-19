@@ -32,6 +32,7 @@ import {
 } from '../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
 import './styles.less';
+import { parseISO } from 'date-fns/esm';
 
 interface Props {
   loggedUserId: number;
@@ -80,7 +81,7 @@ const initialFormPrintData: FormPrintData = {
 };
 
 const formatWeek = (date: string) => {
-  const d = new Date(date);
+  const d = parseISO(date);
   return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
 };
 
@@ -514,7 +515,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
                         equalColWidths
                         columns={[...Array(7)].map((_, idx) => {
                           const date = format(
-                            addDays(new Date(dateStarted), idx),
+                            addDays(parseISO(dateStarted), idx),
                             'do, iiii',
                           );
                           return date;
@@ -522,7 +523,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
                         data={[
                           [...Array(7)].map((_, idx) => {
                             const date = format(
-                              addDays(new Date(dateStarted), idx),
+                              addDays(parseISO(dateStarted), idx),
                               'yyyy-MM-dd',
                             );
                             const row = rowsList.find(({ dateString }) =>
