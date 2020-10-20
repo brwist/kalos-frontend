@@ -50,6 +50,7 @@ const EnhancedField = ({
   | 'actionsInLabel'
   | 'onFileLoad'
   | 'onChange'
+  | 'minutesStep'
 > & {
   defaultValue?: Value | Value[];
 }) => {
@@ -145,6 +146,12 @@ export default () => (
       label="Material Time"
       defaultValue="2020-03-02 21:35:00"
       type="mui-time"
+    />
+    <EnhancedField
+      label="Material Time Every 1 min"
+      defaultValue="2020-03-02 21:35:00"
+      type="mui-time"
+      minutesStep={1}
     />
     <EnhancedField label="Signature" type="signature" />
     <EnhancedField

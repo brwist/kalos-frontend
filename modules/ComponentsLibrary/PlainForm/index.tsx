@@ -38,6 +38,7 @@ export type SchemaProps<T> = {
   disabled?: boolean;
   readOnly?: boolean;
   technicianAsEmployee?: boolean;
+  minutesStep?: number;
 };
 
 export type Schema<T> = SchemaProps<T>[][];
