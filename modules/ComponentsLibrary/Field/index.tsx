@@ -142,6 +142,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   compact = false,
   technicianAsEmployee = false,
   white = false,
+  minutesStep = 15,
   ...props
 }) => {
   const signatureRef = useRef(null);
@@ -551,7 +552,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               },
             })
           }
-          minutesStep={15}
+          minutesStep={minutesStep}
           disabled={disabled}
           fullWidth
         />
