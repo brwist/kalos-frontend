@@ -95,11 +95,7 @@ const Toolbar: FC<Props> = ({
               </>
             )}
           </Box>
-          <Button
-            onClick={handleSubmit}
-            label={buttonLabel}
-            disabled={pendingEntries && !isTimesheetOwner}
-          />
+          <Button onClick={handleSubmit} label={buttonLabel} />
         </Box>
       </MuiPickersUtilsProvider>
     </MuiToolbar>
