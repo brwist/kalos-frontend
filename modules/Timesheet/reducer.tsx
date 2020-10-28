@@ -32,7 +32,7 @@ type DayData = {
   payroll: Payroll;
 };
 
-type DataList = {
+export type DataList = {
   [key: string]: DayData;
 };
 
@@ -70,7 +70,7 @@ export type State = {
     unbillable: number | null;
   };
   editing: EditingState;
-  error: '';
+  error: string;
   receiptsIssue: {
     shown: boolean;
     hasReceiptsIssue: boolean;
@@ -188,7 +188,7 @@ export const reducer = (state: State, action: Action) => {
           return { data, totalPayroll };
         },
         {
-          data: [],
+          data: {} as DataList,
           totalPayroll: {
             billable: 0,
             unbillable: 0,
@@ -215,18 +215,20 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         editing: {
+          ...state.editing,
           entry: new TimesheetLine().toObject(),
           modalShown: true,
-          action: 'create',
+          action: 'create' as 'create',
         },
       };
     case 'editTimesheetCard':
       return {
         ...state,
         editing: {
+          ...state.editing,
           entry: action.data,
           modalShown: true,
-          action: 'update',
+          action: 'update' as 'update',
         },
       };
     case 'editServicesRenderedCard': {
@@ -246,9 +248,10 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         editing: {
+          ...state.editing,
           modalShown: true,
           entry,
-          action: 'convert',
+          action: 'convert' as 'convert',
           convertingSR: card,
         },
       };
@@ -303,7 +306,9 @@ export const reducer = (state: State, action: Action) => {
         editing: {
           entry: new TimesheetLine().toObject(),
           modalShown: false,
-          action: '',
+          action: '' as '',
+          editedEntries: [],
+          hiddenSR: [],
         },
       };
     }
@@ -348,7 +353,9 @@ export const reducer = (state: State, action: Action) => {
         editing: {
           entry: new TimesheetLine().toObject(),
           modalShown: false,
-          action: '',
+          action: '' as '',
+          hiddenSR: [],
+          editedEntries: [],
         },
       };
     case 'error': {
