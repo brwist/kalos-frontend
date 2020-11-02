@@ -30,6 +30,7 @@ import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import EventIcon from '@material-ui/icons/Event';
+import SearchIcon from '@material-ui/icons/Search';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { getCFAppUrl } from '../../helpers';
 import './styles.less';
@@ -267,6 +268,11 @@ const addNewOptions = [
     name: 'Service Call',
     url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
   },
+  {
+    icon: <SearchIcon />,
+    name: 'Search Calls',
+    url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.calls'
+  }
 ];
 
 export const ServiceCalendar: FC<Props> = props => {
@@ -398,8 +404,6 @@ export const ServiceCalendar: FC<Props> = props => {
         </EmployeesContext.Provider>
         <AddNewButton
           options={addNewOptions}
-          search
-          url={getCFAppUrl('admin:service.calls')}
         />
       </CalendarDataContext.Provider>
     </PageWrapper>
