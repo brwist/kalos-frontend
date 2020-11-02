@@ -71,6 +71,7 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
   const started = parseISO(timeStarted);
   const finished = parseISO(timeFinished);
   const sameDay = isSameDay(started, finished);
+  console.log(adminApprovalUserId);
   if (requestType === 10) {
     if (employeesLoading) {
       return <SkeletonCard />;
