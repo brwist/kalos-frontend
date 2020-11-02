@@ -79,7 +79,7 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element => {
     title = 'Training:';
     subheader = `${empl?.firstname} ${empl?.lastname}`;
   } else {
-    title = `${adminApprovalUserId ? 'Time off' : 'Pending'}:`;
+    title = 'Time Off';
     subheader = userName;
   }
   if (sameDay) {

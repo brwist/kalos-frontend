@@ -208,13 +208,14 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
 
   // @ts-ignore
   const calendarDay = datesMap?.get(date)?.toObject();
+  console.log(calendarDay)
   const {
     completedServiceCallsList,
     remindersList,
     serviceCallsList,
     timeoffRequestsList,
   } = filterCalls(calendarDay);
-
+  console.log(timeoffRequestsList)
   return (
     <Box className={clsx(dayView && 'ServiceCalendarColumnDayView')}>
       {dayView && (
