@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useReducer,
+  useState
 } from 'react';
 import clsx from 'clsx';
 import DateFnsUtils from '@date-io/date-fns';
@@ -31,8 +32,11 @@ import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import EventIcon from '@material-ui/icons/Event';
 import SearchIcon from '@material-ui/icons/Search';
+import PersonIcon from '@material-ui/icons/PersonAdd';
+import { Modal } from '../ComponentsLibrary/Modal';
+import { CustomerEdit } from '../ComponentsLibrary/CustomerEdit';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { getCFAppUrl } from '../../helpers';
+import { UserType } from '../../helpers';
 import './styles.less';
 
 type Props = PageWrapperProps & {
@@ -112,9 +116,11 @@ type State = {
   selectedDate: Date | '';
   shownDates: string[];
   filters: Filters;
+  addCustomer: boolean
 };
 
 type Action =
+  | { type: 'toggleAddCustomer'; value: boolean }
   | { type: 'setUser'; value: User.AsObject }
   | { type: 'fetchingCalendarData' }
   | { type: 'fetchedCalendarData'; data: CalendarData }
@@ -122,7 +128,8 @@ type Action =
   | { type: 'speedDialOpen' }
   | { type: 'changeSelectedDate'; value: Date }
   | { type: 'changeFilters'; value: Filters }
-  | { type: 'defaultView'; value: string };
+  | { type: 'defaultView'; value: string }; 
+  
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
@@ -132,6 +139,12 @@ const reducer = (state: State, action: Action): State => {
         user: action.value,
         defaultView: action.value.calendarPref,
       };
+    }
+    case 'toggleAddCustomer': {
+      return {
+        ...state,
+        addCustomer: !state.addCustomer
+      }
     }
     case 'fetchingCalendarData': {
       return {
@@ -210,6 +223,7 @@ const initialState: State = {
     : initialFilters,
   customersMap: {},
   zipCodesMap: {},
+  addCustomer: false
 };
 
 type EmployeesContext = {
@@ -250,30 +264,7 @@ export const EmployeesContext = createContext<EmployeesContext>({
   employeesLoading: false,
 });
 
-const addNewOptions = [
-  {
-    icon: <AssignmentIndIcon />,
-    name: 'Task',
-    url:
-      'https://app.kalosflorida.com/index.cfm?action=admin:service.addServiceCallGeneral',
-  },
-  {
-    icon: <AddAlertIcon />,
-    name: 'Reminder',
-    url:
-      'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
-  },
-  {
-    icon: <EventIcon />,
-    name: 'Service Call',
-    url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
-  },
-  {
-    icon: <SearchIcon />,
-    name: 'Search Calls',
-    url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.calls'
-  }
-];
+
 
 export const ServiceCalendar: FC<Props> = props => {
   const { userId } = props;
@@ -289,10 +280,11 @@ export const ServiceCalendar: FC<Props> = props => {
       shownDates,
       selectedDate,
       filters,
+      addCustomer
     },
     dispatch,
   ] = useReducer(reducer, initialState);
-
+  const [customerOpened, setCustomerOpened] = useState<UserType>(); 
   const fetchUser = async () => {
     const req = new User();
     req.setId(userId);
@@ -360,7 +352,34 @@ export const ServiceCalendar: FC<Props> = props => {
       dispatch({ type: 'defaultView', value: result.calendarPref });
     })();
   }, [viewBy]);
-
+  const addNewOptions = [
+    {
+      icon: <AssignmentIndIcon />,
+      name: 'Task',
+      url:
+      'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
+    },
+    {
+      icon: <AddAlertIcon />,
+      name: 'Reminder',
+      url:
+        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+    },
+    /*{
+      icon: <EventIcon />,
+      name: 'Service Call',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addServiceCallGeneral',
+    },*/
+    {icon: <PersonIcon />,
+      name: 'Add Customer',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:customers.add'
+    },
+    {
+      icon: <SearchIcon />,
+      name: 'Search Calls',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.calls'
+    }
+  ];
   return (
     <PageWrapper {...props} userID={userId}>
       <CalendarDataContext.Provider
@@ -406,6 +425,14 @@ export const ServiceCalendar: FC<Props> = props => {
           options={addNewOptions}
         />
       </CalendarDataContext.Provider>
+      {addCustomer && (
+        <Modal open onClose={handleToggleAddCustomer(false)}>
+          <CustomerEdit
+            onClose={handleToggleAddCustomer(false)}
+            onSave={handleCustomerSave}
+          />
+        </Modal>
+      )}
     </PageWrapper>
   );
 };
