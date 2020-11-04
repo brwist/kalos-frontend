@@ -4,15 +4,16 @@ import React, {
   useEffect,
   useReducer,
   useCallback,
-  Reducer,
 } from 'react';
 import { startOfWeek, subDays, parseISO, addDays, format } from 'date-fns';
+import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Container from '@material-ui/core/Container';
 import Box from '@material-ui/core/Box';
 import EventIcon from '@material-ui/icons/Event';
 import TimerOffIcon from '@material-ui/icons/TimerOff';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
+import AssessmentIcon from '@material-ui/icons/Assessment';
 import Alert from '@material-ui/lab/Alert';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
@@ -22,6 +23,7 @@ import {
   TimesheetReq,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
+import customTheme from '../Theme/main';
 import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import { ConfirmServiceProvider } from '../ComponentsLibrary/ConfirmService';
 import Toolbar from './components/Toolbar';
@@ -29,7 +31,7 @@ import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
 import { loadUserById } from '../../helpers';
-import { Action, getShownDates, reducer, State, DataList } from './reducer';
+import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import './styles.less';
@@ -60,15 +62,13 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
     : startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
 };
 
-type EditingActions = "create" | "update" | "convert" | "delete" | "approve" | "reject"
 export const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId } = props;
-  const isTimesheetOwner = userId === timesheetOwnerId;
-  const [state, dispatch] = useReducer<Reducer<State, Action>>(reducer, {
+  const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
     fetchingTimesheetData: true,
-    data: {} as DataList,
+    data: {},
     pendingEntries: false,
     selectedDate: getWeekStart(userId, timesheetOwnerId),
     shownDates: getShownDates(getWeekStart(userId, timesheetOwnerId)),
@@ -80,7 +80,7 @@ export const Timesheet: FC<Props> = props => {
     editing: {
       entry: new TimesheetLine().toObject(),
       modalShown: false,
-      action: '' as '',
+      action: '',
       editedEntries: [],
       hiddenSR: [],
     },
@@ -186,9 +186,8 @@ export const Timesheet: FC<Props> = props => {
   };
 
   const checkReceiptIssue = (): boolean => {
-    console.log(receiptsIssue);
     if (receiptsIssue.hasReceiptsIssue) {
-      dispatch({ type: 'showReceiptsIssueDialog', value: true });
+      //dispatch({ type: 'showReceiptsIssueDialog', value: true });
       return false;
     }
     return true;
@@ -197,7 +196,7 @@ export const Timesheet: FC<Props> = props => {
   const handleSubmitTimesheet = useCallback(() => {
     (async () => {
       if (!checkReceiptIssue()) return;
-      const ids: number[] = [];
+      const ids = [];
       let overlapped = false;
       for (let i = 0; i < shownDates.length; i++) {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
@@ -228,7 +227,7 @@ export const Timesheet: FC<Props> = props => {
             }
             return acc;
           },
-          { ranges: [], idList: [] } as { ranges: {previous: TimesheetLine.AsObject, current: TimesheetLine.AsObject}[], idList: number[]},
+          { ranges: [], idList: [] },
         );
 
         if (overlapped) {
@@ -240,7 +239,7 @@ export const Timesheet: FC<Props> = props => {
       if (overlapped) {
         dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
       } else {
-        if (user?.timesheetAdministration && !isTimesheetOwner) {
+        if (user?.timesheetAdministration) {
           await tslClient.Approve(ids, userId);
           dispatch({ type: 'approveTimesheet' });
         } else {
@@ -249,7 +248,7 @@ export const Timesheet: FC<Props> = props => {
         }
       }
     })();
-  }, [userId, data, shownDates, tslClient, timesheetOwnerId]);
+  }, [userId, data, shownDates, tslClient]);
 
   const fetchUsers = async () => {
     const userResult = await loadUserById(userId);
@@ -338,7 +337,6 @@ export const Timesheet: FC<Props> = props => {
             payroll={payroll}
             submitTimesheet={handleSubmitTimesheet}
             pendingEntries={pendingEntries}
-            isTimesheetOwner={isTimesheetOwner}
           />
           {error && (
             <Alert
