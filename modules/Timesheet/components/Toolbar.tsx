@@ -20,7 +20,7 @@ type Props = {
   payroll: Payroll;
   submitTimesheet: () => void;
   pendingEntries: boolean;
-  isTimesheetOwner: boolean;
+  isTimesheetOwner?: boolean;
 };
 
 const Toolbar: FC<Props> = ({

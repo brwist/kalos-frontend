@@ -196,7 +196,7 @@ export const Timesheet: FC<Props> = props => {
   const handleSubmitTimesheet = useCallback(() => {
     (async () => {
       if (!checkReceiptIssue()) return;
-      const ids = [];
+      const ids: number[] = [];
       let overlapped = false;
       for (let i = 0; i < shownDates.length; i++) {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
@@ -227,7 +227,13 @@ export const Timesheet: FC<Props> = props => {
             }
             return acc;
           },
-          { ranges: [], idList: [] },
+          {
+            ranges: [] as {
+              previous: TimesheetLine.AsObject;
+              current: TimesheetLine.AsObject;
+            }[],
+            idList: [] as number[],
+          },
         );
 
         if (overlapped) {
