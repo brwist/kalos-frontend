@@ -3,6 +3,7 @@ import { User } from '@kalos-core/kalos-rpc/User/index';
 import {
   TimesheetLine,
   TimesheetReq,
+  Timesheet,
 } from '@kalos-core/kalos-rpc/TimesheetLine/index';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered/index';
 import {
@@ -78,7 +79,7 @@ export type State = {
   };
 };
 
-type TimesheetData = {
+export type TimesheetData = {
   getDatesMap(): jspb.Map<string, RawDayData>;
 };
 
@@ -93,7 +94,7 @@ export type Action =
       };
     }
   | { type: 'fetchingTimesheetData' }
-  | { type: 'fetchedTimesheetData'; data: TimesheetData }
+  | { type: 'fetchedTimesheetData'; data: Timesheet }
   | { type: 'changeDate'; value: Date }
   | { type: 'addNewTimesheet' }
   | { type: 'editTimesheetCard'; data: TimesheetLine.AsObject }
