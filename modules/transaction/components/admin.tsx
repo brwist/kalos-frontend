@@ -25,6 +25,7 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { Button } from '../../ComponentsLibrary/Button';
 import { Field } from '../../ComponentsLibrary/Field';
+import CreateModal from './CreateModal';
 
 interface props {
   userID: number;
@@ -44,6 +45,7 @@ interface state {
   acceptOverride: boolean;
   search: string;
   editingCostCenter: { [key: number]: boolean };
+  showCreateModal: boolean;
 }
 
 interface IFilter {
@@ -98,6 +100,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       count: 0,
       search: '',
       editingCostCenter: {},
+      showCreateModal: false,
     };
     this.TxnClient = new TransactionClient(ENDPOINT);
     this.EventClient = new EventClient(ENDPOINT);
@@ -613,6 +616,22 @@ export class TransactionAdminView extends React.Component<props, state> {
     return this.state.transactions;
   }
 
+  toggleCreateModal = () => {
+    this.setState(prev => ({
+      ...prev,
+      showCreateModal: !prev.showCreateModal,
+    }));
+  };
+
+  handleSave = (entry: Transaction.AsObject): void => {
+    this.setState(prev => ({
+      ...prev,
+      showCreateModal: false,
+      transactions: [entry, ...prev.transactions],
+      count: prev.count + 1,
+    }));
+  };
+
   render() {
     const txns = this.sortTxns();
     let employeeTest;
@@ -807,7 +826,19 @@ export class TransactionAdminView extends React.Component<props, state> {
             disabled={!this.checkFilters()}
             style={{ float: 'left' }}
           />
+          <Button
+            label="Create"
+            variant="outlined"
+            onClick={this.toggleCreateModal}
+            style={{ float: 'left' }}
+          />
         </div>
+        <CreateModal
+          show={this.state.showCreateModal}
+          entry={{} as Transaction.AsObject}
+          onClose={this.toggleCreateModal}
+          onSave={this.handleSave}
+        />
         <div style={{ content: '', clear: 'both', display: 'table' }} />
         <InfoTable
           columns={[
