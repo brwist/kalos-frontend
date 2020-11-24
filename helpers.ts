@@ -15,6 +15,11 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
 import {
+  TimeoffRequest,
+  TimeoffRequestClient,
+  PTO,
+} from '@kalos-core/kalos-rpc/TimeoffRequest';
+import {
   Transaction,
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
@@ -150,6 +155,8 @@ export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
 export type TaskAssignmentType = TaskAssignment.AsObject;
 export type CardDataType = CardData.AsObject;
 export type TransactionDocumentType = TransactionDocument.AsObject;
+export type TimeoffRequestType = TimeoffRequest.AsObject;
+export type PTOType = PTO.AsObject;
 export type SimpleFile = {
   key: string;
   bucket: string;
@@ -198,6 +205,7 @@ export const InternalDocumentClientService = new InternalDocumentClient(
 );
 export const S3ClientService = new S3Client(ENDPOINT);
 export const FileClientService = new FileClient(ENDPOINT);
+export const TimeoffRequestClientService = new TimeoffRequestClient(ENDPOINT);
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -1409,6 +1417,45 @@ export const loadTransactionsByEventId = async (eventId: number) => {
     );
   }
   return results;
+};
+
+export const getPTOInquiryByUserId = async (userId: number) =>
+  (await TimeoffRequestClientService.PTOInquiry(userId)).toObject();
+
+export const getTimeoffRequestTypes = async () =>
+  await (await TimeoffRequestClientService.GetTimeoffRequestTypes()).toObject()
+    .dataList;
+
+export const getTimeoffRequestById = async (id: number) => {
+  const req = new TimeoffRequest();
+  req.setId(id);
+  req.setIsActive(1);
+  try {
+    return await TimeoffRequestClientService.Get(req);
+  } catch (e) {
+    return null;
+  }
+};
+
+export const deleteTimeoffRequestById = async (id: number) => {
+  const req = new TimeoffRequest();
+  req.setId(id);
+  return await TimeoffRequestClientService.Delete(req);
+};
+
+export const upsertTimeoffRequest = async (
+  data: Partial<TimeoffRequestType>,
+) => {
+  const req = new TimeoffRequest();
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return await TimeoffRequestClientService[data.id ? 'Update' : 'Create'](req);
 };
 
 export const refreshToken = async () =>
