@@ -2224,12 +2224,10 @@ export const loadContractsByFilter = async ({
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Contract();
   req.setIsActive(1);
-  // req.getUserId is a thing I can use
-  // business name may be a little more difficult
-  // getBusinessName below takes Id 
   req.setPageNumber(page);
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof ContractsFilter];
+
     if (value) {
       const { methodName } = getRPCFields(fieldName);
       //@ts-ignore
