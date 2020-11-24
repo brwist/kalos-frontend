@@ -116,9 +116,11 @@ import {
   getRandomNumber,
   randomize,
 } from './modules/ComponentsLibrary/helpers';
+import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
 
 export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
+export type ContractType = Contract.AsObject;
 export type GroupType = Group.AsObject;
 export type UserGroupLinkType = UserGroupLink.AsObject;
 export type EventType = Event.AsObject;
@@ -165,6 +167,7 @@ export const TaskClientService = new TaskClient(ENDPOINT);
 export const PDFClientService = new PDFClient(ENDPOINT);
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
+export const ContractClientService = new ContractClient(ENDPOINT);
 export const EventClientService = new EventClient(ENDPOINT);
 export const JobTypeClientService = new JobTypeClient(ENDPOINT);
 export const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);
@@ -1201,7 +1204,7 @@ export const upsertEventTask = async ({
   }
   if (startDate) {
     req.setStartDate(startDate);
-    fieldMaskList.push('StartDate');
+    fieldMaskList.push('StartDate'); 
   }
   if (endDate) {
     req.setEndDate(endDate);
@@ -2133,10 +2136,20 @@ export type PropertiesSort = {
   orderBy: string;
   orderDir: OrderDir;
 };
+export type ContractsSort = {
+  orderByField:  keyof ContractType;
+  orderBy: string;
+  orderDir: OrderDir;
+};
 export type LoadPropertiesByFilter = {
   page: number;
   filter: PropertiesFilter;
   sort: PropertiesSort;
+};
+export type LoadContractsByFilter = {
+  page: number;
+  filter: ContractsFilter;
+  sort: ContractsSort;
 };
 export type PropertiesFilter = {
   subdivision?: string;
@@ -2144,6 +2157,13 @@ export type PropertiesFilter = {
   city?: string;
   zip?: string;
   userId?: number;
+};
+export type ContractsFilter = {
+  number?: string;
+  lastName?: string;
+  businessName?: string;
+  dateStarted?: string;
+  dateEnded?: number;
 };
 /**
  * Returns Properties by filter
@@ -2172,6 +2192,51 @@ export const loadPropertiesByFilter = async ({
     }
   }
   const response = await PropertyClientService.BatchGet(req);
+  return {
+    results: response
+      .getResultsList()
+      .map(item => item.toObject())
+      .sort((a, b) => {
+        const A = (a[orderByField] || '').toString().toLowerCase();
+        const B = (b[orderByField] || '').toString().toLowerCase();
+        if (A < B) return orderDir === 'DESC' ? 1 : -1;
+        if (A > B) return orderDir === 'DESC' ? -1 : 1;
+        return 0;
+      }),
+    totalCount: response.getTotalCount(),
+  };
+};
+
+
+/**
+ * Returns Contracts by filter
+ * @param page number
+ * @param searchBy string
+ * @param searchPhrase string
+ * @returns {results: Property[], totalCount: number}
+ */
+
+export const loadContractsByFilter = async ({
+  page,
+  filter,
+  sort,
+}: LoadContractsByFilter) => {
+  const { orderBy, orderDir, orderByField } = sort;
+  const req = new Contract();
+  req.setIsActive(1);
+  // req.getUserId is a thing I can use
+  // business name may be a little more difficult
+  // getBusinessName below takes Id 
+  req.setPageNumber(page);
+  for (const fieldName in filter) {
+    const value = filter[fieldName as keyof ContractsFilter];
+    if (value) {
+      const { methodName } = getRPCFields(fieldName);
+      //@ts-ignore
+      req[methodName](typeof value === 'string' ? `%${value}%` : value);
+    }
+  }
+  const response = await ContractClientService.BatchGet(req);
   return {
     results: response
       .getResultsList()
@@ -2387,7 +2452,7 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
     await EventClientService.BatchGet(req)
   ).toObject();
   if (totalCount > 0) return resultsList[0];
-  req.setLogJobNumber('');
+  req.setLogJobNumber(''); 
   req.setContractNumber(referenceNumber);
   const { resultsList: resultsList2, totalCount: totalCount2 } = (
     await EventClientService.BatchGet(req)
