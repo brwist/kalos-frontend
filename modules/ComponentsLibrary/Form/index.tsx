@@ -23,7 +23,7 @@ export type Options = FieldOptions;
 
 export interface Props<T> extends PlainFormProps<T> {
   title?: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   intro?: ReactNode;
   onSave: (data: T) => void;
   onClose: (() => void) | null;
@@ -31,6 +31,7 @@ export interface Props<T> extends PlainFormProps<T> {
   actions?: ButtonProps[];
   pagination?: PaginationType;
   submitLabel?: string;
+  submitDisabled?: boolean;
   cancelLabel?: string;
   stickySectionBar?: boolean;
 }
@@ -53,6 +54,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       pagination,
       submitLabel = 'Save',
       cancelLabel = 'Cancel',
+      submitDisabled = false,
       error,
       className = '',
       stickySectionBar = false,
@@ -135,7 +137,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
                     {
                       label: submitLabel,
                       onClick: handleSave,
-                      disabled,
+                      disabled: disabled || submitDisabled,
                     },
                   ]),
               ...(onClose !== null
