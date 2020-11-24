@@ -22,7 +22,7 @@ import {
   timestamp,
   trailingZero,
   PropertyType,
-  loadPropertiesByFilter,
+  loadContractsByFilter,
   upsertEvent,
   CustomEventsHandler,
 } from '../../../helpers';
@@ -106,7 +106,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       this.setState({ error: true, loading: false });
     }
     if (viewedAsCustomer) {
-      const { results } = await loadPropertiesByFilter({
+      const { results } = await loadContractsByFilter({
         page: 0,
         filter: { userId: userID },
         sort: { orderBy: 'address', orderByField: 'address', orderDir: 'ASC' },

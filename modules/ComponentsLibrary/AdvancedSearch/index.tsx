@@ -34,6 +34,7 @@ import {
   loadEventsByFilter,
   loadUsersByFilter,
   loadPropertiesByFilter,
+  loadContractsByFilter,
   makeFakeRows,
   formatDate,
   getCustomerName,
@@ -47,11 +48,14 @@ import {
   UsersSort,
   LoadUsersByFilter,
   PropertiesFilter,
+  ContractsFilter,
   PropertiesSort,
   LoadPropertiesByFilter,
+  LoadContractsByFilter,
   EventType,
   UserType,
   PropertyType,
+  ContractType,
   loadJobTypes,
   loadJobSubtypes,
   JobTypeType,
@@ -74,6 +78,7 @@ import {
   getCFAppUrl,
   refreshToken,
   cfURL,
+  ContractsSort,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -84,7 +89,12 @@ import {
 } from '../../../constants';
 import './styles.less';
 
-type Kind = 'serviceCalls' | 'customers' | 'properties' | 'employees';
+type Kind =
+  | 'serviceCalls'
+  | 'customers'
+  | 'properties'
+  | 'employees'
+  | 'contracts';
 
 export interface Props {
   loggedUserId: number;
@@ -160,6 +170,7 @@ export const AdvancedSearch: FC<Props> = ({
   const [formKey, setFormKey] = useState<number>(0);
   const [events, setEvents] = useState<EventType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
+  const [contracts, setContracts] = useState<ContractType[]>([]);
   const [employeeImages, setEmployeeImages] = useState<{
     [key: string]: string;
   }>({});
@@ -179,6 +190,12 @@ export const AdvancedSearch: FC<Props> = ({
     orderBy: 'property_address',
     orderDir: 'ASC',
   });
+  const [contractsSort, setContractsSort] = useState<ContractsSort>({
+    orderByField: 'number',
+    orderBy: 'number',
+    orderDir: 'ASC',
+  });
+
   const [saving, setSaving] = useState<boolean>(false);
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
@@ -187,40 +204,50 @@ export const AdvancedSearch: FC<Props> = ({
     '',
   );
   const [employeeFormKey, setEmployeeFormKey] = useState<number>(0);
-  const [pendingEmployeeViewing, setPendingEmployeeViewing] = useState<
-    UserType
-  >();
-  const [pendingEmployeeEditing, setPendingEmployeeEditing] = useState<
-    UserType
-  >();
-  const [pendingEmployeeDeleting, setPendingEmployeeDeleting] = useState<
-    UserType
-  >();
-  const [pendingCustomerViewing, setPendingCustomerViewing] = useState<
-    UserType
-  >();
-  const [pendingCustomerEditing, setPendingCustomerEditing] = useState<
-    UserType
-  >();
-  const [pendingCustomerDeleting, setPendingCustomerDeleting] = useState<
-    UserType
-  >();
-  const [pendingPropertyViewing, setPendingPropertyViewing] = useState<
-    PropertyType
-  >();
-  const [pendingPropertyEditing, setPendingPropertyEditing] = useState<
-    PropertyType
-  >();
-  const [pendingPropertyDeleting, setPendingPropertyDeleting] = useState<
-    PropertyType
-  >();
+  const [
+    pendingEmployeeViewing,
+    setPendingEmployeeViewing,
+  ] = useState<UserType>();
+  const [
+    pendingEmployeeEditing,
+    setPendingEmployeeEditing,
+  ] = useState<UserType>();
+  const [
+    pendingEmployeeDeleting,
+    setPendingEmployeeDeleting,
+  ] = useState<UserType>();
+  const [
+    pendingCustomerViewing,
+    setPendingCustomerViewing,
+  ] = useState<UserType>();
+  const [
+    pendingCustomerEditing,
+    setPendingCustomerEditing,
+  ] = useState<UserType>();
+  const [
+    pendingCustomerDeleting,
+    setPendingCustomerDeleting,
+  ] = useState<UserType>();
+  const [
+    pendingPropertyViewing,
+    setPendingPropertyViewing,
+  ] = useState<PropertyType>();
+  const [
+    pendingPropertyEditing,
+    setPendingPropertyEditing,
+  ] = useState<PropertyType>();
+  const [
+    pendingPropertyDeleting,
+    setPendingPropertyDeleting,
+  ] = useState<PropertyType>();
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [employeeFunctions, setEmployeeFunctions] = useState<
     EmployeeFunctionType[]
   >([]);
-  const [employeeDepartmentsOpen, setEmployeeDepartmentsOpen] = useState<
-    boolean
-  >(false);
+  const [
+    employeeDepartmentsOpen,
+    setEmployeeDepartmentsOpen,
+  ] = useState<boolean>(false);
   const [pendingAddProperty, setPendingAddProperty] = useState<boolean>(false);
   const handleTogglePendingAddProperty = useCallback(
     (pendingAddProperty: boolean) => () =>
@@ -322,6 +349,18 @@ export const AdvancedSearch: FC<Props> = ({
       setCount(totalCount);
       setProperties(results);
     }
+    if (kind === 'contracts') {
+      const criteria: LoadContractsByFilter = {
+        page,
+        filter: filterCriteria as ContractsFilter,
+        sort: contractsSort,
+      };
+      //@ts-ignore
+      delete criteria.filter.employeeDepartmentId;
+      const { results, totalCount } = await loadContractsByFilter(criteria);
+      setCount(totalCount);
+      setContracts(results);
+    }
     setLoading(false);
   }, [
     filter,
@@ -330,10 +369,12 @@ export const AdvancedSearch: FC<Props> = ({
     setEvents,
     setUsers,
     setProperties,
+    setContracts,
     setLoading,
     eventsSort,
     usersSort,
     propertiesSort,
+    contractsSort,
     setEmployeeImages,
   ]);
   useEffect(() => {
@@ -365,6 +406,15 @@ export const AdvancedSearch: FC<Props> = ({
   const handlePropertiesSortChange = useCallback(
     (sort: PropertiesSort) => () => {
       setPropertiesSort(sort);
+      setPage(0);
+      setLoaded(false);
+    },
+    [setPropertiesSort, setPage, setLoaded],
+  );
+
+  const handleContractsSortChange = useCallback(
+    (sort: ContractsSort) => () => {
+      setContractsSort(sort);
       setPage(0);
       setLoaded(false);
     },
@@ -640,6 +690,9 @@ export const AdvancedSearch: FC<Props> = ({
       : []),
     ...(kinds.includes('properties')
       ? [{ label: 'Properties', value: 'properties' }]
+      : []),
+    ...(kinds.includes('contracts')
+      ? [{ label: 'Contracts', value: 'contracts' }]
       : []),
   ];
   const SCHEMA_KIND: Schema<SearchForm> = [
@@ -1219,6 +1272,37 @@ export const AdvancedSearch: FC<Props> = ({
       },
     ],
   ];
+  const SCHEMA_CONTRACTS: Schema<ContractsFilter> = [
+    [
+      {
+        name: 'number',
+        label: 'Contract Number',
+        type: 'search',
+      },
+      {
+        name: 'lastName',
+        label: 'Last Name',
+        type: 'search',
+      },
+      {
+        name: 'businessName',
+        label: 'Business Name',
+        type: 'search',
+      },
+      {
+        name: 'dateStarted',
+        label: 'Contract Start Date',
+        type: 'date',
+      },
+      {
+        name: 'dateEnded',
+        label: 'Contract End Date',
+        type: 'date',
+        actions: searchActions,
+      },
+    ],
+  ];
+
   const makeSchema = (schema: Schema<SearchForm>) => {
     const kindsAmount = SCHEMA_KIND[0][0].options?.length || 0;
     if (kindsAmount <= 1) return schema;
@@ -1236,6 +1320,8 @@ export const AdvancedSearch: FC<Props> = ({
       return makeSchema(SCHEMA_EMPLOYEES as Schema<SearchForm>);
     if (kind === 'properties')
       return makeSchema(SCHEMA_PROPERTIES as Schema<SearchForm>);
+    if (kind === 'contracts')
+      return makeSchema(SCHEMA_CONTRACTS as Schema<SearchForm>);
     return [];
   }, [filter, jobTypes, jobSubtypes]);
   const getColumns = (kind: Kind): Columns => {
@@ -1549,6 +1635,76 @@ export const AdvancedSearch: FC<Props> = ({
           }),
         },
       ];
+    if (kind === 'contracts')
+      return [
+        {
+          name: 'Contract #',
+          ...(contractsSort.orderByField === 'number'
+            ? {
+                dir: contractsSort.orderDir,
+              }
+            : {}),
+          onClick: handleContractsSortChange({
+            orderByField: 'number',
+            orderBy: 'number',
+            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        /*
+        {
+          name: 'Last Name',
+          ...(contractsSort.orderByField === 'lastName'
+            ? {
+                dir: contractsSort.orderDir,
+              }
+            : {}),
+          onClick: handleContractsSortChange({
+            orderByField: 'lastName',
+            orderBy: 'lastName',
+            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Business Name',
+          ...(contractsSort.orderByField === 'businessName'
+            ? {
+                dir: contractsSort.orderDir,
+              }
+            : {}),
+          onClick: handleContractsSortChange({
+            orderByField: 'businessName',
+            orderBy: 'businessName',
+            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },*/
+        {
+          name: 'Contract Start Date',
+          ...(contractsSort.orderByField === 'dateStarted'
+            ? {
+                dir: contractsSort.orderDir,
+              }
+            : {}),
+          onClick: handleContractsSortChange({
+            orderByField: 'dateStarted',
+            orderBy: 'dateStarted',
+            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Contract End Date',
+          ...(contractsSort.orderByField === 'dateEnded'
+            ? {
+                dir: contractsSort.orderDir,
+              }
+            : {}),
+          onClick: handleContractsSortChange({
+            orderByField: 'dateEnded',
+            orderBy: 'dateEnded',
+            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+      ];
+
     return [];
   };
   const getData = useCallback(
@@ -2053,6 +2209,28 @@ export const AdvancedSearch: FC<Props> = ({
                       : []),
                   ],
                 },
+              ];
+            });
+      if (kind === 'contracts')
+        return loading
+          ? makeFakeRows(5, 3)
+          : contracts.map(entry => {
+              const { number, dateStarted, dateEnded, userId } = entry;
+
+              let lastname, businessname;
+              users.forEach(user => {
+                if (user.id == userId) {
+                  lastname = user.lastname;
+                  businessname = user.businessname;
+                }
+              });
+
+              return [
+                { value: number },
+                { value: lastname },
+                { value: businessname },
+                { value: formatDate(dateStarted) },
+                { value: formatDate(dateEnded) },
               ];
             });
       return [];
