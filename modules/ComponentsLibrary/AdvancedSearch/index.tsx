@@ -1650,33 +1650,6 @@ export const AdvancedSearch: FC<Props> = ({
             orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
-        /*
-        {
-          name: 'Last Name',
-          ...(contractsSort.orderByField === 'lastName'
-            ? {
-                dir: contractsSort.orderDir,
-              }
-            : {}),
-          onClick: handleContractsSortChange({
-            orderByField: 'lastName',
-            orderBy: 'lastName',
-            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
-          }),
-        },
-        {
-          name: 'Business Name',
-          ...(contractsSort.orderByField === 'businessName'
-            ? {
-                dir: contractsSort.orderDir,
-              }
-            : {}),
-          onClick: handleContractsSortChange({
-            orderByField: 'businessName',
-            orderBy: 'businessName',
-            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
-          }),
-        },*/
         {
           name: 'Contract Start Date',
           ...(contractsSort.orderByField === 'dateStarted'
