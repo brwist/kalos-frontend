@@ -1676,6 +1676,32 @@ export const AdvancedSearch: FC<Props> = ({
             orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
+        {
+          name: 'Contract Business Name',
+          ...(contractsSort.orderByField === 'businessName'
+            ? {
+                dir: contractsSort.orderDir,
+              }
+            : {}),
+          onClick: handleContractsSortChange({
+            orderByField: 'businessName',
+            orderBy: 'businessName',
+            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: 'Contract Last Name',
+          ...(contractsSort.orderByField === 'lastName'
+            ? {
+                dir: contractsSort.orderDir,
+              }
+            : {}),
+          onClick: handleContractsSortChange({
+            orderByField: 'lastName',
+            orderBy: 'lastName',
+            orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
       ];
 
     return [];
@@ -2188,22 +2214,19 @@ export const AdvancedSearch: FC<Props> = ({
         return loading
           ? makeFakeRows(5, 3)
           : contracts.map(entry => {
-              const { number, dateStarted, dateEnded, userId } = entry;
-
-              let lastname, businessname;
-              users.forEach(user => {
-                if (user.id == userId) {
-                  lastname = user.lastname;
-                  businessname = user.businessname;
-                }
-              });
-
+              const {
+                number,
+                dateStarted,
+                dateEnded,
+                lastName,
+                businessName,
+              } = entry;
               return [
                 { value: number },
-                { value: lastname },
-                { value: businessname },
                 { value: formatDate(dateStarted) },
                 { value: formatDate(dateEnded) },
+                { value: businessName },
+                { value: lastName },
               ];
             });
       return [];
