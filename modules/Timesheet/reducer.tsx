@@ -13,6 +13,7 @@ import {
   format,
   parseISO,
 } from 'date-fns';
+import { TimeoffRequestType } from '../../helpers';
 
 export type Payroll = {
   total: number | null;
@@ -31,6 +32,7 @@ type DayData = {
   servicesRenderedList: ServicesRendered.AsObject[];
   timesheetLineList: TimesheetLine.AsObject[];
   payroll: Payroll;
+  timeoffs: TimeoffRequestType[];
 };
 
 export type DataList = {
@@ -94,7 +96,11 @@ export type Action =
       };
     }
   | { type: 'fetchingTimesheetData' }
-  | { type: 'fetchedTimesheetData'; data: Timesheet }
+  | {
+      type: 'fetchedTimesheetData';
+      data: Timesheet;
+      timeoffs: TimeoffRequestType[];
+    }
   | { type: 'changeDate'; value: Date }
   | { type: 'addNewTimesheet' }
   | { type: 'editTimesheetCard'; data: TimesheetLine.AsObject }
@@ -136,7 +142,7 @@ export const reducer = (state: State, action: Action) => {
     case 'fetchedTimesheetData': {
       const datesMap = action.data.getDatesMap();
       let pendingEntries = false;
-      console.log(datesMap);
+      const { timeoffs } = action;
       const { data, totalPayroll } = state.shownDates.reduce(
         ({ data, totalPayroll }, date) => {
           console.log(date);
@@ -180,6 +186,11 @@ export const reducer = (state: State, action: Action) => {
             servicesRenderedList,
             timesheetLineList,
             payroll: payroll || {},
+            timeoffs: timeoffs.filter(
+              ({ timeStarted, timeFinished }) =>
+                timeStarted.substr(0, 10) >= date &&
+                timeFinished.substr(0, 10) <= date,
+            ),
           };
           totalPayroll = {
             billable: totalPayroll.billable + payroll.billable,

@@ -137,6 +137,7 @@ export const TimeOff: FC<Props> = ({
         timeStarted,
         timeFinished,
         userId,
+        briefDescription: '',
       });
       setData(newData);
       setSaving(false);

@@ -30,7 +30,7 @@ import Toolbar from './components/Toolbar';
 import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
-import { loadUserById } from '../../helpers';
+import { loadUserById, getTimeoffRequestByFilter } from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
@@ -315,7 +315,25 @@ export const Timesheet: FC<Props> = props => {
           'yyyy-MM-dd',
         )}%`,
       );
-      dispatch({ type: 'fetchedTimesheetData', data: result });
+      const timeoffs = await getTimeoffRequestByFilter({
+        isActive: 1,
+        userId: timesheetOwnerId.toString(),
+        dateRangeList: [
+          '>=',
+          shownDates[0],
+          '<',
+          format(
+            addDays(parseISO(shownDates[shownDates.length - 1]), 1),
+            'yyyy-MM-dd',
+          ),
+        ],
+        dateTargetList: ['time_started', 'time_started'],
+      });
+      dispatch({
+        type: 'fetchedTimesheetData',
+        data: result,
+        timeoffs: timeoffs.toObject().resultsList,
+      });
     })();
   };
 

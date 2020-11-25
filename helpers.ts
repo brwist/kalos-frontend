@@ -1212,7 +1212,7 @@ export const upsertEventTask = async ({
   }
   if (startDate) {
     req.setStartDate(startDate);
-    fieldMaskList.push('StartDate'); 
+    fieldMaskList.push('StartDate');
   }
   if (endDate) {
     req.setEndDate(endDate);
@@ -1435,6 +1435,21 @@ export const getTimeoffRequestById = async (id: number) => {
   } catch (e) {
     return null;
   }
+};
+
+export const getTimeoffRequestByFilter = async (
+  filter: Partial<TimeoffRequestType>,
+) => {
+  const req = new TimeoffRequest();
+  const fieldMaskList = [];
+  for (const fieldName in filter) {
+    const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    //@ts-ignore
+    req[methodName](filter[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  return await TimeoffRequestClientService.BatchGet(req);
 };
 
 export const deleteTimeoffRequestById = async (id: number) => {
@@ -2184,7 +2199,7 @@ export type PropertiesSort = {
   orderDir: OrderDir;
 };
 export type ContractsSort = {
-  orderByField:  keyof ContractType;
+  orderByField: keyof ContractType;
   orderBy: string;
   orderDir: OrderDir;
 };
@@ -2253,7 +2268,6 @@ export const loadPropertiesByFilter = async ({
     totalCount: response.getTotalCount(),
   };
 };
-
 
 /**
  * Returns Contracts by filter
@@ -2497,7 +2511,7 @@ async function loadEventByJobOrContractNumber(referenceNumber: string) {
     await EventClientService.BatchGet(req)
   ).toObject();
   if (totalCount > 0) return resultsList[0];
-  req.setLogJobNumber(''); 
+  req.setLogJobNumber('');
   req.setContractNumber(referenceNumber);
   const { resultsList: resultsList2, totalCount: totalCount2 } = (
     await EventClientService.BatchGet(req)
