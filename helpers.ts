@@ -161,6 +161,9 @@ export type SimpleFile = {
   key: string;
   bucket: string;
 };
+export type TimeoffRequestTypes = {
+  [key: number]: string;
+};
 
 export const TransactionDocumentClientService = new TransactionDocumentClient(
   ENDPOINT,

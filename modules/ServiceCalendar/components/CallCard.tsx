@@ -52,7 +52,9 @@ const ColorIndicator = ({
 };
 
 interface TimeoffProps {
-  card: TimeoffRequest.AsObject;
+  card: TimeoffRequest.AsObject & {
+    requestTypeName?: string;
+  };
 }
 
 export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
@@ -65,6 +67,7 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
     userName,
     userId,
     allDayOff,
+    requestTypeName,
   } = card;
   const { employees, employeesLoading } = useEmployees();
   let title, subheader, dates, time;
@@ -129,9 +132,9 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
           <Typography variant="body2" color="textSecondary" component="p">
             {name}
           </Typography>
-          {requestType && (
+          {requestTypeName && (
             <Typography variant="body2" color="textSecondary" component="p">
-              {requestTypeMappping[requestType]}
+              {requestTypeName}
             </Typography>
           )}
         </CardContent>

@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useReducer,
   useCallback,
+  useState,
 } from 'react';
 import { startOfWeek, subDays, parseISO, addDays, format } from 'date-fns';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
@@ -30,7 +31,12 @@ import Toolbar from './components/Toolbar';
 import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
-import { loadUserById, getTimeoffRequestByFilter } from '../../helpers';
+import {
+  loadUserById,
+  getTimeoffRequestByFilter,
+  getTimeoffRequestTypes,
+  TimeoffRequestTypes,
+} from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
@@ -91,6 +97,10 @@ export const Timesheet: FC<Props> = props => {
       receiptsIssueStr: '',
     },
   });
+  const [
+    timeoffRequestTypes,
+    setTimeoffRequestTypes,
+  ] = useState<TimeoffRequestTypes>();
   const {
     user,
     owner,
@@ -283,13 +293,27 @@ export const Timesheet: FC<Props> = props => {
     }
   };
 
+  const fetchTimeoffRequestTypes = useCallback(async () => {
+    const timeoffRequestTypes = await getTimeoffRequestTypes();
+    setTimeoffRequestTypes(
+      timeoffRequestTypes.reduce(
+        (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
+        {},
+      ),
+    );
+  }, [setTimeoffRequestTypes]);
+
   useEffect(() => {
     (async () => {
       await userClient.GetToken('test', 'test');
       await txnClient.GetToken('test', 'test');
       fetchUsers();
     })();
-  }, []);
+    if (!timeoffRequestTypes) {
+      setTimeoffRequestTypes({});
+      fetchTimeoffRequestTypes();
+    }
+  }, [timeoffRequestTypes]);
 
   const reload = () => {
     dispatch({ type: 'fetchingTimesheetData' });
@@ -379,6 +403,7 @@ export const Timesheet: FC<Props> = props => {
                     date={date}
                     data={data[date]}
                     loading={fetchingTimesheetData}
+                    timeoffRequestTypes={timeoffRequestTypes}
                   />
                 ))}
               </Container>
