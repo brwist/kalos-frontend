@@ -13,16 +13,17 @@ import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { TimeoffCard } from '../../ServiceCalendar/components/CallCard';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
-import { roundNumber } from '../../../helpers';
+import { roundNumber, TimeoffRequestTypes } from '../../../helpers';
 import './column.less';
 
 type Props = {
   date: string;
   data: any;
   loading: boolean;
+  timeoffRequestTypes?: TimeoffRequestTypes;
 };
 
-const Column: FC<Props> = ({ date, data, loading }) => {
+const Column: FC<Props> = ({ date, data, loading, timeoffRequestTypes }) => {
   const [dayView, setDayView] = useState(false);
   const dateObj = parseISO(date);
   const theme = useTheme();
@@ -100,7 +101,17 @@ const Column: FC<Props> = ({ date, data, loading }) => {
               );
             }
             if (card.hasOwnProperty('allDayOff')) {
-              return <TimeoffCard key={`toc-${card.id}`} card={card} />;
+              return (
+                <TimeoffCard
+                  key={`toc-${card.id}`}
+                  card={{
+                    ...card,
+                    requestTypeName: timeoffRequestTypes
+                      ? timeoffRequestTypes[card.requestType]
+                      : undefined,
+                  }}
+                />
+              );
             }
             return <TimesheetLineCard key={`tlc-${card.id}`} card={card} />;
           })}
