@@ -181,7 +181,6 @@ export const reducer = (state: State, action: Action) => {
             },
             { billable: 0, unbillable: 0, total: 0 },
           );
-          // @ts-ignore
           data[date] = {
             servicesRenderedList,
             timesheetLineList,
