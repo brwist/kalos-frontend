@@ -2230,10 +2230,11 @@ export const loadContractsByFilter = async ({
 
     if (value) {
       const { methodName } = getRPCFields(fieldName);
+
       //@ts-ignore
       req[methodName](typeof value === 'string' ? `%${value}%` : value);
     }
-  }
+  } 
   const response = await ContractClientService.BatchGet(req);
   return {
     results: response
