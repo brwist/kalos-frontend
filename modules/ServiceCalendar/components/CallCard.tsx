@@ -13,6 +13,8 @@ import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
+import { Modal } from '../../ComponentsLibrary/Modal';
+import { TimeOff } from '../../ComponentsLibrary/TimeOff';
 import { useEmployees } from '../hooks';
 import {
   colorsMapping,
@@ -68,26 +70,24 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
     userId,
     allDayOff,
     requestTypeName,
+    requestClass,
   } = card;
-  const { employees, employeesLoading } = useEmployees();
-  let title, subheader, dates, time;
-  const started = parseISO(timeStarted);
-  const finished = parseISO(timeFinished);
-  const sameDay = isSameDay(started, finished);
   if (adminApprovalUserId === 0) {
     return null;
   }
-  if (requestType === 10) {
+  let subheader, dates, time;
+  const [editId, setEditId] = useState<number>();
+  try {
+    const { employees, employeesLoading } = useEmployees();
     if (employeesLoading) {
       return <SkeletonCard />;
     }
     const empl = employees.find(emp => emp.id === +userId);
-    title = 'Training:';
     subheader = `${empl?.firstname} ${empl?.lastname}`;
-  } else {
-    title = 'Time Off';
-    subheader = userName;
-  }
+  } catch (e) {}
+  const started = parseISO(timeStarted);
+  const finished = parseISO(timeFinished);
+  const sameDay = isSameDay(started, finished);
   if (sameDay) {
     dates = format(started, 'M/dd');
     if (allDayOff) {
@@ -99,47 +99,63 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
     dates = `${format(started, 'M/dd p')} - ${format(finished, 'M/dd p')}`;
   }
   return (
-    <Card
-      className="ServiceCalendarCallCardCard"
-      onClick={() => {
-        const win = window.open(
-          `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`,
-          '_blank',
-        );
-        if (win) {
-          win.focus();
-        }
-      }}
-    >
-      <CardActionArea>
-        <CardHeader
-          className="ServiceCalendarCallCardCardHeader"
-          avatar={<ColorIndicator type="timeoff" requestType={requestType} />}
-          title={title}
-          subheader={subheader}
-        />
-        <CardContent className="ServiceCalendarCallCardCardContent">
-          {dates && (
-            <Typography
-              className="ServiceCalendarCallCardDate"
-              variant="body2"
-              color="textSecondary"
-              component="p"
-            >
-              {dates} {time}
-            </Typography>
-          )}
-          <Typography variant="body2" color="textSecondary" component="p">
-            {name}
-          </Typography>
-          {requestTypeName && (
+    <>
+      <Card
+        className="ServiceCalendarCallCardCard"
+        onClick={() => {
+          // const win = window.open(
+          //   `https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${id}`,
+          //   '_blank',
+          // );
+          // if (win) {
+          //   win.focus();
+          // }
+          setEditId(id); // TODO: replace with above to revert react edit modal
+        }}
+      >
+        <CardActionArea>
+          <CardHeader
+            className="ServiceCalendarCallCardCardHeader"
+            avatar={<ColorIndicator type="timeoff" requestType={requestType} />}
+            title={requestClass}
+            subheader={subheader}
+          />
+          <CardContent className="ServiceCalendarCallCardCardContent">
+            {dates && (
+              <Typography
+                className="ServiceCalendarCallCardDate"
+                variant="body2"
+                color="textSecondary"
+                component="p"
+              >
+                {dates} {time}
+              </Typography>
+            )}
             <Typography variant="body2" color="textSecondary" component="p">
-              {requestTypeName}
+              {name}
             </Typography>
-          )}
-        </CardContent>
-      </CardActionArea>
-    </Card>
+            {requestTypeName && (
+              <Typography variant="body2" color="textSecondary" component="p">
+                {requestTypeName}
+              </Typography>
+            )}
+          </CardContent>
+        </CardActionArea>
+      </Card>
+      {editId && (
+        <Modal open onClose={() => setEditId(undefined)} fullScreen>
+          {/* <pre>{JSON.stringify(card, null, 2)}</pre> */}
+          <TimeOff
+            requestOffId={id}
+            onCancel={() => setEditId(undefined)}
+            loggedUserId={+userId}
+            onSaveOrDelete={() => setEditId(undefined)}
+            onAdminSubmit={() => setEditId(undefined)}
+            cancelLabel="Close"
+          />
+        </Modal>
+      )}
+    </>
   );
 };
 
