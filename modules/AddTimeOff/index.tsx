@@ -1,13 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Timesheet } from './main';
+import { AddTimeOff } from './main';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
 
 const u = new UserClient(ENDPOINT);
+
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <Timesheet userId={101253} timesheetOwnerId={101253} withHeader />, //8418
+    <AddTimeOff
+      loggedUserId={8418}
+      onCancel={() => console.log('Cancel')}
+      onSaveOrDelete={data => console.log('Save', data)}
+    />,
     document.getElementById('root'),
   );
 });

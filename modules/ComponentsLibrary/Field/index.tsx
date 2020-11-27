@@ -510,6 +510,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
               },
             })
           }
+          minutesStep={minutesStep}
           disabled={disabled}
           fullWidth
         />

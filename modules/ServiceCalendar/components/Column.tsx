@@ -23,6 +23,7 @@ import { useCalendarData } from '../hooks';
 import { CallCard, TimeoffCard } from './CallCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { colorsMapping } from './constants';
+import { TimeoffRequestTypes } from '../../../helpers';
 import { CalendarDay } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import './column.less';
@@ -32,6 +33,7 @@ type Props = {
   viewBy?: string;
   userId: number;
   isAdmin: number;
+  timeoffRequestTypes?: TimeoffRequestTypes;
 };
 
 type CallsList = {
@@ -42,7 +44,13 @@ type CallsList = {
   timeoffRequestsList: TimeoffRequest.AsObject[];
 };
 
-const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
+const Column = ({
+  date,
+  viewBy,
+  userId,
+  isAdmin,
+  timeoffRequestTypes,
+}: Props): JSX.Element => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [dayView, setDayView] = useState(false);
   const [autoScrollInitialized, setAutoScrollInitialized] = useState(false);
@@ -208,14 +216,14 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
 
   // @ts-ignore
   const calendarDay = datesMap?.get(date)?.toObject();
-  console.log(calendarDay)
+  console.log(calendarDay);
   const {
     completedServiceCallsList,
     remindersList,
     serviceCallsList,
     timeoffRequestsList,
   } = filterCalls(calendarDay);
-  console.log(timeoffRequestsList)
+  console.log(timeoffRequestsList);
   return (
     <Box className={clsx(dayView && 'ServiceCalendarColumnDayView')}>
       {dayView && (
@@ -282,7 +290,15 @@ const Column = ({ date, viewBy, userId, isAdmin }: Props): JSX.Element => {
       {timeoffRequestsList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
         .map(call => (
-          <TimeoffCard key={call.id} card={call} />
+          <TimeoffCard
+            key={call.id}
+            card={{
+              ...call,
+              requestTypeName: timeoffRequestTypes
+                ? timeoffRequestTypes[call.requestType]
+                : undefined,
+            }}
+          />
         ))}
       {remindersList
         .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))

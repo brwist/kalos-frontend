@@ -10,36 +10,39 @@ import IconButton from '@material-ui/core/IconButton';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
-
+import { TimeoffCard } from '../../ServiceCalendar/components/CallCard';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
-import { roundNumber } from '../../../helpers';
+import { roundNumber, TimeoffRequestTypes } from '../../../helpers';
 import './column.less';
 
 type Props = {
   date: string;
   data: any;
   loading: boolean;
+  timeoffRequestTypes?: TimeoffRequestTypes;
 };
 
-const Column: FC<Props> = ({ date, data, loading }) => {
+const Column: FC<Props> = ({ date, data, loading, timeoffRequestTypes }) => {
   const [dayView, setDayView] = useState(false);
-
   const dateObj = parseISO(date);
-
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('md'));
   useLayoutEffect(() => {
     document.body.style.overflow = dayView ? 'hidden' : 'visible';
   }, [dayView]);
-
   const cards = data
-    ? [...data?.servicesRenderedList, ...data?.timesheetLineList]
+    ? [
+        ...data?.servicesRenderedList,
+        ...data?.timesheetLineList,
+        ...data?.timeoffs,
+      ]
     : [];
   cards.sort(
     (a, b) =>
       parseISO(a.timeStarted).getTime() - parseISO(b.timeStarted).getTime(),
   );
+  console.log(cards);
   return (
     <Box className={clsx(dayView && 'TimesheetColumnDayView')}>
       {dayView && (
@@ -95,6 +98,19 @@ const Column: FC<Props> = ({ date, data, loading }) => {
             if (card.hideFromTimesheet === 0) {
               return (
                 <ServicesRenderedCard key={`src-${card.id}`} card={card} />
+              );
+            }
+            if (card.hasOwnProperty('allDayOff')) {
+              return (
+                <TimeoffCard
+                  key={`toc-${card.id}`}
+                  card={{
+                    ...card,
+                    requestTypeName: timeoffRequestTypes
+                      ? timeoffRequestTypes[card.requestType]
+                      : undefined,
+                  }}
+                />
               );
             }
             return <TimesheetLineCard key={`tlc-${card.id}`} card={card} />;
