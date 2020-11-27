@@ -40,6 +40,8 @@ import {
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import { Modal } from '../ComponentsLibrary/Modal';
+import { TimeOff } from '../ComponentsLibrary/TimeOff';
 import './styles.less';
 
 const userClient = new UserClient(ENDPOINT);
@@ -70,6 +72,7 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
 
 export const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId } = props;
+  const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
@@ -153,8 +156,11 @@ export const Timesheet: FC<Props> = props => {
     {
       icon: <TimerOffIcon />,
       name: 'Request Off',
-      url:
-        'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest',
+      // url:
+      //   'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest',
+      action: () => {
+        setTimeoffOpen(true);
+      },
     },
     {
       icon: <AddAlertIcon />,
@@ -433,6 +439,18 @@ export const Timesheet: FC<Props> = props => {
           receiptsIssueStr={receiptsIssue.receiptsIssueStr}
           handleTimeout={handleTimeout}
         />
+      )}
+      {timeoffOpen && (
+        <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
+          <TimeOff
+            loggedUserId={userId}
+            onCancel={() => setTimeoffOpen(false)}
+            onSaveOrDelete={() => {
+              setTimeoffOpen(false);
+              reload();
+            }}
+          />
+        </Modal>
       )}
     </PageWrapper>
   );
