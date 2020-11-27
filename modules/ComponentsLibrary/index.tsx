@@ -74,6 +74,7 @@ import SpiffToolLogEdit from './SpiffToolLogEdit/examples';
 import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
 import Tasks from './Tasks/examples';
+import TimeOff from './TimeOff/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Tooltip from './Tooltip/examples';
 import UploadPhoto from './UploadPhoto/examples';
@@ -82,7 +83,7 @@ import WeekPicker from './WeekPicker/examples';
 
 import './styles.less';
 
-const DEFAULT_COMPONENT_IDX = 0;
+const DEFAULT_COMPONENT_IDX = 71;
 
 const COMPONENTS = {
   Actions,
@@ -156,6 +157,7 @@ const COMPONENTS = {
   StoredQuotes,
   Tabs,
   Tasks,
+  TimeOff,
   TimeoffSummaryReport,
   Tooltip,
   UploadPhoto,
