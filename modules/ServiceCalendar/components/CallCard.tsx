@@ -247,7 +247,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
                 color="primary"
                 invisible={invisible}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-              ></Badge>
+              />
               <Typography variant="body2" component="p">
                 {title}
               </Typography>
