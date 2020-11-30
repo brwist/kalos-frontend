@@ -45,47 +45,51 @@ const Column: FC<Props> = ({ date, data, loading, timeoffRequestTypes }) => {
   console.log(cards);
   return (
     <Box className={clsx(dayView && 'TimesheetColumnDayView')}>
-      {dayView && (
-        <Button startIcon={<BackIcon />} onClick={() => setDayView(false)}>
-          {`Back to Week View`}
-        </Button>
-      )}
-      <Box className="TimesheetColumnPayroll">
-        <Typography className="total" variant="body2" color="textSecondary">
-          Payroll: <strong>{roundNumber(data?.payroll?.total || 0)}</strong>
-        </Typography>
-        <div className="details">
-          <Typography variant="body2" color="textSecondary">
-            Billable:{' '}
-            <strong>{roundNumber(data?.payroll?.billable || 0)}</strong>
+      <div className="TimesheetColumnSticky">
+        {dayView && (
+          <Button startIcon={<BackIcon />} onClick={() => setDayView(false)}>
+            {`Back to Week View`}
+          </Button>
+        )}
+        <Box className="TimesheetColumnPayroll">
+          <Typography className="total" variant="body2" color="textSecondary">
+            Payroll: <strong>{roundNumber(data?.payroll?.total || 0)}</strong>
           </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Unbillable:{' '}
-            <strong>{roundNumber(data?.payroll?.unbillable || 0)}</strong>
-          </Typography>
-        </div>
-      </Box>
-      <Box className="TimesheetColumnDateHeading">
-        <>
-          <Typography className="TimesheetColumnDayCircle">
-            {format(dateObj, 'd')}
-          </Typography>
-          <Typography variant="subtitle2">{format(dateObj, 'cccc')}</Typography>
-          <Tooltip title="Day View">
-            <IconButton
-              className={clsx(
-                'TimesheetColumnDayViewButton',
-                md && !dayView && 'visible',
-              )}
-              aria-label="dayview"
-              size="small"
-              onClick={() => setDayView(true)}
-            >
-              <ViewDayIcon fontSize="inherit" />
-            </IconButton>
-          </Tooltip>
-        </>
-      </Box>
+          <div className="details">
+            <Typography variant="body2" color="textSecondary">
+              Billable:{' '}
+              <strong>{roundNumber(data?.payroll?.billable || 0)}</strong>
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Unbillable:{' '}
+              <strong>{roundNumber(data?.payroll?.unbillable || 0)}</strong>
+            </Typography>
+          </div>
+        </Box>
+        <Box className="TimesheetColumnDateHeading">
+          <>
+            <Typography className="TimesheetColumnDayCircle">
+              {format(dateObj, 'd')}
+            </Typography>
+            <Typography variant="subtitle2">
+              {format(dateObj, 'cccc')}
+            </Typography>
+            <Tooltip title="Day View">
+              <IconButton
+                className={clsx(
+                  'TimesheetColumnDayViewButton',
+                  md && !dayView && 'visible',
+                )}
+                aria-label="dayview"
+                size="small"
+                onClick={() => setDayView(true)}
+              >
+                <ViewDayIcon fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
+          </>
+        </Box>
+      </div>
       {loading ? (
         <>
           {[...Array(5)].map((e, i) => (

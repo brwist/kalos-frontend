@@ -167,6 +167,68 @@ const Column = ({
       );
     return (
       <Box className={clsx(dayView && 'ServiceCalendarColumnDayView')}>
+        <div className="ServiceCalendarColumnSticky">
+          {dayView && (
+            <Button startIcon={<BackIcon />} onClick={() => setDayView(false)}>
+              {`Back to ${viewBy} View`}
+            </Button>
+          )}
+          <Box
+            className="ServiceCalendarColumnDateHeading"
+            id={`ServiceCalendarColumnDateHeading_${format(
+              dateObj,
+              'dd_MM_yyyy',
+            )}`}
+          >
+            {viewBy === 'day' ? (
+              <Typography
+                className="ServiceCalendarColumnDayViewHeading"
+                variant="subtitle2"
+              >
+                {format(dateObj, 'cccc, MMMM d, yyyy')}
+              </Typography>
+            ) : (
+              <>
+                <Typography className="ServiceCalendarColumnDayCircle">
+                  {format(dateObj, 'd')}
+                </Typography>
+                <Typography variant="subtitle2">
+                  {format(dateObj, 'cccc')}
+                </Typography>
+                <Tooltip title="Day View">
+                  <IconButton
+                    className={clsx(
+                      'ServiceCalendarColumnDayViewButton',
+                      md && !dayView && 'visible',
+                    )}
+                    aria-label="dayview"
+                    size="small"
+                    onClick={() => setDayView(true)}
+                  >
+                    <ViewDayIcon fontSize="inherit" />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+          </Box>
+        </div>
+      </Box>
+    );
+  }
+
+  // @ts-ignore
+  const calendarDay = datesMap?.get(date)?.toObject();
+  console.log(calendarDay);
+  const {
+    completedServiceCallsList,
+    remindersList,
+    serviceCallsList,
+    timeoffRequestsList,
+  } = filterCalls(calendarDay);
+  console.log(timeoffRequestsList);
+  return (
+    <Box className={clsx(dayView && 'ServiceCalendarColumnDayView')}>
+      <div className="ServiceCalendarColumnSticky">
         {dayView && (
           <Button startIcon={<BackIcon />} onClick={() => setDayView(false)}>
             {`Back to ${viewBy} View`}
@@ -210,62 +272,7 @@ const Column = ({
             </>
           )}
         </Box>
-      </Box>
-    );
-  }
-
-  // @ts-ignore
-  const calendarDay = datesMap?.get(date)?.toObject();
-  console.log(calendarDay);
-  const {
-    completedServiceCallsList,
-    remindersList,
-    serviceCallsList,
-    timeoffRequestsList,
-  } = filterCalls(calendarDay);
-  console.log(timeoffRequestsList);
-  return (
-    <Box className={clsx(dayView && 'ServiceCalendarColumnDayView')}>
-      {dayView && (
-        <Button startIcon={<BackIcon />} onClick={() => setDayView(false)}>
-          {`Back to ${viewBy} View`}
-        </Button>
-      )}
-      <Box
-        className="ServiceCalendarColumnDateHeading"
-        id={`ServiceCalendarColumnDateHeading_${format(dateObj, 'dd_MM_yyyy')}`}
-      >
-        {viewBy === 'day' ? (
-          <Typography
-            className="ServiceCalendarColumnDayViewHeading"
-            variant="subtitle2"
-          >
-            {format(dateObj, 'cccc, MMMM d, yyyy')}
-          </Typography>
-        ) : (
-          <>
-            <Typography className="ServiceCalendarColumnDayCircle">
-              {format(dateObj, 'd')}
-            </Typography>
-            <Typography variant="subtitle2">
-              {format(dateObj, 'cccc')}
-            </Typography>
-            <Tooltip title="Day View">
-              <IconButton
-                className={clsx(
-                  'ServiceCalendarColumnDayViewButton',
-                  md && !dayView && 'visible',
-                )}
-                aria-label="dayview"
-                size="small"
-                onClick={() => setDayView(true)}
-              >
-                <ViewDayIcon fontSize="inherit" />
-              </IconButton>
-            </Tooltip>
-          </>
-        )}
-      </Box>
+      </div>
       {!!completedServiceCallsList.length && (
         <Button
           className="ServiceCalendarColumnCompletedButton"
