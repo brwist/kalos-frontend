@@ -20,9 +20,17 @@
     height: 100vh;
     overflow: auto;
     box-sizing: border-box;
-    padding: 16px;
+    padding: 0 16px;
     transition: width 1500ms;
     z-index: 10000;
+  }
+  &Sticky {
+    position: sticky;
+    top: 0;
+    z-index: 9;
+    background-color: #fff;
+    margin: 0 -4px;
+    padding: 0 4px;
   }
   &DateHeading {
     display: flex;
