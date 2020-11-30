@@ -1289,6 +1289,8 @@ export const AdvancedSearch: FC<Props> = ({
         label: 'Business Name',
         type: 'search',
       },
+    ] ,
+    [
       {
         name: 'dateStarted',
         label: 'Contract Start Date',
@@ -1300,7 +1302,7 @@ export const AdvancedSearch: FC<Props> = ({
         type: 'date',
         actions: searchActions,
       },
-    ],
+    ]
   ];
 
   const makeSchema = (schema: Schema<SearchForm>) => {
@@ -2212,8 +2214,8 @@ export const AdvancedSearch: FC<Props> = ({
             });
       if (kind === 'contracts')
         return loading
-          ? makeFakeRows(5, 3)
-          : contracts.map(entry => {
+          ? makeFakeRows(1, 3)
+          : contracts.map(entry => { 
               const {
                 number,
                 dateStarted,
