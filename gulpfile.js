@@ -916,6 +916,8 @@ var NAMED_EXPORTS = {
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb.js': [
         'TimeoffRequest',
         'TimeoffRequestList',
+        'TimeoffRequestType',
+        'TimeoffRequestTypeList',
         'PTO',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb.js': [

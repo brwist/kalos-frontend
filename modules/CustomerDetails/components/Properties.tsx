@@ -224,6 +224,7 @@ export const Properties: FC<Props> = props => {
       { name: 'address', label: 'Address', type: 'search' },
       { name: 'subdivision', label: 'Neighborhood', type: 'search' },
       { name: 'city', label: 'City', type: 'search' },
+      { name: 'state', label: 'State', type: 'search' },
       {
         name: 'zip',
         label: 'Zip',

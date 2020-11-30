@@ -2220,6 +2220,7 @@ export type PropertiesFilter = {
   subdivision?: string;
   address?: string;
   city?: string;
+  state? : string;
   zip?: string;
   userId?: number;
 };
