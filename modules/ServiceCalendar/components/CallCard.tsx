@@ -5,6 +5,7 @@ import parseISO from 'date-fns/parseISO';
 import format from 'date-fns/format';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import Card from '@material-ui/core/Card';
+import Badge from '@material-ui/core/Badge';
 import CardActionArea from '@material-ui/core/CardActionArea';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
@@ -164,7 +165,7 @@ type CallProps = {
 };
 
 export const CallCard = ({ card, type }: CallProps): JSX.Element => {
-  const {
+  let {
     id,
     propertyId,
     name,
@@ -179,7 +180,9 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
     repeatType,
     dateEnded,
     timeStarted,
+    isLmpc,
   } = card;
+
   const { employees, employeesLoading } = useEmployees();
   const [contentTextCollapsed, setContentTextCollapsed] = useState(true);
   const technicianIds =
@@ -202,6 +205,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
     })
     .join(', ');
   const isWhiteText = color === '000000';
+  const invisible = isLmpc === 1 ? false : true;
   return (
     <Card
       style={{
@@ -236,9 +240,18 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
             logJobNumber && 'jobNumber',
           )}
           title={
-            <Typography variant="body2" component="p">
-              {title}
-            </Typography>
+            <>
+              <Badge
+                style={{ paddingLeft: '7.5%' }}
+                badgeContent="LMPC"
+                color="primary"
+                invisible={invisible}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+              ></Badge>
+              <Typography variant="body2" component="p">
+                {title}
+              </Typography>
+            </>
           }
           subheader={
             <Typography variant="body2" component="p">
