@@ -104,12 +104,16 @@ const Column = ({
               .map(Number)
               .filter(e => e !== 0);
             if (techIdsFilterArr.length > 0) {
-              if (!+call.logTechnicianAssigned) return false;
+              if (
+                !call.logTechnicianAssigned ||
+                call.logTechnicianAssigned === '0'
+              )
+                return false;
               const techIds = call.logTechnicianAssigned.split(',').map(Number);
               if (
-                techIdsFilterArr.reduce(
-                  (aggr, item) => aggr && !techIds.includes(item),
-                  false,
+                !techIds.reduce(
+                  (aggr, item) => aggr || techIdsFilterArr.includes(item),
+                  true,
                 )
               ) {
                 return false;
@@ -225,7 +229,6 @@ const Column = ({
     serviceCallsList,
     timeoffRequestsList,
   } = filterCalls(calendarDay);
-  console.log(timeoffRequestsList);
   return (
     <Box className={clsx(dayView && 'ServiceCalendarColumnDayView')}>
       <div className="ServiceCalendarColumnSticky">
