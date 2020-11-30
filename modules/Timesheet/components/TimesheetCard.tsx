@@ -72,11 +72,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
           title={status}
         />
         <CardContent className="TimesheetTimesheetCardCardContent">
-          <Typography
-            className="TimesheetTimesheetCardDate"
-            variant="body2"
-            color="textSecondary"
-          >
+          <Typography className="TimesheetTimesheetCardDate" variant="body2">
             <span>
               {format(parseISO(timeStarted), 'p')}
               {timeFinished && ` - ${format(parseISO(timeFinished), 'p')}`}
@@ -86,7 +82,6 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
           {!!eventId && (
             <Typography
               variant="body2"
-              color="textSecondary"
               className="TimesheetTimesheetCardEventId"
               onClick={event => {
                 event.stopPropagation();
@@ -107,24 +102,16 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
           )}
           <Typography>{classCode?.description}</Typography>
           {briefDescription && (
-            <Typography variant="body2" color="textSecondary">
+            <Typography variant="body2">
               Brief desc: {briefDescription}
             </Typography>
           )}
           {referenceNumber && (
-            <Typography variant="body2" color="textSecondary">
-              Ref #: {referenceNumber}
-            </Typography>
+            <Typography variant="body2">Ref #: {referenceNumber}</Typography>
           )}
-          {notes && (
-            <Typography variant="body2" color="textSecondary">
-              Notes: {notes}
-            </Typography>
-          )}
+          {notes && <Typography variant="body2">Notes: {notes}</Typography>}
           {!!eventId && (
-            <Typography variant="body2" color="textSecondary">
-              Service Call ID: {eventId}
-            </Typography>
+            <Typography variant="body2">Service Call ID: {eventId}</Typography>
           )}
         </CardContent>
       </CardActionArea>
@@ -155,11 +142,7 @@ export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({
           title={status}
         />
         <CardContent className="TimesheetTimesheetCardCardContent">
-          <Typography
-            className="TimesheetTimesheetCardDate"
-            variant="body2"
-            color="textSecondary"
-          >
+          <Typography className="TimesheetTimesheetCardDate" variant="body2">
             {format(parseISO(timeStarted), 'p')}
             {timeFinished && ` - ${format(parseISO(timeFinished), 'p')}`}
           </Typography>
