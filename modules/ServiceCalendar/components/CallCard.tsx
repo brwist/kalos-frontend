@@ -125,17 +125,16 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
               <Typography
                 className="ServiceCalendarCallCardDate"
                 variant="body2"
-                color="textSecondary"
                 component="p"
               >
                 {dates} {time}
               </Typography>
             )}
-            <Typography variant="body2" color="textSecondary" component="p">
+            <Typography variant="body2" component="p">
               {name}
             </Typography>
             {requestTypeName && (
-              <Typography variant="body2" color="textSecondary" component="p">
+              <Typography variant="body2" component="p">
                 {requestTypeName}
               </Typography>
             )}
@@ -237,11 +236,15 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
             logJobNumber && 'jobNumber',
           )}
           title={
-            <Typography variant="body2" color="textSecondary" component="p">
+            <Typography variant="body2" component="p">
               {title}
             </Typography>
           }
-          subheader={subheader}
+          subheader={
+            <Typography variant="body2" component="p">
+              {subheader}
+            </Typography>
+          }
           action={
             <Typography
               variant="caption"
@@ -257,7 +260,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
           }`}
         >
           {(!type || type === 'completed') && (
-            <Typography variant="body1" color="textSecondary" component="p">
+            <Typography variant="body1" component="p">
               <strong>
                 {customer?.businessname ||
                   `${customer?.firstname} ${customer?.lastname}`}
@@ -265,15 +268,15 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
             </Typography>
           )}
           {technicianNames.length ? (
-            <Typography variant="body1" color="textSecondary" component="p">
+            <Typography variant="body1" component="p">
               Technician: {technicianNames}
             </Typography>
           ) : null}
-          <Typography variant="body1" color="textSecondary" component="p">
+          <Typography variant="body1" component="p">
             {name}
           </Typography>
           {repeatType ? (
-            <Typography variant="body1" color="textSecondary" component="p">
+            <Typography variant="body1" component="p">
               Repeats {repeatsMapping[repeatType]}
               {dateEnded ? ` until ${dateEnded}` : ' forever'}
             </Typography>
@@ -281,7 +284,6 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
           {description ? (
             <Typography
               variant="body1"
-              color="textSecondary"
               component="p"
               dangerouslySetInnerHTML={{
                 __html: description.replace('\r\n', '<br />'),
