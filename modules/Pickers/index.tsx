@@ -14,6 +14,8 @@ import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { ENDPOINT } from '../../constants';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 
+const MaxCacheItemAge: number = 1; // Max age of the cache item in days before it removes itself
+
 interface props<R, T> {
   selected: number;
   disabled?: boolean;
@@ -142,13 +144,160 @@ class Cache<T> {
   version: number;
   fetchData: () => Promise<T>;
   constructor(key: string, version: number, fetchFn: () => Promise<T>) {
-    this.key = `${key}_${version}`;
+    this.key = `${key}_${version}_|${this.getDateToday().toISOString()}`;
     this.version = version;
     this.fetchData = fetchFn;
+    // You can use this to test the functionality of cache deletion after time
+    //this.testCacheDateRemoval('DEPARTMENT_LIST', 7000, 20);
+    this.deleteOldItems();
   }
 
+  testCacheDateRemoval = (
+    keyToUse: string,
+    version: number,
+    daysOld: number,
+  ) => {
+    console.log('STARTING CACHE TEST.');
+    const date = new Date();
+    date.setDate(date.getDate() - daysOld);
+
+    const dataAsStr = JSON.stringify(
+      'This is a test cache item, remove me if you see me.',
+    );
+    console.log(
+      'Created test string: ' + `${keyToUse}_${version}_|${date.toISOString()}`,
+    );
+    localStorage.setItem(
+      `${keyToUse}_${version}_|${date.toISOString()}`,
+      dataAsStr,
+    );
+
+    this.testDeleteOldCache(`${keyToUse}_${version}_|${date.toISOString()}`);
+
+    console.log(
+      'Created test string: ' + `${keyToUse}_${version}_|${date.toISOString()}`,
+    );
+    localStorage.setItem(
+      `${keyToUse}_${version}_|${date.toISOString()}`,
+      dataAsStr,
+    );
+
+    console.log('Testing deleteOldItems...');
+    try {
+      this.deleteOldItems();
+    } catch (err: any) {
+      console.error('FAIL: deleteOldItems - ' + err);
+    }
+
+    console.log('PASS');
+  };
+
+  testDeleteOldCache = (key: string) => {
+    console.log('Testing cache deletion. key to test: ' + key);
+    const itemDateStr = key.split('|')[1];
+    console.log('Item date string: ' + itemDateStr);
+    let dateToday: Date, itemDate: Date;
+    try {
+      dateToday = this.getDateToday();
+      itemDate = new Date(itemDateStr);
+      if (isNaN(itemDate.getTime())) {
+        // invalid, throw an error and let catch get it
+        throw new RangeError(
+          'Invalid date detected in getItemAge caused by outdated cache values',
+        );
+      }
+    } catch (err) {
+      // Cache date is not valid, clear those values associated with the keys
+      // and regenerate them
+      this.generateDateItem(key);
+      dateToday = this.getDateToday();
+      itemDate = this.getDateToday();
+    }
+    console.log(
+      'Days between: ' + this.getDaysBetweenDates(dateToday, itemDate),
+    );
+    // if older than MaxCacheAge day old, delete it
+    try {
+      this.deleteOldCache(key);
+    } catch (err: any) {
+      console.error('FAIL: testDeleteOldCache - ' + err);
+    }
+  };
+
+  getDaysBetweenDates = (startDate: Date, endDate: Date) => {
+    return (
+      (Date.UTC(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate(),
+      ) -
+        Date.UTC(
+          endDate.getFullYear(),
+          endDate.getMonth(),
+          endDate.getDate(),
+        )) /
+      86400000 // Magic # converts to days
+    );
+  };
+
+  getItemAge = (key: string): number => {
+    const itemDateStr = key.split('|')[1];
+    const dateToday = this.getDateToday();
+    let itemDate: Date;
+    try {
+      itemDate = new Date(itemDateStr);
+      if (isNaN(itemDate.getTime())) {
+        // invalid, throw an error and let catch get it
+        throw new RangeError(
+          'Invalid date detected in getItemAge caused by outdated cache values',
+        );
+      }
+    } catch (err) {
+      // Cache date is not valid, clear those values associated with the keys
+      // and regenerate them
+      this.generateDateItem(key);
+      itemDate = this.getDateToday();
+    }
+
+    var nDays = this.getDaysBetweenDates(dateToday, itemDate);
+
+    if (nDays < 0) {
+      // Found a bad cache key
+      this.generateDateItem(key);
+      itemDate = this.getDateToday();
+      nDays = this.getDaysBetweenDates(dateToday, itemDate);
+    }
+
+    return nDays;
+  };
+
+  deleteOldCache = (key: string) => {
+    // if older than MaxCacheAge day old, delete it
+    if (this.getItemAge(key) > MaxCacheItemAge) {
+      console.log('Removing cache key : ' + key);
+      localStorage.removeItem(key);
+    }
+  };
+
+  getDateYesterday = (): Date => {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    return date;
+  };
+
+  getDateToday = (): Date => {
+    return new Date();
+  };
+
   getItem = () => {
-    const dataAsStr = localStorage.getItem(`${this.key}_${this.version}`);
+    let dataAsStr = localStorage.getItem(
+      `${this.key}_${this.version}_|${this.getDateToday().toISOString()}`,
+    );
+
+    if (dataAsStr == null) {
+      // Convert the old key to new key params
+      this.generateDateItem(`${this.key}_${this.version}`);
+    }
     if (!dataAsStr || dataAsStr === '') {
       return;
     } else {
@@ -162,14 +311,60 @@ class Cache<T> {
     }
   };
 
+  // Generates a new item with a date at the end of the key from
+  // an old item that has no date
+  generateDateItem = (oldKey: string) => {
+    // get old value
+    const dataAsStr = localStorage.getItem(oldKey);
+    let data: T;
+    if (dataAsStr != null) {
+      data = JSON.parse(String(dataAsStr));
+    } else {
+      this.removeItem(oldKey); // get rid of the old one
+      return;
+    }
+
+    this.setItem(data); // Set the new item
+    this.removeItem(oldKey); // get rid of the old one
+  };
+
   setItem = (data: T) => {
+    const dataAsStr = JSON.stringify(data);
     try {
-      const dataAsStr = JSON.stringify(data);
-      localStorage.setItem(`${this.key}_${this.version}`, dataAsStr);
+      const removedSpaces = dataAsStr.replace(' ', '');
+      if (!removedSpaces) return false;
+      localStorage.setItem(
+        `${this.key}_${this.version}_|${this.getDateToday().toISOString()}`,
+        dataAsStr,
+      );
       return true;
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      console.log(`'${dataAsStr}' was inputted as the data.`);
       return false;
+    }
+  };
+
+  removeItem(key: string) {
+    try {
+      localStorage.removeItem(key);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  deleteOldItems = () => {
+    let version = this.version - 1;
+    while (version > 0) {
+      try {
+        this.deleteOldCache(
+          // Regex will allow any alphanumeric value after the string
+          `${this.key}_${version}` + RegExp('[^a-zA-Z0-9 +-]'),
+        );
+      } catch (err) {
+        console.log(err);
+      }
+      version = version - 1;
     }
   };
 
@@ -177,7 +372,10 @@ class Cache<T> {
     let version = this.version - 1;
     while (version > 0) {
       try {
-        localStorage.removeItem(`${this.key}_${version}`);
+        localStorage.removeItem(
+          // Regex will allow any alphanumeric value after the string
+          `${this.key}_${version}` + RegExp('[^a-zA-Z0-9 +-]'),
+        );
       } catch (err) {
         console.log(err);
       }
@@ -190,10 +388,14 @@ class Cache<T> {
     const freshData = await this.fetchData();
     try {
       const strData = JSON.stringify(freshData);
-      localStorage.setItem(`${this.key}_${this.version}`, strData);
+      localStorage.setItem(
+        `${this.key}_${this.version}_|${this.getDateToday().toISOString()}`,
+        strData,
+      );
       return freshData;
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      console.log(`String data was '${JSON.stringify(freshData)}'.`);
     }
   };
 }
