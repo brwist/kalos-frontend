@@ -51,13 +51,14 @@ const userClient = new UserClient(ENDPOINT);
 const eventClient = new EventClient(ENDPOINT);
 
 const today = new Date();
+const calendarOptions = { weekStartsOn: 1 as const };
 
 const getDefaultSelectedDate = (viewBy: string): Date => {
   switch (viewBy) {
     case 'day':
       return today;
     case 'week':
-      return startOfWeek(today);
+      return startOfWeek(today, calendarOptions);
     case 'month':
       return startOfMonth(today);
     default:
@@ -70,7 +71,7 @@ const getShownDates = (viewBy: string, date?: Date): string[] => {
     case 'day':
       return [format(date || today, 'yyyy-MM-dd')];
     case 'week': {
-      const firstDay = date || startOfWeek(today, { weekStartsOn: 1 });
+      const firstDay = date || startOfWeek(today, calendarOptions);
       const lastDay = addDays(firstDay, 6);
       const days = eachDayOfInterval({ start: firstDay, end: lastDay });
       const theDays = days.map(date => format(date, 'yyyy-MM-dd'));
