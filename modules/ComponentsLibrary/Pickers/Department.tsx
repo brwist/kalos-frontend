@@ -3,33 +3,33 @@ import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import {
-  TimesheetClassCode,
-  TimesheetClassCodeClient,
-} from '@kalos-core/kalos-rpc/ClassCode';
-import { ENDPOINT } from '../../constants';
+  TimesheetDepartment,
+  TimesheetDepartmentClient,
+} from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { ENDPOINT } from '../../../constants';
 
 interface props {
-  selected: any;
+  selected: number;
   disabled?: boolean;
   onSelect?(id: number | React.SyntheticEvent<HTMLSelectElement>): void;
-  test?(item: TimesheetClassCode.AsObject): boolean;
+  test?(item: TimesheetDepartment.AsObject): boolean;
   label?: string;
   useDevClient?: boolean;
   withinForm?: boolean;
 }
 
 interface state {
-  list: TimesheetClassCode.AsObject[];
+  list: TimesheetDepartment.AsObject[];
 }
 
-export class ClassCodePicker extends React.PureComponent<props, state> {
-  Client: TimesheetClassCodeClient;
+export class DepartmentPicker extends React.PureComponent<props, state> {
+  Client: TimesheetDepartmentClient;
   constructor(props: props) {
     super(props);
     this.state = {
       list: [],
     };
-    this.Client = new TimesheetClassCodeClient(ENDPOINT);
+    this.Client = new TimesheetDepartmentClient(ENDPOINT);
 
     this.handleSelect = this.handleSelect.bind(this);
     this.addToList = this.addToList.bind(this);
@@ -46,23 +46,20 @@ export class ClassCodePicker extends React.PureComponent<props, state> {
     }
   }
 
-  addToList(item: TimesheetClassCode.AsObject) {
+  addToList(item: TimesheetDepartment.AsObject) {
     this.setState(prevState => ({
       list: prevState.list.concat(item),
     }));
   }
 
   async fetchList() {
-    const req = new TimesheetClassCode();
-    const list = (await this.Client.BatchGet(req)).toObject();
-    // this.setState({
-    //   list,
-    // ))
-    // console.log(data);
+    const dpt = new TimesheetDepartment();
+    dpt.setIsActive(1);
+    this.Client.List(dpt, this.addToList);
   }
 
   componentDidMount() {
-    const cacheListStr = localStorage.getItem('CLASSCODE_LIST');
+    const cacheListStr = localStorage.getItem('DEPARTMENT_LIST_2');
     if (cacheListStr) {
       const cacheList = JSON.parse(cacheListStr);
       if (cacheList && cacheList.length !== 0) {
@@ -82,10 +79,10 @@ export class ClassCodePicker extends React.PureComponent<props, state> {
       this.state.list.length > 0 &&
       prevState.list.length === this.state.list.length
     ) {
-      const cacheList = localStorage.getItem('CLASSCODE_LIST');
+      const cacheList = localStorage.getItem('DEPARTMENT_LIST_2');
       if (!cacheList) {
         localStorage.setItem(
-          'CLASSCODE_LIST',
+          'DEPARTMENT_LIST_2',
           JSON.stringify(this.state.list),
         );
       }
@@ -96,7 +93,7 @@ export class ClassCodePicker extends React.PureComponent<props, state> {
     return (
       <FormControl style={{ marginBottom: 10 }}>
         <InputLabel htmlFor="cost-center-picker">
-          {this.props.label || 'Class Code'}
+          {this.props.label || 'Department'}
         </InputLabel>
         <NativeSelect
           disabled={this.props.disabled}
@@ -105,10 +102,10 @@ export class ClassCodePicker extends React.PureComponent<props, state> {
           IconComponent={undefined}
           inputProps={{ id: 'cost-center-picker' }}
         >
-          <option value={0}>Select Class Code</option>
+          <option value={0}>Select Department</option>
           {this.state.list.map(item => (
             <option value={item.id} key={`${item.description}-${item.id}`}>
-              {item.description}
+              {item.value} - {item.description}
             </option>
           ))}
         </NativeSelect>

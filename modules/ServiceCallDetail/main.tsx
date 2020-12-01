@@ -8,8 +8,8 @@ import {
   TimePicker,
 } from '@material-ui/pickers';
 import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
-import { JobTypePicker } from '../Pickers/JobType';
-import { JobSubtypePicker } from '../Pickers/JobSubtype';
+import { JobTypePicker } from '../ComponentsLibrary/Pickers/JobType';
+import { JobSubtypePicker } from '../ComponentsLibrary/Pickers/JobSubtype';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import {
   InputLabel,

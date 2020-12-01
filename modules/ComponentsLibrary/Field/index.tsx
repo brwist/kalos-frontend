@@ -49,7 +49,7 @@ import {
   EventType,
   loadEventById,
 } from '../../../helpers';
-import { ClassCodePicker, DepartmentPicker } from '../../Pickers/';
+import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import './styles.less';
 

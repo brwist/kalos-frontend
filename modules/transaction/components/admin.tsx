@@ -4,9 +4,9 @@ import {
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionRow, prettyMoney } from './row';
-import { AccountPicker, DepartmentPicker } from '../../Pickers';
-import { EmployeePicker } from '../../Pickers/Employee';
-import { TxnStatusPicker } from '../../Pickers/TransactionStatus';
+import { AccountPicker, DepartmentPicker } from '../../ComponentsLibrary/Pickers';
+import { EmployeePicker } from '../../ComponentsLibrary/Pickers/Employee';
+import { TxnStatusPicker } from '../../ComponentsLibrary/Pickers/TransactionStatus';
 import {
   TransactionActivityClient,
   TransactionActivity,

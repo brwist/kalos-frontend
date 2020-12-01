@@ -6,7 +6,7 @@ import {
   TransactionStatus,
   TransactionStatusClient,
 } from '@kalos-core/kalos-rpc/TransactionStatus';
-import { ENDPOINT } from '../../constants';
+import { ENDPOINT } from '../../../constants';
 
 interface props {
   selected: number;

@@ -6,7 +6,7 @@ import {
   TransactionAccount,
   TransactionAccountClient,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { ENDPOINT } from '../../constants';
+import { ENDPOINT } from '../../../constants';
 
 interface props {
   selected: number;

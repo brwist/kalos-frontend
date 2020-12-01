@@ -4,7 +4,7 @@ import {
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { Modal } from '../../ComponentsLibrary/Modal';
-import { AccountPicker } from '../../Pickers';
+import { AccountPicker } from '../../ComponentsLibrary/Pickers';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { ENDPOINT } from '../../../constants';
 import { getRPCFields } from '../../../helpers';
