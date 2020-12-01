@@ -19,7 +19,7 @@ import { TxnLog } from './log';
 import { TxnNotes } from './notes';
 import { getSlackID, slackNotify } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
-import { CostCenterPicker } from '../../ComponentsLibrary/Pickers/CostCenter';
+import { AccountPicker } from '../../ComponentsLibrary/Pickers/index';
 import { AltGallery, GalleryData } from '../../AltGallery/main';
 import { Row } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -183,10 +183,15 @@ export function TransactionRow({
     },
     {
       value: editingCostCenter ? (
-        <CostCenterPicker
+        <AccountPicker
           selected={txn.costCenter ? txn.costCenter.id : 0}
           onSelect={handleCostCenterSelect}
           hideInactive
+          renderItem={i => (
+            <option value={i.id} key={`${i.description}-${i.id}`}>
+              {i.description}
+            </option>
+          )}
         />
       ) : txn.costCenter ? (
         `${txn.costCenter.description} (${txn.costCenter.id})`
