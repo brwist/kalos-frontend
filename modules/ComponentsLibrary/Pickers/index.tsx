@@ -11,7 +11,7 @@ import {
   TimesheetDepartmentClient,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
-import { ENDPOINT } from '../../constants';
+import { ENDPOINT } from '../../../constants';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 
 const MaxCacheItemAge: number = 1, // Max age of the cache item in days before it removes itself

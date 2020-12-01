@@ -14,7 +14,7 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { AccountPicker } from '../../Pickers';
+import { AccountPicker } from '../../ComponentsLibrary/Pickers';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { GalleryData, AltGallery } from '../../AltGallery/main';

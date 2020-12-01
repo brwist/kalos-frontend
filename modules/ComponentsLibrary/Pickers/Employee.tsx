@@ -3,7 +3,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT } from '../../constants';
+import { ENDPOINT } from '../../../constants';
 
 interface props {
   selected: number;
