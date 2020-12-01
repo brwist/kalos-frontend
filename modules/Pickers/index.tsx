@@ -189,6 +189,15 @@ class Cache<T> {
       console.error('FAIL: deleteOldItems - ' + err);
     }
 
+    const itemGotten = localStorage.getItem(
+      `${keyToUse}_${version}_|${date.toISOString()}`,
+    );
+    if (itemGotten) {
+      console.error(
+        'FAILED! Items left over by deleteOldItems with value of ' + itemGotten,
+      );
+      return;
+    }
     console.log('PASS');
   };
 
@@ -272,6 +281,7 @@ class Cache<T> {
   };
 
   deleteOldCache = (key: string) => {
+    console.log('Deleting old cache value for key ' + key);
     // if older than MaxCacheAge day old, delete it
     if (this.getItemAge(key) > MaxCacheItemAge) {
       console.log('Removing cache key : ' + key);
@@ -354,17 +364,20 @@ class Cache<T> {
   }
 
   deleteOldItems = () => {
-    let version = this.version - 1;
-    while (version > 0) {
+    for (var key in localStorage) {
       try {
-        this.deleteOldCache(
-          // Regex will allow any alphanumeric value after the string
-          `${this.key}_${version}` + RegExp('[^a-zA-Z0-9 +-]'),
-        );
+        if (key.startsWith(key)) {
+          const split = key.split('|');
+          if (
+            this.getDaysBetweenDates(this.getDateToday(), new Date(split[1])) >
+            MaxCacheItemAge
+          ) {
+            this.deleteOldCache(key);
+          }
+        }
       } catch (err) {
         console.log(err);
       }
-      version = version - 1;
     }
   };
 
@@ -372,10 +385,14 @@ class Cache<T> {
     let version = this.version - 1;
     while (version > 0) {
       try {
-        localStorage.removeItem(
-          // Regex will allow any alphanumeric value after the string
-          `${this.key}_${version}` + RegExp('[^a-zA-Z0-9 +-]'),
-        );
+        for (var key in localStorage) {
+          if (key.startsWith(`${key}_${version}`)) {
+            localStorage.removeItem(
+              // Regex will allow any alphanumeric value after the string
+              key,
+            );
+          }
+        }
       } catch (err) {
         console.log(err);
       }
