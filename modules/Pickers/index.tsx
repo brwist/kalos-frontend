@@ -14,7 +14,8 @@ import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { ENDPOINT } from '../../constants';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 
-const MaxCacheItemAge: number = 1; // Max age of the cache item in days before it removes itself
+const MaxCacheItemAge: number = 1, // Max age of the cache item in days before it removes itself
+  UseTests = false;
 
 interface props<R, T> {
   selected: number;
@@ -148,7 +149,9 @@ class Cache<T> {
     this.version = version;
     this.fetchData = fetchFn;
     // You can use this to test the functionality of cache deletion after time
-    //this.testCacheDateRemoval('DEPARTMENT_LIST', 7000, 20);
+    if (UseTests) {
+      this.testCacheDateRemoval('DEPARTMENT_LIST', 7000, 20, false);
+    }
     this.deleteOldItems();
   }
 
@@ -156,6 +159,7 @@ class Cache<T> {
     keyToUse: string,
     version: number,
     daysOld: number,
+    showRemainingKeys: boolean,
   ) => {
     console.log('STARTING CACHE TEST.');
     const date = new Date();
@@ -174,6 +178,18 @@ class Cache<T> {
 
     this.testDeleteOldCache(`${keyToUse}_${version}_|${date.toISOString()}`);
 
+    let itemGotten = localStorage.getItem(
+      `${keyToUse}_${version}_|${date.toISOString()}`,
+    );
+    if (itemGotten) {
+      console.error(
+        'FAILED! Items left over by deleteOldCache with value of ' + itemGotten,
+      );
+      return;
+    }
+
+    console.log('%ctestDeleteOldCache PASSED!', 'color: cyan');
+
     console.log(
       'Created test string: ' + `${keyToUse}_${version}_|${date.toISOString()}`,
     );
@@ -189,7 +205,7 @@ class Cache<T> {
       console.error('FAIL: deleteOldItems - ' + err);
     }
 
-    const itemGotten = localStorage.getItem(
+    itemGotten = localStorage.getItem(
       `${keyToUse}_${version}_|${date.toISOString()}`,
     );
     if (itemGotten) {
@@ -198,7 +214,19 @@ class Cache<T> {
       );
       return;
     }
-    console.log('PASS');
+
+    if (showRemainingKeys) {
+      for (var item in localStorage) {
+        console.log(
+          `%c"${item}" remains in the list of keys.`,
+          'color: yellow',
+        );
+      }
+    }
+    console.log(
+      '%cPASS - all tests have passed for the Cache class.',
+      'color: cyan',
+    );
   };
 
   testDeleteOldCache = (key: string) => {
