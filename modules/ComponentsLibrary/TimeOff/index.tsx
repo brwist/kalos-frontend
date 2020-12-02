@@ -101,6 +101,9 @@ export const TimeOff: FC<Props> = ({
       }
       setData(req);
       setFormKey(formKey + 1);
+    } else {
+      setData({ ...data, departmentCode: user.employeeDepartmentId });
+      setFormKey(formKey + 1);
     }
     setInitiated(true);
   }, [
@@ -112,6 +115,7 @@ export const TimeOff: FC<Props> = ({
     setTypeOptions,
     setDeleted,
     setInitiated,
+    data,
   ]);
   useEffect(() => {
     if (!initiated) {
