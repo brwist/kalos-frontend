@@ -187,8 +187,7 @@ export const reducer = (state: State, action: Action) => {
             payroll: payroll || {},
             timeoffs: timeoffs.filter(
               ({ timeStarted, timeFinished }) =>
-                timeStarted.substr(0, 10) >= date &&
-                timeFinished.substr(0, 10) <= date,
+                timeStarted.substr(0, 10) === date,
             ),
           };
           totalPayroll = {
