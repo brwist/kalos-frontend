@@ -410,6 +410,7 @@ export const Timesheet: FC<Props> = props => {
                     data={data[date]}
                     loading={fetchingTimesheetData}
                     timeoffRequestTypes={timeoffRequestTypes}
+                    loggedUserId={userId}
                   />
                 ))}
               </Container>
@@ -444,6 +445,7 @@ export const Timesheet: FC<Props> = props => {
         <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
           <TimeOff
             loggedUserId={userId}
+            userId={timesheetOwnerId}
             onCancel={() => setTimeoffOpen(false)}
             onSaveOrDelete={() => {
               setTimeoffOpen(false);

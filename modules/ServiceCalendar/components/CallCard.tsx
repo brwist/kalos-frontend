@@ -58,9 +58,13 @@ interface TimeoffProps {
   card: TimeoffRequest.AsObject & {
     requestTypeName?: string;
   };
+  loggedUserId: number;
 }
 
-export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
+export const TimeoffCard = ({
+  card,
+  loggedUserId,
+}: TimeoffProps): JSX.Element | null => {
   const {
     id,
     requestType,
@@ -157,7 +161,8 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
           <TimeOff
             requestOffId={id}
             onCancel={() => setEditId(undefined)}
-            loggedUserId={+userId}
+            loggedUserId={loggedUserId}
+            userId={+userId}
             onSaveOrDelete={() => {
               setEditId(undefined);
               document.location.reload();

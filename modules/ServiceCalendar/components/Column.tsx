@@ -308,6 +308,7 @@ const Column = ({
                 ? timeoffRequestTypes[call.requestType]
                 : undefined,
             }}
+            loggedUserId={userId}
           />
         ))}
       {remindersList

@@ -461,10 +461,11 @@ export const ServiceCalendar: FC<Props> = props => {
         <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
           <TimeOff
             loggedUserId={userId}
+            userId={userId}
             onCancel={() => setTimeoffOpen(false)}
             onSaveOrDelete={() => {
               setTimeoffOpen(false);
-              reload();
+              document.location.reload();
             }}
           />
         </Modal>
