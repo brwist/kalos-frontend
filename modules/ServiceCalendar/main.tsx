@@ -27,8 +27,8 @@ import { ENDPOINT } from '../../constants';
 import Filter from './components/Filter';
 import Column from './components/Column';
 import { useFetchAll } from '../ComponentsLibrary/hooks';
-import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
-import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
+import { AddNewButton } from '../ComponentsLibrary/AddNewButton'; 
+import TimerOffIcon from '@material-ui/icons/TimerOff';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import EventIcon from '@material-ui/icons/Event';
 import SearchIcon from '@material-ui/icons/Search';
@@ -374,9 +374,9 @@ export const ServiceCalendar: FC<Props> = props => {
   }, [viewBy]);
   const addNewOptions = [
     {
-      icon: <AssignmentIndIcon />,
-      name: 'Task',
-      url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
+      icon: <TimerOffIcon />,
+      name: 'Request Time Off',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest',
     },
     {
       icon: <AddAlertIcon />,
