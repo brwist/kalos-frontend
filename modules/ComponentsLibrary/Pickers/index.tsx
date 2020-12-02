@@ -149,8 +149,10 @@ class Cache<T> {
     this.version = version;
     this.fetchData = fetchFn;
     // You can use this to test the functionality of cache deletion after time
+    // transaction and TransactionUser will have the tests pop up in the console
+    // logs when ran in the browser
     if (UseTests) {
-      this.testCacheDateRemoval('DEPARTMENT_LIST', 7000, 20, false);
+      this.testCacheDateRemoval('DEPARTMENT_LIST', 7000, 2, false);
     }
     this.deleteOldItems();
   }
@@ -162,6 +164,32 @@ class Cache<T> {
     showRemainingKeys: boolean,
   ) => {
     console.log('STARTING CACHE TEST.');
+
+    console.log('Checking MaxCacheItemAge...');
+
+    if (MaxCacheItemAge < 0) {
+      console.error('FAILED! MaxCacheItemAge should not be less than 0.');
+      return;
+    }
+
+    console.log('%cMaxCacheItemAge PASSED!', 'color: cyan');
+
+    const removeItems = daysOld <= MaxCacheItemAge ? false : true;
+
+    if (daysOld <= MaxCacheItemAge) {
+      console.log(
+        '%cThe item created in testCacheDateRemoval is not old enough to be removed.',
+        'color: yellow',
+      );
+    }
+
+    if (daysOld < 0) {
+      console.log(
+        '%cThe item created in testCacheDateRemoval is less than 0 days old - testing edge case.',
+        'color: yellow',
+      );
+    }
+
     const date = new Date();
     date.setDate(date.getDate() - daysOld);
 
@@ -182,10 +210,19 @@ class Cache<T> {
       `${keyToUse}_${version}_|${date.toISOString()}`,
     );
     if (itemGotten) {
+      if (removeItems) {
+        console.error(
+          'FAILED! Items left over by deleteOldCache with value of ' +
+            itemGotten,
+        );
+        return;
+      }
+      // Checks for days old greater than 0 because the keys regenerate when this occurs -
+      // the item will not be left behind because it was regenerated
+    } else if (!removeItems && daysOld > 0) {
       console.error(
-        'FAILED! Items left over by deleteOldCache with value of ' + itemGotten,
+        'FAILED! Items were not left over by deleteOldCache when they were not old enough to be deleted. ',
       );
-      return;
     }
 
     console.log('%ctestDeleteOldCache PASSED!', 'color: cyan');
@@ -208,11 +245,21 @@ class Cache<T> {
     itemGotten = localStorage.getItem(
       `${keyToUse}_${version}_|${date.toISOString()}`,
     );
+
     if (itemGotten) {
+      if (removeItems) {
+        console.error(
+          'FAILED! Items left over by deleteOldItems with value of ' +
+            itemGotten,
+        );
+        return;
+      }
+      // Checks for days old greater than 0 because the keys regenerate when this occurs -
+      // the item will not be left behind because it was regenerated
+    } else if (!removeItems && daysOld > 0) {
       console.error(
-        'FAILED! Items left over by deleteOldItems with value of ' + itemGotten,
+        'FAILED! Items were not left over by deleteOldItems when they were not old enough to be deleted. ',
       );
-      return;
     }
 
     if (showRemainingKeys) {
@@ -303,16 +350,16 @@ class Cache<T> {
       this.generateDateItem(key);
       itemDate = this.getDateToday();
       nDays = this.getDaysBetweenDates(dateToday, itemDate);
+      console.log('Generated new key');
     }
 
     return nDays;
   };
 
   deleteOldCache = (key: string) => {
-    console.log('Deleting old cache value for key ' + key);
     // if older than MaxCacheAge day old, delete it
     if (this.getItemAge(key) > MaxCacheItemAge) {
-      console.log('Removing cache key : ' + key);
+      if (UseTests) console.log('Removing cache key : ' + key);
       localStorage.removeItem(key);
     }
   };
@@ -437,6 +484,7 @@ class Cache<T> {
         `${this.key}_${this.version}_|${this.getDateToday().toISOString()}`,
         strData,
       );
+      this.deleteOldItems();
       return freshData;
     } catch (err) {
       console.error(err);
