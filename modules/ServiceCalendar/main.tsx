@@ -36,6 +36,7 @@ import PersonIcon from '@material-ui/icons/PersonAdd';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { CustomerEdit } from '../ComponentsLibrary/CustomerEdit';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import { TimeOff } from '../ComponentsLibrary/TimeOff';
 import {
   UserType,
   getTimeoffRequestTypes,
@@ -287,6 +288,7 @@ export const ServiceCalendar: FC<Props> = props => {
     dispatch,
   ] = useReducer(reducer, initialState);
   const [customerOpened, setCustomerOpened] = useState<UserType>();
+  const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   const [
     timeoffRequestTypes,
     setTimeoffRequestTypes,
@@ -377,6 +379,9 @@ export const ServiceCalendar: FC<Props> = props => {
       icon: <TimerOffIcon />,
       name: 'Request Time Off',
       url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest',
+      // action: () => {
+      //   setTimeoffOpen(true);
+      // },
     },
     {
       icon: <AddAlertIcon />,
@@ -449,6 +454,18 @@ export const ServiceCalendar: FC<Props> = props => {
           <CustomerEdit
             onClose={handleToggleAddCustomer(false)}
             onSave={handleCustomerSave}
+          />
+        </Modal>
+      )}
+      {timeoffOpen && (
+        <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
+          <TimeOff
+            loggedUserId={userId}
+            onCancel={() => setTimeoffOpen(false)}
+            onSaveOrDelete={() => {
+              setTimeoffOpen(false);
+              reload();
+            }}
           />
         </Modal>
       )}
