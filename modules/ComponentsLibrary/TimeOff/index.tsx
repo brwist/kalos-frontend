@@ -48,6 +48,7 @@ export const TimeOff: FC<Props> = ({
   const [pto, setPto] = useState<PTOType>();
   const [user, setUser] = useState<UserType>();
   const [formKey, setFormKey] = useState<number>(0);
+  const [error, setError] = useState<string>('');
   const [data, setData] = useState<TimeoffRequestType>({
     adminApprovalDatetime: '',
     adminApprovalUserId: 0,
@@ -128,7 +129,7 @@ export const TimeOff: FC<Props> = ({
   ]);
   const handleSubmit = useCallback(
     async (data: TimeoffRequestType) => {
-      setSaving(true);
+      setError('');
       const {
         allDayOff,
         departmentCode,
@@ -138,6 +139,11 @@ export const TimeOff: FC<Props> = ({
         timeFinished,
         userId,
       } = data;
+      if (timeFinished < timeStarted) {
+        setError('End Time cannot be before Start Time');
+        return;
+      }
+      setSaving(true);
       const newData = await upsertTimeoffRequest({
         allDayOff,
         departmentCode,
@@ -148,11 +154,21 @@ export const TimeOff: FC<Props> = ({
         userId,
         briefDescription: '',
       });
-      setData(newData);
+      setData({
+        ...newData,
+        ...(user!.isAdmin
+          ? {
+              requestStatus: 1,
+              adminApprovalDatetime: timestamp(true),
+              reviewedBy: user!.firstname + ' ' + user!.lastname,
+            }
+          : {}),
+      });
+      setFormKey(formKey + 1);
       setSaving(false);
       onSaveOrDelete(newData);
     },
-    [onSaveOrDelete, setSaving, setData],
+    [onSaveOrDelete, setSaving, setData, setError, user, setFormKey, formKey],
   );
   const handleSubmitAdmin = useCallback(async () => {
     if (!user) return;
@@ -170,6 +186,7 @@ export const TimeOff: FC<Props> = ({
       requestStatus,
       reviewedBy,
       adminComments,
+      briefDescription: '',
     });
     setData(newData);
     if (onAdminSubmit) {
@@ -334,6 +351,7 @@ export const TimeOff: FC<Props> = ({
         submitLabel={data.id ? 'Delete' : 'Save'}
         cancelLabel={cancelLabel}
         submitDisabled={!!data.adminApprovalUserId}
+        error={error}
       />
       {deleting && (
         <ConfirmDelete
