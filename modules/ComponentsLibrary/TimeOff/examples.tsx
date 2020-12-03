@@ -6,13 +6,15 @@ export default () => (
   <>
     <ExampleTitle>add</ExampleTitle>
     <TimeOff
-      loggedUserId={101253}
+      loggedUserId={8418}
+      userId={101253}
       onCancel={() => console.log('Cancel')}
       onSaveOrDelete={data => console.log('Save', data)}
     />
     <ExampleTitle>edit</ExampleTitle>
     <TimeOff
-      loggedUserId={101253}
+      loggedUserId={8418}
+      userId={101253}
       onCancel={() => console.log('Cancel')}
       onSaveOrDelete={data => console.log('Delete', data)}
       onAdminSubmit={data => console.log('Admin Submit', data)}

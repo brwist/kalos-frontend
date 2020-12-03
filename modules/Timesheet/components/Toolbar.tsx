@@ -36,7 +36,7 @@ const Toolbar: FC<Props> = ({
   const confirm = useConfirm();
 
   const handleSubmit = () => {
-    if (timesheetAdministration) {
+    if (timesheetAdministration && !isTimesheetOwner) {
       submitTimesheet();
     } else {
       confirm({
@@ -52,10 +52,10 @@ const Toolbar: FC<Props> = ({
   let buttonLabel = 'Approve Timesheet';
   if (!timesheetAdministration) {
     buttonLabel = submitText;
-  } else if (isTimesheetOwner) {
+  }
+  if (isTimesheetOwner) {
     buttonLabel = submitText;
   }
-
   return (
     <MuiToolbar className="TimesheetToolbarBar">
       <MuiPickersUtilsProvider utils={DateFnsUtils}>

@@ -25,6 +25,7 @@ import { OPTION_BLANK } from '../../../constants';
 
 export interface Props {
   loggedUserId: number;
+  userId: number;
   requestOffId?: number;
   onCancel: () => void;
   onSaveOrDelete: (data: TimeoffRequestType) => void;
@@ -34,6 +35,7 @@ export interface Props {
 
 export const TimeOff: FC<Props> = ({
   loggedUserId,
+  userId,
   onCancel,
   onSaveOrDelete,
   onAdminSubmit,
@@ -47,7 +49,9 @@ export const TimeOff: FC<Props> = ({
   const [typeOptions, setTypeOptions] = useState<Options>([]);
   const [pto, setPto] = useState<PTOType>();
   const [user, setUser] = useState<UserType>();
+  const [loggedUser, setLoggedUser] = useState<UserType>();
   const [formKey, setFormKey] = useState<number>(0);
+  const [error, setError] = useState<string>('');
   const [data, setData] = useState<TimeoffRequestType>({
     adminApprovalDatetime: '',
     adminApprovalUserId: 0,
@@ -71,7 +75,7 @@ export const TimeOff: FC<Props> = ({
     timeFinished: format(new Date(), 'yyyy-MM-dd 23:59'),
     timeStarted: format(new Date(), 'yyyy-MM-dd 00:00'),
     userApprovalDatetime: '',
-    userId: loggedUserId.toString(),
+    userId: userId.toString(),
     userName: '',
     adminApprovalUserName: '',
     dateRangeList: [],
@@ -83,10 +87,12 @@ export const TimeOff: FC<Props> = ({
     setTypeOptions(
       types.map(({ id, requestType }) => ({ label: requestType, value: id })),
     );
-    const pto = await getPTOInquiryByUserId(loggedUserId);
+    const pto = await getPTOInquiryByUserId(userId);
     setPto(pto);
-    const user = await loadUserById(loggedUserId);
+    const user = await loadUserById(userId);
     setUser(user);
+    const loggedUser = await loadUserById(loggedUserId);
+    setLoggedUser(loggedUser);
     if (requestOffId) {
       const req = await getTimeoffRequestById(requestOffId);
       if (!req) {
@@ -97,14 +103,17 @@ export const TimeOff: FC<Props> = ({
       if (!req.adminApprovalUserId) {
         req.requestStatus = 1;
         req.adminApprovalDatetime = timestamp(true);
-        req.reviewedBy = user.firstname + ' ' + user.lastname;
+        req.reviewedBy = loggedUser.firstname + ' ' + loggedUser.lastname;
       }
       setData(req);
+      setFormKey(formKey + 1);
+    } else {
+      setData({ ...data, departmentCode: user.employeeDepartmentId });
       setFormKey(formKey + 1);
     }
     setInitiated(true);
   }, [
-    loggedUserId,
+    userId,
     setPto,
     requestOffId,
     setData,
@@ -112,6 +121,9 @@ export const TimeOff: FC<Props> = ({
     setTypeOptions,
     setDeleted,
     setInitiated,
+    data,
+    setLoggedUser,
+    setUser,
   ]);
   useEffect(() => {
     if (!initiated) {
@@ -124,7 +136,7 @@ export const TimeOff: FC<Props> = ({
   ]);
   const handleSubmit = useCallback(
     async (data: TimeoffRequestType) => {
-      setSaving(true);
+      setError('');
       const {
         allDayOff,
         departmentCode,
@@ -134,6 +146,11 @@ export const TimeOff: FC<Props> = ({
         timeFinished,
         userId,
       } = data;
+      if (timeFinished < timeStarted) {
+        setError('End Time cannot be before Start Time');
+        return;
+      }
+      setSaving(true);
       const newData = await upsertTimeoffRequest({
         allDayOff,
         departmentCode,
@@ -144,14 +161,31 @@ export const TimeOff: FC<Props> = ({
         userId,
         briefDescription: '',
       });
-      setData(newData);
+      setData({
+        ...newData,
+        ...(loggedUser!.isAdmin
+          ? {
+              requestStatus: 1,
+              adminApprovalDatetime: timestamp(true),
+              reviewedBy: loggedUser!.firstname + ' ' + loggedUser!.lastname,
+            }
+          : {}),
+      });
+      setFormKey(formKey + 1);
       setSaving(false);
       onSaveOrDelete(newData);
     },
-    [onSaveOrDelete, setSaving, setData],
+    [
+      onSaveOrDelete,
+      setSaving,
+      setData,
+      setError,
+      loggedUser,
+      setFormKey,
+      formKey,
+    ],
   );
   const handleSubmitAdmin = useCallback(async () => {
-    if (!user) return;
     const {
       id,
       adminApprovalDatetime,
@@ -162,16 +196,17 @@ export const TimeOff: FC<Props> = ({
     const newData = await upsertTimeoffRequest({
       id,
       adminApprovalDatetime,
-      adminApprovalUserId: user.id,
+      adminApprovalUserId: loggedUserId,
       requestStatus,
       reviewedBy,
       adminComments,
+      briefDescription: '',
     });
     setData(newData);
     if (onAdminSubmit) {
       onAdminSubmit(newData);
     }
-  }, [data, onAdminSubmit, user, setData]);
+  }, [data, onAdminSubmit, setData]);
   const handleDelete = useCallback(async () => {
     if (requestOffId) {
       setSaving(true);
@@ -180,7 +215,7 @@ export const TimeOff: FC<Props> = ({
       onSaveOrDelete(data);
     }
   }, [requestOffId, setSaving, onSaveOrDelete, data]);
-  const isAdmin = user && user.isAdmin;
+  const isAdmin = loggedUser && loggedUser.isAdmin && loggedUserId !== userId;
   const disabled = !(data.id && isAdmin);
   const disabledAdmin = disabled || !!data.adminApprovalUserId;
   const schema: Schema<TimeoffRequestType> = [
@@ -330,6 +365,7 @@ export const TimeOff: FC<Props> = ({
         submitLabel={data.id ? 'Delete' : 'Save'}
         cancelLabel={cancelLabel}
         submitDisabled={!!data.adminApprovalUserId}
+        error={error}
       />
       {deleting && (
         <ConfirmDelete
