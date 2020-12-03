@@ -15,7 +15,9 @@ import { ENDPOINT } from '../../../constants';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 
 const MaxCacheItemAge: number = 1, // Max age of the cache item in days before it removes itself
-  UseTests = false;
+  UseTests = false,
+  VersionNumber = 0; // Mostly unused but left in in case we want to isolate old cache keys
+// from new ones at some point
 
 interface props<R, T> {
   selected: number;
@@ -153,9 +155,19 @@ class Cache<T> {
     // logs when ran in the browser
     if (UseTests) {
       this.testCacheDateRemoval('DEPARTMENT_LIST', 7000, 2, false);
+      this.testGetAllLocalStorageData();
     }
     this.deleteOldItems();
   }
+
+  testGetAllLocalStorageData = () => {
+    let arr = [];
+    for (var key in localStorage) {
+      arr.push(key);
+    }
+
+    console.log(arr);
+  };
 
   testCacheDateRemoval = (
     keyToUse: string,
@@ -278,7 +290,8 @@ class Cache<T> {
 
   testDeleteOldCache = (key: string) => {
     console.log('Testing cache deletion. key to test: ' + key);
-    const itemDateStr = key.split('|')[1];
+    const itemDateSplit = key.split('|');
+    const itemDateStr = itemDateSplit[itemDateSplit.length - 1];
     console.log('Item date string: ' + itemDateStr);
     let dateToday: Date, itemDate: Date;
     try {
@@ -325,7 +338,8 @@ class Cache<T> {
   };
 
   getItemAge = (key: string): number => {
-    const itemDateStr = key.split('|')[1];
+    const itemDateSplit = key.split('|');
+    const itemDateStr = itemDateSplit[itemDateSplit.length - 1];
     const dateToday = this.getDateToday();
     let itemDate: Date;
     try {
@@ -416,8 +430,6 @@ class Cache<T> {
   setItem = (data: T) => {
     const dataAsStr = JSON.stringify(data);
     try {
-      const removedSpaces = dataAsStr.replace(' ', '');
-      if (!removedSpaces) return false;
       localStorage.setItem(
         `${this.key}_${this.version}_|${this.getDateToday().toISOString()}`,
         dataAsStr,
@@ -434,7 +446,7 @@ class Cache<T> {
     try {
       localStorage.removeItem(key);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -451,13 +463,34 @@ class Cache<T> {
           }
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     }
   };
 
+  // not my proudest naming, but you know what it does ;)
+  // Also not the most optimized function, but I figure we will
+  // probably never get too many keys
+  findCacheItemWithListNameAndVersion = (listNameAndVersionNum: string) => {
+    for (var key in localStorage) {
+      try {
+        if (UseTests) console.log('Looking for ' + `${listNameAndVersionNum}`);
+        if (key.startsWith(`${listNameAndVersionNum}`)) {
+          if (UseTests) console.log('Success');
+          return key;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (UseTests) console.log('Failed');
+    // couldn't find that key
+    return null;
+  };
+
   clearHistory = () => {
-    let version = this.version - 1;
+    let version = VersionNumber - 1;
     while (version > 0) {
       try {
         for (var key in localStorage) {
@@ -469,26 +502,36 @@ class Cache<T> {
           }
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
-      version = version - 1;
+      version--;
     }
   };
+
+  // Will cause an error the first time about routes -
+  // goes away on refresh once those are regenerated
+  clearLocalStorage = () => localStorage.clear();
 
   update = async () => {
     this.clearHistory();
     const freshData = await this.fetchData();
     try {
-      const strData = JSON.stringify(freshData);
-      localStorage.setItem(
-        `${this.key}_${this.version}_|${this.getDateToday().toISOString()}`,
-        strData,
-      );
       this.deleteOldItems();
+      const strData = JSON.stringify(freshData);
+      const listNameAndVersionNumber = this.key.split('|')[0];
+      // Attempts to find the key via the name and version number
+      const attemptAtKey = this.findCacheItemWithListNameAndVersion(
+        listNameAndVersionNumber,
+      );
+
+      if (attemptAtKey) {
+        localStorage.setItem(`${attemptAtKey}`, strData);
+      } else {
+        localStorage.setItem(`${this.key}`, strData);
+      }
       return freshData;
     } catch (err) {
       console.error(err);
-      console.log(`String data was '${JSON.stringify(freshData)}'.`);
     }
   };
 }
@@ -498,7 +541,7 @@ export class AccountPicker extends Picker<
   TransactionAccount.AsObject
 > {
   constructor(props: props<TransactionAccount, TransactionAccount.AsObject>) {
-    super(props, 'Purchase Type', 'COST_CENTER_LIST', getRandomInt(0, 9999));
+    super(props, 'Purchase Type', 'COST_CENTER_LIST', VersionNumber);
     this.Client = new TransactionAccountClient(ENDPOINT);
     this.req = new TransactionAccount();
     this.req.setIsActive(1);
@@ -510,7 +553,7 @@ export class DepartmentPicker extends Picker<
   TimesheetDepartment.AsObject
 > {
   constructor(props: props<TimesheetDepartment, TimesheetDepartment.AsObject>) {
-    super(props, 'Department', 'DEPARTMENT_LIST', getRandomInt(0, 9999));
+    super(props, 'Department', 'DEPARTMENT_LIST', VersionNumber);
     this.Client = new TimesheetDepartmentClient(ENDPOINT);
     this.req = new TimesheetDepartment();
     this.req.setIsActive(1);
@@ -519,7 +562,7 @@ export class DepartmentPicker extends Picker<
 
 export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
   constructor(props: props<ClassCode, ClassCode.AsObject>) {
-    super(props, 'Class Code', 'CLASS_CODE_LIST', getRandomInt(0, 9999));
+    super(props, 'Class Code', 'CLASS_CODE_LIST', VersionNumber);
     this.Client = new ClassCodeClient(ENDPOINT);
     this.req = new ClassCode();
   }
@@ -527,7 +570,7 @@ export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
 
 export class EmployeePicker extends Picker<User, User.AsObject> {
   constructor(props: props<User, User.AsObject>) {
-    super(props, 'Employee', 'EMPLOYEE_LIST_X', getRandomInt(0, 9999));
+    super(props, 'Employee', 'EMPLOYEE_LIST_X', VersionNumber);
     this.Client = new UserClient(ENDPOINT);
     this.req = new User();
     this.req.setIsEmployee(1);
@@ -535,10 +578,4 @@ export class EmployeePicker extends Picker<User, User.AsObject> {
     this.req.setIsHvacTech(1);
     this.req.setOverrideLimit(true);
   }
-}
-
-function getRandomInt(min: number, max: number) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
