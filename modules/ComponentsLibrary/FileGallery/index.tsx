@@ -12,6 +12,7 @@ import {
   deleteFileById,
   getFileS3BucketUrl,
   deleteFileFromS3Buckets,
+  padWithZeroes,
 } from '../../../helpers';
 import './styles.less';
 
@@ -22,6 +23,9 @@ interface Props {
   onClose: () => void;
   onAdd: ({ file, url }: { file: FileType; url: string }) => void;
   removeFileOnAdd: boolean;
+  inputFile?: { filename: string; fileurl: string } | null;
+  onlyDisplayInputFile?: boolean;
+  onConfirmAdd?: () => void;
 }
 
 const getFileName = (fileName: string) => {
@@ -37,12 +41,16 @@ export const FileGallery: FC<Props> = ({
   onClose,
   onAdd,
   removeFileOnAdd,
+  inputFile,
+  onlyDisplayInputFile,
+  onConfirmAdd,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [files, setFiles] = useState<FileType[]>([]);
   const [adding, setAdding] = useState<FileType>();
   const [deleting, setDeleting] = useState<FileType>();
+  const [confirming, setConfirming] = useState<boolean>(false);
   const [images, setImages] = useState<{
     [key: string]: string;
   }>({});
@@ -53,12 +61,15 @@ export const FileGallery: FC<Props> = ({
       ownerId: loggedUserId,
     });
     setFiles(resultsList);
-    const images = await Promise.all(
+    let images = await Promise.all(
       resultsList.map(async ({ name, bucket }) => ({
         name,
         url: await getFileS3BucketUrl(name, bucket),
       })),
     );
+    if (inputFile != null) {
+      images.push({ name: inputFile?.filename, url: inputFile?.fileurl });
+    }
     setImages(
       images.reduce((aggr, { name, url }) => ({ ...aggr, [name]: url }), {}),
     );
@@ -74,6 +85,12 @@ export const FileGallery: FC<Props> = ({
     (adding?: FileType) => () => setAdding(adding),
     [setAdding],
   );
+
+  const handleSetConfirming = useCallback(
+    (confirming: boolean) => () => setConfirming(confirming),
+    [confirming],
+  );
+
   const handleSetDeleting = useCallback(
     (deleting?: FileType) => () => setDeleting(deleting),
     [setDeleting],
@@ -107,7 +124,29 @@ export const FileGallery: FC<Props> = ({
     setLoaded,
     images,
     setAdding,
+    confirming,
+    setConfirming,
   ]);
+
+  const handleConfirming = useCallback(async () => {
+    if (onConfirmAdd == undefined) {
+      return false;
+    }
+    onConfirmAdd();
+    return true;
+  }, [
+    adding,
+    onAdd,
+    removeFileOnAdd,
+    setLoading,
+    setLoaded,
+    images,
+    setAdding,
+    confirming,
+    setConfirming,
+    onConfirmAdd,
+  ]);
+  let mapIndex = 0; // to make it render the uploaded image only once
   return (
     <div>
       <SectionBar
@@ -121,15 +160,44 @@ export const FileGallery: FC<Props> = ({
           loading
             ? makeFakeRows()
             : files.map(file => {
-                const { name, createTime } = file;
-                const fileName = getFileName(name);
+                let { name, createTime } = file;
+                const date = new Date();
+                if (onlyDisplayInputFile) {
+                  createTime = `${date.getFullYear()}-${padWithZeroes(
+                    date.getMonth() + 1,
+                  )}-${padWithZeroes(date.getDay() - 1)} ${padWithZeroes(
+                    date.getHours(),
+                  )}:${padWithZeroes(date.getMinutes())}:${padWithZeroes(
+                    date.getSeconds(),
+                  )}`;
+                }
+                const fileName = onlyDisplayInputFile
+                  ? inputFile?.filename
+                  : getFileName(name);
+                mapIndex++;
+                if (onlyDisplayInputFile && mapIndex > 1) {
+                  return [];
+                }
                 return [
                   {
                     value: (
-                      <div
-                        className="FileGalleryImg"
-                        style={{ backgroundImage: `url(${images[name]})` }}
-                      />
+                      <>
+                        {inputFile != null && mapIndex == 1 ? (
+                          <div
+                            className="FileGalleryImg"
+                            id="SingleUploadImgPreview"
+                            style={{
+                              backgroundImage: `url(${inputFile.fileurl})`,
+                            }}
+                          />
+                        ) : null}
+                        {!onlyDisplayInputFile ? (
+                          <div
+                            className="FileGalleryImg"
+                            style={{ backgroundImage: `url(${images[name]})` }}
+                          />
+                        ) : null}
+                      </>
                     ),
                     onClick: handleSetAdding(file),
                   },
@@ -143,8 +211,8 @@ export const FileGallery: FC<Props> = ({
                     actions: [
                       <Button
                         key="add"
-                        label="Add"
-                        onClick={handleSetAdding(file)}
+                        label={onlyDisplayInputFile ? 'Confirm' : 'Add'}
+                        onClick={handleSetConfirming(true)}
                       />,
                       <Button
                         key="delete"
@@ -172,6 +240,22 @@ export const FileGallery: FC<Props> = ({
           <div
             className="FileGalleryImg"
             style={{ backgroundImage: `url(${images[adding.name]})` }}
+          />
+        </Confirm>
+      )}
+      {confirming && inputFile && (
+        <Confirm
+          open
+          onClose={handleSetConfirming(false)}
+          title="Confirm adding single file"
+          onConfirm={handleConfirming}
+        >
+          Are you sure, you want to add the image?
+          <br />
+          <br />
+          <div
+            className="FileGalleryImg"
+            style={{ backgroundImage: `url(${images[inputFile.filename]})` }}
           />
         </Confirm>
       )}

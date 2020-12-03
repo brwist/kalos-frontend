@@ -261,13 +261,15 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
           )}
           title={
             <>
-              <Badge
-                style={{ paddingLeft: '7.5%' }}
-                badgeContent="LMPC"
-                color="primary"
-                invisible={invisible}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-              />
+              {!invisible ? (
+                <Badge
+                  style={{ paddingLeft: '7.5%' }}
+                  badgeContent="LMPC"
+                  color="primary"
+                  invisible={invisible}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                />
+              ) : null}
               <Typography variant="body2" component="p">
                 {title}
               </Typography>
