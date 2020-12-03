@@ -477,12 +477,9 @@ export const getMimeType = (fileName: string) => {
  * @returns format h:MMa (ie. 4:30AM)
  */
 function formatTime(time: string, forceMinutes: boolean = true) {
-  console.log("time passed in: " + time)
   const str = time.includes(' ') ? time.substr(11) : time;
   const [hourStr, minutes] = str.split(':');
-  console.log("Hour str: " + hourStr)
   const hour = +hourStr;
-  console.log(hour)
   const minute = +minutes;
   return (
     (hour > 12 ? hour - 12 : hour || 12) +
