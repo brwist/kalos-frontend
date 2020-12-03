@@ -477,9 +477,12 @@ export const getMimeType = (fileName: string) => {
  * @returns format h:MMa (ie. 4:30AM)
  */
 function formatTime(time: string, forceMinutes: boolean = true) {
+  console.log("time passed in: " + time)
   const str = time.includes(' ') ? time.substr(11) : time;
   const [hourStr, minutes] = str.split(':');
+  console.log("Hour str: " + hourStr)
   const hour = +hourStr;
+  console.log(hour)
   const minute = +minutes;
   return (
     (hour > 12 ? hour - 12 : hour || 12) +
@@ -524,6 +527,16 @@ function formatDay(datetime: string) {
  */
 function formatDateTime(datetime: string) {
   return formatDate(datetime) + ' ' + formatTime(datetime.substr(11));
+}
+
+/**
+ *
+ * @param num number which needs a zero in front if it is less than 10
+ * @returns string of the number with 0 in front if it is less than 10, otherwise just
+ * the number
+ */
+function padWithZeroes(num : number) : string {
+  return (num < 10) ? '0' + num : String(num)
 }
 
 /**
@@ -3399,6 +3412,7 @@ export {
   makeFakeRows,
   getRPCFields,
   formatDateTime,
+  padWithZeroes,
   loadJobTypes,
   loadJobSubtypes,
   loadJobTypeSubtypes,

@@ -55,6 +55,7 @@ interface props {
 interface state {
   txn: Transaction.AsObject;
   pendingAddFromGallery: boolean;
+  pendingAddFromSingleFile: boolean;
 }
 
 const hardcodedList = [
@@ -83,12 +84,18 @@ export class TxnCard extends React.PureComponent<props, state> {
   FileInput: React.RefObject<HTMLInputElement>;
   NotesInput: React.RefObject<HTMLInputElement>;
   EmailClient: EmailClient;
+  LastSingleFileUpload: {
+    filename: string;
+    fileurl: string;
+    filedata: Uint8Array;
+  } | null;
 
   constructor(props: props) {
     super(props);
     this.state = {
       txn: props.txn,
       pendingAddFromGallery: false,
+      pendingAddFromSingleFile: false,
     };
     this.EmailClient = new EmailClient(ENDPOINT);
     this.TxnClient = new TransactionClient(ENDPOINT);
@@ -105,6 +112,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.submit = this.submit.bind(this);
     this.deleteFile = this.deleteFile.bind(this);
     this.onPDFGenerate = this.onPDFGenerate.bind(this);
+    this.LastSingleFileUpload = null; // Will be set when user uploads an image
   }
 
   async makeLog<K extends keyof Transaction.AsObject>(
@@ -256,6 +264,45 @@ export class TxnCard extends React.PureComponent<props, state> {
   toggleAddFromGallery = () =>
     this.setState({ pendingAddFromGallery: !this.state.pendingAddFromGallery });
 
+  toggleAddFromSingleFile = () =>
+    this.setState({
+      pendingAddFromSingleFile: !this.state.pendingAddFromSingleFile,
+    });
+
+  addFromSingleFile = async ({ file }: { file: FileType; url: string }) => {
+    this.setState({ pendingAddFromSingleFile: false });
+    console.log(file);
+    const { id } = this.state.txn;
+    const bucket = 'kalos-transactions';
+    const status = await moveFileBetweenS3Buckets(
+      {
+        key: file.name,
+        bucket: file.bucket,
+      },
+      {
+        key: `${id}-${file.name}`,
+        bucket,
+      },
+    );
+    if (status === 'nok') {
+      alert('Upload failed. Please try again, or contact an administrator');
+      return;
+    }
+    await upsertFile({
+      id: file.id,
+      ownerId: 0,
+      bucket,
+    });
+    await upsertTransactionDocument({
+      transactionId: this.state.txn.id,
+      reference: file.name,
+      fileId: file.id,
+      typeId: 1,
+    });
+    console.log("it's uploaded from here");
+    alert('Upload complete');
+  };
+
   addFromGallery = async ({ file }: { file: FileType; url: string }) => {
     this.setState({ pendingAddFromGallery: false });
     const { id } = this.state.txn;
@@ -271,7 +318,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       },
     );
     if (status === 'nok') {
-      alert('Upload faild. Please try again, or contact administrator');
+      alert('Upload failed. Please try again, or contact an administrator');
       return;
     }
     await upsertFile({
@@ -285,6 +332,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       fileId: file.id,
       typeId: 1,
     });
+    console.log("it's uploaded from here");
     alert('Upload complete');
   };
 
@@ -316,6 +364,11 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.FileInput.current && this.FileInput.current.click();
   }
 
+  onPromptClosed() {
+    console.log('Toggling it');
+    this.toggleAddFromSingleFile();
+  }
+
   async onPDFGenerate(fileData: Uint8Array) {
     await this.props.toggleLoading();
     await this.DocsClient.upload(
@@ -331,22 +384,44 @@ export class TxnCard extends React.PureComponent<props, state> {
     );
   }
 
+  uploadSingleFileData = async () => {
+    if (!this.LastSingleFileUpload) {
+      console.error('Cannot upload file - no file exists.');
+      return;
+    }
+    await this.DocsClient.upload(
+      this.state.txn.id,
+      this.FileInput.current!.files![0].name,
+      this.LastSingleFileUpload?.filedata,
+    );
+    console.log('Upload successful');
+    this.props.toggleLoading();
+  };
+
   handleFile() {
     this.props.toggleLoading(() => {
       const fr = new FileReader();
       fr.onload = async () => {
         try {
-          await this.DocsClient.upload(
-            this.state.txn.id,
-            this.FileInput.current!.files![0].name,
-            new Uint8Array(fr.result as ArrayBuffer),
+          const fileName = this.FileInput.current!.files![0].name;
+          const fileData = new Uint8Array(fr.result as ArrayBuffer);
+
+          const srcUrl = URL.createObjectURL(
+            new Blob([fileData.buffer], { type: 'image/png' } /* (1) */),
           );
+
+          this.LastSingleFileUpload = {
+            filename: fileName,
+            fileurl: srcUrl,
+            filedata: fileData,
+          };
         } catch (err) {
           alert('File could not be uploaded');
-          console.log(err);
+          console.error(err);
         }
         await this.refresh();
-        this.props.toggleLoading(() => alert('Upload complete'));
+        //this.props.toggleLoading(() => alert('Upload complete'));
+        this.onPromptClosed();
       };
       if (this.FileInput.current && this.FileInput.current.files) {
         fr.readAsArrayBuffer(this.FileInput.current.files[0]);
@@ -388,12 +463,23 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
+  async uploadSingleFile(thisInput: any) {
+    thisInput.openFilePrompt();
+  }
+
+  continueSingleUpload = () => {
+    console.log("It's continuing");
+    this.toggleAddFromSingleFile();
+    this.uploadSingleFileData();
+  };
+
   render() {
-    const { txn, pendingAddFromGallery } = this.state;
+    const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const t = txn;
     const { isManager, userID } = this.props;
     let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
     const deriveCallout = this.deriveCallout(t);
+    console.log(this.LastSingleFileUpload);
     return (
       <>
         <Paper elevation={4} style={{ margin: 16, marginTop: 32 }}>
@@ -404,7 +490,12 @@ export class TxnCard extends React.PureComponent<props, state> {
             subtitle={subheader}
             asideContent={
               <div className="TransactionUser_Actions">
-                <Button label="Upload Photo" onClick={this.openFilePrompt} />
+                <Button
+                  label="Upload Photo"
+                  onClick={() => {
+                    this.uploadSingleFile(this);
+                  }}
+                />
                 <Button
                   label="Add Photo "
                   onClick={this.toggleAddFromGallery}
@@ -499,6 +590,21 @@ export class TxnCard extends React.PureComponent<props, state> {
               onClose={this.toggleAddFromGallery}
               onAdd={this.addFromGallery}
               removeFileOnAdd={false}
+            />
+          </Modal>
+        )}
+        {pendingAddFromSingleFile && (
+          <Modal open onClose={this.toggleAddFromSingleFile} fullScreen>
+            <FileGallery
+              loggedUserId={userID}
+              title="Confirm Upload"
+              bucket="kalos-pre-transactions"
+              onClose={this.toggleAddFromSingleFile}
+              onAdd={this.addFromSingleFile}
+              removeFileOnAdd={false}
+              inputFile={this.LastSingleFileUpload}
+              onlyDisplayInputFile={true}
+              onConfirmAdd={this.continueSingleUpload}
             />
           </Modal>
         )}
