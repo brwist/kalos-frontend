@@ -389,11 +389,13 @@ export class TxnCard extends React.PureComponent<props, state> {
       console.error('Cannot upload file - no file exists.');
       return;
     }
+
     await this.DocsClient.upload(
       this.state.txn.id,
       this.FileInput.current!.files![0].name,
       this.LastSingleFileUpload?.filedata,
     );
+    await this.refresh();
     console.log('Upload successful');
     this.props.toggleLoading();
   };
@@ -423,10 +425,20 @@ export class TxnCard extends React.PureComponent<props, state> {
         //this.props.toggleLoading(() => alert('Upload complete'));
         this.onPromptClosed();
       };
-      if (this.FileInput.current && this.FileInput.current.files) {
+      if (
+        this.FileInput.current &&
+        this.FileInput.current.files &&
+        this.FileInput.current.files.length != 0
+      ) {
         fr.readAsArrayBuffer(this.FileInput.current.files[0]);
       }
     });
+
+    if (!this.FileInput.current?.files) return;
+
+    if (this.FileInput?.current?.files.length == 0) {
+      this.props.toggleLoading();
+    }
   }
 
   async refresh() {
@@ -479,7 +491,6 @@ export class TxnCard extends React.PureComponent<props, state> {
     const { isManager, userID } = this.props;
     let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
     const deriveCallout = this.deriveCallout(t);
-    console.log(this.LastSingleFileUpload);
     return (
       <>
         <Paper elevation={4} style={{ margin: 16, marginTop: 32 }}>
