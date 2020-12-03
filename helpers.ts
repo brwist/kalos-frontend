@@ -1452,9 +1452,10 @@ export const getTimeoffRequestById = async (id: number) => {
 
 export const getTimeoffRequestByFilter = async (
   filter: Partial<TimeoffRequestType>,
+  fieldMaskListInit: string[] = [],
 ) => {
   const req = new TimeoffRequest();
-  const fieldMaskList = [];
+  const fieldMaskList = fieldMaskListInit;
   for (const fieldName in filter) {
     const { upperCaseProp, methodName } = getRPCFields(fieldName);
     //@ts-ignore
@@ -2230,7 +2231,7 @@ export type PropertiesFilter = {
   subdivision?: string;
   address?: string;
   city?: string;
-  state? : string;
+  state?: string;
   zip?: string;
   userId?: number;
 };
@@ -2309,7 +2310,7 @@ export const loadContractsByFilter = async ({
       //@ts-ignore
       req[methodName](typeof value === 'string' ? `%${value}%` : value);
     }
-  } 
+  }
   const response = await ContractClientService.BatchGet(req);
   return {
     results: response

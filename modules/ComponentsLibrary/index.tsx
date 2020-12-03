@@ -41,6 +41,7 @@ import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
 import LodgingByZipCode from './LodgingByZipCode/examples';
+import ManagerTimeoffs from './ManagerTimeoffs/examples';
 import Modal from './Modal/examples';
 import PDFMaker from './PDFMaker/examples';
 import PerDiem from './PerDiem/examples';
@@ -124,6 +125,7 @@ const COMPONENTS = {
   InternalDocuments,
   Link,
   LodgingByZipCode,
+  ManagerTimeoffs,
   Modal,
   PDFMaker,
   PerDiem,
