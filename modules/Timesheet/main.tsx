@@ -261,7 +261,7 @@ export const Timesheet: FC<Props> = props => {
       if (overlapped) {
         dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
       } else {
-        if (user?.timesheetAdministration) {
+        if (user?.timesheetAdministration && props.userId !== props.timesheetOwnerId) {
           await tslClient.Approve(ids, userId);
           dispatch({ type: 'approveTimesheet' });
         } else {
@@ -391,6 +391,7 @@ export const Timesheet: FC<Props> = props => {
             payroll={payroll}
             submitTimesheet={handleSubmitTimesheet}
             pendingEntries={pendingEntries}
+            isTimesheetOwner={props.userId === props.timesheetOwnerId}
           />
           {error && (
             <Alert
