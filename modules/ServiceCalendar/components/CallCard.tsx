@@ -58,13 +58,18 @@ interface TimeoffProps {
   card: TimeoffRequest.AsObject & {
     requestTypeName?: string;
   };
+  loggedUserId: number;
 }
 
-export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
+export const TimeoffCard = ({
+  card,
+  loggedUserId,
+}: TimeoffProps): JSX.Element | null => {
   const {
     id,
     requestType,
     adminApprovalUserId,
+    requestStatus,
     timeStarted,
     timeFinished,
     userName,
@@ -73,9 +78,9 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
     requestTypeName,
     requestClass,
   } = card;
-  if (adminApprovalUserId === 0) {
-    return null;
-  }
+  // if (adminApprovalUserId === 0) {
+  //   return null;
+  // }
   let subheader, dates, time;
   const [editId, setEditId] = useState<number>();
   try {
@@ -83,8 +88,9 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
     if (employeesLoading) {
       return <SkeletonCard />;
     }
+    console.log({ employees });
     const empl = employees.find(emp => emp.id === +userId);
-    subheader = `${empl?.firstname} ${empl?.lastname}`;
+    subheader = empl ? `${empl?.firstname} ${empl?.lastname}` : '';
   } catch (e) {}
   const started = parseISO(timeStarted);
   const finished = parseISO(timeFinished);
@@ -118,10 +124,21 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
           <CardHeader
             className="ServiceCalendarCallCardCardHeader"
             avatar={<ColorIndicator type="timeoff" requestType={requestType} />}
-            title={requestClass}
-            subheader={subheader}
+            title={
+              adminApprovalUserId === 0
+                ? 'Pending Approval'
+                : requestStatus === 0
+                ? 'Not Approved'
+                : 'Approved'
+            }
+            subheader={requestTypeName}
           />
           <CardContent className="ServiceCalendarCallCardCardContent">
+            {subheader && (
+              <Typography variant="body2" component="p">
+                {subheader}
+              </Typography>
+            )}
             {dates && (
               <Typography
                 className="ServiceCalendarCallCardDate"
@@ -131,12 +148,9 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
                 {dates} {time}
               </Typography>
             )}
-            <Typography variant="body2" component="p">
-              {name}
-            </Typography>
             {requestTypeName && (
               <Typography variant="body2" component="p">
-                {requestTypeName}
+                {requestClass}
               </Typography>
             )}
           </CardContent>
@@ -144,13 +158,19 @@ export const TimeoffCard = ({ card }: TimeoffProps): JSX.Element | null => {
       </Card>
       {editId && (
         <Modal open onClose={() => setEditId(undefined)} fullScreen>
-          {/* <pre>{JSON.stringify(card, null, 2)}</pre> */}
           <TimeOff
             requestOffId={id}
             onCancel={() => setEditId(undefined)}
-            loggedUserId={+userId}
-            onSaveOrDelete={() => setEditId(undefined)}
-            onAdminSubmit={() => setEditId(undefined)}
+            loggedUserId={loggedUserId}
+            userId={+userId}
+            onSaveOrDelete={() => {
+              setEditId(undefined);
+              document.location.reload();
+            }}
+            onAdminSubmit={() => {
+              setEditId(undefined);
+              document.location.reload();
+            }}
             cancelLabel="Close"
           />
         </Modal>

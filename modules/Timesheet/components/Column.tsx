@@ -21,9 +21,16 @@ type Props = {
   data: any;
   loading: boolean;
   timeoffRequestTypes?: TimeoffRequestTypes;
+  loggedUserId: number;
 };
 
-const Column: FC<Props> = ({ date, data, loading, timeoffRequestTypes }) => {
+const Column: FC<Props> = ({
+  date,
+  data,
+  loading,
+  timeoffRequestTypes,
+  loggedUserId,
+}) => {
   const [dayView, setDayView] = useState(false);
   const dateObj = parseISO(date);
   const theme = useTheme();
@@ -114,6 +121,7 @@ const Column: FC<Props> = ({ date, data, loading, timeoffRequestTypes }) => {
                       ? timeoffRequestTypes[card.requestType]
                       : undefined,
                   }}
+                  loggedUserId={loggedUserId}
                 />
               );
             }

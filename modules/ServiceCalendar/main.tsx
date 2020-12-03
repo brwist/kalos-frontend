@@ -28,7 +28,7 @@ import Filter from './components/Filter';
 import Column from './components/Column';
 import { useFetchAll } from '../ComponentsLibrary/hooks';
 import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
-import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
+import TimerOffIcon from '@material-ui/icons/TimerOff';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import EventIcon from '@material-ui/icons/Event';
 import SearchIcon from '@material-ui/icons/Search';
@@ -36,6 +36,7 @@ import PersonIcon from '@material-ui/icons/PersonAdd';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { CustomerEdit } from '../ComponentsLibrary/CustomerEdit';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import { TimeOff } from '../ComponentsLibrary/TimeOff';
 import {
   UserType,
   getTimeoffRequestTypes,
@@ -287,6 +288,7 @@ export const ServiceCalendar: FC<Props> = props => {
     dispatch,
   ] = useReducer(reducer, initialState);
   const [customerOpened, setCustomerOpened] = useState<UserType>();
+  const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   const [
     timeoffRequestTypes,
     setTimeoffRequestTypes,
@@ -374,9 +376,12 @@ export const ServiceCalendar: FC<Props> = props => {
   }, [viewBy]);
   const addNewOptions = [
     {
-      icon: <AssignmentIndIcon />,
-      name: 'Task',
-      url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
+      icon: <TimerOffIcon />,
+      name: 'Request Time Off',
+      // url: 'https://app.kalosflorida.com/index.cfm?action=admin:timesheet.addTimeOffRequest',
+      action: () => {
+        setTimeoffOpen(true);
+      },
     },
     {
       icon: <AddAlertIcon />,
@@ -449,6 +454,19 @@ export const ServiceCalendar: FC<Props> = props => {
           <CustomerEdit
             onClose={handleToggleAddCustomer(false)}
             onSave={handleCustomerSave}
+          />
+        </Modal>
+      )}
+      {timeoffOpen && (
+        <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
+          <TimeOff
+            loggedUserId={userId}
+            userId={userId}
+            onCancel={() => setTimeoffOpen(false)}
+            onSaveOrDelete={() => {
+              setTimeoffOpen(false);
+              document.location.reload();
+            }}
           />
         </Modal>
       )}
