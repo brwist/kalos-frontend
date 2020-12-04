@@ -138,12 +138,22 @@ export const DeletedServiceCallsReport: FC<Props> = ({
           } = entry;
           const disabled = !property || !customer;
           return [
-            { value: getPropertyAddress(property) },
-            { value: getCustomerName(customer) },
-            { value: logJobNumber },
-            { value: formatDate(dateStarted) },
+            {
+              value: getPropertyAddress(property),
+              onClick: handleSetPendingEdit(entry),
+            },
+            {
+              value: getCustomerName(customer),
+              onClick: handleSetPendingEdit(entry),
+            },
+            { value: logJobNumber, onClick: handleSetPendingEdit(entry) },
+            {
+              value: formatDate(dateStarted),
+              onClick: handleSetPendingEdit(entry),
+            },
             {
               value: logJobStatus,
+              onClick: handleSetPendingEdit(entry),
               actions: [
                 <IconButton
                   key="tasks"

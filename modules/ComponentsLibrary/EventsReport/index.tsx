@@ -279,12 +279,22 @@ export const EventsReport: FC<Props> = ({
             logPaymentStatus,
           } = entry;
           return [
-            { value: getPropertyAddress(property) },
-            { value: getCustomerName(customer, true) },
-            { value: logJobNumber },
-            { value: formatDate(dateStarted) },
+            {
+              value: getPropertyAddress(property),
+              onClick: handlePendingEditToggle(entry),
+            },
+            {
+              value: getCustomerName(customer, true),
+              onClick: handlePendingEditToggle(entry),
+            },
+            { value: logJobNumber, onClick: handlePendingEditToggle(entry) },
+            {
+              value: formatDate(dateStarted),
+              onClick: handlePendingEditToggle(entry),
+            },
             {
               value: kind === 'jobStatus' ? logJobStatus : logPaymentStatus,
+              onClick: handlePendingEditToggle(entry),
               actions: [
                 <IconButton
                   key="edit"

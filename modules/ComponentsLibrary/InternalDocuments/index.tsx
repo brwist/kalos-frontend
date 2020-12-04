@@ -321,12 +321,15 @@ export const InternalDocuments: FC = () => {
                   {tagName} {description}
                 </div>
               ),
+              onClick: handleView(entry),
             },
             {
               value: formatDate(dateCreated),
+              onClick: handleView(entry),
             },
             {
               value: formatDate(dateModified),
+              onClick: handleView(entry),
               actions: [
                 <IconButton key="view" size="small" onClick={handleView(entry)}>
                   <OpenInNewIcon />
