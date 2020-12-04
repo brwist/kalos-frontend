@@ -205,13 +205,6 @@ export const Request: FC<Props> = forwardRef(
           required: true,
         },
         {
-          label: 'Brief Description',
-          name: 'name',
-          required: true,
-          description: 'Used on calendar',
-          multiline: true,
-        },
-        {
           label: 'Service Needed',
           name: 'description',
           required: true,
