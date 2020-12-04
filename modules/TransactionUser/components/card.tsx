@@ -479,7 +479,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     thisInput.openFilePrompt();
   }
 
-  continueSingleUpload = () => {
+  continueSingleUpload = ({ confirmed }: { confirmed: boolean }) => {
     console.log("It's continuing");
     this.toggleAddFromSingleFile();
     this.uploadSingleFileData();
@@ -610,7 +610,10 @@ export class TxnCard extends React.PureComponent<props, state> {
               loggedUserId={userID}
               title="Confirm Upload"
               bucket="kalos-pre-transactions"
-              onClose={this.toggleAddFromSingleFile}
+              onClose={() => {
+                this.toggleAddFromSingleFile();
+                this.props.toggleLoading();
+              }}
               onAdd={this.addFromSingleFile}
               removeFileOnAdd={false}
               inputFile={this.LastSingleFileUpload}
