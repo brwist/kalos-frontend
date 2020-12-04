@@ -75,7 +75,7 @@ export const TimeOff: FC<Props> = ({
     timeFinished: format(new Date(), 'yyyy-MM-dd 23:59'),
     timeStarted: format(new Date(), 'yyyy-MM-dd 00:00'),
     userApprovalDatetime: '',
-    userId: userId.toString(),
+    userId,
     userName: '',
     adminApprovalUserName: '',
     dateRangeList: [],
