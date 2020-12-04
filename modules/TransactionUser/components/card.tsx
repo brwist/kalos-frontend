@@ -264,15 +264,13 @@ export class TxnCard extends React.PureComponent<props, state> {
   toggleAddFromGallery = () =>
     this.setState({ pendingAddFromGallery: !this.state.pendingAddFromGallery });
 
-  toggleAddFromSingleFile = () => {
-    console.log('Setting pendingAddFromSingleFile to opposite');
+  toggleAddFromSingleFile = () =>
     this.setState({
       pendingAddFromSingleFile: !this.state.pendingAddFromSingleFile,
     });
-  };
+
   addFromSingleFile = async ({ file }: { file: FileType; url: string }) => {
     this.setState({ pendingAddFromSingleFile: false });
-    console.log(file);
     const { id } = this.state.txn;
     const bucket = 'kalos-transactions';
     const status = await moveFileBetweenS3Buckets(
@@ -286,7 +284,9 @@ export class TxnCard extends React.PureComponent<props, state> {
       },
     );
     if (status === 'nok') {
-      alert('Upload failed. Please try again, or contact an administrator');
+      alert(
+        'Upload failed. Please try again, or contact an administrator if you keep experiencing issues.',
+      );
       return;
     }
     await upsertFile({
@@ -300,7 +300,6 @@ export class TxnCard extends React.PureComponent<props, state> {
       fileId: file.id,
       typeId: 1,
     });
-    console.log("it's uploaded from here");
     alert('Upload complete');
   };
 
@@ -333,7 +332,6 @@ export class TxnCard extends React.PureComponent<props, state> {
       fileId: file.id,
       typeId: 1,
     });
-    console.log("it's uploaded from here");
     alert('Upload complete');
   };
 
@@ -365,11 +363,6 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.FileInput.current && this.FileInput.current.click();
   }
 
-  onPromptClosed() {
-    console.log('Toggling it');
-    this.toggleAddFromSingleFile();
-  }
-
   async onPDFGenerate(fileData: Uint8Array) {
     await this.props.toggleLoading();
     await this.DocsClient.upload(
@@ -396,9 +389,8 @@ export class TxnCard extends React.PureComponent<props, state> {
       this.FileInput.current!.files![0].name,
       this.LastSingleFileUpload?.filedata,
     );
-    await this.refresh();
-    console.log('Upload successful');
     this.props.toggleLoading();
+    await this.refresh();
   };
 
   handleFile() {
@@ -410,7 +402,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           const fileData = new Uint8Array(fr.result as ArrayBuffer);
 
           const srcUrl = URL.createObjectURL(
-            new Blob([fileData.buffer], { type: 'image/png' } /* (1) */),
+            new Blob([fileData.buffer], { type: 'image/png' }),
           );
 
           this.LastSingleFileUpload = {
@@ -423,8 +415,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           console.error(err);
         }
         await this.refresh();
-        //this.props.toggleLoading(() => alert('Upload complete'));
-        this.onPromptClosed();
+        this.toggleAddFromSingleFile();
       };
       if (
         this.FileInput.current &&
@@ -437,11 +428,13 @@ export class TxnCard extends React.PureComponent<props, state> {
 
     if (!this.FileInput.current?.files) return;
 
+    // Just to get rid of an outlier
     if (this.FileInput?.current?.files.length == 0) {
       this.props.toggleLoading();
     }
   }
 
+  // Allows users to upload multiple of the same file without running into issues
   clearFileInput() {
     if (this.FileInput == null) {
       return;
@@ -495,13 +488,13 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
-  async uploadSingleFile(thisInput: any) {
+  async openPromptWithInputPassed(thisInput: any) {
     thisInput.openFilePrompt();
   }
 
   continueSingleUpload = async ({ confirmed }: { confirmed: boolean }) => {
-    console.log(confirmed);
     if (!confirmed) {
+      // If someone cancelled via the "cancel" button on the FileGallery
       this.toggleAddFromSingleFile();
       this.clearFileInput();
       await this.refresh();
@@ -510,6 +503,8 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
     this.toggleAddFromSingleFile();
     this.uploadSingleFileData();
+    this.clearFileInput();
+    await this.refresh();
   };
 
   render() {
@@ -531,7 +526,9 @@ export class TxnCard extends React.PureComponent<props, state> {
                 <Button
                   label="Upload Photo"
                   onClick={() => {
-                    this.uploadSingleFile(this);
+                    // Pass "this" to it so that we can use the FileInput then
+                    // continue with the rest of the flow
+                    this.openPromptWithInputPassed(this);
                   }}
                 />
                 <Button
