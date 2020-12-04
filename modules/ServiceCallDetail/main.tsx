@@ -144,7 +144,6 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
   }
   handleDescription = this.handleTextInput(this.updateDescription);
   handleNotes = this.handleTextInput(this.updateLogNotes);
-  handleBriefDescription = this.handleTextInput(this.updateBriefDescription);
   handleAmountQuoted = this.handleTextInput(this.updateAmountQuoted);
 
   handleSelect(fn: (val: number) => Promise<void>) {
@@ -481,15 +480,6 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                     ))}
                   </NativeSelect>
                 </FormControl>
-
-                <TextField
-                  disabled={!isEditing}
-                  onChange={this.handleBriefDescription}
-                  label="Brief Description"
-                  margin="normal"
-                  variant="outlined"
-                  defaultValue={event.name}
-                />
               </Grid>
             </Grid>
             <Grid
