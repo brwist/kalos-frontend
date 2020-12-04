@@ -264,11 +264,12 @@ export class TxnCard extends React.PureComponent<props, state> {
   toggleAddFromGallery = () =>
     this.setState({ pendingAddFromGallery: !this.state.pendingAddFromGallery });
 
-  toggleAddFromSingleFile = () =>
+  toggleAddFromSingleFile = () => {
+    console.log('Setting pendingAddFromSingleFile to opposite');
     this.setState({
       pendingAddFromSingleFile: !this.state.pendingAddFromSingleFile,
     });
-
+  };
   addFromSingleFile = async ({ file }: { file: FileType; url: string }) => {
     this.setState({ pendingAddFromSingleFile: false });
     console.log(file);
@@ -441,6 +442,25 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
+  clearFileInput() {
+    if (this.FileInput == null) {
+      return;
+    } else {
+      try {
+        this.FileInput!.current!.value = '';
+      } catch (ex) {}
+      if (this.FileInput!.current!.value) {
+        if (this.FileInput!.current!.parentNode == null) {
+          return;
+        }
+        this.FileInput!.current!.parentNode!.replaceChild(
+          this.FileInput!.current!.cloneNode(true),
+          this.FileInput!.current!,
+        );
+      }
+    }
+  }
+
   async refresh() {
     try {
       const req = new Transaction();
@@ -479,8 +499,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     thisInput.openFilePrompt();
   }
 
-  continueSingleUpload = ({ confirmed }: { confirmed: boolean }) => {
-    console.log("It's continuing");
+  continueSingleUpload = ({}: { confirmed: boolean }) => {
     this.toggleAddFromSingleFile();
     this.uploadSingleFileData();
   };
@@ -588,7 +607,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           <input
             type="file"
             ref={this.FileInput}
-            onChange={this.handleFile}
+            onChange={this.handleFile} // same image after cancel will not work
             style={{ display: 'none' }}
           />
         </Paper>
@@ -605,7 +624,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           </Modal>
         )}
         {pendingAddFromSingleFile && (
-          <Modal open onClose={this.toggleAddFromSingleFile} fullScreen>
+          <Modal open onClose={() => {}} fullScreen>
             <FileGallery
               loggedUserId={userID}
               title="Confirm Upload"
@@ -613,6 +632,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               onClose={() => {
                 this.toggleAddFromSingleFile();
                 this.props.toggleLoading();
+                this.clearFileInput();
               }}
               onAdd={this.addFromSingleFile}
               removeFileOnAdd={false}
