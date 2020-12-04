@@ -34,6 +34,8 @@ const getFileName = (fileName: string) => {
   return name.join('-').split('').reverse().join('');
 };
 
+const PreviewImageSize = [200, 200]; // size of img in px
+
 export const FileGallery: FC<Props> = ({
   loggedUserId,
   title,
@@ -146,128 +148,227 @@ export const FileGallery: FC<Props> = ({
     setConfirming,
     onConfirmAdd,
   ]);
-  let mapIndex = 0; // to make it render the uploaded image only once
-  return (
-    <div>
-      <SectionBar
-        title={title}
-        actions={[{ label: 'Close', onClick: onClose }]}
-        fixedActions
-      />
-      <InfoTable
-        columns={[{ name: 'Photo' }, { name: 'Name' }, { name: 'Uploaded at' }]}
-        data={
-          loading
-            ? makeFakeRows()
-            : files.map(file => {
-                let { name, createTime } = file;
-                const date = new Date();
-                if (onlyDisplayInputFile) {
-                  createTime = `${date.getFullYear()}-${padWithZeroes(
+  const fileArr = [inputFile];
+
+  if (onlyDisplayInputFile) {
+    return (
+      <div>
+        <SectionBar
+          title={title}
+          actions={[{ label: 'Close', onClick: onClose }]}
+          fixedActions
+        />
+        <InfoTable
+          columns={[
+            { name: 'Photo' },
+            { name: 'Name' },
+            { name: 'Uploaded at' },
+          ]}
+          data={
+            loading
+              ? makeFakeRows()
+              : fileArr.map(file => {
+                  if (!inputFile?.fileurl) {
+                    console.error('No file url for image.');
+                  }
+                  const date = new Date();
+                  const createTime = `${date.getFullYear()}-${padWithZeroes(
                     date.getMonth() + 1,
                   )}-${padWithZeroes(date.getDay() - 1)} ${padWithZeroes(
                     date.getHours(),
                   )}:${padWithZeroes(date.getMinutes())}:${padWithZeroes(
                     date.getSeconds(),
                   )}`;
-                }
-                const fileName = onlyDisplayInputFile
-                  ? inputFile?.filename
-                  : getFileName(name);
-                mapIndex++;
-                if (onlyDisplayInputFile && mapIndex > 1) {
-                  return [];
-                }
-                return [
-                  {
-                    value: (
-                      <>
-                        {inputFile != null && mapIndex == 1 ? (
-                          <div
-                            className="FileGalleryImg"
-                            id="SingleUploadImgPreview"
-                            style={{
-                              backgroundImage: `url(${inputFile.fileurl})`,
-                            }}
-                          />
-                        ) : null}
-                        {!onlyDisplayInputFile ? (
-                          <div
-                            className="FileGalleryImg"
-                            style={{ backgroundImage: `url(${images[name]})` }}
-                          />
-                        ) : null}
-                      </>
-                    ),
-                    onClick: handleSetAdding(file),
-                  },
-                  {
-                    value: fileName,
-                    onClick: handleSetAdding(file),
-                  },
-                  {
-                    value: formatDateTime(createTime),
-                    onClick: handleSetAdding(file),
-                    actions: [
-                      <Button
-                        key="add"
-                        label={onlyDisplayInputFile ? 'Confirm' : 'Add'}
-                        onClick={handleSetConfirming(true)}
-                      />,
-                      <Button
-                        key="delete"
-                        label="Delete"
-                        onClick={handleSetDeleting(file)}
-                      />,
-                    ],
-                  },
-                ];
-              })
-        }
-        loading={loading}
-      />
-      {adding && (
-        <Confirm
-          open
-          onClose={handleSetAdding()}
-          title="Confirm adding"
-          onConfirm={handleAdd}
-        >
-          Are you sure, you want to add receipt{' '}
-          <strong>{getFileName(adding.name)}</strong>?
-          <br />
-          <br />
-          <div
-            className="FileGalleryImg"
-            style={{ backgroundImage: `url(${images[adding.name]})` }}
-          />
-        </Confirm>
-      )}
-      {confirming && inputFile && (
-        <Confirm
-          open
-          onClose={handleSetConfirming(false)}
-          title="Confirm adding single file"
-          onConfirm={handleConfirming}
-        >
-          Are you sure, you want to add the image?
-          <br />
-          <br />
-          <div
-            className="FileGalleryImg"
-            style={{ backgroundImage: `url(${images[inputFile.filename]})` }}
-          />
-        </Confirm>
-      )}
-      {deleting && (
-        <ConfirmDelete
-          open
-          onClose={handleSetDeleting()}
-          kind="Recepit"
-          name={getFileName(deleting.name)}
-          onConfirm={deleteFile}
+                  const fileName = inputFile?.filename;
+                  console.log(inputFile?.fileurl);
+                  return [
+                    {
+                      value: (
+                        <img
+                          src={`${inputFile?.fileurl}`}
+                          className="FileGalleryImg"
+                          id="SingleUploadImgPreview"
+                          style={{
+                            width: PreviewImageSize[0],
+                            height: PreviewImageSize[1],
+                          }}
+                        />
+                      ),
+                      onClick: handleSetConfirming(true),
+                    },
+                    {
+                      value: fileName,
+                      onClick: handleSetConfirming(true),
+                    },
+                    {
+                      value: formatDateTime(createTime),
+                      onClick: handleSetConfirming(true),
+                      actions: [
+                        <Button
+                          key="add"
+                          label={onlyDisplayInputFile ? 'Confirm' : 'Add'}
+                          onClick={handleSetConfirming(true)}
+                        />,
+                        <Button
+                          key="delete"
+                          label="Delete"
+                          onClick={handleSetConfirming(true)}
+                        />,
+                      ],
+                    },
+                  ];
+                })
+          }
+          loading={loading}
         />
-      )}
-    </div>
-  );
+        {adding && (
+          <Confirm
+            open
+            onClose={handleSetAdding()}
+            title="Confirm adding"
+            onConfirm={handleAdd}
+          >
+            Are you sure, you want to add receipt{' '}
+            <strong>{getFileName(adding.name)}</strong>?
+            <br />
+            <br />
+            <div
+              className="FileGalleryImg"
+              style={{ backgroundImage: `url(${images[adding.name]})` }}
+            />
+          </Confirm>
+        )}
+        {confirming && inputFile && (
+          <Confirm
+            open
+            onClose={handleSetConfirming(false)}
+            title="Confirm adding single file"
+            onConfirm={handleConfirming}
+          >
+            Are you sure, you want to add the image?
+            <br />
+            <br />
+            <div
+              className="FileGalleryImg"
+              style={{ backgroundImage: `url(${images[inputFile.filename]})` }}
+            />
+          </Confirm>
+        )}
+        {deleting && (
+          <ConfirmDelete
+            open
+            onClose={handleSetDeleting()}
+            kind="Recepit"
+            name={getFileName(deleting.name)}
+            onConfirm={deleteFile}
+          />
+        )}
+      </div>
+    );
+  } else {
+    return (
+      <div>
+        <SectionBar
+          title={title}
+          actions={[{ label: 'Close', onClick: onClose }]}
+          fixedActions
+        />
+        <InfoTable
+          columns={[
+            { name: 'Photo' },
+            { name: 'Name' },
+            { name: 'Uploaded at' },
+          ]}
+          data={
+            loading
+              ? makeFakeRows()
+              : files.map(file => {
+                  let { name, createTime } = file;
+
+                  const fileName = getFileName(name);
+                  return [
+                    {
+                      value: (
+                        <img
+                          src={`${images[name]}`}
+                          className="FileGalleryImg"
+                          id="SingleUploadImgPreview"
+                          style={{
+                            width: PreviewImageSize[0],
+                            height: PreviewImageSize[1],
+                          }}
+                        />
+                      ),
+                      onClick: handleSetAdding(file),
+                    },
+                    {
+                      value: fileName,
+                      onClick: handleSetAdding(file),
+                    },
+                    {
+                      value: formatDateTime(createTime),
+                      onClick: handleSetAdding(file),
+                      actions: [
+                        <Button
+                          key="add"
+                          label="Add"
+                          onClick={handleSetAdding(file)}
+                        />,
+                        <Button
+                          key="delete"
+                          label="Delete"
+                          onClick={handleSetDeleting(file)}
+                        />,
+                      ],
+                    },
+                  ];
+                })
+          }
+          loading={loading}
+        />
+        {adding && (
+          <Confirm
+            open
+            onClose={handleSetAdding()}
+            title="Confirm adding"
+            onConfirm={handleAdd}
+          >
+            Are you sure, you want to add receipt{' '}
+            <strong>{getFileName(adding.name)}</strong>?
+            <br />
+            <br />
+            <div
+              className="FileGalleryImg"
+              style={{ backgroundImage: `url(${images[adding.name]})` }}
+            />
+          </Confirm>
+        )}
+        {confirming && inputFile && (
+          <Confirm
+            open
+            onClose={handleSetConfirming(false)}
+            title="Confirm adding single file"
+            onConfirm={handleConfirming}
+          >
+            Are you sure, you want to add the image?
+            <br />
+            <br />
+            <div
+              className="FileGalleryImg"
+              style={{ backgroundImage: `url(${images[inputFile.filename]})` }}
+            />
+          </Confirm>
+        )}
+        {deleting && (
+          <ConfirmDelete
+            open
+            onClose={handleSetDeleting()}
+            kind="Recepit"
+            name={getFileName(deleting.name)}
+            onConfirm={deleteFile}
+          />
+        )}
+      </div>
+    );
+  }
 };
