@@ -499,7 +499,15 @@ export class TxnCard extends React.PureComponent<props, state> {
     thisInput.openFilePrompt();
   }
 
-  continueSingleUpload = ({}: { confirmed: boolean }) => {
+  continueSingleUpload = async ({ confirmed }: { confirmed: boolean }) => {
+    console.log(confirmed);
+    if (!confirmed) {
+      this.toggleAddFromSingleFile();
+      this.clearFileInput();
+      await this.refresh();
+      this.props.toggleLoading();
+      return;
+    }
     this.toggleAddFromSingleFile();
     this.uploadSingleFileData();
   };
@@ -624,16 +632,16 @@ export class TxnCard extends React.PureComponent<props, state> {
           </Modal>
         )}
         {pendingAddFromSingleFile && (
-          <Modal open onClose={() => {}} fullScreen>
+          <Modal open onClose={this.toggleAddFromSingleFile} fullScreen>
             <FileGallery
               loggedUserId={userID}
               title="Confirm Upload"
               bucket="kalos-pre-transactions"
-              onClose={() => {
-                this.toggleAddFromSingleFile();
-                this.props.toggleLoading();
-                this.clearFileInput();
-              }}
+              onClose={
+                this.toggleAddFromSingleFile
+                // For some reason, the scroll bar disappears if you close it, setting overflow to
+                // visible for scroll bar functionality
+              }
               onAdd={this.addFromSingleFile}
               removeFileOnAdd={false}
               inputFile={this.LastSingleFileUpload}
