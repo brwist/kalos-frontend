@@ -91,9 +91,10 @@ export const PromptPaymentReport: FC<Props> = ({
   const [data, setData] = useState<PromptPaymentData[]>([]);
   const [form, setForm] = useState<FormData>({ month: initialMonth });
   const [openedInvoices, setOpenedInvoices] = useState<OpenedInvoices>();
-  const [editingAward, setEditingAward] = useState<
-    PromptPaymentReportLineType
-  >();
+  const [
+    editingAward,
+    setEditingAward,
+  ] = useState<PromptPaymentReportLineType>();
   const load = useCallback(async () => {
     setLoading(true);
     const data = await loadPromptPaymentData(form.month);
@@ -273,13 +274,29 @@ export const PromptPaymentReport: FC<Props> = ({
                 entries,
               } = entry;
               return [
-                { value: customerName },
-                { value: usd(payableAward) },
-                { value: usd(forfeitedAward) },
-                { value: usd(pendingAward) },
-                { value: `${averageDaysToPay}/${daysToPay}` },
+                {
+                  value: customerName,
+                  onClick: handleSetOpenedInvoices({ customerName, entries }),
+                },
+                {
+                  value: usd(payableAward),
+                  onClick: handleSetOpenedInvoices({ customerName, entries }),
+                },
+                {
+                  value: usd(forfeitedAward),
+                  onClick: handleSetOpenedInvoices({ customerName, entries }),
+                },
+                {
+                  value: usd(pendingAward),
+                  onClick: handleSetOpenedInvoices({ customerName, entries }),
+                },
+                {
+                  value: `${averageDaysToPay}/${daysToPay}`,
+                  onClick: handleSetOpenedInvoices({ customerName, entries }),
+                },
                 {
                   value: `${paidInvoices}/${allInvoices}`,
+                  onClick: handleSetOpenedInvoices({ customerName, entries }),
                   actions: [
                     <IconButton
                       key="view"
@@ -338,15 +355,37 @@ export const PromptPaymentReport: FC<Props> = ({
                 possibleAward,
               } = entry;
               return [
-                { value: formatDate(billingdate) },
-                { value: formatDate(dueDate) },
-                { value: paymentDate ? formatDate(paymentDate) : '' },
-                { value: jobNumber },
-                { value: usd(payable) },
-                { value: usd(payed) },
-                { value: `${daysToPay}/${paymentTerms}` },
+                {
+                  value: formatDate(billingdate),
+                  onClick: handleToggleEditingAward(entry),
+                },
+                {
+                  value: formatDate(dueDate),
+                  onClick: handleToggleEditingAward(entry),
+                },
+                {
+                  value: paymentDate ? formatDate(paymentDate) : '',
+                  onClick: handleToggleEditingAward(entry),
+                },
+                {
+                  value: jobNumber,
+                  onClick: handleToggleEditingAward(entry),
+                },
+                {
+                  value: usd(payable),
+                  onClick: handleToggleEditingAward(entry),
+                },
+                {
+                  value: usd(payed),
+                  onClick: handleToggleEditingAward(entry),
+                },
+                {
+                  value: `${daysToPay}/${paymentTerms}`,
+                  onClick: handleToggleEditingAward(entry),
+                },
                 {
                   value: usd(possibleAward),
+                  onClick: handleToggleEditingAward(entry),
                   actions: [
                     <IconButton
                       key="view"

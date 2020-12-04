@@ -1289,7 +1289,7 @@ export const AdvancedSearch: FC<Props> = ({
         label: 'Business Name',
         type: 'search',
       },
-    ] ,
+    ],
     [
       {
         name: 'dateStarted',
@@ -1302,7 +1302,7 @@ export const AdvancedSearch: FC<Props> = ({
         type: 'date',
         actions: searchActions,
       },
-    ]
+    ],
   ];
 
   const makeSchema = (schema: Schema<SearchForm>) => {
@@ -1736,7 +1736,14 @@ export const AdvancedSearch: FC<Props> = ({
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : undefined,
+                          : () =>
+                              window.open(
+                                cfURL(
+                                  'service.editServiceCall',
+                                  `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                ),
+                                '_blank',
+                              ),
                     },
                     {
                       value: accounting
@@ -1839,7 +1846,14 @@ export const AdvancedSearch: FC<Props> = ({
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : undefined,
+                          : () =>
+                              window.open(
+                                cfURL(
+                                  'service.editServiceCall',
+                                  `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                ),
+                                '_blank',
+                              ),
                     },
                     {
                       value: (
@@ -1850,7 +1864,14 @@ export const AdvancedSearch: FC<Props> = ({
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : undefined,
+                          : () =>
+                              window.open(
+                                cfURL(
+                                  'service.editServiceCall',
+                                  `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                ),
+                                '_blank',
+                              ),
                       actions: [
                         ...(onSelectEvent
                           ? []
@@ -1897,13 +1918,29 @@ export const AdvancedSearch: FC<Props> = ({
           : users.map(entry => {
               const { firstname, lastname, businessname, phone, email } = entry;
               return [
-                { value: firstname },
-                { value: lastname },
-                { value: businessname },
-                { value: phone },
-                { value: email },
+                {
+                  value: firstname,
+                  onClick: handlePendingCustomerViewingToggle(entry),
+                },
+                {
+                  value: lastname,
+                  onClick: handlePendingCustomerViewingToggle(entry),
+                },
+                {
+                  value: businessname,
+                  onClick: handlePendingCustomerViewingToggle(entry),
+                },
+                {
+                  value: phone,
+                  onClick: handlePendingCustomerViewingToggle(entry),
+                },
+                {
+                  value: email,
+                  onClick: handlePendingCustomerViewingToggle(entry),
+                },
                 {
                   value: '',
+                  onClick: handlePendingCustomerViewingToggle(entry),
                   actions: [
                     <IconButton
                       key="view"
@@ -2028,12 +2065,23 @@ export const AdvancedSearch: FC<Props> = ({
                         {getCustomerName(entry)}
                       </div>
                     ),
+                    onClick: handlePendingEmployeeViewingToggle(entry),
                   },
-                  { value: empTitle },
-                  { value: email },
-                  { value: getCustomerPhoneWithExt(entry) },
+                  {
+                    value: empTitle,
+                    onClick: handlePendingEmployeeViewingToggle(entry),
+                  },
+                  {
+                    value: email,
+                    onClick: handlePendingEmployeeViewingToggle(entry),
+                  },
+                  {
+                    value: getCustomerPhoneWithExt(entry),
+                    onClick: handlePendingEmployeeViewingToggle(entry),
+                  },
                   {
                     value: cellphone,
+                    onClick: handlePendingEmployeeViewingToggle(entry),
                     actions: [
                       ...(isAdmin
                         ? [
@@ -2173,11 +2221,21 @@ export const AdvancedSearch: FC<Props> = ({
           : properties.map(entry => {
               const { address, city, zip, subdivision } = entry;
               return [
-                { value: address },
-                { value: subdivision },
-                { value: city },
+                {
+                  value: address,
+                  onClick: handlePendingPropertyViewingToggle(entry),
+                },
+                {
+                  value: subdivision,
+                  onClick: handlePendingPropertyViewingToggle(entry),
+                },
+                {
+                  value: city,
+                  onClick: handlePendingPropertyViewingToggle(entry),
+                },
                 {
                   value: zip,
+                  onClick: handlePendingPropertyViewingToggle(entry),
                   actions: [
                     <IconButton
                       key="view"
@@ -2215,7 +2273,7 @@ export const AdvancedSearch: FC<Props> = ({
       if (kind === 'contracts')
         return loading
           ? makeFakeRows(1, 3)
-          : contracts.map(entry => { 
+          : contracts.map(entry => {
               const {
                 number,
                 dateStarted,

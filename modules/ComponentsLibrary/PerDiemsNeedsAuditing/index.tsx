@@ -111,9 +111,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     initialFormPrintData,
   );
   const [formKey, setFormKey] = useState<number>(0);
-  const [govPerDiemsByYearMonth, setGovPerDiemsByYearMonth] = useState<
-    GovPerDiemsByYearMonth
-  >({});
+  const [
+    govPerDiemsByYearMonth,
+    setGovPerDiemsByYearMonth,
+  ] = useState<GovPerDiemsByYearMonth>({});
   const initialize = useCallback(async () => {
     const technicians = await loadTechnicians();
     setTechnicians(technicians);
@@ -350,9 +351,18 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
         } = entry;
         const { text, color } = getStatus(dateApproved, dateSubmitted, false);
         return [
-          { value: ownerName },
-          { value: getDepartmentName(department) },
-          { value: formatWeek(dateStarted) },
+          {
+            value: ownerName,
+            onClick: handlePerDiemViewedToggle(entry),
+          },
+          {
+            value: getDepartmentName(department),
+            onClick: handlePerDiemViewedToggle(entry),
+          },
+          {
+            value: formatWeek(dateStarted),
+            onClick: handlePerDiemViewedToggle(entry),
+          },
           {
             value: (
               <>
@@ -363,6 +373,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
                 {text}
               </>
             ),
+            onClick: handlePerDiemViewedToggle(entry),
             actions: [
               <IconButton
                 key="view"

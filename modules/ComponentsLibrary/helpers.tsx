@@ -42,6 +42,7 @@ export const ExampleTitle: FC = ({ children }) => (
       marginBottom: 10,
       fontFamily: 'sans-serif',
       fontWeight: 900,
+      borderRadius: 5,
     }}
   >
     {children}

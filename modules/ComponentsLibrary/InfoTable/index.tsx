@@ -54,7 +54,7 @@ export const InfoTable = ({
   loading = false,
   error = false,
   compact = false,
-  hoverable = false,
+  hoverable = true,
   skipPreLine = false,
   className = '',
   styles,
