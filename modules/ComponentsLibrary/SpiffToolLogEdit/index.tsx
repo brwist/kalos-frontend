@@ -161,9 +161,10 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const [statusEditing, setStatusEditing] = useState<
     SpiffToolAdminActionType | undefined
   >(statusEditingInitial);
-  const [statusDeleting, setStatusDeleting] = useState<
-    SpiffToolAdminActionType
-  >();
+  const [
+    statusDeleting,
+    setStatusDeleting,
+  ] = useState<SpiffToolAdminActionType>();
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadFailed, setUploadFailed] = useState<boolean>(false);
   const [documentFile, setDocumentFile] = useState<string>('');
@@ -365,12 +366,25 @@ export const SpiffToolLogEdit: FC<Props> = ({
     : data.actionsList.map(entry => {
         const { decisionDate, reviewedBy, status, reason } = entry;
         return [
-          { value: formatDate(decisionDate) },
-          { value: reviewedBy },
-          { value: <SpiffStatus status={status} /> },
-          { value: reason },
+          {
+            value: formatDate(decisionDate),
+            onClick: handleSetStatusEditing(entry),
+          },
+          {
+            value: reviewedBy,
+            onClick: handleSetStatusEditing(entry),
+          },
+          {
+            value: <SpiffStatus status={status} />,
+            onClick: handleSetStatusEditing(entry),
+          },
+          {
+            value: reason,
+            onClick: handleSetStatusEditing(entry),
+          },
           {
             value: '',
+            onClick: handleSetStatusEditing(entry),
             actions: [
               <IconButton
                 key={0}

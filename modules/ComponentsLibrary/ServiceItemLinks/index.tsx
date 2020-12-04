@@ -144,6 +144,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
           return [
             {
               value: description || url,
+              onClick: () => window.open(url),
               actions: [
                 <a key="view" href={url} target="_blank">
                   <IconButton style={{ marginLeft: 4 }} size="small">

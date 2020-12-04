@@ -257,9 +257,10 @@ export const ServiceItemReadings: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [editedEntry, setEditedEntry] = useState<Entry>();
   const [deletingEntry, setDeletingEntry] = useState<Entry>();
-  const [editedMaintenanceEntry, setEditedMaintenanceEntry] = useState<
-    MaintenanceEntry
-  >();
+  const [
+    editedMaintenanceEntry,
+    setEditedMaintenanceEntry,
+  ] = useState<MaintenanceEntry>();
   const [maintenanceQuestions, setMaintenanceQuestions] = useState<{
     [key: number]: MaintenanceEntry;
   }>({});
@@ -447,6 +448,7 @@ export const ServiceItemReadings: FC<Props> = ({
                 ? ''
                 : ` - ${users[userId].firstname} ${users[userId].lastname}`,
             ].join(' '),
+            onClick: setEditing(entry),
             actions: [
               <IconButton
                 key={0}

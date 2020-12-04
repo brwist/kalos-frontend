@@ -704,14 +704,54 @@ export const Tasks: FC<Props> = ({
                     timeDue,
                   } = task;
                   return [
-                    { value: id },
-                    { value: referenceNumber },
-                    { value: prioritiesMap[priorityId] },
-                    { value: briefDescription },
-                    { value: statusesMap[statusId] },
-                    { value: formatDateTime(timeCreated) },
+                    {
+                      value: id,
+                      onClick: handleSetPendingEdit({
+                        ...task,
+                        assignedTechnicians: '',
+                      }),
+                    },
+                    {
+                      value: referenceNumber,
+                      onClick: handleSetPendingEdit({
+                        ...task,
+                        assignedTechnicians: '',
+                      }),
+                    },
+                    {
+                      value: prioritiesMap[priorityId],
+                      onClick: handleSetPendingEdit({
+                        ...task,
+                        assignedTechnicians: '',
+                      }),
+                    },
+                    {
+                      value: briefDescription,
+                      onClick: handleSetPendingEdit({
+                        ...task,
+                        assignedTechnicians: '',
+                      }),
+                    },
+                    {
+                      value: statusesMap[statusId],
+                      onClick: handleSetPendingEdit({
+                        ...task,
+                        assignedTechnicians: '',
+                      }),
+                    },
+                    {
+                      value: formatDateTime(timeCreated),
+                      onClick: handleSetPendingEdit({
+                        ...task,
+                        assignedTechnicians: '',
+                      }),
+                    },
                     {
                       value: formatDateTime(timeDue),
+                      onClick: handleSetPendingEdit({
+                        ...task,
+                        assignedTechnicians: '',
+                      }),
                       actions: [
                         <IconButton
                           key="edit"
