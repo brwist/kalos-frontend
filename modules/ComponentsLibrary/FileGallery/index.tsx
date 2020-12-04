@@ -25,7 +25,7 @@ interface Props {
   removeFileOnAdd: boolean;
   inputFile?: { filename: string; fileurl: string } | null;
   onlyDisplayInputFile?: boolean;
-  onConfirmAdd?: () => void;
+  onConfirmAdd?: ({ confirmed }: { confirmed: boolean }) => void;
 }
 
 const getFileName = (fileName: string) => {
@@ -130,24 +130,27 @@ export const FileGallery: FC<Props> = ({
     setConfirming,
   ]);
 
-  const handleConfirming = useCallback(async () => {
-    if (onConfirmAdd == undefined) {
-      return false;
-    }
-    onConfirmAdd();
-    return true;
-  }, [
-    adding,
-    onAdd,
-    removeFileOnAdd,
-    setLoading,
-    setLoaded,
-    images,
-    setAdding,
-    confirming,
-    setConfirming,
-    onConfirmAdd,
-  ]);
+  const handleConfirming = useCallback(
+    async (confirmed: boolean) => {
+      if (onConfirmAdd == undefined) {
+        return false;
+      }
+      onConfirmAdd({ confirmed });
+      return true;
+    },
+    [
+      adding,
+      onAdd,
+      removeFileOnAdd,
+      setLoading,
+      setLoaded,
+      images,
+      setAdding,
+      confirming,
+      setConfirming,
+      onConfirmAdd,
+    ],
+  );
   const fileArr = [inputFile];
 
   if (onlyDisplayInputFile) {
@@ -167,7 +170,7 @@ export const FileGallery: FC<Props> = ({
           data={
             loading
               ? makeFakeRows()
-              : fileArr.map(file => {
+              : fileArr.map(_ => {
                   if (!inputFile?.fileurl) {
                     console.error('No file url for image.');
                   }
@@ -180,7 +183,6 @@ export const FileGallery: FC<Props> = ({
                     date.getSeconds(),
                   )}`;
                   const fileName = inputFile?.filename;
-                  console.log(inputFile?.fileurl);
                   return [
                     {
                       value: (
@@ -211,8 +213,8 @@ export const FileGallery: FC<Props> = ({
                         />,
                         <Button
                           key="delete"
-                          label="Delete"
-                          onClick={handleSetConfirming(true)}
+                          label="Cancel"
+                          onClick={onClose}
                         />,
                       ],
                     },
@@ -243,7 +245,9 @@ export const FileGallery: FC<Props> = ({
             open
             onClose={handleSetConfirming(false)}
             title="Confirm adding single file"
-            onConfirm={handleConfirming}
+            onConfirm={() => {
+              handleConfirming(true);
+            }}
           >
             Are you sure, you want to add the image?
             <br />
@@ -284,7 +288,6 @@ export const FileGallery: FC<Props> = ({
               ? makeFakeRows()
               : files.map(file => {
                   let { name, createTime } = file;
-
                   const fileName = getFileName(name);
                   return [
                     {
@@ -340,22 +343,6 @@ export const FileGallery: FC<Props> = ({
             <div
               className="FileGalleryImg"
               style={{ backgroundImage: `url(${images[adding.name]})` }}
-            />
-          </Confirm>
-        )}
-        {confirming && inputFile && (
-          <Confirm
-            open
-            onClose={handleSetConfirming(false)}
-            title="Confirm adding single file"
-            onConfirm={handleConfirming}
-          >
-            Are you sure, you want to add the image?
-            <br />
-            <br />
-            <div
-              className="FileGalleryImg"
-              style={{ backgroundImage: `url(${images[inputFile.filename]})` }}
             />
           </Confirm>
         )}
