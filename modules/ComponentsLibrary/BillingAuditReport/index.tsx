@@ -49,9 +49,10 @@ export const BillingAuditReport: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [entries, setEntries] = useState<BillingAuditType[]>([]);
-  const [serviceCallEdited, setServiceCallEdited] = useState<
-    BillingAuditType
-  >();
+  const [
+    serviceCallEdited,
+    setServiceCallEdited,
+  ] = useState<BillingAuditType>();
   const startDate = format(new Date(month.replace('%', '01')), 'yyyy-MM-dd');
   const [form, setForm] = useState<FilterForm>({
     startDate,
@@ -98,11 +99,26 @@ export const BillingAuditReport: FC<Props> = ({
     : (entries.map(entry => {
         const { date, name, businessname, jobNumber, payable, items } = entry;
         return [
-          { value: formatDate(date) },
-          { value: name },
-          { value: businessname },
-          { value: jobNumber },
-          { value: usd(payable) },
+          {
+            value: formatDate(date),
+            onClick: handleSetServiceCallEdited(entry),
+          },
+          {
+            value: name,
+            onClick: handleSetServiceCallEdited(entry),
+          },
+          {
+            value: businessname,
+            onClick: handleSetServiceCallEdited(entry),
+          },
+          {
+            value: jobNumber,
+            onClick: handleSetServiceCallEdited(entry),
+          },
+          {
+            value: usd(payable),
+            onClick: handleSetServiceCallEdited(entry),
+          },
           {
             value: (
               <Tooltip

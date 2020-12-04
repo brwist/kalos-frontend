@@ -122,6 +122,9 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
           return [
             {
               value: name,
+              onClick: user.isAdmin
+                ? handlePendingEditToggle(entry)
+                : undefined,
             },
             {
               value: (
@@ -133,12 +136,21 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
                   }}
                 />
               ),
+              onClick: user.isAdmin
+                ? handlePendingEditToggle(entry)
+                : undefined,
             },
             {
               value: status ? 'Deactive' : 'Active',
+              onClick: user.isAdmin
+                ? handlePendingEditToggle(entry)
+                : undefined,
             },
             {
               value: formatDate(addeddate),
+              onClick: user.isAdmin
+                ? handlePendingEditToggle(entry)
+                : undefined,
               actions: user.isAdmin
                 ? [
                     <IconButton

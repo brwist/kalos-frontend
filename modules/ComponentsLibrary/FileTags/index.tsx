@@ -125,6 +125,7 @@ export const FileTags: FC<Props> = ({
         return [
           {
             value: name,
+            onClick: handlePendingEdit(entry),
           },
           {
             value: (
@@ -136,6 +137,7 @@ export const FileTags: FC<Props> = ({
                 }}
               />
             ),
+            onClick: handlePendingEdit(entry),
             actions: [
               <IconButton
                 key="edit"
