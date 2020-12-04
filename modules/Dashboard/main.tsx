@@ -27,6 +27,7 @@ import { Button } from '../ComponentsLibrary/Button';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { Tooltip } from '../ComponentsLibrary/Tooltip';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import { ManagerTimeoffs } from '../ComponentsLibrary/ManagerTimeoffs';
 import './styles.less';
 
 interface props extends PageWrapperProps {
@@ -423,6 +424,7 @@ export class Dashboard extends React.PureComponent<props, state> {
               isLoading={this.state.isLoading}
             />
           )}
+          <ManagerTimeoffs loggedUserId={this.props.userId} />
         </Grid>
       </PageWrapper>
     );

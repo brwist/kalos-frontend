@@ -3,6 +3,6 @@ import ReactDOM from 'react-dom';
 import { Dashboard } from './main';
 
 ReactDOM.render(
-  <Dashboard userId={8418} withHeader />,
+  <Dashboard userId={7501} withHeader />,
   document.getElementById('root'),
 );

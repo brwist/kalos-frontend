@@ -1,4 +1,7 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
+import Paper from '@material-ui/core/Paper';
+import IconButton from '@material-ui/core/IconButton';
+import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { TimeOff } from '../TimeOff';
@@ -20,27 +23,13 @@ interface Props {
 }
 
 const COLUMNS: Columns = [
-  {
-    name: 'User',
-  },
-  {
-    name: 'Start Time',
-  },
-  {
-    name: 'End Time',
-  },
-  {
-    name: 'All day?',
-  },
-  {
-    name: 'Request Type',
-  },
-  {
-    name: 'Request Off Details',
-  },
-  {
-    name: 'Request Class',
-  },
+  { name: 'User' },
+  { name: 'Start Time' },
+  { name: 'End Time' },
+  { name: 'All day?' },
+  { name: 'Request Type' },
+  { name: 'Request Off Details' },
+  { name: 'Request Class' },
 ];
 
 export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
@@ -70,15 +59,12 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     } catch (e) {}
   }, [loggedUserId, setLoaded, setTypes]);
   const load = useCallback(async () => {
-    // if (!initiated) {
-    //   await init();
-    // }
     if (!department) return;
     setLoading(true);
     const timeoffs = await getTimeoffRequestByFilter({
       pageNumber: page,
       departmentCode: department.id,
-      //   adminApprovalUserId: 0,
+      adminApprovalUserId: 0,
     });
     const { resultsList, totalCount } = timeoffs.toObject();
     setTimeoffRequests(resultsList);
@@ -86,8 +72,6 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     setLoading(false);
     setLoaded(true);
   }, [
-    // initiated,
-    // init,
     department,
     setTimeoffRequests,
     setCount,
@@ -127,16 +111,47 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
             value: userName,
             onClick: handleEdit(entry),
           },
-          { value: formatDateTime(timeStarted) },
-          { value: formatDateTime(timeFinished) },
-          { value: allDayOff ? 'Yes' : 'No' },
-          { value: types[requestType] },
-          { value: notes },
-          { value: requestClass },
+          {
+            value: formatDateTime(timeStarted),
+            onClick: handleEdit(entry),
+          },
+          {
+            value: formatDateTime(timeFinished),
+            onClick: handleEdit(entry),
+          },
+          {
+            value: allDayOff ? 'Yes' : 'No',
+            onClick: handleEdit(entry),
+          },
+          {
+            value: types[requestType],
+            onClick: handleEdit(entry),
+          },
+          {
+            value: notes,
+            onClick: handleEdit(entry),
+          },
+          {
+            value: requestClass,
+            onClick: handleEdit(entry),
+            actions: [
+              <IconButton key="edit" size="small" onClick={handleEdit(entry)}>
+                <ThumbsUpDownIcon />
+              </IconButton>,
+            ],
+          },
         ];
       });
   return (
-    <div>
+    <Paper
+      elevation={7}
+      style={{
+        width: '90%',
+        maxHeight: 650,
+        overflowY: 'scroll',
+        marginBottom: 20,
+      }}
+    >
       <SectionBar
         title="Timeoff Approvals"
         pagination={{
@@ -149,7 +164,7 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
           },
         }}
       />
-      <InfoTable data={data} columns={COLUMNS} loading={loading} />
+      <InfoTable data={data} columns={COLUMNS} loading={loading} hoverable />
       {editing && (
         <Modal open onClose={handleEdit(undefined)} fullScreen>
           <TimeOff
@@ -163,6 +178,6 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
           />
         </Modal>
       )}
-    </div>
+    </Paper>
   );
 };
