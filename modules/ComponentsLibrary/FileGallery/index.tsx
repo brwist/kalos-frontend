@@ -90,7 +90,7 @@ export const FileGallery: FC<Props> = ({
 
   const handleSetConfirming = useCallback(
     (confirming: boolean) => () => setConfirming(confirming),
-    [confirming],
+    [setConfirming],
   );
 
   const handleSetDeleting = useCallback(
@@ -106,6 +106,26 @@ export const FileGallery: FC<Props> = ({
     await deleteFileById(deleting.id);
     setLoaded(false);
   }, [deleting, setLoading, setLoaded, setDeleting]);
+
+  const handleConfirm = useCallback(async () => {
+    console.log('in here');
+    if (!confirming) return;
+
+    const confirmed = true; // just here so it doesn't yell at me
+    onConfirmAdd!({ confirmed });
+    setConfirming(false);
+  }, [
+    adding,
+    onAdd,
+    removeFileOnAdd,
+    setLoading,
+    setLoaded,
+    images,
+    setAdding,
+    confirming,
+    setConfirming,
+  ]);
+
   const handleAdd = useCallback(async () => {
     if (!adding) return;
     onAdd({
@@ -130,27 +150,29 @@ export const FileGallery: FC<Props> = ({
     setConfirming,
   ]);
 
-  const handleConfirming = useCallback(
-    async (confirmed: boolean) => {
-      if (onConfirmAdd == undefined) {
-        return false;
-      }
-      onConfirmAdd({ confirmed });
-      return true;
-    },
-    [
-      adding,
-      onAdd,
-      removeFileOnAdd,
-      setLoading,
-      setLoaded,
-      images,
-      setAdding,
-      confirming,
-      setConfirming,
-      onConfirmAdd,
-    ],
-  );
+  const handleCancelConfirm = useCallback(() => {
+    console.log('Cancelling confirm');
+    if (onConfirmAdd == undefined) {
+      console.log('Returned false cuz no onConfirmAdd');
+      return false;
+    }
+    const confirmed = false;
+    console.log('on confirm add is going false');
+    onConfirmAdd({ confirmed });
+
+    return false;
+  }, [
+    adding,
+    onAdd,
+    removeFileOnAdd,
+    setLoading,
+    setLoaded,
+    images,
+    setAdding,
+    confirming,
+    setConfirming,
+    onConfirmAdd,
+  ]);
   const fileArr = [inputFile];
 
   if (onlyDisplayInputFile) {
@@ -212,9 +234,9 @@ export const FileGallery: FC<Props> = ({
                           onClick={handleSetConfirming(true)}
                         />,
                         <Button
-                          key="delete"
+                          key="cancel"
                           label="Cancel"
-                          onClick={onClose}
+                          onClick={handleCancelConfirm}
                         />,
                       ],
                     },
@@ -223,41 +245,24 @@ export const FileGallery: FC<Props> = ({
           }
           loading={loading}
         />
-        {adding && (
+        {confirming && (
           <Confirm
             open
-            onClose={handleSetAdding()}
+            onClose={handleCancelConfirm}
             title="Confirm adding"
-            onConfirm={handleAdd}
+            onConfirm={handleConfirm}
           >
-            Are you sure, you want to add receipt{' '}
-            <strong>{getFileName(adding.name)}</strong>?
+            Are you sure, you want to add image{' '}
+            <strong>{inputFile?.filename}</strong>?
             <br />
             <br />
             <div
               className="FileGalleryImg"
-              style={{ backgroundImage: `url(${images[adding.name]})` }}
+              style={{ backgroundImage: `url(${inputFile?.fileurl})` }}
             />
           </Confirm>
         )}
-        {confirming && inputFile && (
-          <Confirm
-            open
-            onClose={handleSetConfirming(false)}
-            title="Confirm adding single file"
-            onConfirm={() => {
-              handleConfirming(true);
-            }}
-          >
-            Are you sure, you want to add the image?
-            <br />
-            <br />
-            <div
-              className="FileGalleryImg"
-              style={{ backgroundImage: `url(${images[inputFile.filename]})` }}
-            />
-          </Confirm>
-        )}
+        )
         {deleting && (
           <ConfirmDelete
             open
