@@ -108,7 +108,6 @@ export const FileGallery: FC<Props> = ({
   }, [deleting, setLoading, setLoaded, setDeleting]);
 
   const handleConfirm = useCallback(async () => {
-    console.log('in here');
     if (!confirming) return;
 
     const confirmed = true; // just here so it doesn't yell at me
@@ -151,15 +150,11 @@ export const FileGallery: FC<Props> = ({
   ]);
 
   const handleCancelConfirm = useCallback(() => {
-    console.log('Cancelling confirm');
     if (onConfirmAdd == undefined) {
-      console.log('Returned false cuz no onConfirmAdd');
       return false;
     }
     const confirmed = false;
-    console.log('on confirm add is going false');
     onConfirmAdd({ confirmed });
-
     return false;
   }, [
     adding,
@@ -173,14 +168,16 @@ export const FileGallery: FC<Props> = ({
     setConfirming,
     onConfirmAdd,
   ]);
-  const fileArr = [inputFile];
+  const fileArr = [inputFile]; // workaround to allow me to "map" over the file just like
+  // there was multiple files - it works, but not the
+  // cleanest thing to do
 
   if (onlyDisplayInputFile) {
     return (
       <div>
         <SectionBar
           title={title}
-          actions={[{ label: 'Close', onClick: onClose }]}
+          actions={[{ label: 'Close', onClick: handleCancelConfirm }]}
           fixedActions
         />
         <InfoTable
@@ -194,7 +191,7 @@ export const FileGallery: FC<Props> = ({
               ? makeFakeRows()
               : fileArr.map(_ => {
                   if (!inputFile?.fileurl) {
-                    console.error('No file url for image.');
+                    console.error('No file url for image found.');
                   }
                   const date = new Date();
                   const createTime = `${date.getFullYear()}-${padWithZeroes(
@@ -230,7 +227,7 @@ export const FileGallery: FC<Props> = ({
                       actions: [
                         <Button
                           key="add"
-                          label={onlyDisplayInputFile ? 'Confirm' : 'Add'}
+                          label="Confirm"
                           onClick={handleSetConfirming(true)}
                         />,
                         <Button
@@ -252,7 +249,7 @@ export const FileGallery: FC<Props> = ({
             title="Confirm adding"
             onConfirm={handleConfirm}
           >
-            Are you sure, you want to add image{' '}
+            Are you sure you want to add the image{' '}
             <strong>{inputFile?.filename}</strong>?
             <br />
             <br />
@@ -267,7 +264,7 @@ export const FileGallery: FC<Props> = ({
           <ConfirmDelete
             open
             onClose={handleSetDeleting()}
-            kind="Recepit"
+            kind="Receipt"
             name={getFileName(deleting.name)}
             onConfirm={deleteFile}
           />
@@ -341,7 +338,7 @@ export const FileGallery: FC<Props> = ({
             title="Confirm adding"
             onConfirm={handleAdd}
           >
-            Are you sure, you want to add receipt{' '}
+            Are you sure you want to add the receipt{' '}
             <strong>{getFileName(adding.name)}</strong>?
             <br />
             <br />
@@ -355,7 +352,7 @@ export const FileGallery: FC<Props> = ({
           <ConfirmDelete
             open
             onClose={handleSetDeleting()}
-            kind="Recepit"
+            kind="Receipt"
             name={getFileName(deleting.name)}
             onConfirm={deleteFile}
           />
