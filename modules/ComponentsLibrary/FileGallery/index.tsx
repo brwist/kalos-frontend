@@ -108,8 +108,6 @@ export const FileGallery: FC<Props> = ({
   }, [deleting, setLoading, setLoaded, setDeleting]);
 
   const handleConfirm = useCallback(async () => {
-    if (!confirming) return;
-
     const confirmed = true; // just here so it doesn't yell at me
     onConfirmAdd!({ confirmed });
     setConfirming(false);
@@ -180,69 +178,7 @@ export const FileGallery: FC<Props> = ({
           actions={[{ label: 'Close', onClick: handleCancelConfirm }]}
           fixedActions
         />
-        <InfoTable
-          columns={[
-            { name: 'Photo' },
-            { name: 'Name' },
-            { name: 'Uploaded at' },
-          ]}
-          data={
-            loading
-              ? makeFakeRows()
-              : fileArr.map(_ => {
-                  if (!inputFile?.fileurl) {
-                    console.error('No file url for image found.');
-                  }
-                  const date = new Date();
-                  const createTime = `${date.getFullYear()}-${padWithZeroes(
-                    date.getMonth() + 1,
-                  )}-${padWithZeroes(date.getDay() - 1)} ${padWithZeroes(
-                    date.getHours(),
-                  )}:${padWithZeroes(date.getMinutes())}:${padWithZeroes(
-                    date.getSeconds(),
-                  )}`;
-                  const fileName = inputFile?.filename;
-                  return [
-                    {
-                      value: (
-                        <img
-                          src={`${inputFile?.fileurl}`}
-                          className="FileGalleryImg"
-                          id="SingleUploadImgPreview"
-                          style={{
-                            width: PreviewImageSize[0],
-                            height: PreviewImageSize[1],
-                          }}
-                        />
-                      ),
-                      onClick: handleSetConfirming(true),
-                    },
-                    {
-                      value: fileName,
-                      onClick: handleSetConfirming(true),
-                    },
-                    {
-                      value: formatDateTime(createTime),
-                      onClick: handleSetConfirming(true),
-                      actions: [
-                        <Button
-                          key="add"
-                          label="Confirm"
-                          onClick={handleSetConfirming(true)}
-                        />,
-                        <Button
-                          key="cancel"
-                          label="Cancel"
-                          onClick={handleCancelConfirm}
-                        />,
-                      ],
-                    },
-                  ];
-                })
-          }
-          loading={loading}
-        />
-        {confirming && (
+        {
           <Confirm
             open
             onClose={handleCancelConfirm}
@@ -258,7 +194,7 @@ export const FileGallery: FC<Props> = ({
               style={{ backgroundImage: `url(${inputFile?.fileurl})` }}
             />
           </Confirm>
-        )}
+        }
         )
         {deleting && (
           <ConfirmDelete
