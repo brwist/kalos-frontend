@@ -65,15 +65,37 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
                       logJobStatus,
                     } = e;
                     return [
-                      { value: id },
-                      { value: formatDate(dateStarted) },
-                      { value: `${timeStarted} - ${timeEnded}` },
-                      { value: getCustomerName(customer) },
-                      { value: getPropertyAddress(property) },
-                      { value: jobType },
-                      { value: jobSubtype },
+                      {
+                        value: id,
+                        onClick: openServiceCall(e),
+                      },
+                      {
+                        value: formatDate(dateStarted),
+                        onClick: openServiceCall(e),
+                      },
+                      {
+                        value: `${timeStarted} - ${timeEnded}`,
+                        onClick: openServiceCall(e),
+                      },
+                      {
+                        value: getCustomerName(customer),
+                        onClick: openServiceCall(e),
+                      },
+                      {
+                        value: getPropertyAddress(property),
+                        onClick: openServiceCall(e),
+                      },
+                      {
+                        value: jobType,
+                        onClick: openServiceCall(e),
+                      },
+                      {
+                        value: jobSubtype,
+                        onClick: openServiceCall(e),
+                      },
                       {
                         value: logJobStatus,
+                        onClick: openServiceCall(e),
                         actions: [
                           <Tooltip
                             key="event"

@@ -237,11 +237,21 @@ export const Properties: FC<Props> = props => {
   const data: Data = entries.map(entry => {
     const { id, address, city, state, zip, subdivision } = entry;
     return [
-      { value: address },
-      { value: subdivision },
-      { value: `${city}, ${state}` },
+      {
+        value: address,
+        onClick: handleViewEntry(id),
+      },
+      {
+        value: subdivision,
+        onClick: handleViewEntry(id),
+      },
+      {
+        value: `${city}, ${state}`,
+        onClick: handleViewEntry(id),
+      },
       {
         value: zip,
+        onClick: handleViewEntry(id),
         actions: [
           <IconButton key="view" size="small" onClick={handleViewEntry(id)}>
             <InfoIcon />

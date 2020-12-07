@@ -207,12 +207,25 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     : events.map(event => {
         const { customer, property, logJobNumber, logDateCompleted } = event;
         return [
-          { value: getCustomerName(customer) },
-          { value: getBusinessName(customer) },
-          { value: logJobNumber },
-          { value: formatDate(logDateCompleted) },
+          {
+            value: getCustomerName(customer),
+            onClick: handleTogglePendingEdit(event),
+          },
+          {
+            value: getBusinessName(customer),
+            onClick: handleTogglePendingEdit(event),
+          },
+          {
+            value: logJobNumber,
+            onClick: handleTogglePendingEdit(event),
+          },
+          {
+            value: formatDate(logDateCompleted),
+            onClick: handleTogglePendingEdit(event),
+          },
           {
             value: getPropertyAddress(property),
+            onClick: handleTogglePendingEdit(event),
             actions: [
               <IconButton key="edit" onClick={handleTogglePendingEdit(event)}>
                 <EditIcon />

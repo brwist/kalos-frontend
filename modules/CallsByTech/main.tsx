@@ -134,14 +134,31 @@ export class CallsByTech extends React.PureComponent<Props, state> {
                     value: `${formatTime(c.timeStarted)} - ${formatTime(
                       c.timeEnded,
                     )}`,
+                    onClick: this.toggleEditing(c),
                   },
-                  { value: getCustomerNameAndBusinessName(c.customer) },
-                  { value: getPropertyAddress(c.property) },
-                  { value: getCustomerPhone(c.customer) },
-                  { value: c.id },
-                  { value: `${c.jobType} / ${c.jobSubtype}` },
+                  {
+                    value: getCustomerNameAndBusinessName(c.customer),
+                    onClick: this.toggleEditing(c),
+                  },
+                  {
+                    value: getPropertyAddress(c.property),
+                    onClick: this.toggleEditing(c),
+                  },
+                  {
+                    value: getCustomerPhone(c.customer),
+                    onClick: this.toggleEditing(c),
+                  },
+                  {
+                    value: c.id,
+                    onClick: this.toggleEditing(c),
+                  },
+                  {
+                    value: `${c.jobType} / ${c.jobSubtype}`,
+                    onClick: this.toggleEditing(c),
+                  },
                   {
                     value: c.logJobStatus,
+                    onClick: this.toggleEditing(c),
                     actions: c.customer
                       ? [
                           <IconButton
