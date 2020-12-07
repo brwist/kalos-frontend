@@ -97,15 +97,17 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
-  const [serviceCallEditing, setServiceCallEditing] = useState<
-    TaskEventDataType
-  >();
+  const [
+    serviceCallEditing,
+    setServiceCallEditing,
+  ] = useState<TaskEventDataType>();
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
-  const [statusEditing, setStatusEditing] = useState<
-    SpiffToolAdminActionType
-  >();
+  const [
+    statusEditing,
+    setStatusEditing,
+  ] = useState<SpiffToolAdminActionType>();
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );
@@ -536,16 +538,28 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
               </IconButton>,
             ];
         return [
-          { value: formatDate(timeDue) },
-          { value: spiffToolId },
+          {
+            value: formatDate(timeDue),
+            onClick: handleSetExtendedEditing(entry),
+          },
+          { value: spiffToolId, onClick: handleSetExtendedEditing(entry) },
           {
             value: `${
               type === 'Spiff' ? `${SPIFF_EXT[spiffTypeId] || ''} ` : ''
             }${briefDescription}`,
+            onClick: handleSetExtendedEditing(entry),
           },
-          ...(type === 'Spiff' ? [{ value: formatDate(datePerformed) }] : []),
+          ...(type === 'Spiff'
+            ? [
+                {
+                  value: formatDate(datePerformed),
+                  onClick: handleSetExtendedEditing(entry),
+                },
+              ]
+            : []),
           {
             value: isAdmin ? technicianValue : ownerName,
+            onClick: handleSetExtendedEditing(entry),
           },
           {
             value:
@@ -563,9 +577,13 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
                 referenceNumber
               ),
           },
-          { value: renderActionsList(actionsList) },
+          {
+            value: renderActionsList(actionsList),
+            onClick: handleSetExtendedEditing(entry),
+          },
           {
             value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost),
+            onClick: handleSetExtendedEditing(entry),
             actions: type === 'Spiff' ? [] : actions,
           },
           ...(type === 'Spiff'

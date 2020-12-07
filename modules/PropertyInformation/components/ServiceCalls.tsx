@@ -353,11 +353,21 @@ export class ServiceCalls extends PureComponent<Props, State> {
           );
           if (viewedAsCustomer)
             return [
-              { value: dateValue },
-              { value: getPropertyAddress(property) },
-              { value: name },
+              {
+                value: dateValue,
+                onClick: this.setViewing(entry),
+              },
+              {
+                value: getPropertyAddress(property),
+                onClick: this.setViewing(entry),
+              },
+              {
+                value: name,
+                onClick: this.setViewing(entry),
+              },
               {
                 value: statusValue,
+                onClick: this.setViewing(entry),
                 actions: [
                   <IconButton
                     key={2}
