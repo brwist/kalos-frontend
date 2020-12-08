@@ -5,3 +5,4 @@ dist
 build
 tmp/
 .idea
+*.code-workspace
