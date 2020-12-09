@@ -15,6 +15,7 @@ interface KalosMapProps {
 enum PartsOfDistanceMatrixRequest {
   DistanceHumanReadable,
   DistanceMeters,
+  DistanceMiles,
   Status,
 }
 
@@ -40,6 +41,11 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
     return coords;
   };
 
+  metersToMiles(meters: number): number {
+    const conversionFactor = 0.000621;
+    return meters * conversionFactor;
+  }
+
   parseDistanceMatrixResponse = (
     req: DistanceMatrixResponse,
     desired: PartsOfDistanceMatrixRequest,
@@ -55,6 +61,8 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
         return req.toArray()[2][0][0][0][3][0];
       case PartsOfDistanceMatrixRequest.DistanceMeters:
         return req.toArray()[2][0][0][0][3][1];
+      case PartsOfDistanceMatrixRequest.DistanceMiles:
+        return this.metersToMiles(req.toArray()[2][0][0][0][3][1]);
       case PartsOfDistanceMatrixRequest.Status:
         return req.toArray()[2][0][0][0][0];
     }
