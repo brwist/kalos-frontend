@@ -28,6 +28,8 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
     super(props);
 
     this.createMatrixRequest().then(async request => {
+      console.log('Request: ');
+      console.log(request);
       let req = await this.makeDistanceMatrixRequest(request);
       console.log(req);
     });
@@ -83,6 +85,9 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
       return new MatrixRequest();
     }
     let addresses = this.props.Addresses;
+    console.log('Addresses: ');
+    console.log(addresses.destination.getCoords());
+    console.log(addresses.origin);
     let req = new MatrixRequest();
 
     req.setOriginsList(
@@ -91,7 +96,13 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
       }),
     );
 
-    req.setDestination(addresses.destination.getCoords());
+    console.log(
+      'Setting destination from ' + addresses.destination.getCoords(),
+    );
+
+    let destCoords = await this.client.Geocode(addresses.destination);
+
+    req.setDestination(destCoords);
 
     return req;
   };
