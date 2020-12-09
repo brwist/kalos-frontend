@@ -15,11 +15,13 @@ testDest.setCountry('Canada');
 ReactDOM.render(
   <>
     <Transaction userID={8418} withHeader />{' '}
-    {/* <KalosMap
-      isOpen
-      Addresses={{ origin: [testDest], destination: testDest }}
-      onDistanceCalculated={() => {}}
-    /> */}
+    {
+      <KalosMap
+        isOpen
+        Addresses={{ origin: [testDest], destination: testDest }}
+        onDistanceCalculated={() => {}}
+      />
+    }
     ,
   </>,
   document.getElementById('txn-root'),

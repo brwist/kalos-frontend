@@ -1,12 +1,18 @@
 import React, { PureComponent, useCallback } from 'react';
 import { MapClient, MatrixRequest } from '@kalos-core/kalos-rpc/Maps';
 import {
+  MapService,
+  MapServiceDistanceMatrix,
+} from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb_service';
+
+import {
   Coordinates,
   CoordinatesList,
   DistanceMatrixResponse,
   Place,
 } from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb';
 import { exception } from 'console';
+import { ENDPOINT } from '../../../constants';
 
 interface KalosMapProps {
   isOpen: boolean;
@@ -17,11 +23,14 @@ interface KalosMapProps {
 interface KalosMapState {}
 
 export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
-  client: MapClient = new MapClient();
+  client: MapClient = new MapClient(ENDPOINT);
   constructor(props: KalosMapProps) {
     super(props);
 
-    let val = this.makeDistanceMatrixRequest(this.createMatrixRequest());
+    this.createMatrixRequest().then(async request => {
+      let req = await this.makeDistanceMatrixRequest(request);
+      console.log(req);
+    });
   }
 
   // Gets the coordinates from the address
@@ -34,22 +43,20 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
   };
 
   fillCoords = async () => {
+    console.log('Filling coords');
     if (!this.props.Addresses.origin) return;
     for (var address of this.props.Addresses.origin) {
       if (!address.getCoords()) {
         address.setCoords(await this.geocode(address)); // Throwing CORS error from here from Geocode
-        /*
-        await this.geocode(address).then(async value => {
-          console.log(`${value} gotten`);
-          address.setCoords(value);
-        });
-        */
+
+        console.log('Set coords as ' + address.getCoords());
       }
     }
   };
 
-  validateInput = (): boolean => {
-    this.fillCoords();
+  validateInput = async () => {
+    console.log('Validating input');
+    await this.fillCoords();
 
     if (!this.props.Addresses.origin) {
       console.error('There are no origins for the Places passed in.');
@@ -66,8 +73,10 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
     return true;
   };
 
-  createMatrixRequest = (): MatrixRequest => {
-    if (!this.validateInput()) {
+  createMatrixRequest = async () => {
+    console.log('Creating matrix request');
+    let valid = await this.validateInput();
+    if (!valid) {
       console.error(
         'There were issues with the props passed in to the KalosMap component.',
       );
@@ -88,8 +97,10 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
   };
 
   makeDistanceMatrixRequest = (req: MatrixRequest) => {
+    console.log('Making matrix request');
     let res = this.client.DistanceMatrix(req);
 
+    console.log('Returning');
     return res;
   };
 
