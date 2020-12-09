@@ -145,7 +145,7 @@ export class AltGallery extends React.PureComponent<props, state> {
     );
 
   delete() {
-    this.setState({ isLoading: true }, async () => {
+    this.setState({ isLoading: true, deleting: false }, async () => {
       const { activeImage, fileList } = this.state;
       const data = fileList[activeImage];
       try {
@@ -155,7 +155,7 @@ export class AltGallery extends React.PureComponent<props, state> {
           const documentList = prevState.documentList.filter(
             d => `${this.props.transactionID}-${d.reference}` !== data.key,
           );
-          let activeImg = prevState.activeImage - 1;
+          let activeImg = 0; //prevState.activeImage - 1;
           if (activeImg < 0) {
             activeImg = 0;
           }
@@ -166,10 +166,11 @@ export class AltGallery extends React.PureComponent<props, state> {
           return {
             fileList,
             documentList,
-            activeImage,
+            activeImage: activeImg,
             isOpen,
+            isLoading: false,
           };
-        });
+        }, this.fetch);
       } catch (err) {
         alert('File could not be deleted');
         this.setState({ isLoading: false });
