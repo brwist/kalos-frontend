@@ -1,23 +1,21 @@
 import React, { PureComponent, useCallback } from 'react';
 import { MapClient, MatrixRequest } from '@kalos-core/kalos-rpc/Maps';
 import {
-  MapService,
-  MapServiceDistanceMatrix,
-} from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb_service';
-
-import {
-  Coordinates,
-  CoordinatesList,
   DistanceMatrixResponse,
   Place,
 } from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb';
-import { exception } from 'console';
 import { ENDPOINT } from '../../../constants';
 
 interface KalosMapProps {
   isOpen: boolean;
   Addresses: { origin: Place[]; destination: Place };
   onDistanceCalculated: (distance: string) => void;
+}
+
+enum PartsOfDistanceMatrixRequest {
+  DistanceHumanReadable,
+  DistanceMeters,
+  Status,
 }
 
 interface KalosMapState {}
@@ -32,45 +30,46 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
         console.error('Failed to create a matrix request.');
         return;
       }
-      console.log('Request: ');
-      console.log(request);
-      let req = await this.makeDistanceMatrixRequest(request);
-      this.parseDistanceMatrixResponse(req);
-      console.log(req);
+      await this.makeDistanceMatrixRequest(request);
     });
   }
 
   // Gets the coordinates from the address
   geocode = async (place: Place) => {
-    console.log('Running geocode');
     let coords = await this.client.Geocode(place); // this line throws the CORS
-
-    console.log('Got geocode coords: ' + coords);
     return coords;
   };
 
-  parseDistanceMatrixResponse = (req: DistanceMatrixResponse) => {
+  parseDistanceMatrixResponse = (
+    req: DistanceMatrixResponse,
+    desired: PartsOfDistanceMatrixRequest,
+  ) => {
     // [2] -> [0] -> [0] -> [0]
     // status: req.toArray()[2][0][0][0][0]
     // distance: req.toArray()[2][0][0][0][1]
     // distance (human readable): req.toArray()[2][0][0][0][3][0]
-    console.log(req.toArray()[2][0][0][0][3][0]);
+    // distance (meters): req.toArray()[2][0][0][0][3][1]
+
+    switch (desired) {
+      case PartsOfDistanceMatrixRequest.DistanceHumanReadable:
+        return req.toArray()[2][0][0][0][3][0];
+      case PartsOfDistanceMatrixRequest.DistanceMeters:
+        return req.toArray()[2][0][0][0][3][1];
+      case PartsOfDistanceMatrixRequest.Status:
+        return req.toArray()[2][0][0][0][0];
+    }
   };
 
   fillCoords = async () => {
-    console.log('Filling coords');
     if (!this.props.Addresses.origin) return;
     for (var address of this.props.Addresses.origin) {
       if (!address.getCoords()) {
-        address.setCoords(await this.geocode(address)); // Throwing CORS error from here from Geocode
-
-        console.log('Set coords as ' + address.getCoords());
+        address.setCoords(await this.geocode(address));
       }
     }
   };
 
   validateInput = async () => {
-    console.log('Validating input');
     await this.fillCoords();
 
     if (!this.props.Addresses.origin) {
@@ -119,11 +118,29 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
     return req;
   };
 
-  makeDistanceMatrixRequest = (req: MatrixRequest) => {
-    console.log('Making matrix request');
-    let res = this.client.DistanceMatrix(req);
+  makeDistanceMatrixRequest = async (req: MatrixRequest) => {
+    const res = await this.client.DistanceMatrix(req);
+    const status = this.parseDistanceMatrixResponse(
+      res,
+      PartsOfDistanceMatrixRequest.Status,
+    );
+    const distance = this.parseDistanceMatrixResponse(
+      res,
+      PartsOfDistanceMatrixRequest.DistanceHumanReadable,
+    );
 
-    console.log('Returning');
+    if (status != 'OK' && status != 'ZERO_RESULTS') {
+      console.error(
+        "DistanceMatrixResponse status was not 'OK' and was not 'ZERO_RESULTS'. Status: " +
+          status,
+      );
+    } else if (status == 'ZERO_RESULTS') {
+      console.log('DistanceMatrixResponse contained zero results.');
+    }
+    if (status == 'OK' && distance != '') {
+      this.props.onDistanceCalculated(distance);
+    }
+
     return res;
   };
 
