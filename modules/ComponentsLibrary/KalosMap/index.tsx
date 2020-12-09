@@ -28,9 +28,14 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
     super(props);
 
     this.createMatrixRequest().then(async request => {
+      if (request == undefined) {
+        console.error('Failed to create a matrix request.');
+        return;
+      }
       console.log('Request: ');
       console.log(request);
       let req = await this.makeDistanceMatrixRequest(request);
+      this.parseDistanceMatrixResponse(req);
       console.log(req);
     });
   }
@@ -42,6 +47,14 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
 
     console.log('Got geocode coords: ' + coords);
     return coords;
+  };
+
+  parseDistanceMatrixResponse = (req: DistanceMatrixResponse) => {
+    // [2] -> [0] -> [0] -> [0]
+    // status: req.toArray()[2][0][0][0][0]
+    // distance: req.toArray()[2][0][0][0][1]
+    // distance (human readable): req.toArray()[2][0][0][0][3][0]
+    console.log(req.toArray()[2][0][0][0][3][0]);
   };
 
   fillCoords = async () => {
@@ -76,7 +89,6 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
   };
 
   createMatrixRequest = async () => {
-    console.log('Creating matrix request');
     let valid = await this.validateInput();
     if (!valid) {
       console.error(
@@ -85,9 +97,6 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
       return new MatrixRequest();
     }
     let addresses = this.props.Addresses;
-    console.log('Addresses: ');
-    console.log(addresses.destination.getCoords());
-    console.log(addresses.origin);
     let req = new MatrixRequest();
 
     req.setOriginsList(
@@ -96,11 +105,14 @@ export class KalosMap extends PureComponent<KalosMapProps, KalosMapState> {
       }),
     );
 
-    console.log(
-      'Setting destination from ' + addresses.destination.getCoords(),
-    );
-
     let destCoords = await this.client.Geocode(addresses.destination);
+
+    if (destCoords == undefined) {
+      console.error(
+        'Could not Geocode the address given: ' + addresses.destination,
+      );
+      return;
+    }
 
     req.setDestination(destCoords);
 
