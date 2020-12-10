@@ -250,7 +250,7 @@ class Cache<T> {
     console.log('Testing deleteOldItems...');
     try {
       this.deleteOldItems();
-    } catch (err: any) {
+    } catch (err) {
       console.error('FAIL: deleteOldItems - ' + err);
     }
 
@@ -316,7 +316,7 @@ class Cache<T> {
     // if older than MaxCacheAge day old, delete it
     try {
       this.deleteOldCache(key);
-    } catch (err: any) {
+    } catch (err) {
       console.error('FAIL: testDeleteOldCache - ' + err);
     }
   };
