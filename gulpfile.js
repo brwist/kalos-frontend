@@ -489,29 +489,18 @@ function release() {
         var target, err_5, modules;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, rollupBuild()];
-                case 1:
-                    _a.sent();
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 3, , 5]);
+                case 0:
+                    _a.trys.push([0, 1, , 3]);
                     target = titleCase(process.argv[4].replace(/-/g, ''));
-                    return [3 /*break*/, 5];
-                case 3:
+                    return [3 /*break*/, 3];
+                case 1:
                     err_5 = _a.sent();
                     return [4 /*yield*/, getBranch()];
-                case 4:
+                case 2:
                     target = target = (_a.sent()).replace(/\n/g, '');
-                    return [3 /*break*/, 5];
-                case 5: return [4 /*yield*/, getModulesList()];
-                case 6:
-                    modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
-                    if (!modules.includes(target.toLowerCase())) {
-                        throw "module " + target + " could not be found";
-                    }
-                    sh.test;
-                    return [4 /*yield*/, sh.exec("jest test -u").code];
-                case 7:
+                    return [3 /*break*/, 3];
+                case 3: return [4 /*yield*/, sh.exec("jest test -u").code];
+                case 4:
                     if ((_a.sent()) != 0) {
                         sh.exec('echo [TESTS FAILED]');
                         sh.exec('echo');
@@ -519,29 +508,40 @@ function release() {
                         sh.exec('echo');
                         sh.exit(1);
                     }
-                    return [4 /*yield*/, sh.exec('echo Are you sure you wish to continue? Press any key to continue, or ^C to abort.')];
-                case 8:
+                    if (sh.exec("test -n \"$(find ./modules/" + target + "/ -name '*.test.*')\"").code != 0) {
+                        sh.exec('echo');
+                        sh.exec("echo No unit tests are written for the module " + target + ". Please write some and retry your release.");
+                        sh.exec('echo');
+                        sh.exit(1);
+                    }
+                    sh.exec('echo Rolling up build. This may take a moment...');
+                    return [4 /*yield*/, rollupBuild()];
+                case 5:
                     _a.sent();
-                    return [4 /*yield*/, sh.exec("read -p input")];
-                case 9:
-                    _a.sent();
+                    sh.exec('echo Build rolled up.');
+                    return [4 /*yield*/, getModulesList()];
+                case 6:
+                    modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
+                    if (!modules.includes(target.toLowerCase())) {
+                        throw "module " + target + " could not be found";
+                    }
                     //await patchCFC();
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
-                case 10:
+                case 7:
                     //await patchCFC();
                     _a.sent();
-                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 12];
+                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 9];
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
-                case 11:
+                case 8:
                     _a.sent();
-                    _a.label = 12;
-                case 12:
-                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 14];
+                    _a.label = 9;
+                case 9:
+                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 11];
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
-                case 13:
+                case 10:
                     _a.sent();
-                    _a.label = 14;
-                case 14: return [2 /*return*/];
+                    _a.label = 11;
+                case 11: return [2 /*return*/];
             }
         });
     });

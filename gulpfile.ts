@@ -426,33 +426,44 @@ async function googBuild() {
 }
 
 async function release() {
-  await rollupBuild();
   let target;
   try {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   } catch (err) {
     target = target = (await getBranch()).replace(/\n/g, '');
   }
-  const modules = (await getModulesList()).map(s => s.toLowerCase());
-  if (!modules.includes(target.toLowerCase())) {
-    throw `module ${target} could not be found`;
-  }
-  sh.test;
 
   if ((await sh.exec(`jest test -u`).code) != 0) {
     sh.exec('echo [TESTS FAILED]');
-    sh.exec('echo')
+    sh.exec('echo');
     sh.exec(
       'echo Please make sure all unit tests are passing before releasing.',
+    );
+    sh.exec('echo');
+    sh.exit(1);
+  }
+
+  if (
+    sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
+  ) {
+    sh.exec('echo')
+    sh.exec(
+      `echo No unit tests are written for the module ${target}. Please write some and retry your release.`,
     );
     sh.exec('echo')
     sh.exit(1);
   }
 
-  await sh.exec(
-    'echo Are you sure you wish to continue? Press any key to continue, or ^C to abort.',
-  );
-  await sh.exec(`read -p input`);
+  sh.exec('echo Rolling up build. This may take a moment...');
+
+  await rollupBuild();
+
+  sh.exec('echo Build rolled up.');
+
+  const modules = (await getModulesList()).map(s => s.toLowerCase());
+  if (!modules.includes(target.toLowerCase())) {
+    throw `module ${target} could not be found`;
+  }
 
   //await patchCFC();
   await sh.exec(
