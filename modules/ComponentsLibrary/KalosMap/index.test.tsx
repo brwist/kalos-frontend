@@ -1,16 +1,9 @@
-/*
-const React = require('react');
-const renderer = require('react-test-renderer');
-const KalosMap = require('./index');
-const MapPlace = require('@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb');
-*/
-
 import React from 'react';
 import renderer from 'react-test-renderer';
 import { KalosMap } from './index';
 import { Place } from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb';
 
-test('SearchIndex displays correctly', () => {
+test('SearchIndex renders correctly', () => {
   const origin = new Place(),
     destination = new Place();
 
@@ -44,5 +37,3 @@ test('SearchIndex displays correctly', () => {
     .toJSON();
   expect(tree).toMatchSnapshot(); // Rendered correctly
 });
-
-export {};
