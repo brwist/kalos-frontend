@@ -7,6 +7,8 @@ module.exports = {
       "**/?(*.)+(spec|test).+(ts|tsx|js)"
     ],
     "transform": {
-      "^.+\\.(ts|tsx)$": "ts-jest"
+      "^.+\\.(ts|tsx|jsx)$": "ts-jest",
     },
+    "transformIgnorePatterns": ['/node_modules\/(?!@kalos-core)(.*)']
+
   }
