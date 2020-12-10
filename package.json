@@ -12,7 +12,8 @@
     "distribute": "gulp -LL distribute",
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
-    "upload": "gulp -LL upload"
+    "upload": "gulp -LL upload",
+    "test": "jest"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
   "license": "MIT",
@@ -40,7 +41,9 @@
     "eslint": "^6.5.1",
     "eslint-plugin-react": "^7.20.0",
     "gulp": "^4.0.2",
+    "jest": "^26.6.3",
     "less": "^3.10.3",
+    "react-test-renderer": "^17.0.1",
     "rollup": "^1.22.0",
     "rollup-plugin-cleanup": "^3.1.1",
     "rollup-plugin-commonjs": "^10.1.0",
@@ -56,6 +59,7 @@
     "rollup-plugin-terser": "^5.1.2",
     "rollup-plugin-typescript2": "^0.24.3",
     "shelljs": "^0.8.3",
+    "ts-jest": "^26.4.4",
     "typescript": "^3.7.0-beta"
   },
   "dependencies": {
@@ -67,9 +71,11 @@
     "@material-ui/pickers": "^3.2.7",
     "@react-pdf/renderer": "^1.6.8",
     "@types/draft-js": "^0.10.40",
+    "@types/jest": "^26.0.18",
     "@types/json2csv": "^5.0.1",
     "@types/lodash": "^4.14.149",
     "@types/papaparse": "^5.0.6",
+    "@types/react-test-renderer": "^17.0.0",
     "@types/recharts": "^1.8.9",
     "@types/resolve": "^1.14.0",
     "axios": "^0.19.0",
