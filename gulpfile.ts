@@ -1,3 +1,5 @@
+import GulpClient from 'gulp';
+
 const { task } = require('gulp');
 const sh = require('shelljs');
 const readline = require('readline');
@@ -435,6 +437,23 @@ async function release() {
   if (!modules.includes(target.toLowerCase())) {
     throw `module ${target} could not be found`;
   }
+  sh.test;
+
+  if ((await sh.exec(`jest test -u`).code) != 0) {
+    sh.exec('echo [TESTS FAILED]');
+    sh.exec('echo')
+    sh.exec(
+      'echo Please make sure all unit tests are passing before releasing.',
+    );
+    sh.exec('echo')
+    sh.exit(1);
+  }
+
+  await sh.exec(
+    'echo Are you sure you wish to continue? Press any key to continue, or ^C to abort.',
+  );
+  await sh.exec(`read -p input`);
+
   //await patchCFC();
   await sh.exec(
     `scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,

@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -34,6 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+exports.__esModule = true;
 var task = require('gulp').task;
 var sh = require('shelljs');
 var readline = require('readline');
@@ -507,23 +509,39 @@ function release() {
                     if (!modules.includes(target.toLowerCase())) {
                         throw "module " + target + " could not be found";
                     }
-                    //await patchCFC();
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
+                    sh.test;
+                    return [4 /*yield*/, sh.exec("jest test -u").code];
                 case 7:
-                    //await patchCFC();
-                    _a.sent();
-                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 9];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
+                    if ((_a.sent()) != 0) {
+                        sh.exec('echo [TESTS FAILED]');
+                        sh.exec('echo');
+                        sh.exec('echo Please make sure all unit tests are passing before releasing.');
+                        sh.exec('echo');
+                        sh.exit(1);
+                    }
+                    return [4 /*yield*/, sh.exec('echo Are you sure you wish to continue? Press any key to continue, or ^C to abort.')];
                 case 8:
                     _a.sent();
-                    _a.label = 9;
+                    return [4 /*yield*/, sh.exec("read -p input")];
                 case 9:
-                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 11];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
-                case 10:
                     _a.sent();
-                    _a.label = 11;
-                case 11: return [2 /*return*/];
+                    //await patchCFC();
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
+                case 10:
+                    //await patchCFC();
+                    _a.sent();
+                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 12];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
+                case 11:
+                    _a.sent();
+                    _a.label = 12;
+                case 12:
+                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 14];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
+                case 13:
+                    _a.sent();
+                    _a.label = 14;
+                case 14: return [2 /*return*/];
             }
         });
     });
