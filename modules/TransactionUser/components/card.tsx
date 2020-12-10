@@ -383,12 +383,16 @@ export class TxnCard extends React.PureComponent<props, state> {
       console.error('Cannot upload file - no file exists.');
       return;
     }
+    try {
+      await this.DocsClient.upload(
+        this.state.txn.id,
+        this.FileInput.current!.files![0].name,
+        this.LastSingleFileUpload?.filedata,
+      );
+    } catch (err) {
+      alert(err);
+    }
 
-    await this.DocsClient.upload(
-      this.state.txn.id,
-      this.FileInput.current!.files![0].name,
-      this.LastSingleFileUpload?.filedata,
-    );
     this.props.toggleLoading();
     await this.refresh();
   };
@@ -441,15 +445,16 @@ export class TxnCard extends React.PureComponent<props, state> {
     } else {
       try {
         this.FileInput!.current!.value = '';
-      } catch (ex) {}
-      if (this.FileInput!.current!.value) {
-        if (this.FileInput!.current!.parentNode == null) {
-          return;
+      } catch (ex) {
+        if (this.FileInput!.current!.value) {
+          if (this.FileInput!.current!.parentNode == null) {
+            return;
+          }
+          this.FileInput!.current!.parentNode!.replaceChild(
+            this.FileInput!.current!.cloneNode(true),
+            this.FileInput!.current!,
+          );
         }
-        this.FileInput!.current!.parentNode!.replaceChild(
-          this.FileInput!.current!.cloneNode(true),
-          this.FileInput!.current!,
-        );
       }
     }
   }
