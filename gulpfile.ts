@@ -242,6 +242,33 @@ async function patchCFC() {
   }
 }
 
+// Just prints a big line break to break up the output
+function echoLineBreak(color? : string) {
+  if (!color) sh.exec('echo ===========================================================================');
+  if (color) sh.exec(`echo "$(tput ${color})===========================================================================$(tput sgr 0)"  `);
+}
+
+function echoNewLine(){
+  sh.exec('echo')
+}
+
+// Echoes warnings in a standardized way with color
+function echoWarning(str : string)
+{
+  sh.exec(
+    `echo "$(tput setaf 3)WARNING: ${str}$(tput sgr 0)"`
+  );
+}
+
+// Just a function to make errors more maintainable and uniform
+function echoError(str : string) {
+  echoLineBreak('setaf 1');
+  sh.exec(
+    `echo "$(tput setaf 1)${str}$(tput sgr 0)"`
+  );
+  echoLineBreak('setaf 1');
+}
+
 function titleCase(str: string) {
   return `${str[0].toUpperCase()}${str.slice(1)}`;
 }
@@ -434,23 +461,14 @@ async function release() {
   }
 
   if ((await sh.exec(`jest test -u`).code) != 0) {
-    sh.exec('echo [TESTS FAILED]');
-    sh.exec('echo');
-    sh.exec(
-      'echo Please make sure all unit tests are passing before releasing.',
-    );
-    sh.exec('echo');
+    echoError('Please ensure all unit tests are passing before release.')
     sh.exit(1);
   }
 
   if (
     sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
   ) {
-    sh.exec('echo');
-    sh.exec(
-      `echo No unit tests are written for the module ${target}. Please write some and retry your release.`,
-    );
-    sh.exec('echo');
+    echoError(`No unit tests are written for the module ${target}. Please write some and retry your release.`)
     sh.exit(1);
   }
 
