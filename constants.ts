@@ -260,59 +260,6 @@ export const MONTHS = [
 
 export const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-interface IModuleMap {
-  [key: string]: [string, string, string] | [];
-}
-
-const MODULE_MAP: IModuleMap = {
-  AcceptProposal: ['customer', 'service', 'accept_proposal'],
-  AccountInfo: ['admin', 'account', 'editinformation'],
-  AddServiceCallGeneral: ['admin', 'service', 'addservicecallgeneral'], // UNRELEASED
-  AddTimeOff: [], // MOVE TO COMPONENTS LIBRARY
-  AltGallery: [], // DEPRECATED
-  CallsByTech: ['admin', 'service', 'callstech'],
-  CreditTransaction: [], // INCOMPLETE
-  CustomerDetails: ['admin', 'customers', 'details'], // UNRELEASED
-  CustomerDirectory: [], // CUSTOMER MODULE
-  CustomerTasks: [], // CUSTOMER MODULE
-  Dashboard: ['admin', 'dashboard', 'index'],
-  Dispatch: ['admin', 'dispatch', 'newdash'],
-  Documents: ['admin', 'document', 'index'],
-  EditProject: ['admin', 'service', 'edit_project'], // UNRELEASED
-  EditTimeOff: [], // MOVE TO COMPONENTS LIBRARY
-  EmployeeDirectory: ['admin', 'users', 'employee'],
-  EmployeeTasks: [], // ?
-  Gallery: [], // MOVE TO COMPONENTS LIBRARY
-  List: [], // DEPRECATED
-  Loader: [], // MOVE TO COMPONENTS LIBRARY
-  Login: [],
-  Metrics: [],
-  PDFMaker: [], // DEPRECATED
-  PendingBilling: ['admin', 'service', 'callspending'],
-  PerDiem: ['admin', 'reports', 'perdiem'],
-  PerDiemsNeedsAuditing: ['admin', 'reports', 'perdiem_audit'],
-  PopoverGallery: [], // DEPRECATED
-  PostProposal: ['customer', 'service', 'post_proposal'],
-  Projects: [], // ?
-  Prompt: [], // ?
-  PropertyInformation: ['admin', 'properties', 'details'],
-  PropertyTasks: [],
-  Proposal: [], // MOVE TO EDIT SERVICE CALL
-  Reports: ['admin', 'reports', 'index'],
-  SearchIndex: ['admin', 'search', 'index'],
-  ServiceCalendar: ['admin', 'service', 'calendar'],
-  ServiceCallDetail: [], // UNRELEASED
-  ServiceCallEdit: [], // UNRELEASED
-  ServiceCallSearch: ['admin', 'service', 'calls'],
-  SideMenu: ['common', 'partials', 'header'],
-  SpiffLog: ['admin', 'tasks', 'spiff_tool_logs'],
-  SpiffToolLogs: ['admin', 'tasks', 'spiff_tool_logs'],
-  Timesheet: ['admin', 'timesheet', 'timesheetview_new'],
-  ToolLog: [],
-  Transaction: ['admin', 'reports', 'transaction_admin'],
-  TransactionUser: ['admin', 'reports', 'transactions'],
-};
-
 export default {
   BASE_URL,
   EVENT_STATUS_LIST,

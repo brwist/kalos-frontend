@@ -1,5 +1,3 @@
-import GulpClient from 'gulp';
-
 const { task } = require('gulp');
 const sh = require('shelljs');
 const readline = require('readline');
@@ -62,6 +60,8 @@ async function create() {
   html.to('index.html');
   indexJS.to('index.tsx');
   mainJS.to('main.tsx');
+
+  // TODO: Add prompt for updating MODULE_MAP in constants
 }
 
 /**
@@ -379,7 +379,7 @@ async function releaseBuild(target: string) {
   }
 }
 
-async function rollupBuild() {
+async function rollupBuild(target = '') {
   if (target.includes('-')) {
     target = process.argv[4].replace(/-/g, '');
   }
@@ -452,38 +452,55 @@ async function googBuild() {
   });
 }
 
-async function release() {
-  let target;
-  try {
-    target = titleCase(process.argv[4].replace(/-/g, ''));
-  } catch (err) {
-    target = target = (await getBranch()).replace(/\n/g, '');
-  }
-
+async function runTests() {
   if ((await sh.exec(`jest test -u`).code) != 0) {
     echoError('Please ensure all unit tests are passing before release.')
     sh.exit(1);
   }
+}
 
+function checkTests() {
   if (
     sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
   ) {
     echoError(`No unit tests are written for the module ${target}. Please write some and retry your release.`)
     sh.exit(1);
   }
+}
 
-  sh.exec('echo Rolling up build. This may take a moment...');
-
-  await rollupBuild();
-
-  sh.exec('echo Build rolled up.');
-
-  const modules = (await getModulesList()).map(s => s.toLowerCase());
-  if (!modules.includes(target.toLowerCase())) {
-    throw `module ${target} could not be found`;
+async function buildAll() {
+  const moduleList = await getModulesList();
+  for (const m of moduleList) {
+    info(m);
+    try {
+      const cfName = MODULE_MAP[m];
+      info(m, cfName);
+      if (cfName.length === 3) {
+        await release(m);
+        await upload(m);
+        if (cfName[0] === 'admin') {
+          await bustCache(cfName[1], cfName[2]);
+        }
+      }
+    } catch (err) {
+      info(`Failed to build module: ${m}\n${err}`);
+    }
   }
+}
 
-  //await patchCFC();
+async function release(target = '') {
+  if (target === '' || typeof target !== 'string') {
+    target = titleCase(process.argv[4].replace(/-/g, ''));
+  }
+  //checkTests();
+  //await runTests();
+
+  info('Rolling up build. This may take a moment...');
+
+  await rollupBuild(target);
+
+  info('Build rolled up.');
+
   await sh.exec(
     `scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,
   );
@@ -501,12 +518,9 @@ async function release() {
   }
 }
 
-async function upload() {
-  let target;
-  try {
+async function upload(target = '') {
+  if (target === '' || typeof target !== 'string') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
-  } catch (err) {
-    target = target = (await getBranch()).replace(/\n/g, '');
   }
   await sh.exec(
     `scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,
@@ -523,9 +537,9 @@ async function cloneModule() {
   sh.cp(`modules`);
 }
 
-async function bustCache() {
-  const controller = process.argv[4].replace(/-/g, '');
-  const filename = process.argv[5].replace(/-/g, '');
+async function bustCache(controller = '', filename = '') {
+  controller = controller || process.argv[4].replace(/-/g, '');
+  filename = filename || process.argv[5].replace(/-/g, '');
   await sh.exec(
     `scp ${KALOS_ROOT}/app/admin/views/${controller}/${filename}.cfm tmp/${filename}.cfm`,
   );
@@ -558,6 +572,7 @@ task('distribute', buildRelease);
 task(release);
 task('cfpatch', patchCFC);
 task(upload);
+task('build-all', buildAll);
 
 const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
 const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
@@ -959,4 +974,57 @@ const NAMED_EXPORTS = {
     'shape',
     'exact',
   ],
+};
+
+interface IModuleMap {
+  [key: string]: [string, string, string] | [];
+}
+
+export const MODULE_MAP: IModuleMap = {
+  AcceptProposal: ['customer', 'service', 'accept_proposal'],
+  AccountInfo: ['admin', 'account', 'editinformation'],
+  // AddServiceCallGeneral: ['admin', 'service', 'addservicecallgeneral'], // UNRELEASED
+  AddTimeOff: [], // MOVE TO COMPONENTS LIBRARY
+  AltGallery: [], // DEPRECATED
+  CallsByTech: ['admin', 'service', 'callstech'],
+  CreditTransaction: [], // INCOMPLETE
+  // CustomerDetails: ['admin', 'customers', 'details'], // UNRELEASED
+  CustomerDirectory: [], // CUSTOMER MODULE
+  CustomerTasks: [], // CUSTOMER MODULE
+  Dashboard: ['admin', 'dashboard', 'index'],
+  Dispatch: ['admin', 'dispatch', 'newdash'],
+  Documents: ['admin', 'document', 'index'],
+  // EditProject: ['admin', 'service', 'edit_project'], // UNRELEASED
+  EditTimeOff: [], // MOVE TO COMPONENTS LIBRARY
+  EmployeeDirectory: ['admin', 'users', 'employee'],
+  EmployeeTasks: [], // ?
+  Gallery: [], // MOVE TO COMPONENTS LIBRARY
+  List: [], // DEPRECATED
+  Loader: [], // MOVE TO COMPONENTS LIBRARY
+  Login: [],
+  Metrics: [],
+  PDFMaker: [], // DEPRECATED
+  // PendingBilling: ['admin', 'service', 'callspending'], // UNRELEASED
+  PerDiem: ['admin', 'reports', 'perdiem'],
+  PerDiemsNeedsAuditing: ['admin', 'reports', 'perdiem_audit'],
+  PopoverGallery: [], // DEPRECATED
+  PostProposal: ['customer', 'service', 'post_proposal'],
+  Projects: [], // ?
+  Prompt: [], // ?
+  // PropertyInformation: ['admin', 'properties', 'details'], // UNRELEASED
+  PropertyTasks: [],
+  Proposal: [], // MOVE TO EDIT SERVICE CALL
+  // Reports: ['admin', 'reports', 'index'], // UNRELEASED
+  SearchIndex: ['admin', 'search', 'index'],
+  ServiceCalendar: ['admin', 'service', 'calendar'],
+  ServiceCallDetail: [], // UNRELEASED
+  ServiceCallEdit: [], // UNRELEASED
+  ServiceCallSearch: ['admin', 'service', 'calls'],
+  // SideMenu: ['common', 'partials', 'header'], // UNRELEASED
+  // SpiffLog: ['admin', 'tasks', 'spiff_tool_logs'], // UNRELEASED
+  // SpiffToolLogs: ['admin', 'tasks', 'spiff_tool_logs'],
+  Timesheet: ['admin', 'timesheet', 'timesheetview_new'],
+  ToolLog: [],
+  Transaction: ['admin', 'reports', 'transaction_admin'],
+  TransactionUser: ['admin', 'reports', 'transactions'],
 };
