@@ -77,6 +77,12 @@ import {
   PerDiemReportConfig,
 } from '@kalos-core/kalos-rpc/PerDiem';
 import {
+  Trip
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb'
+import {
+  MapClient as KalosMap
+} from '@kalos-core/kalos-rpc/Maps'
+import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
@@ -136,6 +142,7 @@ export type FileType = File.AsObject;
 export type DocumentKeyType = DocumentKey.AsObject;
 export type PerDiemType = PerDiem.AsObject;
 export type PerDiemRowType = PerDiemRow.AsObject;
+export type KalosMapType = Trip.AsObject;
 export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
 export type EmployeeFunctionType = EmployeeFunction.AsObject;
 export type ActivityLogType = ActivityLog.AsObject;

@@ -52,6 +52,23 @@ import {
 import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import './styles.less';
+import { Form, Schema } from '../Form';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+
+const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
+  [
+    {
+      label: 'Origin Address',
+      name: 'setOriginAddress',
+      type: 'text',
+    },
+    {
+      label: 'Destination Address',
+      name: 'setDestinationAddress',
+      type: 'text',
+    },
+  ],
+];
 
 type SelectOption = {
   id: number;
@@ -87,7 +104,8 @@ export type Type =
   | 'hidden'
   | 'color'
   | 'eventId'
-  | 'multiselect';
+  | 'multiselect'
+  | 'button';
 
 export type Value = string | number;
 
@@ -153,6 +171,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [eventsOpened, setEventsOpened] = useState<boolean>(false);
   const [techniciansOpened, setTechniciansOpened] = useState<boolean>(false);
+  const [mapModalOpened, setMapModalOpened] = useState<boolean>(false);
   const [techniciansIds, setTechniciansIds] = useState<number[]>(
     (value + '').split(',').map(id => +id),
   );
@@ -170,6 +189,20 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const handleEventsOpenedToggle = useCallback(
     (opened: boolean) => () => setEventsOpened(opened),
     [setEventsOpened],
+  );
+  const handleMapModalOpen = useCallback(() => setMapModalOpened(true), [
+    mapModalOpened,
+    setMapModalOpened,
+  ]);
+  const handleMapModalClose = useCallback(() => setMapModalOpened(false), [
+    mapModalOpened,
+    setMapModalOpened,
+  ]);
+  const handleTripSave = useCallback(
+    (trip: Trip) => {
+      console.log('Saving it');
+    },
+    [mapModalOpened, setMapModalOpened],
   );
   const handleEventsSearchClicked = useCallback(async () => {
     if (eventIdValue === 0) {
@@ -367,6 +400,38 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
       >
         {content}
         {actions.length > 0 && <Actions actions={actions} fixed />}
+      </div>
+    );
+  }
+  const testTrip = new Trip();
+  testTrip.setId(1);
+  testTrip.setPerDiemRowId(162);
+  if (type === 'button') {
+    return (
+      <div
+        className={clsx('FieldInput', 'FieldContent', className, {
+          compact,
+          disabled,
+        })}
+      >
+        <Button
+          label="Add Trip"
+          size="medium"
+          variant="contained"
+          compact
+          onClick={handleMapModalOpen}
+        />
+        {mapModalOpened && (
+          <Modal open onClose={handleMapModalClose}>
+            <Form
+              schema={SCHEMA_KALOS_MAP_INPUT_FORM}
+              onSave={handleTripSave}
+              onClose={handleMapModalClose}
+              title={'Submit Trip'}
+              data={testTrip}
+            ></Form>
+          </Modal>
+        )}
       </div>
     );
   }
