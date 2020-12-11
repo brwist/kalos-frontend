@@ -545,7 +545,6 @@ function buildAll() {
                 case 3:
                     _a.trys.push([3, 8, , 9]);
                     cfName = exports.MODULE_MAP[m];
-                    info(m, cfName);
                     if (!(cfName.length === 3)) return [3 /*break*/, 7];
                     return [4 /*yield*/, release(m)];
                 case 4:

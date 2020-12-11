@@ -474,7 +474,6 @@ async function buildAll() {
     info(m);
     try {
       const cfName = MODULE_MAP[m];
-      info(m, cfName);
       if (cfName.length === 3) {
         await release(m);
         await upload(m);
