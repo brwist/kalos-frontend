@@ -11,7 +11,7 @@ interface props {
 
 interface state {}
 
-export class TextList extends React.PureComponent<props, state> {
+export class TextList_DEPRECATED extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
   }

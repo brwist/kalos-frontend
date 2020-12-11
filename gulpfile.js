@@ -155,6 +155,24 @@ function textPrompt(question) {
         });
     });
 }
+function deleteThis() {
+    return __awaiter(this, void 0, void 0, function () {
+        var modsList, _i, modsList_1, m;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getModulesList()];
+                case 1:
+                    modsList = _a.sent();
+                    for (_i = 0, modsList_1 = modsList; _i < modsList_1.length; _i++) {
+                        m = modsList_1[_i];
+                        console.log(m + ":[],");
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+task('tmp', deleteThis);
 function getModulesList() {
     return __awaiter(this, void 0, void 0, function () {
         var list;
@@ -582,7 +600,7 @@ function cloneModule() {
                     err_7 = _a.sent();
                     return [4 /*yield*/, getBranch()];
                 case 2:
-                    target = target = (_a.sent()).replace(/\n/g, '');
+                    target = (_a.sent()).replace(/\n/g, '');
                     return [3 /*break*/, 3];
                 case 3:
                     sh.cp("modules");
