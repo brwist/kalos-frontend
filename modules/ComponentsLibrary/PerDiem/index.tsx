@@ -122,6 +122,13 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   ],
   [
     {
+      label: 'Add Trip',
+      name: 'tripsList',
+      type: 'button',
+    },
+  ],
+  [
+    {
       label: 'Notes',
       name: 'notes',
       multiline: true,
@@ -146,6 +153,12 @@ export const PerDiemComponent: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
+  const [mapModalOpened, setMapModalOpened] = useState<boolean>(false);
+
+  const handleMapModalOpen = useCallback(() => setMapModalOpened(true), [
+    mapModalOpened,
+    setMapModalOpened,
+  ]);
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
@@ -156,28 +169,33 @@ export const PerDiemComponent: FC<Props> = ({
   const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
     [],
   );
-  const [managerFilterDepartmentId, setManagerFilterDepartmentId] = useState<
-    number
-  >(0);
+  const [
+    managerFilterDepartmentId,
+    setManagerFilterDepartmentId,
+  ] = useState<number>(0);
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
       meals: number;
       lodging: number;
     };
   }>({});
-  const [pendingPerDiemSubmit, setPendingPerDiemSubmit] = useState<
-    PerDiemType
-  >();
-  const [pendingPerDiemApprove, setPendingPerDiemApprove] = useState<
-    PerDiemType
-  >();
+  const [
+    pendingPerDiemSubmit,
+    setPendingPerDiemSubmit,
+  ] = useState<PerDiemType>();
+  const [
+    pendingPerDiemApprove,
+    setPendingPerDiemApprove,
+  ] = useState<PerDiemType>();
   const [pendingPerDiemEdit, setPendingPerDiemEdit] = useState<PerDiemType>();
-  const [pendingPerDiemDelete, setPendingPerDiemDelete] = useState<
-    PerDiemType
-  >();
-  const [pendingPerDiemRowDelete, setPendingPerDiemRowDelete] = useState<
-    boolean
-  >(false);
+  const [
+    pendingPerDiemDelete,
+    setPendingPerDiemDelete,
+  ] = useState<PerDiemType>();
+  const [
+    pendingPerDiemRowDelete,
+    setPendingPerDiemRowDelete,
+  ] = useState<boolean>(false);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
@@ -187,9 +205,10 @@ export const PerDiemComponent: FC<Props> = ({
       -0,
     ),
   );
-  const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] = useState<
-    PerDiemRowType
-  >();
+  const [
+    pendingPerDiemRowEdit,
+    setPendingPerDiemRowEdit,
+  ] = useState<PerDiemRowType>();
   const [
     pendingPerDiemEditDuplicated,
     setPendingPerDiemEditDuplicated,
