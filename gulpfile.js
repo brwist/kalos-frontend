@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
+exports.MODULE_MAP = void 0;
 var task = require('gulp').task;
 var sh = require('shelljs');
 var readline = require('readline');
@@ -420,7 +421,8 @@ function releaseBuild(target) {
         });
     });
 }
-function rollupBuild() {
+function rollupBuild(target) {
+    if (target === void 0) { target = ''; }
     return __awaiter(this, void 0, void 0, function () {
         var minify, inputStr, bundle;
         return __generator(this, function (_a) {
@@ -504,64 +506,124 @@ function googBuild() {
         });
     });
 }
-function release() {
+function runTests() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_5, modules;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 1, , 3]);
-                    target = titleCase(process.argv[4].replace(/-/g, ''));
-                    return [3 /*break*/, 3];
+                case 0: return [4 /*yield*/, sh.exec("jest test -u").code];
                 case 1:
-                    err_5 = _a.sent();
-                    return [4 /*yield*/, getBranch()];
-                case 2:
-                    target = target = (_a.sent()).replace(/\n/g, '');
-                    return [3 /*break*/, 3];
-                case 3: return [4 /*yield*/, sh.exec("jest test -u").code];
-                case 4:
                     if ((_a.sent()) != 0) {
                         echoError('Please ensure all unit tests are passing before release.');
                         sh.exit(1);
                     }
-                    if (sh.exec("test -n \"$(find ./modules/" + target + "/ -name '*.test.*')\"").code != 0) {
-                        echoError("No unit tests are written for the module " + target + ". Please write some and retry your release.");
-                        sh.exit(1);
-                    }
-                    sh.exec('echo Rolling up build. This may take a moment...');
-                    return [4 /*yield*/, rollupBuild()];
-                case 5:
-                    _a.sent();
-                    sh.exec('echo Build rolled up.');
-                    return [4 /*yield*/, getModulesList()];
-                case 6:
-                    modules = (_a.sent()).map(function (s) { return s.toLowerCase(); });
-                    if (!modules.includes(target.toLowerCase())) {
-                        throw "module " + target + " could not be found";
-                    }
-                    //await patchCFC();
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
-                case 7:
-                    //await patchCFC();
-                    _a.sent();
-                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 9];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
-                case 8:
-                    _a.sent();
-                    _a.label = 9;
-                case 9:
-                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 11];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
-                case 10:
-                    _a.sent();
-                    _a.label = 11;
-                case 11: return [2 /*return*/];
+                    return [2 /*return*/];
             }
         });
     });
 }
-function upload() {
+function checkTests() {
+    if (sh.exec("test -n \"$(find ./modules/" + target + "/ -name '*.test.*')\"").code != 0) {
+        echoError("No unit tests are written for the module " + target + ". Please write some and retry your release.");
+        sh.exit(1);
+    }
+}
+function buildAll() {
+    return __awaiter(this, void 0, void 0, function () {
+        var moduleList, _i, moduleList_1, m, cfName, err_5;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getModulesList()];
+                case 1:
+                    moduleList = _a.sent();
+                    _i = 0, moduleList_1 = moduleList;
+                    _a.label = 2;
+                case 2:
+                    if (!(_i < moduleList_1.length)) return [3 /*break*/, 10];
+                    m = moduleList_1[_i];
+                    info(m);
+                    _a.label = 3;
+                case 3:
+                    _a.trys.push([3, 8, , 9]);
+                    cfName = exports.MODULE_MAP[m];
+                    info(m, cfName);
+                    if (!(cfName.length === 3)) return [3 /*break*/, 7];
+                    return [4 /*yield*/, release(m)];
+                case 4:
+                    _a.sent();
+                    return [4 /*yield*/, upload(m)];
+                case 5:
+                    _a.sent();
+                    if (!(cfName[0] === 'admin')) return [3 /*break*/, 7];
+                    return [4 /*yield*/, bustCache(cfName[1], cfName[2])];
+                case 6:
+                    _a.sent();
+                    _a.label = 7;
+                case 7: return [3 /*break*/, 9];
+                case 8:
+                    err_5 = _a.sent();
+                    info("Failed to build module: " + m + "\n" + err_5);
+                    return [3 /*break*/, 9];
+                case 9:
+                    _i++;
+                    return [3 /*break*/, 2];
+                case 10: return [2 /*return*/];
+            }
+        });
+    });
+}
+function release(target) {
+    if (target === void 0) { target = ''; }
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (target === '' || typeof target !== 'string') {
+                        target = titleCase(process.argv[4].replace(/-/g, ''));
+                    }
+                    //checkTests();
+                    //await runTests();
+                    info('Rolling up build. This may take a moment...');
+                    return [4 /*yield*/, rollupBuild(target)];
+                case 1:
+                    _a.sent();
+                    info('Build rolled up.');
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
+                case 2:
+                    _a.sent();
+                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 4];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
+                case 3:
+                    _a.sent();
+                    _a.label = 4;
+                case 4:
+                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 6];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
+                case 5:
+                    _a.sent();
+                    _a.label = 6;
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
+function upload(target) {
+    if (target === void 0) { target = ''; }
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (target === '' || typeof target !== 'string') {
+                        target = titleCase(process.argv[4].replace(/-/g, ''));
+                    }
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function cloneModule() {
     return __awaiter(this, void 0, void 0, function () {
         var target, err_6;
         return __generator(this, function (_a) {
@@ -574,29 +636,6 @@ function upload() {
                     err_6 = _a.sent();
                     return [4 /*yield*/, getBranch()];
                 case 2:
-                    target = target = (_a.sent()).replace(/\n/g, '');
-                    return [3 /*break*/, 3];
-                case 3: return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
-                case 4:
-                    _a.sent();
-                    return [2 /*return*/];
-            }
-        });
-    });
-}
-function cloneModule() {
-    return __awaiter(this, void 0, void 0, function () {
-        var target, err_7;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 1, , 3]);
-                    target = titleCase(process.argv[4].replace(/-/g, ''));
-                    return [3 /*break*/, 3];
-                case 1:
-                    err_7 = _a.sent();
-                    return [4 /*yield*/, getBranch()];
-                case 2:
                     target = (_a.sent()).replace(/\n/g, '');
                     return [3 /*break*/, 3];
                 case 3:
@@ -606,14 +645,16 @@ function cloneModule() {
         });
     });
 }
-function bustCache() {
+function bustCache(controller, filename) {
+    if (controller === void 0) { controller = ''; }
+    if (filename === void 0) { filename = ''; }
     return __awaiter(this, void 0, void 0, function () {
-        var controller, filename, res, versionMatch, version, newVersion, newFile;
+        var res, versionMatch, version, newVersion, newFile;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    controller = process.argv[4].replace(/-/g, '');
-                    filename = process.argv[5].replace(/-/g, '');
+                    controller = controller || process.argv[4].replace(/-/g, '');
+                    filename = filename || process.argv[5].replace(/-/g, '');
                     return [4 /*yield*/, sh.exec("scp " + KALOS_ROOT + "/app/admin/views/" + controller + "/" + filename + ".cfm tmp/" + filename + ".cfm")];
                 case 1:
                     _a.sent();
@@ -649,6 +690,7 @@ task('distribute', buildRelease);
 task(release);
 task('cfpatch', patchCFC);
 task(upload);
+task('build-all', buildAll);
 var KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
 var KALOS_ASSETS = KALOS_ROOT + "/app/assets";
 var MODULE_CFC = KALOS_ROOT + "/app/admin/controllers/module.cfc";
@@ -1049,4 +1091,52 @@ var NAMED_EXPORTS = {
         'shape',
         'exact',
     ]
+};
+exports.MODULE_MAP = {
+    AcceptProposal: ['customer', 'service', 'accept_proposal'],
+    AccountInfo: ['admin', 'account', 'editinformation'],
+    // AddServiceCallGeneral: ['admin', 'service', 'addservicecallgeneral'], // UNRELEASED
+    AddTimeOff: [],
+    AltGallery: [],
+    CallsByTech: ['admin', 'service', 'callstech'],
+    CreditTransaction: [],
+    // CustomerDetails: ['admin', 'customers', 'details'], // UNRELEASED
+    CustomerDirectory: [],
+    CustomerTasks: [],
+    Dashboard: ['admin', 'dashboard', 'index'],
+    Dispatch: ['admin', 'dispatch', 'newdash'],
+    Documents: ['admin', 'document', 'index'],
+    // EditProject: ['admin', 'service', 'edit_project'], // UNRELEASED
+    EditTimeOff: [],
+    EmployeeDirectory: ['admin', 'users', 'employee'],
+    EmployeeTasks: [],
+    Gallery: [],
+    List: [],
+    Loader: [],
+    Login: [],
+    Metrics: [],
+    PDFMaker: [],
+    // PendingBilling: ['admin', 'service', 'callspending'], // UNRELEASED
+    PerDiem: ['admin', 'reports', 'perdiem'],
+    PerDiemsNeedsAuditing: ['admin', 'reports', 'perdiem_audit'],
+    PopoverGallery: [],
+    PostProposal: ['customer', 'service', 'post_proposal'],
+    Projects: [],
+    Prompt: [],
+    // PropertyInformation: ['admin', 'properties', 'details'], // UNRELEASED
+    PropertyTasks: [],
+    Proposal: [],
+    // Reports: ['admin', 'reports', 'index'], // UNRELEASED
+    SearchIndex: ['admin', 'search', 'index'],
+    ServiceCalendar: ['admin', 'service', 'calendar'],
+    ServiceCallDetail: [],
+    ServiceCallEdit: [],
+    ServiceCallSearch: ['admin', 'service', 'calls'],
+    // SideMenu: ['common', 'partials', 'header'], // UNRELEASED
+    // SpiffLog: ['admin', 'tasks', 'spiff_tool_logs'], // UNRELEASED
+    // SpiffToolLogs: ['admin', 'tasks', 'spiff_tool_logs'],
+    Timesheet: ['admin', 'timesheet', 'timesheetview_new'],
+    ToolLog: [],
+    Transaction: ['admin', 'reports', 'transaction_admin'],
+    TransactionUser: ['admin', 'reports', 'transactions']
 };
