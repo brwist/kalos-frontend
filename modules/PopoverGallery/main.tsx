@@ -30,7 +30,7 @@ export interface IFile {
   uri?: string;
 }
 
-export function PopoverGallery({
+export function PopoverGallery_DEPRECATED({
   title,
   text,
   fileList,

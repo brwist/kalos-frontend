@@ -42,7 +42,7 @@ type PDFList =
   | 'Approved Proposal'
   | 'Pending Proposal';
 
-export class PDFMaker extends React.PureComponent<props, state> {
+export class PDFMaker_DEPRECATED extends React.PureComponent<props, state> {
   SigPad: React.RefObject<HTMLCanvasElement>;
   constructor(props: props) {
     super(props);

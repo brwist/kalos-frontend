@@ -446,11 +446,11 @@ async function release() {
   if (
     sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
   ) {
-    sh.exec('echo')
+    sh.exec('echo');
     sh.exec(
       `echo No unit tests are written for the module ${target}. Please write some and retry your release.`,
     );
-    sh.exec('echo')
+    sh.exec('echo');
     sh.exit(1);
   }
 
@@ -500,7 +500,7 @@ async function cloneModule() {
   try {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   } catch (err) {
-    target = target = (await getBranch()).replace(/\n/g, '');
+    target = (await getBranch()).replace(/\n/g, '');
   }
   sh.cp(`modules`);
 }
