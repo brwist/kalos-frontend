@@ -155,24 +155,6 @@ function textPrompt(question) {
         });
     });
 }
-function deleteThis() {
-    return __awaiter(this, void 0, void 0, function () {
-        var modsList, _i, modsList_1, m;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, getModulesList()];
-                case 1:
-                    modsList = _a.sent();
-                    for (_i = 0, modsList_1 = modsList; _i < modsList_1.length; _i++) {
-                        m = modsList_1[_i];
-                        console.log(m + ":[],");
-                    }
-                    return [2 /*return*/];
-            }
-        });
-    });
-}
-task('tmp', deleteThis);
 function getModulesList() {
     return __awaiter(this, void 0, void 0, function () {
         var list;
@@ -273,6 +255,26 @@ function patchCFC() {
             }
         });
     });
+}
+// Just prints a big line break to break up the output
+function echoLineBreak(color) {
+    if (!color)
+        sh.exec('echo ===========================================================================');
+    if (color)
+        sh.exec("echo \"$(tput " + color + ")===========================================================================$(tput sgr 0)\"  ");
+}
+function echoNewLine() {
+    sh.exec('echo');
+}
+// Echoes warnings in a standardized way with color
+function echoWarning(str) {
+    sh.exec("echo \"$(tput setaf 3)WARNING: " + str + "$(tput sgr 0)\"");
+}
+// Just a function to make errors more maintainable and uniform
+function echoError(str) {
+    echoLineBreak('setaf 1');
+    sh.exec("echo \"$(tput setaf 1)" + str + "$(tput sgr 0)\"");
+    echoLineBreak('setaf 1');
 }
 function titleCase(str) {
     return "" + str[0].toUpperCase() + str.slice(1);
@@ -520,16 +522,11 @@ function release() {
                 case 3: return [4 /*yield*/, sh.exec("jest test -u").code];
                 case 4:
                     if ((_a.sent()) != 0) {
-                        sh.exec('echo [TESTS FAILED]');
-                        sh.exec('echo');
-                        sh.exec('echo Please make sure all unit tests are passing before releasing.');
-                        sh.exec('echo');
+                        echoError('Please ensure all unit tests are passing before release.');
                         sh.exit(1);
                     }
                     if (sh.exec("test -n \"$(find ./modules/" + target + "/ -name '*.test.*')\"").code != 0) {
-                        sh.exec('echo');
-                        sh.exec("echo No unit tests are written for the module " + target + ". Please write some and retry your release.");
-                        sh.exec('echo');
+                        echoError("No unit tests are written for the module " + target + ". Please write some and retry your release.");
                         sh.exit(1);
                     }
                     sh.exec('echo Rolling up build. This may take a moment...');
