@@ -77,8 +77,8 @@ const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const handleUpsertTrip = async (data: Trip) => {
-  await upsertTrip(data);
+const handleUpsertTrip = async (data: Trip, rowId: number) => {
+  await upsertTrip(data, rowId);
 };
 
 export const getStatus = (
@@ -151,13 +151,6 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   ],
   [
     {
-      label: 'Add Trip',
-      name: 'tripsList',
-      type: 'button',
-    },
-  ],
-  [
-    {
       label: 'Notes',
       name: 'notes',
       multiline: true,
@@ -194,10 +187,10 @@ export const PerDiemComponent: FC<Props> = ({
   ]);
 
   const handleTripSave = useCallback(
-    async (data: Trip) => {
+    async (data: Trip, rowId: number) => {
       console.log('Tryina save it');
       setSaving(true);
-      await handleUpsertTrip(data);
+      await handleUpsertTrip(data, rowId);
       setSaving(false);
       setMapModalOpened(false);
     },
@@ -935,12 +928,10 @@ export const PerDiemComponent: FC<Props> = ({
               <Form<Trip>
                 schema={SCHEMA_KALOS_MAP_INPUT_FORM}
                 onSave={(trip: Trip) => {
-                  console.log('Trip right here');
+                  //trip.setPerDiemRowId(pendingPerDiemRowEdit.perDiemId);
+                  console.log(trip.setPerDiemRowId);
                   console.log(trip);
-                  console.log(trip.getPerDiemRowId());
-                  //trip.setPerDiemRowId(497);
-                  console.log('Made it past setting row id');
-                  handleTripSave(trip);
+                  handleTripSave(trip, pendingPerDiemRowEdit.perDiemId);
                 }}
                 onClose={handleMapModalClose}
                 title={'Submit Trip'}
