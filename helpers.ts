@@ -1684,7 +1684,7 @@ export const addressStringToPlace = (addressString: string): Place => {
   // comes after everything else
   // Can detect the road name because it's always followed by commas
   const split = addressString.split(',');
-  const streetAddress = split[0];
+  let streetAddress = split[0];
   let city = split[1]; // Gotta check on this one, may include the state
   let state = '',
     zipCode = '';
@@ -1735,8 +1735,37 @@ export const addressStringToPlace = (addressString: string): Place => {
     });
   }
 
+  if (state === '') {
+    // We really need to set this, see if anything in the last split has any states in it
+    split[split.length - 1].split(' ').forEach(str => {
+      if (
+        (state == '' && Object.values(StateCode).indexOf(String(str)) > -1) ||
+        Object.keys(StateCode).indexOf(String(str)) > -1
+      ) {
+        // This is a state
+        state = str;
+        city = city.replace(str, '');
+        city = zipCode != '' ? city.replace(zipCode, '') : city;
+      }
+    });
+  }
+
+  streetAddress = streetAddress.replace(String(streetNumber), '');
+  console.log('THE ADDRESS: "' + streetAddress + '"');
+  streetAddress = streetAddress.trimStart();
+  streetAddress = streetAddress.trimEnd();
+  console.log('AFTER TRIM: "' + streetAddress + '"');
+  city = city.trimStart();
+  city = city.trimEnd();
+  state = state.trimStart();
+  state = state.trimEnd();
+
+  console.log('CITY IS PARSED AS: ' + city);
+  console.log('STATE IS PARSED AS: ' + state);
+  console.log('ZIP IS PARSED AS: ' + zipCode);
+
   pl.setStreetNumber(streetNumber);
-  pl.setRoadName(streetAddress.replace(String(streetNumber), ''));
+  pl.setRoadName(streetAddress);
   pl.setCity(city);
   pl.setState(state);
   pl.setZipCode(zipCode);
