@@ -54,7 +54,13 @@ var globals = require('rollup-plugin-node-globals');
 var terser = require('rollup-plugin-terser').terser;
 var jsonPlugin = require('@rollup/plugin-json');
 var less = require('rollup-plugin-less-modules');
-var target = process.argv[4];
+var target = '';
+try {
+    target = titleCase(process.argv[4]).replace(/-/g, '');
+}
+catch (err) {
+    console.log(err);
+}
 var minify = process.argv[5];
 /**
  * Serves all modules to localhost:1234 via parcel
@@ -187,14 +193,26 @@ function buildIndex() {
         });
     });
 }
-function info(msg) {
-    log('\x1b[2m')(msg);
+function info() {
+    var msgs = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        msgs[_i] = arguments[_i];
+    }
+    log('\x1b[2m')(msgs);
 }
-function warn(msg) {
-    log('\x1b[33m')(msg);
+function warn() {
+    var msgs = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        msgs[_i] = arguments[_i];
+    }
+    log('\x1b[33m')(msgs);
 }
-function error(msg) {
-    log('\x1b[31m')(msg);
+function error() {
+    var msgs = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        msgs[_i] = arguments[_i];
+    }
+    log('\x1b[31m')(msgs);
 }
 function timestamp() {
     return new Date()
@@ -202,8 +220,8 @@ function timestamp() {
         .replace(/\s\w\w/, '');
 }
 function log(color) {
-    return function (msg) {
-        console.log("[" + color + timestamp() + "\u001B[0m] " + msg);
+    return function (msgs) {
+        console.log("[" + color + timestamp() + "\u001B[0m] " + msgs.join(' '));
     };
 }
 task(start);
@@ -540,12 +558,10 @@ function buildAll() {
                 case 2:
                     if (!(_i < moduleList_1.length)) return [3 /*break*/, 10];
                     m = moduleList_1[_i];
-                    info(m);
                     _a.label = 3;
                 case 3:
                     _a.trys.push([3, 8, , 9]);
                     cfName = exports.MODULE_MAP[m];
-                    info(m, cfName);
                     if (!(cfName.length === 3)) return [3 /*break*/, 7];
                     return [4 /*yield*/, release(m)];
                 case 4:
@@ -580,28 +596,30 @@ function release(target) {
                     if (target === '' || typeof target !== 'string') {
                         target = titleCase(process.argv[4].replace(/-/g, ''));
                     }
-                    //checkTests();
-                    //await runTests();
+                    checkTests();
+                    return [4 /*yield*/, runTests()];
+                case 1:
+                    _a.sent();
                     info('Rolling up build. This may take a moment...');
                     return [4 /*yield*/, rollupBuild(target)];
-                case 1:
+                case 2:
                     _a.sent();
                     info('Build rolled up.');
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
-                case 2:
-                    _a.sent();
-                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 4];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
                 case 3:
                     _a.sent();
-                    _a.label = 4;
+                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 5];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
                 case 4:
-                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 6];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
-                case 5:
                     _a.sent();
-                    _a.label = 6;
-                case 6: return [2 /*return*/];
+                    _a.label = 5;
+                case 5:
+                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 7];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
+                case 6:
+                    _a.sent();
+                    _a.label = 7;
+                case 7: return [2 /*return*/];
             }
         });
     });
