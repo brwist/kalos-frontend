@@ -76,8 +76,9 @@ import {
   PerDiemRow,
   PerDiemReportConfig,
 } from '@kalos-core/kalos-rpc/PerDiem';
+import { MapClient, MatrixRequest, Place } from '@kalos-core/kalos-rpc/Maps';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { MapClient as KalosMap } from '@kalos-core/kalos-rpc/Maps';
+import { Coordinates, MapClient as KalosMap } from '@kalos-core/kalos-rpc/Maps';
 import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
@@ -191,6 +192,7 @@ export const EmployeeFunctionClientService = new EmployeeFunctionClient(
   ENDPOINT,
 );
 export const PerDiemClientService = new PerDiemClient(ENDPOINT);
+export const MapClientService = new MapClient(ENDPOINT);
 export const ServicesRenderedClientService = new ServicesRenderedClient(
   ENDPOINT,
 );
@@ -213,6 +215,68 @@ export const InternalDocumentClientService = new InternalDocumentClient(
 export const S3ClientService = new S3Client(ENDPOINT);
 export const FileClientService = new FileClient(ENDPOINT);
 export const TimeoffRequestClientService = new TimeoffRequestClient(ENDPOINT);
+
+const StateCode = {
+  alabama: 'AL',
+  alaska: 'AK',
+  'american samoa': 'AS',
+  arizona: 'AZ',
+  arkansas: 'AR',
+  california: 'CA',
+  colorado: 'CO',
+  connecticut: 'CT',
+  delaware: 'DE',
+  'district of columbia': 'DC',
+  'federated states of micronesia': 'FM',
+  florida: 'FL',
+  georgia: 'GA',
+  guam: 'GU',
+  hawaii: 'HI',
+  idaho: 'ID',
+  illinois: 'IL',
+  indiana: 'IN',
+  iowa: 'IA',
+  kansas: 'KS',
+  kentucky: 'KY',
+  louisiana: 'LA',
+  maine: 'ME',
+  'marshall islands': 'MH',
+  maryland: 'MD',
+  massachusetts: 'MA',
+  michigan: 'MI',
+  minnesota: 'MN',
+  mississippi: 'MS',
+  missouri: 'MO',
+  montana: 'MT',
+  nebraska: 'NE',
+  nevada: 'NV',
+  'new hampshire': 'NH',
+  'new jersey': 'NJ',
+  'new mexico': 'NM',
+  'new york': 'NY',
+  'north carolina': 'NC',
+  'north dakota': 'ND',
+  'northern mariana islands': 'MP',
+  ohio: 'OH',
+  oklahoma: 'OK',
+  oregon: 'OR',
+  palau: 'PW',
+  pennsylvania: 'PA',
+  'puerto rico': 'PR',
+  'rhode island': 'RI',
+  'south carolina': 'SC',
+  'south dakota': 'SD',
+  tennessee: 'TN',
+  texas: 'TX',
+  utah: 'UT',
+  vermont: 'VT',
+  'virgin islands': 'VI',
+  virginia: 'VA',
+  washington: 'WA',
+  'west virginia': 'WV',
+  wisconsin: 'WI',
+  wyoming: 'WY',
+};
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
@@ -1613,9 +1677,123 @@ export const upsertPerDiem = async (data: PerDiemType) => {
   return await PerDiemClientService[data.id ? 'Update' : 'Create'](req);
 };
 
+// Converts a string of an address into a Place
+const addressStringToPlace = (addressString: string): Place => {
+  let pl = new Place();
+  // Can detect the zip code by the fact it's all numbers in USA and always
+  // comes after everything else
+  // Can detect the road name because it's always followed by commas
+  const split = addressString.split(',');
+  console.log('SPLIT: ', split);
+  const streetAddress = split[0];
+  console.log('STREET ADDRESS: ', streetAddress);
+  let city = split[1]; // Gotta check on this one, may include the state
+  console.log('CITY: ', city);
+  let state = '',
+    zipCode = '';
+  let zipAndState = split.length > 2 ? split[2] : null;
+  console.log('ZIP AND STATE: ', zipAndState);
+  for (let str in city.split(' ')) {
+    // If this doesn't work, it probably is next to the zip code
+    if (
+      Object.values(StateCode).indexOf(String(str)) > -1 ||
+      Object.keys(StateCode).indexOf(String(str)) > -1
+    ) {
+      // This is a state
+      state = str;
+      city = city.replace(str, '');
+      break;
+    }
+  }
+
+  if (zipAndState) {
+    for (let str in zipAndState.split(' ')) {
+      if (
+        Object.values(StateCode).indexOf(String(str)) > -1 ||
+        Object.keys(StateCode).indexOf(String(str)) > -1
+      ) {
+        // This is a state
+        state = str;
+        break;
+      }
+      if (!isNaN(Number(str))) {
+        zipCode = str;
+      }
+    }
+  }
+  const streetInfo = streetAddress.split(' ');
+  let streetNumber = 0; // figuring this out in the loop
+  for (let str in streetInfo) {
+    if (!isNaN(Number(str))) {
+      streetNumber = Number(str);
+      break;
+    }
+  }
+  if (zipCode === '') {
+    // still need to set this, so there must be only split[1]
+    for (let str in split[1].split(' ')) {
+      if (!isNaN(Number(str))) {
+        zipCode = str;
+      }
+    }
+  }
+  pl.setStreetNumber(streetNumber);
+  pl.setRoadName(streetAddress.replace(String(streetNumber), ''));
+  pl.setCity(city);
+  pl.setState(state);
+  pl.setZipCode(zipCode);
+
+  return pl;
+};
+
+const metersToMiles = (meters: number): number => {
+  const conversionFactor = 0.000621;
+  return meters * conversionFactor;
+};
+
+export const getTripDistance = async (origin: string, destination: string) => {
+  try {
+    const matReq = new MatrixRequest();
+    const placeOrigin = addressStringToPlace(origin),
+      placeDestination = addressStringToPlace(destination);
+
+    const coordsOrigin = await MapClientService['Geocode'](placeOrigin),
+      coordsDestination = await MapClientService['Geocode'](placeDestination);
+    matReq.addOrigins(coordsOrigin);
+    matReq.setDestination(coordsDestination);
+    const tripDistance = await MapClientService['DistanceMatrix'](matReq);
+    let status,
+      distanceKm,
+      distanceMeters: number = 0,
+      distanceMiles: number = 0;
+    tripDistance.getRowsList().forEach(row => {
+      console.log(row.toArray()[0][0]);
+      distanceKm = row.toArray()[0][0][3][0];
+      distanceMeters = row.toArray()[0][0][3][1];
+      status = row.toArray()[0][0][0];
+    });
+
+    if (status != 'OK') {
+      console.error("Status was not 'OK' on distanceMatrixRequest.");
+      console.error('Status was: ', status);
+    }
+
+    distanceMiles = metersToMiles(distanceMeters);
+
+    return distanceMiles;
+  } catch (err: any) {
+    console.error(
+      'An error occurred while calculating the trip distance: ' + err,
+    );
+    return 0;
+  }
+};
+
 export const upsertTrip = async (data: Trip, rowId: number) => {
   const req = new Trip();
   const fieldMaskList = [];
+  let destinationAddress = '',
+    originAddress = '';
   for (const fieldName in data) {
     let { upperCaseProp, methodName } = getRPCFields(fieldName);
 
@@ -1625,12 +1803,28 @@ export const upsertTrip = async (data: Trip, rowId: number) => {
       methodName = methodName.replace('setG', 'g');
     }
 
+    if (methodName == 'setDestinationAddress') {
+      //@ts-ignore
+      destinationAddress = data[fieldName];
+    }
+    if (methodName == 'setOriginAddress') {
+      //@ts-ignore
+      originAddress = data[fieldName];
+    }
+
     //@ts-ignore
     req[methodName](data[fieldName]);
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
   req.setPerDiemRowId(rowId);
+  console.log('Origin: ' + originAddress);
+  console.log('Destination: ' + destinationAddress);
+  req.setDistanceInMiles(
+    await getTripDistance(originAddress, destinationAddress),
+  );
+
+  console.log('Got distance stuffs');
   try {
     return await PerDiemClientService[
       data.getId != undefined ? 'UpdateTrip' : 'CreateTrip'
