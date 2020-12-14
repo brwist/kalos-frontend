@@ -1678,7 +1678,7 @@ export const upsertPerDiem = async (data: PerDiemType) => {
 };
 
 // Converts a string of an address into a Place
-const addressStringToPlace = (addressString: string): Place => {
+export const addressStringToPlace = (addressString: string): Place => {
   let pl = new Place();
   // Can detect the zip code by the fact it's all numbers in USA and always
   // comes after everything else
@@ -1735,8 +1735,6 @@ const addressStringToPlace = (addressString: string): Place => {
     });
   }
 
-  console.log('STATE: ', state);
-  console.log('ZIP: ', zipCode);
   pl.setStreetNumber(streetNumber);
   pl.setRoadName(streetAddress.replace(String(streetNumber), ''));
   pl.setCity(city);
