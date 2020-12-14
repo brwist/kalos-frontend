@@ -1719,12 +1719,10 @@ const addressStringToPlace = (addressString: string): Place => {
   }
   const streetInfo = streetAddress.split(' ');
   let streetNumber = 0; // figuring this out in the loop
-  for (let str in streetInfo) {
-    if (!isNaN(Number(str))) {
-      streetNumber = Number(str);
-      break;
-    }
+  if (!isNaN(Number(streetInfo[0]))) {
+    streetNumber = Number(streetInfo[0]);
   }
+
   if (zipCode === '') {
     // still need to set this, so there must be only split[1]
     for (let str in split[1].split(' ')) {
@@ -1733,6 +1731,9 @@ const addressStringToPlace = (addressString: string): Place => {
       }
     }
   }
+
+  console.log(state);
+  console.log(zipCode);
   pl.setStreetNumber(streetNumber);
   pl.setRoadName(streetAddress.replace(String(streetNumber), ''));
   pl.setCity(city);
