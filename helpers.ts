@@ -1613,7 +1613,7 @@ export const upsertPerDiem = async (data: PerDiemType) => {
   return await PerDiemClientService[data.id ? 'Update' : 'Create'](req);
 };
 
-export const upsertTrip = async (data: Trip) => {
+export const upsertTrip = async (data: Trip, rowId: number) => {
   console.log('Upserting');
   const req = new Trip();
   const fieldMaskList = [];
@@ -1634,7 +1634,7 @@ export const upsertTrip = async (data: Trip) => {
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
-  req.setPerDiemRowId(105);
+  req.setPerDiemRowId(rowId);
   console.log('Type of trip: ');
   console.log(typeof req);
   console.log(req);
