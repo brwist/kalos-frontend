@@ -14,9 +14,9 @@
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
     "test": "jest",
-    "test-watch" : "jest --watch",
-    "test-watch-all" : "jest --watchAll",
-    "test-coverage" : "jest --collectCoverage"
+    "test-watch": "jest --watch",
+    "test-watch-all": "jest --watchAll",
+    "test-coverage": "jest --collectCoverage"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
   "license": "MIT",
