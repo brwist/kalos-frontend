@@ -40,6 +40,7 @@ interface Props {
   uncollapsable?: boolean;
   sticky?: boolean;
   actionsAndAsideContentResponsive?: boolean;
+  disabled?: boolean;
 }
 
 export const SectionBar: FC<Props> = ({
@@ -61,6 +62,7 @@ export const SectionBar: FC<Props> = ({
   uncollapsable = false,
   sticky = true,
   actionsAndAsideContentResponsive = false,
+  disabled,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const handleToggleCollapsed = useCallback(
@@ -168,7 +170,11 @@ export const SectionBar: FC<Props> = ({
           >
             {asideContentFirst && asideContent}
             {actions.length > 0 && (
-              <Actions actions={actions} fixed={fixedActions} />
+              <Actions
+                actions={actions}
+                fixed={fixedActions}
+                disabled={disabled}
+              />
             )}
             {!asideContentFirst && asideContent}
           </div>

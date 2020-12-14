@@ -16,7 +16,13 @@ const { terser } = require('rollup-plugin-terser');
 const jsonPlugin = require('@rollup/plugin-json');
 const less = require('rollup-plugin-less-modules');
 
-let target = process.argv[4];
+let target = '';
+try {
+  target = titleCase(process.argv[4]).replace(/-/g, '');
+} catch (err) {
+  console.log(err);
+}
+
 let minify = process.argv[5];
 /**
  * Serves all modules to localhost:1234 via parcel
@@ -101,16 +107,16 @@ async function buildIndex() {
   shStr.to('index.js');
 }
 
-function info(msg: string) {
-  log('\x1b[2m')(msg);
+function info(...msgs: (string | number)[]) {
+  log('\x1b[2m')(msgs);
 }
 
-function warn(msg: string) {
-  log('\x1b[33m')(msg);
+function warn(...msgs: (string | number)[]) {
+  log('\x1b[33m')(msgs);
 }
 
-function error(msg: string) {
-  log('\x1b[31m')(msg);
+function error(...msgs: (string | number)[]) {
+  log('\x1b[31m')(msgs);
 }
 
 function timestamp() {
@@ -120,8 +126,8 @@ function timestamp() {
 }
 
 function log(color: string) {
-  return (msg: string) => {
-    console.log(`[${color}${timestamp()}\x1b[0m] ${msg}`);
+  return (msgs: (string | number)[]) => {
+    console.log(`[${color}${timestamp()}\x1b[0m] ${msgs.join(' ')}`);
   };
 }
 
@@ -243,29 +249,30 @@ async function patchCFC() {
 }
 
 // Just prints a big line break to break up the output
-function echoLineBreak(color? : string) {
-  if (!color) sh.exec('echo ===========================================================================');
-  if (color) sh.exec(`echo "$(tput ${color})===========================================================================$(tput sgr 0)"  `);
+function echoLineBreak(color?: string) {
+  if (!color)
+    sh.exec(
+      'echo ===========================================================================',
+    );
+  if (color)
+    sh.exec(
+      `echo "$(tput ${color})===========================================================================$(tput sgr 0)"  `,
+    );
 }
 
-function echoNewLine(){
-  sh.exec('echo')
+function echoNewLine() {
+  sh.exec('echo');
 }
 
 // Echoes warnings in a standardized way with color
-function echoWarning(str : string)
-{
-  sh.exec(
-    `echo "$(tput setaf 3)WARNING: ${str}$(tput sgr 0)"`
-  );
+function echoWarning(str: string) {
+  sh.exec(`echo "$(tput setaf 3)WARNING: ${str}$(tput sgr 0)"`);
 }
 
 // Just a function to make errors more maintainable and uniform
-function echoError(str : string) {
+function echoError(str: string) {
   echoLineBreak('setaf 1');
-  sh.exec(
-    `echo "$(tput setaf 1)${str}$(tput sgr 0)"`
-  );
+  sh.exec(`echo "$(tput setaf 1)${str}$(tput sgr 0)"`);
   echoLineBreak('setaf 1');
 }
 
@@ -454,7 +461,7 @@ async function googBuild() {
 
 async function runTests() {
   if ((await sh.exec(`jest test -u`).code) != 0) {
-    echoError('Please ensure all unit tests are passing before release.')
+    echoError('Please ensure all unit tests are passing before release.');
     sh.exit(1);
   }
 }
@@ -463,7 +470,9 @@ function checkTests() {
   if (
     sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
   ) {
-    echoError(`No unit tests are written for the module ${target}. Please write some and retry your release.`)
+    echoError(
+      `No unit tests are written for the module ${target}. Please write some and retry your release.`,
+    );
     sh.exit(1);
   }
 }
@@ -471,7 +480,6 @@ function checkTests() {
 async function buildAll() {
   const moduleList = await getModulesList();
   for (const m of moduleList) {
-    info(m);
     try {
       const cfName = MODULE_MAP[m];
       if (cfName.length === 3) {
@@ -491,8 +499,8 @@ async function release(target = '') {
   if (target === '' || typeof target !== 'string') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
-  //checkTests();
-  //await runTests();
+  checkTests();
+  await runTests();
 
   info('Rolling up build. This may take a moment...');
 
