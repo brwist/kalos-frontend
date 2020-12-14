@@ -1,5 +1,5 @@
 import { Place } from '@kalos-core/kalos-rpc/Maps';
-import { addressStringToPlace } from './helpers';
+import { addressStringToPlace, getTripDistance } from './helpers';
 
 test('addressStringToPlace should parse addresses from strings correctly', () => {
   let testStrings = [

@@ -1807,11 +1807,14 @@ export const getTripDistance = async (origin: string, destination: string) => {
 
     distanceMiles = metersToMiles(distanceMeters);
 
+    console.log('Returning : ' + distanceMiles);
+
     return distanceMiles;
   } catch (err: any) {
     console.error(
       'An error occurred while calculating the trip distance: ' + err,
     );
+    console.log('Returning 0');
     return 0;
   }
 };
