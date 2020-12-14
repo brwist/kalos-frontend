@@ -41,10 +41,12 @@ import {
   usd,
   refreshToken,
   upsertTrip,
+  getTripDistance,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Coordinates } from '@kalos-core/kalos-rpc/Maps';
 
 export interface Props {
   loggedUserId: number;
@@ -79,6 +81,10 @@ const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
 const handleUpsertTrip = async (data: Trip, rowId: number) => {
   await upsertTrip(data, rowId);
+};
+
+const handleGetTripDistance = async (origin: string, destination: string) => {
+  await getTripDistance(origin, destination);
 };
 
 export const getStatus = (
@@ -199,6 +205,13 @@ export const PerDiemComponent: FC<Props> = ({
   const handleTripSave = useCallback(
     async (data: Trip, rowId: number) => {
       setSaving(true);
+
+      console.log('TRIP : ', data);
+      console.log(data.setOriginAddress);
+      await handleGetTripDistance(
+        String(data.setOriginAddress),
+        String(data.setDestinationAddress),
+      );
       await handleUpsertTrip(data, rowId);
       setSaving(false);
       setMapModalOpened(false);
