@@ -1690,12 +1690,14 @@ const addressStringToPlace = (addressString: string): Place => {
     zipCode = '';
   let zipAndState = split.length > 2 ? split[2] : null;
   for (let str in city.split(' ')) {
+    console.log('Check state string: ' + str);
     // If this doesn't work, it probably is next to the zip code
     if (
       Object.values(StateCode).indexOf(String(str)) > -1 ||
       Object.keys(StateCode).indexOf(String(str)) > -1
     ) {
       // This is a state
+      console.log('Setting state as ' + str);
       state = str;
       city = city.replace(str, '');
       break;
@@ -1703,19 +1705,19 @@ const addressStringToPlace = (addressString: string): Place => {
   }
 
   if (zipAndState) {
-    for (let str in zipAndState.split(' ')) {
+    zipAndState.split(' ').forEach(str => {
       if (
-        Object.values(StateCode).indexOf(String(str)) > -1 ||
+        (state == '' && Object.values(StateCode).indexOf(String(str)) > -1) ||
         Object.keys(StateCode).indexOf(String(str)) > -1
       ) {
         // This is a state
         state = str;
-        break;
+        console.log('In further down loop setting state as :' + str);
       }
       if (!isNaN(Number(str))) {
         zipCode = str;
       }
-    }
+    });
   }
   const streetInfo = streetAddress.split(' ');
   let streetNumber = 0; // figuring this out in the loop
@@ -1732,8 +1734,8 @@ const addressStringToPlace = (addressString: string): Place => {
     }
   }
 
-  console.log(state);
-  console.log(zipCode);
+  console.log('STATE: ', state);
+  console.log('ZIP: ', zipCode);
   pl.setStreetNumber(streetNumber);
   pl.setRoadName(streetAddress.replace(String(streetNumber), ''));
   pl.setCity(city);
