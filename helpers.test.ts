@@ -15,13 +15,13 @@ test('addressStringToPlace should parse addresses from strings correctly', () =>
 
   let expected: Place[] = [new Place(), new Place()];
   expected[0].setStreetNumber(3030);
-  expected[0].setRoadName(' US Hwy 27 S');
-  expected[0].setCity(' Sebring');
+  expected[0].setRoadName('US Hwy 27 S');
+  expected[0].setCity('Sebring');
   expected[0].setState('FL');
 
   expected[1].setStreetNumber(3030);
-  expected[1].setRoadName(' US 27 S');
-  expected[1].setCity(' Sebring');
+  expected[1].setRoadName('US 27 S');
+  expected[1].setCity('Sebring');
   expected[1].setState('FL');
   expected[1].setZipCode('33870');
 
