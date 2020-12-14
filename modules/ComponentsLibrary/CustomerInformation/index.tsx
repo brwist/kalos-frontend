@@ -26,6 +26,7 @@ import {
   CustomEventsHandler,
   getCFAppUrl,
 } from '../../../helpers';
+import Typography from '@material-ui/core/Typography';
 import './styles.less';
 
 const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
@@ -64,6 +65,10 @@ export const CustomerInformation: FC<Props> = ({
   viewedAsCustomer = false,
 }) => {
   const [customer, setCustomer] = useState<UserType>(new User().toObject());
+  const [
+    pendingBillingRecordCount,
+    setPendingBillingRecordCount,
+  ] = useState<number>(0);
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
   const [groups, setGroups] = useState<GroupType[]>([]);
   const [groupLinks, setGroupLinks] = useState<UserGroupLinkType[]>([]);
@@ -106,6 +111,7 @@ export const CustomerInformation: FC<Props> = ({
       ).toObject();
       if (pendingBillingsTotalCount > 0) {
         setPendingBilling(true);
+        setPendingBillingRecordCount(pendingBillingsTotalCount);
       }
     }
     const groups = await loadGroups();
@@ -353,22 +359,30 @@ export const CustomerInformation: FC<Props> = ({
             <SectionBar title="System Information">
               <InfoTable data={systemData} loading={id === 0} error={error} />
             </SectionBar>
-            {isPendingBilling && (
-              <SectionBar
-                title="Pending Billing"
-                className="CustomerInformationPendingBilling"
-                actions={[
-                  {
-                    label: 'View',
-                    url: [
-                      getCFAppUrl('admin:properties.customerpendingbilling'),
-                      `user_id=${userID}`,
-                      `property_id=${propertyId}`,
-                    ].join('&'),
-                  },
+            <SectionBar
+              title="Pending Billing"
+              className="CustomerInformationPendingBilling"
+              disabled={!isPendingBilling}
+              actions={[
+                {
+                  label: isPendingBilling ? 'View' : 'None',
+                  url: isPendingBilling
+                    ? [
+                        getCFAppUrl('admin:properties.customerpendingbilling'),
+                        `user_id=${userID}`,
+                        `property_id=${propertyId}`,
+                      ].join('&')
+                    : '',
+                },
+              ]}
+            >
+              <InfoTable
+                data={[
+                  [{ label: 'Record Count', value: pendingBillingRecordCount }],
                 ]}
+                loading={pendingBillingRecordCount === 0}
               />
-            )}
+            </SectionBar>
           </div>
         )}
       </div>
