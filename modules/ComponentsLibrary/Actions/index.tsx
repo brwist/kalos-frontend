@@ -20,6 +20,7 @@ interface Props extends Style {
   fixed?: boolean;
   actions: ActionsProps;
   className?: string;
+  disabled?: boolean;
 }
 
 export const Actions: FC<Props> = ({
@@ -27,6 +28,7 @@ export const Actions: FC<Props> = ({
   actions,
   className,
   responsiveColumn = false,
+  disabled,
 }) => {
   const [anchorEl, setAnchorEl] = useState<(EventTarget & HTMLElement) | null>(
     null,
@@ -118,6 +120,7 @@ export const Actions: FC<Props> = ({
                 key={idx}
                 {...props}
                 className={clsx('ActionsButton', { responsiveColumn })}
+                disabled={disabled}
               />
             ))}
         </div>
