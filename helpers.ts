@@ -1690,7 +1690,6 @@ const addressStringToPlace = (addressString: string): Place => {
     zipCode = '';
   let zipAndState = split.length > 2 ? split[2] : null;
   for (let str in city.split(' ')) {
-    console.log('Check state string: ' + str);
     // If this doesn't work, it probably is next to the zip code
     if (
       Object.values(StateCode).indexOf(String(str)) > -1 ||
@@ -1715,6 +1714,7 @@ const addressStringToPlace = (addressString: string): Place => {
         console.log('In further down loop setting state as :' + str);
       }
       if (!isNaN(Number(str))) {
+        console.log('Setting zip code in zipAndState forEach as :' + str);
         zipCode = str;
       }
     });
@@ -1727,11 +1727,12 @@ const addressStringToPlace = (addressString: string): Place => {
 
   if (zipCode === '') {
     // still need to set this, so there must be only split[1]
-    for (let str in split[1].split(' ')) {
+    split[split.length - 1].split(' ').forEach(str => {
       if (!isNaN(Number(str))) {
+        console.log('Setting zip code late as: ' + str);
         zipCode = str;
       }
-    }
+    });
   }
 
   console.log('STATE: ', state);
