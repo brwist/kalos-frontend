@@ -48,6 +48,7 @@ import {
   trailingZero,
   EventType,
   loadEventById,
+  upsertTrip,
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
@@ -66,6 +67,14 @@ const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
       label: 'Destination Address',
       name: 'setDestinationAddress',
       type: 'text',
+    },
+    {
+      name: 'getPerDiemRowId',
+      type: 'hidden',
+    },
+    {
+      name: 'setPerDiemRowId',
+      type: 'hidden',
     },
   ],
 ];
@@ -172,6 +181,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
   const [eventsOpened, setEventsOpened] = useState<boolean>(false);
   const [techniciansOpened, setTechniciansOpened] = useState<boolean>(false);
   const [mapModalOpened, setMapModalOpened] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
   const [techniciansIds, setTechniciansIds] = useState<number[]>(
     (value + '').split(',').map(id => +id),
   );
@@ -198,9 +208,16 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     mapModalOpened,
     setMapModalOpened,
   ]);
+  const handleUpsertTrip = async (data: Trip) => {
+    await upsertTrip(data);
+  };
   const handleTripSave = useCallback(
-    (trip: Trip) => {
-      console.log('Saving it');
+    async (data: Trip) => {
+      console.log('Tryina save it');
+      setSaving(true);
+      await handleUpsertTrip(data);
+      setSaving(false);
+      setMapModalOpened(false);
     },
     [mapModalOpened, setMapModalOpened],
   );
@@ -425,7 +442,13 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
           <Modal open onClose={handleMapModalClose}>
             <Form
               schema={SCHEMA_KALOS_MAP_INPUT_FORM}
-              onSave={handleTripSave}
+              onSave={(trip: Trip) => {
+                console.log('Trip right here');
+                console.log(trip);
+                //trip.setPerDiemRowId(497);
+                console.log('Made it past setting row id');
+                handleTripSave(trip);
+              }}
               onClose={handleMapModalClose}
               title={'Submit Trip'}
               data={testTrip}

@@ -76,12 +76,8 @@ import {
   PerDiemRow,
   PerDiemReportConfig,
 } from '@kalos-core/kalos-rpc/PerDiem';
-import {
-  Trip
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb'
-import {
-  MapClient as KalosMap
-} from '@kalos-core/kalos-rpc/Maps'
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { MapClient as KalosMap } from '@kalos-core/kalos-rpc/Maps';
 import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
@@ -128,6 +124,7 @@ import {
   randomize,
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
+import { MapServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb_service';
 
 export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
@@ -539,8 +536,8 @@ function formatDateTime(datetime: string) {
  * @returns string of the number with 0 in front if it is less than 10, otherwise just
  * the number
  */
-function padWithZeroes(num : number) : string {
-  return (num < 10) ? '0' + num : String(num)
+function padWithZeroes(num: number): string {
+  return num < 10 ? '0' + num : String(num);
 }
 
 /**
@@ -1614,6 +1611,40 @@ export const upsertPerDiem = async (data: PerDiemType) => {
   }
   req.setFieldMaskList(fieldMaskList);
   return await PerDiemClientService[data.id ? 'Update' : 'Create'](req);
+};
+
+export const upsertTrip = async (data: Trip) => {
+  console.log('Upserting');
+  const req = new Trip();
+  const fieldMaskList = [];
+  for (const fieldName in data) {
+    let { upperCaseProp, methodName } = getRPCFields(fieldName);
+
+    if (methodName.startsWith('setSet')) {
+      methodName = methodName.replace('setS', 's');
+    } else if (methodName.startsWith('setGet')) {
+      methodName = methodName.replace('setG', 'g');
+    }
+
+    console.log(req);
+    console.log(methodName);
+
+    //@ts-ignore
+    req[methodName](data[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  req.setPerDiemRowId(105);
+  console.log('Type of trip: ');
+  console.log(typeof req);
+  console.log(req);
+  try {
+    return await PerDiemClientService[
+      data.getId != undefined ? 'UpdateTrip' : 'CreateTrip'
+    ](req);
+  } catch (err: any) {
+    console.error('Error occurred trying to save trip: ' + err);
+  }
 };
 
 export const updatePerDiemNeedsAudit = async (id: number) => {
