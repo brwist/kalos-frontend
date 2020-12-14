@@ -176,11 +176,21 @@ export const PerDiemComponent: FC<Props> = ({
   const [initialized, setInitialized] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
   const [mapModalOpened, setMapModalOpened] = useState<boolean>(false);
+  const [pendingTripEdit, setPendingTripEdit] = useState<Trip>();
 
-  const handleMapModalOpen = useCallback(() => setMapModalOpened(true), [
-    mapModalOpened,
-    setMapModalOpened,
-  ]);
+  const handleTripEditOpen = useCallback(
+    (trip: Trip) => {
+      setPendingTripEdit(trip);
+    },
+    [setPendingTripEdit],
+  );
+
+  const handleTripEditClose = useCallback(() => {
+    setPendingTripEdit(undefined);
+  }, [setPendingTripEdit]);
+  const handleMapModalOpen = useCallback(() => {
+    setMapModalOpened(true);
+  }, [mapModalOpened, setMapModalOpened]);
   const handleMapModalClose = useCallback(() => setMapModalOpened(false), [
     mapModalOpened,
     setMapModalOpened,
@@ -188,7 +198,6 @@ export const PerDiemComponent: FC<Props> = ({
 
   const handleTripSave = useCallback(
     async (data: Trip, rowId: number) => {
-      console.log('Tryina save it');
       setSaving(true);
       await handleUpsertTrip(data, rowId);
       setSaving(false);
@@ -919,23 +928,23 @@ export const PerDiemComponent: FC<Props> = ({
                 size="medium"
                 variant="contained"
                 compact
-                onClick={handleMapModalOpen}
+                onClick={() => {
+                  handleMapModalOpen();
+                  handleTripEditOpen(new Trip());
+                }}
               />
             </Form>
           </Modal>
-          {mapModalOpened && (
+          {mapModalOpened && pendingTripEdit && (
             <Modal open onClose={handleMapModalClose}>
               <Form<Trip>
                 schema={SCHEMA_KALOS_MAP_INPUT_FORM}
                 onSave={(trip: Trip) => {
-                  //trip.setPerDiemRowId(pendingPerDiemRowEdit.perDiemId);
-                  console.log(trip.setPerDiemRowId);
-                  console.log(trip);
                   handleTripSave(trip, pendingPerDiemRowEdit.perDiemId);
                 }}
                 onClose={handleMapModalClose}
                 title={'Submit Trip'}
-                data={new Trip()}
+                data={pendingTripEdit}
               ></Form>
             </Modal>
           )}

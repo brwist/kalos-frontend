@@ -1614,7 +1614,6 @@ export const upsertPerDiem = async (data: PerDiemType) => {
 };
 
 export const upsertTrip = async (data: Trip, rowId: number) => {
-  console.log('Upserting');
   const req = new Trip();
   const fieldMaskList = [];
   for (const fieldName in data) {
@@ -1626,18 +1625,12 @@ export const upsertTrip = async (data: Trip, rowId: number) => {
       methodName = methodName.replace('setG', 'g');
     }
 
-    console.log(req);
-    console.log(methodName);
-
     //@ts-ignore
     req[methodName](data[fieldName]);
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
   req.setPerDiemRowId(rowId);
-  console.log('Type of trip: ');
-  console.log(typeof req);
-  console.log(req);
   try {
     return await PerDiemClientService[
       data.getId != undefined ? 'UpdateTrip' : 'CreateTrip'
