@@ -40,9 +40,11 @@ import {
   loadGovPerDiem,
   usd,
   refreshToken,
+  upsertTrip,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 
 export interface Props {
   loggedUserId: number;
@@ -50,7 +52,34 @@ export interface Props {
   perDiem?: PerDiemType;
 }
 
+const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
+  [
+    {
+      label: 'Origin Address',
+      name: 'setOriginAddress',
+      type: 'text',
+    },
+    {
+      label: 'Destination Address',
+      name: 'setDestinationAddress',
+      type: 'text',
+    },
+    {
+      name: 'getPerDiemRowId',
+      type: 'hidden',
+    },
+    {
+      name: 'setPerDiemRowId',
+      type: 'hidden',
+    },
+  ],
+];
+
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
+
+const handleUpsertTrip = async (data: Trip) => {
+  await upsertTrip(data);
+};
 
 export const getStatus = (
   dateApproved: string,
@@ -159,6 +188,22 @@ export const PerDiemComponent: FC<Props> = ({
     mapModalOpened,
     setMapModalOpened,
   ]);
+  const handleMapModalClose = useCallback(() => setMapModalOpened(false), [
+    mapModalOpened,
+    setMapModalOpened,
+  ]);
+
+  const handleTripSave = useCallback(
+    async (data: Trip) => {
+      console.log('Tryina save it');
+      setSaving(true);
+      await handleUpsertTrip(data);
+      setSaving(false);
+      setMapModalOpened(false);
+    },
+    [mapModalOpened, setMapModalOpened],
+  );
+
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
@@ -851,29 +896,59 @@ export const PerDiemComponent: FC<Props> = ({
         </Modal>
       )}
       {pendingPerDiemRowEdit && (
-        <Modal open onClose={handlePendingPerDiemRowEditToggle(undefined)}>
-          <Form
-            title={`${pendingPerDiemRowEdit.id ? 'Edit' : 'Add'} Per Diem Row`}
-            schema={SCHEMA_PER_DIEM_ROW}
-            data={pendingPerDiemRowEdit}
-            onClose={handlePendingPerDiemRowEditToggle(undefined)}
-            onSave={handleSavePerDiemRow}
-            disabled={saving}
-          >
-            {!!pendingPerDiemRowEdit.id && (
-              <div className="PerDiemFormFooter">
-                <Button
-                  label="Delete"
-                  onClick={handlePendingPerDiemRowDeleteToggle(true)}
-                  disabled={saving}
-                  variant="outlined"
-                  compact
-                  className="PerDiemButton"
-                />
-              </div>
-            )}
-          </Form>
-        </Modal>
+        <>
+          <Modal open onClose={handlePendingPerDiemRowEditToggle(undefined)}>
+            <Form
+              title={`${
+                pendingPerDiemRowEdit.id ? 'Edit' : 'Add'
+              } Per Diem Row`}
+              schema={SCHEMA_PER_DIEM_ROW}
+              data={pendingPerDiemRowEdit}
+              onClose={handlePendingPerDiemRowEditToggle(undefined)}
+              onSave={handleSavePerDiemRow}
+              disabled={saving}
+            >
+              {!!pendingPerDiemRowEdit.id && (
+                <div className="PerDiemFormFooter">
+                  <Button
+                    label="Delete"
+                    onClick={handlePendingPerDiemRowDeleteToggle(true)}
+                    disabled={saving}
+                    variant="outlined"
+                    compact
+                    className="PerDiemButton"
+                  />
+                </div>
+              )}
+
+              <Button
+                label="Add Trip"
+                size="medium"
+                variant="contained"
+                compact
+                onClick={handleMapModalOpen}
+              />
+            </Form>
+          </Modal>
+          {mapModalOpened && (
+            <Modal open onClose={handleMapModalClose}>
+              <Form<Trip>
+                schema={SCHEMA_KALOS_MAP_INPUT_FORM}
+                onSave={(trip: Trip) => {
+                  console.log('Trip right here');
+                  console.log(trip);
+                  console.log(trip.getPerDiemRowId());
+                  //trip.setPerDiemRowId(497);
+                  console.log('Made it past setting row id');
+                  handleTripSave(trip);
+                }}
+                onClose={handleMapModalClose}
+                title={'Submit Trip'}
+                data={new Trip()}
+              ></Form>
+            </Modal>
+          )}
+        </>
       )}
       {pendingPerDiemDelete && (
         <ConfirmDelete
