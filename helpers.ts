@@ -1684,15 +1684,11 @@ const addressStringToPlace = (addressString: string): Place => {
   // comes after everything else
   // Can detect the road name because it's always followed by commas
   const split = addressString.split(',');
-  console.log('SPLIT: ', split);
   const streetAddress = split[0];
-  console.log('STREET ADDRESS: ', streetAddress);
   let city = split[1]; // Gotta check on this one, may include the state
-  console.log('CITY: ', city);
   let state = '',
     zipCode = '';
   let zipAndState = split.length > 2 ? split[2] : null;
-  console.log('ZIP AND STATE: ', zipAndState);
   for (let str in city.split(' ')) {
     // If this doesn't work, it probably is next to the zip code
     if (
@@ -1818,13 +1814,10 @@ export const upsertTrip = async (data: Trip, rowId: number) => {
   }
   req.setFieldMaskList(fieldMaskList);
   req.setPerDiemRowId(rowId);
-  console.log('Origin: ' + originAddress);
-  console.log('Destination: ' + destinationAddress);
   req.setDistanceInMiles(
     await getTripDistance(originAddress, destinationAddress),
   );
 
-  console.log('Got distance stuffs');
   try {
     return await PerDiemClientService[
       data.getId != undefined ? 'UpdateTrip' : 'CreateTrip'
