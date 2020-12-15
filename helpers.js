@@ -2298,22 +2298,40 @@ function range(start, end) {
 }
 exports.range = range;
 /**
+ * Returns a key given its alias
+ * @param keyName
+ * @returns ApiKey.AsObject
+ */
+function getKeyByKeyName(keyName) {
+    return __awaiter(this, void 0, void 0, function () {
+        var client, req, ans;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    client = new ApiKey_1.ApiKeyClient(constants_1.ENDPOINT);
+                    req = new ApiKey_1.ApiKey();
+                    req.setApiKey(keyName);
+                    return [4 /*yield*/, client.Get(req)];
+                case 1:
+                    ans = _a.sent();
+                    return [2 /*return*/, ans];
+            }
+        });
+    });
+}
+/**
  * Returns geo-coordinates for given address location
  * @param address
  * @returns { geolocationLat: number, geolocationLng: number }
  */
 function loadGeoLocationByAddress(address) {
     return __awaiter(this, void 0, void 0, function () {
-        var client, req, res, response, data, _a, lat, lng, e_3;
+        var res, response, data, _a, lat, lng, e_3;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
                     _b.trys.push([0, 4, , 5]);
-                    console.log('Setting up request');
-                    client = new ApiKey_1.ApiKeyClient(constants_1.ENDPOINT);
-                    req = new ApiKey_1.ApiKey();
-                    req.setApiKey('google_maps');
-                    return [4 /*yield*/, client.Get(req)];
+                    return [4 /*yield*/, getKeyByKeyName('google_maps')];
                 case 1:
                     res = _b.sent();
                     return [4 /*yield*/, fetch("https://maps.googleapis.com/maps/api/geocode/json?address=" + address + "&key=" + res)];

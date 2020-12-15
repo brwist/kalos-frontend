@@ -1922,20 +1922,31 @@ function range(start: number, end: number) {
 }
 
 /**
+ * Returns a key given its alias
+ * @param keyName
+ * @returns ApiKey.AsObject
+ */
+async function getKeyByKeyName(keyName: string) {
+  const client = new ApiKeyClient(ENDPOINT);
+  const req = new ApiKey();
+  req.setApiKey(keyName);
+  const ans = await client.Get(req);
+  return ans;
+}
+
+/**
  * Returns geo-coordinates for given address location
  * @param address
  * @returns { geolocationLat: number, geolocationLng: number }
  */
 async function loadGeoLocationByAddress(address: string) {
   try {
-    const client = new ApiKeyClient(ENDPOINT);
-    const req = new ApiKey();
-    req.setApiKey('google_maps');
-    const res = await client.Get(req);
+    const res = await getKeyByKeyName('google_maps');
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${res}`,
     );
     const data = await response.json();
+    console.log(data);
     const {
       results: [
         {
