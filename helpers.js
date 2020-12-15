@@ -205,7 +205,7 @@ var StateCode = {
 };
 var BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 exports.BASE_URL = BASE_URL;
-var KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
+var KALOS_BOT = getKeyByKeyName('kalos_bot');
 exports.getCFAppUrl = function (action) { return BASE_URL + "?action=" + action; };
 function cfURL(action, qs) {
     if (qs === void 0) { qs = ''; }
