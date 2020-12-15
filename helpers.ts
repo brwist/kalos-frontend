@@ -1204,12 +1204,6 @@ export const loadCreditCard = async (account: string) => {
   return await UserClientService.GetCardList(req);
 };
 
-export const loadEventById = async (serviceCallId: number) => {
-  const req = new Event();
-  req.setId(serviceCallId);
-  return await EventClientService.Get(req);
-};
-
 export const loadProjectTasks = async (eventId: number) => {
   const { resultsList } = (
     await EventClientService.loadTasksByEventID(eventId)
