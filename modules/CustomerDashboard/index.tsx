@@ -8,6 +8,10 @@ ReactDOM.render(
     loggedUserId={101253}
     kinds={['customers', 'properties', 'contracts']}
     title="Search"
+    deletableCustomers
+    editableCustomers
+    deletableProperties
+    editableProperties
   />,
   document.getElementById('root'),
 );
