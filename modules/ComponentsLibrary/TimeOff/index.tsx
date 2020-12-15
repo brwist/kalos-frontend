@@ -15,11 +15,11 @@ import {
   UserType,
   PTOType,
   upsertTimeoffRequest,
-  getTimeoffRequestById,
   deleteTimeoffRequestById,
   timestamp,
   getTimeoffRequestTypes,
   UserClientService,
+  TimeoffRequestClientService,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 
@@ -94,7 +94,9 @@ export const TimeOff: FC<Props> = ({
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedUser(loggedUser);
     if (requestOffId) {
-      const req = await getTimeoffRequestById(requestOffId);
+      const req = await TimeoffRequestClientService.getTimeoffRequestById(
+        requestOffId,
+      );
       if (!req) {
         setDeleted(true);
         setInitiated(true);
