@@ -19,7 +19,6 @@ import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
 import {
-  loadUserById,
   loadPerDiemByUserIdAndDateStarted,
   loadPerDiemByUserIdsAndDateStarted,
   UserType,
@@ -43,6 +42,7 @@ import {
   upsertTrip,
   getTripDistance,
   TripType,
+  UserClientService,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
@@ -281,7 +281,7 @@ export const PerDiemComponent: FC<Props> = ({
     }
     if (loggedUserId) {
       setInitializing(true);
-      const user = await loadUserById(loggedUserId);
+      const user = await UserClientService.loadUserById(loggedUserId);
       setUser(user);
       const departments = await loadTimesheetDepartments();
       setDepartments(sortBy(departments, getDepartmentName));

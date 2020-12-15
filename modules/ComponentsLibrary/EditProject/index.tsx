@@ -48,9 +48,9 @@ import {
   upsertTaskEvent,
   timestamp,
   UserType,
-  loadUserById,
   deleteTaskEvent,
   EventClientService,
+  UserClientService,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -169,7 +169,7 @@ export const EditProject: FC<Props> = ({
     const statuses = await loadProjectTaskStatuses();
     const priorities = await loadProjectTaskPriorities();
     const departments = await loadTimesheetDepartments();
-    const loggedUser = await loadUserById(loggedUserId);
+    const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setStatuses(statuses);
     setPriorities(priorities);
     setDepartments(departments);

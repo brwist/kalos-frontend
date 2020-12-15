@@ -13,7 +13,6 @@ import {
   getRPCFields,
   loadEventsByPropertyId,
   makeFakeRows,
-  loadUserById,
   loadServicesRendered,
   UserType,
   PropertyType,
@@ -134,7 +133,7 @@ export const ServiceCall: FC<Props> = props => {
     try {
       const property = await PropertyClientService.loadPropertyByID(propertyId);
       setProperty(property);
-      const customer = await loadUserById(userID);
+      const customer = await UserClientService.loadUserById(userID);
       setCustomer(customer);
       const propertyEvents = await loadEventsByPropertyId(propertyId);
       setPropertyEvents(propertyEvents);
@@ -144,7 +143,7 @@ export const ServiceCall: FC<Props> = props => {
       setJobSubtype(jobSubtypes);
       const jobTypeSubtypes = await loadJobTypeSubtypes();
       setJobTypeSubtypes(jobTypeSubtypes);
-      const loggedUser = await loadUserById(loggedUserId);
+      const loggedUser = await UserClientService.loadUserById(loggedUserId);
       setLoggedUser(loggedUser);
       await loadEntry();
       await loadServicesRenderedData();

@@ -13,10 +13,10 @@ import {
   EmployeeFunctionType,
   makeFakeRows,
   formatDate,
-  loadUserById,
   UserType,
   upsertEmployeeFunction,
   deleteEmployeeFunctionById,
+  UserClientService,
 } from '../../../helpers';
 
 interface Props {
@@ -60,7 +60,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
   const [user, setUser] = useState<UserType>();
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
-    const user = await loadUserById(loggedUserId);
+    const user = await UserClientService.loadUserById(loggedUserId);
     setUser(user);
     setLoadingDicts(false);
     setLoadedDicts(true);

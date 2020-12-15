@@ -25,7 +25,6 @@ import {
   timestamp,
   formatDate,
   makeFakeRows,
-  loadUserById,
   trailingZero,
   getWeekOptions,
   loadTechnicians,
@@ -37,6 +36,7 @@ import {
   SpiffTypeType,
   SpiffToolAdminActionType,
   TaskEventDataType,
+  UserClientService,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
@@ -120,7 +120,7 @@ export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
     {},
   );
   const loadLoggedInUser = useCallback(async () => {
-    const loggedInUser = await loadUserById(loggedUserId);
+    const loggedInUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
     setSearchFormKey(searchFormKey + 1);
   }, [loggedUserId, setLoggedInUser, searchFormKey, setSearchFormKey]);

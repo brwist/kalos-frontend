@@ -10,11 +10,11 @@ import {
   GroupType,
   UserGroupLinkType,
   loadGroups,
-  loadUserById,
   loadUserGroupLinksByUserId,
   UserGroupLinkClientService,
   makeFakeRows,
   saveUser,
+  UserClientService,
 } from '../../../helpers';
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
 import './styles.less';
@@ -56,7 +56,7 @@ export const CustomerEdit: FC<Props> = ({
   const load = useCallback(async () => {
     if (userId) {
       if (!_customer) {
-        const customer = await loadUserById(userId);
+        const customer = await UserClientService.loadUserById(userId);
         setCustomer(customer);
       }
       if (!_groupLinks) {

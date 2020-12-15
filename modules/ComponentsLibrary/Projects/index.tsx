@@ -16,7 +16,7 @@ import {
   getPropertyAddress,
   formatDate,
   UserType,
-  loadUserById,
+  UserClientService,
 } from '../../../helpers';
 
 export interface Props {
@@ -58,7 +58,7 @@ export const Projects: FC<Props> = ({
   const [openedEvent, setOpenedEvent] = useState<EventType>();
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
-    const loggedInUser = await loadUserById(loggedUserId);
+    const loggedInUser = await UserClientService.loadUserById(loggedUserId);
     const newFilter = {
       ...filter,
       departmentId: loggedInUser.employeeDepartmentId,

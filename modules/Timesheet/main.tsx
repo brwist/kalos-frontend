@@ -32,10 +32,10 @@ import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
 import {
-  loadUserById,
   getTimeoffRequestByFilter,
   getTimeoffRequestTypes,
   TimeoffRequestTypes,
+  UserClientService,
 } from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
@@ -261,7 +261,10 @@ export const Timesheet: FC<Props> = props => {
       if (overlapped) {
         dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
       } else {
-        if (user?.timesheetAdministration && props.userId !== props.timesheetOwnerId) {
+        if (
+          user?.timesheetAdministration &&
+          props.userId !== props.timesheetOwnerId
+        ) {
           await tslClient.Approve(ids, userId);
           dispatch({ type: 'approveTimesheet' });
         } else {
@@ -273,7 +276,7 @@ export const Timesheet: FC<Props> = props => {
   }, [userId, data, shownDates, tslClient]);
 
   const fetchUsers = async () => {
-    const userResult = await loadUserById(userId);
+    const userResult = await UserClientService.loadUserById(userId);
     const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
     if (userId === timesheetOwnerId) {
       dispatch({
@@ -286,7 +289,9 @@ export const Timesheet: FC<Props> = props => {
         },
       });
     } else {
-      const ownerResult = await loadUserById(timesheetOwnerId);
+      const ownerResult = await UserClientService.loadUserById(
+        timesheetOwnerId,
+      );
       dispatch({
         type: 'setUsers',
         data: {
@@ -347,7 +352,7 @@ export const Timesheet: FC<Props> = props => {
       );
       const timeoffs = await getTimeoffRequestByFilter({
         isActive: 1,
-        userId: timesheetOwnerId.toString(),
+        userId: timesheetOwnerId,
         dateRangeList: [
           '>=',
           shownDates[0],
