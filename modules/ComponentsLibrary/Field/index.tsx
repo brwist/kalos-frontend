@@ -47,8 +47,7 @@ import {
   loadTechnicians,
   trailingZero,
   EventType,
-  loadEventById,
-  upsertTrip,
+  EventClientService,
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
@@ -183,7 +182,10 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
     }
     setEventStatus(0);
     try {
-      const event = await loadEventById(eventIdValue);
+      //const event = await loadEventById(eventIdValue);
+      const event = await EventClientService.LoadEventsByServiceCallID(
+        eventIdValue,
+      );
       if (onChange) {
         onChange(event.id);
       }

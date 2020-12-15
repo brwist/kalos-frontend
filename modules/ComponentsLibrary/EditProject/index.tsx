@@ -21,7 +21,6 @@ import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
 import { Tabs } from '../Tabs';
 import {
-  loadEventById,
   loadProjectTasks,
   EventType,
   ProjectTaskType,
@@ -51,6 +50,7 @@ import {
   UserType,
   loadUserById,
   deleteTaskEvent,
+  EventClientService,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -156,7 +156,11 @@ export const EditProject: FC<Props> = ({
   const [editingProject, setEditingProject] = useState<boolean>(false);
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
-    const event = await loadEventById(serviceCallId);
+    //const event = await loadEventById(serviceCallId);
+    console.log('Loading event');
+    const event = await EventClientService.LoadEventsByServiceCallID(
+      serviceCallId,
+    );
     setEvent(event);
     setLoadingEvent(false);
   }, [setEvent, setLoadingEvent]);
