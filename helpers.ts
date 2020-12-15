@@ -1322,18 +1322,6 @@ async function loadEventsByPropertyId(propertyId: number) {
 }
 
 /**
- * Returns loaded Property by its ids
- * @param id: property id
- * @returns Property
- */
-async function loadPropertyById(id: number) {
-  const req = new Property();
-  req.setId(id);
-  req.setIsActive(1);
-  return await PropertyClientService.Get(req);
-}
-
-/**
  * Returns loaded User by its ids
  * @param id: user id
  * @returns User
@@ -3672,7 +3660,6 @@ export {
   loadJobTypes,
   loadJobSubtypes,
   loadJobTypeSubtypes,
-  loadPropertyById,
   loadUserById,
   loadUsersByIds,
   range,

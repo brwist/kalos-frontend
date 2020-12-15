@@ -4,8 +4,8 @@ import { Form, Schema } from '../Form';
 import {
   PropertyType,
   loadGeoLocationByAddress,
-  loadPropertyById,
   saveProperty,
+  PropertyClientService,
 } from '../../../helpers';
 import {
   RESIDENTIAL_OPTIONS,
@@ -42,7 +42,7 @@ export const PropertyEdit: FC<Props> = ({
     if (propertyId) {
       if (!_property) {
         setLoading(true);
-        const entry = await loadPropertyById(propertyId);
+        const entry = await PropertyClientService.loadPropertyByID(propertyId);
         setEntry(entry);
         setFormKey(formKey + 1);
       }
