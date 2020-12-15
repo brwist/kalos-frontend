@@ -1477,12 +1477,6 @@ export const getTimeoffRequestByFilter = async (
   return await TimeoffRequestClientService.BatchGet(req);
 };
 
-export const deleteTimeoffRequestById = async (id: number) => {
-  const req = new TimeoffRequest();
-  req.setId(id);
-  return await TimeoffRequestClientService.Delete(req);
-};
-
 export const upsertTimeoffRequest = async (
   data: Partial<TimeoffRequestType>,
 ) => {

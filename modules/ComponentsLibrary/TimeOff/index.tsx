@@ -15,7 +15,6 @@ import {
   UserType,
   PTOType,
   upsertTimeoffRequest,
-  deleteTimeoffRequestById,
   timestamp,
   getTimeoffRequestTypes,
   UserClientService,
@@ -212,7 +211,7 @@ export const TimeOff: FC<Props> = ({
   const handleDelete = useCallback(async () => {
     if (requestOffId) {
       setSaving(true);
-      await deleteTimeoffRequestById(requestOffId);
+      await TimeoffRequestClientService.deleteTimeoffRequestById(requestOffId);
       setSaving(false);
       onSaveOrDelete(data);
     }
