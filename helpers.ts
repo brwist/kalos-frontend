@@ -139,6 +139,7 @@ export type InternalDocumentType = InternalDocument.AsObject;
 export type FileType = File.AsObject;
 export type DocumentKeyType = DocumentKey.AsObject;
 export type PerDiemType = PerDiem.AsObject;
+export type TripType = Trip.AsObject;
 export type PerDiemRowType = PerDiemRow.AsObject;
 export type KalosMapType = Trip.AsObject;
 export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
@@ -1819,7 +1820,7 @@ export const getTripDistance = async (origin: string, destination: string) => {
   }
 };
 
-export const upsertTrip = async (data: Trip, rowId: number) => {
+export const upsertTrip = async (data: Trip.AsObject, rowId: number) => {
   const req = new Trip();
   const fieldMaskList = [];
   let destinationAddress = '',
@@ -1854,7 +1855,7 @@ export const upsertTrip = async (data: Trip, rowId: number) => {
 
   try {
     return await PerDiemClientService[
-      data.getId != undefined ? 'UpdateTrip' : 'CreateTrip'
+      data.id != undefined ? 'UpdateTrip' : 'CreateTrip'
     ](req);
   } catch (err: any) {
     console.error('Error occurred trying to save trip: ' + err);

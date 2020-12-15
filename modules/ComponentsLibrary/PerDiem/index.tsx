@@ -42,6 +42,7 @@ import {
   refreshToken,
   upsertTrip,
   getTripDistance,
+  TripType,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
@@ -54,34 +55,26 @@ export interface Props {
   perDiem?: PerDiemType;
 }
 
-const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
+const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip.AsObject> = [
   [
     {
       label: 'Origin Address',
-      name: 'setOriginAddress',
+      name: 'originAddress',
       type: 'text',
     },
     {
       label: 'Destination Address',
-      name: 'setDestinationAddress',
+      name: 'destinationAddress',
       type: 'text',
     },
     {
-      name: 'getPerDiemRowId',
-      type: 'hidden',
-    },
-    {
-      name: 'setPerDiemRowId',
+      name: 'perDiemRowId',
       type: 'hidden',
     },
   ],
 ];
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
-
-const handleUpsertTrip = async (data: Trip, rowId: number) => {
-  await upsertTrip(data, rowId);
-};
 
 const handleGetTripDistance = async (origin: string, destination: string) => {
   await getTripDistance(origin, destination);
@@ -182,14 +175,21 @@ export const PerDiemComponent: FC<Props> = ({
   const [initialized, setInitialized] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
   const [mapModalOpened, setMapModalOpened] = useState<boolean>(false);
-  const [pendingTripEdit, setPendingTripEdit] = useState<Trip>();
+  const [pendingTripEdit, setPendingTripEdit] = useState<TripType>();
 
   const handleTripEditOpen = useCallback(
-    (trip: Trip) => {
-      setPendingTripEdit(trip);
+    (pendingTrip?: Trip.AsObject) => () => {
+      console.log('Pending trip: ', pendingTrip);
+      setPendingTripEdit(pendingTrip);
     },
     [setPendingTripEdit],
   );
+
+  const handleUpsertTrip = async (data: Trip.AsObject, rowId: number) => {
+    await upsertTrip(data, rowId).then(() => {
+      handleTripEditClose();
+    });
+  };
 
   const handleTripEditClose = useCallback(() => {
     setPendingTripEdit(undefined);
@@ -197,20 +197,16 @@ export const PerDiemComponent: FC<Props> = ({
   const handleMapModalOpen = useCallback(() => {
     setMapModalOpened(true);
   }, [mapModalOpened, setMapModalOpened]);
-  const handleMapModalClose = useCallback(() => setMapModalOpened(false), [
-    mapModalOpened,
-    setMapModalOpened,
-  ]);
 
   const handleTripSave = useCallback(
-    async (data: Trip, rowId: number) => {
+    async (data: Trip.AsObject, rowId: number) => {
       setSaving(true);
 
       console.log('TRIP : ', data);
-      console.log(data.setOriginAddress);
+      console.log(data.originAddress);
       await handleGetTripDistance(
-        String(data.setOriginAddress),
-        String(data.setDestinationAddress),
+        String(data.originAddress),
+        String(data.destinationAddress),
       );
       await handleUpsertTrip(data, rowId);
       setSaving(false);
@@ -589,6 +585,11 @@ export const PerDiemComponent: FC<Props> = ({
     availableDapartments,
     isAnyManager,
   ]);
+
+  const makeNewTrip = useCallback(() => {
+    const req = new Trip();
+    return req.toObject();
+  }, []);
   const makeNewPerDiemRow = useCallback(
     (perDiemId: number, dateString: string) => {
       const req = new PerDiemRow();
@@ -941,21 +942,18 @@ export const PerDiemComponent: FC<Props> = ({
                 size="medium"
                 variant="contained"
                 compact
-                onClick={() => {
-                  handleMapModalOpen();
-                  handleTripEditOpen(new Trip());
-                }}
+                onClick={handleTripEditOpen(makeNewTrip())}
               />
             </Form>
           </Modal>
-          {mapModalOpened && pendingTripEdit && (
-            <Modal open onClose={handleMapModalClose}>
-              <Form<Trip>
+          {pendingTripEdit && (
+            <Modal open onClose={handleTripEditClose}>
+              <Form<Trip.AsObject>
                 schema={SCHEMA_KALOS_MAP_INPUT_FORM}
-                onSave={(trip: Trip) => {
+                onSave={(trip: Trip.AsObject) => {
                   handleTripSave(trip, pendingPerDiemRowEdit.perDiemId);
                 }}
-                onClose={handleMapModalClose}
+                onClose={handleTripEditClose}
                 title={'Submit Trip'}
                 data={pendingTripEdit}
               ></Form>
