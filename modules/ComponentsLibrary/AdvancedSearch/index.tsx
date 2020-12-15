@@ -9,6 +9,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
 import BuildIcon from '@material-ui/icons/Build';
+import PersonIcon from '@material-ui/icons/Person';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
@@ -1708,6 +1709,19 @@ export const AdvancedSearch: FC<Props> = ({
 
     return [];
   };
+  const handleContractClick = useCallback(
+    (entry: ContractType) => () => {
+      console.log(entry);
+      window.open(
+        cfURL(
+          'admin:contracts.summary',
+          `&contract_id=${entry.id}&lsort=contract_number&lorder=ASC&lmaxrow=40&lstartrow=1&lnamesearch=&lsearchfield=special`,
+        ),
+        '_blank',
+      );
+    },
+    [],
+  );
   const getData = useCallback(
     (forPrint: boolean = false): Data => {
       const { kind } = filter;
@@ -2272,7 +2286,7 @@ export const AdvancedSearch: FC<Props> = ({
             });
       if (kind === 'contracts')
         return loading
-          ? makeFakeRows(1, 3)
+          ? makeFakeRows(5, 3)
           : contracts.map(entry => {
               const {
                 number,
@@ -2281,12 +2295,47 @@ export const AdvancedSearch: FC<Props> = ({
                 lastName,
                 businessName,
               } = entry;
+              const user = new User();
+              user.setId(entry.userId);
               return [
-                { value: number },
-                { value: formatDate(dateStarted) },
-                { value: formatDate(dateEnded) },
-                { value: businessName },
-                { value: lastName },
+                {
+                  value: number,
+                  onClick: handleContractClick(entry),
+                },
+                {
+                  value: formatDate(dateStarted),
+                  onClick: handleContractClick(entry),
+                },
+                {
+                  value: formatDate(dateEnded),
+                  onClick: handleContractClick(entry),
+                },
+                {
+                  value: businessName,
+                  onClick: handleContractClick(entry),
+                },
+                {
+                  value: lastName,
+                  onClick: handleContractClick(entry),
+                  actions: [
+                    <IconButton
+                      key="view"
+                      size="small"
+                      onClick={handleContractClick(entry)}
+                    >
+                      <SearchIcon />
+                    </IconButton>,
+                    <IconButton
+                      key="user"
+                      size="small"
+                      onClick={handlePendingCustomerViewingToggle(
+                        user.toObject(),
+                      )}
+                    >
+                      <PersonIcon />
+                    </IconButton>,
+                  ],
+                },
               ];
             });
       return [];
