@@ -1461,17 +1461,6 @@ export const getTimeoffRequestTypes = async () =>
   await (await TimeoffRequestClientService.GetTimeoffRequestTypes()).toObject()
     .dataList;
 
-export const getTimeoffRequestById = async (id: number) => {
-  const req = new TimeoffRequest();
-  req.setId(id);
-  req.setIsActive(1);
-  try {
-    return await TimeoffRequestClientService.Get(req);
-  } catch (e) {
-    return null;
-  }
-};
-
 export const getTimeoffRequestByFilter = async (
   filter: Partial<TimeoffRequestType>,
   fieldMaskListInit: string[] = [],
