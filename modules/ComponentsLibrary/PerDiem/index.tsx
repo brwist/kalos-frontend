@@ -47,7 +47,6 @@ import {
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { Coordinates } from '@kalos-core/kalos-rpc/Maps';
 
 export interface Props {
   loggedUserId: number;
@@ -194,9 +193,6 @@ export const PerDiemComponent: FC<Props> = ({
   const handleTripEditClose = useCallback(() => {
     setPendingTripEdit(undefined);
   }, [setPendingTripEdit]);
-  const handleMapModalOpen = useCallback(() => {
-    setMapModalOpened(true);
-  }, [mapModalOpened, setMapModalOpened]);
 
   const handleTripSave = useCallback(
     async (data: Trip.AsObject, rowId: number) => {
