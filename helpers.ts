@@ -281,7 +281,6 @@ const StateCode = {
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
-const GOOGLE_MAPS_KEY = 'AIzaSyBufXfsM3nTanL9XsATgToVf5SgPkbWHkc';
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -1929,8 +1928,12 @@ function range(start: number, end: number) {
  */
 async function loadGeoLocationByAddress(address: string) {
   try {
+    const client = new ApiKeyClient(ENDPOINT);
+    const req = new ApiKey();
+    req.setApiKey('google_maps');
+    const res = await client.Get(req);
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${GOOGLE_MAPS_KEY}`,
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${res}`,
     );
     const data = await response.json();
     const {
@@ -1947,7 +1950,10 @@ async function loadGeoLocationByAddress(address: string) {
       geolocationLng: +lng.toFixed(7),
     };
   } catch (e) {
-    console.log(e);
+    console.error(
+      'Could not load geolocation by address. The error occurred:  ',
+      e,
+    );
   }
 }
 
