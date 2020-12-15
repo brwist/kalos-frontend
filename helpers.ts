@@ -1197,13 +1197,6 @@ async function loadQuoteLines() {
   return results;
 }
 
-export const loadCreditCard = async (account: string) => {
-  const req = new CardData();
-  req.setAccount(account);
-  req.setWithUser(true);
-  return await UserClientService.GetCardList(req);
-};
-
 export const loadProjectTasks = async (eventId: number) => {
   const { resultsList } = (
     await EventClientService.loadTasksByEventID(eventId)

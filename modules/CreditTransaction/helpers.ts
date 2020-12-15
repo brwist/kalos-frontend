@@ -1,5 +1,5 @@
 import { parse } from 'papaparse';
-import { loadCreditCard, CardDataType } from '../../helpers';
+import { CardDataType, UserClientService } from '../../helpers';
 import { CREDIT_CARD_ACCOUNTS } from '../../constants';
 
 type CardData = { [key: string]: CardDataType };
@@ -53,7 +53,7 @@ const loadUserCards = async (cardNumber: string): Promise<CardData> => {
     account.includes(cardNumber),
   );
   if (!account) return {};
-  const cardData = await loadCreditCard(account);
+  const cardData = await UserClientService.loadCreditCardWithAccount(account);
   return cardData.reduce(
     (aggr, item) => ({ ...aggr, [item.cardNumber]: item }),
     {},

@@ -7,3 +7,4 @@ tmp/
 .idea
 *.code-workspace
 coverage
+helpers.js
