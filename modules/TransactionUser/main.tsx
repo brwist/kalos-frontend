@@ -2,11 +2,11 @@ import React, { FC, useState, useEffect, useCallback } from 'react';
 import { TransactionUserView } from './components/view';
 import { Loader } from '../Loader/main';
 import {
-  loadUserById,
   UserType,
   getDepartmentByManagerID,
   getCustomerName,
   refreshToken,
+  UserClientService,
 } from '../../helpers';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
@@ -32,7 +32,7 @@ const Transaction: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoading(true);
     await refreshToken();
-    const user = await loadUserById(userID);
+    const user = await UserClientService.loadUserById(userID);
     const isManager = await managerCheck();
     setUser(user);
     setIsManager(isManager);

@@ -1322,29 +1322,6 @@ async function loadEventsByPropertyId(propertyId: number) {
 }
 
 /**
- * Returns loaded User by its ids
- * @param id: user id
- * @returns User
- */
-async function loadUserById(id: number, withProperties?: boolean) {
-  try {
-    const req = new User();
-    req.setId(id);
-    if (withProperties) {
-      req.setWithProperties(true);
-    }
-    return await UserClientService.Get(req);
-  } catch (err) {
-    console.log('Failed to fetch user with id', id, err);
-    const res = new User();
-    res.setId(id);
-    res.setIsActive(1);
-    res.setIsEmployee(1);
-    return res.toObject();
-  }
-}
-
-/**
  * Returns loaded Users by their ids
  * @param ids: array of user id
  * @returns object { [userId]: User }
@@ -1356,7 +1333,9 @@ async function loadUsersByIds(ids: number[]) {
       uniqueIds.push(id);
     }
   });
-  const users = await Promise.all(uniqueIds.map(id => loadUserById(id)));
+  const users = await Promise.all(
+    uniqueIds.map(id => UserClientService.loadUserById(id)),
+  );
   return users.reduce((aggr, user) => ({ ...aggr, [user.id]: user }), {}) as {
     [key: number]: UserType;
   };
@@ -3660,7 +3639,6 @@ export {
   loadJobTypes,
   loadJobSubtypes,
   loadJobTypeSubtypes,
-  loadUserById,
   loadUsersByIds,
   range,
   loadGeoLocationByAddress,

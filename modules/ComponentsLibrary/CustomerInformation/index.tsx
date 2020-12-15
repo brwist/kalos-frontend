@@ -18,7 +18,6 @@ import {
   saveUser,
   loadGroups,
   loadUserGroupLinksByUserId,
-  loadUserById,
   GroupType,
   UserGroupLinkType,
   UserClientService,
@@ -123,7 +122,10 @@ export const CustomerInformation: FC<Props> = ({
     entry.setId(userID);
     entry.setIsActive(1);
     try {
-      const customer = await loadUserById(userID, viewedAsCustomer);
+      const customer = await UserClientService.loadUserById(
+        userID,
+        viewedAsCustomer,
+      );
       setCustomer(customer);
     } catch (e) {
       setError(true);

@@ -69,7 +69,6 @@ import {
   TimesheetDepartmentType,
   loadTimesheetDepartments,
   getDepartmentName,
-  loadUserById,
   saveUser,
   loadEmployeeFunctions,
   EmployeeFunctionType,
@@ -80,6 +79,7 @@ import {
   refreshToken,
   cfURL,
   ContractsSort,
+  UserClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -268,7 +268,7 @@ export const AdvancedSearch: FC<Props> = ({
       setDepartments(departments);
       const employeeFunctions = await loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
-      const loggedUser = await loadUserById(loggedUserId);
+      const loggedUser = await UserClientService.loadUserById(loggedUserId);
       setIsAdmin(loggedUser.isAdmin);
     }
     setFormKey(formKey + 1);

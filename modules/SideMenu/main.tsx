@@ -6,7 +6,7 @@ import List from '@material-ui/core/List';
 import Hidden from '@material-ui/core/Hidden';
 import IconButton from '@material-ui/core/IconButton';
 import MenuSharp from '@material-ui/icons/MenuSharp';
-import { loadUserById, forceHTTPS, customerCheck } from '../../helpers';
+import { forceHTTPS, customerCheck, UserClientService } from '../../helpers';
 import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
@@ -109,7 +109,7 @@ const SideMenu = ({
     (async () => {
       forceHTTPS();
       await userClient.GetToken('test', 'test');
-      const userResult = await loadUserById(userID);
+      const userResult = await UserClientService.loadUserById(userID);
       //customerCheck(userResult);
       if (userResult.isSu === 1) {
         dispatch({ type: 'fetchedUser', user: userResult, isManager: true });

@@ -12,7 +12,6 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import {
   TimeoffRequestType,
   getPTOInquiryByUserId,
-  loadUserById,
   UserType,
   PTOType,
   upsertTimeoffRequest,
@@ -20,6 +19,7 @@ import {
   deleteTimeoffRequestById,
   timestamp,
   getTimeoffRequestTypes,
+  UserClientService,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 
@@ -89,9 +89,9 @@ export const TimeOff: FC<Props> = ({
     );
     const pto = await getPTOInquiryByUserId(userId);
     setPto(pto);
-    const user = await loadUserById(userId);
+    const user = await UserClientService.loadUserById(userId);
     setUser(user);
-    const loggedUser = await loadUserById(loggedUserId);
+    const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedUser(loggedUser);
     if (requestOffId) {
       const req = await getTimeoffRequestById(requestOffId);
