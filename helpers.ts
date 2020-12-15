@@ -280,7 +280,7 @@ const StateCode = {
 };
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
-const KALOS_BOT = 'xoxb-213169303473-vMbrzzbLN8AThTm4JsXuw4iJ';
+const KALOS_BOT = getKeyByKeyName('kalos_bot');
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -1941,6 +1941,7 @@ async function getKeyByKeyName(keyName: string) {
  */
 async function loadGeoLocationByAddress(address: string) {
   try {
+    console.log('Just trying something out');
     const res = await getKeyByKeyName('google_maps');
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${res}`,
@@ -1962,7 +1963,7 @@ async function loadGeoLocationByAddress(address: string) {
     };
   } catch (e) {
     console.error(
-      'Could not load geolocation by address. The error occurred:  ',
+      'Could not load geolocation by address. This error occurred:  ',
       e,
     );
   }
