@@ -4,7 +4,7 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   loadJobTypes,
@@ -15,11 +15,11 @@ import {
   makeFakeRows,
   loadUserById,
   loadServicesRendered,
-  loadPropertyById,
   UserType,
   PropertyType,
   getCustomerName,
   upsertEvent,
+  PropertyClientService,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -132,7 +132,7 @@ export const ServiceCall: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const property = await loadPropertyById(propertyId);
+      const property = await PropertyClientService.loadPropertyByID(propertyId);
       setProperty(property);
       const customer = await loadUserById(userID);
       setCustomer(customer);
