@@ -286,34 +286,16 @@ const StateCode = {
  * @param keyName
  * @returns ApiKey.AsObject
  */
-/*
 export const getKeyByKeyName = async (keyName: string) => {
-  console.log('Inside getKeyByKeyName');
   const client = new ApiKeyClient(ENDPOINT);
   const req = new ApiKey();
-  console.log('Made key and endpoint');
-  console.log('Keyname is ' + keyName);
-  req.setApiKey(keyName);
-  console.log('Set the key');
-  console.log(req);
+  req.setTextId(keyName);
   const ans = await client.Get(req);
-  console.log('Got client answer: ', ans);
-  return ans;
-};*/
-
-const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
-const KALOS_BOT = async () => {
-  console.log('Inside getKeyByKeyName');
-  const client = new ApiKeyClient(ENDPOINT);
-  const req = new ApiKey();
-  console.log('Made key and endpoint');
-  req.setApiKey('kalos_bot');
-  console.log('Set the key');
-  console.log(req);
-  const ans = await client.Get(req);
-  console.log('Got client answer: ', ans);
   return ans;
 };
+
+const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
+const KALOS_BOT = getKeyByKeyName('kalos_bot');
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -1750,7 +1732,7 @@ const metersToMiles = (meters: number): number => {
 
 export const getTripDistance = async (origin: string, destination: string) => {
   try {
-    await getApi();
+    //await getApi();
     const matReq = new MatrixRequest();
     const placeOrigin = addressStringToPlace(origin),
       placeDestination = addressStringToPlace(destination);
@@ -1899,15 +1881,7 @@ function range(start: number, end: number) {
  */
 async function loadGeoLocationByAddress(address: string) {
   try {
-    console.log('Inside getKeyByKeyName');
-    const client = new ApiKeyClient(ENDPOINT);
-    const req = new ApiKey();
-    console.log('Made key and endpoint');
-    req.setApiKey('google_maps');
-    console.log('Set the key');
-    console.log(req);
-    const res = await client.Get(req);
-    //const res = await getKeyByKeyName('google_maps');
+    const res = await getKeyByKeyName('google_maps');
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${res}`,
     );
