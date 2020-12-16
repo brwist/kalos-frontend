@@ -1,6 +1,7 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import { PropertyInformation } from './main';
+
 test('PropertyInformation renders correctly', () => {
   const tree = renderer
     .create(
