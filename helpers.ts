@@ -660,17 +660,6 @@ function getRPCFields(fieldName: string) {
 }
 
 /**
- * Returns loaded JobTypes
- * @returns JobType[]
- */
-async function loadJobTypes() {
-  const { resultsList } = (
-    await JobTypeClientService.BatchGet(new JobType())
-  ).toObject();
-  return resultsList;
-}
-
-/**
  * Returns loaded JobSubtypes
  * @returns JobSubtype[]
  */
@@ -3620,7 +3609,6 @@ export {
   getRPCFields,
   formatDateTime,
   padWithZeroes,
-  loadJobTypes,
   loadJobSubtypes,
   loadJobTypeSubtypes,
   loadUsersByIds,
