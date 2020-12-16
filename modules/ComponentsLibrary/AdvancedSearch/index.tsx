@@ -57,7 +57,6 @@ import {
   UserType,
   PropertyType,
   ContractType,
-  loadJobSubtypes,
   JobTypeType,
   JobSubtypeType,
   deleteEventById,
@@ -80,6 +79,7 @@ import {
   ContractsSort,
   UserClientService,
   JobTypeClientService,
+  JobSubtypeClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -260,7 +260,7 @@ export const AdvancedSearch: FC<Props> = ({
     setLoadingDicts(true);
     const jobTypes = await JobTypeClientService.loadJobTypes();
     setJobTypes(jobTypes);
-    const jobSubtypes = await loadJobSubtypes();
+    const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
     setJobSubtypes(jobSubtypes);
     setLoadingDicts(false);
     if (kinds.includes('employees')) {

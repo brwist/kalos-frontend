@@ -659,17 +659,6 @@ function getRPCFields(fieldName: string) {
   };
 }
 
-/**
- * Returns loaded JobSubtypes
- * @returns JobSubtype[]
- */
-async function loadJobSubtypes() {
-  const { resultsList } = (
-    await JobSubtypeClientService.BatchGet(new JobSubtype())
-  ).toObject();
-  return resultsList;
-}
-
 export const getDepartmentByManagerID = async (userId: number) =>
   await TimesheetDepartmentClientService.getDepartmentByManagerID(userId);
 
@@ -3609,7 +3598,6 @@ export {
   getRPCFields,
   formatDateTime,
   padWithZeroes,
-  loadJobSubtypes,
   loadJobTypeSubtypes,
   loadUsersByIds,
   range,
