@@ -48,7 +48,7 @@ import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
-import { Address } from '../PlaceAutocompleteAddressForm/Address';
+import { Address, AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 
 export interface Props {
   loggedUserId: number;
@@ -960,7 +960,7 @@ export const PerDiemComponent: FC<Props> = ({
             */
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
-              onSave={(address: Address) => {
+              onSave={(address: AddressPair) => {
                 console.log('It saved');
               }}
             ></PlaceAutocompleteAddressForm>
