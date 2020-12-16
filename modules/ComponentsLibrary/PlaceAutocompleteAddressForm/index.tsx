@@ -125,15 +125,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 
   handleChange = () => {
     const fields = this.getInputFields();
-
-    this.getAddressesFromGoogle();
-  };
-
-  getAddressesFromGoogle = async () => {
-    // @ts-ignore
-    let placeSearch: window.google.maps.places.PlacesService;
-    // @ts-ignore
-    let autocomplete: window.google.maps.places.Autocomplete;
+    // Will fully implement later
   };
 
   loadScript = async (callback: () => void) => {
@@ -184,7 +176,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     this.setState({ query: query });
   };
   render() {
-    this.loadScript(() => this.handleLoad());
+    //this.loadScript(() => this.handleLoad());
+    // Disabling loading as it is WIP
     return (
       <>
         <Modal open onClose={this.props.onClose}>
