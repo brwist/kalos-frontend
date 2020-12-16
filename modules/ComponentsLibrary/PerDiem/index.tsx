@@ -29,7 +29,6 @@ import {
   TimesheetDepartmentType,
   getDepartmentName,
   upsertPerDiem,
-  deletePerDiemById,
   upsertPerDiemRow,
   deletePerDiemRowById,
   submitPerDiemById,
@@ -43,12 +42,13 @@ import {
   getTripDistance,
   TripType,
   UserClientService,
+  PerDiemClientService,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
-import { Address, AddressPair } from '../PlaceAutocompleteAddressForm/Address';
+import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 
 export interface Props {
   loggedUserId: number;
@@ -471,7 +471,7 @@ export const PerDiemComponent: FC<Props> = ({
     if (pendingPerDiemDelete) {
       const { id } = pendingPerDiemDelete;
       setPendingPerDiemDelete(undefined);
-      await deletePerDiemById(id);
+      await PerDiemClientService.deletePerDiemById(id);
       setLoaded(false);
     }
   }, [pendingPerDiemDelete, setLoaded, setPendingPerDiemDelete]);
