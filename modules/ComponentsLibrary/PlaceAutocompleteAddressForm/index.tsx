@@ -7,6 +7,7 @@ import { Form, Schema } from '../Form';
 import { SCHEMA_KALOS_MAP_INPUT_FORM } from '../PerDiem/index';
 import { Address, AddressPairInterface, AddressPair } from './Address';
 
+// Convenience call, will be removed later
 export const getApi = async () => {
   const res = await getKeyByKeyName('google_maps');
   return res.apiKey;
@@ -19,9 +20,10 @@ interface Props {
 
 interface State {
   address: AddressPairInterface;
+  query: any;
 }
 
-// Find with class "FieldInput"
+// Schema will be adjusted down the line to include as many addresses as it can
 export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   [
     {
@@ -99,6 +101,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   Props,
   State
 > {
+  autoComplete: any;
   constructor(props: Props) {
     super(props);
 
@@ -106,6 +109,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 
     this.state = {
       address: trip,
+      query: null,
     };
   }
 
@@ -117,22 +121,72 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     );
 
     return inputs;
-    for (let i = 0; i < inputs.length; i++) {
-      console.log('inputs: ', inputs[i]);
-    }
   };
 
   handleChange = () => {
     const fields = this.getInputFields();
+
+    this.getAddressesFromGoogle();
   };
 
+  getAddressesFromGoogle = async () => {
+    // @ts-ignore
+    let placeSearch: window.google.maps.places.PlacesService;
+    // @ts-ignore
+    let autocomplete: window.google.maps.places.Autocomplete;
+  };
+
+  loadScript = async (callback: () => void) => {
+    const url = `https://maps.googleapis.com/maps/api/js?key=${await getApi()}&libraries=places`;
+    let script = document.createElement('script') as any;
+    script.type = 'text/javascript';
+
+    if (script.readyState) {
+      script.onreadystatechange = () => {
+        if (
+          script.readyState === 'loaded' ||
+          script.readyState === 'complete'
+        ) {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else {
+      script.onload = () => callback();
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  };
+
+  handleLoad = () => {
+    // @ts-ignore
+    console.log('Loading', window.google);
+    // @ts-ignore
+    this.autoComplete = new window.google.maps.places.Autocomplete(
+      this.getInputFields()[0].getElementsByTagName(
+        // For now, I'm just testing it on the first input
+        // element
+        'input',
+      )[0] as HTMLInputElement,
+      { types: ['cities'], componentRestrictions: { country: 'us' } },
+    );
+
+    this.autoComplete.setFields(['address_components', 'formatted_address']);
+    this.autoComplete.addListener('place_changed', () =>
+      this.handlePlaceSelect(),
+    );
+  };
+
+  handlePlaceSelect = () => {
+    const addr = this.autoComplete.getPlace();
+    const query = addr.formatted_address;
+    this.setState({ query: query });
+  };
   render() {
+    this.loadScript(() => this.handleLoad());
     return (
       <>
-        (
-        <script
-          src={`https://maps.googleapis.com/maps/api/js?key=${getApi()}&libraries=places`}
-        />
         <Modal open onClose={this.props.onClose}>
           <Form
             title="Enter Location"
