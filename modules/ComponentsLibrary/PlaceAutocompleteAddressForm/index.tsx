@@ -31,7 +31,10 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   [
     {
       label: 'Origin',
+      headline: true,
     },
+  ],
+  [
     {
       label: 'Street Address',
       name: 'StreetAddressOrigin',
@@ -47,6 +50,8 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       name: 'StateOrigin',
       type: 'text',
     },
+  ],
+  [
     {
       label: 'Zip Code',
       name: 'ZipCodeOrigin',
@@ -57,6 +62,14 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       name: 'CountryOrigin',
       type: 'text',
     },
+  ],
+  [
+    {
+      label: 'Destination',
+      headline: true,
+    },
+  ],
+  [
     { label: 'Destination' },
     {
       label: 'Street Address',
@@ -73,6 +86,8 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       name: 'StateDestination',
       type: 'text',
     },
+  ],
+  [
     {
       label: 'Zip Code',
       name: 'ZipCodeDestination',
