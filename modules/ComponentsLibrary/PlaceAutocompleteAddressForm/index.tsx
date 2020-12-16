@@ -64,7 +64,6 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
     },
   ],
   [
-    { label: 'Destination' },
     {
       label: 'Street Address',
       name: 'StreetAddressDestination',
