@@ -1815,12 +1815,6 @@ export const approvePerDiemById = async (id: number, approvedById: number) => {
   return await PerDiemClientService.Update(req);
 };
 
-export const deletePerDiemById = async (id: number) => {
-  const req = new PerDiem();
-  req.setId(id);
-  await PerDiemClientService.Delete(req);
-};
-
 export const upsertPerDiemRow = async (data: PerDiemRowType) => {
   const req = new PerDiemRow();
   const fieldMaskList = [];

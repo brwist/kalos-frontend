@@ -30,6 +30,7 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       headline: true,
     },
   ],
+
   [
     {
       label: 'Street Address',
@@ -199,23 +200,30 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     // Get the place details from the autocomplete object.
     const place = this.autoComplete.getPlace();
 
+    /*
     for (const component in componentForm) {
       (document.getElementById(component) as HTMLInputElement).value = '';
       (document.getElementById(component) as HTMLInputElement).disabled = false;
     }
-
+    */
+    let index = 0;
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
     // @ts-ignore
     for (const component of place.address_components as google.maps.GeocoderAddressComponent[]) {
+      console.log('in the for loop');
       const addressType = component.types[0];
 
+      console.log('Going into if statement');
       // @ts-ignore
       if (componentForm[addressType]) {
         // @ts-ignore
         const val = component[componentForm[addressType]];
-        (document.getElementById(addressType) as HTMLInputElement).value = val;
+        this.getInputFieldByIndex(index).value = val;
+        index++;
       }
+
+      console.log('Out of if');
     }
   };
 
