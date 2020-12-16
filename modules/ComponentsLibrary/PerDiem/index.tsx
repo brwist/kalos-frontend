@@ -47,6 +47,8 @@ import {
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
+import { Address } from '../PlaceAutocompleteAddressForm/Address';
 
 export interface Props {
   loggedUserId: number;
@@ -54,7 +56,7 @@ export interface Props {
   perDiem?: PerDiemType;
 }
 
-const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip.AsObject> = [
+export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip.AsObject> = [
   [
     {
       label: 'Origin Address',
@@ -943,6 +945,7 @@ export const PerDiemComponent: FC<Props> = ({
             </Form>
           </Modal>
           {pendingTripEdit && (
+            /*
             <Modal open onClose={handleTripEditClose}>
               <Form<Trip.AsObject>
                 schema={SCHEMA_KALOS_MAP_INPUT_FORM}
@@ -954,6 +957,13 @@ export const PerDiemComponent: FC<Props> = ({
                 data={pendingTripEdit}
               ></Form>
             </Modal>
+            */
+            <PlaceAutocompleteAddressForm
+              onClose={handleTripEditClose}
+              onSave={(address: Address) => {
+                console.log('It saved');
+              }}
+            ></PlaceAutocompleteAddressForm>
           )}
         </>
       )}
