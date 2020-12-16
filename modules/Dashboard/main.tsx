@@ -13,7 +13,7 @@ import { Spiff } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import { Assignments } from './components/AssignmentsTable';
 import { Spiffs } from './components/SpiffsTable';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { Search } from '../Search/main';
+import { SearchIndex } from '../SearchIndex/main';
 import { ENDPOINT } from '../../constants';
 import {
   usd,
@@ -409,7 +409,7 @@ export class Dashboard extends React.PureComponent<props, state> {
                 marginBottom: 20,
               }}
             >
-              <Search loggedUserId={this.props.userId} />
+              <SearchIndex loggedUserId={this.props.userId} />
             </Paper>
           )}
           {this.state.spiffs.length !== 0 && (

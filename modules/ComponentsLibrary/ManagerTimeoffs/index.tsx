@@ -56,7 +56,9 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
         ),
       );
       setLoaded(false);
-    } catch (e) {}
+    } catch (e) {
+      console.log(e);
+    }
   }, [loggedUserId, setLoaded, setTypes]);
   const load = useCallback(async () => {
     if (!department) return;
