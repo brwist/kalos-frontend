@@ -21,6 +21,7 @@ interface State {
   address: AddressPairInterface;
 }
 
+// Find with class "FieldInput"
 export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   [
     {
@@ -108,6 +109,23 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     };
   }
 
+  getInputFields = () => {
+    const group = document.getElementsByClassName('LocationForm');
+
+    const inputs = (group[0] as HTMLElement).getElementsByClassName(
+      'FieldInput',
+    );
+
+    return inputs;
+    for (let i = 0; i < inputs.length; i++) {
+      console.log('inputs: ', inputs[i]);
+    }
+  };
+
+  handleChange = () => {
+    const fields = this.getInputFields();
+  };
+
   render() {
     return (
       <>
@@ -122,6 +140,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             onClose={this.props.onClose}
             onSave={this.props.onSave}
             data={this.state.address}
+            onChange={this.handleChange}
+            className="LocationForm"
           ></Form>
         </Modal>
         )
