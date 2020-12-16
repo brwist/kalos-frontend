@@ -39,7 +39,7 @@ import {
   upsertTaskEvent,
   TaskEventType,
   loadTaskEventsByFilter,
-  deleteTaskEvent,
+  TaskEventClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -393,7 +393,7 @@ export const Tasks: FC<Props> = ({
     if (!taskEventDeleting || !pendingEdit || !pendingEdit.id) return;
     const { id } = taskEventDeleting;
     setTaskEventDeleting(undefined);
-    await deleteTaskEvent(id);
+    await TaskEventClientService.deleteTaskEvent(id);
     loadTaskEvents(pendingEdit.id);
   }, [taskEventDeleting, loadTaskEvents, pendingEdit]);
   const handleSaveTaskEvent = useCallback(
