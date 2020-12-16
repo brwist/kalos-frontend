@@ -5,7 +5,7 @@ import { getKeyByKeyName } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { SCHEMA_KALOS_MAP_INPUT_FORM } from '../PerDiem/index';
-import { Address, AddressInterface } from './Address';
+import { Address, AddressPairInterface, AddressPair } from './Address';
 
 export const getApi = async () => {
   console.log('Calling on the maps api');
@@ -20,38 +20,67 @@ export const getApi = async () => {
 
 interface Props {
   onClose: () => void;
-  onSave: (address: Address) => void;
+  onSave: (addressPair: AddressPair) => void;
 }
 
 interface State {
-  address: AddressInterface;
+  address: AddressPairInterface;
 }
 
-export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<Address.AsObject> = [
+export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   [
     {
+      label: 'Origin',
+    },
+    {
       label: 'Street Address',
-      name: 'StreetAddress',
+      name: 'StreetAddressOrigin',
       type: 'text',
     },
     {
       label: 'City',
-      name: 'City',
+      name: 'CityOrigin',
       type: 'text',
     },
     {
       label: 'State',
-      name: 'State',
+      name: 'StateOrigin',
       type: 'text',
     },
     {
       label: 'Zip Code',
-      name: 'ZipCode',
+      name: 'ZipCodeOrigin',
       type: 'text',
     },
     {
       label: 'Country',
-      name: 'Country',
+      name: 'CountryOrigin',
+      type: 'text',
+    },
+    { label: 'Destination' },
+    {
+      label: 'Street Address',
+      name: 'StreetAddressDestination',
+      type: 'text',
+    },
+    {
+      label: 'City',
+      name: 'CityDestination',
+      type: 'text',
+    },
+    {
+      label: 'State',
+      name: 'StateDestination',
+      type: 'text',
+    },
+    {
+      label: 'Zip Code',
+      name: 'ZipCodeDestination',
+      type: 'text',
+    },
+    {
+      label: 'Country',
+      name: 'CountryDestination',
       type: 'text',
     },
   ],
@@ -64,7 +93,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   constructor(props: Props) {
     super(props);
 
-    let trip = new Address();
+    let trip = new AddressPair();
 
     this.state = {
       address: trip,
