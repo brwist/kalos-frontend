@@ -3403,12 +3403,6 @@ export const upsertTaskEvent = async (data: Partial<TaskEventType>) => {
   return await TaskEventClientService[data.id ? 'Update' : 'Create'](req);
 };
 
-export const deleteTaskEvent = async (id: number) => {
-  const req = new TaskEvent();
-  req.setId(id);
-  await TaskEventClientService.Delete(req);
-};
-
 interface IBugReport {
   title: string;
   body?: string;

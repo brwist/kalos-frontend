@@ -48,9 +48,9 @@ import {
   upsertTaskEvent,
   timestamp,
   UserType,
-  deleteTaskEvent,
   EventClientService,
   UserClientService,
+  TaskEventClientService,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -291,7 +291,7 @@ export const EditProject: FC<Props> = ({
     if (!editingTask || taskEvents.length === 0) return;
     setPendingCheckoutDelete(false);
     setPendingCheckoutChange(true);
-    await deleteTaskEvent(taskEvents[0].id);
+    await TaskEventClientService.deleteTaskEvent(taskEvents[0].id);
     await loadTaskEvents(editingTask.id);
     setPendingCheckoutChange(false);
   }, [
