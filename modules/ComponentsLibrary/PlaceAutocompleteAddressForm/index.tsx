@@ -8,14 +8,8 @@ import { SCHEMA_KALOS_MAP_INPUT_FORM } from '../PerDiem/index';
 import { Address, AddressPairInterface, AddressPair } from './Address';
 
 export const getApi = async () => {
-  console.log('Calling on the maps api');
   const res = await getKeyByKeyName('google_maps');
-  console.log('Key ', res);
-  const response = await fetch(
-    `https://maps.googleapis.com/maps/api/js?key=${res.apiKey}&libraries=places`,
-  );
-  const data = await response.json();
-  console.log('Google maps response: ', data);
+  return res.apiKey;
 };
 
 interface Props {
@@ -119,6 +113,9 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     return (
       <>
         (
+        <script
+          src={`https://maps.googleapis.com/maps/api/js?key=${getApi()}&libraries=places`}
+        />
         <Modal open onClose={this.props.onClose}>
           <Form
             title="Enter Location"
