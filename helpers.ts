@@ -125,9 +125,6 @@ import {
   randomize,
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
-import { MapServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb_service';
-
-import { getApi } from './modules/ComponentsLibrary/PlaceAutocompleteAddressForm/index';
 
 export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
@@ -1710,7 +1707,6 @@ const metersToMiles = (meters: number): number => {
 
 export const getTripDistance = async (origin: string, destination: string) => {
   try {
-    //await getApi();
     const matReq = new MatrixRequest();
     const placeOrigin = addressStringToPlace(origin),
       placeDestination = addressStringToPlace(destination);
