@@ -180,7 +180,6 @@ export const PerDiemComponent: FC<Props> = ({
 
   const handleTripEditOpen = useCallback(
     (pendingTrip?: Trip.AsObject) => () => {
-      console.log('Pending trip: ', pendingTrip);
       setPendingTripEdit(pendingTrip);
     },
     [setPendingTripEdit],
