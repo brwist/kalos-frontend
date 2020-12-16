@@ -7,7 +7,6 @@ import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
-  loadJobTypes,
   loadJobSubtypes,
   loadJobTypeSubtypes,
   getRPCFields,
@@ -19,6 +18,7 @@ import {
   getCustomerName,
   upsertEvent,
   PropertyClientService,
+  JobTypeClientService,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -137,7 +137,7 @@ export const ServiceCall: FC<Props> = props => {
       setCustomer(customer);
       const propertyEvents = await loadEventsByPropertyId(propertyId);
       setPropertyEvents(propertyEvents);
-      const jobTypes = await loadJobTypes();
+      const jobTypes = await JobTypeClientService.loadJobTypes();
       setJobTypes(jobTypes);
       const jobSubtypes = await loadJobSubtypes();
       setJobSubtype(jobSubtypes);

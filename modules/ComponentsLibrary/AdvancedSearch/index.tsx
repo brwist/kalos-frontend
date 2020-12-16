@@ -57,7 +57,6 @@ import {
   UserType,
   PropertyType,
   ContractType,
-  loadJobTypes,
   loadJobSubtypes,
   JobTypeType,
   JobSubtypeType,
@@ -80,6 +79,7 @@ import {
   cfURL,
   ContractsSort,
   UserClientService,
+  JobTypeClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -258,7 +258,7 @@ export const AdvancedSearch: FC<Props> = ({
   const loadDicts = useCallback(async () => {
     await refreshToken();
     setLoadingDicts(true);
-    const jobTypes = await loadJobTypes();
+    const jobTypes = await JobTypeClientService.loadJobTypes();
     setJobTypes(jobTypes);
     const jobSubtypes = await loadJobSubtypes();
     setJobSubtypes(jobSubtypes);
