@@ -3,15 +3,8 @@ import React from 'react';
 import { getKeyByKeyName } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
-import {
-  AddressPairInterface,
-  AddressPair,
-  AddressNamespace,
-  AddressInterface,
-  Address,
-} from './Address';
+import { Address } from './Address';
 import './styles.less';
-import { indexOf } from 'lodash';
 
 // Convenience call, will be removed later
 export const getApi = async () => {
@@ -21,13 +14,13 @@ export const getApi = async () => {
 
 interface Props {
   onClose: () => void;
-  onSave: (addressPair: AddressPair) => void;
+  onSave: (addressPair: Address) => void;
   addressFields: number;
-  schema: Schema<AddressPair.AsObject>;
+  schema: Schema<Address.AsObject>;
 }
 
 interface State {
-  address: AddressPairInterface;
+  address: Address;
   query: any;
 }
 
@@ -49,7 +42,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   constructor(props: Props) {
     super(props);
 
-    let trip = new AddressPair();
+    let trip = new Address();
 
     this.state = {
       address: trip,
