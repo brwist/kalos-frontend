@@ -51,12 +51,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     };
   }
 
-  componentDidMount() {}
-
-  componentDidUpdate() {
-    console.log('UPDATED');
-  }
-
   getInputFields = () => {
     const group = document.getElementsByClassName('LocationForm');
     let inputs = [];
