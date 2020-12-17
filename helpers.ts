@@ -354,7 +354,7 @@ function timestamp(dateOnly = false) {
 async function slackNotify(id: string, text: string) {
   const KALOS_BOT = await getKeyByKeyName('kalos_bot');
   await fetch(
-    `https://slack.com/api/chat.postMessage?token=${KALOS_BOT}&channel=${id}&text=${text}`,
+    `https://slack.com/api/chat.postMessage?token=${KALOS_BOT.apiKey}&channel=${id}&text=${text}`,
     {
       method: 'POST',
     },
@@ -362,6 +362,7 @@ async function slackNotify(id: string, text: string) {
 }
 
 async function getSlackList(skipCache = false): Promise<SlackUser[]> {
+  const KALOS_BOT = await getKeyByKeyName('kalos_bot');
   try {
     if (!skipCache) {
       const listStr = localStorage.getItem('SLACK_USER_CACHE');
@@ -373,7 +374,7 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
       }
     }
     const res = await fetch(
-      `https://slack.com/api/users.list?token=${KALOS_BOT}`,
+      `https://slack.com/api/users.list?token=${KALOS_BOT.apiKey}`,
     );
     const jsonRes = await res.json();
     try {
