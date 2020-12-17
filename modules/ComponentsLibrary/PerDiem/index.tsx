@@ -113,6 +113,94 @@ export const getStatus = (
   };
 };
 
+// Schema will be adjusted down the line to include as many addresses as it can
+export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
+  [
+    {
+      label: 'Origin',
+      headline: true,
+    },
+  ],
+  [
+    {
+      label: 'Address',
+      type: 'text',
+      name: 'StreetAddressOrigin',
+    },
+  ],
+  [
+    {
+      label: 'Street Address',
+      name: 'StreetAddressOrigin',
+      type: 'text',
+    },
+    {
+      label: 'City',
+      name: 'CityOrigin',
+      type: 'text',
+    },
+    {
+      label: 'State',
+      name: 'StateOrigin',
+      type: 'text',
+    },
+  ],
+  [
+    {
+      label: 'Zip Code',
+      name: 'ZipCodeOrigin',
+      type: 'text',
+    },
+    {
+      label: 'Country',
+      name: 'CountryOrigin',
+      type: 'text',
+    },
+  ],
+  [
+    {
+      label: 'Destination',
+      headline: true,
+    },
+  ],
+  [
+    {
+      label: 'Address',
+      type: 'text',
+      name: 'StreetAddressDestination',
+    },
+  ],
+  [
+    {
+      label: 'Street Address',
+      name: 'StreetAddressDestination',
+      type: 'text',
+    },
+    {
+      label: 'City',
+      name: 'CityDestination',
+      type: 'text',
+    },
+    {
+      label: 'State',
+      name: 'StateDestination',
+      type: 'text',
+    },
+  ],
+  [
+    {
+      label: 'Zip Code',
+      name: 'ZipCodeDestination',
+      type: 'text',
+    },
+    {
+      label: 'Country',
+      name: 'CountryDestination',
+      type: 'text',
+    },
+  ],
+];
+
 const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   [
     {
@@ -960,8 +1048,10 @@ export const PerDiemComponent: FC<Props> = ({
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
               onSave={(address: AddressPair) => {
-                console.log('It saved');
+                console.log(address);
               }}
+              addressFields={2}
+              schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
             ></PlaceAutocompleteAddressForm>
           )}
         </>

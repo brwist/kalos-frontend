@@ -3,7 +3,13 @@ import React from 'react';
 import { getKeyByKeyName } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
-import { AddressPairInterface, AddressPair } from './Address';
+import {
+  AddressPairInterface,
+  AddressPair,
+  AddressNamespace,
+  AddressInterface,
+  Address,
+} from './Address';
 import './styles.less';
 import { indexOf } from 'lodash';
 
@@ -16,100 +22,14 @@ export const getApi = async () => {
 interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair) => void;
+  addressFields: number;
+  schema: Schema<AddressPair.AsObject>;
 }
 
 interface State {
   address: AddressPairInterface;
   query: any;
 }
-
-// Schema will be adjusted down the line to include as many addresses as it can
-export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
-  [
-    {
-      label: 'Origin',
-      headline: true,
-    },
-  ],
-  [
-    {
-      label: 'Address',
-      type: 'text',
-      name: 'StreetAddressOrigin',
-    },
-  ],
-  [
-    {
-      label: 'Street Address',
-      name: 'StreetAddressOrigin',
-      type: 'text',
-    },
-    {
-      label: 'City',
-      name: 'CityOrigin',
-      type: 'text',
-    },
-    {
-      label: 'State',
-      name: 'StateOrigin',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Zip Code',
-      name: 'ZipCodeOrigin',
-      type: 'text',
-    },
-    {
-      label: 'Country',
-      name: 'CountryOrigin',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Destination',
-      headline: true,
-    },
-  ],
-  [
-    {
-      label: 'Address',
-      type: 'text',
-      name: 'StreetAddressDestination',
-    },
-  ],
-  [
-    {
-      label: 'Street Address',
-      name: 'StreetAddressDestination',
-      type: 'text',
-    },
-    {
-      label: 'City',
-      name: 'CityDestination',
-      type: 'text',
-    },
-    {
-      label: 'State',
-      name: 'StateDestination',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Zip Code',
-      name: 'ZipCodeDestination',
-      type: 'text',
-    },
-    {
-      label: 'Country',
-      name: 'CountryDestination',
-      type: 'text',
-    },
-  ],
-];
 
 const componentForm = {
   street_number: 'short_name',
@@ -126,6 +46,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 > {
   autoCompleteOrigin: any;
   autoCompleteDestination: any;
+  // @ts-ignore
+  autoCompleteSections: google.maps.places.Autocomplete[2] = [];
   constructor(props: Props) {
     super(props);
 
@@ -251,57 +173,48 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   handleLoad = () => {
     // Create the autocomplete object, restricting the search predictions to
     // geographical location types.
-    // @ts-ignore
-    this.autoCompleteOrigin = new google.maps.places.Autocomplete(
-      this.getInputElementFromInputField(
-        this.getInputFieldByLabelContent('Address', 0),
-      ),
-      { types: ['geocode'] },
-    );
 
-    // @ts-ignore
-    this.autoCompleteDestination = new google.maps.places.Autocomplete(
-      this.getInputElementFromInputField(
-        this.getInputFieldByLabelContent('Address', 1),
-      ),
-      { types: ['geocode'] },
-    );
+    for (let i = 0; i < this.props.addressFields; i++) {
+      console.log('i : ', i);
+      // @ts-ignore
+      this.autoCompleteSections[
+        i
+        // @ts-ignore
+      ] = new google.maps.places.Autocomplete(
+        this.getInputElementFromInputField(
+          this.getInputFieldByLabelContent('Address', i),
+        ),
+        { types: ['geocode'] },
+      );
 
-    // Avoid paying for data that you don't need by restricting the set of
-    // place fields that are returned to just the address components.
-    this.autoCompleteOrigin.setFields(['address_component']);
-    this.autoCompleteDestination.setFields(['address_component']);
+      // Avoid paying for data that you don't need by restricting the set of
+      // place fields that are returned to just the address components.
+      this.autoCompleteSections[i].setFields(['address_component']);
 
-    // When the user selects an address from the drop-down, populate the
-    // address fields in the form.
-    this.autoCompleteOrigin.addListener(
-      'place_changed',
-      this.handleOriginSelect,
-    );
+      // When the user selects an address from the drop-down, populate the
+      // address fields in the form.
 
-    this.autoCompleteDestination.addListener(
-      'place_changed',
-      this.handleDestinationSelect,
-    );
+      //const arr = Array<keyof Address>();
+
+      let index = 0;
+      this.props.schema.forEach(row => {
+        row.forEach(field => {
+          if (!field.headline) index++;
+        });
+      });
+
+      console.log(index);
+
+      this.autoCompleteSections[i].addListener('place_changed', () => {
+        this.handlePlaceSelect(i, i * (index / 2));
+      });
+    }
   };
 
-  handleOriginSelect = () => {
-    // Get the place details from the autocomplete object.
-    const place = this.autoCompleteOrigin.getPlace();
-    this.handlePlaceSelect(place, 0);
-  };
-
-  handleDestinationSelect = () => {
-    // Get the place details from the autocomplete object.
-    const place = this.autoCompleteDestination.getPlace();
-    this.handlePlaceSelect(place, 6);
-  };
-
-  handlePlaceSelect = (place: any, startIndex: number) => {
+  handlePlaceSelect = (indexInArray: any, startIndex: number) => {
+    const place = this.autoCompleteSections[indexInArray].getPlace();
     let index = startIndex,
       street_number = 0;
-
-    this.getInputFieldByLabelContent('Street Address', 1);
 
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
@@ -350,7 +263,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         <Modal open onClose={this.props.onClose}>
           <Form
             title="Enter Location"
-            schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
+            schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
             data={this.state.address}
