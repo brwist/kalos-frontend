@@ -21,6 +21,7 @@ import {
   deleteEventById,
   EventsFilter,
   EventsSort,
+  cfURL,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 import './serviceCallsPending.less';
@@ -206,28 +207,38 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     ? makeFakeRows(5, 3)
     : events.map(event => {
         const { customer, property, logJobNumber, logDateCompleted } = event;
+        const openEditServiceCall = (event: EventType) => {
+          return () => {
+            window.location.assign(
+              cfURL(
+                'admin:service.editServiceCall',
+                `&id=${event.id}&user_id=${event.property?.userId}&property_id=${event.propertyId}`,
+              ),
+            );
+          };
+        };
         return [
           {
             value: getCustomerName(customer),
-            onClick: handleTogglePendingEdit(event),
+            onClick: openEditServiceCall(event),
           },
           {
             value: getBusinessName(customer),
-            onClick: handleTogglePendingEdit(event),
+            onClick: openEditServiceCall(event),
           },
           {
             value: logJobNumber,
-            onClick: handleTogglePendingEdit(event),
+            onClick: openEditServiceCall(event),
           },
           {
             value: formatDate(logDateCompleted),
-            onClick: handleTogglePendingEdit(event),
+            onClick: openEditServiceCall(event),
           },
           {
             value: getPropertyAddress(property),
-            onClick: handleTogglePendingEdit(event),
+            onClick: openEditServiceCall(event),
             actions: [
-              <IconButton key="edit" onClick={handleTogglePendingEdit(event)}>
+              <IconButton key="edit" onClick={openEditServiceCall(event)}>
                 <EditIcon />
               </IconButton>,
               <IconButton

@@ -669,8 +669,12 @@ function bustCache(controller, filename) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    controller = controller || process.argv[4].replace(/-/g, '');
-                    filename = filename || process.argv[5].replace(/-/g, '');
+                    if (typeof controller !== 'string' || controller === '') {
+                        controller = process.argv[4].replace(/-/g, '');
+                    }
+                    if (typeof filename !== 'string' || filename === '') {
+                        filename = process.argv[5].replace(/-/g, '');
+                    }
                     return [4 /*yield*/, sh.exec("scp " + KALOS_ROOT + "/app/admin/views/" + controller + "/" + filename + ".cfm tmp/" + filename + ".cfm")];
                 case 1:
                     _a.sent();
