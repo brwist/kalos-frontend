@@ -292,7 +292,6 @@ export const getKeyByKeyName = async (keyName: string) => {
 };
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
-const KALOS_BOT = getKeyByKeyName('kalos_bot');
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -353,6 +352,7 @@ function timestamp(dateOnly = false) {
 }
 
 async function slackNotify(id: string, text: string) {
+  const KALOS_BOT = await getKeyByKeyName('kalos_bot');
   await fetch(
     `https://slack.com/api/chat.postMessage?token=${KALOS_BOT}&channel=${id}&text=${text}`,
     {
