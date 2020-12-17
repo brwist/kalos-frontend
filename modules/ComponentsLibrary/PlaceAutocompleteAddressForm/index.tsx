@@ -192,6 +192,34 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     )[0] as HTMLInputElement;
   };
 
+  getInputFieldByLabelContent = (content: string): HTMLInputElement | null => {
+    const inputFields = this.getInputFields();
+    for (let i = 0; i < inputFields.length; i++) {
+      if (!inputFields[i].parentNode) {
+        console.error(
+          'There is no parent node for one of the input fields: ',
+          inputFields[i],
+        );
+        return null;
+      }
+      const childs = inputFields[i].parentNode!.childNodes;
+      const filtered = Array.from(childs).filter(
+        child => child.textContent == content,
+      );
+
+      if (filtered.length > 0) {
+        console.log('Returning ', inputFields[i]);
+        return inputFields[i] as HTMLInputElement;
+      }
+    }
+
+    console.error(
+      'Failed to find the desired input element with the label: ',
+      content,
+    );
+    return null;
+  };
+
   handleLoad = () => {
     // Create the autocomplete object, restricting the search predictions to
     // geographical location types.
@@ -240,6 +268,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   handlePlaceSelect = (place: any, startIndex: number) => {
     let index = startIndex,
       street_number = 0;
+
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
     // @ts-ignore
