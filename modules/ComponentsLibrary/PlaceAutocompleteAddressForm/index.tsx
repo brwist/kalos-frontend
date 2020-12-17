@@ -120,20 +120,29 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     index: number,
     formIndex?: number,
   ): HTMLInputElement | null => {
-    /*
-    return this.getInputFields()[index].getElementsByTagName(
-      'input',
-    )[0] as HTMLInputElement;
-    */
-
     let result: HTMLInputElement[] = [];
-    this.getInputFields().map(inputField => {
+
+    const inputFields = this.getInputFields();
+    for (let i = 0; i < inputFields.length; i++) {
+      if (formIndex) {
+        if (i != formIndex) {
+          continue;
+        }
+      }
+
+      if (!inputFields[i][index]) {
+        console.error(
+          'Index out of bounds in getInputFieldByIndex inside of for loop. Breaking from loop.',
+        );
+        break;
+      }
+
       result.push(
-        inputField[formIndex ? formIndex : 0].getElementsByTagName('input')[
-          index
-        ] as HTMLInputElement,
+        inputFields[i][index].getElementsByTagName(
+          'input',
+        )[0] as HTMLInputElement,
       );
-    });
+    }
 
     return result[0];
   };
@@ -172,7 +181,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       }
     }
 
-    console.log(results);
     if (indexOfResult) {
       if (results.length <= indexOfResult) {
         console.error(
@@ -231,13 +239,13 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       });
 
       this.autoCompleteSections[i].addListener('place_changed', () => {
-        this.handlePlaceSelect(i, i * (index / this.props.addressFields));
+        this.handlePlaceSelect(i, 0);
       });
     }
   };
 
-  handlePlaceSelect = (indexInArray: any, startIndex: number) => {
-    const place = this.autoCompleteSections[indexInArray].getPlace();
+  handlePlaceSelect = (indexOfForm: any, startIndex: number) => {
+    const place = this.autoCompleteSections[indexOfForm].getPlace();
     let index = startIndex,
       street_number = 0;
 
@@ -257,14 +265,15 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
           //this.getInputFieldByIndex(index).value = street_number + ' ' + val;
           this.getInputFieldByLabelContent(
             'Street Address',
-            indexInArray,
+            indexOfForm,
           )!.value = street_number + ' ' + val;
           index++;
           continue;
         }
+
         addressType == 'street_number'
           ? (street_number = val)
-          : (this.getInputFieldByIndex(index)!.value = val);
+          : (this.getInputFieldByIndex(index, indexOfForm)!.value = val);
         index++;
       }
     }
@@ -290,7 +299,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   render() {
-    console.log('Rendering');
     let forms = [];
     for (let i = 0; i < this.props.addressFields; i++) {
       if (i == 0) {
