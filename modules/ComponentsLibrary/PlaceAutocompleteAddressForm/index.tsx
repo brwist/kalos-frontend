@@ -245,6 +245,9 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
 
+    // ts-ignores because this code does, in fact, work - the google maps library just
+    // isn't imported beforehand, it has to be loaded when ran
+
     // @ts-ignore
     for (const component of place.address_components as google.maps.GeocoderAddressComponent[]) {
       const addressType = component.types[0];
@@ -255,7 +258,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         const val = component[componentForm[addressType]];
 
         if (addressType == 'route') {
-          //this.getInputFieldByIndex(index).value = street_number + ' ' + val;
           this.getInputFieldByLabelContent(
             'Street Address',
             indexOfForm,
@@ -329,6 +331,3 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     );
   }
 }
-
-//const placeSearch: google.maps.places.PlacesService;
-//const autocomplete: google.maps.places.Autocomplete;
