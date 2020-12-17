@@ -39,6 +39,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 > {
   // @ts-ignore
   autoCompleteSections: google.maps.places.Autocomplete[2] = [];
+
   constructor(props: Props) {
     super(props);
 
@@ -50,9 +51,10 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     };
   }
 
-  componentDidMount() {
-    this.loadScript(() => this.handleLoad());
-    this.geolocate();
+  componentDidMount() {}
+
+  componentDidUpdate() {
+    console.log('UPDATED');
   }
 
   getInputFields = () => {
@@ -75,7 +77,11 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   loadScriptByUrl = async (url: string, callback: () => void) => {
     const scripts = document.getElementsByTagName('script');
     for (let i = scripts.length; i--; ) {
-      if (scripts[i].src == url) return; // Already have that url assigned to a script, don't add again
+      if (scripts[i].src == url) {
+        callback(); // Already have that url assigned to a script, don't add again. Instead just
+        // call the callback and have it go on about its business in wherever it was called from
+        return;
+      }
     }
     let script = document.createElement('script') as any;
     script.type = 'text/javascript';
@@ -286,6 +292,9 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   render() {
+    console.log('Rendering');
+    this.loadScript(() => this.handleLoad());
+    this.geolocate();
     let forms = [];
     for (let i = 0; i < this.props.addressFields; i++) {
       if (i == 0) {
