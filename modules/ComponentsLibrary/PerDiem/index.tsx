@@ -48,7 +48,7 @@ import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
-import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
+import { Address } from '../PlaceAutocompleteAddressForm/Address';
 
 export interface Props {
   loggedUserId: number;
@@ -114,7 +114,7 @@ export const getStatus = (
 };
 
 // Schema will be adjusted down the line to include as many addresses as it can
-export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
+export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<Address.AsObject> = [
   [
     {
       label: 'Origin',
@@ -125,35 +125,35 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
     {
       label: 'Address',
       type: 'text',
-      name: 'StreetAddressOrigin',
+      name: 'StreetAddress',
     },
   ],
   [
     {
       label: 'Street Address',
-      name: 'StreetAddressOrigin',
+      name: 'StreetAddress',
       type: 'text',
     },
     {
       label: 'City',
-      name: 'CityOrigin',
+      name: 'City',
       type: 'text',
     },
     {
       label: 'State',
-      name: 'StateOrigin',
+      name: 'State',
       type: 'text',
     },
   ],
   [
     {
       label: 'Zip Code',
-      name: 'ZipCodeOrigin',
+      name: 'ZipCode',
       type: 'text',
     },
     {
       label: 'Country',
-      name: 'CountryOrigin',
+      name: 'Country',
       type: 'text',
     },
   ],
@@ -1005,11 +1005,11 @@ export const PerDiemComponent: FC<Props> = ({
             */
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
-              onSave={(address: AddressPair) => {
+              onSave={(address: Address) => {
                 console.log(address);
                 console.log('Still need to implement saving.');
               }}
-              addressFields={2}
+              addressFields={3}
               schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
             ></PlaceAutocompleteAddressForm>
           )}
