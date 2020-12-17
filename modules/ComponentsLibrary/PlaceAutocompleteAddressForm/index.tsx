@@ -30,7 +30,13 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       headline: true,
     },
   ],
-
+  [
+    {
+      label: 'Address',
+      type: 'text',
+      name: 'StreetAddressOrigin',
+    },
+  ],
   [
     {
       label: 'Street Address',
@@ -64,6 +70,13 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
     {
       label: 'Destination',
       headline: true,
+    },
+  ],
+  [
+    {
+      label: 'Address',
+      type: 'text',
+      name: 'StreetAddressDestination',
     },
   ],
   [
@@ -110,7 +123,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   Props,
   State
 > {
-  autoComplete: any;
+  autoCompleteOrigin: any;
+  autoCompleteDestination: any;
   constructor(props: Props) {
     super(props);
 
@@ -182,48 +196,71 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     // Create the autocomplete object, restricting the search predictions to
     // geographical location types.
     // @ts-ignore
-    this.autoComplete = new google.maps.places.Autocomplete(
+    this.autoCompleteOrigin = new google.maps.places.Autocomplete(
       this.getInputFieldByIndex(0),
+      { types: ['geocode'] },
+    );
+
+    // @ts-ignore
+    this.autoCompleteDestination = new google.maps.places.Autocomplete(
+      this.getInputFieldByIndex(6),
       { types: ['geocode'] },
     );
 
     // Avoid paying for data that you don't need by restricting the set of
     // place fields that are returned to just the address components.
-    this.autoComplete.setFields(['address_component']);
+    this.autoCompleteOrigin.setFields(['address_component']);
+    this.autoCompleteDestination.setFields(['address_component']);
 
     // When the user selects an address from the drop-down, populate the
     // address fields in the form.
-    this.autoComplete.addListener('place_changed', this.handlePlaceSelect);
+    this.autoCompleteOrigin.addListener(
+      'place_changed',
+      this.handleOriginSelect,
+    );
+
+    this.autoCompleteDestination.addListener(
+      'place_changed',
+      this.handleDestinationSelect,
+    );
   };
 
-  handlePlaceSelect = () => {
+  handleOriginSelect = () => {
     // Get the place details from the autocomplete object.
-    const place = this.autoComplete.getPlace();
+    const place = this.autoCompleteOrigin.getPlace();
+    this.handlePlaceSelect(place, 0);
+  };
 
-    /*
-    for (const component in componentForm) {
-      (document.getElementById(component) as HTMLInputElement).value = '';
-      (document.getElementById(component) as HTMLInputElement).disabled = false;
-    }
-    */
-    let index = 0;
+  handleDestinationSelect = () => {
+    // Get the place details from the autocomplete object.
+    const place = this.autoCompleteDestination.getPlace();
+    this.handlePlaceSelect(place, 6);
+  };
+
+  handlePlaceSelect = (place: any, startIndex: number) => {
+    let index = startIndex,
+      street_number = 0;
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
     // @ts-ignore
     for (const component of place.address_components as google.maps.GeocoderAddressComponent[]) {
-      console.log('in the for loop');
       const addressType = component.types[0];
 
-      console.log('Going into if statement');
       // @ts-ignore
       if (componentForm[addressType]) {
         // @ts-ignore
         const val = component[componentForm[addressType]];
-        this.getInputFieldByIndex(index).value = val;
+
+        if (addressType == 'route') {
+          this.getInputFieldByIndex(index).value = street_number + ' ' + val;
+          index++;
+          continue;
+        }
+        addressType == 'street_number'
+          ? (street_number = val)
+          : (this.getInputFieldByIndex(index).value = val);
         index++;
       }
-
-      console.log('Out of if');
     }
   };
 
@@ -239,7 +276,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
           center: geolocation,
           radius: position.coords.accuracy,
         });
-        this.autoComplete.setBounds(circle.getBounds());
+        this.autoCompleteOrigin.setBounds(circle.getBounds());
       });
     }
   }
