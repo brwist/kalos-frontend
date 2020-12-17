@@ -44,8 +44,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   Props,
   State
 > {
-  autoCompleteOrigin: any;
-  autoCompleteDestination: any;
   // @ts-ignore
   autoCompleteSections: google.maps.places.Autocomplete[2] = [];
   constructor(props: Props) {
@@ -212,19 +210,30 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     let index = startIndex,
       street_number = 0;
 
+    console.log(indexInArray, startIndex);
+
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
+
+    console.log(place.address_components.length + startIndex);
+
     // @ts-ignore
     for (const component of place.address_components as google.maps.GeocoderAddressComponent[]) {
       const addressType = component.types[0];
 
       // @ts-ignore
       if (componentForm[addressType]) {
+        console.log(component, addressType);
+
         // @ts-ignore
         const val = component[componentForm[addressType]];
 
         if (addressType == 'route') {
-          this.getInputFieldByIndex(index).value = street_number + ' ' + val;
+          //this.getInputFieldByIndex(index).value = street_number + ' ' + val;
+          this.getInputFieldByLabelContent(
+            'Street Address',
+            indexInArray,
+          )!.value = street_number + ' ' + val;
           index++;
           continue;
         }
@@ -234,6 +243,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         index++;
       }
     }
+
+    console.log(this.getInputFields());
   };
 
   geolocate() {
@@ -248,15 +259,18 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
           center: geolocation,
           radius: position.coords.accuracy,
         });
-        this.autoCompleteOrigin.setBounds(circle.getBounds());
+        this.autoCompleteSections.forEach((section: any) => {
+          section.setBounds(circle.getBounds());
+        });
       });
     }
   }
 
   render() {
-    return (
-      <>
-        <Modal open onClose={this.props.onClose}>
+    let forms = [];
+    for (let i = 0; i < this.props.addressFields; i++) {
+      if (i == 0) {
+        forms.push(
           <Form
             title="Enter Location"
             schema={this.props.schema}
@@ -264,7 +278,26 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             onSave={this.props.onSave}
             data={this.state.address}
             className="LocationForm"
-          ></Form>
+            key={i + 'PlaceAutocompleteAddressForm'}
+          ></Form>,
+        );
+      } else {
+        forms.push(
+          <Form
+            schema={this.props.schema}
+            onClose={this.props.onClose}
+            onSave={this.props.onSave}
+            data={this.state.address}
+            className="LocationForm"
+            key={i + 'PlaceAutocompleteAddressForm'}
+          ></Form>,
+        );
+      }
+    }
+    return (
+      <>
+        <Modal open onClose={this.props.onClose}>
+          {forms}
         </Modal>
         )
       </>
