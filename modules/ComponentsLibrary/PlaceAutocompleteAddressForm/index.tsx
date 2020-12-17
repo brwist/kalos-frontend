@@ -5,6 +5,7 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { AddressPairInterface, AddressPair } from './Address';
 import './styles.less';
+import { indexOf } from 'lodash';
 
 // Convenience call, will be removed later
 export const getApi = async () => {
@@ -192,8 +193,12 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     )[0] as HTMLInputElement;
   };
 
-  getInputFieldByLabelContent = (content: string): HTMLInputElement | null => {
+  getInputFieldByLabelContent = (
+    content: string,
+    indexOfResult?: number,
+  ): HTMLInputElement | null => {
     const inputFields = this.getInputFields();
+    let results = [];
     for (let i = 0; i < inputFields.length; i++) {
       if (!inputFields[i].parentNode) {
         console.error(
@@ -208,9 +213,28 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       );
 
       if (filtered.length > 0) {
-        console.log('Returning ', inputFields[i]);
-        return inputFields[i] as HTMLInputElement;
+        results.push(inputFields[i]);
       }
+    }
+
+    if (indexOfResult) {
+      if (results.length < indexOfResult) {
+        console.error(
+          'The index provided was greater than the results that were received.',
+        );
+        return null;
+      }
+    }
+    if (results.length > 1) {
+      if (indexOfResult) {
+        return results[indexOfResult] as HTMLInputElement;
+      } else {
+        return results[0] as HTMLInputElement;
+      }
+    }
+
+    if (results.length > 0) {
+      return results[0] as HTMLInputElement;
     }
 
     console.error(
@@ -268,6 +292,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   handlePlaceSelect = (place: any, startIndex: number) => {
     let index = startIndex,
       street_number = 0;
+
+    this.getInputFieldByLabelContent('Street Address', 1);
 
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
