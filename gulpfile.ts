@@ -347,7 +347,7 @@ async function releaseBuild(target: string) {
         react: 'React',
         'react-dom': 'ReactDOM',
       },
-      plugins: minify ? [terser()] : [],
+      plugins: [],
     });
   } catch (err) {
     bundle = await rollup.rollup({
@@ -381,7 +381,7 @@ async function releaseBuild(target: string) {
         react: 'React',
         'react-dom': 'ReactDOM',
       },
-      plugins: minify ? [terser()] : [],
+      plugins: [],
     });
   }
 }
@@ -430,7 +430,7 @@ async function rollupBuild(target = '') {
       react: 'React',
       'react-dom': 'ReactDOM',
     },
-    plugins: minify ? [terser()] : [],
+    plugins: [],
   });
   sh.sed(
     '-i',
@@ -499,8 +499,8 @@ async function release(target = '') {
   if (target === '' || typeof target !== 'string') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
-  checkTests();
-  await runTests();
+  //checkTests();
+  //await runTests();
 
   info('Rolling up build. This may take a moment...');
 
@@ -592,6 +592,18 @@ const NAMED_EXPORTS = {
     'unstable_cancelCallback',
   ],
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.js': ['grpc'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb.js': [
+    'Place',
+    'Places',
+    'TripData',
+    'Coordinates',
+    'CoordinatesList',
+    'DistanceMatrixElementRow',
+    'DistanceMatrixElement',
+    'DistanceMatrixResponse',
+    'Distance',
+    'MatrixRequest',
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/email_pb.js': [
     'Email',
     'EmailClient',
@@ -868,6 +880,7 @@ const NAMED_EXPORTS = {
     'PerDiemRow',
     'PerDiemRowList',
     'PerDiemReportRequest',
+    'Trip',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/pdf_pb.js': ['HTML'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_event_pb.js': [
