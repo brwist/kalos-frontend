@@ -1193,7 +1193,21 @@ export const AdvancedSearch: FC<Props> = ({
     //   {},
     // ],
     [{ headline: true, label: 'Paid Time-Off' }],
-    [{ name: 'annualHoursPto', label: 'Annual PTO Allowance', type: 'number' }],
+    [
+      {
+        name: 'hireDate',
+        label: 'Hire Date',
+        type: 'date',
+        disabled: true,
+      },
+      { name: 'annualHoursPto', label: 'Annual PTO Allowance', type: 'number' },
+      /*{
+        name: 'currentPtoAmount',
+        label: 'Current Available PTO',
+        type: 'number',
+        disabled: true,
+      }*/
+    ],
     // [{ headline: true, label: 'Dispatch Mode Permission' }],
     // [
     //   {
