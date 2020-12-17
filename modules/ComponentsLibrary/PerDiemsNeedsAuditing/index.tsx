@@ -16,7 +16,7 @@ import { PerDiemComponent, getStatus } from '../PerDiem';
 import {
   loadPerDiemsNeedsAuditing,
   loadPerDiemsReport,
-  updatePerDiemNeedsAudit,
+  PerDiemClientService,
   PerDiemType,
   makeFakeRows,
   getDepartmentName,
@@ -226,7 +226,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
       const { id } = pendingAudited;
       setLoading(true);
       setPendingAudited(undefined);
-      await updatePerDiemNeedsAudit(id);
+      await PerDiemClientService.updatePerDiemNeedsAudit(id);
       setLoaded(false);
     }
   }, [pendingAudited, setLoading, setPendingAudited, setLoaded]);

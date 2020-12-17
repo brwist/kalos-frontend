@@ -1789,14 +1789,6 @@ export const upsertTrip = async (data: Trip.AsObject, rowId: number) => {
   }
 };
 
-export const updatePerDiemNeedsAudit = async (id: number) => {
-  const req = new PerDiem();
-  req.setId(id);
-  req.setNeedsAuditing(false);
-  req.setFieldMaskList(['Id', 'NeedsAuditing']);
-  await PerDiemClientService.Update(req);
-};
-
 export const submitPerDiemById = async (id: number) => {
   const req = new PerDiem();
   req.setId(id);
