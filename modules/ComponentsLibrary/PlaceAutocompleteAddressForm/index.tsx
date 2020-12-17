@@ -224,13 +224,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       // When the user selects an address from the drop-down, populate the
       // address fields in the form.
 
-      let index = 0;
-      this.props.schema.forEach(row => {
-        row.forEach(field => {
-          if (!field.headline) index++;
-        });
-      });
-
       this.autoCompleteSections[i].addListener('place_changed', () => {
         this.handlePlaceSelect(i, 0);
       });
