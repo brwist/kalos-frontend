@@ -59,7 +59,6 @@ import {
   ContractType,
   JobTypeType,
   JobSubtypeType,
-  deleteEventById,
   deleteUserById,
   deletePropertyById,
   getBusinessName,
@@ -80,6 +79,7 @@ import {
   UserClientService,
   JobTypeClientService,
   JobSubtypeClientService,
+  EventClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -489,7 +489,7 @@ export const AdvancedSearch: FC<Props> = ({
       const { id } = pendingEventDeleting;
       setPendingEventDeleting(undefined);
       setLoading(true);
-      await deleteEventById(id);
+      await EventClientService.deleteEventById(id);
       setLoaded(false);
     }
   }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
