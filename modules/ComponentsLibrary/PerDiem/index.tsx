@@ -125,7 +125,7 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<Address.AsObject> = [
     {
       label: 'Address',
       type: 'text',
-      name: 'StreetAddress',
+      name: 'FullAddress',
     },
   ],
   [
