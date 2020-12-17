@@ -55,17 +55,26 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       address: trip,
       query: null,
     };
+  }
 
+  componentDidMount() {
     this.loadScript(() => this.handleLoad());
     this.geolocate();
   }
 
   getInputFields = () => {
     const group = document.getElementsByClassName('LocationForm');
+    let inputs = [];
+    for (let i = 0; i < group.length; i++) {
+      inputs.push(
+        (group[i] as HTMLElement).getElementsByClassName('FieldInput'),
+      );
+    }
 
-    const inputs = (group[0] as HTMLElement).getElementsByClassName(
-      'FieldInput',
-    );
+    if (!inputs) {
+      console.error('No input fields found.');
+      return [];
+    }
 
     return inputs;
   };
@@ -107,10 +116,26 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     );
   };
 
-  getInputFieldByIndex = (index: number): HTMLInputElement => {
+  getInputFieldByIndex = (
+    index: number,
+    formIndex?: number,
+  ): HTMLInputElement | null => {
+    /*
     return this.getInputFields()[index].getElementsByTagName(
       'input',
     )[0] as HTMLInputElement;
+    */
+
+    let result: HTMLInputElement[] = [];
+    this.getInputFields().map(inputField => {
+      result.push(
+        inputField[formIndex ? formIndex : 0].getElementsByTagName('input')[
+          index
+        ] as HTMLInputElement,
+      );
+    });
+
+    return result[0];
   };
 
   getInputElementFromInputField = (inputField: any) => {
@@ -122,27 +147,34 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     indexOfResult?: number,
   ): HTMLInputElement | null => {
     const inputFields = this.getInputFields();
-    let results = [];
-    for (let i = 0; i < inputFields.length; i++) {
-      if (!inputFields[i].parentNode) {
-        console.error(
-          'There is no parent node for one of the input fields: ',
-          inputFields[i],
+    let results = [],
+      indexOfResultInputField = [];
+    let inputField;
+    for (let j = 0; j < inputFields.length; j++) {
+      inputField = inputFields[j];
+      for (let i = 0; i < inputField.length; i++) {
+        if (!inputField[i].parentNode) {
+          console.error(
+            'There is no parent node for one of the input fields: ',
+            inputFields[i],
+          );
+          return null;
+        }
+        const childs = inputField[i].parentNode!.childNodes;
+        const filtered = Array.from(childs).filter(
+          child => child.textContent == content,
         );
-        return null;
-      }
-      const childs = inputFields[i].parentNode!.childNodes;
-      const filtered = Array.from(childs).filter(
-        child => child.textContent == content,
-      );
 
-      if (filtered.length > 0) {
-        results.push(inputFields[i]);
+        if (filtered.length > 0) {
+          results.push(inputField[i]);
+          indexOfResultInputField.push(j);
+        }
       }
     }
 
+    console.log(results);
     if (indexOfResult) {
-      if (results.length < indexOfResult) {
+      if (results.length <= indexOfResult) {
         console.error(
           'The index provided was greater than the results that were received.',
         );
@@ -173,7 +205,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     // geographical location types.
 
     for (let i = 0; i < this.props.addressFields; i++) {
-      console.log('i : ', i);
       // @ts-ignore
       this.autoCompleteSections[
         i
@@ -210,12 +241,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     let index = startIndex,
       street_number = 0;
 
-    console.log(indexInArray, startIndex);
-
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
-
-    console.log(place.address_components.length + startIndex);
 
     // @ts-ignore
     for (const component of place.address_components as google.maps.GeocoderAddressComponent[]) {
@@ -223,8 +250,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 
       // @ts-ignore
       if (componentForm[addressType]) {
-        console.log(component, addressType);
-
         // @ts-ignore
         const val = component[componentForm[addressType]];
 
@@ -239,12 +264,10 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         }
         addressType == 'street_number'
           ? (street_number = val)
-          : (this.getInputFieldByIndex(index).value = val);
+          : (this.getInputFieldByIndex(index)!.value = val);
         index++;
       }
     }
-
-    console.log(this.getInputFields());
   };
 
   geolocate() {
@@ -267,6 +290,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   render() {
+    console.log('Rendering');
     let forms = [];
     for (let i = 0; i < this.props.addressFields; i++) {
       if (i == 0) {

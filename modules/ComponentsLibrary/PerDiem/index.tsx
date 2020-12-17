@@ -157,48 +157,6 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       type: 'text',
     },
   ],
-  [
-    {
-      label: 'Destination',
-      headline: true,
-    },
-  ],
-  [
-    {
-      label: 'Address',
-      type: 'text',
-      name: 'StreetAddressDestination',
-    },
-  ],
-  [
-    {
-      label: 'Street Address',
-      name: 'StreetAddressDestination',
-      type: 'text',
-    },
-    {
-      label: 'City',
-      name: 'CityDestination',
-      type: 'text',
-    },
-    {
-      label: 'State',
-      name: 'StateDestination',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Zip Code',
-      name: 'ZipCodeDestination',
-      type: 'text',
-    },
-    {
-      label: 'Country',
-      name: 'CountryDestination',
-      type: 'text',
-    },
-  ],
 ];
 
 const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
