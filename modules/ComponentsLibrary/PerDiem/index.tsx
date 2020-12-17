@@ -1005,7 +1005,7 @@ export const PerDiemComponent: FC<Props> = ({
             */
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
-              onSave={(address: Address) => {
+              onSave={(address: Address.Address) => {
                 console.log(address);
                 console.log('Still need to implement saving.');
               }}
