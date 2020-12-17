@@ -14,13 +14,13 @@ export const getApi = async () => {
 
 interface Props {
   onClose: () => void;
-  onSave: (addressPair: Address) => void;
+  onSave: (addressPair: Address.Address) => void;
   addressFields: number;
   schema: Schema<Address.AsObject>;
 }
 
 interface State {
-  address: Address;
+  address: Address.Address;
   query: any;
 }
 
@@ -42,7 +42,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   constructor(props: Props) {
     super(props);
 
-    let trip = new Address();
+    let trip = new Address.Address();
 
     this.state = {
       address: trip,
