@@ -258,9 +258,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         const val = component[componentForm[addressType]];
 
         if (addressType == 'route') {
-          this.getInputFieldByLabelContent(
-            'Street Address',
-            indexOfForm,
+          this.getInputElementFromInputField(
+            this.getInputFieldByLabelContent('Street Address', indexOfForm),
           )!.value = street_number + ' ' + val;
           index++;
           continue;
