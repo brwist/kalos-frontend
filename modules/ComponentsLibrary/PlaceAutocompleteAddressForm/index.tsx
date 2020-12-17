@@ -193,6 +193,10 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     )[0] as HTMLInputElement;
   };
 
+  getInputElementFromInputField = (inputField: any) => {
+    return inputField.lastElementChild?.firstChild;
+  };
+
   getInputFieldByLabelContent = (
     content: string,
     indexOfResult?: number,
@@ -249,13 +253,17 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     // geographical location types.
     // @ts-ignore
     this.autoCompleteOrigin = new google.maps.places.Autocomplete(
-      this.getInputFieldByIndex(0),
+      this.getInputElementFromInputField(
+        this.getInputFieldByLabelContent('Address', 0),
+      ),
       { types: ['geocode'] },
     );
 
     // @ts-ignore
     this.autoCompleteDestination = new google.maps.places.Autocomplete(
-      this.getInputFieldByIndex(6),
+      this.getInputElementFromInputField(
+        this.getInputFieldByLabelContent('Address', 1),
+      ),
       { types: ['geocode'] },
     );
 
