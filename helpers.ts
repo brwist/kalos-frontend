@@ -2909,12 +2909,6 @@ export const upsertEvent = async (data: Partial<EventType>) => {
   return await EventClientService[data.id ? 'Update' : 'Create'](req);
 };
 
-export const deleteEventById = async (id: number) => {
-  const req = new Event();
-  req.setId(id);
-  await EventClientService.Delete(req);
-};
-
 export const deleteUserById = async (id: number) => {
   const req = new User();
   req.setId(id);

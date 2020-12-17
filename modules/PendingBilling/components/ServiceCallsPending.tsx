@@ -18,10 +18,10 @@ import {
   getCustomerName,
   getPropertyAddress,
   formatDate,
-  deleteEventById,
   EventsFilter,
   EventsSort,
   cfURL,
+  EventClientService,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 import './serviceCallsPending.less';
@@ -86,7 +86,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       const { id } = pendingDelete;
       setPendingDelete(undefined);
       setLoading(true);
-      await deleteEventById(id);
+      await EventClientService.deleteEventById(id);
       load();
     }
   }, [pendingDelete, setLoading, setPendingDelete]);
