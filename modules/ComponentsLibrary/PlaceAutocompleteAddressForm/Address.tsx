@@ -20,7 +20,7 @@ export interface AddressPairInterface {
   CountryDestination: string;
 }
 
-export namespace Address {
+export namespace AddressNamespace {
   export type AsObject = {
     StreetAddress: string;
     City: string;
