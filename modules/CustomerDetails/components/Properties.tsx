@@ -105,6 +105,14 @@ export const Properties: FC<Props> = props => {
     async (data: PropertyType) => {
       if (editing) {
         setSaving(true);
+        const { address, city, state: addressState, zip } = data;
+        const geo = await loadGeoLocationByAddress(
+          `${address}, ${city}, ${addressState} ${zip}`,
+        );
+        if (geo) {
+          data.geolocationLat = geo.geolocationLat;
+          data.geolocationLng = geo.geolocationLng;
+        }
         await saveProperty(
           data,
           userID,

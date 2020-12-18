@@ -8,7 +8,7 @@ import { ENDPOINT } from '../../constants';
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <ServiceCalendar userId={8418} withHeader />,
+    <ServiceCalendar userId={8418} withHeader initialCustomer="90" />,
     document.getElementById('root'),
   );
 });

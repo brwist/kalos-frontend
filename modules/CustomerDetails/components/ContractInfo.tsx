@@ -363,8 +363,8 @@ export const ContractInfo: FC<Props> = props => {
     paymentStatus,
     frequency,
     notes,
+    paymentTerms,
   } = entry;
-  const { terms } = invoice;
   const data: Data = [
     [
       { label: 'Contract Number', value: number },
@@ -380,7 +380,7 @@ export const ContractInfo: FC<Props> = props => {
     ],
     [
       { label: 'Frequency', value: getFrequencyById(frequency) },
-      { label: 'Payment Terms', value: terms },
+      { label: 'Payment Terms', value: paymentTerms },
     ],
     [{ label: 'Notes', value: notes }],
   ];
@@ -402,7 +402,7 @@ export const ContractInfo: FC<Props> = props => {
           ? [
               // TODO: PM's count
               <span key={0} className="ContractInfoPropertyPM">
-                PM's: 1 <AddCircleIcon className="ContractInfoPropertyAdd" />
+                PMs: 1 <AddCircleIcon className="ContractInfoPropertyAdd" />
               </span>,
             ]
           : [],
