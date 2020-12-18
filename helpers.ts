@@ -2972,15 +2972,6 @@ export const deleteFileById = async (id: number) => {
   await FileClientService.Delete(req);
 };
 
-export const loadDocumentKeys = async () => {
-  const req = new DocumentKey();
-  req.setIsActive(true);
-  const { dataList } = (
-    await InternalDocumentClientService.GetDocumentKeys(req)
-  ).toObject();
-  return dataList;
-};
-
 export const saveDocumentKey = async (data: DocumentKeyType, id?: number) => {
   const req = new DocumentKey();
   const fieldMaskList = [];
