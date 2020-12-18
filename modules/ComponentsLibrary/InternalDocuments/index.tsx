@@ -17,7 +17,6 @@ import {
   InternalDocumentsFilter,
   InternalDocumentsSort,
   loadInternalDocuments,
-  loadDocumentKeys,
   formatDate,
   openFile,
   upsertInternalDocument,
@@ -68,7 +67,7 @@ export const InternalDocuments: FC = () => {
   }, [setLoading, setEntries, setCount, page, filter, sort]);
   const loadFileTags = useCallback(async () => {
     setLoadingFileTags(true);
-    const fileTags = await loadDocumentKeys();
+    const fileTags = await InternalDocumentClientService.loadDocumentKeys();
     setFileTags(fileTags);
     setLoadingFileTags(false);
   }, [setLoadingFileTags, setFileTags]);

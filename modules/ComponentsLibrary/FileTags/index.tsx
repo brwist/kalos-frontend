@@ -10,10 +10,10 @@ import { SectionBar } from '../SectionBar';
 import { Form, Schema } from '../Form';
 import {
   DocumentKeyType,
-  loadDocumentKeys,
   makeFakeRows,
   saveDocumentKey,
   deleteDocumentKeyById,
+  InternalDocumentClientService,
 } from '../../../helpers';
 
 const COLUMNS: Columns = [{ name: 'Name' }, { name: 'Tag Color' }];
@@ -61,7 +61,7 @@ export const FileTags: FC<Props> = ({
   const [pendingEdit, setPendingEdit] = useState<DocumentKeyType>();
   const load = useCallback(async () => {
     setLoading(true);
-    const entries = await loadDocumentKeys();
+    const entries = await InternalDocumentClientService.loadDocumentKeys();
     setEntries(entries);
     setLoading(false);
     return entries;
