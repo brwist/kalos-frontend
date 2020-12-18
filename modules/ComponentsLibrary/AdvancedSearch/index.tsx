@@ -69,7 +69,6 @@ import {
   saveUser,
   loadEmployeeFunctions,
   EmployeeFunctionType,
-  getFileS3BucketUrl,
   CustomEventsHandler,
   uploadFileToS3Bucket,
   getCFAppUrl,
@@ -80,6 +79,7 @@ import {
   JobTypeClientService,
   JobSubtypeClientService,
   EventClientService,
+  S3ClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -327,7 +327,10 @@ export const AdvancedSearch: FC<Props> = ({
             .filter(({ image }) => !!image)
             .map(async ({ image }) => ({
               image,
-              url: await getFileS3BucketUrl(image, 'kalos-employee-images'),
+              url: await S3ClientService.getFileS3BucketUrl(
+                image,
+                'kalos-employee-images',
+              ),
             })),
         );
         setEmployeeImages(

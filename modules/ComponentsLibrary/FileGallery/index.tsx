@@ -10,9 +10,9 @@ import {
   makeFakeRows,
   formatDateTime,
   deleteFileById,
-  getFileS3BucketUrl,
   deleteFileFromS3Buckets,
   padWithZeroes,
+  S3ClientService,
 } from '../../../helpers';
 import './styles.less';
 
@@ -66,7 +66,7 @@ export const FileGallery: FC<Props> = ({
     let images = await Promise.all(
       resultsList.map(async ({ name, bucket }) => ({
         name,
-        url: await getFileS3BucketUrl(name, bucket),
+        url: await S3ClientService.getFileS3BucketUrl(name, bucket),
       })),
     );
     if (inputFile != null) {
