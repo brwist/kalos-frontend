@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import MailIcon from '@material-ui/icons/Mail';
+import PencilIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { S3Client, URLObject, FileObject } from '@kalos-core/kalos-rpc/S3File';
@@ -10,6 +11,7 @@ import { Link } from '../../ComponentsLibrary/Link';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { makeFakeRows, getCFAppUrl } from '../../../helpers';
+import { Prompt } from '../../Prompt/main';
 
 type Entry = Document.AsObject;
 
@@ -58,6 +60,20 @@ export class ContractDocuments extends PureComponent<Props, State> {
       this.setState({ entries, count, loading: false });
     } catch (e) {
       this.setState({ error: true, loading: false });
+    }
+  };
+
+  handleEditFilename = (entry: Document.AsObject) => async (
+    filename: string,
+  ) => {
+    try {
+      const req = new Document();
+      req.setId(entry.id);
+      req.setDescription(filename);
+      this.DocumentClient.Update(req);
+      this.load();
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -138,6 +154,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
                       `user_id=${userID}`,
                       `contract_id=${contractID}`,
                       'p=1',
+                      `document_id=${entry.id}`,
                     ].join('&');
                   }}
                 >
@@ -151,6 +168,14 @@ export class ContractDocuments extends PureComponent<Props, State> {
                 >
                   <DeleteIcon />
                 </IconButton>,
+                <Prompt
+                  key={2}
+                  Icon={PencilIcon}
+                  prompt={'Update Filename'}
+                  text="Update Filename"
+                  defaultValue={entry.description}
+                  confirmFn={this.handleEditFilename(entry)}
+                />,
               ],
             },
           ];
