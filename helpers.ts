@@ -786,44 +786,6 @@ export const upsertSpiffToolAdminAction = async (
   await SpiffToolAdminActionClientService[isNew ? 'Create' : 'Update'](req);
 };
 
-/** Returns loaded SpiffToolAdminActions by task id
- * @param taskId: number
- * @returns SpiffToolAdminAction[]
- */
-async function loadSpiffToolAdminActionsByTaskId(taskId: number) {
-  const results: SpiffToolAdminAction.AsObject[] = [];
-  const req = new SpiffToolAdminAction();
-  req.setPageNumber(0);
-  req.setTaskId(taskId);
-  const { resultsList, totalCount } = (
-    await SpiffToolAdminActionClientService.BatchGet(req)
-  ).toObject();
-  results.push(...resultsList);
-  if (totalCount > resultsList.length) {
-    const batchesAmount = Math.ceil(
-      (totalCount - resultsList.length) / resultsList.length,
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (
-          await SpiffToolAdminActionClientService.BatchGet(req)
-        ).toObject().resultsList;
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
-  return results.sort((a, b) => {
-    const A = a.id;
-    const B = b.id;
-    if (A < B) return 1;
-    if (A > B) return -1;
-    return 0;
-  });
-}
-
 /**
  * Returns loaded JobTypeSubtypes
  * @returns JobTypeSubtype[]
@@ -3572,7 +3534,6 @@ export {
   loadMetricByUserIds,
   roundNumber,
   getWeekOptions,
-  loadSpiffToolAdminActionsByTaskId,
   loadEventByJobOrContractNumber,
   loadEventsByJobOrContractNumbers,
   escapeText,
