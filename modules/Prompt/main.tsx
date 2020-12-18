@@ -64,6 +64,7 @@ export function Prompt({
     <Tooltip
       open={isOpen}
       controlled
+      maxWidth={400}
       content={
         <Form<Form>
           title=" "
@@ -73,6 +74,7 @@ export function Prompt({
           onSave={handleConfirm}
           submitLabel="Confirm"
           stickySectionBar={false}
+          fullWidth
         />
       }
       placement="bottom"

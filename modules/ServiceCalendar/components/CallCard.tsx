@@ -88,10 +88,11 @@ export const TimeoffCard = ({
     if (employeesLoading) {
       return <SkeletonCard />;
     }
-    console.log({ employees });
     const empl = employees.find(emp => emp.id === +userId);
     subheader = empl ? `${empl?.firstname} ${empl?.lastname}` : '';
-  } catch (e) {}
+  } catch (e) {
+    console.log(e);
+  }
   const started = parseISO(timeStarted);
   const finished = parseISO(timeFinished);
   const sameDay = isSameDay(started, finished);
