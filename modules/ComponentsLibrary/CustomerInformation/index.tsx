@@ -313,6 +313,13 @@ export const CustomerInformation: FC<Props> = ({
                       ].join('&'),
                     },
                     {
+                      label: 'Users',
+                      url: [
+                        getCFAppUrl('admin:customers.userslist'),
+                        `id=${userID}`,
+                      ].join('&'),
+                    },
+                    {
                       label: 'Call History',
                       url: [
                         getCFAppUrl('admin:customers.listPhoneCallLogs'),

@@ -1624,7 +1624,6 @@ export const addressStringToPlace = (addressString: string): Place => {
       Object.keys(StateCode).indexOf(String(str)) > -1
     ) {
       // This is a state
-      console.log('Setting state as ' + str);
       state = str;
       city = city.replace(str, '');
       break;
@@ -1639,10 +1638,8 @@ export const addressStringToPlace = (addressString: string): Place => {
       ) {
         // This is a state
         state = str;
-        console.log('In further down loop setting state as :' + str);
       }
       if (!isNaN(Number(str))) {
-        console.log('Setting zip code in zipAndState forEach as :' + str);
         zipCode = str;
       }
     });
@@ -1679,18 +1676,12 @@ export const addressStringToPlace = (addressString: string): Place => {
   }
 
   streetAddress = streetAddress.replace(String(streetNumber), '');
-  console.log('THE ADDRESS: "' + streetAddress + '"');
   streetAddress = streetAddress.trimStart();
   streetAddress = streetAddress.trimEnd();
-  console.log('AFTER TRIM: "' + streetAddress + '"');
   city = city.trimStart();
   city = city.trimEnd();
   state = state.trimStart();
   state = state.trimEnd();
-
-  console.log('CITY IS PARSED AS: ' + city);
-  console.log('STATE IS PARSED AS: ' + state);
-  console.log('ZIP IS PARSED AS: ' + zipCode);
 
   pl.setStreetNumber(streetNumber);
   pl.setRoadName(streetAddress);
@@ -1844,7 +1835,7 @@ async function loadGeoLocationByAddress(address: string) {
   try {
     const res = await getKeyByKeyName('google_maps');
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${res}`,
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${res.apiKey}`,
     );
     const data = await response.json();
     const {

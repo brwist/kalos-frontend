@@ -46,6 +46,9 @@ import './styles.less';
 
 type Props = PageWrapperProps & {
   userId: number;
+  initialCustomer?: string;
+  initialZip?: string;
+  initialTech?: string;
 };
 
 const userClient = new UserClient(ENDPOINT);
@@ -223,9 +226,7 @@ const initialState: State = {
   viewBy: '',
   selectedDate: '',
   shownDates: [],
-  filters: cachedInitialFilters
-    ? JSON.parse(cachedInitialFilters)
-    : initialFilters,
+  filters: initialFilters,
   customersMap: {},
   zipCodesMap: {},
   addCustomer: false,
@@ -270,7 +271,17 @@ export const EmployeesContext = createContext<EmployeesContext>({
 });
 
 export const ServiceCalendar: FC<Props> = props => {
-  const { userId } = props;
+  const { userId, initialCustomer, initialTech, initialZip } = props;
+  console.log({ initialCustomer });
+  if (initialCustomer) {
+    initialFilters.customers = [initialCustomer];
+  }
+  if (initialTech) {
+    initialFilters.techIds = initialTech;
+  }
+  if (initialZip) {
+    initialFilters.zip = [initialZip];
+  }
   const [
     {
       user,
@@ -449,14 +460,14 @@ export const ServiceCalendar: FC<Props> = props => {
         </EmployeesContext.Provider>
         <AddNewButton options={addNewOptions} />
       </CalendarDataContext.Provider>
-      {addCustomer && (
+      {/*addCustomer && (
         <Modal open onClose={handleToggleAddCustomer(false)}>
           <CustomerEdit
             onClose={handleToggleAddCustomer(false)}
             onSave={handleCustomerSave}
           />
         </Modal>
-      )}
+      )*/}
       {timeoffOpen && (
         <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
           <TimeOff
