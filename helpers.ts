@@ -2940,12 +2940,6 @@ export const upsertInternalDocument = async (data: InternalDocumentType) => {
   return await InternalDocumentClientService[id ? 'Update' : 'Create'](req);
 };
 
-export const deleteInternalDocumentById = async (id: number) => {
-  const req = new InternalDocument();
-  req.setId(id);
-  await InternalDocumentClientService.Delete(req);
-};
-
 export const loadFiles = async (filter: Partial<FileType>) => {
   const req = new File();
   const fieldMaskList = [];
