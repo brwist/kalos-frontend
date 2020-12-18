@@ -28,7 +28,7 @@ import {
   createTaskDocument,
   updateDocumentDescription,
   upsertSpiffToolAdminAction,
-  deletetSpiffToolAdminAction,
+  SpiffToolAdminActionClientService,
 } from '../../../helpers';
 import './styles.less';
 
@@ -275,7 +275,9 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const handleDeleteStatus = useCallback(async () => {
     if (statusDeleting) {
       setStatusDeleting(undefined);
-      await deletetSpiffToolAdminAction(statusDeleting.id);
+      await SpiffToolAdminActionClientService.deletetSpiffToolAdminAction(
+        statusDeleting.id,
+      );
       onStatusChange();
     }
   }, [statusDeleting, setStatusDeleting, onStatusChange]);

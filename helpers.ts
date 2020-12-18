@@ -786,12 +786,6 @@ export const upsertSpiffToolAdminAction = async (
   await SpiffToolAdminActionClientService[isNew ? 'Create' : 'Update'](req);
 };
 
-export const deletetSpiffToolAdminAction = async (id: number) => {
-  const req = new SpiffToolAdminAction();
-  req.setId(id);
-  await SpiffToolAdminActionClientService.Delete(req);
-};
-
 /** Returns loaded SpiffToolAdminActions by task id
  * @param taskId: number
  * @returns SpiffToolAdminAction[]
