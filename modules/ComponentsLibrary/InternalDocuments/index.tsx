@@ -21,9 +21,9 @@ import {
   formatDate,
   openFile,
   upsertInternalDocument,
-  deleteInternalDocumentById,
   deleteFileById,
   uploadFileToS3Bucket,
+  InternalDocumentClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -150,7 +150,7 @@ export const InternalDocuments: FC = () => {
       setDeleting(undefined);
       setLoading(true);
       await deleteFileById(fileId);
-      await deleteInternalDocumentById(id);
+      await InternalDocumentClientService.deleteInternalDocumentById(id);
       setLoaded(false);
     }
   }, [deleting, setDeleting, setLoading, setLoaded]);
