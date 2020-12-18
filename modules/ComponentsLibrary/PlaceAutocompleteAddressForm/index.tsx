@@ -140,7 +140,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     return result[0];
   };
 
-  getInputElementFromInputField = (inputField: any) => {
+  getInputElementFromInputField = (inputField: any): HTMLInputElement => {
     return inputField.lastElementChild?.firstChild;
   };
 
@@ -292,6 +292,10 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     let forms = [];
     for (let i = 0; i < this.props.addressFields; i++) {
       if (i == 0) {
+        // Can do this multiple ways
+        // Can attempt to add onto the schema based upon something, idk how
+        // or I can also make the save function simply find the slots for each and go from there
+        //
         forms.push(
           <Form
             title="Enter Location"
