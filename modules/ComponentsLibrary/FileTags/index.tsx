@@ -12,7 +12,6 @@ import {
   DocumentKeyType,
   makeFakeRows,
   saveDocumentKey,
-  deleteDocumentKeyById,
   InternalDocumentClientService,
 } from '../../../helpers';
 
@@ -111,7 +110,7 @@ export const FileTags: FC<Props> = ({
       const { id } = pendingDelete;
       setPendingDelete(undefined);
       setLoading(true);
-      await deleteDocumentKeyById(id);
+      await InternalDocumentClientService.deleteDocumentKeyById(id);
       const fileTags = await load();
       if (onFileTagsChange) {
         onFileTagsChange(fileTags);

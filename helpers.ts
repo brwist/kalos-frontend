@@ -2988,12 +2988,6 @@ export const saveDocumentKey = async (data: DocumentKeyType, id?: number) => {
   await InternalDocumentClientService.WriteDocumentKey(req);
 };
 
-export const deleteDocumentKeyById = async (id: number) => {
-  const req = new DocumentKey();
-  req.setId(id);
-  await InternalDocumentClientService.DeleteDocumentKey(req);
-};
-
 export const getFileS3BucketUrl = async (filename: string, bucket: string) => {
   const url = new URLObject();
   url.setKey(filename);
