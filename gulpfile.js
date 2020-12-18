@@ -275,26 +275,6 @@ function patchCFC() {
         });
     });
 }
-// Just prints a big line break to break up the output
-function echoLineBreak(color) {
-    if (!color)
-        sh.exec('echo ===========================================================================');
-    if (color)
-        sh.exec("echo \"$(tput " + color + ")===========================================================================$(tput sgr 0)\"  ");
-}
-function echoNewLine() {
-    sh.exec('echo');
-}
-// Echoes warnings in a standardized way with color
-function echoWarning(str) {
-    sh.exec("echo \"$(tput setaf 3)WARNING: " + str + "$(tput sgr 0)\"");
-}
-// Just a function to make errors more maintainable and uniform
-function echoError(str) {
-    echoLineBreak('setaf 1');
-    sh.exec("echo \"$(tput setaf 1)" + str + "$(tput sgr 0)\"");
-    echoLineBreak('setaf 1');
-}
 function titleCase(str) {
     return "" + str[0].toUpperCase() + str.slice(1);
 }
@@ -524,14 +504,14 @@ function googBuild() {
         });
     });
 }
-function runTests() {
+function runTests(target) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, sh.exec("jest test -u").code];
+                case 0: return [4 /*yield*/, sh.exec("jest /modules/" + target + "/index.test.* -u").code];
                 case 1:
                     if ((_a.sent()) != 0) {
-                        echoError('Please ensure all unit tests are passing before release.');
+                        error('Please ensure all unit tests are passing before release.');
                         sh.exit(1);
                     }
                     return [2 /*return*/];
@@ -541,7 +521,7 @@ function runTests() {
 }
 function checkTests() {
     if (sh.exec("test -n \"$(find ./modules/" + target + "/ -name '*.test.*')\"").code != 0) {
-        echoError("No unit tests are written for the module " + target + ". Please write some and retry your release.");
+        error("No unit tests are written for the module " + target + ". Please write some and retry your release.");
         sh.exit(1);
     }
 }
@@ -596,28 +576,30 @@ function release(target) {
                     if (target === '' || typeof target !== 'string') {
                         target = titleCase(process.argv[4].replace(/-/g, ''));
                     }
-                    //checkTests();
-                    //await runTests();
+                    checkTests();
+                    return [4 /*yield*/, runTests(target)];
+                case 1:
+                    _a.sent();
                     info('Rolling up build. This may take a moment...');
                     return [4 /*yield*/, rollupBuild(target)];
-                case 1:
+                case 2:
                     _a.sent();
                     info('Build rolled up.');
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
-                case 2:
-                    _a.sent();
-                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 4];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
                 case 3:
                     _a.sent();
-                    _a.label = 4;
+                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 5];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
                 case 4:
-                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 6];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
-                case 5:
                     _a.sent();
-                    _a.label = 6;
-                case 6: return [2 /*return*/];
+                    _a.label = 5;
+                case 5:
+                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 7];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
+                case 6:
+                    _a.sent();
+                    _a.label = 7;
+                case 7: return [2 /*return*/];
             }
         });
     });

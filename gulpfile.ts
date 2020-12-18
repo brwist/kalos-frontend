@@ -248,34 +248,6 @@ async function patchCFC() {
   }
 }
 
-// Just prints a big line break to break up the output
-function echoLineBreak(color?: string) {
-  if (!color)
-    sh.exec(
-      'echo ===========================================================================',
-    );
-  if (color)
-    sh.exec(
-      `echo "$(tput ${color})===========================================================================$(tput sgr 0)"  `,
-    );
-}
-
-function echoNewLine() {
-  sh.exec('echo');
-}
-
-// Echoes warnings in a standardized way with color
-function echoWarning(str: string) {
-  sh.exec(`echo "$(tput setaf 3)WARNING: ${str}$(tput sgr 0)"`);
-}
-
-// Just a function to make errors more maintainable and uniform
-function echoError(str: string) {
-  echoLineBreak('setaf 1');
-  sh.exec(`echo "$(tput setaf 1)${str}$(tput sgr 0)"`);
-  echoLineBreak('setaf 1');
-}
-
 function titleCase(str: string) {
   return `${str[0].toUpperCase()}${str.slice(1)}`;
 }
@@ -459,9 +431,9 @@ async function googBuild() {
   });
 }
 
-async function runTests() {
-  if ((await sh.exec(`jest test -u`).code) != 0) {
-    echoError('Please ensure all unit tests are passing before release.');
+async function runTests(target: string) {
+  if ((await sh.exec(`jest /modules/${target}/index.test.* -u`).code) != 0) {
+    error('Please ensure all unit tests are passing before release.');
     sh.exit(1);
   }
 }
@@ -470,7 +442,7 @@ function checkTests() {
   if (
     sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
   ) {
-    echoError(
+    error(
       `No unit tests are written for the module ${target}. Please write some and retry your release.`,
     );
     sh.exit(1);
@@ -499,8 +471,9 @@ async function release(target = '') {
   if (target === '' || typeof target !== 'string') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
-  //checkTests();
-  //await runTests();
+
+  checkTests();
+  await runTests(target);
 
   info('Rolling up build. This may take a moment...');
 
