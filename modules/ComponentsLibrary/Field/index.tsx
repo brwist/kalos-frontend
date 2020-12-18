@@ -912,7 +912,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = ({
             ? filename || value
             : type === 'eventId'
             ? eventIdValue
-            : value
+            : value // Need to change this value to being the initial value passed
+          // done via state
         }
         helperText={helper}
       />
