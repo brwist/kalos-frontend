@@ -236,8 +236,12 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       }
     }
 
-    let fullAddress = `${this.state.address[indexOfForm].StreetAddress}, ${this.state.address[indexOfForm].City}, ${this.state.address[indexOfForm].State}, ${this.state.address[indexOfForm].Country}`;
+    let fullAddress = `${this.state.address[0].StreetAddress[indexOfForm]}, ${this.state.address[0].City[indexOfForm]}, ${this.state.address[0].State[indexOfForm]}, ${this.state.address[0].Country[indexOfForm]}`;
     this.state.address[0].FullAddress[indexOfForm] = fullAddress;
+    console.log(
+      'Full address set to be: ',
+      this.state.address[0].FullAddress[indexOfForm],
+    );
     this.getInputFieldByLabelContent(
       'Address',
       indexOfForm,
