@@ -4,9 +4,7 @@ import { getKeyByKeyName } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { Address } from './Address';
-import { Field } from '../Field';
 import './styles.less';
-import { ContractInfo } from '../../CustomerDetails/components/ContractInfo';
 
 // Convenience call, will be removed later
 export const getApi = async () => {
@@ -204,8 +202,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
           continue;
         }
 
-        console.log('ADDRESS TYPE: ', addressType);
-
         switch (addressType) {
           case 'locality':
             this.state.address[0].City[indexOfForm] = val;
@@ -238,10 +234,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 
     let fullAddress = `${this.state.address[0].StreetAddress[indexOfForm]}, ${this.state.address[0].City[indexOfForm]}, ${this.state.address[0].State[indexOfForm]}, ${this.state.address[0].Country[indexOfForm]}`;
     this.state.address[0].FullAddress[indexOfForm] = fullAddress;
-    console.log(
-      'Full address set to be: ',
-      this.state.address[0].FullAddress[indexOfForm],
-    );
     this.getInputFieldByLabelContent(
       'Address',
       indexOfForm,

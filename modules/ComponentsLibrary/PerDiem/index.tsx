@@ -242,16 +242,22 @@ export const PerDiemComponent: FC<Props> = ({
   }, [setPendingTripEdit]);
 
   const handleTripSave = useCallback(
-    async (data: Trip.AsObject, rowId: number) => {
+    async (data: Address.AsObject, rowId: number) => {
       setSaving(true);
 
+      let trip = new Trip();
+
+      trip.setOriginAddress(data.FullAddress[0]);
+
       console.log('TRIP : ', data);
-      console.log(data.originAddress);
+      //console.log(trip.originAddress);
       await handleGetTripDistance(
-        String(data.originAddress),
-        String(data.destinationAddress),
+        String(data.FullAddress[0]),
+        String(data.FullAddress[1]),
       );
-      await handleUpsertTrip(data, rowId);
+
+      return;
+      //await handleUpsertTrip(data, rowId);
       setSaving(false);
       setMapModalOpened(false);
     },
@@ -1008,6 +1014,7 @@ export const PerDiemComponent: FC<Props> = ({
               onSave={(address: Address.Address) => {
                 console.log(address);
                 console.log('Still need to implement saving.');
+                handleTripSave(address, pendingPerDiemRowEdit.perDiemId);
               }}
               addressFields={3}
               schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
