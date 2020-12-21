@@ -147,13 +147,13 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<Address.AsObject> = [
   ],
   [
     {
-      label: 'Zip Code',
-      name: 'ZipCode',
+      label: 'Country',
+      name: 'Country',
       type: 'text',
     },
     {
-      label: 'Country',
-      name: 'Country',
+      label: 'Zip Code',
+      name: 'ZipCode',
       type: 'text',
     },
   ],

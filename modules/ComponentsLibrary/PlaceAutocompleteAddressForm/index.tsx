@@ -6,6 +6,7 @@ import { Form, Schema } from '../Form';
 import { Address } from './Address';
 import { Field } from '../Field';
 import './styles.less';
+import { ContractInfo } from '../../CustomerDetails/components/ContractInfo';
 
 // Convenience call, will be removed later
 export const getApi = async () => {
@@ -113,7 +114,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       this.autoCompleteSections[
         i
         // @ts-ignore
-      ] = new google.maps.places.Autocomplete(this.inputArray[0], {
+      ] = new google.maps.places.Autocomplete(this.inputArray[i * 6], {
         types: ['geocode'],
       });
 
@@ -130,23 +131,36 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     }
   };
 
-  getInputFieldByLabelContent = (labelText: string) => {
-    let index = 0;
+  getInputFieldByLabelContent = (labelText: string, occurence?: number) => {
+    let index = 0,
+      occurences = 0;
 
-    for (let i = 0; i < this.props.schema.length; i++) {
-      for (let j = 0; j < this.props.schema[i].length; j++) {
-        console.log(j);
-        console.log(this.props.schema[j]);
-        console.log('LABEL: ', this.props.schema[i][j].label);
+    console.log('OCCURENCE: ', occurence);
+
+    for (
+      let i = 0;
+      i < this.props.schema.length * this.props.addressFields;
+      i++
+    ) {
+      let div = i % this.props.schema.length;
+      console.log('Trying: ', this.props.schema[i]);
+      for (let j = 0; j < this.props.schema[div].length; j++) {
         if (
-          this.props.schema[i][j].label == labelText &&
-          this.props.schema[i][j].type == 'text'
+          this.props.schema[div][j].label == labelText &&
+          this.props.schema[div][j].type == 'text'
         ) {
-          console.log('Returning ' + this.inputArray[index]);
-          return this.inputArray[index];
+          console.log('Occurence #: ', occurences);
+          if (occurence) {
+            if (occurences == occurence) {
+              return this.inputArray[index];
+            }
+            occurences++;
+          } else {
+            return this.inputArray[index];
+          }
         }
 
-        if (this.props.schema[i][j].type == 'text') {
+        if (this.props.schema[div][j].type == 'text') {
           index++;
         }
       }
@@ -176,40 +190,48 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         // @ts-ignore
         const val = component[componentForm[addressType]];
 
-        console.log('Schema: ', this.props.schema);
+        let labelName: string = '';
 
         if (addressType == 'route') {
-          this.getInputFieldByLabelContent('Street Address')!.value =
+          this.getInputFieldByLabelContent(
+            'Street Address',
+            indexOfForm,
+          )!.value = street_number + ' ' + val;
+          this.state.address.StreetAddress[indexOfForm] =
             street_number + ' ' + val;
-          this.state.address.StreetAddress[0] = street_number + ' ' + val;
           index++;
+          labelName = 'Street Address';
           continue;
         }
 
+        console.log('ADDR TYPE: ', addressType);
         switch (addressType) {
           case 'locality':
-            //this.state.address['City'] = val;
-            // The city is an array
-            let state = this.state;
-            state.address.City = [val];
-            this.setState({ address: state.address });
+            this.state.address.City[indexOfForm] = val;
+            labelName = 'City';
             break;
           case 'administrative_area_level_1':
-            //this.state.address.State = val;
+            this.state.address.State[indexOfForm] = val;
+            labelName = 'State';
             break;
           case 'country':
-          //this.state.address['Country'] = val;
+            this.state.address.Country[indexOfForm] = val;
+            labelName = 'Country';
+            break;
+          case 'postal_code':
+            this.state.address.ZipCode[indexOfForm] = val;
+            labelName = 'Zip Code';
+            break;
         }
-
-        console.log(this.inputArray[index]);
-        console.log(' being set as ', val);
+        console.log('FORM INDEX: ', indexOfForm);
 
         addressType == 'street_number'
           ? (street_number = val)
-          : (this.inputArray[index].value = val);
+          : (this.getInputFieldByLabelContent(
+              labelName,
+              indexOfForm,
+            ).value = val);
         // @ts-ignore
-
-        console.log('TYPE: ', addressType, ': ', val);
 
         index++;
       }
@@ -236,7 +258,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   render() {
-    console.log('Rendering');
     this.loadScript(() => this.handleLoad());
     this.geolocate();
     let forms = [];
