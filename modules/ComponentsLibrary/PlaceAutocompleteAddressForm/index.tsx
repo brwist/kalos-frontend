@@ -22,7 +22,7 @@ interface Props {
 }
 
 interface State {
-  address: Address.Address;
+  address: Address.Address[];
   query: any;
 }
 
@@ -43,10 +43,14 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   autoCompleteSections: google.maps.places.Autocomplete[2] = [];
   fieldRef: any = React.createRef();
   inputArray: any[] = [];
+  numInputs: number = 0;
   constructor(props: Props) {
     super(props);
 
-    let trip = new Address.Address();
+    let trip = [];
+    for (let i = 0; i < this.props.addressFields; i++) {
+      trip.push(new Address.Address());
+    }
 
     this.state = {
       address: trip,
@@ -135,21 +139,17 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     let index = 0,
       occurences = 0;
 
-    console.log('OCCURENCE: ', occurence);
-
     for (
       let i = 0;
       i < this.props.schema.length * this.props.addressFields;
       i++
     ) {
       let div = i % this.props.schema.length;
-      console.log('Trying: ', this.props.schema[i]);
       for (let j = 0; j < this.props.schema[div].length; j++) {
         if (
           this.props.schema[div][j].label == labelText &&
           this.props.schema[div][j].type == 'text'
         ) {
-          console.log('Occurence #: ', occurences);
           if (occurence) {
             if (occurences == occurence) {
               return this.inputArray[index];
@@ -161,11 +161,11 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         }
 
         if (this.props.schema[div][j].type == 'text') {
+          this.numInputs++;
           index++;
         }
       }
     }
-    console.log('Returning null');
 
     return null;
   };
@@ -197,33 +197,33 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             'Street Address',
             indexOfForm,
           )!.value = street_number + ' ' + val;
-          this.state.address.StreetAddress[indexOfForm] =
+          this.state.address[0].StreetAddress[indexOfForm] =
             street_number + ' ' + val;
           index++;
           labelName = 'Street Address';
           continue;
         }
 
-        console.log('ADDR TYPE: ', addressType);
+        console.log('ADDRESS TYPE: ', addressType);
+
         switch (addressType) {
           case 'locality':
-            this.state.address.City[indexOfForm] = val;
+            this.state.address[0].City[indexOfForm] = val;
             labelName = 'City';
             break;
           case 'administrative_area_level_1':
-            this.state.address.State[indexOfForm] = val;
+            this.state.address[0].State[indexOfForm] = val;
             labelName = 'State';
             break;
           case 'country':
-            this.state.address.Country[indexOfForm] = val;
+            this.state.address[0].Country[indexOfForm] = val;
             labelName = 'Country';
             break;
           case 'postal_code':
-            this.state.address.ZipCode[indexOfForm] = val;
+            this.state.address[0].ZipCode[indexOfForm] = val;
             labelName = 'Zip Code';
             break;
         }
-        console.log('FORM INDEX: ', indexOfForm);
 
         addressType == 'street_number'
           ? (street_number = val)
@@ -231,11 +231,17 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
               labelName,
               indexOfForm,
             ).value = val);
-        // @ts-ignore
 
         index++;
       }
     }
+
+    let fullAddress = `${this.state.address[indexOfForm].StreetAddress}, ${this.state.address[indexOfForm].City}, ${this.state.address[indexOfForm].State}, ${this.state.address[indexOfForm].Country}`;
+    this.state.address[0].FullAddress[indexOfForm] = fullAddress;
+    this.getInputFieldByLabelContent(
+      'Address',
+      indexOfForm,
+    ).value = fullAddress;
   };
 
   geolocate() {
@@ -262,12 +268,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     this.geolocate();
     let forms = [];
     for (let i = 0; i < this.props.addressFields; i++) {
-      console.log(i);
       if (i == 0) {
-        // Can do this multiple ways
-        // Can attempt to add onto the schema based upon something, idk how
-        // or I can also make the save function simply find the slots for each and go from there
-        //
         forms.push(
           <Form
             title="Enter Location"
@@ -275,7 +276,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
-            data={this.state.address}
+            data={this.state.address[0]}
             className="LocationForm"
             key={i + 'PlaceAutocompleteAddressForm'}
             inputFieldRefs={this.inputArray}
@@ -288,22 +289,12 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
-            data={this.state.address}
+            data={this.state.address[0]}
             className="LocationForm"
             key={i + 'PlaceAutocompleteAddressForm'}
             inputFieldRefs={this.inputArray}
           ></Form>,
         );
-      }
-      //array = array.slice(0, 6 * this.props.addressFields);
-    }
-
-    console.log('Array: ', this.inputArray);
-    console.log(this.inputArray.length);
-    for (let i = 0; i < this.inputArray.length; i++) {
-      console.log('Iterating: ', i);
-      if (this.inputArray[i]) {
-        console.log(i);
       }
     }
 
