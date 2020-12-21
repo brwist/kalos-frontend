@@ -126,32 +126,6 @@ export const getDefaultValueByType = (type: Type) => {
   return '';
 };
 
-/*
-  name,
-  label,
-  headline,
-  options,
-  onChange,
-  onFileLoad,
-  disabled = false,
-  required = false,
-  validation = '',
-  helperText = '',
-  type = 'text',
-  readOnly = false,
-  className = '',
-  startAdornment,
-  endAdornment,
-  content,
-  actionsInLabel = false,
-  style = {},
-  compact = false,
-  technicianAsEmployee = false,
-  white = false,
-  minutesStep = 15,
-  ...props
-*/
-
 // @ts-ignore
 export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
   (
