@@ -39,7 +39,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 > {
   // @ts-ignore
   autoCompleteSections: google.maps.places.Autocomplete[2] = [];
-  fieldRefs: any = React.createRef();
+  fieldRef: any = React.createRef();
   constructor(props: Props) {
     super(props);
 
@@ -291,6 +291,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     this.geolocate();
     let forms = [];
     for (let i = 0; i < this.props.addressFields; i++) {
+      console.log(i);
       if (i == 0) {
         // Can do this multiple ways
         // Can attempt to add onto the schema based upon something, idk how
@@ -299,7 +300,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         forms.push(
           <Form
             title="Enter Location"
-            ref={this.fieldRefs}
+            ref={this.fieldRef}
             schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
@@ -311,7 +312,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       } else {
         forms.push(
           <Form
-            ref={this.fieldRefs}
+            ref={this.fieldRef}
             schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
@@ -322,7 +323,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         );
       }
 
-      console.log(this.fieldRefs);
+      console.log(this.fieldRef);
     }
     return (
       <>
