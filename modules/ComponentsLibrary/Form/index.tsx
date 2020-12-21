@@ -60,7 +60,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       stickySectionBar = false,
       children,
     },
-    ref,
+    functionRef,
   ) => {
     const [formData, setFormData] = useState(
       schema.reduce(
@@ -123,6 +123,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       }
       onSave(formData);
     }, [onSave, formData, schema, setValidations]);
+
     return (
       <div className={className}>
         {title && (
@@ -166,11 +167,12 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           error={error}
           readOnly={readOnly}
           validations={validations}
+          ref={functionRef}
         />
         {!title && (
           <button
             //@ts-ignore
-            ref={ref}
+            //ref={functionRef}
             onClick={handleSave}
             style={{ display: 'none' }}
           >

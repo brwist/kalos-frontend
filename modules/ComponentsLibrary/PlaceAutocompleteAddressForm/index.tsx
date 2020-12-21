@@ -1,5 +1,5 @@
 // This is the google autocomplete form for address queries
-import React from 'react';
+import React, { createRef } from 'react';
 import { getKeyByKeyName } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -39,7 +39,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 > {
   // @ts-ignore
   autoCompleteSections: google.maps.places.Autocomplete[2] = [];
-
+  fieldRefs: any = React.createRef();
   constructor(props: Props) {
     super(props);
 
@@ -299,6 +299,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         forms.push(
           <Form
             title="Enter Location"
+            ref={this.fieldRefs}
             schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
@@ -310,6 +311,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       } else {
         forms.push(
           <Form
+            ref={this.fieldRefs}
             schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
@@ -319,6 +321,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
           ></Form>,
         );
       }
+
+      console.log(this.fieldRefs);
     }
     return (
       <>
