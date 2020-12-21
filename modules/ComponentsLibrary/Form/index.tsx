@@ -34,6 +34,7 @@ export interface Props<T> extends PlainFormProps<T> {
   submitDisabled?: boolean;
   cancelLabel?: string;
   stickySectionBar?: boolean;
+  inputFieldRefs?: any[];
 }
 
 //@ts-ignore
@@ -59,6 +60,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       className = '',
       stickySectionBar = false,
       children,
+      inputFieldRefs,
     },
     functionRef,
   ) => {
@@ -168,6 +170,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           readOnly={readOnly}
           validations={validations}
           ref={functionRef}
+          inputFieldRefs={inputFieldRefs}
         />
         {!title && (
           <button
