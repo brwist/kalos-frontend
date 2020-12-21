@@ -134,14 +134,15 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     let index = 0;
 
     for (let i = 0; i < this.props.schema.length; i++) {
-      for (let j = 0; j < this.props.schema[j].length; j++) {
+      for (let j = 0; j < this.props.schema[i].length; j++) {
+        console.log(j);
+        console.log(this.props.schema[j]);
+        console.log('LABEL: ', this.props.schema[i][j].label);
         if (
           this.props.schema[i][j].label == labelText &&
           this.props.schema[i][j].type == 'text'
         ) {
-          console.log(this.props.schema[i][j].label);
-          console.log(labelText);
-          console.log('Returning value: ', this.inputArray[index]);
+          console.log('Returning ' + this.inputArray[index]);
           return this.inputArray[index];
         }
 
@@ -150,6 +151,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         }
       }
     }
+    console.log('Returning null');
 
     return null;
   };
@@ -179,13 +181,36 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         if (addressType == 'route') {
           this.getInputFieldByLabelContent('Street Address')!.value =
             street_number + ' ' + val;
+          this.state.address.StreetAddress[0] = street_number + ' ' + val;
           index++;
           continue;
         }
 
+        switch (addressType) {
+          case 'locality':
+            //this.state.address['City'] = val;
+            // The city is an array
+            let state = this.state;
+            state.address.City = [val];
+            this.setState({ address: state.address });
+            break;
+          case 'administrative_area_level_1':
+            //this.state.address.State = val;
+            break;
+          case 'country':
+          //this.state.address['Country'] = val;
+        }
+
+        console.log(this.inputArray[index]);
+        console.log(' being set as ', val);
+
         addressType == 'street_number'
           ? (street_number = val)
           : (this.inputArray[index].value = val);
+        // @ts-ignore
+
+        console.log('TYPE: ', addressType, ': ', val);
+
         index++;
       }
     }
