@@ -40,6 +40,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   // @ts-ignore
   autoCompleteSections: google.maps.places.Autocomplete[2] = [];
   fieldRef: any = React.createRef();
+  inputArray: [] = [];
   constructor(props: Props) {
     super(props);
 
@@ -52,6 +53,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   getInputFields = () => {
+    /*
     const group = document.getElementsByClassName('LocationForm');
     let inputs = [];
     for (let i = 0; i < group.length; i++) {
@@ -63,7 +65,13 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     if (!inputs) {
       console.error('No input fields found.');
       return [];
-    }
+    }*/
+
+    let inputs: any[] = [];
+
+    this.inputArray.forEach(element => {
+      inputs.push(element);
+    });
 
     return inputs;
   };
@@ -109,11 +117,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     );
   };
 
-  getInputFieldByIndex = (
-    index: number,
-    formIndex?: number,
-  ): HTMLInputElement | null => {
-    let result: HTMLInputElement[] = [];
+  getInputFieldByIndex = (index: number, formIndex?: number): any => {
+    let result: any[] = [];
 
     const inputFields = this.getInputFields();
     for (let i = 0; i < inputFields.length; i++) {
@@ -140,19 +145,20 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     return result[0];
   };
 
-  getInputElementFromInputField = (inputField: any): HTMLInputElement => {
+  getInputElementFromInputField = (inputField: any): any => {
     return inputField.lastElementChild?.firstChild;
   };
 
   getInputFieldByLabelContent = (
     content: string,
     indexOfResult?: number,
-  ): HTMLInputElement | null => {
+  ): any => {
     const inputFields = this.getInputFields();
+    console.log('Input fields: ', inputFields);
     let results = [],
       indexOfResultInputField = [];
     let inputField;
-    for (let j = 0; j < inputFields.length; j++) {
+    for (let j = 0; j < 6 * this.props.addressFields - 1; j++) {
       inputField = inputFields[j];
       for (let i = 0; i < inputField.length; i++) {
         if (!inputField[i].parentNode) {
@@ -164,7 +170,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         }
         const childs = inputField[i].parentNode!.childNodes;
         const filtered = Array.from(childs).filter(
-          child => child.textContent == content,
+          (child: any) => child.textContent == content,
         );
 
         if (filtered.length > 0) {
@@ -173,6 +179,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         }
       }
     }
+
+    console.log('Results : ', results);
 
     if (indexOfResult) {
       if (results.length <= indexOfResult) {
@@ -186,12 +194,12 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       if (indexOfResult) {
         return results[indexOfResult] as HTMLInputElement;
       } else {
-        return results[0] as HTMLInputElement;
+        return results[0];
       }
     }
 
     if (results.length > 0) {
-      return results[0] as HTMLInputElement;
+      return results[0];
     }
 
     console.error(
@@ -211,9 +219,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         i
         // @ts-ignore
       ] = new google.maps.places.Autocomplete(
-        this.getInputElementFromInputField(
-          this.getInputFieldByLabelContent('Address', i),
-        ),
+        this.getInputFieldByLabelContent('Address', i),
         { types: ['geocode'] },
       );
 
@@ -307,6 +313,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             data={this.state.address}
             className="LocationForm"
             key={i + 'PlaceAutocompleteAddressForm'}
+            inputFieldRefs={this.inputArray}
           ></Form>,
         );
       } else {
@@ -319,12 +326,22 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             data={this.state.address}
             className="LocationForm"
             key={i + 'PlaceAutocompleteAddressForm'}
+            inputFieldRefs={this.inputArray}
           ></Form>,
         );
       }
-
-      console.log(this.fieldRef);
+      //array = array.slice(0, 6 * this.props.addressFields);
     }
+
+    console.log('Array: ', this.inputArray);
+    console.log(this.inputArray.length);
+    for (let i = 0; i < this.inputArray.length; i++) {
+      console.log('Iterating: ', i);
+      if (this.inputArray[i]) {
+        console.log(i);
+      }
+    }
+
     return (
       <>
         <Modal open onClose={this.props.onClose}>

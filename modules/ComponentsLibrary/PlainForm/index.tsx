@@ -67,6 +67,7 @@ export interface PlainFormProps<T> extends Style {
   children?: ReactNode;
   className?: string;
   ref?: RefObject<T> | ForwardedRef<T>;
+  inputFieldRefs?: any[];
 }
 
 interface Props<T> extends PlainFormProps<T> {
@@ -93,6 +94,7 @@ export const PlainForm: <T>(
       validations = {},
       className = '',
       children,
+      inputFieldRefs,
     },
     functionRef,
   ) => {
@@ -179,7 +181,9 @@ export const PlainForm: <T>(
               const { name } = props;
               return (
                 <Field
-                  ref={functionRef}
+                  ref={functionRef => {
+                    inputFieldRefs?.push(functionRef);
+                  }}
                   key={`${idx2}-${name}`}
                   {...props}
                   value={name ? formData[name] : undefined}
