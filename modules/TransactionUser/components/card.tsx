@@ -365,17 +365,18 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   async onPDFGenerate(fileData: Uint8Array) {
     await this.props.toggleLoading();
+    console.log({ id: this.state.txn.id, time: timestamp() });
     await this.DocsClient.upload(
       this.state.txn.id,
       `${timestamp()}-generated.pdf`,
       fileData,
     );
     await this.refresh();
-    await this.props.toggleLoading(() =>
+    await this.props.toggleLoading(() => {
       alert(
         'A PDF has been generated and uploaded for you, it is recommended you review this document before proceeding',
-      ),
-    );
+      );
+    });
   }
 
   uploadSingleFileData = async () => {
@@ -471,7 +472,6 @@ export class TxnCard extends React.PureComponent<props, state> {
       alert(
         'Network error, displayed information may be incorrect. Refresh is advised',
       );
-      console.log(err);
     }
   }
 
@@ -517,6 +517,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     const t = txn;
     const { isManager, userID } = this.props;
     let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
+    console.log(t);
     const deriveCallout = this.deriveCallout(t);
     return (
       <>
@@ -543,8 +544,8 @@ export class TxnCard extends React.PureComponent<props, state> {
                 <AltGallery
                   title="Transaction Photo(s)"
                   text="View Photo(s)"
-                  fileList={getGalleryData(this.state.txn)}
-                  transactionID={this.state.txn.id}
+                  fileList={getGalleryData(t)}
+                  transactionID={t.id}
                   canDelete
                 />
                 <Button label="Submit" onClick={this.submit} />

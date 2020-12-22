@@ -88,10 +88,12 @@ export const PrintPage: FC<Props> = ({
       const fr = new FileReader();
       fr.onload = () => {
         if (onFileCreated) {
+          console.log('on file created');
           onFileCreated(new Uint8Array(fr.result as ArrayBuffer));
         } else {
           const el = document.createElement('a');
-          el.download = 'affadavit.pdf';
+          console.log({ downloadPdfFilename });
+          el.download = `${downloadPdfFilename}_affadavit.pdf`;
           el.href = URL.createObjectURL(blob);
           el.target = '_blank';
           el.click();
