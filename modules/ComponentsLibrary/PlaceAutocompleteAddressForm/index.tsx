@@ -197,7 +197,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             'Street Address',
             indexOfForm,
           )!.value = street_number + ' ' + val;
-          this.state.address[0].StreetAddress[indexOfForm] =
+          this.state.address[indexOfForm].StreetAddress[indexOfForm] =
             street_number + ' ' + val;
           index++;
           labelName = 'Street Address';
@@ -206,34 +206,36 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 
         switch (addressType) {
           case 'locality':
-            this.state.address[0].City[indexOfForm] = val;
+            this.state.address[indexOfForm].City[indexOfForm] = val;
             labelName = 'City';
             break;
           case 'administrative_area_level_1':
-            this.state.address[0].State[indexOfForm] = val;
+            this.state.address[indexOfForm].State[indexOfForm] = val;
 
             labelName = 'State';
             break;
           case 'country':
-            this.state.address[0].Country[indexOfForm] = val;
+            this.state.address[indexOfForm].Country[indexOfForm] = val;
 
             labelName = 'Country';
             break;
           case 'postal_code':
-            this.state.address[0].ZipCode[indexOfForm] = val;
+            this.state.address[indexOfForm].ZipCode[indexOfForm] = val;
             labelName = 'Zip Code';
             break;
         }
 
-        this.state.address[0].FullAddress[indexOfForm] =
-          this.state.address[0].StreetAddress[indexOfForm] +
+        this.state.address[indexOfForm].FullAddress[indexOfForm] =
+          this.state.address[indexOfForm].StreetAddress[indexOfForm] +
           ', ' +
-          this.state.address[0].City[indexOfForm] +
+          this.state.address[indexOfForm].City[indexOfForm] +
           ', ' +
-          this.state.address[0].State[indexOfForm] +
+          this.state.address[indexOfForm].State[indexOfForm] +
           ', ' +
-          this.state.address[0].Country[indexOfForm] +
+          this.state.address[indexOfForm].Country[indexOfForm] +
           ', ';
+
+        console.log(this.state.address);
 
         addressType == 'street_number'
           ? (street_number = val)
