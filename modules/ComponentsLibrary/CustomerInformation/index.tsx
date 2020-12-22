@@ -17,7 +17,7 @@ import {
   UserType,
   saveUser,
   loadGroups,
-  loadUserGroupLinksByUserId,
+  UserGroupLinkClientService,
   GroupType,
   UserGroupLinkType,
   UserClientService,
@@ -115,7 +115,9 @@ export const CustomerInformation: FC<Props> = ({
     }
     const groups = await loadGroups();
     setGroups(groups);
-    const groupLinks = await loadUserGroupLinksByUserId(userID);
+    const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
+      userID,
+    );
     setGroupLinks(groupLinks);
     setGroupLinksInitial(groupLinks);
     const entry = new User();
