@@ -59,7 +59,6 @@ import {
   ContractType,
   JobTypeType,
   JobSubtypeType,
-  deleteUserById,
   PropertyClientService,
   getBusinessName,
   getCustomerPhoneWithExt,
@@ -501,7 +500,7 @@ export const AdvancedSearch: FC<Props> = ({
       const { id } = pendingCustomerDeleting;
       setPendingCustomerDeleting(undefined);
       setLoading(true);
-      await deleteUserById(id);
+      await UserClientService.deleteUserById(id);
       setLoaded(false);
     }
   }, [
@@ -515,7 +514,7 @@ export const AdvancedSearch: FC<Props> = ({
       const { id } = pendingEmployeeDeleting;
       setPendingEmployeeDeleting(undefined);
       setLoading(true);
-      await deleteUserById(id);
+      await UserClientService.deleteUserById(id);
       setLoaded(false);
     }
   }, [
