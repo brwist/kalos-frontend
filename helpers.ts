@@ -2813,12 +2813,6 @@ export const upsertEvent = async (data: Partial<EventType>) => {
   return await EventClientService[data.id ? 'Update' : 'Create'](req);
 };
 
-export const deleteUserById = async (id: number) => {
-  const req = new User();
-  req.setId(id);
-  await UserClientService.Delete(req);
-};
-
 export const getCurrDate = () =>
   formatDate(new Date().toISOString()).replace(/\//g, '-');
 
