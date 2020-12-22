@@ -1654,20 +1654,14 @@ const metersToMiles = (meters: number): number => {
 };
 
 export const getTripDistance = async (origin: string, destination: string) => {
-  console.log('Getting trip distance between: ', origin, ' and ', destination);
   try {
     const matReq = new MatrixRequest();
     const placeOrigin = addressStringToPlace(origin),
       placeDestination = addressStringToPlace(destination);
 
-    console.log('Place origin: ', placeOrigin);
-    console.log('Place destination: ', placeDestination);
-
     const coordsOrigin = await MapClientService['Geocode'](placeOrigin),
       coordsDestination = await MapClientService['Geocode'](placeDestination);
 
-    console.log('Coords origin: ', coordsOrigin);
-    console.log('Coords dest: ', coordsDestination);
     matReq.addOrigins(coordsOrigin);
     matReq.setDestination(coordsDestination);
     const tripDistance = await MapClientService['DistanceMatrix'](matReq);
@@ -2639,50 +2633,6 @@ export const loadEventsByFilter = async ({
 };
 
 /**
- * Returns Event by job number or contract number
- * @param referenceNumber job number or contract number
- * @returns Event?
- */
-async function loadEventByJobOrContractNumber(referenceNumber: string) {
-  const req = new Event();
-  req.setIsActive(1);
-  req.setLogJobNumber(`${referenceNumber}%`);
-  const { resultsList, totalCount } = (
-    await EventClientService.BatchGet(req)
-  ).toObject();
-  if (totalCount > 0) return resultsList[0];
-  req.setLogJobNumber('');
-  req.setContractNumber(referenceNumber);
-  const { resultsList: resultsList2, totalCount: totalCount2 } = (
-    await EventClientService.BatchGet(req)
-  ).toObject();
-  if (totalCount2 > 0) return resultsList2[0];
-  return undefined;
-}
-
-/**
- * Returns Events by job number or contract numbers
- * @param referenceNumbers job number or contract number
- * @returns {[key: referenceNumber]: Event}
- */
-async function loadEventsByJobOrContractNumbers(referenceNumbers: string[]) {
-  const refNumbers = uniq(
-    referenceNumbers.map(el => (el || '').trim()).filter(el => el !== ''),
-  );
-  return (
-    await Promise.all(
-      refNumbers.map(async referenceNumber => ({
-        referenceNumber,
-        data: await loadEventByJobOrContractNumber(referenceNumber),
-      })),
-    )
-  ).reduce(
-    (aggr, { referenceNumber, data }) => ({ ...aggr, [referenceNumber]: data }),
-    {},
-  );
-}
-
-/**
  * Returns escaped text with special characters, ie. &#x2f; -> /
  * @param encodedStr string
  * @returns string
@@ -3512,8 +3462,6 @@ export {
   loadMetricByUserIds,
   roundNumber,
   getWeekOptions,
-  loadEventByJobOrContractNumber,
-  loadEventsByJobOrContractNumbers,
   escapeText,
   newBugReport,
   newBugReportImage,
