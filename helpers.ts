@@ -3013,20 +3013,6 @@ export const makeMonthsOptions = (withAllOption?: boolean) => {
   ];
 };
 
-export const getUploadedHTMLUrl = async (
-  HTMLString: string,
-  filename: string,
-  bucketName: string = 'testbuckethelios',
-) => {
-  const client = new PDFClient(ENDPOINT);
-  const req = new HTML();
-  req.setData(HTMLString);
-  req.setKey(filename);
-  req.setBucket(bucketName);
-  const url = await client.Create(req);
-  return url;
-};
-
 const loadGovPerDiemData = async (
   apiEndpoint: string,
   apiKey: string,
