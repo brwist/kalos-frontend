@@ -19,7 +19,6 @@ import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
 import {
-  loadPerDiemByUserIdAndDateStarted,
   loadPerDiemByUserIdsAndDateStarted,
   UserType,
   PerDiemType,
@@ -403,7 +402,9 @@ export const PerDiemComponent: FC<Props> = ({
   const load = useCallback(async () => {
     if (!loggedUserId) return;
     setLoading(true);
-    const { resultsList } = await loadPerDiemByUserIdAndDateStarted(
+    const {
+      resultsList,
+    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
       loggedUserId,
       formatDateFns(dateStarted),
     );

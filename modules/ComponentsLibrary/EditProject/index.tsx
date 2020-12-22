@@ -35,7 +35,6 @@ import {
   loadTimesheetDepartments,
   TimesheetDepartmentType,
   upsertEvent,
-  loadPerDiemsByEventId,
   PerDiemType,
   PerDiemRowType,
   getDepartmentName,
@@ -50,6 +49,7 @@ import {
   UserType,
   EventClientService,
   UserClientService,
+  PerDiemClientService,
   TaskEventClientService,
 } from '../../../helpers';
 import {
@@ -484,7 +484,9 @@ export const EditProject: FC<Props> = ({
     ],
   );
   const loadPrintData = useCallback(async () => {
-    const { resultsList } = await loadPerDiemsByEventId(serviceCallId);
+    const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
+      serviceCallId,
+    );
     const lodgings = await loadPerDiemsLodging(resultsList);
     setLodgings(lodgings);
     const transactions = await loadTransactionsByEventId(serviceCallId);
