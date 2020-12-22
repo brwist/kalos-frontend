@@ -299,9 +299,11 @@ export const PerDiemComponent: FC<Props> = ({
 
       return;
 
+      /* 
       await handleUpsertTrip(data, rowId);
       setSaving(false);
       setMapModalOpened(false);
+      */
     },
     [mapModalOpened, setMapModalOpened],
   );

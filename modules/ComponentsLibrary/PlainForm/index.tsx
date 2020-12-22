@@ -100,6 +100,7 @@ export const PlainForm: <T>(
   ) => {
     const theme = useTheme();
     const matches = useMediaQuery(theme.breakpoints.up('sm'));
+
     const [formData, setFormData] = useState(
       schema.reduce(
         (aggr, fields) => ({
@@ -121,6 +122,7 @@ export const PlainForm: <T>(
         {} as typeof data,
       ),
     );
+
     const handleChange = useCallback(
       name => (value: Value) => {
         const data = { ...formData, [name]: value };
