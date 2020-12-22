@@ -10,7 +10,6 @@ import {
   GroupType,
   UserGroupLinkType,
   loadGroups,
-  loadUserGroupLinksByUserId,
   UserGroupLinkClientService,
   makeFakeRows,
   saveUser,
@@ -60,7 +59,9 @@ export const CustomerEdit: FC<Props> = ({
         setCustomer(customer);
       }
       if (!_groupLinks) {
-        const groupLinks = await loadUserGroupLinksByUserId(userId);
+        const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
+          userId,
+        );
         setGroupLinks(groupLinks);
         setGroupLinksInitial(groupLinks);
       }

@@ -2754,15 +2754,6 @@ export const loadGroups = async () => {
   return resultsList;
 };
 
-export const loadUserGroupLinksByUserId = async (userId: number) => {
-  const groupLink = new UserGroupLink();
-  groupLink.setUserId(userId);
-  const { resultsList } = (
-    await UserGroupLinkClientService.BatchGet(groupLink)
-  ).toObject();
-  return resultsList;
-};
-
 export const saveProperty = async (
   data: PropertyType,
   userId: number,
