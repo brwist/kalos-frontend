@@ -7,7 +7,7 @@ import { useReactToPrint } from 'react-to-print';
 import { PrintHeader, Props as HeaderProps } from '../PrintHeader';
 import { PrintFooter, Props as FooterProps } from '../PrintFooter';
 import { Button, Props as ButtonProps } from '../Button';
-import { getUploadedHTMLUrl, setInlineStyles } from '../../../helpers';
+import { setInlineStyles, PDFClientService } from '../../../helpers';
 import './styles.css';
 
 export type Status = 'idle' | 'loading' | 'loaded';
@@ -67,7 +67,7 @@ export const PrintPage: FC<Props> = ({
           </body>
         </html>
       `;
-        const url = await getUploadedHTMLUrl(
+        const url = await PDFClientService.getUploadedHTMLUrl(
           html,
           `${downloadPdfFilename}.pdf`,
         );
