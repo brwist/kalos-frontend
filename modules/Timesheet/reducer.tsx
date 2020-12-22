@@ -110,7 +110,11 @@ export type Action =
   | { type: 'error'; text: string }
   | { type: 'submitTimesheet' }
   | { type: 'approveTimesheet' }
-  | { type: 'showReceiptsIssueDialog'; value: boolean };
+  | { type: 'showReceiptsIssueDialog'; value: boolean }
+  | {
+      type: 'setReceiptsIssue';
+      data: { hasReceiptsIssue: boolean; receiptsIssueStr: string };
+    };
 
 export const getShownDates = (date: Date): string[] => {
   const firstDay = date;
@@ -133,6 +137,16 @@ export const reducer = (state: State, action: Action) => {
         },
       };
     }
+    case 'setReceiptsIssue': {
+      return {
+        ...state,
+        receiptsIssue: {
+          shown: false,
+          hasReceiptsIssue: action.data.hasReceiptsIssue,
+          receiptsIssueStr: action.data.receiptsIssueStr,
+        },
+      };
+    }
     case 'fetchingTimesheetData': {
       return {
         ...state,
@@ -145,7 +159,6 @@ export const reducer = (state: State, action: Action) => {
       const { timeoffs } = action;
       const { data, totalPayroll } = state.shownDates.reduce(
         ({ data, totalPayroll }, date) => {
-          console.log(date);
           const dayData = datesMap.get(date);
           const srList =
             dayData?.getServicesRenderedList().map(i => i.toObject()) || [];
