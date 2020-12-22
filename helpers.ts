@@ -1654,13 +1654,20 @@ const metersToMiles = (meters: number): number => {
 };
 
 export const getTripDistance = async (origin: string, destination: string) => {
+  console.log('Getting trip distance between: ', origin, ' and ', destination);
   try {
     const matReq = new MatrixRequest();
     const placeOrigin = addressStringToPlace(origin),
       placeDestination = addressStringToPlace(destination);
 
+    console.log('Place origin: ', placeOrigin);
+    console.log('Place destination: ', placeDestination);
+
     const coordsOrigin = await MapClientService['Geocode'](placeOrigin),
       coordsDestination = await MapClientService['Geocode'](placeDestination);
+
+    console.log('Coords origin: ', coordsOrigin);
+    console.log('Coords dest: ', coordsDestination);
     matReq.addOrigins(coordsOrigin);
     matReq.setDestination(coordsDestination);
     const tripDistance = await MapClientService['DistanceMatrix'](matReq);
