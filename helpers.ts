@@ -1442,31 +1442,6 @@ export const upsertTimeoffRequest = async (
 export const refreshToken = async () =>
   await UserClientService.GetToken('test', 'test');
 
-export const loadPerDiemsByEventId = async (eventId: number) => {
-  const req = new PerDiem();
-  req.setWithRows(true);
-  req.setIsActive(true);
-  req.setPageNumber(0);
-  req.setWithoutLimit(true);
-  const row = new PerDiemRow();
-  row.setServiceCallId(eventId);
-  req.setRowsList([row]); // FIXME it doesn't work in api this way
-  return (await PerDiemClientService.BatchGet(req)).toObject();
-};
-
-export const loadPerDiemByUserIdAndDateStarted = async (
-  userId: number,
-  dateStarted: string,
-) => {
-  const req = new PerDiem();
-  req.setUserId(userId);
-  req.setWithRows(true);
-  req.setIsActive(true);
-  req.setPageNumber(0);
-  req.setDateStarted(`${dateStarted}%`);
-  return (await PerDiemClientService.BatchGet(req)).toObject();
-};
-
 export const loadPerDiemByUserIdsAndDateStarted = async (
   userIds: number[],
   dateStarted: string,
@@ -1474,8 +1449,12 @@ export const loadPerDiemByUserIdsAndDateStarted = async (
   const response = await Promise.all(
     uniq(userIds).map(async userId => ({
       userId,
-      data: (await loadPerDiemByUserIdAndDateStarted(userId, dateStarted))
-        .resultsList,
+      data: (
+        await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
+          userId,
+          dateStarted,
+        )
+      ).resultsList,
     })),
   );
   return response.reduce(
