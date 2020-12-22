@@ -60,7 +60,7 @@ import {
   JobTypeType,
   JobSubtypeType,
   deleteUserById,
-  deletePropertyById,
+  PropertyClientService,
   getBusinessName,
   getCustomerPhoneWithExt,
   TimesheetDepartmentType,
@@ -529,7 +529,7 @@ export const AdvancedSearch: FC<Props> = ({
       const { id } = pendingPropertyDeleting;
       setPendingPropertyDeleting(undefined);
       setLoading(true);
-      await deletePropertyById(id);
+      await PropertyClientService.deletePropertyById(id);
       setLoaded(false);
     }
   }, [

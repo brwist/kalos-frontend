@@ -2819,12 +2819,6 @@ export const deleteUserById = async (id: number) => {
   await UserClientService.Delete(req);
 };
 
-export const deletePropertyById = async (id: number) => {
-  const req = new Property();
-  req.setId(id);
-  await PropertyClientService.Delete(req);
-};
-
 export const getCurrDate = () =>
   formatDate(new Date().toISOString()).replace(/\//g, '-');
 

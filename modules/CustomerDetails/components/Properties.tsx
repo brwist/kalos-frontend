@@ -21,7 +21,7 @@ import {
   loadPropertiesByFilter,
   PropertiesFilter,
   saveProperty,
-  deletePropertyById,
+  PropertyClientService,
   getPropertyAddress,
   getCFAppUrl,
 } from '../../../helpers';
@@ -128,7 +128,7 @@ export const Properties: FC<Props> = props => {
 
   const handleDelete = useCallback(async () => {
     if (deleting) {
-      await deletePropertyById(deleting.id);
+      await PropertyClientService.deletePropertyById(deleting.id);
       handleSetDeleting()();
       load();
     }
