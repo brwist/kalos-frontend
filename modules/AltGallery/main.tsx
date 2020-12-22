@@ -91,9 +91,7 @@ export class AltGallery extends React.PureComponent<props, state> {
   };
 
   toggleOpen() {
-    let wasClosed: boolean;
     this.setState(prevState => {
-      wasClosed = !prevState.isOpen;
       return { isOpen: !prevState.isOpen };
     });
   }
@@ -195,9 +193,7 @@ export class AltGallery extends React.PureComponent<props, state> {
     this.setState({ isLoading: true }, async () => {
       try {
         let data: Uint8Array;
-        if (this.state.fileList.length === 0) {
-          await this.fetchData();
-        }
+        await this.fetchData();
         const doc = this.state.documentList[this.state.activeImage];
         if (doc.data && doc.data.length > 0) {
           data = doc.data;
