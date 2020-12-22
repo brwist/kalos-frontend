@@ -5,7 +5,6 @@ import {
   UserType,
   getDepartmentByManagerID,
   getCustomerName,
-  refreshToken,
   UserClientService,
 } from '../../helpers';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
@@ -31,7 +30,7 @@ const Transaction: FC<Props> = props => {
   }, [userID]);
   const load = useCallback(async () => {
     setLoading(true);
-    await refreshToken();
+    await UserClientService.refreshToken();
     const user = await UserClientService.loadUserById(userID);
     const isManager = await managerCheck();
     setUser(user);

@@ -5,12 +5,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { Form, Schema } from '../ComponentsLibrary/Form';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import {
-  UserType,
-  refreshToken,
-  saveUser,
-  UserClientService,
-} from '../../helpers';
+import { UserType, saveUser, UserClientService } from '../../helpers';
 import { Loader } from '../Loader/main';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
@@ -137,7 +132,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
   };
 
   async componentDidMount() {
-    await refreshToken();
+    await UserClientService.refreshToken();
     await this.fetchUser();
   }
 

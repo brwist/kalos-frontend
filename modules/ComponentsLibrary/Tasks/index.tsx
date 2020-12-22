@@ -30,7 +30,7 @@ import {
   loadSpiffTypes,
   SpiffTypeType,
   escapeText,
-  refreshToken,
+  UserClientService,
   upsertTaskAssignments,
   uploadFileToS3Bucket,
   createTaskDocument,
@@ -150,7 +150,7 @@ export const Tasks: FC<Props> = ({
   const [taskEventEditing, setTaskEventEditing] = useState<TaskEventType>();
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
-    await refreshToken();
+    await UserClientService.refreshToken();
     const priorities = await loadProjectTaskPriorities();
     const statuses = await loadProjectTaskStatuses();
     const billableTypes = await loadProjectTaskBillableTypes();

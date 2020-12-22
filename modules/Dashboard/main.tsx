@@ -18,7 +18,7 @@ import { ENDPOINT } from '../../constants';
 import {
   usd,
   makeFakeRows,
-  refreshToken,
+  UserClientService,
   EventType,
   UserType,
 } from '../../helpers';
@@ -195,7 +195,7 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    await refreshToken();
+    await UserClientService.refreshToken();
     await this.toggleLoading();
     await this.getIdentity();
     await this.getPTO();

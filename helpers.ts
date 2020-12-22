@@ -1439,9 +1439,6 @@ export const upsertTimeoffRequest = async (
   return await TimeoffRequestClientService[data.id ? 'Update' : 'Create'](req);
 };
 
-export const refreshToken = async () =>
-  await UserClientService.GetToken('test', 'test');
-
 export const loadPerDiemByUserIdsAndDateStarted = async (
   userIds: number[],
   dateStarted: string,

@@ -71,7 +71,6 @@ import {
   CustomEventsHandler,
   uploadFileToS3Bucket,
   getCFAppUrl,
-  refreshToken,
   cfURL,
   ContractsSort,
   UserClientService,
@@ -255,7 +254,7 @@ export const AdvancedSearch: FC<Props> = ({
     [setPendingAddProperty],
   );
   const loadDicts = useCallback(async () => {
-    await refreshToken();
+    await UserClientService.refreshToken();
     setLoadingDicts(true);
     const jobTypes = await JobTypeClientService.loadJobTypes();
     setJobTypes(jobTypes);

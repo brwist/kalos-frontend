@@ -36,7 +36,6 @@ import {
   loadPerDiemByDepartmentIdsAndDateStarted,
   loadGovPerDiem,
   usd,
-  refreshToken,
   upsertTrip,
   getTripDistance,
   TripType,
@@ -362,7 +361,7 @@ export const PerDiemComponent: FC<Props> = ({
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
   const initialize = useCallback(async () => {
-    await refreshToken();
+    await UserClientService.refreshToken();
     if (perDiem) {
       const year = +format(dateStarted, 'yyyy');
       const month = +format(dateStarted, 'M');
