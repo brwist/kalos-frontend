@@ -148,11 +148,11 @@ export const Properties: FC<Props> = props => {
   }, [editing, setEditing, formKey, setFormKey]);
 
   const handleViewEntry = useCallback(
-    (id: number) => () => {
+    (id: number, altUserId: number) => () => {
       window.open(
         [
           getCFAppUrl('admin:properties.details'),
-          `user_id=${userID}`,
+          `user_id=${altUserId}`,
           `property_id=${id}`,
         ].join('&'),
       );
@@ -247,21 +247,25 @@ export const Properties: FC<Props> = props => {
     return [
       {
         value: address,
-        onClick: handleViewEntry(id),
+        onClick: handleViewEntry(id, entry.userId),
       },
       {
         value: subdivision,
-        onClick: handleViewEntry(id),
+        onClick: handleViewEntry(id, entry.userId),
       },
       {
         value: `${city}, ${state}`,
-        onClick: handleViewEntry(id),
+        onClick: handleViewEntry(id, entry.userId),
       },
       {
         value: zip,
-        onClick: handleViewEntry(id),
+        onClick: handleViewEntry(id, entry.userId),
         actions: [
-          <IconButton key="view" size="small" onClick={handleViewEntry(id)}>
+          <IconButton
+            key="view"
+            size="small"
+            onClick={handleViewEntry(id, entry.userId)}
+          >
             <InfoIcon />
           </IconButton>,
           <IconButton key="edit" size="small" onClick={handleSetEditing(entry)}>
