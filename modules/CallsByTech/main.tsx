@@ -9,7 +9,7 @@ import {
   formatTime,
   makeFakeRows,
   loadEventsByFilter,
-  refreshToken,
+  UserClientService,
 } from '../../helpers';
 import { InfoTable } from '../ComponentsLibrary/InfoTable';
 import { Modal } from '../ComponentsLibrary/Modal';
@@ -97,7 +97,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
   };
 
   async componentDidMount() {
-    await refreshToken();
+    await UserClientService.refreshToken();
   }
 
   render() {
