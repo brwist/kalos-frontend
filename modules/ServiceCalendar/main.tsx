@@ -39,7 +39,7 @@ import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { TimeOff } from '../ComponentsLibrary/TimeOff';
 import {
   UserType,
-  getTimeoffRequestTypes,
+  TimeoffRequestClientService,
   TimeoffRequestTypes,
 } from '../../helpers';
 import './styles.less';
@@ -328,7 +328,7 @@ export const ServiceCalendar: FC<Props> = props => {
   );
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes = await getTimeoffRequestTypes();
+    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
