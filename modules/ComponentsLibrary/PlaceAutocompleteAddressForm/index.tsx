@@ -165,7 +165,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       }
     }
 
-    console.log('Returning: null');
     return null;
   };
 
@@ -193,18 +192,9 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         if (addressType == 'route') {
           if (indexOfForm == 0) {
             this.state.address.StreetAddressOrigin = street_number + ' ' + val;
-
-            console.log(
-              'Street address origin: ',
-              this.state.address.StreetAddressOrigin,
-            );
           } else {
             this.state.address.StreetAddressDestination =
               street_number + ' ' + val;
-            console.log(
-              'Street address destination: ',
-              this.state.address.StreetAddressDestination,
-            );
           }
           labelName = 'Street Address';
           continue;
@@ -305,8 +295,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   render() {
     this.loadScript(() => this.handleLoad());
     this.geolocate();
-
-    console.log(this.state.address);
 
     return (
       <>
