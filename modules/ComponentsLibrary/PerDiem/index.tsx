@@ -249,15 +249,30 @@ export const PerDiemComponent: FC<Props> = ({
 
       trip.setOriginAddress(data.FullAddress[0]);
 
-      console.log('TRIP : ', data);
-      //console.log(trip.originAddress);
-      await handleGetTripDistance(
-        String(data.FullAddress[0]),
-        String(data.FullAddress[1]),
-      );
+      console.log('DATA : ', data);
+      const addr1 =
+        data.StreetAddress[0] +
+        ', ' +
+        data.City[0] +
+        ', ' +
+        data.State[0] +
+        ' ' +
+        data.ZipCode[0];
+
+      const addr2 =
+        data.StreetAddress[1] +
+        ', ' +
+        data.City[1] +
+        ', ' +
+        data.State[1] +
+        ' ' +
+        data.ZipCode[1];
+
+      await handleGetTripDistance(String(addr1), String(addr2));
 
       return;
-      //await handleUpsertTrip(data, rowId);
+
+      await handleUpsertTrip(data, rowId);
       setSaving(false);
       setMapModalOpened(false);
     },
@@ -1012,8 +1027,6 @@ export const PerDiemComponent: FC<Props> = ({
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
               onSave={(address: Address.Address) => {
-                console.log(address);
-                console.log('Still need to implement saving.');
                 handleTripSave(address, pendingPerDiemRowEdit.perDiemId);
               }}
               addressFields={3}

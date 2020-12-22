@@ -5,6 +5,8 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { Address } from './Address';
 import './styles.less';
+import { indexOf } from 'lodash';
+import { TextField } from '@material-ui/core';
 
 // Convenience call, will be removed later
 export const getApi = async () => {
@@ -209,10 +211,12 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             break;
           case 'administrative_area_level_1':
             this.state.address[0].State[indexOfForm] = val;
+
             labelName = 'State';
             break;
           case 'country':
             this.state.address[0].Country[indexOfForm] = val;
+
             labelName = 'Country';
             break;
           case 'postal_code':
@@ -220,6 +224,16 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             labelName = 'Zip Code';
             break;
         }
+
+        this.state.address[0].FullAddress[indexOfForm] =
+          this.state.address[0].StreetAddress[indexOfForm] +
+          ', ' +
+          this.state.address[0].City[indexOfForm] +
+          ', ' +
+          this.state.address[0].State[indexOfForm] +
+          ', ' +
+          this.state.address[0].Country[indexOfForm] +
+          ', ';
 
         addressType == 'street_number'
           ? (street_number = val)
@@ -229,15 +243,12 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             ).value = val);
 
         index++;
+
+        this.inputArray[6].value = this.state.address[0].FullAddress[
+          indexOfForm
+        ];
       }
     }
-
-    let fullAddress = `${this.state.address[0].StreetAddress[indexOfForm]}, ${this.state.address[0].City[indexOfForm]}, ${this.state.address[0].State[indexOfForm]}, ${this.state.address[0].Country[indexOfForm]}`;
-    this.state.address[0].FullAddress[indexOfForm] = fullAddress;
-    this.getInputFieldByLabelContent(
-      'Address',
-      indexOfForm,
-    ).value = fullAddress;
   };
 
   geolocate() {
@@ -262,6 +273,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   render() {
     this.loadScript(() => this.handleLoad());
     this.geolocate();
+
     let forms = [];
     for (let i = 0; i < this.props.addressFields; i++) {
       if (i == 0) {
@@ -285,7 +297,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
-            data={this.state.address[0]}
+            data={this.state.address[i]}
             className="LocationForm"
             key={i + 'PlaceAutocompleteAddressForm'}
             inputFieldRefs={this.inputArray}
