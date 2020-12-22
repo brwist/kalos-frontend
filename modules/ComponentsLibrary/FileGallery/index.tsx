@@ -9,10 +9,10 @@ import {
   loadFiles,
   makeFakeRows,
   formatDateTime,
-  deleteFileById,
   deleteFileFromS3Buckets,
   padWithZeroes,
   S3ClientService,
+  FileClientService,
 } from '../../../helpers';
 import './styles.less';
 
@@ -103,7 +103,7 @@ export const FileGallery: FC<Props> = ({
     setDeleting(undefined);
     setLoading(true);
     await deleteFileFromS3Buckets(name, bucket);
-    await deleteFileById(deleting.id);
+    await FileClientService.deleteFileById(deleting.id);
     setLoaded(false);
   }, [deleting, setLoading, setLoaded, setDeleting]);
 
@@ -132,7 +132,7 @@ export const FileGallery: FC<Props> = ({
     setAdding(undefined);
     if (removeFileOnAdd) {
       setLoading(true);
-      await deleteFileById(adding.id);
+      await FileClientService.deleteFileById(adding.id);
       setLoaded(false);
     }
   }, [

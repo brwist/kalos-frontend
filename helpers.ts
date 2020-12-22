@@ -2923,12 +2923,6 @@ export const upsertFile = async (data: Partial<FileType>) => {
   return await FileClientService[data.id ? 'Update' : 'Create'](req);
 };
 
-export const deleteFileById = async (id: number) => {
-  const req = new File();
-  req.setId(id);
-  await FileClientService.Delete(req);
-};
-
 export const saveDocumentKey = async (data: DocumentKeyType, id?: number) => {
   const req = new DocumentKey();
   const fieldMaskList = [];
