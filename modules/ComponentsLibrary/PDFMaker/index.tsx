@@ -5,6 +5,7 @@ import { PrintPage } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintTable } from '../PrintTable';
 import { Button } from '../Button';
+import { timestamp } from '../../../helpers';
 
 interface Props {
   dateStr: string;
@@ -131,7 +132,10 @@ export const PDFMaker: FC<Props> = ({
         </Modal>
       )}
       {formData && (
-        <PrintPage onFileCreated={handleFileCreated}>
+        <PrintPage
+          onFileCreated={handleFileCreated}
+          downloadPdfFilename={`${title}_${timestamp()}`}
+        >
           <PrintParagraph tag="h1" align="center" style={{ fontSize: 30 }}>
             {pdfType === 'Missing Receipt'
               ? receiptAffadavitTitle
@@ -141,10 +145,10 @@ export const PDFMaker: FC<Props> = ({
             columns={[{ title: '', widthPercentage: 50, align: 'left' }, '']}
             data={[
               [
-                <PrintParagraph tag="h2">
+                <PrintParagraph tag="h2" key={0}>
                   <u>PURCHASE DATE:</u> {dateStr}
                 </PrintParagraph>,
-                <PrintParagraph tag="h2">
+                <PrintParagraph tag="h2" key={1}>
                   <u>EMPLOYEE NAME:</u> {name}
                 </PrintParagraph>,
               ],
@@ -156,7 +160,7 @@ export const PDFMaker: FC<Props> = ({
             columns={['']}
             data={[
               [
-                <PrintParagraph tag="h2">
+                <PrintParagraph tag="h2" key={0}>
                   <u>PURCHASED FROM (VENDOR):</u> {formData.vendor}
                 </PrintParagraph>,
               ],
@@ -168,11 +172,11 @@ export const PDFMaker: FC<Props> = ({
             columns={[{ title: '', widthPercentage: 50, align: 'left' }, '']}
             data={[
               [
-                <PrintParagraph tag="h2">
+                <PrintParagraph tag="h2" key={0}>
                   <u>AMOUNT:</u> {amount}
                 </PrintParagraph>,
                 jobNumber ? (
-                  <PrintParagraph tag="h2">
+                  <PrintParagraph tag="h2" key={1}>
                     <u>JOB #:</u> {jobNumber}
                   </PrintParagraph>
                 ) : (
@@ -187,7 +191,7 @@ export const PDFMaker: FC<Props> = ({
             columns={['']}
             data={[
               [
-                <PrintParagraph tag="h2">
+                <PrintParagraph tag="h2" key={0}>
                   <u>PURPOSE OF TRANSACTION:</u> {formData.purpose}
                 </PrintParagraph>,
               ],
