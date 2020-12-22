@@ -28,7 +28,7 @@ import {
   FileType,
   upsertFile,
   upsertTransactionDocument,
-  moveFileBetweenS3Buckets,
+  S3ClientService,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
@@ -273,7 +273,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.setState({ pendingAddFromSingleFile: false });
     const { id } = this.state.txn;
     const bucket = 'kalos-transactions';
-    const status = await moveFileBetweenS3Buckets(
+    const status = await S3ClientService.moveFileBetweenS3Buckets(
       {
         key: file.name,
         bucket: file.bucket,
@@ -307,7 +307,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.setState({ pendingAddFromGallery: false });
     const { id } = this.state.txn;
     const bucket = 'kalos-transactions';
-    const status = await moveFileBetweenS3Buckets(
+    const status = await S3ClientService.moveFileBetweenS3Buckets(
       {
         key: file.name,
         bucket: file.bucket,

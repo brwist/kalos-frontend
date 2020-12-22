@@ -2688,26 +2688,6 @@ export const uploadFileToS3Bucket = async (
   }
 };
 
-export const moveFileBetweenS3Buckets = async (
-  from: SimpleFile,
-  to: SimpleFile,
-  preserveSource: boolean = false,
-) => {
-  try {
-    const res = await S3ClientService.Move(from, to, preserveSource);
-    return res ? 'ok' : 'nok';
-  } catch (e) {
-    return 'nok';
-  }
-};
-
-export const deleteFileFromS3Buckets = async (key: string, bucket: string) => {
-  const req = new FileObject();
-  req.setKey(key);
-  req.setBucket(bucket);
-  await S3ClientService.Delete(req);
-};
-
 export const makeOptions = (
   options: string[],
   withAllOption = false,
