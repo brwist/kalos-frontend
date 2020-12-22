@@ -3,7 +3,7 @@ import React, { createRef } from 'react';
 import { getKeyByKeyName } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
-import { Address } from './Address';
+import { AddressPair } from './Address';
 import './styles.less';
 import { indexOf } from 'lodash';
 import { TextField } from '@material-ui/core';
@@ -16,13 +16,13 @@ export const getApi = async () => {
 
 interface Props {
   onClose: () => void;
-  onSave: (addressPair: Address.Address) => void;
+  onSave: (addressPair: AddressPair.AddressPair) => void;
   addressFields: number;
-  schema: Schema<Address.AsObject>;
+  schema: Schema<AddressPair.AsObject>;
 }
 
 interface State {
-  address: Address.Address[];
+  address: AddressPair.AddressPair;
   query: any;
 }
 
@@ -44,18 +44,16 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   fieldRef: any = React.createRef();
   inputArray: any[] = [];
   numInputs: number = 0;
+  data: any;
   constructor(props: Props) {
     super(props);
 
-    let trip = [];
-    for (let i = 0; i < this.props.addressFields; i++) {
-      trip.push(new Address.Address());
-    }
-
     this.state = {
-      address: trip,
+      address: new AddressPair.AddressPair(),
       query: null,
     };
+
+    this.data = this.state.address;
   }
 
   getInputFields = () => {
@@ -167,13 +165,13 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       }
     }
 
+    console.log('Returning: null');
     return null;
   };
 
   handlePlaceSelect = (indexOfForm: any, startIndex: number) => {
     const place = this.autoCompleteSections[indexOfForm].getPlace();
-    let index = startIndex,
-      street_number = 0;
+    let street_number = 0;
 
     // Get each component of the address from the place details,
     // and then fill-in the corresponding field on the form.
@@ -193,49 +191,85 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         let labelName: string = '';
 
         if (addressType == 'route') {
-          this.getInputFieldByLabelContent(
-            'Street Address',
-            indexOfForm,
-          )!.value = street_number + ' ' + val;
-          this.state.address[indexOfForm].StreetAddress[indexOfForm] =
-            street_number + ' ' + val;
-          index++;
+          if (indexOfForm == 0) {
+            this.state.address.StreetAddressOrigin = street_number + ' ' + val;
+
+            console.log(
+              'Street address origin: ',
+              this.state.address.StreetAddressOrigin,
+            );
+          } else {
+            this.state.address.StreetAddressDestination =
+              street_number + ' ' + val;
+            console.log(
+              'Street address destination: ',
+              this.state.address.StreetAddressDestination,
+            );
+          }
           labelName = 'Street Address';
           continue;
         }
 
         switch (addressType) {
           case 'locality':
-            this.state.address[indexOfForm].City[indexOfForm] = val;
+            if (indexOfForm == 0) {
+              this.state.address.CityOrigin = val;
+            } else {
+              this.state.address.CityDestination = val;
+            }
             labelName = 'City';
             break;
           case 'administrative_area_level_1':
-            this.state.address[indexOfForm].State[indexOfForm] = val;
+            if (indexOfForm == 0) {
+              this.state.address.StateOrigin = val;
+            } else {
+              this.state.address.StateDestination = val;
+            }
 
             labelName = 'State';
             break;
           case 'country':
-            this.state.address[indexOfForm].Country[indexOfForm] = val;
+            if (indexOfForm == 0) {
+              this.state.address.CountryOrigin = val;
+            } else {
+              this.state.address.CountryDestination = val;
+            }
 
             labelName = 'Country';
             break;
           case 'postal_code':
-            this.state.address[indexOfForm].ZipCode[indexOfForm] = val;
+            if (indexOfForm == 0) {
+              this.state.address.ZipCodeOrigin = val;
+            } else {
+              this.state.address.ZipCodeDestination = val;
+            }
             labelName = 'Zip Code';
             break;
         }
 
-        this.state.address[indexOfForm].FullAddress[indexOfForm] =
-          this.state.address[indexOfForm].StreetAddress[indexOfForm] +
-          ', ' +
-          this.state.address[indexOfForm].City[indexOfForm] +
-          ', ' +
-          this.state.address[indexOfForm].State[indexOfForm] +
-          ', ' +
-          this.state.address[indexOfForm].Country[indexOfForm] +
-          ', ';
+        if (indexOfForm == 0) {
+          this.state.address.FullAddressOrigin =
+            this.state.address.StreetAddressOrigin +
+            ', ' +
+            this.state.address.CityOrigin +
+            ', ' +
+            this.state.address.StateOrigin +
+            ', ' +
+            this.state.address.CountryOrigin +
+            ', ';
+        } else {
+          this.state.address.FullAddressDestination =
+            this.state.address.StreetAddressDestination +
+            ', ' +
+            this.state.address.CityDestination +
+            ', ' +
+            this.state.address.StateDestination +
+            ', ' +
+            this.state.address.CountryDestination +
+            ', ';
+        }
 
-        console.log(this.state.address);
+        this.data = this.state.address;
 
         addressType == 'street_number'
           ? (street_number = val)
@@ -243,15 +277,11 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
               labelName,
               indexOfForm,
             ).value = val);
-
-        index++;
-
-        this.inputArray[6].value = this.state.address[0].FullAddress[
-          indexOfForm
-        ];
       }
     }
   };
+
+  componentDidUpdate() {}
 
   geolocate() {
     if (navigator.geolocation) {
@@ -276,42 +306,22 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     this.loadScript(() => this.handleLoad());
     this.geolocate();
 
-    let forms = [];
-    for (let i = 0; i < this.props.addressFields; i++) {
-      if (i == 0) {
-        forms.push(
-          <Form
-            title="Enter Location"
-            ref={this.fieldRef}
-            schema={this.props.schema}
-            onClose={this.props.onClose}
-            onSave={this.props.onSave}
-            data={this.state.address[0]}
-            className="LocationForm"
-            key={i + 'PlaceAutocompleteAddressForm'}
-            inputFieldRefs={this.inputArray}
-          ></Form>,
-        );
-      } else {
-        forms.push(
-          <Form
-            ref={this.fieldRef}
-            schema={this.props.schema}
-            onClose={this.props.onClose}
-            onSave={this.props.onSave}
-            data={this.state.address[i]}
-            className="LocationForm"
-            key={i + 'PlaceAutocompleteAddressForm'}
-            inputFieldRefs={this.inputArray}
-          ></Form>,
-        );
-      }
-    }
+    console.log(this.state.address);
 
     return (
       <>
         <Modal open onClose={this.props.onClose}>
-          {forms}
+          <Form
+            title="Enter Trip Origin and Destination"
+            ref={this.fieldRef}
+            schema={this.props.schema}
+            onClose={this.props.onClose}
+            onSave={this.props.onSave}
+            data={this.data}
+            className="LocationForm"
+            key={'PlaceAutocompleteAddressForm'}
+            inputFieldRefs={this.inputArray}
+          ></Form>
         </Modal>
         )
       </>

@@ -48,7 +48,7 @@ import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
-import { Address } from '../PlaceAutocompleteAddressForm/Address';
+import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 
 export interface Props {
   loggedUserId: number;
@@ -114,7 +114,7 @@ export const getStatus = (
 };
 
 // Schema will be adjusted down the line to include as many addresses as it can
-export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<Address.AsObject> = [
+export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   [
     {
       label: 'Origin',
@@ -125,35 +125,77 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<Address.AsObject> = [
     {
       label: 'Address',
       type: 'text',
-      name: 'FullAddress',
+      name: 'FullAddressOrigin',
     },
   ],
   [
     {
       label: 'Street Address',
-      name: 'StreetAddress',
+      name: 'StreetAddressOrigin',
       type: 'text',
     },
     {
       label: 'City',
-      name: 'City',
+      name: 'CityOrigin',
       type: 'text',
     },
     {
       label: 'State',
-      name: 'State',
+      name: 'StateOrigin',
       type: 'text',
     },
   ],
   [
     {
       label: 'Country',
-      name: 'Country',
+      name: 'CountryOrigin',
       type: 'text',
     },
     {
       label: 'Zip Code',
-      name: 'ZipCode',
+      name: 'ZipCodeOrigin',
+      type: 'text',
+    },
+  ],
+  [
+    {
+      label: 'Destination',
+      headline: true,
+    },
+  ],
+  [
+    {
+      label: 'Address',
+      type: 'text',
+      name: 'FullAddressDestination',
+    },
+  ],
+  [
+    {
+      label: 'Street Address',
+      name: 'StreetAddressDestination',
+      type: 'text',
+    },
+    {
+      label: 'City',
+      name: 'CityDestination',
+      type: 'text',
+    },
+    {
+      label: 'State',
+      name: 'StateDestination',
+      type: 'text',
+    },
+  ],
+  [
+    {
+      label: 'Country',
+      name: 'CountryDestination',
+      type: 'text',
+    },
+    {
+      label: 'Zip Code',
+      name: 'ZipCodeDestination',
       type: 'text',
     },
   ],
@@ -242,33 +284,18 @@ export const PerDiemComponent: FC<Props> = ({
   }, [setPendingTripEdit]);
 
   const handleTripSave = useCallback(
-    async (data: Address.AsObject, rowId: number) => {
+    async (data: AddressPair.AsObject, rowId: number) => {
       setSaving(true);
 
       let trip = new Trip();
 
-      trip.setOriginAddress(data.FullAddress[0]);
+      trip.setOriginAddress(data.FullAddressOrigin);
+      trip.setDestinationAddress(data.FullAddressDestination);
 
-      console.log('DATA : ', data);
-      const addr1 =
-        data.StreetAddress[0] +
-        ', ' +
-        data.City[0] +
-        ', ' +
-        data.State[0] +
-        ' ' +
-        data.ZipCode[0];
-
-      const addr2 =
-        data.StreetAddress[1] +
-        ', ' +
-        data.City[1] +
-        ', ' +
-        data.State[1] +
-        ' ' +
-        data.ZipCode[1];
-
-      await handleGetTripDistance(String(addr1), String(addr2));
+      await handleGetTripDistance(
+        String(data.FullAddressOrigin),
+        String(data.FullAddressDestination),
+      );
 
       return;
 
@@ -1026,10 +1053,10 @@ export const PerDiemComponent: FC<Props> = ({
             */
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
-              onSave={(address: Address.Address) => {
+              onSave={(address: AddressPair.AddressPair) => {
                 handleTripSave(address, pendingPerDiemRowEdit.perDiemId);
               }}
-              addressFields={3}
+              addressFields={2}
               schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
             ></PlaceAutocompleteAddressForm>
           )}
