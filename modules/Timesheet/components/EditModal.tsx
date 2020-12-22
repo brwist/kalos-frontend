@@ -122,9 +122,6 @@ const EditTimesheetModal: FC<Props> = ({
       roundToNearestMinutes(new Date(), { nearestTo: 15 }),
       'yyyy-MM-dd HH:mm',
     );
-
-    console.log(data.timeStarted, 'new time');
-    console.log(data.timeFinished);
   }
   const handleUpdate = useCallback(
     async (data: EntryWithDate) => {
@@ -165,7 +162,6 @@ const EditTimesheetModal: FC<Props> = ({
         data.date ? parseISO(data.date) : new Date(),
         'yyyy-MM-dd',
       )} ${format(parseISO(data.timeStarted), 'HH:mm')}`;
-      console.log(data.timeStarted);
       data.timeFinished = `${format(
         data.date ? parseISO(data.date) : new Date(),
         'yyyy-MM-dd',
@@ -236,7 +232,6 @@ const EditTimesheetModal: FC<Props> = ({
 
   const handleSave = useCallback(
     data => {
-      console.log(data);
       switch (action) {
         case 'update':
           handleUpdate(data);

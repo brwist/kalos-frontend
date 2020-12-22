@@ -186,24 +186,22 @@ export const Timesheet: FC<Props> = props => {
     dispatch({ type: 'changeDate', value });
   };
 
-  const checkTimeout = (): boolean => {
-    const lastTimeout = localStorage.getItem('TIMESHEET_TIMEOUT');
-    if (lastTimeout) {
-      const lastVal = parseInt(lastTimeout);
-      const currVal = new Date().valueOf();
-      return currVal - lastVal <= 86400;
-    }
-    return false;
-  };
-
   const handleTimeout = (): void => {
     localStorage.setItem('TIMESHEET_TIMEOUT', `${new Date().valueOf()}`);
     dispatch({ type: 'showReceiptsIssueDialog', value: false });
+    dispatch({
+      type: 'setReceiptsIssue',
+      data: {
+        hasReceiptsIssue: false,
+        receiptsIssueStr: 'User is on 24 hour timeout',
+      },
+    });
   };
 
   const checkReceiptIssue = (): boolean => {
+    console.log({ receiptsIssue });
     if (receiptsIssue.hasReceiptsIssue) {
-      //dispatch({ type: 'showReceiptsIssueDialog', value: true });
+      dispatch({ type: 'showReceiptsIssueDialog', value: true });
       return false;
     }
     return true;
@@ -316,8 +314,6 @@ export const Timesheet: FC<Props> = props => {
 
   useEffect(() => {
     (async () => {
-      await userClient.GetToken('test', 'test');
-      await txnClient.GetToken('test', 'test');
       fetchUsers();
     })();
     if (!timeoffRequestTypes) {
@@ -341,7 +337,6 @@ export const Timesheet: FC<Props> = props => {
       const req = new TimesheetReq();
       req.setServicesRendered(sr);
       req.setTimesheetLine(tl);
-      console.log(shownDates);
       const result = await tslClient.GetTimesheet(
         req,
         `${shownDates[0]}%`,

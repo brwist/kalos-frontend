@@ -49,7 +49,6 @@ const Column: FC<Props> = ({
     (a, b) =>
       parseISO(a.timeStarted).getTime() - parseISO(b.timeStarted).getTime(),
   );
-  console.log(cards);
   return (
     <Box className={clsx(dayView && 'TimesheetColumnDayView')}>
       <div className="TimesheetColumnSticky">
