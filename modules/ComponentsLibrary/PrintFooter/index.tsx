@@ -8,6 +8,7 @@ export interface Props {
 
 export const PrintFooter: FC<Props> = ({ height, children }) => (
   <div className="PrintFooter" style={{ height }}>
+    <h1>PRINT</h1>
     {children}
   </div>
 );

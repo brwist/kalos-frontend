@@ -46,7 +46,13 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     this.fetchTxns = this.fetchTxns.bind(this);
     this.fetchAllTxns = this.fetchAllTxns.bind(this);
     this.handleCostCenterChange = this.handleCostCenterChange.bind(this);
+    this.debug = this.debug.bind(this);
   }
+
+  debug = () => {
+    console.log('forcing update');
+    this.fetchAllTxns();
+  };
 
   changePage(changeAmount: number) {
     return () => {
