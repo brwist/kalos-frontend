@@ -344,7 +344,7 @@ export const PropertyInfo: FC<Props> = props => {
                     },
                     {
                       label: 'Owner Details',
-                      url: `/index.cfm?action=admin:customers.details&user_id=${userID}`,
+                      url: `/index.cfm?action=admin:customers.details&user_id=${entry.userId}`,
                     },
                     {
                       label: 'Links',
