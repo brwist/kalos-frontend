@@ -33,7 +33,7 @@ import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
 import {
   getTimeoffRequestByFilter,
-  getTimeoffRequestTypes,
+  TimeoffRequestClientService,
   TimeoffRequestTypes,
   UserClientService,
 } from '../../helpers';
@@ -303,7 +303,7 @@ export const Timesheet: FC<Props> = props => {
   };
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes = await getTimeoffRequestTypes();
+    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),

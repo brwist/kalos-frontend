@@ -12,7 +12,7 @@ import {
   getTimeoffRequestByFilter,
   TimeoffRequestType,
   formatDateTime,
-  getTimeoffRequestTypes,
+  TimeoffRequestClientService,
   makeFakeRows,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
@@ -48,7 +48,7 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     try {
       const department = await getDepartmentByManagerID(loggedUserId);
       setDepartment(department);
-      const types = await getTimeoffRequestTypes();
+      const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
       setTypes(
         types.reduce(
           (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),

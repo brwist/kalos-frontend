@@ -1401,13 +1401,6 @@ export const loadTransactionsByEventId = async (eventId: number) => {
   return results;
 };
 
-export const getPTOInquiryByUserId = async (userId: number) =>
-  (await TimeoffRequestClientService.PTOInquiry(userId)).toObject();
-
-export const getTimeoffRequestTypes = async () =>
-  await (await TimeoffRequestClientService.GetTimeoffRequestTypes()).toObject()
-    .dataList;
-
 export const getTimeoffRequestByFilter = async (
   filter: Partial<TimeoffRequestType>,
   fieldMaskListInit: string[] = [],

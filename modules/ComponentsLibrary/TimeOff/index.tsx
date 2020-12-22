@@ -11,12 +11,10 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
 import {
   TimeoffRequestType,
-  getPTOInquiryByUserId,
   UserType,
   PTOType,
   upsertTimeoffRequest,
   timestamp,
-  getTimeoffRequestTypes,
   UserClientService,
   TimeoffRequestClientService,
 } from '../../../helpers';
@@ -82,11 +80,11 @@ export const TimeOff: FC<Props> = ({
     requestClass: '',
   });
   const init = useCallback(async () => {
-    const types = await getTimeoffRequestTypes();
+    const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTypeOptions(
       types.map(({ id, requestType }) => ({ label: requestType, value: id })),
     );
-    const pto = await getPTOInquiryByUserId(userId);
+    const pto = await TimeoffRequestClientService.getPTOInquiryByUserId(userId);
     setPto(pto);
     const user = await UserClientService.loadUserById(userId);
     setUser(user);
