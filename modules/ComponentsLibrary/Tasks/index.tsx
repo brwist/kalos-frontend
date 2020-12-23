@@ -19,7 +19,7 @@ import {
   loadTasks,
   makeFakeRows,
   timestamp,
-  loadProjectTaskPriorities,
+  TaskClientService,
   TaskPriorityType,
   loadProjectTaskStatuses,
   TaskStatusType,
@@ -151,7 +151,7 @@ export const Tasks: FC<Props> = ({
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
     await UserClientService.refreshToken();
-    const priorities = await loadProjectTaskPriorities();
+    const priorities = await TaskClientService.loadProjectTaskPriorities();
     const statuses = await loadProjectTaskStatuses();
     const billableTypes = await loadProjectTaskBillableTypes();
     const spiffTypes = await loadSpiffTypes();

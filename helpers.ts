@@ -1164,17 +1164,10 @@ export const loadProjectTaskStatuses = async () => {
   return resultsList;
 };
 
-export const loadProjectTaskPriorities = async () => {
-  const { resultsList } = (
-    await TaskClientService.loadTaskPriorityList()
-  ).toObject();
-  return resultsList;
-};
-
 export const loadProjectTaskBillableTypes = async () => {
-  // const { resultsList } = (
-  //   await TaskClientService.loadTaskBillableTypeList() // FIXME when available in rpc
-  // ).toObject();
+  //const { resultsList } = (
+  //  await TaskClientService.loadTaskBillableTypeList() // FIXME when available in rpc
+  //).toObject();
   return ['Flat Rate', 'Hourly', 'Parts Run', 'Spiff', 'Tool Purchase'];
 };
 

@@ -28,7 +28,6 @@ import {
   formatDate,
   upsertEventTask,
   loadProjectTaskStatuses,
-  loadProjectTaskPriorities,
   TaskStatusType,
   TaskPriorityType,
   TaskClientService,
@@ -167,7 +166,7 @@ export const EditProject: FC<Props> = ({
   const loadInit = useCallback(async () => {
     await loadEvent();
     const statuses = await loadProjectTaskStatuses();
-    const priorities = await loadProjectTaskPriorities();
+    const priorities = await TaskClientService.loadProjectTaskPriorities();
     const departments = await loadTimesheetDepartments();
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setStatuses(statuses);
