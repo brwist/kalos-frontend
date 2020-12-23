@@ -47,6 +47,7 @@ import PDFMaker from './PDFMaker/examples';
 import PerDiem from './PerDiem/examples';
 import PerDiemsNeedsAuditing from './PerDiemsNeedsAuditing/examples';
 import PerformanceMetrics from './PerformanceMetrics/examples';
+import PlaceAutocompleteAddressForm from './PlaceAutocompleteAddressForm/examples';
 import PlainForm from './PlainForm/examples';
 import PrintFooter from './PrintFooter/examples';
 import PrintHeader from './PrintHeader/examples';
@@ -131,6 +132,7 @@ const COMPONENTS = {
   PerDiem,
   PerDiemsNeedsAuditing,
   PerformanceMetrics,
+  PlaceAutocompleteAddressForm,
   PlainForm,
   PrintFooter,
   PrintHeader,

@@ -14,6 +14,7 @@ interface Props {
 
 interface State {
   address: AddressPair.AddressPair;
+  formKey: number;
 }
 
 const componentForm = {
@@ -36,6 +37,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     super(props);
     this.state = {
       address: new AddressPair.AddressPair(),
+      formKey: 0,
     };
     this.geolocate();
   }
@@ -230,13 +232,11 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             this.state.address.CountryDestination +
             ', ';
         }
+
+        let key = this.state.formKey + 1;
+        this.setState({ formKey: key });
         // Sets the input field text to the value given by val
-        addressType == 'street_number'
-          ? (street_number = val)
-          : (this.getInputFieldByLabelContent(
-              labelName,
-              indexOfForm,
-            ).value = val);
+        if (addressType == 'street_number') street_number = val;
       }
     }
   };
@@ -273,7 +273,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             onSave={this.props.onSave}
             data={this.state.address}
             className="LocationForm"
-            key={'PlaceAutocompleteAddressForm'}
+            key={this.state.formKey}
             inputFieldRefs={this.inputArray}
           ></Form>
         </Modal>
