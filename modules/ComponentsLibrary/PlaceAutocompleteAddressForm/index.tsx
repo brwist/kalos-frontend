@@ -204,7 +204,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             break;
         }
 
-        /*
         if (indexOfForm == 0) {
           this.state.address.FullAddressOrigin =
             this.state.address.StreetAddressOrigin +
@@ -213,8 +212,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             ', ' +
             this.state.address.StateOrigin +
             ', ' +
-            this.state.address.CountryOrigin +
-            ', ';
+            this.state.address.CountryOrigin;
         } else {
           this.state.address.FullAddressDestination =
             this.state.address.StreetAddressDestination +
@@ -223,9 +221,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             ', ' +
             this.state.address.StateDestination +
             ', ' +
-            this.state.address.CountryDestination +
-            ', ';
-        }*/
+            this.state.address.CountryDestination;
+        }
 
         // Sets the input field text to the value given by val
         if (addressType == 'street_number') street_number = val;
