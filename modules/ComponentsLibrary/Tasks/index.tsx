@@ -25,7 +25,6 @@ import {
   loadProjectTaskBillableTypes,
   upsertTask,
   formatDateTime,
-  loadSpiffTypes,
   SpiffTypeType,
   escapeText,
   UserClientService,
@@ -152,7 +151,7 @@ export const Tasks: FC<Props> = ({
     const priorities = await TaskClientService.loadProjectTaskPriorities();
     const statuses = await TaskClientService.loadProjectTaskStatuses();
     const billableTypes = await loadProjectTaskBillableTypes();
-    const spiffTypes = await loadSpiffTypes();
+    const spiffTypes = await TaskClientService.loadSpiffTypes();
     setPriorities(priorities);
     setStatuses(statuses);
     setBillableTypes(billableTypes);

@@ -23,7 +23,7 @@ import {
   SpiffTypeType,
   SpiffToolAdminActionType,
   DocumentType,
-  loadSpiffTypes,
+  TaskClientService,
   updateSpiffTool,
   createTaskDocument,
   DocumentClientService,
@@ -172,7 +172,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     if (type === 'Spiff' && spiffTypes.length === 0) {
-      const spiffTypes = await loadSpiffTypes();
+      const spiffTypes = await TaskClientService.loadSpiffTypes();
       setSpiffTypes(spiffTypes);
     }
     setLoading(false);

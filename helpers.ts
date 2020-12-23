@@ -816,21 +816,6 @@ async function loadJobTypeSubtypes() {
   return results;
 }
 
-export const loadSpiffTypes = async () => {
-  const req = new SpiffType();
-  req.setIsActive(true);
-  const { resultsList } = (
-    await TaskClientService.GetSpiffTypes(req)
-  ).toObject();
-  return resultsList
-    .filter(item => !!item.ext)
-    .sort((a, b) => {
-      if (a.ext < b.ext) return -1;
-      if (a.ext > b.ext) return 1;
-      return 0;
-    });
-};
-
 export const createTaskDocument = async (
   fileName: string,
   taskId: number,

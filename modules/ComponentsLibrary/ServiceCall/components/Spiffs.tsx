@@ -22,7 +22,6 @@ import {
   TaskClientService,
   makeFakeRows,
   TaskType,
-  loadSpiffTypes,
   SpiffTypeType,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE } from '../../../../constants';
@@ -51,7 +50,7 @@ export const Spiffs: FC<Props> = ({
   const [status, setStatus] = useState<number>();
   const load = useCallback(async () => {
     setLoading(true);
-    const spiffTypes = await loadSpiffTypes();
+    const spiffTypes = await TaskClientService.loadSpiffTypes();
     setSpiffTypes(
       spiffTypes.reduce((aggr, item) => ({ ...aggr, [item.id]: item }), {}),
     );
