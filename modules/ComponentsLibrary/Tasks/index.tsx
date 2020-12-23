@@ -33,7 +33,7 @@ import {
   uploadFileToS3Bucket,
   createTaskDocument,
   DocumentType,
-  updateDocumentDescription,
+  DocumentClientService,
   upsertTaskEvent,
   TaskEventType,
   loadTaskEventsByFilter,
@@ -313,7 +313,7 @@ export const Tasks: FC<Props> = ({
     (onClose, onReload, { id }) => async (form: DocumentType) => {
       setDocumentSaving(true);
       const { description } = form;
-      await updateDocumentDescription(id, description);
+      await DocumentClientService.updateDocumentDescription(id, description);
       setDocumentSaving(false);
       onClose();
       onReload();

@@ -847,17 +847,6 @@ export const createTaskDocument = async (
   await DocumentClientService.Create(req);
 };
 
-export const updateDocumentDescription = async (
-  id: number,
-  description: string,
-) => {
-  const req = new Document();
-  req.setId(id);
-  req.setDescription(description);
-  req.setFieldMaskList(['Description']);
-  await DocumentClientService.Update(req);
-};
-
 export const upsertTask = async (data: Partial<TaskType>) => {
   const req = new Task();
   const fieldMaskList = [];
