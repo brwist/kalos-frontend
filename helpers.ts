@@ -1144,19 +1144,6 @@ async function loadQuoteLines() {
   return results;
 }
 
-export const loadProjectTasks = async (eventId: number) => {
-  const { resultsList } = (
-    await EventClientService.loadTasksByEventID(eventId)
-  ).toObject();
-  return resultsList.sort((a, b) => {
-    const A = a.startDate;
-    const B = b.startDate;
-    if (A < B) return -1;
-    if (A > B) return 1;
-    return 0;
-  });
-};
-
 export const loadProjectTaskStatuses = async () => {
   const { resultsList } = (
     await TaskClientService.loadTaskStatuses()
