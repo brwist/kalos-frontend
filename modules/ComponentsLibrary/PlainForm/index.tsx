@@ -67,7 +67,7 @@ export interface PlainFormProps<T> extends Style {
   children?: ReactNode;
   className?: string;
   ref?: RefObject<T> | ForwardedRef<T>;
-  inputFieldRefs?: any[];
+  inputFieldRefs?: T[];
 }
 
 interface Props<T> extends PlainFormProps<T> {
@@ -137,6 +137,7 @@ export const PlainForm: <T>(
       },
       [formData, setFormData, onChange],
     );
+
     return (
       <form
         className={clsx(className, 'PlainForm', {
@@ -184,7 +185,10 @@ export const PlainForm: <T>(
               return (
                 <Field
                   ref={functionRef => {
-                    inputFieldRefs?.push(functionRef);
+                    if (functionRef && !inputFieldRefs?.includes(functionRef)) {
+                      inputFieldRefs?.push(functionRef);
+                      console.log('Pushed: ', `${idx2}-${name}`);
+                    }
                   }}
                   key={`${idx2}-${name}`}
                   {...props}
