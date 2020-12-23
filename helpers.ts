@@ -899,23 +899,6 @@ export const loadTaskAssignment = async (taskId: number) => {
   return results;
 };
 
-export const upsertTaskAssignments = async (
-  taskId: number,
-  technicianIds: number[],
-) => {
-  const req = new TaskAssignment();
-  req.setTaskId(taskId);
-  await TaskAssignmentClientService.Delete(req); // FIXME deleting by taskId doesn't work - resolve when task will return TaskAssignment[]
-  await Promise.all(
-    technicianIds.map(id => {
-      const req = new TaskAssignment();
-      req.setTaskId(taskId);
-      req.setUserId(id);
-      TaskAssignmentClientService.Create(req);
-    }),
-  );
-};
-
 export const updateSpiffTool = async (data: TaskType) => {
   const req = new Task();
   req.setId(data.id);
