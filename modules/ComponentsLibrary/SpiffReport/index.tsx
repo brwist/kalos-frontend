@@ -13,9 +13,9 @@ import {
   loadSpiffReportByFilter,
   usd,
   getCurrDate,
-  loadSpiffTypes,
   SpiffTypeType,
   SpiffReportLineType,
+  TaskClientService,
 } from '../../../helpers';
 import './styles.less';
 
@@ -42,7 +42,7 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const spiffTypes = await loadSpiffTypes();
+    const spiffTypes = await TaskClientService.loadSpiffTypes();
     setSpiffTypes(spiffTypes);
     const entries = await loadSpiffReportByFilter({ date, type, users });
     console.log(entries);
