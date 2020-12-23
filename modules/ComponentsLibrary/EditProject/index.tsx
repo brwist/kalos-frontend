@@ -21,7 +21,6 @@ import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
 import { Tabs } from '../Tabs';
 import {
-  loadProjectTasks,
   EventType,
   ProjectTaskType,
   getPropertyAddress,
@@ -184,7 +183,7 @@ export const EditProject: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     setLoading(true);
-    const tasks = await loadProjectTasks(serviceCallId);
+    const tasks = await EventClientService.loadProjectTasks(serviceCallId);
     setTasks(tasks);
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
