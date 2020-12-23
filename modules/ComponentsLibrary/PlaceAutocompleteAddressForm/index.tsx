@@ -204,6 +204,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             break;
         }
 
+        /*
         if (indexOfForm == 0) {
           this.state.address.FullAddressOrigin =
             this.state.address.StreetAddressOrigin +
@@ -224,13 +225,13 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             ', ' +
             this.state.address.CountryDestination +
             ', ';
-        }
+        }*/
 
-        this.setState({ formKey: this.state.formKey + 1 });
         // Sets the input field text to the value given by val
         if (addressType == 'street_number') street_number = val;
       }
     }
+    this.setState({ formKey: this.state.formKey + 1 });
   };
 
   geolocate() {
@@ -250,6 +251,10 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         });
       });
     }
+  }
+
+  componentDidUpdate() {
+    this.handleLoad();
   }
 
   render() {
