@@ -24,7 +24,6 @@ import {
   TaskType,
   loadSpiffTypes,
   SpiffTypeType,
-  deletetSpiffTool,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE } from '../../../../constants';
 
@@ -97,7 +96,7 @@ export const Spiffs: FC<Props> = ({
       const { id } = deleting;
       setDeleting(undefined);
       setLoading(true);
-      await deletetSpiffTool(id);
+      await TaskClientService.deleteSpiffTool(id);
       setLoaded(false);
     }
   }, [deleting, setLoading, setLoaded, setDeleting]);

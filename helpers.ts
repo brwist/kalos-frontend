@@ -930,12 +930,6 @@ export const updateSpiffTool = async (data: TaskType) => {
   await TaskClientService.Update(req);
 };
 
-export const deletetSpiffTool = async (id: number) => {
-  const req = new Task();
-  req.setId(id);
-  await TaskClientService.Delete(req);
-};
-
 export const loadTasks = async (filter: Partial<TaskType>) => {
   const req = new Task();
   req.setIsActive(true);
