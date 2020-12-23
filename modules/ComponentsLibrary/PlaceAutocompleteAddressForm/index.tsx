@@ -159,8 +159,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         // @ts-ignore
         const val = component[componentForm[addressType]];
 
-        let labelName: string = ''; // Looks up the input field via this value
-
         if (addressType == 'route') {
           this.getInputFieldByLabelContent(
             'Street Address',
@@ -172,7 +170,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             this.state.address.StreetAddressDestination =
               street_number + ' ' + val;
           }
-          labelName = 'Street Address';
           continue;
         }
 
@@ -183,7 +180,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             } else {
               this.state.address.CityDestination = val;
             }
-            labelName = 'City';
             break;
           case 'administrative_area_level_1':
             if (indexOfForm == 0) {
@@ -191,7 +187,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             } else {
               this.state.address.StateDestination = val;
             }
-            labelName = 'State';
             break;
           case 'country':
             if (indexOfForm == 0) {
@@ -199,7 +194,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             } else {
               this.state.address.CountryDestination = val;
             }
-            labelName = 'Country';
             break;
           case 'postal_code':
             if (indexOfForm == 0) {
@@ -207,7 +201,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             } else {
               this.state.address.ZipCodeDestination = val;
             }
-            labelName = 'Zip Code';
             break;
         }
 
@@ -233,8 +226,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             ', ';
         }
 
-        let key = this.state.formKey + 1;
-        this.setState({ formKey: key });
+        this.setState({ formKey: this.state.formKey + 1 });
         // Sets the input field text to the value given by val
         if (addressType == 'street_number') street_number = val;
       }
