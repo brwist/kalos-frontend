@@ -1040,19 +1040,6 @@ export const PerDiemComponent: FC<Props> = ({
             </Form>
           </Modal>
           {pendingTripEdit && (
-            /*
-            <Modal open onClose={handleTripEditClose}>
-              <Form<Trip.AsObject>
-                schema={SCHEMA_KALOS_MAP_INPUT_FORM}
-                onSave={(trip: Trip.AsObject) => {
-                  handleTripSave(trip, pendingPerDiemRowEdit.perDiemId);
-                }}
-                onClose={handleTripEditClose}
-                title={'Submit Trip'}
-                data={pendingTripEdit}
-              ></Form>
-            </Modal>
-            */
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
               onSave={(address: AddressPair.AddressPair) => {
