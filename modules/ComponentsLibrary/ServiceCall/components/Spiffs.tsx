@@ -19,7 +19,7 @@ import { EventType } from '../';
 import {
   usd,
   formatDate,
-  loadSpiffToolLogs,
+  TaskClientService,
   makeFakeRows,
   TaskType,
   loadSpiffTypes,
@@ -56,7 +56,7 @@ export const Spiffs: FC<Props> = ({
     setSpiffTypes(
       spiffTypes.reduce((aggr, item) => ({ ...aggr, [item.id]: item }), {}),
     );
-    const { resultsList, count } = await loadSpiffToolLogs({
+    const { resultsList, count } = await TaskClientService.loadSpiffToolLogs({
       page,
       type: 'Spiff',
       jobNumber: serviceItem.logJobNumber,

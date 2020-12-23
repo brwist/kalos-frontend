@@ -936,53 +936,6 @@ export const deletetSpiffTool = async (id: number) => {
   await TaskClientService.Delete(req);
 };
 
-export const loadSpiffToolLogs = async ({
-  page,
-  type,
-  technician,
-  description,
-  datePerformed,
-  beginDate,
-  endDate,
-  jobNumber,
-}: {
-  page: number;
-  type: 'Spiff' | 'Tool';
-  technician?: number;
-  description?: string;
-  datePerformed?: string;
-  beginDate?: string;
-  endDate?: string;
-  jobNumber?: string;
-}) => {
-  const req = new Task();
-  req.setPageNumber(page);
-  req.setIsActive(true);
-  req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
-  req.setOrderDir('ASC');
-  if (technician) {
-    req.setExternalId(technician);
-  }
-  req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
-  if (description) {
-    req.setBriefDescription(`%${description}%`);
-  }
-  if (datePerformed) {
-    req.setDatePerformed(datePerformed);
-  }
-  if (beginDate && endDate) {
-    req.setDateRangeList(['>=', beginDate, '<', endDate]);
-    req.setDateTargetList(['date_performed', 'date_performed']);
-  }
-  if (jobNumber) {
-    req.setSpiffJobNumber(`%${jobNumber}%`);
-  }
-  const res = await TaskClientService.BatchGet(req);
-  const resultsList = res.getResultsList().map(el => el.toObject());
-  const count = res.getTotalCount();
-  return { resultsList, count };
-};
-
 export const loadTasks = async (filter: Partial<TaskType>) => {
   const req = new Task();
   req.setIsActive(true);
