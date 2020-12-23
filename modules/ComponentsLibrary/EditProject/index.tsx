@@ -31,7 +31,7 @@ import {
   loadProjectTaskPriorities,
   TaskStatusType,
   TaskPriorityType,
-  deleteProjectTaskById,
+  TaskClientService,
   loadTimesheetDepartments,
   TimesheetDepartmentType,
   upsertEvent,
@@ -405,7 +405,7 @@ export const EditProject: FC<Props> = ({
       setPendingDelete(undefined);
       setEditingTask(undefined);
       setLoading(true);
-      await deleteProjectTaskById(id);
+      await TaskClientService.deleteProjectTaskById(id);
       setLoaded(false);
     }
   }, [pendingDelete, setPendingDelete]);

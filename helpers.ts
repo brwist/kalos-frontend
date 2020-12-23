@@ -1178,12 +1178,6 @@ export const loadProjectTaskBillableTypes = async () => {
   return ['Flat Rate', 'Hourly', 'Parts Run', 'Spiff', 'Tool Purchase'];
 };
 
-export const deleteProjectTaskById = async (id: number) => {
-  const req = new ProjectTask();
-  req.setId(id);
-  await TaskClientService.DeleteProjectTask(req);
-};
-
 export const upsertEventTask = async ({
   id,
   eventId,
