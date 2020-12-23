@@ -3,9 +3,9 @@ import { TransactionUserView } from './components/view';
 import { Loader } from '../Loader/main';
 import {
   UserType,
-  getDepartmentByManagerID,
   getCustomerName,
   UserClientService,
+  TimesheetDepartmentClientService,
 } from '../../helpers';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
@@ -22,7 +22,7 @@ const Transaction: FC<Props> = props => {
   const [isManager, setIsManager] = useState<boolean>(false);
   const managerCheck = useCallback(async () => {
     try {
-      await getDepartmentByManagerID(userID);
+      await TimesheetDepartmentClientService.getDepartmentByManagerID(userID);
       return true;
     } catch (e) {
       return false;
