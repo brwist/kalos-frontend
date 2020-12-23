@@ -25,7 +25,6 @@ import {
   loadProjectTaskBillableTypes,
   upsertTask,
   formatDateTime,
-  deletetSpiffTool,
   loadSpiffTypes,
   SpiffTypeType,
   escapeText,
@@ -219,7 +218,7 @@ export const Tasks: FC<Props> = ({
     const { id } = pendingDelete;
     setPendingDelete(undefined);
     setLoading(true);
-    await deletetSpiffTool(id);
+    await TaskClientService.deleteSpiffTool(id);
     setLoaded(false);
   }, [pendingDelete, setPendingDelete, setLoading, setLoaded]);
   const handlePageChange = useCallback(
