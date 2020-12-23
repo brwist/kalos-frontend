@@ -29,7 +29,7 @@ import {
   SpiffTypeType,
   escapeText,
   UserClientService,
-  upsertTaskAssignments,
+  TaskAssignmentClientService,
   uploadFileToS3Bucket,
   createTaskDocument,
   DocumentType,
@@ -206,7 +206,10 @@ export const Tasks: FC<Props> = ({
         ? assignedTechnicians.split(',').map(id => +id)
         : [];
       const id = await upsertTask(saveData);
-      await upsertTaskAssignments(id, technicianIds); // FIXME resolve when task will return TaskAssigment[]
+      await TaskAssignmentClientService.upsertTaskAssignments(
+        id,
+        technicianIds,
+      ); // FIXME resolve when task will return TaskAssigment[]
       setSaving(false);
       setPendingEdit(undefined);
       setLoaded(false);
