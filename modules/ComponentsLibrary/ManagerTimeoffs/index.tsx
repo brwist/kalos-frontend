@@ -7,13 +7,13 @@ import { InfoTable, Columns, Data } from '../InfoTable';
 import { TimeOff } from '../TimeOff';
 import { Modal } from '../Modal';
 import {
-  getDepartmentByManagerID,
   TimesheetDepartmentType,
   getTimeoffRequestByFilter,
   TimeoffRequestType,
   formatDateTime,
   TimeoffRequestClientService,
   makeFakeRows,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 import './styles.less';
@@ -46,7 +46,9 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
   );
   const init = useCallback(async () => {
     try {
-      const department = await getDepartmentByManagerID(loggedUserId);
+      const department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
+        loggedUserId,
+      );
       setDepartment(department);
       const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
       setTypes(
