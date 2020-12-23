@@ -26,7 +26,7 @@ import {
   loadSpiffTypes,
   updateSpiffTool,
   createTaskDocument,
-  updateDocumentDescription,
+  DocumentClientService,
   upsertSpiffToolAdminAction,
   SpiffToolAdminActionClientService,
 } from '../../../helpers';
@@ -242,7 +242,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
     (onClose, onReload, { id }) => async (form: DocumentType) => {
       setDocumentSaving(true);
       const { description } = form;
-      await updateDocumentDescription(id, description);
+      await DocumentClientService.updateDocumentDescription(id, description);
       setDocumentSaving(false);
       onClose();
       onReload();
