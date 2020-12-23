@@ -15,8 +15,8 @@ import {
   formatDate,
   UserType,
   upsertEmployeeFunction,
-  deleteEmployeeFunctionById,
   UserClientService,
+  EmployeeFunctionClientService,
 } from '../../../helpers';
 
 interface Props {
@@ -95,7 +95,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
       const { id } = pendingDelete;
       setPendingDelete(undefined);
       setLoading(true);
-      await deleteEmployeeFunctionById(id);
+      await EmployeeFunctionClientService.deleteEmployeeFunctionById(id);
       setLoaded(false);
     }
   }, [pendingDelete, setLoaded, setLoading]);

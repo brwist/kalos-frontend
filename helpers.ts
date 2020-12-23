@@ -1357,12 +1357,6 @@ export const upsertEmployeeFunction = async (
   );
 };
 
-export const deleteEmployeeFunctionById = async (id: number) => {
-  const req = new EmployeeFunction();
-  req.setId(id);
-  await EmployeeFunctionClientService.Delete(req);
-};
-
 export const downloadCSV = (filename: string, csv: string) => {
   const link = document.createElement('a');
   link.setAttribute('download', `${filename}.csv`);
