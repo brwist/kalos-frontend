@@ -257,6 +257,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     this.handleLoad();
   }
 
+  componentDidMount() {}
+
   render() {
     this.loadScripts(() => this.handleLoad());
 
