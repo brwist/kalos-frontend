@@ -94,7 +94,7 @@ export const PlainForm: <T>(
       validations = {},
       className = '',
       children,
-      inputFieldRefs,
+      inputFieldRefs = [],
     },
     functionRef,
   ) => {
@@ -138,6 +138,7 @@ export const PlainForm: <T>(
       [formData, setFormData, onChange],
     );
 
+    let indexOfInputField = 0;
     return (
       <form
         className={clsx(className, 'PlainForm', {
@@ -186,9 +187,13 @@ export const PlainForm: <T>(
                 <Field
                   ref={functionRef => {
                     if (functionRef && !inputFieldRefs?.includes(functionRef)) {
-                      inputFieldRefs?.push(functionRef);
-                      console.log('Pushed: ', `${idx2}-${name}`);
+                      if (inputFieldRefs[indexOfInputField]) {
+                        inputFieldRefs[indexOfInputField] = functionRef;
+                      } else {
+                        inputFieldRefs?.push(functionRef);
+                      }
                     }
+                    indexOfInputField++;
                   }}
                   key={`${idx2}-${name}`}
                   {...props}
