@@ -1314,21 +1314,6 @@ async function loadMetricByUserIds(userIds: number[], metricType: MetricType) {
   );
 }
 
-export const loadEmployeeFunctions = async () => {
-  const req = new EmployeeFunction();
-  req.setIsdeleted(0);
-  const { resultsList } = (
-    await EmployeeFunctionClientService.BatchGet(req)
-  ).toObject();
-  return resultsList.sort((a, b) => {
-    const A = a.name.toLowerCase();
-    const B = b.name.toLowerCase();
-    if (A < B) return -1;
-    if (A > B) return 1;
-    return 0;
-  });
-};
-
 export const upsertEmployeeFunction = async (
   data: EmployeeFunctionType,
   userId: number,

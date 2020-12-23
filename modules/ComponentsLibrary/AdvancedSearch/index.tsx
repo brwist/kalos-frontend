@@ -66,7 +66,6 @@ import {
   loadTimesheetDepartments,
   getDepartmentName,
   saveUser,
-  loadEmployeeFunctions,
   EmployeeFunctionType,
   CustomEventsHandler,
   uploadFileToS3Bucket,
@@ -78,6 +77,7 @@ import {
   JobSubtypeClientService,
   EventClientService,
   S3ClientService,
+  EmployeeFunctionClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -264,7 +264,7 @@ export const AdvancedSearch: FC<Props> = ({
     if (kinds.includes('employees')) {
       const departments = await loadTimesheetDepartments();
       setDepartments(departments);
-      const employeeFunctions = await loadEmployeeFunctions();
+      const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
       const loggedUser = await UserClientService.loadUserById(loggedUserId);
       setIsAdmin(loggedUser.isAdmin);

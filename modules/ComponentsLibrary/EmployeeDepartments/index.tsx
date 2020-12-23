@@ -9,7 +9,6 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import {
-  loadEmployeeFunctions,
   EmployeeFunctionType,
   makeFakeRows,
   formatDate,
@@ -67,7 +66,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
   }, [setLoadingDicts, setLoadedDicts, loggedUserId, setUser]);
   const load = useCallback(async () => {
     setLoading(true);
-    const entries = await loadEmployeeFunctions();
+    const entries = await EmployeeFunctionClientService.loadEmployeeFunctions();
     setEntries(entries);
     setLoading(false);
   }, [setLoading, setEntries]);
