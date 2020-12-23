@@ -997,15 +997,6 @@ export const loadTasks = async (filter: Partial<TaskType>) => {
   return (await TaskClientService.BatchGet(req)).toObject();
 };
 
-export const loadQuotable = async (id: number) => {
-  const req = new Quotable();
-  req.setEventId(id);
-  req.setIsActive(true);
-  req.setFieldMaskList(['IsActive']);
-  const { dataList } = (await EventClientService.ReadQuotes(req)).toObject();
-  return dataList;
-};
-
 /**
  * Returns loaded StoredQuotes
  * @returns StoredQuote[]

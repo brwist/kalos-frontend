@@ -12,8 +12,8 @@ import {
   loadQuoteLineParts,
   makeFakeRows,
   QuotableType,
-  loadQuotable,
   usd,
+  EventClientService,
 } from '../../../helpers';
 import { QUOTE_PART_AVAILABILITY } from '../../../constants';
 
@@ -64,7 +64,7 @@ export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
       loadQuoteParts(),
       loadQuoteLines(),
       loadQuoteLineParts(),
-      loadQuotable(serviceCallId),
+      EventClientService.loadQuotable(serviceCallId),
     ]);
     setQuoteParts(quoteParts);
     setQuoteLineParts(quoteLineParts);
