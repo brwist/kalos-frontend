@@ -5,15 +5,6 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { AddressPair } from './Address';
 import './styles.less';
-import { indexOf } from 'lodash';
-import { TextField } from '@material-ui/core';
-
-// Convenience call, will be removed later
-export const getApi = async () => {
-  const res = await getKeyByKeyName('google_maps');
-  return res.apiKey;
-};
-
 interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair.AddressPair) => void;
@@ -23,7 +14,6 @@ interface Props {
 
 interface State {
   address: AddressPair.AddressPair;
-  query: any;
 }
 
 const componentForm = {
@@ -41,30 +31,14 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 > {
   // @ts-ignore
   autoCompleteSections: google.maps.places.Autocomplete[2] = [];
-  fieldRef: any = React.createRef();
   inputArray: any[] = [];
-  numInputs: number = 0;
-  data: any;
   constructor(props: Props) {
     super(props);
-
     this.state = {
       address: new AddressPair.AddressPair(),
-      query: null,
     };
-
-    this.data = this.state.address;
+    this.geolocate();
   }
-
-  getInputFields = () => {
-    let inputs: any[] = [];
-
-    this.inputArray.forEach(element => {
-      inputs.push(element);
-    });
-
-    return inputs;
-  };
 
   loadScriptByUrl = async (url: string, callback: () => void) => {
     const scripts = document.getElementsByTagName('script');
@@ -96,13 +70,15 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     document.getElementsByTagName('head')[0].appendChild(script);
   };
 
-  loadScript = async (callback: () => void) => {
+  loadScripts = async (callback: () => void) => {
     this.loadScriptByUrl(
       'https://polyfill.io/v3/polyfill.min.js?features=default',
       () => {},
     );
     this.loadScriptByUrl(
-      `https://maps.googleapis.com/maps/api/js?key=${await getApi()}&libraries=places`,
+      `https://maps.googleapis.com/maps/api/js?key=${
+        (await getKeyByKeyName('google_maps')).apiKey
+      }&libraries=places`,
       callback,
     );
   };
@@ -128,7 +104,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       // address fields in the form.
 
       this.autoCompleteSections[i].addListener('place_changed', () => {
-        this.handlePlaceSelect(i, 0);
+        this.handlePlaceSelect(i);
       });
     }
   };
@@ -157,24 +133,17 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             return this.inputArray[index];
           }
         }
-
         if (this.props.schema[div][j].type == 'text') {
-          this.numInputs++;
           index++;
         }
       }
     }
-
-    console.log('Returning: null');
     return null;
   };
 
-  handlePlaceSelect = (indexOfForm: any, startIndex: number) => {
+  handlePlaceSelect = (indexOfForm: any) => {
     const place = this.autoCompleteSections[indexOfForm].getPlace();
     let street_number = 0;
-
-    // Get each component of the address from the place details,
-    // and then fill-in the corresponding field on the form.
 
     // ts-ignores because this code does, in fact, work - the google maps library just
     // isn't imported beforehand, it has to be loaded when ran
@@ -188,7 +157,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         // @ts-ignore
         const val = component[componentForm[addressType]];
 
-        let labelName: string = '';
+        let labelName: string = ''; // Looks up the input field via this value
 
         if (addressType == 'route') {
           this.getInputFieldByLabelContent(
@@ -220,7 +189,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             } else {
               this.state.address.StateDestination = val;
             }
-
             labelName = 'State';
             break;
           case 'country':
@@ -229,7 +197,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             } else {
               this.state.address.CountryDestination = val;
             }
-
             labelName = 'Country';
             break;
           case 'postal_code':
@@ -263,22 +230,16 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             this.state.address.CountryDestination +
             ', ';
         }
-
-        this.data = this.state.address;
-
+        // Sets the input field text to the value given by val
         addressType == 'street_number'
           ? (street_number = val)
           : (this.getInputFieldByLabelContent(
               labelName,
               indexOfForm,
             ).value = val);
-
-        this.inputArray[6].value = this.state.address.FullAddressOrigin;
       }
     }
   };
-
-  componentDidUpdate() {}
 
   geolocate() {
     if (navigator.geolocation) {
@@ -300,19 +261,17 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   render() {
-    this.loadScript(() => this.handleLoad());
-    this.geolocate();
+    this.loadScripts(() => this.handleLoad());
 
     return (
       <>
         <Modal open onClose={this.props.onClose}>
           <Form
             title="Enter Trip Origin and Destination"
-            ref={this.fieldRef}
             schema={this.props.schema}
             onClose={this.props.onClose}
             onSave={this.props.onSave}
-            data={this.data}
+            data={this.state.address}
             className="LocationForm"
             key={'PlaceAutocompleteAddressForm'}
             inputFieldRefs={this.inputArray}
