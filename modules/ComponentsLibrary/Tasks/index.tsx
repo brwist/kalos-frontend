@@ -21,7 +21,6 @@ import {
   timestamp,
   TaskClientService,
   TaskPriorityType,
-  loadProjectTaskStatuses,
   TaskStatusType,
   loadProjectTaskBillableTypes,
   upsertTask,
@@ -152,7 +151,7 @@ export const Tasks: FC<Props> = ({
     setLoadingInit(true);
     await UserClientService.refreshToken();
     const priorities = await TaskClientService.loadProjectTaskPriorities();
-    const statuses = await loadProjectTaskStatuses();
+    const statuses = await TaskClientService.loadProjectTaskStatuses();
     const billableTypes = await loadProjectTaskBillableTypes();
     const spiffTypes = await loadSpiffTypes();
     setPriorities(priorities);

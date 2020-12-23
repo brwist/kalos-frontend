@@ -1144,13 +1144,6 @@ async function loadQuoteLines() {
   return results;
 }
 
-export const loadProjectTaskStatuses = async () => {
-  const { resultsList } = (
-    await TaskClientService.loadTaskStatuses()
-  ).toObject();
-  return resultsList;
-};
-
 export const loadProjectTaskBillableTypes = async () => {
   //const { resultsList } = (
   //  await TaskClientService.loadTaskBillableTypeList() // FIXME when available in rpc
