@@ -13,7 +13,7 @@
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
-    "test-async": "jest -u",        
+    "test-async": "jest -u",
     "test": "jest -u --runInBand",
     "test-watch": "jest --watch",
     "test-watch-all": "jest --watchAll",
