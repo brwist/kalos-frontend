@@ -1457,7 +1457,9 @@ export const addressStringToPlace = (addressString: string): Place => {
 
 const metersToMiles = (meters: number): number => {
   const conversionFactor = 0.000621;
-  return meters * conversionFactor;
+  return !Number.isNaN(meters * conversionFactor)
+    ? meters * conversionFactor
+    : 0;
 };
 
 export const getTripDistance = async (origin: string, destination: string) => {
