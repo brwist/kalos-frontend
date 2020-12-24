@@ -1417,7 +1417,6 @@ export const addressStringToPlace = (addressString: string): Place => {
     // still need to set this, so there must be only split[1]
     split[split.length - 1].split(' ').forEach(str => {
       if (!isNaN(Number(str))) {
-        console.log('Setting zip code late as: ' + str);
         zipCode = str;
       }
     });
@@ -1479,7 +1478,6 @@ export const getTripDistance = async (origin: string, destination: string) => {
       distanceMeters: number = 0,
       distanceMiles: number = 0;
     tripDistance.getRowsList().forEach(row => {
-      console.log(row.toArray()[0][0]);
       distanceKm = row.toArray()[0][0][3][0];
       distanceMeters = row.toArray()[0][0][3][1];
       status = row.toArray()[0][0][0];
@@ -1492,14 +1490,11 @@ export const getTripDistance = async (origin: string, destination: string) => {
 
     distanceMiles = metersToMiles(distanceMeters);
 
-    console.log('Returning : ' + distanceMiles);
-
     return distanceMiles;
   } catch (err: any) {
     console.error(
       'An error occurred while calculating the trip distance: ' + err,
     );
-    console.log('Returning 0');
     return 0;
   }
 };
@@ -1507,17 +1502,10 @@ export const getTripDistance = async (origin: string, destination: string) => {
 export const upsertTrip = async (data: Trip.AsObject, rowId: number) => {
   const req = new Trip();
   const fieldMaskList = [];
-  let destinationAddress = '',
-    originAddress = '';
+  let destinationAddress, originAddress;
+
   for (const fieldName in data) {
     let { upperCaseProp, methodName } = getRPCFields(fieldName);
-
-    if (methodName.startsWith('setSet')) {
-      methodName = methodName.replace('setS', 's');
-    } else if (methodName.startsWith('setGet')) {
-      methodName = methodName.replace('setG', 'g');
-    }
-
     if (methodName == 'setDestinationAddress') {
       //@ts-ignore
       destinationAddress = data[fieldName];
@@ -1539,7 +1527,7 @@ export const upsertTrip = async (data: Trip.AsObject, rowId: number) => {
 
   try {
     return await PerDiemClientService[
-      data.id != undefined ? 'UpdateTrip' : 'CreateTrip'
+      data.id != 0 ? 'UpdateTrip' : 'CreateTrip'
     ](req);
   } catch (err: any) {
     console.error('Error occurred trying to save trip: ' + err);
