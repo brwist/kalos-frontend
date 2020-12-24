@@ -274,6 +274,7 @@ export const PerDiemComponent: FC<Props> = ({
   const handleUpsertTrip = async (data: Trip.AsObject, rowId: number) => {
     await upsertTrip(data, rowId).then(() => {
       handleTripEditClose();
+      alert('Trip uploaded successfully!');
     });
   };
 
@@ -295,13 +296,9 @@ export const PerDiemComponent: FC<Props> = ({
         String(data.FullAddressDestination),
       );
 
-      return;
-
-      /* 
-      await handleUpsertTrip(data, rowId);
+      await handleUpsertTrip(trip.toObject(), rowId);
       setSaving(false);
       setMapModalOpened(false);
-      */
     },
     [mapModalOpened, setMapModalOpened],
   );
