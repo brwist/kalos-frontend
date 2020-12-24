@@ -50,12 +50,21 @@ import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { InfoTable, Data } from '../InfoTable';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
 
 export interface Props {
   loggedUserId: number;
   onClose?: () => void;
   perDiem?: PerDiemType;
 }
+
+const tripDeleteIcon = [
+  <IconButton key={0} size="small">
+    <DeleteIcon />
+  </IconButton>,
+];
 
 export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip.AsObject> = [
   [
@@ -593,6 +602,7 @@ export const PerDiemComponent: FC<Props> = ({
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
   );
+  const handleTripDelete = () => {};
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
@@ -1063,7 +1073,11 @@ export const PerDiemComponent: FC<Props> = ({
                             return [
                               { value: current.getOriginAddress() },
                               { value: current.getDestinationAddress() },
-                              { value: current.getDistanceInMiles() },
+                              {
+                                value: current.getDistanceInMiles().toFixed(1),
+                                handleTripDelete,
+                                tripEditIcons: tripDeleteIcon,
+                              },
                             ];
                           })
                   }
