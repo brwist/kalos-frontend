@@ -18,6 +18,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
+import { TripList } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   loadPerDiemByUserIdsAndDateStarted,
   UserType,
@@ -41,12 +42,14 @@ import {
   TripType,
   UserClientService,
   PerDiemClientService,
+  makeFakeRows,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
+import { InfoTable, Data } from '../InfoTable';
 
 export interface Props {
   loggedUserId: number;
@@ -341,6 +344,8 @@ export const PerDiemComponent: FC<Props> = ({
     setPendingPerDiemRowDelete,
   ] = useState<boolean>(false);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [trips, setTrips] = useState<TripList>();
+
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
       startOfWeek(perDiem ? parseISO(perDiem.dateStarted) : new Date(), {
@@ -377,6 +382,8 @@ export const PerDiemComponent: FC<Props> = ({
       setUser(user);
       const departments = await loadTimesheetDepartments();
       setDepartments(sortBy(departments, getDepartmentName));
+      const trips = await PerDiemClientService.BatchGetTrips(new Trip());
+      setTrips(trips);
       const managerDepartments = departments.filter(
         ({ managerId }) => managerId === loggedUserId,
       );
@@ -711,6 +718,7 @@ export const PerDiemComponent: FC<Props> = ({
       aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
     0,
   );
+
   return (
     <div>
       {loggedUserId > 0 && (
@@ -1026,7 +1034,6 @@ export const PerDiemComponent: FC<Props> = ({
                   />
                 </div>
               )}
-
               <Button
                 label="Add Trip"
                 size="medium"
@@ -1034,12 +1041,42 @@ export const PerDiemComponent: FC<Props> = ({
                 compact
                 onClick={handleTripEditOpen(makeNewTrip())}
               />
+              {
+                <InfoTable
+                  columns={[
+                    { name: 'Origin' },
+                    { name: 'Destination' },
+                    { name: 'Miles' },
+                  ]}
+                  data={
+                    loading
+                      ? makeFakeRows(3, 1)
+                      : trips!
+                          .getResultsList()
+                          .filter((trip: Trip) => {
+                            return (
+                              trip.getPerDiemRowId() ==
+                              pendingPerDiemRowEdit.perDiemId
+                            );
+                          })
+                          .map((current: Trip) => {
+                            return [
+                              { value: current.getOriginAddress() },
+                              { value: current.getDestinationAddress() },
+                              { value: current.getDistanceInMiles() },
+                            ];
+                          })
+                  }
+                  compact
+                />
+              }
             </Form>
           </Modal>
+
           {pendingTripEdit && (
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
-              onSave={(address: AddressPair.AddressPair) => {
+              onSave={async (address: AddressPair.AddressPair) => {
                 handleTripSave(address, pendingPerDiemRowEdit.perDiemId);
               }}
               addressFields={2}
