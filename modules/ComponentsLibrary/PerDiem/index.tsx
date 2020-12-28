@@ -597,7 +597,8 @@ export const PerDiemComponent: FC<Props> = ({
     [setCheckLodging],
   );
   const handleTripDelete = (trip: Trip) => {
-    PerDiemClientService.DeleteTrip(trip);
+    //PerDiemClientService.DeleteTrip(trip);
+    console.log('Deleted trip: ' + trip);
     alert('Trip deleted');
   };
   const departmentsOptions = useMemo(() => {
@@ -1069,14 +1070,6 @@ export const PerDiemComponent: FC<Props> = ({
                             );
                           })
                           .map((currentTrip: Trip) => {
-                            const deleteIcon = [
-                              <IconButton
-                                key={currentTrip.getId() + 'edit'}
-                                size="small"
-                              >
-                                <DeleteIcon />
-                              </IconButton>,
-                            ];
                             return [
                               { value: currentTrip.getOriginAddress() },
                               { value: currentTrip.getDestinationAddress() },
@@ -1084,8 +1077,17 @@ export const PerDiemComponent: FC<Props> = ({
                                 value: currentTrip
                                   .getDistanceInMiles()
                                   .toFixed(1),
-                                handleTripDelete,
-                                deleteIcon,
+                                actions: [
+                                  <IconButton
+                                    key={currentTrip.getId() + 'edit'}
+                                    size="small"
+                                    onClick={() =>
+                                      handleTripDelete(currentTrip)
+                                    }
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>,
+                                ],
                               },
                             ];
                           })
