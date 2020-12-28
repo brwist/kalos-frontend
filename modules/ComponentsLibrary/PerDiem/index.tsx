@@ -620,7 +620,7 @@ export const PerDiemComponent: FC<Props> = ({
       handleConfirmTripDelete(undefined);
       return;
     }
-    alert('The trip was deleted successfully!');
+    //alert('The trip was deleted successfully!');
     handleConfirmTripDelete(undefined);
     getTrips();
   };
@@ -1044,7 +1044,7 @@ export const PerDiemComponent: FC<Props> = ({
         <ConfirmDelete
           open={confirmTripDelete != undefined}
           onClose={() => handleConfirmTripDelete(undefined)}
-          kind=""
+          kind="" // Purposely left blank for clarity purposes in the box
           name="this trip"
           onConfirm={() => handleDeleteTrip(confirmTripDelete)}
         ></ConfirmDelete>
