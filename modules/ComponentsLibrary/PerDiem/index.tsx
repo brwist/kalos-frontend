@@ -313,6 +313,7 @@ export const PerDiemComponent: FC<Props> = ({
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
   const [checkLodging, setCheckLodging] = useState<boolean>(false);
+  const [confirmTripDelete, setConfirmTripDelete] = useState<boolean>();
   const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
     [key: number]: PerDiemType[];
   }>({});
@@ -596,9 +597,18 @@ export const PerDiemComponent: FC<Props> = ({
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
   );
-  const handleTripDelete = (trip: Trip) => {
+
+  const handleConfirmTripDelete = useCallback(
+    (confirmTripDelete: boolean) => {
+      setConfirmTripDelete(confirmTripDelete);
+    },
+    [setConfirmTripDelete],
+  );
+  const handleConfirmTripDeletion = (trip: Trip) => {
     //PerDiemClientService.DeleteTrip(trip);
-    console.log('Deleted trip: ' + trip);
+    handleConfirmTripDelete(true);
+    console.log('Deleted trip is: ' + trip);
+    console.log('Confirm trip delete: ', confirmTripDelete);
     alert('Trip deleted');
   };
   const departmentsOptions = useMemo(() => {
@@ -1017,6 +1027,11 @@ export const PerDiemComponent: FC<Props> = ({
           />
         </Modal>
       )}
+      {confirmTripDelete && (
+        <Modal open onClose={() => handleConfirmTripDelete(false)}>
+          <h1>Test </h1>
+        </Modal>
+      )}
       {pendingPerDiemRowEdit && (
         <>
           <Modal open onClose={handlePendingPerDiemRowEditToggle(undefined)}>
@@ -1082,7 +1097,7 @@ export const PerDiemComponent: FC<Props> = ({
                                     key={currentTrip.getId() + 'edit'}
                                     size="small"
                                     onClick={() =>
-                                      handleTripDelete(currentTrip)
+                                      handleConfirmTripDeletion(currentTrip)
                                     }
                                   >
                                     <DeleteIcon />
