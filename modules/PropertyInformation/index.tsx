@@ -10,7 +10,7 @@ u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
     <PropertyInformation
       userID={2573}
-      propertyId={6552}
+      propertyId={6873}
       loggedUserId={8418}
       withHeader
     />,
