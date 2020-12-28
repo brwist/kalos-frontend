@@ -51,20 +51,14 @@ import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { InfoTable, Data } from '../InfoTable';
 import IconButton from '@material-ui/core/IconButton';
-import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
+import DeleteIcon from '@material-ui/icons/Delete';
 
 export interface Props {
   loggedUserId: number;
   onClose?: () => void;
   perDiem?: PerDiemType;
 }
-
-const tripDeleteIcon = [
-  <IconButton key={0} size="small">
-    <DeleteIcon />
-  </IconButton>,
-];
 
 export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip.AsObject> = [
   [
@@ -602,7 +596,10 @@ export const PerDiemComponent: FC<Props> = ({
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
   );
-  const handleTripDelete = () => {};
+  const handleTripDelete = (trip: Trip) => {
+    PerDiemClientService.DeleteTrip(trip);
+    alert('Trip deleted');
+  };
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
@@ -1056,7 +1053,9 @@ export const PerDiemComponent: FC<Props> = ({
                   columns={[
                     { name: 'Origin' },
                     { name: 'Destination' },
-                    { name: 'Miles' },
+                    {
+                      name: 'Miles',
+                    },
                   ]}
                   data={
                     loading
@@ -1069,14 +1068,24 @@ export const PerDiemComponent: FC<Props> = ({
                               pendingPerDiemRowEdit.perDiemId
                             );
                           })
-                          .map((current: Trip) => {
+                          .map((currentTrip: Trip) => {
+                            const deleteIcon = [
+                              <IconButton
+                                key={currentTrip.getId() + 'edit'}
+                                size="small"
+                              >
+                                <DeleteIcon />
+                              </IconButton>,
+                            ];
                             return [
-                              { value: current.getOriginAddress() },
-                              { value: current.getDestinationAddress() },
+                              { value: currentTrip.getOriginAddress() },
+                              { value: currentTrip.getDestinationAddress() },
                               {
-                                value: current.getDistanceInMiles().toFixed(1),
+                                value: currentTrip
+                                  .getDistanceInMiles()
+                                  .toFixed(1),
                                 handleTripDelete,
-                                tripEditIcons: tripDeleteIcon,
+                                deleteIcon,
                               },
                             ];
                           })
