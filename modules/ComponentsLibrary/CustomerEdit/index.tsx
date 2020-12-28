@@ -149,6 +149,11 @@ export const CustomerEdit: FC<Props> = ({
               type: 'number',
               endAdornment: '%',
             },
+            {
+              label: 'Referred By',
+              name: 'recommendedBy',
+              type: 'text',
+            },
           ],
         ] as Schema<UserType>)),
     [{ label: 'Notes', headline: true }],
