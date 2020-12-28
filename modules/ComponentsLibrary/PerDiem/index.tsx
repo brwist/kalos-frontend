@@ -281,7 +281,7 @@ export const PerDiemComponent: FC<Props> = ({
   const handleUpsertTrip = async (data: Trip.AsObject, rowId: number) => {
     await upsertTrip(data, rowId).then(() => {
       handleTripEditClose();
-      alert('Trip uploaded successfully!');
+      getTrips();
     });
   };
 
