@@ -11,6 +11,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import OpenIcon from '@material-ui/icons/OpenInNew';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
+import { Prompt } from '../../Prompt/main';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
 import { S3Client, URLObject, FileObject } from '@kalos-core/kalos-rpc/S3File';
 import { InfoTable, Data } from '../InfoTable';
@@ -25,6 +26,10 @@ const DocumentClientService = new DocumentClient(ENDPOINT);
 
 type DocumentType = Document.AsObject;
 
+type OrderByDirective =
+  | 'document_date_created'
+  | 'document_filename'
+  | 'document_description';
 interface Props {
   title: string;
   userId?: number;
@@ -46,6 +51,8 @@ interface Props {
   withDownloadIcon?: boolean;
   deletable?: boolean;
   stickySectionBar?: boolean;
+  displayInAscendingOrder?: boolean;
+  orderBy?: OrderByDirective;
 }
 
 export const Documents: FC<Props> = ({
@@ -58,10 +65,12 @@ export const Documents: FC<Props> = ({
   className,
   renderAdding,
   renderEditing,
+  displayInAscendingOrder,
   withDateCreated = false,
   withDownloadIcon = false,
   deletable = true,
   stickySectionBar = true,
+  orderBy = 'document_date_created',
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -89,6 +98,8 @@ export const Documents: FC<Props> = ({
       entry.setTaskId(taskId);
     }
     try {
+      entry.setOrderDir(displayInAscendingOrder ? 'asc' : 'desc');
+      entry.setOrderBy(orderBy);
       const response = await DocumentClientService.BatchGet(entry);
       const { resultsList, totalCount } = response.toObject();
       setEntries(resultsList);
@@ -107,6 +118,15 @@ export const Documents: FC<Props> = ({
     taskId,
     page,
   ]);
+  const handleEditFilename = (entry: Document.AsObject) => async (
+    filename: string,
+  ) => {
+    const req = new Document();
+    req.setId(entry.id);
+    req.setDescription(filename);
+    await DocumentClientService.Update(req);
+    load();
+  };
   const handleDownload = useCallback(
     (
       filename: string,
@@ -248,6 +268,14 @@ export const Documents: FC<Props> = ({
                     </IconButton>,
                   ]
                 : []),
+              <Prompt
+                key={2}
+                Icon={EditIcon}
+                prompt={'Update Filename'}
+                text="Update Filename"
+                defaultValue={value}
+                confirmFn={handleEditFilename(entry)}
+              />,
             ],
           },
         ];

@@ -20,7 +20,7 @@ export const PropertyDocuments: FC<Props> = ({
     className={className}
     title="Property Documents"
     propertyId={propertyId}
-    deletable={false}
+    deletable={true}
     addUrl={
       viewedAsCustomer
         ? undefined
