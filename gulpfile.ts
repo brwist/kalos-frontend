@@ -401,6 +401,7 @@ async function rollupBuild(target = '') {
     globals: {
       react: 'React',
       'react-dom': 'ReactDOM',
+      'google-protobuf': 'googleProtobuf',
     },
     plugins: [],
   });
