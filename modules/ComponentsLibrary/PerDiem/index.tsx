@@ -313,7 +313,9 @@ export const PerDiemComponent: FC<Props> = ({
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
   const [checkLodging, setCheckLodging] = useState<boolean>(false);
-  const [confirmTripDelete, setConfirmTripDelete] = useState<boolean>();
+  const [confirmTripDelete, setConfirmTripDelete] = useState<
+    Trip | undefined
+  >();
   const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
     [key: number]: PerDiemType[];
   }>({});
@@ -599,17 +601,14 @@ export const PerDiemComponent: FC<Props> = ({
   );
 
   const handleConfirmTripDelete = useCallback(
-    (confirmTripDelete: boolean) => {
+    (confirmTripDelete: Trip | undefined) => {
       setConfirmTripDelete(confirmTripDelete);
     },
     [setConfirmTripDelete],
   );
   const handleConfirmTripDeletion = (trip: Trip) => {
     //PerDiemClientService.DeleteTrip(trip);
-    handleConfirmTripDelete(true);
-    console.log('Deleted trip is: ' + trip);
-    console.log('Confirm trip delete: ', confirmTripDelete);
-    alert('Trip deleted');
+    handleConfirmTripDelete(trip);
   };
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
@@ -1028,9 +1027,13 @@ export const PerDiemComponent: FC<Props> = ({
         </Modal>
       )}
       {confirmTripDelete && (
-        <Modal open onClose={() => handleConfirmTripDelete(false)}>
-          <h1>Test </h1>
-        </Modal>
+        <ConfirmDelete
+          open={confirmTripDelete != undefined}
+          onClose={() => handleConfirmTripDelete(undefined)}
+          kind=""
+          name="this trip"
+          onConfirm={() => console.log('Would delete ' + confirmTripDelete)}
+        ></ConfirmDelete>
       )}
       {pendingPerDiemRowEdit && (
         <>
