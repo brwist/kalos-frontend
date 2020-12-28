@@ -606,9 +606,19 @@ export const PerDiemComponent: FC<Props> = ({
     },
     [setConfirmTripDelete],
   );
-  const handleConfirmTripDeletion = (trip: Trip) => {
-    //PerDiemClientService.DeleteTrip(trip);
-    handleConfirmTripDelete(trip);
+  const handleDeleteTrip = (trip: Trip) => {
+    try {
+      PerDiemClientService.DeleteTrip(trip);
+    } catch (err: any) {
+      console.error('An error occurred while deleting a trip: ', err);
+      alert(
+        'The trip was not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+      );
+      handleConfirmTripDelete(undefined);
+      return;
+    }
+    alert('The trip was deleted successfully!');
+    handleConfirmTripDelete(undefined);
   };
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
@@ -1032,7 +1042,7 @@ export const PerDiemComponent: FC<Props> = ({
           onClose={() => handleConfirmTripDelete(undefined)}
           kind=""
           name="this trip"
-          onConfirm={() => console.log('Would delete ' + confirmTripDelete)}
+          onConfirm={() => handleDeleteTrip(confirmTripDelete)}
         ></ConfirmDelete>
       )}
       {pendingPerDiemRowEdit && (
@@ -1100,7 +1110,7 @@ export const PerDiemComponent: FC<Props> = ({
                                     key={currentTrip.getId() + 'edit'}
                                     size="small"
                                     onClick={() =>
-                                      handleConfirmTripDeletion(currentTrip)
+                                      handleConfirmTripDelete(currentTrip)
                                     }
                                   >
                                     <DeleteIcon />
