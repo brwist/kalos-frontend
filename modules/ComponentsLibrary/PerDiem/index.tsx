@@ -626,9 +626,9 @@ export const PerDiemComponent: FC<Props> = ({
     },
     [setConfirmTripDelete],
   );
-  const handleDeleteTrip = (trip: Trip) => {
+  const handleDeleteTrip = async (trip: Trip) => {
     try {
-      PerDiemClientService.DeleteTrip(trip);
+      await PerDiemClientService.DeleteTrip(trip);
     } catch (err: any) {
       console.error('An error occurred while deleting a trip: ', err);
       alert(
