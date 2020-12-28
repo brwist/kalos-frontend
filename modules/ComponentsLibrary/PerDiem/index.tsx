@@ -1141,7 +1141,7 @@ export const PerDiemComponent: FC<Props> = ({
                   <SectionBar
                     title="Total Miles This Week"
                     footer={
-                      totalTripMiles != undefined
+                      totalTripMiles != undefined && totalTripMiles != 0.0
                         ? totalTripMiles?.toFixed(1) + ' miles'
                         : 'None'
                     }
