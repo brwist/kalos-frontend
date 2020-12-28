@@ -83,7 +83,17 @@ export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip.AsObject> = [
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
 const handleGetTripDistance = async (origin: string, destination: string) => {
-  await getTripDistance(origin, destination);
+  try {
+    await getTripDistance(origin, destination);
+  } catch (error: any) {
+    console.error(
+      'An error occurred while calculating the trip distance: ',
+      error,
+    );
+    alert(
+      'An error occurred while calculating the trip distance. Please try again, or contact your administrator if this error persists.',
+    );
+  }
 };
 
 export const getStatus = (
@@ -637,7 +647,7 @@ export const PerDiemComponent: FC<Props> = ({
         'The trip was not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
       );
       handleConfirmTripDelete(undefined);
-      return;
+      return Error(err);
     }
     //alert('The trip was deleted successfully!');
     handleConfirmTripDelete(undefined);
@@ -649,7 +659,7 @@ export const PerDiemComponent: FC<Props> = ({
       i32.setValue(row);
       await PerDiemClientService.BatchDeleteTrips(i32);
     } catch (err: any) {
-      console.log(
+      console.error(
         'An error occurred while deleting the trips for this week: ',
         err,
       );
@@ -1212,8 +1222,17 @@ export const PerDiemComponent: FC<Props> = ({
           {pendingTripEdit && (
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
-              onSave={async (address: AddressPair.AddressPair) => {
-                handleTripSave(address, pendingPerDiemRowEdit.perDiemId);
+              onSave={async (addressPair: AddressPair.AddressPair) => {
+                for (const [key, value] of Object.entries(addressPair)) {
+                  if (value == '') {
+                    alert(
+                      'Please ensure all fields are filled out before saving.',
+                    );
+                    return;
+                  }
+                }
+                console.log(addressPair);
+                handleTripSave(addressPair, pendingPerDiemRowEdit.perDiemId);
               }}
               addressFields={2}
               schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}

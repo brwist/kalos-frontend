@@ -1495,7 +1495,7 @@ export const getTripDistance = async (origin: string, destination: string) => {
     console.error(
       'An error occurred while calculating the trip distance: ' + err,
     );
-    return 0;
+    throw new Error(err);
   }
 };
 

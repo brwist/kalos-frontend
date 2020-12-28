@@ -271,7 +271,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             className="LocationForm"
             key={this.state.formKey}
             inputFieldRefs={this.inputArray}
-          ></Form>
+          />
         </Modal>
         )
       </>
