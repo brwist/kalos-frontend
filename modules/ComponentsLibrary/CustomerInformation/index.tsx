@@ -214,6 +214,7 @@ export const CustomerInformation: FC<Props> = ({
     login,
     notification,
     receiveemail,
+    recommendedBy,
   } = customer;
   const data: Data = [
     [
@@ -253,6 +254,10 @@ export const CustomerInformation: FC<Props> = ({
                 .filter(({ id }) => groupLinksInitialIds.includes(id))
                 .map(({ name }) => name)
                 .join(', '),
+            },
+            {
+              label: 'Referred By',
+              value: recommendedBy,
             },
           ],
         ]),
