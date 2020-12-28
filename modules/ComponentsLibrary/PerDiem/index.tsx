@@ -505,8 +505,10 @@ export const PerDiemComponent: FC<Props> = ({
     [setDateStarted, setLoaded, dateStarted],
   );
   const handlePendingPerDiemRowEditToggle = useCallback(
-    (pendingPerDiemRowEdit?: PerDiemRowType) => () =>
-      setPendingPerDiemRowEdit(pendingPerDiemRowEdit),
+    (pendingPerDiemRowEdit?: PerDiemRowType) => () => {
+      setTotalTripMiles(undefined);
+      setPendingPerDiemRowEdit(pendingPerDiemRowEdit);
+    },
     [setPendingPerDiemRowEdit],
   );
   const handleSavePerDiem = useCallback(
@@ -1138,7 +1140,11 @@ export const PerDiemComponent: FC<Props> = ({
                 <>
                   <SectionBar
                     title="Total Miles This Week"
-                    footer={totalTripMiles?.toFixed(1) + ' miles'}
+                    footer={
+                      totalTripMiles != undefined
+                        ? totalTripMiles?.toFixed(1) + ' miles'
+                        : 'None'
+                    }
                     small
                   />
                   <InfoTable
