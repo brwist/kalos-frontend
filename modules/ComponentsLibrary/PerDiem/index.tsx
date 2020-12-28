@@ -316,6 +316,9 @@ export const PerDiemComponent: FC<Props> = ({
   const [confirmTripDelete, setConfirmTripDelete] = useState<
     Trip | undefined
   >();
+  const [confirmTripDeleteAll, setConfirmTripDeleteAll] = useState<boolean>(
+    false,
+  );
   const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
     [key: number]: PerDiemType[];
   }>({});
@@ -624,6 +627,28 @@ export const PerDiemComponent: FC<Props> = ({
     handleConfirmTripDelete(undefined);
     getTrips();
   };
+  const handleDeleteAllTripsInRow = (row: number) => {
+    try {
+      console.log('Would delete all trips with row : ', row);
+    } catch (err: any) {
+      console.log(
+        'An error occurred while deleting the trips for this week: ',
+        err,
+      );
+      alert(
+        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+      );
+      handleConfirmTripDeleteAll(false);
+      return;
+    }
+    handleConfirmTripDeleteAll(false);
+    getTrips();
+  };
+  const handleConfirmTripDeleteAll = useCallback(
+    (confirmTripDeleteAll: boolean) =>
+      setConfirmTripDeleteAll(confirmTripDeleteAll),
+    [setConfirmTripDeleteAll],
+  );
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
@@ -1047,10 +1072,22 @@ export const PerDiemComponent: FC<Props> = ({
           kind="" // Purposely left blank for clarity purposes in the box
           name="this trip"
           onConfirm={() => handleDeleteTrip(confirmTripDelete)}
-        ></ConfirmDelete>
+        />
       )}
+
       {pendingPerDiemRowEdit && (
         <>
+          {confirmTripDeleteAll && (
+            <ConfirmDelete
+              open={confirmTripDeleteAll}
+              onClose={() => handleConfirmTripDeleteAll(false)}
+              kind="" // Purposely left blank for clarity purposes in the box
+              name="all of the trips in this week (this action cannot be undone)"
+              onConfirm={() =>
+                handleDeleteAllTripsInRow(pendingPerDiemRowEdit.perDiemId)
+              }
+            />
+          )}
           <Modal open onClose={handlePendingPerDiemRowEditToggle(undefined)}>
             <Form
               title={`${
@@ -1094,7 +1131,7 @@ export const PerDiemComponent: FC<Props> = ({
                           compact: false,
                           variant: 'outlined',
                           onClick: () => {
-                            console.log('Clicked on delete all');
+                            handleConfirmTripDeleteAll(true);
                           },
                         },
                       ],
