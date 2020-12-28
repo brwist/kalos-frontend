@@ -19,6 +19,7 @@ import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
 import { TripList } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import {
   loadPerDiemByUserIdsAndDateStarted,
   UserType,
@@ -627,9 +628,11 @@ export const PerDiemComponent: FC<Props> = ({
     handleConfirmTripDelete(undefined);
     getTrips();
   };
-  const handleDeleteAllTripsInRow = (row: number) => {
+  const handleDeleteAllTripsInRow = async (row: number) => {
     try {
-      console.log('Would delete all trips with row : ', row);
+      let i32 = new Int32();
+      i32.setValue(row);
+      await PerDiemClientService.BatchDeleteTrips(i32);
     } catch (err: any) {
       console.log(
         'An error occurred while deleting the trips for this week: ',
