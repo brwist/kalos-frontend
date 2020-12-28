@@ -67,7 +67,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       deletingEntry: undefined,
       viewingEntry: undefined,
       addingCustomerEntry: undefined,
-      dir: 'ASC',
+      dir: 'DESC',
       orderByFields: ['dateStarted'],
       orderByDBField: 'date_started',
       count: 0,
