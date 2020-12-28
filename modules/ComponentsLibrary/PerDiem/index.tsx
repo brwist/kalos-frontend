@@ -1139,6 +1139,7 @@ export const PerDiemComponent: FC<Props> = ({
                   <SectionBar
                     title="Total Miles This Week"
                     footer={totalTripMiles?.toFixed(1) + ' miles'}
+                    small
                   />
                   <InfoTable
                     columns={[
