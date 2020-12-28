@@ -355,6 +355,7 @@ export const PerDiemComponent: FC<Props> = ({
   ] = useState<boolean>(false);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [trips, setTrips] = useState<TripList>();
+  const [totalTripMiles, setTotalTripMiles] = useState<number>();
 
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
@@ -376,6 +377,18 @@ export const PerDiemComponent: FC<Props> = ({
     const trips = await PerDiemClientService.BatchGetTrips(new Trip());
     setTrips(trips);
   };
+  const getTotalTripDistance = async (rowID: number) => {
+    let i32 = new Int32();
+    i32.setValue(rowID);
+    return await PerDiemClientService.GetTotalRowTripDistance(i32);
+  };
+  const setTotalTripDistance = useCallback(
+    async (rowID: number) => {
+      const dist = await getTotalTripDistance(rowID);
+      setTotalTripMiles(dist.getValue());
+    },
+    [setTotalTripMiles],
+  );
   const initialize = useCallback(async () => {
     await UserClientService.refreshToken();
     if (perDiem) {
@@ -1122,60 +1135,69 @@ export const PerDiemComponent: FC<Props> = ({
                 onClick={handleTripEditOpen(makeNewTrip())}
               />
               {
-                <InfoTable
-                  columns={[
-                    { name: 'Origin' },
-                    { name: 'Destination' },
-                    {
-                      name: 'Miles',
-                      actions: [
-                        {
-                          label: 'Delete All Trips For This Week',
-                          compact: false,
-                          variant: 'outlined',
-                          onClick: () => {
-                            handleConfirmTripDeleteAll(true);
+                <>
+                  <SectionBar
+                    title="Total Miles This Week"
+                    footer={totalTripMiles?.toFixed(1) + ' miles'}
+                  />
+                  <InfoTable
+                    columns={[
+                      { name: 'Origin' },
+                      { name: 'Destination' },
+                      {
+                        name: 'Miles',
+                        actions: [
+                          {
+                            label: 'Delete All Trips For This Week',
+                            compact: false,
+                            variant: 'outlined',
+                            onClick: () => {
+                              handleConfirmTripDeleteAll(true);
+                            },
                           },
-                        },
-                      ],
-                    },
-                  ]}
-                  data={
-                    loading
-                      ? makeFakeRows(3, 1)
-                      : trips!
-                          .getResultsList()
-                          .filter((trip: Trip) => {
-                            return (
-                              trip.getPerDiemRowId() ==
-                              pendingPerDiemRowEdit.perDiemId
-                            );
-                          })
-                          .map((currentTrip: Trip) => {
-                            return [
-                              { value: currentTrip.getOriginAddress() },
-                              { value: currentTrip.getDestinationAddress() },
-                              {
-                                value: currentTrip
-                                  .getDistanceInMiles()
-                                  .toFixed(1),
-                                actions: [
-                                  <IconButton
-                                    key={currentTrip.getId() + 'edit'}
-                                    size="small"
-                                    onClick={() =>
-                                      handleConfirmTripDelete(currentTrip)
-                                    }
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>,
-                                ],
-                              },
-                            ];
-                          })
-                  }
-                  compact
-                />
+                        ],
+                      },
+                    ]}
+                    data={
+                      loading
+                        ? makeFakeRows(3, 1)
+                        : trips!
+                            .getResultsList()
+                            .filter((trip: Trip) => {
+                              return (
+                                trip.getPerDiemRowId() ==
+                                pendingPerDiemRowEdit.perDiemId
+                              );
+                            })
+                            .map((currentTrip: Trip) => {
+                              setTotalTripDistance(
+                                pendingPerDiemRowEdit.perDiemId,
+                              );
+                              return [
+                                { value: currentTrip.getOriginAddress() },
+                                { value: currentTrip.getDestinationAddress() },
+                                {
+                                  value: currentTrip
+                                    .getDistanceInMiles()
+                                    .toFixed(1),
+                                  actions: [
+                                    <IconButton
+                                      key={currentTrip.getId() + 'edit'}
+                                      size="small"
+                                      onClick={() =>
+                                        handleConfirmTripDelete(currentTrip)
+                                      }
+                                    >
+                                      <DeleteIcon />
+                                    </IconButton>,
+                                  ],
+                                },
+                              ];
+                            })
+                    }
+                    compact
+                  />
+                </>
               }
             </Form>
           </Modal>
