@@ -19,7 +19,6 @@ export const PropertyDocuments: FC<Props> = ({
   <Documents
     className={className}
     title="Property Documents"
-    userId={userID}
     propertyId={propertyId}
     deletable={false}
     addUrl={
