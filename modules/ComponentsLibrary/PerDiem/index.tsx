@@ -368,6 +368,10 @@ export const PerDiemComponent: FC<Props> = ({
     pendingPerDiemEditDuplicated,
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
+  const getTrips = async () => {
+    const trips = await PerDiemClientService.BatchGetTrips(new Trip());
+    setTrips(trips);
+  };
   const initialize = useCallback(async () => {
     await UserClientService.refreshToken();
     if (perDiem) {
@@ -388,8 +392,7 @@ export const PerDiemComponent: FC<Props> = ({
       setUser(user);
       const departments = await loadTimesheetDepartments();
       setDepartments(sortBy(departments, getDepartmentName));
-      const trips = await PerDiemClientService.BatchGetTrips(new Trip());
-      setTrips(trips);
+      await getTrips();
       const managerDepartments = departments.filter(
         ({ managerId }) => managerId === loggedUserId,
       );
@@ -619,6 +622,7 @@ export const PerDiemComponent: FC<Props> = ({
     }
     alert('The trip was deleted successfully!');
     handleConfirmTripDelete(undefined);
+    getTrips();
   };
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
