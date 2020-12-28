@@ -313,6 +313,9 @@ export const PerDiemComponent: FC<Props> = ({
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
   const [checkLodging, setCheckLodging] = useState<boolean>(false);
+  const [confirmTripDelete, setConfirmTripDelete] = useState<
+    Trip | undefined
+  >();
   const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
     [key: number]: PerDiemType[];
   }>({});
@@ -365,6 +368,10 @@ export const PerDiemComponent: FC<Props> = ({
     pendingPerDiemEditDuplicated,
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
+  const getTrips = async () => {
+    const trips = await PerDiemClientService.BatchGetTrips(new Trip());
+    setTrips(trips);
+  };
   const initialize = useCallback(async () => {
     await UserClientService.refreshToken();
     if (perDiem) {
@@ -385,8 +392,7 @@ export const PerDiemComponent: FC<Props> = ({
       setUser(user);
       const departments = await loadTimesheetDepartments();
       setDepartments(sortBy(departments, getDepartmentName));
-      const trips = await PerDiemClientService.BatchGetTrips(new Trip());
-      setTrips(trips);
+      await getTrips();
       const managerDepartments = departments.filter(
         ({ managerId }) => managerId === loggedUserId,
       );
@@ -596,9 +602,27 @@ export const PerDiemComponent: FC<Props> = ({
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
   );
-  const handleTripDelete = (trip: Trip) => {
-    PerDiemClientService.DeleteTrip(trip);
-    alert('Trip deleted');
+
+  const handleConfirmTripDelete = useCallback(
+    (confirmTripDelete: Trip | undefined) => {
+      setConfirmTripDelete(confirmTripDelete);
+    },
+    [setConfirmTripDelete],
+  );
+  const handleDeleteTrip = (trip: Trip) => {
+    try {
+      PerDiemClientService.DeleteTrip(trip);
+    } catch (err: any) {
+      console.error('An error occurred while deleting a trip: ', err);
+      alert(
+        'The trip was not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+      );
+      handleConfirmTripDelete(undefined);
+      return;
+    }
+    //alert('The trip was deleted successfully!');
+    handleConfirmTripDelete(undefined);
+    getTrips();
   };
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
@@ -1016,6 +1040,15 @@ export const PerDiemComponent: FC<Props> = ({
           />
         </Modal>
       )}
+      {confirmTripDelete && (
+        <ConfirmDelete
+          open={confirmTripDelete != undefined}
+          onClose={() => handleConfirmTripDelete(undefined)}
+          kind="" // Purposely left blank for clarity purposes in the box
+          name="this trip"
+          onConfirm={() => handleDeleteTrip(confirmTripDelete)}
+        ></ConfirmDelete>
+      )}
       {pendingPerDiemRowEdit && (
         <>
           <Modal open onClose={handlePendingPerDiemRowEditToggle(undefined)}>
@@ -1069,14 +1102,6 @@ export const PerDiemComponent: FC<Props> = ({
                             );
                           })
                           .map((currentTrip: Trip) => {
-                            const deleteIcon = [
-                              <IconButton
-                                key={currentTrip.getId() + 'edit'}
-                                size="small"
-                              >
-                                <DeleteIcon />
-                              </IconButton>,
-                            ];
                             return [
                               { value: currentTrip.getOriginAddress() },
                               { value: currentTrip.getDestinationAddress() },
@@ -1084,8 +1109,17 @@ export const PerDiemComponent: FC<Props> = ({
                                 value: currentTrip
                                   .getDistanceInMiles()
                                   .toFixed(1),
-                                handleTripDelete,
-                                deleteIcon,
+                                actions: [
+                                  <IconButton
+                                    key={currentTrip.getId() + 'edit'}
+                                    size="small"
+                                    onClick={() =>
+                                      handleConfirmTripDelete(currentTrip)
+                                    }
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>,
+                                ],
                               },
                             ];
                           })
