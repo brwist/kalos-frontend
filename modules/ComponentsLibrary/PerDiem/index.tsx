@@ -1088,6 +1088,16 @@ export const PerDiemComponent: FC<Props> = ({
                     { name: 'Destination' },
                     {
                       name: 'Miles',
+                      actions: [
+                        {
+                          label: 'Delete All Trips For This Week',
+                          compact: false,
+                          variant: 'outlined',
+                          onClick: () => {
+                            console.log('Clicked on delete all');
+                          },
+                        },
+                      ],
                     },
                   ]}
                   data={
