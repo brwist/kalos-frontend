@@ -366,6 +366,10 @@ export const PerDiemComponent: FC<Props> = ({
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [trips, setTrips] = useState<TripList>();
   const [totalTripMiles, setTotalTripMiles] = useState<number>();
+  const [
+    addressValidationPopupOpen,
+    setAddressValidationPopupOpen,
+  ] = useState<boolean>();
 
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
@@ -513,6 +517,12 @@ export const PerDiemComponent: FC<Props> = ({
       setLoaded(false);
     },
     [setDateStarted, setLoaded, dateStarted],
+  );
+  const handleAddressValidationPopupOpen = useCallback(
+    (addressValidationPopupOpen: boolean) => {
+      setAddressValidationPopupOpen(addressValidationPopupOpen);
+    },
+    [setAddressValidationPopupOpen],
   );
   const handlePendingPerDiemRowEditToggle = useCallback(
     (pendingPerDiemRowEdit?: PerDiemRowType) => () => {
@@ -1116,6 +1126,19 @@ export const PerDiemComponent: FC<Props> = ({
               }
             />
           )}
+
+          {addressValidationPopupOpen && (
+            <AlertPopup
+              open={addressValidationPopupOpen}
+              onClose={() => setAddressValidationPopupOpen(false)}
+              label="Close"
+              title="Notice"
+            >
+              <Typography component="div">
+                Please ensure all of the fields are filled out prior to saving.
+              </Typography>
+            </AlertPopup>
+          )}
           <Modal open onClose={handlePendingPerDiemRowEditToggle(undefined)}>
             <Form
               title={`${
@@ -1223,15 +1246,12 @@ export const PerDiemComponent: FC<Props> = ({
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
               onSave={async (addressPair: AddressPair.AddressPair) => {
-                for (const [key, value] of Object.entries(addressPair)) {
+                for (const [_, value] of Object.entries(addressPair)) {
                   if (value == '') {
-                    alert(
-                      'Please ensure all fields are filled out before saving.',
-                    );
+                    handleAddressValidationPopupOpen(true);
                     return;
                   }
                 }
-                console.log(addressPair);
                 handleTripSave(addressPair, pendingPerDiemRowEdit.perDiemId);
               }}
               addressFields={2}
