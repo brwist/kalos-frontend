@@ -110,6 +110,9 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
 interface Props {
   perDiemRowId: number;
   loggedUserId: number;
+  onSaveTrip?: (savedTrip?: Trip) => any;
+  onDeleteTrip?: () => any;
+  onDeleteAllTrips?: () => any;
 }
 
 interface State {
@@ -168,14 +171,16 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       );
     }
   };
+
+  getTrips = async () => {
+    const trips = await PerDiemClientService.BatchGetTrips(new Trip());
+    this.updateTotalMiles();
+    this.setState({ trips: trips });
+  };
   getTotalTripDistance = async (rowID: number) => {
     let i32 = new Int32();
     i32.setValue(rowID);
     return await PerDiemClientService.GetTotalRowTripDistance(i32);
-  };
-  getTrips = async () => {
-    const trips = await PerDiemClientService.BatchGetTrips(new Trip());
-    this.setState({ trips: trips });
   };
   updateTotalMiles = async () => {
     this.setState({
@@ -267,7 +272,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
               return trip.getPerDiemRowId() == this.props.perDiemRowId;
             })
             .map((currentTrip: Trip) => {
-              this.setStateToNew({ totalTripMiles: this.props.perDiemRowId });
               return [
                 { value: currentTrip.getOriginAddress() },
                 { value: currentTrip.getDestinationAddress() },
