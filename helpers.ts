@@ -1499,7 +1499,11 @@ export const getTripDistance = async (origin: string, destination: string) => {
   }
 };
 
-export const upsertTrip = async (data: Trip.AsObject, rowId: number) => {
+export const upsertTrip = async (
+  data: Trip.AsObject,
+  rowId: number,
+  userId: number,
+) => {
   const req = new Trip();
   const fieldMaskList = [];
   let destinationAddress, originAddress;
@@ -1521,13 +1525,16 @@ export const upsertTrip = async (data: Trip.AsObject, rowId: number) => {
   }
   req.setFieldMaskList(fieldMaskList);
   req.setPerDiemRowId(rowId);
+  req.setUserId(userId);
   req.setDistanceInMiles(
     await getTripDistance(originAddress, destinationAddress),
   );
 
+  console.log('Req trip: ', req);
+
   try {
     return await PerDiemClientService[
-      data.id != 0 ? 'UpdateTrip' : 'CreateTrip'
+      data.id != 0 && data.id != null ? 'UpdateTrip' : 'CreateTrip'
     ](req);
   } catch (err: any) {
     console.error('Error occurred trying to save trip: ' + err);
