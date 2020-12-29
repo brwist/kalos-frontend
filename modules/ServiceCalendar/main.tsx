@@ -275,15 +275,14 @@ export const EmployeesContext = createContext<EmployeesContext>({
 
 export const ServiceCalendar: FC<Props> = props => {
   const { userId, initialCustomer, initialTech, initialZip } = props;
-  console.log({ initialCustomer });
   if (initialCustomer) {
-    initialFilters.customers = [initialCustomer];
+    initialFilters.customers.concat([initialCustomer]);
   }
   if (initialTech) {
     initialFilters.techIds = initialTech;
   }
   if (initialZip) {
-    initialFilters.zip = [initialZip];
+    initialFilters.zip.concat([initialZip]);
   }
   const [
     {

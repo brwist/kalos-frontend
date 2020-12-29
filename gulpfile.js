@@ -468,7 +468,8 @@ function rollupBuild(target) {
                             format: 'umd',
                             globals: {
                                 react: 'React',
-                                'react-dom': 'ReactDOM'
+                                'react-dom': 'ReactDOM',
+                                'google-protobuf': 'googleProtobuf'
                             },
                             plugins: []
                         })];
@@ -577,29 +578,27 @@ function release(target) {
                         target = titleCase(process.argv[4].replace(/-/g, ''));
                     }
                     checkTests();
-                    return [4 /*yield*/, runTests(target)];
-                case 1:
-                    _a.sent();
+                    //await runTests(target);
                     info('Rolling up build. This may take a moment...');
                     return [4 /*yield*/, rollupBuild(target)];
-                case 2:
+                case 1:
                     _a.sent();
                     info('Build rolled up.');
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".js " + KALOS_ASSETS + "/modules/" + target + ".js")];
+                case 2:
+                    _a.sent();
+                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 4];
+                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
                 case 3:
                     _a.sent();
-                    if (!sh.test('-f', "build/modules/" + target + ".css")) return [3 /*break*/, 5];
-                    return [4 /*yield*/, sh.exec("scp build/modules/" + target + ".css " + KALOS_ASSETS + "/css/" + target + ".css")];
+                    _a.label = 4;
                 case 4:
-                    _a.sent();
-                    _a.label = 5;
-                case 5:
-                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 7];
+                    if (!sh.test('-f', "build/modules/" + target + "Less.css")) return [3 /*break*/, 6];
                     return [4 /*yield*/, sh.exec("scp build/modules/" + target + "Less.css " + KALOS_ASSETS + "/css/" + target + "Less.css")];
-                case 6:
+                case 5:
                     _a.sent();
-                    _a.label = 7;
-                case 7: return [2 /*return*/];
+                    _a.label = 6;
+                case 6: return [2 /*return*/];
             }
         });
     });

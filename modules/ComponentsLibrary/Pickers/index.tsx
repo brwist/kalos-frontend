@@ -14,9 +14,9 @@ import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { ENDPOINT } from '../../../constants';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 
-const MaxCacheItemAge: number = 1, // Max age of the cache item in days before it removes itself
-  UseTests = false,
-  VersionNumber = 0; // Mostly unused but left in in case we want to isolate old cache keys
+const MaxCacheItemAge: number = 1; // Max age of the cache item in days before it removes itself
+const UseTests = false;
+const VersionNumber = 0; // Mostly unused but left in in case we want to isolate old cache keys
 // from new ones at some point
 
 interface props<R, T> {
@@ -93,8 +93,8 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
     return res!.toObject().resultsList;
   }
 
-  async componentDidMount() {
-    await this.handleCache();
+  componentDidMount() {
+    this.handleCache();
   }
 
   async handleCache() {
