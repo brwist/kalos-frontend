@@ -11,6 +11,7 @@ import Container from '@material-ui/core/Container';
 import Box from '@material-ui/core/Box';
 import EventIcon from '@material-ui/icons/Event';
 import TimerOffIcon from '@material-ui/icons/TimerOff';
+import DriveEtaIcon from '@material-ui/icons/DriveEta';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import Alert from '@material-ui/lab/Alert';
@@ -71,6 +72,7 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
 export const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId } = props;
   const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
+  const [tripsOpen, setTripsOpen] = useState<boolean>(false);
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
@@ -170,6 +172,13 @@ export const Timesheet: FC<Props> = props => {
       icon: <AssignmentIndIcon />,
       name: 'Task',
       url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
+    },
+    {
+      icon: <DriveEtaIcon />,
+      name: 'Trips',
+      action: () => {
+        setTripsOpen(true);
+      },
     },
     /*{
       icon: <AssessmentIcon />,
@@ -451,6 +460,11 @@ export const Timesheet: FC<Props> = props => {
               reload();
             }}
           />
+        </Modal>
+      )}
+      {tripsOpen && (
+        <Modal open onClose={() => setTripsOpen(false)}>
+          <h1>Testing this functionality out</h1>
         </Modal>
       )}
     </PageWrapper>
