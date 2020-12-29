@@ -50,7 +50,7 @@ import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
-import { InfoTable, Data } from '../InfoTable';
+import { InfoTable } from '../InfoTable';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 
@@ -1147,83 +1147,81 @@ export const PerDiemComponent: FC<Props> = ({
                 variant="contained"
                 onClick={handleTripEditOpen(makeNewTrip())}
               />
-              {
-                <>
-                  <SectionBar
-                    title="Total Miles This Week"
-                    footer={
-                      totalTripMiles != undefined && totalTripMiles != 0.0
-                        ? totalTripMiles?.toFixed(1) + ' miles'
-                        : 'None'
-                    }
-                    small
-                  />
-                  <InfoTable
-                    columns={[
-                      { name: 'Origin' },
-                      { name: 'Destination' },
-                      {
-                        name: 'Miles',
-                      },
-                      {
-                        name: '',
-                        actions: [
-                          {
-                            label: 'Delete All Trips',
-                            compact: true,
-                            variant: 'outlined',
-                            size: 'xsmall',
-                            onClick: () => {
-                              handleConfirmTripDeleteAll(true);
-                            },
+              <>
+                <SectionBar
+                  title="Total Miles This Week"
+                  footer={
+                    totalTripMiles != undefined && totalTripMiles != 0.0
+                      ? totalTripMiles?.toFixed(1) + ' miles'
+                      : 'None'
+                  }
+                  small
+                />
+                <InfoTable
+                  columns={[
+                    { name: 'Origin' },
+                    { name: 'Destination' },
+                    {
+                      name: 'Miles',
+                    },
+                    {
+                      name: '',
+                      actions: [
+                        {
+                          label: 'Delete All Trips',
+                          compact: true,
+                          variant: 'outlined',
+                          size: 'xsmall',
+                          onClick: () => {
+                            handleConfirmTripDeleteAll(true);
                           },
-                        ],
-                      },
-                    ]}
-                    data={
-                      loading
-                        ? makeFakeRows(3, 1)
-                        : trips!
-                            .getResultsList()
-                            .filter((trip: Trip) => {
-                              return (
-                                trip.getPerDiemRowId() ==
-                                pendingPerDiemRowEdit.perDiemId
-                              );
-                            })
-                            .map((currentTrip: Trip) => {
-                              setTotalTripDistance(
-                                pendingPerDiemRowEdit.perDiemId,
-                              );
-                              return [
-                                { value: currentTrip.getOriginAddress() },
-                                { value: currentTrip.getDestinationAddress() },
-                                {
-                                  value: currentTrip
-                                    .getDistanceInMiles()
-                                    .toFixed(1),
-                                },
-                                {
-                                  value: '',
-                                  actions: [
-                                    <IconButton
-                                      key={currentTrip.getId() + 'edit'}
-                                      size="small"
-                                      onClick={() =>
-                                        handleConfirmTripDelete(currentTrip)
-                                      }
-                                    >
-                                      <DeleteIcon />
-                                    </IconButton>,
-                                  ],
-                                },
-                              ];
-                            })
-                    }
-                    compact
-                  />
-                </>
-              }
+                        },
+                      ],
+                    },
+                  ]}
+                  data={
+                    loading
+                      ? makeFakeRows(3, 1)
+                      : trips!
+                          .getResultsList()
+                          .filter((trip: Trip) => {
+                            return (
+                              trip.getPerDiemRowId() ==
+                              pendingPerDiemRowEdit.perDiemId
+                            );
+                          })
+                          .map((currentTrip: Trip) => {
+                            setTotalTripDistance(
+                              pendingPerDiemRowEdit.perDiemId,
+                            );
+                            return [
+                              { value: currentTrip.getOriginAddress() },
+                              { value: currentTrip.getDestinationAddress() },
+                              {
+                                value: currentTrip
+                                  .getDistanceInMiles()
+                                  .toFixed(1),
+                              },
+                              {
+                                value: '',
+                                actions: [
+                                  <IconButton
+                                    key={currentTrip.getId() + 'edit'}
+                                    size="small"
+                                    onClick={() =>
+                                      handleConfirmTripDelete(currentTrip)
+                                    }
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>,
+                                ],
+                              },
+                            ];
+                          })
+                  }
+                  compact
+                />
+              </>
             </Form>
           </Modal>
 
