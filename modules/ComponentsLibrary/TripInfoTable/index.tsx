@@ -123,13 +123,13 @@ interface State {
 export class TripInfoTable extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.setState({
+    this.state = {
       pendingTrip: null,
       trips: new TripList(),
       totalTripMiles: 0,
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
-    });
+    };
     this.updateTotalMiles();
     this.getTrips();
   }
@@ -199,6 +199,28 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.setState({ pendingTripToDelete: null });
     this.getTrips();
   };
+  deleteAllTrips = async () => {
+    try {
+      let i32 = new Int32();
+      i32.setValue(this.props.perDiemRowId);
+      await PerDiemClientService.BatchDeleteTrips(i32);
+    } catch (err: any) {
+      console.error(
+        'An error occurred while deleting the trips for this week: ',
+        err,
+      );
+      alert(
+        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+      );
+      this.setState({ pendingDeleteAllTrips: false });
+      return;
+    }
+    this.setState({ pendingDeleteAllTrips: false });
+    this.getTrips();
+  };
+  setStateToNew = (to: any) => {
+    this.setState(to);
+  };
   render() {
     return (
       <>
@@ -206,7 +228,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
           label="Add Trip"
           size="small"
           variant="contained"
-          onClick={() => this.setState({ pendingTrip: new Trip() })}
+          onClick={() => this.setStateToNew({ pendingTrip: new Trip() })}
         />
         <SectionBar
           title="Total Miles This Week"
@@ -234,7 +256,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                   variant: 'outlined',
                   size: 'xsmall',
                   onClick: () => {
-                    this.setState({ pendingDeleteAllTrips: true });
+                    this.setStateToNew({ pendingDeleteAllTrips: true });
                   },
                 },
               ],
@@ -246,7 +268,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
               return trip.getPerDiemRowId() == this.props.perDiemRowId;
             })
             .map((currentTrip: Trip) => {
-              this.setState({ totalTripMiles: this.props.perDiemRowId });
+              this.setStateToNew({ totalTripMiles: this.props.perDiemRowId });
               return [
                 { value: currentTrip.getOriginAddress() },
                 { value: currentTrip.getDestinationAddress() },
@@ -260,7 +282,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                       key={currentTrip.getId() + 'edit'}
                       size="small"
                       onClick={() =>
-                        this.setState({
+                        this.setStateToNew({
                           pendingTripToDelete: currentTrip,
                         })
                       }
@@ -275,7 +297,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
         />
         {this.state.pendingTrip && (
           <PlaceAutocompleteAddressForm
-            onClose={() => this.setState({ pendingTrip: null })}
+            onClose={() => this.setStateToNew({ pendingTrip: null })}
             onSave={async (addressPair: AddressPair.AddressPair) => {
               this.handleTripSave(
                 addressPair,
@@ -290,10 +312,19 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
         {this.state.pendingTripToDelete && (
           <ConfirmDelete
             open={this.state.pendingTripToDelete != null}
-            onClose={() => this.setState({ pendingTripToDelete: null })}
+            onClose={() => this.setStateToNew({ pendingTripToDelete: null })}
             kind="" // Purposely left blank for clarity purposes in the box
             name="this trip"
             onConfirm={() => this.deleteTrip(this.state.pendingTripToDelete!)}
+          />
+        )}
+        {this.state.pendingDeleteAllTrips && (
+          <ConfirmDelete
+            open={this.state.pendingDeleteAllTrips}
+            onClose={() => this.setStateToNew({ pendingDeleteAllTrips: false })}
+            kind="" // Purposely left blank for clarity purposes in the box
+            name="all of the trips in this week (this action cannot be undone)"
+            onConfirm={() => this.deleteAllTrips()}
           />
         )}
       </>
