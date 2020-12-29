@@ -43,6 +43,7 @@ import {
   TimeoffRequestTypes,
 } from '../../helpers';
 import './styles.less';
+import { CodeSharp } from '@material-ui/icons';
 
 type Props = PageWrapperProps & {
   userId: number;
@@ -211,14 +212,16 @@ const reducer = (state: State, action: Action): State => {
 const cachedInitialFilters = window.localStorage.getItem(
   'SERVICE_CALENDAR_FILTER',
 );
-const initialFilters: Filters = {
-  customers: [],
-  jobType: 0,
-  jobSubType: 0,
-  zip: [],
-  propertyUse: [],
-  techIds: '0',
-};
+const initialFilters: Filters = cachedInitialFilters
+  ? JSON.parse(cachedInitialFilters)
+  : {
+      customers: [],
+      jobType: 0,
+      jobSubType: 0,
+      zip: [],
+      propertyUse: [],
+      techIds: '0',
+    };
 
 const initialState: State = {
   fetchingCalendarData: true,
