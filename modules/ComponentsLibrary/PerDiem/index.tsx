@@ -458,7 +458,6 @@ export const PerDiemComponent: FC<Props> = ({
         formatDateFns(dateStarted),
       );
       managerPerDiemsList = managerPerDiems;
-      console.log({ managerPerDiemsList });
       managerPerDiemsOther = await loadPerDiemByUserIdsAndDateStarted(
         managerPerDiemsList.map(({ userId }) => userId),
         formatDateFns(dateStarted),
