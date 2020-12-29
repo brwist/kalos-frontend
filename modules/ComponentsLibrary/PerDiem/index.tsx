@@ -52,7 +52,6 @@ import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { InfoTable, Data } from '../InfoTable';
 import IconButton from '@material-ui/core/IconButton';
-import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 
 export interface Props {
@@ -370,10 +369,6 @@ export const PerDiemComponent: FC<Props> = ({
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [trips, setTrips] = useState<TripList>();
   const [totalTripMiles, setTotalTripMiles] = useState<number>();
-  const [
-    addressValidationPopupOpen,
-    setAddressValidationPopupOpen,
-  ] = useState<boolean>();
 
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
@@ -521,12 +516,6 @@ export const PerDiemComponent: FC<Props> = ({
       setLoaded(false);
     },
     [setDateStarted, setLoaded, dateStarted],
-  );
-  const handleAddressValidationPopupOpen = useCallback(
-    (addressValidationPopupOpen: boolean) => {
-      setAddressValidationPopupOpen(addressValidationPopupOpen);
-    },
-    [setAddressValidationPopupOpen],
   );
   const handlePendingPerDiemRowEditToggle = useCallback(
     (pendingPerDiemRowEdit?: PerDiemRowType) => () => {
@@ -1130,19 +1119,6 @@ export const PerDiemComponent: FC<Props> = ({
               }
             />
           )}
-
-          {addressValidationPopupOpen && (
-            <AlertPopup
-              open={addressValidationPopupOpen}
-              onClose={() => setAddressValidationPopupOpen(false)}
-              label="Close"
-              title="Notice"
-            >
-              <Typography component="div">
-                Please ensure all of the fields are filled out prior to saving.
-              </Typography>
-            </AlertPopup>
-          )}
           <Modal open onClose={handlePendingPerDiemRowEditToggle(undefined)}>
             <Form
               title={`${
@@ -1256,12 +1232,6 @@ export const PerDiemComponent: FC<Props> = ({
             <PlaceAutocompleteAddressForm
               onClose={handleTripEditClose}
               onSave={async (addressPair: AddressPair.AddressPair) => {
-                for (const [_, value] of Object.entries(addressPair)) {
-                  if (value == '') {
-                    handleAddressValidationPopupOpen(true);
-                    return;
-                  }
-                }
                 handleTripSave(
                   addressPair,
                   pendingPerDiemRowEdit.perDiemId,

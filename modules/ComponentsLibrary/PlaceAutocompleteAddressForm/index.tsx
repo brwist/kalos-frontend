@@ -4,6 +4,9 @@ import { getKeyByKeyName } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { AddressPair } from './Address';
+import { Alert } from '../Alert';
+import Typography from '@material-ui/core/Typography';
+
 import './styles.less';
 interface Props {
   onClose: () => void;
@@ -15,6 +18,7 @@ interface Props {
 interface State {
   address: AddressPair.AddressPair;
   formKey: number;
+  validationPopupOpen: boolean;
 }
 
 const componentForm = {
@@ -38,6 +42,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     this.state = {
       address: new AddressPair.AddressPair(),
       formKey: 0,
+      validationPopupOpen: false,
     };
     this.geolocate();
   }
@@ -256,17 +261,39 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 
   componentDidMount() {}
 
+  save = (addressPair: AddressPair.AddressPair) => {
+    for (const [_, value] of Object.entries(addressPair)) {
+      if (value == '') {
+        this.setState({ validationPopupOpen: true });
+        return;
+      }
+    }
+    this.props.onSave(addressPair);
+  };
+
   render() {
     this.loadScripts(() => this.handleLoad());
 
     return (
       <>
+        {this.state.validationPopupOpen && (
+          <Alert
+            open={this.state.validationPopupOpen}
+            onClose={() => this.setState({ validationPopupOpen: false })}
+            label="Close"
+            title="Notice"
+          >
+            <Typography component="div">
+              Please ensure all of the fields are filled out prior to saving.
+            </Typography>
+          </Alert>
+        )}
         <Modal open onClose={this.props.onClose}>
           <Form
             title="Enter Trip Origin and Destination"
             schema={this.props.schema}
             onClose={this.props.onClose}
-            onSave={this.props.onSave}
+            onSave={this.save}
             data={this.state.address}
             className="LocationForm"
             key={this.state.formKey}

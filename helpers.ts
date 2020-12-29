@@ -1530,8 +1530,6 @@ export const upsertTrip = async (
     await getTripDistance(originAddress, destinationAddress),
   );
 
-  console.log('Req trip: ', req);
-
   try {
     return await PerDiemClientService[
       data.id != 0 && data.id != null ? 'UpdateTrip' : 'CreateTrip'
