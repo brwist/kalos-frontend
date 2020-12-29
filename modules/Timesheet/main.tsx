@@ -7,14 +7,12 @@ import React, {
   useState,
 } from 'react';
 import { startOfWeek, subDays, parseISO, addDays, format } from 'date-fns';
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Container from '@material-ui/core/Container';
 import Box from '@material-ui/core/Box';
 import EventIcon from '@material-ui/icons/Event';
 import TimerOffIcon from '@material-ui/icons/TimerOff';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
-import AssessmentIcon from '@material-ui/icons/Assessment';
 import Alert from '@material-ui/lab/Alert';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
@@ -24,7 +22,6 @@ import {
   TimesheetReq,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
-import customTheme from '../Theme/main';
 import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import { ConfirmServiceProvider } from '../ComponentsLibrary/ConfirmService';
 import Toolbar from './components/Toolbar';
@@ -42,6 +39,7 @@ import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { TimeOff } from '../ComponentsLibrary/TimeOff';
+
 import './styles.less';
 
 const userClient = new UserClient(ENDPOINT);

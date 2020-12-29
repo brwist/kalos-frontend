@@ -10,6 +10,7 @@ u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
     <EditTimeOff
       loggedUserId={8418}
+      userId={8418}
       requestOffId={2072}
       onCancel={() => console.log('Cancel')}
       onSaveOrDelete={data => console.log('Delete', data)}
