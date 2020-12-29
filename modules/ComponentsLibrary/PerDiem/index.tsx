@@ -53,6 +53,7 @@ import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { InfoTable } from '../InfoTable';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import { TripInfoTable } from '../TripInfoTable';
 
 export interface Props {
   loggedUserId: number;
@@ -127,94 +128,6 @@ export const getStatus = (
   };
 };
 
-// Schema will be adjusted down the line to include as many addresses as it can
-export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
-  [
-    {
-      label: 'Origin',
-      headline: true,
-    },
-  ],
-  [
-    {
-      label: 'Address',
-      type: 'text',
-      name: 'FullAddressOrigin',
-    },
-  ],
-  [
-    {
-      label: 'Street Address',
-      name: 'StreetAddressOrigin',
-      type: 'text',
-    },
-    {
-      label: 'City',
-      name: 'CityOrigin',
-      type: 'text',
-    },
-    {
-      label: 'State',
-      name: 'StateOrigin',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Country',
-      name: 'CountryOrigin',
-      type: 'text',
-    },
-    {
-      label: 'Zip Code',
-      name: 'ZipCodeOrigin',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Destination',
-      headline: true,
-    },
-  ],
-  [
-    {
-      label: 'Address',
-      type: 'text',
-      name: 'FullAddressDestination',
-    },
-  ],
-  [
-    {
-      label: 'Street Address',
-      name: 'StreetAddressDestination',
-      type: 'text',
-    },
-    {
-      label: 'City',
-      name: 'CityDestination',
-      type: 'text',
-    },
-    {
-      label: 'State',
-      name: 'StateDestination',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Country',
-      name: 'CountryDestination',
-      type: 'text',
-    },
-    {
-      label: 'Zip Code',
-      name: 'ZipCodeDestination',
-      type: 'text',
-    },
-  ],
-];
-
 const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRowType> = [
   [
     {
@@ -287,52 +200,10 @@ export const PerDiemComponent: FC<Props> = ({
     [setPendingTripEdit],
   );
 
-  const handleUpsertTrip = async (
-    data: Trip.AsObject,
-    rowId: number,
-    userId: number,
-  ) => {
-    await upsertTrip(data, rowId, userId).then(() => {
-      handleTripEditClose();
-      getTrips();
-    });
-  };
-
-  const handleTripEditClose = useCallback(() => {
-    setPendingTripEdit(undefined);
-  }, [setPendingTripEdit]);
-
-  const handleTripSave = useCallback(
-    async (data: AddressPair.AsObject, rowId: number, userId: number) => {
-      setSaving(true);
-
-      let trip = new Trip();
-
-      trip.setOriginAddress(data.FullAddressOrigin);
-      trip.setDestinationAddress(data.FullAddressDestination);
-
-      await handleGetTripDistance(
-        String(data.FullAddressOrigin),
-        String(data.FullAddressDestination),
-      );
-
-      await handleUpsertTrip(trip.toObject(), rowId, userId);
-      setSaving(false);
-      setMapModalOpened(false);
-    },
-    [mapModalOpened, setMapModalOpened],
-  );
-
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
   const [checkLodging, setCheckLodging] = useState<boolean>(false);
-  const [confirmTripDelete, setConfirmTripDelete] = useState<
-    Trip | undefined
-  >();
-  const [confirmTripDeleteAll, setConfirmTripDeleteAll] = useState<boolean>(
-    false,
-  );
   const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
     [key: number]: PerDiemType[];
   }>({});
@@ -367,9 +238,6 @@ export const PerDiemComponent: FC<Props> = ({
     setPendingPerDiemRowDelete,
   ] = useState<boolean>(false);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
-  const [trips, setTrips] = useState<TripList>();
-  const [totalTripMiles, setTotalTripMiles] = useState<number>();
-
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
       startOfWeek(perDiem ? parseISO(perDiem.dateStarted) : new Date(), {
@@ -386,22 +254,11 @@ export const PerDiemComponent: FC<Props> = ({
     pendingPerDiemEditDuplicated,
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
-  const getTrips = async () => {
-    const trips = await PerDiemClientService.BatchGetTrips(new Trip());
-    setTrips(trips);
-  };
   const getTotalTripDistance = async (rowID: number) => {
     let i32 = new Int32();
     i32.setValue(rowID);
     return await PerDiemClientService.GetTotalRowTripDistance(i32);
   };
-  const setTotalTripDistance = useCallback(
-    async (rowID: number) => {
-      const dist = await getTotalTripDistance(rowID);
-      setTotalTripMiles(dist.getValue());
-    },
-    [setTotalTripMiles],
-  );
   const initialize = useCallback(async () => {
     await UserClientService.refreshToken();
     if (perDiem) {
@@ -422,7 +279,6 @@ export const PerDiemComponent: FC<Props> = ({
       setUser(user);
       const departments = await loadTimesheetDepartments();
       setDepartments(sortBy(departments, getDepartmentName));
-      await getTrips();
       const managerDepartments = departments.filter(
         ({ managerId }) => managerId === loggedUserId,
       );
@@ -518,7 +374,6 @@ export const PerDiemComponent: FC<Props> = ({
   );
   const handlePendingPerDiemRowEditToggle = useCallback(
     (pendingPerDiemRowEdit?: PerDiemRowType) => () => {
-      setTotalTripMiles(undefined);
       setPendingPerDiemRowEdit(pendingPerDiemRowEdit);
     },
     [setPendingPerDiemRowEdit],
@@ -633,52 +488,6 @@ export const PerDiemComponent: FC<Props> = ({
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
   );
-
-  const handleConfirmTripDelete = useCallback(
-    (confirmTripDelete: Trip | undefined) => {
-      setConfirmTripDelete(confirmTripDelete);
-    },
-    [setConfirmTripDelete],
-  );
-  const handleDeleteTrip = async (trip: Trip) => {
-    try {
-      await PerDiemClientService.DeleteTrip(trip);
-    } catch (err: any) {
-      console.error('An error occurred while deleting a trip: ', err);
-      alert(
-        'The trip was not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
-      );
-      handleConfirmTripDelete(undefined);
-      return Error(err);
-    }
-    //alert('The trip was deleted successfully!');
-    handleConfirmTripDelete(undefined);
-    getTrips();
-  };
-  const handleDeleteAllTripsInRow = async (row: number) => {
-    try {
-      let i32 = new Int32();
-      i32.setValue(row);
-      await PerDiemClientService.BatchDeleteTrips(i32);
-    } catch (err: any) {
-      console.error(
-        'An error occurred while deleting the trips for this week: ',
-        err,
-      );
-      alert(
-        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
-      );
-      handleConfirmTripDeleteAll(false);
-      return;
-    }
-    handleConfirmTripDeleteAll(false);
-    getTrips();
-  };
-  const handleConfirmTripDeleteAll = useCallback(
-    (confirmTripDeleteAll: boolean) =>
-      setConfirmTripDeleteAll(confirmTripDeleteAll),
-    [setConfirmTripDeleteAll],
-  );
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
@@ -768,11 +577,6 @@ export const PerDiemComponent: FC<Props> = ({
     availableDapartments,
     isAnyManager,
   ]);
-
-  const makeNewTrip = useCallback(() => {
-    const req = new Trip();
-    return req.toObject();
-  }, []);
   const makeNewPerDiemRow = useCallback(
     (perDiemId: number, dateString: string) => {
       const req = new PerDiemRow();
@@ -1095,29 +899,8 @@ export const PerDiemComponent: FC<Props> = ({
           />
         </Modal>
       )}
-      {confirmTripDelete && (
-        <ConfirmDelete
-          open={confirmTripDelete != undefined}
-          onClose={() => handleConfirmTripDelete(undefined)}
-          kind="" // Purposely left blank for clarity purposes in the box
-          name="this trip"
-          onConfirm={() => handleDeleteTrip(confirmTripDelete)}
-        />
-      )}
-
       {pendingPerDiemRowEdit && (
         <>
-          {confirmTripDeleteAll && (
-            <ConfirmDelete
-              open={confirmTripDeleteAll}
-              onClose={() => handleConfirmTripDeleteAll(false)}
-              kind="" // Purposely left blank for clarity purposes in the box
-              name="all of the trips in this week (this action cannot be undone)"
-              onConfirm={() =>
-                handleDeleteAllTripsInRow(pendingPerDiemRowEdit.perDiemId)
-              }
-            />
-          )}
           <Modal open onClose={handlePendingPerDiemRowEditToggle(undefined)}>
             <Form
               title={`${
@@ -1141,104 +924,12 @@ export const PerDiemComponent: FC<Props> = ({
                   />
                 </div>
               )}
-              <Button
-                label="Add Trip"
-                size="small"
-                variant="contained"
-                onClick={handleTripEditOpen(makeNewTrip())}
-              />
-              <>
-                <SectionBar
-                  title="Total Miles This Week"
-                  footer={
-                    totalTripMiles != undefined && totalTripMiles != 0.0
-                      ? totalTripMiles?.toFixed(1) + ' miles'
-                      : 'None'
-                  }
-                  small
-                />
-                <InfoTable
-                  columns={[
-                    { name: 'Origin' },
-                    { name: 'Destination' },
-                    {
-                      name: 'Miles',
-                    },
-                    {
-                      name: '',
-                      actions: [
-                        {
-                          label: 'Delete All Trips',
-                          compact: true,
-                          variant: 'outlined',
-                          size: 'xsmall',
-                          onClick: () => {
-                            handleConfirmTripDeleteAll(true);
-                          },
-                        },
-                      ],
-                    },
-                  ]}
-                  data={
-                    loading
-                      ? makeFakeRows(3, 1)
-                      : trips!
-                          .getResultsList()
-                          .filter((trip: Trip) => {
-                            return (
-                              trip.getPerDiemRowId() ==
-                              pendingPerDiemRowEdit.perDiemId
-                            );
-                          })
-                          .map((currentTrip: Trip) => {
-                            setTotalTripDistance(
-                              pendingPerDiemRowEdit.perDiemId,
-                            );
-                            return [
-                              { value: currentTrip.getOriginAddress() },
-                              { value: currentTrip.getDestinationAddress() },
-                              {
-                                value: currentTrip
-                                  .getDistanceInMiles()
-                                  .toFixed(1),
-                              },
-                              {
-                                value: '',
-                                actions: [
-                                  <IconButton
-                                    key={currentTrip.getId() + 'edit'}
-                                    size="small"
-                                    onClick={() =>
-                                      handleConfirmTripDelete(currentTrip)
-                                    }
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>,
-                                ],
-                              },
-                            ];
-                          })
-                  }
-                  compact
-                />
-              </>
             </Form>
+            <TripInfoTable
+              perDiemRowId={pendingPerDiemRowEdit.perDiemId}
+              loggedUserId={loggedUserId}
+            />
           </Modal>
-
-          {pendingTripEdit && (
-            <PlaceAutocompleteAddressForm
-              onClose={handleTripEditClose}
-              onSave={async (addressPair: AddressPair.AddressPair) => {
-                handleTripSave(
-                  addressPair,
-                  pendingPerDiemRowEdit.perDiemId,
-                  loggedUserId,
-                );
-              }}
-              addressFields={2}
-              schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
-            ></PlaceAutocompleteAddressForm>
-          )}
         </>
       )}
       {pendingPerDiemDelete && (
