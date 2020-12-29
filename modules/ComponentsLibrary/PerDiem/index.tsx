@@ -288,8 +288,12 @@ export const PerDiemComponent: FC<Props> = ({
     [setPendingTripEdit],
   );
 
-  const handleUpsertTrip = async (data: Trip.AsObject, rowId: number) => {
-    await upsertTrip(data, rowId).then(() => {
+  const handleUpsertTrip = async (
+    data: Trip.AsObject,
+    rowId: number,
+    userId: number,
+  ) => {
+    await upsertTrip(data, rowId, userId).then(() => {
       handleTripEditClose();
       getTrips();
     });
@@ -300,7 +304,7 @@ export const PerDiemComponent: FC<Props> = ({
   }, [setPendingTripEdit]);
 
   const handleTripSave = useCallback(
-    async (data: AddressPair.AsObject, rowId: number) => {
+    async (data: AddressPair.AsObject, rowId: number, userId: number) => {
       setSaving(true);
 
       let trip = new Trip();
@@ -313,7 +317,7 @@ export const PerDiemComponent: FC<Props> = ({
         String(data.FullAddressDestination),
       );
 
-      await handleUpsertTrip(trip.toObject(), rowId);
+      await handleUpsertTrip(trip.toObject(), rowId, userId);
       setSaving(false);
       setMapModalOpened(false);
     },
@@ -1164,9 +1168,8 @@ export const PerDiemComponent: FC<Props> = ({
               )}
               <Button
                 label="Add Trip"
-                size="medium"
+                size="small"
                 variant="contained"
-                compact
                 onClick={handleTripEditOpen(makeNewTrip())}
               />
               {
@@ -1186,11 +1189,15 @@ export const PerDiemComponent: FC<Props> = ({
                       { name: 'Destination' },
                       {
                         name: 'Miles',
+                      },
+                      {
+                        name: '',
                         actions: [
                           {
-                            label: 'Delete All Trips For This Week',
-                            compact: false,
+                            label: 'Delete All Trips',
+                            compact: true,
                             variant: 'outlined',
+                            size: 'xsmall',
                             onClick: () => {
                               handleConfirmTripDeleteAll(true);
                             },
@@ -1220,6 +1227,9 @@ export const PerDiemComponent: FC<Props> = ({
                                   value: currentTrip
                                     .getDistanceInMiles()
                                     .toFixed(1),
+                                },
+                                {
+                                  value: '',
                                   actions: [
                                     <IconButton
                                       key={currentTrip.getId() + 'edit'}
@@ -1252,7 +1262,11 @@ export const PerDiemComponent: FC<Props> = ({
                     return;
                   }
                 }
-                handleTripSave(addressPair, pendingPerDiemRowEdit.perDiemId);
+                handleTripSave(
+                  addressPair,
+                  pendingPerDiemRowEdit.perDiemId,
+                  loggedUserId,
+                );
               }}
               addressFields={2}
               schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
