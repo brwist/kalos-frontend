@@ -134,7 +134,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.getTrips();
   }
 
-  handleTripSave = async (
+  saveTrip = async (
     data: AddressPair.AsObject,
     rowId: number,
     userId: number,
@@ -144,7 +144,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     trip.setOriginAddress(data.FullAddressOrigin);
     trip.setDestinationAddress(data.FullAddressDestination);
 
-    await this.handleGetTripDistance(
+    await this.getTripDistance(
       String(data.FullAddressOrigin),
       String(data.FullAddressDestination),
     );
@@ -155,7 +155,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     });
   };
 
-  handleGetTripDistance = async (origin: string, destination: string) => {
+  getTripDistance = async (origin: string, destination: string) => {
     try {
       await getTripDistance(origin, destination);
     } catch (error: any) {
@@ -195,7 +195,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       this.setState({ pendingTripToDelete: null });
       return Error(err);
     }
-    //alert('The trip was deleted successfully!');
     this.setState({ pendingTripToDelete: null });
     this.getTrips();
   };
@@ -299,7 +298,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
           <PlaceAutocompleteAddressForm
             onClose={() => this.setStateToNew({ pendingTrip: null })}
             onSave={async (addressPair: AddressPair.AddressPair) => {
-              this.handleTripSave(
+              this.saveTrip(
                 addressPair,
                 this.props.perDiemRowId,
                 this.props.loggedUserId,
