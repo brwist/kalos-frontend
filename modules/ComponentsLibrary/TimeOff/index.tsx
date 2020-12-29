@@ -5,7 +5,7 @@ import React, {
   useCallback,
   CSSProperties,
 } from 'react';
-import { format } from 'date-fns';
+import { format, isSameMonth } from 'date-fns';
 import { Form, Schema, Options } from '../Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -18,8 +18,9 @@ import {
   UserClientService,
   TimeoffRequestClientService,
 } from '../../../helpers';
-import { OPTION_BLANK } from '../../../constants';
-
+import { OPTION_BLANK, ENDPOINT } from '../../../constants';
+import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { User } from '@kalos-core/kalos-rpc/User';
 export interface Props {
   loggedUserId: number;
   userId: number;
@@ -79,6 +80,9 @@ export const TimeOff: FC<Props> = ({
     dateTargetList: [],
     requestClass: '',
   });
+
+  const emailClient = new EmailClient(ENDPOINT);
+
   const init = useCallback(async () => {
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTypeOptions(
@@ -160,6 +164,44 @@ export const TimeOff: FC<Props> = ({
         userId,
         briefDescription: '',
       });
+      const typeName = typeOptions.find(
+        //@ts-ignore
+        (val: { label: string; value: number }) => {
+          if (val.value === requestType) {
+            return true;
+          }
+          return false;
+        },
+      );
+
+      try {
+        const manager = await UserClientService.loadUserById(user!.managedBy);
+
+        const emailBody = getTimeoffRequestEmail(
+          `${user?.firstname} ${user?.lastname}`,
+          getTimeoffTimestamp(
+            newData.timeStarted,
+            newData.timeFinished,
+            newData.allDayOff,
+          ),
+          //@ts-ignore
+          typeName ? typeName.label : '',
+          newData.notes,
+          newData.id,
+        );
+
+        const config: EmailConfig = {
+          type: 'timeoff',
+          body: emailBody,
+          recipient: 'robbie@kalosflorida.com' /*manager.email*/,
+        };
+
+        const emailResult = await emailClient.sendMail(config);
+        console.log({ emailResult });
+      } catch (err) {
+        console.log(err);
+      }
+
       setData({
         ...newData,
         ...(loggedUser!.isAdmin
@@ -377,4 +419,51 @@ export const TimeOff: FC<Props> = ({
       )}
     </>
   );
+};
+
+const getTimeoffTimestamp = function getTimeoffTimestamp(
+  startDateStr: string,
+  endDateStr: string,
+  allDays = false,
+) {
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  return `${format(startDate, 'MMM dd yyyy')} - ${format(
+    endDate,
+    'MMM dd yyyy',
+  )}`;
+};
+
+const getTimeoffRequestEmail = function getTimeoffRequestEmail(
+  userName: string,
+  timestamp: string,
+  requestType: string,
+  notes: string,
+  requestID: number,
+) {
+  return `
+<body>
+  <strong>${userName} has submitted a timeoff request</strong>
+  <table style="width:70%;">
+    <thead>
+      <tr>
+        <th style="text-align:left;">Date and Time</th>
+        <th style="text-align:left;">Request Type</th>
+        ${notes !== '' ? '<th style="text-align:left;">Notes</th>' : ''}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${timestamp}</td>
+        <td>${requestType}</td>
+        ${notes !== '' ? `<td>${notes}</td>` : ''}
+      </tr>
+      <tr>
+        <a href="http://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${requestID}">
+        Click here to review the request
+        </a>
+      </tr>
+    </tbody>
+  </table>
+</body>`;
 };
