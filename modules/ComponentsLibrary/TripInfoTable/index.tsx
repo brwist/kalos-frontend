@@ -216,9 +216,10 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
   };
   deleteAllTrips = async () => {
     try {
-      let i32 = new Int32();
-      i32.setValue(this.props.perDiemRowId);
-      await PerDiemClientService.BatchDeleteTrips(i32);
+      let trip = new Trip();
+      trip.setPerDiemRowId(this.props.perDiemRowId);
+      trip.setUserId(this.props.loggedUserId);
+      await PerDiemClientService.BatchDeleteTrips(trip);
     } catch (err: any) {
       console.error(
         'An error occurred while deleting the trips for this week: ',
