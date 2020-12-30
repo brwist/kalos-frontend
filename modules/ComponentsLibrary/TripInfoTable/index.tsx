@@ -299,9 +299,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                   { value: currentTrip.getDestinationAddress() },
                   {
                     value: currentTrip.getDistanceInMiles().toFixed(1),
-                  },
-                  {
-                    value: '',
                     actions: [
                       <IconButton
                         key={currentTrip.getId() + 'edit'}
