@@ -1499,6 +1499,23 @@ export const getTripDistance = async (origin: string, destination: string) => {
   }
 };
 
+export const getTotalRowTripDistanceWithUserID = async (
+  userID: number,
+  rowID?: number,
+) => {
+  let trip = new Trip();
+  trip.setUserId(userID);
+  if (rowID) {
+    trip.setPerDiemRowId(rowID);
+  }
+  const trips = await PerDiemClientService.BatchGetTrips(trip);
+  let totalDist = 0;
+  trips
+    .getResultsList()
+    .forEach(trip => (totalDist += trip.getDistanceInMiles()));
+
+  return totalDist;
+};
 export const upsertTrip = async (
   data: Trip.AsObject,
   rowId: number,
