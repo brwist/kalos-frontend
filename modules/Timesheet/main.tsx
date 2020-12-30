@@ -35,18 +35,16 @@ import {
   TimeoffRequestClientService,
   TimeoffRequestTypes,
   UserClientService,
-  getCurrentPerDiemRowId,
+  getPerDiemRowId,
 } from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { TimeOff } from '../ComponentsLibrary/TimeOff';
-import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 
 import './styles.less';
 
-const userClient = new UserClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
 
@@ -109,9 +107,6 @@ export const Timesheet: FC<Props> = props => {
   ] = useState<TimeoffRequestTypes>();
   const [perDiemRowId, setPerDiemRowId] = useState<number>();
 
-  getCurrentPerDiemRowId().then(value => {
-    setPerDiemRowId(value);
-  });
   const {
     user,
     owner,
@@ -388,6 +383,9 @@ export const Timesheet: FC<Props> = props => {
     return null;
   }
   const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
+  getPerDiemRowId(selectedDate).then(value => {
+    setPerDiemRowId(value);
+  });
   return (
     <PageWrapper {...props} userID={userId}>
       <ConfirmServiceProvider>

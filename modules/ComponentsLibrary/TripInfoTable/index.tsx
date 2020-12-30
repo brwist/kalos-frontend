@@ -13,7 +13,7 @@ import {
   PerDiemClientService,
   upsertTrip,
   getTripDistance,
-  getCurrentPerDiemRowId,
+  getPerDiemRowId,
   getTotalRowTripDistanceWithUserID,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
@@ -154,7 +154,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       String(data.FullAddressDestination),
     );
 
-    const id = await getCurrentPerDiemRowId();
+    const id = await getPerDiemRowId();
 
     if (id) {
       trip.setPerDiemRowId(id);
