@@ -274,9 +274,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
               { name: 'Destination' },
               {
                 name: 'Miles',
-              },
-              {
-                name: '',
                 actions: [
                   {
                     label: 'Delete All Trips',
@@ -286,6 +283,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                     onClick: () => {
                       this.setStateToNew({ pendingDeleteAllTrips: true });
                     },
+                    burgeronly: 1,
                   },
                 ],
               },
