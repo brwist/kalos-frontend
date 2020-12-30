@@ -271,6 +271,9 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         return;
       }
     }
+    addressPair.FullAddressOrigin = `${addressPair.StreetAddressOrigin}, ${addressPair.CityOrigin}, ${addressPair.StateOrigin}, ${addressPair.CountryOrigin}`;
+    addressPair.FullAddressDestination = `${addressPair.StreetAddressDestination}, ${addressPair.CityDestination}, ${addressPair.StateDestination}, ${addressPair.CountryDestination}`;
+
     this.props.onSave(addressPair);
     this.setState({ saving: true });
   };
