@@ -14,10 +14,8 @@ import {
   upsertTrip,
   getTripDistance,
   getPerDiemRowId,
-  getTotalRowTripDistanceWithUserID,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
-import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Schema } from '../Form';
 
@@ -190,7 +188,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.setState({ trips: trips });
   };
   getTotalTripDistance = async (rowID: number) => {
-    return await getTotalRowTripDistanceWithUserID(
+    return await PerDiemClientService.getTotalRowTripDistanceWithUserID(
       this.props.loggedUserId,
       rowID,
     );

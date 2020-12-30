@@ -1499,23 +1499,6 @@ export const getTripDistance = async (origin: string, destination: string) => {
   }
 };
 
-export const getTotalRowTripDistanceWithUserID = async (
-  userID: number,
-  rowID?: number,
-) => {
-  let trip = new Trip();
-  trip.setUserId(userID);
-  if (rowID) {
-    trip.setPerDiemRowId(rowID);
-  }
-  const trips = await PerDiemClientService.BatchGetTrips(trip);
-  let totalDist = 0;
-  trips
-    .getResultsList()
-    .forEach(trip => (totalDist += trip.getDistanceInMiles()));
-
-  return totalDist;
-};
 export const upsertTrip = async (
   data: Trip.AsObject,
   rowId: number,
@@ -1578,16 +1561,6 @@ export const approvePerDiemById = async (id: number, approvedById: number) => {
 // Gets the PerDiem Row Id for the current week if no args are provided, or
 // for a date provided
 export const getPerDiemRowId = async (date?: Date) => {
-  // Saturday = 6
-  // We want to find the last saturday
-  // if x = 6 then 0
-  // if x = 7 then 1
-  // if x = 1 then 2
-  // if x = 2 then 3
-  // if x = 3 then 4
-  // if x = 4 then 5
-  // if x = 5 then 6
-  // if x = 6 then 0
   const dateToQuery = date != null ? date : new Date();
   let daysToGoBack = 0;
   if (dateToQuery.getDay() <= 5) {
