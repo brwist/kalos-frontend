@@ -27,6 +27,7 @@ import { AddNewButton } from '../ComponentsLibrary/AddNewButton';
 import { ConfirmServiceProvider } from '../ComponentsLibrary/ConfirmService';
 import Toolbar from './components/Toolbar';
 import Column from './components/Column';
+import { TripInfoTable } from '../ComponentsLibrary/TripInfoTable';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../constants';
 import {
@@ -34,12 +35,14 @@ import {
   TimeoffRequestClientService,
   TimeoffRequestTypes,
   UserClientService,
+  getCurrentPerDiemRowId,
 } from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { TimeOff } from '../ComponentsLibrary/TimeOff';
+import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 
 import './styles.less';
 
@@ -104,6 +107,11 @@ export const Timesheet: FC<Props> = props => {
     timeoffRequestTypes,
     setTimeoffRequestTypes,
   ] = useState<TimeoffRequestTypes>();
+  const [perDiemRowId, setPerDiemRowId] = useState<number>();
+
+  getCurrentPerDiemRowId().then(value => {
+    console.log('Value set to: ', value);
+  });
   const {
     user,
     owner,
@@ -462,9 +470,12 @@ export const Timesheet: FC<Props> = props => {
           />
         </Modal>
       )}
-      {tripsOpen && (
+      {tripsOpen && perDiemRowId != 0 && (
         <Modal open onClose={() => setTripsOpen(false)}>
-          <h1>Testing this functionality out</h1>
+          <TripInfoTable
+            loggedUserId={props.userId}
+            perDiemRowId={perDiemRowId!}
+          />
         </Modal>
       )}
     </PageWrapper>

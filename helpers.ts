@@ -1558,6 +1558,43 @@ export const approvePerDiemById = async (id: number, approvedById: number) => {
   return await PerDiemClientService.Update(req);
 };
 
+export const getCurrentPerDiemRowId = async () => {
+  const today = new Date();
+  const daysToGoBack = new Date().getDay() + 1; // JS days start on Sunday
+
+  const lastSaturday = `${today.getFullYear()}-${padWithZeroes(
+    today.getMonth() + 1,
+  )}-${padWithZeroes(today.getDate() - daysToGoBack)} 00:00:00`;
+
+  let perDiemRes: PerDiem.AsObject | null = null;
+  try {
+    let pd = new PerDiem();
+    pd.setDateStarted(lastSaturday);
+    perDiemRes = await PerDiemClientService.Get(pd);
+  } catch (error: any) {
+    let err = String(error);
+    if (
+      err.startsWith(
+        'Error: failed to scan PerDiem query result - sql: no rows in result set',
+      )
+    ) {
+      // There was just no results in the set so we should not error for that,
+      // just display it as no trips and if they go to add one add a Per Diem
+      // first
+      return;
+    }
+    console.error(
+      'An error occurred while fetching the current Per-Diem period: ',
+      error,
+    );
+  }
+
+  if (!perDiemRes) return;
+
+  // It'll never be unassigned when it reaches this point
+  return perDiemRes!.id;
+};
+
 export const upsertPerDiemRow = async (data: PerDiemRowType) => {
   const req = new PerDiemRow();
   const fieldMaskList = [];
