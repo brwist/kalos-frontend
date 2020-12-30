@@ -161,8 +161,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       console.error('No perDiem found for this user. ');
     }
 
-    console.log('TRIP WAS: ', trip);
-
     await upsertTrip(trip.toObject(), rowId, userId).then(() => {
       this.setState({ pendingTrip: null });
       this.getTrips();
@@ -187,7 +185,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     let trip = new Trip();
     trip.setUserId(this.props.loggedUserId);
     const trips = await PerDiemClientService.BatchGetTrips(trip);
-    console.log(trips);
     this.updateTotalMiles();
     this.setState({ trips: trips });
   };
@@ -240,7 +237,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.setState(to);
   };
   render() {
-    console.log('Props set to: ', this.props.perDiemRowId);
     return (
       <>
         <Button
