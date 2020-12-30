@@ -1575,13 +1575,29 @@ export const approvePerDiemById = async (id: number, approvedById: number) => {
   return await PerDiemClientService.Update(req);
 };
 
-export const getCurrentPerDiemRowId = async () => {
-  const today = new Date();
-  const daysToGoBack = new Date().getDay() + 1; // JS days start on Sunday
-
-  const lastSaturday = `${today.getFullYear()}-${padWithZeroes(
-    today.getMonth() + 1,
-  )}-${padWithZeroes(today.getDate() - daysToGoBack)} 00:00:00`;
+// Gets the PerDiem Row Id for the current week if no args are provided, or
+// for a date provided
+export const getPerDiemRowId = async (date?: Date) => {
+  // Saturday = 6
+  // We want to find the last saturday
+  // if x = 6 then 0
+  // if x = 7 then 1
+  // if x = 1 then 2
+  // if x = 2 then 3
+  // if x = 3 then 4
+  // if x = 4 then 5
+  // if x = 5 then 6
+  // if x = 6 then 0
+  const dateToQuery = date != null ? date : new Date();
+  let daysToGoBack = 0;
+  if (dateToQuery.getDay() <= 5) {
+    daysToGoBack = dateToQuery.getDay() + 1; // JS days start on Sunday
+  } else {
+    daysToGoBack = dateToQuery.getDay() - 6; // JS days start on Sunday
+  }
+  const lastSaturday = `${dateToQuery.getFullYear()}-${padWithZeroes(
+    dateToQuery.getMonth() + 1,
+  )}-${padWithZeroes(dateToQuery.getDate() - daysToGoBack)} 00:00:00`;
 
   let perDiemRes: PerDiem.AsObject | null = null;
   try {
