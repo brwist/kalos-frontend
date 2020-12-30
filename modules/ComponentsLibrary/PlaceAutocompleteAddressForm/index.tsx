@@ -8,6 +8,7 @@ import { Alert } from '../Alert';
 import Typography from '@material-ui/core/Typography';
 
 import './styles.less';
+import { Loader } from '../../Loader/main';
 interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair.AddressPair) => void;
@@ -19,6 +20,7 @@ interface State {
   address: AddressPair.AddressPair;
   formKey: number;
   validationPopupOpen: boolean;
+  saving: boolean;
 }
 
 const componentForm = {
@@ -43,6 +45,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       address: new AddressPair.AddressPair(),
       formKey: 0,
       validationPopupOpen: false,
+      saving: false,
     };
     this.geolocate();
   }
@@ -269,6 +272,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       }
     }
     this.props.onSave(addressPair);
+    this.setState({ saving: true });
   };
 
   render() {
@@ -289,16 +293,19 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
           </Alert>
         )}
         <Modal open onClose={this.props.onClose}>
-          <Form
-            title="Enter Trip Origin and Destination"
-            schema={this.props.schema}
-            onClose={this.props.onClose}
-            onSave={this.save}
-            data={this.state.address}
-            className="LocationForm"
-            key={this.state.formKey}
-            inputFieldRefs={this.inputArray}
-          />
+          <>
+            {this.state.saving && <Loader />}
+            <Form
+              title="Enter Trip Origin and Destination"
+              schema={this.props.schema}
+              onClose={this.props.onClose}
+              onSave={this.save}
+              data={this.state.address}
+              className="LocationForm"
+              key={this.state.formKey}
+              inputFieldRefs={this.inputArray}
+            />
+          </>
         </Modal>
         )
       </>
