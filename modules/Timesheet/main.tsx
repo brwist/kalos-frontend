@@ -110,7 +110,7 @@ export const Timesheet: FC<Props> = props => {
   const [perDiemRowId, setPerDiemRowId] = useState<number>();
 
   getCurrentPerDiemRowId().then(value => {
-    console.log('Value set to: ', value);
+    setPerDiemRowId(value);
   });
   const {
     user,
@@ -389,6 +389,7 @@ export const Timesheet: FC<Props> = props => {
   }
   const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
 
+  console.log('PER DIEM ID THINGY: ', perDiemRowId);
   return (
     <PageWrapper {...props} userID={userId}>
       <ConfirmServiceProvider>

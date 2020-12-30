@@ -240,6 +240,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.setState(to);
   };
   render() {
+    console.log('Props set to: ', this.props.perDiemRowId);
     return (
       <>
         <Button
