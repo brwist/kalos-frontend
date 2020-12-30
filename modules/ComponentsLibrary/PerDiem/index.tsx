@@ -254,11 +254,6 @@ export const PerDiemComponent: FC<Props> = ({
     pendingPerDiemEditDuplicated,
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
-  const getTotalTripDistance = async (rowID: number) => {
-    let i32 = new Int32();
-    i32.setValue(rowID);
-    return await PerDiemClientService.GetTotalRowTripDistance(i32);
-  };
   const initialize = useCallback(async () => {
     await UserClientService.refreshToken();
     if (perDiem) {

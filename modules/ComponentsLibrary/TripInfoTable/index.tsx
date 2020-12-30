@@ -13,6 +13,7 @@ import {
   PerDiemClientService,
   upsertTrip,
   getTripDistance,
+  getCurrentPerDiemRowId,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
@@ -152,6 +153,16 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       String(data.FullAddressDestination),
     );
 
+    const id = await getCurrentPerDiemRowId();
+
+    if (id) {
+      trip.setPerDiemRowId(id);
+    } else {
+      console.error('No perDiem found for this user. ');
+    }
+
+    console.log('TRIP WAS: ', trip);
+
     await upsertTrip(trip.toObject(), rowId, userId).then(() => {
       this.setState({ pendingTrip: null });
       this.getTrips();
@@ -173,7 +184,10 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
   };
 
   getTrips = async () => {
-    const trips = await PerDiemClientService.BatchGetTrips(new Trip());
+    let trip = new Trip();
+    trip.setUserId(this.props.loggedUserId);
+    const trips = await PerDiemClientService.BatchGetTrips(trip);
+    console.log(trips);
     this.updateTotalMiles();
     this.setState({ trips: trips });
   };
