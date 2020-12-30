@@ -388,8 +388,6 @@ export const Timesheet: FC<Props> = props => {
     return null;
   }
   const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
-
-  console.log('PER DIEM ID THINGY: ', perDiemRowId);
   return (
     <PageWrapper {...props} userID={userId}>
       <ConfirmServiceProvider>

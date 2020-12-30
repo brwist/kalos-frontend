@@ -1508,10 +1508,6 @@ export const upsertTrip = async (
   const fieldMaskList = [];
   let destinationAddress, originAddress;
 
-  console.log('UPSERTING DATA: ', data);
-  console.log('UPSERTING ROW ID: ', rowId);
-  console.log('UPSERTING USER ID: ', userId);
-
   for (const fieldName in data) {
     let { upperCaseProp, methodName } = getRPCFields(fieldName);
     if (methodName == 'setDestinationAddress') {
