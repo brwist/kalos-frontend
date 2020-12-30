@@ -170,6 +170,8 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       this.setState({ pendingTrip: null });
       this.getTrips();
     });
+
+    if (this.props.onSaveTrip) this.props.onSaveTrip();
   };
 
   getTripDistance = async (origin: string, destination: string) => {
@@ -209,6 +211,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
   deleteTrip = async (trip: Trip) => {
     try {
       await PerDiemClientService.DeleteTrip(trip);
+      if (this.props.onDeleteTrip) this.props.onDeleteTrip();
     } catch (err: any) {
       console.error('An error occurred while deleting a trip: ', err);
       alert(
@@ -226,6 +229,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       trip.setPerDiemRowId(this.props.perDiemRowId);
       trip.setUserId(this.props.loggedUserId);
       await PerDiemClientService.BatchDeleteTrips(trip);
+      if (this.props.onDeleteAllTrips) this.props.onDeleteAllTrips();
     } catch (err: any) {
       console.error(
         'An error occurred while deleting the trips for this week: ',
