@@ -38,21 +38,14 @@ import {
   loadPerDiemByDepartmentIdsAndDateStarted,
   loadGovPerDiem,
   usd,
-  upsertTrip,
   getTripDistance,
   TripType,
   UserClientService,
   PerDiemClientService,
-  makeFakeRows,
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
-import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
-import { InfoTable } from '../InfoTable';
-import IconButton from '@material-ui/core/IconButton';
-import DeleteIcon from '@material-ui/icons/Delete';
 import { TripInfoTable } from '../TripInfoTable';
 
 export interface Props {
