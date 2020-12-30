@@ -10,6 +10,8 @@ import './styles.less';
 
 export type ActionsProps = (ButtonProps & {
   desktop?: boolean;
+  burgeronly?: number; // Number as a workaround to a bug involving spreads
+  // Read more here: https://stackoverflow.com/a/49786272
 })[];
 
 type Style = {
@@ -40,7 +42,11 @@ export const Actions: FC<Props> = ({
       setAnchorEl(anchorEl),
     [setAnchorEl],
   );
-  if (matches && !fixed)
+  let burgerOnly = false;
+  actions.forEach(action => {
+    if (action.burgeronly == 1) burgerOnly = true;
+  });
+  if (burgerOnly || (matches && !fixed))
     return (
       <>
         <span
