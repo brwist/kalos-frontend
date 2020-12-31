@@ -24,6 +24,8 @@ export const Alert: FC<Props> = ({
       actions={[{ onClick: onClose, label }]}
       fixedActions
     />
-    <Typography className="Alert">{children}</Typography>
+    <Typography className="Alert" component={'div'} variant={'body2'}>
+      {children}
+    </Typography>
   </Modal>
 );
