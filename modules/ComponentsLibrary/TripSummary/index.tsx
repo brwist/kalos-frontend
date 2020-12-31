@@ -1,11 +1,8 @@
 import React from 'react';
-import { Button } from '../Button';
 import { InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
-import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import {
   PerDiem,
-  PerDiemRow,
   Trip,
   TripList,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
@@ -13,7 +10,6 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import {
   PerDiemClientService,
-  upsertTrip,
   getTripDistance,
   getPerDiemRowId,
   UserClientService,
@@ -22,7 +18,7 @@ import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Schema } from '../Form';
 import { Loader } from '../../Loader/main';
-import { Double, Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
+import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 
 // Schema will be adjusted down the line to include as many addresses as it can
 export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
@@ -125,13 +121,13 @@ interface State {
   pendingTripToDelete: Trip | null;
   pendingDeleteAllTrips: boolean;
   trips: TripList;
-  nameIdPair: { name: string; id: number }[];
-  dateIdPair: { date: string; row_id: number }[];
   totalTripMiles: number;
   loadingTrips: boolean;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
+  nameIdPair: { name: string; id: number }[] = [];
+  dateIdPair: { date: string; row_id: number }[] = [];
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -141,8 +137,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
       loadingTrips: false,
-      nameIdPair: [],
-      dateIdPair: [],
     };
     this.updateTotalMiles();
   }
@@ -176,18 +170,18 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getRowStartDateById = (rowId: number) => {
-    if (this.state.dateIdPair.length == 0) {
+    if (this.dateIdPair.length == 0) {
       // Return - it's a bit early but it will be called at a later time when the state is set
       return '';
     }
 
-    for (let obj of this.state.dateIdPair) {
+    for (let obj of this.dateIdPair) {
       if (obj.row_id == rowId) {
         return obj.date;
       }
     }
 
-    console.error('Failed to find a name for row ID: ', rowId);
+    console.error('Failed to find a date for row ID: ', rowId);
   };
 
   getRowDatesFromPerDiemIds = async () => {
@@ -201,7 +195,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       if (!res.includes(obj)) res.push(obj);
     });
 
-    this.setState({ dateIdPair: res });
+    this.dateIdPair = res;
 
     return res;
   };
@@ -217,18 +211,18 @@ export class TripSummary extends React.PureComponent<Props, State> {
       };
       if (!res.includes(obj)) res.push(obj);
     });
-    this.setState({ nameIdPair: res });
+    this.nameIdPair = res;
 
     return res;
   };
 
   getNameById = (userId: number) => {
-    if (this.state.nameIdPair.length == 0) {
+    if (this.nameIdPair.length == 0) {
       // Return - it's a bit early but it will be called at a later time when the state is set
       return '';
     }
 
-    for (const obj of this.state.nameIdPair) {
+    for (const obj of this.nameIdPair) {
       if (obj.id == userId) {
         return obj.name;
       }
@@ -270,6 +264,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
     this.setState({ pendingTripToDelete: null });
     this.getTrips();
+    this.getUserNamesFromIds();
+    this.getRowDatesFromPerDiemIds();
   };
   deleteAllTrips = async () => {
     try {
@@ -291,6 +287,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
     this.setState({ pendingDeleteAllTrips: false });
     this.getTrips();
+    this.getUserNamesFromIds();
+    this.getRowDatesFromPerDiemIds();
   };
   setStateToNew = (to: any) => {
     this.setState(to);
