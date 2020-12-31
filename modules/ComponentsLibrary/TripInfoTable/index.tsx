@@ -3,6 +3,8 @@ import { Button } from '../Button';
 import { InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
+import { Alert } from '../Alert';
+import Typography from '@material-ui/core/Typography';
 import {
   Trip,
   TripList,
@@ -123,6 +125,8 @@ interface State {
   trips: TripList;
   totalTripMiles: number;
   loadingTrips: boolean;
+  warningNoPerDiem: boolean; // When there is no per-diem this is true and it displays
+  // a dialogue
 }
 
 export class TripInfoTable extends React.PureComponent<Props, State> {
@@ -135,6 +139,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
       loadingTrips: false,
+      warningNoPerDiem: false,
     };
     this.updateTotalMiles();
   }
@@ -254,7 +259,13 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
           label="Add Trip"
           size="small"
           variant="contained"
-          onClick={() => this.setStateToNew({ pendingTrip: new Trip() })}
+          onClick={() => {
+            if (this.props.perDiemRowId == undefined) {
+              this.setStateToNew({ warningNoPerDiem: true });
+              return;
+            }
+            this.setStateToNew({ pendingTrip: new Trip() });
+          }}
         />
         <SectionBar
           title="Total Miles This Week"
@@ -349,6 +360,19 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
             name="all of the trips in this week (this action cannot be undone)"
             onConfirm={() => this.deleteAllTrips()}
           />
+        )}
+        {this.state.warningNoPerDiem && (
+          <Alert
+            open={this.state.warningNoPerDiem}
+            onClose={() => this.setState({ warningNoPerDiem: false })}
+            label="Close"
+            title="Notice"
+          >
+            <Typography component="div">
+              There is no Per Diem created for this week, please create one
+              before adding any trips.
+            </Typography>
+          </Alert>
         )}
       </>
     );
