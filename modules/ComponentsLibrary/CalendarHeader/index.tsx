@@ -35,30 +35,32 @@ export const CalendarHeader: FC<Props> = ({
 }) => (
   <MuiToolbar className="CalendarHeader">
     <MuiPickersUtilsProvider utils={DateFnsUtils}>
-      <WeekPicker
-        white
-        label="Set a Period"
-        inputVariant="outlined"
-        size="small"
-        value={selectedDate}
-        onChange={onDateChange}
-        weekStartsOn={weekStartsOn}
-      />
-      {asideTitle}
-      <Typography className="CalendarHeaderTitle" variant="subtitle1">
-        {title}
-      </Typography>
-      <Box className="CalendarHeaderInfo">
-        <Box className="CalendarHeaderChildren">{children}</Box>
-        {onSubmit && (
-          <Button
-            onClick={onSubmit}
-            label={submitLabel}
-            disabled={submitDisabled}
-          />
-        )}
-        {actions && <Actions actions={actions} fixed />}
-      </Box>
+      <>
+        <WeekPicker
+          white
+          label="Set a Period"
+          inputVariant="outlined"
+          size="small"
+          value={selectedDate}
+          onChange={onDateChange}
+          weekStartsOn={weekStartsOn}
+        />
+        {asideTitle}
+        <Typography className="CalendarHeaderTitle" variant="subtitle1">
+          {title}
+        </Typography>
+        <Box className="CalendarHeaderInfo">
+          <Box className="CalendarHeaderChildren">{children}</Box>
+          {onSubmit && (
+            <Button
+              onClick={onSubmit}
+              label={submitLabel}
+              disabled={submitDisabled}
+            />
+          )}
+          {actions && <Actions actions={actions} fixed />}
+        </Box>
+      </>
     </MuiPickersUtilsProvider>
   </MuiToolbar>
 );
