@@ -80,6 +80,7 @@ import TimeOff from './TimeOff/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Tooltip from './Tooltip/examples';
 import TripInfoTable from './TripInfoTable/examples';
+import TripSummary from './TripSummary/examples';
 import UploadPhoto from './UploadPhoto/examples';
 import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
@@ -166,6 +167,7 @@ const COMPONENTS = {
   TimeoffSummaryReport,
   Tooltip,
   TripInfoTable,
+  TripSummary,
   UploadPhoto,
   WarrantyReport,
   WeekPicker,
