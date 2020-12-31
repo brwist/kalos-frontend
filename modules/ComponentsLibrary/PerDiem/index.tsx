@@ -916,6 +916,10 @@ export const PerDiemComponent: FC<Props> = ({
             <TripInfoTable
               perDiemRowId={pendingPerDiemRowEdit.perDiemId}
               loggedUserId={loggedUserId}
+              onNoPerDiem={() => {
+                setPendingPerDiemEdit(undefined);
+                load();
+              }}
             />
           </Modal>
         </>
