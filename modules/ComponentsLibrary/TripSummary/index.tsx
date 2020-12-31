@@ -14,6 +14,7 @@ import {
   upsertTrip,
   getTripDistance,
   getPerDiemRowId,
+  UserClientService,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -239,6 +240,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
             columns={[
               { name: 'Origin' },
               { name: 'Destination' },
+              { name: 'Name' },
+              { name: 'Week Of' },
               {
                 name: 'Miles',
                 actions: [
@@ -261,6 +264,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 return [
                   { value: currentTrip.getOriginAddress() },
                   { value: currentTrip.getDestinationAddress() },
+                  { value: currentTrip.getUserId() }, // Need to use UserClientService on it
+                  { value: currentTrip.getPerDiemRowId() },
                   {
                     value: currentTrip.getDistanceInMiles().toFixed(1),
                     actions: [
