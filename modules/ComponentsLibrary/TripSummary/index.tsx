@@ -123,6 +123,7 @@ interface State {
   pendingTripToDelete: Trip | null;
   pendingDeleteAllTrips: boolean;
   trips: TripList;
+  nameIdPair: { name: string; id: number }[];
   totalTripMiles: number;
   loadingTrips: boolean;
 }
@@ -137,6 +138,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
       loadingTrips: false,
+      nameIdPair: [],
     };
     this.updateTotalMiles();
   }
@@ -164,8 +166,43 @@ export class TripSummary extends React.PureComponent<Props, State> {
     const trips = await PerDiemClientService.BatchGetTrips(trip);
     this.updateTotalMiles();
     this.setState({ trips: trips });
+    await this.getUserNamesFromIds();
     this.setState({ loadingTrips: false });
   };
+
+  getUserNamesFromIds = async () => {
+    const trips = this.state.trips;
+
+    let res: { name: string; id: number }[] = [];
+
+    trips.getResultsList().forEach(async trip => {
+      let user = await UserClientService.loadUserById(trip.getUserId());
+      let obj: { name: string; id: number } = {
+        name: `${user.firstname} ${user.lastname}`,
+        id: trip.getUserId(),
+      };
+      if (!res.includes(obj)) res.push(obj);
+    });
+    this.setState({ nameIdPair: res });
+
+    return res;
+  };
+
+  getNameById = (userId: number) => {
+    if (this.state.nameIdPair.length == 0) {
+      // Return - it's a bit early but it will be called at a later time when the state is set
+      return '';
+    }
+
+    for (const obj of this.state.nameIdPair) {
+      if (obj.id == userId) {
+        return obj.name;
+      }
+    }
+
+    console.error('Failed to find a name for user ID: ', userId);
+  };
+
   getTotalTripDistance = async () => {
     let i32 = new Int32();
     let val = await getPerDiemRowId();
@@ -267,7 +304,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 return [
                   { value: currentTrip.getOriginAddress() },
                   { value: currentTrip.getDestinationAddress() },
-                  { value: currentTrip.getUserId() }, // Need to use UserClientService on it
+                  { value: this.getNameById(currentTrip.getUserId()) }, // Need to use UserClientService on it
                   { value: currentTrip.getPerDiemRowId() },
                   {
                     value: currentTrip.getDistanceInMiles().toFixed(1),
