@@ -116,6 +116,7 @@ interface Props {
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
+  onNoPerDiem?: () => any;
 }
 
 interface State {
@@ -169,6 +170,10 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       trip.setPerDiemRowId(id);
     } else {
       console.error('No perDiem found for this user. ');
+      this.setState({ warningNoPerDiem: true });
+      this.setState({ pendingTrip: null });
+      this.getTrips();
+      return;
     }
 
     await upsertTrip(trip.toObject(), rowId, userId).then(() => {
@@ -367,7 +372,10 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
         {this.state.warningNoPerDiem && (
           <Alert
             open={this.state.warningNoPerDiem}
-            onClose={() => this.setState({ warningNoPerDiem: false })}
+            onClose={() => {
+              if (this.props.onNoPerDiem) this.props.onNoPerDiem();
+              this.setState({ warningNoPerDiem: false });
+            }}
             label="Close"
             title="Notice"
           >
