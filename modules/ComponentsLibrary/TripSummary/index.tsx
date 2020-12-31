@@ -20,6 +20,7 @@ import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Schema } from '../Form';
 import { Loader } from '../../Loader/main';
+import { Double, Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 
 // Schema will be adjusted down the line to include as many addresses as it can
 export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
@@ -165,14 +166,23 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ trips: trips });
     this.setState({ loadingTrips: false });
   };
-  getTotalTripDistance = async (rowID: number) => {
-    return await PerDiemClientService.getTotalRowTripDistanceWithUserID(
-      this.props.loggedUserId,
-    );
+  getTotalTripDistance = async () => {
+    let i32 = new Int32();
+    let val = await getPerDiemRowId();
+    if (val) {
+      i32.setValue(val);
+    } else {
+      console.error(
+        'Failed to get total trip distance - getPerDiemRowId() failed',
+      );
+
+      return 0;
+    }
+    return (await PerDiemClientService.GetTotalRowTripDistance(i32)).getValue();
   };
   updateTotalMiles = async () => {
     this.setState({
-      totalTripMiles: await this.getTotalTripDistance(this.props.perDiemRowId),
+      totalTripMiles: await this.getTotalTripDistance(),
     });
   };
   deleteTrip = async (trip: Trip) => {
