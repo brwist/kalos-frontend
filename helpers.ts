@@ -1595,6 +1595,7 @@ export const getPerDiemRowId = async (date?: Date) => {
       // There was just no results in the set so we should not error for that,
       // just display it as no trips and if they go to add one add a Per Diem
       // first
+      console.log('No per-diem was found for the given date.');
       return;
     }
     console.error(
@@ -1603,7 +1604,10 @@ export const getPerDiemRowId = async (date?: Date) => {
     );
   }
 
-  if (!perDiemRes) return;
+  if (!perDiemRes) {
+    console.error('No per-diem was found for the given date.');
+    return;
+  }
 
   return perDiemRes.id;
 };

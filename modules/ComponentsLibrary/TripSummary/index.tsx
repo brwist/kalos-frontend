@@ -160,16 +160,22 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
   };
 
+  initializeStateChange = () => this.setState({ key: this.state.key + 1 });
+
+  refreshNamesAndDates = async () => {
+    await this.getUserNamesFromIds();
+    await this.getRowDatesFromPerDiemIds();
+    this.initializeStateChange();
+  };
+
   getTrips = async () => {
     let trip = new Trip();
     this.setState({ loadingTrips: true });
     const trips = await PerDiemClientService.BatchGetTrips(trip);
     this.updateTotalMiles();
     this.setState({ trips: trips });
-    await this.getUserNamesFromIds();
-    this.getRowDatesFromPerDiemIds().then(() => {
-      this.setState({ loadingTrips: false });
-    });
+    this.refreshNamesAndDates();
+    this.setState({ loadingTrips: false });
   };
 
   getRowStartDateById = (rowId: number) => {
@@ -264,8 +270,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       return Error(err);
     }
     this.getTrips();
-    this.getUserNamesFromIds();
-    this.getRowDatesFromPerDiemIds();
+    this.refreshNamesAndDates();
     this.setState({ pendingTripToDelete: null });
   };
   deleteAllTrips = async () => {
@@ -287,8 +292,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       return;
     }
     this.getTrips();
-    this.getUserNamesFromIds();
-    this.getRowDatesFromPerDiemIds();
+    this.refreshNamesAndDates();
     this.setState({ pendingDeleteAllTrips: false });
   };
   setStateToNew = (to: any) => {
