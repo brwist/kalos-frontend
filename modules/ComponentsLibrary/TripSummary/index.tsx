@@ -181,7 +181,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       return '';
     }
 
-    for (const obj of this.state.dateIdPair) {
+    for (let obj of this.state.dateIdPair) {
       if (obj.row_id == rowId) {
         return obj.date;
       }
