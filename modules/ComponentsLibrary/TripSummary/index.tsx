@@ -4,6 +4,8 @@ import { InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import {
+  PerDiem,
+  PerDiemRow,
   Trip,
   TripList,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
@@ -124,6 +126,7 @@ interface State {
   pendingDeleteAllTrips: boolean;
   trips: TripList;
   nameIdPair: { name: string; id: number }[];
+  dateIdPair: { date: string; row_id: number }[];
   totalTripMiles: number;
   loadingTrips: boolean;
 }
@@ -139,6 +142,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingDeleteAllTrips: false,
       loadingTrips: false,
       nameIdPair: [],
+      dateIdPair: [],
     };
     this.updateTotalMiles();
   }
@@ -167,15 +171,45 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.updateTotalMiles();
     this.setState({ trips: trips });
     await this.getUserNamesFromIds();
+    await this.getRowDatesFromPerDiemIds();
     this.setState({ loadingTrips: false });
   };
 
-  getUserNamesFromIds = async () => {
-    const trips = this.state.trips;
+  getRowStartDateById = (rowId: number) => {
+    if (this.state.dateIdPair.length == 0) {
+      // Return - it's a bit early but it will be called at a later time when the state is set
+      return '';
+    }
 
+    for (const obj of this.state.dateIdPair) {
+      if (obj.row_id == rowId) {
+        return obj.date;
+      }
+    }
+
+    console.error('Failed to find a name for row ID: ', rowId);
+  };
+
+  getRowDatesFromPerDiemIds = async () => {
+    let res: { date: string; row_id: number }[] = [];
+
+    this.state.trips.getResultsList().forEach(async (trip: Trip) => {
+      let pd = new PerDiem();
+      pd.setId(trip.getPerDiemRowId());
+      const pdr = await PerDiemClientService.Get(pd);
+      const obj = { date: pdr.dateStarted, row_id: trip.getPerDiemRowId() };
+      if (!res.includes(obj)) res.push(obj);
+    });
+
+    this.setState({ dateIdPair: res });
+
+    return res;
+  };
+
+  getUserNamesFromIds = async () => {
     let res: { name: string; id: number }[] = [];
 
-    trips.getResultsList().forEach(async trip => {
+    this.state.trips.getResultsList().forEach(async (trip: Trip) => {
       let user = await UserClientService.loadUserById(trip.getUserId());
       let obj: { name: string; id: number } = {
         name: `${user.firstname} ${user.lastname}`,
@@ -305,7 +339,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   { value: currentTrip.getOriginAddress() },
                   { value: currentTrip.getDestinationAddress() },
                   { value: this.getNameById(currentTrip.getUserId()) }, // Need to use UserClientService on it
-                  { value: currentTrip.getPerDiemRowId() },
+                  {
+                    value: this.getRowStartDateById(
+                      currentTrip.getPerDiemRowId(),
+                    )?.split(' ')[0],
+                  },
                   {
                     value: currentTrip.getDistanceInMiles().toFixed(1),
                     actions: [
