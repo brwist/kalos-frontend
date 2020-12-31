@@ -47,7 +47,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       validationPopupOpen: false,
       saving: false,
     };
-    this.geolocate();
   }
 
   loadScriptByUrl = async (url: string, callback: () => void) => {
@@ -262,7 +261,9 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     this.handleLoad();
   }
 
-  componentDidMount() {}
+  componentDidMount() {
+    this.geolocate();
+  }
 
   save = (addressPair: AddressPair.AddressPair) => {
     for (const [_, value] of Object.entries(addressPair)) {

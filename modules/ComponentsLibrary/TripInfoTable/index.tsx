@@ -209,6 +209,9 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     );
   };
   updateTotalMiles = async () => {
+    if (this.props.perDiemRowId == undefined) {
+      return;
+    }
     this.setState({
       totalTripMiles: await this.getTotalTripDistance(this.props.perDiemRowId),
     });
