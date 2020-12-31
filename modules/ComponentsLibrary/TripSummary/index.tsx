@@ -169,15 +169,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await this.getUserNamesFromIds();
     this.getRowDatesFromPerDiemIds().then(() => {
       this.setState({ loadingTrips: false });
-      console.log('incrementing key first', this.dateIdPair.length);
     });
   };
 
   getRowStartDateById = (rowId: number) => {
     if (this.dateIdPair.length == 0) return;
-    console.log(this.dateIdPair);
     for (let obj of this.dateIdPair) {
-      console.log(obj);
       if (obj.row_id == rowId) {
         return obj.date;
       }
@@ -188,31 +185,23 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getRowDatesFromPerDiemIds = async () => {
-    let result: { date: string; row_id: number }[] = [];
+    let res: { date: string; row_id: number }[] = [];
 
-    const prom = new Promise((res, rej) => {
+    new Promise(resolve => {
       this.state.trips
         .getResultsList()
         .forEach(async (trip: Trip, index: number, array: Trip[]) => {
-          console.log('Has trips to run');
           let pd = new PerDiem();
           pd.setId(trip.getPerDiemRowId());
           const pdr = await PerDiemClientService.Get(pd);
-          console.log('pdr: ', pdr);
           const obj = { date: pdr.dateStarted, row_id: trip.getPerDiemRowId() };
-          if (!result.includes(obj)) result.push(obj);
-          if (index == array.length - 1) res(result);
+          if (!res.includes(obj)) res.push(obj);
+          if (index == array.length - 1) resolve(res);
         });
-    });
-
-    prom.then(() => {
-      console.log('Getting this an answer of ', result);
-
-      this.dateIdPair = result;
-
+    }).then(() => {
+      this.dateIdPair = res;
       this.setState({ key: this.state.key + 1 });
-
-      return result;
+      return res;
     });
   };
 
@@ -233,7 +222,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getNameById = (userId: number) => {
-    console.log('Getting name by id', userId);
     if (this.nameIdPair.length == 0) {
       // Return - it's a bit early but it will be called at a later time when the state is set
       return '';
@@ -307,7 +295,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState(to);
   };
   render() {
-    console.log('Re-rendering', this.state.key);
     return (
       <>
         <SectionBar
