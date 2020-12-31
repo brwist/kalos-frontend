@@ -1558,16 +1558,24 @@ export const approvePerDiemById = async (id: number, approvedById: number) => {
   return await PerDiemClientService.Update(req);
 };
 
-// Gets the PerDiem Row Id for the current week if no args are provided, or
-// for a date provided
+/**
+ * Returns a number representing the per diem row id of the current week (or the date provided if
+ * one was provided), or undefined if there is an error.
+ * @param date
+ * @returns number | undefined
+ */
 export const getPerDiemRowId = async (date?: Date) => {
   const dateToQuery = date != null ? date : new Date();
   let daysToGoBack = 0;
+  // If the day is Monday - Friday, we don't have to worry about overflow stuff with the offset
+  // (Since our days start on Saturday, not Sunday like JS, we have this weirdness)
   if (dateToQuery.getDay() <= 5) {
-    daysToGoBack = dateToQuery.getDay() + 1; // JS days start on Sunday
+    daysToGoBack = dateToQuery.getDay() + 1;
   } else {
-    daysToGoBack = dateToQuery.getDay() - 6; // JS days start on Sunday
+    daysToGoBack = dateToQuery.getDay() - 6;
   }
+  // We find the last saturday that happened because that's the start of our weeks
+  // and every Saturday per_diem_row is incremented
   const lastSaturday = `${dateToQuery.getFullYear()}-${padWithZeroes(
     dateToQuery.getMonth() + 1,
   )}-${padWithZeroes(dateToQuery.getDate() - daysToGoBack)} 00:00:00`;
@@ -1597,8 +1605,7 @@ export const getPerDiemRowId = async (date?: Date) => {
 
   if (!perDiemRes) return;
 
-  // It'll never be unassigned when it reaches this point
-  return perDiemRes!.id;
+  return perDiemRes.id;
 };
 
 export const upsertPerDiemRow = async (data: PerDiemRowType) => {
