@@ -233,18 +233,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTotalTripDistance = async () => {
-    let i32 = new Int32();
-    let val = await getPerDiemRowId();
-    if (val) {
-      i32.setValue(val);
-    } else {
-      console.error(
-        'Failed to get total trip distance - getPerDiemRowId() failed',
-      );
+    const trips = await PerDiemClientService.BatchGetTrips(new Trip());
 
-      return 0;
-    }
-    return (await PerDiemClientService.GetTotalRowTripDistance(i32)).getValue();
+    let totalDist = 0;
+    trips
+      .getResultsList()
+      .forEach(trip => (totalDist += trip.getDistanceInMiles()));
+
+    return totalDist;
+    //return (await PerDiemClientService.getT(i32)).getValue();
   };
   updateTotalMiles = async () => {
     this.setState({
