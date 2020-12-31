@@ -182,6 +182,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
 
     console.error('Failed to find a date for row ID: ', rowId);
+    return 'None';
   };
 
   getRowDatesFromPerDiemIds = async () => {

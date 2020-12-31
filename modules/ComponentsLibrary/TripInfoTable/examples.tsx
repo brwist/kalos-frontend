@@ -9,6 +9,6 @@ export default () => (
   <>
     <ExampleTitle>Normal</ExampleTitle>
 
-    <TripInfoTable perDiemRowId={-1} loggedUserId={2573}></TripInfoTable>
+    <TripInfoTable perDiemRowId={248} loggedUserId={2573}></TripInfoTable>
   </>
 );
