@@ -161,7 +161,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     let trip = new Trip();
     this.setState({ loadingTrips: true });
     const trips = await PerDiemClientService.BatchGetTrips(trip);
-    console.log('Trips: ', trips);
     this.updateTotalMiles();
     this.setState({ trips: trips });
     this.setState({ loadingTrips: false });
@@ -218,12 +217,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   render() {
     return (
       <>
-        <Button
-          label="Add Trip"
-          size="small"
-          variant="contained"
-          onClick={() => this.setStateToNew({ pendingTrip: new Trip() })}
-        />
         <SectionBar
           title="Total Miles This Week"
           footer={
@@ -287,14 +280,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
             compact
           />
         </>
-        {this.state.pendingTrip && (
-          <PlaceAutocompleteAddressForm
-            onClose={() => this.setStateToNew({ pendingTrip: null })}
-            onSave={async (addressPair: AddressPair.AddressPair) => {}}
-            addressFields={2}
-            schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
-          ></PlaceAutocompleteAddressForm>
-        )}
         {this.state.pendingTripToDelete && (
           <ConfirmDelete
             open={this.state.pendingTripToDelete != null}
