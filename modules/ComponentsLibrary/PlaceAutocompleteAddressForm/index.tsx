@@ -291,7 +291,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             label="Close"
             title="Notice"
           >
-            <Typography component="div">
+            <Typography component="p">
               Please ensure all of the fields are filled out prior to saving.
             </Typography>
           </Alert>
