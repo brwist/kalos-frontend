@@ -266,8 +266,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   save = (addressPair: AddressPair.AddressPair) => {
-    for (const [_, value] of Object.entries(addressPair)) {
-      if (value == '') {
+    for (const [key, value] of Object.entries(addressPair)) {
+      if (value == '' && key != 'Notes') {
         this.setState({ validationPopupOpen: true });
         return;
       }
