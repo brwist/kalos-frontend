@@ -170,6 +170,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   getTrips = async () => {
     let trip = new Trip();
+    trip.setPerDiemRowId(this.props.perDiemRowId);
     this.setState({ loadingTrips: true });
     const trips = await PerDiemClientService.BatchGetTrips(trip);
     this.updateTotalMiles();
@@ -186,7 +187,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }
 
-    console.error('Failed to find a date for row ID: ', rowId);
+    console.log('Failed to find a date for row ID: ', rowId);
     return 'None';
   };
 
@@ -239,11 +240,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }
 
-    console.error('Failed to find a name for user ID: ', userId);
+    console.log('Failed to find a name for user ID: ', userId);
   };
 
   getTotalTripDistance = async () => {
-    const trips = await PerDiemClientService.BatchGetTrips(new Trip());
+    let trip = new Trip();
+    trip.setPerDiemRowId(this.props.perDiemRowId);
+
+    const trips = await PerDiemClientService.BatchGetTrips(trip);
 
     let totalDist = 0;
     trips
@@ -277,7 +281,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     try {
       let trip = new Trip();
       trip.setPerDiemRowId(this.props.perDiemRowId);
-      trip.setUserId(this.props.loggedUserId);
       await PerDiemClientService.BatchDeleteTrips(trip);
       if (this.props.onDeleteAllTrips) this.props.onDeleteAllTrips();
     } catch (err: any) {
