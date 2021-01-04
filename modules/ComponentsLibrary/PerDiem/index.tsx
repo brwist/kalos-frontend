@@ -846,6 +846,7 @@ export const PerDiemComponent: FC<Props> = ({
                             zipCode,
                             serviceCallId,
                             mealsOnly,
+                            tripsList,
                           } = entry;
                           return (
                             <CalendarCard
@@ -888,6 +889,22 @@ export const PerDiemComponent: FC<Props> = ({
                                       : govPerDiems[zipCode].lodging,
                                   )}
                                 </div>
+                              )}
+                              {tripsList.reduce(
+                                (total: any, current, index, arr) => {
+                                  if (index == arr.length - 1) {
+                                    return (
+                                      <div>
+                                        <strong>Total Miles: </strong>
+                                        {(
+                                          total + current.distanceInMiles
+                                        ).toFixed(2) + ' mi'}
+                                      </div>
+                                    );
+                                  }
+                                  return total + current.distanceInMiles;
+                                },
+                                0,
                               )}
                               <div className="PerDiemRow">
                                 <strong>Notes: </strong>
