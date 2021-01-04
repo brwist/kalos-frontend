@@ -721,6 +721,23 @@ export const PerDiemComponent: FC<Props> = ({
                   <>
                     <div>Total Meals: {usd(totalMeals)}</div>
                     <div>Total Lodging: {usd(totalLodging)}</div>
+                    {rowsList.reduce((total: any, current, index, arr) => {
+                      let tot = current.tripsList.reduce(
+                        (acc: number, trip) => {
+                          return acc + trip.distanceInMiles;
+                        },
+                        0,
+                      );
+
+                      if (index == arr.length - 1) {
+                        return (
+                          <div>
+                            Total Miles: {(total + tot).toFixed(2)} miles
+                          </div>
+                        );
+                      }
+                      return total + tot;
+                    }, 0)}
                     {+dateSubmitted[0] > 0 && (
                       <div>Submited Date: {formatDate(dateSubmitted)}</div>
                     )}
