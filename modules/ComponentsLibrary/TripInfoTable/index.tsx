@@ -127,6 +127,7 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
 interface Props {
   perDiemRowId: number;
   loggedUserId: number;
+  canAddTrips: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
@@ -279,18 +280,20 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
   render() {
     return (
       <>
-        <Button
-          label="Add Trip"
-          size="small"
-          variant="contained"
-          onClick={() => {
-            if (this.props.perDiemRowId == undefined) {
-              this.setStateToNew({ warningNoPerDiem: true });
-              return;
-            }
-            this.setStateToNew({ pendingTrip: new Trip() });
-          }}
-        />
+        {this.props.canAddTrips && (
+          <Button
+            label="Add Trip"
+            size="small"
+            variant="contained"
+            onClick={() => {
+              if (this.props.perDiemRowId == undefined) {
+                this.setStateToNew({ warningNoPerDiem: true });
+                return;
+              }
+              this.setStateToNew({ pendingTrip: new Trip() });
+            }}
+          />
+        )}
         <SectionBar
           title="Total Miles This Week"
           footer={
