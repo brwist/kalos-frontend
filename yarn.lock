@@ -1214,9 +1214,9 @@
     chalk "^4.0.0"
 
 "@kalos-core/kalos-rpc@^2.0.0":
-  version "2.45.7"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.45.7.tgz#ffdc999e982e9918ee8bcaa3427ddf9976f011ff"
-  integrity sha512-53eMT3AWYsNdBKSjnn9yPTZVlNaeQTkzIsna1VU//HQfOio+souOAM/s/hkSSyWbRgHCMfF4+hFHUh92nw97uQ==
+  version "2.45.8"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.45.8.tgz#3de815386b5eb1f3954af8c7dec068a8e561b7f2"
+  integrity sha512-p6ZLJpfdlXZCFWmWVJXlfXFwfv1+pqdQiLyIAWAB5VeCZ9W+YjkNMovGxQTOU61jcH4xM7FeKADb64Izsi3LHQ==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -1633,9 +1633,9 @@
     "@types/node" "*"
 
 "@types/lodash@^4.14.149":
-  version "4.14.166"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.166.tgz#07e7f2699a149219dbc3c35574f126ec8737688f"
-  integrity sha512-A3YT/c1oTlyvvW/GQqG86EyqWNrT/tisOIh2mW3YCgcx71TNjiTZA3zYZWA5BCmtsOTXjhliy4c4yEkErw6njA==
+  version "4.14.167"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.167.tgz#ce7d78553e3c886d4ea643c37ec7edc20f16765e"
+  integrity sha512-w7tQPjARrvdeBkX/Rwg95S592JwxqOjmms3zWQ0XZgSyxSLdzWaYH3vErBhdVS/lRBX7F8aBYcYJYTr5TMGOzw==
 
 "@types/minimatch@*":
   version "3.0.3"
@@ -4858,12 +4858,12 @@ google-protobuf@^3.10.0, google-protobuf@^3.9.0-rc.1:
   resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.14.0.tgz#20373d22046e63831a5110e11a84f713cc43651e"
   integrity sha512-bwa8dBuMpOxg7COyqkW6muQuvNnWgVN8TX/epDRGW5m0jcrmq2QJyCyiV8ZE2/6LaIIqJtiv9bYokFhfpy/o6w==
 
-graceful-fs@^4.0.0, graceful-fs@^4.1.6, graceful-fs@^4.2.0:
+graceful-fs@^4.0.0, graceful-fs@^4.2.0:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.3.tgz#4a12ff1b60376ef09862c2093edd908328be8423"
   integrity sha512-a30VEBm4PEdx1dRB7MFK7BejejvCvBronbLjht+sHuGYj8PHs7M/5Z+rt5lw551vZ7yfTCj4Vuyy3mSJytDWRQ==
 
-graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.9, graceful-fs@^4.2.4:
+graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6, graceful-fs@^4.1.9, graceful-fs@^4.2.4:
   version "4.2.4"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.4.tgz#2256bde14d3632958c465ebc96dc467ca07a29fb"
   integrity sha512-WjKPNJF79dtJAVniUlGGWHYGz2jWxT6VhN/4m1NdkbZ2nOsEF+cI1Edgql5zCRhs/VsQYRvrXctxktVXZUkixw==
@@ -6387,27 +6387,12 @@ lead@^1.0.0:
   dependencies:
     flush-write-stream "^1.0.2"
 
-less@^3.10.3:
+less@^3.10.3, less@^3.13.1, less@^3.9.0:
   version "3.13.1"
   resolved "https://registry.yarnpkg.com/less/-/less-3.13.1.tgz#0ebc91d2a0e9c0c6735b83d496b0ab0583077909"
   integrity sha512-SwA1aQXGUvp+P5XdZslUOhhLnClSLIjWvJhmd+Vgib5BFIr9lMNlQwmwUNOjXThF/A0x+MCYYPeWEfeWiLRnTw==
   dependencies:
     copy-anything "^2.0.1"
-    tslib "^1.10.0"
-  optionalDependencies:
-    errno "^0.1.1"
-    graceful-fs "^4.1.2"
-    image-size "~0.5.0"
-    make-dir "^2.1.0"
-    mime "^1.4.1"
-    native-request "^1.0.5"
-    source-map "~0.6.0"
-
-less@^3.9.0:
-  version "3.12.2"
-  resolved "https://registry.yarnpkg.com/less/-/less-3.12.2.tgz#157e6dd32a68869df8859314ad38e70211af3ab4"
-  integrity sha512-+1V2PCMFkL+OIj2/HrtrvZw0BC0sYLMICJfbQjuj/K8CEnlrFX6R5cKKgzzttsZDHyxQNL1jqMREjKN3ja/E3Q==
-  dependencies:
     tslib "^1.10.0"
   optionalDependencies:
     errno "^0.1.1"
@@ -8115,9 +8100,9 @@ react-test-renderer@^17.0.1:
     scheduler "^0.20.1"
 
 react-to-print@^2.6.3:
-  version "2.12.1"
-  resolved "https://registry.yarnpkg.com/react-to-print/-/react-to-print-2.12.1.tgz#120f3116fef55a141f553548388624b976596835"
-  integrity sha512-+zGNUYQKaae7Wp0JL2JcoWM0lDd5csasRmTqRZlJLOj6F4sRmJsT7ZPgH0SL6ZQ7gWz0hwglhLlLoyF85lGgHw==
+  version "2.12.2"
+  resolved "https://registry.yarnpkg.com/react-to-print/-/react-to-print-2.12.2.tgz#1c6323ed6d2eafab4b833a66d1ff83ae74881a62"
+  integrity sha512-uF5tRTmwG9pnakb0Eko1O/+7plrUc3vcG3hKPkT1R7pGqvA9eDmilkRaV+WT66iD9Ii+3WZojlvgEdoPs/+aMw==
   dependencies:
     prop-types "^15.7.2"
 
@@ -8701,14 +8686,14 @@ rollup-plugin-less-modules@^0.1.11:
     source-map "^0.7.3"
 
 rollup-plugin-less@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-less/-/rollup-plugin-less-1.1.2.tgz#c4bffacc24928b7f657a7a06e09930a3e2ebdfad"
-  integrity sha512-tRyUEc7dqzrmwDNKWbKyPN9vxmr2l+4G+2BqqLIccfoowuNwa/IfRMrfs892Mr9EjotDO/KDV1KC+AXXNNCYKA==
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-less/-/rollup-plugin-less-1.1.3.tgz#ae531a8b42c71a2e86fa7d4417cf607561d996c4"
+  integrity sha512-gvJFXpEeU5Opyz514ZO4JGj9kvFTChZEDMR3LSkSIyFfWaeE5NJMFzxPpo+MZK3CY/0j7+AotDeRofyQt9rTew==
   dependencies:
     babel-runtime "^6.26.0"
     fs-extra "^0.30.0"
     growl ">=1.10.0"
-    less "^3.9.0"
+    less "^3.13.1"
     mkdirp "^0.5.1"
     rollup "^0.34.7"
     rollup-pluginutils "^1.5.1"
