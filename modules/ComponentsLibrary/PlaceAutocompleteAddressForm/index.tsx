@@ -311,8 +311,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             title="Notice"
           >
             <Typography component="p">
-              Your notes exceed the length of 1000 characters. Please ensure
-              that your notes are less than 1000 characters.
+              Your notes exceed the maximum length of 1000 characters.
             </Typography>
           </Alert>
         )}
