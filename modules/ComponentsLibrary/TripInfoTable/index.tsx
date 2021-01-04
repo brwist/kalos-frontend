@@ -108,6 +108,13 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       type: 'text',
     },
   ],
+  [
+    {
+      label: 'Notes',
+      name: 'Notes',
+      type: 'text',
+    },
+  ],
 ];
 
 interface Props {
@@ -175,6 +182,8 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       this.getTrips();
       return;
     }
+
+    trip.setNotes(data.Notes);
 
     await upsertTrip(trip.toObject(), rowId, userId).then(() => {
       this.setState({ pendingTrip: null });

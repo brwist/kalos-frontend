@@ -1526,6 +1526,7 @@ export const upsertTrip = async (
   req.setFieldMaskList(fieldMaskList);
   req.setPerDiemRowId(rowId);
   req.setUserId(userId);
+  req.setNotes(data.notes);
   req.setDistanceInMiles(
     await getTripDistance(originAddress, destinationAddress),
   );
