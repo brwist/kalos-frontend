@@ -111,8 +111,15 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   [
     {
       label: 'Notes',
+      headline: true,
+    },
+  ],
+  [
+    {
+      label: 'Notes',
       name: 'Notes',
       type: 'text',
+      multiline: true,
     },
   ],
 ];
