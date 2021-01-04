@@ -454,6 +454,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
             return (
               <TripInfoTable
                 canAddTrips={false}
+                cannotDeleteTrips
                 perDiemRowId={row.perDiemId}
                 loggedUserId={perDiemViewed.userId}
                 key={row.id}

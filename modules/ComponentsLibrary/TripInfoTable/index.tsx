@@ -128,6 +128,7 @@ interface Props {
   perDiemRowId: number;
   loggedUserId: number;
   canAddTrips: boolean;
+  cannotDeleteTrips?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
@@ -306,57 +307,87 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
         />
         <>
           {this.state.loadingTrips && <Loader />}
-          <InfoTable
-            columns={[
-              { name: 'Origin' },
-              { name: 'Destination' },
-              { name: 'Notes' },
-              {
-                name: 'Miles',
-                actions: [
-                  {
-                    label: 'Delete All Trips',
-                    compact: true,
-                    variant: 'outlined',
-                    size: 'xsmall',
-                    onClick: () => {
-                      this.setStateToNew({ pendingDeleteAllTrips: true });
+          {this.props.cannotDeleteTrips && (
+            <InfoTable
+              columns={[
+                { name: 'Origin' },
+                { name: 'Destination' },
+                { name: 'Notes' },
+                {
+                  name: 'Miles',
+                },
+              ]}
+              data={this.state
+                .trips!.getResultsList()
+                .filter((trip: Trip) => {
+                  return trip.getPerDiemRowId() == this.props.perDiemRowId;
+                })
+                .map((currentTrip: Trip) => {
+                  return [
+                    { value: currentTrip.getOriginAddress() },
+                    { value: currentTrip.getDestinationAddress() },
+                    { value: currentTrip.getNotes() },
+                    {
+                      value: currentTrip.getDistanceInMiles().toFixed(1),
                     },
-                    burgeronly: 1,
-                  },
-                ],
-              },
-            ]}
-            data={this.state
-              .trips!.getResultsList()
-              .filter((trip: Trip) => {
-                return trip.getPerDiemRowId() == this.props.perDiemRowId;
-              })
-              .map((currentTrip: Trip) => {
-                return [
-                  { value: currentTrip.getOriginAddress() },
-                  { value: currentTrip.getDestinationAddress() },
-                  { value: currentTrip.getNotes() },
-                  {
-                    value: currentTrip.getDistanceInMiles().toFixed(1),
-                    actions: [
-                      <IconButton
-                        key={currentTrip.getId() + 'edit'}
-                        size="small"
-                        onClick={() =>
-                          this.setStateToNew({
-                            pendingTripToDelete: currentTrip,
-                          })
-                        }
-                      >
-                        <DeleteIcon />
-                      </IconButton>,
-                    ],
-                  },
-                ];
-              })}
-            compact
-          />
+                  ];
+                })}
+              compact
+            />
+          )}
+          {!this.props.cannotDeleteTrips && (
+            <InfoTable
+              columns={[
+                { name: 'Origin' },
+                { name: 'Destination' },
+                { name: 'Notes' },
+                {
+                  name: 'Miles',
+                  actions: [
+                    {
+                      label: 'Delete All Trips',
+                      compact: true,
+                      variant: 'outlined',
+                      size: 'xsmall',
+                      onClick: () => {
+                        this.setStateToNew({ pendingDeleteAllTrips: true });
+                      },
+                      burgeronly: 1,
+                    },
+                  ],
+                },
+              ]}
+              data={this.state
+                .trips!.getResultsList()
+                .filter((trip: Trip) => {
+                  return trip.getPerDiemRowId() == this.props.perDiemRowId;
+                })
+                .map((currentTrip: Trip) => {
+                  return [
+                    { value: currentTrip.getOriginAddress() },
+                    { value: currentTrip.getDestinationAddress() },
+                    { value: currentTrip.getNotes() },
+                    {
+                      value: currentTrip.getDistanceInMiles().toFixed(1),
+                      actions: [
+                        <IconButton
+                          key={currentTrip.getId() + 'edit'}
+                          size="small"
+                          onClick={() =>
+                            this.setStateToNew({
+                              pendingTripToDelete: currentTrip,
+                            })
+                          }
+                        >
+                          <DeleteIcon />
+                        </IconButton>,
+                      ],
+                    },
+                  ];
+                })}
+              compact
+            />
+          )}
         </>
         {this.state.pendingTrip && (
           <PlaceAutocompleteAddressForm
