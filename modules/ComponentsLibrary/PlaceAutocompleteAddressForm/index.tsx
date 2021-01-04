@@ -20,6 +20,7 @@ interface State {
   address: AddressPair.AddressPair;
   formKey: number;
   validationPopupOpen: boolean;
+  noteLengthPopupOpen: boolean;
   saving: boolean;
 }
 
@@ -45,6 +46,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       address: new AddressPair.AddressPair(),
       formKey: 0,
       validationPopupOpen: false,
+      noteLengthPopupOpen: false,
       saving: false,
     };
   }
@@ -271,6 +273,11 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         this.setState({ validationPopupOpen: true });
         return;
       }
+
+      if (key == 'Notes' && value.length >= 1000) {
+        this.setState({ noteLengthPopupOpen: true });
+        return;
+      }
     }
     addressPair.FullAddressOrigin = `${addressPair.StreetAddressOrigin}, ${addressPair.CityOrigin}, ${addressPair.StateOrigin}, ${addressPair.CountryOrigin}`;
     addressPair.FullAddressDestination = `${addressPair.StreetAddressDestination}, ${addressPair.CityDestination}, ${addressPair.StateDestination}, ${addressPair.CountryDestination}`;
@@ -293,6 +300,19 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
           >
             <Typography component="p">
               Please ensure all of the fields are filled out prior to saving.
+            </Typography>
+          </Alert>
+        )}
+        {this.state.noteLengthPopupOpen && (
+          <Alert
+            open={this.state.noteLengthPopupOpen}
+            onClose={() => this.setState({ noteLengthPopupOpen: false })}
+            label="Close"
+            title="Notice"
+          >
+            <Typography component="p">
+              Your notes exceed the length of 1000 characters. Please ensure
+              that your notes are less than 1000 characters.
             </Typography>
           </Alert>
         )}
