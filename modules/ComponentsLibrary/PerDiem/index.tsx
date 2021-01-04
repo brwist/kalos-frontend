@@ -914,6 +914,7 @@ export const PerDiemComponent: FC<Props> = ({
               )}
             </Form>
             <TripInfoTable
+              canAddTrips
               perDiemRowId={pendingPerDiemRowEdit.perDiemId}
               loggedUserId={loggedUserId}
               onNoPerDiem={() => {
