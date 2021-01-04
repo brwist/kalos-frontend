@@ -307,6 +307,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
             columns={[
               { name: 'Origin' },
               { name: 'Destination' },
+              { name: 'Notes' },
               {
                 name: 'Miles',
                 actions: [
@@ -332,6 +333,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                 return [
                   { value: currentTrip.getOriginAddress() },
                   { value: currentTrip.getDestinationAddress() },
+                  { value: currentTrip.getNotes() },
                   {
                     value: currentTrip.getDistanceInMiles().toFixed(1),
                     actions: [
