@@ -371,7 +371,6 @@ export const PropertyInfo: FC<Props> = props => {
             setNotificationEditing(false);
           }}
           property={entry}
-          viewedAsCustomer
         />
       </Modal>
       <Modal

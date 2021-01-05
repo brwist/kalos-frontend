@@ -18,7 +18,10 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
-import { TripList } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import {
+  TripList,
+  Trip,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import {
   loadPerDiemByUserIdsAndDateStarted,
@@ -45,8 +48,13 @@ import {
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { TripInfoTable } from '../TripInfoTable';
+import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
+import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
+import { InfoTable, Data } from '../InfoTable';
+import IconButton from '@material-ui/core/IconButton';
+import EditIcon from '@material-ui/icons/Edit';
+import DeleteIcon from '@material-ui/icons/Delete';
 
 export interface Props {
   loggedUserId: number;
@@ -476,6 +484,53 @@ export const PerDiemComponent: FC<Props> = ({
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
   );
+
+  /*const handleConfirmTripDelete = useCallback(
+    (confirmTripDelete: Trip | undefined) => {
+      setConfirmTripDelete(confirmTripDelete);
+    },
+    [setConfirmTripDelete],
+  );
+  const handleDeleteTrip = async (trip: Trip) => {
+    try {
+      await PerDiemClientService.DeleteTrip(trip);
+    } catch (err: any) {
+      console.error('An error occurred while deleting a trip: ', err);
+      alert(
+        'The trip was not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+      );
+      handleConfirmTripDelete(undefined);
+      return Error(err);
+    }
+    //alert('The trip was deleted successfully!');
+    handleConfirmTripDelete(undefined);
+    getTrips();
+  };
+  const handleDeleteAllTripsInRow = async (row: number) => {
+    try {
+      let i32 = new Int32();
+      i32.setValue(row);
+      //@ts-ignore
+      await PerDiemClientService.BatchDeleteTrips(i32);
+    } catch (err: any) {
+      console.error(
+        'An error occurred while deleting the trips for this week: ',
+        err,
+      );
+      alert(
+        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+      );
+      handleConfirmTripDeleteAll(false);
+      return;
+    }
+    handleConfirmTripDeleteAll(false);
+    getTrips();
+  };
+  const handleConfirmTripDeleteAll = useCallback(
+    (confirmTripDeleteAll: boolean) =>
+      setConfirmTripDeleteAll(confirmTripDeleteAll),
+    [setConfirmTripDeleteAll],
+  );*/
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(({ departmentId }) => departmentId);
     return departments
@@ -963,6 +1018,83 @@ export const PerDiemComponent: FC<Props> = ({
                   />
                 </div>
               )}
+              {/*<Button
+                label="Add Trip"
+                size="medium"
+                variant="contained"
+                compact
+                onClick={handleTripEditOpen(makeNewTrip())}
+              />*/}
+              {/*
+                <>
+                  <SectionBar
+                    title="Total Miles This Week"
+                    footer={
+                      totalTripMiles != undefined && totalTripMiles != 0.0
+                        ? totalTripMiles?.toFixed(1) + ' miles'
+                        : 'None'
+                    }
+                    small
+                  />
+                  <InfoTable
+                    columns={[
+                      { name: 'Origin' },
+                      { name: 'Destination' },
+                      {
+                        name: 'Miles',
+                        actions: [
+                          {
+                            label: 'Delete All Trips For This Week',
+                            compact: false,
+                            variant: 'outlined',
+                            onClick: () => {
+                              handleConfirmTripDeleteAll(true);
+                            },
+                          },
+                        ],
+                      },
+                    ]}
+                    data={
+                      loading
+                        ? makeFakeRows(3, 1)
+                        : trips!
+                            .getResultsList()
+                            .filter((trip: Trip) => {
+                              return (
+                                trip.getPerDiemRowId() ==
+                                pendingPerDiemRowEdit.perDiemId
+                              );
+                            })
+                            .map((currentTrip: Trip) => {
+                              setTotalTripDistance(
+                                pendingPerDiemRowEdit.perDiemId,
+                              );
+                              return [
+                                { value: currentTrip.getOriginAddress() },
+                                { value: currentTrip.getDestinationAddress() },
+                                {
+                                  value: currentTrip
+                                    .getDistanceInMiles()
+                                    .toFixed(1),
+                                  actions: [
+                                    <IconButton
+                                      key={currentTrip.getId() + 'edit'}
+                                      size="small"
+                                      onClick={() =>
+                                        handleConfirmTripDelete(currentTrip)
+                                      }
+                                    >
+                                      <DeleteIcon />
+                                    </IconButton>,
+                                  ],
+                                },
+                              ];
+                            })
+                    }
+                    compact
+                  />
+                </>
+                  */}
             </Form>
             <TripInfoTable
               canAddTrips
