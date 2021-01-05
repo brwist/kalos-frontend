@@ -33,6 +33,7 @@ import {
 import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
 import './styles.less';
 import { parseISO } from 'date-fns/esm';
+import { TripInfoTable } from '../TripInfoTable';
 
 interface Props {
   loggedUserId: number;
@@ -449,6 +450,17 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
             perDiem={perDiemViewed}
             loggedUserId={loggedUserId}
           />
+          {perDiemViewed.rowsList.map(row => {
+            return (
+              <TripInfoTable
+                canAddTrips={false}
+                cannotDeleteTrips
+                perDiemRowId={row.perDiemId}
+                loggedUserId={perDiemViewed.userId}
+                key={row.id}
+              />
+            );
+          })}
         </Modal>
       )}
       {printing && (
