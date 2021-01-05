@@ -2,7 +2,19 @@ import React, { FC, useState, useEffect, useCallback } from 'react';
 import { startOfWeek } from 'date-fns';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { CalendarHeader } from '../ComponentsLibrary/CalendarHeader';
-import { UserType, UserClientService, getCustomerName } from '../../helpers';
+import { Tabs } from '../ComponentsLibrary/Tabs';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
+import { Field } from '../ComponentsLibrary/Field';
+import { Loader } from '../Loader/main';
+import {
+  UserType,
+  UserClientService,
+  getCustomerName,
+  TimesheetDepartmentType,
+  loadTimesheetDepartments,
+  getDepartmentName,
+  loadUsersByFilter,
+} from '../../helpers';
 
 interface Props {
   userID: number;
@@ -12,14 +24,40 @@ interface Props {
 export const Payroll: FC<Props & PageWrapperProps> = props => {
   const { loggedUserId, userID } = props;
   const [initiated, setInitiated] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [department, setDepartment] = useState<number>();
   const [selectedDate, setSelectedDate] = useState<Date>(
     startOfWeek(new Date()),
   );
-  const [user, setUser] = useState<UserType>();
+  const [user, setUser] = useState<UserType>(); // TODO is it useful?
+  const [users, setUsers] = useState<UserType[]>([]);
+  const handleDepartmentChanged = useCallback(async id => {
+    setLoaded(false);
+    setDepartment(id);
+    const users = await loadUsersByFilter({
+      page: -1,
+      filter: {
+        employeeDepartmentId: id,
+      },
+      sort: {
+        orderByField: 'lastname',
+        orderDir: 'ASC',
+        orderBy: 'user_lastname',
+      },
+    });
+    setUsers(users.results);
+    setLoaded(true);
+  }, []);
   const initiate = useCallback(async () => {
     const user = await UserClientService.loadUserById(userID);
     setUser(user);
+    const departments = await loadTimesheetDepartments();
+    setDepartments(departments);
+    const department = user.employeeDepartmentId;
+    await handleDepartmentChanged(department);
   }, [userID]);
+
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);
@@ -28,13 +66,60 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   }, [initiated]);
   return (
     <PageWrapper {...props} userID={loggedUserId} withHeader>
-      <CalendarHeader
-        selectedDate={selectedDate}
-        title={getCustomerName(user)}
-        onDateChange={setSelectedDate}
-        onSubmit={() => console.log('SUBMIT')}
-        weekStartsOn={6}
-      />
+      {loaded ? (
+        <>
+          <CalendarHeader
+            selectedDate={selectedDate}
+            title="Payroll"
+            asideTitle={
+              <span
+                style={{
+                  marginLeft: 16,
+                  display: 'inline-block',
+                  width: 160,
+                }}
+              >
+                <Field
+                  label="Select Department"
+                  name="test"
+                  options={departments.map(p => ({
+                    label: getDepartmentName(p),
+                    value: p.id,
+                  }))}
+                  value={department}
+                  onChange={id => handleDepartmentChanged(+id)}
+                  white
+                />
+              </span>
+            }
+            onDateChange={setSelectedDate}
+            // onSubmit={() => console.log('SUBMIT')}
+            weekStartsOn={6}
+          />
+          {users.map(user => (
+            <SectionBar title={getCustomerName(user)}>
+              <Tabs
+                tabs={[
+                  {
+                    label: 'Timeoff requests',
+                    content: <div style={{ height: 100 }} />,
+                  },
+                  {
+                    label: 'Timesheet',
+                    content: <div />,
+                  },
+                  {
+                    label: 'Per Diem',
+                    content: <div />,
+                  },
+                ]}
+              />
+            </SectionBar>
+          ))}
+        </>
+      ) : (
+        <Loader />
+      )}
     </PageWrapper>
   );
 };
