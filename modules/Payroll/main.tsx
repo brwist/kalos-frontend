@@ -123,6 +123,8 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                     content:
                       perDiemRowId > 0 ? (
                         <TripSummary
+                          canAddTrips={false}
+                          cannotDeleteTrips
                           loggedUserId={user.id}
                           perDiemRowId={perDiemRowId}
                         />
