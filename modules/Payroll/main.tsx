@@ -14,7 +14,9 @@ import {
   loadTimesheetDepartments,
   getDepartmentName,
   loadUsersByFilter,
+  getPerDiemRowId,
 } from '../../helpers';
+import { TripSummary } from '../ComponentsLibrary/TripSummary';
 
 interface Props {
   userID: number;
@@ -32,6 +34,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   );
   const [user, setUser] = useState<UserType>(); // TODO is it useful?
   const [users, setUsers] = useState<UserType[]>([]);
+  const [perDiemRowId, setPerDiemRowId] = useState<number>(0);
   const handleDepartmentChanged = useCallback(async id => {
     setLoaded(false);
     setDepartment(id);
@@ -47,6 +50,8 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
       },
     });
     setUsers(users.results);
+    const perDiemRowId = await getPerDiemRowId(selectedDate);
+    setPerDiemRowId(perDiemRowId!);
     setLoaded(true);
   }, []);
   const initiate = useCallback(async () => {
@@ -114,7 +119,15 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                   },
                   {
                     label: 'Trips',
-                    content: <div />,
+                    content:
+                      perDiemRowId > 0 ? (
+                        <TripSummary
+                          loggedUserId={user.id}
+                          perDiemRowId={perDiemRowId}
+                        />
+                      ) : (
+                        <Loader />
+                      ),
                   },
                 ]}
               />
