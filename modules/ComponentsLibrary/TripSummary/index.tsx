@@ -277,6 +277,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     try {
       let trip = new Trip();
       trip.setPerDiemRowId(this.props.perDiemRowId);
+      trip.setUserId(this.props.loggedUserId);
       const trips = await PerDiemClientService.BatchGetTrips(trip);
       let totalDist = 0;
       trips
