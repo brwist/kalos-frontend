@@ -704,6 +704,23 @@ export const PerDiemComponent: FC<Props> = ({
                 Lodging:
                 <strong> {usd(totalLodging)}</strong>
               </Typography>
+              <Typography variant="subtitle2">
+                All {isAnyManager ? 'Technicians' : 'Departments'} Total Miles
+                for Trips:
+                <strong>
+                  {' '}
+                  {allRowsList.reduce((total: any, current, index, arr) => {
+                    let tot = current.tripsList.reduce((acc: number, trip) => {
+                      return acc + trip.distanceInMiles;
+                    }, 0);
+
+                    if (index == arr.length - 1) {
+                      return (total + tot).toFixed(2);
+                    }
+                    return total + tot;
+                  }, 0)}
+                </strong>
+              </Typography>
             </>
           )}
         </CalendarHeader>
@@ -759,6 +776,23 @@ export const PerDiemComponent: FC<Props> = ({
                   <>
                     <div>Total Meals: {usd(totalMeals)}</div>
                     <div>Total Lodging: {usd(totalLodging)}</div>
+                    {rowsList.reduce((total: any, current, index, arr) => {
+                      let tot = current.tripsList.reduce(
+                        (acc: number, trip) => {
+                          return acc + trip.distanceInMiles;
+                        },
+                        0,
+                      );
+
+                      if (index == arr.length - 1) {
+                        return (
+                          <div>
+                            Total Miles: {(total + tot).toFixed(2)} miles
+                          </div>
+                        );
+                      }
+                      return total + tot;
+                    }, 0)}
                     {+dateSubmitted[0] > 0 && (
                       <div>Submited Date: {formatDate(dateSubmitted)}</div>
                     )}
@@ -867,6 +901,7 @@ export const PerDiemComponent: FC<Props> = ({
                             zipCode,
                             serviceCallId,
                             mealsOnly,
+                            tripsList,
                           } = entry;
                           return (
                             <CalendarCard
@@ -909,6 +944,22 @@ export const PerDiemComponent: FC<Props> = ({
                                       : govPerDiems[zipCode].lodging,
                                   )}
                                 </div>
+                              )}
+                              {tripsList.reduce(
+                                (total: any, current, index, arr) => {
+                                  if (index == arr.length - 1) {
+                                    return (
+                                      <div>
+                                        <strong>Total Miles: </strong>
+                                        {(
+                                          total + current.distanceInMiles
+                                        ).toFixed(2) + ' mi'}
+                                      </div>
+                                    );
+                                  }
+                                  return total + current.distanceInMiles;
+                                },
+                                0,
                               )}
                               <div className="PerDiemRow">
                                 <strong>Notes: </strong>
@@ -1046,6 +1097,7 @@ export const PerDiemComponent: FC<Props> = ({
                   */}
             </Form>
             <TripInfoTable
+              canAddTrips
               perDiemRowId={pendingPerDiemRowEdit.perDiemId}
               loggedUserId={loggedUserId}
               onNoPerDiem={() => {

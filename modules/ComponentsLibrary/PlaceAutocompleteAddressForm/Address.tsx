@@ -1,13 +1,5 @@
 export namespace AddressPair {
   export type AsObject = {
-    /*
-    FullAddress: string[];
-    StreetAddress: string[];
-    City: string[];
-    State: string[];
-    ZipCode: string[];
-    Country: string[];
-    */
     FullAddressOrigin: string;
     StreetAddressOrigin: string;
     CityOrigin: string;
@@ -21,6 +13,8 @@ export namespace AddressPair {
     StateDestination: string;
     ZipCodeDestination: string;
     CountryDestination: string;
+
+    Notes: string;
   };
 
   export interface AddressInterface {
@@ -37,6 +31,8 @@ export namespace AddressPair {
     StateDestination: string;
     ZipCodeDestination: string;
     CountryDestination: string;
+
+    Notes: string;
   }
 
   export class AddressPair implements AddressInterface {
@@ -53,5 +49,7 @@ export namespace AddressPair {
     StateDestination: string = '';
     ZipCodeDestination: string = '';
     CountryDestination: string = '';
+
+    Notes: string = '';
   }
 }
