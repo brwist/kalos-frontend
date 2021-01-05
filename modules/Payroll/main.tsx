@@ -5,6 +5,7 @@ import { CalendarHeader } from '../ComponentsLibrary/CalendarHeader';
 import { Tabs } from '../ComponentsLibrary/Tabs';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { Field } from '../ComponentsLibrary/Field';
+import { PerDiemComponent } from '../ComponentsLibrary/PerDiem';
 import { Loader } from '../Loader/main';
 import {
   UserType,
@@ -102,7 +103,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
             weekStartsOn={6}
           />
           {users.map(user => (
-            <SectionBar title={getCustomerName(user)}>
+            <SectionBar key={user.id} title={getCustomerName(user)}>
               <Tabs
                 tabs={[
                   {
@@ -115,7 +116,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                   },
                   {
                     label: 'Per Diem',
-                    content: <div />,
+                    content: <PerDiemComponent loggedUserId={user.id} />,
                   },
                   {
                     label: 'Trips',
