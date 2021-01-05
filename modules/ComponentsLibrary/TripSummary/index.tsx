@@ -111,6 +111,8 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
 interface Props {
   perDiemRowId: number;
   loggedUserId: number;
+  canAddTrips: boolean;
+  cannotDeleteTrips?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
@@ -350,65 +352,103 @@ export class TripSummary extends React.PureComponent<Props, State> {
         />
         <>
           {this.state.loadingTrips && <Loader />}
-          <InfoTable
-            key={this.state.key}
-            columns={[
-              { name: 'Origin' },
-              { name: 'Destination' },
-              { name: 'Name' },
-              { name: 'Week Of' },
-              { name: 'Miles' },
-              {
-                name: 'Notes',
-                actions: [
-                  {
-                    label: 'Delete All Trips',
-                    compact: true,
-                    variant: 'outlined',
-                    size: 'xsmall',
-                    onClick: () => {
-                      this.setStateToNew({ pendingDeleteAllTrips: true });
+          {!this.props.cannotDeleteTrips && (
+            <InfoTable
+              key={this.state.key}
+              columns={[
+                { name: 'Origin' },
+                { name: 'Destination' },
+                { name: 'Name' },
+                { name: 'Week Of' },
+                { name: 'Miles' },
+                {
+                  name: 'Notes',
+                  actions: [
+                    {
+                      label: 'Delete All Trips',
+                      compact: true,
+                      variant: 'outlined',
+                      size: 'xsmall',
+                      onClick: () => {
+                        this.setStateToNew({ pendingDeleteAllTrips: true });
+                      },
+                      burgeronly: 1,
                     },
-                    burgeronly: 1,
-                  },
-                ],
-              },
-            ]}
-            data={this.state
-              .trips!.getResultsList()
-              .map((currentTrip: Trip) => {
-                return [
-                  { value: currentTrip.getOriginAddress() },
-                  { value: currentTrip.getDestinationAddress() },
-                  { value: this.getNameById(currentTrip.getUserId()) }, // Need to use UserClientService on it
-                  {
-                    value: this.getRowStartDateById(
-                      currentTrip.getPerDiemRowId(),
-                    )?.split(' ')[0],
-                  },
-                  {
-                    value: currentTrip.getDistanceInMiles().toFixed(1),
-                  },
-                  {
-                    value: currentTrip.getNotes(),
-                    actions: [
-                      <IconButton
-                        key={currentTrip.getId() + 'edit'}
-                        size="small"
-                        onClick={() =>
-                          this.setStateToNew({
-                            pendingTripToDelete: currentTrip,
-                          })
-                        }
-                      >
-                        <DeleteIcon />
-                      </IconButton>,
-                    ],
-                  },
-                ];
-              })}
-            compact
-          />
+                  ],
+                },
+              ]}
+              data={this.state
+                .trips!.getResultsList()
+                .map((currentTrip: Trip) => {
+                  return [
+                    { value: currentTrip.getOriginAddress() },
+                    { value: currentTrip.getDestinationAddress() },
+                    { value: this.getNameById(currentTrip.getUserId()) }, // Need to use UserClientService on it
+                    {
+                      value: this.getRowStartDateById(
+                        currentTrip.getPerDiemRowId(),
+                      )?.split(' ')[0],
+                    },
+                    {
+                      value: currentTrip.getDistanceInMiles().toFixed(1),
+                    },
+                    {
+                      value: currentTrip.getNotes(),
+                      actions: [
+                        <IconButton
+                          key={currentTrip.getId() + 'edit'}
+                          size="small"
+                          onClick={() =>
+                            this.setStateToNew({
+                              pendingTripToDelete: currentTrip,
+                            })
+                          }
+                        >
+                          <DeleteIcon />
+                        </IconButton>,
+                      ],
+                    },
+                  ];
+                })}
+              compact
+            />
+          )}
+          {this.props.cannotDeleteTrips && (
+            <InfoTable
+              key={this.state.key}
+              columns={[
+                { name: 'Origin' },
+                { name: 'Destination' },
+                { name: 'Name' },
+                { name: 'Week Of' },
+                { name: 'Miles' },
+                {
+                  name: 'Notes',
+                },
+              ]}
+              data={this.state
+                .trips!.getResultsList()
+                .map((currentTrip: Trip) => {
+                  return [
+                    { value: currentTrip.getOriginAddress() },
+                    { value: currentTrip.getDestinationAddress() },
+                    { value: this.getNameById(currentTrip.getUserId()) }, // Need to use UserClientService on it
+                    {
+                      value: this.getRowStartDateById(
+                        currentTrip.getPerDiemRowId(),
+                      )?.split(' ')[0],
+                    },
+                    {
+                      value: currentTrip.getDistanceInMiles().toFixed(1),
+                    },
+                    {
+                      value: currentTrip.getNotes(),
+                    },
+                  ];
+                })}
+              compact
+            />
+          )}
         </>
         {this.state.pendingTripToDelete && (
           <ConfirmDelete

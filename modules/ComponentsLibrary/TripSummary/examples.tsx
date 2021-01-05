@@ -9,6 +9,10 @@ export default () => (
   <>
     <ExampleTitle>Normal</ExampleTitle>
 
-    <TripSummary perDiemRowId={260} loggedUserId={7051}></TripSummary>
+    <TripSummary
+      canAddTrips
+      perDiemRowId={260}
+      loggedUserId={7051}
+    ></TripSummary>
   </>
 );
