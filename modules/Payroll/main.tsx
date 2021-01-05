@@ -112,6 +112,10 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                     label: 'Per Diem',
                     content: <div />,
                   },
+                  {
+                    label: 'Trips',
+                    content: <div />,
+                  },
                 ]}
               />
             </SectionBar>
