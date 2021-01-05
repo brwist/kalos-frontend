@@ -23,7 +23,7 @@ import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { User } from '@kalos-core/kalos-rpc/User';
 export interface Props {
   loggedUserId: number;
-  userId: number;
+  userId?: number;
   requestOffId?: number;
   onCancel: () => void;
   onSaveOrDelete: (data: TimeoffRequestType) => void;
@@ -73,7 +73,7 @@ export const TimeOff: FC<Props> = ({
     timeFinished: format(new Date(), 'yyyy-MM-dd 23:59'),
     timeStarted: format(new Date(), 'yyyy-MM-dd 00:00'),
     userApprovalDatetime: '',
-    userId,
+    userId: userId || loggedUserId,
     userName: '',
     adminApprovalUserName: '',
     dateRangeList: [],
@@ -88,9 +88,11 @@ export const TimeOff: FC<Props> = ({
     setTypeOptions(
       types.map(({ id, requestType }) => ({ label: requestType, value: id })),
     );
-    const pto = await TimeoffRequestClientService.getPTOInquiryByUserId(userId);
+    const pto = await TimeoffRequestClientService.getPTOInquiryByUserId(
+      userId || loggedUserId,
+    );
     setPto(pto);
-    const user = await UserClientService.loadUserById(userId);
+    const user = await UserClientService.loadUserById(userId || loggedUserId);
     setUser(user);
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedUser(loggedUser);
@@ -175,14 +177,16 @@ export const TimeOff: FC<Props> = ({
       );
 
       try {
-        const manager = await UserClientService.loadUserById(user!.managedBy);
+        const req = new User();
+        req.setId(user!.id);
+        const manager = await UserClientService.GetUserManager(req);
 
         const emailBody = getTimeoffRequestEmail(
           `${user?.firstname} ${user?.lastname}`,
           getTimeoffTimestamp(
             newData.timeStarted,
             newData.timeFinished,
-            newData.allDayOff,
+            !!newData.allDayOff,
           ),
           //@ts-ignore
           typeName ? typeName.label : '',
@@ -193,11 +197,10 @@ export const TimeOff: FC<Props> = ({
         const config: EmailConfig = {
           type: 'timeoff',
           body: emailBody,
-          recipient: 'robbie@kalosflorida.com' /*manager.email*/,
+          recipient: manager.email,
         };
 
-        const emailResult = await emailClient.sendMail(config);
-        console.log({ emailResult });
+        await emailClient.sendMail(config);
       } catch (err) {
         console.log(err);
       }
@@ -256,9 +259,11 @@ export const TimeOff: FC<Props> = ({
       onSaveOrDelete(data);
     }
   }, [requestOffId, setSaving, onSaveOrDelete, data]);
-  const isAdmin = loggedUser && loggedUser.isAdmin && loggedUserId !== userId;
+  console.log({ loggedUser }, loggedUser?.isAdmin, loggedUserId !== userId);
+  const isAdmin = loggedUser && loggedUser.isAdmin;
   const disabled = !(data.id && isAdmin);
   const disabledAdmin = disabled || !!data.adminApprovalUserId;
+  console.log({ disabled, disabledAdmin });
   const schema: Schema<TimeoffRequestType> = [
     [
       {
