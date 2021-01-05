@@ -49,7 +49,6 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
         orderBy: 'user_lastname',
       },
     });
-    console.log(users);
     setUsers(users.results);
     const perDiemRowId = await getPerDiemRowId(selectedDate);
     setPerDiemRowId(perDiemRowId!);
@@ -70,7 +69,6 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
       initiate();
     }
   }, [initiated]);
-  console.log(perDiemRowId);
   return (
     <PageWrapper {...props} userID={loggedUserId} withHeader>
       {loaded ? (
