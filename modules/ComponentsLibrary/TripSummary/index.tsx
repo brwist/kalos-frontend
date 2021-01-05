@@ -355,8 +355,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               { name: 'Destination' },
               { name: 'Name' },
               { name: 'Week Of' },
+              { name: 'Miles' },
               {
-                name: 'Miles',
+                name: 'Notes',
                 actions: [
                   {
                     label: 'Delete All Trips',
@@ -385,6 +386,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   },
                   {
                     value: currentTrip.getDistanceInMiles().toFixed(1),
+                  },
+                  {
+                    value: currentTrip.getNotes(),
                     actions: [
                       <IconButton
                         key={currentTrip.getId() + 'edit'}
