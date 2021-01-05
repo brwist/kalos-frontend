@@ -473,8 +473,8 @@ async function release(target = '') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
 
-  checkTests();
-  await runTests(target);
+  //checkTests();
+  //await runTests(target);
 
   info('Rolling up build. This may take a moment...');
 
@@ -827,7 +827,10 @@ const NAMED_EXPORTS = {
     'SystemReadingsType',
     'SystemReadingsTypeList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/common_pb.js': ['Empty'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/common_pb.js': [
+    'Empty',
+    'Int32',
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_pb.js': [
     'Task',
     'TaskList',
