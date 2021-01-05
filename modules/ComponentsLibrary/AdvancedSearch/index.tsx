@@ -2627,7 +2627,6 @@ export const AdvancedSearch: FC<Props> = ({
             property={pendingPropertyEditing}
             onSave={onSaveProperty}
             onClose={handlePendingPropertyEditingToggle(undefined)}
-            viewedAsCustomer={!!propertyCustomerId}
           />
         </Modal>
       )}
@@ -2637,7 +2636,6 @@ export const AdvancedSearch: FC<Props> = ({
             userId={propertyCustomerId}
             onSave={onSaveProperty}
             onClose={handleTogglePendingAddProperty(false)}
-            viewedAsCustomer
           />
         </Modal>
       )}

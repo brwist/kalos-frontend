@@ -1214,15 +1214,9 @@
     chalk "^4.0.0"
 
 "@kalos-core/kalos-rpc@^2.0.0":
-  version "2.45.8"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.45.8.tgz#3de815386b5eb1f3954af8c7dec068a8e561b7f2"
-  integrity sha512-p6ZLJpfdlXZCFWmWVJXlfXFwfv1+pqdQiLyIAWAB5VeCZ9W+YjkNMovGxQTOU61jcH4xM7FeKADb64Izsi3LHQ==
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.46.1.tgz#892c83d7b7aa484c319f661c37ed28a71a6d9633"
+  integrity sha512-BetlqojRgMU96aYWkJpFbdXRCrsA/kP8/C9ZrleuXCD9cpX7PGhvW0TE4eQCNozP8dnvaUraXmHTGL9T9tCh1Q==
   dependencies:
-    "@improbable-eng/grpc-web" "^0.9.6"
-    "@types/pako" "^1.0.1"
-    google-protobuf "^3.9.0-rc.1"
-    grpc-web "^1.0.5"
-    pako "^1.0.10"
 
 "@material-ui/core@^4.5.1":
   version "4.11.2"

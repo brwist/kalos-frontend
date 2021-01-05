@@ -115,6 +115,7 @@ export const Actions: FC<Props> = ({
         </Menu>
       </>
     );
+  console.log({ actions });
   return (
     <div className={clsx('Actions', className)}>
       {actions.length > 0 && (
@@ -126,7 +127,7 @@ export const Actions: FC<Props> = ({
                 key={idx}
                 {...props}
                 className={clsx('ActionsButton', { responsiveColumn })}
-                disabled={disabled}
+                disabled={disabled || props.disabled}
               />
             ))}
         </div>

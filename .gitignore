@@ -8,3 +8,4 @@ tmp/
 *.code-workspace
 coverage
 helpers.js
+.DS_Store
