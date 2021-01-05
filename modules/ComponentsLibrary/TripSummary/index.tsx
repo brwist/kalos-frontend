@@ -163,8 +163,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
   initializeStateChange = () => this.setState({ key: this.state.key + 1 });
 
   refreshNamesAndDates = async () => {
-    await this.getUserNamesFromIds();
-    await this.getRowDatesFromPerDiemIds();
+    try {
+      await this.getUserNamesFromIds();
+      await this.getRowDatesFromPerDiemIds();
+    } catch (err: any) {
+      console.error('Error refreshing names and dates: ', err);
+    }
     this.initializeStateChange();
   };
 
@@ -172,11 +176,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
     let trip = new Trip();
     trip.setPerDiemRowId(this.props.perDiemRowId);
     this.setState({ loadingTrips: true });
-    const trips = await PerDiemClientService.BatchGetTrips(trip);
-    this.updateTotalMiles();
-    this.setState({ trips: trips });
-    this.refreshNamesAndDates();
-    this.setState({ loadingTrips: false });
+    try {
+      const trips = await PerDiemClientService.BatchGetTrips(trip);
+      this.updateTotalMiles();
+      this.setState({ trips: trips });
+      this.refreshNamesAndDates();
+      this.setState({ loadingTrips: false });
+    } catch (err: any) {
+      console.error('Failed to get trips: ', err);
+    }
   };
 
   getRowStartDateById = (rowId: number) => {
@@ -195,16 +203,33 @@ export class TripSummary extends React.PureComponent<Props, State> {
     let res: { date: string; row_id: number }[] = [];
 
     new Promise(resolve => {
-      this.state.trips
-        .getResultsList()
-        .forEach(async (trip: Trip, index: number, array: Trip[]) => {
-          let pd = new PerDiem();
-          pd.setId(trip.getPerDiemRowId());
-          const pdr = await PerDiemClientService.Get(pd);
-          const obj = { date: pdr.dateStarted, row_id: trip.getPerDiemRowId() };
-          if (!res.includes(obj)) res.push(obj);
-          if (index == array.length - 1) resolve(res);
-        });
+      try {
+        this.state.trips
+          .getResultsList()
+          .forEach(async (trip: Trip, index: number, array: Trip[]) => {
+            try {
+              let pd = new PerDiem();
+              pd.setId(trip.getPerDiemRowId());
+              const pdr = await PerDiemClientService.Get(pd);
+              const obj = {
+                date: pdr.dateStarted,
+                row_id: trip.getPerDiemRowId(),
+              };
+              if (!res.includes(obj)) res.push(obj);
+              if (index == array.length - 1) resolve(res);
+            } catch (err: any) {
+              console.error(
+                'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
+                err,
+              );
+            }
+          });
+      } catch (err: any) {
+        console.error(
+          'Error occurred while getting row dates from per diem IDs: ',
+          err,
+        );
+      }
     }).then(() => {
       this.dateIdPair = res;
       this.setState({ key: this.state.key + 1 });
@@ -216,12 +241,16 @@ export class TripSummary extends React.PureComponent<Props, State> {
     let res: { name: string; id: number }[] = [];
 
     this.state.trips.getResultsList().forEach(async (trip: Trip) => {
-      let user = await UserClientService.loadUserById(trip.getUserId());
-      let obj: { name: string; id: number } = {
-        name: `${user.firstname} ${user.lastname}`,
-        id: trip.getUserId(),
-      };
-      if (!res.includes(obj)) res.push(obj);
+      try {
+        let user = await UserClientService.loadUserById(trip.getUserId());
+        let obj: { name: string; id: number } = {
+          name: `${user.firstname} ${user.lastname}`,
+          id: trip.getUserId(),
+        };
+        if (!res.includes(obj)) res.push(obj);
+      } catch (err: any) {
+        console.error('Failed to get user names from IDs: ', err);
+      }
     });
     this.nameIdPair = res;
 
@@ -244,17 +273,20 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTotalTripDistance = async () => {
-    let trip = new Trip();
-    trip.setPerDiemRowId(this.props.perDiemRowId);
+    try {
+      let trip = new Trip();
+      trip.setPerDiemRowId(this.props.perDiemRowId);
+      const trips = await PerDiemClientService.BatchGetTrips(trip);
+      let totalDist = 0;
+      trips
+        .getResultsList()
+        .forEach(trip => (totalDist += trip.getDistanceInMiles()));
 
-    const trips = await PerDiemClientService.BatchGetTrips(trip);
-
-    let totalDist = 0;
-    trips
-      .getResultsList()
-      .forEach(trip => (totalDist += trip.getDistanceInMiles()));
-
-    return totalDist;
+      return totalDist;
+    } catch (err: any) {
+      console.error('Failed to get total trip distance: ', err);
+      return 0;
+    }
   };
   updateTotalMiles = async () => {
     this.setState({
