@@ -165,11 +165,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.getTrips();
   }
 
-  saveTrip = async (
-    data: AddressPair.AsObject,
-    rowId: number,
-    userId: number,
-  ) => {
+  saveTrip = async (data: AddressPair.AsObject, id: number, userId: number) => {
     let trip = new Trip();
 
     trip.setOriginAddress(data.FullAddressOrigin);
@@ -179,8 +175,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       String(data.FullAddressOrigin),
       String(data.FullAddressDestination),
     );
-
-    const id = await getPerDiemRowId();
 
     if (id) {
       trip.setPerDiemRowId(id);
@@ -194,7 +188,9 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
 
     trip.setNotes(data.Notes);
 
-    await upsertTrip(trip.toObject(), rowId, userId).then(() => {
+    const rowId = await getPerDiemRowId();
+
+    await upsertTrip(trip.toObject(), rowId!, userId).then(() => {
       this.setState({ pendingTrip: null });
       this.getTrips();
     });
