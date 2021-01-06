@@ -207,7 +207,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             statusID = 3;
             statusMessage =
               'receipt marked as accidental or fraudulent and sent directly to accounting for review';
-            const mailBody = `A${getTransactionTypeString(
+            const mailBody = `<html><body><p>A${getTransactionTypeString(
               txn,
             )} transaction has been reported by ${txn.ownerName} (${
               txn.cardUsed
@@ -218,8 +218,9 @@ export class TxnCard extends React.PureComponent<props, state> {
               Department: ${txn.department?.classification} ${
               txn.department?.description
             }
-              ${txn.notes != '' ? `Notes: ${txn.notes}` : ''}
-              https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions
+              ${txn.notes != '' ? `Notes: ${txn.notes}` : ''}</p>
+              <a href="https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions">Click here to view receipts</a>
+              </body></html>
             `;
             const mailConfig: EmailConfig = {
               type: 'receipts',
