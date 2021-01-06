@@ -173,9 +173,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.props.perDiemRowIds.forEach(async (id: number) => {
       let trip = new Trip();
       trip.setUserId(this.props.loggedUserId);
-      console.log(
-        `Checking user ${this.props.loggedUserId} and per diem (row ID) ${id}`,
-      );
       trip.setPerDiemRowId(id);
       this.setState({ loadingTrips: true });
       try {
@@ -183,7 +180,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
         this.updateTotalMiles();
         this.setState({ trips: trips });
         await this.refreshNamesAndDates();
-        console.log('Continuing with state change');
         this.setState({ loadingTrips: false });
       } catch (err: any) {
         console.log('Failed to get trips: ', err);
@@ -192,8 +188,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getRowStartDateById = (rowId: number) => {
-    console.log('Date ID pair: ', this.dateIdPair);
-    console.log(this.dateIdPair.length);
     if (this.dateIdPair.length == 0) return;
     for (let obj of this.dateIdPair) {
       if (obj.row_id == rowId) {
@@ -280,22 +274,32 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   getTotalTripDistance = async () => {
     let dist = 0;
-    this.props.perDiemRowIds.map(async id => {
-      try {
-        let trip = new Trip();
-        trip.setPerDiemRowId(id);
-        trip.setUserId(this.props.loggedUserId);
-        const trips = await PerDiemClientService.BatchGetTrips(trip);
-        let totalDist = 0;
-        trips
-          .getResultsList()
-          .forEach(trip => (totalDist += trip.getDistanceInMiles()));
 
-        dist += totalDist;
+    await new Promise(async resolve => {
+      let total = 0;
+
+      try {
+        this.props.perDiemRowIds.map(async (id, index, arr) => {
+          let trip = new Trip();
+          trip.setPerDiemRowId(id);
+          trip.setUserId(this.props.loggedUserId);
+          const trips = await PerDiemClientService.BatchGetTrips(trip);
+          let totalDist = 0;
+          trips
+            .getResultsList()
+            .forEach(trip => (totalDist += trip.getDistanceInMiles()));
+
+          total += totalDist;
+
+          if (index == arr.length - 1) {
+            resolve(total);
+          }
+        });
       } catch (err: any) {
-        console.error('Failed to get total trip distance: ', err);
-        return 0;
+        console.error('An error occurred in getTotalTripDistance: ', err);
       }
+    }).then(val => {
+      dist = Number(val);
     });
 
     return dist;
