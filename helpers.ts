@@ -77,7 +77,10 @@ import {
   PerDiemReportConfig,
 } from '@kalos-core/kalos-rpc/PerDiem';
 import { MapClient, MatrixRequest, Place } from '@kalos-core/kalos-rpc/Maps';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import {
+  PerDiemList,
+  Trip,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Coordinates, MapClient as KalosMap } from '@kalos-core/kalos-rpc/Maps';
 import {
   TimesheetDepartmentClient,
@@ -1565,7 +1568,7 @@ export const approvePerDiemById = async (id: number, approvedById: number) => {
  * @param date
  * @returns number | undefined
  */
-export const getPerDiemRowId = async (date?: Date) => {
+export const getPerDiemRowIds = async (date?: Date) => {
   const dateToQuery = date != null ? date : new Date();
   let daysToGoBack = 0;
   // If the day is Monday - Friday, we don't have to worry about overflow stuff with the offset
@@ -1581,11 +1584,11 @@ export const getPerDiemRowId = async (date?: Date) => {
     dateToQuery.getMonth() + 1,
   )}-${padWithZeroes(dateToQuery.getDate() - daysToGoBack)} 00:00:00`;
 
-  let perDiemRes: PerDiem.AsObject | null = null;
+  let perDiemRes: PerDiemList = new PerDiemList();
   try {
     let pd = new PerDiem();
     pd.setDateStarted(lastSaturday);
-    perDiemRes = await PerDiemClientService.Get(pd);
+    perDiemRes = await PerDiemClientService.BatchGet(pd);
   } catch (error: any) {
     let err = String(error);
     if (
@@ -1605,12 +1608,12 @@ export const getPerDiemRowId = async (date?: Date) => {
     );
   }
 
-  if (!perDiemRes) {
+  if (perDiemRes.getTotalCount() == 0) {
     console.error('No per-diem was found for the given date.');
     return;
   }
 
-  return perDiemRes.id;
+  return perDiemRes;
 };
 
 export const upsertPerDiemRow = async (data: PerDiemRowType) => {

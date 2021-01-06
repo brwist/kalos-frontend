@@ -11,8 +11,8 @@ export default () => (
 
     <TripSummary
       canAddTrips
-      perDiemRowId={260}
-      loggedUserId={7051}
+      perDiemRowIds={[248]}
+      loggedUserId={2573}
     ></TripSummary>
   </>
 );

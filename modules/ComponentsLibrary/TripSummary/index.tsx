@@ -11,7 +11,6 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import {
   PerDiemClientService,
   getTripDistance,
-  getPerDiemRowId,
   UserClientService,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
@@ -109,7 +108,7 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
 ];
 
 interface Props {
-  perDiemRowId: number;
+  perDiemRowIds: number[];
   loggedUserId: number;
   canAddTrips: boolean;
   cannotDeleteTrips?: boolean;
@@ -175,19 +174,24 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTrips = async () => {
-    let trip = new Trip();
-    trip.setUserId(this.props.loggedUserId);
-    trip.setPerDiemRowId(this.props.perDiemRowId);
-    this.setState({ loadingTrips: true });
-    try {
-      const trips = await PerDiemClientService.BatchGetTrips(trip);
-      this.updateTotalMiles();
-      this.setState({ trips: trips });
-      this.refreshNamesAndDates();
-      this.setState({ loadingTrips: false });
-    } catch (err: any) {
-      console.error('Failed to get trips: ', err);
-    }
+    this.props.perDiemRowIds.forEach(async (id: number) => {
+      let trip = new Trip();
+      trip.setUserId(this.props.loggedUserId);
+      console.log(
+        `Checking user ${this.props.loggedUserId} and per diem (row ID) ${id}`,
+      );
+      trip.setPerDiemRowId(id);
+      this.setState({ loadingTrips: true });
+      try {
+        const trips = await PerDiemClientService.BatchGetTrips(trip);
+        this.updateTotalMiles();
+        this.setState({ trips: trips });
+        this.refreshNamesAndDates();
+        this.setState({ loadingTrips: false });
+      } catch (err: any) {
+        console.log('Failed to get trips: ', err);
+      }
+    });
   };
 
   getRowStartDateById = (rowId: number) => {
@@ -276,21 +280,26 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTotalTripDistance = async () => {
-    try {
-      let trip = new Trip();
-      trip.setPerDiemRowId(this.props.perDiemRowId);
-      trip.setUserId(this.props.loggedUserId);
-      const trips = await PerDiemClientService.BatchGetTrips(trip);
-      let totalDist = 0;
-      trips
-        .getResultsList()
-        .forEach(trip => (totalDist += trip.getDistanceInMiles()));
+    let dist = 0;
+    this.props.perDiemRowIds.map(async id => {
+      try {
+        let trip = new Trip();
+        trip.setPerDiemRowId(id);
+        trip.setUserId(this.props.loggedUserId);
+        const trips = await PerDiemClientService.BatchGetTrips(trip);
+        let totalDist = 0;
+        trips
+          .getResultsList()
+          .forEach(trip => (totalDist += trip.getDistanceInMiles()));
 
-      return totalDist;
-    } catch (err: any) {
-      console.error('Failed to get total trip distance: ', err);
-      return 0;
-    }
+        dist += totalDist;
+      } catch (err: any) {
+        console.error('Failed to get total trip distance: ', err);
+        return 0;
+      }
+    });
+
+    return dist;
   };
   updateTotalMiles = async () => {
     this.setState({
@@ -314,22 +323,24 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ pendingTripToDelete: null });
   };
   deleteAllTrips = async () => {
-    try {
-      let trip = new Trip();
-      trip.setPerDiemRowId(this.props.perDiemRowId);
-      await PerDiemClientService.BatchDeleteTrips(trip);
-      if (this.props.onDeleteAllTrips) this.props.onDeleteAllTrips();
-    } catch (err: any) {
-      console.error(
-        'An error occurred while deleting the trips for this week: ',
-        err,
-      );
-      alert(
-        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
-      );
-      this.setState({ pendingDeleteAllTrips: false });
-      return;
-    }
+    this.props.perDiemRowIds.forEach(async id => {
+      try {
+        let trip = new Trip();
+        trip.setPerDiemRowId(id);
+        await PerDiemClientService.BatchDeleteTrips(trip);
+        if (this.props.onDeleteAllTrips) this.props.onDeleteAllTrips();
+      } catch (err: any) {
+        console.error(
+          'An error occurred while deleting the trips for this week: ',
+          err,
+        );
+        alert(
+          'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+        );
+        this.setState({ pendingDeleteAllTrips: false });
+        return;
+      }
+    });
     this.getTrips();
     this.refreshNamesAndDates();
     this.setState({ pendingDeleteAllTrips: false });

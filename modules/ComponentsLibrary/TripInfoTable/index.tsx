@@ -15,7 +15,6 @@ import {
   PerDiemClientService,
   upsertTrip,
   getTripDistance,
-  getPerDiemRowId,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -125,7 +124,7 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
 ];
 
 interface Props {
-  perDiemRowId: number;
+  perDiemRowIds: number[];
   loggedUserId: number;
   canAddTrips: boolean;
   cannotDeleteTrips?: boolean;
@@ -230,11 +229,18 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     );
   };
   updateTotalMiles = async () => {
-    if (this.props.perDiemRowId == undefined) {
+    if (
+      this.props.perDiemRowIds == undefined ||
+      this.props.perDiemRowIds.length == 0
+    ) {
       return;
     }
+    let totalMiles = 0;
+    this.props.perDiemRowIds.forEach(async id => {
+      totalMiles += await this.getTotalTripDistance(id);
+    });
     this.setState({
-      totalTripMiles: await this.getTotalTripDistance(this.props.perDiemRowId),
+      totalTripMiles: totalMiles,
     });
   };
   deleteTrip = async (trip: Trip) => {
@@ -253,23 +259,21 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.getTrips();
   };
   deleteAllTrips = async () => {
-    try {
-      let trip = new Trip();
-      trip.setPerDiemRowId(this.props.perDiemRowId);
-      trip.setUserId(this.props.loggedUserId);
-      await PerDiemClientService.BatchDeleteTrips(trip);
-      if (this.props.onDeleteAllTrips) this.props.onDeleteAllTrips();
-    } catch (err: any) {
-      console.error(
-        'An error occurred while deleting the trips for this week: ',
-        err,
-      );
-      alert(
-        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
-      );
-      this.setState({ pendingDeleteAllTrips: false });
-      return;
-    }
+    this.props.perDiemRowIds.forEach(async id => {
+      try {
+        let trip = new Trip();
+        trip.setPerDiemRowId(id);
+        trip.setUserId(this.props.loggedUserId);
+        await PerDiemClientService.BatchDeleteTrips(trip);
+        if (this.props.onDeleteAllTrips) this.props.onDeleteAllTrips();
+      } catch (err: any) {
+        console.log(
+          'An error occurred while deleting the trips for this week: ',
+          err,
+        );
+      }
+    });
+
     this.setState({ pendingDeleteAllTrips: false });
     this.getTrips();
   };
@@ -285,7 +289,10 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
             size="small"
             variant="contained"
             onClick={() => {
-              if (this.props.perDiemRowId == undefined) {
+              if (
+                this.props.perDiemRowIds == undefined ||
+                this.props.perDiemRowIds.length == 0
+              ) {
                 this.setStateToNew({ warningNoPerDiem: true });
                 return;
               }
@@ -318,7 +325,9 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
               data={this.state
                 .trips!.getResultsList()
                 .filter((trip: Trip) => {
-                  return trip.getPerDiemRowId() == this.props.perDiemRowId;
+                  this.props.perDiemRowIds.map(id => {
+                    return trip.getPerDiemRowId() == id;
+                  });
                 })
                 .map((currentTrip: Trip) => {
                   return [
@@ -358,7 +367,9 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
               data={this.state
                 .trips!.getResultsList()
                 .filter((trip: Trip) => {
-                  return trip.getPerDiemRowId() == this.props.perDiemRowId;
+                  this.props.perDiemRowIds.map(id => {
+                    return trip.getPerDiemRowId() == id;
+                  });
                 })
                 .map((currentTrip: Trip) => {
                   return [
@@ -393,7 +404,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
             onSave={async (addressPair: AddressPair.AddressPair) => {
               this.saveTrip(
                 addressPair,
-                this.props.perDiemRowId,
+                this.props.perDiemRowIds[0],
                 this.props.loggedUserId,
               );
             }}
