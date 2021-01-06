@@ -165,7 +165,11 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.getTrips();
   }
 
-  saveTrip = async (data: AddressPair.AsObject, id: number, userId: number) => {
+  saveTrip = async (
+    data: AddressPair.AsObject,
+    rowId: number,
+    userId: number,
+  ) => {
     let trip = new Trip();
 
     trip.setOriginAddress(data.FullAddressOrigin);
@@ -176,8 +180,8 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       String(data.FullAddressDestination),
     );
 
-    if (id) {
-      trip.setPerDiemRowId(id);
+    if (rowId) {
+      trip.setPerDiemRowId(rowId);
     } else {
       console.error('No perDiem found for this user. ');
       this.setState({ warningNoPerDiem: true });
@@ -187,8 +191,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     }
 
     trip.setNotes(data.Notes);
-
-    const rowId = await getPerDiemRowId();
 
     await upsertTrip(trip.toObject(), rowId!, userId).then(() => {
       this.setState({ pendingTrip: null });
