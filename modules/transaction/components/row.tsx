@@ -131,11 +131,12 @@ export function TransactionRow({
     const userReq = new User();
     userReq.setId(txn.ownerId);
     const user = await clients.user.Get(userReq);
-    const body = `Reason: ${reason}\r\nInfo: ${prettyMoney(txn.amount)} - ${
-      txn.description
-    } - ${
-      txn.vendor
-    }\r\nReview transactions here: https://app.kalosflorida.com?action=admin:reports.transactions`;
+    const body = getRejectTxnBody(
+      reason,
+      txn.amount,
+      txn.description,
+      txn.vendor,
+    );
     const email: EmailConfig = {
       type: 'receipts',
       recipient: user.email,
@@ -164,7 +165,8 @@ export function TransactionRow({
       alert('An error occurred, user was not notified via slack');
     }
 
-    await reject(reason);
+    //await reject(reason);
+    console.log(body);
     await refresh();
   };
 
@@ -348,4 +350,30 @@ function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
       bucket: 'kalos-transactions',
     };
   });
+}
+
+function getRejectTxnBody(
+  reason: string,
+  amount: number,
+  description: string,
+  vendor: string,
+): string {
+  return `
+<body>
+  <table style="width:70%;">
+    <thead>
+      <th style="text-align:left;">Reason</th>
+      <th style="text-align:left;">Amount</th>
+      <th style="text-align:left;">Info</th>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${reason}</td>
+        <td>${prettyMoney(amount)}</td>
+        <td>${description}${vendor != '' ? ` - ${vendor}` : ''}</td>
+      </tr>
+    </body>
+  </table>
+  <a href="https://app.kalosflorida.com?action=admin:reports.transactions">Go to receipts</a>
+</body>`;
 }
