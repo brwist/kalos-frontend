@@ -18,7 +18,6 @@ import {
   getPerDiemRowId,
 } from '../../helpers';
 import { TripSummary } from '../ComponentsLibrary/TripSummary';
-import Typography from '@material-ui/core/Typography';
 
 interface Props {
   userID: number;
@@ -47,7 +46,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   const handleDateChange = useCallback(
     async date => {
       setSelectedDate(date);
-      handlePerDiemRowIdChange(date);
+      await handlePerDiemRowIdChange(date);
     },
     [setSelectedDate],
   );
@@ -84,7 +83,6 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
       initiate();
     }
   }, [initiated]);
-  console.log(perDiemRowId);
   return (
     <PageWrapper {...props} userID={loggedUserId} withHeader>
       {loaded ? (
@@ -142,6 +140,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                           cannotDeleteTrips
                           loggedUserId={user.id}
                           perDiemRowId={perDiemRowId}
+                          key={perDiemRowId}
                         />
                       ) : perDiemRowId != undefined ? (
                         <Loader />
@@ -151,6 +150,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                           cannotDeleteTrips
                           loggedUserId={user.id}
                           perDiemRowId={-1} // a bit hacky, but it will show no results found
+                          key={perDiemRowId}
                         />
                       ),
                   },
