@@ -145,15 +145,13 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                           perDiemRowIds={perDiemRowId}
                           key={perDiemRowId[0]}
                         />
-                      ) : perDiemRowId != undefined ? (
-                        <Loader />
                       ) : (
                         <TripSummary
                           canAddTrips={false}
                           cannotDeleteTrips
                           loggedUserId={user.id}
                           perDiemRowIds={[-1]} // a bit hacky, but it will show no results found
-                          key={perDiemRowId}
+                          key={perDiemRowId[0]}
                         />
                       ),
                   },
