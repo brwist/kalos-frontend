@@ -1213,10 +1213,16 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@kalos-core/kalos-rpc@^2.0.0":
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.46.1.tgz#892c83d7b7aa484c319f661c37ed28a71a6d9633"
-  integrity sha512-BetlqojRgMU96aYWkJpFbdXRCrsA/kP8/C9ZrleuXCD9cpX7PGhvW0TE4eQCNozP8dnvaUraXmHTGL9T9tCh1Q==
+"@kalos-core/kalos-rpc@^2.47.2":
+  version "2.47.2"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.47.2.tgz#e14a39ae69ac2eeb33af82667d762931b23ccd9e"
+  integrity sha512-OCvRWrLAY64jhNtW3iIlzMsNWH9C/bZKFSpxwOwZPvtYNC7Qn4PtvWmfB6znXbdoRS2v4NfXAfI/sHatj2yJuA==
   dependencies:
+    "@improbable-eng/grpc-web" "^0.9.6"
+    "@types/pako" "^1.0.1"
+    google-protobuf "^3.9.0-rc.1"
+    grpc-web "^1.0.5"
+    pako "^1.0.10"
 
 "@material-ui/core@^4.5.1":
   version "4.11.2"
