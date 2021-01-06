@@ -164,12 +164,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
   initializeStateChange = () => this.setState({ key: this.state.key + 1 });
 
   refreshNamesAndDates = async () => {
-    try {
-      await this.getUserNamesFromIds();
-      await this.getRowDatesFromPerDiemIds();
-    } catch (err: any) {
-      console.error('Error refreshing names and dates: ', err);
-    }
+    await this.getUserNamesFromIds();
+    await this.getRowDatesFromPerDiemIds();
     this.initializeStateChange();
   };
 
@@ -186,7 +182,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
         const trips = await PerDiemClientService.BatchGetTrips(trip);
         this.updateTotalMiles();
         this.setState({ trips: trips });
-        this.refreshNamesAndDates();
+        await this.refreshNamesAndDates();
+        console.log('Continuing with state change');
         this.setState({ loadingTrips: false });
       } catch (err: any) {
         console.log('Failed to get trips: ', err);
@@ -195,6 +192,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getRowStartDateById = (rowId: number) => {
+    console.log('Date ID pair: ', this.dateIdPair);
+    console.log(this.dateIdPair.length);
     if (this.dateIdPair.length == 0) return;
     for (let obj of this.dateIdPair) {
       if (obj.row_id == rowId) {
@@ -203,7 +202,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
 
     console.log('Failed to find a date for row ID: ', rowId);
-    return 'None';
+    return '-';
   };
 
   getRowDatesFromPerDiemIds = async () => {
