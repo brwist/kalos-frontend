@@ -36,6 +36,20 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   const [user, setUser] = useState<UserType>(); // TODO is it useful?
   const [users, setUsers] = useState<UserType[]>([]);
   const [perDiemRowId, setPerDiemRowId] = useState<number>(0);
+  const handlePerDiemRowIdChange = useCallback(
+    async (newDate: Date) => {
+      const perDiemRowId = await getPerDiemRowId(newDate);
+      setPerDiemRowId(perDiemRowId!);
+    },
+    [setPerDiemRowId],
+  );
+  const handleDateChange = useCallback(
+    async date => {
+      setSelectedDate(date);
+      handlePerDiemRowIdChange(date);
+    },
+    [setSelectedDate],
+  );
   const handleDepartmentChanged = useCallback(async id => {
     setLoaded(false);
     setDepartment(id);
@@ -51,8 +65,6 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
       },
     });
     setUsers(users.results);
-    const perDiemRowId = await getPerDiemRowId(selectedDate);
-    setPerDiemRowId(perDiemRowId!);
     setLoaded(true);
   }, []);
   const initiate = useCallback(async () => {
@@ -62,6 +74,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
     setDepartments(departments);
     const department = user.employeeDepartmentId;
     await handleDepartmentChanged(department);
+    await handlePerDiemRowIdChange(selectedDate);
   }, [userID]);
 
   useEffect(() => {
@@ -98,7 +111,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                 />
               </span>
             }
-            onDateChange={setSelectedDate}
+            onDateChange={handleDateChange}
             // onSubmit={() => console.log('SUBMIT')}
             weekStartsOn={6}
           />
