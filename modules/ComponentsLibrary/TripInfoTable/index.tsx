@@ -15,6 +15,7 @@ import {
   PerDiemClientService,
   upsertTrip,
   getTripDistance,
+  getPerDiemRowIds,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -367,11 +368,24 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
               data={this.state
                 .trips!.getResultsList()
                 .filter((trip: Trip) => {
-                  this.props.perDiemRowIds.map(id => {
-                    return trip.getPerDiemRowId() == id;
+                  let pass = false;
+                  this.props.perDiemRowIds.forEach(id => {
+                    if (
+                      trip.getPerDiemRowId() == id &&
+                      trip.getUserId() == this.props.loggedUserId
+                    ) {
+                      pass = true;
+                    }
                   });
+                  return pass;
                 })
                 .map((currentTrip: Trip) => {
+                  console.log(
+                    'Passed trip: ',
+                    currentTrip.getPerDiemRowId(),
+                    'TRIP ITSELF: ',
+                    currentTrip,
+                  );
                   return [
                     { value: currentTrip.getOriginAddress() },
                     { value: currentTrip.getDestinationAddress() },
