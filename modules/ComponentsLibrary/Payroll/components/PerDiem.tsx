@@ -4,6 +4,8 @@ import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import FlashOff from '@material-ui/icons/FlashOff';
 import Visibility from '@material-ui/icons/Visibility';
+import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
+import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
 import { PerDiemComponent } from '../../PerDiem';
@@ -19,6 +21,7 @@ import {
   formatDate,
   getDepartmentName,
   PerDiemClientService,
+  approvePerDiemById,
 } from '../../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 
@@ -71,6 +74,7 @@ export const PerDiem: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
+  const [pendingApprove, setPendingApprove] = useState<PerDiemType>();
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
   const [filter, setFilter] = useState<FilterType>({
     approved: 0,
@@ -112,10 +116,22 @@ export const PerDiem: FC<Props> = ({
     (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
   );
+  const handlePendingApproveToggle = useCallback(
+    (perDiem?: PerDiemType) => () => setPendingApprove(perDiem),
+    [setPendingApprove],
+  );
   const handlePendingAuditedToggle = useCallback(
     (perDiem?: PerDiemType) => () => setPendingAudited(perDiem),
     [setPendingAudited],
   );
+  const handleApprove = useCallback(async () => {
+    if (!pendingApprove) return;
+    const { id } = pendingApprove;
+    setLoading(true);
+    setPendingApprove(undefined);
+    await approvePerDiemById(id, loggedUserId);
+    load();
+  }, [pendingApprove, loggedUserId]);
   const handleAudit = useCallback(async () => {
     if (pendingAudited) {
       const { id } = pendingAudited;
@@ -194,6 +210,21 @@ export const PerDiem: FC<Props> = ({
                         </IconButton>
                       </Tooltip>,
                       <Tooltip
+                        key="approve"
+                        content="Approve"
+                        placement="bottom"
+                      >
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={handlePendingApproveToggle(el)}
+                            disabled={!!el.approvedById}
+                          >
+                            <CheckCircleOutlineIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>,
+                      <Tooltip
                         key="audit"
                         content="Auditing"
                         placement="bottom"
@@ -202,7 +233,7 @@ export const PerDiem: FC<Props> = ({
                           <IconButton
                             size="small"
                             onClick={handlePendingAuditedToggle(el)}
-                            disabled={!el.needsAuditing}
+                            disabled={!el.needsAuditing || !el.approvedById}
                           >
                             <FlashOff />
                           </IconButton>
@@ -249,6 +280,16 @@ export const PerDiem: FC<Props> = ({
             );
           })}
         </Modal>
+      )}
+      {pendingApprove && (
+        <Confirm
+          title="Confirm Approve"
+          open
+          onClose={handlePendingApproveToggle()}
+          onConfirm={handleApprove}
+        >
+          Are you sure, you want to approve this Per Diem?
+        </Confirm>
       )}
       {pendingAudited && (
         <Confirm
