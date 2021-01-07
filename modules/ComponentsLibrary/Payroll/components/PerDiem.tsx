@@ -17,11 +17,13 @@ import {
   formatDate,
   getDepartmentName,
 } from '../../../../helpers';
+import { OPTION_ALL } from '../../../../constants';
 
 interface Props {
+  loggedUserId: number;
   departmentId: number;
   employeeId: number;
-  loggedUserId: number;
+  week: string;
 }
 
 type FilterType = {
@@ -56,9 +58,10 @@ const SCHEMA: Schema<FilterType> = [
 ];
 
 export const PerDiem: FC<Props> = ({
+  loggedUserId,
   departmentId,
   employeeId,
-  loggedUserId,
+  week,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
@@ -76,14 +79,14 @@ export const PerDiem: FC<Props> = ({
       false,
       departmentId,
       employeeId,
-      undefined,
+      week === OPTION_ALL ? undefined : week,
     );
     setPerDiems(perDiems.resultsList);
     setLoading(false);
-  }, [departmentId, employeeId]);
+  }, [departmentId, employeeId, week]);
   useEffect(() => {
     load();
-  }, [departmentId, employeeId]);
+  }, [departmentId, employeeId, week]);
   const handlePerDiemViewedToggle = useCallback(
     (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
@@ -107,7 +110,7 @@ export const PerDiem: FC<Props> = ({
         ]}
         data={
           loading
-            ? makeFakeRows(5, 3)
+            ? makeFakeRows(6, 3)
             : perDiems.map(el => {
                 return [
                   {

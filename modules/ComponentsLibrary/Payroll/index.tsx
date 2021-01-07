@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
 import { Loader } from '../../Loader/main';
@@ -10,6 +10,7 @@ import {
   getDepartmentName,
   loadTechnicians,
   getCustomerName,
+  getWeekOptions,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
 import { PerDiem } from './components/PerDiem';
@@ -22,6 +23,7 @@ interface Props {
 type FilterData = {
   departmentId: number;
   employeeId: number;
+  week: string;
 };
 
 export const Payroll: FC<Props> = ({ userID }) => {
@@ -30,9 +32,17 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
+    week: OPTION_ALL,
   });
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [employees, setEmployees] = useState<UserType[]>([]);
+  const weekOptions = useMemo(
+    () => [
+      { label: OPTION_ALL, value: OPTION_ALL },
+      ...getWeekOptions(52, 0, -1),
+    ],
+    [],
+  );
   const init = useCallback(async () => {
     const departments = await loadTimesheetDepartments();
     setDepartments(departments);
@@ -74,6 +84,11 @@ export const Payroll: FC<Props> = ({ userID }) => {
             })),
         ],
       },
+      {
+        name: 'week',
+        label: 'Week',
+        options: weekOptions,
+      },
     ],
   ];
   return (
@@ -95,6 +110,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                   <PerDiem
                     departmentId={filter.departmentId}
                     employeeId={filter.employeeId}
+                    week={filter.week}
                     loggedUserId={userID}
                   />
                 ),
