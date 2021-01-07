@@ -171,9 +171,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTrips = async () => {
+    console.log(this.props.loggedUserId);
+    console.log(this.props.perDiemRowIds);
     this.props.perDiemRowIds.forEach(async (id: number) => {
       let trip = new Trip();
-      trip.setUserId(this.props.loggedUserId);
+      if (this.props.loggedUserId != 0) trip.setUserId(this.props.loggedUserId);
       trip.setPerDiemRowId(id);
       this.setState({ loadingTrips: true });
       try {
