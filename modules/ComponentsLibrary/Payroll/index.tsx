@@ -12,6 +12,7 @@ import {
   getCustomerName,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
+import { PerDiem } from './components/PerDiem';
 import './styles.less';
 
 interface Props {
@@ -90,7 +91,12 @@ export const Payroll: FC<Props> = ({ userID }) => {
             tabs={[
               {
                 label: 'Per Diem',
-                content: <div>Per Diem</div>,
+                content: (
+                  <PerDiem
+                    departmentId={filter.departmentId}
+                    employeeId={filter.employeeId}
+                  />
+                ),
               },
             ]}
           />
