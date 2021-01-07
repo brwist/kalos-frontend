@@ -76,6 +76,7 @@ export const PerDiem: FC<Props> = ({
   const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
   const [pendingApprove, setPendingApprove] = useState<PerDiemType>();
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
+  const [pendingPayroll, setPendingPayroll] = useState<PerDiemType>();
   const [filter, setFilter] = useState<FilterType>({
     approved: 0,
     needsAuditing: 0,
@@ -124,6 +125,10 @@ export const PerDiem: FC<Props> = ({
     (perDiem?: PerDiemType) => () => setPendingAudited(perDiem),
     [setPendingAudited],
   );
+  const handlePendingPayrollToggle = useCallback(
+    (perDiem?: PerDiemType) => () => setPendingPayroll(perDiem),
+    [setPendingPayroll],
+  );
   const handleApprove = useCallback(async () => {
     if (!pendingApprove) return;
     const { id } = pendingApprove;
@@ -141,6 +146,15 @@ export const PerDiem: FC<Props> = ({
       load();
     }
   }, [pendingAudited, setLoading, setPendingAudited]);
+  const handlePayroll = useCallback(async () => {
+    if (pendingPayroll) {
+      const { id } = pendingPayroll;
+      setLoading(true);
+      setPendingPayroll(undefined);
+      // await PerDiemClientService.updatePerDiemNeedsAudit(id);
+      load();
+    }
+  }, [pendingPayroll, setLoading, setPendingPayroll]);
   return (
     <div>
       <PlainForm<FilterType>
@@ -239,6 +253,21 @@ export const PerDiem: FC<Props> = ({
                           </IconButton>
                         </span>
                       </Tooltip>,
+                      <Tooltip
+                        key="payroll"
+                        content="Payroll Process"
+                        placement="bottom"
+                      >
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={handlePendingPayrollToggle(el)}
+                            disabled={!!el.payrollProcessed}
+                          >
+                            <AccountBalanceWalletIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>,
                     ],
                   },
                 ];
@@ -303,6 +332,16 @@ export const PerDiem: FC<Props> = ({
           <strong>{getDepartmentName(pendingAudited.department)}</strong> for{' '}
           <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no longer
           needs auditing?
+        </Confirm>
+      )}
+      {pendingPayroll && (
+        <Confirm
+          title="Confirm Approve"
+          open
+          onClose={handlePendingPayrollToggle()}
+          onConfirm={handlePayroll}
+        >
+          Are you sure, you want to process payroll for this Per Diem?
         </Confirm>
       )}
     </div>
