@@ -12,11 +12,16 @@ import {
   getCustomerName,
   getWeekOptions,
   getPerDiemRowIds,
+  PerDiemClientService,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
 import { PerDiem } from './components/PerDiem';
 import './styles.less';
 import { TripSummary } from '../TripSummary';
+import {
+  PerDiemList,
+  PerDiem as pd,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 
 interface Props {
   userID: number;
@@ -91,8 +96,20 @@ export const Payroll: FC<Props> = ({ userID }) => {
         label: 'Select Week',
         options: weekOptions,
         onChange: async value => {
-          const ids = await getPerDiemRowIds(new Date(value));
-          console.log(ids);
+          let ids: number[] | undefined = [];
+          if (value == '-- All --') {
+            console.log('ALL');
+            ids = (await PerDiemClientService.BatchGet(new pd()))
+              .getResultsList()
+              .map(perdiem => {
+                return perdiem.getId();
+              });
+            console.log(ids);
+          } else {
+            let pdList = await getPerDiemRowIds(new Date(value));
+            ids = pdList?.getResultsList().map(pd => pd.getId());
+            console.log(ids);
+          }
         },
       },
     ],

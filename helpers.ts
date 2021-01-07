@@ -1582,6 +1582,7 @@ export const getPerDiemRowIds = async (date?: Date) => {
   }
 
   const dateBack = dateToQuery.getDate() - daysToGoBack;
+
   let dateToQueryMonth = dateToQuery.getMonth() + 1;
   let dateToQueryYear = dateToQuery.getFullYear();
   let dateToQueryDay = dateToQuery.getDate() - daysToGoBack;
@@ -1600,10 +1601,8 @@ export const getPerDiemRowIds = async (date?: Date) => {
   let perDiemRes: PerDiemList = new PerDiemList();
   try {
     let pd = new PerDiem();
-    console.log('Last saturday: ', lastSaturday);
     pd.setDateStarted(lastSaturday);
     perDiemRes = await PerDiemClientService.BatchGet(pd);
-    console.log('PER DIEM RES: ', perDiemRes);
   } catch (error: any) {
     let err = String(error);
     if (
