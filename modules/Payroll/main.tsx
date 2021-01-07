@@ -1,11 +1,12 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { startOfWeek } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { CalendarHeader } from '../ComponentsLibrary/CalendarHeader';
 import { Tabs } from '../ComponentsLibrary/Tabs';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { Field } from '../ComponentsLibrary/Field';
 import { PerDiemComponent } from '../ComponentsLibrary/PerDiem';
+import { PerDiem } from './component/PerDiem';
 import { Loader } from '../Loader/main';
 import {
   UserType,
@@ -31,7 +32,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [department, setDepartment] = useState<number>();
   const [selectedDate, setSelectedDate] = useState<Date>(
-    startOfWeek(new Date()),
+    startOfWeek(new Date(), { weekStartsOn: 6 }),
   );
   const [user, setUser] = useState<UserType>(); // TODO is it useful?
   const [users, setUsers] = useState<UserType[]>([]);
@@ -85,7 +86,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   }, [initiated]);
   return (
     <PageWrapper {...props} userID={loggedUserId} withHeader>
-      {loaded ? (
+      {loaded && department ? (
         <>
           <CalendarHeader
             selectedDate={selectedDate}
@@ -129,7 +130,13 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                   },
                   {
                     label: 'Per Diem',
-                    content: <PerDiemComponent loggedUserId={user.id} />,
+                    content: (
+                      <PerDiem
+                        departmentId={department}
+                        userId={user.id}
+                        dateStarted={format(selectedDate, 'yyyy-MM-dd')}
+                      />
+                    ),
                   },
                   {
                     label: 'Trips',
