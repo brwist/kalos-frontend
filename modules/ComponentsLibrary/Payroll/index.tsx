@@ -55,17 +55,23 @@ export const Payroll: FC<Props> = ({ userID }) => {
     let ids: number[] | undefined = [];
     if (dateString == '-- All --') {
       console.log('ALL');
+      console.log(userID);
       ids = (await PerDiemClientService.BatchGet(new pd()))
         .getResultsList()
+        .filter(perdiem => perdiem.getUserId() == userID)
         .map(perdiem => {
           return perdiem.getId();
         });
+
       console.log(ids);
     } else {
       let date = new Date(dateString);
       date.setDate(date.getDate() + 1);
       let pdList = await getPerDiemRowIds(date);
-      ids = pdList?.getResultsList().map(pd => pd.getId());
+      ids = pdList
+        ?.getResultsList()
+        .filter(perdiem => perdiem.getUserId() == userID)
+        .map(pd => pd.getId());
       console.log(ids);
     }
   }, []);
