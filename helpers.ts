@@ -322,7 +322,7 @@ export const usd = (val: number) => `$ ${val.toFixed(2)}`;
  * @param dateOnly if true, returns only the date portion YYYY-MM-DD
  * @returns a timestamp in the format YYYY-MM-DD HH:MM:SS
  */
-function timestamp(dateOnly = false, date: Date) {
+function timestamp(dateOnly = false, date?: Date) {
   const dateObj = date || new Date();
   let month = `${dateObj.getMonth() + 1}`;
   if (month.length === 1) {

@@ -2,6 +2,7 @@ import React, { FC, useState, useCallback, useEffect } from 'react';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
 import { Loader } from '../../Loader/main';
+import { Tabs } from '../Tabs';
 import {
   UserType,
   loadTimesheetDepartments,
@@ -79,7 +80,20 @@ export const Payroll: FC<Props> = ({ userID }) => {
       <SectionBar title="Payroll" />
       {initiated ? (
         <>
-          <PlainForm data={filter} onChange={setFilter} schema={SCHEMA} />
+          <PlainForm
+            data={filter}
+            onChange={setFilter}
+            schema={SCHEMA}
+            className="PayrollFilter"
+          />
+          <Tabs
+            tabs={[
+              {
+                label: 'Per Diem',
+                content: <div>Per Diem</div>,
+              },
+            ]}
+          />
         </>
       ) : (
         <Loader />
