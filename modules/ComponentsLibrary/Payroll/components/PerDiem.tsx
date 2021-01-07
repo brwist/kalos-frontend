@@ -327,11 +327,7 @@ export const PerDiem: FC<Props> = ({
           onClose={handlePendingAuditedToggle()}
           onConfirm={handleAudit}
         >
-          Are you sure, Per Diem of <strong>{pendingAudited.ownerName}</strong>{' '}
-          for department{' '}
-          <strong>{getDepartmentName(pendingAudited.department)}</strong> for{' '}
-          <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no longer
-          needs auditing?
+          Are you sure, this Per Diem no longer needs auditing?
         </Confirm>
       )}
       {pendingPayroll && (
