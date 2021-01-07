@@ -18,7 +18,7 @@ type Entry = Document.AsObject;
 interface Props {
   className?: string;
   userID: number;
-  contractID: number;
+  contractID?: number;
 }
 
 interface State {
@@ -152,7 +152,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
                     document.location.href = [
                       getCFAppUrl('admin:contracts.docemail'),
                       `user_id=${userID}`,
-                      `contract_id=${contractID}`,
+                      ...(contractID ? [`contract_id=${contractID}`] : []),
                       'p=1',
                       `document_id=${entry.id}`,
                     ].join('&');
@@ -190,7 +190,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
               url: [
                 getCFAppUrl('admin:contracts.docaddS3'),
                 `user_id=${userID}`,
-                `contract_id=${contractID}`,
+                ...(contractID ? [`contract_id=${contractID}`] : []),
                 'p=1',
               ].join('&'),
             },

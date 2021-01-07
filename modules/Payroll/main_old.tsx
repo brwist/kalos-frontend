@@ -1,12 +1,12 @@
-import React, { FC } from 'react';
-import { Payroll as PayrollComponent } from '../ComponentsLibrary/Payroll';
+import React, { FC, useState, useEffect, useCallback } from 'react';
+import { format, startOfWeek } from 'date-fns';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-<<<<<<< HEAD
 import { CalendarHeader } from '../ComponentsLibrary/CalendarHeader';
 import { Tabs } from '../ComponentsLibrary/Tabs';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { Field } from '../ComponentsLibrary/Field';
 import { PerDiemComponent } from '../ComponentsLibrary/PerDiem';
+import { PerDiem } from './component/PerDiem';
 import { Loader } from '../Loader/main';
 import {
   UserType,
@@ -16,18 +16,15 @@ import {
   loadTimesheetDepartments,
   getDepartmentName,
   loadUsersByFilter,
-  getPerDiemRowIds,
+  getPerDiemRowId,
 } from '../../helpers';
 import { TripSummary } from '../ComponentsLibrary/TripSummary';
-import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
-=======
->>>>>>> cb1416bf6717b9e6c658fe26b6d6430106b25769
 
 interface Props {
   userID: number;
+  loggedUserId: number;
 }
 
-<<<<<<< HEAD
 export const Payroll: FC<Props & PageWrapperProps> = props => {
   const { loggedUserId, userID } = props;
   const [initiated, setInitiated] = useState<boolean>(false);
@@ -35,17 +32,15 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [department, setDepartment] = useState<number>();
   const [selectedDate, setSelectedDate] = useState<Date>(
-    startOfWeek(new Date()),
+    startOfWeek(new Date(), { weekStartsOn: 6 }),
   );
   const [user, setUser] = useState<UserType>(); // TODO is it useful?
   const [users, setUsers] = useState<UserType[]>([]);
-  const [perDiemRowId, setPerDiemRowId] = useState<number[]>([]);
+  const [perDiemRowId, setPerDiemRowId] = useState<number>(0);
   const handlePerDiemRowIdChange = useCallback(
     async (newDate: Date) => {
-      const perDiemRowId = await getPerDiemRowIds(newDate);
-      let arr: number[] = [];
-      perDiemRowId?.toArray()[0].forEach((id: any) => arr.push(id[0]));
-      setPerDiemRowId(arr);
+      const perDiemRowId = await getPerDiemRowId(newDate);
+      setPerDiemRowId(perDiemRowId!);
     },
     [setPerDiemRowId],
   );
@@ -91,7 +86,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   }, [initiated]);
   return (
     <PageWrapper {...props} userID={loggedUserId} withHeader>
-      {loaded ? (
+      {loaded && department ? (
         <>
           <CalendarHeader
             selectedDate={selectedDate}
@@ -135,26 +130,34 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                   },
                   {
                     label: 'Per Diem',
-                    content: <PerDiemComponent loggedUserId={user.id} />,
+                    content: (
+                      <PerDiem
+                        departmentId={department}
+                        userId={user.id}
+                        dateStarted={format(selectedDate, 'yyyy-MM-dd')}
+                      />
+                    ),
                   },
                   {
                     label: 'Trips',
                     content:
-                      perDiemRowId.length > 0 ? (
+                      perDiemRowId > 0 ? (
                         <TripSummary
                           canAddTrips={false}
                           cannotDeleteTrips
                           loggedUserId={user.id}
-                          perDiemRowIds={perDiemRowId}
-                          key={perDiemRowId[0]}
+                          perDiemRowId={perDiemRowId}
+                          key={perDiemRowId}
                         />
+                      ) : perDiemRowId != undefined ? (
+                        <Loader />
                       ) : (
                         <TripSummary
                           canAddTrips={false}
                           cannotDeleteTrips
                           loggedUserId={user.id}
-                          perDiemRowIds={[-1]} // a bit hacky, but it will show no results found
-                          key={perDiemRowId[0]}
+                          perDiemRowId={-1} // a bit hacky, but it will show no results found
+                          key={perDiemRowId}
                         />
                       ),
                   },
@@ -169,10 +172,3 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
     </PageWrapper>
   );
 };
-=======
-export const Payroll: FC<Props & PageWrapperProps> = ({ userID, ...props }) => (
-  <PageWrapper {...props} userID={userID} withHeader>
-    <PayrollComponent userID={userID} />
-  </PageWrapper>
-);
->>>>>>> cb1416bf6717b9e6c658fe26b6d6430106b25769
