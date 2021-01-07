@@ -154,6 +154,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                     loggedUserId={userID}
                     perDiemRowIds={loadedPerDiemIds}
                     cannotDeleteTrips
+                    key={loadedPerDiemIds.toString()}
                   />
                 ),
               },
