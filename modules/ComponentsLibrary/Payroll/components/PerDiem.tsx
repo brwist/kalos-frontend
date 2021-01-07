@@ -27,9 +27,9 @@ interface Props {
 }
 
 type FilterType = {
-  approved: boolean;
-  needsAuditing: boolean;
-  payrollProcessed: boolean;
+  approved: number;
+  needsAuditing: number;
+  payrollProcessed: number;
 };
 
 const formatWeek = (date: string) => {
@@ -69,16 +69,17 @@ export const PerDiem: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
   const [filter, setFilter] = useState<FilterType>({
-    approved: false,
-    needsAuditing: false,
-    payrollProcessed: false,
+    approved: 0,
+    needsAuditing: 0,
+    payrollProcessed: 0,
   });
+  console.log({ filter });
   const load = useCallback(async () => {
     setLoading(true);
     const perDiems = await loadPerDiemsNeedsAuditing(
       page,
-      false,
-      false,
+      !!filter.needsAuditing,
+      !!filter.payrollProcessed,
       departmentId,
       employeeId,
       week === OPTION_ALL ? undefined : week,
@@ -86,10 +87,24 @@ export const PerDiem: FC<Props> = ({
     setPerDiems(perDiems.resultsList);
     setCount(perDiems.totalCount);
     setLoading(false);
-  }, [departmentId, employeeId, week, page]);
+  }, [
+    departmentId,
+    employeeId,
+    week,
+    page,
+    filter.needsAuditing,
+    filter.payrollProcessed,
+  ]);
   useEffect(() => {
     load();
-  }, [departmentId, employeeId, week, page]);
+  }, [
+    departmentId,
+    employeeId,
+    week,
+    page,
+    filter.needsAuditing,
+    filter.payrollProcessed,
+  ]);
   const handlePerDiemViewedToggle = useCallback(
     (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
