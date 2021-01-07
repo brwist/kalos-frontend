@@ -51,6 +51,24 @@ export const Payroll: FC<Props> = ({ userID }) => {
     ],
     [],
   );
+  const handleSelectNewWeek = useCallback(async dateString => {
+    let ids: number[] | undefined = [];
+    if (dateString == '-- All --') {
+      console.log('ALL');
+      ids = (await PerDiemClientService.BatchGet(new pd()))
+        .getResultsList()
+        .map(perdiem => {
+          return perdiem.getId();
+        });
+      console.log(ids);
+    } else {
+      let date = new Date(dateString);
+      date.setDate(date.getDate() + 1);
+      let pdList = await getPerDiemRowIds(date);
+      ids = pdList?.getResultsList().map(pd => pd.getId());
+      console.log(ids);
+    }
+  }, []);
   const init = useCallback(async () => {
     const departments = await loadTimesheetDepartments();
     setDepartments(departments);
@@ -96,24 +114,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
         name: 'week',
         label: 'Select Week',
         options: weekOptions,
-        onChange: async value => {
-          let ids: number[] | undefined = [];
-          if (value == '-- All --') {
-            console.log('ALL');
-            ids = (await PerDiemClientService.BatchGet(new pd()))
-              .getResultsList()
-              .map(perdiem => {
-                return perdiem.getId();
-              });
-            console.log(ids);
-          } else {
-            let date = new Date(value);
-            date.setDate(date.getDate() + 1);
-            let pdList = await getPerDiemRowIds(date);
-            ids = pdList?.getResultsList().map(pd => pd.getId());
-            console.log(ids);
-          }
-        },
+        onChange: async date => handleSelectNewWeek(date),
       },
     ],
   ];
