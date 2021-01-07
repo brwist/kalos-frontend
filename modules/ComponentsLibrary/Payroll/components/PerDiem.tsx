@@ -10,12 +10,15 @@ import { PerDiemComponent } from '../../PerDiem';
 import { InfoTable } from '../../InfoTable';
 import { PlainForm, Schema } from '../../PlainForm';
 import { TripInfoTable } from '../../TripInfoTable';
+import { Tooltip } from '../../Tooltip';
+import { Confirm } from '../../Confirm';
 import {
   loadPerDiemsNeedsAuditing,
   PerDiemType,
   makeFakeRows,
   formatDate,
   getDepartmentName,
+  PerDiemClientService,
 } from '../../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 
@@ -68,12 +71,12 @@ export const PerDiem: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
+  const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
   const [filter, setFilter] = useState<FilterType>({
     approved: 0,
     needsAuditing: 0,
     payrollProcessed: 0,
   });
-  console.log({ filter });
   const load = useCallback(async () => {
     setLoading(true);
     const perDiems = await loadPerDiemsNeedsAuditing(
@@ -109,6 +112,19 @@ export const PerDiem: FC<Props> = ({
     (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
   );
+  const handlePendingAuditedToggle = useCallback(
+    (perDiem?: PerDiemType) => () => setPendingAudited(perDiem),
+    [setPendingAudited],
+  );
+  const handleAudit = useCallback(async () => {
+    if (pendingAudited) {
+      const { id } = pendingAudited;
+      setLoading(true);
+      setPendingAudited(undefined);
+      await PerDiemClientService.updatePerDiemNeedsAudit(id);
+      load();
+    }
+  }, [pendingAudited, setLoading, setPendingAudited]);
   return (
     <div>
       <PlainForm<FilterType>
@@ -165,13 +181,33 @@ export const PerDiem: FC<Props> = ({
                     value: el.payrollProcessed ? 'Yes' : 'No',
                     onClick: handlePerDiemViewedToggle(el),
                     actions: [
-                      <IconButton
+                      <Tooltip
                         key="view"
-                        size="small"
-                        onClick={handlePerDiemViewedToggle(el)}
+                        content="View Per Diem"
+                        placement="bottom"
                       >
-                        <Visibility />
-                      </IconButton>,
+                        <IconButton
+                          size="small"
+                          onClick={handlePerDiemViewedToggle(el)}
+                        >
+                          <Visibility />
+                        </IconButton>
+                      </Tooltip>,
+                      <Tooltip
+                        key="audit"
+                        content="Auditing"
+                        placement="bottom"
+                      >
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={handlePendingAuditedToggle(el)}
+                            disabled={!el.needsAuditing}
+                          >
+                            <FlashOff />
+                          </IconButton>
+                        </span>
+                      </Tooltip>,
                     ],
                   },
                 ];
@@ -213,6 +249,20 @@ export const PerDiem: FC<Props> = ({
             );
           })}
         </Modal>
+      )}
+      {pendingAudited && (
+        <Confirm
+          title="Confirm Auditing"
+          open
+          onClose={handlePendingAuditedToggle()}
+          onConfirm={handleAudit}
+        >
+          Are you sure, Per Diem of <strong>{pendingAudited.ownerName}</strong>{' '}
+          for department{' '}
+          <strong>{getDepartmentName(pendingAudited.department)}</strong> for{' '}
+          <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no longer
+          needs auditing?
+        </Confirm>
       )}
     </div>
   );
