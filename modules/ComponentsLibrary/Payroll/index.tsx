@@ -57,7 +57,11 @@ export const Payroll: FC<Props> = ({ userID }) => {
     if (dateString == '-- All --') {
       ids = (await PerDiemClientService.BatchGet(new pd()))
         .getResultsList()
-        .filter(perdiem => perdiem.getUserId() == userID)
+        .filter(perdiem =>
+          filter.employeeId != 0
+            ? perdiem.getUserId() == filter.employeeId
+            : true,
+        )
         .map(perdiem => {
           return perdiem.getId();
         });
@@ -68,7 +72,9 @@ export const Payroll: FC<Props> = ({ userID }) => {
       let pdList = await getPerDiemRowIds(date);
       ids = pdList
         ?.getResultsList()
-        .filter(perdiem => perdiem.getUserId() == userID)
+        .filter(perdiem =>
+          filter.employeeId != 0 ? perdiem.getUserId() == userID : true,
+        )
         .map(pd => pd.getId());
       ids ? setLoadedPerDiemIds(ids) : setLoadedPerDiemIds([]);
     }
@@ -123,6 +129,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
       },
     ],
   ];
+  console.log(loadedPerDiemIds);
   return (
     <div>
       <SectionBar title="Payroll" />
@@ -151,10 +158,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
                 label: 'Trips',
                 content: (
                   <TripSummary
-                    loggedUserId={userID}
+                    loggedUserId={filter.employeeId}
                     perDiemRowIds={loadedPerDiemIds}
                     cannotDeleteTrips
-                    key={loadedPerDiemIds.toString()}
+                    key={loadedPerDiemIds.toString() + filter.employeeId}
                   />
                 ),
               },
