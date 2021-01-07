@@ -110,7 +110,6 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
 interface Props {
   perDiemRowIds: number[];
   loggedUserId: number;
-  canAddTrips: boolean;
   cannotDeleteTrips?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
