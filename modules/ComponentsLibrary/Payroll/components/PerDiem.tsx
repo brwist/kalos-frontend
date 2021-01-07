@@ -100,6 +100,7 @@ export const PerDiem: FC<Props> = ({
     employeeId,
     week,
     page,
+    filter.approved,
     filter.needsAuditing,
     filter.payrollProcessed,
   ]);
@@ -110,6 +111,7 @@ export const PerDiem: FC<Props> = ({
     employeeId,
     week,
     page,
+    filter.approved,
     filter.needsAuditing,
     filter.payrollProcessed,
   ]);
