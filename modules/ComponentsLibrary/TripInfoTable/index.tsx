@@ -410,7 +410,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
             }}
             addressFields={2}
             schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
-          ></PlaceAutocompleteAddressForm>
+          />
         )}
         {this.state.pendingTripToDelete && (
           <ConfirmDelete
