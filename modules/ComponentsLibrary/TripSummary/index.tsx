@@ -161,7 +161,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
   };
 
-  initializeStateChange = () => this.setState({ key: this.state.key + 1 });
+  initializeStateChange = () => {
+    this.setState({ key: this.state.key + 1 });
+  };
 
   refreshNamesAndDates = async () => {
     await this.getUserNamesFromIds();
@@ -178,7 +180,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
       try {
         const trips = await PerDiemClientService.BatchGetTrips(trip);
         this.updateTotalMiles();
-        this.setState({ trips: trips });
+        let totalTrips = this.state.trips.getResultsList();
+        totalTrips = [...totalTrips, ...trips.getResultsList()];
+        let list = new TripList();
+        list.setResultsList(totalTrips);
+        this.setState({ trips: list });
         await this.refreshNamesAndDates();
         this.setState({ loadingTrips: false });
       } catch (err: any) {
@@ -305,6 +311,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     return dist;
   };
   updateTotalMiles = async () => {
+    console.log('Updating total miles');
     this.setState({
       totalTripMiles: await this.getTotalTripDistance(),
     });
