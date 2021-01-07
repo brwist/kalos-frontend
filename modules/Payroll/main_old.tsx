@@ -16,7 +16,7 @@ import {
   loadTimesheetDepartments,
   getDepartmentName,
   loadUsersByFilter,
-  getPerDiemRowId,
+  getPerDiemRowIds,
 } from '../../helpers';
 import { TripSummary } from '../ComponentsLibrary/TripSummary';
 
@@ -36,11 +36,12 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
   );
   const [user, setUser] = useState<UserType>(); // TODO is it useful?
   const [users, setUsers] = useState<UserType[]>([]);
-  const [perDiemRowId, setPerDiemRowId] = useState<number>(0);
+  const [perDiemRowId, setPerDiemRowId] = useState<number[]>([]);
   const handlePerDiemRowIdChange = useCallback(
     async (newDate: Date) => {
-      const perDiemRowId = await getPerDiemRowId(newDate);
-      setPerDiemRowId(perDiemRowId!);
+      const perDiemRowId = await getPerDiemRowIds(newDate);
+      let arr = perDiemRowId?.toArray();
+      setPerDiemRowId(arr!);
     },
     [setPerDiemRowId],
   );
@@ -141,22 +142,20 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                   {
                     label: 'Trips',
                     content:
-                      perDiemRowId > 0 ? (
+                      perDiemRowId.length > 0 ? (
                         <TripSummary
-                          canAddTrips={false}
                           cannotDeleteTrips
                           loggedUserId={user.id}
-                          perDiemRowId={perDiemRowId}
-                          key={perDiemRowId}
+                          perDiemRowIds={perDiemRowId}
+                          key={perDiemRowId[0]}
                         />
                       ) : perDiemRowId != undefined ? (
                         <Loader />
                       ) : (
                         <TripSummary
-                          canAddTrips={false}
                           cannotDeleteTrips
                           loggedUserId={user.id}
-                          perDiemRowId={-1} // a bit hacky, but it will show no results found
+                          perDiemRowIds={[-1]} // a bit hacky, but it will show no results found
                           key={perDiemRowId}
                         />
                       ),

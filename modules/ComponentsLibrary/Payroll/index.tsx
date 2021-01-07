@@ -119,11 +119,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
               {
                 label: 'Trips',
                 content: (
-                  <TripSummary
-                    canAddTrips={false}
-                    loggedUserId={userID}
-                    perDiemRowIds={[260]}
-                  />
+                  <TripSummary loggedUserId={userID} perDiemRowIds={[260]} />
                 ),
               },
             ]}
