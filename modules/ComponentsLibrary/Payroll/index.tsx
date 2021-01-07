@@ -95,6 +95,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                   <PerDiem
                     departmentId={filter.departmentId}
                     employeeId={filter.employeeId}
+                    loggedUserId={userID}
                   />
                 ),
               },
