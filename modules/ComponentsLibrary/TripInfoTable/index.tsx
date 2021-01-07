@@ -237,11 +237,13 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       return;
     }
     let totalMiles = 0;
-    this.props.perDiemRowIds.forEach(async id => {
+    this.props.perDiemRowIds.forEach(async (id, idx, arr) => {
       totalMiles += await this.getTotalTripDistance(id);
-    });
-    this.setState({
-      totalTripMiles: totalMiles,
+      if (idx == arr.length - 1) {
+        this.setState({
+          totalTripMiles: totalMiles,
+        });
+      }
     });
   };
   deleteTrip = async (trip: Trip) => {
@@ -380,12 +382,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                   return pass;
                 })
                 .map((currentTrip: Trip) => {
-                  console.log(
-                    'Passed trip: ',
-                    currentTrip.getPerDiemRowId(),
-                    'TRIP ITSELF: ',
-                    currentTrip,
-                  );
                   return [
                     { value: currentTrip.getOriginAddress() },
                     { value: currentTrip.getDestinationAddress() },
