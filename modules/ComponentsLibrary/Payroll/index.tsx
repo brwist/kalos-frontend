@@ -15,6 +15,7 @@ import {
 import { OPTION_ALL } from '../../../constants';
 import { PerDiem } from './components/PerDiem';
 import './styles.less';
+import { TripSummary } from '../TripSummary';
 
 interface Props {
   userID: number;
@@ -112,6 +113,16 @@ export const Payroll: FC<Props> = ({ userID }) => {
                     employeeId={filter.employeeId}
                     week={filter.week}
                     loggedUserId={userID}
+                  />
+                ),
+              },
+              {
+                label: 'Trips',
+                content: (
+                  <TripSummary
+                    canAddTrips={false}
+                    loggedUserId={userID}
+                    perDiemRowIds={[260]}
                   />
                 ),
               },
