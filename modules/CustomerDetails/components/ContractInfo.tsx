@@ -480,9 +480,7 @@ export const ContractInfo: FC<Props> = props => {
           {children}
         </div>
         <div className="ContractInfoAsidePanel">
-          {entry.id > 0 && (
-            <ContractDocuments contractID={entry.id} {...props} />
-          )}
+          <ContractDocuments contractID={entry.id} {...props} />
         </div>
       </div>
       <Modal open={editing} onClose={handleToggleEditing}>
