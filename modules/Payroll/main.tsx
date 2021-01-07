@@ -18,6 +18,7 @@ import {
   getPerDiemRowIds,
 } from '../../helpers';
 import { TripSummary } from '../ComponentsLibrary/TripSummary';
+import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 
 interface Props {
   userID: number;
@@ -40,7 +41,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
     async (newDate: Date) => {
       const perDiemRowId = await getPerDiemRowIds(newDate);
       let arr: number[] = [];
-      perDiemRowId?.toArray().forEach(id => arr.push(id[0]));
+      perDiemRowId?.toArray()[0].forEach((id: any) => arr.push(id[0]));
       setPerDiemRowId(arr);
     },
     [setPerDiemRowId],
@@ -85,7 +86,6 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
       initiate();
     }
   }, [initiated]);
-  console.log(perDiemRowId);
   return (
     <PageWrapper {...props} userID={loggedUserId} withHeader>
       {loaded ? (
