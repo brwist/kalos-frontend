@@ -22,6 +22,7 @@ import {
   PerDiemList,
   PerDiem as pd,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 
 interface Props {
   userID: number;
@@ -106,7 +107,9 @@ export const Payroll: FC<Props> = ({ userID }) => {
               });
             console.log(ids);
           } else {
-            let pdList = await getPerDiemRowIds(new Date(value));
+            let date = new Date(value);
+            date.setDate(date.getDate() + 1);
+            let pdList = await getPerDiemRowIds(date);
             ids = pdList?.getResultsList().map(pd => pd.getId());
             console.log(ids);
           }

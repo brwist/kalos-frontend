@@ -1580,7 +1580,6 @@ export const getPerDiemRowIds = async (date?: Date) => {
   } else {
     daysToGoBack = dateToQuery.getDay() - 6;
   }
-
   let dateToQueryMonth = dateToQuery.getMonth() + 1;
   let dateToQueryYear = dateToQuery.getFullYear();
   let dateToQueryDay = dateToQuery.getDate() - daysToGoBack;
