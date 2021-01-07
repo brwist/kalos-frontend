@@ -1583,6 +1583,8 @@ export const getPerDiemRowIds = async (date?: Date) => {
   let dateToQueryMonth = dateToQuery.getMonth() + 1;
   let dateToQueryYear = dateToQuery.getFullYear();
   let dateToQueryDay = dateToQuery.getDate() - daysToGoBack;
+  // If the dateToQueryDay is less than 0, that means it occurred last year but this day
+  // that is being checked is in the new year, so we act accordingly
   if (dateToQueryDay < 0) {
     dateToQueryMonth = 12;
     dateToQueryYear--;
