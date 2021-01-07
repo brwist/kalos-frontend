@@ -1580,17 +1580,30 @@ export const getPerDiemRowIds = async (date?: Date) => {
   } else {
     daysToGoBack = dateToQuery.getDay() - 6;
   }
+
+  const dateBack = dateToQuery.getDate() - daysToGoBack;
+  let dateToQueryMonth = dateToQuery.getMonth() + 1;
+  let dateToQueryYear = dateToQuery.getFullYear();
+  let dateToQueryDay = dateToQuery.getDate() - daysToGoBack;
+  if (dateBack < 0) {
+    dateToQueryMonth = 12;
+    dateToQueryYear--;
+    dateToQueryDay = 31 + dateBack;
+  }
+
   // We find the last saturday that happened because that's the start of our weeks
   // and every Saturday per_diem_row is incremented
-  const lastSaturday = `${dateToQuery.getFullYear()}-${padWithZeroes(
-    dateToQuery.getMonth() + 1,
-  )}-${padWithZeroes(dateToQuery.getDate() - daysToGoBack)} 00:00:00`;
+  const lastSaturday = `${dateToQueryYear}-${padWithZeroes(
+    dateToQueryMonth,
+  )}-${padWithZeroes(dateToQueryDay)} 00:00:00`;
 
   let perDiemRes: PerDiemList = new PerDiemList();
   try {
     let pd = new PerDiem();
+    console.log('Last saturday: ', lastSaturday);
     pd.setDateStarted(lastSaturday);
     perDiemRes = await PerDiemClientService.BatchGet(pd);
+    console.log('PER DIEM RES: ', perDiemRes);
   } catch (error: any) {
     let err = String(error);
     if (
@@ -1601,7 +1614,7 @@ export const getPerDiemRowIds = async (date?: Date) => {
       // There was just no results in the set so we should not error for that,
       // just display it as no trips and if they go to add one add a Per Diem
       // first
-      console.log('No per-diem was found for the given date.');
+      console.log('No per-diem was found for the given date : ', error);
       return;
     }
     console.error(

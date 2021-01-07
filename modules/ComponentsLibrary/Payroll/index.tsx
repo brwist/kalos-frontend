@@ -11,6 +11,7 @@ import {
   loadTechnicians,
   getCustomerName,
   getWeekOptions,
+  getPerDiemRowIds,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
 import { PerDiem } from './components/PerDiem';
@@ -89,6 +90,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
         name: 'week',
         label: 'Select Week',
         options: weekOptions,
+        onChange: async value => {
+          const ids = await getPerDiemRowIds(new Date(value));
+          console.log(ids);
+        },
       },
     ],
   ];
@@ -119,7 +124,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
               {
                 label: 'Trips',
                 content: (
-                  <TripSummary loggedUserId={userID} perDiemRowIds={[260]} />
+                  <TripSummary loggedUserId={userID} perDiemRowIds={[]} />
                 ),
               },
             ]}
