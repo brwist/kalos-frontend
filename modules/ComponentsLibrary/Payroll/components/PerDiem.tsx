@@ -17,7 +17,7 @@ import {
   formatDate,
   getDepartmentName,
 } from '../../../../helpers';
-import { OPTION_ALL } from '../../../../constants';
+import { OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 
 interface Props {
   loggedUserId: number;
@@ -65,6 +65,8 @@ export const PerDiem: FC<Props> = ({
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [page, setPage] = useState<number>(0);
+  const [count, setCount] = useState<number>(0);
   const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
   const [filter, setFilter] = useState<FilterType>({
     approved: false,
@@ -74,7 +76,7 @@ export const PerDiem: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     const perDiems = await loadPerDiemsNeedsAuditing(
-      0,
+      page,
       false,
       false,
       departmentId,
@@ -82,11 +84,12 @@ export const PerDiem: FC<Props> = ({
       week === OPTION_ALL ? undefined : week,
     );
     setPerDiems(perDiems.resultsList);
+    setCount(perDiems.totalCount);
     setLoading(false);
-  }, [departmentId, employeeId, week]);
+  }, [departmentId, employeeId, week, page]);
   useEffect(() => {
     load();
-  }, [departmentId, employeeId, week]);
+  }, [departmentId, employeeId, week, page]);
   const handlePerDiemViewedToggle = useCallback(
     (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
@@ -98,6 +101,15 @@ export const PerDiem: FC<Props> = ({
         data={filter}
         onChange={setFilter}
         className="PayrollFilter"
+      />
+      <SectionBar
+        title="Per Diems"
+        pagination={{
+          page,
+          count,
+          rowsPerPage: ROWS_PER_PAGE,
+          onChangePage: setPage,
+        }}
       />
       <InfoTable
         columns={[
