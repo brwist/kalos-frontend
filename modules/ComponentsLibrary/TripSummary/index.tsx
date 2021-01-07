@@ -245,7 +245,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   getUserNamesFromIds = async () => {
     let res: { name: string; id: number }[] = [];
 
-    this.state.trips.getResultsList().forEach(async (trip: Trip) => {
+    this.state.trips.getResultsList().forEach(async (trip: Trip, idx, arr) => {
       try {
         let user = await UserClientService.loadUserById(trip.getUserId());
         let obj: { name: string; id: number } = {
@@ -253,13 +253,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
           id: trip.getUserId(),
         };
         if (!res.includes(obj)) res.push(obj);
+        if (idx == arr.length - 1) {
+          this.nameIdPair = res;
+          this.initializeStateChange();
+          return res;
+        }
       } catch (err: any) {
         console.error('Failed to get user names from IDs: ', err);
       }
     });
-    this.nameIdPair = res;
-
-    return res;
   };
 
   getNameById = (userId: number) => {
@@ -310,7 +312,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     return dist;
   };
   updateTotalMiles = async () => {
-    console.log('Updating total miles');
     this.setState({
       totalTripMiles: await this.getTotalTripDistance(),
     });
