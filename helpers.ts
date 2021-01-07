@@ -1581,15 +1581,13 @@ export const getPerDiemRowIds = async (date?: Date) => {
     daysToGoBack = dateToQuery.getDay() - 6;
   }
 
-  const dateBack = dateToQuery.getDate() - daysToGoBack;
-
   let dateToQueryMonth = dateToQuery.getMonth() + 1;
   let dateToQueryYear = dateToQuery.getFullYear();
   let dateToQueryDay = dateToQuery.getDate() - daysToGoBack;
-  if (dateBack < 0) {
+  if (dateToQueryDay < 0) {
     dateToQueryMonth = 12;
     dateToQueryYear--;
-    dateToQueryDay = 31 + dateBack;
+    dateToQueryDay = 31 + dateToQueryDay;
   }
 
   // We find the last saturday that happened because that's the start of our weeks
