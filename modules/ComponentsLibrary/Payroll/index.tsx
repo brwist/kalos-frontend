@@ -44,6 +44,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
   });
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [employees, setEmployees] = useState<UserType[]>([]);
+  const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -54,16 +55,13 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const handleSelectNewWeek = useCallback(async dateString => {
     let ids: number[] | undefined = [];
     if (dateString == '-- All --') {
-      console.log('ALL');
-      console.log(userID);
       ids = (await PerDiemClientService.BatchGet(new pd()))
         .getResultsList()
         .filter(perdiem => perdiem.getUserId() == userID)
         .map(perdiem => {
           return perdiem.getId();
         });
-
-      console.log(ids);
+      setLoadedPerDiemIds(ids);
     } else {
       let date = new Date(dateString);
       date.setDate(date.getDate() + 1);
@@ -72,7 +70,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
         ?.getResultsList()
         .filter(perdiem => perdiem.getUserId() == userID)
         .map(pd => pd.getId());
-      console.log(ids);
+      ids ? setLoadedPerDiemIds(ids) : setLoadedPerDiemIds([]);
     }
   }, []);
   const init = useCallback(async () => {
@@ -80,6 +78,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     setDepartments(departments);
     const employees = await loadTechnicians();
     setEmployees(employees);
+    handleSelectNewWeek('-- All --');
     setInitiated(true);
   }, []);
   useEffect(() => {
@@ -151,7 +150,11 @@ export const Payroll: FC<Props> = ({ userID }) => {
               {
                 label: 'Trips',
                 content: (
-                  <TripSummary loggedUserId={userID} perDiemRowIds={[]} />
+                  <TripSummary
+                    loggedUserId={userID}
+                    perDiemRowIds={loadedPerDiemIds}
+                    cannotDeleteTrips
+                  />
                 ),
               },
             ]}
