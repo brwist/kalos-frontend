@@ -86,7 +86,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
       },
       {
         name: 'week',
-        label: 'Week',
+        label: 'Select Week',
         options: weekOptions,
       },
     ],
