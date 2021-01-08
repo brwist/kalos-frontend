@@ -317,6 +317,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
           {this.state.loadingTrips && <Loader />}
           {this.props.cannotDeleteTrips && (
             <InfoTable
+              key={this.state.trips.toString()}
               columns={[
                 { name: 'Origin' },
                 { name: 'Destination' },
@@ -328,9 +329,14 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
               data={this.state
                 .trips!.getResultsList()
                 .filter((trip: Trip) => {
-                  this.props.perDiemRowIds.map(id => {
-                    return trip.getPerDiemRowId() == id;
+                  let pass = false;
+                  this.props.perDiemRowIds.forEach(id => {
+                    if (trip.getPerDiemRowId() == id) {
+                      pass = true;
+                    }
                   });
+
+                  return pass;
                 })
                 .map((currentTrip: Trip) => {
                   return [
@@ -347,6 +353,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
           )}
           {!this.props.cannotDeleteTrips && (
             <InfoTable
+              key={this.state.trips.toString()}
               columns={[
                 { name: 'Origin' },
                 { name: 'Destination' },
