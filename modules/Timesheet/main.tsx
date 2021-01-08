@@ -35,7 +35,7 @@ import {
   TimeoffRequestClientService,
   TimeoffRequestTypes,
   UserClientService,
-  getPerDiemRowId,
+  getPerDiemRowIds,
 } from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
@@ -105,7 +105,7 @@ export const Timesheet: FC<Props> = props => {
     timeoffRequestTypes,
     setTimeoffRequestTypes,
   ] = useState<TimeoffRequestTypes>();
-  const [perDiemRowId, setPerDiemRowId] = useState<number>();
+  const [perDiemRowId, setPerDiemRowId] = useState<number[]>();
 
   const {
     user,
@@ -383,8 +383,8 @@ export const Timesheet: FC<Props> = props => {
     return null;
   }
   const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
-  getPerDiemRowId(selectedDate).then(value => {
-    setPerDiemRowId(value);
+  getPerDiemRowIds(selectedDate).then(value => {
+    setPerDiemRowId(value?.toArray());
   });
   return (
     <PageWrapper {...props} userID={userId}>
@@ -467,11 +467,12 @@ export const Timesheet: FC<Props> = props => {
           />
         </Modal>
       )}
-      {tripsOpen && perDiemRowId != 0 && (
+      {tripsOpen && perDiemRowId?.length != 0 && (
         <Modal open onClose={() => setTripsOpen(false)}>
           <TripInfoTable
+            canAddTrips
             loggedUserId={props.userId}
-            perDiemRowId={perDiemRowId!}
+            perDiemRowIds={perDiemRowId!}
           />
         </Modal>
       )}

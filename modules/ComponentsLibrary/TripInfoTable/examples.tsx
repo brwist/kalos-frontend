@@ -10,8 +10,8 @@ export default () => (
     <ExampleTitle>Normal</ExampleTitle>
 
     <TripInfoTable
-      perDiemRowId={248}
-      loggedUserId={2573}
+      perDiemRowIds={[1]}
+      loggedUserId={101275}
       canAddTrips
     ></TripInfoTable>
   </>

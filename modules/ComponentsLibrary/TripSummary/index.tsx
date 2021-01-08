@@ -11,7 +11,6 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import {
   PerDiemClientService,
   getTripDistance,
-  getPerDiemRowId,
   UserClientService,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
@@ -109,9 +108,8 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
 ];
 
 interface Props {
-  perDiemRowId: number;
+  perDiemRowIds: number[];
   loggedUserId: number;
-  canAddTrips: boolean;
   cannotDeleteTrips?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
@@ -124,7 +122,6 @@ interface State {
   pendingDeleteAllTrips: boolean;
   trips: TripList;
   totalTripMiles: number;
-  loadingTrips: boolean;
   key: number;
 }
 
@@ -139,15 +136,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
       totalTripMiles: 0,
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
-      loadingTrips: false,
       key: 0,
     };
     this.updateTotalMiles();
-  }
-
-  componentDidMount() {
     this.getTrips();
   }
+
+  componentDidMount() {}
   getTripDistance = async (origin: string, destination: string) => {
     try {
       await getTripDistance(origin, destination);
@@ -161,33 +156,29 @@ export class TripSummary extends React.PureComponent<Props, State> {
       );
     }
   };
-
-  initializeStateChange = () => this.setState({ key: this.state.key + 1 });
-
   refreshNamesAndDates = async () => {
-    try {
-      await this.getUserNamesFromIds();
-      await this.getRowDatesFromPerDiemIds();
-    } catch (err: any) {
-      console.error('Error refreshing names and dates: ', err);
-    }
-    this.initializeStateChange();
+    await this.getUserNamesFromIds();
+    await this.getRowDatesFromPerDiemIds();
   };
 
   getTrips = async () => {
-    let trip = new Trip();
-    trip.setUserId(this.props.loggedUserId);
-    trip.setPerDiemRowId(this.props.perDiemRowId);
-    this.setState({ loadingTrips: true });
-    try {
-      const trips = await PerDiemClientService.BatchGetTrips(trip);
-      this.updateTotalMiles();
-      this.setState({ trips: trips });
-      this.refreshNamesAndDates();
-      this.setState({ loadingTrips: false });
-    } catch (err: any) {
-      console.error('Failed to get trips: ', err);
-    }
+    console.log('Getting trips with PD ids: ', this.props.perDiemRowIds);
+    this.props.perDiemRowIds.forEach(async (id: number) => {
+      let trip = new Trip();
+      if (this.props.loggedUserId != 0) trip.setUserId(this.props.loggedUserId);
+      trip.setPerDiemRowId(id);
+      try {
+        const trips = await PerDiemClientService.BatchGetTrips(trip);
+        this.updateTotalMiles();
+        let totalTrips = [...trips.getResultsList()];
+        let list = new TripList();
+        list.setResultsList(totalTrips);
+        this.setState({ trips: list });
+        await this.refreshNamesAndDates();
+      } catch (err: any) {
+        console.log('Failed to get trips: ', err);
+      }
+    });
   };
 
   getRowStartDateById = (rowId: number) => {
@@ -198,8 +189,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }
 
-    console.log('Failed to find a date for row ID: ', rowId);
-    return 'None';
+    //console.log('Failed to find a date for row ID: ', rowId);
+    return '-';
   };
 
   getRowDatesFromPerDiemIds = async () => {
@@ -243,7 +234,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   getUserNamesFromIds = async () => {
     let res: { name: string; id: number }[] = [];
 
-    this.state.trips.getResultsList().forEach(async (trip: Trip) => {
+    this.state.trips.getResultsList().forEach(async (trip: Trip, idx, arr) => {
       try {
         let user = await UserClientService.loadUserById(trip.getUserId());
         let obj: { name: string; id: number } = {
@@ -251,13 +242,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
           id: trip.getUserId(),
         };
         if (!res.includes(obj)) res.push(obj);
+        if (idx == arr.length - 1) {
+          this.nameIdPair = res;
+          return res;
+        }
       } catch (err: any) {
         console.error('Failed to get user names from IDs: ', err);
       }
     });
-    this.nameIdPair = res;
-
-    return res;
   };
 
   getNameById = (userId: number) => {
@@ -272,25 +264,40 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }
 
-    console.log('Failed to find a name for user ID: ', userId);
+    //console.log('Failed to find a name for user ID: ', userId);
   };
 
   getTotalTripDistance = async () => {
-    try {
-      let trip = new Trip();
-      trip.setPerDiemRowId(this.props.perDiemRowId);
-      trip.setUserId(this.props.loggedUserId);
-      const trips = await PerDiemClientService.BatchGetTrips(trip);
-      let totalDist = 0;
-      trips
-        .getResultsList()
-        .forEach(trip => (totalDist += trip.getDistanceInMiles()));
+    let dist = 0;
 
-      return totalDist;
-    } catch (err: any) {
-      console.error('Failed to get total trip distance: ', err);
-      return 0;
-    }
+    await new Promise(async resolve => {
+      let total = 0;
+
+      try {
+        this.props.perDiemRowIds.map(async (id, index, arr) => {
+          let trip = new Trip();
+          trip.setPerDiemRowId(id);
+          trip.setUserId(this.props.loggedUserId);
+          const trips = await PerDiemClientService.BatchGetTrips(trip);
+          let totalDist = 0;
+          trips
+            .getResultsList()
+            .forEach(trip => (totalDist += trip.getDistanceInMiles()));
+
+          total += totalDist;
+
+          if (index == arr.length - 1) {
+            resolve(total);
+          }
+        });
+      } catch (err: any) {
+        console.error('An error occurred in getTotalTripDistance: ', err);
+      }
+    }).then(val => {
+      dist = Number(val);
+    });
+
+    return dist;
   };
   updateTotalMiles = async () => {
     this.setState({
@@ -314,22 +321,24 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ pendingTripToDelete: null });
   };
   deleteAllTrips = async () => {
-    try {
-      let trip = new Trip();
-      trip.setPerDiemRowId(this.props.perDiemRowId);
-      await PerDiemClientService.BatchDeleteTrips(trip);
-      if (this.props.onDeleteAllTrips) this.props.onDeleteAllTrips();
-    } catch (err: any) {
-      console.error(
-        'An error occurred while deleting the trips for this week: ',
-        err,
-      );
-      alert(
-        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
-      );
-      this.setState({ pendingDeleteAllTrips: false });
-      return;
-    }
+    this.props.perDiemRowIds.forEach(async id => {
+      try {
+        let trip = new Trip();
+        trip.setPerDiemRowId(id);
+        await PerDiemClientService.BatchDeleteTrips(trip);
+        if (this.props.onDeleteAllTrips) this.props.onDeleteAllTrips();
+      } catch (err: any) {
+        console.error(
+          'An error occurred while deleting the trips for this week: ',
+          err,
+        );
+        alert(
+          'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+        );
+        this.setState({ pendingDeleteAllTrips: false });
+        return;
+      }
+    });
     this.getTrips();
     this.refreshNamesAndDates();
     this.setState({ pendingDeleteAllTrips: false });
@@ -351,10 +360,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
           small
         />
         <>
-          {this.state.loadingTrips && <Loader />}
           {!this.props.cannotDeleteTrips && (
             <InfoTable
-              key={this.state.key}
+              key={
+                this.state.key +
+                String(this.dateIdPair) +
+                String(this.nameIdPair)
+              }
               columns={[
                 { name: 'Origin' },
                 { name: 'Destination' },
@@ -432,7 +444,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   return [
                     { value: currentTrip.getOriginAddress() },
                     { value: currentTrip.getDestinationAddress() },
-                    { value: this.getNameById(currentTrip.getUserId()) }, // Need to use UserClientService on it
+                    { value: this.getNameById(currentTrip.getUserId()) },
                     {
                       value: this.getRowStartDateById(
                         currentTrip.getPerDiemRowId(),

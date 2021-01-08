@@ -191,16 +191,6 @@ export const PerDiemComponent: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
-  const [mapModalOpened, setMapModalOpened] = useState<boolean>(false);
-  const [pendingTripEdit, setPendingTripEdit] = useState<TripType>();
-
-  const handleTripEditOpen = useCallback(
-    (pendingTrip?: Trip.AsObject) => () => {
-      setPendingTripEdit(pendingTrip);
-    },
-    [setPendingTripEdit],
-  );
-
   const [user, setUser] = useState<UserType>();
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
@@ -1098,7 +1088,7 @@ export const PerDiemComponent: FC<Props> = ({
             </Form>
             <TripInfoTable
               canAddTrips
-              perDiemRowId={pendingPerDiemRowEdit.perDiemId}
+              perDiemRowIds={[pendingPerDiemRowEdit.perDiemId]}
               loggedUserId={loggedUserId}
               onNoPerDiem={() => {
                 setPendingPerDiemEdit(undefined);
