@@ -91,6 +91,7 @@ export const PerDiem: FC<Props> = ({
       departmentId,
       employeeId,
       week === OPTION_ALL ? undefined : week,
+      !!filter.approved,
     );
     setPerDiems(perDiems.resultsList);
     setCount(perDiems.totalCount);
@@ -153,7 +154,7 @@ export const PerDiem: FC<Props> = ({
       const { id } = pendingPayroll;
       setLoading(true);
       setPendingPayroll(undefined);
-      // await PerDiemClientService.updatePerDiemNeedsAudit(id);
+      await PerDiemClientService.updatePerDiemPayrollProcessed(id);
       load();
     }
   }, [pendingPayroll, setLoading, setPendingPayroll]);
@@ -299,7 +300,7 @@ export const PerDiem: FC<Props> = ({
             perDiem={perDiemViewed}
             loggedUserId={loggedUserId}
           />
-          {perDiemViewed.rowsList.map(row => {
+          {/* {perDiemViewed.rowsList.map(row => { // FIXME
             return (
               <TripInfoTable
                 canAddTrips={false}
@@ -309,7 +310,7 @@ export const PerDiem: FC<Props> = ({
                 key={row.id}
               />
             );
-          })}
+          })} */}
         </Modal>
       )}
       {pendingApprove && (
