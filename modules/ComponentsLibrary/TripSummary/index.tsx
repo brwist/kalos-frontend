@@ -162,6 +162,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTrips = async () => {
+    console.log('Getting trips with PD ids: ', this.props.perDiemRowIds);
     this.props.perDiemRowIds.forEach(async (id: number) => {
       let trip = new Trip();
       if (this.props.loggedUserId != 0) trip.setUserId(this.props.loggedUserId);
@@ -169,8 +170,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       try {
         const trips = await PerDiemClientService.BatchGetTrips(trip);
         this.updateTotalMiles();
-        let totalTrips = this.state.trips.getResultsList();
-        totalTrips = [...totalTrips, ...trips.getResultsList()];
+        let totalTrips = [...trips.getResultsList()];
         let list = new TripList();
         list.setResultsList(totalTrips);
         this.setState({ trips: list });
@@ -444,7 +444,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   return [
                     { value: currentTrip.getOriginAddress() },
                     { value: currentTrip.getDestinationAddress() },
-                    { value: this.getNameById(currentTrip.getUserId()) }, // Need to use UserClientService on it
+                    { value: this.getNameById(currentTrip.getUserId()) },
                     {
                       value: this.getRowStartDateById(
                         currentTrip.getPerDiemRowId(),
