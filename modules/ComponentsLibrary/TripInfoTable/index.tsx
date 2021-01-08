@@ -15,7 +15,6 @@ import {
   PerDiemClientService,
   upsertTrip,
   getTripDistance,
-  getPerDiemRowIds,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -129,6 +128,7 @@ interface Props {
   loggedUserId: number;
   canAddTrips?: boolean;
   canDeleteTrips?: boolean;
+  textAlignment?: 'left' | 'right' | 'center';
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
@@ -319,11 +319,29 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
             <InfoTable
               key={this.state.trips.toString()}
               columns={[
-                { name: 'Origin' },
-                { name: 'Destination' },
-                { name: 'Notes' },
+                {
+                  name: 'Origin',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
+                },
+                {
+                  name: 'Destination',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
+                },
+                {
+                  name: 'Notes',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
+                },
                 {
                   name: 'Miles',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
                 },
               ]}
               data={this.state
@@ -355,9 +373,24 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
             <InfoTable
               key={this.state.trips.toString()}
               columns={[
-                { name: 'Origin' },
-                { name: 'Destination' },
-                { name: 'Notes' },
+                {
+                  name: 'Origin',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
+                },
+                {
+                  name: 'Destination',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
+                },
+                {
+                  name: 'Notes',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
+                },
                 {
                   name: 'Miles',
                   actions: [
@@ -371,6 +404,9 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                       burgeronly: 1,
                     },
                   ],
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
                 },
               ]}
               data={this.state
