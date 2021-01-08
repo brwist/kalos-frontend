@@ -471,6 +471,7 @@ export const Timesheet: FC<Props> = props => {
         <Modal open onClose={() => setTripsOpen(false)}>
           <TripInfoTable
             canAddTrips
+            canDeleteTrips
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
           />

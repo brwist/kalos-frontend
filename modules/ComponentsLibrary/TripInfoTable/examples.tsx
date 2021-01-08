@@ -15,5 +15,8 @@ export default () => (
 
     <ExampleTitle>Can Add Trips</ExampleTitle>
     <TripInfoTable perDiemRowIds={[1]} loggedUserId={101253} canAddTrips />
+
+    <ExampleTitle>Can Delete Trips</ExampleTitle>
+    <TripInfoTable perDiemRowIds={[1]} loggedUserId={101253} canDeleteTrips />
   </>
 );
