@@ -165,7 +165,7 @@ export function TransactionRow({
       alert('An error occurred, user was not notified via slack');
     }
 
-    //await reject(reason);
+    await reject(reason);
     console.log(body);
     await refresh();
   };

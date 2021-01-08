@@ -50,6 +50,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
     this.setState({ loading: true });
     const { userID } = this.props;
     const entry = new Document();
+    entry.setPageNumber(this.state.page);
     entry.setUserId(userID);
     entry.setOrderBy('document_date_created');
     entry.setOrderDir('desc');
@@ -116,6 +117,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
   };
 
   handleChangePage = (page: number) => {
+    console.log(page);
     this.setState({ page }, this.load);
   };
 
