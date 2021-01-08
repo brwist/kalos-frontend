@@ -128,7 +128,7 @@ interface Props {
   perDiemRowIds: number[];
   loggedUserId: number;
   canAddTrips?: boolean;
-  cannotDeleteTrips?: boolean;
+  canDeleteTrips?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
@@ -315,7 +315,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
         />
         <>
           {this.state.loadingTrips && <Loader />}
-          {this.props.cannotDeleteTrips && (
+          {!this.props.canDeleteTrips && (
             <InfoTable
               key={this.state.trips.toString()}
               columns={[
@@ -351,7 +351,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
               compact
             />
           )}
-          {!this.props.cannotDeleteTrips && (
+          {this.props.canDeleteTrips && (
             <InfoTable
               key={this.state.trips.toString()}
               columns={[
