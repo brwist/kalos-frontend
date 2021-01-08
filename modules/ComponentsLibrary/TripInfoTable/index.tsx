@@ -365,7 +365,6 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                       label: 'Delete All Trips',
                       compact: true,
                       variant: 'outlined',
-                      size: 'xsmall',
                       onClick: () => {
                         this.setStateToNew({ pendingDeleteAllTrips: true });
                       },
