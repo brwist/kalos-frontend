@@ -111,6 +111,8 @@ interface Props {
   perDiemRowIds: number[];
   loggedUserId: number;
   canDeleteTrips?: boolean;
+  compact?: boolean;
+  hoverable?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
@@ -375,7 +377,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ? this.state.totalTripMiles?.toFixed(1) + ' miles'
               : 'None'
           }
-          small
+          small={this.props.compact ? true : false}
         />
         <>
           {this.props.canDeleteTrips && (
@@ -396,7 +398,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   actions: [
                     {
                       label: 'Delete All Trips',
-                      compact: true,
+                      compact: this.props.compact ? true : false,
                       variant: 'outlined',
                       size: 'xsmall',
                       onClick: () => {
@@ -440,7 +442,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
                     },
                   ];
                 })}
-              compact
+              compact={this.props.compact ? true : false}
+              hoverable={this.props.hoverable ? true : false}
             />
           )}
           {!this.props.canDeleteTrips && (
@@ -476,7 +479,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
                     },
                   ];
                 })}
-              compact
+              compact={this.props.compact ? true : false}
+              hoverable={this.props.hoverable ? true : false}
             />
           )}
         </>
