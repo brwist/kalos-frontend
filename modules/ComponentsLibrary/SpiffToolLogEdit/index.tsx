@@ -32,7 +32,7 @@ import {
 } from '../../../helpers';
 import './styles.less';
 
-type DocumentUplodad = {
+type DocumentUpload = {
   filename: '';
   description: '';
 };
@@ -206,7 +206,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
     (onClose, onReload) => async ({
       filename,
       description,
-    }: DocumentUplodad) => {
+    }: DocumentUpload) => {
       setUploadFailed(false);
       setUploading(true);
       const ext = filename.split('.').pop();
@@ -284,7 +284,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );
-  const SCHEMA_DOCUMENT: Schema<DocumentUplodad> = [
+  const SCHEMA_DOCUMENT: Schema<DocumentUpload> = [
     [
       {
         name: 'filename',
@@ -440,7 +440,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         taskId={data.id}
         withDateCreated
         renderAdding={(onClose, onReload) => (
-          <Form<DocumentUplodad>
+          <Form<DocumentUpload>
             title="Add Document"
             onClose={onClose}
             onSave={handleDocumentUpload(onClose, onReload)}

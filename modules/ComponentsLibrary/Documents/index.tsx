@@ -35,6 +35,8 @@ interface Props {
   userId?: number;
   propertyId?: number;
   taskId?: number;
+  contractId?: number;
+  fieldMask?: Array<string>;
   actions?: (document: DocumentType) => ReactElement[];
   addUrl?: string;
   className?: string;
@@ -60,12 +62,14 @@ export const Documents: FC<Props> = ({
   userId,
   propertyId,
   taskId,
+  fieldMask,
   actions = () => [],
   addUrl,
   className,
   renderAdding,
   renderEditing,
   displayInAscendingOrder,
+  contractId,
   withDateCreated = false,
   withDownloadIcon = false,
   deletable = true,
@@ -82,12 +86,15 @@ export const Documents: FC<Props> = ({
   const [adding, setAdding] = useState<boolean>(false);
   const [editing, setEditing] = useState<DocumentType>();
   const load = useCallback(async () => {
-    if (!propertyId && !taskId) {
-      return;
-    }
     setLoading(true);
     const entry = new Document();
     entry.setPageNumber(page);
+    if (contractId) {
+      entry.setContractId(contractId);
+    }
+    if (fieldMask) {
+      entry.setFieldMaskList(fieldMask);
+    }
     if (userId) {
       entry.setUserId(userId);
     }
@@ -127,6 +134,7 @@ export const Documents: FC<Props> = ({
     await DocumentClientService.Update(req);
     load();
   };
+
   const handleDownload = useCallback(
     (
       filename: string,
@@ -269,11 +277,11 @@ export const Documents: FC<Props> = ({
                   ]
                 : []),
               <Prompt
-                key={2}
+                key="editFilename"
                 Icon={EditIcon}
                 prompt={'Update Filename'}
                 text="Update Filename"
-                defaultValue={value}
+                defaultValue={entry.filename}
                 confirmFn={handleEditFilename(entry)}
               />,
             ],

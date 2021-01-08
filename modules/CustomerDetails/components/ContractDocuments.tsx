@@ -12,6 +12,8 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { makeFakeRows, getCFAppUrl } from '../../../helpers';
 import { Prompt } from '../../Prompt/main';
+import { Documents } from '../../ComponentsLibrary/Documents';
+import { Form } from '../../ComponentsLibrary/Form';
 
 type Entry = Document.AsObject;
 
@@ -20,6 +22,11 @@ interface Props {
   userID: number;
   contractID?: number;
 }
+
+type DocumentUpload = {
+  filename: '';
+  description: '';
+};
 
 interface State {
   entries: Entry[];
@@ -78,22 +85,6 @@ export class ContractDocuments extends PureComponent<Props, State> {
     }
   };
 
-  async componentDidMount() {
-    await this.load();
-  }
-
-  handleDownload = (filename: string, type: number) => async (
-    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-  ) => {
-    event.preventDefault();
-    const S3 = new S3Client(ENDPOINT);
-    const url = new URLObject();
-    url.setKey(filename);
-    url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
-    const dlURL = await S3.GetDownloadURL(url);
-    window.open(dlURL.url, '_blank');
-  };
-
   handleDelete = async () => {
     const { deleting } = this.state;
     if (deleting) {
@@ -124,94 +115,23 @@ export class ContractDocuments extends PureComponent<Props, State> {
   handleSetDeleting = (deleting?: Entry) => () => this.setState({ deleting });
 
   render() {
-    const {
-      props,
-      state,
-      handleDownload,
-      handleChangePage,
-      handleSetDeleting,
-      handleDelete,
-    } = this;
+    const { props, state, handleSetDeleting, handleDelete } = this;
     const { className, userID, contractID } = props;
-    const { entries, loading, error, count, page, deleting } = state;
-    const data: Data = loading
-      ? makeFakeRows()
-      : entries.map(entry => {
-          const { propertyId, filename, type, description: value } = entry;
-          return [
-            {
-              value: (
-                <Link href="" onClick={handleDownload(filename, type)}>
-                  {value}
-                </Link>
-              ),
-              actions: [
-                <IconButton
-                  key={0}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={() => {
-                    document.location.href = [
-                      getCFAppUrl('admin:contracts.docemail'),
-                      `user_id=${userID}`,
-                      ...(contractID ? [`contract_id=${contractID}`] : []),
-                      'p=1',
-                      `document_id=${entry.id}`,
-                    ].join('&');
-                  }}
-                >
-                  <MailIcon />
-                </IconButton>,
-                <IconButton
-                  key={1}
-                  style={{ marginLeft: 4 }}
-                  size="small"
-                  onClick={handleSetDeleting(entry)}
-                >
-                  <DeleteIcon />
-                </IconButton>,
-                <Prompt
-                  key={2}
-                  Icon={PencilIcon}
-                  prompt={'Update Filename'}
-                  text="Update Filename"
-                  defaultValue={entry.description}
-                  confirmFn={this.handleEditFilename(entry)}
-                />,
-              ],
-            },
-          ];
-        });
+    const { deleting } = state;
     return (
       <div className={className}>
-        <SectionBar
+        <Documents
+          userId={userID}
+          fieldMask={['PropertyId']}
+          contractId={contractID || 0}
           title="Documents"
-          actions={[
-            {
-              label: 'Add',
-              url: [
-                getCFAppUrl('admin:contracts.docaddS3'),
-                `user_id=${userID}`,
-                ...(contractID ? [`contract_id=${contractID}`] : []),
-                'p=1',
-              ].join('&'),
-            },
-          ]}
-          pagination={{
-            count,
-            page,
-            rowsPerPage: ROWS_PER_PAGE,
-            onChangePage: handleChangePage,
-          }}
-        >
-          <InfoTable
-            data={data}
-            loading={loading}
-            error={error}
-            compact
-            hoverable
-          />
-        </SectionBar>
+          addUrl={[
+            getCFAppUrl('admin:contracts.docaddS3'),
+            `user_id=${userID}`,
+            ...(contractID ? [`contract_id=${contractID}`] : []),
+            'p=1',
+          ].join('&')}
+        />
         {deleting && (
           <ConfirmDelete
             open
