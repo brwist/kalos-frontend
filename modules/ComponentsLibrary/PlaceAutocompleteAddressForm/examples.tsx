@@ -1,18 +1,9 @@
-import React from 'react';
+import React, { useState, FC, useCallback } from 'react';
 import { PlaceAutocompleteAddressForm } from './index';
 import { AddressPair } from './Address';
 import { Schema } from '../Form';
 
-const handleClose = () => {
-  alert('Form closed.');
-};
-
-const handleSave = (addresses: AddressPair.AddressPair) => {
-  console.log('Saving addresses: ', addresses);
-  alert('Saving addresses.');
-};
-
-export const SCHEMA_EXAMPLE: Schema<AddressPair.AsObject> = [
+const SCHEMA_EXAMPLE: Schema<AddressPair.AsObject> = [
   [
     {
       label: 'Origin',
@@ -99,15 +90,40 @@ export const SCHEMA_EXAMPLE: Schema<AddressPair.AsObject> = [
   ],
 ];
 
+interface Props {}
+
+const PlaceForm: FC<Props> = ({}) => {
+  const [open, setOpen] = useState<boolean>(true);
+
+  const handleClose = useCallback(() => {
+    setOpen(false);
+  }, [setOpen]);
+
+  const handleSave = useCallback((addresses: AddressPair.AddressPair) => {
+    console.log('Saving addresses: ', addresses);
+    alert(
+      'Would save addresses right now (See console for the address values that would be saved).',
+    );
+  }, []);
+
+  return (
+    <>
+      {open && (
+        <PlaceAutocompleteAddressForm
+          onClose={handleClose}
+          onSave={(addresses: AddressPair.AddressPair) => {
+            handleSave(addresses);
+          }}
+          addressFields={2} // To be implemented
+          schema={SCHEMA_EXAMPLE}
+        />
+      )}
+    </>
+  );
+};
+
 export default () => (
   <>
-    <PlaceAutocompleteAddressForm
-      onClose={handleClose}
-      onSave={(addresses: AddressPair.AddressPair) => {
-        handleSave(addresses);
-      }}
-      addressFields={2} // To be implemented
-      schema={SCHEMA_EXAMPLE}
-    ></PlaceAutocompleteAddressForm>
+    <PlaceForm />
   </>
 );
