@@ -162,18 +162,29 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTrips = async () => {
-    console.log('Getting trips with PD ids: ', this.props.perDiemRowIds);
     this.props.perDiemRowIds.forEach(async (id: number) => {
       let trip = new Trip();
       if (this.props.loggedUserId != 0) trip.setUserId(this.props.loggedUserId);
       trip.setPerDiemRowId(id);
       try {
-        const trips = await PerDiemClientService.BatchGetTrips(trip);
+        const trips = (await PerDiemClientService.BatchGetTrips(trip))
+          .getResultsList()
+          .filter(trip => {
+            let fail = false;
+            if (this.state.trips.getResultsList().length == 0) {
+              // If there's no state, we just add it in to the list - means this is
+              // the first time loading after refresh
+              return true;
+            }
+            this.state.trips.getResultsList().forEach(t => {
+              if (t.getId() == trip.getId()) {
+                fail = true;
+              }
+            });
+            return !fail;
+          });
         this.updateTotalMiles();
-        let totalTrips = [
-          ...this.state.trips.getResultsList(),
-          ...trips.getResultsList(),
-        ];
+        let totalTrips = [...this.state.trips.getResultsList(), ...trips];
         let list = new TripList();
         list.setResultsList(totalTrips);
         this.setState({ trips: list });
@@ -310,6 +321,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
   deleteTrip = async (trip: Trip) => {
     try {
       await PerDiemClientService.DeleteTrip(trip);
+      let trips = this.state.trips;
+      let t = this.state.trips.getResultsList().indexOf(trip);
+      trips.getResultsList().splice(t, 1);
+      this.setState({ trips: trips });
       if (this.props.onDeleteTrip) this.props.onDeleteTrip();
     } catch (err: any) {
       console.error('An error occurred while deleting a trip: ', err);
