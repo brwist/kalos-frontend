@@ -10,6 +10,9 @@ export default () => (
     <ExampleTitle>Default</ExampleTitle>
     <TripInfoTable perDiemRowIds={[1]} loggedUserId={101253} />
 
+    <ExampleTitle>Default (Viewing as Chernov)</ExampleTitle>
+    <TripInfoTable perDiemRowIds={[1]} loggedUserId={101275} />
+
     <ExampleTitle>Can Add Trips</ExampleTitle>
     <TripInfoTable perDiemRowIds={[1]} loggedUserId={101253} canAddTrips />
   </>

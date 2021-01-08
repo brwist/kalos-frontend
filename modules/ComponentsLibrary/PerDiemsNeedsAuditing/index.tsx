@@ -395,12 +395,6 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
           },
         ];
       });
-  console.log(
-    'User ID: ',
-    perDiemViewed?.userId,
-    ', Per Diem ID: ',
-    perDiemViewed?.id,
-  );
   return (
     <div>
       <SectionBar
