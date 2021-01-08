@@ -330,7 +330,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             />
           </>
         </Modal>
-        )
       </>
     );
   }
