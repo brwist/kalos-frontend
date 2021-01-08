@@ -7,12 +7,10 @@ import { PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 
 export default () => (
   <>
-    <ExampleTitle>Normal</ExampleTitle>
+    <ExampleTitle>Default</ExampleTitle>
+    <TripInfoTable perDiemRowIds={[1]} loggedUserId={101253} />
 
-    <TripInfoTable
-      perDiemRowIds={[1]}
-      loggedUserId={101253}
-      canAddTrips
-    ></TripInfoTable>
+    <ExampleTitle>Can Add Trips</ExampleTitle>
+    <TripInfoTable perDiemRowIds={[1]} loggedUserId={101253} canAddTrips />
   </>
 );
