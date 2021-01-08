@@ -383,9 +383,11 @@ export const Timesheet: FC<Props> = props => {
     return null;
   }
   const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
-  getPerDiemRowIds(selectedDate).then(value => {
-    setPerDiemRowId(value?.toArray());
-  });
+  if (!perDiemRowId) {
+    getPerDiemRowIds(selectedDate).then(value => {
+      setPerDiemRowId(value?.toArray());
+    });
+  }
   return (
     <PageWrapper {...props} userID={userId}>
       <ConfirmServiceProvider>
