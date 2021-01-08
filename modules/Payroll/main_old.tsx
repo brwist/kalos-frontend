@@ -144,7 +144,6 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                     content:
                       perDiemRowId.length > 0 ? (
                         <TripSummary
-                          cannotDeleteTrips
                           loggedUserId={user.id}
                           perDiemRowIds={perDiemRowId}
                           key={perDiemRowId[0]}
@@ -153,7 +152,7 @@ export const Payroll: FC<Props & PageWrapperProps> = props => {
                         <Loader />
                       ) : (
                         <TripSummary
-                          cannotDeleteTrips
+                          canDeleteTrips
                           loggedUserId={user.id}
                           perDiemRowIds={[-1]} // a bit hacky, but it will show no results found
                           key={perDiemRowId}
