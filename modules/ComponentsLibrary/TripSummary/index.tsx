@@ -122,7 +122,6 @@ interface State {
   pendingDeleteAllTrips: boolean;
   trips: TripList;
   totalTripMiles: number;
-  loadingTrips: boolean;
   key: number;
 }
 
@@ -137,15 +136,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
       totalTripMiles: 0,
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
-      loadingTrips: false,
       key: 0,
     };
     this.updateTotalMiles();
-  }
-
-  componentDidMount() {
     this.getTrips();
   }
+
+  componentDidMount() {}
   getTripDistance = async (origin: string, destination: string) => {
     try {
       await getTripDistance(origin, destination);
@@ -169,7 +166,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       let trip = new Trip();
       if (this.props.loggedUserId != 0) trip.setUserId(this.props.loggedUserId);
       trip.setPerDiemRowId(id);
-      this.setState({ loadingTrips: true });
       try {
         const trips = await PerDiemClientService.BatchGetTrips(trip);
         this.updateTotalMiles();
@@ -179,7 +175,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
         list.setResultsList(totalTrips);
         this.setState({ trips: list });
         await this.refreshNamesAndDates();
-        this.setState({ loadingTrips: false });
       } catch (err: any) {
         console.log('Failed to get trips: ', err);
       }
@@ -365,7 +360,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
           small
         />
         <>
-          {this.state.loadingTrips && <Loader />}
           {!this.props.cannotDeleteTrips && (
             <InfoTable
               key={
