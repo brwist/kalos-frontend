@@ -170,7 +170,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
       try {
         const trips = await PerDiemClientService.BatchGetTrips(trip);
         this.updateTotalMiles();
-        let totalTrips = [...trips.getResultsList()];
+        let totalTrips = [
+          ...this.state.trips.getResultsList(),
+          ...trips.getResultsList(),
+        ];
         let list = new TripList();
         list.setResultsList(totalTrips);
         this.setState({ trips: list });
