@@ -13,6 +13,13 @@ export default () => (
     <ExampleTitle>Default (Viewing as Chernov)</ExampleTitle>
     <TripInfoTable perDiemRowIds={[1]} loggedUserId={101275} />
 
+    <ExampleTitle>Right-Aligned (Viewing as Chernov)</ExampleTitle>
+    <TripInfoTable
+      perDiemRowIds={[1]}
+      loggedUserId={101275}
+      textAlignment="right"
+    />
+
     <ExampleTitle>Can Add Trips</ExampleTitle>
     <TripInfoTable perDiemRowIds={[1]} loggedUserId={101253} canAddTrips />
 
