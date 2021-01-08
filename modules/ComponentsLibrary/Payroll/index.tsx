@@ -129,7 +129,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
       },
     ],
   ];
-  console.log(loadedPerDiemIds);
   return (
     <div>
       <SectionBar title="Payroll" />
