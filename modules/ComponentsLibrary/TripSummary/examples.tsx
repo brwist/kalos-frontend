@@ -7,6 +7,12 @@ export default () => (
     <ExampleTitle>Default (Viewing as Chernov)</ExampleTitle>
     <TripSummary perDiemRowIds={[1]} loggedUserId={101275} />
 
+    <ExampleTitle>Compact (Viewing as Chernov)</ExampleTitle>
+    <TripSummary perDiemRowIds={[1]} loggedUserId={101275} compact />
+
+    <ExampleTitle>Hoverable (Viewing as Chernov)</ExampleTitle>
+    <TripSummary perDiemRowIds={[1]} loggedUserId={101275} hoverable />
+
     <ExampleTitle>Viewing as Olbinski</ExampleTitle>
     <TripSummary perDiemRowIds={[1]} loggedUserId={101253} />
 
