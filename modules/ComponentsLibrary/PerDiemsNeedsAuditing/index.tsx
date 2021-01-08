@@ -395,6 +395,12 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
           },
         ];
       });
+  console.log(
+    'User ID: ',
+    perDiemViewed?.userId,
+    ', Per Diem ID: ',
+    perDiemViewed?.id,
+  );
   return (
     <div>
       <SectionBar
@@ -451,17 +457,13 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
             perDiem={perDiemViewed}
             loggedUserId={loggedUserId}
           />
-          {perDiemViewed.rowsList.map(row => {
-            return (
-              <TripInfoTable
-                canAddTrips={false}
-                cannotDeleteTrips
-                perDiemRowId={row.perDiemId}
-                loggedUserId={perDiemViewed.userId}
-                key={row.id}
-              />
-            );
-          })}
+          <TripInfoTable
+            canAddTrips={false}
+            cannotDeleteTrips
+            perDiemRowIds={[perDiemViewed.id]}
+            loggedUserId={perDiemViewed.userId}
+            key={perDiemViewed.id}
+          />
         </Modal>
       )}
       {printing && (
