@@ -159,15 +159,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
       );
     }
   };
-
-  initializeStateChange = () => {
-    this.setState({ key: this.state.key + 1 });
-  };
-
   refreshNamesAndDates = async () => {
     await this.getUserNamesFromIds();
     await this.getRowDatesFromPerDiemIds();
-    this.initializeStateChange();
   };
 
   getTrips = async () => {
@@ -255,7 +249,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
         if (!res.includes(obj)) res.push(obj);
         if (idx == arr.length - 1) {
           this.nameIdPair = res;
-          this.initializeStateChange();
           return res;
         }
       } catch (err: any) {
@@ -356,11 +349,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ pendingDeleteAllTrips: false });
   };
   setStateToNew = (to: any) => {
-    console.log('SETTING STATE AS : ', to);
     this.setState(to);
   };
   render() {
-    console.log('Rendering');
     return (
       <>
         <SectionBar
@@ -377,7 +368,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
           {this.state.loadingTrips && <Loader />}
           {!this.props.cannotDeleteTrips && (
             <InfoTable
-              key={this.state.key}
+              key={
+                this.state.key +
+                String(this.dateIdPair) +
+                String(this.nameIdPair)
+              }
               columns={[
                 { name: 'Origin' },
                 { name: 'Destination' },
