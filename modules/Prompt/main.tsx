@@ -4,6 +4,7 @@ import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { Tooltip } from '../ComponentsLibrary/Tooltip';
 import { Button } from '../ComponentsLibrary/Button';
 import { Form, Schema } from '../ComponentsLibrary/Form';
+import { Modal } from '../ComponentsLibrary/Modal';
 
 interface props {
   disabled?: boolean;
@@ -61,11 +62,9 @@ export function Prompt({
     />
   );
   return (
-    <Tooltip
-      open={isOpen}
-      controlled
-      maxWidth={400}
-      content={
+    <>
+      <span>{button}</span>
+      <Modal onClose={toggleOpen} open={isOpen}>
         <Form<Form>
           title=" "
           schema={SCHEMA}
@@ -76,11 +75,7 @@ export function Prompt({
           stickySectionBar={false}
           fullWidth
         />
-      }
-      placement="bottom"
-      noPadding
-    >
-      <span>{button}</span>
-    </Tooltip>
+      </Modal>
+    </>
   );
 }
