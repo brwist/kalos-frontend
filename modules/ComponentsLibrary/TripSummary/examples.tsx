@@ -1,14 +1,19 @@
 import React from 'react';
 import { TripSummary } from './index';
-import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
-import { Schema } from '../Form';
 import { ExampleTitle } from '../helpers';
-import { PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 
 export default () => (
   <>
     <ExampleTitle>Normal</ExampleTitle>
+    <TripSummary perDiemRowIds={[1]} loggedUserId={101275} />
 
-    <TripSummary perDiemRowIds={[1]} loggedUserId={101275}></TripSummary>
+    <ExampleTitle>Cannot Delete Trips</ExampleTitle>
+    <TripSummary perDiemRowIds={[1]} loggedUserId={101275} cannotDeleteTrips />
+
+    <ExampleTitle>Viewing as Olbinski</ExampleTitle>
+    <TripSummary perDiemRowIds={[1]} loggedUserId={101253} cannotDeleteTrips />
+
+    <ExampleTitle>Viewing All Trips for Example Week 1</ExampleTitle>
+    <TripSummary perDiemRowIds={[1]} loggedUserId={0} cannotDeleteTrips />
   </>
 );

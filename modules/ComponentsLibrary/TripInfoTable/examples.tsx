@@ -11,7 +11,7 @@ export default () => (
 
     <TripInfoTable
       perDiemRowIds={[1]}
-      loggedUserId={101275}
+      loggedUserId={101253}
       canAddTrips
     ></TripInfoTable>
   </>
