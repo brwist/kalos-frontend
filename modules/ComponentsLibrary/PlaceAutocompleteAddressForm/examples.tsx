@@ -88,6 +88,20 @@ const SCHEMA_EXAMPLE: Schema<AddressPair.AsObject> = [
       type: 'text',
     },
   ],
+  [
+    {
+      label: 'Notes',
+      headline: true,
+    },
+  ],
+  [
+    {
+      label: 'Notes',
+      name: 'Notes',
+      type: 'text',
+      multiline: true,
+    },
+  ],
 ];
 
 interface Props {}
