@@ -1327,9 +1327,15 @@ export const loadPerDiemsNeedsAuditing = async (
   departmentId?: number,
   userId?: number,
   dateStarted?: string,
+  approved?: boolean,
 ) => {
   const req = new PerDiem();
-  req.setFieldMaskList(['NeedsAuditing', 'PayrollProcessed', 'WithRows']);
+  req.setFieldMaskList([
+    'NeedsAuditing',
+    'PayrollProcessed',
+    'WithRows',
+    // ...(typeof approved === 'boolean' ? ['ApprovedById'] : []),
+  ]);
   req.setWithRows(true);
   req.setPageNumber(page);
   req.setNeedsAuditing(needsAuditing);
