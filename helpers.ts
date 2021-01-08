@@ -77,7 +77,10 @@ import {
   PerDiemReportConfig,
 } from '@kalos-core/kalos-rpc/PerDiem';
 import { MapClient, MatrixRequest, Place } from '@kalos-core/kalos-rpc/Maps';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import {
+  PerDiemList,
+  Trip,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Coordinates, MapClient as KalosMap } from '@kalos-core/kalos-rpc/Maps';
 import {
   TimesheetDepartmentClient,
@@ -322,8 +325,8 @@ export const usd = (val: number) => `$ ${val.toFixed(2)}`;
  * @param dateOnly if true, returns only the date portion YYYY-MM-DD
  * @returns a timestamp in the format YYYY-MM-DD HH:MM:SS
  */
-function timestamp(dateOnly = false) {
-  const dateObj = new Date();
+function timestamp(dateOnly = false, date?: Date) {
+  const dateObj = date || new Date();
   let month = `${dateObj.getMonth() + 1}`;
   if (month.length === 1) {
     month = `0${month}`;
@@ -1320,15 +1323,17 @@ export const loadPerDiemByDepartmentIdsAndDateStarted = async (
 export const loadPerDiemsNeedsAuditing = async (
   page: number,
   needsAuditing: boolean,
+  payrollProcessed: boolean,
   departmentId?: number,
   userId?: number,
   dateStarted?: string,
 ) => {
   const req = new PerDiem();
-  req.setFieldMaskList(['NeedsAuditing', 'WithRows']);
+  req.setFieldMaskList(['NeedsAuditing', 'PayrollProcessed', 'WithRows']);
   req.setWithRows(true);
   req.setPageNumber(page);
   req.setNeedsAuditing(needsAuditing);
+  req.setPayrollProcessed(payrollProcessed);
   if (departmentId) {
     req.setDepartmentId(departmentId);
   }
@@ -1565,7 +1570,7 @@ export const approvePerDiemById = async (id: number, approvedById: number) => {
  * @param date
  * @returns number | undefined
  */
-export const getPerDiemRowId = async (date?: Date) => {
+export const getPerDiemRowIds = async (date?: Date) => {
   const dateToQuery = date != null ? date : new Date();
   let daysToGoBack = 0;
   // If the day is Monday - Friday, we don't have to worry about overflow stuff with the offset
@@ -1575,17 +1580,28 @@ export const getPerDiemRowId = async (date?: Date) => {
   } else {
     daysToGoBack = dateToQuery.getDay() - 6;
   }
+  let dateToQueryMonth = dateToQuery.getMonth() + 1;
+  let dateToQueryYear = dateToQuery.getFullYear();
+  let dateToQueryDay = dateToQuery.getDate() - daysToGoBack;
+  // If the dateToQueryDay is less than 0, that means it occurred last year but this day
+  // that is being checked is in the new year, so we act accordingly
+  if (dateToQueryDay < 0) {
+    dateToQueryMonth = 12;
+    dateToQueryYear--;
+    dateToQueryDay = 31 + dateToQueryDay;
+  }
+
   // We find the last saturday that happened because that's the start of our weeks
   // and every Saturday per_diem_row is incremented
-  const lastSaturday = `${dateToQuery.getFullYear()}-${padWithZeroes(
-    dateToQuery.getMonth() + 1,
-  )}-${padWithZeroes(dateToQuery.getDate() - daysToGoBack)} 00:00:00`;
+  const lastSaturday = `${dateToQueryYear}-${padWithZeroes(
+    dateToQueryMonth,
+  )}-${padWithZeroes(dateToQueryDay)} 00:00:00`;
 
-  let perDiemRes: PerDiem.AsObject | null = null;
+  let perDiemRes: PerDiemList = new PerDiemList();
   try {
     let pd = new PerDiem();
     pd.setDateStarted(lastSaturday);
-    perDiemRes = await PerDiemClientService.Get(pd);
+    perDiemRes = await PerDiemClientService.BatchGet(pd);
   } catch (error: any) {
     let err = String(error);
     if (
@@ -1596,7 +1612,7 @@ export const getPerDiemRowId = async (date?: Date) => {
       // There was just no results in the set so we should not error for that,
       // just display it as no trips and if they go to add one add a Per Diem
       // first
-      console.log('No per-diem was found for the given date.');
+      console.log('No per-diem was found for the given date : ', error);
       return;
     }
     console.error(
@@ -1605,12 +1621,12 @@ export const getPerDiemRowId = async (date?: Date) => {
     );
   }
 
-  if (!perDiemRes) {
+  if (perDiemRes.getTotalCount() == 0) {
     console.error('No per-diem was found for the given date.');
     return;
   }
 
-  return perDiemRes.id;
+  return perDiemRes;
 };
 
 export const upsertPerDiemRow = async (data: PerDiemRowType) => {

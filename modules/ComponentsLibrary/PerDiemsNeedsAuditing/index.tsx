@@ -129,6 +129,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     const { resultsList, totalCount } = await loadPerDiemsNeedsAuditing(
       page,
       needsAuditing,
+      false,
       departmentId ? departmentId : undefined,
       userId ? userId : undefined,
       dateStarted !== OPTION_ALL ? dateStarted : undefined,
