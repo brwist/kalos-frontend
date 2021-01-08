@@ -202,7 +202,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }
 
-    console.log('Failed to find a date for row ID: ', rowId);
+    //console.log('Failed to find a date for row ID: ', rowId);
     return '-';
   };
 
@@ -278,7 +278,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }
 
-    console.log('Failed to find a name for user ID: ', userId);
+    //console.log('Failed to find a name for user ID: ', userId);
   };
 
   getTotalTripDistance = async () => {
