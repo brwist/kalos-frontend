@@ -85,46 +85,40 @@ export const Documents: FC<Props> = ({
   const [deleting, setDeleting] = useState<DocumentType>();
   const [adding, setAdding] = useState<boolean>(false);
   const [editing, setEditing] = useState<DocumentType>();
-  const load = useCallback(async () => {
-    setLoading(true);
-    const entry = new Document();
-    entry.setPageNumber(page);
-    if (contractId) {
-      entry.setContractId(contractId);
-    }
-    if (fieldMask) {
-      entry.setFieldMaskList(fieldMask);
-    }
-    if (userId) {
-      entry.setUserId(userId);
-    }
-    if (propertyId) {
-      entry.setPropertyId(propertyId);
-    }
-    if (taskId) {
-      entry.setTaskId(taskId);
-    }
-    try {
-      entry.setOrderDir(displayInAscendingOrder ? 'asc' : 'desc');
-      entry.setOrderBy(orderBy);
-      const response = await DocumentClientService.BatchGet(entry);
-      const { resultsList, totalCount } = response.toObject();
-      setEntries(resultsList);
-      setCount(totalCount);
-    } catch (e) {
-      setError(true);
-    }
-    setLoading(false);
-  }, [
-    setLoading,
-    setEntries,
-    setCount,
-    setError,
-    userId,
-    propertyId,
-    taskId,
-    page,
-  ]);
+  const load = useCallback(
+    async (p = 0) => {
+      setLoading(true);
+      const entry = new Document();
+      entry.setPageNumber(p);
+      if (fieldMask) {
+        entry.setFieldMaskList(fieldMask);
+      }
+      if (userId) {
+        entry.setUserId(userId);
+      }
+      if (propertyId) {
+        entry.setPropertyId(propertyId);
+      }
+      if (taskId) {
+        entry.setTaskId(taskId);
+      }
+      try {
+        entry.setOrderDir(displayInAscendingOrder ? 'asc' : 'desc');
+        entry.setOrderBy(orderBy);
+        console.log(entry.toObject());
+        const response = await DocumentClientService.BatchGet(entry);
+        const { resultsList, totalCount } = response.toObject();
+        console.log(response.toObject());
+        setEntries(resultsList);
+        setCount(totalCount);
+      } catch (e) {
+        setError(true);
+      }
+      setLoading(false);
+    },
+    [displayInAscendingOrder, fieldMask, orderBy, propertyId, taskId, userId],
+  );
+
   const handleEditFilename = (entry: Document.AsObject) => async (
     filename: string,
   ) => {
@@ -166,25 +160,29 @@ export const Documents: FC<Props> = ({
         }
       }
     },
-    [],
+    [propertyId, userId],
   );
+
   const handleSetDeleting = useCallback(
     (entry?: DocumentType) => () => setDeleting(entry),
     [setDeleting],
   );
+
   const handleChangePage = useCallback(
-    (page: number) => {
-      setPage(page);
-      load();
+    (p: number) => {
+      setPage(p);
+      load(p);
     },
-    [setPage, load],
+    [load],
   );
+
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
       load();
     }
   }, [load, loaded, setLoaded]);
+
   const handleDelete = useCallback(async () => {
     if (deleting) {
       try {
@@ -205,7 +203,7 @@ export const Documents: FC<Props> = ({
         setLoading(false);
       }
     }
-  }, [deleting, setLoading, setError, setDeleting]);
+  }, [deleting, setLoading, setError, setDeleting, load]);
   const handleToggleAdding = useCallback(
     (adding: boolean) => () => setAdding(adding),
     [setAdding],
