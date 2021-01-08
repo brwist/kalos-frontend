@@ -159,7 +159,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
                   <TripSummary
                     loggedUserId={filter.employeeId}
                     perDiemRowIds={loadedPerDiemIds}
-                    cannotDeleteTrips
                     key={loadedPerDiemIds.toString() + filter.employeeId}
                   />
                 ),

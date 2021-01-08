@@ -110,7 +110,7 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
 interface Props {
   perDiemRowIds: number[];
   loggedUserId: number;
-  cannotDeleteTrips?: boolean;
+  canDeleteTrips?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
@@ -378,7 +378,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           small
         />
         <>
-          {!this.props.cannotDeleteTrips && (
+          {this.props.canDeleteTrips && (
             <InfoTable
               key={
                 this.state.key +
@@ -443,7 +443,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               compact
             />
           )}
-          {this.props.cannotDeleteTrips && (
+          {!this.props.canDeleteTrips && (
             <InfoTable
               key={this.state.key}
               columns={[
