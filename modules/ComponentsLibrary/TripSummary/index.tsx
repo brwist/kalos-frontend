@@ -140,12 +140,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingDeleteAllTrips: false,
       key: 0,
     };
+    console.log('ctor');
     this.updateTotalMiles();
-    this.getTrips();
+    this.setTripState();
   }
 
-  componentDidMount() {}
   getTripDistance = async (origin: string, destination: string) => {
+    console.log('getTripDistance');
     try {
       await getTripDistance(origin, destination);
     } catch (error: any) {
@@ -159,45 +160,64 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
   };
   refreshNamesAndDates = async () => {
+    console.log('refreshNamesAndDates');
     await this.getUserNamesFromIds();
     await this.getRowDatesFromPerDiemIds();
   };
 
-  getTrips = async () => {
-    this.props.perDiemRowIds.forEach(async (id: number) => {
-      let trip = new Trip();
-      if (this.props.loggedUserId != 0) trip.setUserId(this.props.loggedUserId);
-      trip.setPerDiemRowId(id);
-      try {
-        const trips = (await PerDiemClientService.BatchGetTrips(trip))
-          .getResultsList()
-          .filter(trip => {
-            let fail = false;
-            if (this.state.trips.getResultsList().length == 0) {
-              // If there's no state, we just add it in to the list - means this is
-              // the first time loading after refresh
-              return true;
-            }
-            this.state.trips.getResultsList().forEach(t => {
-              if (t.getId() == trip.getId()) {
-                fail = true;
-              }
-            });
-            return !fail;
-          });
-        this.updateTotalMiles();
-        let totalTrips = [...this.state.trips.getResultsList(), ...trips];
-        let list = new TripList();
-        list.setResultsList(totalTrips);
-        this.setState({ trips: list });
-        await this.refreshNamesAndDates();
-      } catch (err: any) {
-        console.log('Failed to get trips: ', err);
-      }
+  loadTrips = async () => {
+    let trips: Trip[] = [];
+
+    return await new Promise<Trip[]>(resolve => {
+      this.props.perDiemRowIds.forEach(async (id: number) => {
+        let trip = new Trip();
+        if (this.props.loggedUserId != 0)
+          trip.setUserId(this.props.loggedUserId);
+        trip.setPerDiemRowId(id);
+        console.log('Trips before: ', trips);
+        await new Promise<Trip[]>(async res => {
+          trips.push(
+            ...(await PerDiemClientService.BatchGetTrips(trip))
+              .getResultsList()
+              .filter(trip => {
+                let fail = false;
+                if (this.state.trips.getResultsList().length == 0) {
+                  // If there's no state, we just add it in to the list - means this is
+                  // the first time loading after refresh
+                  return true;
+                }
+                this.state.trips.getResultsList().forEach(t => {
+                  if (t.getId() == trip.getId()) {
+                    fail = true;
+                  }
+                });
+                return !fail;
+              }),
+          );
+          res(trips);
+        }).then(result => {
+          resolve(result);
+        });
+      });
+    }).then(result => {
+      this.updateTotalMiles();
+      console.log('End result: ', result);
+      console.log(result.length);
+      return result;
+    });
+  };
+
+  setTripState = async () => {
+    this.loadTrips().then(async result => {
+      let list = new TripList();
+      list.setResultsList(result);
+      this.setState({ trips: list });
+      await this.refreshNamesAndDates();
     });
   };
 
   getRowStartDateById = (rowId: number) => {
+    console.log('getRowStartDatebyId');
     if (this.dateIdPair.length == 0) return;
     for (let obj of this.dateIdPair) {
       if (obj.row_id == rowId) {
@@ -210,6 +230,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getRowDatesFromPerDiemIds = async () => {
+    console.log('getRowDatesFromPerDiemIds');
     let res: { date: string; row_id: number }[] = [];
 
     new Promise(resolve => {
@@ -248,6 +269,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getUserNamesFromIds = async () => {
+    console.log('getUserNamesFromIds');
     let res: { name: string; id: number }[] = [];
 
     this.state.trips.getResultsList().forEach(async (trip: Trip, idx, arr) => {
@@ -269,6 +291,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getNameById = (userId: number) => {
+    console.log('getNameById');
     if (this.nameIdPair.length == 0) {
       // Return - it's a bit early but it will be called at a later time when the state is set
       return '';
@@ -284,6 +307,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTotalTripDistance = async () => {
+    console.log('getTotalTripDistance');
     let dist = 0;
 
     await new Promise(async resolve => {
@@ -316,6 +340,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     return dist;
   };
   updateTotalMiles = async () => {
+    console.log('updateTotalMiles');
     this.setState({
       totalTripMiles: await this.getTotalTripDistance(),
     });
@@ -336,7 +361,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       this.setState({ pendingTripToDelete: null });
       return Error(err);
     }
-    this.getTrips();
+    this.setTripState();
     this.refreshNamesAndDates();
     this.setState({ pendingTripToDelete: null });
   };
@@ -359,11 +384,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
         return;
       }
     });
-    this.getTrips();
+    this.setTripState();
     this.refreshNamesAndDates();
     this.setState({ pendingDeleteAllTrips: false });
   };
   setStateToNew = (to: any) => {
+    console.log('setStateToNew: ', to);
     this.setState(to);
   };
   render() {
