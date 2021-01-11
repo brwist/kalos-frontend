@@ -214,10 +214,18 @@ export class TripSummary extends React.PureComponent<Props, State> {
               break;
           }
         }
-
-        trips.push(
-          ...(await PerDiemClientService.BatchGetTrips(trip)).getResultsList(),
-        );
+        const tripResultList = (await PerDiemClientService.BatchGetTrips(trip))
+          .getResultsList()
+          .filter(trip => {
+            let fail = true;
+            this.props.perDiemRowIds.forEach(id => {
+              if (trip.getPerDiemRowId() == id) {
+                fail = false;
+              }
+            });
+            return !fail;
+          });
+        trips.push(...tripResultList);
       } else {
         for await (const id of this.props.perDiemRowIds) {
           let trip: Trip = new Trip();
@@ -424,9 +432,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
           <Form
             title="Search"
             submitLabel="Search"
+            cancelLabel="Reset"
             schema={SCHEMA_TRIP_SEARCH}
             data={this.state.search}
-            onClose={() => {}}
+            onClose={this.setTripState}
             onSave={tripFilter => this.setTripState(tripFilter)}
           >
             {this.props.canDeleteTrips && (
