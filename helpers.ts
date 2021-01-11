@@ -2241,6 +2241,11 @@ export type ContractsSort = {
   orderBy: string;
   orderDir: OrderDir;
 };
+export type TripsSort = {
+  orderByField: keyof TripType;
+  orderBy: string;
+  orderDir: OrderDir;
+};
 export type LoadPropertiesByFilter = {
   page: number;
   filter: PropertiesFilter;
@@ -2250,6 +2255,11 @@ export type LoadContractsByFilter = {
   page: number;
   filter: ContractsFilter;
   sort: ContractsSort;
+};
+export type LoadTripsByFilter = {
+  page: number;
+  filter: TripsFilter;
+  sort: TripsSort;
 };
 export type PropertiesFilter = {
   subdivision?: string;
@@ -2265,6 +2275,13 @@ export type ContractsFilter = {
   businessName?: string;
   dateStarted?: string;
   dateEnded?: number;
+};
+export type TripsFilter = {
+  id?: string;
+  lastName?: string;
+  origin?: string;
+  destination?: string;
+  weekof?: number;
 };
 /**
  * Returns Properties by filter
@@ -2336,6 +2353,40 @@ export const loadContractsByFilter = async ({
     }
   }
   const response = await ContractClientService.BatchGet(req);
+  return {
+    results: response
+      .getResultsList()
+      .map(item => item.toObject())
+      .sort((a, b) => {
+        const A = (a[orderByField] || '').toString().toLowerCase();
+        const B = (b[orderByField] || '').toString().toLowerCase();
+        if (A < B) return orderDir === 'DESC' ? 1 : -1;
+        if (A > B) return orderDir === 'DESC' ? -1 : 1;
+        return 0;
+      }),
+    totalCount: response.getTotalCount(),
+  };
+};
+
+export const loadTripsByFilter = async ({
+  page,
+  filter,
+  sort,
+}: LoadTripsByFilter) => {
+  const { orderBy, orderDir, orderByField } = sort;
+  const req = new Trip();
+  req.setPageNumber(page);
+  for (const fieldName in filter) {
+    const value = filter[fieldName as keyof TripsFilter];
+
+    if (value) {
+      const { methodName } = getRPCFields(fieldName);
+
+      //@ts-ignore
+      req[methodName](typeof value === 'string' ? `%${value}%` : value);
+    }
+  }
+  const response = await PerDiemClientService.BatchGetTrips(req);
   return {
     results: response
       .getResultsList()
