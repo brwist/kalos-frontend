@@ -168,49 +168,42 @@ export class TripSummary extends React.PureComponent<Props, State> {
   loadTrips = async () => {
     let trips: Trip[] = [];
 
-    return await new Promise<Trip[]>(resolve => {
-      this.props.perDiemRowIds.forEach(async (id: number) => {
+    return await new Promise<Trip[]>(async resolve => {
+      for await (const id of this.props.perDiemRowIds) {
         let trip = new Trip();
         if (this.props.loggedUserId != 0)
           trip.setUserId(this.props.loggedUserId);
         trip.setPerDiemRowId(id);
-        console.log('Trips before: ', trips);
-        await new Promise<Trip[]>(async res => {
-          trips.push(
-            ...(await PerDiemClientService.BatchGetTrips(trip))
-              .getResultsList()
-              .filter(trip => {
-                let fail = false;
-                if (this.state.trips.getResultsList().length == 0) {
-                  // If there's no state, we just add it in to the list - means this is
-                  // the first time loading after refresh
-                  return true;
-                }
-                this.state.trips.getResultsList().forEach(t => {
-                  if (t.getId() == trip.getId()) {
-                    fail = true;
-                  }
-                });
-                return !fail;
-              }),
-          );
-          res(trips);
-        }).then(result => {
-          resolve(result);
-        });
-      });
+        const tripResultList = (await PerDiemClientService.BatchGetTrips(trip))
+          .getResultsList()
+          .filter(trip => {
+            let fail = false;
+            if (this.state.trips.getResultsList().length == 0) {
+              // If there's no state, we just add it in to the list - means this is
+              // the first time loading after refresh
+              return true;
+            }
+            this.state.trips.getResultsList().forEach(t => {
+              if (t.getId() == trip.getId()) {
+                fail = true;
+              }
+            });
+            return !fail;
+          });
+        trips.push(...tripResultList);
+      }
+      resolve(trips);
     }).then(result => {
       this.updateTotalMiles();
-      console.log('End result: ', result);
-      console.log(result.length);
       return result;
     });
   };
 
   setTripState = async () => {
-    this.loadTrips().then(async result => {
+    await this.loadTrips().then(async result => {
       let list = new TripList();
       list.setResultsList(result);
+      console.log('Trips state set to: ', result);
       this.setState({ trips: list });
       await this.refreshNamesAndDates();
     });
@@ -263,6 +256,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }).then(() => {
       this.dateIdPair = res;
+      console.log('Date id pair set: ', res);
       this.setState({ key: this.state.key + 1 });
       return res;
     });
