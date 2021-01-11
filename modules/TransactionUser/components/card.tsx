@@ -354,6 +354,12 @@ export class TxnCard extends React.PureComponent<props, state> {
         severity: 'error',
         text: 'Purchases should include a brief description in the notes',
       };
+    if (txn.statusId === 4) {
+      return {
+        severity: 'error',
+        text: `Rejection Reason: ${this.getRejectionReason()}`,
+      };
+    }
     return {
       severity: 'success',
       text: 'This transaction is ready for submission',
@@ -512,8 +518,17 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.clearFileInput();
     await this.refresh();
   };
-
+  getRejectionReason = () => {
+    const res = this.state.txn.activityLogList.find(a => {
+      return a.description.includes('rejected');
+    });
+    console.log(res);
+    if (res) {
+      return res.description.replace('rejected', '');
+    }
+  };
   render() {
+    console.log(this.state.txn);
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const t = txn;
     const { isManager, userID } = this.props;
@@ -522,7 +537,13 @@ export class TxnCard extends React.PureComponent<props, state> {
     const deriveCallout = this.deriveCallout(t);
     return (
       <>
-        <Paper elevation={4} style={{ margin: 16, marginTop: 32 }}>
+        <Paper
+          elevation={4}
+          style={{
+            margin: 16,
+            marginTop: 32,
+          }}
+        >
           <SectionBar
             title={`${parseISO(
               t.timestamp.split(' ').join('T'),
