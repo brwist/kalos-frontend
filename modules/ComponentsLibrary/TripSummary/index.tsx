@@ -140,7 +140,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingDeleteAllTrips: false,
       key: 0,
     };
-    this.updateTotalMiles();
     this.setTripState();
   }
 
@@ -191,7 +190,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
       resolve(trips);
     }).then(result => {
-      this.updateTotalMiles();
       return result;
     });
   };
@@ -202,6 +200,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       list.setResultsList(result);
       this.setState({ trips: list });
       await this.refreshNamesAndDates();
+      await this.updateTotalMiles();
     });
   };
 
@@ -213,7 +212,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }
 
-    //console.log('Failed to find a date for row ID: ', rowId);
     return '-';
   };
 
@@ -240,7 +238,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
       resolve(res);
     }).then(() => {
-      console.log('Result of date loop: ', res);
       this.dateIdPair = res;
       this.setState({ key: this.state.key + 1 });
       return res;
@@ -279,8 +276,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
         return obj.name;
       }
     }
-
-    //console.log('Failed to find a name for user ID: ', userId);
   };
 
   getTotalTripDistance = async () => {
@@ -289,30 +284,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await new Promise(async resolve => {
       let total = 0;
 
-      try {
-        this.props.perDiemRowIds.map(async (id, index, arr) => {
-          let trip = new Trip();
-          trip.setPerDiemRowId(id);
-          trip.setUserId(this.props.loggedUserId);
-          const trips = await PerDiemClientService.BatchGetTrips(trip);
-          let totalDist = 0;
-          trips
-            .getResultsList()
-            .forEach(trip => (totalDist += trip.getDistanceInMiles()));
-
-          total += totalDist;
-
-          if (index == arr.length - 1) {
-            resolve(total);
-          }
-        });
-      } catch (err: any) {
-        console.error('An error occurred in getTotalTripDistance: ', err);
+      for await (const trip of this.state.trips.getResultsList()) {
+        total += trip.getDistanceInMiles();
       }
+
+      resolve(total);
     }).then(val => {
       dist = Number(val);
     });
-
     return dist;
   };
   updateTotalMiles = async () => {
