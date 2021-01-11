@@ -217,12 +217,19 @@ export class TripSummary extends React.PureComponent<Props, State> {
         const tripResultList = (await PerDiemClientService.BatchGetTrips(trip))
           .getResultsList()
           .filter(trip => {
-            let fail = true;
+            let fail = true,
+              userIDFailed = true;
+            if (this.props.loggedUserId != 0) {
+              if (trip.getUserId() == this.props.loggedUserId) {
+                userIDFailed = false;
+              }
+            }
             this.props.perDiemRowIds.forEach(id => {
               if (trip.getPerDiemRowId() == id) {
                 fail = false;
               }
             });
+            if (userIDFailed && this.props.loggedUserId != 0) fail = true;
             return !fail;
           });
         trips.push(...tripResultList);
