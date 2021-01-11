@@ -140,13 +140,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingDeleteAllTrips: false,
       key: 0,
     };
-    console.log('ctor');
     this.updateTotalMiles();
     this.setTripState();
   }
 
   getTripDistance = async (origin: string, destination: string) => {
-    console.log('getTripDistance');
     try {
       await getTripDistance(origin, destination);
     } catch (error: any) {
@@ -160,7 +158,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
   };
   refreshNamesAndDates = async () => {
-    console.log('refreshNamesAndDates');
     await this.getUserNamesFromIds();
     await this.getRowDatesFromPerDiemIds();
   };
@@ -203,14 +200,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await this.loadTrips().then(async result => {
       let list = new TripList();
       list.setResultsList(result);
-      console.log('Trips state set to: ', result);
       this.setState({ trips: list });
       await this.refreshNamesAndDates();
     });
   };
 
   getRowStartDateById = (rowId: number) => {
-    console.log('getRowStartDatebyId');
     if (this.dateIdPair.length == 0) return;
     for (let obj of this.dateIdPair) {
       if (obj.row_id == rowId) {
@@ -223,7 +218,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getRowDatesFromPerDiemIds = async () => {
-    console.log('getRowDatesFromPerDiemIds');
     let res: { date: string; row_id: number }[] = [];
 
     new Promise(resolve => {
@@ -256,14 +250,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     }).then(() => {
       this.dateIdPair = res;
-      console.log('Date id pair set: ', res);
       this.setState({ key: this.state.key + 1 });
       return res;
     });
   };
 
   getUserNamesFromIds = async () => {
-    console.log('getUserNamesFromIds');
     let res: { name: string; id: number }[] = [];
 
     this.state.trips.getResultsList().forEach(async (trip: Trip, idx, arr) => {
@@ -285,7 +277,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getNameById = (userId: number) => {
-    console.log('getNameById');
     if (this.nameIdPair.length == 0) {
       // Return - it's a bit early but it will be called at a later time when the state is set
       return '';
@@ -301,7 +292,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getTotalTripDistance = async () => {
-    console.log('getTotalTripDistance');
     let dist = 0;
 
     await new Promise(async resolve => {
@@ -334,7 +324,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     return dist;
   };
   updateTotalMiles = async () => {
-    console.log('updateTotalMiles');
     this.setState({
       totalTripMiles: await this.getTotalTripDistance(),
     });
@@ -383,7 +372,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ pendingDeleteAllTrips: false });
   };
   setStateToNew = (to: any) => {
-    console.log('setStateToNew: ', to);
     this.setState(to);
   };
   render() {
