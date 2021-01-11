@@ -125,6 +125,7 @@ interface State {
   trips: TripList;
   totalTripMiles: number;
   key: number;
+  loading: boolean;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -139,6 +140,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
       key: 0,
+      loading: true,
     };
     this.setTripState();
   }
@@ -157,8 +159,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
   };
   refreshNamesAndDates = async () => {
-    await this.getUserNamesFromIds();
-    await this.getRowDatesFromPerDiemIds();
+    console.log('Refreshing them');
+    new Promise(async resolve => {
+      await this.getUserNamesFromIds();
+      await this.getRowDatesFromPerDiemIds();
+      resolve(false);
+    }).then((result: any) => {
+      console.log('resolved');
+      this.setState({ loading: result });
+    });
   };
 
   loadTrips = async () => {
@@ -196,6 +205,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   setTripState = async () => {
     await this.loadTrips().then(async result => {
+      console.log('Setting trip state');
       let list = new TripList();
       list.setResultsList(result);
       this.setState({ trips: list });
@@ -218,7 +228,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   getRowDatesFromPerDiemIds = async () => {
     let res: { date: string; row_id: number }[] = [];
 
-    new Promise(async resolve => {
+    await new Promise(async resolve => {
       for await (const trip of this.state.trips.getResultsList()) {
         try {
           let pd = new PerDiem();
@@ -240,8 +250,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }).then(() => {
       this.dateIdPair = res;
       this.setState({ key: this.state.key + 1 });
-      return res;
     });
+
+    return res;
   };
 
   getUserNamesFromIds = async () => {
@@ -359,6 +370,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           small={this.props.compact ? true : false}
         />
         <>
+          {this.state.loading && <Loader />}
           {this.props.canDeleteTrips && (
             <InfoTable
               key={
