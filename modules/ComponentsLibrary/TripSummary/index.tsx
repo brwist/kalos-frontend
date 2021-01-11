@@ -196,53 +196,58 @@ export class TripSummary extends React.PureComponent<Props, State> {
     let trips: Trip[] = [];
 
     return await new Promise<Trip[]>(async resolve => {
-      for await (const id of this.props.perDiemRowIds) {
+      if (tripFilter) {
         let trip: Trip = new Trip();
-        if (!tripFilter) {
-          if (this.props.loggedUserId != 0)
-            trip.setUserId(this.props.loggedUserId);
-          trip.setPerDiemRowId(id);
-        } else {
-          for (const prop of Object.keys(tripFilter)) {
-            switch (prop) {
-              case 'originAddress':
-                if (tripFilter[prop] == '') break;
-                trip.setOriginAddress(tripFilter[prop]);
-                break;
-              case 'destinationAddress':
-                if (tripFilter[prop] == '') break;
-                trip.setDestinationAddress(tripFilter[prop]);
-                break;
-              case 'id':
-                if (tripFilter[prop] == 0) break;
-                trip.setId(tripFilter[prop]);
-                break;
-            }
+        for (const prop of Object.keys(tripFilter)) {
+          switch (prop) {
+            case 'originAddress':
+              if (tripFilter[prop] == '') break;
+              trip.setOriginAddress(tripFilter[prop]);
+              break;
+            case 'destinationAddress':
+              if (tripFilter[prop] == '') break;
+              trip.setDestinationAddress(tripFilter[prop]);
+              break;
+            case 'id':
+              if (tripFilter[prop] == 0) break;
+              trip.setId(tripFilter[prop]);
+              break;
           }
         }
-        const tripResultList = (await PerDiemClientService.BatchGetTrips(trip))
-          .getResultsList()
-          .filter(trip => {
-            let fail = false;
 
-            if (tripFilter) {
-              // We must be searching, so we want all the results
-              return true;
-            }
-            if (this.state.trips.getResultsList().length == 0) {
-              // If there's no state, we just add it in to the list - means this is
-              // the first time loading after refresh
-              return true;
-            }
-            this.state.trips.getResultsList().forEach(t => {
-              if (t.getId() == trip.getId()) {
-                fail = true;
+        trips.push(
+          ...(await PerDiemClientService.BatchGetTrips(trip)).getResultsList(),
+        );
+      } else {
+        for await (const id of this.props.perDiemRowIds) {
+          let trip: Trip = new Trip();
+          if (!tripFilter) {
+            if (this.props.loggedUserId != 0)
+              trip.setUserId(this.props.loggedUserId);
+            trip.setPerDiemRowId(id);
+          }
+          const tripResultList = (
+            await PerDiemClientService.BatchGetTrips(trip)
+          )
+            .getResultsList()
+            .filter(trip => {
+              let fail = false;
+              if (this.state.trips.getResultsList().length == 0) {
+                // If there's no state, we just add it in to the list - means this is
+                // the first time loading after refresh
+                return true;
               }
+              this.state.trips.getResultsList().forEach(t => {
+                if (t.getId() == trip.getId()) {
+                  fail = true;
+                }
+              });
+              return !fail;
             });
-            return !fail;
-          });
-        trips.push(...tripResultList);
+          trips.push(...tripResultList);
+        }
       }
+
       resolve(trips);
     }).then(result => {
       return result;
