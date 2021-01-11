@@ -220,35 +220,27 @@ export class TripSummary extends React.PureComponent<Props, State> {
   getRowDatesFromPerDiemIds = async () => {
     let res: { date: string; row_id: number }[] = [];
 
-    new Promise(resolve => {
-      try {
-        this.state.trips
-          .getResultsList()
-          .forEach(async (trip: Trip, index: number, array: Trip[]) => {
-            try {
-              let pd = new PerDiem();
-              pd.setId(trip.getPerDiemRowId());
-              const pdr = await PerDiemClientService.Get(pd);
-              const obj = {
-                date: pdr.dateStarted,
-                row_id: trip.getPerDiemRowId(),
-              };
-              if (!res.includes(obj)) res.push(obj);
-              if (index == array.length - 1) resolve(res);
-            } catch (err: any) {
-              console.error(
-                'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
-                err,
-              );
-            }
-          });
-      } catch (err: any) {
-        console.error(
-          'Error occurred while getting row dates from per diem IDs: ',
-          err,
-        );
+    new Promise(async resolve => {
+      for await (const trip of this.state.trips.getResultsList()) {
+        try {
+          let pd = new PerDiem();
+          pd.setId(trip.getPerDiemRowId());
+          const pdr = await PerDiemClientService.Get(pd);
+          const obj = {
+            date: pdr.dateStarted,
+            row_id: trip.getPerDiemRowId(),
+          };
+          if (!res.includes(obj)) res.push(obj);
+        } catch (err: any) {
+          console.error(
+            'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
+            err,
+          );
+        }
       }
+      resolve(res);
     }).then(() => {
+      console.log('Result of date loop: ', res);
       this.dateIdPair = res;
       this.setState({ key: this.state.key + 1 });
       return res;
