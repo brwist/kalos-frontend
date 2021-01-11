@@ -16,6 +16,7 @@ import {
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
 import { PerDiem } from './components/PerDiem';
+import { Timesheet } from './components/Timesheet';
 import './styles.less';
 import { TripSummary } from '../TripSummary';
 import {
@@ -142,6 +143,15 @@ export const Payroll: FC<Props> = ({ userID }) => {
           />
           <Tabs
             tabs={[
+              {
+                label: 'Timesheet',
+                content: (
+                  <Timesheet
+                    departmentId={filter.departmentId}
+                    employeeId={filter.employeeId}
+                  />
+                ),
+              },
               {
                 label: 'Per Diem',
                 content: (

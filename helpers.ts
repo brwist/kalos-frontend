@@ -86,6 +86,10 @@ import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import {
+  TimesheetLineClient,
+  TimesheetLine,
+} from '@kalos-core/kalos-rpc/TimesheetLine';
 import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
 import {
   SpiffToolAdminAction,
@@ -165,6 +169,7 @@ export type CardDataType = CardData.AsObject;
 export type TransactionDocumentType = TransactionDocument.AsObject;
 export type TimeoffRequestType = TimeoffRequest.AsObject;
 export type PTOType = PTO.AsObject;
+export type TimesheetLineType = TimesheetLine.AsObject;
 export type SimpleFile = {
   key: string;
   bucket: string;
@@ -218,6 +223,7 @@ export const InternalDocumentClientService = new InternalDocumentClient(
 export const S3ClientService = new S3Client(ENDPOINT);
 export const FileClientService = new FileClient(ENDPOINT);
 export const TimeoffRequestClientService = new TimeoffRequestClient(ENDPOINT);
+export const TimesheetLineClientService = new TimesheetLineClient(ENDPOINT);
 
 const StateCode = {
   alabama: 'AL',
@@ -659,6 +665,27 @@ function getRPCFields(fieldName: string) {
     methodName: `set${upperCaseProp}`,
   };
 }
+
+export const loadTimesheetLine = async ({
+  page,
+  departmentId,
+  technicianUserId,
+}: {
+  page: number;
+  departmentId: number;
+  technicianUserId: number;
+}) => {
+  const req = new TimesheetLine();
+  req.setPageNumber(page);
+  if (departmentId) {
+    req.setDepartmentCode(departmentId);
+  }
+  if (technicianUserId) {
+    req.setTechnicianUserId(technicianUserId);
+  }
+  const response = (await TimesheetLineClientService.BatchGet(req)).toObject();
+  return response;
+};
 
 /** Returns loaded TimesheetDepartments
  * @returns TimesheetDepartment[]
