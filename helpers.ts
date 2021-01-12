@@ -1545,9 +1545,10 @@ export const upsertTrip = async (
   rowId: number,
   userId: number,
 ) => {
-  const req = new Trip();
   const fieldMaskList = [];
   let destinationAddress, originAddress;
+
+  const req = new Trip();
 
   for (const fieldName in data) {
     let { upperCaseProp, methodName } = getRPCFields(fieldName);
@@ -2378,7 +2379,7 @@ export const loadTripsByFilter = async ({
 }: LoadTripsByFilter) => {
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Trip();
-  req.setPageNumber(page);
+  req.setPage(page);
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof TripsFilter];
 
