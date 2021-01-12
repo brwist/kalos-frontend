@@ -1,6 +1,10 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
+import IconButton from '@material-ui/core/IconButton';
+import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
+import { Modal } from '../../../ComponentsLibrary/Modal';
+import { Timesheet as TimesheetComponent } from '../../../Timesheet/main';
 import {
   loadTimesheetLine,
   TimesheetLineType,
@@ -19,6 +23,7 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId }) => {
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
+  const [pendingView, setPendingView] = useState<TimesheetLineType>();
   const load = useCallback(async () => {
     setLoading(true);
     const { resultsList, totalCount } = await loadTimesheetLine({
@@ -34,6 +39,10 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId }) => {
   useEffect(() => {
     load();
   }, [page, departmentId, employeeId]);
+  const handleTogglePendingView = useCallback(
+    (pendingView?: TimesheetLineType) => () => setPendingView(pendingView),
+    [],
+  );
   return (
     <div>
       <SectionBar
@@ -60,20 +69,42 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId }) => {
                 return [
                   {
                     value: e.technicianUserId,
+                    onClick: handleTogglePendingView(e),
                   },
                   {
                     value: e.departmentCode,
+                    onClick: handleTogglePendingView(e),
                   },
                   {
                     value: formatDateTime(e.timeStarted),
+                    onClick: handleTogglePendingView(e),
                   },
                   {
                     value: formatDateTime(e.timeFinished),
+                    onClick: handleTogglePendingView(e),
+                    actions: [
+                      <IconButton
+                        key="view"
+                        onClick={handleTogglePendingView(e)}
+                        size="small"
+                      >
+                        <Visibility />
+                      </IconButton>,
+                    ],
                   },
                 ];
               })
         }
       />
+      {pendingView && (
+        <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
+          <TimesheetComponent
+            timesheetOwnerId={pendingView.technicianUserId}
+            userId={pendingView.technicianUserId}
+            onClose={handleTogglePendingView(undefined)}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
