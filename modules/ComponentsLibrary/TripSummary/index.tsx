@@ -222,100 +222,69 @@ export class TripSummary extends React.PureComponent<Props, State> {
       sort: tripSort as TripsSort,
     };
     return await new Promise<Trip[]>(async resolve => {
+      let tripResultList: any = [];
       if (tripFilter) {
-        const tripResultList = (
-          await loadTripsByFilter(criteria)
-        ).results.filter(trip => {
-          console.log('GOT A TRIP: ', trip);
-          let fail = true,
-            userIDFailed = true;
-          if (this.props.loggedUserId != 0) {
-            if (trip.userId == this.props.loggedUserId) {
-              userIDFailed = false;
+        tripResultList = (await loadTripsByFilter(criteria)).results.filter(
+          trip => {
+            let fail = true,
+              userIDFailed = true;
+            if (this.props.loggedUserId != 0) {
+              if (trip.userId == this.props.loggedUserId) {
+                userIDFailed = false;
+              }
             }
-          }
-          this.props.perDiemRowIds.forEach(id => {
-            if (trip.perDiemRowId == id) {
-              fail = false;
-            }
-          });
-          if (userIDFailed && this.props.loggedUserId != 0) fail = true;
-          return !fail;
-        });
-
-        let tripList: Trip[] = [];
-        for await (const tripAsObj of tripResultList) {
-          const req = new Trip();
-          let originAddress: string = '',
-            destinationAddress: string = '';
-          for (const fieldName in tripAsObj) {
-            let { methodName } = getRPCFields(fieldName);
-            if (methodName == 'setDestinationAddress') {
-              //@ts-ignore
-              destinationAddress = tripAsObj[fieldName];
-            }
-            if (methodName == 'setOriginAddress') {
-              //@ts-ignore
-              originAddress = tripAsObj[fieldName];
-            }
-
-            //@ts-ignore
-            req[methodName](tripAsObj[fieldName]);
-          }
-
-          req.setPerDiemRowId(tripAsObj.perDiemRowId);
-          req.setUserId(tripAsObj.userId);
-          req.setNotes(tripAsObj.notes);
-          req.setDistanceInMiles(tripAsObj.distanceInMiles);
-          req.setOriginAddress(originAddress);
-          req.setDestinationAddress(destinationAddress);
-          tripList.push(req);
-        }
-        trips.push(...tripList);
+            this.props.perDiemRowIds.forEach(id => {
+              if (trip.perDiemRowId == id) {
+                fail = false;
+              }
+            });
+            if (userIDFailed && this.props.loggedUserId != 0) fail = true;
+            return !fail;
+          },
+        );
       } else {
-        const tripResultList = (
-          await loadTripsByFilter(criteria)
-        ).results.filter(trip => {
-          let fail = false;
-          this.state.trips.getResultsList().forEach(t => {
-            if (t.getId() == trip.id) {
-              fail = true;
-            }
-          });
+        tripResultList = (await loadTripsByFilter(criteria)).results.filter(
+          trip => {
+            let fail = false;
+            this.state.trips.getResultsList().forEach(t => {
+              if (t.getId() == trip.id) {
+                fail = true;
+              }
+            });
+            return !fail;
+          },
+        );
+      }
 
-          return !fail;
-        });
-
-        let tripList: Trip[] = [];
-        for await (const tripAsObj of tripResultList) {
-          const req = new Trip();
-          let originAddress: string = '',
-            destinationAddress: string = '';
-          for (const fieldName in tripAsObj) {
-            let { methodName } = getRPCFields(fieldName);
-            if (methodName == 'setDestinationAddress') {
-              //@ts-ignore
-              destinationAddress = tripAsObj[fieldName];
-            }
-            if (methodName == 'setOriginAddress') {
-              //@ts-ignore
-              originAddress = tripAsObj[fieldName];
-            }
-
+      let tripList: Trip[] = [];
+      for await (const tripAsObj of tripResultList) {
+        const req = new Trip();
+        let originAddress: string = '',
+          destinationAddress: string = '';
+        for (const fieldName in tripAsObj) {
+          let { methodName } = getRPCFields(fieldName);
+          if (methodName == 'setDestinationAddress') {
             //@ts-ignore
-            req[methodName](tripAsObj[fieldName]);
+            destinationAddress = tripAsObj[fieldName];
+          }
+          if (methodName == 'setOriginAddress') {
+            //@ts-ignore
+            originAddress = tripAsObj[fieldName];
           }
 
-          req.setPerDiemRowId(tripAsObj.perDiemRowId);
-          req.setUserId(tripAsObj.userId);
-          req.setNotes(tripAsObj.notes);
-          req.setDistanceInMiles(tripAsObj.distanceInMiles);
-          req.setOriginAddress(originAddress);
-          req.setDestinationAddress(destinationAddress);
-          tripList.push(req);
+          //@ts-ignore
+          req[methodName](tripAsObj[fieldName]);
         }
-        trips.push(...tripList);
+
+        req.setPerDiemRowId(tripAsObj.perDiemRowId);
+        req.setUserId(tripAsObj.userId);
+        req.setNotes(tripAsObj.notes);
+        req.setDistanceInMiles(tripAsObj.distanceInMiles);
+        req.setOriginAddress(originAddress);
+        req.setDestinationAddress(destinationAddress);
+        tripList.push(req);
       }
+      trips.push(...tripList);
       resolve(trips);
     }).then(result => {
       return result;
