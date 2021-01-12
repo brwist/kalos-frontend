@@ -270,10 +270,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
             if (userIDFailed && this.props.loggedUserId != 0) fail = true;
             return !fail;
           });*/
-        const req = new Trip();
 
+        console.log('RESULTS LIST: ', tripResultList);
         let tripList: Trip[] = [];
         for await (const tripAsObj of tripResultList) {
+          const req = new Trip();
+
           let originAddress: string = '',
             destinationAddress: string = '';
           for (const fieldName in tripAsObj) {
@@ -290,6 +292,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             //@ts-ignore
             req[methodName](tripAsObj[fieldName]);
           }
+
           req.setPerDiemRowId(tripAsObj.perDiemRowId);
           req.setUserId(tripAsObj.userId);
           req.setNotes(tripAsObj.notes);
@@ -297,8 +300,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
           req.setOriginAddress(originAddress);
           req.setDestinationAddress(destinationAddress);
 
+          console.log('FINAL : ', req);
           tripList.push(req);
         }
+        console.log('FINAL trip list: ', tripList);
         trips.push(...tripList);
       } else {
         for await (const id of this.props.perDiemRowIds) {
