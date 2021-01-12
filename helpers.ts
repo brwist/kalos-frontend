@@ -1361,7 +1361,7 @@ export const loadPerDiemsNeedsAuditing = async (
     'NeedsAuditing',
     'PayrollProcessed',
     'WithRows',
-    // ...(typeof approved === 'boolean' ? ['ApprovedById'] : []),
+    ...(typeof approved === 'boolean' && !approved ? ['ApprovedById'] : []),
   ]);
   req.setWithRows(true);
   req.setPageNumber(page);
@@ -1375,6 +1375,9 @@ export const loadPerDiemsNeedsAuditing = async (
   }
   if (dateStarted) {
     req.setDateStarted(`${dateStarted}%`);
+  }
+  if (typeof approved === 'boolean' && approved) {
+    req.setNotEqualsList(['ApprovedById']);
   }
   req.setIsActive(true);
   return (await PerDiemClientService.BatchGet(req)).toObject();
