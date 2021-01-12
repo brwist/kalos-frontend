@@ -12,6 +12,10 @@ import {
   PerDiemClientService,
   getTripDistance,
   UserClientService,
+  loadTripsByFilter,
+  TripsFilter,
+  TripsSort,
+  LoadTripsByFilter,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -150,6 +154,7 @@ interface State {
   key: number;
   loading: boolean;
   search: Trip.AsObject;
+  page: number;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -166,6 +171,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       key: 0,
       loading: true,
       search: new Trip().toObject(),
+      page: 0,
     };
     this.setTripState();
   }
@@ -215,7 +221,36 @@ export class TripSummary extends React.PureComponent<Props, State> {
               break;
           }
         }
-        const tripResultList = (await PerDiemClientService.BatchGetTrips(trip))
+        const tripSort = {
+          orderByField: 'per_diem_row_id',
+          orderBy: 'per_diem_row_id',
+          orderDir: 'ASC',
+        };
+        const page = this.state.page;
+        const criteria: LoadTripsByFilter = {
+          page,
+          filter: trip as TripsFilter,
+          sort: tripSort as TripsSort,
+        };
+        const tripResultList = (
+          await loadTripsByFilter(criteria)
+        ).results.filter(trip => {
+          let fail = true,
+            userIDFailed = true;
+          if (this.props.loggedUserId != 0) {
+            if (trip.userId == this.props.loggedUserId) {
+              userIDFailed = false;
+            }
+          }
+          this.props.perDiemRowIds.forEach(id => {
+            if (trip.perDiemRowId == id) {
+              fail = false;
+            }
+          });
+          if (userIDFailed && this.props.loggedUserId != 0) fail = true;
+          return !fail;
+        });
+        /*(await PerDiemClientService.BatchGetTrips(trip))
           .getResultsList()
           .filter(trip => {
             let fail = true,
@@ -232,8 +267,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
             });
             if (userIDFailed && this.props.loggedUserId != 0) fail = true;
             return !fail;
-          });
-        trips.push(...tripResultList);
+          });*/
+        //trips.push(...tripResultList);
       } else {
         for await (const id of this.props.perDiemRowIds) {
           let trip: Trip = new Trip();
