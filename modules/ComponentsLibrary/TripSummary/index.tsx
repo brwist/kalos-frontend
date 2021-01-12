@@ -202,6 +202,17 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   loadTrips = async (tripFilter?: TripsFilter) => {
     let trips: Trip[] = [];
+    const tripSort = {
+      orderByField: 'user_id',
+      orderBy: 'user_id',
+      orderDir: 'ASC',
+    };
+    const page = this.state.page;
+    const criteria: LoadTripsByFilter = {
+      page,
+      filter: tripFilter ? tripFilter : {},
+      sort: tripSort as TripsSort,
+    };
 
     return await new Promise<Trip[]>(async resolve => {
       if (tripFilter) {
@@ -222,17 +233,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               break;
           }
         }
-        const tripSort = {
-          orderByField: 'per_diem_row_id',
-          orderBy: 'per_diem_row_id',
-          orderDir: 'ASC',
-        };
-        const page = this.state.page;
-        const criteria: LoadTripsByFilter = {
-          page,
-          filter: tripFilter,
-          sort: tripSort as TripsSort,
-        };
+
         const tripResultList = (
           await loadTripsByFilter(criteria)
         ).results.filter(trip => {
@@ -282,35 +283,49 @@ export class TripSummary extends React.PureComponent<Props, State> {
         }
         trips.push(...tripList);
       } else {
-        for await (const id of this.props.perDiemRowIds) {
-          let trip: Trip = new Trip();
-          if (!tripFilter) {
-            if (this.props.loggedUserId != 0)
-              trip.setUserId(this.props.loggedUserId);
-            trip.setPerDiemRowId(id);
-          }
-          const tripResultList = (
-            await PerDiemClientService.BatchGetTrips(trip)
-          )
-            .getResultsList()
-            .filter(trip => {
-              let fail = false;
-              if (this.state.trips.getResultsList().length == 0) {
-                // If there's no state, we just add it in to the list - means this is
-                // the first time loading after refresh
-                return true;
-              }
-              this.state.trips.getResultsList().forEach(t => {
-                if (t.getId() == trip.getId()) {
-                  fail = true;
-                }
-              });
-              return !fail;
-            });
-          trips.push(...tripResultList);
-        }
-      }
+        const tripResultList = (
+          await loadTripsByFilter(criteria)
+        ).results.filter(trip => {
+          let fail = false;
+          this.state.trips.getResultsList().forEach(t => {
+            if (t.getId() == trip.id) {
+              fail = true;
+            }
+          });
 
+          return !fail;
+        });
+
+        let tripList: Trip[] = [];
+        for await (const tripAsObj of tripResultList) {
+          const req = new Trip();
+          let originAddress: string = '',
+            destinationAddress: string = '';
+          for (const fieldName in tripAsObj) {
+            let { methodName } = getRPCFields(fieldName);
+            if (methodName == 'setDestinationAddress') {
+              //@ts-ignore
+              destinationAddress = tripAsObj[fieldName];
+            }
+            if (methodName == 'setOriginAddress') {
+              //@ts-ignore
+              originAddress = tripAsObj[fieldName];
+            }
+
+            //@ts-ignore
+            req[methodName](tripAsObj[fieldName]);
+          }
+
+          req.setPerDiemRowId(tripAsObj.perDiemRowId);
+          req.setUserId(tripAsObj.userId);
+          req.setNotes(tripAsObj.notes);
+          req.setDistanceInMiles(tripAsObj.distanceInMiles);
+          req.setOriginAddress(originAddress);
+          req.setDestinationAddress(destinationAddress);
+          tripList.push(req);
+        }
+        trips.push(...tripList);
+      }
       resolve(trips);
     }).then(result => {
       return result;
