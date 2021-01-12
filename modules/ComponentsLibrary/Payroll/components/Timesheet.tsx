@@ -68,11 +68,11 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId }) => {
             : timesheets.map(e => {
                 return [
                   {
-                    value: e.technicianUserId,
+                    value: e.technicianUserName,
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: e.departmentCode,
+                    value: e.departmentName,
                     onClick: handleTogglePendingView(e),
                   },
                   {
