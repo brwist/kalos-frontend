@@ -208,35 +208,25 @@ export class TripSummary extends React.PureComponent<Props, State> {
       orderDir: 'ASC',
     };
     const page = this.state.page;
+
     const criteria: LoadTripsByFilter = {
       page,
-      filter: tripFilter ? tripFilter : {},
+      filter: tripFilter
+        ? tripFilter
+        : {
+            userId:
+              this.props.loggedUserId != 0
+                ? this.props.loggedUserId
+                : undefined,
+          },
       sort: tripSort as TripsSort,
     };
-
     return await new Promise<Trip[]>(async resolve => {
       if (tripFilter) {
-        let trip: Trip = new Trip();
-        for (const prop of Object.keys(tripFilter)) {
-          switch (prop) {
-            case 'originAddress':
-              if (tripFilter[prop] == '') break;
-              trip.setOriginAddress(tripFilter[prop]!);
-              break;
-            case 'destinationAddress':
-              if (tripFilter[prop] == '') break;
-              trip.setDestinationAddress(tripFilter[prop]!);
-              break;
-            case 'id':
-              if (tripFilter[prop]! == 0) break;
-              trip.setId(tripFilter[prop]!);
-              break;
-          }
-        }
-
         const tripResultList = (
           await loadTripsByFilter(criteria)
         ).results.filter(trip => {
+          console.log('GOT A TRIP: ', trip);
           let fail = true,
             userIDFailed = true;
           if (this.props.loggedUserId != 0) {

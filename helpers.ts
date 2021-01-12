@@ -2282,6 +2282,7 @@ export type ContractsFilter = {
 };
 export type TripsFilter = {
   id?: number;
+  userId?: number;
   lastName?: string;
   originAddress?: string;
   destinationAddress?: string;
