@@ -16,6 +16,7 @@ import {
   TripsFilter,
   TripsSort,
   LoadTripsByFilter,
+  getRPCFields,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -199,7 +200,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     });
   };
 
-  loadTrips = async (tripFilter?: Trip.AsObject) => {
+  loadTrips = async (tripFilter?: TripsFilter) => {
     let trips: Trip[] = [];
 
     return await new Promise<Trip[]>(async resolve => {
@@ -209,15 +210,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
           switch (prop) {
             case 'originAddress':
               if (tripFilter[prop] == '') break;
-              trip.setOriginAddress(tripFilter[prop]);
+              trip.setOriginAddress(tripFilter[prop]!);
               break;
             case 'destinationAddress':
               if (tripFilter[prop] == '') break;
-              trip.setDestinationAddress(tripFilter[prop]);
+              trip.setDestinationAddress(tripFilter[prop]!);
               break;
             case 'id':
-              if (tripFilter[prop] == 0) break;
-              trip.setId(tripFilter[prop]);
+              if (tripFilter[prop]! == 0) break;
+              trip.setId(tripFilter[prop]!);
               break;
           }
         }
@@ -227,9 +228,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
           orderDir: 'ASC',
         };
         const page = this.state.page;
+        console.log(tripFilter);
         const criteria: LoadTripsByFilter = {
           page,
-          filter: trip as TripsFilter,
+          filter: tripFilter,
           sort: tripSort as TripsSort,
         };
         const tripResultList = (
@@ -268,7 +270,36 @@ export class TripSummary extends React.PureComponent<Props, State> {
             if (userIDFailed && this.props.loggedUserId != 0) fail = true;
             return !fail;
           });*/
-        //trips.push(...tripResultList);
+        const req = new Trip();
+
+        let tripList: Trip[] = [];
+        for await (const tripAsObj of tripResultList) {
+          let originAddress: string = '',
+            destinationAddress: string = '';
+          for (const fieldName in tripAsObj) {
+            let { upperCaseProp, methodName } = getRPCFields(fieldName);
+            if (methodName == 'setDestinationAddress') {
+              //@ts-ignore
+              destinationAddress = tripAsObj[fieldName];
+            }
+            if (methodName == 'setOriginAddress') {
+              //@ts-ignore
+              originAddress = tripAsObj[fieldName];
+            }
+
+            //@ts-ignore
+            req[methodName](tripAsObj[fieldName]);
+          }
+          req.setPerDiemRowId(tripAsObj.perDiemRowId);
+          req.setUserId(tripAsObj.userId);
+          req.setNotes(tripAsObj.notes);
+          req.setDistanceInMiles(tripAsObj.distanceInMiles);
+          req.setOriginAddress(originAddress);
+          req.setDestinationAddress(destinationAddress);
+
+          tripList.push(req);
+        }
+        trips.push(...tripList);
       } else {
         for await (const id of this.props.perDiemRowIds) {
           let trip: Trip = new Trip();

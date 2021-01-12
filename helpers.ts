@@ -2281,10 +2281,10 @@ export type ContractsFilter = {
   dateEnded?: number;
 };
 export type TripsFilter = {
-  id?: string;
+  id?: number;
   lastName?: string;
-  origin?: string;
-  destination?: string;
+  originAddress?: string;
+  destinationAddress?: string;
   weekof?: number;
 };
 /**
@@ -2386,6 +2386,8 @@ export const loadTripsByFilter = async ({
     if (value) {
       const { methodName } = getRPCFields(fieldName);
 
+      // @ts-ignore
+      if (!req[methodName]) continue;
       //@ts-ignore
       req[methodName](typeof value === 'string' ? `%${value}%` : value);
     }
