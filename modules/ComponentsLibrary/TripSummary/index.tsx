@@ -228,7 +228,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
           orderDir: 'ASC',
         };
         const page = this.state.page;
-        console.log(tripFilter);
         const criteria: LoadTripsByFilter = {
           page,
           filter: tripFilter,
@@ -252,34 +251,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
           if (userIDFailed && this.props.loggedUserId != 0) fail = true;
           return !fail;
         });
-        /*(await PerDiemClientService.BatchGetTrips(trip))
-          .getResultsList()
-          .filter(trip => {
-            let fail = true,
-              userIDFailed = true;
-            if (this.props.loggedUserId != 0) {
-              if (trip.getUserId() == this.props.loggedUserId) {
-                userIDFailed = false;
-              }
-            }
-            this.props.perDiemRowIds.forEach(id => {
-              if (trip.getPerDiemRowId() == id) {
-                fail = false;
-              }
-            });
-            if (userIDFailed && this.props.loggedUserId != 0) fail = true;
-            return !fail;
-          });*/
 
-        console.log('RESULTS LIST: ', tripResultList);
         let tripList: Trip[] = [];
         for await (const tripAsObj of tripResultList) {
           const req = new Trip();
-
           let originAddress: string = '',
             destinationAddress: string = '';
           for (const fieldName in tripAsObj) {
-            let { upperCaseProp, methodName } = getRPCFields(fieldName);
+            let { methodName } = getRPCFields(fieldName);
             if (methodName == 'setDestinationAddress') {
               //@ts-ignore
               destinationAddress = tripAsObj[fieldName];
@@ -299,11 +278,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
           req.setDistanceInMiles(tripAsObj.distanceInMiles);
           req.setOriginAddress(originAddress);
           req.setDestinationAddress(destinationAddress);
-
-          console.log('FINAL : ', req);
           tripList.push(req);
         }
-        console.log('FINAL trip list: ', tripList);
         trips.push(...tripList);
       } else {
         for await (const id of this.props.perDiemRowIds) {
