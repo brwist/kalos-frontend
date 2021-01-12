@@ -39,7 +39,6 @@ import {
 } from '../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
-import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { TimeOff } from '../ComponentsLibrary/TimeOff';
 
@@ -48,9 +47,10 @@ import './styles.less';
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
 
-type Props = PageWrapperProps & {
+type Props = {
   userId: number;
   timesheetOwnerId: number;
+  onClose?: () => void;
 };
 
 type EditTimesheetContext = {
@@ -71,7 +71,7 @@ const getWeekStart = (userId: number, timesheetOwnerId: number) => {
 };
 
 export const Timesheet: FC<Props> = props => {
-  const { userId, timesheetOwnerId } = props;
+  const { userId, timesheetOwnerId, onClose } = props;
   const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   const [tripsOpen, setTripsOpen] = useState<boolean>(false);
   const [state, dispatch] = useReducer(reducer, {
@@ -389,7 +389,7 @@ export const Timesheet: FC<Props> = props => {
     });
   }
   return (
-    <PageWrapper {...props} userID={userId}>
+    <div>
       <ConfirmServiceProvider>
         <EditTimesheetContext.Provider
           value={{
@@ -406,6 +406,7 @@ export const Timesheet: FC<Props> = props => {
             submitTimesheet={handleSubmitTimesheet}
             pendingEntries={pendingEntries}
             isTimesheetOwner={props.userId === props.timesheetOwnerId}
+            onClose={onClose}
           />
           {error && (
             <Alert
@@ -479,6 +480,6 @@ export const Timesheet: FC<Props> = props => {
           />
         </Modal>
       )}
-    </PageWrapper>
+    </div>
   );
 };

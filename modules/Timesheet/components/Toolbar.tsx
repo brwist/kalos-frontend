@@ -21,6 +21,7 @@ type Props = {
   submitTimesheet: () => void;
   pendingEntries: boolean;
   isTimesheetOwner?: boolean;
+  onClose?: () => void;
 };
 
 const Toolbar: FC<Props> = ({
@@ -32,6 +33,7 @@ const Toolbar: FC<Props> = ({
   submitTimesheet,
   pendingEntries,
   isTimesheetOwner,
+  onClose,
 }): JSX.Element => {
   const confirm = useConfirm();
 
@@ -96,6 +98,7 @@ const Toolbar: FC<Props> = ({
             )}
           </Box>
           <Button onClick={handleSubmit} label={buttonLabel} />
+          {onClose && <Button label="Close" onClick={onClose} />}
         </Box>
       </MuiPickersUtilsProvider>
     </MuiToolbar>
