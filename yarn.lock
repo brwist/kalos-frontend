@@ -1214,9 +1214,9 @@
     chalk "^4.0.0"
 
 "@kalos-core/kalos-rpc@^2.47.2":
-  version "2.49.2"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.49.2.tgz#6ad8b1c26bbf358fcb598407fb737cbd746f9039"
-  integrity sha512-8I5Pf39eIQnr4OZEIql29GfdmzYIebXj3CYc98SV14QjgRWQA1bT5o+REf64CvyC43w6Sr7ADZciT+cGH5hVng==
+  version "2.50.0"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.50.0.tgz#209b49a91d1fb1d597bf0a9e24ad60b130de368f"
+  integrity sha512-i5RVSfZNlZHT5YCZZIgAv4ohjbUOxzg9A98IHBK27FJOs/1QLURiXFTX/uWn5BPmjP4YwO7iKu80+fG/TBRlRg==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
