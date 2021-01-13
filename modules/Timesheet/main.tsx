@@ -222,6 +222,20 @@ export const Timesheet: FC<Props> = props => {
       if (!checkReceiptIssue()) return;
       const ids: number[] = [];
       let overlapped = false;
+      let sameTimeConflict = false; //Track if there was a same time conflict
+      for (let i = 0; i < shownDates.length; i++) {
+        let days = [...data[shownDates[i]].timesheetLineList]; //interate through each day
+        for (var val of days) {
+          //iterate through each card in the day, as long as it is defined
+          if (val != undefined) {
+            if (val.timeFinished === val.timeStarted) {
+              //if the Start and End time are the same, trip the flag
+              console.log('Start and End time are identical');
+              sameTimeConflict = true;
+            }
+          }
+        }
+      }
       for (let i = 0; i < shownDates.length; i++) {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
           (a, b) =>
@@ -234,6 +248,7 @@ export const Timesheet: FC<Props> = props => {
               acc.idList.push(current.id);
               return acc;
             }
+
             let previous = arr[idx - 1];
             let previousEnd = parseISO(previous.timeFinished).getTime();
             let currentStart = parseISO(current.timeStarted).getTime();
@@ -260,7 +275,9 @@ export const Timesheet: FC<Props> = props => {
           },
         );
 
-        if (overlapped) {
+        if (overlapped || sameTimeConflict) {
+          //Adding the sameTimeConflict check to here as well, since
+          //we would like to break if either one has been tripped
           break;
         } else {
           ids.push(...result.idList);
@@ -268,6 +285,11 @@ export const Timesheet: FC<Props> = props => {
       }
       if (overlapped) {
         dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
+      } else if (sameTimeConflict) {
+        dispatch({
+          type: 'error',
+          text: 'Timesheet contains value with same Start and End time.', // dispatch the error
+        });
       } else {
         if (
           user?.timesheetAdministration &&
