@@ -149,6 +149,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                   <Timesheet
                     departmentId={filter.departmentId}
                     employeeId={filter.employeeId}
+                    week={filter.week}
                   />
                 ),
               },
