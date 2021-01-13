@@ -8,8 +8,8 @@ import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { Timesheet as TimesheetComponent } from '../../../Timesheet/main';
 import {
-  loadTimesheets,
-  TimesheetLineType,
+  loadTimeoffRequests,
+  TimeoffRequestType,
   makeFakeRows,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
@@ -28,12 +28,16 @@ const formatWeek = (date: string) => {
   )}`;
 };
 
-export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
+export const TimeoffRequests: FC<Props> = ({
+  departmentId,
+  employeeId,
+  week,
+}) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
+  const [timesheets, setTimesheets] = useState<TimeoffRequestType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [pendingView, setPendingView] = useState<TimesheetLineType>();
+  const [pendingView, setPendingView] = useState<TimeoffRequestType>();
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -47,8 +51,9 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
-    const { resultsList, totalCount } = await loadTimesheets(filter);
+    const { resultsList, totalCount } = await loadTimeoffRequests(filter);
     setTimesheets(resultsList);
+    console.log({ resultsList });
     setCount(totalCount);
     setLoading(false);
   }, [page, departmentId, employeeId, week]);
@@ -56,13 +61,13 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
     load();
   }, [page, departmentId, employeeId, week]);
   const handleTogglePendingView = useCallback(
-    (pendingView?: TimesheetLineType) => () => setPendingView(pendingView),
+    (pendingView?: TimeoffRequestType) => () => setPendingView(pendingView),
     [],
   );
   return (
     <div>
       <SectionBar
-        title="Timesheet"
+        title="Timeoff Requests"
         pagination={{
           count,
           page,
@@ -83,15 +88,15 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
             : timesheets.map(e => {
                 return [
                   {
-                    value: e.technicianUserName,
+                    value: e.userName,
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: e.departmentName,
+                    value: e.departmentCode,
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: formatWeek(e.weekStart),
+                    value: formatWeek(e.timeStarted),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
@@ -110,8 +115,8 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
       {pendingView && (
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <TimesheetComponent
-            timesheetOwnerId={pendingView.technicianUserId}
-            userId={pendingView.technicianUserId}
+            timesheetOwnerId={pendingView.userId}
+            userId={pendingView.userId}
             week={pendingView.timeStarted}
             onClose={handleTogglePendingView(undefined)}
           />

@@ -17,6 +17,7 @@ import {
 import { OPTION_ALL } from '../../../constants';
 import { PerDiem } from './components/PerDiem';
 import { Timesheet } from './components/Timesheet';
+import { TimeoffRequests } from './components/TimeoffRequests';
 import './styles.less';
 import { TripSummary } from '../TripSummary';
 import {
@@ -147,6 +148,16 @@ export const Payroll: FC<Props> = ({ userID }) => {
                 label: 'Timesheet',
                 content: (
                   <Timesheet
+                    departmentId={filter.departmentId}
+                    employeeId={filter.employeeId}
+                    week={filter.week}
+                  />
+                ),
+              },
+              {
+                label: 'Timeoff Requests',
+                content: (
+                  <TimeoffRequests
                     departmentId={filter.departmentId}
                     employeeId={filter.employeeId}
                     week={filter.week}
