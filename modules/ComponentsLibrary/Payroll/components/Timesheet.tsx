@@ -1,4 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
+import { format, addDays } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -6,19 +7,20 @@ import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { Timesheet as TimesheetComponent } from '../../../Timesheet/main';
 import {
-  loadTimesheetLine,
+  loadTimesheets,
   TimesheetLineType,
   makeFakeRows,
   formatDateTime,
 } from '../../../../helpers';
-import { ROWS_PER_PAGE } from '../../../../constants';
+import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 
 interface Props {
   departmentId: number;
   employeeId: number;
+  week: string;
 }
 
-export const Timesheet: FC<Props> = ({ departmentId, employeeId }) => {
+export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
@@ -26,19 +28,26 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId }) => {
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
   const load = useCallback(async () => {
     setLoading(true);
-    const { resultsList, totalCount } = await loadTimesheetLine({
+    const filter = {
       page,
       departmentId,
-      technicianUserId: employeeId,
-    });
+      employeeId,
+    };
+    if (week !== OPTION_ALL) {
+      Object.assign(filter, {
+        startDate: week,
+        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+      });
+    }
+    const { resultsList, totalCount } = await loadTimesheets(filter);
     setTimesheets(resultsList);
+    console.log({ resultsList });
     setCount(totalCount);
     setLoading(false);
-  }, [page, departmentId, employeeId]);
-  console.log({ timesheets });
+  }, [page, departmentId, employeeId, week]);
   useEffect(() => {
     load();
-  }, [page, departmentId, employeeId]);
+  }, [page, departmentId, employeeId, week]);
   const handleTogglePendingView = useCallback(
     (pendingView?: TimesheetLineType) => () => setPendingView(pendingView),
     [],
@@ -56,8 +65,8 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId }) => {
       />
       <InfoTable
         columns={[
-          { name: 'Employee ID' },
-          { name: 'Department ID' },
+          { name: 'Employee' },
+          { name: 'Department' },
           { name: 'Time Started' },
           { name: 'Time Finished' },
         ]}

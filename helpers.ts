@@ -666,6 +666,33 @@ function getRPCFields(fieldName: string) {
   };
 }
 
+export const loadTimesheets = async ({
+  page,
+  departmentId,
+  employeeId,
+  startDate,
+  endDate,
+}: {
+  page: number;
+  departmentId?: number;
+  employeeId?: number;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  const filter = {
+    page,
+    departmentID: departmentId,
+    technicianUserID: employeeId,
+    startDate,
+    endDate,
+  };
+  console.log({ filter });
+  const response = (
+    await TimesheetLineClientService.GetTimesheets(filter)
+  ).toObject();
+  return response;
+};
+
 export const loadTimesheetLine = async ({
   page,
   departmentId,
