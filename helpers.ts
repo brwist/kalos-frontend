@@ -86,6 +86,10 @@ import {
   TimesheetDepartmentClient,
   TimesheetDepartment,
 } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import {
+  TimesheetLineClient,
+  TimesheetLine,
+} from '@kalos-core/kalos-rpc/TimesheetLine';
 import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
 import {
   SpiffToolAdminAction,
@@ -165,6 +169,7 @@ export type CardDataType = CardData.AsObject;
 export type TransactionDocumentType = TransactionDocument.AsObject;
 export type TimeoffRequestType = TimeoffRequest.AsObject;
 export type PTOType = PTO.AsObject;
+export type TimesheetLineType = TimesheetLine.AsObject;
 export type SimpleFile = {
   key: string;
   bucket: string;
@@ -218,6 +223,7 @@ export const InternalDocumentClientService = new InternalDocumentClient(
 export const S3ClientService = new S3Client(ENDPOINT);
 export const FileClientService = new FileClient(ENDPOINT);
 export const TimeoffRequestClientService = new TimeoffRequestClient(ENDPOINT);
+export const TimesheetLineClientService = new TimesheetLineClient(ENDPOINT);
 
 const StateCode = {
   alabama: 'AL',
@@ -659,6 +665,27 @@ function getRPCFields(fieldName: string) {
     methodName: `set${upperCaseProp}`,
   };
 }
+
+export const loadTimesheetLine = async ({
+  page,
+  departmentId,
+  technicianUserId,
+}: {
+  page: number;
+  departmentId: number;
+  technicianUserId: number;
+}) => {
+  const req = new TimesheetLine();
+  req.setPageNumber(page);
+  if (departmentId) {
+    req.setDepartmentCode(departmentId);
+  }
+  if (technicianUserId) {
+    req.setTechnicianUserId(technicianUserId);
+  }
+  const response = (await TimesheetLineClientService.BatchGet(req)).toObject();
+  return response;
+};
 
 /** Returns loaded TimesheetDepartments
  * @returns TimesheetDepartment[]
@@ -1334,7 +1361,7 @@ export const loadPerDiemsNeedsAuditing = async (
     'NeedsAuditing',
     'PayrollProcessed',
     'WithRows',
-    // ...(typeof approved === 'boolean' ? ['ApprovedById'] : []),
+    ...(typeof approved === 'boolean' && !approved ? ['ApprovedById'] : []),
   ]);
   req.setWithRows(true);
   req.setPageNumber(page);
@@ -1348,6 +1375,9 @@ export const loadPerDiemsNeedsAuditing = async (
   }
   if (dateStarted) {
     req.setDateStarted(`${dateStarted}%`);
+  }
+  if (typeof approved === 'boolean' && approved) {
+    req.setNotEqualsList(['ApprovedById']);
   }
   req.setIsActive(true);
   return (await PerDiemClientService.BatchGet(req)).toObject();
@@ -1515,9 +1545,10 @@ export const upsertTrip = async (
   rowId: number,
   userId: number,
 ) => {
-  const req = new Trip();
   const fieldMaskList = [];
   let destinationAddress, originAddress;
+
+  const req = new Trip();
 
   for (const fieldName in data) {
     let { upperCaseProp, methodName } = getRPCFields(fieldName);
@@ -2214,6 +2245,11 @@ export type ContractsSort = {
   orderBy: string;
   orderDir: OrderDir;
 };
+export type TripsSort = {
+  orderByField: keyof TripType;
+  orderBy: string;
+  orderDir: OrderDir;
+};
 export type LoadPropertiesByFilter = {
   page: number;
   filter: PropertiesFilter;
@@ -2223,6 +2259,11 @@ export type LoadContractsByFilter = {
   page: number;
   filter: ContractsFilter;
   sort: ContractsSort;
+};
+export type LoadTripsByFilter = {
+  page: number;
+  filter: TripsFilter;
+  sort: TripsSort;
 };
 export type PropertiesFilter = {
   subdivision?: string;
@@ -2238,6 +2279,14 @@ export type ContractsFilter = {
   businessName?: string;
   dateStarted?: string;
   dateEnded?: number;
+};
+export type TripsFilter = {
+  id?: number;
+  userId?: number;
+  lastName?: string;
+  originAddress?: string;
+  destinationAddress?: string;
+  weekof?: number;
 };
 /**
  * Returns Properties by filter
@@ -2309,6 +2358,42 @@ export const loadContractsByFilter = async ({
     }
   }
   const response = await ContractClientService.BatchGet(req);
+  return {
+    results: response
+      .getResultsList()
+      .map(item => item.toObject())
+      .sort((a, b) => {
+        const A = (a[orderByField] || '').toString().toLowerCase();
+        const B = (b[orderByField] || '').toString().toLowerCase();
+        if (A < B) return orderDir === 'DESC' ? 1 : -1;
+        if (A > B) return orderDir === 'DESC' ? -1 : 1;
+        return 0;
+      }),
+    totalCount: response.getTotalCount(),
+  };
+};
+
+export const loadTripsByFilter = async ({
+  page,
+  filter,
+  sort,
+}: LoadTripsByFilter) => {
+  const { orderBy, orderDir, orderByField } = sort;
+  const req = new Trip();
+  req.setPage(page);
+  for (const fieldName in filter) {
+    const value = filter[fieldName as keyof TripsFilter];
+
+    if (value) {
+      const { methodName } = getRPCFields(fieldName);
+
+      // @ts-ignore
+      if (!req[methodName]) continue;
+      //@ts-ignore
+      req[methodName](typeof value === 'string' ? `%${value}%` : value);
+    }
+  }
+  const response = await PerDiemClientService.BatchGetTrips(req);
   return {
     results: response
       .getResultsList()
