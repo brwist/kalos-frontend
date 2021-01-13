@@ -1,5 +1,6 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
+import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -10,7 +11,6 @@ import {
   loadTimesheets,
   TimesheetLineType,
   makeFakeRows,
-  formatDateTime,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 
@@ -19,6 +19,14 @@ interface Props {
   employeeId: number;
   week: string;
 }
+
+const formatWeek = (date: string) => {
+  const d = parseISO(date);
+  return `Week of ${format(d, 'yyyy')} ${format(d, 'MMMM')}, ${format(
+    d,
+    'do',
+  )}`;
+};
 
 export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -67,13 +75,12 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
         columns={[
           { name: 'Employee' },
           { name: 'Department' },
-          { name: 'Time Started' },
-          { name: 'Time Finished' },
+          { name: 'Week' },
         ]}
         loading={loading}
         data={
           loading
-            ? makeFakeRows(4, 3)
+            ? makeFakeRows(3, 3)
             : timesheets.map(e => {
                 return [
                   {
@@ -85,11 +92,7 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: formatDateTime(e.timeStarted),
-                    onClick: handleTogglePendingView(e),
-                  },
-                  {
-                    value: formatDateTime(e.timeFinished),
+                    value: formatWeek(e.weekStart),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
@@ -110,6 +113,7 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
           <TimesheetComponent
             timesheetOwnerId={pendingView.technicianUserId}
             userId={pendingView.technicianUserId}
+            week={pendingView.timeStarted}
             onClose={handleTogglePendingView(undefined)}
           />
         </Modal>

@@ -50,6 +50,7 @@ const txnClient = new TransactionClient(ENDPOINT);
 type Props = {
   userId: number;
   timesheetOwnerId: number;
+  week?: string;
   onClose?: () => void;
 };
 
@@ -63,15 +64,19 @@ export const EditTimesheetContext = createContext<EditTimesheetContext>({
   editServicesRenderedCard: (card: ServicesRendered.AsObject) => {},
 });
 
-const getWeekStart = (userId: number, timesheetOwnerId: number) => {
-  const today = new Date();
+const getWeekStart = (
+  userId: number,
+  timesheetOwnerId: number,
+  week?: string,
+) => {
+  const today = week ? new Date(week) : new Date();
   return userId === timesheetOwnerId
     ? startOfWeek(today, { weekStartsOn: 6 })
     : startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
 };
 
 export const Timesheet: FC<Props> = props => {
-  const { userId, timesheetOwnerId, onClose } = props;
+  const { userId, timesheetOwnerId, week, onClose } = props;
   const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   const [tripsOpen, setTripsOpen] = useState<boolean>(false);
   const [state, dispatch] = useReducer(reducer, {
@@ -80,8 +85,8 @@ export const Timesheet: FC<Props> = props => {
     fetchingTimesheetData: true,
     data: {},
     pendingEntries: false,
-    selectedDate: getWeekStart(userId, timesheetOwnerId),
-    shownDates: getShownDates(getWeekStart(userId, timesheetOwnerId)),
+    selectedDate: getWeekStart(userId, timesheetOwnerId, week),
+    shownDates: getShownDates(getWeekStart(userId, timesheetOwnerId, week)),
     payroll: {
       total: null,
       billable: null,
