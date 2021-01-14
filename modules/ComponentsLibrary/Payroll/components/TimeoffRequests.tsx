@@ -34,7 +34,9 @@ export const TimeoffRequests: FC<Props> = ({
   week,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [timesheets, setTimesheets] = useState<TimeoffRequestType[]>([]);
+  const [timeoffRequests, setTimeoffRequests] = useState<TimeoffRequestType[]>(
+    [],
+  );
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TimeoffRequestType>();
@@ -52,7 +54,7 @@ export const TimeoffRequests: FC<Props> = ({
       });
     }
     const { resultsList, totalCount } = await loadTimeoffRequests(filter);
-    setTimesheets(resultsList);
+    setTimeoffRequests(resultsList);
     console.log({ resultsList });
     setCount(totalCount);
     setLoading(false);
@@ -85,7 +87,7 @@ export const TimeoffRequests: FC<Props> = ({
         data={
           loading
             ? makeFakeRows(3, 3)
-            : timesheets.map(e => {
+            : timeoffRequests.map(e => {
                 return [
                   {
                     value: e.userName,
