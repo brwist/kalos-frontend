@@ -1,7 +1,7 @@
 type Colors = {
   [key: string]: string;
 };
-
+export const NULL_TIME_VALUE = '0001-01-01 00:00:00';
 export const colorsMapping: Colors = {
   Requested: '#EFC281',
   Confirmed: '#FEFDB9',
