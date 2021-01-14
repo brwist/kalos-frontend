@@ -49,7 +49,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
   let status;
   if (adminApprovalDatetime && adminApprovalDatetime != NULL_TIME_VALUE) {
     status = 'Approved';
-  } else if (userApprovalDatetime) {
+  } else if (userApprovalDatetime && userApprovalDatetime != NULL_TIME_VALUE) {
     status = 'Submitted';
   } else {
     status = 'Pending';
