@@ -12,6 +12,7 @@ import { colorsMapping } from '../constants';
 import { useEditTimesheet } from '../hooks';
 import { roundNumber, getCFAppUrl } from '../../../helpers';
 import './timesheetCard.less';
+import { NULL_TIME_VALUE } from '../constants';
 
 type ColorIndicatorProps = {
   status: string;
@@ -46,7 +47,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
     eventPropertyId,
   } = card;
   let status;
-  if (adminApprovalDatetime) {
+  if (adminApprovalDatetime && adminApprovalDatetime != NULL_TIME_VALUE) {
     status = 'Approved';
   } else if (userApprovalDatetime) {
     status = 'Submitted';
