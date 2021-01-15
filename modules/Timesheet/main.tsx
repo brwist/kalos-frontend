@@ -213,18 +213,20 @@ export const Timesheet: FC<Props> = props => {
     });
   };
 
-  const checkReceiptIssue = (): boolean => {
+  const checkReceiptIssue = async (): Promise<boolean> => {
     console.log({ receiptsIssue });
-    if (receiptsIssue.hasReceiptsIssue) {
+    const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
+    if (hasIssue) {
+      console.log(receiptsIssue.hasReceiptsIssue);
       dispatch({ type: 'showReceiptsIssueDialog', value: true });
       return false;
     }
     return true;
   };
 
-  const handleSubmitTimesheet = useCallback(() => {
+  const handleSubmitTimesheet = useCallback(async () => {
     (async () => {
-      if (!checkReceiptIssue()) return;
+      if (await !checkReceiptIssue()) return;
       const ids: number[] = [];
       let overlapped = false;
       let sameTimeConflict = false; //Track if there was a same time conflict
@@ -313,6 +315,7 @@ export const Timesheet: FC<Props> = props => {
   const fetchUsers = async () => {
     const userResult = await UserClientService.loadUserById(userId);
     const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
+    console.log('Our current issue:' + hasIssue);
     if (userId === timesheetOwnerId) {
       dispatch({
         type: 'setUsers',
