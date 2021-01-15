@@ -37,6 +37,7 @@ import {
   SpiffToolAdminActionType,
   TaskEventDataType,
   UserClientService,
+  formatWeek,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
@@ -73,6 +74,7 @@ export interface Props {
   loggedUserId: number;
   kind?: string;
   week?: string;
+  onClose?: () => void;
 }
 
 export const SpiffTool: FC<Props> = ({
@@ -80,9 +82,13 @@ export const SpiffTool: FC<Props> = ({
   loggedUserId,
   kind = MONTHLY,
   week,
+  onClose,
 }) => {
   const WEEK_OPTIONS =
     kind === WEEKLY ? getWeekOptions(52, 0, -1) : getWeekOptions();
+  if (week && !WEEK_OPTIONS.map(({ value }) => value).includes(week)) {
+    WEEK_OPTIONS.push({ label: formatWeek(week), value: week });
+  }
   const MONTHS_OPTIONS: Option[] = makeLast12MonthsOptions(true);
   const getSearchFormInit = () => ({
     description: '',
@@ -693,7 +699,20 @@ export const SpiffTool: FC<Props> = ({
     <div>
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
-        actions={[{ label: 'Add', onClick: handleSetEditing(makeNewTask()) }]}
+        actions={[
+          {
+            label: 'Add',
+            onClick: handleSetEditing(makeNewTask()),
+          },
+          ...(onClose
+            ? [
+                {
+                  label: 'Close',
+                  onClick: onClose,
+                },
+              ]
+            : []),
+        ]}
         fixedActions
         pagination={{
           count,
