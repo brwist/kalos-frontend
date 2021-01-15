@@ -53,6 +53,7 @@ interface State {
   customerProperties: PropertyType[];
   saving: boolean;
   confirmingAdded: boolean;
+  showText?: string;
 }
 
 export class ServiceCalls extends PureComponent<Props, State> {
@@ -308,13 +309,23 @@ export class ServiceCalls extends PureComponent<Props, State> {
             onClick: handleOrder('log_jobNumber', ['logJobNumber']),
           },
           {
+            name: 'Name',
+            dir: orderByDBField === 'name' ? dir : undefined,
+            onClick: handleOrder('name', ['name']),
+          },
+          {
+            name: 'Description',
+            dir: orderByDBField === 'description' ? dir : undefined,
+            onClick: handleOrder('description', ['description']),
+          },
+          {
             name: 'Contract Number',
             dir: orderByDBField === 'contract_number' ? dir : undefined,
             onClick: handleOrder('contract_number', ['contractNumber']),
           },
         ];
     const data: Data = loading
-      ? makeFakeRows(viewedAsCustomer ? 4 : 5)
+      ? makeFakeRows(viewedAsCustomer ? 4 : 7)
       : entries.map(entry => {
           const {
             id,
@@ -329,6 +340,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             color,
             property,
             name,
+            description,
           } = entry;
           const dateValue =
             formatDate(dateStarted) +
@@ -395,6 +407,17 @@ export class ServiceCalls extends PureComponent<Props, State> {
             {
               value: logJobNumber,
               onClick: handleRowClick(id),
+            },
+            {
+              value: name.length > 100 ? name.substr(0, 100) + '...' : name,
+              onClick: () => this.setState({ showText: name }),
+            },
+            {
+              value:
+                description.length > 100
+                  ? description.substr(0, 100) + '...'
+                  : description,
+              onClick: () => this.setState({ showText: description }),
             },
             {
               value: contractNumber,
@@ -728,6 +751,25 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 For emergency requests please additionally call{' '}
                 <Link href="tel:3522437088">352-243-7088</Link>.
               </p>
+            </div>
+          </Modal>
+        )}
+        {this.state.showText && (
+          <Modal
+            open
+            onClose={() => this.setState({ showText: undefined })}
+            compact
+          >
+            <SectionBar
+              actions={[
+                {
+                  label: 'Close',
+                  onClick: () => this.setState({ showText: undefined }),
+                },
+              ]}
+            />
+            <div style={{ padding: '1rem', maxWidth: 320 }}>
+              {this.state.showText}
             </div>
           </Modal>
         )}
