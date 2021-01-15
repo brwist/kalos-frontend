@@ -8,7 +8,7 @@ import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
 import {
-  loadPendingSpiffs,
+  loadPendingToolLogs,
   TaskType,
   makeFakeRows,
   formatWeek,
@@ -20,9 +20,9 @@ interface Props {
   week: string;
 }
 
-export const Spiffs: FC<Props> = ({ employeeId, week }) => {
+export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [spiffs, setSpiffs] = useState<TaskType[]>([]);
+  const [toolLogs, setToolLogs] = useState<TaskType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TaskType>();
@@ -38,9 +38,9 @@ export const Spiffs: FC<Props> = ({ employeeId, week }) => {
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
-    const { resultsList, totalCount } = await loadPendingSpiffs(filter);
+    const { resultsList, totalCount } = await loadPendingToolLogs(filter);
     console.log({ resultsList });
-    setSpiffs(resultsList);
+    setToolLogs(resultsList);
     setCount(totalCount);
     setLoading(false);
   }, [page, employeeId, week]);
@@ -68,21 +68,23 @@ export const Spiffs: FC<Props> = ({ employeeId, week }) => {
         data={
           loading
             ? makeFakeRows(2, 3)
-            : spiffs.map(e => {
+            : toolLogs.map(e => {
                 return [
                   {
                     value: e.ownerName,
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: formatWeek(
-                      format(
-                        startOfWeek(parseISO(e.datePerformed), {
-                          weekStartsOn: 6,
-                        }),
-                        'yyyy-MM-dd',
-                      ),
-                    ),
+                    value: e.timeDue
+                      ? formatWeek(
+                          format(
+                            startOfWeek(parseISO(e.timeDue), {
+                              weekStartsOn: 6,
+                            }),
+                            'yyyy-MM-dd',
+                          ),
+                        )
+                      : e.timeDue,
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
@@ -102,14 +104,18 @@ export const Spiffs: FC<Props> = ({ employeeId, week }) => {
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <SpiffTool
             loggedUserId={pendingView.externalId}
-            type="Spiff"
+            type="Tool"
             kind="Weekly"
-            week={format(
-              startOfWeek(parseISO(pendingView.datePerformed), {
-                weekStartsOn: 6,
-              }),
-              'yyyy-MM-dd',
-            )}
+            week={
+              pendingView.timeDue
+                ? format(
+                    startOfWeek(parseISO(pendingView.timeDue), {
+                      weekStartsOn: 6,
+                    }),
+                    'yyyy-MM-dd',
+                  )
+                : undefined
+            }
             onClose={handleTogglePendingView(undefined)}
           />
         </Modal>
