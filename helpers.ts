@@ -1,6 +1,7 @@
 import uniq from 'lodash/uniq';
 import sortBy from 'lodash/sortBy';
 import compact from 'lodash/compact';
+import { parseISO } from 'date-fns/esm';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import {
   S3Client,
@@ -666,6 +667,40 @@ function getRPCFields(fieldName: string) {
   };
 }
 
+export const formatWeek = (date: string) => {
+  const d = parseISO(date);
+  return `Week of ${format(d, 'yyyy')} ${format(d, 'MMMM')}, ${format(
+    d,
+    'do',
+  )}`;
+};
+
+export const loadPendingSpiffs = async ({
+  page,
+  departmentId,
+  employeeId,
+  startDate,
+  endDate,
+}: {
+  page: number;
+  departmentId?: number;
+  employeeId?: number;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  const filter = {
+    page,
+    technicianUserID: employeeId,
+    startDate,
+    endDate,
+  };
+  console.log({ filter });
+  const response = (
+    await TaskClientService.GetPendingSpiffs(filter)
+  ).toObject();
+  return response;
+};
+
 export const loadTimeoffRequests = async ({
   page,
   departmentId,
@@ -686,7 +721,6 @@ export const loadTimeoffRequests = async ({
     startDate,
     endDate,
   };
-  console.log({ filter });
   const response = (
     await TimeoffRequestClientService.GetTimeoffRequests(filter)
   ).toObject();
