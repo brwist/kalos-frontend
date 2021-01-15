@@ -19,6 +19,7 @@ import { PerDiem } from './components/PerDiem';
 import { Timesheet } from './components/Timesheet';
 import { TimeoffRequests } from './components/TimeoffRequests';
 import { Spiffs } from './components/Spiffs';
+import { ToolLogs } from './components/ToolLogs';
 import './styles.less';
 import { TripSummary } from '../TripSummary';
 import {
@@ -168,11 +169,13 @@ export const Payroll: FC<Props> = ({ userID }) => {
               {
                 label: 'Spiffs',
                 content: (
-                  <Spiffs
-                    departmentId={filter.departmentId}
-                    employeeId={filter.employeeId}
-                    week={filter.week}
-                  />
+                  <Spiffs employeeId={filter.employeeId} week={filter.week} />
+                ),
+              },
+              {
+                label: 'Tool Logs',
+                content: (
+                  <ToolLogs employeeId={filter.employeeId} week={filter.week} />
                 ),
               },
               {

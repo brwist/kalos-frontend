@@ -677,13 +677,11 @@ export const formatWeek = (date: string) => {
 
 export const loadPendingSpiffs = async ({
   page,
-  departmentId,
   employeeId,
   startDate,
   endDate,
 }: {
   page: number;
-  departmentId?: number;
   employeeId?: number;
   startDate?: string;
   endDate?: string;
@@ -696,7 +694,31 @@ export const loadPendingSpiffs = async ({
   };
   console.log({ filter });
   const response = (
-    await TaskClientService.GetPendingSpiffs(filter)
+    await (await TaskClientService.GetPendingSpiffs)(filter)
+  ).toObject();
+  return response;
+};
+
+export const loadPendingToolLogs = async ({
+  page,
+  employeeId,
+  startDate,
+  endDate,
+}: {
+  page: number;
+  employeeId?: number;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  const filter = {
+    page,
+    technicianUserID: employeeId,
+    startDate,
+    endDate,
+  };
+  console.log({ filter });
+  const response = (
+    await (await TaskClientService.GetPendingToolLogs)(filter)
   ).toObject();
   return response;
 };
