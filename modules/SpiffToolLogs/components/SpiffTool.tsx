@@ -45,7 +45,6 @@ const TaskClientService = new TaskClient(ENDPOINT);
 
 const MONTHLY = 'Monthly';
 const WEEKLY = 'Weekly';
-const WEEK_OPTIONS = getWeekOptions();
 const STATUSES: Option[] = [
   { label: 'Approved', value: 1, color: '#080' },
   { label: 'Not Approved', value: 2, color: '#D00' },
@@ -72,14 +71,23 @@ type DocumentUplodad = {
 export interface Props {
   type: 'Spiff' | 'Tool';
   loggedUserId: number;
+  kind?: string;
+  week?: string;
 }
 
-export const SpiffTool: FC<Props> = ({ type, loggedUserId }) => {
+export const SpiffTool: FC<Props> = ({
+  type,
+  loggedUserId,
+  kind = MONTHLY,
+  week,
+}) => {
+  const WEEK_OPTIONS =
+    kind === WEEKLY ? getWeekOptions(52, 0, -1) : getWeekOptions();
   const MONTHS_OPTIONS: Option[] = makeLast12MonthsOptions(true);
   const getSearchFormInit = () => ({
     description: '',
-    month: MONTHS_OPTIONS[MONTHS_OPTIONS.length - 1].value as string,
-    kind: MONTHLY,
+    month: week || (MONTHS_OPTIONS[MONTHS_OPTIONS.length - 1].value as string),
+    kind,
     technician: loggedUserId,
   });
   const [loaded, setLoaded] = useState<boolean>(false);
