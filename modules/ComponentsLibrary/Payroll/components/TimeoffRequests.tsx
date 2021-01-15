@@ -11,6 +11,7 @@ import {
   loadTimeoffRequests,
   TimeoffRequestType,
   makeFakeRows,
+  formatWeek,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 
@@ -19,14 +20,6 @@ interface Props {
   employeeId: number;
   week: string;
 }
-
-const formatWeek = (date: string) => {
-  const d = parseISO(date);
-  return `Week of ${format(d, 'yyyy')} ${format(d, 'MMMM')}, ${format(
-    d,
-    'do',
-  )}`;
-};
 
 export const TimeoffRequests: FC<Props> = ({
   departmentId,
@@ -55,7 +48,6 @@ export const TimeoffRequests: FC<Props> = ({
     }
     const { resultsList, totalCount } = await loadTimeoffRequests(filter);
     setTimeoffRequests(resultsList);
-    console.log({ resultsList });
     setCount(totalCount);
     setLoading(false);
   }, [page, departmentId, employeeId, week]);
@@ -94,7 +86,7 @@ export const TimeoffRequests: FC<Props> = ({
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: e.departmentCode,
+                    value: e.departmentName,
                     onClick: handleTogglePendingView(e),
                   },
                   {
