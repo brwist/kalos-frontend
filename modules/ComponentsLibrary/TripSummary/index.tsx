@@ -161,6 +161,7 @@ interface State {
 export class TripSummary extends React.PureComponent<Props, State> {
   nameIdPair: { name: string; id: number }[] = [];
   dateIdPair: { date: string; row_id: number }[] = [];
+  resultsPerPage: number = 25;
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -453,18 +454,30 @@ export class TripSummary extends React.PureComponent<Props, State> {
   setStateToNew = (to: any) => {
     this.setState(to);
   };
+  handleChangePage = (page: number) => {
+    this.setState({ page: page });
+  };
   render() {
     return (
       <>
         <SectionBar
-          title="Total Miles This Week"
+          title="Trips"
+          pagination={{
+            count: this.state.trips.getResultsList().length,
+            page: this.state.page,
+            rowsPerPage: this.resultsPerPage,
+            onChangePage: this.handleChangePage,
+          }}
           footer={
             this.state.totalTripMiles != undefined &&
             this.state.totalTripMiles != 0.0
-              ? this.state.totalTripMiles?.toFixed(1) + ' miles'
-              : 'None'
+              ? 'Total miles: ' +
+                this.state.totalTripMiles?.toFixed(1) +
+                ' miles'
+              : 'Total miles: None'
           }
           small={this.props.compact ? true : false}
+          key={this.state.trips.getResultsList().length}
         />
         <>
           {this.state.loading && <Loader />}
