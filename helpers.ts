@@ -2392,7 +2392,7 @@ export type TripsFilter = {
   lastName?: string;
   originAddress?: string;
   destinationAddress?: string;
-  weekof?: number;
+  weekof?: number[];
 };
 /**
  * Returns Properties by filter

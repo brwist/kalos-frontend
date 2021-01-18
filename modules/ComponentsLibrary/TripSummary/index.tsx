@@ -218,6 +218,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               this.props.loggedUserId != 0
                 ? this.props.loggedUserId
                 : undefined,
+            weekof: this.props.perDiemRowIds,
           },
       sort: tripSort as TripsSort,
     };
@@ -246,6 +247,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
         tripResultList = (await loadTripsByFilter(criteria)).results.filter(
           trip => {
             let fail = false;
+            let hadId = false;
+            this.props.perDiemRowIds.forEach(id => {
+              if (trip.perDiemRowId == id) {
+                hadId = true;
+              }
+            });
+            if (!hadId) {
+              fail = true;
+            }
             this.state.trips.getResultsList().forEach(t => {
               if (t.getId() == trip.id) {
                 fail = true;
@@ -576,7 +586,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               cancelLabel="Reset"
               schema={SCHEMA_TRIP_SEARCH}
               data={this.state.search}
-              onClose={this.setTripState}
+              onClose={() => {
+                this.setTripState();
+              }}
               onSave={tripFilter => this.setTripState(tripFilter)}
             >
               {this.props.canDeleteTrips && (
