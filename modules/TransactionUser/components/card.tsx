@@ -29,6 +29,7 @@ import {
   upsertFile,
   upsertTransactionDocument,
   S3ClientService,
+  getFileExt,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
@@ -412,9 +413,10 @@ export class TxnCard extends React.PureComponent<props, state> {
         try {
           const fileName = this.FileInput.current!.files![0].name;
           const fileData = new Uint8Array(fr.result as ArrayBuffer);
-
           const srcUrl = URL.createObjectURL(
-            new Blob([fileData.buffer], { type: 'image/png' }),
+            new Blob([fileData.buffer], {
+              type: getMimeType(getFileExt(fileName)),
+            }),
           );
 
           this.LastSingleFileUpload = {
