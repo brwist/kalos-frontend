@@ -298,8 +298,13 @@ export const Timesheet: FC<Props> = props => {
           text: 'Timesheet contains value with same Start and End time.', // dispatch the error
         });
       } else {
+        let isManager = false;
+        if (user) {
+          const { permissionGroupsList } = user;
+          isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
+        }
         if (
-          user?.timesheetAdministration &&
+          (user?.timesheetAdministration || isManager) &&
           props.userId !== props.timesheetOwnerId
         ) {
           await tslClient.Approve(ids, userId);
@@ -412,7 +417,10 @@ export const Timesheet: FC<Props> = props => {
   if (!user) {
     return null;
   }
-  const hasAccess = userId === timesheetOwnerId || user.timesheetAdministration;
+  const { permissionGroupsList } = user;
+  const isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
+  const hasAccess =
+    userId === timesheetOwnerId || user.timesheetAdministration || isManager;
   if (!perDiemRowId) {
     getPerDiemRowIds(selectedDate).then(value => {
       setPerDiemRowId(value?.toArray());
@@ -431,7 +439,9 @@ export const Timesheet: FC<Props> = props => {
             selectedDate={selectedDate}
             handleDateChange={handleDateChange}
             userName={`${owner?.firstname} ${owner?.lastname}`}
-            timesheetAdministration={!!user.timesheetAdministration}
+            timesheetAdministration={
+              !!user.timesheetAdministration || isManager
+            }
             payroll={payroll}
             submitTimesheet={handleSubmitTimesheet}
             pendingEntries={pendingEntries}
@@ -471,7 +481,9 @@ export const Timesheet: FC<Props> = props => {
               entry={editing.entry}
               timesheetOwnerId={timesheetOwnerId}
               userId={userId}
-              timesheetAdministration={!!user.timesheetAdministration}
+              timesheetAdministration={
+                !!user.timesheetAdministration || isManager
+              }
               onClose={handleCloseModal}
               onSave={handleOnSave}
               action={editing.action}
@@ -482,7 +494,7 @@ export const Timesheet: FC<Props> = props => {
       </ConfirmServiceProvider>
       {receiptsIssue.shown && (
         <ReceiptsIssueDialog
-          isAdmin={user.timesheetAdministration}
+          isAdmin={user.timesheetAdministration || isManager}
           receiptsIssueStr={receiptsIssue.receiptsIssueStr}
           handleTimeout={handleTimeout}
         />
