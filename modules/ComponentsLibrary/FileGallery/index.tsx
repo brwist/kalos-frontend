@@ -11,6 +11,7 @@ import {
   formatDateTime,
   S3ClientService,
   FileClientService,
+  getMimeType,
 } from '../../../helpers';
 import './styles.less';
 
@@ -169,6 +170,7 @@ export const FileGallery: FC<Props> = ({
   // cleanest thing to do
 
   if (onlyDisplayInputFile) {
+    const mimeType = getMimeType(inputFile!.filename);
     return (
       <div>
         <SectionBar
@@ -183,17 +185,24 @@ export const FileGallery: FC<Props> = ({
             title="Confirm adding"
             onConfirm={handleConfirm}
           >
-            Are you sure you want to add the image{' '}
+            Are you sure you want to add file{' '}
             <strong>{inputFile?.filename}</strong>?
             <br />
             <br />
-            <div
-              className="FileGalleryImg"
-              style={{ backgroundImage: `url(${inputFile?.fileurl})` }}
-            />
+            {mimeType === 'application/pdf' && (
+              <iframe
+                src={inputFile?.fileurl}
+                className="FileGalleryPdf"
+              ></iframe>
+            )}
+            {mimeType !== 'application/pdf' && (
+              <div
+                className="FileGalleryImg"
+                style={{ backgroundImage: `url(${inputFile?.fileurl})` }}
+              />
+            )}
           </Confirm>
         }
-        )
         {deleting && (
           <ConfirmDelete
             open
