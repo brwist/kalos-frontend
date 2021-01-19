@@ -5,7 +5,7 @@ import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
-const userId = 103285; //8418
+const userId = 102412; //8418
 
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
