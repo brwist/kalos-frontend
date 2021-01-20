@@ -19,12 +19,14 @@ interface Props {
   departmentId: number;
   employeeId: number;
   week: string;
+  role: string;
 }
 
 export const TimeoffRequests: FC<Props> = ({
   departmentId,
   employeeId,
   week,
+  role,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [timeoffRequests, setTimeoffRequests] = useState<TimeoffRequestType[]>(
@@ -46,14 +48,17 @@ export const TimeoffRequests: FC<Props> = ({
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
+    if (role === 'Payroll') {
+      Object.assign(filter, { requestType: 9 });
+    }
     const { resultsList, totalCount } = await loadTimeoffRequests(filter);
     setTimeoffRequests(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, departmentId, employeeId, week]);
+  }, [page, departmentId, employeeId, week, role]);
   useEffect(() => {
     load();
-  }, [page, departmentId, employeeId, week]);
+  }, [page, departmentId, employeeId, week, role]);
   const handleTogglePendingView = useCallback(
     (pendingView?: TimeoffRequestType) => () => setPendingView(pendingView),
     [],

@@ -729,12 +729,14 @@ export const loadTimeoffRequests = async ({
   employeeId,
   startDate,
   endDate,
+  requestType,
 }: {
   page: number;
   departmentId?: number;
   employeeId?: number;
   startDate?: string;
   endDate?: string;
+  requestType?: number;
 }) => {
   const filter = {
     page,
@@ -743,6 +745,9 @@ export const loadTimeoffRequests = async ({
     startDate,
     endDate,
   };
+  if (requestType) {
+    Object.assign(filter, { requestType });
+  }
   const response = (
     await TimeoffRequestClientService.GetTimeoffRequests(filter)
   ).toObject();
