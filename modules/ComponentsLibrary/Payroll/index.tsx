@@ -1,9 +1,11 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import Alert from '@material-ui/lab/Alert';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
 import { Loader } from '../../Loader/main';
 import { Tabs } from '../Tabs';
 import {
+  UserClientService,
   UserType,
   loadTimesheetDepartments,
   TimesheetDepartmentType,
@@ -40,13 +42,14 @@ type FilterData = {
 
 export const Payroll: FC<Props> = ({ userID }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
     week: OPTION_ALL,
   });
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [loggedUser, setLoggedUser] = useState<UserType>();
+  const [role, setRole] = useState<string>('');
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
   const weekOptions = useMemo(
@@ -89,8 +92,16 @@ export const Payroll: FC<Props> = ({ userID }) => {
     const employees = await loadTechnicians();
     setEmployees(employees);
     handleSelectNewWeek('-- All --');
+    const loggedUser = await UserClientService.loadUserById(userID);
+    setLoggedUser(loggedUser);
+    const role = loggedUser.permissionGroupsList.find(p => p.type === 'role');
+    if (role) {
+      setRole(role.name);
+    }
+    console.log({ loggedUser });
     setInitiated(true);
-  }, []);
+  }, [userID]);
+  console.log({ role });
   useEffect(() => {
     if (!initiated) {
       init();
@@ -125,84 +136,98 @@ export const Payroll: FC<Props> = ({ userID }) => {
             })),
         ],
       },
-      {
-        name: 'week',
-        label: 'Select Week',
-        options: weekOptions,
-        onChange: async date => handleSelectNewWeek(date),
-      },
+      ...(role === 'Manager'
+        ? [
+            {
+              name: 'week' as const,
+              label: 'Select Week',
+              options: weekOptions,
+              onChange: async (date: React.ReactText) =>
+                handleSelectNewWeek(date),
+            },
+          ]
+        : []),
     ],
   ];
   return (
     <div>
       <SectionBar title="Payroll" />
       {initiated ? (
-        <>
-          <PlainForm
-            data={filter}
-            onChange={setFilter}
-            schema={SCHEMA}
-            className="PayrollFilter"
-          />
-          <Tabs
-            tabs={[
-              {
-                label: 'Timesheet',
-                content: (
-                  <Timesheet
-                    departmentId={filter.departmentId}
-                    employeeId={filter.employeeId}
-                    week={filter.week}
-                  />
-                ),
-              },
-              {
-                label: 'Timeoff Requests',
-                content: (
-                  <TimeoffRequests
-                    departmentId={filter.departmentId}
-                    employeeId={filter.employeeId}
-                    week={filter.week}
-                  />
-                ),
-              },
-              {
-                label: 'Spiffs',
-                content: (
-                  <Spiffs employeeId={filter.employeeId} week={filter.week} />
-                ),
-              },
-              {
-                label: 'Tool Logs',
-                content: (
-                  <ToolLogs employeeId={filter.employeeId} week={filter.week} />
-                ),
-              },
-              {
-                label: 'Per Diem',
-                content: (
-                  <PerDiem
-                    departmentId={filter.departmentId}
-                    employeeId={filter.employeeId}
-                    week={filter.week}
-                    loggedUserId={userID}
-                  />
-                ),
-              },
-              {
-                label: 'Trips',
-                content: (
-                  <TripSummary
-                    loggedUserId={filter.employeeId}
-                    perDiemRowIds={loadedPerDiemIds}
-                    key={loadedPerDiemIds.toString() + filter.employeeId}
-                    searchable
-                  />
-                ),
-              },
-            ]}
-          />
-        </>
+        role ? (
+          <>
+            <PlainForm
+              data={filter}
+              onChange={setFilter}
+              schema={SCHEMA}
+              className="PayrollFilter"
+            />
+            <Tabs
+              tabs={[
+                {
+                  label: 'Timesheet',
+                  content: (
+                    <Timesheet
+                      departmentId={filter.departmentId}
+                      employeeId={filter.employeeId}
+                      week={filter.week}
+                    />
+                  ),
+                },
+                {
+                  label: 'Timeoff Requests',
+                  content: (
+                    <TimeoffRequests
+                      departmentId={filter.departmentId}
+                      employeeId={filter.employeeId}
+                      week={filter.week}
+                    />
+                  ),
+                },
+                {
+                  label: 'Spiffs',
+                  content: (
+                    <Spiffs employeeId={filter.employeeId} week={filter.week} />
+                  ),
+                },
+                {
+                  label: 'Tool Logs',
+                  content: (
+                    <ToolLogs
+                      employeeId={filter.employeeId}
+                      week={filter.week}
+                    />
+                  ),
+                },
+                {
+                  label: 'Per Diem',
+                  content: (
+                    <PerDiem
+                      departmentId={filter.departmentId}
+                      employeeId={filter.employeeId}
+                      week={filter.week}
+                      loggedUserId={userID}
+                    />
+                  ),
+                },
+                {
+                  label: 'Trips',
+                  content: (
+                    <TripSummary
+                      loggedUserId={filter.employeeId}
+                      perDiemRowIds={loadedPerDiemIds}
+                      key={loadedPerDiemIds.toString() + filter.employeeId}
+                      searchable
+                    />
+                  ),
+                },
+              ]}
+            />
+          </>
+        ) : (
+          <Alert severity="error">
+            You don't have persmission to view Payroll
+          </Alert>
+        )
       ) : (
         <Loader />
       )}
