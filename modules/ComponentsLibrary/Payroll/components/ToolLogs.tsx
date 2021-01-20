@@ -39,7 +39,6 @@ export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
       });
     }
     const { resultsList, totalCount } = await loadPendingToolLogs(filter);
-    console.log({ resultsList });
     setToolLogs(resultsList);
     setCount(totalCount);
     setLoading(false);
@@ -54,7 +53,7 @@ export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
   return (
     <div>
       <SectionBar
-        title="Spiffs"
+        title="Tool Logs"
         pagination={{
           count,
           page,

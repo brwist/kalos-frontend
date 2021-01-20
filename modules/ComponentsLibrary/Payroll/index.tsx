@@ -42,6 +42,7 @@ type FilterData = {
 
 export const Payroll: FC<Props> = ({ userID }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
+  const [initiatedRole, setInitiatedRole] = useState<boolean>(false);
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
@@ -129,6 +130,14 @@ export const Payroll: FC<Props> = ({ userID }) => {
       );
     }
   }
+  useEffect(() => {
+    if (!initiatedRole && role !== '') {
+      setInitiatedRole(true);
+      if (departmentOptions[0]) {
+        setFilter({ ...filter, departmentId: +departmentOptions[0].value });
+      }
+    }
+  }, [initiatedRole, role, filter]);
   const SCHEMA: Schema<FilterData> = [
     [
       {
