@@ -100,7 +100,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
     }
     setInitiated(true);
   }, [userID]);
-  console.log({ role });
   useEffect(() => {
     if (!initiated) {
       init();
@@ -166,6 +165,19 @@ export const Payroll: FC<Props> = ({ userID }) => {
         : []),
     ],
   ];
+  let isTimesheet = true;
+  let isTimeoffRequests = true;
+  let isSpiffs = true;
+  let isToolLogs = true;
+  let isPerDiem = true;
+  let isTrips = true;
+  if (role === 'Auditor') {
+    isTimesheet = false;
+    isTimeoffRequests = false;
+  } else if (role === 'Manager') {
+    isSpiffs = false;
+    isTrips = false;
+  }
   return (
     <div>
       <SectionBar title="Payroll" />
@@ -180,63 +192,92 @@ export const Payroll: FC<Props> = ({ userID }) => {
             />
             <Tabs
               tabs={[
-                {
-                  label: 'Timesheet',
-                  content: (
-                    <Timesheet
-                      departmentId={filter.departmentId}
-                      employeeId={filter.employeeId}
-                      week={filter.week}
-                    />
-                  ),
-                },
-                {
-                  label: 'Timeoff Requests',
-                  content: (
-                    <TimeoffRequests
-                      departmentId={filter.departmentId}
-                      employeeId={filter.employeeId}
-                      week={filter.week}
-                    />
-                  ),
-                },
-                {
-                  label: 'Spiffs',
-                  content: (
-                    <Spiffs employeeId={filter.employeeId} week={filter.week} />
-                  ),
-                },
-                {
-                  label: 'Tool Logs',
-                  content: (
-                    <ToolLogs
-                      employeeId={filter.employeeId}
-                      week={filter.week}
-                    />
-                  ),
-                },
-                {
-                  label: 'Per Diem',
-                  content: (
-                    <PerDiem
-                      departmentId={filter.departmentId}
-                      employeeId={filter.employeeId}
-                      week={filter.week}
-                      loggedUserId={userID}
-                    />
-                  ),
-                },
-                {
-                  label: 'Trips',
-                  content: (
-                    <TripSummary
-                      loggedUserId={filter.employeeId}
-                      perDiemRowIds={loadedPerDiemIds}
-                      key={loadedPerDiemIds.toString() + filter.employeeId}
-                      searchable
-                    />
-                  ),
-                },
+                ...(isTimesheet
+                  ? [
+                      {
+                        label: 'Timesheet',
+                        content: (
+                          <Timesheet
+                            departmentId={filter.departmentId}
+                            employeeId={filter.employeeId}
+                            week={filter.week}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(isTimeoffRequests
+                  ? [
+                      {
+                        label: 'Timeoff Requests',
+                        content: (
+                          <TimeoffRequests
+                            departmentId={filter.departmentId}
+                            employeeId={filter.employeeId}
+                            week={filter.week}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(isSpiffs
+                  ? [
+                      {
+                        label: 'Spiffs',
+                        content: (
+                          <Spiffs
+                            employeeId={filter.employeeId}
+                            week={filter.week}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(isToolLogs
+                  ? [
+                      {
+                        label: 'Tool Logs',
+                        content: (
+                          <ToolLogs
+                            employeeId={filter.employeeId}
+                            week={filter.week}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(isPerDiem
+                  ? [
+                      {
+                        label: 'Per Diem',
+                        content: (
+                          <PerDiem
+                            departmentId={filter.departmentId}
+                            employeeId={filter.employeeId}
+                            week={filter.week}
+                            loggedUserId={userID}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(isTrips
+                  ? [
+                      {
+                        label: 'Trips',
+                        content: (
+                          <TripSummary
+                            loggedUserId={filter.employeeId}
+                            perDiemRowIds={loadedPerDiemIds}
+                            key={
+                              loadedPerDiemIds.toString() + filter.employeeId
+                            }
+                            searchable
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
               ]}
             />
           </>
