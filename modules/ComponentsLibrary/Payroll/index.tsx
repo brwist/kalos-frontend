@@ -1,7 +1,7 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import Alert from '@material-ui/lab/Alert';
 import { SectionBar } from '../SectionBar';
-import { PlainForm, Schema } from '../PlainForm';
+import { PlainForm, Schema, Option } from '../PlainForm';
 import { Loader } from '../../Loader/main';
 import { Tabs } from '../Tabs';
 import {
@@ -107,18 +107,30 @@ export const Payroll: FC<Props> = ({ userID }) => {
       init();
     }
   }, [initiated]);
+  let departmentOptions: Option[] = [
+    { label: OPTION_ALL, value: 0 },
+    ...departments.map(el => ({
+      label: getDepartmentName(el),
+      value: el.id,
+    })),
+  ];
+  if (loggedUser && role === 'Manager') {
+    const departments = loggedUser.permissionGroupsList
+      .filter(p => p.type === 'department')
+      .reduce(
+        (aggr, item) => [...aggr, +JSON.parse(item.filterData).value],
+        [] as number[],
+      );
+    departmentOptions = departmentOptions.filter(p =>
+      departments.includes(+p.value),
+    );
+  }
   const SCHEMA: Schema<FilterData> = [
     [
       {
         name: 'departmentId',
         label: 'Select Department',
-        options: [
-          { label: OPTION_ALL, value: 0 },
-          ...departments.map(el => ({
-            label: getDepartmentName(el),
-            value: el.id,
-          })),
-        ],
+        options: departmentOptions,
       },
       {
         name: 'employeeId',
