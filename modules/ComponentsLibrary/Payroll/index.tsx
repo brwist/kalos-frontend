@@ -98,7 +98,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
     if (role) {
       setRole(role.name);
     }
-    console.log({ loggedUser });
     setInitiated(true);
   }, [userID]);
   console.log({ role });
@@ -121,9 +120,15 @@ export const Payroll: FC<Props> = ({ userID }) => {
         (aggr, item) => [...aggr, +JSON.parse(item.filterData).value],
         [] as number[],
       );
-    departmentOptions = departmentOptions.filter(p =>
-      departments.includes(+p.value),
-    );
+    if (departments.length > 0) {
+      departmentOptions = departmentOptions.filter(p =>
+        departments.includes(+p.value),
+      );
+    } else {
+      departmentOptions = departmentOptions.filter(
+        p => +p.value === loggedUser.employeeDepartmentId,
+      );
+    }
   }
   const SCHEMA: Schema<FilterData> = [
     [
