@@ -1,17 +1,15 @@
 import React from 'react';
 import { SlackMessageButton } from './index';
-import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
-import { Schema } from '../Form';
 import { ExampleTitle } from '../helpers';
-import { PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
-import { UserClientService } from '../../../helpers';
 
-const userName1 = 'Justin Farrell';
-const messageToSend = 'Test message';
-const userId = 101275;
+const userId = 101275; // Pavel Chernov's ID
 
 export default () => (
   <>
+    <h1 style={{ color: 'red' }}>
+      NOTICE: This will actually send messages to people at the moment. Do not
+      use until this message is gone.
+    </h1>
     <ExampleTitle>Default</ExampleTitle>
     <SlackMessageButton label="Message on slack!" loggedUserId={userId} />
     <ExampleTitle>Using a Form to get details</ExampleTitle>
