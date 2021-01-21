@@ -18,11 +18,7 @@ export default () => (
       userName={userName1}
       textToSend={messageToSend}
       loggedUserId={userId}
-      onClick={() => {
-        alert(
-          `Would send a message to the user with ID ${userId} saying "${messageToSend}"`,
-        );
-      }}
     />
+    <ExampleTitle>Using a Form to get details</ExampleTitle>
   </>
 );

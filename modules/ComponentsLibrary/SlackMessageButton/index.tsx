@@ -6,6 +6,33 @@ import {
   UserClientService,
 } from '../../../helpers';
 import { Button } from '../Button/index';
+import { Form, Schema } from '../Form';
+import { Modal } from '../Modal';
+
+type SlackMessage = {
+  user: string;
+  message: string;
+};
+
+class SlackMessageInstance implements SlackMessage {
+  user: string = '';
+  message: string = '';
+}
+
+export const SCHEMA_SLACK_MESSAGE: Schema<SlackMessage> = [
+  [
+    {
+      label: 'User to Send to: ',
+      type: 'text',
+      name: 'user',
+    },
+    {
+      label: 'Message: ',
+      type: 'text',
+      name: 'message',
+    },
+  ],
+];
 
 interface Props {
   label: string;
@@ -25,13 +52,17 @@ interface Props {
   loggedUserId: number;
 }
 
-interface State {}
+interface State {
+  formOpened: boolean;
+}
 
 export class SlackMessageButton extends React.PureComponent<Props, State> {
   userName: string = '';
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = {
+      formOpened: false,
+    };
 
     this.getUserNameFromId();
   }
@@ -53,6 +84,10 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
       return;
     }
 
+    this.setState({ formOpened: true });
+  };
+
+  sendMessage = async () => {
     const messageToSend = `*From ${this.userName}*: ${this.props.textToSend}.`;
 
     const slackUser = await getSlackID(this.props.userName);
@@ -64,6 +99,19 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
   render() {
     return (
       <>
+        {this.state.formOpened && (
+          <Modal open={true} onClose={() => alert('Closed')}>
+            <Form
+              title="Send a Message"
+              onSave={msg => alert('Send ' + msg.message + ' to ' + msg.user)}
+              onClose={() => alert('Closed form')}
+              schema={SCHEMA_SLACK_MESSAGE}
+              data={new SlackMessageInstance()}
+              submitLabel="Send"
+              cancelLabel="Cancel"
+            />
+          </Modal>
+        )}
         <Button
           label={this.props.label}
           url={this.props.url}
