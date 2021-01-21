@@ -1,3 +1,4 @@
+import Typography from '@material-ui/core/Typography';
 import React, { CSSProperties } from 'react';
 import {
   getSlackID,
@@ -5,7 +6,9 @@ import {
   slackNotify,
   UserClientService,
 } from '../../../helpers';
+import { Alert } from '../Alert';
 import { Button } from '../Button/index';
+import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
 import { Modal } from '../Modal';
 
@@ -52,6 +55,7 @@ interface Props {
 
 interface State {
   formOpened: boolean;
+  noUserFoundWarningOpen: boolean;
 }
 
 export class SlackMessageButton extends React.PureComponent<Props, State> {
@@ -60,6 +64,7 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
     super(props);
     this.state = {
       formOpened: false,
+      noUserFoundWarningOpen: false,
     };
 
     this.getUserNameFromId();
@@ -88,6 +93,10 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
     const messageToSend = `*From ${this.userName}*: ${message}.`;
 
     const slackUser = await getSlackID(userToSendTo);
+    if (slackUser === '0') {
+      this.toggleNotice();
+      return;
+    }
     await slackNotify(slackUser, messageToSend);
 
     console.log('Message sent successfully.');
@@ -97,9 +106,23 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
     this.setState({ formOpened: !this.state.formOpened });
   };
 
+  toggleNotice = () => {
+    this.setState({
+      noUserFoundWarningOpen: !this.state.noUserFoundWarningOpen,
+    });
+  };
+
   render() {
     return (
       <>
+        {this.state.noUserFoundWarningOpen && (
+          <Alert open={true} onClose={this.toggleNotice} title="Notice">
+            <Typography>
+              No user could be found with that username. Please double check the
+              spelling and try again.
+            </Typography>
+          </Alert>
+        )}
         {this.state.formOpened && (
           <Modal open={true} onClose={this.toggleForm}>
             <Form
