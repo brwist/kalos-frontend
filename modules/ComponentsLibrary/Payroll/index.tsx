@@ -48,6 +48,21 @@ export const Payroll: FC<Props> = ({ userID }) => {
     employeeId: 0,
     week: OPTION_ALL,
   });
+
+  const handleSetFilter = (d: FilterData) => {
+    if (!d.week) {
+      d.week = OPTION_ALL;
+    }
+    if (!d.departmentId) {
+      d.departmentId = 0;
+    }
+    if (!d.employeeId) {
+      d.employeeId = 0;
+    }
+    setFilter(d);
+    // {departmentId: 18, week: undefined, employeeId: undefined}
+  };
+
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [loggedUser, setLoggedUser] = useState<UserType>();
   const [role, setRole] = useState<string>('');
@@ -187,6 +202,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     isSpiffs = false;
     isTrips = false;
   }
+
   return (
     <div>
       <SectionBar title="Payroll" />
@@ -195,7 +211,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
           <>
             <PlainForm
               data={filter}
-              onChange={setFilter}
+              onChange={handleSetFilter}
               schema={SCHEMA}
               className="PayrollFilter"
             />
@@ -293,7 +309,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
           </>
         ) : (
           <Alert severity="error">
-            You don't have persmission to view Payroll
+            You don&apos;t have persmission to view Payroll
           </Alert>
         )
       ) : (

@@ -565,6 +565,7 @@ export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
     super(props, 'Class Code', 'CLASS_CODE_LIST', VersionNumber);
     this.Client = new ClassCodeClient(ENDPOINT);
     this.req = new ClassCode();
+    this.req.setIsActive(true);
   }
 }
 

@@ -260,6 +260,8 @@ export const MONTHS = [
 
 export const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+export const NULL_TIME = '0001-01-01 00:00:00';
+
 export default {
   BASE_URL,
   EVENT_STATUS_LIST,
