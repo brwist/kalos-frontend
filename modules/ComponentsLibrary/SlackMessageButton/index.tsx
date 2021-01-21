@@ -77,17 +77,16 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
   };
 
   onClick = async () => {
+    this.toggleForm();
+  };
+
+  sendMessage = async () => {
     if (this.userName == '') {
       console.error(
         'An error occurred while sending the message. Please try again.',
       );
       return;
     }
-
-    this.setState({ formOpened: true });
-  };
-
-  sendMessage = async () => {
     const messageToSend = `*From ${this.userName}*: ${this.props.textToSend}.`;
 
     const slackUser = await getSlackID(this.props.userName);
@@ -96,15 +95,19 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
     console.log('Message sent successfully.');
   };
 
+  toggleForm = () => {
+    this.setState({ formOpened: !this.state.formOpened });
+  };
+
   render() {
     return (
       <>
         {this.state.formOpened && (
-          <Modal open={true} onClose={() => alert('Closed')}>
+          <Modal open={true} onClose={this.toggleForm}>
             <Form
               title="Send a Message"
               onSave={msg => alert('Send ' + msg.message + ' to ' + msg.user)}
-              onClose={() => alert('Closed form')}
+              onClose={this.toggleForm}
               schema={SCHEMA_SLACK_MESSAGE}
               data={new SlackMessageInstance()}
               submitLabel="Send"
