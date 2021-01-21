@@ -27,6 +27,8 @@ type Entry = {
   tag: string;
 };
 
+// TODO: Refactor tags to allow multiple tag selection, separated by &
+// e.g.: Subject=Refrigeration&Classification=Service
 export const UploadPhoto: FC<Props> = ({
   onClose,
   bucket,
