@@ -298,7 +298,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             key={
                               loadedPerDiemIds.toString() + filter.employeeId
                             }
-                            searchable
                           />
                         ),
                       },

@@ -141,6 +141,7 @@ interface Props {
   compact?: boolean;
   hoverable?: boolean;
   searchable?: boolean;
+  displayTripDistance?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
@@ -469,12 +470,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
             onChangePage: this.handleChangePage,
           }}
           footer={
-            this.state.totalTripMiles != undefined &&
-            this.state.totalTripMiles != 0.0
-              ? 'Total miles: ' +
-                this.state.totalTripMiles?.toFixed(1) +
-                ' miles'
-              : 'Total miles: None'
+            this.props.displayTripDistance
+              ? this.state.totalTripMiles != undefined &&
+                this.state.totalTripMiles != 0.0
+                ? 'Total miles: ' +
+                  this.state.totalTripMiles?.toFixed(1) +
+                  ' miles'
+                : 'Total miles: None'
+              : null
           }
           small={this.props.compact ? true : false}
           key={this.state.trips.getResultsList().length}
