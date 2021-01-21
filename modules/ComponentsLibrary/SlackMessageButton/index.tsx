@@ -51,6 +51,8 @@ interface Props {
   style?: CSSProperties;
   loading?: boolean;
   loggedUserId: number;
+  autofillName?: string;
+  autofillMessage?: string;
 }
 
 interface State {
@@ -60,13 +62,17 @@ interface State {
 
 export class SlackMessageButton extends React.PureComponent<Props, State> {
   userName: string = '';
+  data: SlackMessageInstance;
   constructor(props: Props) {
     super(props);
     this.state = {
       formOpened: false,
       noUserFoundWarningOpen: false,
     };
-
+    this.data = new SlackMessageInstance();
+    if (this.props.autofillMessage)
+      this.data.message = this.props.autofillMessage;
+    if (this.props.autofillName) this.data.user = this.props.autofillName;
     this.getUserNameFromId();
   }
 
@@ -90,7 +96,7 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
       );
       return;
     }
-    const messageToSend = `*From ${this.userName}*: ${message}.`;
+    const messageToSend = `*From ${this.userName}*: ${message}`;
 
     const slackUser = await getSlackID(userToSendTo);
     if (slackUser === '0') {
@@ -130,7 +136,7 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
               onSave={msg => this.sendMessage(msg.user, msg.message)}
               onClose={this.toggleForm}
               schema={SCHEMA_SLACK_MESSAGE}
-              data={new SlackMessageInstance()}
+              data={this.data}
               submitLabel="Send"
               cancelLabel="Cancel"
             />
