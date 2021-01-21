@@ -72,6 +72,7 @@ import ServiceItemLinks from './ServiceItemLinks/examples';
 import ServiceItemReadings from './ServiceItemReadings/examples';
 import ServiceItems from './ServiceItems/examples';
 import SkeletonCard from './SkeletonCard/examples';
+import SlackMessageButton from './SlackMessageButton/examples';
 import SpiffReport from './SpiffReport/examples';
 import SpiffToolLogEdit from './SpiffToolLogEdit/examples';
 import StoredQuotes from './StoredQuotes/examples';
@@ -160,6 +161,7 @@ const COMPONENTS = {
   ServiceItemReadings,
   ServiceItems,
   SkeletonCard,
+  SlackMessageButton,
   SpiffReport,
   SpiffToolLogEdit,
   StoredQuotes,
