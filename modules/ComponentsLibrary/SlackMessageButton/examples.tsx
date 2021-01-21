@@ -13,12 +13,7 @@ const userId = 101275;
 export default () => (
   <>
     <ExampleTitle>Default</ExampleTitle>
-    <SlackMessageButton
-      label="Message on slack!"
-      userName={userName1}
-      textToSend={messageToSend}
-      loggedUserId={userId}
-    />
+    <SlackMessageButton label="Message on slack!" loggedUserId={userId} />
     <ExampleTitle>Using a Form to get details</ExampleTitle>
   </>
 );
