@@ -106,6 +106,7 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
     await slackNotify(slackUser, messageToSend);
 
     console.log('Message sent successfully.');
+    this.toggleForm();
   };
 
   toggleForm = () => {
