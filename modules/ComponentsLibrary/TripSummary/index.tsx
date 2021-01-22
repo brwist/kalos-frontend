@@ -156,7 +156,7 @@ interface State {
   pendingTrip: Trip | null;
   pendingTripToDelete: Trip | null;
   pendingDeleteAllTrips: boolean;
-  pendingProcessPayroll: boolean;
+  pendingProcessPayrollTrip: Trip | null;
   trips: TripList;
   totalTripMiles: number;
   key: number;
@@ -177,7 +177,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       totalTripMiles: 0,
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
-      pendingProcessPayroll: false,
+      pendingProcessPayrollTrip: null,
       key: 0,
       loading: true,
       search: new Trip().toObject(),
@@ -516,7 +516,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   <IconButton
                     key={currentTrip.getId() + 'wallet' + idx}
                     size="small"
-                    onClick={this.togglePendingProcessPayroll}
+                    onClick={() => this.setPendingProcessPayroll(currentTrip)}
                   >
                     <AccountBalanceWalletIcon />
                   </IconButton>
@@ -529,8 +529,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
         ];
       });
   };
-  togglePendingProcessPayroll = () => {
-    this.setState({ pendingProcessPayroll: !this.state.pendingProcessPayroll });
+  setPayrollProcessed = async (id: number) => {
+    await PerDiemClientService.updateTripPayrollProcessed(id);
+
+    this.setPendingProcessPayroll(null);
+  };
+  setPendingProcessPayroll = (trip: Trip | null) => {
+    this.setState({ pendingProcessPayrollTrip: trip });
   };
   getColumns = () => {
     return (this.props.canDeleteTrips
@@ -612,12 +617,16 @@ export class TripSummary extends React.PureComponent<Props, State> {
               </>
             </>
           )}
-          {this.state.pendingProcessPayroll && (
+          {this.state.pendingProcessPayrollTrip && (
             <Confirm
               title="Are you sure?"
               open={true}
-              onClose={this.togglePendingProcessPayroll}
-              onConfirm={() => alert('Confirmed')}
+              onClose={() => this.setPendingProcessPayroll(null)}
+              onConfirm={() =>
+                this.setPayrollProcessed(
+                  this.state.pendingProcessPayrollTrip!.getId(),
+                )
+              }
             >
               <Typography>
                 Are you sure you want to process this payroll?
