@@ -38,6 +38,7 @@ export const SCHEMA_SLACK_MESSAGE: Schema<SlackMessage> = [
 ];
 
 interface Props {
+  // Button options
   label: string;
   url?: string;
   disabled?: boolean;
@@ -50,9 +51,21 @@ interface Props {
   startIcon?: JSX.Element;
   style?: CSSProperties;
   loading?: boolean;
+
+  // Modal options
+  compact?: boolean;
+  maxWidth?: number | 'none';
+  fullScreen?: boolean;
+  fullHeight?: boolean;
+  classNameForModal?: string;
+  modalStyles?: CSSProperties;
+  onOpenModal?: () => void;
+
+  // For this specific component
   loggedUserId: number;
   autofillName?: string;
   autofillMessage?: string;
+  title?: string;
 }
 
 interface State {
@@ -131,9 +144,19 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
           </Alert>
         )}
         {this.state.formOpened && (
-          <Modal open={true} onClose={this.toggleForm}>
+          <Modal
+            open={true}
+            onClose={this.toggleForm}
+            compact={this.props.compact}
+            maxWidth={this.props.maxWidth}
+            fullScreen={this.props.fullScreen}
+            fullHeight={this.props.fullHeight}
+            classname={this.props.classNameForModal}
+            styles={this.props.modalStyles}
+            onOpen={this.props.onOpenModal}
+          >
             <Form
-              title="Send a Message"
+              title={this.props.title ? this.props.title : 'Send a Message'}
               onSave={msg => this.sendMessage(msg.user, msg.message)}
               onClose={this.toggleForm}
               schema={SCHEMA_SLACK_MESSAGE}
