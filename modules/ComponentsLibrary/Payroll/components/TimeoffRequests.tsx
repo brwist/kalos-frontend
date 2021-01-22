@@ -12,6 +12,7 @@ import {
   TimeoffRequestType,
   makeFakeRows,
   formatWeek,
+  GetTimesheetConfig,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 
@@ -37,10 +38,10 @@ export const TimeoffRequests: FC<Props> = ({
   const [pendingView, setPendingView] = useState<TimeoffRequestType>();
   const load = useCallback(async () => {
     setLoading(true);
-    const filter = {
+    const filter: GetTimesheetConfig = {
       page,
-      departmentId,
-      employeeId,
+      departmentID: departmentId,
+      technicianUserID: employeeId,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
