@@ -27,6 +27,8 @@ import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Search } from '../Search';
 import { Tooltip } from '../Tooltip';
+import { Confirm } from '../Confirm';
+import { Typography } from '@material-ui/core';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -154,6 +156,7 @@ interface State {
   pendingTrip: Trip | null;
   pendingTripToDelete: Trip | null;
   pendingDeleteAllTrips: boolean;
+  pendingProcessPayroll: boolean;
   trips: TripList;
   totalTripMiles: number;
   key: number;
@@ -174,6 +177,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       totalTripMiles: 0,
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
+      pendingProcessPayroll: false,
       key: 0,
       loading: true,
       search: new Trip().toObject(),
@@ -512,7 +516,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   <IconButton
                     key={currentTrip.getId() + 'wallet' + idx}
                     size="small"
-                    onClick={() => alert('Clicked on')}
+                    onClick={this.togglePendingProcessPayroll}
                   >
                     <AccountBalanceWalletIcon />
                   </IconButton>
@@ -524,6 +528,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },
         ];
       });
+  };
+  togglePendingProcessPayroll = () => {
+    this.setState({ pendingProcessPayroll: !this.state.pendingProcessPayroll });
   };
   getColumns = () => {
     return (this.props.canDeleteTrips
@@ -604,6 +611,18 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 />
               </>
             </>
+          )}
+          {this.state.pendingProcessPayroll && (
+            <Confirm
+              title="Are you sure?"
+              open={true}
+              onClose={this.togglePendingProcessPayroll}
+              onConfirm={() => alert('Confirmed')}
+            >
+              <Typography>
+                Are you sure you want to process this payroll?
+              </Typography>
+            </Confirm>
           )}
           {this.props.searchable && (
             <Form
