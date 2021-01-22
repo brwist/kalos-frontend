@@ -469,7 +469,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     return this.state
       .trips!.getResultsList()
       .map((currentTrip: Trip, idx: number) => {
-        console.log(currentTrip);
         return [
           { value: currentTrip.getOriginAddress() },
           { value: currentTrip.getDestinationAddress() },
@@ -537,6 +536,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await PerDiemClientService.updateTripPayrollProcessed(id);
 
     this.setPendingProcessPayroll(null);
+    this.setTripState(this.state.search);
   };
   setPendingProcessPayroll = (trip: Trip | null) => {
     this.setState({ pendingProcessPayrollTrip: trip });
