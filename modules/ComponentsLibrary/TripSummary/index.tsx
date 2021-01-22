@@ -458,6 +458,62 @@ export class TripSummary extends React.PureComponent<Props, State> {
   handleChangePage = (page: number) => {
     this.setState({ page: page });
   };
+  getData = () => {
+    return this.state.trips!.getResultsList().map((currentTrip: Trip) => {
+      if (this.props.canDeleteTrips) {
+        return [
+          { value: currentTrip.getOriginAddress() },
+          { value: currentTrip.getDestinationAddress() },
+          {
+            value: this.getNameById(currentTrip.getUserId()),
+          }, // Need to use UserClientService on it
+          {
+            value: this.getRowStartDateById(
+              currentTrip.getPerDiemRowId(),
+            )?.split(' ')[0],
+          },
+          {
+            value: currentTrip.getDistanceInMiles().toFixed(1),
+          },
+          {
+            value: currentTrip.getNotes(),
+            actions: [
+              <IconButton
+                key={currentTrip.getId() + 'edit'}
+                size="small"
+                onClick={() =>
+                  this.setStateToNew({
+                    pendingTripToDelete: currentTrip,
+                  })
+                }
+              >
+                <DeleteIcon />
+              </IconButton>,
+            ],
+          },
+        ];
+      } else {
+        return [
+          { value: currentTrip.getOriginAddress() },
+          { value: currentTrip.getDestinationAddress() },
+          {
+            value: this.getNameById(currentTrip.getUserId()),
+          }, // Need to use UserClientService on it
+          {
+            value: this.getRowStartDateById(
+              currentTrip.getPerDiemRowId(),
+            )?.split(' ')[0],
+          },
+          {
+            value: currentTrip.getDistanceInMiles().toFixed(1),
+          },
+          {
+            value: currentTrip.getNotes(),
+          },
+        ];
+      }
+    });
+  };
   render() {
     return (
       <>
@@ -530,62 +586,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                           },
                         ]
                   }
-                  data={this.state
-                    .trips!.getResultsList()
-                    .map((currentTrip: Trip) => {
-                      if (this.props.canDeleteTrips) {
-                        return [
-                          { value: currentTrip.getOriginAddress() },
-                          { value: currentTrip.getDestinationAddress() },
-                          {
-                            value: this.getNameById(currentTrip.getUserId()),
-                          }, // Need to use UserClientService on it
-                          {
-                            value: this.getRowStartDateById(
-                              currentTrip.getPerDiemRowId(),
-                            )?.split(' ')[0],
-                          },
-                          {
-                            value: currentTrip.getDistanceInMiles().toFixed(1),
-                          },
-                          {
-                            value: currentTrip.getNotes(),
-                            actions: [
-                              <IconButton
-                                key={currentTrip.getId() + 'edit'}
-                                size="small"
-                                onClick={() =>
-                                  this.setStateToNew({
-                                    pendingTripToDelete: currentTrip,
-                                  })
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>,
-                            ],
-                          },
-                        ];
-                      } else {
-                        return [
-                          { value: currentTrip.getOriginAddress() },
-                          { value: currentTrip.getDestinationAddress() },
-                          {
-                            value: this.getNameById(currentTrip.getUserId()),
-                          }, // Need to use UserClientService on it
-                          {
-                            value: this.getRowStartDateById(
-                              currentTrip.getPerDiemRowId(),
-                            )?.split(' ')[0],
-                          },
-                          {
-                            value: currentTrip.getDistanceInMiles().toFixed(1),
-                          },
-                          {
-                            value: currentTrip.getNotes(),
-                          },
-                        ];
-                      }
-                    })}
+                  data={this.getData()}
                   compact={this.props.compact ? true : false}
                   hoverable={this.props.hoverable ? true : false}
                 />
@@ -648,62 +649,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                           },
                         ]
                   }
-                  data={this.state
-                    .trips!.getResultsList()
-                    .map((currentTrip: Trip) => {
-                      if (this.props.canDeleteTrips) {
-                        return [
-                          { value: currentTrip.getOriginAddress() },
-                          { value: currentTrip.getDestinationAddress() },
-                          {
-                            value: this.getNameById(currentTrip.getUserId()),
-                          }, // Need to use UserClientService on it
-                          {
-                            value: this.getRowStartDateById(
-                              currentTrip.getPerDiemRowId(),
-                            )?.split(' ')[0],
-                          },
-                          {
-                            value: currentTrip.getDistanceInMiles().toFixed(1),
-                          },
-                          {
-                            value: currentTrip.getNotes(),
-                            actions: [
-                              <IconButton
-                                key={currentTrip.getId() + 'edit'}
-                                size="small"
-                                onClick={() =>
-                                  this.setStateToNew({
-                                    pendingTripToDelete: currentTrip,
-                                  })
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>,
-                            ],
-                          },
-                        ];
-                      } else {
-                        return [
-                          { value: currentTrip.getOriginAddress() },
-                          { value: currentTrip.getDestinationAddress() },
-                          {
-                            value: this.getNameById(currentTrip.getUserId()),
-                          }, // Need to use UserClientService on it
-                          {
-                            value: this.getRowStartDateById(
-                              currentTrip.getPerDiemRowId(),
-                            )?.split(' ')[0],
-                          },
-                          {
-                            value: currentTrip.getDistanceInMiles().toFixed(1),
-                          },
-                          {
-                            value: currentTrip.getNotes(),
-                          },
-                        ];
-                      }
-                    })}
+                  data={this.getData()}
                   compact={this.props.compact ? true : false}
                   hoverable={this.props.hoverable ? true : false}
                 />
