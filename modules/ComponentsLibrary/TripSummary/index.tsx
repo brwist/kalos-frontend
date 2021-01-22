@@ -218,7 +218,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
       orderBy: 'user_id',
       orderDir: 'ASC',
     };
-    const page = this.state.page;
+    const page =
+      tripFilter != undefined
+        ? tripFilter.page == undefined
+          ? 0
+          : tripFilter.page
+        : 0;
 
     const criteria: LoadTripsByFilter = {
       page,
@@ -230,6 +235,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 ? this.props.loggedUserId
                 : undefined,
             weekof: this.props.perDiemRowIds,
+            page: this.state.page,
           },
       sort: tripSort as TripsSort,
     };
@@ -474,6 +480,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   handleChangePage = (page: number) => {
     this.setState({ page: page });
+    const currentSearch = this.state.search;
+    currentSearch.page = page;
+    this.setTripState(currentSearch);
   };
   getData = () => {
     return this.state
