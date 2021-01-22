@@ -26,6 +26,7 @@ import { Loader } from '../../Loader/main';
 import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Search } from '../Search';
+import { Tooltip } from '../Tooltip';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -482,28 +483,40 @@ export class TripSummary extends React.PureComponent<Props, State> {
             value: currentTrip.getNotes(),
             actions: [
               this.props.canDeleteTrips ? (
-                <IconButton
-                  key={currentTrip.getId() + 'delete' + idx}
-                  size="small"
-                  onClick={() =>
-                    this.setStateToNew({
-                      pendingTripToDelete: currentTrip,
-                    })
-                  }
+                <Tooltip
+                  key={'delete' + idx}
+                  content="Delete Trip"
+                  placement="bottom"
                 >
-                  <DeleteIcon />
-                </IconButton>
+                  <IconButton
+                    key={currentTrip.getId() + 'delete' + idx}
+                    size="small"
+                    onClick={() =>
+                      this.setStateToNew({
+                        pendingTripToDelete: currentTrip,
+                      })
+                    }
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
               ) : (
                 <></>
               ),
               this.props.canProcessPayroll ? (
-                <IconButton
-                  key={currentTrip.getId() + 'wallet' + idx}
-                  size="small"
-                  onClick={() => alert('Clicked on')}
+                <Tooltip
+                  key={'payroll' + idx}
+                  content="Process Payroll"
+                  placement="bottom"
                 >
-                  <AccountBalanceWalletIcon />
-                </IconButton>
+                  <IconButton
+                    key={currentTrip.getId() + 'wallet' + idx}
+                    size="small"
+                    onClick={() => alert('Clicked on')}
+                  >
+                    <AccountBalanceWalletIcon />
+                  </IconButton>
+                </Tooltip>
               ) : (
                 <></>
               ),
