@@ -107,7 +107,9 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
               if (
                 formData[name] === undefined ||
                 value === '' ||
-                ((['classCode', 'department', 'eventId'].includes(type) ||
+                ((['classCode', 'department', 'eventId', 'technician'].includes(
+                  type,
+                ) ||
                   !!options) &&
                   value === '0')
               ) {
