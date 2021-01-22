@@ -303,7 +303,7 @@ export const getKeyByKeyName = async (keyName: string) => {
 
 const BASE_URL = 'https://app.kalosflorida.com/index.cfm';
 
-const IRS_SUGGESTED_MILE_FACTOR = 0.56 // $0.56 a mile
+const IRS_SUGGESTED_MILE_FACTOR = 0.56; // $0.56 a mile
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -329,9 +329,9 @@ function trailingZero(val: number) {
  */
 export const usd = (val: number) => `$ ${val.toFixed(2)}`;
 
-export const perDiemTripMilesToUsd = (miles : number) => {
-  return usd(miles * IRS_SUGGESTED_MILE_FACTOR)
-} 
+export const perDiemTripMilesToUsd = (miles: number) => {
+  return usd(miles * IRS_SUGGESTED_MILE_FACTOR);
+};
 
 /**
  *
@@ -2400,6 +2400,7 @@ export type TripsFilter = {
   originAddress?: string;
   destinationAddress?: string;
   weekof?: number[];
+  page: number;
 };
 /**
  * Returns Properties by filter
