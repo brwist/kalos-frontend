@@ -1,5 +1,5 @@
 import React from 'react';
-import { InfoTable } from '../InfoTable';
+import { Columns, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import {
   PerDiem,
@@ -514,6 +514,43 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
     });
   };
+  getColumns = () => {
+    return (this.props.canDeleteTrips
+      ? [
+          { name: 'Origin' },
+          { name: 'Destination' },
+          { name: 'Name' },
+          { name: 'Week Of' },
+          { name: 'Miles' },
+          {
+            name: 'Notes',
+            actions: [
+              {
+                label: 'Delete All Trips',
+                compact: this.props.compact ? true : false,
+                variant: 'outlined',
+                size: 'xsmall',
+                onClick: () => {
+                  this.setStateToNew({
+                    pendingDeleteAllTrips: true,
+                  });
+                },
+                burgeronly: 1,
+              },
+            ],
+          },
+        ]
+      : [
+          { name: 'Origin' },
+          { name: 'Destination' },
+          { name: 'Name' },
+          { name: 'Week Of' },
+          { name: 'Miles' },
+          {
+            name: 'Notes',
+          },
+        ]) as Columns;
+  };
   render() {
     return (
       <>
@@ -549,43 +586,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                     String(this.dateIdPair) +
                     String(this.nameIdPair)
                   }
-                  columns={
-                    this.props.canDeleteTrips
-                      ? [
-                          { name: 'Origin' },
-                          { name: 'Destination' },
-                          { name: 'Name' },
-                          { name: 'Week Of' },
-                          { name: 'Miles' },
-                          {
-                            name: 'Notes',
-                            actions: [
-                              {
-                                label: 'Delete All Trips',
-                                compact: this.props.compact ? true : false,
-                                variant: 'outlined',
-                                size: 'xsmall',
-                                onClick: () => {
-                                  this.setStateToNew({
-                                    pendingDeleteAllTrips: true,
-                                  });
-                                },
-                                burgeronly: 1,
-                              },
-                            ],
-                          },
-                        ]
-                      : [
-                          { name: 'Origin' },
-                          { name: 'Destination' },
-                          { name: 'Name' },
-                          { name: 'Week Of' },
-                          { name: 'Miles' },
-                          {
-                            name: 'Notes',
-                          },
-                        ]
-                  }
+                  columns={this.getColumns()}
                   data={this.getData()}
                   compact={this.props.compact ? true : false}
                   hoverable={this.props.hoverable ? true : false}
@@ -612,43 +613,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                     String(this.dateIdPair) +
                     String(this.nameIdPair)
                   }
-                  columns={
-                    this.props.canDeleteTrips
-                      ? [
-                          { name: 'Origin' },
-                          { name: 'Destination' },
-                          { name: 'Name' },
-                          { name: 'Week Of' },
-                          { name: 'Miles' },
-                          {
-                            name: 'Notes',
-                            actions: [
-                              {
-                                label: 'Delete All Trips',
-                                compact: this.props.compact ? true : false,
-                                variant: 'outlined',
-                                size: 'xsmall',
-                                onClick: () => {
-                                  this.setStateToNew({
-                                    pendingDeleteAllTrips: true,
-                                  });
-                                },
-                                burgeronly: 1,
-                              },
-                            ],
-                          },
-                        ]
-                      : [
-                          { name: 'Origin' },
-                          { name: 'Destination' },
-                          { name: 'Name' },
-                          { name: 'Week Of' },
-                          { name: 'Miles' },
-                          {
-                            name: 'Notes',
-                          },
-                        ]
-                  }
+                  columns={this.getColumns()}
                   data={this.getData()}
                   compact={this.props.compact ? true : false}
                   hoverable={this.props.hoverable ? true : false}
