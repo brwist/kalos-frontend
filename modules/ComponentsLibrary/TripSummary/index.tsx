@@ -8,6 +8,7 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import {
   PerDiemClientService,
   getTripDistance,
@@ -138,6 +139,7 @@ interface Props {
   perDiemRowIds: number[];
   loggedUserId: number;
   canDeleteTrips?: boolean;
+  canProcessPayroll?: boolean;
   compact?: boolean;
   hoverable?: boolean;
   searchable?: boolean;
@@ -459,14 +461,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ page: page });
   };
   getData = () => {
-    return this.state.trips!.getResultsList().map((currentTrip: Trip) => {
-      if (this.props.canDeleteTrips) {
+    return this.state
+      .trips!.getResultsList()
+      .map((currentTrip: Trip, idx: number) => {
         return [
           { value: currentTrip.getOriginAddress() },
           { value: currentTrip.getDestinationAddress() },
           {
             value: this.getNameById(currentTrip.getUserId()),
-          }, // Need to use UserClientService on it
+          },
           {
             value: this.getRowStartDateById(
               currentTrip.getPerDiemRowId(),
@@ -478,41 +481,36 @@ export class TripSummary extends React.PureComponent<Props, State> {
           {
             value: currentTrip.getNotes(),
             actions: [
-              <IconButton
-                key={currentTrip.getId() + 'edit'}
-                size="small"
-                onClick={() =>
-                  this.setStateToNew({
-                    pendingTripToDelete: currentTrip,
-                  })
-                }
-              >
-                <DeleteIcon />
-              </IconButton>,
+              this.props.canDeleteTrips ? (
+                <IconButton
+                  key={currentTrip.getId() + 'delete' + idx}
+                  size="small"
+                  onClick={() =>
+                    this.setStateToNew({
+                      pendingTripToDelete: currentTrip,
+                    })
+                  }
+                >
+                  <DeleteIcon />
+                </IconButton>
+              ) : (
+                <></>
+              ),
+              this.props.canProcessPayroll ? (
+                <IconButton
+                  key={currentTrip.getId() + 'wallet' + idx}
+                  size="small"
+                  onClick={() => alert('Clicked on')}
+                >
+                  <AccountBalanceWalletIcon />
+                </IconButton>
+              ) : (
+                <></>
+              ),
             ],
           },
         ];
-      } else {
-        return [
-          { value: currentTrip.getOriginAddress() },
-          { value: currentTrip.getDestinationAddress() },
-          {
-            value: this.getNameById(currentTrip.getUserId()),
-          }, // Need to use UserClientService on it
-          {
-            value: this.getRowStartDateById(
-              currentTrip.getPerDiemRowId(),
-            )?.split(' ')[0],
-          },
-          {
-            value: currentTrip.getDistanceInMiles().toFixed(1),
-          },
-          {
-            value: currentTrip.getNotes(),
-          },
-        ];
-      }
-    });
+      });
   };
   getColumns = () => {
     return (this.props.canDeleteTrips

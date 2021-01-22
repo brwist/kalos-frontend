@@ -23,6 +23,9 @@ export default () => (
     <ExampleTitle>Can Delete Trips (Viewing as Chernov)</ExampleTitle>
     <TripSummary perDiemRowIds={[1]} loggedUserId={101275} canDeleteTrips />
 
+    <ExampleTitle>Can Process Payroll (Viewing as Chernov)</ExampleTitle>
+    <TripSummary perDiemRowIds={[1]} loggedUserId={101275} canProcessPayroll />
+
     <ExampleTitle>Searchable (Viewing as Chernov)</ExampleTitle>
     <TripSummary perDiemRowIds={[1]} loggedUserId={101275} searchable />
   </>
