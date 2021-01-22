@@ -18,6 +18,7 @@ import {
   TripsSort,
   LoadTripsByFilter,
   getRPCFields,
+  perDiemTripMilesToUsd,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -157,7 +158,8 @@ interface State {
   pendingTripToDelete: Trip | null;
   pendingDeleteAllTrips: boolean;
   pendingProcessPayrollTrip: Trip | null;
-  trips: TripList;
+  tripsOnPage: TripList;
+  totalTrips: number;
   totalTripMiles: number;
   key: number;
   loading: boolean;
@@ -173,7 +175,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
     super(props);
     this.state = {
       pendingTrip: null,
-      trips: new TripList(),
+      tripsOnPage: new TripList(),
+      totalTrips: 0,
       totalTripMiles: 0,
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
@@ -210,7 +213,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   loadTrips = async (tripFilter?: TripsFilter) => {
-    let trips: Trip[] = [];
     const tripSort = {
       orderByField: 'user_id',
       orderBy: 'user_id',
@@ -231,50 +233,53 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },
       sort: tripSort as TripsSort,
     };
-    return await new Promise<Trip[]>(async resolve => {
-      let tripResultList: any = [];
+    return await new Promise<TripList>(async resolve => {
+      let tripResultList: Trip.AsObject[] = [];
+      let res: {
+        results: Trip.AsObject[];
+        totalCount: number;
+      };
       if (tripFilter) {
-        tripResultList = (await loadTripsByFilter(criteria)).results.filter(
-          trip => {
-            let fail = true,
-              userIDFailed = true;
-            if (this.props.loggedUserId != 0) {
-              if (trip.userId == this.props.loggedUserId) {
-                userIDFailed = false;
-              }
+        res = await loadTripsByFilter(criteria);
+        tripResultList = res.results.filter(trip => {
+          let fail = true,
+            userIDFailed = true;
+          if (this.props.loggedUserId != 0) {
+            if (trip.userId == this.props.loggedUserId) {
+              userIDFailed = false;
             }
-            this.props.perDiemRowIds.forEach(id => {
-              if (trip.perDiemRowId == id) {
-                fail = false;
-              }
-            });
-            if (userIDFailed && this.props.loggedUserId != 0) fail = true;
-            return !fail;
-          },
-        );
+          }
+          this.props.perDiemRowIds.forEach(id => {
+            if (trip.perDiemRowId == id) {
+              fail = false;
+            }
+          });
+          if (userIDFailed && this.props.loggedUserId != 0) fail = true;
+          return !fail;
+        });
       } else {
-        tripResultList = (await loadTripsByFilter(criteria)).results.filter(
-          trip => {
-            let fail = false;
-            let hadId = false;
-            this.props.perDiemRowIds.forEach(id => {
-              if (trip.perDiemRowId == id) {
-                hadId = true;
-              }
-            });
-            if (!hadId) {
+        res = await loadTripsByFilter(criteria);
+        tripResultList = res.results.filter(trip => {
+          let fail = false;
+          let hadId = false;
+          this.props.perDiemRowIds.forEach(id => {
+            if (trip.perDiemRowId == id) {
+              hadId = true;
+            }
+          });
+          if (!hadId) {
+            fail = true;
+          }
+          this.state.tripsOnPage.getResultsList().forEach(t => {
+            if (t.getId() == trip.id) {
               fail = true;
             }
-            this.state.trips.getResultsList().forEach(t => {
-              if (t.getId() == trip.id) {
-                fail = true;
-              }
-            });
-            return !fail;
-          },
-        );
+          });
+          return !fail;
+        });
       }
 
+      let trips: Trip[] = [];
       let tripList: Trip[] = [];
       for await (const tripAsObj of tripResultList) {
         const req = new Trip();
@@ -304,7 +309,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
         tripList.push(req);
       }
       trips.push(...tripList);
-      resolve(trips);
+
+      let resultList = new TripList();
+      resultList.setResultsList(trips);
+      resultList.setTotalCount(res.totalCount);
+
+      resolve(resultList);
     }).then(result => {
       return result;
     });
@@ -312,9 +322,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   setTripState = async (tripFilter?: Trip.AsObject) => {
     await this.loadTrips(tripFilter).then(async result => {
-      let list = new TripList();
-      list.setResultsList(result);
-      this.setState({ trips: list });
+      this.setState({ tripsOnPage: result });
       await this.refreshNamesAndDates();
       await this.updateTotalMiles();
     });
@@ -335,7 +343,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     let res: { date: string; row_id: number }[] = [];
 
     await new Promise(async resolve => {
-      for await (const trip of this.state.trips.getResultsList()) {
+      for await (const trip of this.state.tripsOnPage.getResultsList()) {
         try {
           let pd = new PerDiem();
           pd.setId(trip.getPerDiemRowId());
@@ -364,22 +372,24 @@ export class TripSummary extends React.PureComponent<Props, State> {
   getUserNamesFromIds = async () => {
     let res: { name: string; id: number }[] = [];
 
-    this.state.trips.getResultsList().forEach(async (trip: Trip, idx, arr) => {
-      try {
-        let user = await UserClientService.loadUserById(trip.getUserId());
-        let obj: { name: string; id: number } = {
-          name: `${user.firstname} ${user.lastname}`,
-          id: trip.getUserId(),
-        };
-        if (!res.includes(obj)) res.push(obj);
-        if (idx == arr.length - 1) {
-          this.nameIdPair = res;
-          return res;
+    this.state.tripsOnPage
+      .getResultsList()
+      .forEach(async (trip: Trip, idx, arr) => {
+        try {
+          let user = await UserClientService.loadUserById(trip.getUserId());
+          let obj: { name: string; id: number } = {
+            name: `${user.firstname} ${user.lastname}`,
+            id: trip.getUserId(),
+          };
+          if (!res.includes(obj)) res.push(obj);
+          if (idx == arr.length - 1) {
+            this.nameIdPair = res;
+            return res;
+          }
+        } catch (err: any) {
+          console.error('Failed to get user names from IDs: ', err);
         }
-      } catch (err: any) {
-        console.error('Failed to get user names from IDs: ', err);
-      }
-    });
+      });
   };
 
   getNameById = (userId: number) => {
@@ -401,7 +411,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await new Promise(async resolve => {
       let total = 0;
 
-      for await (const trip of this.state.trips.getResultsList()) {
+      for await (const trip of this.state.tripsOnPage.getResultsList()) {
         total += trip.getDistanceInMiles();
       }
 
@@ -419,10 +429,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
   deleteTrip = async (trip: Trip) => {
     try {
       await PerDiemClientService.DeleteTrip(trip);
-      let trips = this.state.trips;
-      let t = this.state.trips.getResultsList().indexOf(trip);
+      let trips = this.state.tripsOnPage;
+      let t = this.state.tripsOnPage.getResultsList().indexOf(trip);
       trips.getResultsList().splice(t, 1);
-      this.setState({ trips: trips });
+      this.setState({ tripsOnPage: trips });
       if (this.props.onDeleteTrip) this.props.onDeleteTrip();
     } catch (err: any) {
       console.error('An error occurred while deleting a trip: ', err);
@@ -467,7 +477,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   getData = () => {
     return this.state
-      .trips!.getResultsList()
+      .tripsOnPage!.getResultsList()
       .map((currentTrip: Trip, idx: number) => {
         return [
           { value: currentTrip.getOriginAddress() },
@@ -481,7 +491,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
             )?.split(' ')[0],
           },
           {
-            value: currentTrip.getDistanceInMiles().toFixed(1),
+            value:
+              currentTrip.getDistanceInMiles().toFixed(1) +
+              ' / ' +
+              perDiemTripMilesToUsd(
+                Number(currentTrip.getDistanceInMiles().toFixed(1)),
+              ),
           },
           {
             value: currentTrip.getNotes(),
@@ -548,7 +563,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Destination' },
           { name: 'Name' },
           { name: 'Week Of' },
-          { name: 'Miles' },
+          { name: 'Miles / Cost' },
           {
             name: 'Notes',
             actions: [
@@ -566,13 +581,16 @@ export class TripSummary extends React.PureComponent<Props, State> {
               },
             ],
           },
+          {
+            name: 'Payroll Processed?',
+          },
         ]
       : [
           { name: 'Origin' },
           { name: 'Destination' },
           { name: 'Name' },
           { name: 'Week Of' },
-          { name: 'Miles' },
+          { name: 'Miles / Cost' },
           {
             name: 'Notes',
           },
@@ -587,7 +605,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
         <SectionBar
           title="Trips"
           pagination={{
-            count: this.state.trips.getResultsList().length,
+            count: this.state.tripsOnPage
+              ? this.state.tripsOnPage.getTotalCount()
+              : 0,
             page: this.state.page,
             rowsPerPage: this.resultsPerPage,
             onChangePage: this.handleChangePage,
@@ -603,7 +623,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               : null
           }
           small={this.props.compact ? true : false}
-          key={this.state.trips.getResultsList().length}
+          key={this.state.tripsOnPage.getResultsList().length}
         />
         <>
           {this.state.loading && <Loader />}
