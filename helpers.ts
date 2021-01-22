@@ -675,53 +675,36 @@ export const formatWeek = (date: string) => {
   )}`;
 };
 
-export const loadPendingSpiffs = async ({
-  page,
-  employeeId,
-  startDate,
-  endDate,
-}: {
-  page: number;
-  employeeId?: number;
+interface GetPendingSpiffConfig {
+  page?: number;
+  technicianUserID?: number;
   startDate?: string;
   endDate?: string;
-}) => {
-  const filter = {
-    page,
-    technicianUserID: employeeId,
-    startDate,
-    endDate,
+}
+
+export const GetPendingTasks = (billableType: string) => {
+  return async (config: GetPendingSpiffConfig) => {
+    const req = new Task();
+    req.setBillableType(billableType);
+    req.setFieldMaskList(['AdminApprovalId']);
+    req.setIsActive(true);
+    req.setGroupBy('external_id');
+    req.setPageNumber(config.page || 0);
+    req.setOrderBy('date_performed');
+    if (config.technicianUserID) {
+      req.setExternalId(config.technicianUserID);
+    }
+
+    if (config.startDate && config.endDate) {
+      req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
+    }
+
+    return (await TaskClientService.BatchGet(req)).toObject();
   };
-  console.log({ filter });
-  const response = (
-    await (await TaskClientService.GetPendingSpiffs)(filter)
-  ).toObject();
-  return response;
 };
 
-export const loadPendingToolLogs = async ({
-  page,
-  employeeId,
-  startDate,
-  endDate,
-}: {
-  page: number;
-  employeeId?: number;
-  startDate?: string;
-  endDate?: string;
-}) => {
-  const filter = {
-    page,
-    technicianUserID: employeeId,
-    startDate,
-    endDate,
-  };
-  console.log({ filter });
-  const response = (
-    await (await TaskClientService.GetPendingToolLogs)(filter)
-  ).toObject();
-  return response;
-};
+export const loadPendingSpiffs = GetPendingTasks('Spiff');
+export const loadPendingToolLogs = GetPendingTasks('Tool Purchase');
 
 export const loadTimeoffRequests = async ({
   page,
