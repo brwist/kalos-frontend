@@ -53,6 +53,7 @@ export const Spiffs: FC<Props> = ({ employeeId, week, role, loggedUserId }) => {
     const filter: GetPendingSpiffConfig = {
       page,
       technicianUserID: employeeId,
+      role,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
@@ -64,7 +65,7 @@ export const Spiffs: FC<Props> = ({ employeeId, week, role, loggedUserId }) => {
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week]);
+  }, [page, employeeId, week, role]);
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);

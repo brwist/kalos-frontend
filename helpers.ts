@@ -680,6 +680,7 @@ export interface GetPendingSpiffConfig {
   technicianUserID?: number;
   startDate?: string;
   endDate?: string;
+  role?: string;
 }
 
 export const GetPendingTasks = (billableType: string) => {
@@ -691,6 +692,12 @@ export const GetPendingTasks = (billableType: string) => {
     req.setGroupBy('external_id');
     req.setPageNumber(config.page || 0);
     req.setOrderBy('date_performed');
+    if (config.role === 'Manager') {
+      req.setAdminActionId(0);
+    }
+    if (config.role === 'Payroll') {
+      req.setNotEqualsList(['AdminActionId']);
+    }
     if (config.technicianUserID) {
       req.setExternalId(config.technicianUserID);
     }
