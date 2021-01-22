@@ -32,5 +32,17 @@ export default () => (
       autofillName="Justin Farrell"
       autofillMessage="Hi!"
     />
+    <ExampleTitle>Title changed (visible in form at the top)</ExampleTitle>
+    <SlackMessageButton
+      label="Message on slack!"
+      loggedUserId={userId}
+      title="Changed title"
+    />
+    <ExampleTitle>Full Height Modal</ExampleTitle>
+    <SlackMessageButton
+      label="Message on slack!"
+      loggedUserId={userId}
+      fullHeight
+    />
   </>
 );
