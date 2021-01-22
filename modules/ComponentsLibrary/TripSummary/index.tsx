@@ -469,6 +469,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     return this.state
       .trips!.getResultsList()
       .map((currentTrip: Trip, idx: number) => {
+        console.log(currentTrip);
         return [
           { value: currentTrip.getOriginAddress() },
           { value: currentTrip.getDestinationAddress() },
@@ -485,6 +486,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },
           {
             value: currentTrip.getNotes(),
+          },
+          {
+            value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',
             actions: [
               this.props.canDeleteTrips ? (
                 <Tooltip
@@ -571,6 +575,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Miles' },
           {
             name: 'Notes',
+          },
+          {
+            name: 'Payroll Processed?',
           },
         ]) as Columns;
   };
