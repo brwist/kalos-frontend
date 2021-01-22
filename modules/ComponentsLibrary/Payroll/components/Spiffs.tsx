@@ -12,25 +12,29 @@ import {
   TaskType,
   makeFakeRows,
   formatWeek,
+  GetPendingSpiffConfig,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 
 interface Props {
   employeeId: number;
   week: string;
+  role: string;
 }
 
-export const Spiffs: FC<Props> = ({ employeeId, week }) => {
+export const Spiffs: FC<Props> = ({ employeeId, week, role }) => {
+  console.log({ role });
   const [loading, setLoading] = useState<boolean>(false);
   const [spiffs, setSpiffs] = useState<TaskType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TaskType>();
+  const [pendingAdd, setPendingAdd] = useState<boolean>(false);
   const load = useCallback(async () => {
     setLoading(true);
-    const filter = {
+    const filter: GetPendingSpiffConfig = {
       page,
-      employeeId,
+      technicianUserID: employeeId,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
@@ -51,6 +55,9 @@ export const Spiffs: FC<Props> = ({ employeeId, week }) => {
     (pendingView?: TaskType) => () => setPendingView(pendingView),
     [],
   );
+  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
+    pendingAdd,
+  ]);
   return (
     <div>
       <SectionBar
@@ -61,6 +68,10 @@ export const Spiffs: FC<Props> = ({ employeeId, week }) => {
           rowsPerPage: ROWS_PER_PAGE,
           onChangePage: setPage,
         }}
+        actions={
+          role === 'Manager' ? [{ label: 'Add', onClick: handleToggleAdd }] : []
+        }
+        fixedActions
       />
       <InfoTable
         columns={[{ name: 'Employee' }, { name: 'Week' }]}

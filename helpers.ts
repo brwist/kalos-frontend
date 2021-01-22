@@ -675,7 +675,7 @@ export const formatWeek = (date: string) => {
   )}`;
 };
 
-interface GetPendingSpiffConfig {
+export interface GetPendingSpiffConfig {
   page?: number;
   technicianUserID?: number;
   startDate?: string;
@@ -694,11 +694,9 @@ export const GetPendingTasks = (billableType: string) => {
     if (config.technicianUserID) {
       req.setExternalId(config.technicianUserID);
     }
-
     if (config.startDate && config.endDate) {
       req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
     }
-
     return (await TaskClientService.BatchGet(req)).toObject();
   };
 };
@@ -706,74 +704,43 @@ export const GetPendingTasks = (billableType: string) => {
 export const loadPendingSpiffs = GetPendingTasks('Spiff');
 export const loadPendingToolLogs = GetPendingTasks('Tool Purchase');
 
-// interface GetTimesheetConfig {
-//   page?: number;
-//   departmentID?: number;
-//   requestType?: number;
-//   technicianUserID?: number;
-//   startDate?: string;
-//   endDate?: string;
-// }
-
-// export const  GetTimeoffRequests  = async (config: GetTimesheetConfig) => {
-//   const req = new TimeoffRequest();
-//   if (config.startDate && config.endDate) {
-//     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
-//   }
-//   if (config.departmentID) {
-//     req.setDepartmentCode(config.departmentID);
-//   }
-//   if (config.technicianUserID) {
-//     req.setUserId(config.technicianUserID);
-//   }
-//   req.setPageNumber(config.page || 0);
-//   req.setOrderBy('time_started');
-//   if (config.requestType !== 9) {
-//     req.setRequestType(config.requestType || 0);
-//     req.setFieldMaskList(['AdminApprovalUserId']);
-//   } else {
-//     req.setNotEqualsList(['AdminApprovalDatetime']);
-//     req.setAdminApprovalDatetime('0001-01-01 00:00:00');
-//     req.setRequestTypeList('9,10,11');
-//   }
-//   if (config.departmentID) {
-//     const user = new User();
-//     user.setEmployeeDepartmentId(config.departmentID);
-//     req.setUser(user);
-//   }
-//   req.setIsActive(1);
-//   return (await TimeoffRequestClientService.BatchGet(req)).toObject();
-// }
-
-export const loadTimeoffRequests = async ({
-  page,
-  departmentId,
-  employeeId,
-  startDate,
-  endDate,
-  requestType,
-}: {
-  page: number;
-  departmentId?: number;
-  employeeId?: number;
+export interface GetTimesheetConfig {
+  page?: number;
+  departmentID?: number;
+  requestType?: number;
+  technicianUserID?: number;
   startDate?: string;
   endDate?: string;
-  requestType?: number;
-}) => {
-  const filter = {
-    page,
-    departmentID: departmentId,
-    technicianUserID: employeeId,
-    startDate,
-    endDate,
-  };
-  if (requestType) {
-    Object.assign(filter, { requestType });
+}
+
+export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
+  const req = new TimeoffRequest();
+  if (config.startDate && config.endDate) {
+    req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
   }
-  const response = (
-    await TimeoffRequestClientService.GetTimeoffRequests(filter)
-  ).toObject();
-  return response;
+  if (config.departmentID) {
+    req.setDepartmentCode(config.departmentID);
+  }
+  if (config.technicianUserID) {
+    req.setUserId(config.technicianUserID);
+  }
+  req.setPageNumber(config.page || 0);
+  req.setOrderBy('time_started');
+  if (config.requestType !== 9) {
+    req.setRequestType(config.requestType || 0);
+    req.setFieldMaskList(['AdminApprovalUserId']);
+  } else {
+    req.setNotEqualsList(['AdminApprovalDatetime']);
+    req.setAdminApprovalDatetime('0001-01-01 00:00:00');
+    req.setRequestTypeList('9,10,11');
+  }
+  if (config.departmentID) {
+    const user = new User();
+    user.setEmployeeDepartmentId(config.departmentID);
+    req.setUser(user);
+  }
+  req.setIsActive(1);
+  return (await TimeoffRequestClientService.BatchGet(req)).toObject();
 };
 
 export const loadTimesheets = async ({
