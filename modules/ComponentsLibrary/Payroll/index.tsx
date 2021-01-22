@@ -308,7 +308,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
           </>
         ) : (
           <Alert severity="error">
-            You don&apos;t have persmission to view Payroll
+            You don&apos;t have permission to view Payroll
           </Alert>
         )
       ) : (
