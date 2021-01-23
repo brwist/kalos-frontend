@@ -301,7 +301,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             }
                             canProcessPayroll
                             canApprove
-                            
+                            hoverable
                           />
                         ),
                       },
