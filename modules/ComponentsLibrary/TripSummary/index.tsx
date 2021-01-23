@@ -31,6 +31,7 @@ import { Tooltip } from '../Tooltip';
 import { Confirm } from '../Confirm';
 import { Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
+import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -184,6 +185,7 @@ interface Props {
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
+  role?: PermissionGroup.AsObject;
 }
 
 interface State {
@@ -299,12 +301,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
             }
           });
           if (userIDFailed && this.props.loggedUserId != 0) fail = true;
-          /*
-          if (this.state.filter.payrollProcessed == 1) {
-            if (trip.payrollProcessed == false) {
-              fail = true;
-            }
-          }*/
           return !fail;
         });
       } else {
