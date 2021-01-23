@@ -586,6 +586,20 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ) : (
                 <></>
               ),
+              this.props.canApprove ? (
+                <Tooltip key="approve" content="Approve" placement="bottom">
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={() => this.setPendingApproveTrip(currentTrip)}
+                    >
+                      <CheckCircleOutlineIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              ) : (
+                <></>
+              ),
               this.props.canProcessPayroll ? (
                 <Tooltip
                   key={'payroll' + idx}
@@ -599,20 +613,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   >
                     <AccountBalanceWalletIcon />
                   </IconButton>
-                </Tooltip>
-              ) : (
-                <></>
-              ),
-              this.props.canApprove ? (
-                <Tooltip key="approve" content="Approve" placement="bottom">
-                  <span>
-                    <IconButton
-                      size="small"
-                      onClick={() => this.setPendingApproveTrip(currentTrip)}
-                    >
-                      <CheckCircleOutlineIcon />
-                    </IconButton>
-                  </span>
                 </Tooltip>
               ) : (
                 <></>
@@ -651,6 +651,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Miles / Cost' },
           {
             name: 'Notes',
+          },
+          {
+            name: 'Approved?',
           },
           {
             name: 'Payroll Processed?',
