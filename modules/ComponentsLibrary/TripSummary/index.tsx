@@ -271,6 +271,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 : undefined,
             weekof: this.props.perDiemRowIds,
             page: this.state.page,
+            payrollProcessed: !!+this.state.filter.payrollProcessed, // Gotta love JS
           },
       sort: tripSort as TripsSort,
     };
@@ -298,11 +299,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
             }
           });
           if (userIDFailed && this.props.loggedUserId != 0) fail = true;
+          /*
           if (this.state.filter.payrollProcessed == 1) {
             if (trip.payrollProcessed == false) {
               fail = true;
             }
-          }
+          }*/
           return !fail;
         });
       } else {
@@ -526,7 +528,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   handleChangePage = (page: number) => {
     this.setState({ page: page });
-    const currentSearch = this.state.search;
+    const currentSearch = this.state.search; 
     currentSearch.page = page;
     this.loadTripsAndUpdate(currentSearch);
   };
@@ -656,7 +658,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   setFilter = (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
-    this.reloadTrips();
+    const currentSearch = this.state.search;
+    currentSearch.payrollProcessed = !!+checkboxFilter.payrollProcessed;
+    this.loadTripsAndUpdate(currentSearch);
   };
   render() {
     return (
@@ -735,7 +739,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               onClose={() => {
                 this.loadTripsAndUpdate();
               }}
-              onSave={tripFilter => this.loadTripsAndUpdate(tripFilter)}
+              onSave={tripFilter => {
+                this.loadTripsAndUpdate(tripFilter);
+              }}
             >
               <>
                 <InfoTable
