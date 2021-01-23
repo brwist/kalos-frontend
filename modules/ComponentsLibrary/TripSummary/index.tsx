@@ -278,6 +278,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             weekof: this.props.perDiemRowIds,
             page: this.state.page,
             payrollProcessed: !!+this.state.filter.payrollProcessed, // Gotta love JS
+            approved: !!+this.state.filter.approved,
           },
       sort: tripSort as TripsSort,
     };
@@ -684,6 +685,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ filter: checkboxFilter });
     const currentSearch = this.state.search;
     currentSearch.payrollProcessed = !!+checkboxFilter.payrollProcessed;
+    currentSearch.approved = !!+checkboxFilter.approved;
     currentSearch.page = 0; // Go to page 0 in case it cannot handle larger
     this.setState({ page: 0 });
     await this.loadTripsAndUpdate(currentSearch);
