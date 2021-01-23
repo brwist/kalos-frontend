@@ -528,7 +528,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   handleChangePage = (page: number) => {
     this.setState({ page: page });
-    const currentSearch = this.state.search; 
+    const currentSearch = this.state.search;
     currentSearch.page = page;
     this.loadTripsAndUpdate(currentSearch);
   };
@@ -656,11 +656,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },
         ]) as Columns;
   };
-  setFilter = (checkboxFilter: CheckboxesFilterType) => {
+  setFilter = async (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
     const currentSearch = this.state.search;
     currentSearch.payrollProcessed = !!+checkboxFilter.payrollProcessed;
-    this.loadTripsAndUpdate(currentSearch);
+    currentSearch.page = 0; // Go to page 0 in case it cannot handle larger
+    this.setState({ page: 0 });
+    await this.loadTripsAndUpdate(currentSearch);
   };
   render() {
     return (
