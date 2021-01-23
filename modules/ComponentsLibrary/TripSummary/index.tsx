@@ -33,6 +33,9 @@ import { Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
 import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
+import Visibility from '@material-ui/icons/Visibility';
+import { Modal } from '../Modal';
+import { NULL_TIME } from '../../../constants';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -50,6 +53,26 @@ export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
       label: 'Destination',
       type: 'text',
       name: 'destinationAddress',
+    },
+  ],
+];
+
+export const SCHEMA_TRIP_INFO: Schema<Trip.AsObject> = [
+  [
+    {
+      label: 'Origin Address',
+      type: 'text',
+      name: 'originAddress',
+    },
+    {
+      label: 'Destination Address',
+      type: 'text',
+      name: 'destinationAddress',
+    },
+    {
+      label: 'Notes',
+      type: 'text',
+      name: 'notes',
     },
   ],
 ];
@@ -204,6 +227,7 @@ interface State {
   search: Trip.AsObject;
   page: number;
   filter: CheckboxesFilterType;
+  tripToView: Trip | null;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -226,6 +250,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       search: new Trip().toObject(),
       page: 0,
       filter: new Checkboxes(),
+      tripToView: null,
     };
     this.loadTripsAndUpdate();
   }
@@ -586,6 +611,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ) : (
                 <></>
               ),
+              <Tooltip key="view" content="View Per Diem" placement="bottom">
+                <IconButton
+                  size="small"
+                  onClick={() => this.setTripToView(currentTrip)}
+                >
+                  <Visibility />
+                </IconButton>
+              </Tooltip>,
               this.props.canApprove ? (
                 <Tooltip key="approve" content="Approve" placement="bottom">
                   <span>
@@ -640,6 +673,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   setPendingProcessPayroll = (trip: Trip | null) => {
     this.setState({ pendingProcessPayrollTrip: trip });
+  };
+  setTripToView = (trip: Trip | null) => {
+    this.setState({ tripToView: trip });
   };
   getColumns = () => {
     return (this.props.canDeleteTrips
@@ -702,6 +738,24 @@ export class TripSummary extends React.PureComponent<Props, State> {
   render() {
     return (
       <>
+        {/* May be useful to put this functionality into its own component */}
+        {this.state.tripToView && (
+          <Modal open={true} onClose={() => this.setTripToView(null)}>
+            <Form
+              title="Trip"
+              submitLabel="Approve"
+              cancelLabel="Close"
+              schema={SCHEMA_TRIP_INFO}
+              data={this.state.search}
+              onClose={() => {
+                this.setTripToView(null);
+              }}
+              onSave={tripFilter => {
+                this.loadTripsAndUpdate(tripFilter);
+              }}
+            />
+          </Modal>
+        )}
         <PlainForm<CheckboxesFilterType>
           schema={CHECKBOXES_SCHEMA}
           data={this.state.filter}
