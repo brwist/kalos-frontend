@@ -30,6 +30,7 @@ import { Search } from '../Search';
 import { Tooltip } from '../Tooltip';
 import { Confirm } from '../Confirm';
 import { Typography } from '@material-ui/core';
+import { PlainForm } from '../PlainForm';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -139,6 +140,38 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   ],
 ];
 
+type CheckboxesFilterType = {
+  approved: number;
+  //needsAuditing: number;
+  payrollProcessed: number;
+};
+
+class Checkboxes implements CheckboxesFilterType {
+  approved: number = 0;
+  payrollProcessed: number = 0;
+}
+
+const CHECKBOXES_SCHEMA: Schema<CheckboxesFilterType> = [
+  [
+    {
+      name: 'approved',
+      type: 'checkbox',
+      label: 'Approved',
+    },
+    /*  May not need to audit trips, just in case though I'ma leave this here
+    {
+      name: 'needsAuditing',
+      type: 'checkbox',
+      label: 'Needs Auditing',
+    },*/
+    {
+      name: 'payrollProcessed',
+      type: 'checkbox',
+      label: 'Payroll Processed',
+    },
+  ],
+];
+
 interface Props {
   perDiemRowIds: number[];
   loggedUserId: number;
@@ -165,6 +198,7 @@ interface State {
   loading: boolean;
   search: Trip.AsObject;
   page: number;
+  filter: CheckboxesFilterType;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -185,6 +219,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       loading: true,
       search: new Trip().toObject(),
       page: 0,
+      filter: new Checkboxes(),
     };
     this.setTripState();
   }
@@ -608,9 +643,18 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },
         ]) as Columns;
   };
+  setFilter = (checkboxFilter: CheckboxesFilterType) => {
+    this.setState({ filter: checkboxFilter });
+  };
   render() {
     return (
       <>
+        <PlainForm<CheckboxesFilterType>
+          schema={CHECKBOXES_SCHEMA}
+          data={this.state.filter}
+          onChange={this.setFilter}
+          className="PayrollFilter"
+        />
         <SectionBar
           title="Trips"
           pagination={{
