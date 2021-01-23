@@ -2402,6 +2402,7 @@ export type TripsFilter = {
   weekof?: number[];
   page: number;
   payrollProcessed: boolean;
+  approved: boolean;
 };
 /**
  * Returns Properties by filter
