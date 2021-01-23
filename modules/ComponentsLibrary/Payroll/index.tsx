@@ -300,6 +300,8 @@ export const Payroll: FC<Props> = ({ userID }) => {
                               loadedPerDiemIds.toString() + filter.employeeId
                             }
                             canProcessPayroll
+                            canApprove
+                            
                           />
                         ),
                       },

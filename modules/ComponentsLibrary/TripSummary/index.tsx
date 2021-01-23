@@ -32,6 +32,7 @@ import { Confirm } from '../Confirm';
 import { Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
 import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -178,6 +179,7 @@ interface Props {
   loggedUserId: number;
   canDeleteTrips?: boolean;
   canProcessPayroll?: boolean;
+  canApprove?: boolean;
   compact?: boolean;
   hoverable?: boolean;
   searchable?: boolean;
@@ -193,6 +195,7 @@ interface State {
   pendingTripToDelete: Trip | null;
   pendingDeleteAllTrips: boolean;
   pendingProcessPayrollTrip: Trip | null;
+  pendingApproveTrip: Trip | null;
   tripsOnPage: TripList;
   totalTrips: number;
   totalTripMiles: number;
@@ -217,6 +220,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingTripToDelete: null,
       pendingDeleteAllTrips: false,
       pendingProcessPayrollTrip: null,
+      pendingApproveTrip: null,
       key: 0,
       loading: true,
       search: new Trip().toObject(),
@@ -595,6 +599,20 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ) : (
                 <></>
               ),
+              this.props.canApprove ? (
+                <Tooltip key="approve" content="Approve" placement="bottom">
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={() => this.setPendingApproveTrip(currentTrip)}
+                    >
+                      <CheckCircleOutlineIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              ) : (
+                <></>
+              ),
             ],
           },
         ];
@@ -605,6 +623,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     this.setPendingProcessPayroll(null);
     this.reloadTrips();
+  };
+  setPendingApproveTrip = (trip: Trip | null) => {
+    this.setState({ pendingApproveTrip: trip });
   };
   setPendingProcessPayroll = (trip: Trip | null) => {
     this.setState({ pendingProcessPayrollTrip: trip });
@@ -619,6 +640,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Miles / Cost' },
           {
             name: 'Notes',
+          },
+          {
+            name: 'Payroll Processed?',
             actions: [
               {
                 label: 'Delete All Trips',
@@ -633,9 +657,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 burgeronly: 1,
               },
             ],
-          },
-          {
-            name: 'Payroll Processed?',
           },
         ]
       : [
@@ -724,6 +745,22 @@ export class TripSummary extends React.PureComponent<Props, State> {
             >
               <Typography>
                 Are you sure you want to process this payroll?
+              </Typography>
+            </Confirm>
+          )}
+          {this.state.pendingApproveTrip && (
+            <Confirm
+              title="Are you sure?"
+              open={true}
+              onClose={() => this.setPendingApproveTrip(null)}
+              onConfirm={() =>
+                this.setPayrollProcessed(
+                  this.state.pendingProcessPayrollTrip!.getId(),
+                )
+              }
+            >
+              <Typography>
+                Are you sure you want to approve this trip?
               </Typography>
             </Confirm>
           )}
