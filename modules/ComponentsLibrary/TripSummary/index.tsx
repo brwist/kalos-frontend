@@ -368,6 +368,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
     });
   };
 
+  reloadTrips = () => {
+    this.loadTripsAndUpdate(this.state.search);
+  };
+
   loadTripsAndUpdate = async (tripFilter?: Trip.AsObject) => {
     await this.loadTrips(tripFilter).then(async result => {
       this.setState({ tripsOnPage: result });
@@ -602,7 +606,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await PerDiemClientService.updateTripPayrollProcessed(id);
 
     this.setPendingProcessPayroll(null);
-    this.loadTripsAndUpdate(this.state.search);
+    this.reloadTrips();
   };
   setPendingProcessPayroll = (trip: Trip | null) => {
     this.setState({ pendingProcessPayrollTrip: trip });
@@ -652,7 +656,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   setFilter = (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
-    this.loadTripsAndUpdate(this.state.search);
+    this.reloadTrips();
   };
   render() {
     return (
