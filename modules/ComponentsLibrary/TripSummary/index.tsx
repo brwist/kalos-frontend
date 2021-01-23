@@ -624,6 +624,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setPendingProcessPayroll(null);
     this.reloadTrips();
   };
+
+  setTripApproved = async (id: number) => {
+    await PerDiemClientService.updateTripApproved(id);
+
+    this.setPendingApproveTrip(null);
+    this.reloadTrips();
+  };
   setPendingApproveTrip = (trip: Trip | null) => {
     this.setState({ pendingApproveTrip: trip });
   };
@@ -754,9 +761,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               open={true}
               onClose={() => this.setPendingApproveTrip(null)}
               onConfirm={() =>
-                this.setPayrollProcessed(
-                  this.state.pendingProcessPayrollTrip!.getId(),
-                )
+                this.setTripApproved(this.state.pendingApproveTrip!.getId())
               }
             >
               <Typography>
