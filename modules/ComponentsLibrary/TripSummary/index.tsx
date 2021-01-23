@@ -221,7 +221,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       page: 0,
       filter: new Checkboxes(),
     };
-    this.setTripState();
+    this.loadTripsAndUpdate();
   }
 
   getTripDistance = async (origin: string, destination: string) => {
@@ -300,7 +300,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
           if (userIDFailed && this.props.loggedUserId != 0) fail = true;
           if (this.state.filter.payrollProcessed == 1) {
             if (trip.payrollProcessed == false) {
-              console.log('Setting to failed');
               fail = true;
             }
           }
@@ -369,7 +368,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     });
   };
 
-  setTripState = async (tripFilter?: Trip.AsObject) => {
+  loadTripsAndUpdate = async (tripFilter?: Trip.AsObject) => {
     await this.loadTrips(tripFilter).then(async result => {
       this.setState({ tripsOnPage: result });
       await this.refreshNamesAndDates();
@@ -491,7 +490,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       this.setState({ pendingTripToDelete: null });
       return Error(err);
     }
-    this.setTripState();
+    this.loadTripsAndUpdate();
     this.refreshNamesAndDates();
     this.setState({ pendingTripToDelete: null });
   };
@@ -514,7 +513,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         return;
       }
     });
-    this.setTripState();
+    this.loadTripsAndUpdate();
     this.refreshNamesAndDates();
     this.setState({ pendingDeleteAllTrips: false });
   };
@@ -525,7 +524,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ page: page });
     const currentSearch = this.state.search;
     currentSearch.page = page;
-    this.setTripState(currentSearch);
+    this.loadTripsAndUpdate(currentSearch);
   };
   getData = () => {
     return this.state
@@ -603,7 +602,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await PerDiemClientService.updateTripPayrollProcessed(id);
 
     this.setPendingProcessPayroll(null);
-    this.setTripState(this.state.search);
+    this.loadTripsAndUpdate(this.state.search);
   };
   setPendingProcessPayroll = (trip: Trip | null) => {
     this.setState({ pendingProcessPayrollTrip: trip });
@@ -653,6 +652,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   setFilter = (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
+    this.loadTripsAndUpdate(this.state.search);
   };
   render() {
     return (
@@ -729,9 +729,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               schema={SCHEMA_TRIP_SEARCH}
               data={this.state.search}
               onClose={() => {
-                this.setTripState();
+                this.loadTripsAndUpdate();
               }}
-              onSave={tripFilter => this.setTripState(tripFilter)}
+              onSave={tripFilter => this.loadTripsAndUpdate(tripFilter)}
             >
               <>
                 <InfoTable
