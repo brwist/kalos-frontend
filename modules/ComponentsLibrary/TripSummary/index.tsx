@@ -285,17 +285,25 @@ export class TripSummary extends React.PureComponent<Props, State> {
         tripResultList = res.results.filter(trip => {
           let fail = true,
             userIDFailed = true;
+
           if (this.props.loggedUserId != 0) {
             if (trip.userId == this.props.loggedUserId) {
               userIDFailed = false;
             }
           }
+
           this.props.perDiemRowIds.forEach(id => {
             if (trip.perDiemRowId == id) {
               fail = false;
             }
           });
           if (userIDFailed && this.props.loggedUserId != 0) fail = true;
+          if (this.state.filter.payrollProcessed == 1) {
+            if (trip.payrollProcessed == false) {
+              console.log('Setting to failed');
+              fail = true;
+            }
+          }
           return !fail;
         });
       } else {
