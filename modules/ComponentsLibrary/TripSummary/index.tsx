@@ -560,6 +560,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
             value: currentTrip.getNotes(),
           },
           {
+            value: currentTrip.getApproved() ? 'Yes' : 'No',
+          },
+          {
             value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',
             actions: [
               this.props.canDeleteTrips ? (
@@ -675,6 +678,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Miles / Cost' },
           {
             name: 'Notes',
+          },
+          {
+            name: 'Approved?',
           },
           {
             name: 'Payroll Processed?',
