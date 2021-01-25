@@ -51,9 +51,10 @@ const TripModal: FC<Props> = ({}) => {
             schema={SCHEMA_TRIP_INFO}
             data={Trip1}
             onClose={() => handleClose()}
-            onApprove={(approvedTrip: any) =>
-              alert('Approved: ' + approvedTrip)
-            }
+            onApprove={(approvedTrip: any) => {
+              alert('Approved - see console for the exact approved trip. ');
+              console.log(approvedTrip);
+            }}
           />{' '}
         </>
       )}
