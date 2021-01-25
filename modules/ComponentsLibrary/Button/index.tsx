@@ -12,6 +12,7 @@ type Style = {
 export interface Props extends Style {
   label: string;
   url?: string;
+  target?: string;
   onClick?: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
   disabled?: boolean;
   variant?: 'contained' | 'outlined' | 'text';
@@ -27,6 +28,7 @@ export interface Props extends Style {
 export const Button: FC<Props> = ({
   label,
   url,
+  target,
   variant = 'contained',
   compact = false,
   size = 'small',
@@ -71,7 +73,7 @@ export const Button: FC<Props> = ({
   );
   if (url) {
     return (
-      <a href={url} className="ButtonLink">
+      <a href={url} target={target} className="ButtonLink">
         {Component}
       </a>
     );

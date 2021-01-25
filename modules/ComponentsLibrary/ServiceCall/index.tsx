@@ -19,6 +19,7 @@ import {
   PropertyClientService,
   JobTypeClientService,
   JobSubtypeClientService,
+  cfURL,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -405,18 +406,18 @@ export const ServiceCall: FC<Props> = props => {
             ? [
                 {
                   label: 'Spiff Apply',
-                  url: [
-                    '/index.cfm?action=admin:tasks.addtask',
-                    'type=Spiff',
-                    `job_no=${logJobNumber}`,
-                  ].join('&'),
+                  url: cfURL(
+                    [
+                      'tasks.addtask',
+                      'type=Spiff',
+                      `job_no=${logJobNumber}`,
+                    ].join('&'),
+                  ),
+                  target: '_blank',
                 },
                 {
                   label: 'Job Activity',
-                  url: [
-                    '/index.cfm?action=admin:service.viewlogs',
-                    `id=${id}`,
-                  ].join('&'),
+                  url: cfURL(['service.viewlogs', `id=${id}`].join('&')),
                 },
                 {
                   label: notification ? 'Notification' : 'Add Notification',
@@ -426,18 +427,20 @@ export const ServiceCall: FC<Props> = props => {
                 },
                 {
                   label: 'Service Call Search',
-                  url: '/index.cfm?action=admin:service.calls',
+                  url: cfURL('service.calls'),
                 },
                 {
                   label: 'Close',
                   ...(onClose
                     ? { onClick: onClose }
                     : {
-                        url: [
-                          '/index.cfm?action=admin:properties.details',
-                          `property_id=${propertyId}`,
-                          `user_id=${userID}`,
-                        ].join('&'),
+                        url: cfURL(
+                          [
+                            'properties.details',
+                            `property_id=${propertyId}`,
+                            `user_id=${userID}`,
+                          ].join('&'),
+                        ),
                       }),
                 },
               ]
