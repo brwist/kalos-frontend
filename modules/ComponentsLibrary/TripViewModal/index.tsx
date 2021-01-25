@@ -7,13 +7,30 @@ import { PlainForm } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 
 interface Props {
-  schema: Schema<Trip.AsObject>;
-  data: Trip.AsObject;
+  schema: Schema<TripInfo>;
+  data: TripInfo;
   onClose: () => any;
   onApprove: (approvedTrip: Trip.AsObject) => any;
   open: boolean;
   fullScreen?: boolean;
 }
+
+export type TripInfo = {
+  // Could be a way to spread these onto the type or something, these are from Trip.AsObject
+  id: number;
+  distanceInMiles: number;
+  originAddress: string;
+  destinationAddress: string;
+  perDiemRowId: number;
+  fieldMaskList: string[];
+  userId: number;
+  notes: string;
+  payrollProcessed: boolean;
+  page: number;
+  approved: boolean;
+
+  distanceInDollars: string;
+};
 
 export const TripViewModal: FC<Props> = ({
   schema,
@@ -39,7 +56,7 @@ export const TripViewModal: FC<Props> = ({
             </>
           }
         />
-        <PlainForm<Trip.AsObject>
+        <PlainForm<TripInfo>
           readOnly
           data={data}
           schema={schema}
