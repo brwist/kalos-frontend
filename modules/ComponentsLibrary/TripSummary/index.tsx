@@ -60,6 +60,7 @@ export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
 ];
 
 export const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
+  [{ headline: true, label: 'Monetary' }],
   [
     {
       label: 'Distance in Miles',
@@ -71,6 +72,19 @@ export const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
       type: 'text',
       label: 'Amount for Trip',
       readOnly: true,
+    },
+  ],
+  [{ headline: true, label: 'General' }],
+  [
+    {
+      label: 'Employee Name',
+      type: 'text',
+      name: 'nameOfEmployee',
+    },
+    {
+      label: 'Week Of',
+      type: 'text',
+      name: 'weekOf',
     },
   ],
   [
@@ -92,8 +106,10 @@ export const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
       label: 'Notes',
       type: 'text',
       name: 'notes',
+      multiline: true,
     },
   ],
+  [{ headline: true, label: 'Approval' }],
   [
     {
       name: 'approved',
@@ -787,6 +803,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
               distanceInDollars: perDiemTripMilesToUsd(
                 this.state.tripToView.toObject().distanceInMiles,
               ),
+              nameOfEmployee: this.getNameById(
+                this.state.tripToView.toObject().userId,
+              )!,
+              weekOf: this.getRowStartDateById(
+                this.state.tripToView.toObject().perDiemRowId,
+              )!.split(' ')[0],
             }}
             onClose={() => this.setTripToView(null)}
             open={true}
