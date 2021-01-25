@@ -329,8 +329,12 @@ function trailingZero(val: number) {
  */
 export const usd = (val: number) => `$ ${val.toFixed(2)}`;
 
+export const perDiemTripMilesToUsdAsNumber = (miles: number) => {
+  return miles * IRS_SUGGESTED_MILE_FACTOR;
+};
+
 export const perDiemTripMilesToUsd = (miles: number) => {
-  return usd(miles * IRS_SUGGESTED_MILE_FACTOR);
+  return usd(perDiemTripMilesToUsdAsNumber(miles));
 };
 
 /**

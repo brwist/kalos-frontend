@@ -19,6 +19,7 @@ import {
   LoadTripsByFilter,
   getRPCFields,
   perDiemTripMilesToUsd,
+  perDiemTripMilesToUsdAsNumber,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -36,7 +37,7 @@ import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import Visibility from '@material-ui/icons/Visibility';
 import { Modal } from '../Modal';
 import { NULL_TIME } from '../../../constants';
-import { TripViewModal } from '../TripViewModal';
+import { TripInfo, TripViewModal } from '../TripViewModal';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -58,12 +59,18 @@ export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   ],
 ];
 
-export const SCHEMA_TRIP_INFO: Schema<Trip.AsObject> = [
+export const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
   [
     {
       label: 'Distance in Miles',
       type: 'text',
       name: 'distanceInMiles',
+    },
+    {
+      name: 'distanceInDollars',
+      type: 'text',
+      label: 'Amount for Trip',
+      readOnly: true,
     },
   ],
   [
@@ -775,7 +782,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
           <TripViewModal
             fullScreen
             schema={SCHEMA_TRIP_INFO}
-            data={this.state.tripToView.toObject()}
+            data={{
+              ...this.state.tripToView.toObject(),
+              distanceInDollars: perDiemTripMilesToUsd(
+                this.state.tripToView.toObject().distanceInMiles,
+              ),
+            }}
             onClose={() => this.setTripToView(null)}
             open={true}
             onApprove={approved => console.log('Approved ', approved)}
