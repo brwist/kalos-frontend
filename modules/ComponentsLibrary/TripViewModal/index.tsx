@@ -30,6 +30,8 @@ export type TripInfo = {
   approved: boolean;
 
   distanceInDollars: string;
+  weekOf: string;
+  nameOfEmployee: string;
 };
 
 export const TripViewModal: FC<Props> = ({
