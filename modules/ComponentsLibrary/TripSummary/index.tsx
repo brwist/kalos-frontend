@@ -812,7 +812,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
             }}
             onClose={() => this.setTripToView(null)}
             open={true}
-            onApprove={approved => console.log('Approved ', approved)}
+            onApprove={async approved => {
+              await this.setTripApproved(approved.id);
+              this.setTripToView(null);
+            }}
           />
         )}
         <PlainForm<CheckboxesFilterType>
