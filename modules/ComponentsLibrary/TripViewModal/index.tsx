@@ -3,6 +3,7 @@ import React, { FC, useState, useEffect } from 'react';
 import { Button } from '../Button';
 import { Form, Schema } from '../Form';
 import { Modal } from '../Modal';
+import { PlainForm } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
   onClose: () => any;
   onApprove: (approvedTrip: Trip.AsObject) => any;
   open: boolean;
+  fullScreen?: boolean;
 }
 
 export const TripViewModal: FC<Props> = ({
@@ -19,9 +21,10 @@ export const TripViewModal: FC<Props> = ({
   onClose,
   onApprove,
   open,
+  fullScreen,
 }) => {
   return (
-    <Modal open={open} onClose={() => onClose()}>
+    <Modal open={open} onClose={() => onClose()} fullScreen={fullScreen}>
       <>
         <SectionBar
           title="Trip"
@@ -36,14 +39,11 @@ export const TripViewModal: FC<Props> = ({
             </>
           }
         />
-        <Form
+        <PlainForm<Trip.AsObject>
           readOnly
-          submitLabel="Approve"
-          cancelLabel="Close"
-          schema={schema}
           data={data}
-          onClose={() => onClose()}
-          onSave={() => {}}
+          schema={schema}
+          onChange={() => {}}
         />
       </>
     </Modal>

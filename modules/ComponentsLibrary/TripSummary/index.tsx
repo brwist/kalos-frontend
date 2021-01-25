@@ -36,6 +36,7 @@ import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import Visibility from '@material-ui/icons/Visibility';
 import { Modal } from '../Modal';
 import { NULL_TIME } from '../../../constants';
+import { TripViewModal } from '../TripViewModal';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -60,19 +61,50 @@ export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
 export const SCHEMA_TRIP_INFO: Schema<Trip.AsObject> = [
   [
     {
+      label: 'Distance in Miles',
+      type: 'text',
+      name: 'distanceInMiles',
+    },
+  ],
+  [
+    {
       label: 'Origin Address',
       type: 'text',
       name: 'originAddress',
     },
+  ],
+  [
     {
       label: 'Destination Address',
       type: 'text',
       name: 'destinationAddress',
     },
+  ],
+  [
     {
       label: 'Notes',
       type: 'text',
       name: 'notes',
+    },
+  ],
+  [
+    {
+      name: 'approved',
+      type: 'text',
+      label: 'Approved',
+      readOnly: true,
+    },
+    /*  May not need to audit trips, just in case though I'ma leave this here
+  {
+    name: 'needsAuditing',
+    type: 'checkbox',
+    label: 'Needs Auditing',
+  },*/
+    {
+      name: 'payrollProcessed',
+      type: 'text',
+      label: 'Payroll Processed',
+      readOnly: true,
     },
   ],
 ];
@@ -740,21 +772,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
       <>
         {/* May be useful to put this functionality into its own component */}
         {this.state.tripToView && (
-          <Modal open={true} onClose={() => this.setTripToView(null)}>
-            <Form
-              title="Trip"
-              submitLabel="Approve"
-              cancelLabel="Close"
-              schema={SCHEMA_TRIP_INFO}
-              data={this.state.search}
-              onClose={() => {
-                this.setTripToView(null);
-              }}
-              onSave={tripFilter => {
-                this.loadTripsAndUpdate(tripFilter);
-              }}
-            />
-          </Modal>
+          <TripViewModal
+            fullScreen
+            schema={SCHEMA_TRIP_INFO}
+            data={this.state.tripToView.toObject()}
+            onClose={() => this.setTripToView(null)}
+            open={true}
+            onApprove={approved => console.log('Approved ', approved)}
+          />
         )}
         <PlainForm<CheckboxesFilterType>
           schema={CHECKBOXES_SCHEMA}
