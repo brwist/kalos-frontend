@@ -11,6 +11,7 @@ interface Props {
   data: TripInfo;
   onClose: () => any;
   onApprove: (approvedTrip: Trip.AsObject) => any;
+  onProcessPayroll: (processedTrip: Trip.AsObject) => any;
   open: boolean;
   fullScreen?: boolean;
 }
@@ -39,6 +40,7 @@ export const TripViewModal: FC<Props> = ({
   data,
   onClose,
   onApprove,
+  onProcessPayroll,
   open,
   fullScreen,
 }) => {
@@ -50,6 +52,10 @@ export const TripViewModal: FC<Props> = ({
           asideContent={
             <>
               <Button label="Approve" onClick={() => onApprove(data)} />
+              <Button
+                label="Process Payroll"
+                onClick={() => onProcessPayroll(data)}
+              />
               <Button
                 label="Close"
                 variant="outlined"

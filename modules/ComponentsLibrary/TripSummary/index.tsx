@@ -816,6 +816,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
               await this.setTripApproved(approved.id);
               this.setTripToView(null);
             }}
+            onProcessPayroll={async processed => {
+              await this.setPayrollProcessed(processed.id);
+              this.setTripToView(null);
+            }}
           />
         )}
         <PlainForm<CheckboxesFilterType>
