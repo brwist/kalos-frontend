@@ -666,7 +666,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ) : (
                 <></>
               ),
-              <Tooltip key="view" content="View Per Diem" placement="bottom">
+              <Tooltip
+                key="view"
+                content="View Trip Details"
+                placement="bottom"
+              >
                 <IconButton
                   size="small"
                   onClick={() => this.setTripToView(currentTrip)}
