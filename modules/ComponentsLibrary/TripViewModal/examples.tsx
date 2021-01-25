@@ -55,6 +55,10 @@ const TripModal: FC<Props> = ({}) => {
               alert('Approved - see console for the exact approved trip. ');
               console.log(approvedTrip);
             }}
+            onProcessPayroll={(processedTrip: any) => {
+              alert('Processed - see console for the exact approved trip. ');
+              console.log(processedTrip);
+            }}
           />{' '}
         </>
       )}
