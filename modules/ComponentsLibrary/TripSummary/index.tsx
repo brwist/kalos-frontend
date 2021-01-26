@@ -33,7 +33,10 @@ import { Tooltip } from '../Tooltip';
 import { Confirm } from '../Confirm';
 import { Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
-import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import {
+  PermissionGroup,
+  User,
+} from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import Visibility from '@material-ui/icons/Visibility';
 import { Modal } from '../Modal';
@@ -256,7 +259,8 @@ const CHECKBOXES_SCHEMA: Schema<CheckboxesFilterType> = [
 
 interface Props {
   perDiemRowIds: number[];
-  loggedUserId: number;
+  userId: number; // The id to filter to
+  loggedUserId: number; // The actual logged user id passed down via props
   canDeleteTrips?: boolean;
   canProcessPayroll?: boolean;
   canApprove?: boolean;
@@ -345,7 +349,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     };
 
     if (tripFilter) {
-      console.log('Altering');
       tripFilter.payrollProcessed = tripFilter?.payrollProcessed;
       tripFilter.approved = tripFilter?.approved;
     }
@@ -377,9 +380,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     } else if (this.props.role == 'Manager') {
       // Will get department from the user id of the manager
       // Trips themselves will have a department id on them and the comparison will happen in filter below
-      this.department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
-        this.props.loggedUserId,
-      );
     }
 
     const criteria: LoadTripsByFilter = {
@@ -387,10 +387,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       filter: tripFilter
         ? tripFilter
         : {
-            userId:
-              this.props.loggedUserId != 0
-                ? this.props.loggedUserId
-                : undefined,
+            userId: this.props.userId != 0 ? this.props.userId : undefined,
             weekof: this.props.perDiemRowIds,
             page: this.state.page,
             payrollProcessed: payrollProcessed, // Gotta love JS
@@ -405,16 +402,41 @@ export class TripSummary extends React.PureComponent<Props, State> {
         results: Trip.AsObject[];
         totalCount: number;
       };
-      console.log('Criteria: ', criteria);
       res = await loadTripsByFilter(criteria);
+
+      let mgr: User.AsObject;
+      try {
+        if (
+          (await TimesheetDepartmentClientService.isManagerCheck(
+            this.props.loggedUserId,
+          )) == false
+        ) {
+          mgr = await UserClientService.getUserManagerByUserID(
+            this.props.loggedUserId,
+          );
+        } else {
+          mgr = await UserClientService.loadUserById(this.props.loggedUserId);
+        }
+      } catch (err: any) {
+        if (err.toString().includes('no rows in result')) {
+          // fine, we just ARE a manager
+          mgr = await UserClientService.loadUserById(this.props.loggedUserId);
+        } else {
+          console.error(err);
+        }
+      }
+
+      let dept = await TimesheetDepartmentClientService.getDepartmentByManagerID(
+        mgr!.id,
+      );
 
       if (tripFilter) {
         tripResultList = res.results.filter(trip => {
           let fail = true,
             userIDFailed = true;
 
-          if (this.props.loggedUserId != 0) {
-            if (trip.userId == this.props.loggedUserId) {
+          if (this.props.userId != 0) {
+            if (trip.userId == this.props.userId) {
               userIDFailed = false;
             }
           }
@@ -424,8 +446,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
               fail = false;
             }
           });
-          if (userIDFailed && this.props.loggedUserId != 0) fail = true;
+          if (userIDFailed && this.props.userId != 0) fail = true;
           if (this.props.role == 'Manager' && trip.approved) fail = true;
+          if (this.props.role == 'Manager' && trip.department != dept.id)
+            fail = true;
           if (this.props.role == 'Payroll' && trip.payrollProcessed)
             fail = true;
           return !fail;
@@ -449,6 +473,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
           });
           if (this.props.role == 'Manager' && trip.approved) fail = true;
           if (this.props.role == 'Payroll' && trip.payrollProcessed)
+            fail = true;
+          if (this.props.role == 'Manager' && trip.department != dept.id)
             fail = true;
 
           return !fail;

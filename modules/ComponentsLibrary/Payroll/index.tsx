@@ -293,7 +293,8 @@ export const Payroll: FC<Props> = ({ userID }) => {
                         content: (
                           <TripSummary
                             role={role}
-                            loggedUserId={filter.employeeId}
+                            loggedUserId={loggedUser ? loggedUser!.id : 0}
+                            userId={filter.employeeId}
                             perDiemRowIds={loadedPerDiemIds}
                             key={
                               loadedPerDiemIds.toString() + filter.employeeId
