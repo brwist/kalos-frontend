@@ -198,8 +198,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
   if (role === 'Auditor') {
     isTimesheet = false;
     isTimeoffRequests = false;
-  } else if (role === 'Manager') {
-    isTrips = false;
   }
 
   return (

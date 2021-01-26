@@ -20,6 +20,7 @@ import {
   getRPCFields,
   perDiemTripMilesToUsd,
   perDiemTripMilesToUsdAsNumber,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -38,6 +39,7 @@ import Visibility from '@material-ui/icons/Visibility';
 import { Modal } from '../Modal';
 import { NULL_TIME } from '../../../constants';
 import { TripInfo, TripViewModal } from '../TripViewModal';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -266,6 +268,7 @@ interface Props {
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
   role?: string;
+  departmentId?: number;
 }
 
 interface State {
@@ -289,6 +292,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   nameIdPair: { name: string; id: number }[] = [];
   dateIdPair: { date: string; row_id: number }[] = [];
   resultsPerPage: number = 25;
+  department: TimesheetDepartment.AsObject | null = null;
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -352,7 +356,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
           : tripFilter.page
         : 0;
 
-    console.log(tripFilter);
     /*
     Manager
 
@@ -372,7 +375,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
         tripFilter.approved = true;
       }
     } else if (this.props.role == 'Manager') {
-      // Just leave it
+      // Will get department from the user id of the manager
+      // Trips themselves will have a department id on them and the comparison will happen in filter below
+      this.department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
+        this.props.loggedUserId,
+      );
     }
 
     const criteria: LoadTripsByFilter = {
