@@ -648,6 +648,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                     label="Message Team Member"
                     loggedUserId={this.props.loggedUserId}
                     type="icon"
+                    autofillName={this.getNameById(currentTrip.getUserId())}
                   >
                     <MessageIcon />
                   </SlackMessageButton>
