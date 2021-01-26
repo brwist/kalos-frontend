@@ -381,6 +381,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     } else if (this.props.role == 'Manager') {
       // Will get department from the user id of the manager
       // Trips themselves will have a department id on them and the comparison will happen in filter below
+      payrollProcessed = false;
     }
 
     const criteria: LoadTripsByFilter = {
@@ -391,7 +392,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             userId: this.props.userId != 0 ? this.props.userId : undefined,
             weekof: this.props.perDiemRowIds,
             page: this.state.page,
-            payrollProcessed: payrollProcessed, // Gotta love JS
+            payrollProcessed: payrollProcessed,
             approved: approved,
           },
       sort: tripSort as TripsSort,
@@ -405,6 +406,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       };
       res = await loadTripsByFilter(criteria);
 
+      /*
       let mgr: User.AsObject;
       try {
         if (
@@ -431,6 +433,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
         mgr!.id,
       );
 
+      console.log('Department: ', dept);
+
+      */
       if (tripFilter) {
         tripResultList = res.results.filter(trip => {
           let fail = true,
@@ -449,7 +454,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
           });
           if (userIDFailed && this.props.userId != 0) fail = true;
           if (this.props.role == 'Manager' && trip.approved) fail = true;
-          if (this.props.role == 'Manager' && trip.departmentId != dept.id)
+          if (
+            this.props.role == 'Manager' &&
+            trip.departmentId != this.props.departmentId
+          )
             fail = true;
           if (this.props.role == 'Payroll' && trip.payrollProcessed)
             fail = true;
@@ -475,7 +483,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
           if (this.props.role == 'Manager' && trip.approved) fail = true;
           if (this.props.role == 'Payroll' && trip.payrollProcessed)
             fail = true;
-          if (this.props.role == 'Manager' && trip.departmentId != dept.id)
+          if (
+            this.props.role == 'Manager' &&
+            trip.departmentId != this.props.departmentId
+          )
             fail = true;
 
           return !fail;
