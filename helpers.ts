@@ -2504,14 +2504,13 @@ export const loadTripsByFilter = async ({
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof TripsFilter];
 
-    if (value) {
-      const { methodName } = getRPCFields(fieldName);
+    const { methodName } = getRPCFields(fieldName);
 
-      // @ts-ignore
-      if (!req[methodName]) continue;
-      //@ts-ignore
-      req[methodName](typeof value === 'string' ? `%${value}%` : value);
-    }
+    // @ts-ignore
+    if (!req[methodName]) continue;
+
+    //@ts-ignore
+    req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
   const response = await PerDiemClientService.BatchGetTrips(req);
   return {

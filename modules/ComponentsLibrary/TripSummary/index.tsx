@@ -339,12 +339,41 @@ export class TripSummary extends React.PureComponent<Props, State> {
       orderBy: 'user_id',
       orderDir: 'ASC',
     };
+
+    if (tripFilter) {
+      console.log('Altering');
+      tripFilter.payrollProcessed = tripFilter?.payrollProcessed;
+      tripFilter.approved = tripFilter?.approved;
+    }
     const page =
       tripFilter != undefined
         ? tripFilter.page == undefined
           ? 0
           : tripFilter.page
         : 0;
+
+    console.log(tripFilter);
+    /*
+    Manager
+
+    - Should see unapproved trips in their dept
+
+    Payroll
+
+    - Should see approved trips that aren't payroll processed
+    */
+
+    let payrollProcessed = false,
+      approved = false;
+
+    if (this.props.role == 'Payroll') {
+      approved = true;
+      if (tripFilter) {
+        tripFilter.approved = true;
+      }
+    } else if (this.props.role == 'Manager') {
+      // Just leave it
+    }
 
     const criteria: LoadTripsByFilter = {
       page,
@@ -357,8 +386,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 : undefined,
             weekof: this.props.perDiemRowIds,
             page: this.state.page,
-            payrollProcessed: !!+this.state.filter.payrollProcessed, // Gotta love JS
-            approved: !!+this.state.filter.approved,
+            payrollProcessed: payrollProcessed, // Gotta love JS
+            approved: approved,
           },
       sort: tripSort as TripsSort,
     };
@@ -369,6 +398,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         results: Trip.AsObject[];
         totalCount: number;
       };
+      console.log('Criteria: ', criteria);
       res = await loadTripsByFilter(criteria);
 
       if (tripFilter) {
@@ -388,6 +418,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
             }
           });
           if (userIDFailed && this.props.loggedUserId != 0) fail = true;
+          if (this.props.role == 'Manager' && trip.approved) fail = true;
+          if (this.props.role == 'Payroll' && trip.payrollProcessed)
+            fail = true;
           return !fail;
         });
       } else {
@@ -407,6 +440,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               fail = true;
             }
           });
+          if (this.props.role == 'Manager' && trip.approved) fail = true;
+          if (this.props.role == 'Payroll' && trip.payrollProcessed)
+            fail = true;
 
           return !fail;
         });
@@ -445,7 +481,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
       let resultList = new TripList();
       resultList.setResultsList(trips);
-      resultList.setTotalCount(res.totalCount);
+      resultList.setTotalCount(tripResultList.length);
 
       resolve(resultList);
     }).then(result => {
