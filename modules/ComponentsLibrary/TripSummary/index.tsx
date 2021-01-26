@@ -346,31 +346,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
           : tripFilter.page
         : 0;
 
-    console.log(
-      `Role: "${
-        tripFilter
-          ? tripFilter
-          : {
-              userId:
-                this.props.loggedUserId != 0
-                  ? this.props.loggedUserId
-                  : undefined,
-              weekof: this.props.perDiemRowIds,
-              page: this.state.page,
-              payrollProcessed:
-                this.props.role == 'Payroll'
-                  ? false
-                  : !!+this.state.filter.payrollProcessed,
-              approved:
-                this.props.role == 'Manager'
-                  ? false
-                  : !!+this.state.filter.approved,
-              // payrollProcessed: !!+this.state.filter.payrollProcessed, // Gotta love JS
-              // approved: !!+this.state.filter.approved,
-            }
-      }"`,
-    );
-
     const criteria: LoadTripsByFilter = {
       page,
       filter: tripFilter
@@ -394,8 +369,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
         results: Trip.AsObject[];
         totalCount: number;
       };
+      res = await loadTripsByFilter(criteria);
+
       if (tripFilter) {
-        res = await loadTripsByFilter(criteria);
         tripResultList = res.results.filter(trip => {
           let fail = true,
             userIDFailed = true;
@@ -415,7 +391,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
           return !fail;
         });
       } else {
-        res = await loadTripsByFilter(criteria);
         tripResultList = res.results.filter(trip => {
           let fail = false;
           let hadId = false;
@@ -672,6 +647,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },
           {
             value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',
+          },
+          {
+            value: '',
             actions: [
               this.props.canDeleteTrips ? (
                 <Tooltip
@@ -795,6 +773,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               },
             ],
           },
+          {
+            name: '',
+          },
         ]
       : [
           { name: 'Origin' },
@@ -811,6 +792,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },
           {
             name: 'Payroll Processed?',
+          },
+          {
+            name: '',
           },
         ]) as Columns;
   };
