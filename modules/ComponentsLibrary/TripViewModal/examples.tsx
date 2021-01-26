@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useState } from 'react';
-import { TripViewModal } from './index';
+import { TripInfo, TripViewModal } from './index';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { Schema } from '../Form';
 import { ExampleTitle } from '../helpers';
@@ -11,7 +11,7 @@ Trip1.setOriginAddress('Origin goes here');
 Trip1.setDestinationAddress('Destination goes here');
 Trip1 = Trip1.toObject();
 
-const SCHEMA_TRIP_INFO: Schema<Trip.AsObject> = [
+const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
   [
     {
       label: 'Origin Address',

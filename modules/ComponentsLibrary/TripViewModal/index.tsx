@@ -10,8 +10,8 @@ interface Props {
   schema: Schema<TripInfo>;
   data: TripInfo;
   onClose: () => any;
-  onApprove: (approvedTrip: Trip.AsObject) => any;
-  onProcessPayroll: (processedTrip: Trip.AsObject) => any;
+  onApprove: (approvedTrip: TripInfo) => any;
+  onProcessPayroll: (processedTrip: TripInfo) => any;
   open: boolean;
   fullScreen?: boolean;
 }
