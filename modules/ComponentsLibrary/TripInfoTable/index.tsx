@@ -15,11 +15,14 @@ import {
   PerDiemClientService,
   upsertTrip,
   getTripDistance,
+  UserClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Schema } from '../Form';
 import { Loader } from '../../Loader/main';
+import { User } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 // Schema will be adjusted down the line to include as many addresses as it can
 export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
@@ -191,6 +194,15 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     }
 
     trip.setNotes(data.Notes);
+
+    const user = await UserClientService.loadUserById(this.props.loggedUserId);
+    trip.setDepartment(
+      await (
+        await TimesheetDepartmentClientService.getDepartmentByManagerID(
+          user.managedBy,
+        )
+      ).id,
+    );
 
     await upsertTrip(trip.toObject(), rowId!, userId).then(() => {
       this.setState({ pendingTrip: null });
