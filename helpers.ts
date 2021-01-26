@@ -1686,7 +1686,7 @@ export const upsertTrip = async (
   req.setPerDiemRowId(rowId);
   req.setUserId(userId);
   req.setNotes(data.notes);
-  req.setDepartment(data.department);
+  req.setDepartmentId(data.departmentId);
   req.setDistanceInMiles(
     await getTripDistance(originAddress, destinationAddress),
   );

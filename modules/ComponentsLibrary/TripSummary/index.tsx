@@ -449,7 +449,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           });
           if (userIDFailed && this.props.userId != 0) fail = true;
           if (this.props.role == 'Manager' && trip.approved) fail = true;
-          if (this.props.role == 'Manager' && trip.department != dept.id)
+          if (this.props.role == 'Manager' && trip.departmentId != dept.id)
             fail = true;
           if (this.props.role == 'Payroll' && trip.payrollProcessed)
             fail = true;
@@ -475,7 +475,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           if (this.props.role == 'Manager' && trip.approved) fail = true;
           if (this.props.role == 'Payroll' && trip.payrollProcessed)
             fail = true;
-          if (this.props.role == 'Manager' && trip.department != dept.id)
+          if (this.props.role == 'Manager' && trip.departmentId != dept.id)
             fail = true;
 
           return !fail;

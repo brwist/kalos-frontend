@@ -196,7 +196,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     trip.setNotes(data.Notes);
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);
-    trip.setDepartment(
+    trip.setDepartmentId(
       await (
         await TimesheetDepartmentClientService.getDepartmentByManagerID(
           user.managedBy,
