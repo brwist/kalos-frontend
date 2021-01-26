@@ -30,10 +30,13 @@ export const SCHEMA_SLACK_MESSAGE: Schema<SlackMessage> = [
       type: 'text',
       name: 'user',
     },
+  ],
+  [
     {
       label: 'Message: ',
       type: 'text',
       name: 'message',
+      multiline: true,
     },
   ],
 ];
