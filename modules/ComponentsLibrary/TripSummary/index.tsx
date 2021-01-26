@@ -38,11 +38,13 @@ import {
   User,
 } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
+import MessageIcon from '@material-ui/icons/Message';
 import Visibility from '@material-ui/icons/Visibility';
 import { Modal } from '../Modal';
 import { NULL_TIME } from '../../../constants';
 import { TripInfo, TripViewModal } from '../TripViewModal';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { SlackMessageButton } from '../SlackMessageButton';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -635,6 +637,21 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 >
                   <Visibility />
                 </IconButton>
+              </Tooltip>,
+              <Tooltip
+                key="message"
+                content="Send Message on Slack"
+                placement="bottom"
+              >
+                <span>
+                  <SlackMessageButton
+                    label="Message Team Member"
+                    loggedUserId={this.props.loggedUserId}
+                    type="icon"
+                  >
+                    <MessageIcon />
+                  </SlackMessageButton>
+                </span>
               </Tooltip>,
               this.props.canApprove ? (
                 <Tooltip key="approve" content="Approve" placement="bottom">

@@ -1,3 +1,4 @@
+import { IconButton } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 import React, { CSSProperties } from 'react';
 import {
@@ -66,6 +67,7 @@ interface Props {
   autofillName?: string;
   autofillMessage?: string;
   title?: string;
+  type: 'icon' | 'regular';
 }
 
 interface State {
@@ -166,20 +168,31 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
             />
           </Modal>
         )}
-        <Button
-          label={this.props.label}
-          url={this.props.url}
-          onClick={this.props.onClick ? this.props.onClick : this.onClick}
-          disabled={this.props.disabled}
-          variant={this.props.variant}
-          color={this.props.color}
-          fullWidth={this.props.fullWidth}
-          className={this.props.className}
-          span={this.props.span}
-          startIcon={this.props.startIcon}
-          style={this.props.style}
-          loading={this.props.loading}
-        />
+        {this.props.type == 'regular' && (
+          <Button
+            label={this.props.label}
+            url={this.props.url}
+            onClick={this.props.onClick ? this.props.onClick : this.onClick}
+            disabled={this.props.disabled}
+            variant={this.props.variant}
+            color={this.props.color}
+            fullWidth={this.props.fullWidth}
+            className={this.props.className}
+            span={this.props.span}
+            startIcon={this.props.startIcon}
+            style={this.props.style}
+            loading={this.props.loading}
+          />
+        )}
+        {this.props.type == 'icon' && (
+          <IconButton
+            onClick={this.props.onClick ? this.props.onClick : this.onClick}
+            className={this.props.className}
+            style={this.props.style}
+          >
+            {this.props.children}
+          </IconButton>
+        )}
       </>
     );
   }
