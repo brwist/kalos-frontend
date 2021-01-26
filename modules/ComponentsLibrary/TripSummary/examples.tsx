@@ -30,6 +30,14 @@ export default () => (
     {/* You can add in 0 as the logged user id to view all users for that week */}
     <TripSummary perDiemRowIds={[1]} loggedUserId={101275} userId={0} />
 
+    <ExampleTitle>Checkboxes (Viewing as Chernov)</ExampleTitle>
+    <TripSummary
+      perDiemRowIds={[1]}
+      userId={101275}
+      loggedUserId={101275}
+      checkboxes
+    />
+
     <ExampleTitle>Can Delete Trips (Viewing as Chernov)</ExampleTitle>
     <TripSummary
       perDiemRowIds={[1]}

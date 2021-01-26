@@ -273,6 +273,7 @@ interface Props {
   onDeleteAllTrips?: () => any;
   role?: string;
   departmentId?: number;
+  checkboxes?: boolean;
 }
 
 interface State {
@@ -908,12 +909,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
             }}
           />
         )}
-        <PlainForm<CheckboxesFilterType>
-          schema={CHECKBOXES_SCHEMA}
-          data={this.state.filter}
-          onChange={this.setFilter}
-          className="PayrollFilter"
-        />
+        {this.props.checkboxes && (
+          <PlainForm<CheckboxesFilterType>
+            schema={CHECKBOXES_SCHEMA}
+            data={this.state.filter}
+            onChange={this.setFilter}
+          />
+        )}
         <SectionBar
           title="Trips"
           pagination={{
