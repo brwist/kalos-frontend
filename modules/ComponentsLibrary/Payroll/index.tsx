@@ -294,6 +294,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                         label: 'Trips',
                         content: (
                           <TripSummary
+                            role={role}
                             loggedUserId={filter.employeeId}
                             perDiemRowIds={loadedPerDiemIds}
                             key={

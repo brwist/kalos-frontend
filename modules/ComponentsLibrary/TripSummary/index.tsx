@@ -265,7 +265,7 @@ interface Props {
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: () => any;
   onDeleteAllTrips?: () => any;
-  role?: PermissionGroup.AsObject;
+  role?: string;
 }
 
 interface State {
@@ -346,6 +346,31 @@ export class TripSummary extends React.PureComponent<Props, State> {
           : tripFilter.page
         : 0;
 
+    console.log(
+      `Role: "${
+        tripFilter
+          ? tripFilter
+          : {
+              userId:
+                this.props.loggedUserId != 0
+                  ? this.props.loggedUserId
+                  : undefined,
+              weekof: this.props.perDiemRowIds,
+              page: this.state.page,
+              payrollProcessed:
+                this.props.role == 'Payroll'
+                  ? false
+                  : !!+this.state.filter.payrollProcessed,
+              approved:
+                this.props.role == 'Manager'
+                  ? false
+                  : !!+this.state.filter.approved,
+              // payrollProcessed: !!+this.state.filter.payrollProcessed, // Gotta love JS
+              // approved: !!+this.state.filter.approved,
+            }
+      }"`,
+    );
+
     const criteria: LoadTripsByFilter = {
       page,
       filter: tripFilter
@@ -362,6 +387,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },
       sort: tripSort as TripsSort,
     };
+
     return await new Promise<TripList>(async resolve => {
       let tripResultList: Trip.AsObject[] = [];
       let res: {
@@ -406,6 +432,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               fail = true;
             }
           });
+
           return !fail;
         });
       }
@@ -636,9 +663,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 Number(currentTrip.getDistanceInMiles().toFixed(1)),
               ),
           },
+          /*
           {
             value: currentTrip.getNotes(),
-          },
+          },*/
           {
             value: currentTrip.getApproved() ? 'Yes' : 'No',
           },
@@ -744,9 +772,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Name' },
           { name: 'Week Of' },
           { name: 'Miles / Cost' },
-          {
+          /*{
             name: 'Notes',
-          },
+          },*/
           {
             name: 'Approved?',
           },
@@ -774,9 +802,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Name' },
           { name: 'Week Of' },
           { name: 'Miles / Cost' },
+          /*
           {
             name: 'Notes',
-          },
+          },*/
           {
             name: 'Approved?',
           },
