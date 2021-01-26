@@ -297,11 +297,14 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             userId={filter.employeeId}
                             perDiemRowIds={loadedPerDiemIds}
                             key={
-                              loadedPerDiemIds.toString() + filter.employeeId
+                              loadedPerDiemIds.toString() +
+                              filter.employeeId +
+                              filter.departmentId
                             }
                             canProcessPayroll
                             canApprove
                             hoverable
+                            departmentId={filter.departmentId}
                           />
                         ),
                       },
