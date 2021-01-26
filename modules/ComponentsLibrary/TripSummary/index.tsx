@@ -137,94 +137,6 @@ export const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
   ],
 ];
 
-// Schema will be adjusted down the line to include as many addresses as it can
-export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
-  [
-    {
-      label: 'Origin',
-      headline: true,
-    },
-  ],
-  [
-    {
-      label: 'Address',
-      type: 'text',
-      name: 'FullAddressOrigin',
-    },
-  ],
-  [
-    {
-      label: 'Street Address',
-      name: 'StreetAddressOrigin',
-      type: 'text',
-    },
-    {
-      label: 'City',
-      name: 'CityOrigin',
-      type: 'text',
-    },
-    {
-      label: 'State',
-      name: 'StateOrigin',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Country',
-      name: 'CountryOrigin',
-      type: 'text',
-    },
-    {
-      label: 'Zip Code',
-      name: 'ZipCodeOrigin',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Destination',
-      headline: true,
-    },
-  ],
-  [
-    {
-      label: 'Address',
-      type: 'text',
-      name: 'FullAddressDestination',
-    },
-  ],
-  [
-    {
-      label: 'Street Address',
-      name: 'StreetAddressDestination',
-      type: 'text',
-    },
-    {
-      label: 'City',
-      name: 'CityDestination',
-      type: 'text',
-    },
-    {
-      label: 'State',
-      name: 'StateDestination',
-      type: 'text',
-    },
-  ],
-  [
-    {
-      label: 'Country',
-      name: 'CountryDestination',
-      type: 'text',
-    },
-    {
-      label: 'Zip Code',
-      name: 'ZipCodeDestination',
-      type: 'text',
-    },
-  ],
-];
-
 type CheckboxesFilterType = {
   approved: number;
   //needsAuditing: number;
@@ -360,16 +272,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
           : tripFilter.page
         : 0;
 
-    /*
-    Manager
-
-    - Should see unapproved trips in their dept
-
-    Payroll
-
-    - Should see approved trips that aren't payroll processed
-    */
-
     let payrollProcessed = false,
       approved = false;
 
@@ -405,37 +307,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
         totalCount: number;
       };
       res = await loadTripsByFilter(criteria);
-
-      /*
-      let mgr: User.AsObject;
-      try {
-        if (
-          (await TimesheetDepartmentClientService.isManagerCheck(
-            this.props.loggedUserId,
-          )) == false
-        ) {
-          mgr = await UserClientService.getUserManagerByUserID(
-            this.props.loggedUserId,
-          );
-        } else {
-          mgr = await UserClientService.loadUserById(this.props.loggedUserId);
-        }
-      } catch (err: any) {
-        if (err.toString().includes('no rows in result')) {
-          // fine, we just ARE a manager
-          mgr = await UserClientService.loadUserById(this.props.loggedUserId);
-        } else {
-          console.error(err);
-        }
-      }
-
-      let dept = await TimesheetDepartmentClientService.getDepartmentByManagerID(
-        mgr!.id,
-      );
-
-      console.log('Department: ', dept);
-
-      */
       if (tripFilter) {
         tripResultList = res.results.filter(trip => {
           let fail = true,
