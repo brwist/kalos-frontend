@@ -178,6 +178,7 @@ interface Props {
   canDeleteTrips?: boolean;
   canProcessPayroll?: boolean;
   canApprove?: boolean;
+  canSlackMessageUsers?: boolean;
   compact?: boolean;
   hoverable?: boolean;
   searchable?: boolean;
@@ -638,22 +639,26 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   <Visibility />
                 </IconButton>
               </Tooltip>,
-              <Tooltip
-                key="message"
-                content="Send Message on Slack"
-                placement="bottom"
-              >
-                <span>
-                  <SlackMessageButton
-                    label="Message Team Member"
-                    loggedUserId={this.props.loggedUserId}
-                    type="icon"
-                    autofillName={this.getNameById(currentTrip.getUserId())}
-                  >
-                    <MessageIcon />
-                  </SlackMessageButton>
-                </span>
-              </Tooltip>,
+              this.props.canSlackMessageUsers ? (
+                <Tooltip
+                  key="message"
+                  content="Send Message on Slack"
+                  placement="bottom"
+                >
+                  <span>
+                    <SlackMessageButton
+                      label="Message Team Member"
+                      loggedUserId={this.props.loggedUserId}
+                      type="icon"
+                      autofillName={this.getNameById(currentTrip.getUserId())}
+                    >
+                      <MessageIcon />
+                    </SlackMessageButton>
+                  </span>
+                </Tooltip>
+              ) : (
+                <></>
+              ),
               this.props.canApprove ? (
                 <Tooltip key="approve" content="Approve" placement="bottom">
                   <span>
