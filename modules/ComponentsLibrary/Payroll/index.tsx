@@ -303,6 +303,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             }
                             canProcessPayroll
                             canApprove
+                            canSlackMessageUsers
                             hoverable
                             departmentId={filter.departmentId}
                           />
