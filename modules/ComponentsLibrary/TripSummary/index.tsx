@@ -940,7 +940,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
           key={this.state.tripsOnPage.getResultsList().length}
         />
         <>
-          {this.state.loading && <Loader />}
           {!this.props.searchable && (
             <>
               <>
@@ -960,6 +959,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           )}
           {this.state.pendingProcessPayrollTrip && (
             <Confirm
+              key="ConfirmProcessed"
               title="Are you sure?"
               open={true}
               onClose={() => this.setPendingProcessPayroll(null)}
@@ -976,6 +976,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           )}
           {this.state.pendingApproveTrip && (
             <Confirm
+              key="ConfirmApproved"
               title="Are you sure?"
               open={true}
               onClose={() => this.setPendingApproveTrip(null)}
@@ -1020,6 +1021,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         </>
         {this.state.pendingTripToDelete && (
           <ConfirmDelete
+            key="DeleteTrip"
             open={this.state.pendingTripToDelete != null}
             onClose={() => this.setStateToNew({ pendingTripToDelete: null })}
             kind="" // Purposely left blank for clarity purposes in the box
@@ -1029,6 +1031,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         )}
         {this.state.pendingDeleteAllTrips && (
           <ConfirmDelete
+            key="DeleteAllTrips"
             open={this.state.pendingDeleteAllTrips}
             onClose={() => this.setStateToNew({ pendingDeleteAllTrips: false })}
             kind="" // Purposely left blank for clarity purposes in the box
