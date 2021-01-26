@@ -659,7 +659,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ) : (
                 <></>
               ),
-              this.props.canApprove ? (
+              this.props.canApprove && currentTrip.getApproved() == false ? (
                 <Tooltip key="approve" content="Approve" placement="bottom">
                   <span>
                     <IconButton
@@ -673,7 +673,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ) : (
                 <></>
               ),
-              this.props.canProcessPayroll ? (
+              this.props.canProcessPayroll &&
+              currentTrip.getPayrollProcessed() == false ? (
                 <Tooltip
                   key={'payroll' + idx}
                   content="Process Payroll"
