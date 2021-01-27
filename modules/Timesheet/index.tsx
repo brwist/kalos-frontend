@@ -1,18 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Timesheet } from './main';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
-import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-
-const userId = 102412; //8418
+import { TimesheetProxy } from './proxy';
 
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <PageWrapper userID={userId} withHeader>
-      <Timesheet userId={userId} timesheetOwnerId={103285} />
-    </PageWrapper>,
+    <TimesheetProxy userId={103285} loggedUserId={102412} />,
     document.getElementById('root'),
   );
 });
