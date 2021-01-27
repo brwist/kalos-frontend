@@ -1,5 +1,9 @@
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import React, { FC, useState, useEffect } from 'react';
+import {
+  getRowDatesFromPerDiemTripInfos,
+  getRowDatesFromPerDiemTrips,
+} from '../../../helpers';
 import { Button } from '../Button';
 import { Form, Schema } from '../Form';
 import { Modal } from '../Modal';
@@ -44,6 +48,13 @@ export const TripViewModal: FC<Props> = ({
   open,
   fullScreen,
 }) => {
+  const [key, setKey] = useState<string>('');
+
+  if (!data.weekOf)
+    getRowDatesFromPerDiemTripInfos([data]).then(result => {
+      data.weekOf = result[0].date.split(' ')[0];
+      setKey(key + '!');
+    });
   return (
     <Modal open={open} onClose={() => onClose()} fullScreen={fullScreen}>
       <>
@@ -65,6 +76,7 @@ export const TripViewModal: FC<Props> = ({
           }
         />
         <PlainForm<TripInfo>
+          key={key}
           readOnly
           data={data}
           schema={schema}

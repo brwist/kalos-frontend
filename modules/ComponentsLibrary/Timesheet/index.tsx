@@ -43,6 +43,7 @@ import { Modal } from '../Modal';
 import { TimeOff } from '../TimeOff';
 
 import './styles.less';
+import { TripSummary } from '../TripSummary';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -425,7 +426,19 @@ export const Timesheet: FC<Props> = props => {
     userId === timesheetOwnerId || user.timesheetAdministration || isManager;
   if (!perDiemRowId) {
     getPerDiemRowIds(selectedDate).then(value => {
-      setPerDiemRowId(value?.toArray());
+      if (!value) return;
+
+      const pdIds: number[] = [];
+      for (const pd of value!.getResultsList()) {
+        pdIds.push(pd.getId());
+      }
+
+      if (pdIds.length === 0) {
+        console.error('Could not get per diem ids to match that date.');
+        return;
+      }
+
+      setPerDiemRowId(pdIds);
     });
   }
   return (
@@ -516,12 +529,19 @@ export const Timesheet: FC<Props> = props => {
       )}
       {tripsOpen && perDiemRowId?.length != 0 && (
         <Modal open onClose={() => setTripsOpen(false)}>
-          <TripInfoTable
+          {/*<TripInfoTable
             canAddTrips
             canDeleteTrips
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
-          />
+          />*/}
+          <TripSummary
+            userId={props.userId}
+            loggedUserId={props.userId}
+            perDiemRowIds={perDiemRowId!}
+            canDeleteTrips
+            canAddTrips
+          ></TripSummary>
         </Modal>
       )}
     </div>
