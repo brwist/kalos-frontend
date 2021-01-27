@@ -61,5 +61,13 @@ export default () => (
       loggedUserId={101275}
       searchable
     />
+
+    <ExampleTitle>Can add trips (Viewing as Chernov)</ExampleTitle>
+    <TripSummary
+      perDiemRowIds={[1]}
+      userId={101275}
+      loggedUserId={101275}
+      canAddTrips
+    />
   </>
 );

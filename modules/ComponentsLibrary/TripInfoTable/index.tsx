@@ -124,6 +124,13 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       multiline: true,
     },
   ],
+  [
+    {
+      label: 'Time of Trip Start',
+      name: 'Date',
+      type: 'mui-datetime',
+    },
+  ],
 ];
 
 interface Props {
@@ -194,6 +201,8 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     }
 
     trip.setNotes(data.Notes);
+
+    trip.setDate(data.Date);
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);
     trip.setDepartmentId(

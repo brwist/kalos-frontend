@@ -21,6 +21,9 @@ import {
   perDiemTripMilesToUsd,
   perDiemTripMilesToUsdAsNumber,
   TimesheetDepartmentClientService,
+  getRowDatesFromPerDiemIds,
+  getRowDatesFromPerDiemTrips,
+  upsertTrip,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -45,6 +48,10 @@ import { NULL_TIME } from '../../../constants';
 import { TripInfo, TripViewModal } from '../TripViewModal';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { SlackMessageButton } from '../SlackMessageButton';
+import { Button } from '../Button';
+import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
+import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
+import { Alert } from '../Alert';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -179,6 +186,7 @@ interface Props {
   canProcessPayroll?: boolean;
   canApprove?: boolean;
   canSlackMessageUsers?: boolean;
+  canAddTrips?: boolean;
   compact?: boolean;
   hoverable?: boolean;
   searchable?: boolean;
@@ -194,6 +202,7 @@ interface Props {
 interface State {
   pendingTrip: Trip | null;
   pendingTripToDelete: Trip | null;
+  pendingTripToAdd: Trip | null;
   pendingDeleteAllTrips: boolean;
   pendingProcessPayrollTrip: Trip | null;
   pendingApproveTrip: Trip | null;
@@ -206,6 +215,8 @@ interface State {
   page: number;
   filter: CheckboxesFilterType;
   tripToView: Trip | null;
+  warningNoPerDiem: boolean; // When there is no per-diem this is true and it displays
+  // a dialogue
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -221,6 +232,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       totalTrips: 0,
       totalTripMiles: 0,
       pendingTripToDelete: null,
+      pendingTripToAdd: null,
       pendingDeleteAllTrips: false,
       pendingProcessPayrollTrip: null,
       pendingApproveTrip: null,
@@ -230,6 +242,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       page: 0,
       filter: new Checkboxes(),
       tripToView: null,
+      warningNoPerDiem: false,
     };
     this.loadTripsAndUpdate();
   }
@@ -250,7 +263,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
   refreshNamesAndDates = async () => {
     new Promise(async resolve => {
       await this.getUserNamesFromIds();
-      await this.getRowDatesFromPerDiemIds();
+      let res = await getRowDatesFromPerDiemTrips(
+        this.state.tripsOnPage.getResultsList(),
+      );
+      this.dateIdPair = res;
+      this.setState({ key: this.state.key + 1 });
       resolve(false);
     }).then((result: any) => {
       this.setState({ loading: result });
@@ -429,36 +446,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
 
     return '-';
-  };
-
-  getRowDatesFromPerDiemIds = async () => {
-    let res: { date: string; row_id: number }[] = [];
-
-    await new Promise(async resolve => {
-      for await (const trip of this.state.tripsOnPage.getResultsList()) {
-        try {
-          let pd = new PerDiem();
-          pd.setId(trip.getPerDiemRowId());
-          const pdr = await PerDiemClientService.Get(pd);
-          const obj = {
-            date: pdr.dateStarted,
-            row_id: trip.getPerDiemRowId(),
-          };
-          if (!res.includes(obj)) res.push(obj);
-        } catch (err: any) {
-          console.error(
-            'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
-            err,
-          );
-        }
-      }
-      resolve(res);
-    }).then(() => {
-      this.dateIdPair = res;
-      this.setState({ key: this.state.key + 1 });
-    });
-
-    return res;
   };
 
   getUserNamesFromIds = async () => {
@@ -783,9 +770,116 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ page: 0 });
     await this.loadTripsAndUpdate(currentSearch);
   };
+  setPendingTripToAdd = (trip: Trip | null) => {
+    this.setState({ pendingTripToAdd: trip });
+  };
+
+  toggleWarningForNoPerDiem = () => {
+    this.setState({ warningNoPerDiem: !this.state.warningNoPerDiem });
+  };
+
+  saveTrip = async (
+    data: AddressPair.AsObject,
+    rowId: number,
+    userId: number,
+  ) => {
+    let trip = new Trip();
+
+    trip.setOriginAddress(data.FullAddressOrigin);
+    trip.setDestinationAddress(data.FullAddressDestination);
+
+    await this.getTripDistance(
+      String(data.FullAddressOrigin),
+      String(data.FullAddressDestination),
+    );
+
+    if (rowId) {
+      trip.setPerDiemRowId(rowId);
+    } else {
+      console.error('No perDiem found for this user. ');
+      this.toggleWarningForNoPerDiem();
+      this.setState({ pendingTrip: null });
+      this.reloadTrips();
+      return;
+    }
+
+    trip.setNotes(data.Notes);
+
+    trip.setDate(data.Date);
+
+    const user = await UserClientService.loadUserById(this.props.loggedUserId);
+    trip.setDepartmentId(
+      await (
+        await TimesheetDepartmentClientService.getDepartmentByManagerID(
+          user.managedBy,
+        )
+      ).id,
+    );
+    await upsertTrip(trip.toObject(), rowId!, userId).then(() => {
+      this.setState({ pendingTrip: null });
+    });
+
+    if (this.props.onSaveTrip) this.props.onSaveTrip();
+    this.setPendingTripToAdd(null);
+  };
+
+  handleClickAddTrip = () => {
+    if (
+      this.props.perDiemRowIds == undefined ||
+      this.props.perDiemRowIds.length == 0
+    ) {
+      this.toggleWarningForNoPerDiem();
+      return;
+    }
+    this.setPendingTripToAdd(new Trip());
+  };
+
   render() {
+    /*
+    const rowStartDate = this.state.tripToView
+      ? this.getRowStartDateById(this.state.tripToView.toObject().perDiemRowId)
+      : null;
+      */
+
     return (
       <>
+        {this.state.warningNoPerDiem && (
+          <Alert
+            open={this.state.warningNoPerDiem}
+            onClose={() => {
+              this.setState({ warningNoPerDiem: false });
+            }}
+            label="Close"
+            title="Notice"
+          >
+            <Typography component="div">
+              There is no Per Diem created for this week, please create one
+              before adding any trips.
+            </Typography>
+          </Alert>
+        )}
+        {this.props.canAddTrips && (
+          <Button
+            label="Add Trip"
+            size="small"
+            variant="contained"
+            onClick={this.handleClickAddTrip}
+          />
+        )}
+        {this.state.pendingTripToAdd && (
+          <PlaceAutocompleteAddressForm
+            onClose={() => this.setPendingTripToAdd(null)}
+            onSave={async (addressPair: AddressPair.AddressPair) => {
+              this.saveTrip(
+                addressPair,
+                this.props.perDiemRowIds[0],
+                this.props.loggedUserId,
+              );
+            }}
+            addressFields={2}
+            schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
+          />
+        )}
         {/* May be useful to put this functionality into its own component */}
         {this.state.tripToView && (
           <TripViewModal
@@ -799,9 +893,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               nameOfEmployee: this.getNameById(
                 this.state.tripToView.toObject().userId,
               )!,
-              weekOf: this.getRowStartDateById(
-                this.state.tripToView.toObject().perDiemRowId,
-              )!.split(' ')[0],
+              weekOf: '', // Will be filled out but this is to stop the schema from screaming at us
             }}
             onClose={() => this.setTripToView(null)}
             open={true}
