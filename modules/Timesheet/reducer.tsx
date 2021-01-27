@@ -14,6 +14,7 @@ import {
   parseISO,
 } from 'date-fns';
 import { TimeoffRequestType } from '../../helpers';
+import { NULL_TIME_VALUE } from './constants';
 
 export type Payroll = {
   total: number | null;
@@ -173,7 +174,7 @@ export const reducer = (state: State, action: Action) => {
 
           const payroll = timesheetLineList.reduce(
             (acc, item) => {
-              if (!item.userApprovalDatetime) {
+              if (item.userApprovalDatetime === NULL_TIME_VALUE) {
                 pendingEntries = true;
               }
               const payrollDiff =
@@ -341,7 +342,7 @@ export const reducer = (state: State, action: Action) => {
       for (let i = 0; i < state.shownDates.length; i++) {
         let dayList = [...data[state.shownDates[i]].timesheetLineList];
         dayList.forEach(entry => {
-          if (!entry.userApprovalDatetime) {
+          if (entry.userApprovalDatetime === NULL_TIME_VALUE) {
             entry.userApprovalDatetime = dateTime;
           }
         });
@@ -358,7 +359,7 @@ export const reducer = (state: State, action: Action) => {
       for (let i = 0; i < state.shownDates.length; i++) {
         let dayList = [...data[state.shownDates[i]].timesheetLineList];
         dayList.forEach(entry => {
-          if (!entry.adminApprovalDatetime) {
+          if (entry.adminApprovalDatetime === NULL_TIME_VALUE) {
             entry.adminApprovalDatetime = dateTime;
             entry.adminApprovalUserId = state.user!.id;
           }
