@@ -323,6 +323,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
       payrollProcessed = false;
     }
 
+    let totalCount = 0;
+
     const criteria: LoadTripsByFilter = {
       page,
       filter: tripFilter
@@ -344,6 +346,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         totalCount: number;
       };
       res = await loadTripsByFilter(criteria);
+      totalCount = res.totalCount;
       if (tripFilter) {
         tripResultList = res.results.filter(trip => {
           let fail = true,
@@ -434,7 +437,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
       let resultList = new TripList();
       resultList.setResultsList(trips);
-      resultList.setTotalCount(tripResultList.length);
+      resultList.setTotalCount(totalCount);
 
       resolve(resultList);
     }).then(result => {
@@ -632,7 +635,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 <></>
               ),
               <Tooltip
-                key="view"
+                key={'view' + idx}
                 content="View Trip Details"
                 placement="bottom"
               >
@@ -645,7 +648,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               </Tooltip>,
               this.props.canSlackMessageUsers ? (
                 <Tooltip
-                  key="message"
+                  key={'message' + idx}
                   content="Send Message on Slack"
                   placement="bottom"
                 >
@@ -664,7 +667,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 <></>
               ),
               this.props.canApprove && currentTrip.getApproved() == false ? (
-                <Tooltip key="approve" content="Approve" placement="bottom">
+                <Tooltip
+                  key={'approve' + idx}
+                  content="Approve"
+                  placement="bottom"
+                >
                   <span>
                     <IconButton
                       size="small"
@@ -866,12 +873,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   render() {
-    /*
-    const rowStartDate = this.state.tripToView
-      ? this.getRowStartDateById(this.state.tripToView.toObject().perDiemRowId)
-      : null;
-      */
-
     return (
       <>
         {this.state.warningNoPerDiem && (
