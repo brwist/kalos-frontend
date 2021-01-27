@@ -22,6 +22,7 @@ import {
   perDiemTripMilesToUsdAsNumber,
   TimesheetDepartmentClientService,
   getRowDatesFromPerDiemIds,
+  getRowDatesFromPerDiemTrips,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -433,12 +434,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getRowDatesFromPerDiemIds = async () => {
-    let tripIds = [];
-    for (const trip of this.state.tripsOnPage.getResultsList()) {
-      tripIds.push(trip.getPerDiemRowId());
-    }
-
-    let res = await getRowDatesFromPerDiemIds(tripIds);
+    let res = await getRowDatesFromPerDiemTrips(this.state.tripsOnPage.getResultsList());
     this.dateIdPair = res;
     this.setState({ key: this.state.key + 1 });
 

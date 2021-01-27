@@ -1438,6 +1438,33 @@ export const loadPerDiemByUserIdsAndDateStarted = async (
   );
 };
 
+export const getRowDatesFromPerDiemTrips = async (trips: Trip[]) => {
+  let tripIds = [];
+  for (const trip of trips) {
+    tripIds.push(trip.getPerDiemRowId());
+  }
+  let res: { date: string; row_id: number }[] = [];
+  for await (const id of tripIds) {
+    try {
+      let pd = new PerDiem();
+      pd.setId(id);
+      const pdr = await PerDiemClientService.Get(pd);
+      const obj = {
+        date: pdr.dateStarted,
+        row_id: id,
+      };
+      if (!res.includes(obj)) res.push(obj);
+    } catch (err: any) {
+      console.error(
+        'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
+        err,
+      );
+    }
+  }
+
+  return res;
+};
+
 export const getRowDatesFromPerDiemIds = async (ids: number[]) => {
   let res: { date: string; row_id: number }[] = [];
   for await (const id of ids) {
