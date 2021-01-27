@@ -5,11 +5,11 @@ import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 import Skeleton from '@material-ui/lab/Skeleton';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
-import { WeekPicker } from '../../ComponentsLibrary/WeekPicker';
-import { Button } from '../../ComponentsLibrary/Button';
+import { WeekPicker } from '../../WeekPicker';
+import { Button } from '../../Button';
 import { Payroll } from '../reducer';
-import { roundNumber } from '../../../helpers';
-import { useConfirm } from '../../ComponentsLibrary/ConfirmService';
+import { roundNumber } from '../../../../helpers';
+import { useConfirm } from '../../ConfirmService';
 import './toolbar.less';
 
 type Props = {

@@ -10,10 +10,10 @@ import IconButton from '@material-ui/core/IconButton';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
-import { TimeoffCard } from '../../ServiceCalendar/components/CallCard';
+import { TimeoffCard } from '../../../ServiceCalendar/components/CallCard';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
-import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
-import { roundNumber, TimeoffRequestTypes } from '../../../helpers';
+import { SkeletonCard } from '../../SkeletonCard';
+import { roundNumber, TimeoffRequestTypes } from '../../../../helpers';
 import './column.less';
 
 type Props = {
