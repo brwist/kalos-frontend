@@ -35,7 +35,7 @@ import { AdvancedSearch } from '../AdvancedSearch';
 import { Search } from '../Search';
 import { Tooltip } from '../Tooltip';
 import { Confirm } from '../Confirm';
-import { Typography } from '@material-ui/core';
+import { MenuItem, Select, Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
 import {
   PermissionGroup,
@@ -247,7 +247,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       filter: new Checkboxes(),
       tripToView: null,
       warningNoPerDiem: false,
-      perDiemDropDownSelected: this.props.perDiemRowIds[0],
+      perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
       perDiems: null,
     };
     this.loadTripsAndUpdate();
@@ -851,8 +851,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setPendingTripToAdd(new Trip());
   };
 
-  setPerDiemDropdown = ({ target: { value } }: any) => {
-    this.setState({ perDiemDropDownSelected: value });
+  setPerDiemDropdown = (value: any) => {
+    this.setState({ perDiemDropDownSelected: value.target.value });
   };
 
   componentDidMount() {
@@ -876,16 +876,31 @@ export class TripSummary extends React.PureComponent<Props, State> {
       <>
         {this.props.perDiemSelectorDropdown && (
           <>
-            <select
-              value={this.state.perDiemDropDownSelected}
+            <Select
+              value={
+                this.state.perDiems
+                  ? this.state.perDiemDropDownSelected
+                  : 'loading'
+              }
               onChange={this.setPerDiemDropdown}
             >
-              {this.state.perDiems
-                ? this.state.perDiems.map(key => (
-                    <option key={key.id}>{key.notes}</option>
-                  ))
-                : null}
-            </select>
+              {this.state.perDiems ? (
+                this.state.perDiems.map((key, idx) => {
+                  return (
+                    <MenuItem
+                      value={key.id + ' | ' + idx}
+                      key={key.id + ' | ' + idx}
+                    >
+                      {key.department?.value} | Notes: "{key.notes}"
+                    </MenuItem>
+                  );
+                })
+              ) : (
+                <MenuItem value={'loading'} key="Loading">
+                  Loading...
+                </MenuItem>
+              )}
+            </Select>
           </>
         )}
         {this.state.warningNoPerDiem && (
