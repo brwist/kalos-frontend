@@ -13,7 +13,7 @@ import {
   format,
   parseISO,
 } from 'date-fns';
-import { TimeoffRequestType } from '../../helpers';
+import { TimeoffRequestType } from '../../../helpers';
 import { NULL_TIME_VALUE } from './constants';
 
 export type Payroll = {

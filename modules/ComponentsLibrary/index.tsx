@@ -80,6 +80,7 @@ import Tabs from './Tabs/examples';
 import Tasks from './Tasks/examples';
 import TimeOff from './TimeOff/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
+import Timesheet from './Timesheet/examples';
 import Tooltip from './Tooltip/examples';
 import TripInfoTable from './TripInfoTable/examples';
 import TripSummary from './TripSummary/examples';
@@ -170,6 +171,7 @@ const COMPONENTS = {
   Tasks,
   TimeOff,
   TimeoffSummaryReport,
+  Timesheet,
   Tooltip,
   TripInfoTable,
   TripSummary,
