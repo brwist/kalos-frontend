@@ -252,7 +252,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
   refreshNamesAndDates = async () => {
     new Promise(async resolve => {
       await this.getUserNamesFromIds();
-      await this.getRowDatesFromPerDiemIds();
+      let res = await getRowDatesFromPerDiemTrips(
+        this.state.tripsOnPage.getResultsList(),
+      );
+      this.dateIdPair = res;
+      this.setState({ key: this.state.key + 1 });
       resolve(false);
     }).then((result: any) => {
       this.setState({ loading: result });
@@ -431,14 +435,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
 
     return '-';
-  };
-
-  getRowDatesFromPerDiemIds = async () => {
-    let res = await getRowDatesFromPerDiemTrips(this.state.tripsOnPage.getResultsList());
-    this.dateIdPair = res;
-    this.setState({ key: this.state.key + 1 });
-
-    return res;
   };
 
   getUserNamesFromIds = async () => {
