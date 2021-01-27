@@ -43,6 +43,7 @@ import { Modal } from '../Modal';
 import { TimeOff } from '../TimeOff';
 
 import './styles.less';
+import { TripSummary } from '../TripSummary';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -514,12 +515,19 @@ export const Timesheet: FC<Props> = props => {
       )}
       {tripsOpen && perDiemRowId?.length != 0 && (
         <Modal open onClose={() => setTripsOpen(false)}>
-          <TripInfoTable
+          {/*<TripInfoTable
             canAddTrips
             canDeleteTrips
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
-          />
+          />*/}
+          <TripSummary
+            userId={props.userId}
+            loggedUserId={props.userId}
+            perDiemRowIds={perDiemRowId!}
+            canDeleteTrips
+            canAddTrips
+          ></TripSummary>
         </Modal>
       )}
     </div>
