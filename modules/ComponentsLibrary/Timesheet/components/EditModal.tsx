@@ -7,7 +7,7 @@ import {
   isBefore,
   addDays,
 } from 'date-fns';
-import { Button } from '../../ComponentsLibrary/Button';
+import { Button } from '../../Button';
 import {
   TimesheetLine,
   TimesheetLineClient,
@@ -16,11 +16,11 @@ import {
   ServicesRenderedClient,
   ServicesRendered,
 } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { Modal } from '../../ComponentsLibrary/Modal';
-import { Form, Schema } from '../../ComponentsLibrary/Form';
-import { useConfirm } from '../../ComponentsLibrary/ConfirmService';
-import { getRPCFields } from '../../../helpers';
-import { ENDPOINT } from '../../../constants';
+import { Modal } from '../../Modal';
+import { Form, Schema } from '../../Form';
+import { useConfirm } from '../../ConfirmService';
+import { getRPCFields } from '../../../../helpers';
+import { ENDPOINT } from '../../../../constants';
 import './editModal.less';
 
 const srClient = new ServicesRenderedClient(ENDPOINT);

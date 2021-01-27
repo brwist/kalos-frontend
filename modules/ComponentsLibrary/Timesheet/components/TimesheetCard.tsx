@@ -10,7 +10,7 @@ import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
 import { colorsMapping } from '../constants';
 import { useEditTimesheet } from '../hooks';
-import { roundNumber, getCFAppUrl } from '../../../helpers';
+import { roundNumber, getCFAppUrl } from '../../../../helpers';
 import './timesheetCard.less';
 import { NULL_TIME_VALUE } from '../constants';
 
