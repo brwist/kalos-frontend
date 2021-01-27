@@ -76,15 +76,18 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
           <Typography className="TimesheetTimesheetCardDate" variant="body2">
             <span>
               {format(parseISO(timeStarted), 'p')}
-              {timeFinished &&
-                ` - ${format(parseISO(timeFinished), 'p')}`},{' '}
-              {differenceInMinutes(
-                parseISO(timeFinished),
-                parseISO(timeStarted),
-              ) / 60}{' '}
-              Hours
+              {timeFinished && ` - ${format(parseISO(timeFinished), 'p')}`}
             </span>
-            {payrollDiff > 0 && <strong>{roundNumber(payrollDiff)}</strong>}
+            {
+              <strong>
+                {roundNumber(
+                  differenceInMinutes(
+                    parseISO(timeFinished),
+                    parseISO(timeStarted),
+                  ) / 60,
+                )}
+              </strong>
+            }
           </Typography>
           {!!eventId && (
             <Typography
