@@ -760,9 +760,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await this.loadTripsAndUpdate(currentSearch);
   };
   render() {
+    /*
     const rowStartDate = this.state.tripToView
       ? this.getRowStartDateById(this.state.tripToView.toObject().perDiemRowId)
       : null;
+      */
+
     return (
       <>
         {/* May be useful to put this functionality into its own component */}
@@ -778,7 +781,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               nameOfEmployee: this.getNameById(
                 this.state.tripToView.toObject().userId,
               )!,
-              weekOf: rowStartDate ? rowStartDate!.split(' ')[0] : '-',
+              weekOf: '', // Will be filled out but this is to stop the schema from screaming at us
             }}
             onClose={() => this.setTripToView(null)}
             open={true}
