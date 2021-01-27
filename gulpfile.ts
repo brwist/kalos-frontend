@@ -864,6 +864,7 @@ const NAMED_EXPORTS = {
     'PerDiemRowList',
     'PerDiemReportRequest',
     'Trip',
+    'TripList',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/pdf_pb.js': ['HTML'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_event_pb.js': [
