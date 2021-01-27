@@ -15,6 +15,7 @@ export namespace AddressPair {
     CountryDestination: string;
 
     Notes: string;
+    Date: string;
   };
 
   export interface AddressInterface {
@@ -33,6 +34,7 @@ export namespace AddressPair {
     CountryDestination: string;
 
     Notes: string;
+    Date: string;
   }
 
   export class AddressPair implements AddressInterface {
@@ -51,5 +53,6 @@ export namespace AddressPair {
     CountryDestination: string = '';
 
     Notes: string = '';
+    Date: string = '';
   }
 }
