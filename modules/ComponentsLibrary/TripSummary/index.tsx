@@ -21,6 +21,7 @@ import {
   perDiemTripMilesToUsd,
   perDiemTripMilesToUsdAsNumber,
   TimesheetDepartmentClientService,
+  getRowDatesFromPerDiemIds,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -432,31 +433,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   getRowDatesFromPerDiemIds = async () => {
-    let res: { date: string; row_id: number }[] = [];
+    let tripIds = [];
+    for (const trip of this.state.tripsOnPage.getResultsList()) {
+      tripIds.push(trip.getPerDiemRowId());
+    }
 
-    await new Promise(async resolve => {
-      for await (const trip of this.state.tripsOnPage.getResultsList()) {
-        try {
-          let pd = new PerDiem();
-          pd.setId(trip.getPerDiemRowId());
-          const pdr = await PerDiemClientService.Get(pd);
-          const obj = {
-            date: pdr.dateStarted,
-            row_id: trip.getPerDiemRowId(),
-          };
-          if (!res.includes(obj)) res.push(obj);
-        } catch (err: any) {
-          console.error(
-            'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
-            err,
-          );
-        }
-      }
-      resolve(res);
-    }).then(() => {
-      this.dateIdPair = res;
-      this.setState({ key: this.state.key + 1 });
-    });
+    let res = await getRowDatesFromPerDiemIds(tripIds);
+    this.dateIdPair = res;
+    this.setState({ key: this.state.key + 1 });
 
     return res;
   };
