@@ -534,11 +534,13 @@ export const Timesheet: FC<Props> = props => {
             perDiemRowIds={perDiemRowId!}
           />*/}
           <TripSummary
+            key={'key' + perDiemRowId}
             userId={props.userId}
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
             canDeleteTrips
             canAddTrips
+            perDiemSelectorDropdown
           ></TripSummary>
         </Modal>
       )}
