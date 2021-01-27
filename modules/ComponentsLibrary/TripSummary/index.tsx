@@ -3,6 +3,7 @@ import { Columns, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import {
   PerDiem,
+  PerDiemList,
   Trip,
   TripList,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
@@ -197,6 +198,7 @@ interface Props {
   role?: string;
   departmentId?: number;
   checkboxes?: boolean;
+  perDiemSelectorDropdown?: boolean;
 }
 
 interface State {
@@ -217,6 +219,8 @@ interface State {
   tripToView: Trip | null;
   warningNoPerDiem: boolean; // When there is no per-diem this is true and it displays
   // a dialogue
+  perDiemDropDownSelected: any;
+  perDiems: PerDiem.AsObject[] | null;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -243,9 +247,22 @@ export class TripSummary extends React.PureComponent<Props, State> {
       filter: new Checkboxes(),
       tripToView: null,
       warningNoPerDiem: false,
+      perDiemDropDownSelected: this.props.perDiemRowIds[0],
+      perDiems: null,
     };
     this.loadTripsAndUpdate();
   }
+
+  getPerDiemsFromIds = async (ids: number[]) => {
+    let list: PerDiem.AsObject[] = [];
+    for await (const id of ids) {
+      let pd = new PerDiem();
+      pd.setId(id);
+      list.push(await PerDiemClientService.Get(pd));
+    }
+
+    return list;
+  };
 
   getTripDistance = async (origin: string, destination: string) => {
     try {
@@ -834,6 +851,20 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setPendingTripToAdd(new Trip());
   };
 
+  setPerDiemDropdown = ({ target: { value } }: any) => {
+    this.setState({ perDiemDropDownSelected: value });
+  };
+
+  componentDidMount() {
+    this.setStateOfPerDiems();
+  }
+
+  setStateOfPerDiems = async () => {
+    this.setState({
+      perDiems: await this.getPerDiemsFromIds(this.props.perDiemRowIds),
+    });
+  };
+
   render() {
     /*
     const rowStartDate = this.state.tripToView
@@ -843,6 +874,20 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     return (
       <>
+        {this.props.perDiemSelectorDropdown && (
+          <>
+            <select
+              value={this.state.perDiemDropDownSelected}
+              onChange={this.setPerDiemDropdown}
+            >
+              {this.state.perDiems
+                ? this.state.perDiems.map(key => (
+                    <option key={key.id}>{key.notes}</option>
+                  ))
+                : null}
+            </select>
+          </>
+        )}
         {this.state.warningNoPerDiem && (
           <Alert
             open={this.state.warningNoPerDiem}
