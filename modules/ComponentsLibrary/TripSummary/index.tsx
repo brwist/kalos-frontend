@@ -874,35 +874,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     return (
       <>
-        {this.props.perDiemSelectorDropdown && (
-          <>
-            <Select
-              value={
-                this.state.perDiems
-                  ? this.state.perDiemDropDownSelected
-                  : 'loading'
-              }
-              onChange={this.setPerDiemDropdown}
-            >
-              {this.state.perDiems ? (
-                this.state.perDiems.map((key, idx) => {
-                  return (
-                    <MenuItem
-                      value={key.id + ' | ' + idx}
-                      key={key.id + ' | ' + idx}
-                    >
-                      {key.department?.value} | Notes: "{key.notes}"
-                    </MenuItem>
-                  );
-                })
-              ) : (
-                <MenuItem value={'loading'} key="Loading">
-                  Loading...
-                </MenuItem>
-              )}
-            </Select>
-          </>
-        )}
         {this.state.warningNoPerDiem && (
           <Alert
             open={this.state.warningNoPerDiem}
@@ -928,11 +899,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
         )}
         {this.state.pendingTripToAdd && (
           <PlaceAutocompleteAddressForm
+            perDiemRowIds={this.props.perDiemRowIds}
             onClose={() => this.setPendingTripToAdd(null)}
             onSave={async (addressPair: AddressPair.AddressPair) => {
               this.saveTrip(
                 addressPair,
-                this.props.perDiemRowIds[0],
+                addressPair.PerDiemId,
                 this.props.loggedUserId,
               );
             }}
