@@ -38,6 +38,7 @@ import { Confirm } from '../Confirm';
 import { MenuItem, Select, Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
 import {
+  IntArray,
   PermissionGroup,
   User,
 } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
@@ -254,14 +255,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   }
 
   getPerDiemsFromIds = async (ids: number[]) => {
-    let list: PerDiem.AsObject[] = [];
-    for await (const id of ids) {
-      let pd = new PerDiem();
-      pd.setId(id);
-      list.push(await PerDiemClientService.Get(pd));
-    }
-
-    return list;
+    return await PerDiemClientService.getPerDiemsFromIds(ids);
   };
 
   getTripDistance = async (origin: string, destination: string) => {
@@ -471,24 +465,19 @@ export class TripSummary extends React.PureComponent<Props, State> {
   getUserNamesFromIds = async () => {
     let res: { name: string; id: number }[] = [];
 
-    this.state.tripsOnPage
-      .getResultsList()
-      .forEach(async (trip: Trip, idx, arr) => {
-        try {
-          let user = await UserClientService.loadUserById(trip.getUserId());
-          let obj: { name: string; id: number } = {
-            name: `${user.firstname} ${user.lastname}`,
-            id: trip.getUserId(),
-          };
-          if (!res.includes(obj)) res.push(obj);
-          if (idx == arr.length - 1) {
-            this.nameIdPair = res;
-            return res;
-          }
-        } catch (err: any) {
-          console.error('Failed to get user names from IDs: ', err);
-        }
+    let arrayInts: number[] = [];
+    this.state.tripsOnPage.getResultsList().forEach(async (trip: Trip) => {
+      arrayInts.push(trip.getUserId());
+    });
+    const users = await UserClientService.BatchGetUsersByIds(arrayInts);
+    for (const user of users.getResultsList()) {
+      res.push({
+        name: `${user.getFirstname()} ${user.getLastname()}`,
+        id: user.getId(),
       });
+    }
+    this.nameIdPair = res;
+    return res;
   };
 
   getNameById = (userId: number) => {
