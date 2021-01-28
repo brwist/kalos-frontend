@@ -411,6 +411,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   loadTripsAndUpdate = async (tripFilter?: Trip.AsObject) => {
     await this.loadTrips(tripFilter).then(async result => {
+      console.log('Got a result from loading: ', result);
       this.setState({ tripsOnPage: result });
       await this.refreshNamesAndDates();
       await this.updateTotalMiles();
@@ -481,6 +482,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     });
   };
   deleteTrip = async (trip: Trip) => {
+    console.log('Deleting');
     try {
       await PerDiemClientService.DeleteTrip(trip);
       let trips = this.state.tripsOnPage;
@@ -496,8 +498,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
       this.setState({ pendingTripToDelete: null });
       return Error(err);
     }
-    this.loadTripsAndUpdate();
-    this.refreshNamesAndDates();
+    console.log('Got done, loading stuffs');
+    this.reloadTrips();
     this.setState({ pendingTripToDelete: null });
   };
   deleteAllTrips = async () => {
@@ -519,8 +521,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         return;
       }
     });
-    this.loadTripsAndUpdate();
-    this.refreshNamesAndDates();
+    this.reloadTrips();
     this.setState({ pendingDeleteAllTrips: false });
   };
   setStateToNew = (to: any) => {
@@ -800,6 +801,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     if (this.props.onSaveTrip) this.props.onSaveTrip();
     this.setPendingTripToAdd(null);
+    console.log('Search: ', this.state.search);
+    this.reloadTrips();
   };
 
   handleClickAddTrip = () => {
