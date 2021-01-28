@@ -4,7 +4,10 @@ import {
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionRow, prettyMoney } from './row';
-import { AccountPicker, DepartmentPicker } from '../../ComponentsLibrary/Pickers';
+import {
+  AccountPicker,
+  DepartmentPicker,
+} from '../../ComponentsLibrary/Pickers';
 import { EmployeePicker } from '../../ComponentsLibrary/Pickers/Employee';
 import { TxnStatusPicker } from '../../ComponentsLibrary/Pickers/TransactionStatus';
 import {
@@ -454,7 +457,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       const ids = this.state.transactions.map(t => t.id);
       const req = new RecordPageReq();
       req.setTransactionIdsList(ids);
-
+      req.setAdminId(this.props.userID);
       let reqObj = new Transaction();
       reqObj = this.applyFilters(reqObj);
       if (this.state.departmentView) {
