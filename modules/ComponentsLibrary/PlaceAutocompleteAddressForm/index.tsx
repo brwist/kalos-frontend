@@ -1,6 +1,6 @@
 // This is the google autocomplete form for address queries
 import React, { createRef } from 'react';
-import { getKeyByKeyName } from '../../../helpers';
+import { getKeyByKeyName, PerDiemClientService } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { AddressPair } from './Address';
@@ -9,11 +9,21 @@ import Typography from '@material-ui/core/Typography';
 
 import './styles.less';
 import { Loader } from '../../Loader/main';
+import {
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
+} from '@material-ui/core';
+import { PerDiem } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { SectionBar } from '../SectionBar';
 interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair.AddressPair) => void;
   addressFields: number;
   schema: Schema<AddressPair.AsObject>;
+  perDiemRowIds: number[];
 }
 
 interface State {
@@ -22,6 +32,8 @@ interface State {
   validationPopupOpen: boolean;
   noteLengthPopupOpen: boolean;
   saving: boolean;
+  perDiemDropDownSelected: any;
+  perDiems: PerDiem.AsObject[] | null;
 }
 
 const componentForm = {
@@ -48,6 +60,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       validationPopupOpen: false,
       noteLengthPopupOpen: false,
       saving: false,
+      perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
+      perDiems: null,
     };
   }
 
@@ -265,7 +279,25 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 
   componentDidMount() {
     this.geolocate();
+    this.setStateOfPerDiems();
   }
+
+  getPerDiemsFromIds = async (ids: number[]) => {
+    let list: PerDiem.AsObject[] = [];
+    for await (const id of ids) {
+      let pd = new PerDiem();
+      pd.setId(id);
+      list.push(await PerDiemClientService.Get(pd));
+    }
+
+    return list;
+  };
+
+  setStateOfPerDiems = async () => {
+    this.setState({
+      perDiems: await this.getPerDiemsFromIds(this.props.perDiemRowIds),
+    });
+  };
 
   save = (addressPair: AddressPair.AddressPair) => {
     for (const [key, value] of Object.entries(addressPair)) {
@@ -282,8 +314,14 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     addressPair.FullAddressOrigin = `${addressPair.StreetAddressOrigin}, ${addressPair.CityOrigin}, ${addressPair.StateOrigin}, ${addressPair.CountryOrigin}`;
     addressPair.FullAddressDestination = `${addressPair.StreetAddressDestination}, ${addressPair.CityDestination}, ${addressPair.StateDestination}, ${addressPair.CountryDestination}`;
 
+    addressPair.PerDiemId = this.state.perDiemDropDownSelected.split(' ')[0];
+
     this.props.onSave(addressPair);
     this.setState({ saving: true });
+  };
+
+  setPerDiemDropdown = (value: any) => {
+    this.setState({ perDiemDropDownSelected: value.target.value });
   };
 
   render() {
@@ -318,6 +356,45 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         <Modal open onClose={this.props.onClose}>
           <>
             {this.state.saving && <Loader />}
+            <>
+              <SectionBar title="Per Diem" uncollapsable>
+                <FormControl>
+                  <InputLabel shrink htmlFor="per-diem-select">
+                    Per Diem
+                  </InputLabel>{' '}
+                  <Select
+                    value={
+                      this.state.perDiems
+                        ? this.state.perDiemDropDownSelected
+                        : 'loading'
+                    }
+                    onChange={this.setPerDiemDropdown}
+                    label="Per Diem"
+                    inputProps={{
+                      name: 'age',
+                      id: 'per-diem-select',
+                    }}
+                  >
+                    {this.state.perDiems ? (
+                      this.state.perDiems.map((key, idx) => {
+                        return (
+                          <MenuItem
+                            value={key.id + ' | ' + idx}
+                            key={key.id + ' | ' + idx}
+                          >
+                            {key.department?.value} | Notes: "{key.notes}"
+                          </MenuItem>
+                        );
+                      })
+                    ) : (
+                      <MenuItem value={'loading'} key="Loading">
+                        Loading...
+                      </MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
+              </SectionBar>
+            </>
             <Form
               title="Enter Trip Origin and Destination"
               schema={this.props.schema}

@@ -473,6 +473,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
         </>
         {this.state.pendingTrip && (
           <PlaceAutocompleteAddressForm
+            perDiemRowIds={this.props.perDiemRowIds}
             onClose={() => this.setStateToNew({ pendingTrip: null })}
             onSave={async (addressPair: AddressPair.AddressPair) => {
               this.saveTrip(
