@@ -1,8 +1,10 @@
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { User } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import React, { FC, useState, useEffect } from 'react';
 import {
   getRowDatesFromPerDiemTripInfos,
   getRowDatesFromPerDiemTrips,
+  UserClientService,
 } from '../../../helpers';
 import { Button } from '../Button';
 import { Form, Schema } from '../Form';
@@ -55,6 +57,14 @@ export const TripViewModal: FC<Props> = ({
       data.weekOf = result[0].date.split(' ')[0];
       setKey(key + '!');
     });
+
+  if (!data.nameOfEmployee) {
+    let u = new User();
+    u.setId(data.userId);
+    UserClientService.Get(u).then(result => {
+      data.nameOfEmployee = result.firstname + ' ' + result.lastname;
+    });
+  }
   return (
     <Modal open={open} onClose={() => onClose()} fullScreen={fullScreen}>
       <>
