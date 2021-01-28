@@ -291,7 +291,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   ) => {
     return trips.filter(trip => {
       let fail = !!isTripFilterPresent;
-      let hadId = !!isTripFilterPresent;
       if (isTripFilterPresent) {
         let userIDFailed = true;
 
@@ -300,12 +299,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
             userIDFailed = false;
           }
         }
-
-        this.props.perDiemRowIds.forEach(id => {
-          if (trip.perDiemRowId == id) {
-            fail = false;
-          }
-        });
+        if (this.props.perDiemRowIds.includes(trip.perDiemRowId)) {
+          fail = false;
+        }
         if (userIDFailed && this.props.userId != 0) fail = true;
         if (
           this.props.role == 'Manager' &&
@@ -313,11 +309,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         )
           fail = true;
       } else {
-        this.props.perDiemRowIds.forEach(id => {
-          if (trip.perDiemRowId == id) {
-            hadId = true;
-          }
-        });
+        let hadId = this.props.perDiemRowIds.includes(trip.perDiemRowId);
         if (!hadId) {
           fail = true;
         }
@@ -326,7 +318,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
             fail = true;
           }
         });
-
         if (
           this.props.role == 'Manager' &&
           trip.departmentId != this.props.departmentId
