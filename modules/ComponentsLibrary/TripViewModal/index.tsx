@@ -62,9 +62,14 @@ export const TripViewModal: FC<Props> = ({
           title="Trip"
           asideContent={
             <>
-              <Button label="Approve" onClick={() => onApprove(data)} />
+              <Button
+                label="Approve"
+                disabled={data.approved}
+                onClick={() => onApprove(data)}
+              />
               <Button
                 label="Process Payroll"
+                disabled={data.payrollProcessed}
                 onClick={() => onProcessPayroll(data)}
               />
               <Button
