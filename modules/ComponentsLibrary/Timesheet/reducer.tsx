@@ -13,7 +13,7 @@ import {
   format,
   parseISO,
 } from 'date-fns';
-import { TimeoffRequestType } from '../../../helpers';
+import { TimeoffRequestType, TimeoffRequestTypes } from '../../../helpers';
 import { NULL_TIME_VALUE } from './constants';
 
 export type Payroll = {
@@ -65,8 +65,12 @@ export type State = {
   owner?: User.AsObject;
   fetchingTimesheetData: boolean;
   data: DataList;
+  timeoffOpen: boolean;
+  tripsOpen: boolean;
+  perDiemRowId: number[] | null;
   pendingEntries: boolean;
   selectedDate: Date;
+  timeoffRequestTypes: TimeoffRequestTypes | undefined;
   shownDates: string[];
   payroll: {
     total: number | null;
@@ -110,6 +114,10 @@ export type Action =
   | { type: 'closeEditingModal' }
   | { type: 'error'; text: string }
   | { type: 'submitTimesheet' }
+  | { type: 'timeoffOpen'; value: boolean }
+  | { type: 'tripsOpen'; value: boolean }
+  | { type: 'timeoffRequestTypes'; value: TimeoffRequestTypes }
+  | { type: 'perDiemRowId'; value: number[] }
   | { type: 'approveTimesheet' }
   | { type: 'showReceiptsIssueDialog'; value: boolean }
   | {
@@ -397,7 +405,26 @@ export const reducer = (state: State, action: Action) => {
           shown: action.value,
         },
       };
-
+    case 'timeoffOpen':
+      return {
+        ...state,
+        timeoffOpen: action.value,
+      };
+    case 'tripsOpen':
+      return {
+        ...state,
+        tripsOpen: action.value,
+      };
+    case 'perDiemRowId':
+      return {
+        ...state,
+        perDiemRowId: action.value,
+      };
+    case 'timeoffRequestTypes':
+      return {
+        ...state,
+        timeoffRequestTypes: action.value,
+      };
     default:
       return state;
   }
