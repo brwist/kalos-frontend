@@ -25,6 +25,7 @@ import {
   getRowDatesFromPerDiemIds,
   getRowDatesFromPerDiemTrips,
   upsertTrip,
+  tripAsObjectToTrip,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -330,34 +331,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     });
   };
 
-  tripAsObjectToTrip = (asObj: Trip.AsObject) => {
-    const req = new Trip();
-    let originAddress: string = '',
-      destinationAddress: string = '';
-    for (const fieldName in asObj) {
-      let { methodName } = getRPCFields(fieldName);
-      if (methodName == 'setDestinationAddress') {
-        //@ts-ignore
-        destinationAddress = asObj[fieldName];
-      }
-      if (methodName == 'setOriginAddress') {
-        //@ts-ignore
-        originAddress = asObj[fieldName];
-      }
-
-      //@ts-ignore
-      req[methodName](asObj[fieldName]);
-    }
-
-    req.setPerDiemRowId(asObj.perDiemRowId);
-    req.setUserId(asObj.userId);
-    req.setNotes(asObj.notes);
-    req.setDistanceInMiles(asObj.distanceInMiles);
-    req.setOriginAddress(originAddress);
-    req.setDestinationAddress(destinationAddress);
-    return req;
-  };
-
   loadTrips = async (tripFilter?: TripsFilter) => {
     const tripSort = {
       orderByField: 'user_id',
@@ -422,7 +395,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     let tripList: Trip[] = [];
     for await (const tripAsObj of filteredAsObjResultList) {
-      tripList.push(this.tripAsObjectToTrip(tripAsObj));
+      tripList.push(tripAsObjectToTrip(tripAsObj));
     }
     const tripsFinalResultList: Trip[] = [...tripList];
 
