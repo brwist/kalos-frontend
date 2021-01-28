@@ -230,6 +230,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   dateIdPair: { date: string; row_id: number }[] = [];
   resultsPerPage: number = 25;
   department: TimesheetDepartment.AsObject | null = null;
+  numFilteredTrips: number = 0;
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -327,6 +328,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       }
       if (this.props.role == 'Manager' && trip.approved) fail = true;
       if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
+      if (fail) this.numFilteredTrips++;
       return !fail;
     });
   };
@@ -337,6 +339,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
       orderBy: 'user_id',
       orderDir: 'ASC',
     };
+
+    this.numFilteredTrips = 0;
 
     if (tripFilter) {
       tripFilter.payrollProcessed = tripFilter?.payrollProcessed;
@@ -401,6 +405,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     let resultList = new TripList();
     resultList.setResultsList(tripsFinalResultList);
+    this.setState({ totalTrips: res.totalCount - this.numFilteredTrips });
     resultList.setTotalCount(res.totalCount);
     return resultList;
   };
@@ -411,7 +416,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   loadTripsAndUpdate = async (tripFilter?: Trip.AsObject) => {
     await this.loadTrips(tripFilter).then(async result => {
-      console.log('Got a result from loading: ', result);
       this.setState({ tripsOnPage: result });
       await this.refreshNamesAndDates();
       await this.updateTotalMiles();
@@ -908,9 +912,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         <SectionBar
           title="Trips"
           pagination={{
-            count: this.state.tripsOnPage
-              ? this.state.tripsOnPage.getTotalCount()
-              : 0,
+            count: this.state.totalTrips,
             page: this.state.page,
             rowsPerPage: this.resultsPerPage,
             onChangePage: this.handleChangePage,
