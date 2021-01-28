@@ -16,6 +16,7 @@ export namespace AddressPair {
 
     Notes: string;
     Date: string;
+    PerDiemId: number;
   };
 
   export interface AddressInterface {
@@ -35,6 +36,7 @@ export namespace AddressPair {
 
     Notes: string;
     Date: string;
+    PerDiemId: number;
   }
 
   export class AddressPair implements AddressInterface {
@@ -54,5 +56,6 @@ export namespace AddressPair {
 
     Notes: string = '';
     Date: string = '';
+    PerDiemId: number = 0;
   }
 }

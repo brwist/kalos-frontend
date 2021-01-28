@@ -3,6 +3,7 @@ import { Columns, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import {
   PerDiem,
+  PerDiemList,
   Trip,
   TripList,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
@@ -34,9 +35,10 @@ import { AdvancedSearch } from '../AdvancedSearch';
 import { Search } from '../Search';
 import { Tooltip } from '../Tooltip';
 import { Confirm } from '../Confirm';
-import { Typography } from '@material-ui/core';
+import { MenuItem, Select, Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
 import {
+  IntArray,
   PermissionGroup,
   User,
 } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
@@ -197,6 +199,7 @@ interface Props {
   role?: string;
   departmentId?: number;
   checkboxes?: boolean;
+  perDiemSelectorDropdown?: boolean;
 }
 
 interface State {
@@ -217,6 +220,8 @@ interface State {
   tripToView: Trip | null;
   warningNoPerDiem: boolean; // When there is no per-diem this is true and it displays
   // a dialogue
+  perDiemDropDownSelected: any;
+  perDiems: PerDiem.AsObject[] | null;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -243,9 +248,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
       filter: new Checkboxes(),
       tripToView: null,
       warningNoPerDiem: false,
+      perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
+      perDiems: null,
     };
     this.loadTripsAndUpdate();
   }
+
+  getPerDiemsFromIds = async (ids: number[]) => {
+    return await PerDiemClientService.getPerDiemsFromIds(ids);
+  };
 
   getTripDistance = async (origin: string, destination: string) => {
     try {
@@ -272,6 +283,69 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }).then((result: any) => {
       this.setState({ loading: result });
     });
+  };
+
+  filterResults = async (
+    trips: Trip.AsObject[],
+    isTripFilterPresent: TripsFilter | undefined,
+  ) => {
+    let result = null;
+    if (isTripFilterPresent) {
+      result = trips.filter(trip => {
+        let fail = true,
+          userIDFailed = true;
+
+        if (this.props.userId != 0) {
+          if (trip.userId == this.props.userId) {
+            userIDFailed = false;
+          }
+        }
+
+        this.props.perDiemRowIds.forEach(id => {
+          if (trip.perDiemRowId == id) {
+            fail = false;
+          }
+        });
+        if (userIDFailed && this.props.userId != 0) fail = true;
+        if (this.props.role == 'Manager' && trip.approved) fail = true;
+        if (
+          this.props.role == 'Manager' &&
+          trip.departmentId != this.props.departmentId
+        )
+          fail = true;
+        if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
+        return !fail;
+      });
+    } else {
+      result = trips.filter(trip => {
+        let fail = false;
+        let hadId = false;
+        this.props.perDiemRowIds.forEach(id => {
+          if (trip.perDiemRowId == id) {
+            hadId = true;
+          }
+        });
+        if (!hadId) {
+          fail = true;
+        }
+        this.state.tripsOnPage.getResultsList().forEach(t => {
+          if (t.getId() == trip.id) {
+            fail = true;
+          }
+        });
+        if (this.props.role == 'Manager' && trip.approved) fail = true;
+        if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
+        if (
+          this.props.role == 'Manager' &&
+          trip.departmentId != this.props.departmentId
+        )
+          fail = true;
+
+        return !fail;
+      });
+    }
+
+    return result;
   };
 
   loadTrips = async (tripFilter?: TripsFilter) => {
@@ -306,6 +380,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
       payrollProcessed = false;
     }
 
+    let totalCount = 0;
+
     const criteria: LoadTripsByFilter = {
       page,
       filter: tripFilter
@@ -327,62 +403,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
         totalCount: number;
       };
       res = await loadTripsByFilter(criteria);
-      if (tripFilter) {
-        tripResultList = res.results.filter(trip => {
-          let fail = true,
-            userIDFailed = true;
+      totalCount = res.totalCount;
 
-          if (this.props.userId != 0) {
-            if (trip.userId == this.props.userId) {
-              userIDFailed = false;
-            }
-          }
-
-          this.props.perDiemRowIds.forEach(id => {
-            if (trip.perDiemRowId == id) {
-              fail = false;
-            }
-          });
-          if (userIDFailed && this.props.userId != 0) fail = true;
-          if (this.props.role == 'Manager' && trip.approved) fail = true;
-          if (
-            this.props.role == 'Manager' &&
-            trip.departmentId != this.props.departmentId
-          )
-            fail = true;
-          if (this.props.role == 'Payroll' && trip.payrollProcessed)
-            fail = true;
-          return !fail;
-        });
-      } else {
-        tripResultList = res.results.filter(trip => {
-          let fail = false;
-          let hadId = false;
-          this.props.perDiemRowIds.forEach(id => {
-            if (trip.perDiemRowId == id) {
-              hadId = true;
-            }
-          });
-          if (!hadId) {
-            fail = true;
-          }
-          this.state.tripsOnPage.getResultsList().forEach(t => {
-            if (t.getId() == trip.id) {
-              fail = true;
-            }
-          });
-          if (this.props.role == 'Manager' && trip.approved) fail = true;
-          if (this.props.role == 'Payroll' && trip.payrollProcessed)
-            fail = true;
-          if (
-            this.props.role == 'Manager' &&
-            trip.departmentId != this.props.departmentId
-          )
-            fail = true;
-
-          return !fail;
-        });
-      }
+      tripResultList = await this.filterResults(res.results, tripFilter);
 
       let trips: Trip[] = [];
       let tripList: Trip[] = [];
@@ -417,7 +440,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
       let resultList = new TripList();
       resultList.setResultsList(trips);
-      resultList.setTotalCount(tripResultList.length);
+      resultList.setTotalCount(totalCount);
 
       resolve(resultList);
     }).then(result => {
@@ -451,24 +474,19 @@ export class TripSummary extends React.PureComponent<Props, State> {
   getUserNamesFromIds = async () => {
     let res: { name: string; id: number }[] = [];
 
-    this.state.tripsOnPage
-      .getResultsList()
-      .forEach(async (trip: Trip, idx, arr) => {
-        try {
-          let user = await UserClientService.loadUserById(trip.getUserId());
-          let obj: { name: string; id: number } = {
-            name: `${user.firstname} ${user.lastname}`,
-            id: trip.getUserId(),
-          };
-          if (!res.includes(obj)) res.push(obj);
-          if (idx == arr.length - 1) {
-            this.nameIdPair = res;
-            return res;
-          }
-        } catch (err: any) {
-          console.error('Failed to get user names from IDs: ', err);
-        }
+    let arrayInts: number[] = [];
+    this.state.tripsOnPage.getResultsList().forEach(async (trip: Trip) => {
+      arrayInts.push(trip.getUserId());
+    });
+    const users = await UserClientService.BatchGetUsersByIds(arrayInts);
+    for (const user of users.getResultsList()) {
+      res.push({
+        name: `${user.getFirstname()} ${user.getLastname()}`,
+        id: user.getId(),
       });
+    }
+    this.nameIdPair = res;
+    return res;
   };
 
   getNameById = (userId: number) => {
@@ -615,7 +633,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 <></>
               ),
               <Tooltip
-                key="view"
+                key={'view' + idx}
                 content="View Trip Details"
                 placement="bottom"
               >
@@ -628,7 +646,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               </Tooltip>,
               this.props.canSlackMessageUsers ? (
                 <Tooltip
-                  key="message"
+                  key={'message' + idx}
                   content="Send Message on Slack"
                   placement="bottom"
                 >
@@ -647,7 +665,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 <></>
               ),
               this.props.canApprove && currentTrip.getApproved() == false ? (
-                <Tooltip key="approve" content="Approve" placement="bottom">
+                <Tooltip
+                  key={'approve' + idx}
+                  content="Approve"
+                  placement="bottom"
+                >
                   <span>
                     <IconButton
                       size="small"
@@ -834,13 +856,21 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setPendingTripToAdd(new Trip());
   };
 
-  render() {
-    /*
-    const rowStartDate = this.state.tripToView
-      ? this.getRowStartDateById(this.state.tripToView.toObject().perDiemRowId)
-      : null;
-      */
+  setPerDiemDropdown = (value: any) => {
+    this.setState({ perDiemDropDownSelected: value.target.value });
+  };
 
+  componentDidMount() {
+    this.setStateOfPerDiems();
+  }
+
+  setStateOfPerDiems = async () => {
+    this.setState({
+      perDiems: await this.getPerDiemsFromIds(this.props.perDiemRowIds),
+    });
+  };
+
+  render() {
     return (
       <>
         {this.state.warningNoPerDiem && (
@@ -868,11 +898,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
         )}
         {this.state.pendingTripToAdd && (
           <PlaceAutocompleteAddressForm
+            perDiemRowIds={this.props.perDiemRowIds}
             onClose={() => this.setPendingTripToAdd(null)}
             onSave={async (addressPair: AddressPair.AddressPair) => {
               this.saveTrip(
                 addressPair,
-                this.props.perDiemRowIds[0],
+                addressPair.PerDiemId,
                 this.props.loggedUserId,
               );
             }}
