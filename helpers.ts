@@ -1729,38 +1729,48 @@ export const getTripDistance = async (origin: string, destination: string) => {
   }
 };
 
+export const tripAsObjectToTrip = (
+  asObj: Trip.AsObject,
+  rowId?: number,
+  userId?: number,
+): Trip => {
+  const req = new Trip();
+  let originAddress: string = '',
+    destinationAddress: string = '',
+    fieldMaskList = [];
+  for (const fieldName in asObj) {
+    let { upperCaseProp, methodName } = getRPCFields(fieldName);
+    if (methodName == 'setDestinationAddress') {
+      //@ts-ignore
+      destinationAddress = asObj[fieldName];
+    }
+    if (methodName == 'setOriginAddress') {
+      //@ts-ignore
+      originAddress = asObj[fieldName];
+    }
+
+    //@ts-ignore
+    req[methodName](asObj[fieldName]);
+    fieldMaskList.push(upperCaseProp);
+  }
+  req.setFieldMaskList(fieldMaskList);
+  req.setPerDiemRowId(rowId ? rowId : asObj.perDiemRowId);
+  req.setUserId(userId ? userId : asObj.userId);
+  req.setNotes(asObj.notes);
+  req.setDistanceInMiles(asObj.distanceInMiles);
+  req.setOriginAddress(originAddress);
+  req.setDestinationAddress(destinationAddress);
+  return req;
+};
+
 export const upsertTrip = async (
   data: Trip.AsObject,
   rowId: number,
   userId: number,
 ) => {
-  const fieldMaskList = [];
-  let destinationAddress, originAddress;
-
-  const req = new Trip();
-
-  for (const fieldName in data) {
-    let { upperCaseProp, methodName } = getRPCFields(fieldName);
-    if (methodName == 'setDestinationAddress') {
-      //@ts-ignore
-      destinationAddress = data[fieldName];
-    }
-    if (methodName == 'setOriginAddress') {
-      //@ts-ignore
-      originAddress = data[fieldName];
-    }
-
-    //@ts-ignore
-    req[methodName](data[fieldName]);
-    fieldMaskList.push(upperCaseProp);
-  }
-  req.setFieldMaskList(fieldMaskList);
-  req.setPerDiemRowId(rowId);
-  req.setUserId(userId);
-  req.setNotes(data.notes);
-  req.setDepartmentId(data.departmentId);
+  const req = tripAsObjectToTrip(data, rowId, userId);
   req.setDistanceInMiles(
-    await getTripDistance(originAddress, destinationAddress),
+    await getTripDistance(req.getOriginAddress(), req.getDestinationAddress()),
   );
 
   try {
