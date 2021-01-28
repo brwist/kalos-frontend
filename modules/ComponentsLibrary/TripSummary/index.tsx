@@ -285,6 +285,69 @@ export class TripSummary extends React.PureComponent<Props, State> {
     });
   };
 
+  filterResults = async (
+    trips: Trip.AsObject[],
+    isTripFilterPresent: TripsFilter | undefined,
+  ) => {
+    let result = null;
+    if (isTripFilterPresent) {
+      result = trips.filter(trip => {
+        let fail = true,
+          userIDFailed = true;
+
+        if (this.props.userId != 0) {
+          if (trip.userId == this.props.userId) {
+            userIDFailed = false;
+          }
+        }
+
+        this.props.perDiemRowIds.forEach(id => {
+          if (trip.perDiemRowId == id) {
+            fail = false;
+          }
+        });
+        if (userIDFailed && this.props.userId != 0) fail = true;
+        if (this.props.role == 'Manager' && trip.approved) fail = true;
+        if (
+          this.props.role == 'Manager' &&
+          trip.departmentId != this.props.departmentId
+        )
+          fail = true;
+        if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
+        return !fail;
+      });
+    } else {
+      result = trips.filter(trip => {
+        let fail = false;
+        let hadId = false;
+        this.props.perDiemRowIds.forEach(id => {
+          if (trip.perDiemRowId == id) {
+            hadId = true;
+          }
+        });
+        if (!hadId) {
+          fail = true;
+        }
+        this.state.tripsOnPage.getResultsList().forEach(t => {
+          if (t.getId() == trip.id) {
+            fail = true;
+          }
+        });
+        if (this.props.role == 'Manager' && trip.approved) fail = true;
+        if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
+        if (
+          this.props.role == 'Manager' &&
+          trip.departmentId != this.props.departmentId
+        )
+          fail = true;
+
+        return !fail;
+      });
+    }
+
+    return result;
+  };
+
   loadTrips = async (tripFilter?: TripsFilter) => {
     const tripSort = {
       orderByField: 'user_id',
@@ -341,62 +404,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
       };
       res = await loadTripsByFilter(criteria);
       totalCount = res.totalCount;
-      if (tripFilter) {
-        tripResultList = res.results.filter(trip => {
-          let fail = true,
-            userIDFailed = true;
 
-          if (this.props.userId != 0) {
-            if (trip.userId == this.props.userId) {
-              userIDFailed = false;
-            }
-          }
-
-          this.props.perDiemRowIds.forEach(id => {
-            if (trip.perDiemRowId == id) {
-              fail = false;
-            }
-          });
-          if (userIDFailed && this.props.userId != 0) fail = true;
-          if (this.props.role == 'Manager' && trip.approved) fail = true;
-          if (
-            this.props.role == 'Manager' &&
-            trip.departmentId != this.props.departmentId
-          )
-            fail = true;
-          if (this.props.role == 'Payroll' && trip.payrollProcessed)
-            fail = true;
-          return !fail;
-        });
-      } else {
-        tripResultList = res.results.filter(trip => {
-          let fail = false;
-          let hadId = false;
-          this.props.perDiemRowIds.forEach(id => {
-            if (trip.perDiemRowId == id) {
-              hadId = true;
-            }
-          });
-          if (!hadId) {
-            fail = true;
-          }
-          this.state.tripsOnPage.getResultsList().forEach(t => {
-            if (t.getId() == trip.id) {
-              fail = true;
-            }
-          });
-          if (this.props.role == 'Manager' && trip.approved) fail = true;
-          if (this.props.role == 'Payroll' && trip.payrollProcessed)
-            fail = true;
-          if (
-            this.props.role == 'Manager' &&
-            trip.departmentId != this.props.departmentId
-          )
-            fail = true;
-
-          return !fail;
-        });
-      }
+      tripResultList = await this.filterResults(res.results, tripFilter);
 
       let trips: Trip[] = [];
       let tripList: Trip[] = [];
