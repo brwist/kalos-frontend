@@ -404,31 +404,32 @@ export class TripSummary extends React.PureComponent<Props, State> {
       sort: tripSort as TripsSort,
     };
 
-    return await new Promise<TripList>(async resolve => {
-      let res: {
-        results: Trip.AsObject[];
-        totalCount: number;
-      };
-      res = await loadTripsByFilter(criteria);
-      const filteredAsObjResultList: Trip.AsObject[] = await this.filterResults(
-        res.results,
-        tripFilter,
-      );
+    return await this.getFilteredTripList(criteria, tripFilter);
+  };
 
-      let tripList: Trip[] = [];
-      for await (const tripAsObj of filteredAsObjResultList) {
-        tripList.push(this.tripAsObjectToTrip(tripAsObj));
-      }
-      const tripsFinalResultList: Trip[] = [...tripList];
+  getFilteredTripList = async (
+    criteria: LoadTripsByFilter,
+    tripFilter: TripsFilter | undefined,
+  ) => {
+    const res: {
+      results: Trip.AsObject[];
+      totalCount: number;
+    } = await loadTripsByFilter(criteria);
+    const filteredAsObjResultList: Trip.AsObject[] = await this.filterResults(
+      res.results,
+      tripFilter,
+    );
 
-      let resultList = new TripList();
-      resultList.setResultsList(tripsFinalResultList);
-      resultList.setTotalCount(res.totalCount);
+    let tripList: Trip[] = [];
+    for await (const tripAsObj of filteredAsObjResultList) {
+      tripList.push(this.tripAsObjectToTrip(tripAsObj));
+    }
+    const tripsFinalResultList: Trip[] = [...tripList];
 
-      resolve(resultList);
-    }).then(result => {
-      return result;
-    });
+    let resultList = new TripList();
+    resultList.setResultsList(tripsFinalResultList);
+    resultList.setTotalCount(res.totalCount);
+    return resultList;
   };
 
   reloadTrips = () => {
