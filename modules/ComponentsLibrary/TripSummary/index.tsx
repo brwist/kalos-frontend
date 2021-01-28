@@ -289,11 +289,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
     trips: Trip.AsObject[],
     isTripFilterPresent: TripsFilter | undefined,
   ) => {
-    let result = null;
-    if (isTripFilterPresent) {
-      result = trips.filter(trip => {
-        let fail = true,
-          userIDFailed = true;
+    return trips.filter(trip => {
+      let fail = !!isTripFilterPresent;
+      let hadId = !!isTripFilterPresent;
+      if (isTripFilterPresent) {
+        let userIDFailed = true;
 
         if (this.props.userId != 0) {
           if (trip.userId == this.props.userId) {
@@ -307,19 +307,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
           }
         });
         if (userIDFailed && this.props.userId != 0) fail = true;
-        if (this.props.role == 'Manager' && trip.approved) fail = true;
         if (
           this.props.role == 'Manager' &&
           trip.departmentId != this.props.departmentId
         )
           fail = true;
-        if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
-        return !fail;
-      });
-    } else {
-      result = trips.filter(trip => {
-        let fail = false;
-        let hadId = false;
+      } else {
         this.props.perDiemRowIds.forEach(id => {
           if (trip.perDiemRowId == id) {
             hadId = true;
@@ -333,19 +326,17 @@ export class TripSummary extends React.PureComponent<Props, State> {
             fail = true;
           }
         });
-        if (this.props.role == 'Manager' && trip.approved) fail = true;
-        if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
+
         if (
           this.props.role == 'Manager' &&
           trip.departmentId != this.props.departmentId
         )
           fail = true;
-
-        return !fail;
-      });
-    }
-
-    return result;
+      }
+      if (this.props.role == 'Manager' && trip.approved) fail = true;
+      if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
+      return !fail;
+    });
   };
 
   tripAsObjectToTrip = (asObj: Trip.AsObject) => {
