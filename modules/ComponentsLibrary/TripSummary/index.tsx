@@ -390,8 +390,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       payrollProcessed = false;
     }
 
-    let totalCount = 0;
-
     const criteria: LoadTripsByFilter = {
       page,
       filter: tripFilter
@@ -407,26 +405,25 @@ export class TripSummary extends React.PureComponent<Props, State> {
     };
 
     return await new Promise<TripList>(async resolve => {
-      let tripResultList: Trip.AsObject[] = [];
       let res: {
         results: Trip.AsObject[];
         totalCount: number;
       };
       res = await loadTripsByFilter(criteria);
-      totalCount = res.totalCount;
+      const filteredAsObjResultList: Trip.AsObject[] = await this.filterResults(
+        res.results,
+        tripFilter,
+      );
 
-      tripResultList = await this.filterResults(res.results, tripFilter);
-
-      let trips: Trip[] = [];
       let tripList: Trip[] = [];
-      for await (const tripAsObj of tripResultList) {
+      for await (const tripAsObj of filteredAsObjResultList) {
         tripList.push(this.tripAsObjectToTrip(tripAsObj));
       }
-      trips.push(...tripList);
+      const tripsFinalResultList: Trip[] = [...tripList];
 
       let resultList = new TripList();
-      resultList.setResultsList(trips);
-      resultList.setTotalCount(totalCount);
+      resultList.setResultsList(tripsFinalResultList);
+      resultList.setTotalCount(res.totalCount);
 
       resolve(resultList);
     }).then(result => {
