@@ -134,6 +134,7 @@ import {
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
 import { TripInfo } from './modules/ComponentsLibrary/TripViewModal';
+import { IntArray } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
@@ -1472,22 +1473,15 @@ export const getRowDatesFromPerDiemTrips = async (trips: Trip[]) => {
     tripIds.push(trip.getPerDiemRowId());
   }
   let res: { date: string; row_id: number }[] = [];
-  for await (const id of tripIds) {
-    try {
-      let pd = new PerDiem();
-      pd.setId(id);
-      const pdr = await PerDiemClientService.Get(pd);
-      const obj = {
-        date: pdr.dateStarted,
-        row_id: id,
-      };
-      if (!res.includes(obj)) res.push(obj);
-    } catch (err: any) {
-      console.error(
-        'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
-        err,
-      );
-    }
+
+  let pds = await PerDiemClientService.BatchGetPerDiemsByIds(tripIds);
+
+  for (const perDiem of pds.getResultsList()) {
+    const obj = {
+      date: perDiem.getDateStarted(),
+      row_id: perDiem.getId(),
+    };
+    res.push(obj);
   }
 
   return res;
