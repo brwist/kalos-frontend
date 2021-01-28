@@ -549,7 +549,7 @@ export const Timesheet: FC<Props> = props => {
             perDiemRowIds={perDiemRowId!}
           />*/}
           <TripSummary
-            key={'key' + perDiemRowId}
+            key={'key' + state.perDiemRowId}
             userId={props.userId}
             loggedUserId={props.userId}
             perDiemRowIds={state.perDiemRowId!}

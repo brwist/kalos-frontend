@@ -21,6 +21,7 @@ import {
 import { OPTION_BLANK, ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 export interface Props {
   loggedUserId: number;
   userId?: number;
@@ -50,36 +51,8 @@ export const TimeOff: FC<Props> = ({
   const [loggedUser, setLoggedUser] = useState<UserType>();
   const [formKey, setFormKey] = useState<number>(0);
   const [error, setError] = useState<string>('');
-  const [data, setData] = useState<TimeoffRequestType>({
-    adminApprovalDatetime: '',
-    adminApprovalUserId: 0,
-    adminComments: '',
-    allDayOff: 0,
-    briefDescription: '',
-    departmentCode: 0,
-    eventId: 0,
-    fieldMaskList: [],
-    id: 0,
-    isActive: 1,
-    isRooRequest: 1,
-    notes: '',
-    pageNumber: 0,
-    referenceNumber: '',
-    requestStatus: 1,
-    requestType: 0,
-    reviewedBy: '',
-    servicesRenderedId: 0,
-    taskEventId: 0,
-    timeFinished: format(new Date(), 'yyyy-MM-dd 23:59'),
-    timeStarted: format(new Date(), 'yyyy-MM-dd 00:00'),
-    userApprovalDatetime: '',
-    userId: userId || loggedUserId,
-    userName: '',
-    adminApprovalUserName: '',
-    dateRangeList: [],
-    dateTargetList: [],
-    requestClass: '',
-  });
+  const emptyTO = new TimeoffRequest();
+  const [data, setData] = useState<TimeoffRequestType>(emptyTO.toObject());
 
   const emailClient = new EmailClient(ENDPOINT);
 
@@ -259,11 +232,11 @@ export const TimeOff: FC<Props> = ({
       onSaveOrDelete(data);
     }
   }, [requestOffId, setSaving, onSaveOrDelete, data]);
-  console.log({ loggedUser }, loggedUser?.isAdmin, loggedUserId !== userId);
+  //console.log({ loggedUser }, loggedUser?.isAdmin, loggedUserId !== userId);
   const isAdmin = loggedUser && loggedUser.isAdmin;
   const disabled = !(data.id && isAdmin);
   const disabledAdmin = disabled || !!data.adminApprovalUserId;
-  console.log({ disabled, disabledAdmin });
+  //console.log({ disabled, disabledAdmin });
   const schema: Schema<TimeoffRequestType> = [
     [
       {
