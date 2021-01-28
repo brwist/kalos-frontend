@@ -78,11 +78,15 @@ const getWeekStart = (
 
 export const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId, week, onClose } = props;
-  const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
-  const [tripsOpen, setTripsOpen] = useState<boolean>(false);
+  //const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
+  //const [tripsOpen, setTripsOpen] = useState<boolean>(false);
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
+    perDiemRowId: null,
+    timeoffOpen: false,
+    tripsOpen: false,
+    timeoffRequestTypes: undefined,
     fetchingTimesheetData: true,
     data: {},
     pendingEntries: false,
@@ -107,11 +111,8 @@ export const Timesheet: FC<Props> = props => {
       receiptsIssueStr: '',
     },
   });
-  const [
-    timeoffRequestTypes,
-    setTimeoffRequestTypes,
-  ] = useState<TimeoffRequestTypes>();
-  const [perDiemRowId, setPerDiemRowId] = useState<number[]>();
+  //imeoffRequestTypes,setTimeoffRequestTypes,] = useState<TimeoffRequestTypes>();
+  //const [perDiemRowId, setPerDiemRowId] = useState<number[]>();
 
   const {
     user,
@@ -154,6 +155,18 @@ export const Timesheet: FC<Props> = props => {
 
   const handleCloseModal = () => {
     dispatch({ type: 'closeEditingModal' });
+  };
+  const setTimeoffOpen = (value: boolean) => {
+    dispatch({ type: 'timeoffOpen', value });
+  };
+  const setTripsOpen = (value: boolean) => {
+    dispatch({ type: 'tripsOpen', value });
+  };
+  const setPerDiemRowId = (value: number[]) => {
+    dispatch({ type: 'perDiemRowId', value });
+  };
+  const setTimeoffRequestTypes = (value: TimeoffRequestTypes) => {
+    dispatch({ type: 'timeoffRequestTypes', value });
   };
 
   const addNewOptions = [
@@ -364,11 +377,11 @@ export const Timesheet: FC<Props> = props => {
     (async () => {
       fetchUsers();
     })();
-    if (!timeoffRequestTypes) {
+    if (!state.timeoffRequestTypes) {
       setTimeoffRequestTypes({});
       fetchTimeoffRequestTypes();
     }
-  }, [timeoffRequestTypes]);
+  }, [state.timeoffRequestTypes]);
 
   const reload = () => {
     dispatch({ type: 'fetchingTimesheetData' });
@@ -424,7 +437,7 @@ export const Timesheet: FC<Props> = props => {
   const isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
   const hasAccess =
     userId === timesheetOwnerId || user.timesheetAdministration || isManager;
-  if (!perDiemRowId) {
+  if (!state.perDiemRowId) {
     getPerDiemRowIds(selectedDate).then(value => {
       if (!value) return;
 
@@ -480,7 +493,7 @@ export const Timesheet: FC<Props> = props => {
                     date={date}
                     data={data[date]}
                     loading={fetchingTimesheetData}
-                    timeoffRequestTypes={timeoffRequestTypes}
+                    timeoffRequestTypes={state.timeoffRequestTypes}
                     loggedUserId={userId}
                   />
                 ))}
@@ -514,7 +527,7 @@ export const Timesheet: FC<Props> = props => {
           handleTimeout={handleTimeout}
         />
       )}
-      {timeoffOpen && (
+      {state.timeoffOpen && (
         <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
           <TimeOff
             loggedUserId={userId}
@@ -527,7 +540,7 @@ export const Timesheet: FC<Props> = props => {
           />
         </Modal>
       )}
-      {tripsOpen && perDiemRowId?.length != 0 && (
+      {state.tripsOpen && state.perDiemRowId?.length != 0 && (
         <Modal open onClose={() => setTripsOpen(false)}>
           {/*<TripInfoTable
             canAddTrips
@@ -538,7 +551,7 @@ export const Timesheet: FC<Props> = props => {
           <TripSummary
             userId={props.userId}
             loggedUserId={props.userId}
-            perDiemRowIds={perDiemRowId!}
+            perDiemRowIds={state.perDiemRowId!}
             canDeleteTrips
             canAddTrips
           ></TripSummary>
