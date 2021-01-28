@@ -274,7 +274,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   componentDidUpdate() {
-    this.handleLoad();
+    this.loadScripts(() => this.handleLoad());
   }
 
   componentDidMount() {
@@ -325,8 +325,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   };
 
   render() {
-    this.loadScripts(() => this.handleLoad());
-
     return (
       <>
         {this.state.validationPopupOpen && (
