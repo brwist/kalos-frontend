@@ -830,6 +830,7 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/common_pb.js': [
     'Empty',
     'Int32',
+    'IntArray',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_pb.js': [
     'Task',
@@ -928,6 +929,7 @@ const NAMED_EXPORTS = {
     'UserList',
     'CardDataList',
     'CardData',
+    'IntArray',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/vendor_order_pb.js': [
     'VendorOrder',
