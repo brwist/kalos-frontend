@@ -273,7 +273,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   refreshNamesAndDates = async () => {
     new Promise(async resolve => {
-      await this.getUserNamesFromIds();
+      this.getUserNamesFromIds();
       let res = await getRowDatesFromPerDiemTrips(
         this.state.tripsOnPage.getResultsList(),
       );
