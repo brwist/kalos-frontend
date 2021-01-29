@@ -55,6 +55,7 @@ import { Button } from '../Button';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
+import { filter } from 'lodash';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -256,10 +257,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.loadTripsAndUpdate();
   }
 
-  getPerDiemsFromIds = async (ids: number[]) => {
-    return await PerDiemClientService.getPerDiemsFromIds(ids);
-  };
-
   getTripDistance = async (origin: string, destination: string) => {
     try {
       await getTripDistance(origin, destination);
@@ -405,7 +402,23 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     let resultList = new TripList();
     resultList.setResultsList(tripsFinalResultList);
-    this.setState({ totalTrips: res.totalCount - this.numFilteredTrips });
+    if (criteria.page == 0) {
+      if (tripsFinalResultList.length < 25) {
+        this.setState({
+          totalTrips:
+            tripsFinalResultList.length < res.totalCount - this.numFilteredTrips
+              ? tripsFinalResultList.length
+              : res.totalCount - this.numFilteredTrips,
+        });
+      } else {
+        this.setState({
+          totalTrips:
+            tripsFinalResultList.length < res.totalCount - this.numFilteredTrips
+              ? res.totalCount - this.numFilteredTrips
+              : tripsFinalResultList.length,
+        });
+      }
+    }
     resultList.setTotalCount(res.totalCount);
     return resultList;
   };
@@ -418,7 +431,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
     await this.loadTrips(tripFilter).then(async result => {
       this.setState({ tripsOnPage: result });
       await this.refreshNamesAndDates();
-      await this.updateTotalMiles();
+      this.setState({
+        totalTripMiles: await this.getTotalTripDistance(),
+      });
     });
   };
 
@@ -480,13 +495,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     });
     return dist;
   };
-  updateTotalMiles = async () => {
-    this.setState({
-      totalTripMiles: await this.getTotalTripDistance(),
-    });
-  };
   deleteTrip = async (trip: Trip) => {
-    console.log('Deleting');
     try {
       await PerDiemClientService.DeleteTrip(trip);
       let trips = this.state.tripsOnPage;
@@ -669,14 +678,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   setPayrollProcessed = async (id: number) => {
     await PerDiemClientService.updateTripPayrollProcessed(id);
-
     this.setPendingProcessPayroll(null);
     this.reloadTrips();
   };
 
   setTripApproved = async (id: number) => {
     await PerDiemClientService.updateTripApproved(id);
-
     this.setPendingApproveTrip(null);
     this.reloadTrips();
   };
@@ -805,7 +812,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     if (this.props.onSaveTrip) this.props.onSaveTrip();
     this.setPendingTripToAdd(null);
-    console.log('Search: ', this.state.search);
     this.reloadTrips();
   };
 
@@ -830,7 +836,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   setStateOfPerDiems = async () => {
     this.setState({
-      perDiems: await this.getPerDiemsFromIds(this.props.perDiemRowIds),
+      perDiems: await PerDiemClientService.getPerDiemsFromIds(
+        this.props.perDiemRowIds,
+      ),
     });
   };
 
