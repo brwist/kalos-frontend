@@ -70,7 +70,7 @@ const getWeekStart = (
   timesheetOwnerId: number,
   week?: string,
 ) => {
-  const today = week ? new Date(week) : new Date();
+  const today = week ? parseISO(week) : new Date();
   return userId === timesheetOwnerId
     ? startOfWeek(today, { weekStartsOn: 6 })
     : startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
