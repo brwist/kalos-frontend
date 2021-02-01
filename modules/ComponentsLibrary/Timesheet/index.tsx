@@ -382,11 +382,11 @@ export const Timesheet: FC<Props> = props => {
     (async () => {
       fetchUsers();
     })();
-    if (!state.timeoffRequestTypes) {
+    if (!timeoffRequestTypes) {
       setTimeoffRequestTypes({});
       fetchTimeoffRequestTypes();
     }
-  }, [state.timeoffRequestTypes]);
+  }, [timeoffRequestTypes]);
 
   const reload = () => {
     dispatch({ type: 'fetchingTimesheetData' });
@@ -442,7 +442,7 @@ export const Timesheet: FC<Props> = props => {
   const isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
   const hasAccess =
     userId === timesheetOwnerId || user.timesheetAdministration || isManager;
-  if (!state.perDiemRowId) {
+  if (!perDiemRowId) {
     getPerDiemRowIds(selectedDate).then(value => {
       if (!value) return;
 
@@ -498,7 +498,7 @@ export const Timesheet: FC<Props> = props => {
                     date={date}
                     data={data[date]}
                     loading={fetchingTimesheetData}
-                    timeoffRequestTypes={state.timeoffRequestTypes}
+                    timeoffRequestTypes={timeoffRequestTypes}
                     loggedUserId={userId}
                   />
                 ))}
@@ -532,7 +532,7 @@ export const Timesheet: FC<Props> = props => {
           handleTimeout={handleTimeout}
         />
       )}
-      {state.timeoffOpen && (
+      {timeoffOpen && (
         <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
           <TimeOff
             loggedUserId={userId}
@@ -545,7 +545,7 @@ export const Timesheet: FC<Props> = props => {
           />
         </Modal>
       )}
-      {state.tripsOpen && state.perDiemRowId?.length != 0 && (
+      {tripsOpen && perDiemRowId?.length != 0 && (
         <Modal open onClose={() => setTripsOpen(false)}>
           {/*<TripInfoTable
             canAddTrips
@@ -554,10 +554,10 @@ export const Timesheet: FC<Props> = props => {
             perDiemRowIds={perDiemRowId!}
           />*/}
           <TripSummary
-            key={'key' + state.perDiemRowId}
+            key={'key' + perDiemRowId}
             userId={props.userId}
             loggedUserId={props.userId}
-            perDiemRowIds={state.perDiemRowId!}
+            perDiemRowIds={perDiemRowId!}
             canDeleteTrips
             canAddTrips
             perDiemSelectorDropdown
