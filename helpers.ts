@@ -1549,7 +1549,6 @@ export const loadPerDiemsNeedsAuditing = async (
   req.setFieldMaskList([
     'NeedsAuditing',
     'PayrollProcessed',
-    'WithRows',
     ...(typeof approved === 'boolean' && !approved ? ['ApprovedById'] : []),
   ]);
   req.setWithRows(true);

@@ -75,33 +75,36 @@ export const Payroll: FC<Props> = ({ userID }) => {
     ],
     [],
   );
-  const handleSelectNewWeek = useCallback(async dateString => {
-    let ids: number[] | undefined = [];
-    if (dateString == '-- All --') {
-      ids = (await PerDiemClientService.BatchGet(new pd()))
-        .getResultsList()
-        .filter(perdiem =>
-          filter.employeeId != 0
-            ? perdiem.getUserId() == filter.employeeId
-            : true,
-        )
-        .map(perdiem => {
-          return perdiem.getId();
-        });
-      setLoadedPerDiemIds(ids);
-    } else {
-      let date = new Date(dateString);
-      date.setDate(date.getDate() + 1);
-      let pdList = await getPerDiemRowIds(date);
-      ids = pdList
-        ?.getResultsList()
-        .filter(perdiem =>
-          filter.employeeId != 0 ? perdiem.getUserId() == userID : true,
-        )
-        .map(pd => pd.getId());
-      ids ? setLoadedPerDiemIds(ids) : setLoadedPerDiemIds([]);
-    }
-  }, []);
+  const handleSelectNewWeek = useCallback(
+    async dateString => {
+      let ids: number[] | undefined = [];
+      if (dateString == '-- All --') {
+        ids = (await PerDiemClientService.BatchGet(new pd()))
+          .getResultsList()
+          .filter(perdiem =>
+            filter.employeeId != 0
+              ? perdiem.getUserId() == filter.employeeId
+              : true,
+          )
+          .map(perdiem => {
+            return perdiem.getId();
+          });
+        setLoadedPerDiemIds(ids);
+      } else {
+        let date = new Date(dateString);
+        date.setDate(date.getDate() + 1);
+        let pdList = await getPerDiemRowIds(date);
+        ids = pdList
+          ?.getResultsList()
+          .filter(perdiem =>
+            filter.employeeId != 0 ? perdiem.getUserId() == userID : true,
+          )
+          .map(pd => pd.getId());
+        ids ? setLoadedPerDiemIds(ids) : setLoadedPerDiemIds([]);
+      }
+    },
+    [filter.employeeId, userID],
+  );
   const init = useCallback(async () => {
     const departments = await loadTimesheetDepartments();
     setDepartments(departments);
@@ -110,24 +113,31 @@ export const Payroll: FC<Props> = ({ userID }) => {
     handleSelectNewWeek('-- All --');
     const loggedUser = await UserClientService.loadUserById(userID);
     setLoggedUser(loggedUser);
+    console.log(loggedUser);
     const role = loggedUser.permissionGroupsList.find(p => p.type === 'role');
     if (role) {
       setRole(role.name);
     }
     setInitiated(true);
-  }, [userID]);
+  }, [handleSelectNewWeek, userID]);
+
   useEffect(() => {
     if (!initiated) {
       init();
     }
-  }, [initiated]);
-  let departmentOptions: Option[] = [
-    { label: OPTION_ALL, value: 0 },
-    ...departments.map(el => ({
-      label: getDepartmentName(el),
-      value: el.id,
-    })),
-  ];
+  }, [initiated, init]);
+  const getDepartmentOptions = () => {
+    return [
+      { label: OPTION_ALL, value: 0 },
+      ...departments.map(el => ({
+        label: getDepartmentName(el),
+        value: el.id,
+      })),
+    ];
+  };
+  let departmentOptions: Option[] = useMemo(getDepartmentOptions, [
+    departments,
+  ]);
   if (loggedUser && role === 'Manager') {
     const departments = loggedUser.permissionGroupsList
       .filter(p => p.type === 'department')
@@ -152,7 +162,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
         setFilter({ ...filter, departmentId: +departmentOptions[0].value });
       }
     }
-  }, [initiatedRole, role, filter]);
+  }, [departmentOptions, filter, initiatedRole, role]);
   const SCHEMA: Schema<FilterData> = [
     [
       {
