@@ -30,6 +30,8 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 
+export type RoleType = 'Manager' | 'Payroll' | 'Auditor' | '';
+
 interface Props {
   userID: number;
 }
@@ -65,7 +67,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
 
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [loggedUser, setLoggedUser] = useState<UserType>();
-  const [role, setRole] = useState<string>('');
+  const [role, setRole] = useState<RoleType>('');
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
   const weekOptions = useMemo(
@@ -116,7 +118,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     console.log(loggedUser);
     const role = loggedUser.permissionGroupsList.find(p => p.type === 'role');
     if (role) {
-      setRole(role.name);
+      setRole(role.name as RoleType);
     }
     setInitiated(true);
   }, [handleSelectNewWeek, userID]);
@@ -233,6 +235,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             departmentId={filter.departmentId}
                             employeeId={filter.employeeId}
                             week={filter.week}
+                            type={role}
                           />
                         ),
                       },
@@ -291,6 +294,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             employeeId={filter.employeeId}
                             week={filter.week}
                             loggedUserId={userID}
+                            role={role}
                           />
                         ),
                       },

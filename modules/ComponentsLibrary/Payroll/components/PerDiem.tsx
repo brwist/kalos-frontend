@@ -24,12 +24,14 @@ import {
   approvePerDiemById,
 } from '../../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
+import { RoleType } from '../index';
 
 interface Props {
   loggedUserId: number;
   departmentId: number;
   employeeId: number;
   week: string;
+  role: RoleType;
 }
 
 type FilterType = {
@@ -68,6 +70,7 @@ export const PerDiem: FC<Props> = ({
   departmentId,
   employeeId,
   week,
+  role,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
@@ -107,15 +110,7 @@ export const PerDiem: FC<Props> = ({
   ]);
   useEffect(() => {
     load();
-  }, [
-    departmentId,
-    employeeId,
-    week,
-    page,
-    filter.approved,
-    filter.needsAuditing,
-    filter.payrollProcessed,
-  ]);
+  }, [load]);
   const handlePerDiemViewedToggle = useCallback(
     (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
@@ -139,7 +134,7 @@ export const PerDiem: FC<Props> = ({
     setPendingApprove(undefined);
     await approvePerDiemById(id, loggedUserId);
     load();
-  }, [pendingApprove, loggedUserId]);
+  }, [load, loggedUserId, pendingApprove]);
   const handleAudit = useCallback(async () => {
     if (pendingAudited) {
       const { id } = pendingAudited;
@@ -148,7 +143,7 @@ export const PerDiem: FC<Props> = ({
       await PerDiemClientService.updatePerDiemNeedsAudit(id);
       load();
     }
-  }, [pendingAudited, setLoading, setPendingAudited]);
+  }, [load, pendingAudited]);
   const handlePayroll = useCallback(async () => {
     if (pendingPayroll) {
       const { id } = pendingPayroll;
@@ -157,7 +152,7 @@ export const PerDiem: FC<Props> = ({
       await PerDiemClientService.updatePerDiemPayrollProcessed(id);
       load();
     }
-  }, [pendingPayroll, setLoading, setPendingPayroll]);
+  }, [load, pendingPayroll]);
   return (
     <div>
       <PlainForm<FilterType>
@@ -241,36 +236,40 @@ export const PerDiem: FC<Props> = ({
                           </IconButton>
                         </span>
                       </Tooltip>,
-                      <Tooltip
-                        key="audit"
-                        content="Auditing"
-                        placement="bottom"
-                      >
-                        <span>
-                          <IconButton
-                            size="small"
-                            onClick={handlePendingAuditedToggle(el)}
-                            disabled={!el.needsAuditing || !el.approvedById}
-                          >
-                            <FlashOff />
-                          </IconButton>
-                        </span>
-                      </Tooltip>,
-                      <Tooltip
-                        key="payroll"
-                        content="Payroll Process"
-                        placement="bottom"
-                      >
-                        <span>
-                          <IconButton
-                            size="small"
-                            onClick={handlePendingPayrollToggle(el)}
-                            disabled={!!el.payrollProcessed}
-                          >
-                            <AccountBalanceWalletIcon />
-                          </IconButton>
-                        </span>
-                      </Tooltip>,
+                      role === 'Auditor' ? (
+                        <Tooltip
+                          key="audit"
+                          content="Auditing"
+                          placement="bottom"
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingAuditedToggle(el)}
+                              disabled={!el.needsAuditing || !el.approvedById}
+                            >
+                              <FlashOff />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
+                      role === 'Payroll' ? (
+                        <Tooltip
+                          key="payroll"
+                          content="Payroll Process"
+                          placement="bottom"
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingPayrollToggle(el)}
+                              disabled={!!el.payrollProcessed}
+                            >
+                              <AccountBalanceWalletIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
                     ],
                   },
                 ];
