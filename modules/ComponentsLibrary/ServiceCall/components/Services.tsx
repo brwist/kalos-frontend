@@ -187,9 +187,10 @@ export const Services: FC<Props> = ({
 }) => {
   const { isAdmin } = loggedUser;
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
-  const [serviceRenderedForm, setServicesRenderedForm] = useState<
-    ServicesRenderedType
-  >(new ServicesRendered().toObject());
+  const [
+    serviceRenderedForm,
+    setServicesRenderedForm,
+  ] = useState<ServicesRenderedType>(new ServicesRendered().toObject());
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
   const [signatureForm, setSignatureForm] = useState<SignatureType>(
     SIGNATURE_INITIAL,
@@ -397,7 +398,11 @@ export const Services: FC<Props> = ({
   return (
     <>
       {[ON_CALL, ADMIN].includes(lastStatus) && (
-        <QuoteSelector serviceCallId={serviceCallId} onAdd={console.log} />
+        <QuoteSelector
+          serviceCallId={serviceCallId}
+          onAdd={console.log}
+          onAddQuotes={console.log}
+        />
       )}
       {[COMPLETED, INCOMPLETE, ENROUTE].includes(lastStatus) && (
         <QuoteSelector serviceCallId={serviceCallId} />
