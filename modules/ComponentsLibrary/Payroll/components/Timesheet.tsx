@@ -7,7 +7,7 @@ import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
-import { TimesheetLineType, makeFakeRows } from '../../../../helpers';
+import { TimesheetLineType, makeFakeRows, UserType } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
@@ -15,12 +15,14 @@ import {
 } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
+import { PropertyService } from '@kalos-core/kalos-rpc/compiled-protos/property_pb_service';
 
 interface Props {
   departmentId: number;
   employeeId: number;
   week: string;
   type: RoleType;
+  loggedUser: number;
 }
 
 const formatWeek = (date: string) => {
@@ -36,11 +38,13 @@ export const Timesheet: FC<Props> = ({
   employeeId,
   week,
   type,
+  loggedUser,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
+
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,7 +125,7 @@ export const Timesheet: FC<Props> = ({
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <TimesheetComponent
             timesheetOwnerId={pendingView.technicianUserId}
-            userId={pendingView.technicianUserId}
+            userId={loggedUser}
             week={pendingView.timeStarted}
             onClose={handleTogglePendingView(undefined)}
           />

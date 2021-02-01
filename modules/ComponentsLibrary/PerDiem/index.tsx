@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useReducer } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Alert from '@material-ui/lab/Alert';
 import { Alert as AlertPopup } from '../Alert';
@@ -46,8 +46,14 @@ import {
   UserClientService,
   PerDiemClientService,
 } from '../../../helpers';
-import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
+import {
+  JOB_STATUS_COLORS,
+  MEALS_RATE,
+  OPTION_ALL,
+  NULL_TIME,
+} from '../../../constants';
 import './styles.less';
+import { GovPerDiems, reducer, managerPerDiemsOther } from './reducer';
 import { TripInfoTable } from '../TripInfoTable';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
@@ -55,7 +61,6 @@ import { InfoTable, Data } from '../InfoTable';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 
 export interface Props {
   loggedUserId: number;
@@ -187,65 +192,125 @@ export const PerDiemComponent: FC<Props> = ({
   onClose,
   perDiem,
 }) => {
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [initialized, setInitialized] = useState<boolean>(false);
-  const [initializing, setInitializing] = useState<boolean>(false);
-  const [user, setUser] = useState<UserType>();
-  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [managerPerDiems, setManagerPerDiems] = useState<PerDiemType[]>([]);
-  const [checkLodging, setCheckLodging] = useState<boolean>(false);
-  const [managerPerDiemsOther, setManagerPerDiemsOther] = useState<{
-    [key: number]: PerDiemType[];
-  }>({});
-  const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
-    [],
-  );
-  const [
-    managerFilterDepartmentId,
-    setManagerFilterDepartmentId,
-  ] = useState<number>(0);
-  const [govPerDiems, setGovPerDiems] = useState<{
-    [key: string]: {
-      meals: number;
-      lodging: number;
-    };
-  }>({});
-  const [
-    pendingPerDiemSubmit,
-    setPendingPerDiemSubmit,
-  ] = useState<PerDiemType>();
-  const [
-    pendingPerDiemApprove,
-    setPendingPerDiemApprove,
-  ] = useState<PerDiemType>();
-  const [pendingPerDiemEdit, setPendingPerDiemEdit] = useState<PerDiemType>();
-  const [
-    pendingPerDiemDelete,
-    setPendingPerDiemDelete,
-  ] = useState<PerDiemType>();
-  const [
-    pendingPerDiemRowDelete,
-    setPendingPerDiemRowDelete,
-  ] = useState<boolean>(false);
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
-  const [dateStarted, setDateStarted] = useState<Date>(
-    addDays(
+  const [state, dispatch] = useReducer(reducer, {
+    loaded: false,
+    govPerDiems: {},
+    loading: false,
+    saving: false,
+    initializing: false,
+    initialized: false,
+    user: undefined,
+    perDiems: [],
+    managerPerDiems: [],
+    checkLodging: false,
+    managerPerDiemsOther: {},
+    managerDepartmentIds: [],
+    managerFilterDepartmentId: 0,
+    pendingPerDiemSubmit: undefined,
+    pendingPerDiemApprove: undefined,
+    pendingPerDiemDelete: undefined,
+    pendingPerDiemEdit: undefined,
+    pendingPerDiemRowDelete: false,
+    pendingPerDiemRowEdit: undefined,
+    pendingPerDiemEditDuplicated: false,
+    departments: [],
+    dateStarted: addDays(
       startOfWeek(perDiem ? parseISO(perDiem.dateStarted) : new Date(), {
         weekStartsOn: 6,
       }),
       -0,
     ),
-  );
-  const [
-    pendingPerDiemRowEdit,
-    setPendingPerDiemRowEdit,
-  ] = useState<PerDiemRowType>();
-  const [
+  });
+  const setLoaded = (value: boolean) => {
+    dispatch({ type: 'loaded', value });
+  };
+  const setGovPerDiems = (value: GovPerDiems) => {
+    dispatch({ type: 'govPerDiems', value });
+  };
+  const setLoading = (value: boolean) => {
+    dispatch({ type: 'loading', value });
+  };
+  const setSaving = (value: boolean) => {
+    dispatch({ type: 'saving', value });
+  };
+  const setInitialized = (value: boolean) => {
+    dispatch({ type: 'initialized', value });
+  };
+  const setInitializing = (value: boolean) => {
+    dispatch({ type: 'initializing', value });
+  };
+  const setUser = (value: UserType) => {
+    dispatch({ type: 'setUser', value });
+  };
+  const setPerDiems = (value: PerDiemType[]) => {
+    dispatch({ type: 'setPerDiems', value });
+  };
+  const setManagerPerDiems = (value: PerDiemType[]) => {
+    dispatch({ type: 'setManagerPerDiems', value });
+  };
+  const setCheckLodging = (value: boolean) => {
+    dispatch({ type: 'setCheckLodging', value });
+  };
+  const setManagerPerDiemsOther = (value: managerPerDiemsOther) => {
+    dispatch({ type: 'setManagerPerDiemsOther', value });
+  };
+  const setManagerDepartmentIds = (value: number[]) => {
+    dispatch({ type: 'setManagerDepartmentIds', value });
+  };
+  const setManagerFilterDepartmentId = (value: number) => {
+    dispatch({ type: 'setManagerFilterDepartmentId', value });
+  };
+  const setPendingPerDiemApprove = (value: PerDiemType | undefined) => {
+    dispatch({ type: 'setPendingPerDiemApprove', value });
+  };
+  const setPendingPerDiemSubmit = (value: PerDiemType | undefined) => {
+    dispatch({ type: 'setPendingPerDiemSubmit', value });
+  };
+  const setPendingPerDiemDelete = (value: PerDiemType | undefined) => {
+    dispatch({ type: 'setPendingPerDiemDelete', value });
+  };
+  const setPendingPerDiemEdit = (value: PerDiemType | undefined) => {
+    dispatch({ type: 'setPendingPerDiemEdit', value });
+  };
+  const setPendingPerDiemRowDelete = (value: boolean) => {
+    dispatch({ type: 'setPendingPerDiemRowDelete', value });
+  };
+  const setDepartments = (value: TimesheetDepartmentType[]) => {
+    dispatch({ type: 'setDepartments', value });
+  };
+  const setDateStarted = (value: Date) => {
+    dispatch({ type: 'setDateStarted', value });
+  };
+  const setPendingPerDiemRowEdit = (value: PerDiemRowType | undefined) => {
+    dispatch({ type: 'setPendingPerDiemRowEdit', value });
+  };
+  const setPendingPerDiemEditDuplicated = (value: boolean) => {
+    dispatch({ type: 'setPendingPerDiemEditDuplicated', value });
+  };
+  const {
+    loaded,
+    govPerDiems,
+    loading,
+    saving,
+    initialized,
+    initializing,
+    user,
+    perDiems,
+    managerPerDiems,
+    checkLodging,
+    managerPerDiemsOther,
+    managerDepartmentIds,
+    managerFilterDepartmentId,
+    pendingPerDiemApprove,
+    pendingPerDiemDelete,
+    pendingPerDiemSubmit,
+    pendingPerDiemEdit,
+    pendingPerDiemRowDelete,
     pendingPerDiemEditDuplicated,
-    setPendingPerDiemEditDuplicated,
-  ] = useState<boolean>(false);
+    departments,
+    dateStarted,
+    pendingPerDiemRowEdit,
+  } = state;
   const initialize = useCallback(async () => {
     await UserClientService.refreshToken();
     if (perDiem) {
@@ -347,9 +412,10 @@ export const PerDiemComponent: FC<Props> = ({
     (value: Date) => {
       if (formatDateFns(value) === formatDateFns(dateStarted)) return;
       setDateStarted(value);
+
       setLoaded(false);
     },
-    [setDateStarted, setLoaded, dateStarted],
+    [setDateStarted, loaded, setLoaded, dateStarted],
   );
   const handlePendingPerDiemRowEditToggle = useCallback(
     (pendingPerDiemRowEdit?: PerDiemRowType) => () => {
@@ -379,7 +445,7 @@ export const PerDiemComponent: FC<Props> = ({
     [
       setSaving,
       setPendingPerDiemEdit,
-      setLoaded,
+
       setPendingPerDiemEditDuplicated,
       managerPerDiems,
     ],
@@ -392,7 +458,7 @@ export const PerDiemComponent: FC<Props> = ({
       setSaving(false);
       setLoaded(false);
     },
-    [setSaving, setPendingPerDiemRowEdit, setLoaded],
+    [setSaving, setPendingPerDiemRowEdit, loaded, setLoaded],
   );
   const handlePendingPerDiemDeleteToggle = useCallback(
     (pendingPerDiemDelete?: PerDiemType) => () =>
@@ -430,7 +496,7 @@ export const PerDiemComponent: FC<Props> = ({
       setSaving(false);
       setLoaded(false);
     }
-  }, [setSaving, setLoaded, pendingPerDiemSubmit]);
+  }, [setSaving, loaded, setLoaded, pendingPerDiemSubmit]);
   const approvePerDiem = useCallback(async () => {
     if (pendingPerDiemApprove) {
       const { id } = pendingPerDiemApprove;
@@ -440,7 +506,7 @@ export const PerDiemComponent: FC<Props> = ({
       setSaving(false);
       setLoaded(false);
     }
-  }, [setSaving, setLoaded, loggedUserId, pendingPerDiemApprove]);
+  }, [setSaving, loaded, setLoaded, loggedUserId, pendingPerDiemApprove]);
   const handleDeletePerDiem = useCallback(async () => {
     if (pendingPerDiemDelete) {
       const { id } = pendingPerDiemDelete;
@@ -448,7 +514,7 @@ export const PerDiemComponent: FC<Props> = ({
       await PerDiemClientService.deletePerDiemById(id);
       setLoaded(false);
     }
-  }, [pendingPerDiemDelete, setLoaded, setPendingPerDiemDelete]);
+  }, [pendingPerDiemDelete, loaded, setLoaded, setPendingPerDiemDelete]);
   const handleDeletePerDiemRow = useCallback(async () => {
     if (pendingPerDiemRowDelete && pendingPerDiemRowEdit) {
       const { id } = pendingPerDiemRowEdit;
@@ -458,6 +524,7 @@ export const PerDiemComponent: FC<Props> = ({
       setLoaded(false);
     }
   }, [pendingPerDiemRowEdit, pendingPerDiemRowDelete]);
+
   const handleToggleCheckLodging = useCallback(
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
