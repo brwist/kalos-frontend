@@ -177,7 +177,7 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
         {!title && (
           <button
             //@ts-ignore
-            //ref={functionRef}
+            ref={functionRef}
             onClick={handleSave}
             style={{ display: 'none' }}
           >

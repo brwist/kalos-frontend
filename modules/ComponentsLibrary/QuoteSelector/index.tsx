@@ -20,10 +20,16 @@ import { QUOTE_PART_AVAILABILITY } from '../../../constants';
 type QuotePartType = QuotePart.AsObject;
 type QuoteLinePartType = QuoteLinePart.AsObject;
 type QuoteLineType = QuoteLine.AsObject;
+type SelectedQuote = {
+  quotePart: QuotePartType;
+  billable: boolean;
+  quantity: number;
+};
 
 interface Props {
   serviceCallId: number;
   onAdd?: () => void;
+  onAddQuotes?: (quotes: SelectedQuote[]) => void;
 }
 
 const COLUMNS: Columns = [
@@ -42,33 +48,43 @@ const COLUMNS_QUOTABLE: Columns = [
   { name: 'Amount' },
 ];
 
-export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
+export const QuoteSelector: FC<Props> = ({
+  serviceCallId,
+  onAdd,
+  onAddQuotes,
+}) => {
   const [open, setOpen] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [quotable, setQuotable] = useState<QuotableType[]>([]);
   const [quoteParts, setQuoteParts] = useState<QuotePartType[]>([]);
-  const [quoteLineParts, setQuoteLineParts] = useState<QuoteLinePartType[]>([]);
-  const [quoteLines, setQuoteLines] = useState<QuoteLineType[]>([]);
+  // const [quoteLineParts, setQuoteLineParts] = useState<QuoteLinePartType[]>([]);
+  // const [quoteLines, setQuoteLines] = useState<QuoteLineType[]>([]);
   const [selectedQuoteLineIds, setSelectedQuoteLineIds] = useState<number[]>(
     [],
   );
+  const [billable, setBillable] = useState<{
+    [key: number]: {
+      billable: boolean;
+      quantity: number;
+    };
+  }>({});
   const load = useCallback(async () => {
     setLoading(true);
     const [
       quoteParts,
-      quoteLines,
-      quoteLineParts,
+      // quoteLines,
+      // quoteLineParts,
       quotable,
     ] = await Promise.all([
       loadQuoteParts(),
-      loadQuoteLines(),
-      loadQuoteLineParts(),
+      // loadQuoteLines(),
+      // loadQuoteLineParts(),
       EventClientService.loadQuotable(serviceCallId),
     ]);
     setQuoteParts(quoteParts);
-    setQuoteLineParts(quoteLineParts);
-    setQuoteLines(quoteLines);
+    // setQuoteLineParts(quoteLineParts);
+    // setQuoteLines(quoteLines);
     setQuotable(quotable);
     setLoaded(true);
     setLoading(false);
@@ -77,8 +93,8 @@ export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
     setLoading,
     serviceCallId,
     setQuoteParts,
-    setQuoteLineParts,
-    setQuoteLines,
+    // setQuoteLineParts,
+    // setQuoteLines,
     setQuotable,
   ]);
   useEffect(() => {
@@ -89,16 +105,60 @@ export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
   const handleToggleOpen = useCallback(() => setOpen(!open), [open, setOpen]);
   const handleToggleQuoteLineSelect = useCallback(
     (id: number) => (value: Value) => {
-      const ids = [...selectedQuoteLineIds];
       setSelectedQuoteLineIds(
         value
           ? [...selectedQuoteLineIds, id]
           : selectedQuoteLineIds.filter(_id => _id !== id),
       );
+      if (value) {
+        setBillable({
+          ...billable,
+          [id]: {
+            billable: true,
+            quantity: 1,
+          },
+        });
+      }
     },
-    [selectedQuoteLineIds],
+    [selectedQuoteLineIds, billable],
   );
-  console.log({ quotable, quoteParts, quoteLines, quoteLineParts });
+  const handleToggleBillable = useCallback(
+    (id: number) => (value: Value) => {
+      setBillable({
+        ...billable,
+        [id]: {
+          billable: !!value,
+          quantity: billable[id].quantity || 1,
+        },
+      });
+    },
+    [billable],
+  );
+  const handleToggleBillableQuantity = useCallback(
+    (id: number) => (value: Value) => {
+      setBillable({
+        ...billable,
+        [id]: {
+          billable: billable[id].billable,
+          quantity: +value,
+        },
+      });
+    },
+    [billable],
+  );
+  const handleAddQuotes = useCallback(() => {
+    if (onAddQuotes) {
+      onAddQuotes(
+        Object.keys(billable).map(id => ({
+          quotePart: quoteParts.find(q => q.id === +id)!,
+          billable: billable[+id].billable,
+          quantity: billable[+id].quantity,
+        })),
+      );
+      setOpen(false);
+    }
+  }, [billable, quoteParts, onAddQuotes]);
+  // console.log({ quotable, quoteParts, quoteLines, quoteLineParts });
   const data: Data = loading
     ? makeFakeRows(6, 20)
     : quoteParts.map(({ id, description, cost, availability }) => [
@@ -113,9 +173,33 @@ export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
             />
           ),
         },
-        { value: '' },
+        {
+          value: selectedQuoteLineIds.includes(id) ? (
+            <Field
+              name="selectedBillable"
+              type="checkbox"
+              style={{ marginBottom: 0 }}
+              value={billable[id].billable}
+              onChange={handleToggleBillable(id)}
+            />
+          ) : (
+            ''
+          ),
+        },
         { value: description },
-        { value: '' },
+        {
+          value: selectedQuoteLineIds.includes(id) ? (
+            <Field
+              name="selected"
+              type="number"
+              style={{ marginBottom: 0 }}
+              value={billable[id].quantity}
+              onChange={handleToggleBillableQuantity(id)}
+            />
+          ) : (
+            ''
+          ),
+        },
         { value: `$ ${cost}` },
         { value: QUOTE_PART_AVAILABILITY[availability] },
       ]);
@@ -163,7 +247,12 @@ export const QuoteSelector: FC<Props> = ({ serviceCallId, onAdd }) => {
         <Modal open onClose={handleToggleOpen} fullScreen>
           <SectionBar
             title="Select Material(s)"
-            actions={[{ label: 'Close', onClick: handleToggleOpen }]}
+            actions={[
+              ...(onAddQuotes
+                ? [{ label: 'Add Selected', onClick: handleAddQuotes }]
+                : []),
+              { label: 'Close', onClick: handleToggleOpen },
+            ]}
             fixedActions
           />
           <InfoTable
