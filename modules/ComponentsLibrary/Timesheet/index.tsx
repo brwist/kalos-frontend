@@ -218,6 +218,7 @@ export const Timesheet: FC<Props> = props => {
   ];
 
   const handleDateChange = (value: Date) => {
+    console.log({ value });
     dispatch({ type: 'changeDate', value });
   };
 
