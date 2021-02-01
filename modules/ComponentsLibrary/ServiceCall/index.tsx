@@ -340,7 +340,7 @@ export const ServiceCall: FC<Props> = props => {
       { label: 'Business Name', value: businessname },
     ],
     [
-      { label: 'Primary Phone', value: phone },
+      { label: 'Primary Phone', value: phone, href: 'tel' },
       { label: 'Alternate Phone', value: altphone, href: 'tel' },
     ],
     [
