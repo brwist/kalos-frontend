@@ -7,17 +7,20 @@ import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
-import {
-  loadTimesheets,
-  TimesheetLineType,
-  makeFakeRows,
-} from '../../../../helpers';
+import { TimesheetLineType, makeFakeRows } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
+import {
+  TimesheetLine,
+  TimesheetLineClient,
+} from '@kalos-core/kalos-rpc/TimesheetLine';
+import { ENDPOINT, NULL_TIME } from '../../../../constants';
+import { RoleType } from '../index';
 
 interface Props {
   departmentId: number;
   employeeId: number;
   week: string;
+  type: RoleType;
 }
 
 const formatWeek = (date: string) => {
@@ -28,7 +31,12 @@ const formatWeek = (date: string) => {
   )}`;
 };
 
-export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
+export const Timesheet: FC<Props> = ({
+  departmentId,
+  employeeId,
+  week,
+  type,
+}) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
@@ -40,6 +48,7 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
       page,
       departmentId,
       employeeId,
+      type: type,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
@@ -47,14 +56,15 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
-    const { resultsList, totalCount } = await loadTimesheets(filter);
+    const getTimesheets = createTimesheetFetchFunction(filter);
+    const { resultsList, totalCount } = (await getTimesheets()).toObject();
     setTimesheets(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, departmentId, employeeId, week]);
+  }, [page, departmentId, employeeId, week, type]);
   useEffect(() => {
     load();
-  }, [page, departmentId, employeeId, week]);
+  }, [load]);
   const handleTogglePendingView = useCallback(
     (pendingView?: TimesheetLineType) => () => setPendingView(pendingView),
     [],
@@ -120,3 +130,46 @@ export const Timesheet: FC<Props> = ({ departmentId, employeeId, week }) => {
     </div>
   );
 };
+
+interface GetTimesheetConfig {
+  page?: number;
+  departmentID?: number;
+  technicianUserID?: number;
+  startDate?: string;
+  endDate?: string;
+  type: RoleType;
+}
+
+const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
+  const req = new TimesheetLine();
+  req.setPageNumber(config.page || 0);
+  req.setOrderBy('time_started');
+  req.setGroupBy('technician_user_id');
+  req.setIsActive(1);
+  req.setNotEqualsList(['UserApprovalDatetime']);
+  req.setUserApprovalDatetime(NULL_TIME);
+
+  const client = new TimesheetLineClient(ENDPOINT);
+
+  if (config.startDate && config.endDate) {
+    req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
+  }
+  if (config.departmentID) {
+    req.setDepartmentCode(config.departmentID);
+  }
+  if (config.technicianUserID) {
+    req.setTechnicianUserId(config.technicianUserID);
+  }
+
+  if (config.type === 'Payroll') {
+    req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
+  } else if (config.type === 'Manager') {
+    req.setFieldMaskList(['AdminApprovalUserId']);
+  }
+
+  return () => client.BatchGet(req);
+};
+
+const getManagerTimesheets = () => {};
+
+const getPayrollTimesheets = () => {};
