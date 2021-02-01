@@ -55,6 +55,7 @@ import { InfoTable, Data } from '../InfoTable';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
+import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 
 export interface Props {
   loggedUserId: number;
@@ -107,14 +108,14 @@ export const getStatus = (
   text: string;
   color: string;
 } => {
-  if (dateApproved)
+  if (dateApproved != NULL_TIME)
     return {
       status: 'APPROVED',
       button: isManager ? 'Approve' : 'Submit',
       text: 'Approved',
       color: '#' + JOB_STATUS_COLORS['Completed'],
     };
-  if (dateSubmitted)
+  if (dateSubmitted != NULL_TIME)
     return {
       status: 'PENDING_APPROVE',
       button: isManager ? 'Approve' : 'Submit',
@@ -274,15 +275,7 @@ export const PerDiemComponent: FC<Props> = ({
       setInitializing(false);
     }
     setInitialized(true);
-  }, [
-    loggedUserId,
-    setInitializing,
-    setUser,
-    setDepartments,
-    setManagerDepartmentIds,
-    setInitialized,
-    perDiem,
-  ]);
+  }, [dateStarted, loggedUserId, perDiem]);
   const load = useCallback(async () => {
     if (!loggedUserId) return;
     setLoading(true);
@@ -464,12 +457,7 @@ export const PerDiemComponent: FC<Props> = ({
       await deletePerDiemRowById(id);
       setLoaded(false);
     }
-  }, [
-    pendingPerDiemRowDelete,
-    setPendingPerDiemRowDelete,
-    setPendingPerDiemRowEdit,
-    setLoaded,
-  ]);
+  }, [pendingPerDiemRowEdit, pendingPerDiemRowDelete]);
   const handleToggleCheckLodging = useCallback(
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
@@ -789,7 +777,9 @@ export const PerDiemComponent: FC<Props> = ({
                     {+dateApproved[0] > 0 && (
                       <div>Approved Date: {formatDate(dateApproved)}</div>
                     )}
-                    {approvedByName && <div>Approved By: {approvedByName}</div>}
+                    {approvedByName !== '' && (
+                      <div>Approved By: {approvedByName}</div>
+                    )}
                   </>
                 }
                 actions={
@@ -1086,7 +1076,7 @@ export const PerDiemComponent: FC<Props> = ({
                 </>
                   */}
             </Form>
-            <TripInfoTable
+            {/*<TripInfoTable
               canAddTrips
               canDeleteTrips
               perDiemRowIds={[pendingPerDiemRowEdit.perDiemId]}
@@ -1095,7 +1085,7 @@ export const PerDiemComponent: FC<Props> = ({
                 setPendingPerDiemEdit(undefined);
                 load();
               }}
-            />
+            />*/}
           </Modal>
         </>
       )}
