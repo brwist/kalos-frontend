@@ -26,6 +26,7 @@ import {
   getRowDatesFromPerDiemTrips,
   upsertTrip,
   tripAsObjectToTrip,
+  getDepartmentName,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -99,6 +100,13 @@ export const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
       type: 'text',
       name: 'nameOfEmployee',
     },
+    {
+      label: 'Department',
+      type: 'text',
+      name: 'departmentName',
+    },
+  ],
+  [
     {
       label: 'Week Of',
       type: 'text',
@@ -222,8 +230,9 @@ interface State {
   tripToView: Trip | null;
   warningNoPerDiem: boolean; // When there is no per-diem this is true and it displays
   // a dialogue
-  perDiemDropDownSelected: any;
+  perDiemDropDownSelected: string;
   perDiems: PerDiem.AsObject[] | null;
+  department: TimesheetDepartment.AsObject | null;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -253,9 +262,21 @@ export class TripSummary extends React.PureComponent<Props, State> {
       warningNoPerDiem: false,
       perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
       perDiems: null,
+      department: null,
     };
     this.loadTripsAndUpdate();
+    if (this.props.departmentId) {
+      this.getDepartmentName();
+    }
   }
+
+  getDepartmentName = async () => {
+    let req = new TimesheetDepartment();
+    req.setId(this.props.departmentId!);
+    const dept = await TimesheetDepartmentClientService.Get(req);
+
+    this.setState({ department: dept });
+  };
 
   getTripDistance = async (origin: string, destination: string) => {
     try {
@@ -302,6 +323,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           fail = false;
         }
         if (userIDFailed && this.props.userId != 0) fail = true;
+
         if (
           this.props.role == 'Manager' &&
           trip.departmentId != this.props.departmentId
@@ -897,6 +919,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 this.state.tripToView.toObject().userId,
               )!,
               weekOf: '', // Will be filled out but this is to stop the schema from screaming at us
+              departmentName: this.state.department?.value
+                ? this.state.department.value
+                : '',
             }}
             onClose={() => this.setTripToView(null)}
             open={true}
