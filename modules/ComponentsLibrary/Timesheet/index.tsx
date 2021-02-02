@@ -199,7 +199,7 @@ export const Timesheet: FC<Props> = props => {
       name: 'Task',
       url: 'https://app.kalosflorida.com/index.cfm?action=admin:tasks.addtask',
     },
-    /*
+
     {
       icon: <DriveEtaIcon />,
       name: 'Trips',
@@ -207,7 +207,7 @@ export const Timesheet: FC<Props> = props => {
         setTripsOpen(true);
       },
     },
-    */
+
     /*{
         icon: <AssessmentIcon />,
         name: 'Timesheet Weekly Report',
