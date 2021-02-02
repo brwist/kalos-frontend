@@ -78,7 +78,7 @@ export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   ],
 ];
 
-export const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
+const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
   [{ headline: true, label: 'Monetary' }],
   [
     {
@@ -600,6 +600,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
             value: currentTrip.getApproved() ? 'Yes' : 'No',
           },
           {
+            value: currentTrip.getDepartmentId(),
+          },
+          {
             value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',
           },
           {
@@ -734,6 +737,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
             name: 'Approved?',
           },
           {
+            name: 'Department ID',
+          },
+          {
             name: 'Payroll Processed?',
             actions: [
               {
@@ -766,6 +772,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
           },*/
           {
             name: 'Approved?',
+          },
+          {
+            name: 'Department ID',
           },
           {
             name: 'Payroll Processed?',
