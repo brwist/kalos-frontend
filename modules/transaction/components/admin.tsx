@@ -93,7 +93,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       transactions: [],
       filters: {
         statusID: props.isSU ? 8 : 2,
-        yearCreated: `${new Date().getFullYear()}`,
+        yearCreated: '-- All --',
         dateCreated: '0',
         sort: {
           sortBy: 'timestamp',
@@ -326,7 +326,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     }
     if (filters.dateCreated && filters.dateCreated !== '0') {
       obj.setTimestamp(`${filters.yearCreated}-${filters.dateCreated}%`);
-    } else {
+    } else if (filters.yearCreated !== '-- All --') {
       obj.setTimestamp(`${filters.yearCreated}-%`);
     }
     if (filters.statusID) {
@@ -674,7 +674,7 @@ export class TransactionAdminView extends React.Component<props, state> {
             value={this.state.filters.yearCreated}
             label="Filter by Year"
             onChange={val => this.setFilter('yearCreated', val.toString())}
-            options={this.getYearListNew()}
+            options={['-- All --'].concat(this.getYearListNew())}
             compact
             style={{
               display: 'inline-block',

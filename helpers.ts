@@ -135,6 +135,7 @@ import {
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
 import { TripInfo } from './modules/ComponentsLibrary/TripViewModal';
 import { IntArray } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { NULL_TIME } from './constants';
 
 export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
@@ -1555,6 +1556,8 @@ export const loadPerDiemsNeedsAuditing = async (
   req.setPageNumber(page);
   req.setNeedsAuditing(needsAuditing);
   req.setPayrollProcessed(payrollProcessed);
+  req.setNotEqualsList(['DateSubmitted']);
+  req.setDateSubmitted(NULL_TIME);
   if (departmentId) {
     req.setDepartmentId(departmentId);
   }

@@ -451,12 +451,12 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
             perDiem={perDiemViewed}
             loggedUserId={loggedUserId}
           />
-          <TripInfoTable
+          {/*<TripInfoTable
             canAddTrips={false}
             perDiemRowIds={[perDiemViewed.id]}
             loggedUserId={perDiemViewed.userId}
             key={perDiemViewed.id}
-          />
+          />*/}
         </Modal>
       )}
       {printing && (
