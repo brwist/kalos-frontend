@@ -268,12 +268,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
   }
 
   getDepartmentNameById = async (id: number) => {
-    console.log('Was passed : ', id);
     let req = new TimesheetDepartment();
     req.setId(id);
     const dept = await TimesheetDepartmentClientService.Get(req);
-
-    console.log('Dept; ', dept);
 
     this.setState({ department: dept });
   };
@@ -869,7 +866,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   render() {
-    console.log('Statetrip to view:', this.state.tripToView);
     return (
       <>
         {this.state.warningNoPerDiem && (
