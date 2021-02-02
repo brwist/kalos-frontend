@@ -265,17 +265,21 @@ export class TripSummary extends React.PureComponent<Props, State> {
       department: null,
     };
     this.loadTripsAndUpdate();
-    if (this.props.departmentId) {
-      this.getDepartmentName();
-    }
   }
 
-  getDepartmentName = async () => {
+  getDepartmentNameById = async (id: number) => {
+    console.log('Was passed : ', id);
     let req = new TimesheetDepartment();
-    req.setId(this.props.departmentId!);
+    req.setId(id);
     const dept = await TimesheetDepartmentClientService.Get(req);
 
+    console.log('Dept; ', dept);
+
     this.setState({ department: dept });
+  };
+
+  setDepartment = (value: TimesheetDepartment.AsObject | null) => {
+    this.setState({ department: value });
   };
 
   getTripDistance = async (origin: string, destination: string) => {
@@ -865,6 +869,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   render() {
+    console.log('Statetrip to view:', this.state.tripToView);
     return (
       <>
         {this.state.warningNoPerDiem && (
@@ -921,9 +926,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
               weekOf: '', // Will be filled out but this is to stop the schema from screaming at us
               departmentName: this.state.department?.value
                 ? this.state.department.value
-                : '',
+                : this.getDepartmentNameById(
+                    this.state.tripToView.getDepartmentId(),
+                  ) && '',
             }}
-            onClose={() => this.setTripToView(null)}
+            onClose={() => {
+              this.setTripToView(null);
+              this.setDepartment(null);
+            }}
             open={true}
             onApprove={async approved => {
               await this.setTripApproved(approved.id);
