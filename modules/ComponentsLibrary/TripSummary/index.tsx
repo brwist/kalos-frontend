@@ -232,7 +232,7 @@ interface State {
   // a dialogue
   perDiemDropDownSelected: string;
   perDiems: PerDiem.AsObject[] | null;
-  department: TimesheetDepartment.AsObject | null;
+  currentTripDepartment: TimesheetDepartment.AsObject | null;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -262,7 +262,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       warningNoPerDiem: false,
       perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
       perDiems: null,
-      department: null,
+      currentTripDepartment: null,
     };
     this.loadTripsAndUpdate();
   }
@@ -272,11 +272,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
     req.setId(id);
     const dept = await TimesheetDepartmentClientService.Get(req);
 
-    this.setState({ department: dept });
+    this.setState({ currentTripDepartment: dept });
   };
 
   setDepartment = (value: TimesheetDepartment.AsObject | null) => {
-    this.setState({ department: value });
+    this.setState({ currentTripDepartment: value });
   };
 
   getTripDistance = async (origin: string, destination: string) => {
@@ -929,8 +929,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 this.state.tripToView.toObject().userId,
               )!,
               weekOf: '', // Will be filled out but this is to stop the schema from screaming at us
-              departmentName: this.state.department?.value
-                ? this.state.department.value
+              departmentName: this.state.currentTripDepartment?.value
+                ? `${this.state.currentTripDepartment.value} (${this.state.currentTripDepartment.description})`
                 : this.getDepartmentNameById(
                     this.state.tripToView.getDepartmentId(),
                   ) && '',
