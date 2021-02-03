@@ -12,6 +12,7 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Link } from '../../ComponentsLibrary/Link';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import {
   formatTime,
   formatDate,
@@ -38,6 +39,10 @@ interface Props {
   viewedAsCustomer?: boolean;
 }
 
+type ServiceCallFilter = {
+  name: string;
+  briefDescription: string;
+};
 interface State {
   entries: Entry[];
   loading: boolean;
@@ -54,6 +59,7 @@ interface State {
   saving: boolean;
   confirmingAdded: boolean;
   showText?: string;
+  serviceCallFilter: ServiceCallFilter;
 }
 
 export class ServiceCalls extends PureComponent<Props, State> {
@@ -76,6 +82,10 @@ export class ServiceCalls extends PureComponent<Props, State> {
       customerProperties: [],
       saving: false,
       confirmingAdded: false,
+      serviceCallFilter: {
+        name: '',
+        briefDescription: '',
+      },
     };
     this.EventClient = new EventClient(ENDPOINT);
   }
@@ -83,7 +93,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
   load = async () => {
     this.setState({ loading: true });
     const { propertyId, userID, viewedAsCustomer } = this.props;
-    const { dir, orderByDBField, page } = this.state;
+    const { dir, orderByDBField, page, serviceCallFilter } = this.state;
     const entry = new Event();
     const reqCust = new User();
     reqCust.setId(userID);
@@ -95,6 +105,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
     entry.setOrderDir(dir);
     entry.setPageNumber(page);
     entry.setIsActive(1);
+    if (serviceCallFilter.name !== '') {
+      entry.setName(`%${serviceCallFilter.name}%`);
+    }
+    if (serviceCallFilter.briefDescription !== '') {
+      entry.setDescription(`%${serviceCallFilter.briefDescription}%`);
+    }
     try {
       const response = await this.EventClient.BatchGet(entry);
       const { resultsList, totalCount: count } = response.toObject();
@@ -524,6 +540,31 @@ export class ServiceCalls extends PureComponent<Props, State> {
           }}
           fixedActions
         >
+          <PlainForm<ServiceCallFilter>
+            schema={[
+              [
+                {
+                  label: 'Name',
+                  name: 'name',
+                  type: 'search',
+                },
+                {
+                  label: 'Description',
+                  name: 'briefDescription',
+                  type: 'search',
+                  actions: [
+                    {
+                      label: 'Search',
+                      onClick: () => this.load(),
+                    },
+                  ],
+                },
+              ],
+            ]}
+            onChange={serviceCallFilter => this.setState({ serviceCallFilter })}
+            data={this.state.serviceCallFilter}
+            className="ServiceCallsFilter"
+          />
           <InfoTable
             columns={columns}
             data={data}
