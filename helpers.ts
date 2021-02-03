@@ -134,7 +134,6 @@ import {
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
 import { TripInfo } from './modules/ComponentsLibrary/TripViewModal';
-import { IntArray } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import { NULL_TIME } from './constants';
 
 export type UserType = User.AsObject;
@@ -783,6 +782,7 @@ export const loadTimesheets = async ({
       technicianUserID: employeeId,
       startDate,
       endDate,
+      type: 'Payroll', // Added payroll type to get rid of error
     })
   ).toObject();
 
