@@ -40,7 +40,6 @@ import { Confirm } from '../Confirm';
 import { MenuItem, Select, Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
 import {
-  IntArray,
   PermissionGroup,
   User,
 } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
@@ -237,6 +236,7 @@ interface State {
 
 export class TripSummary extends React.PureComponent<Props, State> {
   nameIdPair: { name: string; id: number }[] = [];
+  deptNameIdPair: { name: string; id: number }[] = [];
   dateIdPair: { date: string; row_id: number }[] = [];
   resultsPerPage: number = 25;
   department: TimesheetDepartment.AsObject | null = null;
@@ -294,6 +294,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   refreshNamesAndDates = async () => {
     new Promise(async resolve => {
+      this.getDepartmentNamesFromIds();
       this.getUserNamesFromIds();
       let res = await getRowDatesFromPerDiemTrips(
         this.state.tripsOnPage.getResultsList(),
@@ -471,6 +472,26 @@ export class TripSummary extends React.PureComponent<Props, State> {
     return '-';
   };
 
+  getDepartmentNamesFromIds = async () => {
+    let res: { name: string; id: number }[] = [];
+
+    let arrayInts: number[] = [];
+    this.state.tripsOnPage.getResultsList().forEach(async (trip: Trip) => {
+      arrayInts.push(trip.getDepartmentId());
+    });
+    const depts = await TimesheetDepartmentClientService.BatchGetDepartmentsByIds(
+      arrayInts,
+    );
+    for (const dept of depts.getResultsList()) {
+      res.push({
+        name: dept.getDescription(),
+        id: dept.getId(),
+      });
+    }
+    this.deptNameIdPair = res;
+    return res;
+  };
+
   getUserNamesFromIds = async () => {
     let res: { name: string; id: number }[] = [];
 
@@ -497,6 +518,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     for (const obj of this.nameIdPair) {
       if (obj.id == userId) {
+        return obj.name;
+      }
+    }
+  };
+
+  getDeptById = (Id: number) => {
+    for (const obj of this.deptNameIdPair) {
+      if (obj.id == Id) {
         return obj.name;
       }
     }
@@ -534,7 +563,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       this.setState({ pendingTripToDelete: null });
       return Error(err);
     }
-    console.log('Got done, loading stuffs');
     this.reloadTrips();
     this.setState({ pendingTripToDelete: null });
   };
@@ -600,7 +628,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             value: currentTrip.getApproved() ? 'Yes' : 'No',
           },
           {
-            value: currentTrip.getDepartmentId(),
+            value: this.getDeptById(currentTrip.getDepartmentId()),
           },
           {
             value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',
@@ -986,7 +1014,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   key={
                     this.state.key +
                     String(this.dateIdPair) +
-                    String(this.nameIdPair)
+                    String(this.nameIdPair) +
+                    String(this.deptNameIdPair)
                   }
                   columns={this.getColumns()}
                   data={this.getData()}
