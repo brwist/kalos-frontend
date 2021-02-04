@@ -45,6 +45,19 @@ async function start() {
   }
 }
 
+async function clean() {
+  try {
+    await sh.exec('echo Cleaning cache...');
+    await sh.exec(`rm -r .cache`);
+    if (process.argv[4] === '--Modules') {
+      await sh.exec('echo Reinstalling node modules...');
+      await sh.exec(`yarn install`);
+    }
+  } catch (err) {
+    error(err);
+  }
+}
+
 /**
  * Creates a new local module, module name should be passed as flag
  *
@@ -132,6 +145,8 @@ function log(color: string) {
 }
 
 task(start);
+
+task(clean);
 
 task(create);
 
