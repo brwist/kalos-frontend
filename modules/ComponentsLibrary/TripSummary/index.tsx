@@ -208,7 +208,6 @@ interface Props {
   role?: string;
   departmentId?: number;
   checkboxes?: boolean;
-  perDiemSelectorDropdown?: boolean;
 }
 
 interface State {

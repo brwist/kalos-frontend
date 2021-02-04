@@ -558,9 +558,8 @@ export const Timesheet: FC<Props> = props => {
             userId={props.userId}
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
-            canDeleteTrips
+            canDeleteTrips 
             canAddTrips
-            perDiemSelectorDropdown
           ></TripSummary>
         </Modal>
       )}
