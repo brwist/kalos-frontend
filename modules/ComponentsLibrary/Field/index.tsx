@@ -159,10 +159,8 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
     const signatureRef = useRef(null);
     const dateTimePart =
       type === 'date' ? (props.value + '').substr(11, 8) : '';
-    console.log({ dateTimePart });
     const value =
       type === 'date' ? (props.value + '').substr(0, 10) : props.value;
-    console.log({ value });
     const [technicians, setTechnicians] = useState<UserType[]>([]);
     const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
     const [eventsOpened, setEventsOpened] = useState<boolean>(false);
