@@ -325,11 +325,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
         }
         if (userIDFailed && this.props.userId != 0) fail = true;
 
+        /*
         if (
           this.props.role == 'Manager' &&
           trip.departmentId != this.props.departmentId
         )
           fail = true;
+          */
       } else {
         let hadId = this.props.perDiemRowIds.includes(trip.perDiemRowId);
         if (!hadId) {
@@ -397,6 +399,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             page: this.state.page,
             payrollProcessed: payrollProcessed,
             approved: approved,
+            departmentId: this.props.departmentId,
           },
       sort: tripSort as TripsSort,
     };

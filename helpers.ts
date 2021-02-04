@@ -2492,6 +2492,7 @@ export type TripsFilter = {
   page: number;
   payrollProcessed: boolean;
   approved: boolean;
+  departmentId: number | undefined;
 };
 /**
  * Returns Properties by filter
