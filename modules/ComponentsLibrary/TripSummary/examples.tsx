@@ -68,7 +68,6 @@ export default () => (
       userId={101275}
       loggedUserId={101275}
       canAddTrips
-      perDiemSelectorDropdown
     />
   </>
 );
