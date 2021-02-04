@@ -3,6 +3,8 @@ import { format, addDays } from 'date-fns';
 import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
+import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
+import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
@@ -29,6 +31,14 @@ export const TimeoffRequests: FC<Props> = ({
   week,
   role,
 }) => {
+  const client = new TimeoffRequestClient();
+
+  const makeProcessTimeoffRequest = (id: number) => {
+    return async () => {
+      return await client.processTimeoffRequest(id);
+    };
+  };
+
   const [loading, setLoading] = useState<boolean>(false);
   const [timeoffRequests, setTimeoffRequests] = useState<TimeoffRequestType[]>(
     [],
@@ -59,7 +69,7 @@ export const TimeoffRequests: FC<Props> = ({
   }, [page, departmentId, employeeId, week, role]);
   useEffect(() => {
     load();
-  }, [page, departmentId, employeeId, week, role]);
+  }, [load]);
   const handleTogglePendingView = useCallback(
     (pendingView?: TimeoffRequestType) => () => setPendingView(pendingView),
     [],
@@ -105,6 +115,13 @@ export const TimeoffRequests: FC<Props> = ({
                         size="small"
                       >
                         <Visibility />
+                      </IconButton>,
+                      <IconButton
+                        key="view"
+                        onClick={makeProcessTimeoffRequest(e.id)}
+                        size="small"
+                      >
+                        <AccountBalanceWalletIcon />
                       </IconButton>,
                     ],
                   },

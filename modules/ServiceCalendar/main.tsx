@@ -306,12 +306,13 @@ export const ServiceCalendar: FC<Props> = props => {
     timeoffRequestTypes,
     setTimeoffRequestTypes,
   ] = useState<TimeoffRequestTypes>();
-  const fetchUser = async () => {
+
+  const fetchUser = useCallback(async () => {
     const req = new User();
     req.setId(userId);
     const result = await userClient.Get(req);
     dispatch({ type: 'setUser', value: result });
-  };
+  }, [userId]);
 
   if (defaultView && !viewBy) {
     dispatch({ type: 'viewBy', value: defaultView });
@@ -346,7 +347,7 @@ export const ServiceCalendar: FC<Props> = props => {
       setTimeoffRequestTypes({});
       fetchTimeoffRequestTypes();
     }
-  }, [timeoffRequestTypes]);
+  }, [timeoffRequestTypes, fetchTimeoffRequestTypes, fetchUser]);
 
   useEffect(() => {
     if (shownDates.length) {
@@ -366,12 +367,9 @@ export const ServiceCalendar: FC<Props> = props => {
     dispatch({ type: 'viewBy', value });
   }, []);
 
-  const changeSelectedDate = useCallback(
-    (value: Date): void => {
-      dispatch({ type: 'changeSelectedDate', value });
-    },
-    [viewBy],
-  );
+  const changeSelectedDate = useCallback((value: Date): void => {
+    dispatch({ type: 'changeSelectedDate', value });
+  }, []);
 
   const changeFilters = useCallback((value: Filters): void => {
     dispatch({ type: 'changeFilters', value });
@@ -386,7 +384,7 @@ export const ServiceCalendar: FC<Props> = props => {
       const result = await userClient.Update(req);
       dispatch({ type: 'defaultView', value: result.calendarPref });
     })();
-  }, [viewBy]);
+  }, [viewBy, userId]);
   const addNewOptions = [
     {
       icon: <TimerOffIcon />,

@@ -665,215 +665,237 @@ export const AdvancedSearch: FC<Props> = ({
     employeeFormKey,
     setEmployeeFormKey,
   ]);
-  const searchActions: ActionsProps = [
-    {
-      label: 'Reset',
-      variant: 'outlined',
-      onClick: handleResetSearchForm,
-    },
-    ...(kinds.includes('employees')
-      ? []
-      : [
-          {
-            label: 'Search',
-            onClick: handleLoad,
-          },
-        ]),
-  ];
-  const TYPES: Option[] = [
-    ...(kinds.includes('serviceCalls')
-      ? [{ label: 'Service Calls', value: 'serviceCalls' }]
-      : []),
-    ...(kinds.includes('customers')
-      ? [{ label: 'Customers', value: 'customers' }]
-      : []),
-    ...(kinds.includes('employees')
-      ? [{ label: 'Employees', value: 'employees' }]
-      : []),
-    ...(kinds.includes('properties')
-      ? [{ label: 'Properties', value: 'properties' }]
-      : []),
-    ...(kinds.includes('contracts')
-      ? [{ label: 'Contracts', value: 'contracts' }]
-      : []),
-  ];
-  const SCHEMA_KIND: Schema<SearchForm> = [
-    [
+  const searchActions: ActionsProps = useMemo(
+    () => [
       {
-        name: 'kind',
-        label: 'Search',
-        options: TYPES,
+        label: 'Reset',
+        variant: 'outlined',
+        onClick: handleResetSearchForm,
       },
+      ...(kinds.includes('employees')
+        ? []
+        : [
+            {
+              label: 'Search',
+              onClick: handleLoad,
+            },
+          ]),
     ],
-  ];
-  const SCHEMA_EVENTS: Schema<EventsFilter> = [
-    [
-      {
-        name: 'firstname',
-        label: 'First Name',
-        type: 'search',
-      },
-      {
-        name: 'lastname',
-        label: 'Last Name',
-        type: 'search',
-      },
-      {
-        name: 'businessname',
-        label: 'Business Name',
-        type: 'search',
-      },
+    [handleLoad, handleResetSearchForm, kinds],
+  );
+
+  const TYPES: Option[] = useMemo(
+    () => [
+      ...(kinds.includes('serviceCalls')
+        ? [{ label: 'Service Calls', value: 'serviceCalls' }]
+        : []),
+      ...(kinds.includes('customers')
+        ? [{ label: 'Customers', value: 'customers' }]
+        : []),
+      ...(kinds.includes('employees')
+        ? [{ label: 'Employees', value: 'employees' }]
+        : []),
+      ...(kinds.includes('properties')
+        ? [{ label: 'Properties', value: 'properties' }]
+        : []),
+      ...(kinds.includes('contracts')
+        ? [{ label: 'Contracts', value: 'contracts' }]
+        : []),
     ],
-    [
-      {
-        name: 'logJobNumber',
-        label: 'Job #',
-        type: 'search',
-      },
-      {
-        name: 'logPo',
-        label: 'PO',
-        type: 'search',
-      },
-      {
-        name: 'jobTypeId',
-        label: 'Job Type',
-        options: [
-          { label: OPTION_ALL, value: 0 },
-          ...jobTypes.map(({ id: value, name: label }) => ({ label, value })),
-        ],
-      },
-      {
-        name: 'jobSubtypeId',
-        label: 'Job Subtype',
-        options: [
-          { label: OPTION_ALL, value: 0 },
-          ...jobSubtypes.map(({ id: value, name: label }) => ({
-            label,
-            value,
-          })),
-        ],
-      },
-      {
-        name: 'logJobStatus',
-        label: 'Job Status',
-        options: JOB_STATUS_OPTIONS,
-      },
+    [kinds],
+  );
+
+  const SCHEMA_KIND: Schema<SearchForm> = useMemo(
+    () => [
+      [
+        {
+          name: 'kind',
+          label: 'Search',
+          options: TYPES,
+        },
+      ],
     ],
-    [
-      {
-        name: 'dateStartedFrom',
-        label: 'Date Started - From',
-        type: 'date',
-      },
-      {
-        name: 'dateStartedTo',
-        label: 'Date Started - To',
-        type: 'date',
-      },
-      {
-        name: 'address',
-        label: 'Address',
-        type: 'search',
-      },
-      {
-        name: 'city',
-        label: 'City',
-        type: 'search',
-      },
-      {
-        name: 'zip',
-        label: 'Zip Code',
-        type: 'search',
-        actions: searchActions,
-      },
+    [TYPES],
+  );
+
+  const SCHEMA_EVENTS: Schema<EventsFilter> = useMemo(
+    () => [
+      [
+        {
+          name: 'firstname',
+          label: 'First Name',
+          type: 'search',
+        },
+        {
+          name: 'lastname',
+          label: 'Last Name',
+          type: 'search',
+        },
+        {
+          name: 'businessname',
+          label: 'Business Name',
+          type: 'search',
+        },
+      ],
+      [
+        {
+          name: 'logJobNumber',
+          label: 'Job #',
+          type: 'search',
+        },
+        {
+          name: 'logPo',
+          label: 'PO',
+          type: 'search',
+        },
+        {
+          name: 'jobTypeId',
+          label: 'Job Type',
+          options: [
+            { label: OPTION_ALL, value: 0 },
+            ...jobTypes.map(({ id: value, name: label }) => ({ label, value })),
+          ],
+        },
+        {
+          name: 'jobSubtypeId',
+          label: 'Job Subtype',
+          options: [
+            { label: OPTION_ALL, value: 0 },
+            ...jobSubtypes.map(({ id: value, name: label }) => ({
+              label,
+              value,
+            })),
+          ],
+        },
+        {
+          name: 'logJobStatus',
+          label: 'Job Status',
+          options: JOB_STATUS_OPTIONS,
+        },
+      ],
+      [
+        {
+          name: 'dateStartedFrom',
+          label: 'Date Started - From',
+          type: 'date',
+        },
+        {
+          name: 'dateStartedTo',
+          label: 'Date Started - To',
+          type: 'date',
+        },
+        {
+          name: 'address',
+          label: 'Address',
+          type: 'search',
+        },
+        {
+          name: 'city',
+          label: 'City',
+          type: 'search',
+        },
+        {
+          name: 'zip',
+          label: 'Zip Code',
+          type: 'search',
+          actions: searchActions,
+        },
+      ],
     ],
-  ];
-  const SCHEMA_USERS: Schema<UsersFilter> = [
-    [
-      {
-        name: 'firstname',
-        label: 'First Name',
-        type: 'search',
-      },
-      {
-        name: 'lastname',
-        label: 'Last Name',
-        type: 'search',
-      },
-      {
-        name: 'businessname',
-        label: 'Business Name',
-        type: 'search',
-      },
+    [jobSubtypes, jobTypes, searchActions],
+  );
+  const SCHEMA_USERS: Schema<UsersFilter> = useMemo(
+    () => [
+      [
+        {
+          name: 'firstname',
+          label: 'First Name',
+          type: 'search',
+        },
+        {
+          name: 'lastname',
+          label: 'Last Name',
+          type: 'search',
+        },
+        {
+          name: 'businessname',
+          label: 'Business Name',
+          type: 'search',
+        },
+      ],
+      [
+        {
+          name: 'email',
+          label: 'Email',
+          type: 'search',
+        },
+        {
+          name: 'phone',
+          label: 'Primary Phone',
+          type: 'search',
+          actions: searchActions,
+        },
+      ],
     ],
-    [
-      {
-        name: 'email',
-        label: 'Email',
-        type: 'search',
-      },
-      {
-        name: 'phone',
-        label: 'Primary Phone',
-        type: 'search',
-        actions: searchActions,
-      },
+    [searchActions],
+  );
+  const SCHEMA_EMPLOYEES: Schema<UsersFilter> = useMemo(
+    () => [
+      [
+        {
+          name: 'firstname',
+          label: 'First Name',
+          type: 'search',
+        },
+        {
+          name: 'lastname',
+          label: 'Last Name',
+          type: 'search',
+        },
+        {
+          name: 'employeeDepartmentId',
+          label: 'Department',
+          options: [
+            { label: OPTION_ALL, value: -1 },
+            ...departments.map(({ id, description, value }) => ({
+              label: `${value} - ${description}`,
+              value: id,
+            })),
+          ],
+        },
+        {
+          name: 'empTitle',
+          label: 'Title',
+          type: 'search',
+        },
+      ],
+      [
+        {
+          name: 'email',
+          label: 'Email',
+          type: 'search',
+        },
+        {
+          name: 'cellphone',
+          label: 'Cell',
+          type: 'search',
+        },
+        {
+          name: 'phone',
+          label: 'Office',
+          type: 'search',
+        },
+        {
+          name: 'ext',
+          label: 'Ext.',
+          type: 'search',
+          actions: searchActions,
+        },
+      ],
     ],
-  ];
-  const SCHEMA_EMPLOYEES: Schema<UsersFilter> = [
-    [
-      {
-        name: 'firstname',
-        label: 'First Name',
-        type: 'search',
-      },
-      {
-        name: 'lastname',
-        label: 'Last Name',
-        type: 'search',
-      },
-      {
-        name: 'employeeDepartmentId',
-        label: 'Department',
-        options: [
-          { label: OPTION_ALL, value: -1 },
-          ...departments.map(({ id, description, value }) => ({
-            label: `${value} - ${description}`,
-            value: id,
-          })),
-        ],
-      },
-      {
-        name: 'empTitle',
-        label: 'Title',
-        type: 'search',
-      },
-    ],
-    [
-      {
-        name: 'email',
-        label: 'Email',
-        type: 'search',
-      },
-      {
-        name: 'cellphone',
-        label: 'Cell',
-        type: 'search',
-      },
-      {
-        name: 'phone',
-        label: 'Office',
-        type: 'search',
-      },
-      {
-        name: 'ext',
-        label: 'Ext.',
-        type: 'search',
-        actions: searchActions,
-      },
-    ],
-  ];
+    [departments, searchActions],
+  );
+
   const SCHEMA_EMPLOYEES_VIEW: Schema<UserType> = [
     [
       {
@@ -1263,71 +1285,81 @@ export const AdvancedSearch: FC<Props> = ({
       {},
     ],
   ];
-  const SCHEMA_PROPERTIES: Schema<PropertiesFilter> = [
-    [
-      {
-        name: 'address',
-        label: 'Address',
-        type: 'search',
-      },
-      {
-        name: 'subdivision',
-        label: 'Subdivision',
-        type: 'search',
-      },
-      {
-        name: 'city',
-        label: 'City',
-        type: 'search',
-      },
-      {
-        name: 'zip',
-        label: 'Zip Code',
-        type: 'search',
-        actions: searchActions,
-      },
+  const SCHEMA_PROPERTIES: Schema<PropertiesFilter> = useMemo(
+    () => [
+      [
+        {
+          name: 'address',
+          label: 'Address',
+          type: 'search',
+        },
+        {
+          name: 'subdivision',
+          label: 'Subdivision',
+          type: 'search',
+        },
+        {
+          name: 'city',
+          label: 'City',
+          type: 'search',
+        },
+        {
+          name: 'zip',
+          label: 'Zip Code',
+          type: 'search',
+          actions: searchActions,
+        },
+      ],
     ],
-  ];
-  const SCHEMA_CONTRACTS: Schema<ContractsFilter> = [
-    [
-      {
-        name: 'number',
-        label: 'Contract Number',
-        type: 'search',
-      },
-      {
-        name: 'lastName',
-        label: 'Last Name',
-        type: 'search',
-      },
-      {
-        name: 'businessName',
-        label: 'Business Name',
-        type: 'search',
-      },
+    [searchActions],
+  );
+  const SCHEMA_CONTRACTS: Schema<ContractsFilter> = useMemo(
+    () => [
+      [
+        {
+          name: 'number',
+          label: 'Contract Number',
+          type: 'search',
+        },
+        {
+          name: 'lastName',
+          label: 'Last Name',
+          type: 'search',
+        },
+        {
+          name: 'businessName',
+          label: 'Business Name',
+          type: 'search',
+        },
+      ],
+      [
+        {
+          name: 'dateStarted',
+          label: 'Contract Start Date',
+          type: 'date',
+        },
+        {
+          name: 'dateEnded',
+          label: 'Contract End Date',
+          type: 'date',
+          actions: searchActions,
+        },
+      ],
     ],
-    [
-      {
-        name: 'dateStarted',
-        label: 'Contract Start Date',
-        type: 'date',
-      },
-      {
-        name: 'dateEnded',
-        label: 'Contract End Date',
-        type: 'date',
-        actions: searchActions,
-      },
-    ],
-  ];
+    [searchActions],
+  );
 
-  const makeSchema = (schema: Schema<SearchForm>) => {
-    const kindsAmount = SCHEMA_KIND[0][0].options?.length || 0;
-    if (kindsAmount <= 1) return schema;
-    const clonedSchema = cloneDeep(schema);
-    clonedSchema[0].unshift(SCHEMA_KIND[0][0]);
-    return clonedSchema;
-  };
+  const makeSchema = useCallback(
+    (schema: Schema<SearchForm>) => {
+      const kindsAmount = SCHEMA_KIND[0][0].options?.length || 0;
+      if (kindsAmount <= 1) return schema;
+      const clonedSchema = cloneDeep(schema);
+      clonedSchema[0].unshift(SCHEMA_KIND[0][0]);
+      return clonedSchema;
+    },
+    [SCHEMA_KIND],
+  );
+
   const getSchema = useCallback(() => {
     const { kind } = filter;
     if (kind === 'serviceCalls')
@@ -1341,7 +1373,15 @@ export const AdvancedSearch: FC<Props> = ({
     if (kind === 'contracts')
       return makeSchema(SCHEMA_CONTRACTS as Schema<SearchForm>);
     return [];
-  }, [filter, jobTypes, jobSubtypes]);
+  }, [
+    filter,
+    SCHEMA_EVENTS,
+    SCHEMA_CONTRACTS,
+    SCHEMA_PROPERTIES,
+    SCHEMA_EMPLOYEES,
+    SCHEMA_USERS,
+    makeSchema,
+  ]);
   const getColumns = (kind: Kind): Columns => {
     if (kind === 'serviceCalls')
       return accounting
@@ -2312,6 +2352,10 @@ export const AdvancedSearch: FC<Props> = ({
               } = entry;
               const user = new User();
               user.setId(entry.userId);
+              console.log({ dateStarted, dateEnded });
+              const formattedDS = formatDate(dateStarted);
+              const formattedDE = formatDate(dateEnded);
+              console.log({ formattedDS, formattedDE });
               return [
                 {
                   value: number,

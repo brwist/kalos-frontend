@@ -77,13 +77,7 @@ const Column = ({
         });
       }
     }
-  }, [
-    fetchingCalendarData,
-    datesMap,
-    dayView,
-    autoScrollInitialized,
-    setAutoScrollInitialized,
-  ]);
+  }, [date, autoScrollInitialized, datesMap, dayView, fetchingCalendarData]);
 
   const filterCalls = useCallback(
     (calendarDay: CalendarDay): CallsList => {
@@ -157,7 +151,7 @@ const Column = ({
         },
       );
     },
-    [filters],
+    [isAdmin, userId, filters],
   );
 
   if (fetchingCalendarData || !datesMap?.get(date)) {
