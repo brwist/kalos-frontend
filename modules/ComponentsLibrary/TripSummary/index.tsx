@@ -557,9 +557,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             value:
               currentTrip.getDistanceInMiles().toFixed(1) +
               ' / ' +
-              perDiemTripMilesToUsd(
-                Number(currentTrip.getDistanceInMiles().toFixed(1)),
-              ),
+              perDiemTripMilesToUsd(Number(currentTrip.getDistanceInMiles())),
           },
           /*
           {
