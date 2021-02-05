@@ -103,6 +103,37 @@ function start() {
         });
     });
 }
+function clean() {
+    return __awaiter(this, void 0, void 0, function () {
+        var err_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 6, , 7]);
+                    return [4 /*yield*/, sh.exec('echo Cleaning cache...')];
+                case 1:
+                    _a.sent();
+                    return [4 /*yield*/, sh.exec("rm -r .cache")];
+                case 2:
+                    _a.sent();
+                    if (!(process.argv[4] === '--Modules')) return [3 /*break*/, 5];
+                    return [4 /*yield*/, sh.exec('echo Reinstalling node modules...')];
+                case 3:
+                    _a.sent();
+                    return [4 /*yield*/, sh.exec("yarn install")];
+                case 4:
+                    _a.sent();
+                    _a.label = 5;
+                case 5: return [3 /*break*/, 7];
+                case 6:
+                    err_3 = _a.sent();
+                    error(err_3);
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+}
 /**
  * Creates a new local module, module name should be passed as flag
  *
@@ -225,6 +256,7 @@ function log(color) {
     };
 }
 task(start);
+task(clean);
 task(create);
 function htmlTemplate(title) {
     return ("\n<!DOCTYPE html>\n<html>\n  <head>\n    <title>" + title + "</title>\n  </head>\n  <body>\n    <div id=\"root\"></div>\n    <script src=\"index.tsx\"></script>\n  </body>\n</html>").replace('\n', '');
@@ -287,7 +319,7 @@ function getBranch() {
 }
 function buildRelease() {
     return __awaiter(this, void 0, void 0, function () {
-        var modules, _i, modules_1, m, err_3;
+        var modules, _i, modules_1, m, err_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getModulesList()];
@@ -309,7 +341,7 @@ function buildRelease() {
                     _a.sent();
                     return [3 /*break*/, 7];
                 case 6:
-                    err_3 = _a.sent();
+                    err_4 = _a.sent();
                     warn("failed to build " + m);
                     return [3 /*break*/, 7];
                 case 7:
@@ -322,7 +354,7 @@ function buildRelease() {
 }
 function releaseBuild(target) {
     return __awaiter(this, void 0, void 0, function () {
-        var inputStr, bundle, err_4;
+        var inputStr, bundle, err_5;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -375,7 +407,7 @@ function releaseBuild(target) {
                     _a.sent();
                     return [3 /*break*/, 7];
                 case 4:
-                    err_4 = _a.sent();
+                    err_5 = _a.sent();
                     return [4 /*yield*/, rollup.rollup({
                             input: inputStr,
                             plugins: [
@@ -528,7 +560,7 @@ function checkTests() {
 }
 function buildAll() {
     return __awaiter(this, void 0, void 0, function () {
-        var moduleList, _i, moduleList_1, m, cfName, err_5;
+        var moduleList, _i, moduleList_1, m, cfName, err_6;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getModulesList()];
@@ -557,8 +589,8 @@ function buildAll() {
                     _a.label = 7;
                 case 7: return [3 /*break*/, 9];
                 case 8:
-                    err_5 = _a.sent();
-                    info("Failed to build module: " + m + "\n" + err_5);
+                    err_6 = _a.sent();
+                    info("Failed to build module: " + m + "\n" + err_6);
                     return [3 /*break*/, 9];
                 case 9:
                     _i++;
@@ -622,7 +654,7 @@ function upload(target) {
 }
 function cloneModule() {
     return __awaiter(this, void 0, void 0, function () {
-        var target, err_6;
+        var target, err_7;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -630,7 +662,7 @@ function cloneModule() {
                     target = titleCase(process.argv[4].replace(/-/g, ''));
                     return [3 /*break*/, 3];
                 case 1:
-                    err_6 = _a.sent();
+                    err_7 = _a.sent();
                     return [4 /*yield*/, getBranch()];
                 case 2:
                     target = (_a.sent()).replace(/\n/g, '');

@@ -6,6 +6,7 @@
     "publish-pkg": "npm login && yarn publish --access restricted",
     "build-index": "gulp -LL index",
     "start": "gulp -LL start",
+    "clean": "gulp -LL clean",
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
     "release": "gulp -LL release",
