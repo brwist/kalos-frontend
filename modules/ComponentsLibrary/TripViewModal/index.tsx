@@ -55,6 +55,10 @@ export const TripViewModal: FC<Props> = ({
 
   if (!data.weekOf)
     getRowDatesFromPerDiemTripInfos([data]).then(result => {
+      if (result == null) {
+        console.error("Could not get week to use due to an error in getting the row dates.")
+        return
+      }
       data.weekOf = result[0].date.split(' ')[0];
       setKey(key + '!');
     });
