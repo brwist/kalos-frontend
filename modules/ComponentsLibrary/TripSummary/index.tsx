@@ -706,7 +706,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             name: 'Approved?',
           },
           {
-            name: 'Department ID',
+            name: 'Department Name',
           },
           {
             name: 'Payroll Processed?',
@@ -743,7 +743,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             name: 'Approved?',
           },
           {
-            name: 'Department ID',
+            name: 'Department Name',
           },
           {
             name: 'Payroll Processed?',
