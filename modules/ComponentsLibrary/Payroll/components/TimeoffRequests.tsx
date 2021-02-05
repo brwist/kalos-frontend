@@ -4,19 +4,28 @@ import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
-import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import {
+  TimeoffRequest,
+  TimeoffRequestClient,
+} from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
+import { Tooltip } from '../../Tooltip';
+import FlashOff from '@material-ui/icons/FlashOff';
+import { Confirm } from '../../Confirm';
+
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
 import {
   loadTimeoffRequests,
   TimeoffRequestType,
   makeFakeRows,
   formatWeek,
+  TimeoffRequestClientService,
   GetTimesheetConfig,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
+import { TimeoffRequestServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb_service';
 
 interface Props {
   departmentId: number;
@@ -33,11 +42,11 @@ export const TimeoffRequests: FC<Props> = ({
 }) => {
   const client = new TimeoffRequestClient();
 
-  const makeProcessTimeoffRequest = (id: number) => {
-    return async () => {
-      return await client.processTimeoffRequest(id);
-    };
-  };
+  //const makeProcessTimeoffRequest = (id: number) => {
+  //  return async () => {
+  //    return await client.processTimeoffRequest(id);
+  //  };
+  //};
 
   const [loading, setLoading] = useState<boolean>(false);
   const [timeoffRequests, setTimeoffRequests] = useState<TimeoffRequestType[]>(
@@ -46,6 +55,7 @@ export const TimeoffRequests: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TimeoffRequestType>();
+  const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequestType>();
   const load = useCallback(async () => {
     setLoading(true);
     const filter: GetTimesheetConfig = {
@@ -74,6 +84,26 @@ export const TimeoffRequests: FC<Props> = ({
     (pendingView?: TimeoffRequestType) => () => setPendingView(pendingView),
     [],
   );
+  const handlePendingPayrollToggle = useCallback(
+    (pendingPayroll?: TimeoffRequestType) => () =>
+      setPendingPayroll(pendingPayroll),
+    [setPendingPayroll],
+  );
+  const handlePayroll = useCallback(async () => {
+    if (pendingPayroll) {
+      const { id } = pendingPayroll;
+      console.log(id);
+      setLoading(true);
+      setPendingPayroll(undefined);
+      const req = new TimeoffRequest();
+      req.setId(id);
+      req.setFieldMaskList(['PayrollProcessed']);
+      req.setPayrollProcessed(true);
+      await TimeoffRequestClientService.Update(req);
+      load();
+    }
+  }, [load, pendingPayroll]);
+
   return (
     <div>
       <SectionBar
@@ -89,13 +119,18 @@ export const TimeoffRequests: FC<Props> = ({
         columns={[
           { name: 'Employee' },
           { name: 'Department' },
-          { name: 'Week' },
+          { name: 'Start Date' },
+          { name: 'End Date' },
         ]}
         loading={loading}
         data={
           loading
             ? makeFakeRows(3, 3)
             : timeoffRequests.map(e => {
+                console.log(e.timeStarted);
+                const startDate = new Date(e.timeStarted.replace(' ', 'T'));
+                const endDate = new Date(e.timeFinished.replace(' ', 'T'));
+                console.log(startDate);
                 return [
                   {
                     value: e.userName,
@@ -106,7 +141,11 @@ export const TimeoffRequests: FC<Props> = ({
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: formatWeek(e.timeStarted),
+                    value: format(startDate, 'MMM do, YYY'),
+                    onClick: handleTogglePendingView(e),
+                  },
+                  {
+                    value: format(endDate, 'MMM do, YYY'),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
@@ -116,13 +155,23 @@ export const TimeoffRequests: FC<Props> = ({
                       >
                         <Visibility />
                       </IconButton>,
-                      <IconButton
-                        key="view"
-                        onClick={makeProcessTimeoffRequest(e.id)}
-                        size="small"
-                      >
-                        <AccountBalanceWalletIcon />
-                      </IconButton>,
+                      role === 'Payroll' ? (
+                        <Tooltip
+                          key="payroll"
+                          content="Payroll Process"
+                          placement="bottom"
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingPayrollToggle(e)}
+                              disabled={!!e.payrollProcessed}
+                            >
+                              <AccountBalanceWalletIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
                     ],
                   },
                 ];
@@ -138,6 +187,16 @@ export const TimeoffRequests: FC<Props> = ({
             onClose={handleTogglePendingView(undefined)}
           />
         </Modal>
+      )}
+      {pendingPayroll && (
+        <Confirm
+          title="Confirm Approve"
+          open
+          onClose={handlePendingPayrollToggle()}
+          onConfirm={handlePayroll}
+        >
+          Are you sure, you want to process payroll for this Timeoff Request?
+        </Confirm>
       )}
     </div>
   );
