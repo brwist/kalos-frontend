@@ -748,6 +748,13 @@ export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
   if (config.requestType !== 9) {
     req.setRequestType(config.requestType || 0);
     req.setFieldMaskList(['AdminApprovalUserId']);
+  }
+  if (config.requestType === 9) {
+    req.setFieldMaskList(['PayrollProcessed']);
+    req.setPayrollProcessed(false);
+    req.setNotEqualsList(['AdminApprovalDatetime']);
+    req.setAdminApprovalDatetime('0001-01-01 00:00:00');
+    req.setRequestTypeList('9,10,11');
   } else {
     req.setNotEqualsList(['AdminApprovalDatetime']);
     req.setAdminApprovalDatetime('0001-01-01 00:00:00');
