@@ -22,7 +22,6 @@ import {
   perDiemTripMilesToUsd,
   perDiemTripMilesToUsdAsNumber,
   TimesheetDepartmentClientService,
-  getRowDatesFromPerDiemIds,
   getRowDatesFromPerDiemTrips,
   upsertTrip,
   tripAsObjectToTrip,
