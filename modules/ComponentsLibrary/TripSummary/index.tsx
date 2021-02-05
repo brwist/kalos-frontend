@@ -312,8 +312,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
       orderDir: 'ASC',
     };
 
-    if (tripFilter) tripFilter.role = this.props.role;
-    if (tripFilter) tripFilter.weekof = this.props.perDiemRowIds;
+    if (tripFilter) {
+      tripFilter.role = this.props.role;
+      tripFilter.weekof = this.props.perDiemRowIds;
+      tripFilter.userId = this.props.userId;
+      tripFilter.departmentId = this.props.departmentId;
+    }
 
     this.numFilteredTrips = 0;
 
@@ -324,6 +328,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
           : tripFilter.page
         : 0;
 
+    // These two cases will need certain properties reversed, since we will use not_equals to compare them
+    // (we need to compare if they're true and if they are, then filter them)
     if (this.props.role == 'Payroll' && tripFilter) {
       tripFilter.payrollProcessed = !tripFilter.payrollProcessed;
     }
@@ -384,7 +390,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   reloadTrips = () => {
-    console.log('Reloading trips');
     this.loadTripsAndUpdate(this.state.search);
   };
 
@@ -760,7 +765,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     currentSearch.approved = !!+checkboxFilter.approved;
     currentSearch.page = 0; // Go to page 0 in case it cannot handle larger
     this.setState({ page: 0 });
-    console.log('Loading from setFilter');
     await this.loadTripsAndUpdate(currentSearch);
   };
   setPendingTripToAdd = (trip: Trip | null) => {
