@@ -2490,9 +2490,10 @@ export type TripsFilter = {
   destinationAddress?: string;
   weekof?: number[];
   page: number;
-  payrollProcessed: boolean;
-  approved: boolean;
-  departmentId: number | undefined;
+  payrollProcessed?: boolean;
+  approved?: boolean;
+  departmentId?: number;
+  role?: string;
 };
 /**
  * Returns Properties by filter
@@ -2592,11 +2593,19 @@ export const loadTripsByFilter = async ({
 
     const { methodName } = getRPCFields(fieldName);
 
+    console.log(methodName);
+
     // @ts-ignore
     if (!req[methodName]) continue;
 
     //@ts-ignore
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
+  }
+  console.log('Role is:', filter.role);
+  if (filter.role == 'Manager') {
+    req.setNotEqualsList(['Approved']);
+  } else if (filter.role == 'Payroll') {
+    req.setNotEqualsList(['PayrollProcessed']);
   }
   const response = await PerDiemClientService.BatchGetTrips(req);
   return {
