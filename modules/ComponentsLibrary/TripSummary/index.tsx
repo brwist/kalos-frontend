@@ -222,7 +222,7 @@ interface State {
   totalTripMiles: number;
   key: number;
   loading: boolean;
-  search: Trip.AsObject;
+  search: TripsFilter | undefined;
   page: number;
   filter: CheckboxesFilterType;
   tripToView: Trip | null;
@@ -254,7 +254,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingApproveTrip: null,
       key: 0,
       loading: true,
-      search: new Trip().toObject(),
+      search: undefined,
       page: 0,
       filter: new Checkboxes(),
       tripToView: null,
@@ -314,6 +314,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     };
 
     if (tripFilter) tripFilter.role = this.props.role;
+    if (tripFilter) tripFilter.weekof = this.props.perDiemRowIds;
 
     this.numFilteredTrips = 0;
 
@@ -327,7 +328,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     if (this.props.role == 'Payroll' && tripFilter) {
       tripFilter.payrollProcessed = !tripFilter.payrollProcessed;
     }
-    console.log('Trip filter: ', tripFilter);
     if (this.props.role == 'Manager' && tripFilter) {
       tripFilter.approved = !tripFilter.approved;
       if (tripFilter.departmentId == 0)
@@ -385,10 +385,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   reloadTrips = () => {
+    console.log('Reloading trips');
     this.loadTripsAndUpdate(this.state.search);
   };
 
-  loadTripsAndUpdate = async (tripFilter?: Trip.AsObject) => {
+  loadTripsAndUpdate = async (tripFilter?: TripsFilter) => {
     await this.loadTrips(tripFilter).then(async result => {
       this.setState({ tripsOnPage: result });
       await this.refreshNamesAndDates();
@@ -530,7 +531,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   handleChangePage = (page: number) => {
     this.setState({ page: page });
-    const currentSearch = this.state.search;
+    let currentSearch = this.state.search;
+    if (currentSearch == null) {
+      currentSearch = new Trip().toObject();
+    }
     currentSearch.page = page;
     this.loadTripsAndUpdate(currentSearch);
   };
@@ -751,11 +755,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   setFilter = async (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
-    const currentSearch = this.state.search;
+    let currentSearch = this.state.search;
+    if (currentSearch == undefined) {
+      currentSearch = new Trip().toObject();
+    }
     currentSearch.payrollProcessed = !!+checkboxFilter.payrollProcessed;
     currentSearch.approved = !!+checkboxFilter.approved;
     currentSearch.page = 0; // Go to page 0 in case it cannot handle larger
     this.setState({ page: 0 });
+    console.log('Loading from setFilter');
     await this.loadTripsAndUpdate(currentSearch);
   };
   setPendingTripToAdd = (trip: Trip | null) => {
@@ -1000,7 +1008,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               submitLabel="Search"
               cancelLabel="Reset"
               schema={SCHEMA_TRIP_SEARCH}
-              data={this.state.search}
+              data={this.state.search as Trip.AsObject}
               onClose={() => {
                 this.loadTripsAndUpdate();
               }}

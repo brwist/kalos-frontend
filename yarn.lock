@@ -1252,9 +1252,9 @@
     chalk "^4.0.0"
 
 "@kalos-core/kalos-rpc@^2.47.2":
-  version "2.55.2"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.55.2.tgz#a2a4af82b832e9915db887446472577f39cb9513"
-  integrity sha512-x4tYJUHGh4i/T0fDzcBOrIlYPx+l22D4yzSPrljjmLLlugag+tOE4aoEvgrG1SQjLqj0MTtWC0HQLwOxtuyHbw==
+  version "2.58.0"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.58.0.tgz#edd1ed3b2fd39e5da61bbc2ffd1f2702cc965a3d"
+  integrity sha512-EMZid9cke2R7fEOwpdoNBWxibF1j2Rpk2fASlBu6m7NnuMxZV//eActTIU0kmiJob/0yfG6XS7YZ0FMOTeg2/A==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -3587,9 +3587,9 @@ data-urls@^2.0.0:
     whatwg-url "^8.0.0"
 
 date-fns@^2.6.0:
-  version "2.16.1"
-  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.16.1.tgz#05775792c3f3331da812af253e1a935851d3834b"
-  integrity sha512-sAJVKx/FqrLYHAQeN7VpJrPhagZc9R4ImZIWYRFZaaohR3KzmuK88touwsSwSVT8Qcbd4zoDsnGfX4GFB4imyQ==
+  version "2.17.0"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.17.0.tgz#afa55daea539239db0a64e236ce716ef3d681ba1"
+  integrity sha512-ZEhqxUtEZeGgg9eHNSOAJ8O9xqSgiJdrL0lzSSfMF54x6KXWJiOH/xntSJ9YomJPrYH/p08t6gWjGWq1SDJlSA==
 
 debug@=3.1.0:
   version "3.1.0"

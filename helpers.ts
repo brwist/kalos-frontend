@@ -2600,15 +2600,12 @@ export const loadTripsByFilter = async ({
 
     const { methodName } = getRPCFields(fieldName);
 
-    console.log(methodName);
-
     // @ts-ignore
     if (!req[methodName]) continue;
 
     //@ts-ignore
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
-  console.log('Role is:', filter.role);
   if (filter.role == 'Manager') {
     req.setNotEqualsList(['Approved']);
   } else if (filter.role == 'Payroll') {
