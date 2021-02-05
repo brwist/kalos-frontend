@@ -306,55 +306,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     });
   };
 
-  filterResults = async (
-    trips: Trip.AsObject[],
-    isTripFilterPresent: TripsFilter | undefined,
-  ) => {
-    return trips.filter(trip => {
-      let fail = !!isTripFilterPresent;
-      if (isTripFilterPresent) {
-        let userIDFailed = true;
-
-        if (this.props.userId != 0) {
-          if (trip.userId == this.props.userId) {
-            userIDFailed = false;
-          }
-        }
-        if (this.props.perDiemRowIds.includes(trip.perDiemRowId)) {
-          fail = false;
-        }
-        if (userIDFailed && this.props.userId != 0) fail = true;
-
-        /*
-        if (
-          this.props.role == 'Manager' &&
-          trip.departmentId != this.props.departmentId
-        )
-          fail = true;
-          */
-      } else {
-        let hadId = this.props.perDiemRowIds.includes(trip.perDiemRowId);
-        if (!hadId) {
-          fail = true;
-        }
-        this.state.tripsOnPage.getResultsList().forEach(t => {
-          if (t.getId() == trip.id) {
-            fail = true;
-          }
-        });
-        if (
-          this.props.role == 'Manager' &&
-          trip.departmentId != this.props.departmentId
-        )
-          fail = true;
-      }
-      if (this.props.role == 'Manager' && trip.approved) fail = true;
-      if (this.props.role == 'Payroll' && trip.payrollProcessed) fail = true;
-      if (fail) this.numFilteredTrips++;
-      return !fail;
-    });
-  };
-
   loadTrips = async (tripFilter?: TripsFilter) => {
     const tripSort = {
       orderByField: 'user_id',
@@ -362,12 +313,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
       orderDir: 'ASC',
     };
 
+    if (tripFilter) tripFilter.role = this.props.role;
+
     this.numFilteredTrips = 0;
 
-    if (tripFilter) {
-      tripFilter.payrollProcessed = tripFilter?.payrollProcessed;
-      tripFilter.approved = tripFilter?.approved;
-    }
     const page =
       tripFilter != undefined
         ? tripFilter.page == undefined
@@ -375,18 +324,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
           : tripFilter.page
         : 0;
 
-    let payrollProcessed = false,
-      approved = false;
-
-    if (this.props.role == 'Payroll') {
-      approved = true;
-      if (tripFilter) {
-        tripFilter.approved = true;
-      }
-    } else if (this.props.role == 'Manager') {
-      // Will get department from the user id of the manager
-      // Trips themselves will have a department id on them and the comparison will happen in filter below
-      payrollProcessed = false;
+    if (this.props.role == 'Payroll' && tripFilter) {
+      tripFilter.payrollProcessed = !tripFilter.payrollProcessed;
+    }
+    console.log('Trip filter: ', tripFilter);
+    if (this.props.role == 'Manager' && tripFilter) {
+      tripFilter.approved = !tripFilter.approved;
+      if (tripFilter.departmentId == 0)
+        tripFilter.departmentId = this.props.departmentId;
     }
 
     const criteria: LoadTripsByFilter = {
@@ -397,54 +342,44 @@ export class TripSummary extends React.PureComponent<Props, State> {
             userId: this.props.userId != 0 ? this.props.userId : undefined,
             weekof: this.props.perDiemRowIds,
             page: this.state.page,
-            payrollProcessed: payrollProcessed,
-            approved: approved,
             departmentId: this.props.departmentId,
+            payrollProcessed: tripFilter
+              ? !tripFilter!.payrollProcessed
+              : this.props.role == 'Payroll'
+              ? true
+              : false,
+            approved: tripFilter
+              ? !tripFilter!.approved
+              : this.props.role == 'Manager'
+              ? true
+              : false,
+            role: this.props.role,
           },
       sort: tripSort as TripsSort,
     };
 
-    return await this.getFilteredTripList(criteria, tripFilter);
+    return await this.getFilteredTripList(criteria);
   };
 
-  getFilteredTripList = async (
-    criteria: LoadTripsByFilter,
-    tripFilter: TripsFilter | undefined,
-  ) => {
+  getFilteredTripList = async (criteria: LoadTripsByFilter) => {
     const res: {
       results: Trip.AsObject[];
       totalCount: number;
     } = await loadTripsByFilter(criteria);
-    const filteredAsObjResultList: Trip.AsObject[] = await this.filterResults(
-      res.results,
-      tripFilter,
-    );
 
     let tripList: Trip[] = [];
-    for await (const tripAsObj of filteredAsObjResultList) {
+    for await (const tripAsObj of res.results) {
       tripList.push(tripAsObjectToTrip(tripAsObj));
     }
     const tripsFinalResultList: Trip[] = [...tripList];
 
     let resultList = new TripList();
     resultList.setResultsList(tripsFinalResultList);
-    if (criteria.page == 0) {
-      if (tripsFinalResultList.length < 25) {
-        this.setState({
-          totalTrips:
-            tripsFinalResultList.length < res.totalCount - this.numFilteredTrips
-              ? tripsFinalResultList.length
-              : res.totalCount - this.numFilteredTrips,
-        });
-      } else {
-        this.setState({
-          totalTrips:
-            tripsFinalResultList.length < res.totalCount - this.numFilteredTrips
-              ? res.totalCount - this.numFilteredTrips
-              : tripsFinalResultList.length,
-        });
-      }
-    }
+
+    this.setState({
+      totalTrips: res.totalCount,
+    });
+
     resultList.setTotalCount(res.totalCount);
     return resultList;
   };
