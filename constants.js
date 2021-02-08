@@ -7,7 +7,7 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
     return r;
 };
 exports.__esModule = true;
-exports.NULL_TIME = exports.WEEK_DAYS = exports.MONTHS = exports.RESIDENTIAL_OPTIONS = exports.API_FAILED_GENERAL_ERROR_MSG = exports.ROWS_PER_PAGE = exports.BILLING_TERMS_OPTIONS = exports.USA_STATES_OPTIONS = exports.QUOTE_PART_AVAILABILITY = exports.ENDPOINT = exports.ELEVATION = exports.PROJECT_TASK_STATUS_COLORS = exports.JOB_STATUS_COLORS = exports.SERVICE_STATUSES = exports.COLORS = exports.CHART_COLORS = exports.DUMMY_PWD = exports.DUMMY_USER = exports.PAYMENT_NOT_COLLECTED_LIST = exports.PAYMENT_COLLECTED_LIST = exports.SIGNATURE_PAYMENT_TYPE_LIST = exports.PAYMENT_TYPE_LIST = exports.SPIFF_KIND_TYPE_LIST = exports.NOTIFICATIONS_STATUS_TYPE_LIST = exports.BILLING_STATUS_TYPE_LIST = exports.EVENT_STATUS_LIST = exports.JOB_STATUS_LIST = exports.INTERNAL_DOCUMENTS_BUCKET = exports.PROP_LEVEL = exports.CREDIT_CARD_ACCOUNTS = exports.OPTION_ALL = exports.OPTION_BLANK = exports.BASE_URL = exports.APP_URL = exports.MAX_PAGES = exports.MEALS_RATE = void 0;
+exports.PERMISSION_NAME_MANAGER = exports.PERMISSION_DEPARTMENT = exports.PERMISSION_ROLE = exports.PERMISSION_PRIVILEGE = exports.NULL_TIME = exports.WEEK_DAYS = exports.MONTHS = exports.RESIDENTIAL_OPTIONS = exports.API_FAILED_GENERAL_ERROR_MSG = exports.ROWS_PER_PAGE = exports.BILLING_TERMS_OPTIONS = exports.USA_STATES_OPTIONS = exports.QUOTE_PART_AVAILABILITY = exports.ENDPOINT = exports.ELEVATION = exports.PROJECT_TASK_STATUS_COLORS = exports.JOB_STATUS_COLORS = exports.SERVICE_STATUSES = exports.COLORS = exports.CHART_COLORS = exports.DUMMY_PWD = exports.DUMMY_USER = exports.PAYMENT_NOT_COLLECTED_LIST = exports.PAYMENT_COLLECTED_LIST = exports.SIGNATURE_PAYMENT_TYPE_LIST = exports.PAYMENT_TYPE_LIST = exports.SPIFF_KIND_TYPE_LIST = exports.NOTIFICATIONS_STATUS_TYPE_LIST = exports.BILLING_STATUS_TYPE_LIST = exports.EVENT_STATUS_LIST = exports.JOB_STATUS_LIST = exports.INTERNAL_DOCUMENTS_BUCKET = exports.PROP_LEVEL = exports.CREDIT_CARD_ACCOUNTS = exports.OPTION_ALL = exports.OPTION_BLANK = exports.BASE_URL = exports.APP_URL = exports.MAX_PAGES = exports.MEALS_RATE = void 0;
 exports.MEALS_RATE = 35;
 exports.MAX_PAGES = 20;
 exports.APP_URL = 'https://app.kalosflorida.com/';
@@ -237,6 +237,10 @@ exports.MONTHS = [
 ];
 exports.WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 exports.NULL_TIME = '0001-01-01 00:00:00';
+exports.PERMISSION_PRIVILEGE = 'privilege';
+exports.PERMISSION_ROLE = 'role';
+exports.PERMISSION_DEPARTMENT = 'department';
+exports.PERMISSION_NAME_MANAGER = 'Manager';
 exports["default"] = {
     BASE_URL: exports.BASE_URL,
     EVENT_STATUS_LIST: exports.EVENT_STATUS_LIST,
@@ -258,5 +262,8 @@ exports["default"] = {
     PAYMENT_NOT_COLLECTED_LIST: exports.PAYMENT_NOT_COLLECTED_LIST,
     OPTION_BLANK: exports.OPTION_BLANK,
     CHART_COLORS: exports.CHART_COLORS,
-    MONTHS: exports.MONTHS
+    MONTHS: exports.MONTHS,
+    PERMISSION_PRIVILEGE: exports.PERMISSION_PRIVILEGE,
+    PERMISSION_ROLE: exports.PERMISSION_ROLE,
+    PERMISSION_DEPARTMENT: exports.PERMISSION_DEPARTMENT
 };

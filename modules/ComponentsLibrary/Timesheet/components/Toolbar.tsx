@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import DateFnsUtils from '@date-io/date-fns';
 import MuiToolbar from '@material-ui/core/Toolbar';
 import Box from '@material-ui/core/Box';
@@ -8,9 +8,10 @@ import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { WeekPicker } from '../../WeekPicker';
 import { Button } from '../../Button';
 import { Payroll } from '../reducer';
-import { roundNumber } from '../../../../helpers';
+import { roundNumber, UserClientService, UserType } from '../../../../helpers';
 import { useConfirm } from '../../ConfirmService';
 import './toolbar.less';
+import { RoleType } from '../../Payroll';
 
 type Props = {
   selectedDate: Date;
@@ -22,6 +23,7 @@ type Props = {
   pendingEntries: boolean;
   isTimesheetOwner?: boolean;
   onClose?: () => void;
+  role: string | undefined;
 };
 
 const Toolbar: FC<Props> = ({
@@ -34,6 +36,7 @@ const Toolbar: FC<Props> = ({
   pendingEntries,
   isTimesheetOwner,
   onClose,
+  role,
 }): JSX.Element => {
   const confirm = useConfirm();
 
@@ -98,6 +101,12 @@ const Toolbar: FC<Props> = ({
             )}
           </Box>
           <Button onClick={handleSubmit} label={buttonLabel} />
+          {role == 'Payroll' && (
+            <Button
+              onClick={() => alert('Clicked on process payroll')}
+              label="Process Payroll"
+            />
+          )}
           {onClose && <Button label="Close" onClick={onClose} />}
         </Box>
       </MuiPickersUtilsProvider>
