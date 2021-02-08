@@ -113,12 +113,13 @@ const Toolbar: FC<Props> = ({
             )}
           </Box>
           <Button onClick={handleSubmit} label={buttonLabel} />
-          {role == 'Payroll' && (
-            <Button
-              onClick={() => handleSetPayrollOpen(true)}
-              label="Process Payroll"
-            />
-          )}
+          {role == 'Payroll' ||
+            (role == 'Manager' && (
+              <Button
+                onClick={() => handleSetPayrollOpen(true)}
+                label="Process Payroll"
+              />
+            ))}
           {payrollOpen && (
             <Modal
               open={true}
