@@ -36,6 +36,7 @@ import {
   TimeoffRequestTypes,
   UserClientService,
   getPerDiemRowIds,
+  UserType,
 } from '../../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
@@ -44,6 +45,7 @@ import { TimeOff } from '../TimeOff';
 
 import './styles.less';
 import { TripSummary } from '../TripSummary';
+import { RoleType } from '../Payroll';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -80,6 +82,9 @@ export const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId, week, onClose } = props;
   //const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   //const [tripsOpen, setTripsOpen] = useState<boolean>(false);
+
+  const [role, setRole] = useState<RoleType>();
+
   const [state, dispatch] = useReducer(reducer, {
     user: undefined,
     owner: undefined,
@@ -340,6 +345,10 @@ export const Timesheet: FC<Props> = props => {
 
   const fetchUsers = async () => {
     const userResult = await UserClientService.loadUserById(userId);
+    const role = userResult.permissionGroupsList.find(p => p.type === 'role');
+    if (role) {
+      setRole(role.name as RoleType);
+    }
     const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
     console.log('Our current issue:' + hasIssue);
     if (userId === timesheetOwnerId) {
@@ -480,6 +489,7 @@ export const Timesheet: FC<Props> = props => {
             pendingEntries={pendingEntries}
             isTimesheetOwner={props.userId === props.timesheetOwnerId}
             onClose={onClose}
+            role={role}
           />
           {error && (
             <Alert
@@ -558,7 +568,7 @@ export const Timesheet: FC<Props> = props => {
             userId={props.userId}
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
-            canDeleteTrips 
+            canDeleteTrips
             canAddTrips
           ></TripSummary>
         </Modal>
