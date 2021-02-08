@@ -241,7 +241,6 @@ export class TxnCard extends React.PureComponent<props, state> {
               txn.timestamp,
             );
           }
-          console.log('submitted');
           await this.props.fetchFn();
         }
       }
@@ -373,7 +372,6 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   async onPDFGenerate(fileData: Uint8Array) {
     await this.props.toggleLoading();
-    console.log({ id: this.state.txn.id, time: timestamp() });
     await this.DocsClient.upload(
       this.state.txn.id,
       `${timestamp()}-generated.pdf`,
@@ -524,18 +522,15 @@ export class TxnCard extends React.PureComponent<props, state> {
     const res = this.state.txn.activityLogList.find(a => {
       return a.description.includes('rejected');
     });
-    console.log(res);
     if (res) {
       return res.description.replace('rejected', '');
     }
   };
   render() {
-    console.log(this.state.txn);
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const t = txn;
     const { isManager, userID } = this.props;
     let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
-    console.log(t);
     const deriveCallout = this.deriveCallout(t);
     return (
       <>

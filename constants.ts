@@ -262,6 +262,11 @@ export const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const NULL_TIME = '0001-01-01 00:00:00';
 
+export const PERMISSION_PRIVILEGE = 'privilege';
+export const PERMISSION_ROLE = 'role';
+export const PERMISSION_DEPARTMENT = 'department';
+export const PERMISSION_NAME_MANAGER = 'Manager';
+
 export default {
   BASE_URL,
   EVENT_STATUS_LIST,
@@ -284,4 +289,7 @@ export default {
   OPTION_BLANK,
   CHART_COLORS,
   MONTHS,
+  PERMISSION_PRIVILEGE,
+  PERMISSION_ROLE,
+  PERMISSION_DEPARTMENT,
 };
