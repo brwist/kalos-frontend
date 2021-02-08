@@ -704,6 +704,10 @@ export const SpiffTool: FC<Props> = ({
             label: 'Add',
             onClick: handleSetEditing(makeNewTask()),
           },
+          {
+            label: 'Process Payroll',
+            onClick: () => alert('Clicked on process payroll'),
+          },
           ...(onClose
             ? [
                 {
