@@ -77,7 +77,6 @@ export const CustomerEdit: FC<Props> = ({
     userId,
     setCustomer,
     formKey,
-    formKey,
     setLoading,
     setGroupLinks,
     setGroupLinksInitial,
@@ -175,22 +174,6 @@ export const CustomerEdit: FC<Props> = ({
             },
           ]),
     ],
-    // {label:'Who recommended us?', name:''}, // TODO
-    ...(viewedAsCustomer
-      ? []
-      : ([
-          [{ label: 'Login details', headline: true }],
-          [
-            {
-              label: 'Login',
-              name: 'login',
-              required: true,
-              helperText:
-                'NOTE: If they have an email address, their login ID will automatically be their email address.',
-            },
-            { label: 'Password', name: 'pwd', type: 'password' },
-          ],
-        ] as Schema<UserType>)),
   ];
   const saveGroupLinks = useCallback(
     async (
@@ -241,7 +224,15 @@ export const CustomerEdit: FC<Props> = ({
         onSave(customer);
       }
     },
-    [setSaving, userId, setCustomer, groupLinks, groupLinksInitial],
+    [
+      setSaving,
+      userId,
+      setCustomer,
+      groupLinks,
+      groupLinksInitial,
+      onSave,
+      saveGroupLinks,
+    ],
   );
   const handleChangeLinkGroup = useCallback(
     (groupId: number) => (value: Value) => {

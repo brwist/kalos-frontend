@@ -1029,6 +1029,7 @@ var NAMED_EXPORTS = {
         'PerDiemReportRequest',
         'Trip',
         'TripList',
+        'SQLRequest',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/pdf_pb.js': ['HTML'],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_event_pb.js': [
@@ -1061,6 +1062,7 @@ var NAMED_EXPORTS = {
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_department_pb.js': [
         'TimesheetDepartment',
         'TimesheetDepartmentList',
+        'IntArray',
     ],
     'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_pb.js': [
         'Transaction',

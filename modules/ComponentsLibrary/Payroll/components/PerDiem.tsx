@@ -16,6 +16,7 @@ import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import {
   loadPerDiemsNeedsAuditing,
+  loadPerDiemsForPayroll,
   PerDiemType,
   makeFakeRows,
   formatDate,
@@ -34,36 +35,10 @@ interface Props {
   role: RoleType;
 }
 
-type FilterType = {
-  approved: number;
-  needsAuditing: number;
-  payrollProcessed: number;
-};
-
 const formatWeek = (date: string) => {
   const d = parseISO(date);
   return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
 };
-
-const SCHEMA: Schema<FilterType> = [
-  [
-    {
-      name: 'approved',
-      type: 'checkbox',
-      label: 'Approved',
-    },
-    {
-      name: 'needsAuditing',
-      type: 'checkbox',
-      label: 'Needs Auditing',
-    },
-    {
-      name: 'payrollProcessed',
-      type: 'checkbox',
-      label: 'Payroll Processed',
-    },
-  ],
-];
 
 export const PerDiem: FC<Props> = ({
   loggedUserId,
@@ -80,21 +55,25 @@ export const PerDiem: FC<Props> = ({
   const [pendingApprove, setPendingApprove] = useState<PerDiemType>();
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
   const [pendingPayroll, setPendingPayroll] = useState<PerDiemType>();
-  const [filter, setFilter] = useState<FilterType>({
-    approved: 0,
-    needsAuditing: 0,
-    payrollProcessed: 0,
-  });
+  const [managerFilter, setManagerFilter] = useState<boolean>(
+    role == 'Manager' ? true : false,
+  );
+  const [payrollFilter, setPayrollFilter] = useState<boolean>(
+    role == 'Payroll' ? true : false,
+  );
+  const [auditorFilter, setAuditorFilter] = useState<boolean>(
+    role == 'Auditor' ? true : false,
+  );
   const load = useCallback(async () => {
     setLoading(true);
-    const perDiems = await loadPerDiemsNeedsAuditing(
+    const perDiems = await loadPerDiemsForPayroll(
       page,
-      !!filter.needsAuditing,
-      !!filter.payrollProcessed,
+      auditorFilter,
+      payrollFilter,
+      managerFilter,
       departmentId,
       employeeId,
       week === OPTION_ALL ? undefined : week,
-      !!filter.approved,
     );
     setPerDiems(perDiems.resultsList);
     setCount(perDiems.totalCount);
@@ -104,9 +83,10 @@ export const PerDiem: FC<Props> = ({
     employeeId,
     week,
     page,
-    filter.approved,
-    filter.needsAuditing,
-    filter.payrollProcessed,
+    managerFilter,
+    payrollFilter,
+    auditorFilter,
+    role,
   ]);
   useEffect(() => {
     load();
@@ -155,12 +135,6 @@ export const PerDiem: FC<Props> = ({
   }, [load, pendingPayroll]);
   return (
     <div>
-      <PlainForm<FilterType>
-        schema={SCHEMA}
-        data={filter}
-        onChange={setFilter}
-        className="PayrollFilter"
-      />
       <SectionBar
         title="Per Diems"
         pagination={{
@@ -175,9 +149,10 @@ export const PerDiem: FC<Props> = ({
           { name: 'Employee' },
           { name: 'Department' },
           { name: 'Week' },
-          { name: 'Approved' },
-          { name: 'Needs Auditing' },
-          { name: 'Payroll Processed' },
+          { name: 'Date' },
+          //         { name: 'Approved' },
+          //         { name: 'Needs Auditing' },
+          //          { name: 'Payroll Processed' },
         ]}
         data={
           loading
@@ -201,13 +176,6 @@ export const PerDiem: FC<Props> = ({
                       el.approvedByName
                     }`,
                     onClick: handlePerDiemViewedToggle(el),
-                  },
-                  {
-                    value: el.needsAuditing ? 'Yes' : 'No',
-                  },
-                  {
-                    value: el.payrollProcessed ? 'Yes' : 'No',
-                    onClick: handlePerDiemViewedToggle(el),
                     actions: [
                       <Tooltip
                         key="view"
@@ -221,21 +189,23 @@ export const PerDiem: FC<Props> = ({
                           <Visibility />
                         </IconButton>
                       </Tooltip>,
-                      <Tooltip
-                        key="approve"
-                        content="Approve"
-                        placement="bottom"
-                      >
-                        <span>
-                          <IconButton
-                            size="small"
-                            onClick={handlePendingApproveToggle(el)}
-                            disabled={!!el.approvedById}
-                          >
-                            <CheckCircleOutlineIcon />
-                          </IconButton>
-                        </span>
-                      </Tooltip>,
+                      role === 'Manager' ? (
+                        <Tooltip
+                          key="approve"
+                          content="Approve"
+                          placement="bottom"
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingApproveToggle(el)}
+                              disabled={!!el.approvedById}
+                            >
+                              <CheckCircleOutlineIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
                       role === 'Auditor' ? (
                         <Tooltip
                           key="audit"
@@ -246,7 +216,6 @@ export const PerDiem: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingAuditedToggle(el)}
-                              disabled={!el.needsAuditing || !el.approvedById}
                             >
                               <FlashOff />
                             </IconButton>
