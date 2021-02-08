@@ -11,7 +11,10 @@ import { Payroll } from '../reducer';
 import { roundNumber, UserClientService, UserType } from '../../../../helpers';
 import { useConfirm } from '../../ConfirmService';
 import './toolbar.less';
-import { RoleType } from '../../Payroll';
+import { RoleType, Payroll as PayrollComponent } from '../../Payroll';
+import { Modal } from '../../Modal';
+import { Fullscreen } from '@material-ui/icons';
+import { SectionBar } from '../../SectionBar';
 
 type Props = {
   selectedDate: Date;
@@ -24,6 +27,7 @@ type Props = {
   isTimesheetOwner?: boolean;
   onClose?: () => void;
   role: string | undefined;
+  userId: number;
 };
 
 const Toolbar: FC<Props> = ({
@@ -37,8 +41,16 @@ const Toolbar: FC<Props> = ({
   isTimesheetOwner,
   onClose,
   role,
+  userId: userID,
 }): JSX.Element => {
   const confirm = useConfirm();
+
+  const [payrollOpen, setPayrollOpen] = useState<boolean>();
+
+  const handleSetPayrollOpen = useCallback(
+    (open: boolean) => setPayrollOpen(open),
+    [setPayrollOpen],
+  );
 
   const handleSubmit = () => {
     if (timesheetAdministration && !isTimesheetOwner) {
@@ -103,9 +115,28 @@ const Toolbar: FC<Props> = ({
           <Button onClick={handleSubmit} label={buttonLabel} />
           {role == 'Payroll' && (
             <Button
-              onClick={() => alert('Clicked on process payroll')}
+              onClick={() => handleSetPayrollOpen(true)}
               label="Process Payroll"
             />
+          )}
+          {payrollOpen && (
+            <Modal
+              open={true}
+              onClose={() => handleSetPayrollOpen(false)}
+              fullScreen
+            >
+              <SectionBar
+                title={'Process Payroll'}
+                actions={[
+                  {
+                    label: 'Close',
+                    onClick: () => handleSetPayrollOpen(false),
+                  },
+                ]}
+                fixedActions
+              />
+              <PayrollComponent userID={userID}></PayrollComponent>
+            </Modal>
           )}
           {onClose && <Button label="Close" onClick={onClose} />}
         </Box>
