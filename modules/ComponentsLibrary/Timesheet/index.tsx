@@ -490,6 +490,7 @@ export const Timesheet: FC<Props> = props => {
             isTimesheetOwner={props.userId === props.timesheetOwnerId}
             onClose={onClose}
             role={role}
+            userId={props.userId}
           />
           {error && (
             <Alert
