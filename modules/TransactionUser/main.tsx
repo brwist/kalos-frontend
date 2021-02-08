@@ -7,7 +7,9 @@ import {
   UserClientService,
   TimesheetDepartmentClientService,
 } from '../../helpers';
+import { PERMISSION_NAME_MANAGER } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 interface Props extends PageWrapperProps {
   userID: number;
@@ -20,29 +22,38 @@ const Transaction: FC<Props> = props => {
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<UserType>();
   const [isManager, setIsManager] = useState<boolean>(false);
-  const managerCheck = useCallback(async () => {
-    try {
-      await TimesheetDepartmentClientService.getDepartmentByManagerID(userID);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }, [userID]);
+  const managerCheck = useCallback(
+    async (u: User.AsObject) => {
+      try {
+        await TimesheetDepartmentClientService.getDepartmentByManagerID(userID);
+        return true;
+      } catch (e) {
+        const pg = u.permissionGroupsList.filter(
+          pg => pg.name === PERMISSION_NAME_MANAGER,
+        );
+        if (pg.length > 0) {
+          return true;
+        }
+        return false;
+      }
+    },
+    [userID],
+  );
   const load = useCallback(async () => {
     setLoading(true);
     await UserClientService.refreshToken();
     const user = await UserClientService.loadUserById(userID);
-    const isManager = await managerCheck();
     setUser(user);
+    const isManager = await managerCheck(user);
     setIsManager(isManager);
     setLoading(false);
   }, [setLoading, userID, managerCheck]);
   useEffect(() => {
-    if (!loaded) {
+    if (!loaded || !user) {
       setLoaded(true);
       load();
     }
-  }, [loaded, setLoaded, load]);
+  }, [loaded, setLoaded, load, user]);
   return (
     <PageWrapper {...props}>
       {loading || !user ? (

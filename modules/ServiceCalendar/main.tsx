@@ -23,7 +23,7 @@ import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_re
 import Box from '@material-ui/core/Box';
 import Container from '@material-ui/core/Container';
 import * as jspb from 'google-protobuf';
-import { ENDPOINT } from '../../constants';
+import { ENDPOINT, PERMISSION_PRIVILEGE } from '../../constants';
 import Filter from './components/Filter';
 import Column from './components/Column';
 import { useFetchAll } from '../ComponentsLibrary/hooks';
@@ -416,6 +416,12 @@ export const ServiceCalendar: FC<Props> = props => {
       url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.calls',
     },
   ];
+  const calendarPrivilege = user?.permissionGroupsList
+    .filter(pg => pg.type === PERMISSION_PRIVILEGE)
+    ?.find(privilege => privilege.name === 'FullCalendar');
+  const canSeeFullCalendar =
+    calendarPrivilege !== undefined || !!user?.isAdmin || false;
+
   return (
     <PageWrapper {...props} userID={userId}>
       <CalendarDataContext.Provider
@@ -451,7 +457,7 @@ export const ServiceCalendar: FC<Props> = props => {
                   date={date}
                   viewBy={viewBy}
                   userId={userId}
-                  isAdmin={user?.isAdmin || 0}
+                  isAdmin={canSeeFullCalendar}
                   timeoffRequestTypes={timeoffRequestTypes}
                 />
               ))}
