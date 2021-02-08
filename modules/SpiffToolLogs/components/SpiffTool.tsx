@@ -41,7 +41,7 @@ import {
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
-import { Payroll } from '../../ComponentsLibrary/Payroll';
+import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -113,6 +113,7 @@ export const SpiffTool: FC<Props> = ({
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const [payrollOpen, setPayrollOpen] = useState<boolean>(false);
+  const [role, setRole] = useState<RoleType>();
   const [
     serviceCallEditing,
     setServiceCallEditing,
@@ -136,6 +137,11 @@ export const SpiffTool: FC<Props> = ({
     {},
   );
   const loadLoggedInUser = useCallback(async () => {
+    const userResult = await UserClientService.loadUserById(loggedUserId);
+    const role = userResult.permissionGroupsList.find(p => p.type === 'role');
+    if (role) {
+      setRole(role.name as RoleType);
+    }
     const loggedInUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
     setSearchFormKey(searchFormKey + 1);
@@ -724,24 +730,41 @@ export const SpiffTool: FC<Props> = ({
       )}
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
-        actions={[
-          {
-            label: 'Add',
-            onClick: handleSetEditing(makeNewTask()),
-          },
-          {
-            label: 'Process Payroll',
-            onClick: () => handleSetPayrollOpen(true),
-          },
-          ...(onClose
+        actions={
+          role == 'Manager' || role == 'Payroll'
             ? [
                 {
-                  label: 'Close',
-                  onClick: onClose,
+                  label: 'Add',
+                  onClick: handleSetEditing(makeNewTask()),
                 },
+                {
+                  label: 'Process Payroll',
+                  onClick: () => handleSetPayrollOpen(true),
+                },
+                ...(onClose
+                  ? [
+                      {
+                        label: 'Close',
+                        onClick: onClose,
+                      },
+                    ]
+                  : []),
               ]
-            : []),
-        ]}
+            : [
+                {
+                  label: 'Add',
+                  onClick: handleSetEditing(makeNewTask()),
+                },
+                ...(onClose
+                  ? [
+                      {
+                        label: 'Close',
+                        onClick: onClose,
+                      },
+                    ]
+                  : []),
+              ]
+        }
         fixedActions
         pagination={{
           count,
