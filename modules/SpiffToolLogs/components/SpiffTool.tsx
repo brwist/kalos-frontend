@@ -41,6 +41,7 @@ import {
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
+import { Payroll } from '../../ComponentsLibrary/Payroll';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -111,6 +112,7 @@ export const SpiffTool: FC<Props> = ({
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
+  const [payrollOpen, setPayrollOpen] = useState<boolean>(false);
   const [
     serviceCallEditing,
     setServiceCallEditing,
@@ -193,6 +195,10 @@ export const SpiffTool: FC<Props> = ({
     const technicians = await loadTechnicians();
     setTechnicians(technicians);
   }, [setLoadedTechnicians, setTechnicians]);
+  const handleSetPayrollOpen = useCallback(
+    (open: boolean) => setPayrollOpen(open),
+    [setPayrollOpen],
+  );
   const handleChangePage = useCallback(
     (page: number) => {
       setPage(page);
@@ -697,6 +703,25 @@ export const SpiffTool: FC<Props> = ({
   ];
   return (
     <div>
+      {payrollOpen && (
+        <Modal
+          open={true}
+          onClose={() => handleSetPayrollOpen(false)}
+          fullScreen
+        >
+          <SectionBar
+            title={'Process Payroll'}
+            actions={[
+              {
+                label: 'Close',
+                onClick: () => handleSetPayrollOpen(false),
+              },
+            ]}
+            fixedActions
+          />
+          <Payroll userID={loggedUserId}></Payroll>
+        </Modal>
+      )}
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
         actions={[
@@ -706,7 +731,7 @@ export const SpiffTool: FC<Props> = ({
           },
           {
             label: 'Process Payroll',
-            onClick: () => alert('Clicked on process payroll'),
+            onClick: () => handleSetPayrollOpen(true),
           },
           ...(onClose
             ? [
