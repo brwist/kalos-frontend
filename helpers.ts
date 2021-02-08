@@ -1521,7 +1521,48 @@ export const loadPerDiemByDepartmentIdsAndDateStarted = async (
       return 0;
     });
 };
-
+export const loadPerDiemsForPayroll = async (
+  page: number,
+  needsAuditing: boolean,
+  needsProcessed: boolean,
+  managerApproved?: boolean,
+  departmentId?: number,
+  userId?: number,
+  dateStarted?: string,
+) => {
+  const req = new PerDiem();
+  req.setWithRows(true);
+  req.setPageNumber(page);
+  req.setNotEqualsList(['DateSubmitted']);
+  req.setDateSubmitted(NULL_TIME);
+  if (departmentId) {
+    req.setDepartmentId(departmentId);
+  }
+  if (userId) {
+    req.setUserId(userId);
+  }
+  if (dateStarted) {
+    req.setDateStarted(`${dateStarted}%`);
+  }
+  if (managerApproved) {
+    //fetch unapproved perdiems for the department
+    req.setFieldMaskList(['ApprovedById']);
+    req.setNotEqualsList(['DateSubmitted']);
+  } else if (needsProcessed) {
+    //fetch all peridems that are not currently processed by payroll
+    req.setNotEqualsList(['ApprovedById', 'DateSubmitted']);
+    req.setFieldMaskList(['PayrollProcessed']);
+    req.setPayrollProcessed(false);
+  } else if (needsAuditing) {
+    //fetch perdiems that have no been audited yet
+    req.setNotEqualsList(['ApprovedById', 'DateSubmitted']);
+    req.setFieldMaskList(['NeedsAuditing']);
+    req.setNeedsAuditing(true);
+  }
+  const sql = await PerDiemClientService.getSQL(req, 'BatchGet');
+  console.log(sql);
+  return (await PerDiemClientService.BatchGet(req)).toObject();
+};
 export const loadPerDiemsNeedsAuditing = async (
   page: number,
   needsAuditing: boolean,
@@ -1543,6 +1584,7 @@ export const loadPerDiemsNeedsAuditing = async (
   req.setPayrollProcessed(payrollProcessed);
   req.setNotEqualsList(['DateSubmitted']);
   req.setDateSubmitted(NULL_TIME);
+  req.setIsActive(true);
   if (departmentId) {
     req.setDepartmentId(departmentId);
   }
@@ -1556,6 +1598,8 @@ export const loadPerDiemsNeedsAuditing = async (
     req.setNotEqualsList(['ApprovedById']);
   }
   req.setIsActive(true);
+  const sql = await PerDiemClientService.getSQL(req, 'BatchGet');
+  console.log({ sql });
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 
