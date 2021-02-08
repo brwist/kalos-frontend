@@ -1559,8 +1559,6 @@ export const loadPerDiemsForPayroll = async (
     req.setFieldMaskList(['NeedsAuditing']);
     req.setNeedsAuditing(true);
   }
-  const sql = await PerDiemClientService.getSQL(req, 'BatchGet');
-  console.log(sql);
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 export const loadPerDiemsNeedsAuditing = async (
