@@ -86,7 +86,6 @@ export const PerDiem: FC<Props> = ({
     managerFilter,
     payrollFilter,
     auditorFilter,
-    role,
   ]);
   useEffect(() => {
     load();

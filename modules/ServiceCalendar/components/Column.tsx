@@ -32,7 +32,7 @@ type Props = {
   date: string;
   viewBy?: string;
   userId: number;
-  isAdmin: number;
+  isAdmin: boolean;
   timeoffRequestTypes?: TimeoffRequestTypes;
 };
 
