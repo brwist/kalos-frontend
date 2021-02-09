@@ -165,13 +165,20 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
     req.setTechnicianUserId(config.technicianUserID);
   }
 
+  // page number
+  // is active
+  // not equals list
+  // user approval datetime
+  // dept code
+  // technician user id
+
   if (config.type === 'Payroll') {
     req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
   } else if (config.type === 'Manager') {
     req.setFieldMaskList(['AdminApprovalUserId']);
   }
 
-  return () => client.BatchGet(req);
+  return () => client.BatchGetPayroll(req);
 };
 
 const getManagerTimesheets = () => {};
