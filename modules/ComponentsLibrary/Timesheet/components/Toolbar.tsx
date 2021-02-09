@@ -46,6 +46,9 @@ const Toolbar: FC<Props> = ({
   const confirm = useConfirm();
 
   const [payrollOpen, setPayrollOpen] = useState<boolean>();
+  const [processButtonVisible, setProcessButtonVisible] = useState<boolean>(
+    false,
+  );
 
   const handleSetPayrollOpen = useCallback(
     (open: boolean) => setPayrollOpen(open),
@@ -72,6 +75,11 @@ const Toolbar: FC<Props> = ({
   }
   if (isTimesheetOwner) {
     buttonLabel = submitText;
+  }
+  if (processButtonVisible == false) {
+    if (role == 'Manager' || role == 'Payroll') {
+      setProcessButtonVisible(true);
+    }
   }
   return (
     <MuiToolbar className="TimesheetToolbarBar">
@@ -113,13 +121,12 @@ const Toolbar: FC<Props> = ({
             )}
           </Box>
           <Button onClick={handleSubmit} label={buttonLabel} />
-          {role == 'Payroll' ||
-            (role == 'Manager' && (
-              <Button
-                onClick={() => handleSetPayrollOpen(true)}
-                label="Process Payroll"
-              />
-            ))}
+          {processButtonVisible && (
+            <Button
+              onClick={() => handleSetPayrollOpen(true)}
+              label="Process Payroll"
+            />
+          )}
           {payrollOpen && (
             <Modal
               open={true}
