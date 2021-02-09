@@ -166,11 +166,7 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   }
 
   if (config.type === 'Payroll') {
-    req.setNotEqualsList([
-      'UserApprovalDatetime',
-      'AdminApprovalUserId',
-      'PayrollProcessed',
-    ]);
+    req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
   } else if (config.type === 'Manager') {
     req.setFieldMaskList(['AdminApprovalUserId']);
   }
