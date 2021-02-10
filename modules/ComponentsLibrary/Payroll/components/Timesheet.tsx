@@ -168,22 +168,15 @@ const createTimesheetFetchFunction = (
     req.setTechnicianUserId(config.technicianUserID);
   }
 
-  // page number
-  // is active
-  // not equals list
-  // user approval datetime
-  // dept code
-  // technician user id
-
   if (config.type === 'Payroll') {
     req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
   } else if (config.type === 'Manager') {
     req.setFieldMaskList(['AdminApprovalUserId']);
   }
   if (role == 'Manager') {
-    return () => client.BatchGetManager(req);
+    return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains
   } else {
-    return () => client.BatchGetPayroll(req);
+    return () => client.BatchGetPayroll(req); // Payroll does the same but to a specific Payroll view
   }
 };
 
