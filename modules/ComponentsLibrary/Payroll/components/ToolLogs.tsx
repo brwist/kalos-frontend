@@ -45,7 +45,7 @@ export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
   }, [page, employeeId, week]);
   useEffect(() => {
     load();
-  }, [page, employeeId, week]);
+  }, [page, employeeId, week, load]);
   const handleTogglePendingView = useCallback(
     (pendingView?: TaskType) => () => setPendingView(pendingView),
     [],
@@ -105,6 +105,8 @@ export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
             loggedUserId={pendingView.externalId}
             type="Tool"
             kind="Weekly"
+            needsManagerAction={false}
+            needsPayrollAction={false}
             week={
               pendingView.timeDue
                 ? format(
