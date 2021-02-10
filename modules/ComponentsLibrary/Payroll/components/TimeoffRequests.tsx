@@ -8,10 +8,12 @@ import {
   TimeoffRequest,
   TimeoffRequestClient,
 } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { Tooltip } from '../../Tooltip';
+import { TimeOff } from '../../../ComponentsLibrary/Timeoff';
 import FlashOff from '@material-ui/icons/FlashOff';
 import { Confirm } from '../../Confirm';
 
@@ -32,6 +34,7 @@ interface Props {
   employeeId: number;
   week: string;
   role: string;
+  loggedUserId: number;
 }
 
 export const TimeoffRequests: FC<Props> = ({
@@ -39,6 +42,7 @@ export const TimeoffRequests: FC<Props> = ({
   employeeId,
   week,
   role,
+  loggedUserId,
 }) => {
   const client = new TimeoffRequestClient();
 
@@ -56,6 +60,7 @@ export const TimeoffRequests: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TimeoffRequestType>();
   const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequestType>();
+  const [pendingApproval, setPendingApproval] = useState<TimeoffRequestType>();
   const load = useCallback(async () => {
     setLoading(true);
     const filter: GetTimesheetConfig = {
@@ -80,6 +85,9 @@ export const TimeoffRequests: FC<Props> = ({
   useEffect(() => {
     load();
   }, [load]);
+  const closeApproval = function closeApproval() {
+    setPendingApproval(undefined);
+  };
   const handleTogglePendingView = useCallback(
     (pendingView?: TimeoffRequestType) => () => setPendingView(pendingView),
     [],
@@ -88,6 +96,11 @@ export const TimeoffRequests: FC<Props> = ({
     (pendingPayroll?: TimeoffRequestType) => () =>
       setPendingPayroll(pendingPayroll),
     [setPendingPayroll],
+  );
+  const handlePendingApprovalToggle = useCallback(
+    (pendingApproval?: TimeoffRequestType) => () =>
+      setPendingApproval(pendingApproval),
+    [setPendingApproval],
   );
   const handlePayroll = useCallback(async () => {
     if (pendingPayroll) {
@@ -128,9 +141,9 @@ export const TimeoffRequests: FC<Props> = ({
             ? makeFakeRows(3, 3)
             : timeoffRequests.map(e => {
                 console.log(e.timeStarted);
-                const startDate = new Date(e.timeStarted.replace(' ', 'T'));
-                const endDate = new Date(e.timeFinished.replace(' ', 'T'));
-                console.log(startDate);
+                const startDate = parseISO(e.timeStarted);
+                const endDate = parseISO(e.timeFinished);
+                //console.log(startDate);
                 return [
                   {
                     value: e.userName,
@@ -172,6 +185,22 @@ export const TimeoffRequests: FC<Props> = ({
                           </span>
                         </Tooltip>
                       ) : null,
+                      role === 'Manager' ? (
+                        <Tooltip
+                          key="manager"
+                          content="Approve/Deny Timeoff"
+                          placement="bottom"
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingApprovalToggle(e)}
+                            >
+                              <ThumbsUpDownIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
                     ],
                   },
                 ];
@@ -197,6 +226,18 @@ export const TimeoffRequests: FC<Props> = ({
         >
           Are you sure, you want to process payroll for this Timeoff Request?
         </Confirm>
+      )}
+      {pendingApproval && (
+        <Modal open={!!pendingApproval} onClose={closeApproval}>
+          <TimeOff
+            loggedUserId={loggedUserId}
+            onCancel={closeApproval}
+            onSaveOrDelete={closeApproval}
+            onAdminSubmit={closeApproval}
+            submitDisabled
+            requestOffId={pendingApproval.id}
+          />
+        </Modal>
       )}
     </div>
   );

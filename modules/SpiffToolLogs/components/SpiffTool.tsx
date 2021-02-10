@@ -45,6 +45,7 @@ import {
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
 import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
+import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -182,6 +183,9 @@ export const SpiffTool: FC<Props> = ({
     if (needsPayrollAction) {
       req.setNotEqualsList(['AdminActionId']);
       req.setFieldMaskList(['PayrollProcessed']);
+      const action = new SpiffToolAdminAction();
+      action.setStatus(1);
+      req.setSearchAction(action);
     }
     if (technician) {
       req.setExternalId(technician);
@@ -580,14 +584,18 @@ export const SpiffTool: FC<Props> = ({
         );
         const actions = isAdmin
           ? [
-              <IconButton
-                key={2}
-                size="small"
-                onClick={handleClickAddStatus(entry)}
-                disabled={actionsList[0] && actionsList[0].status === 1}
-              >
-                <ThumbsUpDownIcon />
-              </IconButton>,
+              needsManagerAction ? (
+                <IconButton
+                  key={2}
+                  size="small"
+                  onClick={handleClickAddStatus(entry)}
+                  disabled={actionsList[0] && actionsList[0].status === 1}
+                >
+                  <ThumbsUpDownIcon />
+                </IconButton>
+              ) : (
+                <React.Fragment />
+              ),
               <IconButton
                 key={0}
                 size="small"
@@ -595,14 +603,17 @@ export const SpiffTool: FC<Props> = ({
               >
                 <EditIcon />
               </IconButton>,
-              <IconButton
-                key={3}
-                size="small"
-                disabled={needsPayrollAction ? false : true}
-                onClick={handlePendingPayrollToggle(entry)}
-              >
-                <AccountBalanceWalletIcon />
-              </IconButton>,
+              needsPayrollAction ? (
+                <IconButton
+                  key={3}
+                  size="small"
+                  onClick={handlePendingPayrollToggle(entry)}
+                >
+                  <AccountBalanceWalletIcon />
+                </IconButton>
+              ) : (
+                <React.Fragment />
+              ),
               <IconButton
                 key={1}
                 size="small"
