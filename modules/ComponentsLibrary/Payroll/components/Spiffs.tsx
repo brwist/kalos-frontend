@@ -128,7 +128,7 @@ export const Spiffs: FC<Props> = ({ employeeId, week, role, loggedUserId }) => {
       setPendingAdd(false);
       await load();
     },
-    [loggedUserId],
+    [loggedUserId, load],
   );
   const SCHEMA: Schema<TaskType> = [
     [
@@ -225,13 +225,9 @@ export const Spiffs: FC<Props> = ({ employeeId, week, role, loggedUserId }) => {
           <SpiffTool
             loggedUserId={pendingView.externalId}
             type="Spiff"
-            kind="Weekly"
-            week={format(
-              startOfWeek(parseISO(pendingView.datePerformed), {
-                weekStartsOn: 6,
-              }),
-              'yyyy-MM-dd',
-            )}
+            needsManagerAction={role === 'Manager' ? true : false}
+            needsPayrollAction={role === 'Payroll' ? true : false}
+            role={role}
             onClose={handleTogglePendingView(undefined)}
           />
         </Modal>

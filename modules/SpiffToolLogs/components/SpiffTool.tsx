@@ -5,6 +5,8 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import FlagIcon from '@material-ui/icons/Flag';
+import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
+import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import CheckIcon from '@material-ui/icons/CheckCircleOutline';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -15,6 +17,7 @@ import { Link } from '../../ComponentsLibrary/Link';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
+import { Confirm } from '../../ComponentsLibrary/Confirm';
 import {
   SpiffToolLogEdit,
   getStatusFormInit,
@@ -75,6 +78,9 @@ export interface Props {
   loggedUserId: number;
   kind?: string;
   week?: string;
+  needsManagerAction: boolean;
+  needsPayrollAction: boolean;
+  role?: string;
   onClose?: () => void;
 }
 
@@ -83,6 +89,9 @@ export const SpiffTool: FC<Props> = ({
   loggedUserId,
   kind = MONTHLY,
   week,
+  needsManagerAction,
+  needsPayrollAction,
+  role,
   onClose,
 }) => {
   const WEEK_OPTIONS =
@@ -113,7 +122,8 @@ export const SpiffTool: FC<Props> = ({
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const [payrollOpen, setPayrollOpen] = useState<boolean>(false);
-  const [role, setRole] = useState<RoleType>();
+  //const [role, setRole] = useState<RoleType>();
+  const [pendingPayroll, setPendingPayroll] = useState<TaskType>();
   const [
     serviceCallEditing,
     setServiceCallEditing,
@@ -137,11 +147,14 @@ export const SpiffTool: FC<Props> = ({
     {},
   );
   const loadLoggedInUser = useCallback(async () => {
+    console.log('we called load logged in user ');
+    console.log(loggedUserId);
     const userResult = await UserClientService.loadUserById(loggedUserId);
     const role = userResult.permissionGroupsList.find(p => p.type === 'role');
-    if (role) {
-      setRole(role.name as RoleType);
-    }
+    //if (role) {
+    //console.log(role.name);
+    //setRole(role.name as RoleType);
+    // }
     const loggedInUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedInUser(loggedInUser);
     setSearchFormKey(searchFormKey + 1);
@@ -155,12 +168,21 @@ export const SpiffTool: FC<Props> = ({
       ).toObject();
       setSpiffTypes(spiffTypes);
     }
+
     const { description, month, kind, technician } = searchForm;
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(true);
     req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
     req.setOrderDir('ASC');
+    if (needsManagerAction) {
+      req.setFieldMaskList(['AdminActionId']);
+      req.setNotEqualsList(['PayrollProcessed']);
+    }
+    if (needsPayrollAction) {
+      req.setNotEqualsList(['AdminActionId']);
+      req.setFieldMaskList(['PayrollProcessed']);
+    }
     if (technician) {
       req.setExternalId(technician);
     }
@@ -196,11 +218,13 @@ export const SpiffTool: FC<Props> = ({
     type,
     setSpiffTypes,
     spiffTypes,
+    needsManagerAction,
+    needsPayrollAction,
   ]);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
     setTechnicians(technicians);
-  }, [setLoadedTechnicians, setTechnicians]);
+  }, [setTechnicians]);
   const handleSetPayrollOpen = useCallback(
     (open: boolean) => setPayrollOpen(open),
     [setPayrollOpen],
@@ -211,6 +235,10 @@ export const SpiffTool: FC<Props> = ({
       setLoaded(false);
     },
     [setPage, setLoaded],
+  );
+  const handlePendingPayrollToggle = useCallback(
+    (task?: TaskType) => () => setPendingPayroll(task),
+    [setPendingPayroll],
   );
   const handleSetExtendedEditing = useCallback(
     (extendedEditing?: TaskType) => async () => {
@@ -227,6 +255,20 @@ export const SpiffTool: FC<Props> = ({
     (deleting?: TaskType) => () => setDeleting(deleting),
     [setDeleting],
   );
+  const handlePayroll = useCallback(async () => {
+    if (pendingPayroll) {
+      const { id } = pendingPayroll;
+      setLoading(true);
+      setPendingPayroll(undefined);
+      const t = new Task();
+      console.log('We would like to update this thing as Payroll');
+      t.setPayrollProcessed(true);
+      t.setId(id);
+      t.setFieldMaskList(['PayrollProcessed']);
+      await TaskClientService.Update(t);
+      load();
+    }
+  }, [load, pendingPayroll]);
   const handleDelete = useCallback(async () => {
     if (deleting) {
       setLoading(true);
@@ -284,7 +326,7 @@ export const SpiffTool: FC<Props> = ({
         await load();
       }
     },
-    [loggedUserId, editing, setSaving, setEditing, type],
+    [loggedUserId, editing, setSaving, setEditing, type, load],
   );
   const handleSaveExtended = useCallback(async () => {
     if (extendedEditing) {
@@ -393,6 +435,8 @@ export const SpiffTool: FC<Props> = ({
     loadedTechnicians,
     setLoadedTechnicians,
     loadUserTechnicians,
+    load,
+    loadLoggedInUser,
   ]);
   const SCHEMA: Schema<TaskType> =
     type === 'Spiff'
@@ -526,6 +570,7 @@ export const SpiffTool: FC<Props> = ({
           event,
           ownerName,
           duplicatesList,
+          adminActionId,
         } = entry;
         const isDuplicate =
           duplicatesList.filter(({ actionsList }) => actionsList.length > 0)
@@ -541,7 +586,7 @@ export const SpiffTool: FC<Props> = ({
                 onClick={handleClickAddStatus(entry)}
                 disabled={actionsList[0] && actionsList[0].status === 1}
               >
-                <CheckIcon />
+                <ThumbsUpDownIcon />
               </IconButton>,
               <IconButton
                 key={0}
@@ -549,6 +594,14 @@ export const SpiffTool: FC<Props> = ({
                 onClick={handleSetExtendedEditing(entry)}
               >
                 <EditIcon />
+              </IconButton>,
+              <IconButton
+                key={3}
+                size="small"
+                disabled={needsPayrollAction ? false : true}
+                onClick={handlePendingPayrollToggle(entry)}
+              >
+                <AccountBalanceWalletIcon />
               </IconButton>,
               <IconButton
                 key={1}
@@ -731,7 +784,7 @@ export const SpiffTool: FC<Props> = ({
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
         actions={
-          role == 'Manager' || role == 'Payroll'
+          role === 'Manager' || role === 'Payroll'
             ? [
                 {
                   label: 'Add',
@@ -840,6 +893,16 @@ export const SpiffTool: FC<Props> = ({
             userID={serviceCallEditing.customerId}
           />
         </Modal>
+      )}
+      {pendingPayroll && (
+        <Confirm
+          title="Confirm Approve"
+          open
+          onClose={handlePendingPayrollToggle()}
+          onConfirm={handlePayroll}
+        >
+          Are you sure, you want to process payroll for this Per Diem?
+        </Confirm>
       )}
     </div>
   );
