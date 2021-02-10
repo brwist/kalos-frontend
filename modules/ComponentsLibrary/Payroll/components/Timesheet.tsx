@@ -60,7 +60,7 @@ export const Timesheet: FC<Props> = ({
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
-    const getTimesheets = createTimesheetFetchFunction(filter);
+    const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     setTimesheets(resultsList);
     setCount(totalCount);
@@ -144,7 +144,10 @@ interface GetTimesheetConfig {
   type: RoleType;
 }
 
-const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
+const createTimesheetFetchFunction = (
+  config: GetTimesheetConfig,
+  role: RoleType,
+) => {
   const req = new TimesheetLine();
   req.setPageNumber(config.page || 0);
   req.setOrderBy('time_started');
@@ -177,8 +180,11 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   } else if (config.type === 'Manager') {
     req.setFieldMaskList(['AdminApprovalUserId']);
   }
-
-  return () => client.BatchGetPayroll(req);
+  if (role == 'Manager') {
+    return () => client.BatchGetManager(req);
+  } else {
+    return () => client.BatchGetPayroll(req);
+  }
 };
 
 const getManagerTimesheets = () => {};
