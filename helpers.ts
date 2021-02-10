@@ -707,7 +707,7 @@ export const GetPendingTasks = (billableType: string) => {
     req.setOrderBy('date_performed');
     if (config.role === 'Manager') {
       req.setFieldMaskList(['AdminActionId']);
-      console.log('We are manager');
+      req.setNotEqualsList(['DatePerformed', 'PayrollProcessed']);
     }
     if (config.role === 'Payroll') {
       console.log('We are payroll');

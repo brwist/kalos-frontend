@@ -30,6 +30,7 @@ export interface Props {
   onSaveOrDelete: (data: TimeoffRequestType) => void;
   onAdminSubmit?: (data: TimeoffRequestType) => void;
   cancelLabel?: string;
+  submitDisabled?: boolean;
 }
 
 export const TimeOff: FC<Props> = ({
@@ -40,6 +41,7 @@ export const TimeOff: FC<Props> = ({
   onAdminSubmit,
   requestOffId,
   cancelLabel,
+  submitDisabled,
 }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
@@ -383,7 +385,7 @@ export const TimeOff: FC<Props> = ({
         disabled={!initiated || saving}
         submitLabel={data.id ? 'Delete' : 'Save'}
         cancelLabel={cancelLabel}
-        submitDisabled={!!data.adminApprovalUserId}
+        submitDisabled={submitDisabled || !!data.adminApprovalUserId}
         error={error}
       />
       {deleting && (

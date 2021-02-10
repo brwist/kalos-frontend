@@ -252,6 +252,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             employeeId={filter.employeeId}
                             week={filter.week}
                             role={role}
+                            loggedUserId={userID}
                           />
                         ),
                       },
