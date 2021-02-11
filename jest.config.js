@@ -10,5 +10,8 @@ module.exports = {
     '.+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$':
       'jest-transform-stub',
   },
-  transformIgnorePatterns: ['/node_modules/(?!@kalos-core)'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!@kalos-core)',
+    '/node_modules/(?!date-fns)',
+  ],
 };
