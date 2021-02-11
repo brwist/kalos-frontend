@@ -46,6 +46,7 @@ import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
 import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { PropLinkServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/prop_link_pb_service';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -148,7 +149,6 @@ export const SpiffTool: FC<Props> = ({
     {},
   );
   const loadLoggedInUser = useCallback(async () => {
-    console.log('we called load logged in user ');
     console.log(loggedUserId);
     const userResult = await UserClientService.loadUserById(loggedUserId);
     const role = userResult.permissionGroupsList.find(p => p.type === 'role');
@@ -265,7 +265,6 @@ export const SpiffTool: FC<Props> = ({
       setLoading(true);
       setPendingPayroll(undefined);
       const t = new Task();
-      console.log('We would like to update this thing as Payroll');
       t.setPayrollProcessed(true);
       t.setId(id);
       t.setFieldMaskList(['PayrollProcessed']);

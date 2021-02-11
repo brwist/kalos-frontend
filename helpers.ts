@@ -699,20 +699,39 @@ export const GetPendingTasks = (billableType: string) => {
   return async (config: GetPendingSpiffConfig) => {
     const req = new Task();
     req.setBillableType(billableType);
-    req.setDatePerformed(NULL_TIME);
-    req.setNotEqualsList(['DatePerformed']);
+    if (billableType === 'Spiff') {
+      req.setDatePerformed(NULL_TIME);
+      req.setNotEqualsList(['DatePerformed']);
+    }
+    if (billableType === 'Tool Purchase') {
+      req.setDatePerformed(NULL_TIME);
+      req.setNotEqualsList(['TimeDue']);
+    }
     req.setIsActive(true);
     req.setGroupBy('external_id');
     req.setPageNumber(config.page || 0);
     req.setOrderBy('date_performed');
     if (config.role === 'Manager') {
       req.setFieldMaskList(['AdminActionId']);
-      req.setNotEqualsList(['DatePerformed', 'PayrollProcessed']);
+      if (billableType === 'Spiff') {
+        console.log(' spiff manager');
+        req.setPayrollProcessed(false);
+        req.setNotEqualsList(['DatePerformed', 'PayrollProcessed']);
+      }
+      if (billableType === 'Tool Purchase') {
+        req.setNotEqualsList(['TimeDue', 'PayrollProcessed']);
+      }
     }
     if (config.role === 'Payroll') {
-      console.log('We are payroll');
-      req.setNotEqualsList(['AdminActionId', 'DatePerformed']);
-      req.setFieldMaskList(['PayrollProcessed']);
+      if (billableType === 'Spiff') {
+        console.log(' spiff payroll');
+        req.setNotEqualsList(['AdminActionId', 'DatePerformed']);
+        req.setFieldMaskList(['PayrollProcessed']);
+      }
+      if (billableType === 'Tool Purchase') {
+        req.setNotEqualsList(['AdminActionId', 'TimeDue']);
+        req.setFieldMaskList(['PayrollProcessed']);
+      }
     }
     if (config.technicianUserID) {
       req.setExternalId(config.technicianUserID);

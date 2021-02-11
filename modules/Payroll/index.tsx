@@ -7,7 +7,7 @@ import { ENDPOINT } from '../../constants';
 const u = new UserClient(ENDPOINT);
 
 // example userID - role
-// 102412 - Manager
+// 102412,213 - Manager
 // 101253 - Auditor
 // 1550 - Payroll
 // 2573 - none

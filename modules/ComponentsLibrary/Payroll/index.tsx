@@ -115,7 +115,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
     handleSelectNewWeek('-- All --');
     const loggedUser = await UserClientService.loadUserById(userID);
     setLoggedUser(loggedUser);
-    console.log(loggedUser);
     const role = loggedUser.permissionGroupsList.find(p => p.type === 'role');
     if (role) {
       setRole(role.name as RoleType);
@@ -281,6 +280,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                           <ToolLogs
                             employeeId={filter.employeeId}
                             week={filter.week}
+                            role={role}
                           />
                         ),
                       },

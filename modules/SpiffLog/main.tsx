@@ -8,6 +8,11 @@ interface Props extends PageWrapperProps {
 
 export const SpiffLog: FC<Props> = props => (
   <PageWrapper {...props} userID={props.loggedUserId}>
-    <SpiffTool type="Spiff" {...props} />
+    <SpiffTool
+      type="Spiff"
+      {...props}
+      needsManagerAction={false}
+      needsPayrollAction={false}
+    />
   </PageWrapper>
 );
