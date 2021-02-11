@@ -18,9 +18,10 @@ import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 interface Props {
   employeeId: number;
   week: string;
+  role: string;
 }
 
-export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
+export const ToolLogs: FC<Props> = ({ employeeId, week, role }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [toolLogs, setToolLogs] = useState<TaskType[]>([]);
   const [page, setPage] = useState<number>(0);
@@ -31,6 +32,7 @@ export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
     const filter = {
       page,
       employeeId,
+      role,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
@@ -42,7 +44,7 @@ export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
     setToolLogs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week]);
+  }, [page, employeeId, week, role]);
   useEffect(() => {
     load();
   }, [page, employeeId, week, load]);
@@ -104,19 +106,9 @@ export const ToolLogs: FC<Props> = ({ employeeId, week }) => {
           <SpiffTool
             loggedUserId={pendingView.externalId}
             type="Tool"
-            kind="Weekly"
-            needsManagerAction={false}
-            needsPayrollAction={false}
-            week={
-              pendingView.timeDue
-                ? format(
-                    startOfWeek(parseISO(pendingView.timeDue), {
-                      weekStartsOn: 6,
-                    }),
-                    'yyyy-MM-dd',
-                  )
-                : undefined
-            }
+            needsManagerAction={role === 'Manager' ? true : false}
+            needsPayrollAction={role === 'Payroll' ? true : false}
+            role={role}
             onClose={handleTogglePendingView(undefined)}
           />
         </Modal>
