@@ -173,7 +173,7 @@ const createTimesheetFetchFunction = (
   } else if (config.type === 'Manager') {
     req.setFieldMaskList(['AdminApprovalUserId']);
   }
-  if (role == 'Manager') {
+  if (config.type == 'Manager') {
     return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains
   } else {
     return () => client.BatchGetPayroll(req); // Payroll does the same but to a specific Payroll view

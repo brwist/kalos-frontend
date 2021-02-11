@@ -77,7 +77,7 @@ const Toolbar: FC<Props> = ({
     buttonLabel = submitText;
   }
   if (processButtonVisible == false) {
-    if (role == 'Manager' || role == 'Payroll') {
+    if (role == 'Payroll') {
       setProcessButtonVisible(true);
     }
   }
