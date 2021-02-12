@@ -45,6 +45,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
     eventId,
     eventUserId,
     eventPropertyId,
+    adminApprovalUserName,
   } = card;
   let status;
   if (adminApprovalDatetime && adminApprovalDatetime != NULL_TIME_VALUE) {
@@ -122,6 +123,11 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
           {notes && <Typography variant="body2">Notes: {notes}</Typography>}
           {!!eventId && (
             <Typography variant="body2">Service Call ID: {eventId}</Typography>
+          )}
+          {adminApprovalUserName && (
+            <Typography variant="body1">
+              Approved by: {adminApprovalUserName}
+            </Typography>
           )}
         </CardContent>
       </CardActionArea>
