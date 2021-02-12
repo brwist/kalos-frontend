@@ -1304,7 +1304,98 @@ exports[`CustomerDetails renders correctly 1`] = `
       </div>
       <div
         className="ContractInfoAsidePanel"
-      />
+      >
+        <div>
+          <div>
+            <div
+              className="SectionBar collapsable sticky"
+            >
+              <div
+                className="SectionBarHeaderWrapper"
+              >
+                <div
+                  className="SectionBarHeader"
+                >
+                  <div
+                    className="SectionBarTitleWrapper collapsable"
+                  >
+                    <h5
+                      className="MuiTypography-root SectionBarTitle MuiTypography-h5"
+                      onClick={[Function]}
+                    >
+                      Documents
+                       
+                      <svg
+                        aria-hidden={true}
+                        className="MuiSvgIcon-root"
+                        focusable="false"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"
+                        />
+                      </svg>
+                    </h5>
+                  </div>
+                </div>
+                <div
+                  className="SectionBarActions"
+                >
+                  <div
+                    className="Actions"
+                  >
+                    <div
+                      className="ActionsActions"
+                    >
+                      <a
+                        className="ButtonLink"
+                        href="https://app.kalosflorida.com/index.cfm?action=admin:contracts.docaddS3&user_id=2573&p=1"
+                      >
+                        <button
+                          className="MuiButtonBase-root MuiButton-root MuiButton-contained ButtonWrapper ActionsButton size-small status-undefined variant-contained MuiButton-containedPrimary MuiButton-containedSizeSmall MuiButton-sizeSmall"
+                          disabled={false}
+                          onBlur={[Function]}
+                          onDragLeave={[Function]}
+                          onFocus={[Function]}
+                          onKeyDown={[Function]}
+                          onKeyUp={[Function]}
+                          onMouseDown={[Function]}
+                          onMouseLeave={[Function]}
+                          onMouseUp={[Function]}
+                          onTouchEnd={[Function]}
+                          onTouchMove={[Function]}
+                          onTouchStart={[Function]}
+                          tabIndex={0}
+                          type="button"
+                        >
+                          <span
+                            className="MuiButton-label"
+                          >
+                            Add
+                          </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              className="InfoTable"
+            >
+              <div
+                className="InfoTableRow compact hoverable"
+              >
+                <p
+                  className="MuiTypography-root InfoTableNoEntries MuiTypography-body1"
+                >
+                  No entries found.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

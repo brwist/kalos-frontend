@@ -12,6 +12,5 @@ module.exports = {
   },
   transformIgnorePatterns: [
     '/node_modules/(?!@kalos-core)',
-    '/node_modules/(?!date-fns)',
   ],
 };
