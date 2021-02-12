@@ -10,6 +10,7 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import OpenIcon from '@material-ui/icons/OpenInNew';
+import MailIcon from '@material-ui/icons/Mail';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
 import { Prompt } from '../../Prompt/main';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
@@ -20,7 +21,7 @@ import { Link } from '../Link';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
-import { makeFakeRows, formatDateTime } from '../../../helpers';
+import { makeFakeRows, formatDateTime, cfURL } from '../../../helpers';
 
 const DocumentClientService = new DocumentClient(ENDPOINT);
 
@@ -238,6 +239,23 @@ export const Documents: FC<Props> = ({
                 <OpenIcon />
               </IconButton>,
               ...actions(entry),
+              <IconButton
+                key="mail"
+                style={{ marginLeft: 4 }}
+                size="small"
+                onClick={() =>
+                  window.open(
+                    cfURL(
+                      'contracts.docemail&',
+                      [`user_id=${userId}`, `document_id=${id}`, `p=1`].join(
+                        '&',
+                      ),
+                    ),
+                  )
+                }
+              >
+                <MailIcon />
+              </IconButton>,
               ...(withDownloadIcon
                 ? [
                     <IconButton
