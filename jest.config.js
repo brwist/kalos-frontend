@@ -5,7 +5,7 @@ module.exports = {
     '**/?(*.)+(spec|test).+(ts|tsx|js)',
   ],
   transform: {
-    '^.+\\.(ts|tsx|jsx)$': 'babel-jest',
+    '^.+\\.(ts|tsx|jsx|js)$': 'babel-jest',
     // jest-transform-stub allows compatibility between less files and jest
     '.+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$':
       'jest-transform-stub',
