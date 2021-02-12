@@ -54,6 +54,7 @@ export type Props = {
   userId: number;
   timesheetOwnerId: number;
   week?: string;
+  startOnWeek?: boolean;
   onClose?: () => void;
 };
 
@@ -71,9 +72,10 @@ const getWeekStart = (
   userId: number,
   timesheetOwnerId: number,
   week?: string,
+  startOnWeek?: boolean,
 ) => {
   const today = week ? parseISO(week) : new Date();
-  return userId === timesheetOwnerId
+  return userId === timesheetOwnerId || startOnWeek === true
     ? startOfWeek(today, { weekStartsOn: 6 })
     : startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
 };

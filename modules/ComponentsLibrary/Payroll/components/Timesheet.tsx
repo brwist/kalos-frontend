@@ -128,6 +128,7 @@ export const Timesheet: FC<Props> = ({
             userId={loggedUser}
             week={pendingView.timeStarted}
             onClose={handleTogglePendingView(undefined)}
+            startOnWeek={type === 'Payroll' || type === 'Manager'}
           />
         </Modal>
       )}

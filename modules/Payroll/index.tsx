@@ -13,5 +13,5 @@ const u = new UserClient(ENDPOINT);
 // 2573 - none
 
 u.GetToken('test', 'test').then(() => {
-  ReactDOM.render(<Payroll userID={213} />, document.getElementById('root'));
+  ReactDOM.render(<Payroll userID={1550} />, document.getElementById('root'));
 });
