@@ -772,7 +772,6 @@ export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
   }
   if (config.requestType === 9) {
     req.setFieldMaskList(['PayrollProcessed']);
-    req.setPayrollProcessed(false);
     req.setNotEqualsList(['AdminApprovalDatetime']);
     req.setAdminApprovalDatetime('0001-01-01 00:00:00');
     req.setRequestTypeList('9,10,11');
@@ -1591,6 +1590,7 @@ export const loadPerDiemsForPayroll = async (
     if (managerApproved) {
       //fetch unapproved perdiems for the department
       req.setFieldMaskList(['ApprovedByID']);
+      req.setNotEqualsList(['PayrollProcessed']);
     } else if (needsProcessed) {
       //fetch all peridems that are not currently processed by payroll
       req.setNotEqualsList(['ApprovedById']);
@@ -2670,13 +2670,12 @@ export const loadTripsByFilter = async ({
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
   if (filter.payrollProcessed) {
-    req.setNotEqualsList(['ApprovedById']);
-    req.setFieldMaskList(['PayrollProcessed']);
+    req.setApproved(true);
+    req.setNotEqualsList(['PayrollProcessed']);
   }
-  // if (filter.approved) {
-  //   req.setNotEqualsList(['ApprovedById']);
-  //   req.setFieldMaskList(['PayrollProcessed']);
-  // }
+  //if (filter.approved) {
+  //  req.setFieldMaskList(['ApproveById']);
+  //}
   const response = await PerDiemClientService.BatchGetTrips(req);
   return {
     results: response
