@@ -70,8 +70,11 @@ export const Timesheet: FC<Props> = ({
     load();
   }, [load]);
   const handleTogglePendingView = useCallback(
-    (pendingView?: TimesheetLineType) => () => setPendingView(pendingView),
-    [],
+    (pendingView?: TimesheetLineType) => () => {
+      setPendingView(pendingView);
+      load();
+    },
+    [load],
   );
   return (
     <div>
@@ -172,6 +175,7 @@ const createTimesheetFetchFunction = (
   if (config.type === 'Payroll') {
     req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
   } else if (config.type === 'Manager') {
+    req.setNotEqualsList(['UserApprovalDatetime']);
     req.setFieldMaskList(['AdminApprovalUserId']);
   }
   if (config.type == 'Manager') {

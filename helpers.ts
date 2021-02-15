@@ -714,7 +714,6 @@ export const GetPendingTasks = (billableType: string) => {
     if (config.role === 'Manager') {
       req.setFieldMaskList(['AdminActionId']);
       if (billableType === 'Spiff') {
-        console.log(' spiff manager');
         req.setPayrollProcessed(false);
         req.setNotEqualsList(['DatePerformed', 'PayrollProcessed']);
       }
@@ -724,7 +723,6 @@ export const GetPendingTasks = (billableType: string) => {
     }
     if (config.role === 'Payroll') {
       if (billableType === 'Spiff') {
-        console.log(' spiff payroll');
         req.setNotEqualsList(['AdminActionId', 'DatePerformed']);
         req.setFieldMaskList(['PayrollProcessed']);
       }
@@ -1592,16 +1590,13 @@ export const loadPerDiemsForPayroll = async (
   if (managerApproved || needsProcessed || needsAuditing) {
     if (managerApproved) {
       //fetch unapproved perdiems for the department
-      console.log('we are manager perdiems');
       req.setFieldMaskList(['ApprovedByID']);
     } else if (needsProcessed) {
       //fetch all peridems that are not currently processed by payroll
-      console.log('We are at the payroll ');
       req.setNotEqualsList(['ApprovedById']);
       req.setFieldMaskList(['PayrollProcessed']);
       req.setPayrollProcessed(false);
     } else if (needsAuditing) {
-      console.log('we are in audits');
       //fetch perdiems that have no been audited yet
       req.setNotEqualsList(['ApprovedById']);
       req.setFieldMaskList(['NeedsAuditing']);
@@ -1646,8 +1641,6 @@ export const loadPerDiemsNeedsAuditing = async (
     req.setNotEqualsList(['ApprovedById']);
   }
   req.setIsActive(true);
-  const sql = await PerDiemClientService.getSQL(req, 'BatchGet');
-  console.log({ sql });
   return (await PerDiemClientService.BatchGet(req)).toObject();
 };
 
@@ -2569,6 +2562,8 @@ export type TripsFilter = {
   page: number;
   payrollProcessed: boolean;
   approved: boolean;
+  role?: string;
+  departmentId?: number;
 };
 /**
  * Returns Properties by filter
@@ -2674,6 +2669,14 @@ export const loadTripsByFilter = async ({
     //@ts-ignore
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
+  if (filter.payrollProcessed) {
+    req.setNotEqualsList(['ApprovedById']);
+    req.setFieldMaskList(['PayrollProcessed']);
+  }
+  // if (filter.approved) {
+  //   req.setNotEqualsList(['ApprovedById']);
+  //   req.setFieldMaskList(['PayrollProcessed']);
+  // }
   const response = await PerDiemClientService.BatchGetTrips(req);
   return {
     results: response
