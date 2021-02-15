@@ -49,14 +49,16 @@ const Toolbar: FC<Props> = ({
   const [processButtonVisible, setProcessButtonVisible] = useState<boolean>(
     false,
   );
-
+  const [submitButtonVisible, setSubmitButtonVisible] = useState<boolean>(
+    false,
+  );
   const handleSetPayrollOpen = useCallback(
     (open: boolean) => setPayrollOpen(open),
     [setPayrollOpen],
   );
 
   const handleSubmit = () => {
-    if (timesheetAdministration && !isTimesheetOwner) {
+    if ((timesheetAdministration && !isTimesheetOwner) || role === 'Payroll') {
       submitTimesheet();
     } else {
       confirm({
@@ -79,6 +81,7 @@ const Toolbar: FC<Props> = ({
   if (processButtonVisible == false) {
     if (role == 'Payroll') {
       setProcessButtonVisible(true);
+      setSubmitButtonVisible(false);
     }
   }
   return (
@@ -120,12 +123,11 @@ const Toolbar: FC<Props> = ({
               </>
             )}
           </Box>
-          <Button onClick={handleSubmit} label={buttonLabel} />
+          {submitButtonVisible && (
+            <Button onClick={handleSubmit} label={buttonLabel} />
+          )}
           {processButtonVisible && (
-            <Button
-              onClick={() => handleSetPayrollOpen(true)}
-              label="Process Payroll"
-            />
+            <Button onClick={handleSubmit} label="Process Payroll" />
           )}
           {payrollOpen && (
             <Modal
