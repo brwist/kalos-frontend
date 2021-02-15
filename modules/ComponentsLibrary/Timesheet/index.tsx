@@ -72,16 +72,16 @@ const getWeekStart = (
   userId: number,
   timesheetOwnerId: number,
   week?: string,
-  startOnWeek?: boolean,
+  toggleStartOnWeek?: boolean,
 ) => {
   const today = week ? parseISO(week) : new Date();
-  return userId === timesheetOwnerId || startOnWeek === true
+  return userId === timesheetOwnerId || toggleStartOnWeek === true
     ? startOfWeek(today, { weekStartsOn: 6 })
     : startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
 };
 
 export const Timesheet: FC<Props> = props => {
-  const { userId, timesheetOwnerId, week, onClose } = props;
+  const { userId, timesheetOwnerId, week, onClose, startOnWeek } = props;
   //const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   //const [tripsOpen, setTripsOpen] = useState<boolean>(false);
 
@@ -97,8 +97,10 @@ export const Timesheet: FC<Props> = props => {
     fetchingTimesheetData: true,
     data: {},
     pendingEntries: false,
-    selectedDate: getWeekStart(userId, timesheetOwnerId, week),
-    shownDates: getShownDates(getWeekStart(userId, timesheetOwnerId, week)),
+    selectedDate: getWeekStart(userId, timesheetOwnerId, week, startOnWeek),
+    shownDates: getShownDates(
+      getWeekStart(userId, timesheetOwnerId, week, startOnWeek),
+    ),
     payroll: {
       total: null,
       billable: null,
@@ -225,7 +227,6 @@ export const Timesheet: FC<Props> = props => {
   ];
 
   const handleDateChange = (value: Date) => {
-    console.log({ value });
     dispatch({ type: 'changeDate', value });
   };
 
@@ -242,7 +243,6 @@ export const Timesheet: FC<Props> = props => {
   };
 
   const checkReceiptIssue = async (): Promise<boolean> => {
-    console.log({ receiptsIssue });
     const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
     if (hasIssue) {
       console.log(receiptsIssue.hasReceiptsIssue);
@@ -265,7 +265,6 @@ export const Timesheet: FC<Props> = props => {
           if (val != undefined) {
             if (val.timeFinished === val.timeStarted) {
               //if the Start and End time are the same, trip the flag
-              console.log('Start and End time are identical');
               sameTimeConflict = true;
             }
           }
@@ -337,6 +336,10 @@ export const Timesheet: FC<Props> = props => {
         ) {
           await tslClient.Approve(ids, userId);
           dispatch({ type: 'approveTimesheet' });
+        } else if (role === 'Payroll') {
+          console.log('We are processing the timesheet');
+          //This is where we should mark them as Payroll Processed
+          dispatch({ type: 'processTimesheet' });
         } else {
           await tslClient.Submit(ids);
           dispatch({ type: 'submitTimesheet' });

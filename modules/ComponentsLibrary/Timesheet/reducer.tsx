@@ -119,6 +119,7 @@ export type Action =
   | { type: 'timeoffRequestTypes'; value: TimeoffRequestTypes }
   | { type: 'perDiemRowId'; value: number[] }
   | { type: 'approveTimesheet' }
+  | { type: 'processTimesheet' }
   | { type: 'showReceiptsIssueDialog'; value: boolean }
   | {
       type: 'setReceiptsIssue';
@@ -379,7 +380,22 @@ export const reducer = (state: State, action: Action) => {
         data,
       };
     }
-
+    case 'processTimesheet': {
+      const data = { ...state.data };
+      const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm');
+      for (let i = 0; i < state.shownDates.length; i++) {
+        let dayList = [...data[state.shownDates[i]].timesheetLineList];
+        dayList.forEach(entry => {
+          if (entry.adminApprovalDatetime !== NULL_TIME_VALUE) {
+            entry.payrollProcessed = true;
+          }
+        });
+      }
+      return {
+        ...state,
+        data,
+      };
+    }
     case 'closeEditingModal':
       return {
         ...state,
