@@ -178,7 +178,6 @@ export const SpiffTool: FC<Props> = ({
     req.setOrderDir('ASC');
     if (needsManagerAction) {
       req.setFieldMaskList(['AdminActionId']);
-      req.setNotEqualsList(['PayrollProcessed']);
     }
     if (needsPayrollAction) {
       req.setNotEqualsList(['AdminActionId']);
@@ -794,16 +793,16 @@ export const SpiffTool: FC<Props> = ({
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
         actions={
-          role === 'Manager' || role === 'Payroll'
+          role === 'Manager' || role !== 'Payroll'
             ? [
                 {
                   label: 'Add',
                   onClick: handleSetEditing(makeNewTask()),
                 },
-                {
-                  label: 'Process Payroll',
-                  onClick: () => handleSetPayrollOpen(true),
-                },
+                // {
+                //   label: 'Process Payroll',
+                //   onClick: () => handleSetPayrollOpen(true),
+                // },
                 ...(onClose
                   ? [
                       {
@@ -814,10 +813,12 @@ export const SpiffTool: FC<Props> = ({
                   : []),
               ]
             : [
+                /*
                 {
                   label: 'Add',
                   onClick: handleSetEditing(makeNewTask()),
                 },
+                */
                 ...(onClose
                   ? [
                       {
