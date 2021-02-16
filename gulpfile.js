@@ -451,13 +451,16 @@ function releaseBuild(target) {
         });
     });
 }
-function rollupBuild(target) {
-    if (target === void 0) { target = ''; }
+function rollupBuild(t) {
     return __awaiter(this, void 0, void 0, function () {
         var minify, inputStr, bundle;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    if (t && typeof t === 'string') {
+                        target = t;
+                    }
+                    console.log(target);
                     if (target.includes('-')) {
                         target = process.argv[4].replace(/-/g, '');
                     }

@@ -373,7 +373,11 @@ async function releaseBuild(target: string) {
   }
 }
 
-async function rollupBuild(target = '') {
+async function rollupBuild(t: string | undefined) {
+  if (t && typeof t === 'string') {
+    target = t;
+  }
+  console.log(target);
   if (target.includes('-')) {
     target = process.argv[4].replace(/-/g, '');
   }
