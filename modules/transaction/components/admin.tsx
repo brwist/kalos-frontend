@@ -32,10 +32,12 @@ import CreateModal from './CreateModal';
 
 interface props {
   userID: number;
-  departmentId: number;
+  departmentID: number;
   userName: string;
   isSU: boolean;
   isProd?: boolean;
+  showMultipleDepartments?: boolean;
+  departmentIDList?: string;
 }
 
 interface state {
@@ -95,6 +97,7 @@ export class TransactionAdminView extends React.Component<props, state> {
         statusID: props.isSU ? 8 : 2,
         yearCreated: '-- All --',
         dateCreated: '0',
+        departmentID: props.isSU ? undefined : props.departmentID,
         sort: {
           sortBy: 'timestamp',
           sortDir: 'asc',
@@ -321,8 +324,15 @@ export class TransactionAdminView extends React.Component<props, state> {
     if (filters.costCenterID) {
       obj.setCostCenterId(filters.costCenterID);
     }
+    if (this.props.showMultipleDepartments && this.props.departmentIDList) {
+      console.log('setting department id list in applyFilters');
+      obj.setDepartmentIdList(this.props.departmentIDList);
+    }
     if (filters.departmentID) {
-      obj.setDepartmentId(filters.departmentID);
+      if (obj.getDepartmentIdList() === '') {
+        console.log('setting department id in applyFilters');
+        obj.setDepartmentId(filters.departmentID);
+      }
     }
     if (filters.dateCreated && filters.dateCreated !== '0') {
       obj.setTimestamp(`${filters.yearCreated}-${filters.dateCreated}%`);
@@ -354,6 +364,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     }
     obj.setOrderBy(filters.sort.sortBy);
     obj.setOrderDir(filters.sort.sortDir);
+    console.log({ filters });
     return obj;
   }
 
@@ -392,9 +403,6 @@ export class TransactionAdminView extends React.Component<props, state> {
   async fetchTxns() {
     let reqObj = new Transaction();
     reqObj = this.applyFilters(reqObj);
-    if (this.state.departmentView) {
-      reqObj.setDepartmentId(this.props.departmentId);
-    }
     reqObj.setPageNumber(this.state.page);
     reqObj.setIsActive(1);
     this.setState(
@@ -407,9 +415,9 @@ export class TransactionAdminView extends React.Component<props, state> {
         } else {
           res = await this.TxnClient.BatchGet(reqObj);
         }
-
+        console.log('request', reqObj.toObject());
         const asObject = res.toObject();
-
+        console.log(asObject);
         this.setState({
           transactions: asObject.resultsList,
           count: asObject.totalCount,
@@ -461,7 +469,13 @@ export class TransactionAdminView extends React.Component<props, state> {
       let reqObj = new Transaction();
       reqObj = this.applyFilters(reqObj);
       if (this.state.departmentView) {
-        reqObj.setDepartmentId(this.props.departmentId);
+        console.log('department view is true');
+        if (this.props.showMultipleDepartments && this.props.departmentIDList) {
+          console.log('setting department id list');
+          reqObj.setDepartmentIdList(this.props.departmentIDList);
+        } else {
+          reqObj.setDepartmentId(this.props.departmentID);
+        }
       }
       reqObj.setPageNumber(this.state.page);
       reqObj.setIsActive(1);
@@ -639,7 +653,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     const txns = this.sortTxns();
     let employeeTest;
     if (this.state.departmentView) {
-      employeeTest = makeEmployeeTest(this.props.departmentId);
+      employeeTest = makeEmployeeTest(this.props.departmentID);
     }
     return (
       <>

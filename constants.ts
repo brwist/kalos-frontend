@@ -261,7 +261,7 @@ export const MONTHS = [
 export const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const NULL_TIME = '0001-01-01 00:00:00';
-
+export const EMPTY_VALUES = [0, '', NULL_TIME];
 export const PERMISSION_PRIVILEGE = 'privilege';
 export const PERMISSION_ROLE = 'role';
 export const PERMISSION_DEPARTMENT = 'department';
@@ -291,5 +291,6 @@ export default {
   MONTHS,
   PERMISSION_PRIVILEGE,
   PERMISSION_ROLE,
+  EMPTY_VALUES,
   PERMISSION_DEPARTMENT,
 };

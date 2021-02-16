@@ -178,9 +178,9 @@ export const Timesheet: FC<Props> = props => {
   const setPerDiemRowId = (value: number[]) => {
     dispatch({ type: 'perDiemRowId', value });
   };
-  const setTimeoffRequestTypes = (value: TimeoffRequestTypes) => {
+  const setTimeoffRequestTypes = useCallback((value: TimeoffRequestTypes) => {
     dispatch({ type: 'timeoffRequestTypes', value });
-  };
+  }, []);
 
   const addNewOptions = [
     {
