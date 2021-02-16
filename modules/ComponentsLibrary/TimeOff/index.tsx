@@ -4,6 +4,7 @@ import React, {
   useState,
   useCallback,
   CSSProperties,
+  useMemo,
 } from 'react';
 import { format, isSameMonth } from 'date-fns';
 import { Form, Schema, Options } from '../Form';
@@ -56,7 +57,7 @@ export const TimeOff: FC<Props> = ({
   const emptyTO = new TimeoffRequest();
   const [data, setData] = useState<TimeoffRequestType>(emptyTO.toObject());
 
-  const emailClient = new EmailClient(ENDPOINT);
+  const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
 
   const init = useCallback(async () => {
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
@@ -104,6 +105,7 @@ export const TimeOff: FC<Props> = ({
     data,
     setLoggedUser,
     setUser,
+    loggedUserId,
   ]);
   useEffect(() => {
     if (!initiated) {
@@ -195,6 +197,9 @@ export const TimeOff: FC<Props> = ({
       onSaveOrDelete(newData);
     },
     [
+      emailClient,
+      typeOptions,
+      user,
       onSaveOrDelete,
       setSaving,
       setData,
@@ -225,7 +230,7 @@ export const TimeOff: FC<Props> = ({
     if (onAdminSubmit) {
       onAdminSubmit(newData);
     }
-  }, [data, onAdminSubmit, setData]);
+  }, [data, onAdminSubmit, setData, loggedUserId]);
   const handleDelete = useCallback(async () => {
     if (requestOffId) {
       setSaving(true);

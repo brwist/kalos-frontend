@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import Paper from '@material-ui/core/Paper';
 import IconButton from '@material-ui/core/IconButton';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
@@ -15,8 +15,13 @@ import {
   makeFakeRows,
   TimesheetDepartmentClientService,
 } from '../../../helpers';
-import { ROWS_PER_PAGE } from '../../../constants';
+import {
+  TimeoffRequestClient,
+  TimeoffRequest,
+} from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { ROWS_PER_PAGE, ENDPOINT } from '../../../constants';
 import './styles.less';
+import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 
 interface Props {
   loggedUserId: number;
@@ -33,6 +38,7 @@ const COLUMNS: Columns = [
 ];
 
 export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
+  const timeoffClient = useMemo(() => new TimeoffRequestClient(ENDPOINT), []);
   const [department, setDepartment] = useState<TimesheetDepartmentType>();
   const [editing, setEditing] = useState<TimeoffRequestType>();
   const [initiated, setInitiated] = useState<boolean>(false);
@@ -65,11 +71,19 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
   const load = useCallback(async () => {
     if (!department) return;
     setLoading(true);
-    const timeoffs = await getTimeoffRequestByFilter({
+    const req = new TimeoffRequest();
+    req.setPageNumber(page);
+    req.setDepartmentCode(department.id);
+    req.setAdminApprovalDatetime(NULL_TIME);
+    req.setIsActive(1);
+    req.setOrderBy('time_started');
+    req.setOrderDir('desc');
+    const timeoffs = await timeoffClient.BatchGet(req);
+    /*const timeoffs = await getTimeoffRequestByFilter({
       pageNumber: page,
       departmentCode: department.id,
       adminApprovalUserId: 0,
-    });
+    });*/
     const { resultsList, totalCount } = timeoffs.toObject();
     setTimeoffRequests(resultsList);
     setCount(totalCount);
@@ -79,10 +93,10 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     department,
     setTimeoffRequests,
     setCount,
-    setInitiated,
     setLoading,
     page,
     setLoaded,
+    timeoffClient,
   ]);
   useEffect(() => {
     if (!initiated) {
@@ -92,7 +106,7 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     if (!loaded) {
       load();
     }
-  }, [initiated, setInitiated, loaded, load]);
+  }, [initiated, setInitiated, loaded, load, init]);
   const handleEdit = useCallback(
     (editing?: TimeoffRequestType) => () => setEditing(editing),
     [setEditing],

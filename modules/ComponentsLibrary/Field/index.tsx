@@ -223,7 +223,12 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           loadUserTechnicians();
         }
       },
-      [setTechniciansOpened, setSearchTechnician, loadedTechnicians],
+      [
+        setTechniciansOpened,
+        setSearchTechnician,
+        loadedTechnicians,
+        loadUserTechnicians,
+      ],
     );
     useEffect(() => {
       if (
@@ -233,7 +238,15 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       ) {
         loadUserTechnicians();
       }
-    }, [loadedTechnicians, value]);
+    }, [loadUserTechnicians, type, value, loadedTechnicians]);
+    const eventAdornment = useMemo(() => {
+      if (eventStatus === -1)
+        return <BlockIcon className="FieldEventFailure" />;
+      if (eventStatus === 0) return <CircularProgress size={20} />;
+      if (eventStatus === -2)
+        return <HelpOutlineIcon className="FieldEventUnknown" />;
+      return <CheckIcon className="FieldEventSuccess" />;
+    }, [eventStatus]);
     const handleTechniciansSelect = useCallback(() => {
       if (onChange) {
         onChange(techniciansIds.filter(id => id > 0).join(','));
@@ -866,14 +879,6 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
         />
       );
     }
-    const eventAdornment = useMemo(() => {
-      if (eventStatus === -1)
-        return <BlockIcon className="FieldEventFailure" />;
-      if (eventStatus === 0) return <CircularProgress size={20} />;
-      if (eventStatus === -2)
-        return <HelpOutlineIcon className="FieldEventUnknown" />;
-      return <CheckIcon className="FieldEventSuccess" />;
-    }, [eventStatus]);
     return (
       <div className={clsx('Field', className, `type-${type}`)} style={style}>
         {type === 'file' && (

@@ -2,8 +2,13 @@ import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TransactionAdminView } from './components/admin';
 import { Loader } from '../Loader/main';
-import { ENDPOINT } from '../../constants';
+import { ENDPOINT, PERMISSION_DEPARTMENT } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import {
+  TimesheetDepartment,
+  TimesheetDepartmentClient,
+} from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 interface props extends PageWrapperProps {
   userID: number;
@@ -15,6 +20,8 @@ interface state {
   isAdmin: boolean;
   isManager: boolean;
   userDepartmentID: number;
+  userHasMultipleDepartments: boolean;
+  userDepartmentList: string;
   userName: string;
   isSU: boolean;
 }
@@ -29,25 +36,56 @@ export default class Transaction extends React.PureComponent<props, state> {
       isAdmin: false,
       isManager: false,
       userDepartmentID: 0,
+      userDepartmentList: '0',
+      userHasMultipleDepartments: false,
       userName: '',
       isSU: false,
     };
     this.UserClient = new UserClient(ENDPOINT);
-
     this.getUserData = this.getUserData.bind(this);
+    this.getDepartmentList = this.getDepartmentList.bind(this);
   }
 
   async getUserData() {
+    let userHasMultipleDepartments = false;
     const user = new User();
     user.setId(this.props.userID);
     const userData = await this.UserClient.Get(user);
+    const deptList = this.getDepartmentList(userData.permissionGroupsList);
+    if (deptList.includes(',')) {
+      console.log('setting multi dpt to true!');
+      userHasMultipleDepartments = true;
+    }
     this.setState({
       isAdmin: userData.isAdmin === 1,
       isSU: userData.isSu === 1,
       userDepartmentID: userData.employeeDepartmentId,
       userName: `${userData.firstname} ${userData.lastname}`,
       isLoading: false,
+      userDepartmentList: deptList,
+      userHasMultipleDepartments,
     });
+  }
+
+  getDepartmentList(pgList: PermissionGroup.AsObject[]) {
+    let departmentList: string[] = [];
+    const dpts = pgList.filter(pg => pg.type === PERMISSION_DEPARTMENT);
+    console.log({ pgList, dpts });
+    if (dpts.length > 1) {
+      console.log('dpts is long!');
+      for (const d of dpts) {
+        try {
+          const filter: { key: string; value: string } = JSON.parse(
+            d.filterData,
+          );
+          console.log(filter);
+          departmentList = departmentList.concat(filter.value);
+        } catch (e) {
+          console.log('failed to parse filter data', e);
+        }
+      }
+    }
+    return departmentList.join(',');
   }
 
   toggleFlag(flag: keyof state) {
@@ -79,8 +117,10 @@ export default class Transaction extends React.PureComponent<props, state> {
           <TransactionAdminView
             userID={this.props.userID}
             userName={this.state.userName}
-            departmentId={this.state.userDepartmentID}
+            departmentID={this.state.userDepartmentID}
             isSU={this.state.isSU}
+            showMultipleDepartments={this.state.userHasMultipleDepartments}
+            departmentIDList={this.state.userDepartmentList}
           />
         )}
       </PageWrapper>
