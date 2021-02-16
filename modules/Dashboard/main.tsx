@@ -399,6 +399,7 @@ export class Dashboard extends React.PureComponent<props, state> {
             maxWidth: window.innerWidth,
           }}
         >
+          <ManagerTimeoffs loggedUserId={this.props.userId} />
           {this.state.currentUser.isEmployee === 1 && (
             <Paper
               elevation={7}
@@ -424,7 +425,6 @@ export class Dashboard extends React.PureComponent<props, state> {
               isLoading={this.state.isLoading}
             />
           )}
-          <ManagerTimeoffs loggedUserId={this.props.userId} />
         </Grid>
       </PageWrapper>
     );

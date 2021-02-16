@@ -23,6 +23,7 @@ import {
   getStatusFormInit,
 } from '../../ComponentsLibrary/SpiffToolLogEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
+import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import {
   getRPCFields,
   timestamp,
@@ -193,6 +194,8 @@ export const SpiffTool: FC<Props> = ({
     if (description !== '') {
       req.setBriefDescription(`%${description}%`);
     }
+    const action = new SpiffToolAdminAction();
+    action.setStatus(1);
     if (kind === MONTHLY) {
       if (month !== OPTION_ALL) {
         req.setDatePerformed(month);
