@@ -698,13 +698,14 @@ export interface GetPendingSpiffConfig {
 export const GetPendingTasks = (billableType: string) => {
   return async (config: GetPendingSpiffConfig) => {
     const req = new Task();
+    req.setOrderBy(billableType === 'Spiff' ? 'date_performed' : 'time_due');
     req.setBillableType(billableType);
     if (billableType === 'Spiff') {
       req.setDatePerformed(NULL_TIME);
       req.setNotEqualsList(['DatePerformed']);
     }
     if (billableType === 'Tool Purchase') {
-      req.setDatePerformed(NULL_TIME);
+      req.setTimeDue(NULL_TIME);
       req.setNotEqualsList(['TimeDue']);
     }
     req.setIsActive(true);
@@ -714,11 +715,10 @@ export const GetPendingTasks = (billableType: string) => {
     if (config.role === 'Manager') {
       req.setFieldMaskList(['AdminActionId']);
       if (billableType === 'Spiff') {
-        req.setPayrollProcessed(false);
-        req.setNotEqualsList(['DatePerformed', 'PayrollProcessed']);
+        req.setNotEqualsList(['DatePerformed']);
       }
       if (billableType === 'Tool Purchase') {
-        req.setNotEqualsList(['TimeDue', 'PayrollProcessed']);
+        req.setNotEqualsList(['TimeDue']);
       }
     }
     if (config.role === 'Payroll') {
@@ -737,7 +737,9 @@ export const GetPendingTasks = (billableType: string) => {
     if (config.startDate && config.endDate) {
       req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
     }
-    return (await TaskClientService.BatchGet(req)).toObject();
+
+    const response = (await TaskClientService.BatchGet(req)).toObject();
+    return response;
   };
 };
 
