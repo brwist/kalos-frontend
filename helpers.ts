@@ -695,6 +695,7 @@ export interface GetPendingSpiffConfig {
   startDate?: string;
   endDate?: string;
   role?: string;
+  departmentId?: number;
 }
 
 export const GetPendingTasks = (billableType: string) => {
@@ -738,6 +739,12 @@ export const GetPendingTasks = (billableType: string) => {
     }
     if (config.startDate && config.endDate) {
       req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
+    }
+
+    if (config.departmentId) {
+      let u = new User();
+      u.setEmployeeDepartmentId(config.departmentId);
+      req.setSearchUser(u);
     }
 
     const response = (await TaskClientService.BatchGet(req)).toObject();
