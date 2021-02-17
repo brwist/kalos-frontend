@@ -8,6 +8,7 @@ import FlagIcon from '@material-ui/icons/Flag';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import CheckIcon from '@material-ui/icons/CheckCircleOutline';
+import RateReviewIcon from '@material-ui/icons/RateReview';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Modal } from '../../ComponentsLibrary/Modal';
@@ -46,7 +47,6 @@ import {
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
 import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { PropLinkServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/prop_link_pb_service';
 
 const TaskClientService = new TaskClient(ENDPOINT);
@@ -83,6 +83,7 @@ export interface Props {
   week?: string;
   needsManagerAction: boolean;
   needsPayrollAction: boolean;
+  needsAuditAction: boolean;
   role?: string;
   onClose?: () => void;
 }
@@ -94,9 +95,11 @@ export const SpiffTool: FC<Props> = ({
   week,
   needsManagerAction,
   needsPayrollAction,
+  needsAuditAction,
   role,
   onClose,
 }) => {
+  console.log({ needsAuditAction });
   const WEEK_OPTIONS =
     kind === WEEKLY ? getWeekOptions(52, 0, -1) : getWeekOptions();
   if (week && !WEEK_OPTIONS.map(({ value }) => value).includes(week)) {
@@ -127,6 +130,8 @@ export const SpiffTool: FC<Props> = ({
   const [payrollOpen, setPayrollOpen] = useState<boolean>(false);
   //const [role, setRole] = useState<RoleType>();
   const [pendingPayroll, setPendingPayroll] = useState<TaskType>();
+  const [pendingAudit, setPendingAudit] = useState<TaskType>();
+
   const [
     serviceCallEditing,
     setServiceCallEditing,
@@ -187,6 +192,14 @@ export const SpiffTool: FC<Props> = ({
       action.setStatus(1);
       req.setSearchAction(action);
     }
+    if (needsAuditAction) {
+      req.setNotEqualsList(['AdminActionId']);
+      req.setFieldMaskList(['NeedsAuditing']);
+      req.setNeedsAuditing(true);
+      const action = new SpiffToolAdminAction();
+      action.setStatus(1);
+      req.setSearchAction(action);
+    }
     if (technician) {
       req.setExternalId(technician);
     }
@@ -226,6 +239,7 @@ export const SpiffTool: FC<Props> = ({
     spiffTypes,
     needsManagerAction,
     needsPayrollAction,
+    needsAuditAction,
   ]);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await loadTechnicians();
@@ -245,6 +259,10 @@ export const SpiffTool: FC<Props> = ({
   const handlePendingPayrollToggle = useCallback(
     (task?: TaskType) => () => setPendingPayroll(task),
     [setPendingPayroll],
+  );
+  const handlePendingAuditToggle = useCallback(
+    (task?: TaskType) => () => setPendingAudit(task),
+    [setPendingAudit],
   );
   const handleSetExtendedEditing = useCallback(
     (extendedEditing?: TaskType) => async () => {
@@ -274,6 +292,19 @@ export const SpiffTool: FC<Props> = ({
       load();
     }
   }, [load, pendingPayroll]);
+  const handleAudit = useCallback(async () => {
+    if (pendingAudit) {
+      const { id } = pendingAudit;
+      setLoading(true);
+      setPendingAudit(undefined);
+      const t = new Task();
+      t.setId(id);
+      t.setNeedsAuditing(false);
+      t.setFieldMaskList(['NeedsAuditing']);
+      await TaskClientService.Update(t);
+      load();
+    }
+  }, [load, pendingAudit]);
   const handleDelete = useCallback(async () => {
     if (deleting) {
       setLoading(true);
@@ -615,6 +646,17 @@ export const SpiffTool: FC<Props> = ({
               ) : (
                 <React.Fragment />
               ),
+              needsAuditAction ? (
+                <IconButton
+                  key={3}
+                  size="small"
+                  onClick={handlePendingAuditToggle(entry)}
+                >
+                  <RateReviewIcon />
+                </IconButton>
+              ) : (
+                <React.Fragment />
+              ),
               <IconButton
                 key={1}
                 size="small"
@@ -915,7 +957,17 @@ export const SpiffTool: FC<Props> = ({
           onClose={handlePendingPayrollToggle()}
           onConfirm={handlePayroll}
         >
-          Are you sure, you want to process payroll for this Per Diem?
+          Are you sure, you want to process payroll for this Spiff/Tool?
+        </Confirm>
+      )}
+      {pendingAudit && (
+        <Confirm
+          title="Confirm Approve"
+          open
+          onClose={handlePendingAuditToggle()}
+          onConfirm={handleAudit}
+        >
+          Are you sure, you want complete Auditing for this Spiff/Tool?
         </Confirm>
       )}
     </div>

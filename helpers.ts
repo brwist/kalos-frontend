@@ -731,6 +731,19 @@ export const GetPendingTasks = (billableType: string) => {
         req.setFieldMaskList(['PayrollProcessed']);
       }
     }
+    if (config.role === 'Auditor') {
+      console.log('Spiff Tool auditor');
+      if (billableType === 'Spiff') {
+        req.setNotEqualsList([
+          'AdminActionId',
+          'DatePerformed',
+          'NeedsAuditing',
+        ]);
+      }
+      if (billableType === 'Tool Purchase') {
+        req.setNotEqualsList(['AdminActionId', 'TimeDue', 'NeedsAuditing']);
+      }
+    }
     if (config.technicianUserID) {
       req.setExternalId(config.technicianUserID);
     }

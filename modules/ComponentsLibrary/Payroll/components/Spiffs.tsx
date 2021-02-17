@@ -227,6 +227,7 @@ export const Spiffs: FC<Props> = ({ employeeId, week, role, loggedUserId }) => {
             type="Spiff"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
+            needsAuditAction={role === 'Auditor' ? true : false}
             role={role}
             onClose={handleTogglePendingView(undefined)}
           />

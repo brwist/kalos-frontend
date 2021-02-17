@@ -332,13 +332,16 @@ export const Timesheet: FC<Props> = props => {
         }
         if (
           (user?.timesheetAdministration || isManager) &&
+          role != 'Payroll' &&
+          role != 'Auditor' &&
           props.userId !== props.timesheetOwnerId
         ) {
           await tslClient.Approve(ids, userId);
           dispatch({ type: 'approveTimesheet' });
         } else if (role === 'Payroll') {
           console.log('We are processing the timesheet');
-          //This is where we should mark them as Payroll Processed
+          console.log({ ids });
+          await tslClient.Process(ids, userId);
           dispatch({ type: 'processTimesheet' });
         } else {
           await tslClient.Submit(ids);
