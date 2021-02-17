@@ -70,6 +70,7 @@ import {
   QuoteLinePartClient,
   QuoteLinePart,
 } from '@kalos-core/kalos-rpc/QuoteLinePart';
+import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { QuoteLineClient, QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import {
   PerDiemClient,
@@ -161,6 +162,7 @@ export type TaskType = Task.AsObject;
 export type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
 export type DocumentType = Document.AsObject;
 export type TaskEventDataType = TaskEventData.AsObject;
+export type QuotableReadType = QuotableRead.AsObject;
 export type QuotableType = Quotable.AsObject;
 export type ProjectTaskType = ProjectTask.AsObject;
 export type TaskStatusType = TaskStatus.AsObject;
@@ -1142,23 +1144,30 @@ async function loadServicesRendered(eventId: number) {
  * Returns loaded QuoteParts
  * @returns QuotePart[]
  */
-async function loadQuoteParts() {
-  const results: QuotePart.AsObject[] = [];
-  const req = new QuotePart();
-  req.setPageNumber(0);
-  const { resultsList, totalCount } = (
-    await QuotePartClientService.BatchGet(req)
+async function loadQuoteParts(
+  filter: Partial<QuotableReadType>,
+  fieldMaskListInit: string[] = [],
+) {
+  const results: QuotableType[] = [];
+  const { dataList, totalCount } = (
+    await EventClientService.loadQuotableList(
+      { ...filter, pageNumber: 0 },
+      fieldMaskListInit,
+    )
   ).toObject();
-  results.push(...resultsList);
-  if (totalCount > resultsList.length) {
+  results.push(...dataList);
+  if (totalCount > dataList.length) {
     const batchesAmount = Math.ceil(
-      (totalCount - resultsList.length) / resultsList.length,
+      (totalCount - dataList.length) / dataList.length,
     );
     const batchResults = await Promise.all(
       Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await QuotePartClientService.BatchGet(req)).toObject()
-          .resultsList;
+        return (
+          await EventClientService.loadQuotableList(
+            { ...filter, pageNumber: idx + 1 },
+            fieldMaskListInit,
+          )
+        ).toObject().dataList;
       }),
     );
     results.push(
