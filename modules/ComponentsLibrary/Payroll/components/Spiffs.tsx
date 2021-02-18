@@ -30,9 +30,16 @@ interface Props {
   week: string;
   role: string;
   loggedUserId: number;
+  departmentId: number;
 }
 
-export const Spiffs: FC<Props> = ({ employeeId, week, role, loggedUserId }) => {
+export const Spiffs: FC<Props> = ({
+  employeeId,
+  week,
+  role,
+  loggedUserId,
+  departmentId,
+}) => {
   const [initiated, setInitiated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [spiffs, setSpiffs] = useState<TaskType[]>([]);
@@ -54,6 +61,7 @@ export const Spiffs: FC<Props> = ({ employeeId, week, role, loggedUserId }) => {
       page,
       technicianUserID: employeeId,
       role,
+      departmentId,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {

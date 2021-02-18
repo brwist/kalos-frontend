@@ -657,13 +657,17 @@ export const SpiffTool: FC<Props> = ({
               ) : (
                 <React.Fragment />
               ),
-              <IconButton
-                key={1}
-                size="small"
-                onClick={handleSetDeleting(entry)}
-              >
-                <DeleteIcon />
-              </IconButton>,
+              role != 'Payroll' && role != 'Auditor' ? (
+                <IconButton
+                  key={1}
+                  size="small"
+                  onClick={handleSetDeleting(entry)}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              ) : (
+                <React.Fragment />
+              ),
             ]
           : [
               <IconButton key={0} size="small">
