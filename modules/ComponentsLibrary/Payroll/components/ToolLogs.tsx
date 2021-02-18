@@ -19,20 +19,28 @@ interface Props {
   employeeId: number;
   week: string;
   role: string;
+  departmentId: number;
 }
 
-export const ToolLogs: FC<Props> = ({ employeeId, week, role }) => {
+export const ToolLogs: FC<Props> = ({
+  employeeId,
+  week,
+  role,
+  departmentId,
+}) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [toolLogs, setToolLogs] = useState<TaskType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TaskType>();
+  console.log({ departmentId });
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
       page,
       employeeId,
       role,
+      departmentId,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
@@ -44,7 +52,7 @@ export const ToolLogs: FC<Props> = ({ employeeId, week, role }) => {
     setToolLogs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week, role]);
+  }, [page, employeeId, week, role, departmentId]);
   useEffect(() => {
     load();
   }, [page, employeeId, week, load]);
@@ -108,6 +116,7 @@ export const ToolLogs: FC<Props> = ({ employeeId, week, role }) => {
             type="Tool"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
+            needsAuditAction={role === 'Auditor' ? true : false}
             role={role}
             onClose={handleTogglePendingView(undefined)}
           />
