@@ -75,6 +75,14 @@ export const PerDiem: FC<Props> = ({
       employeeId,
       week === OPTION_ALL ? undefined : week,
     );
+    console.log('args', {
+      page,
+      auditorFilter,
+      payrollFilter,
+      managerFilter,
+      departmentId,
+      employeeId,
+    });
     setPerDiems(perDiems.resultsList);
     setCount(perDiems.totalCount);
     setLoading(false);
