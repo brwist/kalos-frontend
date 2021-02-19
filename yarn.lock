@@ -979,9 +979,9 @@
     regenerator-runtime "^0.13.4"
 
 "@babel/runtime@^7.12.5", "@babel/runtime@^7.8.4":
-  version "7.12.17"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.12.17.tgz#9821f8de0f8d518624198b7382b74bd71b17f75c"
-  integrity sha512-nEvWif7aHm4O0lTT2p4kYCfYwsGSBiWA8XmAqovusBDKugpUy3BVggAjJL4iFWIwrFJktay2VLtAQl1/l8Xsow==
+  version "7.12.18"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.12.18.tgz#af137bd7e7d9705a412b3caaf991fe6aaa97831b"
+  integrity sha512-BogPQ7ciE6SYAUPtlm9tWbgI9+2AgqSam6QivMgXgAT+fKbgppaj4ZX15MHeLC1PVF5sNk70huBu20XxWOs8Cg==
   dependencies:
     regenerator-runtime "^0.13.4"
 
@@ -1314,9 +1314,9 @@
     chalk "^4.0.0"
 
 "@kalos-core/kalos-rpc@^2.60.2":
-  version "2.60.5"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.60.5.tgz#21755a21eae08338a0b0449ac5d3ae19a29996b1"
-  integrity sha512-Ozf4ra/7710k0nfntJbcN10l9yKwo0JWaTrzv6ATlMSZ5Wpv4POyKfs83A70nyy09OukybDE6tNK3xlU5c5QzQ==
+  version "2.60.6"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.60.6.tgz#d9542b983624a36bb8fc71a2a1766a45b8a80a85"
+  integrity sha512-Rxk4H32AipOQG64ASzhKEOtwyAHZm5vdZ0oDfP6mVicBvftUgwyHAGQ6DHjzqUVmrtIAHoc0yMwZbhmCy+Z0bw==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -1735,14 +1735,14 @@
   integrity sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==
 
 "@types/node@*":
-  version "14.14.25"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.25.tgz#15967a7b577ff81383f9b888aa6705d43fbbae93"
-  integrity sha512-EPpXLOVqDvisVxtlbvzfyqSsFeQxltFbluZNRndIb8tr9KiBnYNLzrc1N3pyKUCww2RNrfHDViqDWWE1LCJQtQ==
+  version "14.14.30"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.30.tgz#7d5162eec085ba34f8cb9011e9ba12119f76f961"
+  integrity sha512-gUWhy8s45fQp4PqqKecsnOkdW0kt1IaKjgOIR3HPokkzTmQj9ji2wWFID5THu1MKrtO+d4s2lVrlEhXUsPXSvg==
 
 "@types/node@^12.7.8":
-  version "12.20.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.1.tgz#63d36c10e162666f0107f247cdca76542c3c7472"
-  integrity sha512-tCkE96/ZTO+cWbln2xfyvd6ngHLanvVlJ3e5BeirJ3BYI5GbAyubIrmV4JjjugDly5D9fHjOL5MNsqsCnqwW6g==
+  version "12.20.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.3.tgz#fbabde59d96c23a80e337ca6a71b464da2a0a824"
+  integrity sha512-63cSd8J30Sr4/aFKKfDmCEM4GMH3W2efWT0Ii/B+Ohm3id0TU2xPEBFktiq3nXCZcN6VwVvpyv75I4zTP7YO/w==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
@@ -1814,11 +1814,9 @@
     "@types/node" "*"
 
 "@types/resolve@^1.14.0":
-  version "1.19.0"
-  resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-1.19.0.tgz#75c729aedd9a0de60650facb16eb33239d3c407a"
-  integrity sha512-NikKq+D2KJzmaWbcz4JLVT34ybtCC4c3jV6XRGWOQvOkXka9QblEmC+sPf3vRa3lmcURkVbCk2V2BDyCO7jbXg==
-  dependencies:
-    "@types/node" "*"
+  version "1.20.0"
+  resolved "https://registry.yarnpkg.com/@types/resolve/-/resolve-1.20.0.tgz#11325a379b6f63b858fed49552fd4178495ee087"
+  integrity sha512-SFT3jdUNlLkjxUWwH/0QjLiEsV38hjdDX8oMcX9jZAD8KWNzRLdg6INZE7UMz9O86b2BOHzA3dR8nF+DbonX2Q==
 
 "@types/rollup-plugin-node-builtins@^2.1.1":
   version "2.1.1"
@@ -2755,7 +2753,7 @@ browserslist@^4.0.0:
     electron-to-chromium "^1.3.322"
     node-releases "^1.1.44"
 
-browserslist@^4.14.5, browserslist@^4.16.1:
+browserslist@^4.14.5, browserslist@^4.16.3:
   version "4.16.3"
   resolved "https://registry.yarnpkg.com/browserslist/-/browserslist-4.16.3.tgz#340aa46940d7db878748567c5dea24a48ddf3717"
   integrity sha512-vIyhWmIkULaq04Gt93txdh+j02yX/JzlyhLYbV3YQCn/zvES3JnY7TifHHvvr1w5hTDluNKMkV05cs4vy8Q7sw==
@@ -3273,11 +3271,11 @@ copy-props@^2.0.1:
     is-plain-object "^2.0.1"
 
 core-js-compat@^3.8.0:
-  version "3.8.3"
-  resolved "https://registry.yarnpkg.com/core-js-compat/-/core-js-compat-3.8.3.tgz#9123fb6b9cad30f0651332dc77deba48ef9b0b3f"
-  integrity sha512-1sCb0wBXnBIL16pfFG1Gkvei6UzvKyTNYpiC41yrdjEv0UoJoq9E/abTMzyYJ6JpTkAj15dLjbqifIzEBDVvog==
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/core-js-compat/-/core-js-compat-3.9.0.tgz#29da39385f16b71e1915565aa0385c4e0963ad56"
+  integrity sha512-YK6fwFjCOKWwGnjFUR3c544YsnA/7DoLL0ysncuOJ4pwbriAtOpvM2bygdlcXbvQCQZ7bBU9CL4t7tGl7ETRpQ==
   dependencies:
-    browserslist "^4.16.1"
+    browserslist "^4.16.3"
     semver "7.0.0"
 
 core-js@^2.4.0:
@@ -3956,9 +3954,9 @@ electron-to-chromium@^1.3.322:
   integrity sha512-DNMd91VtKt44LIkFtpICxAWu/GSGFLUMDM/kFINJ3Oe47OimSnbMvO3ChkUCdUyit+pRdhdCcM3+i5bpli5gqg==
 
 electron-to-chromium@^1.3.649:
-  version "1.3.667"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.667.tgz#18ca4f243ec163c3e354e506ba22ef46d31d925e"
-  integrity sha512-Ot1pPtAVb5nd7jeVF651zmfLFilRVFomlDzwXmdlWe5jyzOGa6mVsQ06XnAurT7wWfg5VEIY+LopbAdD/bpo5w==
+  version "1.3.669"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.669.tgz#ef9b63187b3f9821e2a064e04f616ea092282b41"
+  integrity sha512-VNj10fmGC6SbE7s4tKG7y2OopVXYoTIfjE1MetflPd77KmeRuHtkl+HYsfF00BGg5hyaorTUn6lTToEHaciOSw==
 
 elliptic@^6.0.0:
   version "6.5.2"
@@ -4963,9 +4961,9 @@ glogg@^1.0.0:
     sparkles "^1.0.0"
 
 google-protobuf@^3.10.0, google-protobuf@^3.9.0-rc.1:
-  version "3.14.0"
-  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.14.0.tgz#20373d22046e63831a5110e11a84f713cc43651e"
-  integrity sha512-bwa8dBuMpOxg7COyqkW6muQuvNnWgVN8TX/epDRGW5m0jcrmq2QJyCyiV8ZE2/6LaIIqJtiv9bYokFhfpy/o6w==
+  version "3.15.0"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.15.0.tgz#2dddf32f6a5aec34f7cf71867cde6e4e54c0a30b"
+  integrity sha512-5R5vZ9pFfbsGS4yHl932PpKbAti2u4d6eyI+wIK0WMyvVaJK6Htkf1Z7QGbzgiccq3MjYByxSt/OtyV+prJD7g==
 
 graceful-fs@^4.0.0, graceful-fs@^4.2.0:
   version "4.2.3"
