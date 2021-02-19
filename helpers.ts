@@ -1606,7 +1606,7 @@ export const loadPerDiemsForPayroll = async (
   const req = new PerDiem();
   req.setWithRows(true);
   req.setPageNumber(page);
-  req.setNotEqualsList(['DateSubmitted']);
+  req.addNotEquals('DateSubmitted');
   req.setDateSubmitted(NULL_TIME);
   if (departmentId) {
     req.setDepartmentId(departmentId);
@@ -1620,16 +1620,16 @@ export const loadPerDiemsForPayroll = async (
   if (managerApproved || needsProcessed || needsAuditing) {
     if (managerApproved) {
       //fetch unapproved perdiems for the department
-      req.setFieldMaskList(['ApprovedByID']);
-      req.setNotEqualsList(['PayrollProcessed']);
+      req.addFieldMask('ApprovedById');
+      req.addNotEquals('PayrollProcessed');
     } else if (needsProcessed) {
       //fetch all peridems that are not currently processed by payroll
-      req.setNotEqualsList(['ApprovedById']);
-      req.setFieldMaskList(['PayrollProcessed']);
-      req.setPayrollProcessed(false);
+      req.addNotEquals('ApprovedById');
+      req.addFieldMask('PayrollProcessed');
     } else if (needsAuditing) {
       //fetch perdiems that have no been audited yet
-      req.setNotEqualsList(['ApprovedById']);
+      req.addNotEquals('ApprovedById');
+      req.addFieldMask('NeedsAuditing');
       req.setFieldMaskList(['NeedsAuditing']);
       req.setNeedsAuditing(true);
     }
