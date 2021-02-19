@@ -58,7 +58,6 @@ export const TimeOff: FC<Props> = ({
   const [data, setData] = useState<TimeoffRequestType>(emptyTO.toObject());
 
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
-
   const init = useCallback(async () => {
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTypeOptions(
@@ -70,6 +69,7 @@ export const TimeOff: FC<Props> = ({
     setPto(pto);
     const user = await UserClientService.loadUserById(userId || loggedUserId);
     setUser(user);
+
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedUser(loggedUser);
     if (requestOffId) {
@@ -126,8 +126,8 @@ export const TimeOff: FC<Props> = ({
         requestType,
         timeStarted,
         timeFinished,
-        userId,
       } = data;
+      const userId = user?.id;
       if (timeFinished < timeStarted) {
         setError('End Time cannot be before Start Time');
         return;
@@ -209,6 +209,7 @@ export const TimeOff: FC<Props> = ({
       formKey,
     ],
   );
+
   const handleSubmitAdmin = useCallback(async () => {
     const {
       id,
@@ -239,11 +240,9 @@ export const TimeOff: FC<Props> = ({
       onSaveOrDelete(data);
     }
   }, [requestOffId, setSaving, onSaveOrDelete, data]);
-  //console.log({ loggedUser }, loggedUser?.isAdmin, loggedUserId !== userId);
   const isAdmin = loggedUser && loggedUser.isAdmin;
   const disabled = !(data.id && isAdmin);
   const disabledAdmin = disabled || !!data.adminApprovalUserId;
-  //console.log({ disabled, disabledAdmin });
   const schema: Schema<TimeoffRequestType> = [
     [
       {
