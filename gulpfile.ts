@@ -659,6 +659,7 @@ const NAMED_EXPORTS = {
     'EventList',
     'Quotable',
     'QuotableList',
+    'QuotableRead',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/event_assignment_pb.js': [
     'EventAssignment',
