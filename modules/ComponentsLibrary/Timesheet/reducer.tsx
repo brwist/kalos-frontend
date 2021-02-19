@@ -129,7 +129,6 @@ export type Action =
 export const getShownDates = (date: Date): string[] => {
   const firstDay = date;
   const lastDay = addDays(firstDay, 6);
-  console.log({ firstDay, lastDay });
   const days = eachDayOfInterval({ start: firstDay, end: lastDay });
   return days.map(date => format(date, 'yyyy-MM-dd'));
 };
