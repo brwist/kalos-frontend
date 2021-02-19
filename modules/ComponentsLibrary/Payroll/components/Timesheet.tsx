@@ -141,8 +141,8 @@ export const Timesheet: FC<Props> = ({
 
 interface GetTimesheetConfig {
   page?: number;
-  departmentID?: number;
-  technicianUserID?: number;
+  departmentId?: number;
+  employeeId: number;
   startDate?: string;
   endDate?: string;
   type: RoleType;
@@ -161,22 +161,20 @@ const createTimesheetFetchFunction = (
   req.setUserApprovalDatetime(NULL_TIME);
 
   const client = new TimesheetLineClient(ENDPOINT);
-
   if (config.startDate && config.endDate) {
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
   }
-  if (config.departmentID) {
-    req.setDepartmentCode(config.departmentID);
+  if (config.departmentId) {
+    req.setDepartmentCode(config.departmentId);
   }
-  if (config.technicianUserID) {
-    req.setTechnicianUserId(config.technicianUserID);
+  if (config.employeeId) {
+    req.setTechnicianUserId(config.employeeId);
   }
 
   if (config.type === 'Payroll') {
     req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
   } else if (config.type === 'Manager') {
     req.setNotEqualsList(['UserApprovalDatetime']);
-    req.setFieldMaskList(['AdminApprovalUserId']);
   }
   if (config.type == 'Manager') {
     return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains
