@@ -292,8 +292,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   refreshNamesAndDates = async () => {
     new Promise(async resolve => {
-      this.getDepartmentNamesFromIds();
-      this.getUserNamesFromIds();
       let res = await getRowDatesFromPerDiemTrips(
         this.state.tripsOnPage.getResultsList(),
       );
@@ -414,65 +412,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     return '-';
   };
 
-  getDepartmentNamesFromIds = async () => {
-    let res: { name: string; id: number }[] = [];
-
-    let arrayInts: number[] = [];
-    this.state.tripsOnPage.getResultsList().forEach(async (trip: Trip) => {
-      arrayInts.push(trip.getDepartmentId());
-    });
-    const depts = await TimesheetDepartmentClientService.BatchGetDepartmentsByIds(
-      arrayInts,
-    );
-    for (const dept of depts.getResultsList()) {
-      res.push({
-        name: dept.getDescription(),
-        id: dept.getId(),
-      });
-    }
-    this.deptNameIdPair = res;
-    return res;
-  };
-
-  getUserNamesFromIds = async () => {
-    let res: { name: string; id: number }[] = [];
-
-    let arrayInts: number[] = [];
-    this.state.tripsOnPage.getResultsList().forEach(async (trip: Trip) => {
-      arrayInts.push(trip.getUserId());
-    });
-    const users = await UserClientService.BatchGetUsersByIds(arrayInts);
-    for (const user of users.getResultsList()) {
-      res.push({
-        name: `${user.getFirstname()} ${user.getLastname()}`,
-        id: user.getId(),
-      });
-    }
-    this.nameIdPair = res;
-    return res;
-  };
-
-  getNameById = (userId: number) => {
-    if (this.nameIdPair.length == 0) {
-      // Return - it's a bit early but it will be called at a later time when the state is set
-      return '';
-    }
-
-    for (const obj of this.nameIdPair) {
-      if (obj.id == userId) {
-        return obj.name;
-      }
-    }
-  };
-
-  getDeptById = (Id: number) => {
-    for (const obj of this.deptNameIdPair) {
-      if (obj.id == Id) {
-        return obj.name;
-      }
-    }
-  };
-
   getTotalTripDistance = async () => {
     let dist = 0;
 
@@ -550,7 +489,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { value: currentTrip.getOriginAddress() },
           { value: currentTrip.getDestinationAddress() },
           {
-            value: this.getNameById(currentTrip.getUserId()),
+            value: currentTrip.getUserName(),
           },
           {
             value: this.getRowStartDateById(
@@ -571,7 +510,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             value: currentTrip.getApproved() ? 'Yes' : 'No',
           },
           {
-            value: this.getDeptById(currentTrip.getDepartmentId()),
+            value: currentTrip.getDepartmentName(),
           },
           {
             value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',
@@ -623,7 +562,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                       label="Message Team Member"
                       loggedUserId={this.props.loggedUserId}
                       type="icon"
-                      autofillName={this.getNameById(currentTrip.getUserId())}
+                      autofillName={currentTrip.getUserName()}
                     >
                       <MessageIcon />
                     </SlackMessageButton>
@@ -899,9 +838,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               distanceInDollars: perDiemTripMilesToUsd(
                 this.state.tripToView.toObject().distanceInMiles,
               ),
-              nameOfEmployee: this.getNameById(
-                this.state.tripToView.toObject().userId,
-              )!,
+              nameOfEmployee: this.state.tripToView.getUserName(),
               weekOf: '', // Will be filled out but this is to stop the schema from screaming at us
               departmentName: this.state.currentTripDepartment?.value
                 ? `${this.state.currentTripDepartment.value} (${this.state.currentTripDepartment.description})`
