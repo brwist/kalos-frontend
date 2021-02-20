@@ -840,11 +840,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ),
               nameOfEmployee: this.state.tripToView.getUserName(),
               weekOf: '', // Will be filled out but this is to stop the schema from screaming at us
-              departmentName: this.state.currentTripDepartment?.value
-                ? `${this.state.currentTripDepartment.value} (${this.state.currentTripDepartment.description})`
-                : this.getDepartmentNameById(
-                    this.state.tripToView.getDepartmentId(),
-                  ) && '',
+              departmentName: this.state.tripToView.getDepartmentName(),
             }}
             onClose={() => {
               this.setTripToView(null);
