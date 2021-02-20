@@ -165,6 +165,7 @@ const createTimesheetFetchFunction = (
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
   }
   if (config.departmentId) {
+    console.log('We got a department');
     req.setDepartmentCode(config.departmentId);
   }
   if (config.employeeId) {
@@ -174,7 +175,7 @@ const createTimesheetFetchFunction = (
   if (config.type === 'Payroll') {
     req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
   } else if (config.type === 'Manager') {
-    req.setNotEqualsList(['UserApprovalDatetime']);
+    req.addNotEquals('UserApprovalDatetime');
   }
   if (config.type == 'Manager') {
     return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains
