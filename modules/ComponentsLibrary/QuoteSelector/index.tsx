@@ -1,11 +1,11 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
+import { Quotable } from '@kalos-core/kalos-rpc/Event';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { InfoTable, Data, Columns } from '../InfoTable';
-import { QuotePart } from '@kalos-core/kalos-rpc/QuotePart';
-import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
-import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import { Field, Value } from '../Field';
+import { Form, Schema } from '../Form';
+import { Filter } from './filter';
 import {
   loadQuoteParts,
   makeFakeRows,
@@ -19,7 +19,6 @@ type SelectedQuote = {
   billable: boolean;
   quantity: number;
 };
-
 interface Props {
   serviceCallId: number;
   onAdd?: () => void;
@@ -41,6 +40,33 @@ const COLUMNS_QUOTABLE: Columns = [
   { name: 'Amount' },
 ];
 
+const SCHEMA_NEW_QUOTABLE: Schema<QuotableType> = [
+  [
+    {
+      name: 'description',
+      label: 'Item/Labor Name',
+    },
+    {
+      name: 'isLmpc',
+      type: 'checkbox',
+      label: 'LMPC',
+    },
+  ],
+  [
+    {
+      name: 'quotedPrice',
+      type: 'number',
+      label: 'Price',
+      startAdornment: '$',
+    },
+    {
+      name: 'quantity',
+      type: 'number',
+      label: 'QTY',
+    },
+  ],
+];
+
 export const QuoteSelector: FC<Props> = ({
   serviceCallId,
   onAdd,
@@ -49,8 +75,14 @@ export const QuoteSelector: FC<Props> = ({
   const [open, setOpen] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [newQuotable, setNewQuotable] = useState<boolean>(false);
+  const [filter, setFilter] = useState<string>('');
   const [quotable, setQuotable] = useState<QuotableType[]>([]);
   const [quoteParts, setQuoteParts] = useState<QuotableType[]>([]);
+  const [pendingQuotable, setPendingQuotable] = useState<QuotableType[]>([]);
+  const [pendingNewQuotable, setPendingNewQuotable] = useState<QuotableType[]>(
+    [],
+  );
   const [selectedQuoteLineIds, setSelectedQuoteLineIds] = useState<number[]>(
     [],
   );
@@ -127,79 +159,152 @@ export const QuoteSelector: FC<Props> = ({
     [billable],
   );
   const handleAddQuotes = useCallback(() => {
+    setPendingQuotable(
+      Object.keys(billable).map(id => ({
+        ...quoteParts.find(q => q.quoteLineId === +id)!,
+        quantity: billable[+id].quantity,
+      })),
+    );
     if (onAddQuotes) {
-      onAddQuotes(
-        Object.keys(billable).map(id => ({
+      onAddQuotes([
+        ...Object.keys(billable).map(id => ({
           quotePart: quoteParts.find(q => q.quoteLineId === +id)!,
           billable: billable[+id].billable,
           quantity: billable[+id].quantity,
         })),
-      );
-      setOpen(false);
+        ...pendingNewQuotable.map(quotePart => ({
+          quotePart,
+          billable: true,
+          quantity: quotePart.quantity,
+        })),
+      ]);
     }
-  }, [billable, quoteParts, onAddQuotes]);
-  // console.log({ quotable, quoteParts });
+    setOpen(false);
+  }, [billable, quoteParts, onAddQuotes, pendingNewQuotable]);
+  const handleToggleNewQuotable = useCallback(
+    () => setNewQuotable(!newQuotable),
+    [newQuotable],
+  );
+  const handleSaveNewQuotable = useCallback(
+    ({ quantity, ...data }: QuotableType) => {
+      const quotePart = new Quotable().toObject();
+      Object.assign(quotePart, {
+        ...data,
+        quantity,
+        isActive: true, // TODO rest default props?
+      });
+      const newPendingNewQuotable = [...pendingNewQuotable, quotePart];
+      setPendingNewQuotable(newPendingNewQuotable);
+      if (onAddQuotes) {
+        onAddQuotes([
+          ...Object.keys(billable).map(id => ({
+            quotePart: quoteParts.find(q => q.quoteLineId === +id)!,
+            billable: billable[+id].billable,
+            quantity: billable[+id].quantity,
+          })),
+          ...newPendingNewQuotable.map(quotePart => ({
+            quotePart,
+            billable: true,
+            quantity: quotePart.quantity,
+          })),
+        ]);
+      }
+      setNewQuotable(false);
+      setOpen(false);
+    },
+    [onAddQuotes, billable, pendingQuotable, pendingNewQuotable],
+  );
+  console.log({ quotable });
   const data: Data = loading
     ? makeFakeRows(6, 20)
-    : quoteParts.map(({ quoteLineId, description, quotedPrice }) => [
-        {
-          value: (
-            <Field
-              name="selected"
-              type="checkbox"
-              style={{ marginBottom: 0 }}
-              value={selectedQuoteLineIds.includes(quoteLineId)}
-              onChange={handleToggleQuoteLineSelect(quoteLineId)}
-            />
-          ),
-        },
-        {
-          value: selectedQuoteLineIds.includes(quoteLineId) ? (
-            <Field
-              name="selectedBillable"
-              type="checkbox"
-              style={{ marginBottom: 0 }}
-              value={billable[quoteLineId].billable}
-              onChange={handleToggleBillable(quoteLineId)}
-            />
-          ) : (
-            ''
-          ),
-        },
-        { value: description },
-        {
-          value: selectedQuoteLineIds.includes(quoteLineId) ? (
-            <Field
-              name="selected"
-              type="number"
-              style={{ marginBottom: 0 }}
-              value={billable[quoteLineId].quantity}
-              onChange={handleToggleBillableQuantity(quoteLineId)}
-            />
-          ) : (
-            ''
-          ),
-        },
-        { value: `$ ${quotedPrice}` },
-      ]);
+    : quoteParts
+        .filter(({ description }) =>
+          !!filter
+            ? description
+                .toLocaleLowerCase()
+                .includes(filter.toLocaleLowerCase())
+            : true,
+        )
+        .map(({ quoteLineId, description, quotedPrice }) => [
+          {
+            value: (
+              <Field
+                name="selected"
+                type="checkbox"
+                style={{ marginBottom: 0 }}
+                value={selectedQuoteLineIds.includes(quoteLineId)}
+                onChange={handleToggleQuoteLineSelect(quoteLineId)}
+              />
+            ),
+          },
+          {
+            value: selectedQuoteLineIds.includes(quoteLineId) ? (
+              <Field
+                name="selectedBillable"
+                type="checkbox"
+                style={{ marginBottom: 0 }}
+                value={billable[quoteLineId].billable}
+                onChange={handleToggleBillable(quoteLineId)}
+              />
+            ) : (
+              ''
+            ),
+          },
+          { value: description },
+          {
+            value: selectedQuoteLineIds.includes(quoteLineId) ? (
+              <Field
+                name="selected"
+                type="number"
+                style={{ marginBottom: 0 }}
+                value={billable[quoteLineId].quantity}
+                onChange={handleToggleBillableQuantity(quoteLineId)}
+              />
+            ) : (
+              ''
+            ),
+          },
+          {
+            value: usd(
+              selectedQuoteLineIds.includes(quoteLineId)
+                ? billable[quoteLineId].quantity * quotedPrice
+                : quotedPrice,
+            ),
+          },
+        ]);
   const dataQuotable: Data = loading
     ? makeFakeRows(4, 5)
-    : quotable.map(({ description, quantity, quotedPrice, isBillable }) => [
-        { value: description },
-        { value: quantity },
-        { value: usd(quotedPrice) },
-        { value: usd(isBillable ? quantity * quotedPrice : 0) },
-      ]);
+    : [
+        ...pendingQuotable.map(({ description, quantity, quotedPrice }) => [
+          { value: <strong>{description}</strong> },
+          { value: <strong>{quantity}</strong> },
+          { value: <strong>{usd(quotedPrice)}</strong> },
+          { value: <strong>{usd(quantity * quotedPrice)}</strong> },
+        ]),
+        ...pendingNewQuotable.map(({ description, quantity, quotedPrice }) => [
+          { value: <strong>{description}</strong> },
+          { value: <strong>{quantity}</strong> },
+          { value: <strong>{usd(quotedPrice)}</strong> },
+          { value: <strong>{usd(quantity * quotedPrice)}</strong> },
+        ]),
+        ...quotable.map(({ description, quantity, quotedPrice }) => [
+          { value: description },
+          { value: quantity },
+          { value: usd(quotedPrice) },
+          { value: usd(quantity * quotedPrice) },
+        ]),
+      ];
   return (
     <div>
       <SectionBar
-        title="Materials Used"
+        title="Supplies / Services"
         actions={
           onAdd
             ? [
                 {
                   label: 'Add',
                   onClick: handleToggleOpen,
+                  disabled: loading,
                 },
               ]
             : undefined
@@ -214,8 +319,13 @@ export const QuoteSelector: FC<Props> = ({
       {open && (
         <Modal open onClose={handleToggleOpen} fullScreen>
           <SectionBar
-            title="Select Material(s)"
+            title="Select Item(s)"
             actions={[
+              {
+                label: 'New Part/Labor',
+                variant: 'outlined',
+                onClick: handleToggleNewQuotable,
+              },
               ...(onAddQuotes
                 ? [{ label: 'Add Selected', onClick: handleAddQuotes }]
                 : []),
@@ -223,11 +333,23 @@ export const QuoteSelector: FC<Props> = ({
             ]}
             fixedActions
           />
+          <Filter onSearch={setFilter} />
           <InfoTable
             columns={COLUMNS}
             data={data}
             hoverable
             loading={loading}
+          />
+        </Modal>
+      )}
+      {newQuotable && (
+        <Modal open onClose={handleToggleNewQuotable}>
+          <Form<QuotableType>
+            title="Adding the following Part of Labor to Current Job Invoice"
+            schema={SCHEMA_NEW_QUOTABLE}
+            onClose={handleToggleNewQuotable}
+            onSave={handleSaveNewQuotable}
+            data={new Quotable().toObject()}
           />
         </Modal>
       )}
