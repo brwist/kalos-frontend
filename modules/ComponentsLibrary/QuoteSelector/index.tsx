@@ -79,6 +79,10 @@ export const QuoteSelector: FC<Props> = ({
   const [filter, setFilter] = useState<string>('');
   const [quotable, setQuotable] = useState<QuotableType[]>([]);
   const [quoteParts, setQuoteParts] = useState<QuotableType[]>([]);
+  const [pendingQuotable, setPendingQuotable] = useState<QuotableType[]>([]);
+  const [pendingNewQuotable, setPendingNewQuotable] = useState<QuotableType[]>(
+    [],
+  );
   const [selectedQuoteLineIds, setSelectedQuoteLineIds] = useState<number[]>(
     [],
   );
@@ -155,17 +159,28 @@ export const QuoteSelector: FC<Props> = ({
     [billable],
   );
   const handleAddQuotes = useCallback(() => {
+    setPendingQuotable(
+      Object.keys(billable).map(id => ({
+        ...quoteParts.find(q => q.quoteLineId === +id)!,
+        quantity: billable[+id].quantity,
+      })),
+    );
     if (onAddQuotes) {
-      onAddQuotes(
-        Object.keys(billable).map(id => ({
+      onAddQuotes([
+        ...Object.keys(billable).map(id => ({
           quotePart: quoteParts.find(q => q.quoteLineId === +id)!,
           billable: billable[+id].billable,
           quantity: billable[+id].quantity,
         })),
-      );
-      setOpen(false);
+        ...pendingNewQuotable.map(quotePart => ({
+          quotePart,
+          billable: true,
+          quantity: quotePart.quantity,
+        })),
+      ]);
     }
-  }, [billable, quoteParts, onAddQuotes]);
+    setOpen(false);
+  }, [billable, quoteParts, onAddQuotes, pendingNewQuotable]);
   const handleToggleNewQuotable = useCallback(
     () => setNewQuotable(!newQuotable),
     [newQuotable],
@@ -175,17 +190,31 @@ export const QuoteSelector: FC<Props> = ({
       const quotePart = new Quotable().toObject();
       Object.assign(quotePart, {
         ...data,
+        quantity,
         isActive: true, // TODO rest default props?
       });
+      const newPendingNewQuotable = [...pendingNewQuotable, quotePart];
+      setPendingNewQuotable(newPendingNewQuotable);
       if (onAddQuotes) {
-        onAddQuotes([{ billable: true, quantity, quotePart }]);
+        onAddQuotes([
+          ...Object.keys(billable).map(id => ({
+            quotePart: quoteParts.find(q => q.quoteLineId === +id)!,
+            billable: billable[+id].billable,
+            quantity: billable[+id].quantity,
+          })),
+          ...newPendingNewQuotable.map(quotePart => ({
+            quotePart,
+            billable: true,
+            quantity: quotePart.quantity,
+          })),
+        ]);
       }
       setNewQuotable(false);
       setOpen(false);
     },
-    [onAddQuotes],
+    [onAddQuotes, billable, pendingQuotable, pendingNewQuotable],
   );
-  // console.log({ quotable, quoteParts });
+  console.log({ quotable });
   const data: Data = loading
     ? makeFakeRows(6, 20)
     : quoteParts
@@ -245,12 +274,26 @@ export const QuoteSelector: FC<Props> = ({
         ]);
   const dataQuotable: Data = loading
     ? makeFakeRows(4, 5)
-    : quotable.map(({ description, quantity, quotedPrice, isBillable }) => [
-        { value: description },
-        { value: quantity },
-        { value: usd(quotedPrice) },
-        { value: usd(isBillable ? quantity * quotedPrice : 0) },
-      ]);
+    : [
+        ...pendingQuotable.map(({ description, quantity, quotedPrice }) => [
+          { value: <strong>{description}</strong> },
+          { value: <strong>{quantity}</strong> },
+          { value: <strong>{usd(quotedPrice)}</strong> },
+          { value: <strong>{usd(quantity * quotedPrice)}</strong> },
+        ]),
+        ...pendingNewQuotable.map(({ description, quantity, quotedPrice }) => [
+          { value: <strong>{description}</strong> },
+          { value: <strong>{quantity}</strong> },
+          { value: <strong>{usd(quotedPrice)}</strong> },
+          { value: <strong>{usd(quantity * quotedPrice)}</strong> },
+        ]),
+        ...quotable.map(({ description, quantity, quotedPrice }) => [
+          { value: description },
+          { value: quantity },
+          { value: usd(quotedPrice) },
+          { value: usd(quantity * quotedPrice) },
+        ]),
+      ];
   return (
     <div>
       <SectionBar
