@@ -338,7 +338,10 @@ export const Timesheet: FC<Props> = props => {
         ) {
           await tslClient.Approve(ids, userId);
           dispatch({ type: 'approveTimesheet' });
-        } else if (role === 'Payroll') {
+        } else if (
+          role === 'Payroll' &&
+          props.userId !== props.timesheetOwnerId
+        ) {
           await tslClient.Process(ids, userId);
           dispatch({ type: 'processTimesheet' });
         } else {

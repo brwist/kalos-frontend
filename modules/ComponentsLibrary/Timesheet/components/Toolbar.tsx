@@ -64,12 +64,16 @@ const Toolbar: FC<Props> = ({
   };
 
   const submitText = 'Submit Timesheet';
+  const processText = 'Process Timesheet';
   let buttonLabel = 'Approve Timesheet';
   if (!timesheetAdministration) {
     buttonLabel = submitText;
   }
   if (isTimesheetOwner) {
     buttonLabel = submitText;
+  }
+  if (role === 'Payroll' && isTimesheetOwner === false) {
+    buttonLabel = processText;
   }
   return (
     <MuiToolbar className="TimesheetToolbarBar">
@@ -113,11 +117,6 @@ const Toolbar: FC<Props> = ({
           {(isTimesheetOwner || timesheetAdministration) && (
             <Button onClick={handleSubmit} label={buttonLabel} />
           )}
-          {role === 'Payroll'
-            ? true
-            : false && (
-                <Button onClick={handleSubmit} label="Process Payroll" />
-              )}
           {payrollOpen && (
             <Modal
               open={true}
