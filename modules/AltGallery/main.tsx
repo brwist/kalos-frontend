@@ -107,11 +107,15 @@ export class AltGallery extends React.PureComponent<props, state> {
           bucket: 'kalos-transactions',
         };
       });
+
       const documentList = docs.map(d => ({
         reference: d.reference,
         id: d.transactionId,
       }));
-      this.setState({ fileList: galleryData, documentList }, resolve);
+      documentList.reverse();
+      this.setState({ fileList: galleryData, documentList }, () =>
+        resolve(docs),
+      );
     });
   }
 
