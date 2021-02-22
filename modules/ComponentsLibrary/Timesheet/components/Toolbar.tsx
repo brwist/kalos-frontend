@@ -110,7 +110,7 @@ const Toolbar: FC<Props> = ({
               </>
             )}
           </Box>
-          {isTimesheetOwner && (
+          {(isTimesheetOwner || timesheetAdministration) && (
             <Button onClick={handleSubmit} label={buttonLabel} />
           )}
           {role === 'Payroll'
