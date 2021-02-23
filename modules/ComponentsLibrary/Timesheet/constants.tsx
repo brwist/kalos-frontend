@@ -12,6 +12,7 @@ export const colorsMapping: Colors = {
   'On Call': '#88EDB3',
   Delayed: '#07CCEC',
   Incomplete: '#BFD4FF',
+  Processed: '#7B68EE',
   'Part on order': '#AA93EA',
   'Pend Sched': '#FD9834',
   Canceled: '#E74C3C',

@@ -46,16 +46,26 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
     eventUserId,
     eventPropertyId,
     adminApprovalUserName,
+    payrollProcessed,
   } = card;
   let status;
-  if (adminApprovalDatetime && adminApprovalDatetime != NULL_TIME_VALUE) {
+  if (payrollProcessed) {
+    status = 'Processed';
+  } else if (
+    adminApprovalDatetime &&
+    adminApprovalDatetime != NULL_TIME_VALUE &&
+    !payrollProcessed
+  ) {
     status = 'Approved';
-  } else if (userApprovalDatetime && userApprovalDatetime != NULL_TIME_VALUE) {
+  } else if (
+    userApprovalDatetime &&
+    userApprovalDatetime != NULL_TIME_VALUE &&
+    !payrollProcessed
+  ) {
     status = 'Submitted';
   } else {
     status = 'Pending';
   }
-
   const payrollDiff = classCode?.billable
     ? differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) / 60
     : 0;
