@@ -297,6 +297,9 @@ export const Timesheet: FC<Props> = props => {
               if (!current.adminApprovalUserId) {
                 acc.idList.push(current.id);
               }
+              if (current.adminApprovalUserId && role === 'Payroll') {
+                acc.idList.push(current.id);
+              }
             }
             return acc;
           },
@@ -315,6 +318,7 @@ export const Timesheet: FC<Props> = props => {
           break;
         } else {
           ids.push(...result.idList);
+          console.log(ids);
         }
       }
       if (overlapped) {
@@ -326,6 +330,7 @@ export const Timesheet: FC<Props> = props => {
         });
       } else {
         let isManager = false;
+        console.log(ids);
         if (user) {
           const { permissionGroupsList } = user;
           isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
@@ -343,6 +348,8 @@ export const Timesheet: FC<Props> = props => {
           props.userId !== props.timesheetOwnerId
         ) {
           await tslClient.Process(ids, userId);
+          console.log(ids);
+          console.log('Processing Timesheets');
           dispatch({ type: 'processTimesheet' });
         } else {
           await tslClient.Submit(ids);
