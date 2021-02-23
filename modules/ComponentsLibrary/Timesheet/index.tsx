@@ -297,7 +297,11 @@ export const Timesheet: FC<Props> = props => {
               if (!current.adminApprovalUserId) {
                 acc.idList.push(current.id);
               }
-              if (current.adminApprovalUserId && role === 'Payroll') {
+              if (
+                current.adminApprovalUserId &&
+                role === 'Payroll' &&
+                timesheetOwnerId != userId
+              ) {
                 acc.idList.push(current.id);
               }
             }
