@@ -1128,7 +1128,7 @@ export const PerDiemComponent: FC<Props> = ({
           title="Confirm Submit"
           submitLabel="Submit"
         >
-          Are you sure, you want to submit this Per Diem?
+          Are you sure you want to submit this Per Diem?
         </Confirm>
       )}
       {pendingPerDiemApprove && (
@@ -1139,7 +1139,7 @@ export const PerDiemComponent: FC<Props> = ({
           title="Confirm Approve"
           submitLabel="Approve"
         >
-          Are you sure, you want to approve this Per Diem?
+          Are you sure you want to approve this Per Diem?
         </Confirm>
       )}
       {checkLodging && (
