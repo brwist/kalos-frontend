@@ -48,6 +48,7 @@ import {
   UserClientService,
   PerDiemClientService,
   TaskEventClientService,
+  padWithZeroes,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -950,12 +951,17 @@ export const EditProject: FC<Props> = ({
         onClick={() => {
           const date = new Date();
           let task = new ProjectTask().toObject() as ExtendedProjectTaskType;
-          task.startDate = date.getDate().toString();
+
+          task.startDate = `${date.getFullYear()}-${padWithZeroes(
+            date.getMonth() + 1,
+          )}-${padWithZeroes(
+            date.getDate(),
+          )} ${date.getHours()}:${date.getMinutes()}:00`;
           task.endDate = '';
           task.statusId = 1;
           task.priorityId = 2;
-          task.startTime = '09:00';
-          task.endTime = '10:00';
+          task.startTime = '08:00';
+          task.endTime = '09:00';
           task.briefDescription = 'Auto generated task';
 
           handleSaveTask(task);
