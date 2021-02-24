@@ -944,6 +944,12 @@ export const EditProject: FC<Props> = ({
         onChange={setSearch}
         disabled={loading || loadingEvent}
       />
+      <Button
+        variant="outlined"
+        label={`Check in`}
+        onClick={handleSetPendingCheckout(true)}
+        disabled={pendingCheckoutChange}
+      />
       <Tabs
         defaultOpenIdx={0}
         tabs={[
@@ -1140,14 +1146,13 @@ export const EditProject: FC<Props> = ({
           {taskEvents.length === 0 ||
           (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT) ? (
             <div>
-              Are you sure, you want to Enroute and assign yourself to this
-              task?
+              Are you sure you want to Enroute and assign yourself to this task?
             </div>
           ) : taskEvents.length > 0 && taskEvents[0].actionTaken === CHECKIN ? (
-            <div>Are you sure, you want to Check Out from this task?</div>
+            <div>Are you sure you want to Check Out from this task?</div>
           ) : (
             <div>
-              Are you sure, you want to Check In and assign yourself to this
+              Are you sure you want to Check In and assign yourself to this
               task?
             </div>
           )}

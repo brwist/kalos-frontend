@@ -224,7 +224,7 @@ export const TimeoffRequests: FC<Props> = ({
           onClose={handlePendingPayrollToggle()}
           onConfirm={handlePayroll}
         >
-          Are you sure, you want to process payroll for this Timeoff Request?
+          Are you sure you want to process payroll for this Timeoff Request?
         </Confirm>
       )}
       {pendingApproval && (

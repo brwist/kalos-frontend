@@ -295,7 +295,7 @@ export const PerDiem: FC<Props> = ({
           onClose={handlePendingApproveToggle()}
           onConfirm={handleApprove}
         >
-          Are you sure, you want to approve this Per Diem?
+          Are you sure you want to approve this Per Diem?
         </Confirm>
       )}
       {pendingAudited && (
@@ -305,7 +305,7 @@ export const PerDiem: FC<Props> = ({
           onClose={handlePendingAuditedToggle()}
           onConfirm={handleAudit}
         >
-          Are you sure, this Per Diem no longer needs auditing?
+          Are you sure this Per Diem no longer needs auditing?
         </Confirm>
       )}
       {pendingPayroll && (
@@ -315,7 +315,7 @@ export const PerDiem: FC<Props> = ({
           onClose={handlePendingPayrollToggle()}
           onConfirm={handlePayroll}
         >
-          Are you sure, you want to process payroll for this Per Diem?
+          Are you sure you want to process payroll for this Per Diem?
         </Confirm>
       )}
     </div>

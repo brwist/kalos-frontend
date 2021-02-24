@@ -961,7 +961,7 @@ export const SpiffTool: FC<Props> = ({
           onClose={handlePendingPayrollToggle()}
           onConfirm={handlePayroll}
         >
-          Are you sure, you want to process payroll for this Spiff/Tool?
+          Are you sure you want to process payroll for this Spiff/Tool?
         </Confirm>
       )}
       {pendingAudit && (
@@ -971,7 +971,7 @@ export const SpiffTool: FC<Props> = ({
           onClose={handlePendingAuditToggle()}
           onConfirm={handleAudit}
         >
-          Are you sure, you want complete Auditing for this Spiff/Tool?
+          Are you sure you want complete Auditing for this Spiff/Tool?
         </Confirm>
       )}
     </div>
