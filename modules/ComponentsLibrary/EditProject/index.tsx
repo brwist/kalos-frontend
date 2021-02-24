@@ -361,7 +361,7 @@ export const EditProject: FC<Props> = ({
       ...formData
     }: ExtendedProjectTaskType) => {
       if (!event) return;
-      if (startDate > endDate) {
+      if (startDate > endDate && endDate != '') {
         setErrorTask('Start Date cannot be after End Date.');
         return;
       }
@@ -947,7 +947,19 @@ export const EditProject: FC<Props> = ({
       <Button
         variant="outlined"
         label={`Check in`}
-        onClick={handleSetPendingCheckout(true)}
+        onClick={() => {
+          const date = new Date();
+          let task = new ProjectTask().toObject() as ExtendedProjectTaskType;
+          task.startDate = date.getDate().toString();
+          task.endDate = '';
+          task.statusId = 1;
+          task.priorityId = 2;
+          task.startTime = '09:00';
+          task.endTime = '10:00';
+          task.briefDescription = 'Auto generated task';
+
+          handleSaveTask(task);
+        }}
         disabled={pendingCheckoutChange}
       />
       <Tabs
