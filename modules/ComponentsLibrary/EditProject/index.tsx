@@ -964,10 +964,7 @@ export const EditProject: FC<Props> = ({
           let task = new ProjectTask().toObject() as ExtendedProjectTaskType;
 
           task.startDate = format(new Date(date), 'yyyy-MM-dd HH-mm-ss');
-          task.endDate = format(
-            addDays(new Date(date), 1),
-            'yyyy-MM-dd HH-mm-ss',
-          );
+          task.endDate = '';
           task.statusId = 2; // Starting in progress
           task.priorityId = 2;
           task.startTime = format(new Date(date), 'HH-mm');
@@ -991,6 +988,13 @@ export const EditProject: FC<Props> = ({
             content: event ? (
               <CalendarEvents
                 events={filteredTasks.map(task => {
+                  if (task.endDate == '0000-00-00 00:00:00') {
+                    let date = new Date();
+                    date.setMinutes(date.getMinutes() + 1);
+                    console.log(date);
+                    task.endDate = format(date, 'yyyy-MM-dd hh-mm-ss');
+                    console.log('End date: ', task.endDate);
+                  }
                   const {
                     id,
                     briefDescription,
