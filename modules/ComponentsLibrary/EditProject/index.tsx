@@ -153,6 +153,7 @@ export const EditProject: FC<Props> = ({
   });
   const [event, setEvent] = useState<EventType>();
   const [editingProject, setEditingProject] = useState<boolean>(false);
+  const [checkedIn, setCheckedIn] = useState<boolean>(false);
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
@@ -308,6 +309,10 @@ export const EditProject: FC<Props> = ({
     (pendingCheckoutDelete: boolean) => () =>
       setPendingCheckoutDelete(pendingCheckoutDelete),
     [setPendingCheckoutDelete],
+  );
+  const handleSetCheckedIn = useCallback(
+    (checkedIn: boolean) => setCheckedIn(checkedIn),
+    [setCheckedIn],
   );
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
@@ -953,7 +958,7 @@ export const EditProject: FC<Props> = ({
       />
       <Button
         variant="outlined"
-        label={`Check in`}
+        label={!checkedIn ? `Check In` : `Check Out`}
         onClick={() => {
           const date = new Date();
           let task = new ProjectTask().toObject() as ExtendedProjectTaskType;
@@ -974,6 +979,7 @@ export const EditProject: FC<Props> = ({
           console.log(task);
 
           handleSaveTask(task);
+          handleSetCheckedIn(true);
         }}
         disabled={pendingCheckoutChange}
       />
