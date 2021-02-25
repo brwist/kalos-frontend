@@ -172,6 +172,7 @@ const EditTimesheetModal: FC<Props> = ({
       delete data.date;
       data.technicianUserId = timesheetOwnerId;
       data.servicesRenderedId = entry.servicesRenderedId;
+      data.eventId = entry.eventId;
       const req = new TimesheetLine();
       for (const fieldName in data) {
         const { methodName } = getRPCFields(fieldName);
