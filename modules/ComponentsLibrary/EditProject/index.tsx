@@ -56,6 +56,7 @@ import {
   MEALS_RATE,
 } from '../../../constants';
 import './styles.less';
+import { addDays, format } from 'date-fns';
 
 export interface Props {
   serviceCallId: number;
@@ -364,16 +365,21 @@ export const EditProject: FC<Props> = ({
       if (!event) return;
       if (startDate > endDate && endDate != '') {
         setErrorTask('Start Date cannot be after End Date.');
+        console.error('Start Date cannot be after End Date.');
         return;
       }
       if (event.dateStarted.substr(0, 10) > startDate) {
         setErrorTask(
           "Task's Start Date cannot be before Project's Start Date.",
         );
+        console.error(
+          "Task's Start Date cannot be before Project's Start Date.",
+        );
         return;
       }
       if (event.dateEnded.substr(0, 10) < endDate) {
         setErrorTask("Task's End Date cannot be after Project's End Date.");
+        console.error("Task's End Date cannot be after Project's End Date.");
         return;
       }
       setEditingTask(undefined);
@@ -952,17 +958,17 @@ export const EditProject: FC<Props> = ({
           const date = new Date();
           let task = new ProjectTask().toObject() as ExtendedProjectTaskType;
 
-          task.startDate = `${date.getFullYear()}-${padWithZeroes(
-            date.getMonth() + 1,
-          )}-${padWithZeroes(
-            date.getDate(),
-          )} ${date.getHours()}:${date.getMinutes()}:00`;
-          task.endDate = '';
-          task.statusId = 1;
+          task.startDate = format(new Date(date), 'yyyy-MM-dd HH-mm-ss');
+          task.endDate = format(
+            addDays(new Date(date), 1),
+            'yyyy-MM-dd HH-mm-ss',
+          );
+          task.statusId = 2; // Starting in progress
           task.priorityId = 2;
-          task.startTime = '08:00';
-          task.endTime = '09:00';
+          task.startTime = format(new Date(date), 'HH-mm');
+          task.endTime = format(addDays(new Date(date), 1), 'HH-mm');
           task.briefDescription = 'Auto generated task';
+          task.externalId = loggedUserId;
 
           handleSaveTask(task);
         }}
@@ -1026,6 +1032,13 @@ export const EditProject: FC<Props> = ({
             content: event ? (
               <GanttChart
                 events={filteredTasks.map(task => {
+                  console.log(task.endDate);
+                  // This one is in-progress
+                  if (
+                    task.endDate == '2009-00-00 00:00:00' &&
+                    task.statusId == 2
+                  ) {
+                  }
                   const {
                     id,
                     briefDescription,
