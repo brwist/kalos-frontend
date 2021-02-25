@@ -970,6 +970,9 @@ export const EditProject: FC<Props> = ({
           task.briefDescription = 'Auto generated task';
           task.externalId = loggedUserId;
 
+          alert('upserting task - see details in console log');
+          console.log(task);
+
           handleSaveTask(task);
         }}
         disabled={pendingCheckoutChange}
@@ -1032,7 +1035,6 @@ export const EditProject: FC<Props> = ({
             content: event ? (
               <GanttChart
                 events={filteredTasks.map(task => {
-                  console.log(task.endDate);
                   // This one is in-progress
                   if (
                     task.endDate == '2009-00-00 00:00:00' &&
