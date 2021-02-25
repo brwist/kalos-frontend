@@ -98,6 +98,7 @@ export const GanttChart: FC<Props> = ({
     setCollapsed,
     collapsed,
   ]);
+
   return (
     <div className={clsx('GanttChart', { loading })}>
       <div className={clsx('GanttChartAside', { collapsed })}>
@@ -261,6 +262,7 @@ export const GanttChart: FC<Props> = ({
                 (_, idx) => {
                   const day = addDays(startDate, idx - offsetStart);
                   const date = format(day, 'yyyy-MM-dd');
+
                   const weekDay = +format(day, 'i');
                   return (
                     <div
