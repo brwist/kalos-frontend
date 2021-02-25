@@ -23,6 +23,7 @@ type Props = {
   timesheetAdministration: boolean;
   payroll: Payroll;
   submitTimesheet: () => void;
+  processTimesheet: () => void;
   pendingEntries: boolean;
   isTimesheetOwner?: boolean;
   onClose?: () => void;
@@ -37,6 +38,7 @@ const Toolbar: FC<Props> = ({
   timesheetAdministration,
   payroll,
   submitTimesheet,
+  processTimesheet,
   pendingEntries,
   isTimesheetOwner,
   onClose,
@@ -62,9 +64,12 @@ const Toolbar: FC<Props> = ({
       });
     }
   };
-
+  const handleProcess = () => {
+    if (role === 'Payroll') {
+      processTimesheet();
+    }
+  };
   const submitText = 'Submit Timesheet';
-  const processText = 'Process Timesheet';
   let buttonLabel = 'Approve Timesheet';
   if (!timesheetAdministration) {
     buttonLabel = submitText;
@@ -72,9 +77,7 @@ const Toolbar: FC<Props> = ({
   if (isTimesheetOwner) {
     buttonLabel = submitText;
   }
-  if (role === 'Payroll' && isTimesheetOwner === false) {
-    buttonLabel = processText;
-  }
+
   return (
     <MuiToolbar className="TimesheetToolbarBar">
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -116,6 +119,9 @@ const Toolbar: FC<Props> = ({
           </Box>
           {(isTimesheetOwner || timesheetAdministration) && (
             <Button onClick={handleSubmit} label={buttonLabel} />
+          )}
+          {role === 'Payroll' && (
+            <Button onClick={handleProcess} label={'Process Payroll'} />
           )}
           {payrollOpen && (
             <Modal

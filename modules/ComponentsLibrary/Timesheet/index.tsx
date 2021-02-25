@@ -46,6 +46,7 @@ import { TimeOff } from '../TimeOff';
 import './styles.less';
 import { TripSummary } from '../TripSummary';
 import { RoleType } from '../Payroll';
+import { NULL_TIME_VALUE } from './constants';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -294,14 +295,7 @@ export const Timesheet: FC<Props> = props => {
                 previous: previous,
                 current: current,
               });
-              if (!current.adminApprovalUserId) {
-                acc.idList.push(current.id);
-              }
-              if (
-                current.adminApprovalUserId &&
-                role === 'Payroll' &&
-                timesheetOwnerId != userId
-              ) {
+              if (!current.adminApprovalUserId && current.adminApprovalUserId) {
                 acc.idList.push(current.id);
               }
             }
@@ -341,20 +335,10 @@ export const Timesheet: FC<Props> = props => {
         }
         if (
           (user?.timesheetAdministration || isManager) &&
-          role != 'Payroll' &&
-          role != 'Auditor' &&
           props.userId !== props.timesheetOwnerId
         ) {
           await tslClient.Approve(ids, userId);
           dispatch({ type: 'approveTimesheet' });
-        } else if (
-          role === 'Payroll' &&
-          props.userId !== props.timesheetOwnerId
-        ) {
-          await tslClient.Process(ids, userId);
-          console.log(ids);
-          console.log('Processing Timesheets');
-          dispatch({ type: 'processTimesheet' });
         } else {
           await tslClient.Submit(ids);
           dispatch({ type: 'submitTimesheet' });
@@ -362,7 +346,65 @@ export const Timesheet: FC<Props> = props => {
       }
     })();
   }, [userId, data, shownDates, tslClient]);
+  const handleProcessTimesheet = useCallback(async () => {
+    (async () => {
+      const ids: number[] = [];
+      for (let i = 0; i < shownDates.length; i++) {
+        let dayList = [...data[shownDates[i]].timesheetLineList].sort(
+          (a, b) =>
+            parseISO(a.timeStarted).getTime() -
+            parseISO(b.timeStarted).getTime(),
+        );
+        let result = dayList.reduce(
+          (acc, current, idx, arr) => {
+            if (
+              idx === 0 &&
+              current.adminApprovalUserId &&
+              current.adminApprovalUserId != 0
+            ) {
+              acc.idList.push(current.id);
+              return acc;
+            }
 
+            let previous = arr[idx - 1];
+            acc.ranges.push({
+              previous: previous,
+              current: current,
+            });
+            if (
+              current.adminApprovalUserId &&
+              current.adminApprovalUserId !== 0 &&
+              current.adminApprovalDatetime != NULL_TIME_VALUE
+            ) {
+              acc.idList.push(current.id);
+            }
+
+            return acc;
+          },
+          {
+            ranges: [] as {
+              previous: TimesheetLine.AsObject;
+              current: TimesheetLine.AsObject;
+            }[],
+            idList: [] as number[],
+          },
+        );
+        ids.push(...result.idList);
+        console.log(ids);
+      }
+      let isManager = false;
+      console.log(ids);
+      if (user) {
+        const { permissionGroupsList } = user;
+        isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
+      }
+
+      await tslClient.Process(ids, userId);
+      console.log(ids);
+      console.log('Processing Timesheets');
+      dispatch({ type: 'processTimesheet' });
+    })();
+  }, [userId, data, shownDates, tslClient, user]);
   const fetchUsers = async () => {
     const userResult = await UserClientService.loadUserById(userId);
     const role = userResult.permissionGroupsList.find(p => p.type === 'role');
@@ -506,6 +548,7 @@ export const Timesheet: FC<Props> = props => {
             }
             payroll={payroll}
             submitTimesheet={handleSubmitTimesheet}
+            processTimesheet={handleProcessTimesheet}
             pendingEntries={pendingEntries}
             isTimesheetOwner={props.userId === props.timesheetOwnerId}
             onClose={onClose}
@@ -548,6 +591,7 @@ export const Timesheet: FC<Props> = props => {
               timesheetAdministration={
                 !!user.timesheetAdministration || isManager
               }
+              role={role}
               onClose={handleCloseModal}
               onSave={handleOnSave}
               action={editing.action}
