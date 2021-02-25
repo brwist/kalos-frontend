@@ -314,6 +314,9 @@ export const EditProject: FC<Props> = ({
     (checkedIn: boolean) => setCheckedIn(checkedIn),
     [setCheckedIn],
   );
+  const toggleCheckedIn = () => {
+    handleSetCheckedIn(!checkedIn);
+  };
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
     [departments, loggedUserId],
@@ -976,7 +979,7 @@ export const EditProject: FC<Props> = ({
           console.log(task);
 
           handleSaveTask(task);
-          handleSetCheckedIn(true);
+          toggleCheckedIn();
         }}
         disabled={pendingCheckoutChange}
       />
