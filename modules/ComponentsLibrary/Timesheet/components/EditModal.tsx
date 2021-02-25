@@ -22,6 +22,7 @@ import { useConfirm } from '../../ConfirmService';
 import { getRPCFields } from '../../../../helpers';
 import { ENDPOINT } from '../../../../constants';
 import './editModal.less';
+import { NULL_TIME_VALUE } from '../constants';
 
 const srClient = new ServicesRenderedClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
@@ -38,6 +39,7 @@ type Props = {
   userId: number;
   timesheetAdministration: boolean;
   create?: boolean;
+  role?: string;
   action:
     | 'create'
     | 'update'
@@ -58,6 +60,7 @@ const EditTimesheetModal: FC<Props> = ({
   timesheetOwnerId,
   userId,
   timesheetAdministration,
+  role,
   action,
   onSave,
   onClose,
@@ -214,6 +217,43 @@ const EditTimesheetModal: FC<Props> = ({
     });
   }, [id, userId, timesheetAdministration]);
 
+  const handleProcess = useCallback(async () => {
+    confirm({
+      catchOnCancel: true,
+      description: `Are you sure you want to Process this Timesheet?`,
+    }).then(async () => {
+      setSaving(true);
+      const req = new TimesheetLine();
+      req.setId(id);
+      req.setPayrollProcessed(true);
+      req.setFieldMaskList(['PayrollProcessed']);
+      const result = await tslClient.Update(req);
+      setSaving(false);
+      onSave(result);
+    });
+  }, [id, userId, timesheetAdministration, confirm, onSave]);
+
+  const handleRevoke = useCallback(async () => {
+    confirm({
+      catchOnCancel: true,
+      description: `Are you sure you want to Revoke this Timesheet?`,
+    }).then(async () => {
+      setSaving(true);
+      const req = new TimesheetLine();
+      req.setId(id);
+      req.setPayrollProcessed(false);
+      req.setAdminApprovalDatetime(NULL_TIME_VALUE);
+      req.setAdminApprovalUserId(0);
+      req.setFieldMaskList([
+        'AdminApprovalUserId',
+        'AdminApprovalDatetime',
+        'PayrollProcessed',
+      ]);
+      const result = await tslClient.Update(req);
+      setSaving(false);
+      onSave(result);
+    });
+  }, [id, userId, timesheetAdministration, confirm, onSave]);
   const handleDelete = useCallback(async () => {
     confirm({
       catchOnCancel: true,
@@ -268,13 +308,36 @@ const EditTimesheetModal: FC<Props> = ({
             <Button
               label={timesheetAdministration ? 'Approve' : 'Submit'}
               onClick={handleApprove}
-              disabled={timesheetAdministration && !entry.userApprovalDatetime}
+              disabled={
+                (timesheetAdministration && !entry.userApprovalDatetime) ||
+                (role === 'Payroll' && timesheetOwnerId !== userId)
+              }
             />
+            {role === 'Payroll' && (
+              <Button
+                className="TimesheetEditModalDelete"
+                label={'Process'}
+                onClick={handleProcess}
+                disabled={
+                  !entry.adminApprovalDatetime ||
+                  entry.adminApprovalUserId === 0
+                }
+              />
+            )}
             <Button
               label="Delete"
               onClick={handleDelete}
               className="TimesheetEditModalDelete"
+              disabled={role === 'Payroll'}
             />
+            {role === 'Payroll' && (
+              <Button
+                label="Revoke"
+                onClick={handleRevoke}
+                className="TimesheetEditModalDelete"
+                disabled={role !== 'Payroll' && !entry.adminApprovalDatetime}
+              />
+            )}
           </ButtonGroup>
         )}
       </Form>
