@@ -23,7 +23,7 @@ import {
   cfURL,
   EventClientService,
 } from '../../../helpers';
-import { ROWS_PER_PAGE } from '../../../constants';
+import { NULL_TIME, ROWS_PER_PAGE } from '../../../constants';
 import './serviceCallsPending.less';
 
 export interface Props {
@@ -50,14 +50,20 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     setLoading(true);
     const { results, totalCount } = await loadEventsByFilter({
       page,
-      filter,
       sort,
+      filter: {
+        ...filter,
+        logDateCompleted: filter.logDateCompleted
+          ? filter.logDateCompleted
+          : NULL_TIME,
+        notEqualsList: filter.logDateCompleted ? [] : ['LogDateCompleted'],
+      },
       pendingBilling: true,
     });
     setEvents(results);
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, setEvents, setCount, setLoading, filter, page, sort]);
+  }, [setEvents, setCount, setLoading, filter, page, sort]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -89,7 +95,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       await EventClientService.deleteEventById(id);
       load();
     }
-  }, [pendingDelete, setLoading, setPendingDelete]);
+  }, [pendingDelete, setLoading, setPendingDelete, load]);
   const handlePageChange = useCallback(
     (page: number) => {
       setPage(page);
@@ -209,11 +215,12 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         const { customer, property, logJobNumber, logDateCompleted } = event;
         const openEditServiceCall = (event: EventType) => {
           return () => {
-            window.location.assign(
+            window.open(
               cfURL(
                 'admin:service.editServiceCall',
                 `&id=${event.id}&user_id=${event.property?.userId}&property_id=${event.propertyId}`,
               ),
+              '_blank',
             );
           };
         };

@@ -157,14 +157,17 @@ export const AdvancedSearch: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [accounting, setAccounting] = useState<boolean>(false);
-  const defaultFilter: SearchForm = {
-    kind: kinds[0],
-    jobTypeId: 0,
-    jobSubtypeId: 0,
-    logJobStatus: '',
-    employeeDepartmentId: -1,
-    userId: propertyCustomerId,
-  };
+  const defaultFilter: SearchForm = useMemo(
+    () => ({
+      kind: kinds[0],
+      jobTypeId: 0,
+      jobSubtypeId: 0,
+      logJobStatus: '',
+      employeeDepartmentId: -1,
+      userId: propertyCustomerId,
+    }),
+    [kinds, propertyCustomerId],
+  );
   const [filter, setFilter] = useState<SearchForm>(defaultFilter);
   const [formKey, setFormKey] = useState<number>(0);
   const [events, setEvents] = useState<EventType[]>([]);
@@ -279,6 +282,7 @@ export const AdvancedSearch: FC<Props> = ({
     setLoadingDicts,
     setJobTypes,
     setJobSubtypes,
+    loggedUserId,
     // setFormKey,
     formKey,
     kinds,
@@ -420,7 +424,7 @@ export const AdvancedSearch: FC<Props> = ({
       setPage(0);
       setLoaded(false);
     },
-    [setPropertiesSort, setPage, setLoaded],
+    [setContractsSort, setPage, setLoaded],
   );
   const handleChangePage = useCallback(
     (page: number) => {
@@ -442,7 +446,7 @@ export const AdvancedSearch: FC<Props> = ({
     if (!kinds.includes('employees')) {
       setLoaded(false);
     }
-  }, [setFilter, setLoaded, filter, formKey, setFormKey, kinds]);
+  }, [setFilter, setLoaded, filter, formKey, setFormKey, kinds, defaultFilter]);
   const handleFormChange = useCallback(
     (data: SearchForm) => {
       if (!data.kind) {
@@ -459,7 +463,7 @@ export const AdvancedSearch: FC<Props> = ({
         }
       }
     },
-    [setFilter, filter, formKey, setFormKey, setLoaded, kinds],
+    [setFilter, filter, formKey, setFormKey, setLoaded, defaultFilter],
   );
   const handlePendingEventAddingToggle = useCallback(
     (pendingEventAdding: boolean) => () =>
@@ -478,7 +482,7 @@ export const AdvancedSearch: FC<Props> = ({
       }
       // setPendingEventEditing(pendingEventEditing); // TODO restore when EditServiceCall is finished
     },
-    [setPendingEventEditing],
+    [],
   );
   const handlePendingEventDeletingToggle = useCallback(
     (pendingEventDeleting?: EventType) => () =>
@@ -2399,7 +2403,38 @@ export const AdvancedSearch: FC<Props> = ({
             });
       return [];
     },
-    [filter, loading, events, loadingDicts, accounting, onSelectEvent, isAdmin],
+    [
+      filter,
+      loading,
+      loadingDicts,
+      accounting,
+      events,
+      users,
+      properties,
+      contracts,
+      onSelectEvent,
+      handleSelectEvent,
+      handlePendingCustomerViewingToggle,
+      handlePendingPropertyViewingToggle,
+      deletableEvents,
+      handlePendingEventDeletingToggle,
+      editableCustomers,
+      handlePendingCustomerEditingToggle,
+      deletableCustomers,
+      handlePendingCustomerDeletingToggle,
+      employeeImages,
+      handlePendingEmployeeViewingToggle,
+      isAdmin,
+      editableEmployees,
+      handlePendingEmployeeEditingToggle,
+      deletableEmployees,
+      handlePendingEmployeeDeletingToggle,
+      editableProperties,
+      handlePendingPropertyEditingToggle,
+      deletableProperties,
+      handlePendingPropertyDeletingToggle,
+      handleContractClick,
+    ],
   );
   const makeNewEmployee = () => {
     const req = new User();
@@ -2454,7 +2489,7 @@ export const AdvancedSearch: FC<Props> = ({
         )}
       </>
     );
-  }, [filter]);
+  }, [filter, departments]);
   return (
     <div>
       <SectionBar
