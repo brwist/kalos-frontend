@@ -70,7 +70,7 @@ export type SearchType = {
   priorityId: number;
 };
 
-export type ExtendedProjectTaskType = ProjectTaskType & {
+type ExtendedProjectTaskType = ProjectTaskType & {
   startTime: string;
   endTime: string;
 };
