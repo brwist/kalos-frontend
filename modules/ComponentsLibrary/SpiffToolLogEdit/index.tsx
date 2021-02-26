@@ -10,6 +10,8 @@ import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { Option } from '../Field';
+import { User } from '@kalos-core/kalos-rpc/User';
+
 import { ConfirmDelete } from '../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../InfoTable';
 import { Documents } from '../Documents';
@@ -29,6 +31,7 @@ import {
   DocumentClientService,
   upsertSpiffToolAdminAction,
   SpiffToolAdminActionClientService,
+  UserClientService,
 } from '../../../helpers';
 import './styles.less';
 
@@ -84,7 +87,13 @@ const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
       type: 'date',
     },
   ],
-  [{ name: 'reviewedBy', label: 'Reviewed By', required: true }],
+  [
+    {
+      name: 'reviewedBy',
+      label: 'Reviewed By',
+      disabled: true,
+    },
+  ],
   [{ name: 'status', label: 'Status', options: STATUSES }],
   [{ name: 'reason', label: 'Reason', multiline: true }],
 ];
@@ -92,6 +101,7 @@ const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
 interface Props {
   type: 'Spiff' | 'Tool';
   loggedUserId: number;
+  userId?: number;
   onClose: () => void;
   onSave: () => void;
   onStatusChange: () => void;
@@ -146,6 +156,7 @@ export const getStatusFormInit = (status: number, reviewedBy?: string) => {
 export const SpiffToolLogEdit: FC<Props> = ({
   type,
   loggedUserId,
+  userId,
   data,
   onClose,
   onSave,
@@ -262,6 +273,11 @@ export const SpiffToolLogEdit: FC<Props> = ({
     async (form: SpiffToolAdminActionType) => {
       if (statusEditing) {
         setStatusEditing(undefined);
+        if (userId) {
+          const userInfo = await UserClientService.loadUserById(userId);
+          const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
+          form.reviewedBy = newReviewedBy;
+        }
         await upsertSpiffToolAdminAction({
           ...form,
           id: statusEditing.id,

@@ -82,9 +82,10 @@ export interface Props {
   loggedUserId: number;
   kind?: string;
   week?: string;
-  needsManagerAction: boolean;
-  needsPayrollAction: boolean;
-  needsAuditAction: boolean;
+  userId?: number;
+  needsManagerAction?: boolean;
+  needsPayrollAction?: boolean;
+  needsAuditAction?: boolean;
   role?: string;
   onClose?: () => void;
 }
@@ -92,6 +93,7 @@ export interface Props {
 export const SpiffTool: FC<Props> = ({
   type,
   loggedUserId,
+  userId,
   kind = MONTHLY,
   week,
   needsManagerAction,
@@ -938,6 +940,7 @@ export const SpiffTool: FC<Props> = ({
             onClose={handleSetExtendedEditing()}
             data={extendedEditing}
             loading={loading}
+            userId={userId}
             loggedUserId={loggedUserId}
             onSave={handleSaveExtended}
             onStatusChange={reloadExtendedEditing}

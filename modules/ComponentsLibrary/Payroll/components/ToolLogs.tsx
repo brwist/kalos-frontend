@@ -20,6 +20,7 @@ interface Props {
   week: string;
   role: string;
   departmentId: number;
+  userId?: number;
 }
 
 export const ToolLogs: FC<Props> = ({
@@ -27,6 +28,7 @@ export const ToolLogs: FC<Props> = ({
   week,
   role,
   departmentId,
+  userId,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [toolLogs, setToolLogs] = useState<TaskType[]>([]);
@@ -113,6 +115,7 @@ export const ToolLogs: FC<Props> = ({
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <SpiffTool
             loggedUserId={pendingView.externalId}
+            userId={userId}
             type="Tool"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
