@@ -15,6 +15,7 @@ import { Modal } from '../../../ComponentsLibrary/Modal';
 import { Tooltip } from '../../Tooltip';
 import { TimeOff } from '../../../ComponentsLibrary/Timeoff';
 import FlashOff from '@material-ui/icons/FlashOff';
+import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Confirm } from '../../Confirm';
 
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
@@ -28,6 +29,7 @@ import {
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import { TimeoffRequestServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb_service';
+import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 
 interface Props {
   departmentId: number;
@@ -60,6 +62,10 @@ export const TimeoffRequests: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TimeoffRequestType>();
   const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequestType>();
+  const [
+    pendingPayrollReject,
+    setPendingPayrollReject,
+  ] = useState<TimeoffRequestType>();
   const [pendingApproval, setPendingApproval] = useState<TimeoffRequestType>();
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,6 +103,11 @@ export const TimeoffRequests: FC<Props> = ({
       setPendingPayroll(pendingPayroll),
     [setPendingPayroll],
   );
+  const handlePendingPayrollToggleReject = useCallback(
+    (pendingPayrollReject?: TimeoffRequestType) => () =>
+      setPendingPayrollReject(pendingPayrollReject),
+    [setPendingPayrollReject],
+  );
   const handlePendingApprovalToggle = useCallback(
     (pendingApproval?: TimeoffRequestType) => () =>
       setPendingApproval(pendingApproval),
@@ -116,6 +127,26 @@ export const TimeoffRequests: FC<Props> = ({
       load();
     }
   }, [load, pendingPayroll]);
+
+  const handlePayrollReject = useCallback(async () => {
+    if (pendingPayrollReject) {
+      const { id } = pendingPayrollReject;
+      setLoading(true);
+      setPendingPayrollReject(undefined);
+      const req = new TimeoffRequest();
+      req.setId(id);
+      req.setAdminApprovalUserId(0);
+      req.setAdminApprovalDatetime(NULL_TIME);
+      req.setFieldMaskList([
+        'PayrollProcessed',
+        'AdminApprovalDatetime',
+        'AdminApprovalUserId',
+      ]);
+      req.setPayrollProcessed(false);
+      await TimeoffRequestClientService.Update(req);
+      load();
+    }
+  }, [load, pendingPayrollReject]);
 
   return (
     <div>
@@ -185,6 +216,23 @@ export const TimeoffRequests: FC<Props> = ({
                           </span>
                         </Tooltip>
                       ) : null,
+                      role === 'Payroll' ? (
+                        <Tooltip
+                          key="payroll"
+                          content="Reject TimeOff"
+                          placement="bottom"
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingPayrollToggleReject(e)}
+                              disabled={!!e.payrollProcessed}
+                            >
+                              <NotInterestedIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
                       role === 'Manager' ? (
                         <Tooltip
                           key="manager"
@@ -225,6 +273,16 @@ export const TimeoffRequests: FC<Props> = ({
           onConfirm={handlePayroll}
         >
           Are you sure you want to process payroll for this Timeoff Request?
+        </Confirm>
+      )}
+      {pendingPayrollReject && (
+        <Confirm
+          title="Confirm Reject"
+          open
+          onClose={handlePendingPayrollToggleReject()}
+          onConfirm={handlePayrollReject}
+        >
+          Are you sure you want to Reject this Timeoff Request?
         </Confirm>
       )}
       {pendingApproval && (
