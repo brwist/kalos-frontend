@@ -57,7 +57,13 @@ import {
 } from '../../../constants';
 import './styles.less';
 import { addDays, format } from 'date-fns';
-import { ExtendedProjectTaskType, PROJECT_TASK_PRIORITY_ICONS, Props, SearchType } from '../EditProject';
+import {
+  ExtendedProjectTaskType,
+  PROJECT_TASK_PRIORITY_ICONS,
+  Props,
+  SCHEMA_PROJECT,
+  SearchType,
+} from '../EditProject';
 
 export const EditProjectEvents: FC<Props> = ({
   serviceCallId,
