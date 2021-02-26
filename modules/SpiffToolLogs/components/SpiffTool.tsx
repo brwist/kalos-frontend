@@ -82,7 +82,7 @@ export interface Props {
   loggedUserId: number;
   kind?: string;
   week?: string;
-  userId?: number;
+  ownerId?: number;
   needsManagerAction?: boolean;
   needsPayrollAction?: boolean;
   needsAuditAction?: boolean;
@@ -93,7 +93,7 @@ export interface Props {
 export const SpiffTool: FC<Props> = ({
   type,
   loggedUserId,
-  userId,
+  ownerId,
   kind = MONTHLY,
   week,
   needsManagerAction,
@@ -108,12 +108,16 @@ export const SpiffTool: FC<Props> = ({
     WEEK_OPTIONS.push({ label: formatWeek(week), value: week });
   }
   const MONTHS_OPTIONS: Option[] = makeLast12MonthsOptions(true);
-  const getSearchFormInit = () => ({
-    description: '',
-    month: week || (MONTHS_OPTIONS[MONTHS_OPTIONS.length - 1].value as string),
-    kind,
-    technician: loggedUserId,
-  });
+  const getSearchFormInit = useCallback(
+    () => ({
+      description: '',
+      month:
+        week || (MONTHS_OPTIONS[MONTHS_OPTIONS.length - 1].value as string),
+      kind,
+      technician: ownerId || loggedUserId,
+    }),
+    [MONTHS_OPTIONS, kind, ownerId, week, loggedUserId],
+  );
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -164,7 +168,13 @@ export const SpiffTool: FC<Props> = ({
 
     setLoggedInUser(loggedInUser);
     setSearchFormKey(searchFormKey + 1);
-  }, [loggedUserId, setLoggedInUser, searchFormKey, setSearchFormKey]);
+  }, [
+    loggedUserId,
+    setLoggedInUser,
+    searchFormKey,
+    setSearchFormKey,
+    loggedInUser,
+  ]);
   const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   const load = useCallback(async () => {
     setLoading(true);
@@ -406,14 +416,20 @@ export const SpiffTool: FC<Props> = ({
         setSearchFormKey(searchFormKey + 1);
       }
     },
-    [searchForm, setSearchFormKey, searchFormKey],
+    [searchForm, setSearchFormKey, searchFormKey, MONTHS_OPTIONS, WEEK_OPTIONS],
   );
   const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleResetSearch = useCallback(() => {
     setSearchForm(getSearchFormInit());
     setSearchFormKey(searchFormKey + 1);
     setLoaded(false);
-  }, [setLoaded, setSearchForm, searchFormKey, setSearchFormKey]);
+  }, [
+    setLoaded,
+    setSearchForm,
+    searchFormKey,
+    setSearchFormKey,
+    getSearchFormInit,
+  ]);
   const reloadExtendedEditing = useCallback(async () => {
     if (extendedEditing) {
       const entries = await load();
@@ -940,7 +956,7 @@ export const SpiffTool: FC<Props> = ({
             onClose={handleSetExtendedEditing()}
             data={extendedEditing}
             loading={loading}
-            userId={userId}
+            userId={ownerId}
             loggedUserId={loggedUserId}
             onSave={handleSaveExtended}
             onStatusChange={reloadExtendedEditing}

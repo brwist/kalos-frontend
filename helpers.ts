@@ -2748,6 +2748,8 @@ export type EventsFilter = {
   logPaymentStatus?: string;
   departmentId?: number;
   logTechnicianAssigned?: string;
+  notEqualsList?: string[];
+  fieldMaskList?: string[];
 };
 export type LoadEventsByFilter = {
   page: number;
@@ -2789,6 +2791,8 @@ export const loadEventsByFilter = async ({
     departmentId,
     logTechnicianAssigned,
     logPo,
+    notEqualsList,
+    fieldMaskList,
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Event();
@@ -2812,6 +2816,13 @@ export const loadEventsByFilter = async ({
     req.setLogJobStatus('Completed');
     req.setLogPaymentStatus('Pending');
   }
+  if (fieldMaskList) {
+    req.setFieldMaskList(fieldMaskList);
+  }
+  if (notEqualsList) {
+    req.setNotEqualsList(notEqualsList);
+  }
+
   if (logJobNumber) {
     req.setLogJobNumber(`%${logJobNumber}%`);
   }
