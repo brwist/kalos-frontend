@@ -19,6 +19,7 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
+import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import {
   SpiffToolLogEdit,
   getStatusFormInit,
@@ -81,9 +82,10 @@ export interface Props {
   loggedUserId: number;
   kind?: string;
   week?: string;
-  needsManagerAction: boolean;
-  needsPayrollAction: boolean;
-  needsAuditAction: boolean;
+  ownerId?: number;
+  needsManagerAction?: boolean;
+  needsPayrollAction?: boolean;
+  needsAuditAction?: boolean;
   role?: string;
   onClose?: () => void;
 }
@@ -91,6 +93,7 @@ export interface Props {
 export const SpiffTool: FC<Props> = ({
   type,
   loggedUserId,
+  ownerId,
   kind = MONTHLY,
   week,
   needsManagerAction,
@@ -99,19 +102,22 @@ export const SpiffTool: FC<Props> = ({
   role,
   onClose,
 }) => {
-  console.log({ needsAuditAction });
   const WEEK_OPTIONS =
     kind === WEEKLY ? getWeekOptions(52, 0, -1) : getWeekOptions();
   if (week && !WEEK_OPTIONS.map(({ value }) => value).includes(week)) {
     WEEK_OPTIONS.push({ label: formatWeek(week), value: week });
   }
   const MONTHS_OPTIONS: Option[] = makeLast12MonthsOptions(true);
-  const getSearchFormInit = () => ({
-    description: '',
-    month: week || (MONTHS_OPTIONS[MONTHS_OPTIONS.length - 1].value as string),
-    kind,
-    technician: loggedUserId,
-  });
+  const getSearchFormInit = useCallback(
+    () => ({
+      description: '',
+      month:
+        week || (MONTHS_OPTIONS[MONTHS_OPTIONS.length - 1].value as string),
+      kind,
+      technician: ownerId || loggedUserId,
+    }),
+    [MONTHS_OPTIONS, kind, ownerId, week, loggedUserId],
+  );
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -130,6 +136,7 @@ export const SpiffTool: FC<Props> = ({
   const [payrollOpen, setPayrollOpen] = useState<boolean>(false);
   //const [role, setRole] = useState<RoleType>();
   const [pendingPayroll, setPendingPayroll] = useState<TaskType>();
+  const [pendingPayrollReject, setPendingPayrollReject] = useState<TaskType>();
   const [pendingAudit, setPendingAudit] = useState<TaskType>();
 
   const [
@@ -158,14 +165,16 @@ export const SpiffTool: FC<Props> = ({
     console.log(loggedUserId);
     const userResult = await UserClientService.loadUserById(loggedUserId);
     const role = userResult.permissionGroupsList.find(p => p.type === 'role');
-    //if (role) {
-    //console.log(role.name);
-    //setRole(role.name as RoleType);
-    // }
-    const loggedInUser = await UserClientService.loadUserById(loggedUserId);
+
     setLoggedInUser(loggedInUser);
     setSearchFormKey(searchFormKey + 1);
-  }, [loggedUserId, setLoggedInUser, searchFormKey, setSearchFormKey]);
+  }, [
+    loggedUserId,
+    setLoggedInUser,
+    searchFormKey,
+    setSearchFormKey,
+    loggedInUser,
+  ]);
   const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   const load = useCallback(async () => {
     setLoading(true);
@@ -260,6 +269,10 @@ export const SpiffTool: FC<Props> = ({
     (task?: TaskType) => () => setPendingPayroll(task),
     [setPendingPayroll],
   );
+  const handlePendingPayrollToggleReject = useCallback(
+    (task?: TaskType) => () => setPendingPayrollReject(task),
+    [setPendingPayrollReject],
+  );
   const handlePendingAuditToggle = useCallback(
     (task?: TaskType) => () => setPendingAudit(task),
     [setPendingAudit],
@@ -292,6 +305,21 @@ export const SpiffTool: FC<Props> = ({
       load();
     }
   }, [load, pendingPayroll]);
+  const handlePayrollReject = useCallback(async () => {
+    if (pendingPayrollReject) {
+      const { id } = pendingPayrollReject;
+      setLoading(true);
+      setPendingPayroll(undefined);
+      const t = new Task();
+      t.setPayrollProcessed(false);
+      t.setId(id);
+      t.setAdminActionId(0);
+      //rest of implementation, do we handle the Rejection in the joined table?
+      t.setFieldMaskList(['PayrollProcessed', 'AdminActionId']);
+      await TaskClientService.Update(t);
+      load();
+    }
+  }, [load, pendingPayrollReject]);
   const handleAudit = useCallback(async () => {
     if (pendingAudit) {
       const { id } = pendingAudit;
@@ -388,14 +416,20 @@ export const SpiffTool: FC<Props> = ({
         setSearchFormKey(searchFormKey + 1);
       }
     },
-    [searchForm, setSearchFormKey, searchFormKey],
+    [searchForm, setSearchFormKey, searchFormKey, MONTHS_OPTIONS, WEEK_OPTIONS],
   );
   const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleResetSearch = useCallback(() => {
     setSearchForm(getSearchFormInit());
     setSearchFormKey(searchFormKey + 1);
     setLoaded(false);
-  }, [setLoaded, setSearchForm, searchFormKey, setSearchFormKey]);
+  }, [
+    setLoaded,
+    setSearchForm,
+    searchFormKey,
+    setSearchFormKey,
+    getSearchFormInit,
+  ]);
   const reloadExtendedEditing = useCallback(async () => {
     if (extendedEditing) {
       const entries = await load();
@@ -642,6 +676,17 @@ export const SpiffTool: FC<Props> = ({
                   onClick={handlePendingPayrollToggle(entry)}
                 >
                   <AccountBalanceWalletIcon />
+                </IconButton>
+              ) : (
+                <React.Fragment />
+              ),
+              needsPayrollAction ? (
+                <IconButton
+                  key={3}
+                  size="small"
+                  onClick={handlePendingPayrollToggleReject(entry)}
+                >
+                  <NotInterestedIcon />
                 </IconButton>
               ) : (
                 <React.Fragment />
@@ -911,6 +956,7 @@ export const SpiffTool: FC<Props> = ({
             onClose={handleSetExtendedEditing()}
             data={extendedEditing}
             loading={loading}
+            userId={ownerId}
             loggedUserId={loggedUserId}
             onSave={handleSaveExtended}
             onStatusChange={reloadExtendedEditing}
@@ -960,6 +1006,16 @@ export const SpiffTool: FC<Props> = ({
           open
           onClose={handlePendingPayrollToggle()}
           onConfirm={handlePayroll}
+        >
+          Are you sure you want to process payroll for this Spiff/Tool?
+        </Confirm>
+      )}
+      {pendingPayrollReject && (
+        <Confirm
+          title="Confirm Reject"
+          open
+          onClose={handlePendingPayrollToggleReject()}
+          onConfirm={handlePayrollReject}
         >
           Are you sure you want to process payroll for this Spiff/Tool?
         </Confirm>

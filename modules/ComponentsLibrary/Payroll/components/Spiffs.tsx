@@ -231,7 +231,8 @@ export const Spiffs: FC<Props> = ({
       {pendingView && (
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <SpiffTool
-            loggedUserId={pendingView.externalId}
+            loggedUserId={loggedUserId}
+            ownerId={pendingView.externalId}
             type="Spiff"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
