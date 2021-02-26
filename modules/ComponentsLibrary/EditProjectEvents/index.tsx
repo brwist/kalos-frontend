@@ -57,65 +57,9 @@ import {
 } from '../../../constants';
 import './styles.less';
 import { addDays, format } from 'date-fns';
+import { ExtendedProjectTaskType, PROJECT_TASK_PRIORITY_ICONS, Props, SearchType } from '../EditProject';
 
-export interface Props {
-  serviceCallId: number;
-  loggedUserId: number;
-  onClose?: () => void;
-}
-
-type SearchType = {
-  technicians: string;
-  statusId: number;
-  priorityId: number;
-};
-
-type ExtendedProjectTaskType = ProjectTaskType & {
-  startTime: string;
-  endTime: string;
-};
-
-export const PROJECT_TASK_PRIORITY_ICONS: {
-  [key: number]: FC<SvgIconProps>;
-} = {
-  1: LowIcon,
-  2: NormalIcon,
-  3: HighIcon,
-  4: HighestIcon,
-};
-
-const SCHEMA_PROJECT: Schema<EventType> = [
-  [
-    {
-      name: 'dateStarted',
-      label: 'Start Date',
-      type: 'date',
-    },
-
-    {
-      name: 'dateEnded',
-      label: 'End Date',
-      type: 'date',
-    },
-  ],
-  [
-    {
-      name: 'departmentId',
-      label: 'Department',
-      type: 'department',
-    },
-  ],
-  [
-    {
-      name: 'description',
-      label: 'Description',
-      type: 'text',
-      multiline: true,
-    },
-  ],
-];
-
-export const EditProject: FC<Props> = ({
+export const EditProjectEvents: FC<Props> = ({
   serviceCallId,
   loggedUserId,
   onClose,
