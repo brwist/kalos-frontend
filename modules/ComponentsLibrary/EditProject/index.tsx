@@ -64,13 +64,13 @@ export interface Props {
   onClose?: () => void;
 }
 
-type SearchType = {
+export type SearchType = {
   technicians: string;
   statusId: number;
   priorityId: number;
 };
 
-type ExtendedProjectTaskType = ProjectTaskType & {
+export type ExtendedProjectTaskType = ProjectTaskType & {
   startTime: string;
   endTime: string;
 };
@@ -84,7 +84,7 @@ export const PROJECT_TASK_PRIORITY_ICONS: {
   4: HighestIcon,
 };
 
-const SCHEMA_PROJECT: Schema<EventType> = [
+export const SCHEMA_PROJECT: Schema<EventType> = [
   [
     {
       name: 'dateStarted',
