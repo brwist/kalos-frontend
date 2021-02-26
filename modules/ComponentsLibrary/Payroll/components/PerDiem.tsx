@@ -12,6 +12,7 @@ import { PerDiemComponent } from '../../PerDiem';
 import { InfoTable } from '../../InfoTable';
 import { PlainForm, Schema } from '../../PlainForm';
 import { TripInfoTable } from '../../TripInfoTable';
+import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import {
@@ -24,8 +25,12 @@ import {
   PerDiemClientService,
   approvePerDiemById,
 } from '../../../../helpers';
-import { OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
+import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
+import {
+  PerDiemClient,
+  PerDiem as PerDiemReq,
+} from '@kalos-core/kalos-rpc/PerDiem';
 
 interface Props {
   loggedUserId: number;
@@ -55,6 +60,10 @@ export const PerDiem: FC<Props> = ({
   const [pendingApprove, setPendingApprove] = useState<PerDiemType>();
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
   const [pendingPayroll, setPendingPayroll] = useState<PerDiemType>();
+  const [
+    pendingPayrollReject,
+    setPendingPayrollReject,
+  ] = useState<PerDiemType>();
   const [managerFilter, setManagerFilter] = useState<boolean>(
     role == 'Manager' ? true : false,
   );
@@ -75,14 +84,6 @@ export const PerDiem: FC<Props> = ({
       employeeId,
       week === OPTION_ALL ? undefined : week,
     );
-    console.log('args', {
-      page,
-      auditorFilter,
-      payrollFilter,
-      managerFilter,
-      departmentId,
-      employeeId,
-    });
     setPerDiems(perDiems.resultsList);
     setCount(perDiems.totalCount);
     setLoading(false);
@@ -114,6 +115,13 @@ export const PerDiem: FC<Props> = ({
     (perDiem?: PerDiemType) => () => setPendingPayroll(perDiem),
     [setPendingPayroll],
   );
+  const handlePendingPayrollToggleReject = useCallback(
+    (perDiem?: PerDiemType) => () => {
+      setPendingPayrollReject(perDiem);
+      console.log('We called the callback');
+    },
+    [setPendingPayrollReject],
+  );
   const handleApprove = useCallback(async () => {
     if (!pendingApprove) return;
     const { id } = pendingApprove;
@@ -140,6 +148,21 @@ export const PerDiem: FC<Props> = ({
       load();
     }
   }, [load, pendingPayroll]);
+  const handlePayrollRejected = useCallback(async () => {
+    if (pendingPayrollReject) {
+      const { id } = pendingPayrollReject;
+      setLoading(true);
+      setPendingPayrollReject(undefined);
+      const req = new PerDiemReq();
+      req.setPayrollProcessed(false);
+      req.setId(id);
+      req.setDateApproved(NULL_TIME);
+      req.setApprovedById(0);
+      req.setFieldMaskList(['DateApproved', 'ApprovedById']);
+      await PerDiemClientService.Update(req);
+    }
+    load();
+  }, [load, pendingPayrollReject]);
   return (
     <div>
       <SectionBar
@@ -246,6 +269,23 @@ export const PerDiem: FC<Props> = ({
                           </span>
                         </Tooltip>
                       ) : null,
+                      role === 'Payroll' ? (
+                        <Tooltip
+                          key="payroll reject "
+                          content="Reject"
+                          placement="bottom"
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingPayrollToggleReject(el)}
+                              disabled={!!el.payrollProcessed}
+                            >
+                              <NotInterestedIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
                     ],
                   },
                 ];
@@ -316,6 +356,16 @@ export const PerDiem: FC<Props> = ({
           onConfirm={handlePayroll}
         >
           Are you sure you want to process payroll for this Per Diem?
+        </Confirm>
+      )}
+      {pendingPayrollReject && (
+        <Confirm
+          title="Confirm Rejection"
+          open
+          onClose={handlePendingPayrollToggleReject()}
+          onConfirm={handlePayrollRejected}
+        >
+          Are you sure you want to reject this Per Diem?
         </Confirm>
       )}
     </div>
