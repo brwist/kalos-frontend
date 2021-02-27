@@ -151,6 +151,8 @@ export const EditProjectEvents: FC<Props> = ({
       converted.push(task.toObject());
     });
 
+    console.log(converted);
+
     setTasks(converted);
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
@@ -537,7 +539,24 @@ export const EditProjectEvents: FC<Props> = ({
         name: 'logJobStatus',
         label: 'Log Job Status',
         required: true,
-        options: statusOptions,
+        options: [
+          {
+            label: 'Completed',
+            value: 'Completed',
+          },
+          {
+            label: 'Pending Scheduling',
+            value: 'Pend Sched',
+          },
+          {
+            label: 'Admin Review',
+            value: 'Admin Review',
+          },
+          {
+            label: 'Cancelled',
+            value: 'Cancelled',
+          },
+        ],
         disabled: !isOwner,
       },
     ],
@@ -546,7 +565,7 @@ export const EditProjectEvents: FC<Props> = ({
         name: 'highPriority',
         label: 'High Priority',
         required: true,
-        options: priorityOptions,
+        type: 'checkbox',
         disabled: !isOwner,
       },
     ],
@@ -569,6 +588,7 @@ export const EditProjectEvents: FC<Props> = ({
     <div>
       <SectionBar
         title="Project Management"
+        /*
         footer={
           event && !loadingEvent ? (
             <>
@@ -581,7 +601,7 @@ export const EditProjectEvents: FC<Props> = ({
           ) : (
             'Loading...'
           )
-        }
+        }*/
         actions={[
           ...(hasEditRights
             ? [
@@ -593,7 +613,7 @@ export const EditProjectEvents: FC<Props> = ({
               ]
             : []),
           {
-            label: 'Add Task',
+            label: 'Add Project',
             onClick: handleSetEditing({
               ...new Project().toObject(),
               dateStarted: event ? event.dateStarted.substr(0, 10) : '',
