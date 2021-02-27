@@ -158,7 +158,7 @@ export const EditProject: FC<Props> = ({
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
     console.log('Loading event');
-    const event = await EventClientService.LoadEventsByServiceCallID(
+    const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
     setEvent(event);

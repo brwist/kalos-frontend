@@ -114,7 +114,7 @@ export const EditProjectEvents: FC<Props> = ({
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
     console.log('Loading event');
-    const event = await EventClientService.LoadEventsByServiceCallID(
+    const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
     setEvent(event);
@@ -144,7 +144,13 @@ export const EditProjectEvents: FC<Props> = ({
     const tasks = await EventClientService.LoadEventsByServiceCallID(
       serviceCallId,
     );
-    //setTasks(tasks);
+
+    let converted: Project.AsObject[] = [];
+    tasks.getResultsList().forEach(task => {
+      converted.push(task.toObject());
+    });
+
+    setTasks(converted);
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
