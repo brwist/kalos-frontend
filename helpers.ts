@@ -3066,11 +3066,13 @@ export const upsertEvent = async (data: Partial<EventType>) => {
   const fieldMaskList = [];
   for (const fieldName in data) {
     const { upperCaseProp, methodName } = getRPCFields(fieldName);
+    console.log('Method name: ', methodName);
     //@ts-ignore
     req[methodName](data[fieldName]);
     fieldMaskList.push(upperCaseProp);
   }
   req.setFieldMaskList(fieldMaskList);
+  console.log('Sending out');
   return await EventClientService[data.id ? 'Update' : 'Create'](req);
 };
 

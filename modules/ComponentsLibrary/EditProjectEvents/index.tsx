@@ -67,8 +67,8 @@ import {
 } from '../EditProject';
 
 export type ExtendedProjectType = ProjectType & {
-  startTime: string;
-  endTime: string;
+  timeStarted: string;
+  timeEnded: string;
 };
 
 export const EditProjectEvents: FC<Props> = ({
@@ -318,20 +318,18 @@ export const EditProjectEvents: FC<Props> = ({
     [priorityOptions],
   );
   const handleSaveTask = useCallback(
-    async ({
-      dateStarted,
-      startTime,
-      dateEnded,
-      endTime,
-      ...formData
-    }: ExtendedProjectType) => {
+    async (eventInput: Project.AsObject) => {
+      console.log('Event: ', event);
       if (!event) return;
-      if (dateStarted > dateEnded && dateEnded != '') {
+      if (
+        eventInput.dateStarted > eventInput.dateEnded &&
+        eventInput.dateEnded != ''
+      ) {
         setErrorTask('Start Date cannot be after End Date.');
         console.error('Start Date cannot be after End Date.');
         return;
       }
-      if (event.dateStarted.substr(0, 10) > dateStarted) {
+      if (event.dateStarted.substr(0, 10) > eventInput.dateStarted) {
         setErrorTask(
           "Task's Start Date cannot be before Project's Start Date.",
         );
@@ -340,20 +338,15 @@ export const EditProjectEvents: FC<Props> = ({
         );
         return;
       }
-      if (event.dateEnded.substr(0, 10) < dateEnded) {
+      if (event.dateEnded.substr(0, 10) < eventInput.dateEnded) {
         setErrorTask("Task's End Date cannot be after Project's End Date.");
         console.error("Task's End Date cannot be after Project's End Date.");
         return;
       }
       setEditingTask(undefined);
       setLoading(true);
-      await upsertEvent({
-        ...formData,
-        id: serviceCallId,
-        dateStarted: `${dateStarted} ${startTime}:00`,
-        dateEnded: `${dateEnded} ${endTime}:00`,
-        ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
-      });
+      console.log('upserting: ', eventInput);
+      await upsertEvent(eventInput);
       setLoaded(false);
     },
     [
@@ -389,8 +382,8 @@ export const EditProjectEvents: FC<Props> = ({
         ...new Project().toObject(),
         dateStarted,
         dateEnded: dateStarted,
-        startTime: '09:00',
-        endTime: '10:00',
+        timeStarted: '09:00',
+        timeEnded: '10:00',
       });
     },
     [setEditingTask, loggedUser, event, isAnyManager],
@@ -527,7 +520,7 @@ export const EditProjectEvents: FC<Props> = ({
         disabled: !isOwner,
       },
       {
-        name: 'endTime',
+        name: 'timeEnded',
         label: 'End Time',
         type: 'time',
         required: true,
@@ -618,8 +611,8 @@ export const EditProjectEvents: FC<Props> = ({
               ...new Project().toObject(),
               dateStarted: event ? event.dateStarted.substr(0, 10) : '',
               dateEnded: event ? event.dateStarted.substr(0, 10) : '',
-              startTime: '09:00',
-              endTime: '10:00',
+              timeStarted: '09:00',
+              timeEnded: '10:00',
             }),
             disabled:
               loading ||
@@ -906,8 +899,8 @@ export const EditProjectEvents: FC<Props> = ({
 
           task.dateStarted = format(new Date(date), 'yyyy-MM-dd HH-mm-ss');
           task.dateEnded = '';
-          task.startTime = format(new Date(date), 'HH-mm');
-          task.endTime = format(addDays(new Date(date), 1), 'HH-mm');
+          task.timeStarted = format(new Date(date), 'HH-mm');
+          task.timeEnded = format(addDays(new Date(date), 1), 'HH-mm');
           task.description = 'Auto generated task';
 
           alert('upserting task - see details in console log');
@@ -958,8 +951,8 @@ export const EditProjectEvents: FC<Props> = ({
                           ...task,
                           dateStarted: startDate,
                           dateEnded: endDate,
-                          startTime: startHour.substr(0, 5),
-                          endTime: endHour.substr(0, 5),
+                          timeStarted: startHour.substr(0, 5),
+                          timeEnded: endHour.substr(0, 5),
                           logJobStatus,
                           highPriority,
                         })
@@ -1006,8 +999,8 @@ export const EditProjectEvents: FC<Props> = ({
                           ...task,
                           dateStarted: dateStart,
                           dateEnded: endDate,
-                          startTime: startHour.substr(0, 5),
-                          endTime: endHour.substr(0, 5),
+                          timeStarted: startHour.substr(0, 5),
+                          timeEnded: endHour.substr(0, 5),
                           logJobStatus,
                           highPriority,
                         })
@@ -1030,7 +1023,7 @@ export const EditProjectEvents: FC<Props> = ({
             data={editingTask}
             onClose={handleSetEditing()}
             onSave={handleSaveTask}
-            title={`${editingTask.id ? 'Edit' : 'Add'} Task`}
+            title={`${editingTask.id ? 'Edit' : 'Add'} Project`}
             error={errorTask}
           >
             <div className="EditProjectDelete">
