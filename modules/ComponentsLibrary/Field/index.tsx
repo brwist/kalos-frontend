@@ -193,7 +193,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       setEventStatus(0);
       try {
         //const event = await loadEventById(eventIdValue);
-        const event = await EventClientService.LoadEventsByServiceCallID(
+        const event = await EventClientService.LoadEventByServiceCallID(
           eventIdValue,
         );
         if (onChange) {

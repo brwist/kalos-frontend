@@ -165,6 +165,7 @@ export type TaskEventDataType = TaskEventData.AsObject;
 export type QuotableReadType = QuotableRead.AsObject;
 export type QuotableType = Quotable.AsObject;
 export type ProjectTaskType = ProjectTask.AsObject;
+export type ProjectType = Event.AsObject;
 export type TaskStatusType = TaskStatus.AsObject;
 export type TaskPriorityType = TaskPriority.AsObject;
 export type TransactionType = Transaction.AsObject;
