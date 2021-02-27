@@ -141,6 +141,7 @@ export const EditProjectEvents: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     setLoading(true);
+    console.log('SCID:', serviceCallId);
     const tasks = await EventClientService.LoadEventsByServiceCallID(
       serviceCallId,
     );
@@ -917,9 +918,12 @@ export const EditProjectEvents: FC<Props> = ({
                     description,
                     dateStarted: dateStart,
                     dateEnded: dateEnd,
+                    logJobStatus,
+                    highPriority,
                   } = task;
                   const [startDate, startHour] = dateStart.split(' ');
                   const [endDate, endHour] = dateEnd.split(' ');
+                  console.log(highPriority);
                   return {
                     id,
                     startDate,
@@ -927,6 +931,8 @@ export const EditProjectEvents: FC<Props> = ({
                     startHour,
                     endHour,
                     notes: description,
+                    status: logJobStatus,
+                    priorityId: highPriority == 1 ? 3 : 1,
                     onClick: hasEditRights
                       ? handleSetEditing({
                           ...task,
@@ -934,6 +940,8 @@ export const EditProjectEvents: FC<Props> = ({
                           dateEnded: endDate,
                           startTime: startHour.substr(0, 5),
                           endTime: endHour.substr(0, 5),
+                          logJobStatus,
+                          highPriority,
                         })
                       : undefined,
                   };
@@ -958,9 +966,12 @@ export const EditProjectEvents: FC<Props> = ({
                     description,
                     dateStarted: dateStart,
                     dateEnded: dateEnd,
+                    logJobStatus,
+                    highPriority,
                   } = task;
                   const [startDate, startHour] = dateStart.split(' ');
                   const [endDate, endHour] = dateEnd.split(' ');
+                  console.log(logJobStatus);
                   return {
                     id,
                     startDate,
@@ -968,6 +979,8 @@ export const EditProjectEvents: FC<Props> = ({
                     startHour,
                     endHour,
                     notes: description,
+                    status: logJobStatus,
+                    priorityId: highPriority == 1 ? 3 : 1,
                     onClick: hasEditRights
                       ? handleSetEditing({
                           ...task,
@@ -975,6 +988,8 @@ export const EditProjectEvents: FC<Props> = ({
                           dateEnded: endDate,
                           startTime: startHour.substr(0, 5),
                           endTime: endHour.substr(0, 5),
+                          logJobStatus,
+                          highPriority,
                         })
                       : undefined,
                   };

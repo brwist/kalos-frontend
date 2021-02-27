@@ -178,24 +178,28 @@ export const GanttChart: FC<Props> = ({
                           <strong>End Date: </strong>
                           {formatDate(endDate)} {endHour && formatTime(endHour)}
                         </div>
-                        <div>
-                          <strong>Status: </strong>
-                          {status}
-                        </div>
-                        <div>
-                          <strong>Priority: </strong>
-                          {PriorityIcon && (
-                            <PriorityIcon
-                              style={{
-                                fontSize: 16,
-                                marginRight: 4,
-                                verticalAlign: 'middle',
-                                display: 'inline-flex',
-                              }}
-                            />
-                          )}
-                          {priority}
-                        </div>
+                        {status && (
+                          <div>
+                            <strong>Status: </strong>
+                            {status}
+                          </div>
+                        )}
+                        {priority && (
+                          <div>
+                            <strong>Priority: </strong>
+                            {PriorityIcon && (
+                              <PriorityIcon
+                                style={{
+                                  fontSize: 16,
+                                  marginRight: 4,
+                                  verticalAlign: 'middle',
+                                  display: 'inline-flex',
+                                }}
+                              />
+                            )}
+                            {priority}
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
