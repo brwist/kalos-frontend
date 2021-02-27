@@ -392,6 +392,13 @@ export const ServiceCall: FC<Props> = props => {
     ],
     [
       {
+        name: 'color',
+        label: 'Color',
+        type: 'color',
+      },
+    ],
+    [
+      {
         name: 'propertyId',
         type: 'hidden',
       },
