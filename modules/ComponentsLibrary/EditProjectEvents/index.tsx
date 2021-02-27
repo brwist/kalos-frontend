@@ -488,6 +488,13 @@ export const EditProjectEvents: FC<Props> = ({
     ],
     [
       {
+        name: 'name',
+        label: 'Name of Project',
+        required: !hasEditRights,
+      },
+    ],
+    [
+      {
         name: 'description',
         label: 'Description',
         multiline: true,
@@ -561,7 +568,15 @@ export const EditProjectEvents: FC<Props> = ({
         type: 'checkbox',
         disabled: !isOwner,
       },
+      {
+        name: 'color',
+        label: 'Color',
+        required: true,
+        type: 'color',
+        disabled: !isOwner,
+      },
     ],
+    [{}],
   ];
   const totalMeals =
     perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
