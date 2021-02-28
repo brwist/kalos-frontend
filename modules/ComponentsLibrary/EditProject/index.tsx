@@ -57,6 +57,10 @@ import {
 } from '../../../constants';
 import './styles.less';
 import { addDays, format } from 'date-fns';
+import {
+  CostReportInfo,
+  CostReportInfoList,
+} from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 
 export interface Props {
   serviceCallId: number;
@@ -128,6 +132,10 @@ export const EditProject: FC<Props> = ({
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [pendingDelete, setPendingDelete] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
+  const [
+    costReportInfoList,
+    setCostReportInfoList,
+  ] = useState<CostReportInfoList>();
   const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
   const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
   const [pendingCheckout, setPendingCheckout] = useState<boolean>(false);
@@ -186,7 +194,11 @@ export const EditProject: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     const tasks = await EventClientService.loadProjectTasks(serviceCallId);
+    const costReportList = await EventClientService.GetCostReportInfo(
+      new CostReportInfo(),
+    );
     setTasks(tasks);
+    setCostReportInfoList(costReportList);
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
