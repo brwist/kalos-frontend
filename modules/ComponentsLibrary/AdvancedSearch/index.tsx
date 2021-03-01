@@ -969,17 +969,6 @@ export const AdvancedSearch: FC<Props> = ({
         label: 'Last Name',
         required: true,
       },
-      {
-        name: 'login',
-        label: 'Login',
-        required: true,
-      },
-      {
-        name: 'pwd',
-        label: 'Password',
-        type: 'password',
-        required: true,
-      },
     ],
     [
       {
