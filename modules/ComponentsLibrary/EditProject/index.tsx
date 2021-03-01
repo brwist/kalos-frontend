@@ -61,6 +61,7 @@ import {
   CostReportInfo,
   CostReportInfoList,
 } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
+import { Transaction } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 export interface Props {
   serviceCallId: number;
@@ -193,10 +194,29 @@ export const EditProject: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     setLoading(true);
+    console.log('Service call id:', serviceCallId);
+
     const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-    const costReportList = await EventClientService.GetCostReportInfo(
-      new CostReportInfo(),
-    );
+    let req = new CostReportInfo();
+    req.setJobId(serviceCallId);
+    const costReportList = await EventClientService.GetCostReportInfo(req);
+    console.log('Costreportlist:', costReportList);
+
+    let transactions: TransactionType[] = [];
+
+    console.log(costReportList.getResultsList());
+
+    costReportList.getResultsList().forEach(data => {
+      let txn = new Transaction();
+      txn.setJobId(data.getJobId());
+      txn.setNotes(data.getTransactionNotes());
+      txn.setDescription(data.getTransactionDescription());
+      txn.setAmount(data.getAmount());
+      transactions.push(txn.toObject());
+    });
+
+    console.log('txns:', transactions);
+
     setTasks(tasks);
     setCostReportInfoList(costReportList);
     setLoading(false);
@@ -507,6 +527,7 @@ export const EditProject: FC<Props> = ({
       setErrorProject,
     ],
   );
+
   const loadPrintData = useCallback(async () => {
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
