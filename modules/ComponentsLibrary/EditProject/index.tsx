@@ -80,6 +80,13 @@ type ExtendedProjectTaskType = ProjectTaskType & {
   endTime: string;
 };
 
+type TransactionDisplayType = {
+  jobId: number;
+  notes: string;
+  description: string;
+  amount: number;
+};
+
 export const PROJECT_TASK_PRIORITY_ICONS: {
   [key: number]: FC<SvgIconProps>;
 } = {
@@ -212,10 +219,18 @@ export const EditProject: FC<Props> = ({
       txn.setNotes(data.getTransactionNotes());
       txn.setDescription(data.getTransactionDescription());
       txn.setAmount(data.getAmount());
+      txn.setTimestamp(data.getDateString());
+      txn.setOwnerId(data.getOwnerId());
+      txn.setVendor(data.getVendor());
+      txn.setDepartmentId(data.getDepartmentId());
+      txn.setDepartmentString(data.getDepartmentName());
+      txn.setOwnerName(data.getOwnerName());
       transactions.push(txn.toObject());
     });
 
     console.log('txns:', transactions);
+
+    setTransactions(transactions);
 
     setTasks(tasks);
     setCostReportInfoList(costReportList);
