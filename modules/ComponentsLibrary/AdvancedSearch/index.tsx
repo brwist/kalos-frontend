@@ -2255,6 +2255,7 @@ export const AdvancedSearch: FC<Props> = ({
                             </Tooltip>,
                           ]
                         : []),
+                      /*
                       ...(deletableEmployees && isAdmin
                         ? [
                             <Tooltip
@@ -2273,6 +2274,7 @@ export const AdvancedSearch: FC<Props> = ({
                             </Tooltip>,
                           ]
                         : []),
+                        */
                     ],
                   },
                 ];
