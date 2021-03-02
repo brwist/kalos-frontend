@@ -49,6 +49,7 @@ import {
   PerDiemClientService,
   TaskEventClientService,
   padWithZeroes,
+  TransactionClientService,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -61,6 +62,11 @@ import {
   CostReportInfo,
   CostReportInfoList,
 } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
+import {
+  Transaction,
+  TxnDepartment,
+} from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
 
 export interface Props {
   serviceCallId: number;
@@ -77,6 +83,13 @@ export type SearchType = {
 type ExtendedProjectTaskType = ProjectTaskType & {
   startTime: string;
   endTime: string;
+};
+
+type TransactionDisplayType = {
+  jobId: number;
+  notes: string;
+  description: string;
+  amount: number;
 };
 
 export const PROJECT_TASK_PRIORITY_ICONS: {
@@ -193,10 +206,54 @@ export const EditProject: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     setLoading(true);
+    console.log('Service call id:', serviceCallId);
+
     const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-    const costReportList = await EventClientService.GetCostReportInfo(
-      new CostReportInfo(),
-    );
+    let req = new CostReportInfo();
+    req.setJobId(serviceCallId);
+    const costReportList = await EventClientService.GetCostReportInfo(req);
+    console.log('Costreportlist:', costReportList);
+
+    let transactions: TransactionType[] = [];
+
+    console.log(costReportList.getResultsList());
+
+    for await (let data of costReportList.getResultsList()) {
+      //await costReportList.getResultsList().forEach(async data => {
+      let txn = new Transaction();
+      txn.setJobId(data.getJobId());
+      txn.setNotes(data.getTransactionNotes());
+      txn.setDescription(data.getTransactionDescription());
+      txn.setAmount(data.getAmount());
+      txn.setTimestamp(data.getDateString());
+      txn.setOwnerId(data.getOwnerId());
+      txn.setVendor(data.getVendor());
+      txn.setDepartmentId(data.getDepartmentId());
+      /*
+      let transaction = new Transaction();
+      transaction.setDepartmentId(data.getDepartmentId());
+      console.log('Transaction: ', txn);
+      const dept = await TransactionClientService.Get(transaction);
+      console.log('Department gotten');
+      if (dept.department) {
+        console.log('in if statement');
+        let txnDept = new TxnDepartment();
+        txnDept.setDescription(dept.department?.description);
+        txnDept.setClassification(dept.department?.classification);
+        txnDept.setId(dept.department?.id);
+        txnDept.setManagerId(dept.department?.managerId);
+        txn.setDepartment(txnDept);
+        console.log('At the end');
+      }*/
+      txn.setOwnerName(data.getOwnerName());
+      console.log('Pushing to transactions:', txn);
+      transactions.push(txn.toObject());
+    }
+
+    console.log('txns:', transactions);
+
+    setTransactions(transactions);
+
     setTasks(tasks);
     setCostReportInfoList(costReportList);
     setLoading(false);
@@ -507,6 +564,7 @@ export const EditProject: FC<Props> = ({
       setErrorProject,
     ],
   );
+
   const loadPrintData = useCallback(async () => {
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
