@@ -67,6 +67,10 @@ import {
   TxnDepartment,
 } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
+import {
+  PerDiem,
+  PerDiemRow,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 
 export interface Props {
   serviceCallId: number;
@@ -215,44 +219,37 @@ export const EditProject: FC<Props> = ({
     console.log('Costreportlist:', costReportList);
 
     let transactions: TransactionType[] = [];
+    let perDiems: PerDiemType[] = [];
 
     console.log(costReportList.getResultsList());
 
     for await (let data of costReportList.getResultsList()) {
-      //await costReportList.getResultsList().forEach(async data => {
       let txn = new Transaction();
       txn.setJobId(data.getJobId());
       txn.setNotes(data.getTransactionNotes());
       txn.setDescription(data.getTransactionDescription());
       txn.setAmount(data.getAmount());
-      txn.setTimestamp(data.getDateString());
+      txn.setTimestamp(data.getDateStarted());
       txn.setOwnerId(data.getOwnerId());
       txn.setVendor(data.getVendor());
       txn.setDepartmentId(data.getDepartmentId());
-      /*
-      let transaction = new Transaction();
-      transaction.setDepartmentId(data.getDepartmentId());
-      console.log('Transaction: ', txn);
-      const dept = await TransactionClientService.Get(transaction);
-      console.log('Department gotten');
-      if (dept.department) {
-        console.log('in if statement');
-        let txnDept = new TxnDepartment();
-        txnDept.setDescription(dept.department?.description);
-        txnDept.setClassification(dept.department?.classification);
-        txnDept.setId(dept.department?.id);
-        txnDept.setManagerId(dept.department?.managerId);
-        txn.setDepartment(txnDept);
-        console.log('At the end');
-      }*/
+      txn.setDepartment(data.getDepartment());
       txn.setOwnerName(data.getOwnerName());
-      console.log('Pushing to transactions:', txn);
       transactions.push(txn.toObject());
+
+      let pd = new PerDiem();
+      pd.setId(data.getPerDiemId());
+      pd.setDateStarted(data.getDateStarted());
+      pd.setDateApproved(data.getDateApproved());
+      pd.setDateSubmitted(data.getDateSubmitted());
+      pd.setOwnerName(data.getPerDiemOwnerName());
+      perDiems.push(pd.toObject());
     }
 
     console.log('txns:', transactions);
 
     setTransactions(transactions);
+    setPerDiems(perDiems);
 
     setTasks(tasks);
     setCostReportInfoList(costReportList);
