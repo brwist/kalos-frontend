@@ -49,6 +49,7 @@ import {
   PerDiemClientService,
   TaskEventClientService,
   padWithZeroes,
+  TransactionClientService,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -61,7 +62,11 @@ import {
   CostReportInfo,
   CostReportInfoList,
 } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
-import { Transaction } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import {
+  Transaction,
+  TxnDepartment,
+} from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
 
 export interface Props {
   serviceCallId: number;
@@ -213,7 +218,8 @@ export const EditProject: FC<Props> = ({
 
     console.log(costReportList.getResultsList());
 
-    costReportList.getResultsList().forEach(data => {
+    for await (let data of costReportList.getResultsList()) {
+      //await costReportList.getResultsList().forEach(async data => {
       let txn = new Transaction();
       txn.setJobId(data.getJobId());
       txn.setNotes(data.getTransactionNotes());
@@ -223,10 +229,26 @@ export const EditProject: FC<Props> = ({
       txn.setOwnerId(data.getOwnerId());
       txn.setVendor(data.getVendor());
       txn.setDepartmentId(data.getDepartmentId());
-      txn.setDepartmentString(data.getDepartmentName());
+      /*
+      let transaction = new Transaction();
+      transaction.setDepartmentId(data.getDepartmentId());
+      console.log('Transaction: ', txn);
+      const dept = await TransactionClientService.Get(transaction);
+      console.log('Department gotten');
+      if (dept.department) {
+        console.log('in if statement');
+        let txnDept = new TxnDepartment();
+        txnDept.setDescription(dept.department?.description);
+        txnDept.setClassification(dept.department?.classification);
+        txnDept.setId(dept.department?.id);
+        txnDept.setManagerId(dept.department?.managerId);
+        txn.setDepartment(txnDept);
+        console.log('At the end');
+      }*/
       txn.setOwnerName(data.getOwnerName());
+      console.log('Pushing to transactions:', txn);
       transactions.push(txn.toObject());
-    });
+    }
 
     console.log('txns:', transactions);
 
