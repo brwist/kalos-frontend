@@ -591,6 +591,7 @@ const NAMED_EXPORTS = {
     'unstable_cancelCallback',
   ],
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.js': ['grpc'],
+  'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb.js': [
     'Place',
     'Places',
@@ -660,6 +661,7 @@ const NAMED_EXPORTS = {
     'Quotable',
     'QuotableList',
     'QuotableRead',
+    'CostReportInfo',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/event_assignment_pb.js': [
     'EventAssignment',
@@ -919,7 +921,6 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_department_pb.js': [
     'TimesheetDepartment',
     'TimesheetDepartmentList',
-    'IntArray',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_pb.js': [
     'Transaction',
@@ -951,7 +952,6 @@ const NAMED_EXPORTS = {
     'UserList',
     'CardDataList',
     'CardData',
-    'IntArray',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/vendor_order_pb.js': [
     'VendorOrder',
@@ -971,7 +971,6 @@ const NAMED_EXPORTS = {
   ],
   'node_modules/react-is/index.js': ['ForwardRef', 'isFragment', 'Memo'],
   'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
-  'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [
     'TransactionData',
     'Prediction',
