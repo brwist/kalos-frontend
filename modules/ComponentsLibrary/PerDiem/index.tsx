@@ -56,6 +56,7 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { RoleType } from '../Payroll';
 
 export interface Props {
   loggedUserId: number;
@@ -202,6 +203,7 @@ export const PerDiemComponent: FC<Props> = ({
   const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
     [],
   );
+  const [role, setRole] = useState<RoleType>();
   const [
     managerFilterDepartmentId,
     setManagerFilterDepartmentId,
@@ -266,9 +268,29 @@ export const PerDiemComponent: FC<Props> = ({
       setUser(user);
       const departments = await loadTimesheetDepartments();
       setDepartments(sortBy(departments, getDepartmentName));
+      console.log({ user });
+      const role = user.permissionGroupsList.find(p => p.type === 'role');
+      if (role) {
+        setRole(role.name as RoleType);
+      }
+      //This is where we get the department IDs from permission groups
+      const groupDepartments = user.permissionGroupsList.filter(
+        group => group.type === 'department',
+      );
       const managerDepartments = departments.filter(
         ({ managerId }) => managerId === loggedUserId,
       );
+      const totalDepartments = [];
+      //New method, based on permission groups, where we setState the new department IDs
+      //Since Not everyone has a permission group yet, this will be on hold for now.
+      //Uncomment when ready.
+      //if (groupDepartments.length > 0) {
+      //  for (let i = 0; i < groupDepartments.length; i++) {
+      //    totalDepartments.push(groupDepartments[i].id);
+      //  }
+      //  setManagerDepartmentIds(totalDepartments);
+      //}
+      //Current method for getting department IDS
       if (managerDepartments.length > 0) {
         setManagerDepartmentIds(managerDepartments.map(({ id }) => id));
       }
@@ -531,9 +553,9 @@ export const PerDiemComponent: FC<Props> = ({
     [usedDepartments, departments],
   );
   const addPerDiemDisabled = availableDapartments.length === 0;
-  const isAnyManager = departments
-    .map(({ managerId }) => managerId)
-    .includes(loggedUserId);
+  const isAnyManager =
+    departments.map(({ managerId }) => managerId).includes(loggedUserId) ||
+    role === 'Manager';
   const isOwner = !isAnyManager;
   const SCHEMA_PER_DIEM: Schema<PerDiemType> = pendingPerDiemEdit
     ? [
@@ -722,7 +744,7 @@ export const PerDiemComponent: FC<Props> = ({
             ownerName,
             userId,
           } = entry;
-          const isManager = !isOwner;
+          const isManager = !isOwner || role === 'Manager';
           const status = getStatus(dateApproved, dateSubmitted, isManager);
           const buttonDisabled =
             saving ||
