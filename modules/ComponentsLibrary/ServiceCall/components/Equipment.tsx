@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
 import { ServiceItems, Entry, Repair } from '../../ServiceItems';
-import { PlainForm, Schema } from '../../PlainForm';
 import { UserType, PropertyType } from '../../../../helpers';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
@@ -30,12 +29,19 @@ export const Equipment: FC<Props> = ({
 }) => {
   const { notes, logJobNumber, id } = serviceItem;
   const localStorageKey = `SERVICE_CALL_EQUIPMENT_${id}`;
+  const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
   let repairsInitial = [];
+  let selectedInitial = [];
   try {
     repairsInitial = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
   } catch (e) {}
+  try {
+    selectedInitial = JSON.parse(
+      localStorage.getItem(localStorageSelectedKey) || '[]',
+    );
+  } catch (e) {}
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
-  const [selected, setSelected] = useState<Entry[]>([]);
+  const [selected, setSelected] = useState<Entry[]>(selectedInitial);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [data, setData] = useState<Form>({
     displayName: customerName,
@@ -49,26 +55,15 @@ export const Equipment: FC<Props> = ({
     },
     [setRepairs, localStorageKey],
   );
-  const SCHEMA: Schema<Form> = [
-    [
-      {
-        name: 'displayName',
-        label: 'Display Name',
-        options: [customerName, customer?.businessname || ''],
-      },
-      {
-        name: 'withJobNotes',
-        label: 'With Job Notes',
-        type: 'checkbox',
-      },
-      {
-        name: 'jobNotes',
-        label: 'Job Notes',
-        multiline: true,
-        disabled: !data.withJobNotes,
-      },
-    ],
-  ];
+  const handleSetSelected = useCallback(
+    (selected: Entry[]) => {
+      setSelected(selected);
+      const { id } = serviceItem;
+      const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
+      localStorage.setItem(localStorageKey, JSON.stringify(selected));
+    },
+    [setSelected, serviceItem],
+  );
   const handleSubmit = useCallback(() => {
     // TODO handle submit
     console.log({
@@ -90,7 +85,8 @@ export const Equipment: FC<Props> = ({
       repair
       disableRepair={!id}
       repairs={repairs}
-      onSelect={setSelected}
+      onSelect={debounce(handleSetSelected, 1000)}
+      selected={selected}
       onRepairsChange={debounce(handleSetRepair, 1000)}
       asideContent={
         <ProposalPrint

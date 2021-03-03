@@ -82,6 +82,7 @@ interface Props {
   loading?: boolean;
   selectable?: boolean;
   onSelect?: (entries: Entry[]) => void;
+  selected?: Entry[];
   repair?: boolean;
   disableRepair?: boolean;
   repairs?: Repair[];
@@ -112,6 +113,7 @@ export const ServiceItems: FC<Props> = props => {
     title = 'Service Items',
     selectable,
     onSelect,
+    selected: selectedInitial,
     repair,
     disableRepair = false,
     repairs: repairsInitial = [],
@@ -136,7 +138,7 @@ export const ServiceItems: FC<Props> = props => {
   const [linkId, setLinkId] = useState<number>();
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
-  const [selected, setSelected] = useState<Entry[]>([]);
+  const [selected, setSelected] = useState<Entry[]>(selectedInitial || []);
 
   const handleMaterialChange = useCallback(
     (idx: number) => (data: MaterialType) => {
@@ -451,8 +453,10 @@ export const ServiceItems: FC<Props> = props => {
 
   const handleSelectedChange = useCallback(
     (entry: Entry) => () => {
-      const newSelected: Entry[] = [...selected.filter(item => item !== entry)];
-      const isSelected = selected.find(item => item === entry);
+      const newSelected: Entry[] = [
+        ...selected.filter(item => item.id !== entry.id),
+      ];
+      const isSelected = selected.find(item => item.id === entry.id);
       if (!isSelected) {
         newSelected.push(entry);
       }
