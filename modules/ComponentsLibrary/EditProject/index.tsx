@@ -235,6 +235,7 @@ export const EditProject: FC<Props> = ({
       txn.setDepartmentId(data.getDepartmentId());
       txn.setDepartment(data.getDepartment());
       txn.setOwnerName(data.getOwnerName());
+      txn.setCostCenter(data.getCostCenter());
       transactions.push(txn.toObject());
 
       let pd = new PerDiem();
