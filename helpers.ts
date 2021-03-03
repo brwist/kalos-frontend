@@ -136,6 +136,7 @@ import {
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
 import { TripInfo } from './modules/ComponentsLibrary/TripViewModal';
 import { NULL_TIME } from './constants';
+import { PropertyInfo } from './modules/PropertyInformation/components/PropertyInfo';
 
 export type UserType = User.AsObject;
 export type PropertyType = Property.AsObject;
@@ -2152,10 +2153,19 @@ export type DateStartEndFilter = {
   dateStart: string;
   dateEnd: string;
 };
-
+export type DateStartEndSearchFilter = {
+  dateStart: string;
+  dateEnd: string;
+  businessName?: string;
+  lastname?: string;
+};
 export type LoadMetricsByFilter = {
   page: number;
   filter: DateStartEndFilter;
+};
+export type LoadMetricsBySearchFilter = {
+  page: number;
+  filter: DateStartEndSearchFilter;
 };
 
 export const loadPerformanceMetricsByFilter = async ({
@@ -2171,15 +2181,29 @@ export const loadPerformanceMetricsByFilter = async ({
 
 export const loadDeletedServiceCallsByFilter = async ({
   page,
-  filter: { dateStart, dateEnd },
-}: LoadMetricsByFilter) => {
+  filter: { dateStart, dateEnd, businessName, lastname },
+}: LoadMetricsBySearchFilter) => {
   const req = new Event();
+  req.setFieldMaskList(['IsActive']);
+  if (businessName && businessName != '') {
+    console.log('We have a business name');
+    const bReq = new Property();
+    bReq.setBusinessname(businessName);
+    const bResult = await PropertyClientService.Get(bReq);
+    if (bReq) {
+      console.log('bReq');
+      req.setPropertyId(bResult.id);
+      req.addFieldMask('PropertyId');
+    }
+  }
+
   req.setPageNumber(page === -1 ? 0 : page);
   req.setOrderBy('date_started');
   req.setOrderDir('ASC');
   req.setIsActive(0);
   req.setDateRangeList(['>=', dateStart, '<=', dateEnd]);
   req.setDateTargetList(['date_started', 'date_started']);
+
   const results: EventType[] = [];
   const { resultsList, totalCount } = (
     await EventClientService.BatchGet(req)
@@ -2751,6 +2775,7 @@ export type EventsFilter = {
   logTechnicianAssigned?: string;
   notEqualsList?: string[];
   fieldMaskList?: string[];
+  isActive?: boolean;
 };
 export type LoadEventsByFilter = {
   page: number;
@@ -2794,6 +2819,7 @@ export const loadEventsByFilter = async ({
     logPo,
     notEqualsList,
     fieldMaskList,
+    isActive,
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Event();
@@ -2810,15 +2836,22 @@ export const loadEventsByFilter = async ({
     req.setOrderBy(orderBy);
     req.setOrderDir(orderDir);
   }
-  req.setIsActive(1);
+  if (fieldMaskList) {
+    req.setFieldMaskList(fieldMaskList);
+  }
+  if (isActive) {
+    req.setIsActive(1);
+    req.addFieldMask('isActive');
+  }
+  if (!isActive) {
+    req.setIsActive(0);
+    req.addFieldMask('isActive');
+  }
   req.setPageNumber(page === -1 ? 0 : page);
   p.setIsActive(1);
   if (pendingBilling) {
     req.setLogJobStatus('Completed');
     req.setLogPaymentStatus('Pending');
-  }
-  if (fieldMaskList) {
-    req.setFieldMaskList(fieldMaskList);
   }
   if (notEqualsList) {
     req.setNotEqualsList(notEqualsList);
@@ -2921,7 +2954,150 @@ export const loadEventsByFilter = async ({
     totalCount,
   };
 };
+export const loadEventsByFilterDeleted = async ({
+  page,
+  filter,
+  sort,
+  pendingBilling = false,
+}: LoadEventsByFilter) => {
+  const {
+    logJobNumber,
+    dateStarted,
+    dateStartedFrom,
+    dateStartedTo,
+    dateEnded,
+    address,
+    zip,
+    logDateCompleted,
+    city,
+    firstname,
+    lastname,
+    businessname,
+    jobTypeId,
+    jobSubtypeId,
+    logJobStatus,
+    logPaymentStatus,
+    departmentId,
+    logTechnicianAssigned,
+    logPo,
+    notEqualsList,
+    fieldMaskList,
+  } = filter;
+  console.log({ filter });
+  const { orderBy, orderDir, orderByField } = sort;
+  const req = new Event();
+  const p = new Property();
+  const u = new User();
+  if (orderByField === 'lastname') {
+    u.setOrderBy(orderBy);
+    u.setOrderDir(orderDir);
+  } else if (orderByField === 'address') {
+    // FIXME - missing setOrderBy/setOrderDir in Property RPC
+    // p.setOrderBy(orderBy);
+    // p.setOrderDir(orderDir)
+  } else {
+    req.setOrderBy(orderBy);
+    req.setOrderDir(orderDir);
+  }
+  if (fieldMaskList) {
+    req.setFieldMaskList(['IsActive']);
+  }
 
+  req.setPageNumber(page === -1 ? 0 : page);
+  if (pendingBilling) {
+    req.setLogJobStatus('Completed');
+    req.setLogPaymentStatus('Pending');
+  }
+  if (notEqualsList) {
+    req.setNotEqualsList(notEqualsList);
+  }
+
+  if (logJobNumber) {
+    req.setLogJobNumber(`%${logJobNumber}%`);
+  }
+  if (jobTypeId) {
+    req.setJobTypeId(jobTypeId);
+  }
+  if (logPo) {
+    req.setLogPo(logPo);
+  }
+  if (jobSubtypeId) {
+    req.setJobSubtypeId(jobSubtypeId);
+  }
+  if (logJobStatus) {
+    req.setLogJobStatus(logJobStatus);
+  }
+  if (logPaymentStatus) {
+    req.setLogPaymentStatus(logPaymentStatus);
+  }
+  if (departmentId) {
+    req.setDepartmentId(departmentId);
+  }
+  if (logTechnicianAssigned) {
+    req.setLogTechnicianAssigned(logTechnicianAssigned);
+  }
+  if (dateStarted && dateEnded) {
+    req.setDateRangeList(['>=', dateStarted, '<=', dateEnded]);
+    req.setDateTargetList(['date_started', 'date_ended']);
+  } else {
+    if (dateStarted) {
+      console.log('We set date started');
+      req.setDateStarted(`%${dateStarted}%`);
+    }
+    if (dateEnded) {
+      console.log('We set date ended');
+      req.setDateEnded(`%${dateEnded}%`);
+    }
+  }
+  if (dateStartedFrom || dateStartedTo) {
+    if (dateStartedFrom && dateStartedTo) {
+      req.setDateRangeList(['>=', dateStartedFrom, '<=', dateStartedTo]);
+      req.setDateTargetList(['date_started', 'date_started']);
+    } else if (dateStartedFrom) {
+      req.setDateRangeList(['>=', dateStartedFrom]);
+      req.setDateTargetList(['date_started']);
+    } else if (dateStartedTo) {
+      req.setDateRangeList(['<=', dateStartedTo]);
+      req.setDateTargetList(['date_started']);
+    }
+  }
+  if (address) {
+    p.setAddress(`%${address}%`);
+  }
+  if (zip) {
+    p.setZip(`%${zip}%`);
+  }
+  if (logDateCompleted) {
+    req.setLogDateCompleted(`${logDateCompleted}%`);
+  }
+  if (city) {
+    p.setCity(`%${city}%`);
+  }
+  if (firstname) {
+    u.setFirstname(`%${firstname}%`);
+  }
+  if (lastname) {
+    u.setLastname(`%${lastname}%`);
+  }
+  if (businessname) {
+    console.log('We got a buisiness name');
+    u.setBusinessname(`%${businessname}%`);
+  }
+  //console.log({ u });
+  //console.log({ p });
+  req.setProperty(p);
+  req.setCustomer(u);
+  console.log({ req });
+  const results = [];
+  const response = await EventClientService.BatchGet(req);
+  const totalCount = response.getTotalCount();
+  const resultsList = response.getResultsList().map(item => item.toObject());
+  results.push(...resultsList);
+  return {
+    results,
+    totalCount,
+  };
+};
 /**
  * Returns escaped text with special characters, ie. &#x2f; -> /
  * @param encodedStr string

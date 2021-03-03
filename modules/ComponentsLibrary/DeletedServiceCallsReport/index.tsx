@@ -19,27 +19,35 @@ import {
   getPropertyAddress,
   getCustomerName,
   getCFAppUrl,
+  loadEventsByFilterDeleted,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
 interface Props {
   loggedUserId: number;
   onClose?: () => void;
-  dateStart: string;
-  dateEnd: string;
+  dateStarted: string;
+  dateEnded: string;
+  businessname?: string;
+  lastname?: string;
 }
 
 type FilterForm = {
-  dateStart: string;
-  dateEnd: string;
+  businessname?: string;
+  lastname?: string;
+  dateStarted: string;
+  dateEnded: string;
+  isActive?: boolean;
 };
 
 const COLUMNS = ['Property', 'Customer Name', 'Job', 'Date', 'Job Status'];
 
 export const DeletedServiceCallsReport: FC<Props> = ({
   loggedUserId,
-  dateStart,
-  dateEnd,
+  dateStarted,
+  dateEnded,
+  businessname,
+  lastname,
   onClose,
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -48,19 +56,32 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   const [printEntries, setPrintEntries] = useState<EventType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [form, setForm] = useState<FilterForm>({ dateStart, dateEnd });
+  const [form, setForm] = useState<FilterForm>({
+    dateStarted,
+    dateEnded,
+    businessname,
+    lastname,
+    isActive: false,
+  });
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [pendingEdit, setPendingEdit] = useState<EventType>();
   const load = useCallback(async () => {
     setLoading(true);
-    const { results, totalCount } = await loadDeletedServiceCallsByFilter({
-      page,
+    console.log({ form });
+    const { results, totalCount } = await loadEventsByFilterDeleted({
+      page: -1,
       filter: form,
+      sort: {
+        orderBy: 'date_started',
+        orderByField: 'dateStarted',
+        orderDir: 'ASC',
+      },
     });
     setEntries(results);
+    console.log({ results });
     setCount(totalCount);
     setLoading(false);
-  }, [setLoading, form, page]);
+  }, [setLoading, form]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -77,9 +98,14 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   );
   const loadPrintEntries = useCallback(async () => {
     if (printEntries.length === count) return;
-    const { results } = await loadDeletedServiceCallsByFilter({
+    const { results } = await loadEventsByFilterDeleted({
       page: -1,
       filter: form,
+      sort: {
+        orderBy: 'date_started',
+        orderByField: 'dateStarted',
+        orderDir: 'ASC',
+      },
     });
     setPrintEntries(results);
   }, [setPrintEntries, form, printEntries, count]);
@@ -112,12 +138,22 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   const SCHEMA: Schema<FilterForm> = [
     [
       {
-        name: 'dateStart',
+        name: 'lastname',
+        label: 'Last Name',
+        type: 'search',
+      },
+      {
+        name: 'businessname',
+        label: 'Business Name',
+        type: 'search',
+      },
+      {
+        name: 'dateStarted',
         label: 'Start Date',
         type: 'date',
       },
       {
-        name: 'dateEnd',
+        name: 'dateEnded',
         label: 'End Date',
         type: 'date',
         actions: [{ label: 'Search', onClick: handleSearch }],
@@ -132,7 +168,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
             id,
             property,
             customer,
-            logJobNumber,
+            name,
             dateStarted,
             logJobStatus,
           } = entry;
@@ -146,7 +182,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
               value: getCustomerName(customer),
               onClick: handleSetPendingEdit(entry),
             },
-            { value: logJobNumber, onClick: handleSetPendingEdit(entry) },
+            { value: name, onClick: handleSetPendingEdit(entry) },
             {
               value: formatDate(dateStarted),
               onClick: handleSetPendingEdit(entry),
@@ -177,10 +213,12 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   const allPrintData = entries.length === count;
   const printHeaderSubtitle = (
     <>
-      {dateStart && (
-        <PrintHeaderSubtitleItem label="Start date" value={dateStart} />
+      {dateStarted && (
+        <PrintHeaderSubtitleItem label="Start date" value={dateStarted} />
       )}
-      {dateEnd && <PrintHeaderSubtitleItem label="End date" value={dateEnd} />}
+      {dateEnded && (
+        <PrintHeaderSubtitleItem label="End date" value={dateEnded} />
+      )}
     </>
   );
   return (

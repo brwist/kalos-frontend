@@ -15,6 +15,8 @@ import { WarrantyReport } from '../WarrantyReport';
 import { PromptPaymentReport } from '../PromptPaymentReport';
 import { TimeoffSummaryReport } from '../TimeoffSummaryReport';
 import { BillingAuditReport } from '../BillingAuditReport';
+import { format, parseISO } from 'date-fns';
+
 import {
   makeOptions,
   makeLast12MonthsOptions,
@@ -222,7 +224,7 @@ const SCHEMA_LAST_12_MONTHS_REPORT: Schema<FilterForm> = [
 ];
 
 const getCurrWeek = () => {
-  const d = new Date();
+  const d = parseISO(format(new Date(), 'yyyy-MM-dd'));
   return `${d.getFullYear()}-${trailingZero(d.getMonth() + 1)}-${trailingZero(
     d.getDate() - d.getDay(),
   )}`;
@@ -240,24 +242,29 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [billingStatusReport, setBillingStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
-  const [billingStatusDatesError, setBillingStatusDatesError] = useState<
-    boolean
-  >(false);
-  const [billingStatusReportOpen, setBillingStatusReportOpen] = useState<
-    boolean
-  >(false);
+  const [
+    billingStatusDatesError,
+    setBillingStatusDatesError,
+  ] = useState<boolean>(false);
+  const [
+    billingStatusReportOpen,
+    setBillingStatusReportOpen,
+  ] = useState<boolean>(false);
   const [notificationsReport, setNotificationsReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
-  const [notificationsDatesError, setNotificationsDatesError] = useState<
-    boolean
-  >(false);
-  const [notificationsReportOpen, setNotificationsReportOpen] = useState<
-    boolean
-  >(false);
-  const [performanceMetricsReport, setPerformanceMetricsReport] = useState<
-    FilterForm
-  >({});
+  const [
+    notificationsDatesError,
+    setNotificationsDatesError,
+  ] = useState<boolean>(false);
+  const [
+    notificationsReportOpen,
+    setNotificationsReportOpen,
+  ] = useState<boolean>(false);
+  const [
+    performanceMetricsReport,
+    setPerformanceMetricsReport,
+  ] = useState<FilterForm>({});
   const [
     performanceMetricsDatesError,
     setPerformanceMetricsDatesError,
@@ -266,9 +273,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     performanceMetricsReportOpen,
     setPerformanceMetricsReportOpen,
   ] = useState<boolean>(false);
-  const [deletedServiceCallsReport, setDeletedServiceCallsReport] = useState<
-    FilterForm
-  >({});
+  const [
+    deletedServiceCallsReport,
+    setDeletedServiceCallsReport,
+  ] = useState<FilterForm>({});
   const [
     deletedServiceCallsDatesError,
     setDeletedServiceCallsDatesError,
@@ -280,11 +288,13 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [callbackReport, setCallbackReport] = useState<FilterForm>({});
   const [callbackDatesError, setCallbackDatesError] = useState<boolean>(false);
   const [callbackReportOpen, setCallbackReportOpen] = useState<boolean>(false);
-  const [serviceCallMetricsReport, setServiceCallMetricsReport] = useState<
-    FilterForm
-  >({
+  const [
+    serviceCallMetricsReport,
+    setServiceCallMetricsReport,
+  ] = useState<FilterForm>({
     week: getCurrWeek(),
   });
+
   const [
     serviceCallMetricsReportOpen,
     setServiceCallMetricsReportOpen,
@@ -296,23 +306,27 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   });
   const [spiffReportKey, setSpiffReportKey] = useState<number>(0);
   const [spiffReportOpen, setSpiffReportOpen] = useState<boolean>(false);
-  const [finalizeApprovedSpiffsOpen, setFinalizeApprovedSpiffsOpen] = useState<
-    boolean
-  >(false);
+  const [
+    finalizeApprovedSpiffsOpen,
+    setFinalizeApprovedSpiffsOpen,
+  ] = useState<boolean>(false);
   const [
     serviceCallZipCodeReportOpen,
     setServiceCallZipCodeReportOpen,
   ] = useState<boolean>(false);
   const [warrantyReportOpen, setWarrantyReportOpen] = useState<boolean>(false);
-  const [trainingMetricsReport, setTrainingMetricsReport] = useState<
-    FilterForm
-  >({});
-  const [trainingMetricsDatesError, setTrainingMetricsDatesError] = useState<
-    boolean
-  >(false);
-  const [trainingMetricsReportOpen, setTrainingMetricsReportOpen] = useState<
-    boolean
-  >(false);
+  const [
+    trainingMetricsReport,
+    setTrainingMetricsReport,
+  ] = useState<FilterForm>({});
+  const [
+    trainingMetricsDatesError,
+    setTrainingMetricsDatesError,
+  ] = useState<boolean>(false);
+  const [
+    trainingMetricsReportOpen,
+    setTrainingMetricsReportOpen,
+  ] = useState<boolean>(false);
   const [charityReport, setCharityReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_0[0].value,
   });
@@ -326,12 +340,14 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [promptPaymentReport, setPromptPaymentReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_1[0].value,
   });
-  const [promptPaymentReportOpen, setPromptPaymentReportOpen] = useState<
-    boolean
-  >(false);
-  const [timeoffSummaryReportOpen, setTimeoffSummaryReportOpen] = useState<
-    boolean
-  >(false);
+  const [
+    promptPaymentReportOpen,
+    setPromptPaymentReportOpen,
+  ] = useState<boolean>(false);
+  const [
+    timeoffSummaryReportOpen,
+    setTimeoffSummaryReportOpen,
+  ] = useState<boolean>(false);
   const handleOpenJobStatusReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
       setJobStatusDatesError(false);
@@ -422,6 +438,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   );
   const handleOpenDeletedServiceCallsReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
+      console.log({ data });
       setDeletedServiceCallsDatesError(false);
       if (
         data &&
@@ -430,6 +447,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         data.endDate < data.startDate
       ) {
         setDeletedServiceCallsDatesError(true);
+        console.log('we had an error');
         return;
       }
       if (data && data.startDate) {
@@ -815,8 +833,8 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           <DeletedServiceCallsReport
             loggedUserId={loggedUserId}
             onClose={handleOpenDeletedServiceCallsReportToggle(false)}
-            dateStart={deletedServiceCallsReport.startDate!}
-            dateEnd={deletedServiceCallsReport.endDate!}
+            dateStarted={deletedServiceCallsReport.startDate!}
+            dateEnded={deletedServiceCallsReport.endDate!}
           />
         </Modal>
       )}
