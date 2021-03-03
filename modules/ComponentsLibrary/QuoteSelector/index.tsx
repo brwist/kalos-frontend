@@ -14,7 +14,7 @@ import {
   EventClientService,
 } from '../../../helpers';
 
-type SelectedQuote = {
+export type SelectedQuote = {
   quotePart: QuotableType;
   billable: boolean;
   quantity: number;
@@ -214,7 +214,7 @@ export const QuoteSelector: FC<Props> = ({
     },
     [onAddQuotes, billable, pendingQuotable, pendingNewQuotable],
   );
-  console.log({ quotable });
+  // console.log({ quotable, quoteParts });
   const data: Data = loading
     ? makeFakeRows(6, 20)
     : quoteParts
