@@ -6,13 +6,14 @@ import {
   ServicesRenderedClient,
   ServicesRendered,
 } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { Quotable } from '@kalos-core/kalos-rpc/Event';
 import { SectionBar } from '../../SectionBar';
 import { ConfirmDelete } from '../../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../InfoTable';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Form } from '../../Form';
 import { Modal } from '../../Modal';
-import { QuoteSelector } from '../../QuoteSelector';
+import { QuoteSelector, SelectedQuote } from '../../QuoteSelector';
 import {
   makeFakeRows,
   timestamp,
@@ -20,6 +21,7 @@ import {
   formatDateTimeDay,
   getRPCFields,
   UserType,
+  writeQuotes,
 } from '../../../../helpers';
 import {
   ENDPOINT,
@@ -201,6 +203,9 @@ export const Services: FC<Props> = ({
   const [deleting, setDeleting] = useState<ServicesRenderedType>();
   const [editing, setEditing] = useState<ServicesRenderedType>();
   const [saving, setSaving] = useState<boolean>(false);
+  const [pendingSelectedQuote, setPendingSelectedQuote] = useState<
+    SelectedQuote[]
+  >([]);
   const handleDeleting = useCallback(
     (deleting?: ServicesRenderedType) => () => setDeleting(deleting),
     [setDeleting],
@@ -247,7 +252,29 @@ export const Services: FC<Props> = ({
         }),
       );
       req.setFieldMaskList(fieldMaskList);
-      await ServicesRenderedClientService.Create(req);
+      const res = await ServicesRenderedClientService.Create(req);
+      if (pendingSelectedQuote.length > 0) {
+        await Promise.all(
+          pendingSelectedQuote.map(
+            async ({ billable, quantity, quotePart }) => {
+              const req = new Quotable();
+              req.setEventId(serviceCallId);
+              req.setServicesRenderedId(res.id);
+              req.setQuoteLineId(quotePart.quoteLineId);
+              req.setIsBillable(billable);
+              req.setQuantity(quantity);
+              req.setDescription(quotePart.description);
+              req.setQuotedPrice(quotePart.quotedPrice);
+              req.setIsLmpc(quotePart.isLmpc);
+              req.setIsFlatrate(quotePart.isFlatrate);
+              req.setIsComplex(quotePart.isComplex);
+              req.setIsActive(true);
+              await writeQuotes(req);
+            },
+          ),
+        );
+        setPendingSelectedQuote([]);
+      }
       loadServicesRendered();
       setServicesRenderedForm(new ServicesRendered().toObject());
       setPaymentFormPart(PAYMENT_PART_INITIAL);
@@ -265,6 +292,8 @@ export const Services: FC<Props> = ({
       setSignatureForm,
       signatureForm,
       paymentForm,
+      pendingSelectedQuote,
+      serviceCallId,
     ],
   );
   const handleChangeServiceRendered = useCallback(
@@ -401,7 +430,7 @@ export const Services: FC<Props> = ({
         <QuoteSelector
           serviceCallId={serviceCallId}
           onAdd={console.log}
-          onAddQuotes={console.log}
+          onAddQuotes={setPendingSelectedQuote}
         />
       )}
       {[COMPLETED, INCOMPLETE, ENROUTE].includes(lastStatus) && (
