@@ -103,13 +103,6 @@ export const Equipment: FC<Props> = ({
         />
       }
       {...props}
-    >
-      <PlainForm
-        schema={SCHEMA}
-        data={data}
-        onChange={setData}
-        className="EquipmentForm"
-      />
-    </ServiceItems>
+    />
   );
 };
