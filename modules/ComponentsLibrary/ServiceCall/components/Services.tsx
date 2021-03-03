@@ -387,7 +387,11 @@ export const Services: FC<Props> = ({
     lastStatus = SIGNED_AS;
   }
   const servicesRenderedData: Data = servicesRendered
-    .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
+    .filter(
+      ({ status, serviceRendered, techNotes }) =>
+        [COMPLETED, INCOMPLETE].includes(status) &&
+        !(serviceRendered === '' && techNotes === ''),
+    )
     .map(({ datetime, name, serviceRendered, techNotes }) => [
       { value: formatDateTimeDay(datetime) },
       { value: name },
@@ -614,5 +618,3 @@ export const Services: FC<Props> = ({
     </>
   );
 };
-
-//Are you sure you want to delete this services rendered item?
