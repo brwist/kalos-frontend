@@ -1149,6 +1149,10 @@ async function loadServicesRendered(eventId: number) {
   });
 }
 
+export const writeQuotes = async (q: Quotable) => {
+  return await EventClientService.WriteQuotes(q);
+};
+
 /**
  * Returns loaded QuoteParts
  * @returns QuotePart[]
