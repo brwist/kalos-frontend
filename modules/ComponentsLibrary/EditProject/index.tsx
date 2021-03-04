@@ -224,6 +224,7 @@ export const EditProject: FC<Props> = ({
 
     let transactions: TransactionType[] = [];
     let perDiems: PerDiemType[] = [];
+    let timesheets: TimesheetLineType[] = [];
 
     console.log(costReportList.getResultsList());
 
@@ -255,13 +256,20 @@ export const EditProject: FC<Props> = ({
       let tl = new TimesheetLine();
       tl.setTimeStarted(data.getTimeStarted());
       tl.setTimeFinished(data.getTimeFinished());
+      tl.setNotes(data.getTimesheetNotes());
+      tl.setBriefDescription(data.getTimesheetBriefDescription());
+      tl.setAdminApprovalUserName(data.getTimesheetAdminApprovalName());
+      tl.setDepartmentName(data.getTimesheetDepartmentName());
+      timesheets.push(tl.toObject());
     }
 
     console.log('txns:', transactions);
     console.log('pds: ', perDiems);
+    console.log('timesheets: ', timesheets);
 
     setTransactions(transactions);
     setPerDiems(perDiems);
+    setTimesheets(timesheets);
 
     setTasks(tasks);
     setCostReportInfoList(costReportList);
