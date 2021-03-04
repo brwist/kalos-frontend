@@ -243,15 +243,9 @@ export const EditProject: FC<Props> = ({
       txn.setCostCenter(data.getCostCenter());
       transactions.push(txn.toObject());
 
-      let pd = new PerDiem();
-      pd.setId(data.getPerDiemId());
-      pd.setDateStarted(data.getDateStarted());
-      pd.setDateApproved(data.getDateApproved());
-      pd.setDateSubmitted(data.getDateSubmitted());
-      pd.setOwnerName(data.getPerDiemOwnerName());
-      pd.setDepartment(data.getPerDiemDepartment());
-      pd.setApprovedByName(data.getPerDiemApprovedByName());
-      perDiems.push(pd.toObject());
+      let pd = data.getPerDiem();
+      pd?.setDepartment(data.getPerDiemDepartment());
+      perDiems.push(pd!.toObject());
 
       let tl = new TimesheetLine();
       tl.setTimeStarted(data.getTimeStarted());
