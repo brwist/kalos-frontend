@@ -50,6 +50,7 @@ import {
   TaskEventClientService,
   padWithZeroes,
   TransactionClientService,
+  TimesheetLineType,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -71,6 +72,7 @@ import {
   PerDiem,
   PerDiemRow,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb';
 
 export interface Props {
   serviceCallId: number;
@@ -169,6 +171,8 @@ export const EditProject: FC<Props> = ({
   const [errorTask, setErrorTask] = useState<string>('');
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
+
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
   const [search, setSearch] = useState<SearchType>({
@@ -244,10 +248,17 @@ export const EditProject: FC<Props> = ({
       pd.setDateApproved(data.getDateApproved());
       pd.setDateSubmitted(data.getDateSubmitted());
       pd.setOwnerName(data.getPerDiemOwnerName());
+      pd.setDepartment(data.getPerDiemDepartment());
+      pd.setApprovedByName(data.getPerDiemApprovedByName());
       perDiems.push(pd.toObject());
+
+      let tl = new TimesheetLine();
+      tl.setTimeStarted(data.getTimeStarted());
+      tl.setTimeFinished(data.getTimeFinished());
     }
 
     console.log('txns:', transactions);
+    console.log('pds: ', perDiems);
 
     setTransactions(transactions);
     setPerDiems(perDiems);
@@ -1011,6 +1022,66 @@ export const EditProject: FC<Props> = ({
                           notes,
                         ],
                       )}
+                    />
+                  </div>
+                );
+              },
+            )}
+            <PrintParagraph tag="h2">Timesheet Lines</PrintParagraph>
+            {timesheets.map(
+              ({
+                id,
+                departmentName,
+                timeStarted,
+                timeFinished,
+                adminApprovalUserName,
+                notes,
+                briefDescription,
+              }) => {
+                return (
+                  <div key={id}>
+                    <PrintTable
+                      columns={[
+                        {
+                          title: 'Department',
+                          align: 'left',
+                        },
+                        {
+                          title: 'Time Started',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Time Finished',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Approved By',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Notes',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Brief Description',
+                          align: 'right',
+                          widthPercentage: 10,
+                        },
+                      ]}
+                      data={[
+                        [
+                          departmentName,
+                          formatDate(timeStarted) || '-',
+                          formatDate(timeFinished) || '-',
+                          adminApprovalUserName,
+                          notes,
+                          briefDescription,
+                        ],
+                      ]}
                     />
                   </div>
                 );
