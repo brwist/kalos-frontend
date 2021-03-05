@@ -2418,8 +2418,6 @@ export const AdvancedSearch: FC<Props> = ({
       isAdmin,
       editableEmployees,
       handlePendingEmployeeEditingToggle,
-      deletableEmployees,
-      handlePendingEmployeeDeletingToggle,
       editableProperties,
       handlePendingPropertyEditingToggle,
       deletableProperties,
