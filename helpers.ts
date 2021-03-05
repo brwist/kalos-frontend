@@ -691,6 +691,19 @@ export const formatWeek = (date: string) => {
   )}`;
 };
 
+export const updateMaterialUsed = async (
+  serviceCallId: number,
+  materialUsed: string,
+  materialTotal: number,
+) => {
+  const req = new Event();
+  req.setId(serviceCallId);
+  req.setMaterialUsed(materialUsed);
+  req.setMaterialTotal(materialTotal);
+  req.setFieldMaskList(['MaterialUsed', 'MaterialTotal']);
+  await EventClientService.Update(req);
+};
+
 export interface GetPendingSpiffConfig {
   page?: number;
   technicianUserID?: number;
