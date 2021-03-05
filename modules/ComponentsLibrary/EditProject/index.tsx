@@ -925,6 +925,7 @@ export const EditProject: FC<Props> = ({
                 );
                 return (
                   <div key={id}>
+                    <PrintParagraph tag="h4">Per Diems</PrintParagraph>
                     <PrintTable
                       columns={[
                         {
@@ -942,12 +943,12 @@ export const EditProject: FC<Props> = ({
                           widthPercentage: 10,
                         },
                         {
-                          title: 'Approved At',
+                          title: 'Approved By',
                           align: 'left',
                           widthPercentage: 10,
                         },
                         {
-                          title: 'Approved By',
+                          title: 'Approved At',
                           align: 'left',
                           widthPercentage: 10,
                         },
@@ -972,14 +973,15 @@ export const EditProject: FC<Props> = ({
                           getDepartmentName(department),
                           ownerName,
                           formatDate(dateSubmitted) || '-',
-                          formatDate(dateApproved) || '-',
                           approvedByName || '-',
+                          formatDate(dateApproved) || '-',
                           usd(totalMeals),
                           usd(totalLodging),
                           notes,
                         ],
                       ]}
                     />
+                    <PrintParagraph tag="h4">Per Diem Days</PrintParagraph>
                     <PrintTable
                       columns={[
                         {
@@ -1047,6 +1049,11 @@ export const EditProject: FC<Props> = ({
                           align: 'left',
                         },
                         {
+                          title: 'Approved By',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
                           title: 'Time Started',
                           align: 'left',
                           widthPercentage: 10,
@@ -1056,11 +1063,7 @@ export const EditProject: FC<Props> = ({
                           align: 'left',
                           widthPercentage: 10,
                         },
-                        {
-                          title: 'Approved By',
-                          align: 'left',
-                          widthPercentage: 10,
-                        },
+
                         {
                           title: 'Brief Description',
                           align: 'left',
@@ -1075,9 +1078,9 @@ export const EditProject: FC<Props> = ({
                       data={[
                         [
                           departmentName,
+                          adminApprovalUserName,
                           formatDate(timeStarted) || '-',
                           formatDate(timeFinished) || '-',
-                          adminApprovalUserName,
                           briefDescription,
                           notes,
                         ],
