@@ -853,10 +853,12 @@ export const EditProject: FC<Props> = ({
                 {
                   title: 'Owner',
                   align: 'left',
+                  widthPercentage: 10,
                 },
                 {
                   title: 'Cost Center / Vendor',
                   align: 'left',
+                  widthPercentage: 10,
                 },
                 {
                   title: 'Date',
@@ -865,12 +867,12 @@ export const EditProject: FC<Props> = ({
                 },
                 {
                   title: 'Amount',
-                  align: 'right',
+                  align: 'left',
                   widthPercentage: 10,
                 },
                 {
                   title: 'Notes',
-                  align: 'left',
+                  align: 'right',
                   widthPercentage: 20,
                 },
               ]}
@@ -935,7 +937,7 @@ export const EditProject: FC<Props> = ({
                           widthPercentage: 10,
                         },
                         {
-                          title: 'Submited At',
+                          title: 'Submitted At',
                           align: 'left',
                           widthPercentage: 10,
                         },
@@ -951,17 +953,17 @@ export const EditProject: FC<Props> = ({
                         },
                         {
                           title: 'Total Meals',
-                          align: 'right',
+                          align: 'left',
                           widthPercentage: 10,
                         },
                         {
                           title: 'Total Lodging',
-                          align: 'right',
+                          align: 'left',
                           widthPercentage: 10,
                         },
                         {
                           title: 'Notes',
-                          align: 'left',
+                          align: 'right',
                           widthPercentage: 20,
                         },
                       ]}
@@ -981,11 +983,6 @@ export const EditProject: FC<Props> = ({
                     <PrintTable
                       columns={[
                         {
-                          title: '',
-                          align: 'left',
-                          widthPercentage: 3,
-                        },
-                        {
                           title: 'Date',
                           align: 'left',
                         },
@@ -996,22 +993,22 @@ export const EditProject: FC<Props> = ({
                         },
                         {
                           title: 'Meals Only',
-                          align: 'center',
+                          align: 'left',
                           widthPercentage: 10,
                         },
                         {
                           title: 'Meals',
-                          align: 'right',
+                          align: 'left',
                           widthPercentage: 10,
                         },
                         {
                           title: 'Lodging',
-                          align: 'right',
+                          align: 'left',
                           widthPercentage: 10,
                         },
                         {
                           title: 'Notes',
-                          align: 'left',
+                          align: 'right',
                           widthPercentage: 20,
                         },
                       ]}
@@ -1022,7 +1019,6 @@ export const EditProject: FC<Props> = ({
                           zipCode,
                           mealsOnly ? 'Yes' : 'No',
                           usd(MEALS_RATE),
-                          usd(mealsOnly ? 0 : lodgings[id]),
                           notes,
                         ],
                       )}
@@ -1066,14 +1062,14 @@ export const EditProject: FC<Props> = ({
                           widthPercentage: 10,
                         },
                         {
-                          title: 'Notes',
+                          title: 'Brief Description',
                           align: 'left',
                           widthPercentage: 10,
                         },
                         {
-                          title: 'Brief Description',
+                          title: 'Notes',
                           align: 'right',
-                          widthPercentage: 10,
+                          widthPercentage: 20,
                         },
                       ]}
                       data={[
@@ -1082,8 +1078,8 @@ export const EditProject: FC<Props> = ({
                           formatDate(timeStarted) || '-',
                           formatDate(timeFinished) || '-',
                           adminApprovalUserName,
-                          notes,
                           briefDescription,
+                          notes,
                         ],
                       ]}
                     />
