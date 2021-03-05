@@ -245,6 +245,8 @@ export const EditProject: FC<Props> = ({
 
       let pd = data.getPerDiem();
       pd?.setDepartment(data.getPerDiemDepartment());
+      pd?.setDepartmentId(data.getPerDiemDepartmentId());
+
       perDiems.push(pd!.toObject());
 
       let tl = new TimesheetLine();
