@@ -81,6 +81,7 @@ interface Props {
   servicesRendered: ServicesRenderedType[];
   loadServicesRendered: () => void;
   loading: boolean;
+  onAddMaterials: (materialUsed: string, materialTotal: number) => void;
 }
 
 const COLUMNS_SERVICES_RENDERED: Columns = [
@@ -189,6 +190,7 @@ export const Services: FC<Props> = ({
   servicesRendered,
   loadServicesRendered,
   loading,
+  onAddMaterials,
 }) => {
   const { isAdmin } = loggedUser;
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
@@ -299,11 +301,12 @@ export const Services: FC<Props> = ({
                 quantity * quotePart.quotedPrice,
             )
             .join(', ') +
-          '/n';
+          `
+`;
         const materialTotal = pendingSelectedQuote
           .map(({ quantity, quotePart }) => quantity * quotePart.quotedPrice)
           .reduce((aggr, item) => aggr + item, 0);
-        console.log({ materialUsed, materialTotal });
+        onAddMaterials(materialUsed, materialTotal);
         setPendingSelectedQuote([]);
       }
       loadServicesRendered();
@@ -326,6 +329,7 @@ export const Services: FC<Props> = ({
       paymentForm,
       pendingSelectedQuote,
       serviceCallId,
+      onAddMaterials,
     ],
   );
   const handleChangeServiceRendered = useCallback(
