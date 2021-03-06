@@ -229,25 +229,32 @@ export const EditProject: FC<Props> = ({
     console.log(costReportList.getResultsList());
 
     for await (let data of costReportList.getResultsList()) {
-      let txn = new Transaction();
-      txn.setJobId(data.getJobId());
-      txn.setNotes(data.getTransactionNotes());
-      txn.setDescription(data.getTransactionDescription());
-      txn.setAmount(data.getAmount());
-      txn.setTimestamp(data.getDateStarted());
-      txn.setOwnerId(data.getOwnerId());
-      txn.setVendor(data.getVendor());
-      txn.setDepartmentId(data.getDepartmentId());
-      txn.setDepartment(data.getDepartment());
-      txn.setOwnerName(data.getOwnerName());
-      txn.setCostCenter(data.getCostCenter());
-      transactions.push(txn.toObject());
+      let txnNew: Partial<Transaction.AsObject> = {
+        jobId: data.getJobId(),
+        notes: data.getTransactionNotes(),
+        description: data.getTransactionDescription(),
+        amount: data.getAmount(),
+        timestamp: data.getDateStarted(),
+        ownerId: data.getOwnerId(),
+        vendor: data.getVendor(),
+        departmentId: data.getDepartmentId(),
+        department: data.getDepartment()?.toObject(),
+        ownerName: data.getOwnerName(),
+        costCenter: data.getCostCenter()?.toObject(),
+      };
+      transactions.push(txnNew as Transaction.AsObject);
 
-      let pd = data.getPerDiem();
-      pd?.setDepartment(data.getPerDiemDepartment());
-      pd?.setDepartmentId(data.getPerDiemDepartmentId());
+      let pdNew: Partial<PerDiem.AsObject> = {
+        ...data.getPerDiem()?.toObject(),
+        department: data.getPerDiemDepartment()?.toObject(),
+        departmentId: data.getPerDiemDepartmentId(),
+        rowsList: data
+          .getPerDiem()!
+          .getRowsList()
+          .map(val => val.toObject()),
+      };
 
-      perDiems.push(pd!.toObject());
+      perDiems.push(pdNew as PerDiem.AsObject);
 
       let tl = new TimesheetLine();
       tl.setTimeStarted(data.getTimeStarted());
@@ -714,6 +721,11 @@ export const EditProject: FC<Props> = ({
       return true;
     },
   );
+  console.log(
+    'Reducing: ',
+    perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
+      MEALS_RATE,
+  );
   const totalMeals =
     perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
     MEALS_RATE;
@@ -728,6 +740,7 @@ export const EditProject: FC<Props> = ({
     (aggr, { amount }) => aggr + amount,
     0,
   );
+  console.log('Lodgings: ', lodgings);
   return (
     <div>
       <SectionBar
@@ -1016,11 +1029,11 @@ export const EditProject: FC<Props> = ({
                       ]}
                       data={rowsList.map(
                         ({ id, dateString, zipCode, mealsOnly, notes }) => [
-                          '',
                           formatDate(dateString),
                           zipCode,
                           mealsOnly ? 'Yes' : 'No',
                           usd(MEALS_RATE),
+                          '-',
                           notes,
                         ],
                       )}
