@@ -3515,6 +3515,8 @@ export const loadGovPerDiemByZipCode = async (
   return { state, city, county, month };
 };
 
+// Returns an object with the key being the per diem id of the relevant per diem and the
+// value being the cost for lodging
 export const loadPerDiemsLodging = async (perDiems: PerDiemType[]) => {
   const zipCodesByYearMonth: {
     [key: number]: {
