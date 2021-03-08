@@ -589,7 +589,7 @@ export const EditProject: FC<Props> = ({
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
-    const lodgings = await loadPerDiemsLodging(resultsList);
+    const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
     setLodgings(lodgings);
     const transactions = await loadTransactionsByEventId(serviceCallId);
     setTransactions(transactions);
@@ -1028,14 +1028,24 @@ export const EditProject: FC<Props> = ({
                         },
                       ]}
                       data={rowsList.map(
-                        ({ id, dateString, zipCode, mealsOnly, notes }) => [
-                          formatDate(dateString),
+                        ({
+                          dateString,
                           zipCode,
-                          mealsOnly ? 'Yes' : 'No',
-                          usd(MEALS_RATE),
-                          '-',
+                          mealsOnly,
                           notes,
-                        ],
+                          perDiemId,
+                        }) => {
+                          return [
+                            formatDate(dateString),
+                            zipCode,
+                            mealsOnly ? 'Yes' : 'No',
+                            usd(MEALS_RATE),
+                            lodgings[perDiemId]
+                              ? usd(lodgings[perDiemId])
+                              : '-',
+                            notes,
+                          ];
+                        },
                       )}
                     />
                   </div>
