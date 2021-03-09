@@ -1002,7 +1002,7 @@ export const EditProject: FC<Props> = ({
                             approvedByName || '-',
                             formatDate(dateApproved) || '-',
                             usd(totalMeals),
-                            usd(totalLodging),
+                            totalLodging != 0 ? usd(totalLodging) : '-',
                             notes,
                           ],
                         ]}
