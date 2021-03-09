@@ -998,9 +998,13 @@ export const EditProject: FC<Props> = ({
                           [
                             getDepartmentName(department),
                             ownerName,
-                            formatDate(dateSubmitted) || '-',
+                            dateSubmitted != NULL_TIME
+                              ? formatDate(dateSubmitted)
+                              : '-' || '-',
                             approvedByName || '-',
-                            formatDate(dateApproved) || '-',
+                            dateApproved != NULL_TIME
+                              ? formatDate(dateApproved)
+                              : '-' || '-',
                             usd(totalMeals),
                             totalLodging != 0 ? usd(totalLodging) : '-',
                             notes,
