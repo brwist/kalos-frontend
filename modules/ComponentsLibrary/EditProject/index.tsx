@@ -273,9 +273,10 @@ export const EditProject: FC<Props> = ({
     setTransactions(transactions);
     setPerDiems(perDiems);
     setTimesheets(timesheets);
-
     setTasks(tasks);
     setCostReportInfoList(costReportList);
+
+    loadPrintData();
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
