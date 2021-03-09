@@ -39,7 +39,7 @@ export const PrintTable: FC<Props> = ({
       className={clsx('PrintTable', className, { noBorders })}
       style={styles}
     >
-      <thead>
+      <thead style={{ display: 'table-header-group' }}>
         <tr>
           {columns.map((column, idxColumn) => (
             <th
@@ -64,9 +64,9 @@ export const PrintTable: FC<Props> = ({
           ))}
         </tr>
       </thead>
-      <tbody>
+      <tbody style={{ display: 'table-row-group' }}>
         {data.map((cells, idxRow) => (
-          <tr key={idxRow}>
+          <tr key={idxRow} style={{ pageBreakInside: 'avoid' }}>
             {cells.map((cell, idxColumn) => (
               <td
                 key={idxColumn}
