@@ -254,17 +254,9 @@ export const EditProject: FC<Props> = ({
           .getRowsList()
           .map(val => val.toObject()),
       };
-
       perDiems.push(pdNew as PerDiem.AsObject);
 
-      let tl = new TimesheetLine();
-      tl.setTimeStarted(data.getTimeStarted());
-      tl.setTimeFinished(data.getTimeFinished());
-      tl.setNotes(data.getTimesheetNotes());
-      tl.setBriefDescription(data.getTimesheetBriefDescription());
-      tl.setAdminApprovalUserName(data.getTimesheetAdminApprovalName());
-      tl.setDepartmentName(data.getTimesheetDepartmentName());
-      timesheets.push(tl.toObject());
+      timesheets = data.getTimesheetsList().map(line => line.toObject());
     }
 
     console.log('txns:', transactions);
@@ -1079,14 +1071,21 @@ export const EditProject: FC<Props> = ({
                 adminApprovalUserName,
                 notes,
                 briefDescription,
+                technicianUserName,
+                technicianUserId,
               }) => {
                 return (
                   <div key={id}>
                     <PrintTable
                       columns={[
                         {
+                          title: 'Technician',
+                          align: 'left',
+                        },
+                        {
                           title: 'Department',
                           align: 'left',
+                          widthPercentage: 10,
                         },
                         {
                           title: 'Approved By',
@@ -1117,6 +1116,7 @@ export const EditProject: FC<Props> = ({
                       ]}
                       data={[
                         [
+                          technicianUserName + ` (${technicianUserId})`,
                           departmentName,
                           adminApprovalUserName,
                           formatDate(timeStarted) || '-',
