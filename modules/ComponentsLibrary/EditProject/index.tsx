@@ -187,24 +187,59 @@ export const EditProject: FC<Props> = ({
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
-    console.log('Loading event');
+    console.log('Started loading event.');
     const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
+    console.log('Finished loading the event.');
     setEvent(event);
     setLoadingEvent(false);
   }, [setEvent, setLoadingEvent]);
   const loadInit = useCallback(async () => {
-    await loadEvent();
-    const statuses = await TaskClientService.loadProjectTaskStatuses();
-    const priorities = await TaskClientService.loadProjectTaskPriorities();
-    const departments = await loadTimesheetDepartments();
-    const loggedUser = await UserClientService.loadUserById(loggedUserId);
-    setStatuses(statuses);
-    setPriorities(priorities);
-    setDepartments(departments);
-    setLoggedUser(loggedUser);
-    setLoadedInit(true);
+    let promises = [];
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        await loadEvent();
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        const statuses = await TaskClientService.loadProjectTaskStatuses();
+        setStatuses(statuses);
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        const priorities = await TaskClientService.loadProjectTaskPriorities();
+        setPriorities(priorities);
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        const departments = await loadTimesheetDepartments();
+        setDepartments(departments);
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        const loggedUser = await UserClientService.loadUserById(loggedUserId);
+        setLoggedUser(loggedUser);
+        resolve();
+      }),
+    );
+
+    Promise.all(promises).then(() => {
+      setLoadedInit(true);
+    });
   }, [
     loadEvent,
     setStatuses,
@@ -221,18 +256,28 @@ export const EditProject: FC<Props> = ({
 
     setLoading(true);
 
-    promises.push(loadPrintData());
-
     promises.push(
       new Promise<void>(async resolve => {
-        const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-        setTasks(tasks);
+        console.log('Started loading print data.');
+        loadPrintData();
+        console.log('Loaded print data.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Started loading project tasks.');
+        const tasks = await EventClientService.loadProjectTasks(serviceCallId);
+        setTasks(tasks);
+        resolve();
+        console.log('Loaded project tasks.');
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Started loading cost report info.');
         let req = new CostReportInfo();
         req.setJobId(serviceCallId);
         const costReportList = await EventClientService.GetCostReportInfo(req);
@@ -265,6 +310,7 @@ export const EditProject: FC<Props> = ({
           perDiems.push(pdNew as PerDiem.AsObject);
 
           timesheets = data.getTimesheetsList().map(line => line.toObject());
+          console.log('Loaded cost report info.');
         }
         setCostReportInfoList(costReportList);
 
