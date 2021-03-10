@@ -944,119 +944,135 @@ export const EditProject: FC<Props> = ({
                           : ''}{' '}
                         {ownerName ? '-' : ''} {ownerName}
                       </PrintParagraph>
-                      <PrintTable
-                        columns={[
-                          {
-                            title: 'Department',
-                            align: 'left',
-                          },
-                          {
-                            title: 'Owner',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Submitted At',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Approved By',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Approved At',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Total Meals',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Total Lodging',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Notes',
-                            align: 'right',
-                            widthPercentage: 20,
-                          },
-                        ]}
-                        data={[
-                          [
-                            getDepartmentName(department),
-                            ownerName,
-                            dateSubmitted != NULL_TIME
-                              ? formatDate(dateSubmitted)
-                              : '-' || '-',
-                            approvedByName || '-',
-                            dateApproved != NULL_TIME
-                              ? formatDate(dateApproved)
-                              : '-' || '-',
-                            usd(totalMeals),
-                            totalLodging != 0 ? usd(totalLodging) : '-',
-                            notes,
-                          ],
-                        ]}
-                      />
-                      <PrintParagraph tag="h4">Per Diem Days</PrintParagraph>
-                      <PrintTable
-                        columns={[
-                          {
-                            title: 'Date',
-                            align: 'left',
-                          },
-                          {
-                            title: 'Zip Code',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Meals Only',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Meals',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Lodging',
-                            align: 'left',
-                            widthPercentage: 10,
-                          },
-                          {
-                            title: 'Notes',
-                            align: 'right',
-                            widthPercentage: 20,
-                          },
-                        ]}
-                        data={rowsList.map(
-                          ({
-                            dateString,
-                            zipCode,
-                            mealsOnly,
-                            notes,
-                            perDiemId,
-                          }) => {
-                            return [
-                              formatDate(dateString),
-                              zipCode,
-                              mealsOnly ? 'Yes' : 'No',
-                              usd(MEALS_RATE),
-                              lodgings[perDiemId]
-                                ? usd(lodgings[perDiemId])
-                                : '-',
+                      <div
+                        style={{
+                          breakInside: 'avoid',
+                          display: 'inline-block',
+                          width: '100%',
+                        }}
+                      >
+                        <PrintTable
+                          columns={[
+                            {
+                              title: 'Department',
+                              align: 'left',
+                            },
+                            {
+                              title: 'Owner',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Submitted At',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Approved By',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Approved At',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Total Meals',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Total Lodging',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Notes',
+                              align: 'right',
+                              widthPercentage: 20,
+                            },
+                          ]}
+                          data={[
+                            [
+                              getDepartmentName(department),
+                              ownerName,
+                              dateSubmitted != NULL_TIME
+                                ? formatDate(dateSubmitted)
+                                : '-' || '-',
+                              approvedByName || '-',
+                              dateApproved != NULL_TIME
+                                ? formatDate(dateApproved)
+                                : '-' || '-',
+                              usd(totalMeals),
+                              totalLodging != 0 ? usd(totalLodging) : '-',
                               notes,
-                            ];
-                          },
-                        )}
-                      />
+                            ],
+                          ]}
+                        />
+                      </div>
+                      <PrintParagraph tag="h4">Per Diem Days</PrintParagraph>
+                      <div
+                        style={{
+                          breakInside: 'avoid',
+                          display: 'inline-block',
+                          width: '100%',
+                        }}
+                      >
+                        <PrintTable
+                          columns={[
+                            {
+                              title: 'Date',
+                              align: 'left',
+                            },
+                            {
+                              title: 'Zip Code',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Meals Only',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Meals',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Lodging',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Notes',
+                              align: 'right',
+                              widthPercentage: 20,
+                            },
+                          ]}
+                          data={rowsList.map(
+                            ({
+                              dateString,
+                              zipCode,
+                              mealsOnly,
+                              notes,
+                              perDiemId,
+                            }) => {
+                              return [
+                                formatDate(dateString),
+                                zipCode,
+                                mealsOnly ? 'Yes' : 'No',
+                                usd(MEALS_RATE),
+                                lodgings[perDiemId]
+                                  ? usd(lodgings[perDiemId])
+                                  : '-',
+                                notes,
+                              ];
+                            },
+                          )}
+                        />
+                      </div>
                     </div>
                   );
                 },
