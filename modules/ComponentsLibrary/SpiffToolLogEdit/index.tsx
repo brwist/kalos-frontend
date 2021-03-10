@@ -193,7 +193,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
       setLoaded(true);
       load();
     }
-  }, [loaded, setLoaded]);
+  }, [loaded, setLoaded, load]);
   const getStatusFormInit = () => {
     const entry = new SpiffToolAdminAction();
     entry.setDecisionDate(timestamp(true));
@@ -274,7 +274,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
       if (statusEditing) {
         setStatusEditing(undefined);
         if (userId) {
-          const userInfo = await UserClientService.loadUserById(userId);
+          const userInfo = await UserClientService.loadUserById(loggedUserId);
           const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
           form.reviewedBy = newReviewedBy;
         }
@@ -286,7 +286,14 @@ export const SpiffToolLogEdit: FC<Props> = ({
         onStatusChange();
       }
     },
-    [data, setStatusEditing, statusEditing, load, onStatusChange],
+    [
+      data,
+      setStatusEditing,
+      statusEditing,
+      onStatusChange,
+      userId,
+      loggedUserId,
+    ],
   );
   const handleDeleteStatus = useCallback(async () => {
     if (statusDeleting) {

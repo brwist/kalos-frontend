@@ -20,6 +20,7 @@ import {
   JobTypeClientService,
   JobSubtypeClientService,
   cfURL,
+  updateMaterialUsed,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -306,6 +307,18 @@ export const ServiceCall: FC<Props> = props => {
     [setSaving, userID, handleSetNotificationEditing],
   );
 
+  const handleOnAddMaterials = useCallback(
+    async (materialUsed, materialTotal) => {
+      await updateMaterialUsed(
+        serviceCallId,
+        materialUsed + entry.materialUsed,
+        materialTotal + entry.materialTotal,
+      );
+      await loadEntry();
+    },
+    [serviceCallId, entry],
+  );
+
   const jobTypeOptions: Option[] = jobTypes.map(
     ({ id: value, name: label }) => ({ label, value }),
   );
@@ -538,6 +551,7 @@ export const ServiceCall: FC<Props> = props => {
                           loggedUser={loggedUser}
                           loadServicesRendered={loadServicesRenderedData}
                           loading={loading}
+                          onAddMaterials={handleOnAddMaterials}
                         />
                       ) : (
                         <InfoTable data={makeFakeRows(4, 4)} loading />

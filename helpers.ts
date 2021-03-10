@@ -1,4 +1,4 @@
-import uniq from 'lodash/uniq';
+import uniq = require('lodash/uniq'); // Fixing issue with lodash and not transpiling
 import sortBy from 'lodash/sortBy';
 import compact from 'lodash/compact';
 import { parseISO } from 'date-fns/esm';
@@ -689,6 +689,19 @@ export const formatWeek = (date: string) => {
     d,
     'do',
   )}`;
+};
+
+export const updateMaterialUsed = async (
+  serviceCallId: number,
+  materialUsed: string,
+  materialTotal: number,
+) => {
+  const req = new Event();
+  req.setId(serviceCallId);
+  req.setMaterialUsed(materialUsed);
+  req.setMaterialTotal(materialTotal);
+  req.setFieldMaskList(['MaterialUsed', 'MaterialTotal']);
+  await EventClientService.Update(req);
 };
 
 export interface GetPendingSpiffConfig {
@@ -3502,6 +3515,8 @@ export const loadGovPerDiemByZipCode = async (
   return { state, city, county, month };
 };
 
+// Returns an object with the key being the per diem id of the relevant per diem and the
+// value being the cost for lodging
 export const loadPerDiemsLodging = async (perDiems: PerDiemType[]) => {
   const zipCodesByYearMonth: {
     [key: number]: {
