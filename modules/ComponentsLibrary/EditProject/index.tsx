@@ -214,63 +214,72 @@ export const EditProject: FC<Props> = ({
     loggedUserId,
   ]);
   const load = useCallback(async () => {
+    let promises = [];
     setLoading(true);
     console.log('Service call id:', serviceCallId);
 
-    const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-    let req = new CostReportInfo();
-    req.setJobId(serviceCallId);
-    const costReportList = await EventClientService.GetCostReportInfo(req);
-    console.log('Costreportlist:', costReportList);
+    promises.push(loadPrintData());
 
-    let transactions: TransactionType[] = [];
-    let perDiems: PerDiemType[] = [];
-    let timesheets: TimesheetLineType[] = [];
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        const tasks = await EventClientService.loadProjectTasks(serviceCallId);
+        let req = new CostReportInfo();
+        req.setJobId(serviceCallId);
+        const costReportList = await EventClientService.GetCostReportInfo(req);
+        console.log('Costreportlist:', costReportList);
 
-    console.log(costReportList.getResultsList());
+        let transactions: TransactionType[] = [];
+        let perDiems: PerDiemType[] = [];
+        let timesheets: TimesheetLineType[] = [];
 
-    for await (let data of costReportList.getResultsList()) {
-      let txnNew: Partial<Transaction.AsObject> = {
-        jobId: data.getJobId(),
-        notes: data.getTransactionNotes(),
-        description: data.getTransactionDescription(),
-        amount: data.getAmount(),
-        timestamp: data.getDateStarted(),
-        ownerId: data.getOwnerId(),
-        vendor: data.getVendor(),
-        departmentId: data.getDepartmentId(),
-        department: data.getDepartment()?.toObject(),
-        ownerName: data.getOwnerName(),
-        costCenter: data.getCostCenter()?.toObject(),
-      };
-      transactions.push(txnNew as Transaction.AsObject);
+        console.log(costReportList.getResultsList());
 
-      let pdNew: Partial<PerDiem.AsObject> = {
-        ...data.getPerDiem()?.toObject(),
-        department: data.getPerDiemDepartment()?.toObject(),
-        departmentId: data.getPerDiemDepartmentId(),
-        rowsList: data
-          .getPerDiem()!
-          .getRowsList()
-          .map(val => val.toObject()),
-      };
-      perDiems.push(pdNew as PerDiem.AsObject);
+        for await (let data of costReportList.getResultsList()) {
+          let txnNew: Partial<Transaction.AsObject> = {
+            jobId: data.getJobId(),
+            notes: data.getTransactionNotes(),
+            description: data.getTransactionDescription(),
+            amount: data.getAmount(),
+            timestamp: data.getDateStarted(),
+            ownerId: data.getOwnerId(),
+            vendor: data.getVendor(),
+            departmentId: data.getDepartmentId(),
+            department: data.getDepartment()?.toObject(),
+            ownerName: data.getOwnerName(),
+            costCenter: data.getCostCenter()?.toObject(),
+          };
+          transactions.push(txnNew as Transaction.AsObject);
 
-      timesheets = data.getTimesheetsList().map(line => line.toObject());
-    }
+          let pdNew: Partial<PerDiem.AsObject> = {
+            ...data.getPerDiem()?.toObject(),
+            department: data.getPerDiemDepartment()?.toObject(),
+            departmentId: data.getPerDiemDepartmentId(),
+            rowsList: data
+              .getPerDiem()!
+              .getRowsList()
+              .map(val => val.toObject()),
+          };
+          perDiems.push(pdNew as PerDiem.AsObject);
 
-    console.log('txns:', transactions);
-    console.log('pds: ', perDiems);
-    console.log('timesheets: ', timesheets);
+          timesheets = data.getTimesheetsList().map(line => line.toObject());
+        }
 
-    setTransactions(transactions);
-    setPerDiems(perDiems);
-    setTimesheets(timesheets);
-    setTasks(tasks);
-    setCostReportInfoList(costReportList);
+        console.log('txns:', transactions);
+        console.log('pds: ', perDiems);
+        console.log('timesheets: ', timesheets);
 
-    loadPrintData();
-    setLoading(false);
+        setTransactions(transactions);
+        setPerDiems(perDiems);
+        setTimesheets(timesheets);
+        setTasks(tasks);
+        setCostReportInfoList(costReportList);
+        resolve();
+      }),
+    );
+
+    Promise.all(promises).then(() => {
+      setLoading(false);
+    });
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
     if (!loadedInit) {
