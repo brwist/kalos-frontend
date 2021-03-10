@@ -22,6 +22,9 @@ import {
   getRPCFields,
   UserType,
   writeQuotes,
+  formatDay,
+  formatDate,
+  formatTime,
 } from '../../../../helpers';
 import {
   ENDPOINT,
@@ -78,6 +81,7 @@ interface Props {
   servicesRendered: ServicesRenderedType[];
   loadServicesRendered: () => void;
   loading: boolean;
+  onAddMaterials: (materialUsed: string, materialTotal: number) => void;
 }
 
 const COLUMNS_SERVICES_RENDERED: Columns = [
@@ -186,6 +190,7 @@ export const Services: FC<Props> = ({
   servicesRendered,
   loadServicesRendered,
   loading,
+  onAddMaterials,
 }) => {
   const { isAdmin } = loggedUser;
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
@@ -206,6 +211,7 @@ export const Services: FC<Props> = ({
   const [pendingSelectedQuote, setPendingSelectedQuote] = useState<
     SelectedQuote[]
   >([]);
+  const [changingStatus, setChangingStatus] = useState<boolean>(false);
   const handleDeleting = useCallback(
     (deleting?: ServicesRenderedType) => () => setDeleting(deleting),
     [setDeleting],
@@ -221,6 +227,7 @@ export const Services: FC<Props> = ({
   }, [deleting, loadServicesRendered]);
   const handleChangeStatus = useCallback(
     (status: string) => async () => {
+      setChangingStatus(true);
       const req = new ServicesRendered();
       req.setEventId(serviceCallId);
       const isSignature = status === SIGNED_AS;
@@ -273,6 +280,33 @@ export const Services: FC<Props> = ({
             },
           ),
         );
+        const [date, hour] = timestamp().split(' ');
+        const materialUsed =
+          formatDay(date) +
+          ', ' +
+          formatDate(date) +
+          ' ' +
+          formatTime(hour) +
+          ' ' +
+          `${loggedUser.firstname} ${loggedUser.lastname}` +
+          ' - ' +
+          pendingSelectedQuote
+            .map(
+              ({ quantity, quotePart }) =>
+                '(' +
+                quantity +
+                ')' +
+                quotePart.description +
+                ' - $' +
+                quantity * quotePart.quotedPrice,
+            )
+            .join(', ') +
+          `
+`;
+        const materialTotal = pendingSelectedQuote
+          .map(({ quantity, quotePart }) => quantity * quotePart.quotedPrice)
+          .reduce((aggr, item) => aggr + item, 0);
+        onAddMaterials(materialUsed, materialTotal);
         setPendingSelectedQuote([]);
       }
       loadServicesRendered();
@@ -280,6 +314,7 @@ export const Services: FC<Props> = ({
       setPaymentFormPart(PAYMENT_PART_INITIAL);
       setPaymentForm(PAYMENT_INITIAL);
       setSignatureForm(SIGNATURE_INITIAL);
+      setChangingStatus(false);
     },
     [
       loggedUser,
@@ -294,6 +329,7 @@ export const Services: FC<Props> = ({
       paymentForm,
       pendingSelectedQuote,
       serviceCallId,
+      onAddMaterials,
     ],
   );
   const handleChangeServiceRendered = useCallback(
@@ -472,9 +508,9 @@ export const Services: FC<Props> = ({
                       {
                         label: ENROUTE,
                         onClick: handleChangeStatus(ENROUTE),
-                        disabled: [ENROUTE, ON_CALL, ADMIN].includes(
-                          lastStatus,
-                        ),
+                        disabled:
+                          [ENROUTE, ON_CALL, ADMIN].includes(lastStatus) ||
+                          changingStatus,
                       },
                     ]
                   : []),
@@ -482,7 +518,7 @@ export const Services: FC<Props> = ({
                   ? [
                       {
                         label: ON_CALL,
-                        onClick: handleChangeStatus(ON_CALL),
+                        onClick: handleChangeStatus(ON_CALL) || changingStatus,
                         disabled: [ON_CALL].includes(lastStatus),
                       },
                     ]
@@ -500,6 +536,7 @@ export const Services: FC<Props> = ({
                       {
                         label: ADMIN,
                         onClick: handleChangeStatus(ADMIN),
+                        disabled: changingStatus,
                       },
                     ]
                   : []),
@@ -508,11 +545,13 @@ export const Services: FC<Props> = ({
                       {
                         label: COMPLETED,
                         onClick: handleChangeStatus(COMPLETED),
+                        disabled: changingStatus,
                         status: 'success' as const,
                       },
                       {
                         label: INCOMPLETE,
                         onClick: handleChangeStatus(INCOMPLETE),
+                        disabled: changingStatus,
                         status: 'failure' as const,
                       },
                     ]
@@ -528,10 +567,12 @@ export const Services: FC<Props> = ({
                       {
                         label: PAYMENT,
                         onClick: handleChangeStatus(PAYMENT),
+                        disabled: changingStatus,
                       },
                       {
                         label: SIGNATURE,
                         onClick: handleChangeStatus(SIGNATURE),
+                        disabled: changingStatus,
                       },
                     ]
                   : []),
@@ -540,6 +581,7 @@ export const Services: FC<Props> = ({
                       {
                         label: 'SAVE',
                         onClick: handleChangeStatus(SIGNED_AS),
+                        disabled: changingStatus,
                       },
                     ]
                   : []),

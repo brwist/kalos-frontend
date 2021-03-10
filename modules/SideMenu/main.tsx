@@ -136,7 +136,7 @@ const SideMenu = ({
         }
       }
     })();
-  }, []);
+  }, [userID]);
 
   if (!user?.id) {
     return null;

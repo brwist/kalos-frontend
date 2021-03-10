@@ -61,6 +61,7 @@ const Column = ({
   const md = useMediaQuery(theme.breakpoints.down('md'));
   const { fetchingCalendarData, datesMap, filters } = useCalendarData();
   const dateObj = parseISO(date);
+  console.log(datesMap);
   useEffect(() => {
     if (!(fetchingCalendarData || !datesMap?.get(date))) {
       const id = `ServiceCalendarColumnDateHeading_${format(

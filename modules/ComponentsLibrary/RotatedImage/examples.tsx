@@ -2,7 +2,8 @@ import React from 'react';
 import { RotatedImage } from './';
 import { ExampleTitle } from '../helpers';
 
-const url = 'http://idolondemand.topcoder.com/images/logo-lg.png';
+const url =
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/LG_Chem_logo_%28english%29.svg/1280px-LG_Chem_logo_%28english%29.svg.png';
 
 export default () => (
   <>
