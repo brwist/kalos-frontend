@@ -215,20 +215,27 @@ export const EditProject: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     let promises = [];
+    let transactions: TransactionType[] = [];
+    let perDiems: PerDiemType[] = [];
+    let timesheets: TimesheetLineType[] = [];
+
     setLoading(true);
 
     promises.push(loadPrintData());
 
     promises.push(
-      new Promise<void>(async (resolve, reject) => {
+      new Promise<void>(async resolve => {
         const tasks = await EventClientService.loadProjectTasks(serviceCallId);
+        setTasks(tasks);
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
         let req = new CostReportInfo();
         req.setJobId(serviceCallId);
         const costReportList = await EventClientService.GetCostReportInfo(req);
-
-        let transactions: TransactionType[] = [];
-        let perDiems: PerDiemType[] = [];
-        let timesheets: TimesheetLineType[] = [];
 
         for await (let data of costReportList.getResultsList()) {
           let txnNew: Partial<Transaction.AsObject> = {
@@ -259,17 +266,17 @@ export const EditProject: FC<Props> = ({
 
           timesheets = data.getTimesheetsList().map(line => line.toObject());
         }
-
-        setTransactions(transactions);
-        setPerDiems(perDiems);
-        setTimesheets(timesheets);
-        setTasks(tasks);
         setCostReportInfoList(costReportList);
+
         resolve();
       }),
     );
 
     Promise.all(promises).then(() => {
+      setTransactions(transactions);
+      setPerDiems(perDiems);
+      setTimesheets(timesheets);
+
       setLoading(false);
     });
   }, [setLoading, serviceCallId, setTasks]);
