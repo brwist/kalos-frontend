@@ -44,6 +44,7 @@ import LodgingByZipCode from './LodgingByZipCode/examples';
 import ManagerTimeoffs from './ManagerTimeoffs/examples';
 import Modal from './Modal/examples';
 import Payroll from './Payroll/examples';
+import PDFInvoice from './PDFInvoice/examples';
 import PDFMaker from './PDFMaker/examples';
 import PerDiem from './PerDiem/examples';
 import PerDiemsNeedsAuditing from './PerDiemsNeedsAuditing/examples';
@@ -135,6 +136,7 @@ const COMPONENTS = {
   ManagerTimeoffs,
   Modal,
   Payroll,
+  PDFInvoice,
   PDFMaker,
   PerDiem,
   PerDiemsNeedsAuditing,
