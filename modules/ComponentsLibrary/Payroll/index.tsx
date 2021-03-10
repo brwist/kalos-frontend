@@ -30,7 +30,12 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 
-export type RoleType = 'Manager' | 'Payroll' | 'Auditor' | '';
+export type RoleType =
+  | 'Manager'
+  | 'Payroll'
+  | 'Auditor'
+  | 'Accounts_Payable'
+  | '';
 
 interface Props {
   userID: number;

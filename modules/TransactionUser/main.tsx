@@ -7,9 +7,19 @@ import {
   UserClientService,
   TimesheetDepartmentClientService,
 } from '../../helpers';
-import { PERMISSION_NAME_MANAGER } from '../../constants';
+import { ENDPOINT, PERMISSION_NAME_MANAGER } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { RoleType } from '../ComponentsLibrary/Payroll';
+import { Button } from '../ComponentsLibrary/Button';
+import { Modal } from '../ComponentsLibrary/Modal';
+
+import { UploadPhotoTransaction } from '../ComponentsLibrary/UploadPhotoTransaction';
+import {
+  TransactionAccountList,
+  TransactionAccount,
+  TransactionAccountClient,
+} from '@kalos-core/kalos-rpc/TransactionAccount';
 
 interface Props extends PageWrapperProps {
   userID: number;
@@ -21,7 +31,16 @@ const Transaction: FC<Props> = props => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<UserType>();
+  const [costCenters, setCostCenters] = useState<TransactionAccountList>();
   const [isManager, setIsManager] = useState<boolean>(false);
+  const [toggleAddTransaction, setToggleAddTransaction] = useState<boolean>(
+    false,
+  );
+  const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
+    [],
+  );
+  const [role, setRole] = useState<RoleType>();
+
   const managerCheck = useCallback(
     async (u: User.AsObject) => {
       try {
@@ -41,11 +60,30 @@ const Transaction: FC<Props> = props => {
   );
   const load = useCallback(async () => {
     setLoading(true);
+    const req = new TransactionAccount();
+    req.setIsActive(1);
+    const results = await new TransactionAccountClient(ENDPOINT).BatchGet(req);
+    setCostCenters(results);
     await UserClientService.refreshToken();
     const user = await UserClientService.loadUserById(userID);
     setUser(user);
+    const foundRole = user.permissionGroupsList.find(p => p.type === 'role');
+    if (foundRole) {
+      setRole(foundRole.name as RoleType);
+    }
     const isManager = await managerCheck(user);
-    setIsManager(isManager);
+    const groupDepartments = user.permissionGroupsList.filter(
+      group => group.type === 'department',
+    );
+    const totalDepartments = [];
+
+    for (let i = 0; i < groupDepartments.length; i++) {
+      let permissionObj = JSON.parse(groupDepartments[i].filterData);
+      totalDepartments.push(permissionObj.value);
+    }
+    setManagerDepartmentIds(totalDepartments);
+    console.log(totalDepartments);
+    setIsManager(isManager || role === 'Manager');
     setLoading(false);
   }, [setLoading, userID, managerCheck]);
   useEffect(() => {
@@ -54,17 +92,48 @@ const Transaction: FC<Props> = props => {
       load();
     }
   }, [loaded, setLoaded, load, user]);
+  const handleToggleAddTransaction = (value: boolean) => {
+    setToggleAddTransaction(value);
+  };
   return (
     <PageWrapper {...props}>
       {loading || !user ? (
         <Loader />
       ) : (
-        <TransactionUserView
-          userID={userID}
-          userName={getCustomerName(user)}
-          departmentId={user.employeeDepartmentId}
-          isManager={isManager}
-        />
+        <React.Fragment>
+          {role === 'Accounts_Payable' ? (
+            <Button
+              label="Add Transaction"
+              onClick={() => handleToggleAddTransaction(true)}
+            />
+          ) : (
+            React.Fragment
+          )}
+          {toggleAddTransaction ? (
+            <Modal
+              open={toggleAddTransaction}
+              onClose={() => handleToggleAddTransaction(false)}
+            >
+              <UploadPhotoTransaction
+                loggedUserId={userID}
+                bucket="kalos-transactions"
+                costCenters={
+                  costCenters ? costCenters : new TransactionAccountList()
+                }
+                onClose={() => handleToggleAddTransaction(false)}
+              />
+            </Modal>
+          ) : null}
+
+          <TransactionUserView
+            userID={userID}
+            userName={getCustomerName(user)}
+            departmentId={user.employeeDepartmentId}
+            departmentList={managerDepartmentIds}
+            isManager={isManager}
+            role={role}
+          />
+        </React.Fragment>
       )}
     </PageWrapper>
   );

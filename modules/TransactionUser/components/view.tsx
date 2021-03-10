@@ -9,14 +9,17 @@ import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { getEditDistance } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { parseISO } from 'date-fns/esm';
+import { RoleType } from '../../ComponentsLibrary/Payroll';
 
 const MISSING_RECEIPT_KEY = 'KALOS MISSING RECIEPT AFFADAVIT';
 
 interface props {
   userID: number;
   departmentId: number;
+  departmentList?: number[];
   userName: string;
   isManager: boolean;
+  role?: RoleType;
 }
 
 interface state {
@@ -24,6 +27,7 @@ interface state {
   isLoading: boolean;
   transactions: Transaction.AsObject[];
   totalCount: number;
+  role?: RoleType;
 }
 
 export class TransactionUserView extends React.PureComponent<props, state> {
@@ -37,10 +41,10 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       isLoading: false,
       transactions: [],
       totalCount: 0,
+      role: this.props.role,
     };
     this.TxnClient = new TransactionClient(ENDPOINT);
     this.S3Client = new S3Client(ENDPOINT);
-
     this.downloadAffadavit = this.downloadAffadavit.bind(this);
     this.changePage = this.changePage.bind(this);
     this.fetchTxns = this.fetchTxns.bind(this);
@@ -85,28 +89,68 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   async fetchTxns(statusID: number) {
     const reqObj = new Transaction();
+    if (!this.props.departmentList && this.props.role != 'Accounts_Payable') {
+      reqObj.setOwnerId(this.props.userID);
+    }
+    reqObj.setPageNumber(this.state.page);
+    reqObj.setStatusId(statusID);
+    if (
+      this.props.departmentList &&
+      this.props.departmentList.length > 0 &&
+      this.props.role != 'Accounts_Payable'
+    ) {
+      const departmentListString = this.props.departmentList.toString();
+      reqObj.setDepartmentIdList(departmentListString);
+    }
+    if (this.props.role === 'Accounts_Payable') {
+      reqObj.setVendorCategory('%Pick%');
+    }
+    reqObj.setIsActive(1);
+    const res = (await this.TxnClient.BatchGet(reqObj)).toObject();
+    return res.resultsList;
+  }
+  async fetchTxnsAccountsPayable(statusID: number) {
+    const reqObj = new Transaction();
     reqObj.setOwnerId(this.props.userID);
     reqObj.setPageNumber(this.state.page);
     reqObj.setStatusId(statusID);
+
     reqObj.setIsActive(1);
     const res = (await this.TxnClient.BatchGet(reqObj)).toObject();
     return res.resultsList;
   }
 
   async fetchAllTxns() {
-    this.setState(
-      {
-        isLoading: true,
-      },
-      await (async () => {
-        const newTxns = await this.fetchTxns(1);
-        const rejectedTxns = await this.fetchTxns(4);
-        this.setState({
-          transactions: newTxns.concat(rejectedTxns),
-          isLoading: false,
-        });
-      }),
-    );
+    if (this.props.role === 'Accounts_Payable') {
+      console.log('Hey, fetch your stuff here');
+      this.setState(
+        {
+          isLoading: true,
+        },
+        await (async () => {
+          const newTxns = await this.fetchTxns(1);
+          const rejectedTxns = await this.fetchTxns(4);
+          this.setState({
+            transactions: newTxns.concat(rejectedTxns),
+            isLoading: false,
+          });
+        }),
+      );
+    } else {
+      this.setState(
+        {
+          isLoading: true,
+        },
+        await (async () => {
+          const newTxns = await this.fetchTxns(1);
+          const rejectedTxns = await this.fetchTxns(4);
+          this.setState({
+            transactions: newTxns.concat(rejectedTxns),
+            isLoading: false,
+          });
+        }),
+      );
+    }
   }
 
   async downloadAffadavit(e: React.SyntheticEvent<HTMLSelectElement>) {

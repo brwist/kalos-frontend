@@ -959,7 +959,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
               ...(type === 'eventId'
                 ? [
                     {
-                      label: 'Search Service Calls',
+                      label: 'Search Job Number',
                       variant: 'outlined' as const,
                       onClick: handleEventsSearchClicked,
                     },
