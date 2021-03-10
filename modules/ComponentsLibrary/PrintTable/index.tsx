@@ -59,7 +59,7 @@ export const PrintTable: FC<Props> = ({
                   : {}),
               }}
             >
-              {typeof column === 'string' ? column : column.title}
+              {typeof column === 'string' ? column : column.title} 
             </th>
           ))}
         </tr>
