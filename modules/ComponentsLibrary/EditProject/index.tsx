@@ -1098,6 +1098,7 @@ export const EditProject: FC<Props> = ({
                 briefDescription,
                 technicianUserName,
                 technicianUserId,
+                hoursWorked,
               }) => {
                 return (
                   <div key={id}>
@@ -1127,9 +1128,13 @@ export const EditProject: FC<Props> = ({
                           align: 'left',
                           widthPercentage: 10,
                         },
-
                         {
                           title: 'Brief Description',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Hours Worked',
                           align: 'left',
                           widthPercentage: 10,
                         },
@@ -1147,6 +1152,11 @@ export const EditProject: FC<Props> = ({
                           formatDate(timeStarted) || '-',
                           formatDate(timeFinished) || '-',
                           briefDescription,
+                          hoursWorked != 0
+                            ? hoursWorked > 1
+                              ? `${hoursWorked} hrs`
+                              : `${hoursWorked} hr`
+                            : '-',
                           notes,
                         ],
                       ]}
