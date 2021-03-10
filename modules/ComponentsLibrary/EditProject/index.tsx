@@ -216,7 +216,6 @@ export const EditProject: FC<Props> = ({
   const load = useCallback(async () => {
     let promises = [];
     setLoading(true);
-    console.log('Service call id:', serviceCallId);
 
     promises.push(loadPrintData());
 
@@ -226,13 +225,10 @@ export const EditProject: FC<Props> = ({
         let req = new CostReportInfo();
         req.setJobId(serviceCallId);
         const costReportList = await EventClientService.GetCostReportInfo(req);
-        console.log('Costreportlist:', costReportList);
 
         let transactions: TransactionType[] = [];
         let perDiems: PerDiemType[] = [];
         let timesheets: TimesheetLineType[] = [];
-
-        console.log(costReportList.getResultsList());
 
         for await (let data of costReportList.getResultsList()) {
           let txnNew: Partial<Transaction.AsObject> = {
@@ -263,10 +259,6 @@ export const EditProject: FC<Props> = ({
 
           timesheets = data.getTimesheetsList().map(line => line.toObject());
         }
-
-        console.log('txns:', transactions);
-        console.log('pds: ', perDiems);
-        console.log('timesheets: ', timesheets);
 
         setTransactions(transactions);
         setPerDiems(perDiems);
@@ -724,11 +716,6 @@ export const EditProject: FC<Props> = ({
       return true;
     },
   );
-  console.log(
-    'Reducing: ',
-    perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
-      MEALS_RATE,
-  );
   const totalMeals =
     perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
     MEALS_RATE;
@@ -743,7 +730,6 @@ export const EditProject: FC<Props> = ({
     (aggr, { amount }) => aggr + amount,
     0,
   );
-  console.log('Lodgings: ', lodgings);
   return (
     <div>
       <SectionBar
@@ -1062,6 +1048,7 @@ export const EditProject: FC<Props> = ({
                           ]}
                           data={rowsList.map(
                             ({
+                              id,
                               dateString,
                               zipCode,
                               mealsOnly,
@@ -1073,9 +1060,7 @@ export const EditProject: FC<Props> = ({
                                 zipCode,
                                 mealsOnly ? 'Yes' : 'No',
                                 usd(MEALS_RATE),
-                                lodgings[perDiemId]
-                                  ? usd(lodgings[perDiemId])
-                                  : '-',
+                                lodgings[id] ? usd(lodgings[id]) : '-',
                                 notes,
                               ];
                             },
@@ -1211,9 +1196,7 @@ export const EditProject: FC<Props> = ({
                   if (task.endDate == '0000-00-00 00:00:00') {
                     let date = new Date();
                     date.setMinutes(date.getMinutes() + 1);
-                    console.log(date);
                     task.endDate = format(date, 'yyyy-MM-dd hh-mm-ss');
-                    console.log('End date: ', task.endDate);
                   }
                   const {
                     id,
