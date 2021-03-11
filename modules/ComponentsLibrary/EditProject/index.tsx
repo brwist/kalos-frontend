@@ -200,44 +200,55 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Loading event in loadInit.');
         await loadEvent();
+        console.log('Loaded event in loadInit.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Loading statuses.');
         const statuses = await TaskClientService.loadProjectTaskStatuses();
         setStatuses(statuses);
+        console.log('Loaded statuses.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Loading priorities.');
         const priorities = await TaskClientService.loadProjectTaskPriorities();
         setPriorities(priorities);
+        console.log('Loading event in loadInit.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Loading departments.');
         const departments = await loadTimesheetDepartments();
         setDepartments(departments);
+        console.log('Loaded depts.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Loading user by id.');
         const loggedUser = await UserClientService.loadUserById(loggedUserId);
         setLoggedUser(loggedUser);
+        console.log('Loaded user by id.');
         resolve();
       }),
     );
 
     Promise.all(promises).then(() => {
+      console.log('Loaded everything.');
       setLoadedInit(true);
     });
   }, [
@@ -259,7 +270,7 @@ export const EditProject: FC<Props> = ({
     promises.push(
       new Promise<void>(async resolve => {
         console.log('Started loading print data.');
-        loadPrintData();
+        await loadPrintData();
         console.log('Loaded print data.');
         resolve();
       }),
@@ -298,16 +309,16 @@ export const EditProject: FC<Props> = ({
           };
           transactions.push(txnNew as Transaction.AsObject);
 
-          let pdNew: Partial<PerDiem.AsObject> = {
-            ...data.getPerDiem()?.toObject(),
-            department: data.getPerDiemDepartment()?.toObject(),
-            departmentId: data.getPerDiemDepartmentId(),
-            rowsList: data
-              .getPerDiem()!
-              .getRowsList()
-              .map(val => val.toObject()),
-          };
-          perDiems.push(pdNew as PerDiem.AsObject);
+          // let pdNew: Partial<PerDiem.AsObject> = {
+          //   ...data.getPerDiem()?.toObject(),
+          //   department: data.getPerDiemDepartment()?.toObject(),
+          //   departmentId: data.getPerDiemDepartmentId(),
+          //   rowsList: data
+          //     .getPerDiem()!
+          //     .getRowsList()
+          //     .map(val => val.toObject()),
+          // };
+          // perDiems.push(pdNew as PerDiem.AsObject);
 
           timesheets = data.getTimesheetsList().map(line => line.toObject());
           console.log('Loaded cost report info.');
@@ -320,9 +331,9 @@ export const EditProject: FC<Props> = ({
 
     Promise.all(promises).then(() => {
       setTransactions(transactions);
-      setPerDiems(perDiems);
       setTimesheets(timesheets);
 
+      console.log('Loaded everything in load() function.');
       setLoading(false);
     });
   }, [setLoading, serviceCallId, setTasks]);
@@ -634,6 +645,7 @@ export const EditProject: FC<Props> = ({
   );
 
   const loadPrintData = useCallback(async () => {
+    console.log('Loading print data.');
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
@@ -642,11 +654,10 @@ export const EditProject: FC<Props> = ({
     const transactions = await loadTransactionsByEventId(serviceCallId);
     setTransactions(transactions);
     setPerDiems(resultsList);
+    console.log('Loaded print data.');
   }, [serviceCallId, setPerDiems, setLodgings]);
   const handlePrint = useCallback(async () => {
-    setPrintStatus('loading');
     await loadPrintData();
-    setPrintStatus('loaded');
   }, [setPrintStatus, loadPrintData]);
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
