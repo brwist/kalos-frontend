@@ -184,27 +184,74 @@ export const EditProject: FC<Props> = ({
   const [event, setEvent] = useState<EventType>();
   const [editingProject, setEditingProject] = useState<boolean>(false);
   const [checkedIn, setCheckedIn] = useState<boolean>(false);
+  const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
-    console.log('Loading event');
+    console.log('Started loading event.');
     const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
+    console.log('Finished loading the event.');
     setEvent(event);
     setLoadingEvent(false);
   }, [setEvent, setLoadingEvent]);
   const loadInit = useCallback(async () => {
-    await loadEvent();
-    const statuses = await TaskClientService.loadProjectTaskStatuses();
-    const priorities = await TaskClientService.loadProjectTaskPriorities();
-    const departments = await loadTimesheetDepartments();
-    const loggedUser = await UserClientService.loadUserById(loggedUserId);
-    setStatuses(statuses);
-    setPriorities(priorities);
-    setDepartments(departments);
-    setLoggedUser(loggedUser);
-    setLoadedInit(true);
+    let promises = [];
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Loading event in loadInit.');
+        await loadEvent();
+        console.log('Loaded event in loadInit.');
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Loading statuses.');
+        const statuses = await TaskClientService.loadProjectTaskStatuses();
+        setStatuses(statuses);
+        console.log('Loaded statuses.');
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Loading priorities.');
+        const priorities = await TaskClientService.loadProjectTaskPriorities();
+        setPriorities(priorities);
+        console.log('Loading event in loadInit.');
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Loading departments.');
+        const departments = await loadTimesheetDepartments();
+        setDepartments(departments);
+        console.log('Loaded depts.');
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Loading user by id.');
+        const loggedUser = await UserClientService.loadUserById(loggedUserId);
+        setLoggedUser(loggedUser);
+        console.log('Loaded user by id.');
+        resolve();
+      }),
+    );
+
+    Promise.all(promises).then(() => {
+      console.log('Loaded everything.');
+      setLoadedInit(true);
+    });
   }, [
     loadEvent,
     setStatuses,
@@ -215,24 +262,37 @@ export const EditProject: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     let promises = [];
-    setLoading(true);
-    console.log('Service call id:', serviceCallId);
+    let transactions: TransactionType[] = [];
+    let perDiems: PerDiemType[] = [];
+    let timesheets: TimesheetLineType[] = [];
 
-    promises.push(loadPrintData());
+    setLoading(true);
 
     promises.push(
-      new Promise<void>(async (resolve, reject) => {
+      new Promise<void>(async resolve => {
+        console.log('Started loading print data.');
+        await loadPrintData();
+        console.log('Loaded print data.');
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Started loading project tasks.');
         const tasks = await EventClientService.loadProjectTasks(serviceCallId);
+        setTasks(tasks);
+        resolve();
+        console.log('Loaded project tasks.');
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Started loading cost report info.');
         let req = new CostReportInfo();
         req.setJobId(serviceCallId);
         const costReportList = await EventClientService.GetCostReportInfo(req);
-        console.log('Costreportlist:', costReportList);
-
-        let transactions: TransactionType[] = [];
-        let perDiems: PerDiemType[] = [];
-        let timesheets: TimesheetLineType[] = [];
-
-        console.log(costReportList.getResultsList());
 
         for await (let data of costReportList.getResultsList()) {
           let txnNew: Partial<Transaction.AsObject> = {
@@ -250,34 +310,35 @@ export const EditProject: FC<Props> = ({
           };
           transactions.push(txnNew as Transaction.AsObject);
 
-          let pdNew: Partial<PerDiem.AsObject> = {
-            ...data.getPerDiem()?.toObject(),
-            department: data.getPerDiemDepartment()?.toObject(),
-            departmentId: data.getPerDiemDepartmentId(),
-            rowsList: data
-              .getPerDiem()!
-              .getRowsList()
-              .map(val => val.toObject()),
-          };
-          perDiems.push(pdNew as PerDiem.AsObject);
+          // let pdNew: Partial<PerDiem.AsObject> = {
+          //   ...data.getPerDiem()?.toObject(),
+          //   department: data.getPerDiemDepartment()?.toObject(),
+          //   departmentId: data.getPerDiemDepartmentId(),
+          //   rowsList: data
+          //     .getPerDiem()!
+          //     .getRowsList()
+          //     .map(val => val.toObject()),
+          // };
+          // perDiems.push(pdNew as PerDiem.AsObject);
 
           timesheets = data.getTimesheetsList().map(line => line.toObject());
+          console.log('Loaded cost report info.');
         }
-
-        console.log('txns:', transactions);
-        console.log('pds: ', perDiems);
-        console.log('timesheets: ', timesheets);
-
-        setTransactions(transactions);
-        setPerDiems(perDiems);
-        setTimesheets(timesheets);
-        setTasks(tasks);
         setCostReportInfoList(costReportList);
+
         resolve();
       }),
     );
 
     Promise.all(promises).then(() => {
+      setTransactions(transactions);
+      setTimesheets(timesheets);
+
+      let total = 0;
+      timesheets.forEach(timesheet => (total = total + timesheet.hoursWorked));
+      setTotalHoursWorked(total);
+
+      console.log('Loaded everything in load() function.');
       setLoading(false);
     });
   }, [setLoading, serviceCallId, setTasks]);
@@ -589,6 +650,7 @@ export const EditProject: FC<Props> = ({
   );
 
   const loadPrintData = useCallback(async () => {
+    console.log('Loading print data.');
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
@@ -597,6 +659,7 @@ export const EditProject: FC<Props> = ({
     const transactions = await loadTransactionsByEventId(serviceCallId);
     setTransactions(transactions);
     setPerDiems(resultsList);
+    console.log('Loaded print data.');
   }, [serviceCallId, setPerDiems, setLodgings]);
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
@@ -724,11 +787,6 @@ export const EditProject: FC<Props> = ({
       return true;
     },
   );
-  console.log(
-    'Reducing: ',
-    perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
-      MEALS_RATE,
-  );
   const totalMeals =
     perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
     MEALS_RATE;
@@ -743,7 +801,6 @@ export const EditProject: FC<Props> = ({
     (aggr, { amount }) => aggr + amount,
     0,
   );
-  console.log('Lodgings: ', lodgings);
   return (
     <div>
       <SectionBar
@@ -841,6 +898,23 @@ export const EditProject: FC<Props> = ({
                 ]}
               />
             )}
+            <PrintParagraph tag="h2">Summary Info</PrintParagraph>
+            <PrintTable
+              columns={[
+                { title: 'Type', align: 'left' },
+                { title: 'Total', align: 'right' },
+              ]}
+              data={[
+                [
+                  'Total Hours Worked',
+                  totalHoursWorked > 1
+                    ? `${totalHoursWorked} hrs`
+                    : totalHoursWorked == 0
+                    ? 'None'
+                    : `${totalHoursWorked} hr`,
+                ],
+              ]}
+            />
             <PrintParagraph tag="h2">Costs</PrintParagraph>
             <PrintTable
               columns={[
@@ -1062,6 +1136,7 @@ export const EditProject: FC<Props> = ({
                           ]}
                           data={rowsList.map(
                             ({
+                              id,
                               dateString,
                               zipCode,
                               mealsOnly,
@@ -1073,9 +1148,7 @@ export const EditProject: FC<Props> = ({
                                 zipCode,
                                 mealsOnly ? 'Yes' : 'No',
                                 usd(MEALS_RATE),
-                                lodgings[perDiemId]
-                                  ? usd(lodgings[perDiemId])
-                                  : '-',
+                                lodgings[id] ? usd(lodgings[id]) : '-',
                                 notes,
                               ];
                             },
@@ -1098,6 +1171,7 @@ export const EditProject: FC<Props> = ({
                 briefDescription,
                 technicianUserName,
                 technicianUserId,
+                hoursWorked,
               }) => {
                 return (
                   <div key={id}>
@@ -1127,9 +1201,13 @@ export const EditProject: FC<Props> = ({
                           align: 'left',
                           widthPercentage: 10,
                         },
-
                         {
                           title: 'Brief Description',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Hours Worked',
                           align: 'left',
                           widthPercentage: 10,
                         },
@@ -1147,6 +1225,11 @@ export const EditProject: FC<Props> = ({
                           formatDate(timeStarted) || '-',
                           formatDate(timeFinished) || '-',
                           briefDescription,
+                          hoursWorked != 0
+                            ? hoursWorked > 1
+                              ? `${hoursWorked} hrs`
+                              : `${hoursWorked} hr`
+                            : '-',
                           notes,
                         ],
                       ]}
@@ -1201,9 +1284,7 @@ export const EditProject: FC<Props> = ({
                   if (task.endDate == '0000-00-00 00:00:00') {
                     let date = new Date();
                     date.setMinutes(date.getMinutes() + 1);
-                    console.log(date);
                     task.endDate = format(date, 'yyyy-MM-dd hh-mm-ss');
-                    console.log('End date: ', task.endDate);
                   }
                   const {
                     id,
