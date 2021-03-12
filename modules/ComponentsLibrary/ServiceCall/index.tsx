@@ -419,14 +419,31 @@ export const ServiceCall: FC<Props> = props => {
     ],
     [
       {
-        name: 'color',
-        label: 'Color',
-        type: 'color',
-      },
-      {
         name: 'isAllDay',
         label: 'Is all-day?',
         type: 'checkbox',
+      },
+      {
+        name: 'isLmpc',
+        label: 'Is LMPC?',
+        type: 'checkbox',
+      },
+      {
+        name: 'highPriority',
+        label: 'High priority?',
+        type: 'checkbox',
+      },
+      {
+        name: 'isResidential',
+        label: 'Is residential?',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'color',
+        label: 'Color',
+        type: 'color',
       },
     ],
     [
