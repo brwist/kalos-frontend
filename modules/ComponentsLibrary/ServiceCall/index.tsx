@@ -392,6 +392,20 @@ export const ServiceCall: FC<Props> = props => {
         required: true,
       },
       {
+        name: 'timeStarted',
+        label: 'Time Started',
+        type: 'mui-time',
+        required: true,
+      },
+      {
+        name: 'timeEnded',
+        label: 'Time Ended',
+        type: 'mui-time',
+        required: true,
+      },
+    ],
+    [
+      {
         name: 'departmentId',
         label: 'Department',
         type: 'department',
@@ -408,6 +422,11 @@ export const ServiceCall: FC<Props> = props => {
         name: 'color',
         label: 'Color',
         type: 'color',
+      },
+      {
+        name: 'isAllDay',
+        label: 'Is all-day?',
+        type: 'checkbox',
       },
     ],
     [
