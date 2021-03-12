@@ -17,6 +17,7 @@ import {
   PerDiemClientService,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
+import { PayrollSummary } from './components/PayrollSummary';
 import { PerDiem } from './components/PerDiem';
 import { Timesheet } from './components/Timesheet';
 import { TimeoffRequests } from './components/TimeoffRequests';
@@ -211,6 +212,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
   let isToolLogs = true;
   let isPerDiem = true;
   let isTrips = true;
+  let isPayrollSummary = false;
+  if (role === 'Payroll') {
+    isPayrollSummary = true;
+  }
   if (role === 'Auditor') {
     isTimesheet = false;
     isTimeoffRequests = false;
@@ -230,6 +235,22 @@ export const Payroll: FC<Props> = ({ userID }) => {
             />
             <Tabs
               tabs={[
+                ...(isPayrollSummary
+                  ? [
+                      {
+                        label: 'Payroll Summary',
+                        content: (
+                          <PayrollSummary
+                            departmentId={filter.departmentId}
+                            employeeId={filter.employeeId}
+                            week={filter.week}
+                            type={role}
+                            loggedUser={userID}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
                 ...(isTimesheet
                   ? [
                       {
