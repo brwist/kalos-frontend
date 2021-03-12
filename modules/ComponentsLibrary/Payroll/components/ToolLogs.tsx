@@ -115,7 +115,7 @@ export const ToolLogs: FC<Props> = ({
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <SpiffTool
             loggedUserId={pendingView.externalId}
-            userId={userId}
+            ownerId={userId}
             type="Tool"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
