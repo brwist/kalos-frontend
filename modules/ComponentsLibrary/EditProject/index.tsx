@@ -184,6 +184,7 @@ export const EditProject: FC<Props> = ({
   const [event, setEvent] = useState<EventType>();
   const [editingProject, setEditingProject] = useState<boolean>(false);
   const [checkedIn, setCheckedIn] = useState<boolean>(false);
+  const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
@@ -332,6 +333,10 @@ export const EditProject: FC<Props> = ({
     Promise.all(promises).then(() => {
       setTransactions(transactions);
       setTimesheets(timesheets);
+
+      let total = 0;
+      timesheets.forEach(timesheet => (total = total + timesheet.hoursWorked));
+      setTotalHoursWorked(total);
 
       console.log('Loaded everything in load() function.');
       setLoading(false);
@@ -891,6 +896,14 @@ export const EditProject: FC<Props> = ({
                 ]}
               />
             )}
+            <PrintParagraph tag="h2">Summary Info</PrintParagraph>
+            <PrintTable
+              columns={[
+                { title: 'Type', align: 'left' },
+                { title: 'Total', align: 'right' },
+              ]}
+              data={[['Hours Worked', totalHoursWorked + ' hrs']]}
+            />
             <PrintParagraph tag="h2">Costs</PrintParagraph>
             <PrintTable
               columns={[
