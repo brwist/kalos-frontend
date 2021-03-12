@@ -902,7 +902,16 @@ export const EditProject: FC<Props> = ({
                 { title: 'Type', align: 'left' },
                 { title: 'Total', align: 'right' },
               ]}
-              data={[['Hours Worked', totalHoursWorked + ' hrs']]}
+              data={[
+                [
+                  'Total Hours Worked',
+                  totalHoursWorked > 1
+                    ? `${totalHoursWorked} hrs`
+                    : totalHoursWorked == 0
+                    ? 'None'
+                    : `${totalHoursWorked} hr`,
+                ],
+              ]}
             />
             <PrintParagraph tag="h2">Costs</PrintParagraph>
             <PrintTable
