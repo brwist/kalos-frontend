@@ -662,7 +662,9 @@ export const EditProject: FC<Props> = ({
     console.log('Loaded print data.');
   }, [serviceCallId, setPerDiems, setLodgings]);
   const handlePrint = useCallback(async () => {
+    setPrintStatus('loading');
     await loadPrintData();
+    setPrintStatus('loaded');
   }, [setPrintStatus, loadPrintData]);
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
