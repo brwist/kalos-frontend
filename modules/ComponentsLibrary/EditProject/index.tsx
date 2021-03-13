@@ -295,31 +295,7 @@ export const EditProject: FC<Props> = ({
         const costReportList = await EventClientService.GetCostReportInfo(req);
 
         for await (let data of costReportList.getResultsList()) {
-          let txnNew: Partial<Transaction.AsObject> = {
-            jobId: data.getJobId(),
-            notes: data.getTransactionNotes(),
-            description: data.getTransactionDescription(),
-            amount: data.getAmount(),
-            timestamp: data.getTimestamp(),
-            ownerId: data.getOwnerId(),
-            vendor: data.getVendor(),
-            departmentId: data.getDepartmentId(),
-            department: data.getDepartment()?.toObject(),
-            ownerName: data.getOwnerName(),
-            costCenter: data.getCostCenter()?.toObject(),
-          };
-          transactions.push(txnNew as Transaction.AsObject);
-
-          // let pdNew: Partial<PerDiem.AsObject> = {
-          //   ...data.getPerDiem()?.toObject(),
-          //   department: data.getPerDiemDepartment()?.toObject(),
-          //   departmentId: data.getPerDiemDepartmentId(),
-          //   rowsList: data
-          //     .getPerDiem()!
-          //     .getRowsList()
-          //     .map(val => val.toObject()),
-          // };
-          // perDiems.push(pdNew as PerDiem.AsObject);
+          transactions = data.getTransactionsList().map(txn => txn.toObject());
 
           timesheets = data.getTimesheetsList().map(line => line.toObject());
           console.log('Loaded cost report info.');
