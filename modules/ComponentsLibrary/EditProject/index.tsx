@@ -300,7 +300,7 @@ export const EditProject: FC<Props> = ({
             notes: data.getTransactionNotes(),
             description: data.getTransactionDescription(),
             amount: data.getAmount(),
-            timestamp: data.getDateStarted(),
+            timestamp: data.getTimestamp(),
             ownerId: data.getOwnerId(),
             vendor: data.getVendor(),
             departmentId: data.getDepartmentId(),
