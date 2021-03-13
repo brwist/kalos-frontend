@@ -394,13 +394,13 @@ export const ServiceCall: FC<Props> = props => {
       {
         name: 'timeStarted',
         label: 'Time Started',
-        type: 'mui-time',
+        type: 'time',
         required: true,
       },
       {
         name: 'timeEnded',
         label: 'Time Ended',
-        type: 'mui-time',
+        type: 'time',
         required: true,
       },
     ],
