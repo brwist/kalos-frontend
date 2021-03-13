@@ -295,7 +295,14 @@ export const EditProject: FC<Props> = ({
         const costReportList = await EventClientService.GetCostReportInfo(req);
 
         for await (let data of costReportList.getResultsList()) {
-          transactions = data.getTransactionsList().map(txn => txn.toObject());
+          transactions = data.getTransactionsList().map(txn => {
+            let dept = new TxnDepartment();
+            dept.setClassification(txn.getDepartmentString().split(' ')[1]);
+            dept.setDescription(txn.getDepartmentString().split(' ')[3]);
+
+            txn.setDepartment(dept);
+            return txn.toObject();
+          });
 
           timesheets = data.getTimesheetsList().map(line => line.toObject());
           console.log('Loaded cost report info.');
