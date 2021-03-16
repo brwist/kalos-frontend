@@ -74,6 +74,7 @@ import {
   PerDiemRow,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb';
+import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 
 export interface Props {
   serviceCallId: number;
@@ -262,8 +263,6 @@ export const EditProject: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     let promises = [];
-    let transactions: TransactionType[] = [];
-    let perDiems: PerDiemType[] = [];
     let timesheets: TimesheetLineType[] = [];
 
     setLoading(true);
@@ -295,18 +294,12 @@ export const EditProject: FC<Props> = ({
         const costReportList = await EventClientService.GetCostReportInfo(req);
 
         for await (let data of costReportList.getResultsList()) {
-          transactions = data.getTransactionsList().map(txn => {
-            let dept = new TxnDepartment();
-            dept.setClassification(txn.getDepartmentString().split(' ')[1]);
-            dept.setDescription(txn.getDepartmentString().split(' ')[3]);
-
-            txn.setDepartment(dept);
-            return txn.toObject();
-          });
-
           timesheets = data.getTimesheetsList().map(line => line.toObject());
           console.log('Loaded cost report info.');
         }
+        console.log(
+          costReportList.getResultsList().map(list => list.toObject()),
+        );
         setCostReportInfoList(costReportList);
 
         resolve();
@@ -314,7 +307,6 @@ export const EditProject: FC<Props> = ({
     );
 
     Promise.all(promises).then(() => {
-      setTransactions(transactions);
       setTimesheets(timesheets);
 
       let total = 0;
@@ -640,6 +632,7 @@ export const EditProject: FC<Props> = ({
     const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
     setLodgings(lodgings);
     const transactions = await loadTransactionsByEventId(serviceCallId);
+    console.log('Set transactions in the print data thingy');
     setTransactions(transactions);
     setPerDiems(resultsList);
     console.log('Loaded print data.');
@@ -958,24 +951,28 @@ export const EditProject: FC<Props> = ({
                   costCenter,
                   timestamp,
                   vendor,
-                }) => [
-                  department ? (
+                }) => {
+                  console.log('Transactions:', transactions);
+                  console.log('transaction cost ctr:', costCenter);
+                  return [
+                    department ? (
+                      <>
+                        {department.classification} - {department.description}
+                      </>
+                    ) : (
+                      '-'
+                    ),
+                    ownerName,
                     <>
-                      {department.classification} - {department.description}
-                    </>
-                  ) : (
-                    '-'
-                  ),
-                  ownerName,
-                  <>
-                    {costCenter ? costCenter.description : '-'}
-                    <br />
-                    {vendor}
-                  </>,
-                  formatDate(timestamp),
-                  usd(amount),
-                  notes,
-                ],
+                      {`${costCenter?.description}` + ' - '}
+                      <br />
+                      {vendor}
+                    </>,
+                    formatDate(timestamp),
+                    usd(amount),
+                    notes,
+                  ];
+                },
               )}
             />
             <PrintParagraph tag="h2">Per Diem</PrintParagraph>
