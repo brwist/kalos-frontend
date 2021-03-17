@@ -2971,6 +2971,11 @@ export const loadEventsByFilter = async ({
     totalCount,
   };
 };
+
+export const loadEventById = async (eventId: number) => {
+  return await EventClientService.loadEvent(eventId);
+};
+
 export const loadEventsByFilterDeleted = async ({
   page,
   filter,
