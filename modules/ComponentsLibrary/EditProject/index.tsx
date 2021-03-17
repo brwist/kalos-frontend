@@ -1233,23 +1233,27 @@ export const EditProject: FC<Props> = ({
         variant="outlined"
         label={!checkedIn ? `Check In` : `Check Out`}
         onClick={() => {
-          const date = new Date();
-          let task = new ProjectTask().toObject() as ExtendedProjectTaskType;
+          if (!checkedIn) {
+            const date = new Date();
+            let taskNew = {
+              startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
+              endDate: '',
+              statusId: 2,
+              priorityId: 2,
+              startTime: format(new Date(date), 'HH-mm'),
+              endTime: format(addDays(new Date(date), 1), 'HH-mm'),
+              briefDescription: 'Auto generated task new',
+              externalId: loggedUserId,
+            } as ExtendedProjectTaskType;
 
-          task.startDate = format(new Date(date), 'yyyy-MM-dd HH-mm-ss');
-          task.endDate = '';
-          task.statusId = 2; // Starting in progress
-          task.priorityId = 2;
-          task.startTime = format(new Date(date), 'HH-mm');
-          task.endTime = format(addDays(new Date(date), 1), 'HH-mm');
-          task.briefDescription = 'Auto generated task';
-          task.externalId = loggedUserId;
+            alert('upserting task - see details in console log');
+            console.log('TASK CHECKED IN:', taskNew);
 
-          alert('upserting task - see details in console log');
-          console.log(task);
-
-          handleSaveTask(task);
-          toggleCheckedIn();
+            handleSaveTask(taskNew);
+            toggleCheckedIn();
+          } else {
+            console.log('Would have checked out');
+          }
         }}
         disabled={pendingCheckoutChange}
       />
