@@ -5,7 +5,7 @@ import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
 import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
 import LowIcon from '@material-ui/icons/Details';
-import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
+import { ProjectTask, Task } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -184,7 +184,7 @@ export const EditProject: FC<Props> = ({
   });
   const [event, setEvent] = useState<EventType>();
   const [editingProject, setEditingProject] = useState<boolean>(false);
-  const [checkedIn, setCheckedIn] = useState<boolean>(false);
+  const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
@@ -438,13 +438,11 @@ export const EditProject: FC<Props> = ({
       setPendingCheckoutDelete(pendingCheckoutDelete),
     [setPendingCheckoutDelete],
   );
-  const handleSetCheckedIn = useCallback(
-    (checkedIn: boolean) => setCheckedIn(checkedIn),
-    [setCheckedIn],
+  const handleSetCheckedInTask = useCallback(
+    (checkedIn: ExtendedProjectTaskType) => setCheckedInTask(checkedIn),
+    [setCheckedInTask],
   );
-  const toggleCheckedIn = () => {
-    handleSetCheckedIn(!checkedIn);
-  };
+
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
     [departments, loggedUserId],
@@ -1231,9 +1229,11 @@ export const EditProject: FC<Props> = ({
       />
       <Button
         variant="outlined"
-        label={!checkedIn ? `Check In` : `Check Out`}
+        label={!checkedInTask ? `Check In` : `Check Out`}
         onClick={() => {
-          if (!checkedIn) {
+          // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
+          // if there is then use that result to set it as checked in
+          if (!checkedInTask) {
             const date = new Date();
             let taskNew = {
               startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
@@ -1250,7 +1250,7 @@ export const EditProject: FC<Props> = ({
             console.log('TASK CHECKED IN:', taskNew);
 
             handleSaveTask(taskNew);
-            toggleCheckedIn();
+            setCheckedInTask(taskNew);
           } else {
             console.log('Would have checked out');
           }
