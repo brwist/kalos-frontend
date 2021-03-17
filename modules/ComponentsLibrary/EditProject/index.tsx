@@ -471,6 +471,7 @@ export const EditProject: FC<Props> = ({
       startTime,
       endDate,
       endTime,
+      checkedIn,
       ...formData
     }: ExtendedProjectTaskType) => {
       if (!event) return;
@@ -500,6 +501,7 @@ export const EditProject: FC<Props> = ({
         eventId: serviceCallId,
         startDate: `${startDate} ${startTime}:00`,
         endDate: `${endDate} ${endTime}:00`,
+        checkedIn: checkedIn,
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
       setLoaded(false);
