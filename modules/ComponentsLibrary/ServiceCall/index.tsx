@@ -392,6 +392,20 @@ export const ServiceCall: FC<Props> = props => {
         required: true,
       },
       {
+        name: 'timeStarted',
+        label: 'Time Started',
+        type: 'time',
+        required: true,
+      },
+      {
+        name: 'timeEnded',
+        label: 'Time Ended',
+        type: 'time',
+        required: true,
+      },
+    ],
+    [
+      {
         name: 'departmentId',
         label: 'Department',
         type: 'department',
@@ -401,6 +415,28 @@ export const ServiceCall: FC<Props> = props => {
         name: 'description',
         label: 'Description',
         multiline: true,
+      },
+    ],
+    [
+      {
+        name: 'isAllDay',
+        label: 'Is all-day?',
+        type: 'checkbox',
+      },
+      {
+        name: 'isLmpc',
+        label: 'Is LMPC?',
+        type: 'checkbox',
+      },
+      {
+        name: 'highPriority',
+        label: 'High priority?',
+        type: 'checkbox',
+      },
+      {
+        name: 'isResidential',
+        label: 'Is residential?',
+        type: 'checkbox',
       },
     ],
     [
