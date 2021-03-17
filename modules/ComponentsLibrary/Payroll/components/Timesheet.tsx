@@ -6,6 +6,7 @@ import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
+import PageviewIcon from '@material-ui/icons/Pageview';
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
 import { TimesheetLineType, makeFakeRows, UserType } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
@@ -16,6 +17,7 @@ import {
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
 import { PropertyService } from '@kalos-core/kalos-rpc/compiled-protos/property_pb_service';
+import { TimesheetSummary } from './TimesheetSummary';
 
 interface Props {
   departmentId: number;
@@ -44,7 +46,10 @@ export const Timesheet: FC<Props> = ({
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-
+  const [
+    timesheetSummaryToggle,
+    setTimesheetSummaryToggle,
+  ] = useState<TimesheetLineType>();
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,6 +123,13 @@ export const Timesheet: FC<Props> = ({
                       >
                         <Visibility />
                       </IconButton>,
+                      <IconButton
+                        key="summary"
+                        onClick={() => setTimesheetSummaryToggle(e)}
+                        size="small"
+                      >
+                        <PageviewIcon />
+                      </IconButton>,
                     ],
                   },
                 ];
@@ -133,6 +145,17 @@ export const Timesheet: FC<Props> = ({
             onClose={handleTogglePendingView(undefined)}
             startOnWeek={type === 'Payroll' || type === 'Manager'}
           />
+        </Modal>
+      )}
+      {timesheetSummaryToggle && (
+        <Modal open onClose={() => setTimesheetSummaryToggle(undefined)}>
+          <TimesheetSummary
+            userId={timesheetSummaryToggle.technicianUserId}
+            loggedUserId={loggedUser}
+            notReady={false}
+            onClose={() => setTimesheetSummaryToggle(undefined)}
+            username={timesheetSummaryToggle.technicianUserName}
+          ></TimesheetSummary>
         </Modal>
       )}
     </div>
