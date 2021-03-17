@@ -189,11 +189,9 @@ export const EditProject: FC<Props> = ({
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
-    console.log('Started loading event.');
     const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
-    console.log('Finished loading the event.');
     setEvent(event);
     setLoadingEvent(false);
   }, [setEvent, setLoadingEvent]);
@@ -202,55 +200,44 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading event in loadInit.');
         await loadEvent();
-        console.log('Loaded event in loadInit.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading statuses.');
         const statuses = await TaskClientService.loadProjectTaskStatuses();
         setStatuses(statuses);
-        console.log('Loaded statuses.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading priorities.');
         const priorities = await TaskClientService.loadProjectTaskPriorities();
         setPriorities(priorities);
-        console.log('Loading event in loadInit.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading departments.');
         const departments = await loadTimesheetDepartments();
         setDepartments(departments);
-        console.log('Loaded depts.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading user by id.');
         const loggedUser = await UserClientService.loadUserById(loggedUserId);
         setLoggedUser(loggedUser);
-        console.log('Loaded user by id.');
         resolve();
       }),
     );
 
     Promise.all(promises).then(() => {
-      console.log('Loaded everything.');
       setLoadedInit(true);
     });
   }, [
@@ -269,37 +256,28 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Started loading print data.');
         await loadPrintData();
-        console.log('Loaded print data.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Started loading project tasks.');
         const tasks = await EventClientService.loadProjectTasks(serviceCallId);
         setTasks(tasks);
         resolve();
-        console.log('Loaded project tasks.');
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Started loading cost report info.');
         let req = new CostReportInfo();
         req.setJobId(serviceCallId);
         const costReportList = await EventClientService.GetCostReportInfo(req);
 
         for await (let data of costReportList.getResultsList()) {
           timesheets = data.getTimesheetsList().map(line => line.toObject());
-          console.log('Loaded cost report info.');
         }
-        console.log(
-          costReportList.getResultsList().map(list => list.toObject()),
-        );
         setCostReportInfoList(costReportList);
 
         resolve();
@@ -313,7 +291,6 @@ export const EditProject: FC<Props> = ({
       timesheets.forEach(timesheet => (total = total + timesheet.hoursWorked));
       setTotalHoursWorked(total);
 
-      console.log('Loaded everything in load() function.');
       setLoading(false);
     });
   }, [setLoading, serviceCallId, setTasks]);
@@ -623,17 +600,14 @@ export const EditProject: FC<Props> = ({
   );
 
   const loadPrintData = useCallback(async () => {
-    console.log('Loading print data.');
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
     const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
     setLodgings(lodgings);
     const transactions = await loadTransactionsByEventId(serviceCallId);
-    console.log('Set transactions in the print data thingy');
     setTransactions(transactions);
     setPerDiems(resultsList);
-    console.log('Loaded print data.');
   }, [serviceCallId, setPerDiems, setLodgings]);
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
@@ -950,8 +924,6 @@ export const EditProject: FC<Props> = ({
                   timestamp,
                   vendor,
                 }) => {
-                  console.log('Transactions:', transactions);
-                  console.log('transaction cost ctr:', costCenter);
                   return [
                     department ? (
                       <>
