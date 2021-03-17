@@ -1244,6 +1244,7 @@ export const EditProject: FC<Props> = ({
               endTime: format(addDays(new Date(date), 1), 'HH-mm'),
               briefDescription: 'Auto generated task new',
               externalId: loggedUserId,
+              checkedIn: true,
             } as ExtendedProjectTaskType;
 
             alert('upserting task - see details in console log');
