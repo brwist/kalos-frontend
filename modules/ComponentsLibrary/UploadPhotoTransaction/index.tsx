@@ -188,7 +188,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [
       {
         name: 'eventId',
-        label: 'Job ID,',
+        label: 'Job ID',
         type: 'eventId',
         required: true,
       },
@@ -211,7 +211,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [
       {
         name: 'costCenter',
-        label: 'Purchase Type,',
+        label: 'Purchase Type',
         required: true,
         options: costCenterList,
       },
