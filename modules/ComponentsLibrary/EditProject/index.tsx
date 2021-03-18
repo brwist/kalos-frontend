@@ -75,6 +75,7 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { Field } from '../Field';
 
 export interface Props {
   serviceCallId: number;
@@ -185,7 +186,19 @@ export const EditProject: FC<Props> = ({
   const [event, setEvent] = useState<EventType>();
   const [editingProject, setEditingProject] = useState<boolean>(false);
   const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
+  const [currentCheckedInTasks, setCurrentCheckedInTasks] = useState<
+    ExtendedProjectTaskType[]
+  >();
+  const [briefDescription, setBriefDescription] = useState<string>(
+    'Automatically set description',
+  ); // sets the checked in task's brief description field
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
+  const handleBriefDescriptionChange = useCallback(
+    value => {
+      setBriefDescription(value);
+    },
+    [setBriefDescription],
+  );
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
@@ -253,6 +266,22 @@ export const EditProject: FC<Props> = ({
     let timesheets: TimesheetLineType[] = [];
 
     setLoading(true);
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        let taskReq = new ProjectTask();
+        taskReq.setCheckedIn(true);
+        taskReq.setCreatorUserId(loggedUserId);
+        console.log('Task obj:', taskReq.toObject());
+        let tasksList = await TaskClientService.BatchGetProjectTasks(taskReq);
+        let tasks = tasksList.getResultsList().map(task => {
+          return { ...task } as ExtendedProjectTaskType;
+        });
+        setCurrentCheckedInTasks(tasks);
+        console.log('Project tasks found:', tasks);
+        resolve();
+      }),
+    );
 
     promises.push(
       new Promise<void>(async resolve => {
@@ -1216,7 +1245,9 @@ export const EditProject: FC<Props> = ({
               priorityId: 2,
               startTime: format(new Date(date), 'HH-mm'),
               endTime: format(addDays(new Date(date), 1), 'HH-mm'),
-              briefDescription: 'Auto generated task new',
+              briefDescription: briefDescription
+                ? briefDescription
+                : 'Auto generated task',
               externalId: loggedUserId,
               checkedIn: true,
             } as ExtendedProjectTaskType;
@@ -1232,6 +1263,16 @@ export const EditProject: FC<Props> = ({
         }}
         disabled={pendingCheckoutChange}
       />
+      {!checkedInTask && (
+        <Field
+          name="Brief Description for Check-in"
+          onChange={changedText => {
+            handleBriefDescriptionChange(changedText.toString());
+          }}
+          type="text"
+          value={briefDescription}
+        />
+      )}
       <Tabs
         defaultOpenIdx={0}
         tabs={[
