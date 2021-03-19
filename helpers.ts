@@ -1540,7 +1540,7 @@ export const getRowDatesFromPerDiemTripInfos = async (trips: TripInfo[]) => {
         row_id: id,
       };
       if (!res.includes(obj)) res.push(obj);
-    } catch (err: any) {
+    } catch (err) {
       console.error(
         'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
         err,
@@ -1583,7 +1583,7 @@ export const getRowDatesFromPerDiemIds = async (ids: number[]) => {
         row_id: id,
       };
       if (!res.includes(obj)) res.push(obj);
-    } catch (err: any) {
+    } catch (err) {
       console.error(
         'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
         err,
@@ -1849,7 +1849,7 @@ export const getTripDistance = async (origin: string, destination: string) => {
     distanceMiles = metersToMiles(distanceMeters);
 
     return distanceMiles;
-  } catch (err: any) {
+  } catch (err) {
     console.error(
       'An error occurred while calculating the trip distance: ' + err,
     );
@@ -1905,7 +1905,7 @@ export const upsertTrip = async (
     return await PerDiemClientService[
       data.id != 0 && data.id != null ? 'UpdateTrip' : 'CreateTrip'
     ](req);
-  } catch (err: any) {
+  } catch (err) {
     console.error('Error occurred trying to save trip: ' + err);
   }
 };
@@ -1967,7 +1967,7 @@ export const getPerDiemRowIds = async (date?: Date) => {
     let pd = new PerDiem();
     pd.setDateStarted(lastSaturday);
     perDiemRes = await PerDiemClientService.BatchGet(pd);
-  } catch (error: any) {
+  } catch (error) {
     let err = String(error);
     if (
       err.startsWith(
