@@ -2990,6 +2990,36 @@ export const loadEventsByFilter = async ({
   };
 };
 
+export const loadProjects = async () => {
+  const req = new Event();
+  req.setNotEqualsList(['DepartmentId']);
+  req.setPageNumber(0);
+  req.setOrderBy('date_started');
+  req.setOrderDir('ASC');
+  const results = [];
+  const response = await EventClientService.BatchGet(req);
+  const totalCount = response.getTotalCount();
+  const resultsList = response.getResultsList().map(item => item.toObject());
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await EventClientService.BatchGet(req))
+          .getResultsList()
+          .map(item => item.toObject());
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
+};
+
 export const loadEventById = async (eventId: number) => {
   return await EventClientService.loadEvent(eventId);
 };
