@@ -1,6 +1,6 @@
 import uniq = require('lodash/uniq'); // Fixing issue with lodash and not transpiling
-import sortBy from 'lodash/sortBy';
-import compact from 'lodash/compact';
+const sortBy = require('lodash/sortBy');
+const compact = require('lodash/compact');
 import { parseISO } from 'date-fns/esm';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import {
