@@ -286,7 +286,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                 ...(isSpiffs
                   ? [
                       {
-                        label: 'Spiffs',
+                        label: 'Spiffs Weekly',
                         content: (
                           <Spiffs
                             employeeId={filter.employeeId}
@@ -295,6 +295,25 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             loggedUserId={userID}
                             departmentId={filter.departmentId}
                             key={filter.departmentId + 'key'}
+                            option="Weekly"
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(isSpiffs
+                  ? [
+                      {
+                        label: 'Spiffs Monthly',
+                        content: (
+                          <Spiffs
+                            employeeId={filter.employeeId}
+                            week={filter.week}
+                            role={role}
+                            loggedUserId={userID}
+                            departmentId={filter.departmentId}
+                            key={filter.departmentId + 'key'}
+                            option="Monthly"
                           />
                         ),
                       },

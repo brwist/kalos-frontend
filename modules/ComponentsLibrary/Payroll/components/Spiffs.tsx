@@ -31,6 +31,7 @@ interface Props {
   role: string;
   loggedUserId: number;
   departmentId: number;
+  option: string;
 }
 
 export const Spiffs: FC<Props> = ({
@@ -39,6 +40,7 @@ export const Spiffs: FC<Props> = ({
   role,
   loggedUserId,
   departmentId,
+  option,
 }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -62,6 +64,7 @@ export const Spiffs: FC<Props> = ({
       technicianUserID: employeeId,
       role,
       departmentId,
+      option: option === 'Monthly' ? 'Monthly' : 'Weekly',
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
