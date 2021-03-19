@@ -17,6 +17,7 @@ import {
   upsertFile,
   upsertTransactionDocument,
   SUBJECT_TAGS,
+  SUBJECT_TAGS_TRANSACTIONS,
   UserClientService,
   timestamp,
 } from '../../../helpers';
