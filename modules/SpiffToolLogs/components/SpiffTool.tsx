@@ -86,6 +86,7 @@ export interface Props {
   needsManagerAction?: boolean;
   needsPayrollAction?: boolean;
   needsAuditAction?: boolean;
+  option?: string;
   role?: string;
   onClose?: () => void;
 }
@@ -94,7 +95,8 @@ export const SpiffTool: FC<Props> = ({
   type,
   loggedUserId,
   ownerId,
-  kind = MONTHLY,
+  option,
+  kind = option === WEEKLY ? WEEKLY : MONTHLY,
   week,
   needsManagerAction,
   needsPayrollAction,

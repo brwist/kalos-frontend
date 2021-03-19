@@ -127,6 +127,7 @@ export const CostSummary: FC<Props> = ({
     timesheetReq.setIsActive(1);
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
+    timesheetReq.setWithoutLimit(false);
 
     if (notReady) {
       timesheetReq.setUserApprovalDatetime(NULL_TIME);
@@ -138,11 +139,12 @@ export const CostSummary: FC<Props> = ({
 
       results = (await client.BatchGetManager(timesheetReq)).getResultsList();
     } else {
-      timesheetReq.setAdminApprovalUserId(0);
       timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
       timesheetReq.setFieldMaskList(['PayrollProcessed']);
       results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
     }
+    console.log({ timesheetReq });
+    console.log(results);
     setTimesheets(results);
     let total = 0;
     for (let i = 0; i < results.length; i++) {

@@ -711,6 +711,7 @@ export interface GetPendingSpiffConfig {
   endDate?: string;
   role?: string;
   departmentId?: number;
+  option?: string;
 }
 
 export const GetPendingTasks = (billableType: string) => {
@@ -768,7 +769,11 @@ export const GetPendingTasks = (billableType: string) => {
     if (config.startDate && config.endDate) {
       req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
     }
-
+    if (config.option) {
+      const spiffType = new SpiffType();
+      spiffType.setType(config.option);
+      req.setSpiffType(spiffType);
+    }
     if (config.departmentId) {
       let u = new User();
       u.setEmployeeDepartmentId(config.departmentId);
