@@ -3672,7 +3672,7 @@ export const loadTaskEventsByFilter = async ({
     );
   }
   if (withTechnicianNames) {
-    const technicianIds = uniq(
+    const technicianIds: number[] = uniq(
       compact(results.map(({ technicianUserId }) => technicianUserId)),
     );
     const technicianNames = await loadUsersByIds(technicianIds);
