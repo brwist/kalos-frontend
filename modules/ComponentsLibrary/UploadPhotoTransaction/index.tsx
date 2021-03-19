@@ -87,7 +87,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     vendor: '',
     cost: 0,
     tag: (
-      SUBJECT_TAGS.find(({ label }) => label === defaultTag) || {
+      SUBJECT_TAGS_TRANSACTIONS.find(({ label }) => label === defaultTag) || {
         value: '',
       }
     ).value,
@@ -162,13 +162,19 @@ export const UploadPhotoTransaction: FC<Props> = ({
   );
   console.log({ costCenterList });
 
+  if (SUBJECT_TAGS_TRANSACTIONS === undefined) {
+    console.error(
+      'SUBJECT_TAGS_TRANSACTIONS is undefined. You should try manually deleting the .cache folder and compiling helpers.ts, then try again.',
+    );
+  }
+
   const SCHEMA: Schema<Entry> = [
     [
       {
         name: 'tag',
         label: 'Tag',
         required: true,
-        options: SUBJECT_TAGS,
+        options: SUBJECT_TAGS_TRANSACTIONS,
       },
     ],
     [
