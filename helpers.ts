@@ -2459,15 +2459,27 @@ export const loadPromptPaymentData = async (month: string) => {
     // pendingAward
   });
 
-  return sortBy(Object.values(data), ({ customerName }) =>
-    customerName.toLowerCase().trim(),
-  ).map(({ averageDaysToPay, ...item }) => ({
-    ...item,
-    averageDaysToPay:
-      item.paidInvoices === 0
-        ? 0
-        : Math.round(averageDaysToPay / item.paidInvoices),
-  }));
+  return sortBy(
+    Object.values(data),
+    ({ customerName }: { customerName: string }) =>
+      customerName.toLowerCase().trim(),
+  ).map(
+    ({
+      averageDaysToPay,
+      ...item
+    }: {
+      averageDaysToPay: number;
+      promptPaymentData: PromptPaymentData;
+    }) => ({
+      ...item,
+      averageDaysToPay:
+        // @ts-ignore
+        item.paidInvoices === 0
+          ? 0
+          : // @ts-ignore
+            Math.round(averageDaysToPay / item.paidInvoices),
+    }),
+  );
 };
 
 export type LoadSpiffReportByFilter = {
