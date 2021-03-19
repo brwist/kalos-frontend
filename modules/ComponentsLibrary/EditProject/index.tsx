@@ -51,6 +51,7 @@ import {
   padWithZeroes,
   TransactionClientService,
   TimesheetLineType,
+  loadProjects,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -142,10 +143,11 @@ export const SCHEMA_PROJECT: Schema<EventType> = [
 ];
 
 export const EditProject: FC<Props> = ({
-  serviceCallId,
+  serviceCallId: serviceCallIdInit,
   loggedUserId,
   onClose,
 }) => {
+  const [serviceCallId, setServiceCallId] = useState<number>(serviceCallIdInit);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -184,6 +186,7 @@ export const EditProject: FC<Props> = ({
     priorityId: 0,
   });
   const [event, setEvent] = useState<EventType>();
+  const [projects, setProjects] = useState<EventType[]>([]);
   const [editingProject, setEditingProject] = useState<boolean>(false);
   const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
   const [currentCheckedInTasks, setCurrentCheckedInTasks] = useState<
@@ -207,12 +210,23 @@ export const EditProject: FC<Props> = ({
     );
     setEvent(event);
     setLoadingEvent(false);
-  }, [setEvent, setLoadingEvent]);
+  }, [setEvent, setLoadingEvent, serviceCallId]);
   const loadInit = useCallback(async () => {
     let promises = [];
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Loading projects');
+        const projects = await loadProjects();
+        setProjects(projects);
+        console.log('Loaded projects', projects);
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        console.log('Loading event in loadInit.');
         await loadEvent();
         resolve();
       }),
@@ -255,11 +269,13 @@ export const EditProject: FC<Props> = ({
     });
   }, [
     loadEvent,
+    setProjects,
     setStatuses,
     setPriorities,
     setDepartments,
     setLoadedInit,
     loggedUserId,
+    serviceCallId,
   ]);
   const load = useCallback(async () => {
     let promises = [];
@@ -644,7 +660,7 @@ export const EditProject: FC<Props> = ({
     setPrintStatus('loading');
     await loadPrintData();
     setPrintStatus('loaded');
-  }, [setPrintStatus, loadPrintData]);
+  }, [setPrintStatus, loadPrintData, serviceCallId]);
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
@@ -1386,6 +1402,49 @@ export const EditProject: FC<Props> = ({
                 onAdd={handleAddTask}
               />
             ) : null,
+          },
+          {
+            label: 'Projects Gantt Chart',
+            content:
+              projects.length > 0 ? (
+                <GanttChart
+                  events={projects.map(task => {
+                    const {
+                      id,
+                      description,
+                      dateStarted: dateStart,
+                      dateEnded: dateEnd,
+                      logJobStatus,
+                      color,
+                    } = task;
+                    const [startDate, startHour] = dateStart.split(' ');
+                    const [endDate, endHour] = dateEnd.split(' ');
+                    return {
+                      id,
+                      startDate,
+                      endDate,
+                      startHour,
+                      endHour,
+                      notes: description,
+                      statusColor: '#' + color,
+                      onClick: () => {
+                        setServiceCallId(id);
+                        setLoaded(false);
+                        setLoadedInit(false);
+                        // load();
+                      },
+                    };
+                  })}
+                  startDate={projects[0].dateStarted.substr(0, 10)}
+                  endDate={projects[projects.length - 1].dateEnded.substr(
+                    0,
+                    10,
+                  )}
+                  loading={loading || loadingEvent}
+                />
+              ) : (
+                <div />
+              ),
           },
         ]}
       />
