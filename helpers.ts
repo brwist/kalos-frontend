@@ -8,6 +8,7 @@ import {
   URLObject,
   FileObject,
   SUBJECT_TAGS,
+  SUBJECT_TAGS_TRANSACTIONS,
 } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
@@ -3861,6 +3862,7 @@ function getDateTimeArgs(str: string): dateTimeRes {
 
 export {
   SUBJECT_TAGS,
+  SUBJECT_TAGS_TRANSACTIONS,
   getDateArgs,
   getDateTimeArgs,
   cfURL,
