@@ -20,6 +20,7 @@ interface props {
   userName: string;
   isManager: boolean;
   role?: RoleType;
+  loggedUserId: number;
 }
 
 interface state {
@@ -208,6 +209,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
             fetchFn={this.fetchAllTxns}
             toggleLoading={this.toggleLoading}
             isManager={this.props.isManager}
+            loggedUserId={this.props.loggedUserId}
           />
         ))}
         {txns.length === 0 && !isLoading && (
