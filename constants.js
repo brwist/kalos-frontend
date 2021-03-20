@@ -148,6 +148,7 @@ exports.ELEVATION = {
     modals: '0px 20px 32px #00000052'
 };
 exports.ENDPOINT = 'https://core-dev.kalosflorida.com:8443';
+//export const ENDPOINT = 'https://dev-core.kalosflorida.com';
 exports.QUOTE_PART_AVAILABILITY = {
     1: 'local',
     2: 'next day',
