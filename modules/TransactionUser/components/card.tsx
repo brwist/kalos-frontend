@@ -15,7 +15,11 @@ import {
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import {
+  TransactionAccount,
+  TransactionAccountClient,
+  TransactionAccountList,
+} from '@kalos-core/kalos-rpc/TransactionAccount';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { GalleryData, AltGallery } from '../../AltGallery/main';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
@@ -30,6 +34,7 @@ import {
   upsertTransactionDocument,
   S3ClientService,
   getFileExt,
+  UserClientService,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
@@ -41,7 +46,9 @@ import { FileGallery } from '../../ComponentsLibrary/FileGallery';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import './card.css';
 import { parseISO } from 'date-fns';
-
+import { IconButton } from '@material-ui/core';
+import AddCircleOutlineTwoToneIcon from '@material-ui/icons/AddCircleOutlineTwoTone';
+import { UploadPhotoTransaction } from '../../ComponentsLibrary/UploadPhotoTransaction';
 interface props {
   txn: Transaction.AsObject;
   userDepartmentID: number;
@@ -51,12 +58,15 @@ interface props {
   isManager?: boolean;
   fetchFn(): void;
   toggleLoading(cb?: () => void): Promise<void>;
+  loggedUserId: number;
 }
 
 interface state {
   txn: Transaction.AsObject;
   pendingAddFromGallery: boolean;
   pendingAddFromSingleFile: boolean;
+  uploadPhotoTransactionOpen: boolean;
+  costCenters: TransactionAccountList;
 }
 
 const hardcodedList = [
@@ -97,6 +107,8 @@ export class TxnCard extends React.PureComponent<props, state> {
       txn: props.txn,
       pendingAddFromGallery: false,
       pendingAddFromSingleFile: false,
+      uploadPhotoTransactionOpen: false,
+      costCenters: new TransactionAccountList(),
     };
     this.EmailClient = new EmailClient(ENDPOINT);
     this.TxnClient = new TransactionClient(ENDPOINT);
@@ -191,7 +203,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           try {
             const d = new TransactionDocument();
             d.setTransactionId(this.state.txn.id);
-            const res = await this.DocsClient.Get(d);
+            // const res = await this.DocsClient.Get(d);
           } catch (err) {
             throw 'Please attach a photo to this receipt before submitting';
           }
@@ -227,6 +239,10 @@ export class TxnCard extends React.PureComponent<props, state> {
               type: 'receipts',
               recipient: 'accounts@kalosflorida.com',
               body: mailBody,
+              subject: 'Receipts',
+              from: await UserClientService.getEmailByUserID(
+                this.props.loggedUserId,
+              ),
             };
             await this.EmailClient.sendMail(mailConfig);
           }
@@ -526,6 +542,20 @@ export class TxnCard extends React.PureComponent<props, state> {
       return res.description.replace('rejected', '');
     }
   };
+
+  toggleUploadPhotoTransactionOpen = () => {
+    this.setState({
+      uploadPhotoTransactionOpen: !this.state.uploadPhotoTransactionOpen,
+    });
+  };
+
+  setCostCenters = async () => {
+    const req = new TransactionAccount();
+    req.setIsActive(1);
+    const results = await new TransactionAccountClient(ENDPOINT).BatchGet(req);
+    this.setState({ costCenters: results });
+  };
+
   render() {
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const t = txn;
@@ -534,6 +564,20 @@ export class TxnCard extends React.PureComponent<props, state> {
     const deriveCallout = this.deriveCallout(t);
     return (
       <>
+        {this.state.uploadPhotoTransactionOpen && (
+          <Modal open onClose={this.toggleUploadPhotoTransactionOpen}>
+            <UploadPhotoTransaction
+              loggedUserId={this.props.loggedUserId}
+              bucket="kalos-pre-transactions"
+              onClose={this.toggleUploadPhotoTransactionOpen}
+              costCenters={
+                this.state.costCenters
+                  ? this.state.costCenters
+                  : new TransactionAccountList()
+              }
+            />
+          </Modal>
+        )}
         <Paper
           elevation={4}
           style={{
@@ -548,6 +592,15 @@ export class TxnCard extends React.PureComponent<props, state> {
             subtitle={subheader}
             asideContent={
               <div className="TransactionUser_Actions">
+                <IconButton
+                  aria-label="+"
+                  size="medium"
+                  onClick={() => {
+                    this.toggleUploadPhotoTransactionOpen();
+                  }}
+                >
+                  <AddCircleOutlineTwoToneIcon />
+                </IconButton>
                 <Button
                   label="Upload Photo"
                   onClick={() => {
