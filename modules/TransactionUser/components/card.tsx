@@ -595,6 +595,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                 <IconButton
                   aria-label="+"
                   size="medium"
+                  defaultValue=""
                   onClick={() => {
                     this.toggleUploadPhotoTransactionOpen();
                   }}
