@@ -148,7 +148,11 @@ export const Timesheet: FC<Props> = ({
         </Modal>
       )}
       {timesheetSummaryToggle && (
-        <Modal open onClose={() => setTimesheetSummaryToggle(undefined)}>
+        <Modal
+          open
+          onClose={() => setTimesheetSummaryToggle(undefined)}
+          fullScreen
+        >
           <TimesheetSummary
             userId={timesheetSummaryToggle.technicianUserId}
             loggedUserId={loggedUser}
