@@ -66,6 +66,7 @@ export const TimesheetSummary: FC<Props> = ({
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
     timesheetReq.setIsActive(1);
+    timesheetReq.setWithoutLimit(true);
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
 
@@ -93,8 +94,6 @@ export const TimesheetSummary: FC<Props> = ({
         results[i].toObject().referenceNumber != '' &&
         results[i].toObject().referenceNumber != undefined
       ) {
-        console.log('Its a job');
-
         let tempJob = {
           jobId: results[i].toObject().referenceNumber,
           actions: [
@@ -111,19 +110,30 @@ export const TimesheetSummary: FC<Props> = ({
             },
           ],
         };
-        let found = false;
+        let foundJob = false;
+        let foundCode = false;
         for (let j = 0; j < tempJobs.length; j++) {
-          if (tempJobs[j].jobId === tempJob.jobId) {
-            tempJobs[j].actions.push(tempJob.actions[0]);
-            found = true;
-            break;
+          for (let l = 0; l < tempJobs[j].actions.length; l++) {
+            if (tempJobs[j].jobId === tempJob.jobId) {
+              foundJob = true;
+              if (
+                tempJob.actions[0].classCode ===
+                tempJobs[j].actions[l].classCode
+              ) {
+                tempNoJobs[j].actions[l].time += tempJob.actions[0].time;
+                foundCode = true;
+                break;
+              }
+            }
+          }
+          if (foundJob === true && foundCode === false) {
+            tempNoJobs[j].actions.push(tempJob.actions[0]);
           }
         }
-        if (found === false) {
+        if (foundJob === false && foundCode === false) {
           tempJobs.push(tempJob);
         }
       } else {
-        console.log('Its a nojob');
         let tempNoJob = {
           jobId: results[i].toObject().referenceNumber,
           actions: [
@@ -146,7 +156,6 @@ export const TimesheetSummary: FC<Props> = ({
           for (let l = 0; l < tempNoJobs[j].actions.length; l++) {
             if (tempNoJobs[j].actions[l].day === tempNoJob.actions[0].day) {
               foundDay = true;
-              console.log('We have actions in the same day');
               if (
                 tempNoJob.actions[0].classCode ===
                 tempNoJobs[j].actions[l].classCode
@@ -167,7 +176,6 @@ export const TimesheetSummary: FC<Props> = ({
         }
       }
     }
-    console.log(tempNoJobs);
     setTimesheetsJobs(tempJobs);
     setTimesheetsNoJobs(tempNoJobs);
   }, [notReady, userId]);
@@ -183,7 +191,6 @@ export const TimesheetSummary: FC<Props> = ({
       load();
     }
     if (!loaded) {
-      console.log('creating da map');
       let jobReports = [];
       if (timesheetsJobs != undefined) {
         for (let i = 0; i < timesheetsJobs?.length; i++) {
