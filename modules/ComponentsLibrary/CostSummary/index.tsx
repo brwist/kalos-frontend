@@ -235,6 +235,7 @@ export const CostSummary: FC<Props> = ({
   useEffect(() => {
     load();
   }, [load]);
+  console.log('Loaded: ', loaded);
   return loaded ? (
     <Form<Entry>
       onSave={handleSubmit}
