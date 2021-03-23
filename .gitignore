@@ -10,3 +10,4 @@ coverage
 helpers.js
 .DS_Store
 .vscode
+constants.js
