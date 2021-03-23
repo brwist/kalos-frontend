@@ -87,6 +87,7 @@ import TripInfoTable from './TripInfoTable/examples';
 import TripSummary from './TripSummary/examples';
 import TripViewModal from './TripViewModal/examples';
 import UploadPhoto from './UploadPhoto/examples';
+import UploadPhotoTransaction from './UploadPhotoTransaction/examples';
 import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
 
@@ -179,6 +180,7 @@ const COMPONENTS = {
   TripSummary,
   TripViewModal,
   UploadPhoto,
+  UploadPhotoTransaction,
   WarrantyReport,
   WeekPicker,
 };

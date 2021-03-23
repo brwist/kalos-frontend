@@ -1,6 +1,6 @@
 import uniq = require('lodash/uniq'); // Fixing issue with lodash and not transpiling
-import sortBy from 'lodash/sortBy';
-import compact from 'lodash/compact';
+const sortBy = require('lodash/sortBy');
+const compact = require('lodash/compact');
 import { parseISO } from 'date-fns/esm';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import {
@@ -8,6 +8,7 @@ import {
   URLObject,
   FileObject,
   SUBJECT_TAGS,
+  SUBJECT_TAGS_TRANSACTIONS,
 } from '@kalos-core/kalos-rpc/S3File';
 import { File, FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
@@ -1285,6 +1286,7 @@ export const upsertEventTask = async ({
   startDate,
   endDate,
   priorityId,
+  checkedIn,
 }: Partial<ProjectTaskType>) => {
   const req = new ProjectTask();
   const fieldMaskList: string[] = ['ExternalCode', 'ExternalId', 'TimeCreated'];
@@ -1327,6 +1329,10 @@ export const upsertEventTask = async ({
   if (priorityId) {
     req.setPriorityId(priorityId);
     fieldMaskList.push('PriorityId');
+  }
+  if (checkedIn != undefined) {
+    req.setCheckedIn(checkedIn);
+    fieldMaskList.push('CheckedIn');
   }
   req.setFieldMaskList(fieldMaskList);
   await TaskClientService[id ? 'UpdateProjectTask' : 'CreateProjectTask'](req);
@@ -1539,7 +1545,7 @@ export const getRowDatesFromPerDiemTripInfos = async (trips: TripInfo[]) => {
         row_id: id,
       };
       if (!res.includes(obj)) res.push(obj);
-    } catch (err: any) {
+    } catch (err) {
       console.error(
         'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
         err,
@@ -1582,7 +1588,7 @@ export const getRowDatesFromPerDiemIds = async (ids: number[]) => {
         row_id: id,
       };
       if (!res.includes(obj)) res.push(obj);
-    } catch (err: any) {
+    } catch (err) {
       console.error(
         'Error in promise for get row dates from per diem IDs (Verify Per Diem exists): ',
         err,
@@ -1848,7 +1854,7 @@ export const getTripDistance = async (origin: string, destination: string) => {
     distanceMiles = metersToMiles(distanceMeters);
 
     return distanceMiles;
-  } catch (err: any) {
+  } catch (err) {
     console.error(
       'An error occurred while calculating the trip distance: ' + err,
     );
@@ -1904,7 +1910,7 @@ export const upsertTrip = async (
     return await PerDiemClientService[
       data.id != 0 && data.id != null ? 'UpdateTrip' : 'CreateTrip'
     ](req);
-  } catch (err: any) {
+  } catch (err) {
     console.error('Error occurred trying to save trip: ' + err);
   }
 };
@@ -1966,7 +1972,7 @@ export const getPerDiemRowIds = async (date?: Date) => {
     let pd = new PerDiem();
     pd.setDateStarted(lastSaturday);
     perDiemRes = await PerDiemClientService.BatchGet(pd);
-  } catch (error: any) {
+  } catch (error) {
     let err = String(error);
     if (
       err.startsWith(
@@ -2458,15 +2464,27 @@ export const loadPromptPaymentData = async (month: string) => {
     // pendingAward
   });
 
-  return sortBy(Object.values(data), ({ customerName }) =>
-    customerName.toLowerCase().trim(),
-  ).map(({ averageDaysToPay, ...item }) => ({
-    ...item,
-    averageDaysToPay:
-      item.paidInvoices === 0
-        ? 0
-        : Math.round(averageDaysToPay / item.paidInvoices),
-  }));
+  return sortBy(
+    Object.values(data),
+    ({ customerName }: { customerName: string }) =>
+      customerName.toLowerCase().trim(),
+  ).map(
+    ({
+      averageDaysToPay,
+      ...item
+    }: {
+      averageDaysToPay: number;
+      promptPaymentData: PromptPaymentData;
+    }) => ({
+      ...item,
+      averageDaysToPay:
+        // @ts-ignore
+        item.paidInvoices === 0
+          ? 0
+          : // @ts-ignore
+            Math.round(averageDaysToPay / item.paidInvoices),
+    }),
+  );
 };
 
 export type LoadSpiffReportByFilter = {
@@ -2975,6 +2993,36 @@ export const loadEventsByFilter = async ({
     results,
     totalCount,
   };
+};
+
+export const loadProjects = async () => {
+  const req = new Event();
+  req.setNotEqualsList(['DepartmentId']);
+  req.setPageNumber(0);
+  req.setOrderBy('date_started');
+  req.setOrderDir('ASC');
+  const results = [];
+  const response = await EventClientService.BatchGet(req);
+  const totalCount = response.getTotalCount();
+  const resultsList = response.getResultsList().map(item => item.toObject());
+  results.push(...resultsList);
+  if (totalCount > resultsList.length) {
+    const batchesAmount = Math.ceil(
+      (totalCount - resultsList.length) / resultsList.length,
+    );
+    const batchResults = await Promise.all(
+      Array.from(Array(batchesAmount)).map(async (_, idx) => {
+        req.setPageNumber(idx + 1);
+        return (await EventClientService.BatchGet(req))
+          .getResultsList()
+          .map(item => item.toObject());
+      }),
+    );
+    results.push(
+      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
+    );
+  }
+  return results;
 };
 
 export const loadEventById = async (eventId: number) => {
@@ -3659,7 +3707,7 @@ export const loadTaskEventsByFilter = async ({
     );
   }
   if (withTechnicianNames) {
-    const technicianIds = uniq(
+    const technicianIds: number[] = uniq(
       compact(results.map(({ technicianUserId }) => technicianUserId)),
     );
     const technicianNames = await loadUsersByIds(technicianIds);
@@ -3861,6 +3909,7 @@ function getDateTimeArgs(str: string): dateTimeRes {
 
 export {
   SUBJECT_TAGS,
+  SUBJECT_TAGS_TRANSACTIONS,
   getDateArgs,
   getDateTimeArgs,
   cfURL,
