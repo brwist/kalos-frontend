@@ -195,7 +195,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [
       {
         name: 'eventId',
-        label: 'Job ID',
+        label: 'Job Number',
         type: 'eventId',
         required: true,
       },
