@@ -5,7 +5,7 @@ import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
 import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
 import LowIcon from '@material-ui/icons/Details';
-import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
+import { ProjectTask, Task } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -51,6 +51,7 @@ import {
   padWithZeroes,
   TransactionClientService,
   TimesheetLineType,
+  loadProjects,
 } from '../../../helpers';
 import {
   PROJECT_TASK_STATUS_COLORS,
@@ -75,6 +76,7 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { Field } from '../Field';
 
 export interface Props {
   serviceCallId: number;
@@ -141,10 +143,11 @@ export const SCHEMA_PROJECT: Schema<EventType> = [
 ];
 
 export const EditProject: FC<Props> = ({
-  serviceCallId,
+  serviceCallId: serviceCallIdInit,
   loggedUserId,
   onClose,
 }) => {
+  const [serviceCallId, setServiceCallId] = useState<number>(serviceCallIdInit);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -183,83 +186,96 @@ export const EditProject: FC<Props> = ({
     priorityId: 0,
   });
   const [event, setEvent] = useState<EventType>();
+  const [projects, setProjects] = useState<EventType[]>([]);
   const [editingProject, setEditingProject] = useState<boolean>(false);
-  const [checkedIn, setCheckedIn] = useState<boolean>(false);
+  const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
+  const [currentCheckedInTasks, setCurrentCheckedInTasks] = useState<
+    ExtendedProjectTaskType[]
+  >();
+  const [briefDescription, setBriefDescription] = useState<string>(
+    'Automatically set description',
+  ); // sets the checked in task's brief description field
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
+  const handleBriefDescriptionChange = useCallback(
+    value => {
+      setBriefDescription(value);
+    },
+    [setBriefDescription],
+  );
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
-    console.log('Started loading event.');
     const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
-    console.log('Finished loading the event.');
     setEvent(event);
     setLoadingEvent(false);
-  }, [setEvent, setLoadingEvent]);
+  }, [setEvent, setLoadingEvent, serviceCallId]);
   const loadInit = useCallback(async () => {
     let promises = [];
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Loading projects');
+        const projects = await loadProjects();
+        setProjects(projects);
+        console.log('Loaded projects', projects);
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
         console.log('Loading event in loadInit.');
         await loadEvent();
-        console.log('Loaded event in loadInit.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading statuses.');
         const statuses = await TaskClientService.loadProjectTaskStatuses();
         setStatuses(statuses);
-        console.log('Loaded statuses.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading priorities.');
         const priorities = await TaskClientService.loadProjectTaskPriorities();
         setPriorities(priorities);
-        console.log('Loading event in loadInit.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading departments.');
         const departments = await loadTimesheetDepartments();
         setDepartments(departments);
-        console.log('Loaded depts.');
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Loading user by id.');
         const loggedUser = await UserClientService.loadUserById(loggedUserId);
         setLoggedUser(loggedUser);
-        console.log('Loaded user by id.');
         resolve();
       }),
     );
 
     Promise.all(promises).then(() => {
-      console.log('Loaded everything.');
       setLoadedInit(true);
     });
   }, [
     loadEvent,
+    setProjects,
     setStatuses,
     setPriorities,
     setDepartments,
     setLoadedInit,
     loggedUserId,
+    serviceCallId,
   ]);
   const load = useCallback(async () => {
     let promises = [];
@@ -269,37 +285,44 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Started loading print data.');
-        await loadPrintData();
-        console.log('Loaded print data.');
+        let taskReq = new ProjectTask();
+        taskReq.setCheckedIn(true);
+        taskReq.setCreatorUserId(loggedUserId);
+        console.log('Task obj:', taskReq.toObject());
+        let tasksList = await TaskClientService.BatchGetProjectTasks(taskReq);
+        let tasks = tasksList.getResultsList().map(task => {
+          return { ...task } as ExtendedProjectTaskType;
+        });
+        setCurrentCheckedInTasks(tasks);
+        console.log('Project tasks found:', tasks);
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Started loading project tasks.');
+        await loadPrintData();
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
         const tasks = await EventClientService.loadProjectTasks(serviceCallId);
         setTasks(tasks);
         resolve();
-        console.log('Loaded project tasks.');
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        console.log('Started loading cost report info.');
         let req = new CostReportInfo();
         req.setJobId(serviceCallId);
         const costReportList = await EventClientService.GetCostReportInfo(req);
 
         for await (let data of costReportList.getResultsList()) {
           timesheets = data.getTimesheetsList().map(line => line.toObject());
-          console.log('Loaded cost report info.');
         }
-        console.log(
-          costReportList.getResultsList().map(list => list.toObject()),
-        );
         setCostReportInfoList(costReportList);
 
         resolve();
@@ -313,7 +336,6 @@ export const EditProject: FC<Props> = ({
       timesheets.forEach(timesheet => (total = total + timesheet.hoursWorked));
       setTotalHoursWorked(total);
 
-      console.log('Loaded everything in load() function.');
       setLoading(false);
     });
   }, [setLoading, serviceCallId, setTasks]);
@@ -438,13 +460,11 @@ export const EditProject: FC<Props> = ({
       setPendingCheckoutDelete(pendingCheckoutDelete),
     [setPendingCheckoutDelete],
   );
-  const handleSetCheckedIn = useCallback(
-    (checkedIn: boolean) => setCheckedIn(checkedIn),
-    [setCheckedIn],
+  const handleSetCheckedInTask = useCallback(
+    (checkedIn: ExtendedProjectTaskType) => setCheckedInTask(checkedIn),
+    [setCheckedInTask],
   );
-  const toggleCheckedIn = () => {
-    handleSetCheckedIn(!checkedIn);
-  };
+
   const isAnyManager = useMemo(
     () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
     [departments, loggedUserId],
@@ -496,6 +516,7 @@ export const EditProject: FC<Props> = ({
       startTime,
       endDate,
       endTime,
+      checkedIn,
       ...formData
     }: ExtendedProjectTaskType) => {
       if (!event) return;
@@ -525,6 +546,7 @@ export const EditProject: FC<Props> = ({
         eventId: serviceCallId,
         startDate: `${startDate} ${startTime}:00`,
         endDate: `${endDate} ${endTime}:00`,
+        checkedIn: checkedIn,
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
       setLoaded(false);
@@ -625,23 +647,20 @@ export const EditProject: FC<Props> = ({
   );
 
   const loadPrintData = useCallback(async () => {
-    console.log('Loading print data.');
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
     const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
     setLodgings(lodgings);
     const transactions = await loadTransactionsByEventId(serviceCallId);
-    console.log('Set transactions in the print data thingy');
     setTransactions(transactions);
     setPerDiems(resultsList);
-    console.log('Loaded print data.');
   }, [serviceCallId, setPerDiems, setLodgings]);
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
     await loadPrintData();
     setPrintStatus('loaded');
-  }, [setPrintStatus, loadPrintData]);
+  }, [setPrintStatus, loadPrintData, serviceCallId]);
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
@@ -952,8 +971,6 @@ export const EditProject: FC<Props> = ({
                   timestamp,
                   vendor,
                 }) => {
-                  console.log('Transactions:', transactions);
-                  console.log('transaction cost ctr:', costCenter);
                   return [
                     department ? (
                       <>
@@ -1231,28 +1248,47 @@ export const EditProject: FC<Props> = ({
       />
       <Button
         variant="outlined"
-        label={!checkedIn ? `Check In` : `Check Out`}
+        label={!checkedInTask ? `Check In` : `Check Out`}
         onClick={() => {
-          const date = new Date();
-          let task = new ProjectTask().toObject() as ExtendedProjectTaskType;
+          // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
+          // if there is then use that result to set it as checked in
+          if (!checkedInTask) {
+            const date = new Date();
+            let taskNew = {
+              startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
+              endDate: '',
+              statusId: 2,
+              priorityId: 2,
+              startTime: format(new Date(date), 'HH-mm'),
+              endTime: format(addDays(new Date(date), 1), 'HH-mm'),
+              briefDescription: briefDescription
+                ? briefDescription
+                : 'Auto generated task',
+              externalId: loggedUserId,
+              checkedIn: true,
+            } as ExtendedProjectTaskType;
 
-          task.startDate = format(new Date(date), 'yyyy-MM-dd HH-mm-ss');
-          task.endDate = '';
-          task.statusId = 2; // Starting in progress
-          task.priorityId = 2;
-          task.startTime = format(new Date(date), 'HH-mm');
-          task.endTime = format(addDays(new Date(date), 1), 'HH-mm');
-          task.briefDescription = 'Auto generated task';
-          task.externalId = loggedUserId;
+            alert('upserting task - see details in console log');
+            console.log('TASK CHECKED IN:', taskNew);
 
-          alert('upserting task - see details in console log');
-          console.log(task);
-
-          handleSaveTask(task);
-          toggleCheckedIn();
+            handleSaveTask(taskNew);
+            setCheckedInTask(taskNew);
+          } else {
+            console.log('Would have checked out');
+          }
         }}
         disabled={pendingCheckoutChange}
       />
+      {!checkedInTask && (
+        <Field
+          name="Brief Description for Check-in"
+          onChange={changedText => {
+            handleBriefDescriptionChange(changedText.toString());
+          }}
+          type="text"
+          value={briefDescription}
+        />
+      )}
       <Tabs
         defaultOpenIdx={0}
         tabs={[
@@ -1366,6 +1402,49 @@ export const EditProject: FC<Props> = ({
                 onAdd={handleAddTask}
               />
             ) : null,
+          },
+          {
+            label: 'Projects Gantt Chart',
+            content:
+              projects.length > 0 ? (
+                <GanttChart
+                  events={projects.map(task => {
+                    const {
+                      id,
+                      description,
+                      dateStarted: dateStart,
+                      dateEnded: dateEnd,
+                      logJobStatus,
+                      color,
+                    } = task;
+                    const [startDate, startHour] = dateStart.split(' ');
+                    const [endDate, endHour] = dateEnd.split(' ');
+                    return {
+                      id,
+                      startDate,
+                      endDate,
+                      startHour,
+                      endHour,
+                      notes: description,
+                      statusColor: '#' + color,
+                      onClick: () => {
+                        setServiceCallId(id);
+                        setLoaded(false);
+                        setLoadedInit(false);
+                        // load();
+                      },
+                    };
+                  })}
+                  startDate={projects[0].dateStarted.substr(0, 10)}
+                  endDate={projects[projects.length - 1].dateEnded.substr(
+                    0,
+                    10,
+                  )}
+                  loading={loading || loadingEvent}
+                />
+              ) : (
+                <div />
+              ),
           },
         ]}
       />

@@ -132,6 +132,7 @@ const Transaction: FC<Props> = props => {
             departmentList={managerDepartmentIds}
             isManager={isManager}
             role={role}
+            loggedUserId={userID}
           />
         </React.Fragment>
       )}
