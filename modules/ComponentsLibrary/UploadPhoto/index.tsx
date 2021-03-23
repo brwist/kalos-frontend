@@ -90,7 +90,9 @@ export const UploadPhoto: FC<Props> = ({
   const onLocationSuccess = useCallback(
     ({
       coords: { latitude: geolocationLat, longitude: geolocationLng },
-    }: Position) => {
+    }: {
+      coords: { latitude: number; longitude: number };
+    }) => {
       setFormData({ ...formData, geolocationLat, geolocationLng });
       setGeolocating(false);
       setFormKey(formKey + 1);
@@ -98,7 +100,7 @@ export const UploadPhoto: FC<Props> = ({
     [setGeolocating, setFormData, formData, setFormKey, formKey],
   );
   const onLocationError = useCallback(
-    ({ message }: PositionError) => {
+    ({ message }: any) => {
       setGeolocating(false);
       alert(message);
     },

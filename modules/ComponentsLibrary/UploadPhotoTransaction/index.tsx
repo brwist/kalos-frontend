@@ -17,6 +17,7 @@ import {
   upsertFile,
   upsertTransactionDocument,
   SUBJECT_TAGS,
+  SUBJECT_TAGS_TRANSACTIONS,
   UserClientService,
   timestamp,
 } from '../../../helpers';
@@ -86,7 +87,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     vendor: '',
     cost: 0,
     tag: (
-      SUBJECT_TAGS.find(({ label }) => label === defaultTag) || {
+      SUBJECT_TAGS_TRANSACTIONS.find(({ label }) => label === defaultTag) || {
         value: '',
       }
     ).value,
@@ -161,13 +162,19 @@ export const UploadPhotoTransaction: FC<Props> = ({
   );
   console.log({ costCenterList });
 
+  if (SUBJECT_TAGS_TRANSACTIONS === undefined) {
+    console.error(
+      'SUBJECT_TAGS_TRANSACTIONS is undefined. You should try manually deleting the .cache folder and compiling helpers.ts, then try again.',
+    );
+  }
+
   const SCHEMA: Schema<Entry> = [
     [
       {
         name: 'tag',
         label: 'Tag',
         required: true,
-        options: SUBJECT_TAGS,
+        options: SUBJECT_TAGS_TRANSACTIONS,
       },
     ],
     [
@@ -188,7 +195,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [
       {
         name: 'eventId',
-        label: 'Job ID,',
+        label: 'Job ID',
         type: 'eventId',
         required: true,
       },
@@ -211,7 +218,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [
       {
         name: 'costCenter',
-        label: 'Purchase Type,',
+        label: 'Purchase Type',
         required: true,
         options: costCenterList,
       },

@@ -9,3 +9,4 @@ tmp/
 coverage
 helpers.js
 .DS_Store
+.vscode
