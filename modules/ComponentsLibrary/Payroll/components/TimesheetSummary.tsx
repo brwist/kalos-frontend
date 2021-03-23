@@ -4,12 +4,9 @@ import {
   TimesheetLineClient,
   TimesheetLineList,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { Form, Schema } from '../../Form';
-import { Timesheet } from '../../../Timesheet/main';
+
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { result } from 'lodash';
+import { Button } from '../../Button';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
@@ -28,12 +25,12 @@ interface Props {
   userId: number;
   loggedUserId: number;
   notReady: boolean;
-  onClose: (() => void) | null;
+  onClose: () => void;
   username: string;
 }
 export type Action = {
   time: number;
-  classCode: number;
+  classCode: string;
   billable: boolean;
   day: string;
 };
@@ -104,7 +101,10 @@ export const TimesheetSummary: FC<Props> = ({
                   parseISO(results[i].toObject().timeStarted),
                 ) / 60,
               ),
-              classCode: results[i].toObject().classCodeId,
+              classCode:
+                results[i].toObject().classCodeId +
+                '-' +
+                results[i].toObject().classCode!.classcodeQbName,
               billable: results[i].toObject().classCode!.billable,
               day: formatDate(results[i].toObject().timeStarted),
             },
@@ -120,14 +120,14 @@ export const TimesheetSummary: FC<Props> = ({
                 tempJob.actions[0].classCode ===
                 tempJobs[j].actions[l].classCode
               ) {
-                tempNoJobs[j].actions[l].time += tempJob.actions[0].time;
+                tempJobs[j].actions[l].time += tempJob.actions[0].time;
                 foundCode = true;
                 break;
               }
             }
           }
           if (foundJob === true && foundCode === false) {
-            tempNoJobs[j].actions.push(tempJob.actions[0]);
+            tempJobs[j].actions.push(tempJob.actions[0]);
           }
         }
         if (foundJob === false && foundCode === false) {
@@ -144,7 +144,10 @@ export const TimesheetSummary: FC<Props> = ({
                   parseISO(results[i].toObject().timeStarted),
                 ) / 60,
               ),
-              classCode: results[i].toObject().classCodeId,
+              classCode:
+                results[i].toObject().classCodeId +
+                '-' +
+                results[i].toObject().classCode!.classcodeQbName,
               billable: results[i].toObject().classCode!.billable,
               day: formatDate(results[i].toObject().timeStarted),
             },
@@ -179,6 +182,17 @@ export const TimesheetSummary: FC<Props> = ({
     setTimesheetsJobs(tempJobs);
     setTimesheetsNoJobs(tempNoJobs);
   }, [notReady, userId]);
+  const ProcessTimesheets = useCallback(async () => {
+    const tslClient = new TimesheetLineClient(ENDPOINT);
+    let ids = [];
+    if (timesheets) {
+      for (let i = 0; i < timesheets!.length; i++) {
+        ids.push(timesheets[i].toObject().id);
+      }
+      await tslClient.Process(ids, userId);
+      onClose();
+    }
+  }, [timesheets, userId]);
 
   const load = useCallback(async () => {
     await getTimesheetTotals();
@@ -205,8 +219,12 @@ export const TimesheetSummary: FC<Props> = ({
           }
 
           let mapElements = (
-            <SectionBar title={'Job:' + timesheetsJobs[i].jobId}>
+            <SectionBar
+              title={'Job:' + timesheetsJobs[i].jobId}
+              key={'Job:' + timesheetsJobs[i].jobId}
+            >
               <InfoTable
+                loading={loaded}
                 key={timesheetsJobs[i].jobId}
                 columns={[
                   { name: 'Day' },
@@ -227,7 +245,8 @@ export const TimesheetSummary: FC<Props> = ({
                   ];
                 })}
               />
-              <strong>Billable Total: {Billable}</strong>{' '}
+              <strong>Billable Total: {Billable}</strong>
+              {', '}
               <strong>UnBillable Total:{Unbillable}</strong>
             </SectionBar>
           );
@@ -248,12 +267,20 @@ export const TimesheetSummary: FC<Props> = ({
           }
 
           let mapElementsNoJob = (
-            <SectionBar title={'Day:' + timesheetsNoJobs[i].actions[0].day}>
+            <SectionBar
+              title={'Day:' + timesheetsNoJobs[i].actions[0].day}
+              key={
+                timesheetsNoJobs[i].actions[0].day +
+                timesheetsNoJobs[i].actions[0].classCode
+              }
+            >
               <InfoTable
                 key={
                   timesheetsNoJobs[i].actions[0].day +
-                  timesheetsNoJobs[i].actions[0].classCode
+                  timesheetsNoJobs[i].actions[0].classCode +
+                  timesheetsNoJobs[i].actions[0].time
                 }
+                loading={loaded}
                 columns={[{ name: 'Hours' }, { name: 'ClassCode' }]}
                 data={timesheetsNoJobs[i].actions.map(action => {
                   return [
@@ -267,7 +294,7 @@ export const TimesheetSummary: FC<Props> = ({
                 })}
               />
               <strong>Billable Total: {Billable}</strong>{' '}
-              <strong>UnBillable Total:{Unbillable}</strong>
+              <strong>Unbillable Total:{Unbillable}</strong>
             </SectionBar>
           );
           noJobReports.push(mapElementsNoJob);
@@ -277,13 +304,23 @@ export const TimesheetSummary: FC<Props> = ({
       setMappedElementsNoJobs(noJobReports);
       setLoaded(true);
     }
-  }, [loaded, load, classCodes, totalHours, loading]);
-
+  }, [
+    loaded,
+    load,
+    classCodes,
+    totalHours,
+    loading,
+    timesheetsJobs,
+    timesheetsNoJobs,
+  ]);
+  console.log({ onClose });
   return loaded ? (
-    <div>
-      <div>{mappedElements}</div>
+    <SectionBar title="Timesheet Summary" uncollapsable={true}>
+      <Button label="Close" onClick={() => onClose()}></Button>
+      <Button label="Process All" onClick={() => ProcessTimesheets()}></Button>
       <div> {mappedElementsNoJobs}</div>
-    </div>
+      <div>{mappedElements}</div>
+    </SectionBar>
   ) : (
     <React.Fragment></React.Fragment>
   );

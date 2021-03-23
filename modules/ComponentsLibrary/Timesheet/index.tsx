@@ -400,8 +400,6 @@ export const Timesheet: FC<Props> = props => {
       }
 
       await tslClient.Process(ids, userId);
-      console.log(ids);
-      console.log('Processing Timesheets');
       dispatch({ type: 'processTimesheet' });
     })();
   }, [userId, data, shownDates, tslClient, user]);
