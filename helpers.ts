@@ -1,4 +1,3 @@
-import uniq = require('lodash/uniq'); // Fixing issue with lodash and not transpiling
 const sortBy = require('lodash/sortBy');
 const compact = require('lodash/compact');
 import { parseISO } from 'date-fns/esm';
@@ -386,6 +385,18 @@ async function slackNotify(id: string, text: string) {
       method: 'POST',
     },
   );
+}
+
+// Replacement for lodash uniq
+function unique(original: any[]) {
+  let container: any[] = [];
+  for (const el of original) {
+    if (!container.includes(el)) {
+      container.push(el);
+    }
+  }
+  console.log('Returning: ', container);
+  return container;
 }
 
 async function getSlackList(skipCache = false): Promise<SlackUser[]> {
@@ -1508,7 +1519,7 @@ export const loadPerDiemByUserIdsAndDateStarted = async (
   dateStarted: string,
 ) => {
   const response = await Promise.all(
-    uniq(userIds).map(async userId => ({
+    unique(userIds).map(async userId => ({
       userId,
       data: (
         await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
@@ -3658,7 +3669,7 @@ export const loadGovPerDiem = async (
   req.setTextId('per_diem_key');
   const { apiEndpoint, apiKey } = await client.Get(req);
   const results = await Promise.all(
-    uniq(zipCodes).map(zipCode =>
+    unique(zipCodes).map(zipCode =>
       loadGovPerDiemData(apiEndpoint, apiKey, zipCode, year, month),
     ),
   );
@@ -3702,7 +3713,7 @@ export const loadTaskEventsByFilter = async ({
     );
   }
   if (withTechnicianNames) {
-    const technicianIds: number[] = uniq(
+    const technicianIds: number[] = unique(
       compact(results.map(({ technicianUserId }) => technicianUserId)),
     );
     const technicianNames = await loadUsersByIds(technicianIds);
