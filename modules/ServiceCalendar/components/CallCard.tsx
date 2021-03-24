@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import isSameDay from 'date-fns/isSameDay';
 import parseISO from 'date-fns/parseISO';
 import format from 'date-fns/format';
+import { differenceInMinutes } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import Card from '@material-ui/core/Card';
 import Badge from '@material-ui/core/Badge';
@@ -22,7 +23,7 @@ import {
   repeatsMapping,
   requestTypeMappping,
 } from './constants';
-import { formatTime } from '../../../helpers';
+import { formatTime, roundNumber } from '../../../helpers';
 import './callCard.less';
 
 type ColorIndicatorProps = {
@@ -148,6 +149,18 @@ export const TimeoffCard = ({
               >
                 {dates} {time}
               </Typography>
+            )}
+            {!allDayOff ? (
+              <strong>
+                {roundNumber(
+                  differenceInMinutes(
+                    parseISO(timeFinished),
+                    parseISO(timeStarted),
+                  ) / 60,
+                )}
+              </strong>
+            ) : (
+              8
             )}
             {requestTypeName && (
               <Typography variant="body2" component="p">

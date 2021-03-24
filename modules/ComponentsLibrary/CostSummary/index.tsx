@@ -5,6 +5,7 @@ import {
   TimesheetLineList,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { Form, Schema } from '../Form';
+import { SectionBar } from '../SectionBar';
 import { Timesheet } from '../../Timesheet/main';
 import { ENDPOINT, NULL_TIME } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
@@ -21,6 +22,10 @@ import {
   loadTimeoffRequests,
   GetTimesheetConfig,
   TaskClientService,
+  UserClientService,
+  formatWeek,
+  formatDay,
+  formatDate,
 } from '../../../helpers';
 interface Props {
   userId: number;
@@ -38,6 +43,7 @@ type Entry = {
 import { PerDiem, PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
 import { notStrictEqual } from 'assert';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { InfoTable } from '../InfoTable';
 export const CostSummary: FC<Props> = ({
   userId,
   loggedUserId,
@@ -55,12 +61,6 @@ export const CostSummary: FC<Props> = ({
   const [pto, setPTO] = useState<TimeoffRequest.AsObject[]>();
   const [totalPerDiem, setTotalDiem] = useState<number>();
   const [perDiems, setPerDiems] = useState<PerDiem[]>();
-  const [formData, setFormData] = useState<Entry>({
-    timesheetTotal: undefined,
-    timeoffTotal: undefined,
-    toolTotal: undefined,
-    spiffTotal: undefined,
-  });
   const [loading, setLoading] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>();
   const getPerDiemTotals = useCallback(async () => {
@@ -175,49 +175,18 @@ export const CostSummary: FC<Props> = ({
     setPTO(results);
     return total;
   }, [userId, notReady]);
-  const SCHEMA: Schema<Entry> = [
-    [
-      {
-        name: 'timesheetTotal',
-        label: 'TimeSheet Total Hours',
-        disabled: true,
-      },
-      {
-        name: 'timeoffTotal',
-        label: 'PTO Total Hours',
-        disabled: true,
-      },
-      {
-        name: 'spiffTotal',
-        label: 'Spiff Total',
-        disabled: true,
-      },
-      {
-        name: 'toolTotal',
-        label: 'Tool Purchase Total',
-        disabled: true,
-      },
-    ],
-  ];
-  const handleSubmit = useCallback(async (data: Entry) => {}, []);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setTotalHours(await getTimesheetTotals());
     setTotalPTO(await getTimeoffTotals());
     setTotalTools(await getSpiffToolTotals('Tool Purchase'));
     setTotalSpiffs(await getSpiffToolTotals('Spiff'));
-    setFormData({
-      timesheetTotal: totalHours,
-      timeoffTotal: totalPTO,
-      toolTotal: totalTools,
-      spiffTotal: totalSpiffs,
-    });
+
     if (
-      totalHours != undefined &&
       totalPTO != undefined &&
       totalTools != undefined &&
-      totalSpiffs != undefined
+      totalSpiffs != undefined &&
+      pto != undefined
     ) {
       setLoading(false);
       setLoaded(true);
@@ -226,25 +195,98 @@ export const CostSummary: FC<Props> = ({
     getTimesheetTotals,
     getTimeoffTotals,
     getSpiffToolTotals,
-    setFormData,
-    totalHours,
     totalPTO,
     totalTools,
     totalSpiffs,
   ]);
   useEffect(() => {
-    load();
+    if (!loaded) load();
   }, [load]);
-  console.log('Loaded: ', loaded);
   return loaded ? (
-    <Form<Entry>
-      onSave={handleSubmit}
-      onClose={onClose}
-      title={`Employee Summary-${username}`}
-      schema={SCHEMA}
-      data={formData}
-      cancelLabel="Close"
-      submitLabel="Process"
-    />
+    <div>
+      {/* for the PTO*/}
+      <SectionBar title="PTO Current Total">
+        <InfoTable
+          columns={[
+            { name: 'Date Started-Date Ended' },
+            { name: 'Hours' },
+            { name: 'Additional Info' },
+          ]}
+          data={pto!.map(pt => {
+            return [
+              {
+                value:
+                  formatDate(pt.timeStarted) +
+                  ' to ' +
+                  formatDate(pt.timeFinished),
+              },
+              {
+                value: roundNumber(
+                  differenceInMinutes(
+                    parseISO(pt.timeFinished),
+                    parseISO(pt.timeStarted),
+                  ) / 60,
+                ),
+              },
+              {
+                value: pt.notes,
+              },
+            ];
+          })}
+        ></InfoTable>
+      </SectionBar>
+      <SectionBar title="Spiff Current Total">
+        <InfoTable
+          columns={[
+            { name: 'Date Created' },
+            { name: 'Date Approved' },
+            { name: 'Amount' },
+            { name: 'Additional Info' },
+          ]}
+          data={spiffs!.map(spiff => {
+            return [
+              {
+                value: formatDate(spiff.toObject().timeCreated),
+              },
+              {
+                value: spiff.toObject().searchAction?.reviewedBy,
+              },
+              {
+                value: spiff.toObject().spiffAmount,
+              },
+              {
+                value: spiff.toObject().briefDescription,
+              },
+            ];
+          })}
+        ></InfoTable>
+      </SectionBar>
+      <SectionBar title="Tool Current Total">
+        <InfoTable
+          columns={[
+            { name: 'Date Created' },
+            { name: 'Date Approved' },
+            { name: 'Amount' },
+            { name: 'Additional Info' },
+          ]}
+          data={tools!.map(tool => {
+            return [
+              {
+                value: formatDate(tool.toObject().toolpurchaseDate),
+              },
+              {
+                value: tool.toObject().searchAction?.reviewedBy,
+              },
+              {
+                value: tool.toObject().toolpurchaseCost,
+              },
+              {
+                value: tool.toObject().briefDescription,
+              },
+            ];
+          })}
+        ></InfoTable>
+      </SectionBar>
+    </div>
   ) : null;
 };
