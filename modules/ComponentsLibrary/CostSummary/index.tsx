@@ -20,11 +20,6 @@ import {
   perDiemTripMilesToUsdAsNumber,
   roundNumber,
   loadTimeoffRequests,
-  GetTimesheetConfig,
-  TaskClientService,
-  UserClientService,
-  formatWeek,
-  formatDay,
   formatDate,
 } from '../../../helpers';
 interface Props {
@@ -165,12 +160,19 @@ export const CostSummary: FC<Props> = ({
     const results = (await loadTimeoffRequests(filter)).resultsList;
     let total = 0;
     for (let i = 0; i < results.length; i++) {
-      const timeFinished = results[i].timeFinished;
-      const timeStarted = results[i].timeStarted;
-      const subtotal = roundNumber(
-        differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) / 60,
-      );
-      total += subtotal;
+      console.log(results[i].allDayOff);
+      if (results[i].allDayOff === 0) {
+        const timeFinished = results[i].timeFinished;
+        const timeStarted = results[i].timeStarted;
+        const subtotal = roundNumber(
+          differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
+            60,
+        );
+
+        total += subtotal;
+      } else {
+        total += 8;
+      }
     }
     setPTO(results);
     return total;

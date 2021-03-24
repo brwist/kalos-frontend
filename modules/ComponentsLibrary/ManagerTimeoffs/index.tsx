@@ -14,6 +14,7 @@ import {
   TimeoffRequestClientService,
   makeFakeRows,
   TimesheetDepartmentClientService,
+  UserClientService,
 } from '../../../helpers';
 import {
   TimeoffRequestClient,
@@ -39,7 +40,7 @@ const COLUMNS: Columns = [
 
 export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
   const timeoffClient = useMemo(() => new TimeoffRequestClient(ENDPOINT), []);
-  const [department, setDepartment] = useState<TimesheetDepartmentType>();
+  const [department, setDepartment] = useState<number>();
   const [editing, setEditing] = useState<TimeoffRequestType>();
   const [initiated, setInitiated] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -52,9 +53,11 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
   );
   const init = useCallback(async () => {
     try {
-      const department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
-        loggedUserId,
-      );
+      let department = await (
+        await TimesheetDepartmentClientService.getDepartmentByManagerID(
+          loggedUserId,
+        )
+      ).id;
       setDepartment(department);
       const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
       setTypes(
@@ -65,15 +68,25 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
       );
       setLoaded(false);
     } catch (e) {
-      console.log(e);
+      let user = await UserClientService.loadUserById(loggedUserId);
+      let role = user.permissionGroupsList.find(p => p.type === 'role');
+      if (role) {
+        if (role.name === 'Manager') {
+          let department = user.permissionGroupsList.find(
+            p => p.type === 'department',
+          );
+          setDepartment(department?.id);
+        }
+      }
     }
   }, [loggedUserId, setLoaded, setTypes]);
   const load = useCallback(async () => {
     if (!department) return;
     setLoading(true);
+    console.log(department);
     const req = new TimeoffRequest();
     req.setPageNumber(page);
-    req.setDepartmentCode(department.id);
+    req.setDepartmentCode(department);
     req.setAdminApprovalDatetime(NULL_TIME);
     req.setIsActive(1);
     req.setOrderBy('time_started');

@@ -198,7 +198,7 @@ export const TimesheetSummary: FC<Props> = ({
     await getTimesheetTotals();
     setLoading(false);
     setLoaded(false);
-  }, [getTimesheetTotals, totalHours, classCodes, loading]);
+  }, [getTimesheetTotals]);
 
   useEffect(() => {
     if (loading) {
