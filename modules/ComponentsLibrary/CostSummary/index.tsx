@@ -26,6 +26,7 @@ type Entry = {
 import { PerDiem, PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { InfoTable } from '../InfoTable';
+import { Loader } from '../../Loader/main';
 export const CostSummary: FC<Props> = ({
   userId,
   loggedUserId,
@@ -190,15 +191,8 @@ export const CostSummary: FC<Props> = ({
     );
 
     Promise.all(promises).then(() => {
-      if (
-        totalPTO != undefined &&
-        totalTools != undefined &&
-        totalSpiffs != undefined &&
-        pto != undefined
-      ) {
-        setLoading(false);
-        setLoaded(true);
-      }
+      setLoading(false);
+      setLoaded(true);
     });
   }, [
     getTimesheetTotals,
@@ -297,5 +291,7 @@ export const CostSummary: FC<Props> = ({
         ></InfoTable>
       </SectionBar>
     </div>
-  ) : null;
+  ) : (
+    <Loader />
+  );
 };
