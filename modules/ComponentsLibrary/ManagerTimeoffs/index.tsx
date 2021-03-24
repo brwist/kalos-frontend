@@ -23,6 +23,7 @@ import {
 import { ROWS_PER_PAGE, ENDPOINT } from '../../../constants';
 import './styles.less';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { LocalConvenienceStoreOutlined } from '@material-ui/icons';
 
 interface Props {
   loggedUserId: number;
@@ -40,7 +41,7 @@ const COLUMNS: Columns = [
 
 export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
   const timeoffClient = useMemo(() => new TimeoffRequestClient(ENDPOINT), []);
-  const [department, setDepartment] = useState<number>();
+  const [department, setDepartment] = useState<number[]>();
   const [editing, setEditing] = useState<TimeoffRequestType>();
   const [initiated, setInitiated] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -53,40 +54,51 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
   );
   const init = useCallback(async () => {
     try {
-      let department = await (
-        await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          loggedUserId,
-        )
-      ).id;
-      setDepartment(department);
-      const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
-      setTypes(
-        types.reduce(
-          (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
-          {},
-        ),
-      );
-      setLoaded(false);
-    } catch (e) {
       let user = await UserClientService.loadUserById(loggedUserId);
       let role = user.permissionGroupsList.find(p => p.type === 'role');
       if (role) {
         if (role.name === 'Manager') {
-          let department = user.permissionGroupsList.find(
+          let department = user.permissionGroupsList.filter(
             p => p.type === 'department',
           );
-          setDepartment(department?.id);
+          let tempDepartmentList = [];
+          for (let i = 0; i < department.length; i++) {
+            tempDepartmentList.push(department[i].id);
+          }
+          setDepartment(tempDepartmentList);
         }
+      }
+    } catch (e) {
+      console.log(e);
+      try {
+        let tempDepartmentList = [];
+        let department = await (
+          await TimesheetDepartmentClientService.getDepartmentByManagerID(
+            loggedUserId,
+          )
+        ).id;
+        tempDepartmentList.push(department);
+        setDepartment(tempDepartmentList);
+        const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
+        setTypes(
+          types.reduce(
+            (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
+            {},
+          ),
+        );
+      } catch (e) {
+        setLoaded(false);
+        console.log(e);
       }
     }
   }, [loggedUserId, setLoaded, setTypes]);
   const load = useCallback(async () => {
     if (!department) return;
     setLoading(true);
-    console.log(department);
     const req = new TimeoffRequest();
     req.setPageNumber(page);
-    req.setDepartmentCode(department);
+    req.setDepartmentIdList(department.toString());
+    console.log(department.toString());
     req.setAdminApprovalDatetime(NULL_TIME);
     req.setIsActive(1);
     req.setOrderBy('time_started');
