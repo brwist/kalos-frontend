@@ -24,7 +24,6 @@ type Entry = {
   spiffTotal: number | undefined;
 };
 import { PerDiem, PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
-import { notStrictEqual } from 'assert';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { InfoTable } from '../InfoTable';
 export const CostSummary: FC<Props> = ({
@@ -168,19 +167,39 @@ export const CostSummary: FC<Props> = ({
 
   const load = useCallback(async () => {
     setLoading(true);
-    setTotalPTO(await getTimeoffTotals());
-    setTotalTools(await getSpiffToolTotals('Tool Purchase'));
-    setTotalSpiffs(await getSpiffToolTotals('Spiff'));
 
-    if (
-      totalPTO != undefined &&
-      totalTools != undefined &&
-      totalSpiffs != undefined &&
-      pto != undefined
-    ) {
-      setLoading(false);
-      setLoaded(true);
-    }
+    let promises = [];
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTotalPTO(await getTimeoffTotals());
+        resolve();
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTotalTools(await getSpiffToolTotals('Tool Purchase'));
+        resolve();
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTotalSpiffs(await getSpiffToolTotals('Spiff'));
+        resolve();
+      }),
+    );
+
+    Promise.all(promises).then(() => {
+      if (
+        totalPTO != undefined &&
+        totalTools != undefined &&
+        totalSpiffs != undefined &&
+        pto != undefined
+      ) {
+        setLoading(false);
+        setLoaded(true);
+      }
+    });
   }, [
     getTimesheetTotals,
     getTimeoffTotals,
