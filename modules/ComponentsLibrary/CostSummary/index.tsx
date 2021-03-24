@@ -4,24 +4,12 @@ import {
   TimesheetLineClient,
   TimesheetLineList,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
-import { Timesheet } from '../../Timesheet/main';
 import { ENDPOINT, NULL_TIME } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { result } from 'lodash';
-import { format, differenceInMinutes, parseISO } from 'date-fns';
-import {
-  AirlineSeatLegroomExtraRounded,
-  ContactsOutlined,
-} from '@material-ui/icons';
-import {
-  perDiemTripMilesToUsdAsNumber,
-  roundNumber,
-  loadTimeoffRequests,
-  formatDate,
-} from '../../../helpers';
+import { differenceInMinutes, parseISO } from 'date-fns';
+import { roundNumber, loadTimeoffRequests, formatDate } from '../../../helpers';
 interface Props {
   userId: number;
   loggedUserId: number;
