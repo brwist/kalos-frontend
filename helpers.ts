@@ -1,4 +1,3 @@
-const sortBy = require('lodash/sortBy');
 const compact = require('lodash/compact');
 import { parseISO } from 'date-fns/esm';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
@@ -2470,27 +2469,41 @@ export const loadPromptPaymentData = async (month: string) => {
     // pendingAward
   });
 
-  return sortBy(
-    Object.values(data),
-    ({ customerName }: { customerName: string }) =>
-      customerName.toLowerCase().trim(),
-  ).map(
-    ({
-      averageDaysToPay,
-      ...item
-    }: {
-      averageDaysToPay: number;
-      promptPaymentData: PromptPaymentData;
-    }) => ({
-      ...item,
-      averageDaysToPay:
-        // @ts-ignore
-        item.paidInvoices === 0
-          ? 0
-          : // @ts-ignore
-            Math.round(averageDaysToPay / item.paidInvoices),
-    }),
-  );
+  const fn = (key: any) => {
+    key.trimStart();
+    return (a: PromptPaymentData, b: PromptPaymentData) => {
+      // @ts-ignore
+      a[key] = a[key].trimStart();
+      // @ts-ignore
+      b[key] = b[key].trimStart();
+      // @ts-ignore
+      return a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0;
+    };
+  };
+
+  console.log();
+
+  return Object.values(data)
+    .concat()
+    .sort(fn('customerName'))
+    .map(
+      //@ts-ignore
+      ({
+        averageDaysToPay,
+        ...item
+      }: {
+        averageDaysToPay: number;
+        promptPaymentData: PromptPaymentData;
+      }) => ({
+        ...item,
+        averageDaysToPay:
+          // @ts-ignore
+          item.paidInvoices === 0
+            ? 0
+            : // @ts-ignore
+              Math.round(averageDaysToPay / item.paidInvoices),
+      }),
+    );
 };
 
 export type LoadSpiffReportByFilter = {
