@@ -1,5 +1,3 @@
-import uniq = require('lodash/uniq'); // Fixing issue with lodash and not transpiling
-const sortBy = require('lodash/sortBy');
 const compact = require('lodash/compact');
 import { parseISO } from 'date-fns/esm';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
@@ -386,6 +384,18 @@ async function slackNotify(id: string, text: string) {
       method: 'POST',
     },
   );
+}
+
+// Replacement for lodash uniq
+function unique(original: any[]) {
+  let container: any[] = [];
+  for (const el of original) {
+    if (!container.includes(el)) {
+      container.push(el);
+    }
+  }
+  console.log('Returning: ', container);
+  return container;
 }
 
 async function getSlackList(skipCache = false): Promise<SlackUser[]> {
@@ -1513,7 +1523,7 @@ export const loadPerDiemByUserIdsAndDateStarted = async (
   dateStarted: string,
 ) => {
   const response = await Promise.all(
-    uniq(userIds).map(async userId => ({
+    unique(userIds).map(async userId => ({
       userId,
       data: (
         await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
@@ -2464,27 +2474,41 @@ export const loadPromptPaymentData = async (month: string) => {
     // pendingAward
   });
 
-  return sortBy(
-    Object.values(data),
-    ({ customerName }: { customerName: string }) =>
-      customerName.toLowerCase().trim(),
-  ).map(
-    ({
-      averageDaysToPay,
-      ...item
-    }: {
-      averageDaysToPay: number;
-      promptPaymentData: PromptPaymentData;
-    }) => ({
-      ...item,
-      averageDaysToPay:
-        // @ts-ignore
-        item.paidInvoices === 0
-          ? 0
-          : // @ts-ignore
-            Math.round(averageDaysToPay / item.paidInvoices),
-    }),
-  );
+  const fn = (key: any) => {
+    key.trimStart();
+    return (a: PromptPaymentData, b: PromptPaymentData) => {
+      // @ts-ignore
+      a[key] = a[key].trimStart();
+      // @ts-ignore
+      b[key] = b[key].trimStart();
+      // @ts-ignore
+      return a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0;
+    };
+  };
+
+  console.log();
+
+  return Object.values(data)
+    .concat()
+    .sort(fn('customerName'))
+    .map(
+      //@ts-ignore
+      ({
+        averageDaysToPay,
+        ...item
+      }: {
+        averageDaysToPay: number;
+        promptPaymentData: PromptPaymentData;
+      }) => ({
+        ...item,
+        averageDaysToPay:
+          // @ts-ignore
+          item.paidInvoices === 0
+            ? 0
+            : // @ts-ignore
+              Math.round(averageDaysToPay / item.paidInvoices),
+      }),
+    );
 };
 
 export type LoadSpiffReportByFilter = {
@@ -3663,7 +3687,7 @@ export const loadGovPerDiem = async (
   req.setTextId('per_diem_key');
   const { apiEndpoint, apiKey } = await client.Get(req);
   const results = await Promise.all(
-    uniq(zipCodes).map(zipCode =>
+    unique(zipCodes).map(zipCode =>
       loadGovPerDiemData(apiEndpoint, apiKey, zipCode, year, month),
     ),
   );
@@ -3707,7 +3731,7 @@ export const loadTaskEventsByFilter = async ({
     );
   }
   if (withTechnicianNames) {
-    const technicianIds: number[] = uniq(
+    const technicianIds: number[] = unique(
       compact(results.map(({ technicianUserId }) => technicianUserId)),
     );
     const technicianNames = await loadUsersByIds(technicianIds);
