@@ -387,7 +387,9 @@ function releaseBuild(target) {
                                 peerDependencies(),
                                 replace({
                                     'process.env.NODE_ENV': JSON.stringify('production'),
-                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com'
+                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com',
+                                    'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
+                                    'https://dev-core.kalosflorida.com': 'https://core.kalosflorida.com:8443'
                                 }),
                             ]
                         })];

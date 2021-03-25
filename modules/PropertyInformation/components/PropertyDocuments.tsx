@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import MailIcon from '@material-ui/icons/Mail';
 import { Documents } from '../../ComponentsLibrary/Documents';
+import { loadUsersByIds } from '../../../helpers';
 
 interface Props {
   className?: string;
@@ -21,6 +22,7 @@ export const PropertyDocuments: FC<Props> = ({
     title="Property Documents"
     propertyId={propertyId}
     deletable={true}
+    userId={0}
     addUrl={
       viewedAsCustomer
         ? undefined
@@ -29,30 +31,6 @@ export const PropertyDocuments: FC<Props> = ({
             `user_id=${userID}`,
             `property_id=${propertyId}`,
           ].join('&')
-    }
-    actions={
-      viewedAsCustomer
-        ? undefined
-        : ({ id }) => [
-            <IconButton
-              key={0}
-              style={{ marginLeft: 4 }}
-              size="small"
-              onClick={() => {
-                window.open(
-                  [
-                    '/index.cfm?action=admin:properties.docemail',
-                    `user_id=${userID}`,
-                    `document_id=${id}`,
-                    `property_id=${propertyId}`,
-                    `p=2`,
-                  ].join('&'),
-                );
-              }}
-            >
-              <MailIcon />
-            </IconButton>,
-          ]
     }
   />
 );

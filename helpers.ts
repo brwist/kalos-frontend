@@ -1,4 +1,6 @@
-const compact = require('lodash/compact');
+import uniq from 'lodash/uniq';
+import sortBy from 'lodash/sortBy';
+import compact from 'lodash/compact';
 import { parseISO } from 'date-fns/esm';
 import { startOfWeek, format, addMonths, addDays } from 'date-fns';
 import {
