@@ -8,12 +8,9 @@ export const AddServiceCallGeneral: FC<Props & PageWrapperProps> = props => (
     <Tabs
       tabs={Array.from(Array(2)).map((_, idx) => ({
         label: idx == 0 ? `Add Service Call` : `Add Project`,
-        content:
-          idx == 0 ? (
-            <AddServiceCall {...props} />
-          ) : (
-            <AddServiceCall {...props} asProject />
-          ),
+        content: (
+          <AddServiceCall {...props} asProject={idx == 0 ? false : true} />
+        ),
       }))}
     />
   </PageWrapper>
