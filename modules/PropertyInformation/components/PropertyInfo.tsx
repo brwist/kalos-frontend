@@ -280,6 +280,7 @@ export const PropertyInfo: FC<Props> = props => {
     ],
     [{ label: 'Notes', value: notes }],
   ];
+  console.log({ props });
   return (
     <>
       <div className="PropertyInfoPropertiesWrapper">
@@ -357,7 +358,12 @@ export const PropertyInfo: FC<Props> = props => {
           </SectionBar>
           <ServiceItems {...props} />
         </div>
-        <PropertyDocuments className="PropertyInfoDocuments" {...props} />
+        <PropertyDocuments
+          className="PropertyInfoDocuments"
+          propertyId={props.propertyId}
+          userID={props.userID}
+          viewedAsCustomer={false}
+        />
       </div>
       <ServiceCalls {...props} />
       <Modal open={editing} onClose={handleSetEditing(false)}>
