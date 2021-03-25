@@ -7,13 +7,36 @@ import { AdvancedSearch } from '../ComponentsLibrary/AdvancedSearch';
 import { GanttChart } from '../ComponentsLibrary/GanttChart';
 import { EventType, loadProjects } from '../../helpers';
 import { Loader } from '../Loader/main';
+import { Confirm } from '../ComponentsLibrary/Confirm';
 
 export const AddServiceCallGeneral: FC<Props & PageWrapperProps> = props => {
   const [projects, setProjects] = useState<EventType[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [parentId, setParentId] = useState<number | null>(null);
+  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
+    null,
+  );
+
+  const handleSetParentId = useCallback(
+    id => {
+      console.log('Set parent id: ', id);
+      setParentId(id);
+    },
+    [setParentId],
+  );
+
+  const handleSetConfirmedIsChild = useCallback(
+    id => {
+      console.log('Confirmed is child: ', id);
+      //setConfirmedIsChild(confirmed);
+      setConfirmedParentId(id);
+    },
+    [setConfirmedParentId],
+  );
 
   const load = useCallback(async () => {
+    setLoading(true);
     const projects = await loadProjects();
     console.log('Got projects: ', projects);
     setProjects(projects);
@@ -22,7 +45,6 @@ export const AddServiceCallGeneral: FC<Props & PageWrapperProps> = props => {
   }, [setProjects, setLoading, setLoaded]);
 
   useEffect(() => {
-    setLoading(true);
     load();
   }, [load, setProjects, setLoading, setLoaded]);
 
@@ -37,6 +59,17 @@ export const AddServiceCallGeneral: FC<Props & PageWrapperProps> = props => {
             ),
           }))}
         />
+        {parentId != confirmedParentId && parentId != null && (
+          <Confirm
+            title="Confirm Parent"
+            open={true}
+            onClose={() => handleSetParentId(null)}
+            onConfirm={() => handleSetConfirmedIsChild(parentId)}
+          >
+            Are you sure you want to set this project as the parent to the new
+            project?
+          </Confirm>
+        )}
         {loaded ? (
           <GanttChart
             events={projects.map(task => {
@@ -60,6 +93,7 @@ export const AddServiceCallGeneral: FC<Props & PageWrapperProps> = props => {
                 statusColor: '#' + color,
                 onClick: () => {
                   console.log('Service call id of clicked: ', id);
+                  handleSetParentId(id);
                   // setServiceCallId(id);
                   // setLoaded(false);
                   // setLoadedInit(false);
