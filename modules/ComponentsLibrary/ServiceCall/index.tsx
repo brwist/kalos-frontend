@@ -511,7 +511,9 @@ export const ServiceCall: FC<Props> = props => {
           schema={SCHEMA_PROJECT}
           data={{ ...new Event().toObject(), propertyId }}
           onClose={onClose || (() => {})}
-          onSave={saveProject}
+          onSave={(data: EventType) =>
+            saveProject({ ...data, departmentId: Number(data.departmentId) })
+          }
         />
       ) : (
         <>
