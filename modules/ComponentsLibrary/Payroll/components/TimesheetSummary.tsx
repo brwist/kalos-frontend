@@ -9,7 +9,14 @@ import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { Button } from '../../Button';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
-import { format, differenceInMinutes, parseISO } from 'date-fns';
+import {
+  format,
+  differenceInMinutes,
+  parseISO,
+  startOfWeek,
+  subDays,
+  addDays,
+} from 'date-fns';
 import {
   perDiemTripMilesToUsdAsNumber,
   roundNumber,
@@ -56,14 +63,23 @@ export const TimesheetSummary: FC<Props> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [mappedElements, setMappedElements] = useState<JSX.Element[]>();
+
   const [mappedElementsNoJobs, setMappedElementsNoJobs] = useState<
     JSX.Element[]
   >();
+  const [today, setToday] = useState<Date>(new Date());
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 6));
   const getTimesheetTotals = useCallback(async () => {
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
     timesheetReq.setIsActive(1);
     timesheetReq.setWithoutLimit(true);
+    const startDate = format(startDay, 'yyyy-MM-dd');
+    const endDate = format(endDay, 'yyyy-MM-dd');
+    timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
 
@@ -313,11 +329,15 @@ export const TimesheetSummary: FC<Props> = ({
     timesheetsJobs,
     timesheetsNoJobs,
   ]);
-  console.log({ onClose });
   return loaded ? (
     <SectionBar title="Timesheet Summary" uncollapsable={true}>
       <Button label="Close" onClick={() => onClose()}></Button>
       <Button label="Process All" onClick={() => ProcessTimesheets()}></Button>
+      {mappedElements?.length === 0 && mappedElementsNoJobs?.length === 0 && (
+        <div>
+          <strong>No Timesheet Records Found</strong>
+        </div>
+      )}
       <div> {mappedElementsNoJobs}</div>
       <div>{mappedElements}</div>
     </SectionBar>

@@ -7,11 +7,28 @@ import {
 import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { Timesheet } from '../../Timesheet/main';
+import { Button } from '../Button';
 import { ENDPOINT, NULL_TIME } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import IconButton from '@material-ui/core/IconButton';
+import CheckIcon from '@material-ui/icons/Check';
 import { result } from 'lodash';
-import { format, differenceInMinutes, parseISO } from 'date-fns';
+import {
+  format,
+  differenceInMinutes,
+  parseISO,
+  startOfWeek,
+  subDays,
+  addDays,
+  subMonths,
+  getMonth,
+  getYear,
+  getDaysInMonth,
+  differenceInBusinessDays,
+  differenceInDays,
+  differenceInCalendarDays,
+} from 'date-fns';
 import {
   AirlineSeatLegroomExtraRounded,
   ContactsOutlined,
@@ -21,6 +38,9 @@ import {
   roundNumber,
   loadTimeoffRequests,
   formatDate,
+  UserClientService,
+  TimeoffRequestClientService,
+  TaskClientService,
 } from '../../../helpers';
 interface Props {
   userId: number;
@@ -29,15 +49,13 @@ interface Props {
   onClose: (() => void) | null;
   username: string;
 }
-type Entry = {
-  timesheetTotal: number | undefined;
-  timeoffTotal: number | undefined;
-  toolTotal: number | undefined;
-  spiffTotal: number | undefined;
-};
+
 import { PerDiem, PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
 import { notStrictEqual } from 'assert';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import {
+  TimeoffRequest,
+  TimeoffRequestClient,
+} from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { InfoTable } from '../InfoTable';
 export const CostSummary: FC<Props> = ({
   userId,
@@ -58,10 +76,17 @@ export const CostSummary: FC<Props> = ({
   const [perDiems, setPerDiems] = useState<PerDiem[]>();
   const [loading, setLoading] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>();
+  const [today, setToday] = useState<Date>(new Date());
+  const [toolFund, setToolFund] = useState<number>(0);
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 6));
   const getPerDiemTotals = useCallback(async () => {
     const perdiemReq = new PerDiem();
     perdiemReq.setIsActive(true);
     perdiemReq.setPayrollProcessed(false);
+
     if (notReady) {
       //PerDiems that have been created, but not approved
       perdiemReq.setDateSubmitted(NULL_TIME);
@@ -81,6 +106,23 @@ export const CostSummary: FC<Props> = ({
       const action = new SpiffToolAdminAction();
       req.setPayrollProcessed(false);
       req.setCreatorUserId(userId);
+      if (spiffType === 'Spiff') {
+        const startDate = format(startDay, 'yyyy-MM-dd');
+        const endDate = format(endDay, 'yyyy-MM-dd');
+        req.setDateRangeList(['>=', startDate, '<', endDate]);
+      } else {
+        const startMonth = getMonth(startDay) - 1;
+        const startYear = getYear(startDay);
+        const startDate = format(new Date(startYear, startMonth), 'yyy-MM-dd');
+        const endDate = format(
+          addDays(
+            new Date(startYear, startMonth),
+            getDaysInMonth(new Date(startYear, startMonth)) - 1,
+          ),
+          'yyy-MM-dd',
+        );
+        req.setDateRangeList(['>=', startDate, '<', endDate]);
+      }
       if (!notReady) {
         action.setStatus(1);
         req.setSearchAction(action);
@@ -114,53 +156,21 @@ export const CostSummary: FC<Props> = ({
         return toolTotal;
       }
     },
-    [notReady, userId],
+    [notReady, userId, endDay, startDay],
   );
-  const getTimesheetTotals = useCallback(async () => {
-    const timesheetReq = new TimesheetLine();
-    timesheetReq.setTechnicianUserId(userId);
-    timesheetReq.setIsActive(1);
-    const client = new TimesheetLineClient(ENDPOINT);
-    let results = new TimesheetLineList().getResultsList();
-    timesheetReq.setWithoutLimit(true);
-
-    if (notReady) {
-      timesheetReq.setUserApprovalDatetime(NULL_TIME);
-      timesheetReq.setNotEqualsList(['UserApprovalDatetime']);
-      timesheetReq.setFieldMaskList([
-        'PayrollProcessed',
-        'AdminApprovalUserId',
-      ]);
-
-      results = (await client.BatchGetManager(timesheetReq)).getResultsList();
-    } else {
-      timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
-      timesheetReq.setFieldMaskList(['PayrollProcessed']);
-      results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
-    }
-
-    setTimesheets(results);
-    let total = 0;
-    for (let i = 0; i < results.length; i++) {
-      const timeFinished = results[i].toObject().timeFinished;
-      const timeStarted = results[i].toObject().timeStarted;
-      const subtotal = roundNumber(
-        differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) / 60,
-      );
-      total += subtotal;
-    }
-    return total;
-  }, [notReady, userId]);
 
   const getTimeoffTotals = useCallback(async () => {
+    const startDate = format(startDay, 'yyyy-MM-dd');
+    const endDate = format(endDay, 'yyyy-MM-dd');
     const filter = {
       technicianUserID: userId,
       requestType: notReady ? 10 : 9,
+      startDate: startDate,
+      endDate: endDate,
     };
     const results = (await loadTimeoffRequests(filter)).resultsList;
     let total = 0;
     for (let i = 0; i < results.length; i++) {
-      console.log(results[i].allDayOff);
       if (results[i].allDayOff === 0) {
         const timeFinished = results[i].timeFinished;
         const timeStarted = results[i].timeStarted;
@@ -171,15 +181,41 @@ export const CostSummary: FC<Props> = ({
 
         total += subtotal;
       } else {
-        total += 8;
+        const timeFinished = results[i].timeFinished;
+        const timeStarted = results[i].timeStarted;
+        const numberOfDays =
+          differenceInCalendarDays(
+            parseISO(timeFinished),
+            parseISO(timeStarted),
+          ) + 1;
+        total += numberOfDays * 8;
       }
     }
     setPTO(results);
     return total;
   }, [userId, notReady]);
-
+  const toggleProcessTimeoff = async (pt: TimeoffRequest.AsObject) => {
+    pt.payrollProcessed = true;
+    const { id } = pt;
+    const req = new TimeoffRequest();
+    req.setId(id);
+    req.setFieldMaskList(['PayrollProcessed']);
+    req.setPayrollProcessed(true);
+    await TimeoffRequestClientService.Update(req);
+  };
+  const toggleProcessSpiffTool = async (spiffTool: Task.AsObject) => {
+    spiffTool.payrollProcessed = true;
+    const { id } = spiffTool;
+    const req = new Task();
+    req.setId(id);
+    req.setFieldMaskList(['PayrollProcessed']);
+    req.setPayrollProcessed(true);
+    await TaskClientService.Update(req);
+  };
   const load = useCallback(async () => {
     setLoading(true);
+    const user = await UserClientService.loadUserById(userId);
+    setToolFund(user.toolFund);
     setTotalPTO(await getTimeoffTotals());
     setTotalTools(await getSpiffToolTotals('Tool Purchase'));
     setTotalSpiffs(await getSpiffToolTotals('Spiff'));
@@ -194,19 +230,21 @@ export const CostSummary: FC<Props> = ({
       setLoaded(true);
     }
   }, [
-    getTimesheetTotals,
+    pto,
     getTimeoffTotals,
     getSpiffToolTotals,
     totalPTO,
     totalTools,
     totalSpiffs,
+    userId,
   ]);
   useEffect(() => {
     if (!loaded) load();
-  }, [load]);
+  }, [load, loaded]);
   return loaded ? (
     <div>
       {/* for the PTO*/}
+      {onClose ? <Button label="Close" onClick={() => onClose()}></Button> : []}
       <SectionBar title="PTO Current Total">
         <InfoTable
           columns={[
@@ -223,26 +261,48 @@ export const CostSummary: FC<Props> = ({
                   formatDate(pt.timeFinished),
               },
               {
-                value: roundNumber(
-                  differenceInMinutes(
-                    parseISO(pt.timeFinished),
-                    parseISO(pt.timeStarted),
-                  ) / 60,
-                ),
+                value:
+                  pt.allDayOff === 0
+                    ? roundNumber(
+                        differenceInMinutes(
+                          parseISO(pt.timeFinished),
+                          parseISO(pt.timeStarted),
+                        ) / 60,
+                      )
+                    : 8 *
+                      (differenceInCalendarDays(
+                        parseISO(pt.timeFinished),
+                        parseISO(pt.timeStarted),
+                      ) +
+                        1),
               },
               {
                 value: pt.notes,
+                actions:
+                  pt.payrollProcessed === false && pt.adminApprovalUserId != 0
+                    ? [
+                        <IconButton
+                          key="process"
+                          size="small"
+                          onClick={() => toggleProcessTimeoff(pt)}
+                        >
+                          <CheckIcon />
+                        </IconButton>,
+                      ]
+                    : [],
               },
             ];
           })}
         ></InfoTable>
+        <strong>Total PTO Hours: {totalPTO}</strong>
+        {/*For spiffs*/}
       </SectionBar>
       <SectionBar title="Spiff Current Total">
         <InfoTable
           columns={[
             { name: 'Date Created' },
-            { name: 'Date Approved' },
             { name: 'Amount' },
+            { name: 'Job Number' },
             { name: 'Additional Info' },
           ]}
           data={spiffs!.map(spiff => {
@@ -251,18 +311,35 @@ export const CostSummary: FC<Props> = ({
                 value: formatDate(spiff.toObject().timeCreated),
               },
               {
-                value: spiff.toObject().searchAction?.reviewedBy,
-              },
-              {
                 value: spiff.toObject().spiffAmount,
               },
               {
+                value: spiff.toObject().spiffJobNumber,
+              },
+              {
                 value: spiff.toObject().briefDescription,
+                actions:
+                  spiff.toObject().payrollProcessed === false &&
+                  spiff.toObject().adminActionId != 0
+                    ? [
+                        <IconButton
+                          key="process"
+                          size="small"
+                          onClick={() =>
+                            toggleProcessSpiffTool(spiff.toObject())
+                          }
+                        >
+                          <CheckIcon />
+                        </IconButton>,
+                      ]
+                    : [],
               },
             ];
           })}
         ></InfoTable>
+        <strong>Spiff Total:{totalSpiffs}</strong>
       </SectionBar>
+      {/*For Tools*/}
       <SectionBar title="Tool Current Total">
         <InfoTable
           columns={[
@@ -284,10 +361,33 @@ export const CostSummary: FC<Props> = ({
               },
               {
                 value: tool.toObject().briefDescription,
+                actions:
+                  tool.toObject().payrollProcessed === false &&
+                  tool.toObject().adminActionId != 0
+                    ? [
+                        <IconButton
+                          key="process"
+                          size="small"
+                          onClick={() =>
+                            toggleProcessSpiffTool(tool.toObject())
+                          }
+                        >
+                          <CheckIcon />
+                        </IconButton>,
+                      ]
+                    : [],
               },
             ];
           })}
         ></InfoTable>
+        <strong>Tool Fund:{toolFund} </strong>
+        <div></div>
+        <strong>Total Purchases for the Month:{totalTools}</strong>
+        <div></div>
+        <strong>
+          Absolute Total:
+          {toolFund - (totalTools === undefined ? 0 : totalTools)}
+        </strong>
       </SectionBar>
     </div>
   ) : null;
