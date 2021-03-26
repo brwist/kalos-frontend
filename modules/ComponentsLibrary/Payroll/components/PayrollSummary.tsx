@@ -85,6 +85,20 @@ export const PayrollSummary: FC<Props> = ({
     },
     [load],
   );
+  const handleNextEmployee = () => {
+    const tempPendingView = pendingView;
+    if (tempPendingView != undefined) {
+      setPendingView(undefined);
+      let index = 0;
+      for (let i = 0; i < timesheets.length; i++) {
+        if (timesheets[index] === tempPendingView)
+          setPendingView(timesheets[index]);
+        else {
+          index += 1;
+        }
+      }
+    }
+  };
   const handleSetToggle = () => {
     if (toggle === true) {
       setToggle(false);
@@ -94,15 +108,7 @@ export const PayrollSummary: FC<Props> = ({
   };
   return (
     <div>
-      <SectionBar
-        title="Payroll Summary"
-        pagination={{
-          count,
-          page,
-          rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: setPage,
-        }}
-      />
+      <SectionBar title="Payroll Summary" />
       <Button
         label={
           toggle == false
@@ -166,6 +172,7 @@ export const PayrollSummary: FC<Props> = ({
             onClose={handleTogglePendingView(undefined)}
             loggedUserId={loggedUser}
             notReady={toggle}
+            onNext={handleNextEmployee}
           ></CostSummary>
         </Modal>
       )}
@@ -188,10 +195,9 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   req.setOrderBy('time_started');
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
-
+  req.setWithoutLimit(true);
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
-    console.log(config.startDate, config.endDate);
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
   }
   if (config.employeeId) {

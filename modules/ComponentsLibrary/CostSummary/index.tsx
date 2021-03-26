@@ -33,6 +33,7 @@ interface Props {
   loggedUserId: number;
   notReady: boolean;
   onClose: (() => void) | null;
+  onNext?: (() => void) | null;
   username: string;
 }
 import { Button } from '../Button';
@@ -47,6 +48,7 @@ export const CostSummary: FC<Props> = ({
   loggedUserId,
   notReady,
   onClose,
+  onNext,
   username,
 }) => {
   const [totalHours, setTotalHours] = useState<number>();
@@ -382,6 +384,11 @@ export const CostSummary: FC<Props> = ({
           {toolFund - (totalTools === undefined ? 0 : totalTools)}
         </strong>
       </SectionBar>
+      {onNext && onNext != null ? (
+        <Button label="Next Employee" onClick={() => onNext()}></Button>
+      ) : (
+        []
+      )}
     </div>
   ) : (
     <Loader />
