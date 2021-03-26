@@ -201,11 +201,13 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   if (config.toggle === true) {
     //look like manager
     req.setUserApprovalDatetime(NULL_TIME_VALUE);
+    req.setFieldMaskList(['PayrollProcessed']);
     req.setNotEqualsList(['UserApprovalDatetime']);
   }
   if (config.toggle === false) {
     req.setAdminApprovalUserId(0);
-    req.setNotEqualsList(['AdminApprovalUserId']);
+
+    req.setNotEqualsList(['AdminApprovalUserId', 'PayrollProcessed']);
   }
   if (config.toggle === true) {
     //return like manager
