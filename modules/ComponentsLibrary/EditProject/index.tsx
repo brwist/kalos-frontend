@@ -1012,6 +1012,9 @@ export const EditProject: FC<Props> = ({
                       aggr + (mealsOnly ? 0 : lodgings[id]),
                     0,
                   );
+                  if (totalMeals == 0 && totalLodging == 0) {
+                    return <></>; // Don't show it
+                  }
                   return (
                     <div key={id}>
                       <PrintParagraph tag="h3">

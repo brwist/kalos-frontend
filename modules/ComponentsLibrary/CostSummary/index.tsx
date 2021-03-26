@@ -4,43 +4,29 @@ import {
   TimesheetLineClient,
   TimesheetLineList,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
-import { Timesheet } from '../../Timesheet/main';
-import { Button } from '../Button';
 import { ENDPOINT, NULL_TIME } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import IconButton from '@material-ui/core/IconButton';
-import CheckIcon from '@material-ui/icons/Check';
-import { result } from 'lodash';
 import {
-  format,
   differenceInMinutes,
   parseISO,
-  startOfWeek,
+  differenceInCalendarDays,
   subDays,
   addDays,
-  subMonths,
+  startOfWeek,
+  format,
   getMonth,
   getYear,
   getDaysInMonth,
-  differenceInBusinessDays,
-  differenceInDays,
-  differenceInCalendarDays,
 } from 'date-fns';
 import {
-  AirlineSeatLegroomExtraRounded,
-  ContactsOutlined,
-} from '@material-ui/icons';
-import {
-  perDiemTripMilesToUsdAsNumber,
   roundNumber,
   loadTimeoffRequests,
   formatDate,
+  TaskClientService,
   UserClientService,
   TimeoffRequestClientService,
-  TaskClientService,
 } from '../../../helpers';
 interface Props {
   userId: number;
@@ -49,14 +35,13 @@ interface Props {
   onClose: (() => void) | null;
   username: string;
 }
-
+import { Button } from '../Button';
+import CheckIcon from '@material-ui/icons/Check';
+import IconButton from '@material-ui/core/IconButton';
 import { PerDiem, PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
-import { notStrictEqual } from 'assert';
-import {
-  TimeoffRequest,
-  TimeoffRequestClient,
-} from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { InfoTable } from '../InfoTable';
+import { Loader } from '../../Loader/main';
 export const CostSummary: FC<Props> = ({
   userId,
   loggedUserId,
@@ -216,28 +201,36 @@ export const CostSummary: FC<Props> = ({
     setLoading(true);
     const user = await UserClientService.loadUserById(userId);
     setToolFund(user.toolFund);
-    setTotalPTO(await getTimeoffTotals());
-    setTotalTools(await getSpiffToolTotals('Tool Purchase'));
-    setTotalSpiffs(await getSpiffToolTotals('Spiff'));
+    let promises = [];
 
-    if (
-      totalPTO != undefined &&
-      totalTools != undefined &&
-      totalSpiffs != undefined &&
-      pto != undefined
-    ) {
-      setLoading(false);
-      setLoaded(true);
-    }
-  }, [
-    pto,
-    getTimeoffTotals,
-    getSpiffToolTotals,
-    totalPTO,
-    totalTools,
-    totalSpiffs,
-    userId,
-  ]);
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTotalPTO(await getTimeoffTotals());
+        resolve();
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTotalTools(await getSpiffToolTotals('Tool Purchase'));
+        resolve();
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTotalSpiffs(await getSpiffToolTotals('Spiff'));
+        resolve();
+      }),
+    );
+
+    Promise.all(promises)
+      .then(() => {
+        setLoading(false);
+        setLoaded(true);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }, [getTimeoffTotals, getSpiffToolTotals, userId]);
   useEffect(() => {
     if (!loaded) load();
   }, [load, loaded]);
@@ -390,5 +383,7 @@ export const CostSummary: FC<Props> = ({
         </strong>
       </SectionBar>
     </div>
-  ) : null;
+  ) : (
+    <Loader />
+  );
 };
