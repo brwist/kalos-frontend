@@ -39,6 +39,7 @@ import { Spiffs } from './components/Spiffs';
 import { Confirm } from '../Confirm';
 import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
+import { Typography } from '@material-ui/core';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -557,6 +558,9 @@ export const ServiceCall: FC<Props> = props => {
               project?
             </Confirm>
           )}
+          {confirmedParentId && (
+            <Typography variant="h5">Parent ID: {confirmedParentId}</Typography>
+          )}
           {loaded && projects.length > 0 ? (
             <GanttChart
               events={projects.map(task => {
@@ -578,7 +582,7 @@ export const ServiceCall: FC<Props> = props => {
                   endHour,
                   notes: description,
                   statusColor: '#' + color,
-                  onClick: () => { 
+                  onClick: () => {
                     handleSetParentId(id);
                   },
                 };
