@@ -119,7 +119,7 @@ export const Timesheet: FC<Props> = ({
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: formatWeek(e.weekStart),
+                    value: formatWeek(e.weekEnd),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton

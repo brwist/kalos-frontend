@@ -238,12 +238,12 @@ export const Payroll: FC<Props> = ({ userID }) => {
             />
             <Tabs
               tabs={[
-                ...(isPayrollSummary
+                ...(isTimesheet
                   ? [
                       {
-                        label: 'Payroll Summary',
+                        label: 'Timesheet',
                         content: (
-                          <PayrollSummary
+                          <Timesheet
                             departmentId={filter.departmentId}
                             employeeId={filter.employeeId}
                             week={filter.week}
@@ -254,12 +254,12 @@ export const Payroll: FC<Props> = ({ userID }) => {
                       },
                     ]
                   : []),
-                ...(isTimesheet
+                ...(isPayrollSummary
                   ? [
                       {
-                        label: 'Timesheet',
+                        label: 'Payroll Summary',
                         content: (
-                          <Timesheet
+                          <PayrollSummary
                             departmentId={filter.departmentId}
                             employeeId={filter.employeeId}
                             week={filter.week}
