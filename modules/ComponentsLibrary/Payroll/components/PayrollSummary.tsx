@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { format, addDays } from 'date-fns';
+import { format, addDays, startOfWeek, subDays } from 'date-fns';
 import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
@@ -49,7 +49,10 @@ export const PayrollSummary: FC<Props> = ({
   const [toggle, setToggle] = useState<boolean>(false);
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
   const [pendingViewDefault, setPendingViewDefault] = useState<boolean>(false);
-
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 6));
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -57,6 +60,8 @@ export const PayrollSummary: FC<Props> = ({
       employeeId,
       type: type,
       toggle,
+      startDate: startDay.toString(),
+      endDate: endDay.toString(),
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
@@ -183,6 +188,7 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   req.setOrderBy('time_started');
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
+
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);

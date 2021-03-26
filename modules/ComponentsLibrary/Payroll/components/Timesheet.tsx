@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { format, addDays } from 'date-fns';
+import { format, addDays, subDays, startOfWeek } from 'date-fns';
 import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
@@ -50,6 +50,10 @@ export const Timesheet: FC<Props> = ({
     timesheetSummaryToggle,
     setTimesheetSummaryToggle,
   ] = useState<TimesheetLineType>();
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 6));
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,6 +62,8 @@ export const Timesheet: FC<Props> = ({
       departmentId,
       employeeId,
       type: type,
+      startDate: startDay.toString(),
+      endDate: endDay.toString(),
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
