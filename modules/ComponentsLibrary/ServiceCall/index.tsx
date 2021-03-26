@@ -21,6 +21,7 @@ import {
   JobSubtypeClientService,
   cfURL,
   updateMaterialUsed,
+  loadProjects,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -35,6 +36,9 @@ import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
 import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
+import { Confirm } from '../Confirm';
+import { GanttChart } from '../GanttChart';
+import { Loader } from '../../Loader/main';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -99,6 +103,7 @@ export const ServiceCall: FC<Props> = props => {
   const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
     [],
   );
+
   const [servicesRendered, setServicesRendered] = useState<
     ServicesRenderedType[]
   >([]);
@@ -108,6 +113,11 @@ export const ServiceCall: FC<Props> = props => {
   );
   const [notificationViewing, setNotificationViewing] = useState<boolean>(
     false,
+  );
+  const [projects, setProjects] = useState<EventType[]>([]);
+  const [parentId, setParentId] = useState<number | null>(null);
+  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
+    null,
   );
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
@@ -150,6 +160,9 @@ export const ServiceCall: FC<Props> = props => {
       setLoggedUser(loggedUser);
       await loadEntry();
       await loadServicesRenderedData();
+      const projects = await loadProjects();
+      setProjects(projects);
+      setLoaded(true);
       setLoading(false);
     } catch (e) {
       setError(true);
@@ -166,7 +179,22 @@ export const ServiceCall: FC<Props> = props => {
     setLoggedUser,
     setProperty,
     setCustomer,
+    setProjects,
   ]);
+
+  const handleSetParentId = useCallback(
+    id => {
+      setParentId(id);
+    },
+    [setParentId],
+  );
+
+  const handleSetConfirmedIsChild = useCallback(
+    id => {
+      setConfirmedParentId(id);
+    },
+    [setConfirmedParentId],
+  );
 
   const handleSave = useCallback(async () => {
     setPendingSave(true);
@@ -219,7 +247,7 @@ export const ServiceCall: FC<Props> = props => {
   const saveProject = useCallback(
     async (data: EventType) => {
       setSaving(true);
-      if (props.projectParentId) data.parentId = props.projectParentId;
+      if (confirmedParentId) data.parentId = confirmedParentId;
       await upsertEvent(data);
       setSaving(false);
       if (onSave) {
@@ -229,7 +257,7 @@ export const ServiceCall: FC<Props> = props => {
         onClose();
       }
     },
-    [onSave, onClose],
+    [onSave, onClose, confirmedParentId],
   );
   useEffect(() => {
     if (!loaded) {
@@ -508,15 +536,61 @@ export const ServiceCall: FC<Props> = props => {
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
       {asProject ? (
-        <Form
-          title="Project Data"
-          schema={SCHEMA_PROJECT}
-          data={{ ...new Event().toObject(), propertyId }}
-          onClose={onClose || (() => {})}
-          onSave={(data: EventType) =>
-            saveProject({ ...data, departmentId: Number(data.departmentId) })
-          }
-        />
+        <>
+          <Form
+            title="Project Data"
+            schema={SCHEMA_PROJECT}
+            data={{ ...new Event().toObject(), propertyId }}
+            onClose={onClose || (() => {})}
+            onSave={(data: EventType) =>
+              saveProject({ ...data, departmentId: Number(data.departmentId) })
+            }
+          />
+          {parentId != confirmedParentId && (
+            <Confirm
+              title="Confirm Parent"
+              open={true}
+              onClose={() => handleSetParentId(null)}
+              onConfirm={() => handleSetConfirmedIsChild(parentId)}
+            >
+              Are you sure you want to set this project as the parent to the new
+              project?
+            </Confirm>
+          )}
+          {loaded && projects.length > 0 ? (
+            <GanttChart
+              events={projects.map(task => {
+                const {
+                  id,
+                  description,
+                  dateStarted: dateStart,
+                  dateEnded: dateEnd,
+                  logJobStatus,
+                  color,
+                } = task;
+                const [startDate, startHour] = dateStart.split(' ');
+                const [endDate, endHour] = dateEnd.split(' ');
+                return {
+                  id,
+                  startDate,
+                  endDate,
+                  startHour,
+                  endHour,
+                  notes: description,
+                  statusColor: '#' + color,
+                  onClick: () => { 
+                    handleSetParentId(id);
+                  },
+                };
+              })}
+              startDate={projects[0].dateStarted.substr(0, 10)}
+              endDate={projects[projects.length - 1].dateEnded.substr(0, 10)}
+              loading={loading}
+            />
+          ) : (
+            <Loader />
+          )}
+        </>
       ) : (
         <>
           <SectionBar
