@@ -238,7 +238,11 @@ export const CostSummary: FC<Props> = ({
     <div>
       {/* for the PTO*/}
       {onClose ? <Button label="Close" onClick={() => onClose()}></Button> : []}
-      <SectionBar title="PTO Current Total">
+      <SectionBar
+        title="PTO Current Total"
+        asideContent={<strong>Total PTO Hours: {totalPTO}</strong>}
+        actionsAndAsideContentResponsive
+      >
         <InfoTable
           columns={[
             { name: 'Date Started-Date Ended' },
@@ -286,11 +290,15 @@ export const CostSummary: FC<Props> = ({
               },
             ];
           })}
-        ></InfoTable>
-        <strong>Total PTO Hours: {totalPTO}</strong>
+        />
+
         {/*For spiffs*/}
       </SectionBar>
-      <SectionBar title="Spiff Current Total">
+      <SectionBar
+        title="Spiff Current Total"
+        asideContent={<strong>Spiff Total: {totalSpiffs}</strong>}
+        actionsAndAsideContentResponsive
+      >
         <InfoTable
           columns={[
             { name: 'Date Created' },
@@ -329,11 +337,14 @@ export const CostSummary: FC<Props> = ({
               },
             ];
           })}
-        ></InfoTable>
-        <strong>Spiff Total:{totalSpiffs}</strong>
+        />
       </SectionBar>
       {/*For Tools*/}
-      <SectionBar title="Tool Current Total">
+      <SectionBar
+        title="Tool Current Total"
+        asideContent={<strong>Tool Fund: {toolFund}</strong>}
+        actionsAndAsideContentResponsive
+      >
         <InfoTable
           columns={[
             { name: 'Date Created' },
@@ -372,8 +383,7 @@ export const CostSummary: FC<Props> = ({
               },
             ];
           })}
-        ></InfoTable>
-        <strong>Tool Fund:{toolFund} </strong>
+        />
         <div></div>
         <strong>Total Purchases for the Month:{totalTools}</strong>
         <div></div>
