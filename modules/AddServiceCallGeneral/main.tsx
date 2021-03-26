@@ -59,6 +59,9 @@ export const AddServiceCallGeneral: FC<Props & PageWrapperProps> = props => {
                 <AddServiceCall
                   {...props}
                   asProject={idx == 0 ? false : true}
+                  projectParentId={
+                    confirmedParentId ? confirmedParentId : undefined
+                  }
                 />
                 {idx != 0 && (
                   <>

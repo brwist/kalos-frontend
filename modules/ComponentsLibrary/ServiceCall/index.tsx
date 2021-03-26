@@ -53,6 +53,7 @@ export interface Props {
   onClose?: () => void;
   onSave?: () => void;
   asProject?: boolean;
+  projectParentId?: number;
 }
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
@@ -174,7 +175,7 @@ export const ServiceCall: FC<Props> = props => {
       setTabKey(tabKey + 1);
     }
   }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
-  const save = useCallback(async () => {
+  const saveServiceCall = useCallback(async () => {
     setSaving(true);
     const req = new Event();
     req.setIsActive(1);
@@ -218,6 +219,7 @@ export const ServiceCall: FC<Props> = props => {
   const saveProject = useCallback(
     async (data: EventType) => {
       setSaving(true);
+      if (props.projectParentId) data.parentId = props.projectParentId;
       await upsertEvent(data);
       setSaving(false);
       if (onSave) {
@@ -239,7 +241,7 @@ export const ServiceCall: FC<Props> = props => {
     }
     if (pendingSave && requestValid) {
       setPendingSave(false);
-      save();
+      saveServiceCall();
     }
     if (pendingSave && tabIdx === 0 && requestRef.current) {
       //@ts-ignore
@@ -254,7 +256,7 @@ export const ServiceCall: FC<Props> = props => {
     pendingSave,
     requestValid,
     setPendingSave,
-    save,
+    saveServiceCall,
     tabIdx,
     requestRef,
   ]);
