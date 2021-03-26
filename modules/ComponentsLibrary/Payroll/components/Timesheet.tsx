@@ -62,8 +62,8 @@ export const Timesheet: FC<Props> = ({
       departmentId,
       employeeId,
       type: type,
-      startDate: startDay.toString(),
-      endDate: endDay.toString(),
+      startDate: format(startDay, 'yyyy-MM-dd'),
+      endDate: format(endDay, 'yyyy-MM-dd'),
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
