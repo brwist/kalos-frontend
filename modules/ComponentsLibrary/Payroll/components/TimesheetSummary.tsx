@@ -128,13 +128,15 @@ export const TimesheetSummary: FC<Props> = ({
         };
         let foundJob = false;
         let foundCode = false;
+        let foundDay = false;
         for (let j = 0; j < tempJobs.length; j++) {
           for (let l = 0; l < tempJobs[j].actions.length; l++) {
             if (tempJobs[j].jobId === tempJob.jobId) {
               foundJob = true;
               if (
                 tempJob.actions[0].classCode ===
-                tempJobs[j].actions[l].classCode
+                  tempJobs[j].actions[l].classCode &&
+                tempJob.actions[0].day === tempJobs[j].actions[l].day
               ) {
                 tempJobs[j].actions[l].time += tempJob.actions[0].time;
                 foundCode = true;
