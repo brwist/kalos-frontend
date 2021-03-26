@@ -87,7 +87,7 @@ export class Dashboard extends React.PureComponent<props, state> {
         prevState => ({
           isLoading: !prevState.isLoading,
         }),
-        resolve,
+        () => resolve,
       );
     });
   }

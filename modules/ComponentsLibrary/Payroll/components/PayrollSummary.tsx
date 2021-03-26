@@ -48,6 +48,8 @@ export const PayrollSummary: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [toggle, setToggle] = useState<boolean>(false);
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
+  const [pendingViewDefault, setPendingViewDefault] = useState<boolean>(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -96,7 +98,14 @@ export const PayrollSummary: FC<Props> = ({
           onChangePage: setPage,
         }}
       />
-      <Button label="Toggle For Values" onClick={handleSetToggle}></Button>
+      <Button
+        label={
+          toggle == false
+            ? 'Toggle For Pending Manager Approval Records'
+            : 'Toogle For Manager Approved Records'
+        }
+        onClick={handleSetToggle}
+      ></Button>
       <InfoTable
         columns={[
           { name: 'Employee' },
@@ -142,6 +151,7 @@ export const PayrollSummary: FC<Props> = ({
         <Modal
           open={pendingView ? true : false}
           onClose={handleTogglePendingView(undefined)}
+          fullScreen
         >
           <CostSummary
             userId={
@@ -169,7 +179,6 @@ interface GetTimesheetConfig {
 
 const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   const req = new TimesheetLine();
-  console.log(config.toggle);
   req.setPageNumber(config.page || 0);
   req.setOrderBy('time_started');
   req.setGroupBy('technician_user_id');
@@ -193,7 +202,6 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   }
   if (config.toggle === true) {
     //return like manager
-    console.log('we shall see what remains');
     return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains
   } else {
     return () => client.BatchGetPayroll(req); // Payroll does the same but to a specific Payroll view
