@@ -145,26 +145,92 @@ export const ServiceCall: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const property = await PropertyClientService.loadPropertyByID(propertyId);
-      setProperty(property);
-      const customer = await UserClientService.loadUserById(userID);
-      setCustomer(customer);
-      const propertyEvents = await loadEventsByPropertyId(propertyId);
-      setPropertyEvents(propertyEvents);
-      const jobTypes = await JobTypeClientService.loadJobTypes();
-      setJobTypes(jobTypes);
-      const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
-      setJobSubtype(jobSubtypes);
-      const jobTypeSubtypes = await loadJobTypeSubtypes();
-      setJobTypeSubtypes(jobTypeSubtypes);
-      const loggedUser = await UserClientService.loadUserById(loggedUserId);
-      setLoggedUser(loggedUser);
-      await loadEntry();
-      await loadServicesRenderedData();
-      const projects = await loadProjects();
-      setProjects(projects);
-      setLoaded(true);
-      setLoading(false);
+      let promises = [];
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const property = await PropertyClientService.loadPropertyByID(
+            propertyId,
+          );
+          setProperty(property);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const customer = await UserClientService.loadUserById(userID);
+          setCustomer(customer);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const propertyEvents = await loadEventsByPropertyId(propertyId);
+          setPropertyEvents(propertyEvents);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobTypes = await JobTypeClientService.loadJobTypes();
+          setJobTypes(jobTypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
+          setJobSubtype(jobSubtypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobTypeSubtypes = await loadJobTypeSubtypes();
+          setJobTypeSubtypes(jobTypeSubtypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const loggedUser = await UserClientService.loadUserById(loggedUserId);
+          setLoggedUser(loggedUser);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          await loadEntry();
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          await loadServicesRenderedData();
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const projects = await loadProjects();
+          setProjects(projects);
+          resolve();
+        }),
+      );
+
+      Promise.all(promises).then(() => {
+        setLoaded(true);
+        setLoading(false);
+      });
     } catch (e) {
       setError(true);
     }
