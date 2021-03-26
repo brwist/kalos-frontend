@@ -384,13 +384,24 @@ export const CostSummary: FC<Props> = ({
             ];
           })}
         />
-        <div></div>
-        <strong>Total Purchases for the Month:{totalTools}</strong>
-        <div></div>
-        <strong>
-          Absolute Total:
-          {toolFund - (totalTools === undefined ? 0 : totalTools)}
-        </strong>
+      </SectionBar>
+      <SectionBar title="Totals" small>
+        <InfoTable
+          columns={[
+            { name: 'Total Purchases for the Month' },
+            { name: 'Absolute Total' },
+          ]}
+          data={[
+            [
+              {
+                value: totalTools,
+              },
+              {
+                value: toolFund - (totalTools === undefined ? 0 : totalTools),
+              },
+            ],
+          ]}
+        />
       </SectionBar>
     </div>
   ) : (
