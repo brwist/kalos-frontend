@@ -547,7 +547,7 @@ export const ServiceCall: FC<Props> = props => {
               saveProject({ ...data, departmentId: Number(data.departmentId) })
             }
           />
-          {parentId != confirmedParentId && (
+          {parentId != confirmedParentId && parentId != null && (
             <Confirm
               title="Confirm Parent"
               open={true}
