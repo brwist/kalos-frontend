@@ -122,6 +122,8 @@ export const Payroll: FC<Props> = ({ userID }) => {
     const loggedUser = await UserClientService.loadUserById(userID);
     setLoggedUser(loggedUser);
     const role = loggedUser.permissionGroupsList.find(p => p.type === 'role');
+    console.log(role);
+    console.log(userID);
     if (role) {
       setRole(role.name as RoleType);
     }
