@@ -384,7 +384,7 @@ export const CostSummary: FC<Props> = ({
           {toolFund - (totalTools === undefined ? 0 : totalTools)}
         </strong>
       </SectionBar>
-      {onNext && onNext != null ? (
+      {onNext != null ? (
         <Button label="Next Employee" onClick={() => onNext()}></Button>
       ) : (
         []
