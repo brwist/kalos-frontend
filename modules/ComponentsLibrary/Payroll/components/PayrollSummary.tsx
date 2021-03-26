@@ -172,7 +172,7 @@ export const PayrollSummary: FC<Props> = ({
             onClose={handleTogglePendingView(undefined)}
             loggedUserId={loggedUser}
             notReady={toggle}
-            onNext={handleNextEmployee}
+            onNext={() => handleNextEmployee()}
           ></CostSummary>
         </Modal>
       )}
