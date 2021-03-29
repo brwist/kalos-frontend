@@ -74,6 +74,7 @@ export const Timesheet: FC<Props> = ({
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     setTimesheets(resultsList);
+    timesheets.sort;
     setCount(totalCount);
     setLoading(false);
   }, [page, departmentId, employeeId, week, type]);
@@ -192,7 +193,6 @@ const createTimesheetFetchFunction = (
   req.setIsActive(1);
   req.setNotEqualsList(['UserApprovalDatetime']);
   req.setUserApprovalDatetime(NULL_TIME);
-  req.setOrderBy('technician_user_name_reverse');
 
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {

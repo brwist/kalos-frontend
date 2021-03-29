@@ -99,7 +99,6 @@ export const TimesheetSummary: FC<Props> = ({
       timesheetReq.setAdminApprovalUserId(0);
       timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
       timesheetReq.setFieldMaskList(['PayrollProcessed']);
-      timesheetReq.setOrderBy('technician_user_name_reverse');
       results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
     }
     setTimesheets(results);
