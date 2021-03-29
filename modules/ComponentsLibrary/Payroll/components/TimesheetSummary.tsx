@@ -291,13 +291,7 @@ export const TimesheetSummary: FC<Props> = ({
           }
 
           let mapElementsNoJob = (
-            <SectionBar
-              title={'Day:' + timesheetsNoJobs[i].actions[0].day}
-              key={
-                timesheetsNoJobs[i].actions[0].day +
-                timesheetsNoJobs[i].actions[0].classCode
-              }
-            >
+            <div>
               <InfoTable
                 key={
                   timesheetsNoJobs[i].actions[0].day +
@@ -306,6 +300,7 @@ export const TimesheetSummary: FC<Props> = ({
                 }
                 loading={loaded}
                 columns={[
+                  { name: 'Day' },
                   { name: 'Hours' },
                   { name: 'ClassCode' },
                   { name: 'Brief Description' },
@@ -326,8 +321,9 @@ export const TimesheetSummary: FC<Props> = ({
               />
               <strong>Billable Total: {Billable}</strong>{' '}
               <strong>Unbillable Total:{Unbillable}</strong>
-            </SectionBar>
+            </div>
           );
+
           noJobReports.push(mapElementsNoJob);
         }
       }
@@ -353,7 +349,14 @@ export const TimesheetSummary: FC<Props> = ({
           <strong>No Timesheet Records Found</strong>
         </div>
       )}
-      <div> {mappedElementsNoJobs}</div>
+
+      {mappedElementsNoJobs && mappedElementsNoJobs.length > 0 ? (
+        <SectionBar title={'Week of' + startDay}>
+          <div> {mappedElementsNoJobs}</div>
+        </SectionBar>
+      ) : (
+        []
+      )}
       <div>{mappedElements}</div>
     </SectionBar>
   ) : (
