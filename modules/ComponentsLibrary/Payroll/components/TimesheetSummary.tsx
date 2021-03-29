@@ -40,6 +40,7 @@ export type Action = {
   classCode: string;
   billable: boolean;
   day: string;
+  briefDescription: string;
 };
 export type Job = {
   jobId: string;
@@ -123,6 +124,7 @@ export const TimesheetSummary: FC<Props> = ({
                 results[i].toObject().classCode!.classcodeQbName,
               billable: results[i].toObject().classCode!.billable,
               day: formatDate(results[i].toObject().timeStarted),
+              briefDescription: results[i].toObject().briefDescription,
             },
           ],
         };
@@ -167,6 +169,7 @@ export const TimesheetSummary: FC<Props> = ({
                 results[i].toObject().classCode!.classcodeQbName,
               billable: results[i].toObject().classCode!.billable,
               day: formatDate(results[i].toObject().timeStarted),
+              briefDescription: results[i].toObject().briefDescription,
             },
           ],
         };
@@ -298,7 +301,11 @@ export const TimesheetSummary: FC<Props> = ({
                   timesheetsNoJobs[i].actions[0].time
                 }
                 loading={loaded}
-                columns={[{ name: 'Hours' }, { name: 'ClassCode' }]}
+                columns={[
+                  { name: 'Hours' },
+                  { name: 'ClassCode' },
+                  { name: 'Brief Description' },
+                ]}
                 data={timesheetsNoJobs[i].actions.map(action => {
                   return [
                     {
@@ -306,6 +313,9 @@ export const TimesheetSummary: FC<Props> = ({
                     },
                     {
                       value: action.classCode,
+                    },
+                    {
+                      value: action.briefDescription,
                     },
                   ];
                 })}
