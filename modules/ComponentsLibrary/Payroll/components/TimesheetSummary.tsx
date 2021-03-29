@@ -128,7 +128,6 @@ export const TimesheetSummary: FC<Props> = ({
         };
         let foundJob = false;
         let foundCode = false;
-        let foundDay = false;
         for (let j = 0; j < tempJobs.length; j++) {
           for (let l = 0; l < tempJobs[j].actions.length; l++) {
             if (tempJobs[j].jobId === tempJob.jobId) {
