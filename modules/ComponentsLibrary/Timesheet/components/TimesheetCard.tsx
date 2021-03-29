@@ -121,7 +121,9 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
               {eventId}
             </Typography>
           )}
-          <Typography>{classCode?.description}</Typography>
+          <Typography>
+            {classCode?.classcodeId + '-' + classCode?.classcodeQbName}
+          </Typography>
           {briefDescription && (
             <Typography variant="body2">
               Brief desc: {briefDescription}
