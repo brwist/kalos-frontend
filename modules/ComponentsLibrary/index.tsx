@@ -93,6 +93,8 @@ import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
 
 import './styles.less';
+import { UserClient } from '@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from '../../constants';
 
 const DEFAULT_COMPONENT_IDX = 0;
 
@@ -187,6 +189,8 @@ const COMPONENTS = {
   WeekPicker,
 };
 
+const u = new UserClient(ENDPOINT);
+
 const ComponentsLibrary = () => {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
@@ -245,5 +249,6 @@ const ComponentsLibrary = () => {
     </StyledPage>
   );
 };
-
-ReactDOM.render(<ComponentsLibrary />, document.getElementById('root'));
+u.GetToken('test', 'test').then(() => {
+  ReactDOM.render(<ComponentsLibrary />, document.getElementById('root'));
+});
