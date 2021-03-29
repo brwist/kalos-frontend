@@ -238,7 +238,7 @@ export const CostSummary: FC<Props> = ({
   }, [load, loaded]);
   return loaded ? (
     <div>
-      {/* for the PTO*/}
+      <strong>{username}</strong>
       {onClose ? <Button label="Close" onClick={() => onClose()}></Button> : []}
       <SectionBar title="PTO Current Total">
         <InfoTable

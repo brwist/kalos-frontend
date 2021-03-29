@@ -86,18 +86,21 @@ export const PayrollSummary: FC<Props> = ({
     [load],
   );
   const handleNextEmployee = () => {
-    const tempPendingView = pendingView;
+    let tempPendingView = pendingView;
+    setPendingView(undefined);
     if (tempPendingView != undefined) {
-      setPendingView(undefined);
-      let index = 0;
       for (let i = 0; i < timesheets.length; i++) {
-        if (timesheets[index] === tempPendingView)
-          setPendingView(timesheets[index]);
-        else {
-          index += 1;
+        if (
+          timesheets[i].technicianUserId === tempPendingView.technicianUserId
+        ) {
+          tempPendingView = timesheets[i + 1];
+          break;
         }
       }
     }
+    setTimeout(() => {
+      setPendingView(tempPendingView);
+    }, 1000);
   };
   const handleSetToggle = () => {
     if (toggle === true) {
