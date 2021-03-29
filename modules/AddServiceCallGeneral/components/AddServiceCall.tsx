@@ -23,6 +23,7 @@ export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   onClose?: () => void;
   onSave?: () => void;
   asProject?: boolean;
+  projectParentId?: number;
 };
 
 export const AddServiceCall: FC<Props> = props => {
@@ -197,6 +198,7 @@ export const AddServiceCall: FC<Props> = props => {
                 onSave={onSave}
                 asProject={asProject}
                 onClose={handleServiceCallClose}
+                projectParentId={props.projectParentId}
               />
             </div>
           </div>
