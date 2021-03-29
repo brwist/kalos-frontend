@@ -212,6 +212,7 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
     req.setUserApprovalDatetime(NULL_TIME_VALUE);
     req.setFieldMaskList(['PayrollProcessed']);
     req.setNotEqualsList(['UserApprovalDatetime']);
+    req.setOrderBy('technician_user_name_reverse');
   }
   if (config.toggle === false) {
     req.setAdminApprovalUserId(0);

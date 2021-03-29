@@ -192,6 +192,7 @@ const createTimesheetFetchFunction = (
   req.setIsActive(1);
   req.setNotEqualsList(['UserApprovalDatetime']);
   req.setUserApprovalDatetime(NULL_TIME);
+  req.setOrderBy('technician_user_name_reverse');
 
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
