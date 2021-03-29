@@ -21,6 +21,7 @@ import {
   JobSubtypeClientService,
   cfURL,
   updateMaterialUsed,
+  loadProjects,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -35,6 +36,10 @@ import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
 import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
+import { Confirm } from '../Confirm';
+import { GanttChart } from '../GanttChart';
+import { Loader } from '../../Loader/main';
+import { Typography } from '@material-ui/core';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -53,6 +58,7 @@ export interface Props {
   onClose?: () => void;
   onSave?: () => void;
   asProject?: boolean;
+  projectParentId?: number;
 }
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
@@ -98,6 +104,7 @@ export const ServiceCall: FC<Props> = props => {
   const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
     [],
   );
+
   const [servicesRendered, setServicesRendered] = useState<
     ServicesRenderedType[]
   >([]);
@@ -107,6 +114,11 @@ export const ServiceCall: FC<Props> = props => {
   );
   const [notificationViewing, setNotificationViewing] = useState<boolean>(
     false,
+  );
+  const [projects, setProjects] = useState<EventType[]>([]);
+  const [parentId, setParentId] = useState<number | null>(null);
+  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
+    null,
   );
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
@@ -133,23 +145,92 @@ export const ServiceCall: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const property = await PropertyClientService.loadPropertyByID(propertyId);
-      setProperty(property);
-      const customer = await UserClientService.loadUserById(userID);
-      setCustomer(customer);
-      const propertyEvents = await loadEventsByPropertyId(propertyId);
-      setPropertyEvents(propertyEvents);
-      const jobTypes = await JobTypeClientService.loadJobTypes();
-      setJobTypes(jobTypes);
-      const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
-      setJobSubtype(jobSubtypes);
-      const jobTypeSubtypes = await loadJobTypeSubtypes();
-      setJobTypeSubtypes(jobTypeSubtypes);
-      const loggedUser = await UserClientService.loadUserById(loggedUserId);
-      setLoggedUser(loggedUser);
-      await loadEntry();
-      await loadServicesRenderedData();
-      setLoading(false);
+      let promises = [];
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const property = await PropertyClientService.loadPropertyByID(
+            propertyId,
+          );
+          setProperty(property);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const customer = await UserClientService.loadUserById(userID);
+          setCustomer(customer);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const propertyEvents = await loadEventsByPropertyId(propertyId);
+          setPropertyEvents(propertyEvents);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobTypes = await JobTypeClientService.loadJobTypes();
+          setJobTypes(jobTypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
+          setJobSubtype(jobSubtypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobTypeSubtypes = await loadJobTypeSubtypes();
+          setJobTypeSubtypes(jobTypeSubtypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const loggedUser = await UserClientService.loadUserById(loggedUserId);
+          setLoggedUser(loggedUser);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          await loadEntry();
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          await loadServicesRenderedData();
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const projects = await loadProjects();
+          setProjects(projects);
+          resolve();
+        }),
+      );
+
+      Promise.all(promises).then(() => {
+        setLoaded(true);
+        setLoading(false);
+      });
     } catch (e) {
       setError(true);
     }
@@ -165,7 +246,22 @@ export const ServiceCall: FC<Props> = props => {
     setLoggedUser,
     setProperty,
     setCustomer,
+    setProjects,
   ]);
+
+  const handleSetParentId = useCallback(
+    id => {
+      setParentId(id);
+    },
+    [setParentId],
+  );
+
+  const handleSetConfirmedIsChild = useCallback(
+    id => {
+      setConfirmedParentId(id);
+    },
+    [setConfirmedParentId],
+  );
 
   const handleSave = useCallback(async () => {
     setPendingSave(true);
@@ -174,7 +270,7 @@ export const ServiceCall: FC<Props> = props => {
       setTabKey(tabKey + 1);
     }
   }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
-  const save = useCallback(async () => {
+  const saveServiceCall = useCallback(async () => {
     setSaving(true);
     const req = new Event();
     req.setIsActive(1);
@@ -218,6 +314,7 @@ export const ServiceCall: FC<Props> = props => {
   const saveProject = useCallback(
     async (data: EventType) => {
       setSaving(true);
+      if (confirmedParentId) data.parentId = confirmedParentId;
       await upsertEvent(data);
       setSaving(false);
       if (onSave) {
@@ -227,7 +324,7 @@ export const ServiceCall: FC<Props> = props => {
         onClose();
       }
     },
-    [onSave, onClose],
+    [onSave, onClose, confirmedParentId],
   );
   useEffect(() => {
     if (!loaded) {
@@ -239,7 +336,7 @@ export const ServiceCall: FC<Props> = props => {
     }
     if (pendingSave && requestValid) {
       setPendingSave(false);
-      save();
+      saveServiceCall();
     }
     if (pendingSave && tabIdx === 0 && requestRef.current) {
       //@ts-ignore
@@ -254,7 +351,7 @@ export const ServiceCall: FC<Props> = props => {
     pendingSave,
     requestValid,
     setPendingSave,
-    save,
+    saveServiceCall,
     tabIdx,
     requestRef,
   ]);
@@ -506,13 +603,64 @@ export const ServiceCall: FC<Props> = props => {
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
       {asProject ? (
-        <Form
-          title="Project Data"
-          schema={SCHEMA_PROJECT}
-          data={{ ...new Event().toObject(), propertyId }}
-          onClose={onClose || (() => {})}
-          onSave={saveProject}
-        />
+        <>
+          <Form
+            title="Project Data"
+            schema={SCHEMA_PROJECT}
+            data={{ ...new Event().toObject(), propertyId }}
+            onClose={onClose || (() => {})}
+            onSave={(data: EventType) =>
+              saveProject({ ...data, departmentId: Number(data.departmentId) })
+            }
+          />
+          {parentId != confirmedParentId && parentId != null && (
+            <Confirm
+              title="Confirm Parent"
+              open={true}
+              onClose={() => handleSetParentId(null)}
+              onConfirm={() => handleSetConfirmedIsChild(parentId)}
+            >
+              Are you sure you want to set this project as the parent to the new
+              project?
+            </Confirm>
+          )}
+          {confirmedParentId && (
+            <Typography variant="h5">Parent ID: {confirmedParentId}</Typography>
+          )}
+          {loaded && projects.length > 0 ? (
+            <GanttChart
+              events={projects.map(task => {
+                const {
+                  id,
+                  description,
+                  dateStarted: dateStart,
+                  dateEnded: dateEnd,
+                  logJobStatus,
+                  color,
+                } = task;
+                const [startDate, startHour] = dateStart.split(' ');
+                const [endDate, endHour] = dateEnd.split(' ');
+                return {
+                  id,
+                  startDate,
+                  endDate,
+                  startHour,
+                  endHour,
+                  notes: description,
+                  statusColor: '#' + color,
+                  onClick: () => {
+                    handleSetParentId(id);
+                  },
+                };
+              })}
+              startDate={projects[0].dateStarted.substr(0, 10)}
+              endDate={projects[projects.length - 1].dateEnded.substr(0, 10)}
+              loading={loading}
+            />
+          ) : (
+            <Loader />
+          )}
+        </>
       ) : (
         <>
           <SectionBar
