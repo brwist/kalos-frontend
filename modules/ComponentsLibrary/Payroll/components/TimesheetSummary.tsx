@@ -250,6 +250,7 @@ export const TimesheetSummary: FC<Props> = ({
                   { name: 'Day' },
                   { name: 'Hours' },
                   { name: 'ClassCode' },
+                  { name: 'Brief Description' },
                 ]}
                 data={timesheetsJobs[i].actions.map(action => {
                   return [
@@ -261,6 +262,9 @@ export const TimesheetSummary: FC<Props> = ({
                     },
                     {
                       value: action.classCode,
+                    },
+                    {
+                      value: action.briefDescription,
                     },
                   ];
                 })}
