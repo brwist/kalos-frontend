@@ -295,7 +295,7 @@ export const Timesheet: FC<Props> = props => {
                 previous: previous,
                 current: current,
               });
-              if (!current.adminApprovalUserId && current.adminApprovalUserId) {
+              if (!current.adminApprovalUserId) {
                 acc.idList.push(current.id);
               }
             }
