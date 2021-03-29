@@ -56,7 +56,7 @@ export const TimesheetSummary: FC<Props> = ({
   onClose,
   username,
 }) => {
-  const [totalHours, setTotalHours] = useState<number[]>();
+  const [totalHours, setTotalHours] = useState<number>();
   const [classCodes, setClassCodes] = useState<string[]>();
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
@@ -103,7 +103,15 @@ export const TimesheetSummary: FC<Props> = ({
     setTimesheets(results);
     let tempJobs = [];
     let tempNoJobs = [];
+    let total = 0;
     for (let i = 0; i < results.length; i++) {
+      let subtotal = roundNumber(
+        differenceInMinutes(
+          parseISO(results[i].toObject().timeFinished),
+          parseISO(results[i].toObject().timeStarted),
+        ) / 60,
+      );
+      total += subtotal;
       if (
         results[i].toObject().referenceNumber != '' &&
         results[i].toObject().referenceNumber != undefined
@@ -199,6 +207,7 @@ export const TimesheetSummary: FC<Props> = ({
         }
       }
     }
+    setTotalHours(total);
     setTimesheetsJobs(tempJobs);
     setTimesheetsNoJobs(tempNoJobs);
   }, [notReady, userId]);
@@ -308,6 +317,9 @@ export const TimesheetSummary: FC<Props> = ({
                 data={timesheetsNoJobs[i].actions.map(action => {
                   return [
                     {
+                      value: action.day,
+                    },
+                    {
                       value: action.time,
                     },
                     {
@@ -342,6 +354,7 @@ export const TimesheetSummary: FC<Props> = ({
   ]);
   return loaded ? (
     <SectionBar title="Timesheet Summary" uncollapsable={true}>
+      <strong>Total Approved Hours :{totalHours}</strong>
       <Button label="Close" onClick={() => onClose()}></Button>
       <Button label="Process All" onClick={() => ProcessTimesheets()}></Button>
       {mappedElements?.length === 0 && mappedElementsNoJobs?.length === 0 && (
@@ -351,7 +364,7 @@ export const TimesheetSummary: FC<Props> = ({
       )}
 
       {mappedElementsNoJobs && mappedElementsNoJobs.length > 0 ? (
-        <SectionBar title={'Week of' + startDay}>
+        <SectionBar title={'Week of' + format(startDay, 'yyyy-MM-dd')}>
           <div> {mappedElementsNoJobs}</div>
         </SectionBar>
       ) : (
