@@ -38,6 +38,7 @@ const formatWeek = (date: string) => {
 
 export const PayrollSummary: FC<Props> = ({
   employeeId,
+  departmentId,
   week,
   type,
   loggedUser,
@@ -58,6 +59,7 @@ export const PayrollSummary: FC<Props> = ({
     const filter = {
       page,
       employeeId,
+      departmentId,
       type: type,
       toggle,
       startDate: format(startDay, 'yyyy-MM-dd'),
@@ -74,7 +76,7 @@ export const PayrollSummary: FC<Props> = ({
     setTimesheets(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week, type, toggle]);
+  }, [page, employeeId, week, type, toggle, departmentId, endDay, startDay]);
   useEffect(() => {
     load();
   }, [load]);
@@ -205,6 +207,10 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   }
   if (config.employeeId) {
     req.setTechnicianUserId(config.employeeId);
+  }
+  if (config.departmentId) {
+    console.log('we got a department ID');
+    req.setDepartmentCode(config.departmentId);
   }
 
   if (config.toggle === true) {

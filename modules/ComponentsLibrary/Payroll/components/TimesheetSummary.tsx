@@ -17,17 +17,7 @@ import {
   subDays,
   addDays,
 } from 'date-fns';
-import {
-  perDiemTripMilesToUsdAsNumber,
-  roundNumber,
-  formatWeek,
-  formatDate,
-  formatDay,
-  loadTimeoffRequests,
-  GetTimesheetConfig,
-  TaskClientService,
-  makeFakeRows,
-} from '../../../../helpers';
+import { roundNumber, formatDate } from '../../../../helpers';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -46,9 +36,7 @@ export type Job = {
   jobId: string;
   actions: Action[];
 };
-import { PerDiem, PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
-import { notStrictEqual } from 'assert';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+
 export const TimesheetSummary: FC<Props> = ({
   userId,
   loggedUserId,
@@ -59,7 +47,6 @@ export const TimesheetSummary: FC<Props> = ({
   const [totalHours, setTotalHours] = useState<number>();
   const [totalBillableHours, setTotaBillablelHours] = useState<number>();
   const [totalUnbillableHours, setTotalUnbillableHours] = useState<number>();
-  const [classCodes, setClassCodes] = useState<string[]>();
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
   const [timesheetsNoJobs, setTimesheetsNoJobs] = useState<Job[]>();
@@ -354,15 +341,7 @@ export const TimesheetSummary: FC<Props> = ({
       setMappedElementsNoJobs(noJobReports);
       setLoaded(true);
     }
-  }, [
-    loaded,
-    load,
-    classCodes,
-    totalHours,
-    loading,
-    timesheetsJobs,
-    timesheetsNoJobs,
-  ]);
+  }, [loaded, load, totalHours, loading, timesheetsJobs, timesheetsNoJobs]);
   return loaded ? (
     <SectionBar title="Timesheet Summary" uncollapsable={true}>
       <Button label="Close" onClick={() => onClose()}></Button>

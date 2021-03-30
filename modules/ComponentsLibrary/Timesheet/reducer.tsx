@@ -120,6 +120,7 @@ export type Action =
   | { type: 'perDiemRowId'; value: number[] }
   | { type: 'approveTimesheet' }
   | { type: 'processTimesheet' }
+  | { type: 'rejectTimesheet' }
   | { type: 'showReceiptsIssueDialog'; value: boolean }
   | {
       type: 'setReceiptsIssue';
@@ -387,6 +388,23 @@ export const reducer = (state: State, action: Action) => {
         dayList.forEach(entry => {
           if (entry.adminApprovalDatetime !== NULL_TIME_VALUE) {
             entry.payrollProcessed = true;
+          }
+        });
+      }
+      return {
+        ...state,
+        data,
+      };
+    }
+    case 'rejectTimesheet': {
+      const data = { ...state.data };
+      const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm');
+      for (let i = 0; i < state.shownDates.length; i++) {
+        let dayList = [...data[state.shownDates[i]].timesheetLineList];
+        dayList.forEach(entry => {
+          if (entry.adminApprovalDatetime !== NULL_TIME_VALUE) {
+            entry.adminApprovalUserId = 0;
+            entry.adminApprovalDatetime = NULL_TIME_VALUE;
           }
         });
       }
