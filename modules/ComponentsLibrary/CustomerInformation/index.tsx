@@ -485,6 +485,8 @@ export const CustomerInformation: FC<Props> = ({
               key={prop.id}
               title={getPropertyAddress(prop)}
               propertyId={prop.id}
+              userId={customer.id}
+              ignoreUserId
               deletable={false}
               stickySectionBar={false}
             />

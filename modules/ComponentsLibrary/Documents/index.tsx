@@ -56,6 +56,7 @@ interface Props {
   stickySectionBar?: boolean;
   displayInAscendingOrder?: boolean;
   orderBy?: OrderByDirective;
+  ignoreUserId?: boolean;
 }
 
 export const Documents: FC<Props> = ({
@@ -76,6 +77,7 @@ export const Documents: FC<Props> = ({
   deletable = true,
   stickySectionBar = true,
   orderBy = 'document_date_created',
+  ignoreUserId,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -94,7 +96,8 @@ export const Documents: FC<Props> = ({
       if (fieldMask) {
         entry.setFieldMaskList(fieldMask);
       }
-      if (userId) {
+      if (userId && !ignoreUserId) {
+        console.log('setting userID');
         entry.setUserId(userId);
       }
       if (propertyId) {
@@ -243,16 +246,24 @@ export const Documents: FC<Props> = ({
                 key="mail"
                 style={{ marginLeft: 4 }}
                 size="small"
-                onClick={() =>
-                  window.open(
-                    cfURL(
-                      'contracts.docemail&',
-                      [`user_id=${userId}`, `document_id=${id}`, `p=1`].join(
-                        '&',
-                      ),
-                    ),
-                  )
-                }
+                onClick={() => {
+                  const URL = cfURL(
+                    !ignoreUserId
+                      ? 'contracts.docemail&'
+                      : 'properties.docemail&',
+                    !ignoreUserId
+                      ? [`user_id=${userId}`, `document_id=${id}`, `p=1`].join(
+                          '&',
+                        )
+                      : [
+                          `user_id=${userId}`,
+                          `document_id=${id}`,
+                          `property_id=${propertyId}`,
+                          `p=2`,
+                        ].join('&'),
+                  );
+                  document.location.href = URL;
+                }}
               >
                 <MailIcon />
               </IconButton>,
