@@ -9,8 +9,8 @@ const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
     <PropertyInformation
-      userID={1286}
-      propertyId={28953}
+      userID={8418}
+      propertyId={6552}
       loggedUserId={8418}
       withHeader
     />,

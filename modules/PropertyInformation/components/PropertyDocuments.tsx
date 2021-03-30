@@ -22,7 +22,8 @@ export const PropertyDocuments: FC<Props> = ({
     title="Property Documents"
     propertyId={propertyId}
     deletable={true}
-    userId={0}
+    userId={userID}
+    ignoreUserId
     addUrl={
       viewedAsCustomer
         ? undefined
