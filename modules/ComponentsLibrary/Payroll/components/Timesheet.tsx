@@ -200,7 +200,7 @@ const createTimesheetFetchFunction = (
   }
   if (config.departmentId) {
     console.log('We got a department');
-    //req.setDepartmentCode(config.departmentId);
+    req.setDepartmentCode(config.departmentId);
   }
   if (config.employeeId) {
     req.setTechnicianUserId(config.employeeId);

@@ -24,6 +24,7 @@ type Props = {
   payroll: Payroll;
   submitTimesheet: () => void;
   processTimesheet: () => void;
+  rejectTimesheet: () => void;
   pendingEntries: boolean;
   isTimesheetOwner?: boolean;
   onClose?: () => void;
@@ -39,6 +40,7 @@ const Toolbar: FC<Props> = ({
   payroll,
   submitTimesheet,
   processTimesheet,
+  rejectTimesheet,
   pendingEntries,
   isTimesheetOwner,
   onClose,
@@ -67,6 +69,11 @@ const Toolbar: FC<Props> = ({
   const handleProcess = () => {
     if (role === 'Payroll') {
       processTimesheet();
+    }
+  };
+  const handleReject = () => {
+    if (role === 'Payroll') {
+      rejectTimesheet();
     }
   };
   const submitText = 'Submit Timesheet';
@@ -121,7 +128,10 @@ const Toolbar: FC<Props> = ({
             <Button onClick={handleSubmit} label={buttonLabel} />
           )}
           {role === 'Payroll' && (
-            <Button onClick={handleProcess} label={'Process Payroll'} />
+            <div>
+              <Button onClick={handleProcess} label={'Process Payroll'} />
+              <Button onClick={handleReject} label={'Reject Timesheet'} />
+            </div>
           )}
           {payrollOpen && (
             <Modal

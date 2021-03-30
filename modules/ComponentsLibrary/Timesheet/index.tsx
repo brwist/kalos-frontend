@@ -295,7 +295,10 @@ export const Timesheet: FC<Props> = props => {
                 previous: previous,
                 current: current,
               });
-              if (!current.adminApprovalUserId) {
+              if (
+                !current.adminApprovalUserId ||
+                current.adminApprovalUserId === 0
+              ) {
                 acc.idList.push(current.id);
               }
             }
@@ -392,15 +395,59 @@ export const Timesheet: FC<Props> = props => {
         ids.push(...result.idList);
         console.log(ids);
       }
-      let isManager = false;
-      console.log(ids);
-      if (user) {
-        const { permissionGroupsList } = user;
-        isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
-      }
 
       await tslClient.Process(ids, userId);
       dispatch({ type: 'processTimesheet' });
+    })();
+  }, [userId, data, shownDates, tslClient, user]);
+  const handleRejectTimesheet = useCallback(async () => {
+    (async () => {
+      const ids: number[] = [];
+      for (let i = 0; i < shownDates.length; i++) {
+        let dayList = [...data[shownDates[i]].timesheetLineList].sort(
+          (a, b) =>
+            parseISO(a.timeStarted).getTime() -
+            parseISO(b.timeStarted).getTime(),
+        );
+        let result = dayList.reduce(
+          (acc, current, idx, arr) => {
+            if (
+              idx === 0 &&
+              current.adminApprovalUserId &&
+              current.adminApprovalUserId != 0
+            ) {
+              acc.idList.push(current.id);
+              return acc;
+            }
+
+            let previous = arr[idx - 1];
+            acc.ranges.push({
+              previous: previous,
+              current: current,
+            });
+            if (
+              current.adminApprovalUserId &&
+              current.adminApprovalUserId !== 0 &&
+              current.adminApprovalDatetime != NULL_TIME_VALUE
+            ) {
+              acc.idList.push(current.id);
+            }
+
+            return acc;
+          },
+          {
+            ranges: [] as {
+              previous: TimesheetLine.AsObject;
+              current: TimesheetLine.AsObject;
+            }[],
+            idList: [] as number[],
+          },
+        );
+        ids.push(...result.idList);
+        console.log(ids);
+      }
+      dispatch({ type: 'rejectTimesheet' });
+      await tslClient.Reject(ids, userId);
     })();
   }, [userId, data, shownDates, tslClient, user]);
   const fetchUsers = async () => {
@@ -547,6 +594,7 @@ export const Timesheet: FC<Props> = props => {
             payroll={payroll}
             submitTimesheet={handleSubmitTimesheet}
             processTimesheet={handleProcessTimesheet}
+            rejectTimesheet={handleRejectTimesheet}
             pendingEntries={pendingEntries}
             isTimesheetOwner={props.userId === props.timesheetOwnerId}
             onClose={onClose}
