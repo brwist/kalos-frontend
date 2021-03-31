@@ -111,7 +111,7 @@ export const TimesheetSummary: FC<Props> = ({
       }
       if (!results[i].toObject().classCode?.billable) {
         unbillableTotal += subtotal;
-      } /*
+      }
       if (
         results[i].toObject().referenceNumber != '' &&
         results[i].toObject().referenceNumber != undefined
@@ -162,58 +162,57 @@ export const TimesheetSummary: FC<Props> = ({
           tempJobs.push(tempJob);
         }
       } else {
-        */
-      let tempNoJob = {
-        jobId: results[i].toObject().eventId.toString(),
-        actions: [
-          {
-            time: roundNumber(
-              differenceInMinutes(
-                parseISO(results[i].toObject().timeFinished),
-                parseISO(results[i].toObject().timeStarted),
-              ) / 60,
-            ),
-            classCode:
-              results[i].toObject().classCodeId +
-              '-' +
-              results[i].toObject().classCode!.classcodeQbName,
-            billable: results[i].toObject().classCode!.billable,
-            day: formatDate(results[i].toObject().timeStarted),
-            briefDescription: results[i].toObject().briefDescription,
-            referenceNumber: results[i].toObject().referenceNumber,
-          },
-        ],
-      };
-      let foundDay = false;
-      let foundCode = false;
-      for (let j = 0; j < tempNoJobs.length; j++) {
-        for (let l = 0; l < tempNoJobs[j].actions.length; l++) {
-          if (tempNoJobs[j].actions[l].day === tempNoJob.actions[0].day) {
-            foundDay = true;
-            if (
-              tempNoJob.actions[0].classCode ===
-              tempNoJobs[j].actions[l].classCode
-            ) {
-              tempNoJobs[j].actions[l].time += tempNoJob.actions[0].time;
-              foundCode = true;
-              break;
+        let tempNoJob = {
+          jobId: results[i].toObject().eventId.toString(),
+          actions: [
+            {
+              time: roundNumber(
+                differenceInMinutes(
+                  parseISO(results[i].toObject().timeFinished),
+                  parseISO(results[i].toObject().timeStarted),
+                ) / 60,
+              ),
+              classCode:
+                results[i].toObject().classCodeId +
+                '-' +
+                results[i].toObject().classCode!.classcodeQbName,
+              billable: results[i].toObject().classCode!.billable,
+              day: formatDate(results[i].toObject().timeStarted),
+              briefDescription: results[i].toObject().briefDescription,
+              referenceNumber: results[i].toObject().referenceNumber,
+            },
+          ],
+        };
+        let foundDay = false;
+        let foundCode = false;
+        for (let j = 0; j < tempNoJobs.length; j++) {
+          for (let l = 0; l < tempNoJobs[j].actions.length; l++) {
+            if (tempNoJobs[j].actions[l].day === tempNoJob.actions[0].day) {
+              foundDay = true;
+              if (
+                tempNoJob.actions[0].classCode ===
+                tempNoJobs[j].actions[l].classCode
+              ) {
+                tempNoJobs[j].actions[l].time += tempNoJob.actions[0].time;
+                foundCode = true;
+                break;
+              }
             }
           }
+          if (foundDay === true && foundCode === false) {
+            tempNoJobs[j].actions.push(tempNoJob.actions[0]);
+            break;
+          }
         }
-        if (foundDay === true && foundCode === false) {
-          tempNoJobs[j].actions.push(tempNoJob.actions[0]);
-          break;
+        if (foundDay === false && foundCode === false) {
+          tempNoJobs.push(tempNoJob);
         }
-      }
-      if (foundDay === false && foundCode === false) {
-        tempNoJobs.push(tempNoJob);
       }
     }
-    //}
     setTotalHours(total);
     setTotalUnbillableHours(unbillableTotal);
     setTotaBillablelHours(billableTotal);
-    //setTimesheetsJobs(tempJobs);
+    setTimesheetsJobs(tempJobs);
     setTimesheetsNoJobs(tempNoJobs);
   }, [notReady, userId]);
   const ProcessTimesheets = useCallback(async () => {
