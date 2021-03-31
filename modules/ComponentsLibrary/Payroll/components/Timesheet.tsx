@@ -73,7 +73,11 @@ export const Timesheet: FC<Props> = ({
     }
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
-    setTimesheets(resultsList);
+    let sortedResultsLists = resultsList.sort((a, b) =>
+      a.technicianUserNameReverse > b.technicianUserNameReverse ? 1 : -1,
+    );
+
+    setTimesheets(sortedResultsLists);
     timesheets.sort;
     setCount(totalCount);
     setLoading(false);

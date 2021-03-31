@@ -117,7 +117,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
     const departments = await loadTimesheetDepartments();
     setDepartments(departments);
     const employees = await loadTechnicians();
-    setEmployees(employees);
+    let sortedEmployeeList = employees.sort((a, b) =>
+      a.lastname > b.lastname ? 1 : -1,
+    );
+    setEmployees(sortedEmployeeList);
     handleSelectNewWeek('-- All --');
     const loggedUser = await UserClientService.loadUserById(userID);
     setLoggedUser(loggedUser);
