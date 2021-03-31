@@ -18,6 +18,8 @@ import {
   addDays,
 } from 'date-fns';
 import { roundNumber, formatDate } from '../../../../helpers';
+import { Loader } from '../../../Loader/main';
+import { keys } from 'lodash';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -31,6 +33,7 @@ export type Action = {
   billable: boolean;
   day: string;
   briefDescription: string;
+  referenceNumber: string;
 };
 export type Job = {
   jobId: string;
@@ -70,6 +73,7 @@ export const TimesheetSummary: FC<Props> = ({
     const startDate = format(startDay, 'yyyy-MM-dd');
     const endDate = format(endDay, 'yyyy-MM-dd');
     timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
+
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
 
@@ -107,13 +111,13 @@ export const TimesheetSummary: FC<Props> = ({
       }
       if (!results[i].toObject().classCode?.billable) {
         unbillableTotal += subtotal;
-      }
+      } /*
       if (
-        results[i].toObject().eventId != 0 &&
-        results[i].toObject().eventId != undefined
+        results[i].toObject().referenceNumber != '' &&
+        results[i].toObject().referenceNumber != undefined
       ) {
         let tempJob = {
-          jobId: results[i].toObject().eventId.toString(),
+          jobId: results[i].toObject().referenceNumber,
           actions: [
             {
               time: roundNumber(
@@ -129,6 +133,7 @@ export const TimesheetSummary: FC<Props> = ({
               billable: results[i].toObject().classCode!.billable,
               day: formatDate(results[i].toObject().timeStarted),
               briefDescription: results[i].toObject().briefDescription,
+              referenceNumber: results[i].toObject().referenceNumber,
             },
           ],
         };
@@ -157,56 +162,58 @@ export const TimesheetSummary: FC<Props> = ({
           tempJobs.push(tempJob);
         }
       } else {
-        let tempNoJob = {
-          jobId: results[i].toObject().eventId.toString(),
-          actions: [
-            {
-              time: roundNumber(
-                differenceInMinutes(
-                  parseISO(results[i].toObject().timeFinished),
-                  parseISO(results[i].toObject().timeStarted),
-                ) / 60,
-              ),
-              classCode:
-                results[i].toObject().classCodeId +
-                '-' +
-                results[i].toObject().classCode!.classcodeQbName,
-              billable: results[i].toObject().classCode!.billable,
-              day: formatDate(results[i].toObject().timeStarted),
-              briefDescription: results[i].toObject().briefDescription,
-            },
-          ],
-        };
-        let foundDay = false;
-        let foundCode = false;
-        for (let j = 0; j < tempNoJobs.length; j++) {
-          for (let l = 0; l < tempNoJobs[j].actions.length; l++) {
-            if (tempNoJobs[j].actions[l].day === tempNoJob.actions[0].day) {
-              foundDay = true;
-              if (
-                tempNoJob.actions[0].classCode ===
-                tempNoJobs[j].actions[l].classCode
-              ) {
-                tempNoJobs[j].actions[l].time += tempNoJob.actions[0].time;
-                foundCode = true;
-                break;
-              }
+        */
+      let tempNoJob = {
+        jobId: results[i].toObject().eventId.toString(),
+        actions: [
+          {
+            time: roundNumber(
+              differenceInMinutes(
+                parseISO(results[i].toObject().timeFinished),
+                parseISO(results[i].toObject().timeStarted),
+              ) / 60,
+            ),
+            classCode:
+              results[i].toObject().classCodeId +
+              '-' +
+              results[i].toObject().classCode!.classcodeQbName,
+            billable: results[i].toObject().classCode!.billable,
+            day: formatDate(results[i].toObject().timeStarted),
+            briefDescription: results[i].toObject().briefDescription,
+            referenceNumber: results[i].toObject().referenceNumber,
+          },
+        ],
+      };
+      let foundDay = false;
+      let foundCode = false;
+      for (let j = 0; j < tempNoJobs.length; j++) {
+        for (let l = 0; l < tempNoJobs[j].actions.length; l++) {
+          if (tempNoJobs[j].actions[l].day === tempNoJob.actions[0].day) {
+            foundDay = true;
+            if (
+              tempNoJob.actions[0].classCode ===
+              tempNoJobs[j].actions[l].classCode
+            ) {
+              tempNoJobs[j].actions[l].time += tempNoJob.actions[0].time;
+              foundCode = true;
+              break;
             }
           }
-          if (foundDay === true && foundCode === false) {
-            tempNoJobs[j].actions.push(tempNoJob.actions[0]);
-            break;
-          }
         }
-        if (foundDay === false && foundCode === false) {
-          tempNoJobs.push(tempNoJob);
+        if (foundDay === true && foundCode === false) {
+          tempNoJobs[j].actions.push(tempNoJob.actions[0]);
+          break;
         }
       }
+      if (foundDay === false && foundCode === false) {
+        tempNoJobs.push(tempNoJob);
+      }
     }
+    //}
     setTotalHours(total);
     setTotalUnbillableHours(unbillableTotal);
     setTotaBillablelHours(billableTotal);
-    setTimesheetsJobs(tempJobs);
+    //setTimesheetsJobs(tempJobs);
     setTimesheetsNoJobs(tempNoJobs);
   }, [notReady, userId]);
   const ProcessTimesheets = useCallback(async () => {
@@ -303,15 +310,24 @@ export const TimesheetSummary: FC<Props> = ({
                 key={
                   timesheetsNoJobs[i].actions[0].day +
                   timesheetsNoJobs[i].actions[0].classCode +
-                  timesheetsNoJobs[i].actions[0].time
+                  timesheetsNoJobs[i].actions[0].time +
+                  timesheetsNoJobs[i].actions[0].billable +
+                  timesheetsNoJobs[i].actions[0].briefDescription
                 }
                 loading={loaded}
-                columns={[
-                  { name: 'Day' },
-                  { name: 'Hours' },
-                  { name: 'ClassCode' },
-                  { name: 'Brief Description' },
-                ]}
+                columns={
+                  i == 0
+                    ? [
+                        { name: 'Day' },
+                        { name: 'Hours' },
+                        { name: 'ClassCode' },
+                        { name: 'Brief Description' },
+                        { name: 'Reference Number' },
+                        { name: 'Billable Amount' },
+                        { name: 'Unbillable Amount' },
+                      ]
+                    : []
+                }
                 data={timesheetsNoJobs[i].actions.map(action => {
                   return [
                     {
@@ -326,11 +342,19 @@ export const TimesheetSummary: FC<Props> = ({
                     {
                       value: action.briefDescription,
                     },
+                    {
+                      value: action.referenceNumber,
+                    },
+
+                    {
+                      value: Billable,
+                    },
+                    {
+                      value: Unbillable,
+                    },
                   ];
                 })}
               />
-              <strong>Billable Total: {Billable}</strong>{' '}
-              <strong>Unbillable Total:{Unbillable}</strong>
             </div>
           );
 
@@ -346,11 +370,14 @@ export const TimesheetSummary: FC<Props> = ({
     <SectionBar title="Timesheet Summary" uncollapsable={true}>
       <Button label="Close" onClick={() => onClose()}></Button>
       <Button label="Process All" onClick={() => ProcessTimesheets()}></Button>
-      {mappedElements?.length === 0 && mappedElementsNoJobs?.length === 0 && (
-        <div>
-          <strong>No Timesheet Records Found</strong>
-        </div>
-      )}
+      {mappedElements?.length === 0 &&
+        mappedElementsNoJobs?.length === 0 &&
+        mappedElements != undefined &&
+        mappedElementsNoJobs != undefined && (
+          <div>
+            <strong>No Timesheet Records Found</strong>
+          </div>
+        )}
 
       {mappedElementsNoJobs && mappedElementsNoJobs.length > 0 ? (
         <SectionBar title={'Week of ' + format(startDay, 'yyyy-MM-dd')}>
@@ -369,6 +396,6 @@ export const TimesheetSummary: FC<Props> = ({
       </div>
     </SectionBar>
   ) : (
-    <React.Fragment></React.Fragment>
+    <Loader />
   );
 };
