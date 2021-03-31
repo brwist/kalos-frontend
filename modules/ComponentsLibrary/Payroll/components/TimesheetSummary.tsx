@@ -109,11 +109,11 @@ export const TimesheetSummary: FC<Props> = ({
         unbillableTotal += subtotal;
       }
       if (
-        results[i].toObject().referenceNumber != '' &&
-        results[i].toObject().referenceNumber != undefined
+        results[i].toObject().eventId != 0 &&
+        results[i].toObject().eventId != undefined
       ) {
         let tempJob = {
-          jobId: results[i].toObject().referenceNumber,
+          jobId: results[i].toObject().eventId.toString(),
           actions: [
             {
               time: roundNumber(
@@ -158,7 +158,7 @@ export const TimesheetSummary: FC<Props> = ({
         }
       } else {
         let tempNoJob = {
-          jobId: results[i].toObject().referenceNumber,
+          jobId: results[i].toObject().eventId.toString(),
           actions: [
             {
               time: roundNumber(
