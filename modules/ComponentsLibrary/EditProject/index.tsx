@@ -314,20 +314,20 @@ export const EditProject: FC<Props> = ({
       }),
     );
 
-    promises.push(
-      new Promise<void>(async resolve => {
-        let req = new CostReportInfo();
-        req.setJobId(serviceCallId);
-        const costReportList = await EventClientService.GetCostReportInfo(req);
+    // promises.push(
+    //   new Promise<void>(async resolve => {
+    //     let req = new CostReportInfo();
+    //     req.setJobId(serviceCallId);
+    //     const costReportList = await EventClientService.GetCostReportInfo(req);
 
-        for await (let data of costReportList.getResultsList()) {
-          timesheets = data.getTimesheetsList().map(line => line.toObject());
-        }
-        setCostReportInfoList(costReportList);
+    //     for await (let data of costReportList.getResultsList()) {
+    //       timesheets = data.getTimesheetsList().map(line => line.toObject());
+    //     }
+    //     setCostReportInfoList(costReportList);
 
-        resolve();
-      }),
-    );
+    //     resolve();
+    //   }),
+    // );
 
     Promise.all(promises).then(() => {
       setTimesheets(timesheets);
