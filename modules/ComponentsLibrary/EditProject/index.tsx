@@ -652,8 +652,8 @@ export const EditProject: FC<Props> = ({
     );
     const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
     setLodgings(lodgings);
-    const transactions = await loadTransactionsByEventId(serviceCallId);
-    setTransactions(transactions);
+    //const transactions = await loadTransactionsByEventId(serviceCallId);
+    //setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
   const handlePrint = useCallback(async () => {
