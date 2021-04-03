@@ -316,6 +316,7 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
+        console.log('Loading with GetCostReportInfo');
         let req = new CostReportInfo();
         req.setJobId(serviceCallId);
         const costReportList = await EventClientService.GetCostReportInfo(req);
@@ -325,6 +326,7 @@ export const EditProject: FC<Props> = ({
         }
         setCostReportInfoList(costReportList);
 
+        console.log('Loaded GetCostReportInfo');
         resolve();
       }),
     );
