@@ -320,8 +320,10 @@ export const EditProject: FC<Props> = ({
         let req = new CostReportInfo();
         req.setJobId(serviceCallId);
         const costReportList = await EventClientService.GetCostReportInfo(req);
+        console.log('Ended rpc');
 
         for await (let data of costReportList.getResultsList()) {
+          console.log('Timesheet lines being set. Data: ', data);
           timesheets = data.getTimesheetsList().map(line => line.toObject());
         }
         setCostReportInfoList(costReportList);
