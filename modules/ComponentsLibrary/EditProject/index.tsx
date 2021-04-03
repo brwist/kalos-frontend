@@ -314,20 +314,20 @@ export const EditProject: FC<Props> = ({
       }),
     );
 
-    // promises.push(
-    //   new Promise<void>(async resolve => {
-    //     let req = new CostReportInfo();
-    //     req.setJobId(serviceCallId);
-    //     const costReportList = await EventClientService.GetCostReportInfo(req);
+    promises.push(
+      new Promise<void>(async resolve => {
+        let req = new CostReportInfo();
+        req.setJobId(serviceCallId);
+        const costReportList = await EventClientService.GetCostReportInfo(req);
 
-    //     for await (let data of costReportList.getResultsList()) {
-    //       timesheets = data.getTimesheetsList().map(line => line.toObject());
-    //     }
-    //     setCostReportInfoList(costReportList);
+        for await (let data of costReportList.getResultsList()) {
+          timesheets = data.getTimesheetsList().map(line => line.toObject());
+        }
+        setCostReportInfoList(costReportList);
 
-    //     resolve();
-    //   }),
-    // );
+        resolve();
+      }),
+    );
 
     Promise.all(promises).then(() => {
       setTimesheets(timesheets);
@@ -652,8 +652,8 @@ export const EditProject: FC<Props> = ({
     );
     const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
     setLodgings(lodgings);
-    //const transactions = await loadTransactionsByEventId(serviceCallId);
-    //setTransactions(transactions);
+    const transactions = await loadTransactionsByEventId(serviceCallId);
+    setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
   const handlePrint = useCallback(async () => {
