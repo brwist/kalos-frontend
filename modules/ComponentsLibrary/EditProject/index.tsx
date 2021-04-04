@@ -11,10 +11,6 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { PlainForm } from '../PlainForm';
 import { Button } from '../Button';
-import { PrintPage, Status } from '../PrintPage';
-import { PrintTable } from '../PrintTable';
-import { PrintParagraph } from '../PrintParagraph';
-import { PrintList } from '../PrintList';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Confirm } from '../Confirm';
 import { CalendarEvents } from '../CalendarEvents';
@@ -32,13 +28,6 @@ import {
   loadTimesheetDepartments,
   TimesheetDepartmentType,
   upsertEvent,
-  PerDiemType,
-  PerDiemRowType,
-  getDepartmentName,
-  usd,
-  loadPerDiemsLodging,
-  loadTransactionsByEventId,
-  TransactionType,
   TaskEventType,
   loadTaskEventsByFilter,
   upsertTaskEvent,
@@ -46,19 +35,10 @@ import {
   UserType,
   EventClientService,
   UserClientService,
-  PerDiemClientService,
   TaskEventClientService,
-  padWithZeroes,
-  TransactionClientService,
-  TimesheetLineType,
   loadProjects,
 } from '../../../helpers';
-import {
-  PROJECT_TASK_STATUS_COLORS,
-  OPTION_ALL,
-  MEALS_RATE,
-  NULL_TIME,
-} from '../../../constants';
+import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { addDays, format } from 'date-fns';
 import { Field } from '../Field';
@@ -375,10 +355,6 @@ export const EditProject: FC<Props> = ({
     (pendingCheckoutDelete: boolean) => () =>
       setPendingCheckoutDelete(pendingCheckoutDelete),
     [setPendingCheckoutDelete],
-  );
-  const handleSetCheckedInTask = useCallback(
-    (checkedIn: ExtendedProjectTaskType) => setCheckedInTask(checkedIn),
-    [setCheckedInTask],
   );
 
   const isAnyManager = useMemo(
