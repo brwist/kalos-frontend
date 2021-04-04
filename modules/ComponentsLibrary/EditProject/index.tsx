@@ -61,21 +61,6 @@ import {
 } from '../../../constants';
 import './styles.less';
 import { addDays, format } from 'date-fns';
-import {
-  CostReportInfo,
-  CostReportInfoList,
-} from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
-import {
-  Transaction,
-  TxnDepartment,
-} from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
-import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
-import {
-  PerDiem,
-  PerDiemRow,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { Field } from '../Field';
 
 export interface Props {
@@ -93,13 +78,6 @@ export type SearchType = {
 type ExtendedProjectTaskType = ProjectTaskType & {
   startTime: string;
   endTime: string;
-};
-
-type TransactionDisplayType = {
-  jobId: number;
-  notes: string;
-  description: string;
-  amount: number;
 };
 
 export const PROJECT_TASK_PRIORITY_ICONS: {
@@ -156,10 +134,6 @@ export const EditProject: FC<Props> = ({
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [pendingDelete, setPendingDelete] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
-  const [
-    costReportInfoList,
-    setCostReportInfoList,
-  ] = useState<CostReportInfoList>();
   const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
   const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
   const [pendingCheckout, setPendingCheckout] = useState<boolean>(false);
@@ -174,12 +148,6 @@ export const EditProject: FC<Props> = ({
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [errorProject, setErrorProject] = useState<string>('');
   const [errorTask, setErrorTask] = useState<string>('');
-  const [printStatus, setPrintStatus] = useState<Status>('idle');
-  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
-
-  const [transactions, setTransactions] = useState<TransactionType[]>([]);
-  const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
   const [search, setSearch] = useState<SearchType>({
     technicians: '',
     statusId: 0,
@@ -189,13 +157,9 @@ export const EditProject: FC<Props> = ({
   const [projects, setProjects] = useState<EventType[]>([]);
   const [editingProject, setEditingProject] = useState<boolean>(false);
   const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
-  const [currentCheckedInTasks, setCurrentCheckedInTasks] = useState<
-    ExtendedProjectTaskType[]
-  >();
   const [briefDescription, setBriefDescription] = useState<string>(
     'Automatically set description',
   ); // sets the checked in task's brief description field
-  const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
   const handleBriefDescriptionChange = useCallback(
     value => {
       setBriefDescription(value);
@@ -276,32 +240,8 @@ export const EditProject: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     let promises = [];
-    let timesheets: TimesheetLineType[] = [];
 
     setLoading(true);
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        let taskReq = new ProjectTask();
-        taskReq.setCheckedIn(true);
-        taskReq.setCreatorUserId(loggedUserId);
-        console.log('Task obj:', taskReq.toObject());
-        let tasksList = await TaskClientService.BatchGetProjectTasks(taskReq);
-        let tasks = tasksList.getResultsList().map(task => {
-          return { ...task } as ExtendedProjectTaskType;
-        });
-        setCurrentCheckedInTasks(tasks);
-        console.log('Project tasks found:', tasks);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        await loadPrintData();
-        resolve();
-      }),
-    );
 
     promises.push(
       new Promise<void>(async resolve => {
@@ -311,28 +251,7 @@ export const EditProject: FC<Props> = ({
       }),
     );
 
-    // promises.push(
-    //   new Promise<void>(async resolve => {
-    //     let req = new CostReportInfo();
-    //     req.setJobId(serviceCallId);
-    //     const costReportList = await EventClientService.GetCostReportInfo(req);
-
-    //     for await (let data of costReportList.getResultsList()) {
-    //       timesheets = data.getTimesheetsList().map(line => line.toObject());
-    //     }
-    //     setCostReportInfoList(costReportList);
-
-    //     resolve();
-    //   }),
-    // );
-
     Promise.all(promises).then(() => {
-      setTimesheets(timesheets);
-
-      let total = 0;
-      timesheets.forEach(timesheet => (total = total + timesheet.hoursWorked));
-      setTotalHoursWorked(total);
-
       setLoading(false);
     });
   }, [setLoading, serviceCallId, setTasks]);
@@ -643,24 +562,6 @@ export const EditProject: FC<Props> = ({
     ],
   );
 
-  const loadPrintData = useCallback(async () => {
-    const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
-      serviceCallId,
-    );
-    const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
-    setLodgings(lodgings);
-    //const transactions = await loadTransactionsByEventId(serviceCallId);
-    //setTransactions(transactions);
-    setPerDiems(resultsList);
-  }, [serviceCallId, setPerDiems, setLodgings]);
-  const handlePrint = useCallback(async () => {
-    setPrintStatus('loading');
-    await loadPrintData();
-    setPrintStatus('loaded');
-  }, [setPrintStatus, loadPrintData, serviceCallId]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
       {
@@ -779,22 +680,7 @@ export const EditProject: FC<Props> = ({
       return true;
     },
   );
-  const totalMeals =
-    perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
-    MEALS_RATE;
-  const totalLodging = perDiems
-    .reduce(
-      (aggr, { rowsList }) => [...aggr, ...rowsList],
-      [] as PerDiemRowType[],
-    )
-    .filter(({ mealsOnly }) => !mealsOnly)
-    .reduce((aggr, { id }) => aggr + lodgings[id], 0);
-  const totalTransactions = transactions.reduce(
-    (aggr, { amount }) => aggr + amount,
-    0,
-  );
-  console.log('Event:', event);
-  console.log('Loading event:', !loadingEvent);
+
   return (
     <div>
       <SectionBar

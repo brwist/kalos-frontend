@@ -231,6 +231,21 @@ export const CostReport: FC<Props> = ({
       }),
     );
 
+    // promises.push(
+    //   new Promise<void>(async resolve => {
+    //     let req = new CostReportInfo();
+    //     req.setJobId(serviceCallId);
+    //     const costReportList = await EventClientService.GetCostReportInfo(req);
+
+    //     for await (let data of costReportList.getResultsList()) {
+    //       timesheets = data.getTimesheetsList().map(line => line.toObject());
+    //     }
+    //     setCostReportInfoList(costReportList);
+
+    //     resolve();
+    //   }),
+    // );
+
     promises.push(
       new Promise<void>(async resolve => {
         let req = new CostReportInfo();
