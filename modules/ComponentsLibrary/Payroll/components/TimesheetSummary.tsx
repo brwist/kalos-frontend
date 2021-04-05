@@ -53,7 +53,7 @@ export const TimesheetSummary: FC<Props> = ({
   username,
 }) => {
   const [totalHours, setTotalHours] = useState<number>();
-  const [totalBillableHours, setTotaBillablelHours] = useState<number>();
+  const [totalBillableHours, setTotalBillableHours] = useState<number>();
   const [totalUnbillableHours, setTotalUnbillableHours] = useState<number>();
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [timesheetsPending, setTimesheetsPending] = useState<TimesheetLine[]>();
@@ -139,25 +139,8 @@ export const TimesheetSummary: FC<Props> = ({
       results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
     }
 
-    setTimesheets(results);
     let tempJobs = [];
-    let total = 0;
-    let billableTotal = 0;
-    let unbillableTotal = 0;
     for (let i = 0; i < results.length; i++) {
-      let subtotal = roundNumber(
-        differenceInMinutes(
-          parseISO(results[i].toObject().timeFinished),
-          parseISO(results[i].toObject().timeStarted),
-        ) / 60,
-      );
-      total += subtotal;
-      if (results[i].toObject().classCode?.billable) {
-        billableTotal += subtotal;
-      }
-      if (!results[i].toObject().classCode?.billable) {
-        unbillableTotal += subtotal;
-      }
       let tempJob = {
         jobId:
           results[i].toObject().referenceNumber === ''
@@ -191,6 +174,7 @@ export const TimesheetSummary: FC<Props> = ({
       for (let j = 0; j < tempJobs.length; j++) {
         for (let l = 0; l < tempJobs[j].actions.length; l++) {
           if (tempJobs[j].jobId === tempJob.jobId) {
+            console.log('same job');
             foundJob = true;
             if (
               tempJob.actions[0].classCode ===
@@ -205,16 +189,16 @@ export const TimesheetSummary: FC<Props> = ({
         }
         if (foundJob === true && foundCode === false) {
           tempJobs[j].actions.push(tempJob.actions[0]);
+          break;
         }
       }
-      if (foundJob === false && foundCode === false) {
+      if (foundJob === false) {
         tempJobs.push(tempJob);
+        continue;
       }
     }
-    setTimesheetsJobs(tempJobs);
-    setTotalHours(total);
-    setTotalUnbillableHours(unbillableTotal);
-    setTotaBillablelHours(billableTotal);
+    setTimesheets(results);
+    return tempJobs;
   }, [notReady, userId, endDay, startDay]);
   const ProcessTimesheets = useCallback(async () => {
     const tslClient = new TimesheetLineClient(ENDPOINT);
@@ -242,33 +226,35 @@ export const TimesheetSummary: FC<Props> = ({
   const load = useCallback(async () => {
     await getTimesheetTotals();
     await getTimesheetsPending();
-
-    setLoading(false);
     let subtotalsBillable = [0, 0, 0, 0, 0, 0, 0];
     let subtotalsUnbillable = [0, 0, 0, 0, 0, 0, 0];
     let subtotals = [0, 0, 0, 0, 0, 0, 0];
 
     let jobReports = [];
     let weekList = [];
-    let tempJobs = timesheetsJobs;
+    let tempJobs = await getTimesheetTotals();
+    console.log(tempJobs);
     let jobNumber = '0';
 
     if (tempJobs != undefined) {
       for (let i = 0; i < tempJobs.length; i++) {
         let tempWeek = [];
         for (let i = 0; i < 7; i++) {
-          tempWeek.push([format(addDays(startDay, i), 'yyyy-MM-dd')]);
+          tempWeek.push([
+            format(
+              addDays(
+                startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+                i,
+              ),
+              'yyyy-MM-dd',
+            ),
+          ]);
         }
+        console.log(tempWeek);
         for (let j = 0; j < tempJobs[i].actions.length; j++) {
-          for (let m = 0; m < dayList.length; m++) {
+          for (let m = 0; m < tempWeek.length; m++) {
             if (dayList[m][0] === tempJobs[i].actions[j].day) {
-              subtotals[m] += tempJobs[i].actions[j].time;
-              if (tempJobs[i].actions[j].billable) {
-                subtotalsBillable[m] += tempJobs[i].actions[j].time;
-              }
-              if (!tempJobs[i].actions[j].billable) {
-                subtotalsUnbillable[m] += tempJobs[i].actions[j].time;
-              }
+              console.log('matching day');
               if (!tempWeek[m][1]) {
                 jobNumber = tempJobs[i].jobId === '' ? '0' : tempJobs[i].jobId;
                 tempWeek.push([jobNumber]);
@@ -277,6 +263,16 @@ export const TimesheetSummary: FC<Props> = ({
                     '-' +
                     tempJobs[i].actions[j].time,
                 );
+                if (tempJobs[i].actions[j].time > 0) {
+                  console.log('we have a time, add it');
+                  if (tempJobs[i].actions[j].billable) {
+                    subtotalsBillable[m] += tempJobs[i].actions[j].time;
+                  }
+                  if (!tempJobs[i].actions[j].billable) {
+                    subtotalsUnbillable[m] += tempJobs[i].actions[j].time;
+                  }
+                  subtotals[m] += tempJobs[i].actions[j].time;
+                }
                 break;
               } else {
                 tempWeek[m][1] =
@@ -285,6 +281,16 @@ export const TimesheetSummary: FC<Props> = ({
                   tempJobs[i].actions[j].classCode +
                   '-' +
                   tempJobs[i].actions[j].time;
+                if (tempJobs[i].actions[j].time > 0) {
+                  console.log('we have a time, add it');
+                  if (tempJobs[i].actions[j].billable) {
+                    subtotalsBillable[m] += tempJobs[i].actions[j].time;
+                  }
+                  if (!tempJobs[i].actions[j].billable) {
+                    subtotalsUnbillable[m] += tempJobs[i].actions[j].time;
+                  }
+                  subtotals[m] += tempJobs[i].actions[j].time;
+                }
                 break;
               }
             }
@@ -295,7 +301,6 @@ export const TimesheetSummary: FC<Props> = ({
       }
       let mapElements = (
         <InfoTable
-          loading={loaded}
           columns={[
             { name: 'Job Number (if any)' },
             { name: dayList![0][0] },
@@ -439,20 +444,28 @@ export const TimesheetSummary: FC<Props> = ({
       jobReports.push(mapElements);
       jobReports.push(subtotalReport);
     }
-
+    let total = subtotals.reduce(
+      (accumulator, currentValue) => accumulator + currentValue,
+      0,
+    );
+    let totalBill = subtotalsBillable.reduce(
+      (accumulator, currentValue) => accumulator + currentValue,
+      0,
+    );
+    let totalUnbill = subtotalsUnbillable.reduce(
+      (accumulator, currentValue) => accumulator + currentValue,
+      0,
+    );
+    setTotalHours(total);
+    setTotalUnbillableHours(totalUnbill);
+    setTotalBillableHours(totalBill);
     setMappedElements(jobReports);
     setLoaded(true);
-  }, [
-    getTimesheetTotals,
-    getTimesheetsPending,
-    dayList,
-    startDay,
-    loaded,
-    timesheetsJobs,
-  ]);
+  }, [getTimesheetTotals, getTimesheetsPending, dayList]);
 
   useEffect(() => {
     if (loading) {
+      setLoading(false);
       load();
     }
   }, [load, loading]);
