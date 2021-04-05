@@ -1575,14 +1575,17 @@ export const getRowDatesFromPerDiemTrips = async (trips: Trip[]) => {
   }
   let res: { date: string; row_id: number }[] = [];
 
-  let pds = await PerDiemClientService.BatchGetPerDiemsByIds(tripIds);
+  console.log('Trip ids for request:', tripIds);
+  if (tripIds.length != 0) {
+    let pds = await PerDiemClientService.BatchGetPerDiemsByIds(tripIds);
 
-  for (const perDiem of pds.getResultsList()) {
-    const obj = {
-      date: perDiem.getDateStarted(),
-      row_id: perDiem.getId(),
-    };
-    res.push(obj);
+    for (const perDiem of pds.getResultsList()) {
+      const obj = {
+        date: perDiem.getDateStarted(),
+        row_id: perDiem.getId(),
+      };
+      res.push(obj);
+    }
   }
 
   return res;
