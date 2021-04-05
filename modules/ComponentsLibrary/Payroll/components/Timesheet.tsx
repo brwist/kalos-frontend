@@ -65,12 +65,7 @@ export const Timesheet: FC<Props> = ({
       startDate: format(startDay, 'yyyy-MM-dd'),
       endDate: format(endDay, 'yyyy-MM-dd'),
     };
-    if (week !== OPTION_ALL) {
-      Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
-      });
-    }
+
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     let sortedResultsLists = resultsList.sort((a, b) =>
@@ -192,7 +187,6 @@ const createTimesheetFetchFunction = (
 ) => {
   const req = new TimesheetLine();
   req.setPageNumber(config.page || 0);
-  req.setWithoutLimit(true);
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
   req.setNotEqualsList(['UserApprovalDatetime']);
@@ -203,7 +197,6 @@ const createTimesheetFetchFunction = (
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
   }
   if (config.departmentId) {
-    console.log('We got a department');
     req.setDepartmentCode(config.departmentId);
   }
   if (config.employeeId) {
@@ -212,6 +205,7 @@ const createTimesheetFetchFunction = (
 
   if (config.type === 'Payroll') {
     req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
+    req.setFieldMaskList(['PayrollProcessed']);
   } else if (config.type === 'Manager') {
     req.addNotEquals('UserApprovalDatetime');
   }
