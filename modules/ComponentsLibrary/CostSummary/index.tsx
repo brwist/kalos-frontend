@@ -281,7 +281,7 @@ export const CostSummary: FC<Props> = ({
                   pt.payrollProcessed === false && pt.adminApprovalUserId != 0
                     ? [
                         <IconButton
-                          key="process"
+                          key="processPTO"
                           size="small"
                           onClick={() => toggleProcessTimeoff(pt)}
                         >
@@ -326,7 +326,7 @@ export const CostSummary: FC<Props> = ({
                   spiff.toObject().adminActionId != 0
                     ? [
                         <IconButton
-                          key="process"
+                          key="processSpiff"
                           size="small"
                           onClick={() =>
                             toggleProcessSpiffTool(spiff.toObject())
@@ -372,7 +372,7 @@ export const CostSummary: FC<Props> = ({
                   tool.toObject().adminActionId != 0
                     ? [
                         <IconButton
-                          key="process"
+                          key="processTool"
                           size="small"
                           onClick={() =>
                             toggleProcessSpiffTool(tool.toObject())
