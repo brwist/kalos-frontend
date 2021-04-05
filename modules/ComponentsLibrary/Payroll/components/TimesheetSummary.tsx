@@ -101,7 +101,6 @@ export const TimesheetSummary: FC<Props> = ({
     const timesheetPendingReq = new TimesheetLine();
     timesheetPendingReq.setTechnicianUserId(userId);
     timesheetPendingReq.setIsActive(1);
-    timesheetPendingReq.setWithoutLimit(true);
     timesheetPendingReq.setDateRangeList(['>=', startDate, '<', endDate]);
     timesheetPendingReq.setUserApprovalDatetime(NULL_TIME);
     //entries that still require user action
@@ -112,7 +111,7 @@ export const TimesheetSummary: FC<Props> = ({
     if (pendingApproval.getTotalCount()) {
       setTogglePendingApprovalAlert(true);
     }
-  }, []);
+  }, [endDay, startDay, userId]);
   const getTimesheetTotals = useCallback(async () => {
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
@@ -245,7 +244,6 @@ export const TimesheetSummary: FC<Props> = ({
     await getTimesheetsPending();
 
     setLoading(false);
-    setLoaded(false);
     let subtotalsBillable = [0, 0, 0, 0, 0, 0, 0];
     let subtotalsUnbillable = [0, 0, 0, 0, 0, 0, 0];
     let subtotals = [0, 0, 0, 0, 0, 0, 0];
@@ -425,7 +423,7 @@ export const TimesheetSummary: FC<Props> = ({
               {
                 value:
                   'Billable:' +
-                  subtotalsBillable[0] +
+                  subtotalsBillable[6] +
                   ' \r\n' +
                   'Unbillable:' +
                   subtotalsUnbillable[6] +
@@ -444,7 +442,14 @@ export const TimesheetSummary: FC<Props> = ({
 
     setMappedElements(jobReports);
     setLoaded(true);
-  }, [getTimesheetTotals, loaded, timesheetsJobs]);
+  }, [
+    getTimesheetTotals,
+    getTimesheetsPending,
+    dayList,
+    startDay,
+    loaded,
+    timesheetsJobs,
+  ]);
 
   useEffect(() => {
     if (loading) {
