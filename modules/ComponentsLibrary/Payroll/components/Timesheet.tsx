@@ -187,7 +187,6 @@ const createTimesheetFetchFunction = (
 ) => {
   const req = new TimesheetLine();
   req.setPageNumber(config.page || 0);
-  req.setWithoutLimit(true);
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
   req.setNotEqualsList(['UserApprovalDatetime']);
