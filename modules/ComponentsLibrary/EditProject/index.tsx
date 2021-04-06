@@ -77,6 +77,7 @@ import {
 import { TimesheetLine } from '@kalos-core/kalos-rpc/compiled-protos/timesheet_line_pb';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { Field } from '../Field';
+import { CostReport } from '../CostReport';
 
 export interface Props {
   serviceCallId: number;
@@ -298,13 +299,6 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        await loadPrintData();
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
         const tasks = await EventClientService.loadProjectTasks(serviceCallId);
         setTasks(tasks);
         resolve();
@@ -456,10 +450,6 @@ export const EditProject: FC<Props> = ({
     (pendingCheckoutDelete: boolean) => () =>
       setPendingCheckoutDelete(pendingCheckoutDelete),
     [setPendingCheckoutDelete],
-  );
-  const handleSetCheckedInTask = useCallback(
-    (checkedIn: ExtendedProjectTaskType) => setCheckedInTask(checkedIn),
-    [setCheckedInTask],
   );
 
   const isAnyManager = useMemo(
@@ -653,14 +643,7 @@ export const EditProject: FC<Props> = ({
     //setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
-  const handlePrint = useCallback(async () => {
-    setPrintStatus('loading');
-    await loadPrintData();
-    setPrintStatus('loaded');
-  }, [setPrintStatus, loadPrintData, serviceCallId]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+
   const SCHEMA_SEARCH: Schema<SearchType> = [
     [
       {
@@ -854,7 +837,12 @@ export const EditProject: FC<Props> = ({
         ]}
         fixedActions
         actionsAndAsideContentResponsive
-        asideContent={<></>} // CostReport will go here once it is more stable
+        asideContent={
+          <CostReport
+            serviceCallId={serviceCallId}
+            loggedUserId={loggedUserId}
+          />
+        } // CostReport will go here once it is more stable
         asideContentFirst
         sticky={false}
       />
