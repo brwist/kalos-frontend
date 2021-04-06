@@ -108,7 +108,7 @@ export const CostReport: FC<Props> = ({
     );
     const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
     setLodgings(lodgings);
-    const transactions = await loadTransactionsByEventId(serviceCallId);
+    const transactions = await loadTransactionsByEventId(serviceCallId, true);
     setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
@@ -117,7 +117,7 @@ export const CostReport: FC<Props> = ({
     setPrintStatus('loading');
     await loadPrintData();
     setPrintStatus('loaded');
-  }, [setPrintStatus, loadPrintData, serviceCallId]);
+  }, [setPrintStatus, loadPrintData]);
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
@@ -193,7 +193,6 @@ export const CostReport: FC<Props> = ({
     setDepartments,
     setLoadedInit,
     loggedUserId,
-    serviceCallId,
   ]);
 
   const load = useCallback(async () => {
@@ -255,7 +254,7 @@ export const CostReport: FC<Props> = ({
 
       setLoading(false);
     });
-  }, [setLoading, serviceCallId, setTasks]);
+  }, [setLoading, serviceCallId, setTasks, loggedUserId, loadPrintData]);
 
   useEffect(() => {
     if (!loadedInit) {
@@ -334,7 +333,7 @@ export const CostReport: FC<Props> = ({
           ['Lodging', usd(totalLodging)],
           [
             '',
-            <strong>
+            <strong key="stronk">
               TOTAL: {usd(totalMeals + totalLodging + totalTransactions)}
             </strong>,
           ],
