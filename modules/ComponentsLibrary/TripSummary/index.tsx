@@ -354,8 +354,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
             approved: tripFilter
               ? !tripFilter!.approved
               : this.props.role == 'Manager'
-              ? true
-              : false,
+              ? false
+              : true,
             role: this.props.role,
           },
       sort: tripSort as TripsSort,
