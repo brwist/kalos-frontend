@@ -208,9 +208,9 @@ export const EditProject: FC<Props> = ({
       }),
     );
 
-    Promise.all(promises).then(() => {
-      setLoadedInit(true);
-    });
+    await Promise.all(promises);
+
+    setLoadedInit(true);
   }, [
     loadEvent,
     setProjects,
@@ -222,21 +222,9 @@ export const EditProject: FC<Props> = ({
     serviceCallId,
   ]);
   const load = useCallback(async () => {
-    let promises = [];
-
-    setLoading(true);
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-        setTasks(tasks);
-        resolve();
-      }),
-    );
-
-    Promise.all(promises).then(() => {
-      setLoading(false);
-    });
+    const tasks = await EventClientService.loadProjectTasks(serviceCallId);
+    setTasks(tasks);
+    setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
     if (!loadedInit) {
