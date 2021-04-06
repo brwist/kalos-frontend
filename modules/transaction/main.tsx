@@ -4,10 +4,6 @@ import { TransactionAdminView } from './components/admin';
 import { Loader } from '../Loader/main';
 import { ENDPOINT, PERMISSION_DEPARTMENT } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import {
-  TimesheetDepartment,
-  TimesheetDepartmentClient,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 interface props extends PageWrapperProps {
