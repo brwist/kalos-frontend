@@ -69,11 +69,12 @@ export const Timesheet: FC<Props> = ({
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     let sortedResultsLists = resultsList.sort((a, b) =>
-      a.technicianUserNameReverse > b.technicianUserNameReverse ? 1 : -1,
+      a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
+        ? 1
+        : -1,
     );
 
     setTimesheets(sortedResultsLists);
-    timesheets.sort;
     setCount(totalCount);
     setLoading(false);
   }, [page, departmentId, employeeId, week, type]);
