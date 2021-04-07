@@ -1,11 +1,7 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import {
-  TimesheetLine,
-  TimesheetLineClient,
-  TimesheetLineList,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { SectionBar } from '../SectionBar';
-import { ENDPOINT, NULL_TIME } from '../../../constants';
+import { ENDPOINT, NULL_TIME, MEALS_RATE } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
@@ -27,6 +23,10 @@ import {
   TaskClientService,
   UserClientService,
   TimeoffRequestClientService,
+  PerDiemRowType,
+  PerDiemClientService,
+  loadGovPerDiem,
+  PerDiemType,
 } from '../../../helpers';
 interface Props {
   userId: number;
@@ -59,8 +59,12 @@ export const CostSummary: FC<Props> = ({
   const [tools, setTools] = useState<Task[]>();
   const [totalPTO, setTotalPTO] = useState<number>();
   const [pto, setPTO] = useState<TimeoffRequest.AsObject[]>();
-  const [totalPerDiem, setTotalDiem] = useState<number>();
-  const [perDiems, setPerDiems] = useState<PerDiem[]>();
+  const [totalPerDiem, setTotalPerDiem] = useState<{
+    totalMeals: number;
+    totalLodging: number;
+    totalMileage: number;
+  }>();
+  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [loading, setLoading] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>();
   const [today, setToday] = useState<Date>(new Date());
@@ -69,24 +73,80 @@ export const CostSummary: FC<Props> = ({
     startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
   );
   const [endDay, setEndDay] = useState<Date>(addDays(startDay, 6));
-  const getPerDiemTotals = useCallback(async () => {
-    const perdiemReq = new PerDiem();
-    perdiemReq.setIsActive(true);
-    perdiemReq.setPayrollProcessed(false);
-
-    if (notReady) {
-      //PerDiems that have been created, but not approved
-      perdiemReq.setDateSubmitted(NULL_TIME);
-      perdiemReq.setNotEqualsList(['DateSubmitted']);
-      perdiemReq.setFieldMaskList(['ApprovedById']);
-    } else {
-      //Approved Perdiems that have not been Processed Yet
-      perdiemReq.setNotEqualsList(['ApprovedById']);
+  const [govPerDiems, setGovPerDiems] = useState<{
+    [key: string]: {
+      meals: number;
+      lodging: number;
+    };
+  }>({});
+  const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
+  const govPerDiemByZipCode = useCallback(
+    (zipCode: string) => {
+      const govPerDiem = govPerDiems[zipCode];
+      console.log(govPerDiem);
+      if (govPerDiem) return govPerDiem;
+      return {
+        meals: MEALS_RATE,
+        lodging: 0,
+      };
+    },
+    [govPerDiems],
+  );
+  const getPerDiems = useCallback(async () => {
+    const {
+      resultsList,
+    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
+      userId,
+      formatDateFns(startDay),
+    );
+    setPerDiems(resultsList);
+    const year = +format(startDay, 'yyyy');
+    const month = +format(startDay, 'M');
+    const zipCodesList = [];
+    for (let i = 0; i < resultsList.length; i++) {
+      let zipCodes = [resultsList[i]]
+        .reduce(
+          (aggr, { rowsList }) => [...aggr, ...rowsList],
+          [] as PerDiemRowType[],
+        )
+        .map(({ zipCode }) => zipCode);
+      for (let j = 0; j < zipCodes.length; j++) {
+        zipCodesList.push(zipCodes[j]);
+      }
     }
-    const pdClient = new PerDiemClient(ENDPOINT);
-    let results = (await pdClient.BatchGet(perdiemReq)).getResultsList();
-    setPerDiems(results);
-  }, [notReady]);
+    const govPerDiems = await loadGovPerDiem(zipCodesList, year, month);
+    setGovPerDiems(govPerDiems);
+  }, [govPerDiemByZipCode, startDay, userId]);
+  const getPerDiemTotals = useCallback(async () => {
+    await getPerDiems();
+    console.log(govPerDiems);
+    let filteredPerDiems = perDiems;
+
+    let allRowsList = filteredPerDiems.reduce(
+      (aggr, { rowsList }) => [...aggr, ...rowsList],
+      [] as PerDiemRowType[],
+    );
+    let totalMeals = allRowsList.reduce(
+      (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
+      0,
+    );
+    let totalLodging = allRowsList.reduce(
+      (aggr, { zipCode, mealsOnly }) =>
+        aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
+      0,
+    );
+    let totalMileage = 0;
+    for (let i = 0; i < allRowsList.length; i++) {
+      let totalMileage = allRowsList[i].tripsList.reduce(
+        (aggr, { distanceInMiles }) => aggr + distanceInMiles,
+        0,
+      );
+    }
+
+    const totals = { totalMeals, totalLodging, totalMileage };
+
+    return totals;
+  }, [getPerDiems, govPerDiemByZipCode, govPerDiems, perDiems]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string) => {
       const req = new Task();
@@ -223,7 +283,12 @@ export const CostSummary: FC<Props> = ({
         resolve();
       }),
     );
-
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTotalPerDiem(await getPerDiemTotals());
+        resolve();
+      }),
+    );
     Promise.all(promises)
       .then(() => {
         setLoading(false);
@@ -232,7 +297,7 @@ export const CostSummary: FC<Props> = ({
       .catch(error => {
         console.log(error);
       });
-  }, [getTimeoffTotals, getSpiffToolTotals, userId]);
+  }, [getTimeoffTotals, getSpiffToolTotals, userId, getPerDiemTotals]);
   useEffect(() => {
     if (!loaded) load();
   }, [load, loaded]);
@@ -400,6 +465,31 @@ export const CostSummary: FC<Props> = ({
               },
               {
                 value: toolFund - (totalTools === undefined ? 0 : totalTools),
+              },
+            ],
+          ]}
+        />
+      </SectionBar>
+      <SectionBar
+        title={`Total PerDiem for the Week of ${formatDateFns(startDay)}`}
+      >
+        <InfoTable
+          key="PerDiem Totals"
+          columns={[
+            { name: 'Total Lodging' },
+            { name: 'Total Meals' },
+            { name: 'Total Mileage' },
+          ]}
+          data={[
+            [
+              {
+                value: totalPerDiem?.totalLodging,
+              },
+              {
+                value: totalPerDiem?.totalMeals,
+              },
+              {
+                value: totalPerDiem?.totalMileage,
               },
             ],
           ]}
