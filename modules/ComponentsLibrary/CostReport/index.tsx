@@ -4,6 +4,7 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { MEALS_RATE } from '../../../constants';
 import {
@@ -30,6 +31,7 @@ import {
   loadTimesheetDepartments,
   UserClientService,
   loadTransactionsByEventId,
+  TimesheetLineClientService,
 } from '../../../helpers';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
@@ -64,7 +66,7 @@ export const CostReport: FC<Props> = ({
 
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>([]);
 
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
@@ -197,7 +199,7 @@ export const CostReport: FC<Props> = ({
 
   const load = useCallback(async () => {
     let promises = [];
-    let timesheets: TimesheetLineType[] = [];
+    let timesheets: TimesheetLine.AsObject[] = [];
 
     setLoading(true);
 
@@ -232,16 +234,21 @@ export const CostReport: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        let req = new CostReportInfo();
-        req.setJobId(serviceCallId);
-        const costReportList = await EventClientService.GetCostReportInfo(req);
+        try {
+          let req = new TimesheetLine();
+          req.setEventId(serviceCallId);
 
-        for await (let data of costReportList.getResultsList()) {
-          timesheets = data.getTimesheetsList().map(line => line.toObject());
+          timesheets = (await TimesheetLineClientService.BatchGet(req))
+            .getResultsList()
+            .map(line => line.toObject());
+
+          resolve();
+        } catch (err) {
+          console.error(
+            'Error occurred while loading the timesheet lines for the cost report. Error: ',
+            err,
+          );
         }
-        setCostReportInfoList(costReportList);
-
-        resolve();
       }),
     );
 
