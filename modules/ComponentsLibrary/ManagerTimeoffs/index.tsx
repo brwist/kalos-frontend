@@ -70,6 +70,7 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
       }
     } catch (e) {
       console.log(e);
+      setLoaded(false);
       try {
         let tempDepartmentList = [];
         let department = await (
@@ -91,13 +92,15 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
         console.log(e);
       }
     }
+    setLoaded(false);
   }, [loggedUserId, setLoaded, setTypes]);
   const load = useCallback(async () => {
+    console.log(department);
     if (!department) return;
     setLoading(true);
     const req = new TimeoffRequest();
     req.setPageNumber(page);
-    req.setDepartmentIdList(department.toString());
+    req.setDepartmentIdList(department.join(','));
     console.log(department.toString());
     req.setAdminApprovalDatetime(NULL_TIME);
     req.setIsActive(1);
