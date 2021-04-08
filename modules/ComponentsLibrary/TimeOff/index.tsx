@@ -155,7 +155,7 @@ export const TimeOff: FC<Props> = ({
 
       try {
         const req = new User();
-        req.setId(user!.id);
+        req.setId(loggedUserId);
         const manager = await UserClientService.GetUserManager(req);
 
         const emailBody = getTimeoffRequestEmail(
@@ -171,6 +171,7 @@ export const TimeOff: FC<Props> = ({
           newData.id,
         );
 
+        //@ts-ignore
         const config: EmailConfig = {
           type: 'timeoff',
           body: emailBody,
@@ -207,6 +208,7 @@ export const TimeOff: FC<Props> = ({
       loggedUser,
       setFormKey,
       formKey,
+      loggedUserId,
     ],
   );
 
