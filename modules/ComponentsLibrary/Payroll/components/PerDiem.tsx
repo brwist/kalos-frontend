@@ -315,17 +315,6 @@ export const PerDiem: FC<Props> = ({
             perDiem={perDiemViewed}
             loggedUserId={loggedUserId}
           />
-          {/* {perDiemViewed.rowsList.map(row => { // FIXME
-            return (
-              <TripInfoTable
-                canAddTrips={false}
-                cannotDeleteTrips
-                perDiemRowId={row.perDiemId}
-                loggedUserId={perDiemViewed.userId}
-                key={row.id}
-              />
-            );
-          })} */}
         </Modal>
       )}
       {pendingApprove && (
