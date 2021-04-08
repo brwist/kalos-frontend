@@ -147,7 +147,7 @@ export const CostSummary: FC<Props> = ({
     const totals = { totalMeals, totalLodging, totalMileage };
 
     return totals;
-  }, [getPerDiems, govPerDiemByZipCode, govPerDiems, perDiems]);
+  }, [getPerDiems, govPerDiemByZipCode, perDiems]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
       console.log(dateType);
@@ -165,13 +165,13 @@ export const CostSummary: FC<Props> = ({
       } else {
         const startMonth = getMonth(startDay) - 1;
         const startYear = getYear(startDay);
-        const startDate = format(new Date(startYear, startMonth), 'yyy-MM-dd');
+        const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
         const endDate = format(
           addDays(
             new Date(startYear, startMonth),
             getDaysInMonth(new Date(startYear, startMonth)) - 1,
           ),
-          'yyy-MM-dd',
+          'yyyy-MM-dd',
         );
         req.setDateRangeList(['>=', startDate, '<', endDate]);
       }
@@ -267,6 +267,15 @@ export const CostSummary: FC<Props> = ({
     req.setFieldMaskList(['PayrollProcessed']);
     req.setPayrollProcessed(true);
     await TaskClientService.Update(req);
+  };
+  const toggleProcessPerDiems = async (perDiems: PerDiem.AsObject[]) => {
+    for (let i = 0; i < perDiems.length; i++) {
+      let req = new PerDiem();
+      req.setId(perDiems[i].id);
+      req.setPayrollProcessed(true);
+      req.setFieldMaskList(['Payroll{Processed']);
+      await PerDiemClientService.Update(req);
+    }
   };
   const load = useCallback(async () => {
     setLoading(true);
@@ -554,6 +563,17 @@ export const CostSummary: FC<Props> = ({
               },
               {
                 value: totalPerDiem?.totalMileage,
+                actions: perDiems
+                  ? [
+                      <IconButton
+                        key="processPerdiem"
+                        size="small"
+                        onClick={() => toggleProcessPerDiems(perDiems)}
+                      >
+                        <CheckIcon />
+                      </IconButton>,
+                    ]
+                  : [],
               },
             ],
           ]}
