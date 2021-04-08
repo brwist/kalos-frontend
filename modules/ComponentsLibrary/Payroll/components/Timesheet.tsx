@@ -130,10 +130,12 @@ export const Timesheet: FC<Props> = ({
                       >
                         <Visibility />
                       </IconButton>,
+
                       <IconButton
                         key="summary"
                         onClick={() => setTimesheetSummaryToggle(e)}
                         size="small"
+                        disabled={type != 'Payroll'}
                       >
                         <PageviewIcon />
                       </IconButton>,
@@ -189,10 +191,15 @@ const createTimesheetFetchFunction = (
   const req = new TimesheetLine();
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
-  req.setWithoutLimit(true);
+  if (config.type === 'Payroll') {
+    req.setWithoutLimit(true);
+  }
+  if (config.type != 'Payroll' && config.page) {
+    req.setPageNumber(config.page);
+  }
   req.setNotEqualsList(['UserApprovalDatetime']);
   req.setUserApprovalDatetime(NULL_TIME);
-
+  req.setOrderBy('SUBSTRING ()');
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);

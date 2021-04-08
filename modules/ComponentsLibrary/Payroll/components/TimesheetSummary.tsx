@@ -143,11 +143,11 @@ export const TimesheetSummary: FC<Props> = ({
     for (let i = 0; i < results.length; i++) {
       let tempJob = {
         jobId:
-          results[i].toObject().referenceNumber === ''
-            ? results[i].toObject().eventId === 0
+          results[i].toObject().eventId === 0
+            ? results[i].toObject().referenceNumber === ''
               ? '0'
-              : results[i].toObject().eventId.toString()
-            : results[i].toObject().referenceNumber,
+              : results[i].toObject().referenceNumber
+            : results[i].toObject().eventId.toString(),
         actions: [
           {
             time: roundNumber(
@@ -250,11 +250,9 @@ export const TimesheetSummary: FC<Props> = ({
             ),
           ]);
         }
-        console.log(tempWeek);
         for (let j = 0; j < tempJobs[i].actions.length; j++) {
           for (let m = 0; m < tempWeek.length; m++) {
             if (dayList[m][0] === tempJobs[i].actions[j].day) {
-              console.log('matching day');
               if (!tempWeek[m][1]) {
                 jobNumber = tempJobs[i].jobId === '' ? '0' : tempJobs[i].jobId;
                 tempWeek.push([jobNumber]);
@@ -264,7 +262,6 @@ export const TimesheetSummary: FC<Props> = ({
                     tempJobs[i].actions[j].time,
                 );
                 if (tempJobs[i].actions[j].time > 0) {
-                  console.log('we have a time, add it');
                   if (tempJobs[i].actions[j].billable) {
                     subtotalsBillable[m] += tempJobs[i].actions[j].time;
                   }
@@ -280,9 +277,9 @@ export const TimesheetSummary: FC<Props> = ({
                   ' \r\n' +
                   tempJobs[i].actions[j].classCode +
                   '-' +
-                  tempJobs[i].actions[j].time;
+                  tempJobs[i].actions[j].time +
+                  ' Hours';
                 if (tempJobs[i].actions[j].time > 0) {
-                  console.log('we have a time, add it');
                   if (tempJobs[i].actions[j].billable) {
                     subtotalsBillable[m] += tempJobs[i].actions[j].time;
                   }
