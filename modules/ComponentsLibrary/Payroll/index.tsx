@@ -125,9 +125,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
     const loggedUser = await UserClientService.loadUserById(userID);
     setLoggedUser(loggedUser);
     const role = loggedUser.permissionGroupsList.find(p => p.type === 'role');
-    console.log(role);
-    console.log(loggedUser.permissionGroupsList);
-    console.log(userID);
     if (role) {
       setRole(role.name as RoleType);
     }
@@ -214,7 +211,8 @@ export const Payroll: FC<Props> = ({ userID }) => {
   ];
   let isTimesheet = true;
   let isTimeoffRequests = true;
-  let isSpiffs = true;
+  let isSpiffsWeekly = true;
+  let isSpiffsMonthly = true;
   let isToolLogs = true;
   let isPerDiem = true;
   let isTrips = true;
@@ -289,7 +287,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                       },
                     ]
                   : []),
-                ...(isSpiffs
+                ...(isSpiffsWeekly
                   ? [
                       {
                         label: 'Spiffs Weekly',
@@ -307,7 +305,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                       },
                     ]
                   : []),
-                ...(isSpiffs
+                ...(isSpiffsMonthly
                   ? [
                       {
                         label: 'Spiffs Monthly',
@@ -318,7 +316,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             role={role}
                             loggedUserId={userID}
                             departmentId={filter.departmentId}
-                            key={filter.departmentId + 'key'}
+                            key={filter.departmentId + 'key2'}
                             option="Monthly"
                           />
                         ),

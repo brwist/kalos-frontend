@@ -743,7 +743,6 @@ export const GetPendingTasks = (billableType: string) => {
     req.setIsActive(true);
     req.setGroupBy('external_id');
     req.setPageNumber(config.page || 0);
-    req.setOrderBy('date_performed');
     if (config.role === 'Manager') {
       req.setFieldMaskList(['AdminActionId']);
       if (billableType === 'Spiff') {
@@ -777,11 +776,10 @@ export const GetPendingTasks = (billableType: string) => {
       }
     }
     if (config.technicianUserID) {
-      req.setExternalId(config.technicianUserID);
+      //req.setExternalId(config.technicianUserID);
     }
     if (config.startDate && config.endDate) {
       req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
-      console.log('>=', config.startDate, '<=', config.endDate);
     }
     if (config.option) {
       const spiffType = new SpiffType();
@@ -793,6 +791,7 @@ export const GetPendingTasks = (billableType: string) => {
       u.setEmployeeDepartmentId(config.departmentId);
       req.setSearchUser(u);
     }
+    console.log(req);
     const response = (await TaskClientService.BatchGet(req)).toObject();
     return response;
   };
