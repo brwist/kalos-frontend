@@ -118,7 +118,6 @@ export const PerDiem: FC<Props> = ({
   const handlePendingPayrollToggleReject = useCallback(
     (perDiem?: PerDiemType) => () => {
       setPendingPayrollReject(perDiem);
-      console.log('We called the callback');
     },
     [setPendingPayrollReject],
   );
@@ -254,7 +253,7 @@ export const PerDiem: FC<Props> = ({
                       ) : null,
                       role === 'Payroll' ? (
                         <Tooltip
-                          key="payroll"
+                          key="payroll process"
                           content="Payroll Process"
                           placement="bottom"
                         >

@@ -40,7 +40,6 @@ export const ToolLogs: FC<Props> = ({
   );
   const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 6));
 
-  console.log({ departmentId });
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -51,13 +50,13 @@ export const ToolLogs: FC<Props> = ({
     };
     const startMonth = getMonth(startDay) - 1;
     const startYear = getYear(startDay);
-    const startDate = format(new Date(startYear, startMonth), 'yyy-MM-dd');
+    const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
     const endDate = format(
       addDays(
         new Date(startYear, startMonth),
         getDaysInMonth(new Date(startYear, startMonth)) - 1,
       ),
-      'yyy-MM-dd',
+      'yyyy-MM-dd',
     );
     Object.assign(filter, {
       startDate: startDate,
