@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { format, addDays, startOfWeek } from 'date-fns';
-import { parseISO } from 'date-fns/esm';
+import { format, addDays, startOfWeek, subDays } from 'date-fns';
+import { parseISO, getMonth, getYear, getDaysInMonth } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -35,6 +35,11 @@ export const ToolLogs: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TaskType>();
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 6));
+
   console.log({ departmentId });
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,12 +49,21 @@ export const ToolLogs: FC<Props> = ({
       role,
       departmentId,
     };
-    if (week !== OPTION_ALL) {
-      Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
-      });
-    }
+    const startMonth = getMonth(startDay) - 1;
+    const startYear = getYear(startDay);
+    const startDate = format(new Date(startYear, startMonth), 'yyy-MM-dd');
+    const endDate = format(
+      addDays(
+        new Date(startYear, startMonth),
+        getDaysInMonth(new Date(startYear, startMonth)) - 1,
+      ),
+      'yyy-MM-dd',
+    );
+    Object.assign(filter, {
+      startDate: startDate,
+      endDate: endDate,
+    });
+
     const { resultsList, totalCount } = await loadPendingToolLogs(filter);
     setToolLogs(resultsList);
     setCount(totalCount);
