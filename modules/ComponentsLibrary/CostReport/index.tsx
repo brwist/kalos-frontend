@@ -1,9 +1,4 @@
-import {
-  CostReportInfo,
-  CostReportInfoList,
-} from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { MEALS_RATE } from '../../../constants';
@@ -15,21 +10,10 @@ import {
   PerDiemRowType,
   EventType,
   PerDiemType,
-  ProjectTaskType,
-  TaskEventType,
-  TaskPriorityType,
-  TaskStatusType,
-  TimesheetDepartmentType,
-  TimesheetLineType,
   TransactionType,
-  UserType,
   loadPerDiemsLodging,
   PerDiemClientService,
   EventClientService,
-  TaskClientService,
-  loadProjects,
-  loadTimesheetDepartments,
-  UserClientService,
   loadTransactionsByEventId,
   TimesheetLineClientService,
 } from '../../../helpers';
@@ -48,11 +32,6 @@ export type SearchType = {
   technicians: string;
   statusId: number;
   priorityId: number;
-};
-
-type ExtendedProjectTaskType = ProjectTaskType & {
-  startTime: string;
-  endTime: string;
 };
 
 export const CostReport: FC<Props> = ({
