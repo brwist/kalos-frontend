@@ -3,7 +3,7 @@ import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { SectionBar } from '../SectionBar';
 import { ENDPOINT, NULL_TIME, MEALS_RATE } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { TaskClient, Task, SpiffType } from '@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
@@ -53,8 +53,11 @@ export const CostSummary: FC<Props> = ({
 }) => {
   const [totalHours, setTotalHours] = useState<number>();
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
-  const [totalSpiffs, setTotalSpiffs] = useState<number>();
-  const [spiffs, setSpiffs] = useState<Task[]>();
+  const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>();
+  const [totalSpiffsMonthly, setTotalSpiffsMonthly] = useState<number>();
+  const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
+  const [spiffsMonthly, setSpiffsMonthly] = useState<Task[]>();
+
   const [totalTools, setTotalTools] = useState<number>();
   const [tools, setTools] = useState<Task[]>();
   const [totalPTO, setTotalPTO] = useState<number>();
@@ -83,7 +86,6 @@ export const CostSummary: FC<Props> = ({
   const govPerDiemByZipCode = useCallback(
     (zipCode: string) => {
       const govPerDiem = govPerDiems[zipCode];
-      console.log(govPerDiem);
       if (govPerDiem) return govPerDiem;
       return {
         meals: MEALS_RATE,
@@ -119,7 +121,6 @@ export const CostSummary: FC<Props> = ({
   }, [govPerDiemByZipCode, startDay, userId]);
   const getPerDiemTotals = useCallback(async () => {
     await getPerDiems();
-    console.log(govPerDiems);
     let filteredPerDiems = perDiems;
 
     let allRowsList = filteredPerDiems.reduce(
@@ -148,7 +149,8 @@ export const CostSummary: FC<Props> = ({
     return totals;
   }, [getPerDiems, govPerDiemByZipCode, govPerDiems, perDiems]);
   const getSpiffToolTotals = useCallback(
-    async (spiffType: string) => {
+    async (spiffType: string, dateType = 'Weekly') => {
+      console.log(dateType);
       const req = new Task();
       const action = new SpiffToolAdminAction();
       req.setPayrollProcessed(false);
@@ -157,6 +159,9 @@ export const CostSummary: FC<Props> = ({
         const startDate = format(startDay, 'yyyy-MM-dd');
         const endDate = format(endDay, 'yyyy-MM-dd');
         req.setDateRangeList(['>=', startDate, '<', endDate]);
+        let tempSpiff = new SpiffType();
+        tempSpiff.setPayout(dateType);
+        req.setSpiffType(tempSpiff);
       } else {
         const startMonth = getMonth(startDay) - 1;
         const startYear = getYear(startDay);
@@ -196,7 +201,11 @@ export const CostSummary: FC<Props> = ({
         }
       }
       if (spiffType === 'Spiff') {
-        setSpiffs(results);
+        if (dateType === 'Weekly') {
+          setSpiffsWeekly(results);
+        } else {
+          setSpiffsMonthly(results);
+        }
         return spiffTotal;
       } else {
         setTools(results);
@@ -279,7 +288,13 @@ export const CostSummary: FC<Props> = ({
     );
     promises.push(
       new Promise<void>(async resolve => {
-        setTotalSpiffs(await getSpiffToolTotals('Spiff'));
+        setTotalSpiffsWeekly(await getSpiffToolTotals('Spiff'));
+        resolve();
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTotalSpiffsMonthly(await getSpiffToolTotals('Spiff', 'Monthly'));
         resolve();
       }),
     );
@@ -362,8 +377,8 @@ export const CostSummary: FC<Props> = ({
         {/*For spiffs*/}
       </SectionBar>
       <SectionBar
-        title="Spiff Current Total"
-        asideContent={<strong>Spiff Total: {totalSpiffs}</strong>}
+        title="Spiff Weekly Current Total"
+        asideContent={<strong>Spiff Weekly Total : {totalSpiffsWeekly}</strong>}
         actionsAndAsideContentResponsive
       >
         <InfoTable
@@ -373,7 +388,7 @@ export const CostSummary: FC<Props> = ({
             { name: 'Job Number' },
             { name: 'Additional Info' },
           ]}
-          data={spiffs!.map(spiff => {
+          data={spiffsWeekly!.map(spiff => {
             return [
               {
                 value: formatDate(spiff.toObject().timeCreated),
@@ -405,6 +420,55 @@ export const CostSummary: FC<Props> = ({
             ];
           })}
         />
+      </SectionBar>
+      <SectionBar
+        title="Spiff Monthly Current Total"
+        asideContent={
+          <strong>Spiff Monthly Total : {totalSpiffsMonthly}</strong>
+        }
+        actionsAndAsideContentResponsive
+      >
+        {
+          <InfoTable
+            columns={[
+              { name: 'Date Created' },
+              { name: 'Amount' },
+              { name: 'Job Number' },
+              { name: 'Additional Info' },
+            ]}
+            data={spiffsMonthly!.map(spiff => {
+              return [
+                {
+                  value: formatDate(spiff.toObject().timeCreated),
+                },
+                {
+                  value: spiff.toObject().spiffAmount,
+                },
+                {
+                  value: spiff.toObject().spiffJobNumber,
+                },
+                {
+                  value: spiff.toObject().briefDescription,
+                  actions:
+                    spiff.toObject().payrollProcessed === false &&
+                    spiff.toObject().adminActionId != 0
+                      ? [
+                          <IconButton
+                            key="processSpiff"
+                            size="small"
+                            onClick={() =>
+                              toggleProcessSpiffTool(spiff.toObject())
+                            }
+                          >
+                            <CheckIcon />
+                          </IconButton>,
+                        ]
+                      : [],
+                },
+              ];
+            })}
+          />
+        }
       </SectionBar>
       {/*For Tools*/}
       <SectionBar

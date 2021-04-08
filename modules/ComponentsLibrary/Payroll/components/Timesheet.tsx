@@ -69,11 +69,12 @@ export const Timesheet: FC<Props> = ({
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     let sortedResultsLists = resultsList.sort((a, b) =>
-      a.technicianUserNameReverse > b.technicianUserNameReverse ? 1 : -1,
+      a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
+        ? 1
+        : -1,
     );
 
     setTimesheets(sortedResultsLists);
-    timesheets.sort;
     setCount(totalCount);
     setLoading(false);
   }, [page, departmentId, employeeId, week, type]);
@@ -129,10 +130,12 @@ export const Timesheet: FC<Props> = ({
                       >
                         <Visibility />
                       </IconButton>,
+
                       <IconButton
                         key="summary"
                         onClick={() => setTimesheetSummaryToggle(e)}
                         size="small"
+                        disabled={type != 'Payroll'}
                       >
                         <PageviewIcon />
                       </IconButton>,
@@ -186,12 +189,16 @@ const createTimesheetFetchFunction = (
   role: RoleType,
 ) => {
   const req = new TimesheetLine();
-  req.setPageNumber(config.page || 0);
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
+  if (config.type === 'Payroll') {
+    req.setWithoutLimit(true);
+  }
+  if (config.type != 'Payroll' && config.page) {
+    req.setPageNumber(config.page);
+  }
   req.setNotEqualsList(['UserApprovalDatetime']);
   req.setUserApprovalDatetime(NULL_TIME);
-
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
