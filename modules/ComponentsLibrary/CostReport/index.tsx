@@ -56,11 +56,10 @@ type ExtendedProjectTaskType = ProjectTaskType & {
 };
 
 export const CostReport: FC<Props> = ({
-  serviceCallId: serviceCallIdInit,
+  serviceCallId,
   loggedUserId,
   onClose,
 }) => {
-  const [serviceCallId, setServiceCallId] = useState<number>(serviceCallIdInit);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
 
@@ -72,22 +71,10 @@ export const CostReport: FC<Props> = ({
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
 
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
-  const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
-  const [currentCheckedInTasks, setCurrentCheckedInTasks] = useState<
-    ExtendedProjectTaskType[]
-  >();
-  const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
-  const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [event, setEvent] = useState<EventType>();
-  const [projects, setProjects] = useState<EventType[]>([]);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [
-    costReportInfoList,
-    setCostReportInfoList,
-  ] = useState<CostReportInfoList>();
 
   const totalMeals =
     perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
@@ -139,47 +126,7 @@ export const CostReport: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        const projects = await loadProjects();
-        setProjects(projects);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
         await loadEvent();
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const statuses = await TaskClientService.loadProjectTaskStatuses();
-        setStatuses(statuses);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const priorities = await TaskClientService.loadProjectTaskPriorities();
-        setPriorities(priorities);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const departments = await loadTimesheetDepartments();
-        setDepartments(departments);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const loggedUser = await UserClientService.loadUserById(loggedUserId);
-        setLoggedUser(loggedUser);
         resolve();
       }),
     );
@@ -187,15 +134,7 @@ export const CostReport: FC<Props> = ({
     Promise.all(promises).then(() => {
       setLoadedInit(true);
     });
-  }, [
-    loadEvent,
-    setProjects,
-    setStatuses,
-    setPriorities,
-    setDepartments,
-    setLoadedInit,
-    loggedUserId,
-  ]);
+  }, [loadEvent, setLoadedInit, loggedUserId]);
 
   const load = useCallback(async () => {
     let promises = [];
@@ -205,29 +144,7 @@ export const CostReport: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        let taskReq = new ProjectTask();
-        taskReq.setCheckedIn(true);
-        taskReq.setCreatorUserId(loggedUserId);
-        let tasksList = await TaskClientService.BatchGetProjectTasks(taskReq);
-        let tasks = tasksList.getResultsList().map(task => {
-          return { ...task } as ExtendedProjectTaskType;
-        });
-        setCurrentCheckedInTasks(tasks);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
         await loadPrintData();
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-        setTasks(tasks);
         resolve();
       }),
     );
@@ -261,7 +178,7 @@ export const CostReport: FC<Props> = ({
 
       setLoading(false);
     });
-  }, [setLoading, serviceCallId, setTasks, loggedUserId, loadPrintData]);
+  }, [setLoading, serviceCallId, loggedUserId, loadPrintData]);
 
   useEffect(() => {
     if (!loadedInit) {
