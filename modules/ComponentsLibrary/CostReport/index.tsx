@@ -101,18 +101,8 @@ export const CostReport: FC<Props> = ({
   }, [setEvent, setLoadingEvent, serviceCallId]);
 
   const loadInit = useCallback(async () => {
-    let promises = [];
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        await loadEvent();
-        resolve();
-      }),
-    );
-
-    Promise.all(promises).then(() => {
-      setLoadedInit(true);
-    });
+    await loadEvent();
+    setLoadedInit(true);
   }, [loadEvent, setLoadedInit, loggedUserId]);
 
   const load = useCallback(async () => {
