@@ -1,7 +1,14 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { format, addDays, startOfWeek } from 'date-fns';
+import {
+  format,
+  addDays,
+  startOfWeek,
+  getMonth,
+  getYear,
+  getDaysInMonth,
+} from 'date-fns';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { parseISO } from 'date-fns/esm';
+import { parseISO, subDays } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -50,6 +57,11 @@ export const Spiffs: FC<Props> = ({
   const [pendingView, setPendingView] = useState<TaskType>();
   const [pendingAdd, setPendingAdd] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 6));
+
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const init = useCallback(async () => {
     const { resultsList: spiffTypes } = (
@@ -66,17 +78,38 @@ export const Spiffs: FC<Props> = ({
       departmentId,
       option: option === 'Monthly' ? 'Monthly' : 'Weekly',
     };
-    if (week !== OPTION_ALL) {
+    if (option === 'Weekly') {
+      console.log('we are weekly');
       Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+        startDate: format(startDay, 'yyyy-MM-dd'),
+        endDate: format(endDay, 'yyyy-MM-dd'),
       });
+      console.log(format(startDay, 'yyyy-MM-dd'), format(endDay, 'yyyy-MM-dd'));
     }
+    if (option === 'Monthly') {
+      console.log('we are monthly');
+      const startMonth = getMonth(startDay) - 1;
+      const startYear = getYear(startDay);
+      const startDate = format(new Date(startYear, startMonth), 'yyy-MM-dd');
+      const endDate = format(
+        addDays(
+          new Date(startYear, startMonth),
+          getDaysInMonth(new Date(startYear, startMonth)) - 1,
+        ),
+        'yyy-MM-dd',
+      );
+      Object.assign(filter, {
+        startDate: startDate,
+        endDate: endDate,
+      });
+      console.log(startDate, endDate);
+    }
+
     const { resultsList, totalCount } = await loadPendingSpiffs(filter);
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week, role]);
+  }, [page, employeeId, week, role, departmentId, option]);
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);

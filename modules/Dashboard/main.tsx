@@ -82,12 +82,12 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   toggleLoading() {
-    return new Promise(resolve => {
+    return new Promise<void>(resolve => {
       this.setState(
         prevState => ({
           isLoading: !prevState.isLoading,
         }),
-        () => resolve,
+        () => resolve(),
       );
     });
   }
