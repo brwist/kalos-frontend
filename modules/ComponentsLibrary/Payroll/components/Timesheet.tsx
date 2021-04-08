@@ -199,7 +199,6 @@ const createTimesheetFetchFunction = (
   }
   req.setNotEqualsList(['UserApprovalDatetime']);
   req.setUserApprovalDatetime(NULL_TIME);
-  req.setOrderBy('SUBSTRING ()');
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
