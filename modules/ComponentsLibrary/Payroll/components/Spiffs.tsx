@@ -79,30 +79,26 @@ export const Spiffs: FC<Props> = ({
       option: option === 'Monthly' ? 'Monthly' : 'Weekly',
     };
     if (option === 'Weekly') {
-      console.log('we are weekly');
       Object.assign(filter, {
         startDate: format(startDay, 'yyyy-MM-dd'),
         endDate: format(endDay, 'yyyy-MM-dd'),
       });
-      console.log(format(startDay, 'yyyy-MM-dd'), format(endDay, 'yyyy-MM-dd'));
     }
     if (option === 'Monthly') {
-      console.log('we are monthly');
       const startMonth = getMonth(startDay) - 1;
       const startYear = getYear(startDay);
-      const startDate = format(new Date(startYear, startMonth), 'yyy-MM-dd');
+      const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
       const endDate = format(
         addDays(
           new Date(startYear, startMonth),
           getDaysInMonth(new Date(startYear, startMonth)) - 1,
         ),
-        'yyy-MM-dd',
+        'yyyy-MM-dd',
       );
       Object.assign(filter, {
         startDate: startDate,
         endDate: endDate,
       });
-      console.log(startDate, endDate);
     }
 
     const { resultsList, totalCount } = await loadPendingSpiffs(filter);

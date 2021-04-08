@@ -116,7 +116,6 @@ export const TimeoffRequests: FC<Props> = ({
   const handlePayroll = useCallback(async () => {
     if (pendingPayroll) {
       const { id } = pendingPayroll;
-      console.log(id);
       setLoading(true);
       setPendingPayroll(undefined);
       const req = new TimeoffRequest();
@@ -171,10 +170,8 @@ export const TimeoffRequests: FC<Props> = ({
           loading
             ? makeFakeRows(3, 3)
             : timeoffRequests.map(e => {
-                console.log(e.timeStarted);
                 const startDate = parseISO(e.timeStarted);
                 const endDate = parseISO(e.timeFinished);
-                //console.log(startDate);
                 return [
                   {
                     value: e.userName,
@@ -201,7 +198,7 @@ export const TimeoffRequests: FC<Props> = ({
                       </IconButton>,
                       role === 'Payroll' ? (
                         <Tooltip
-                          key="payroll"
+                          key="payroll process"
                           content="Payroll Process"
                           placement="bottom"
                         >
@@ -218,7 +215,7 @@ export const TimeoffRequests: FC<Props> = ({
                       ) : null,
                       role === 'Payroll' ? (
                         <Tooltip
-                          key="payroll"
+                          key="payroll reject"
                           content="Reject TimeOff"
                           placement="bottom"
                         >

@@ -781,10 +781,11 @@ export const GetPendingTasks = (billableType: string) => {
     }
     if (config.startDate && config.endDate) {
       req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
+      console.log('>=', config.startDate, '<=', config.endDate);
     }
     if (config.option) {
       const spiffType = new SpiffType();
-      spiffType.setType(config.option);
+      spiffType.setPayout(config.option);
       req.setSpiffType(spiffType);
     }
     if (config.departmentId) {
@@ -792,7 +793,6 @@ export const GetPendingTasks = (billableType: string) => {
       u.setEmployeeDepartmentId(config.departmentId);
       req.setSearchUser(u);
     }
-
     const response = (await TaskClientService.BatchGet(req)).toObject();
     return response;
   };

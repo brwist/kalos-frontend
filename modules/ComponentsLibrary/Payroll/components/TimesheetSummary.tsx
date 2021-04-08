@@ -159,7 +159,7 @@ export const TimesheetSummary: FC<Props> = ({
             classCode:
               results[i].toObject().classCodeId +
               '-' +
-              results[i].toObject().classCode!.classcodeQbName,
+              results[i].toObject().classCode!.description,
             billable: results[i].toObject().classCode!.billable,
             day: format(
               parseISO(results[i].toObject().timeStarted),
@@ -468,6 +468,7 @@ export const TimesheetSummary: FC<Props> = ({
   }, [load, loading]);
   return loaded ? (
     <SectionBar key="title" title="Timesheet Summary" uncollapsable={true}>
+      <strong>{username}</strong>
       {togglePendingApprovalAlert && (
         <Alert key="pending" severity="warning">
           {' '}
