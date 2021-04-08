@@ -301,9 +301,9 @@ export const AdvancedSearch: FC<Props> = ({
         filter: filterCriteria,
         sort: eventsSort,
       };
-      const { results, totalCount } = await loadEventsByFilter(criteria);
+      const { resultsList, totalCount } = await loadEventsByFilter(criteria);
       setCount(totalCount);
-      setEvents(results);
+      setEvents(resultsList);
     }
     if (kind === 'customers' || kind === 'employees') {
       const criteria: LoadUsersByFilter = {
