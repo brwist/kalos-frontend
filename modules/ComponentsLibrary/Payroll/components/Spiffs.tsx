@@ -91,8 +91,8 @@ export const Spiffs: FC<Props> = ({
       }
     }
     if (option === 'Monthly') {
-      const startMonth = getMonth(startDay) - 1;
-      const startYear = getYear(startDay);
+      const startMonth = getMonth(new Date()) - 1;
+      const startYear = getYear(new Date());
       const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
       const endDate = format(
         addDays(
@@ -106,7 +106,6 @@ export const Spiffs: FC<Props> = ({
         endDate: endDate,
       });
     }
-
     const { resultsList, totalCount } = await loadPendingSpiffs(filter);
     setSpiffs(resultsList);
     setCount(totalCount);

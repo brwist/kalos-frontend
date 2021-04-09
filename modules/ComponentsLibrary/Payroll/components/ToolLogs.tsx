@@ -48,8 +48,8 @@ export const ToolLogs: FC<Props> = ({
       role,
       departmentId,
     };
-    const startMonth = getMonth(startDay) - 1;
-    const startYear = getYear(startDay);
+    const startMonth = getMonth(new Date()) - 1;
+    const startYear = getYear(new Date());
     const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
     const endDate = format(
       addDays(
