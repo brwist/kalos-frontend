@@ -1,9 +1,4 @@
-import {
-  CostReportInfo,
-  CostReportInfoList,
-} from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { MEALS_RATE } from '../../../constants';
@@ -15,21 +10,10 @@ import {
   PerDiemRowType,
   EventType,
   PerDiemType,
-  ProjectTaskType,
-  TaskEventType,
-  TaskPriorityType,
-  TaskStatusType,
-  TimesheetDepartmentType,
-  TimesheetLineType,
   TransactionType,
-  UserType,
   loadPerDiemsLodging,
   PerDiemClientService,
   EventClientService,
-  TaskClientService,
-  loadProjects,
-  loadTimesheetDepartments,
-  UserClientService,
   loadTransactionsByEventId,
   TimesheetLineClientService,
 } from '../../../helpers';
@@ -50,17 +34,11 @@ export type SearchType = {
   priorityId: number;
 };
 
-type ExtendedProjectTaskType = ProjectTaskType & {
-  startTime: string;
-  endTime: string;
-};
-
 export const CostReport: FC<Props> = ({
-  serviceCallId: serviceCallIdInit,
+  serviceCallId,
   loggedUserId,
   onClose,
 }) => {
-  const [serviceCallId, setServiceCallId] = useState<number>(serviceCallIdInit);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
 
@@ -72,22 +50,10 @@ export const CostReport: FC<Props> = ({
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
 
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
-  const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
-  const [currentCheckedInTasks, setCurrentCheckedInTasks] = useState<
-    ExtendedProjectTaskType[]
-  >();
-  const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
-  const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [event, setEvent] = useState<EventType>();
-  const [projects, setProjects] = useState<EventType[]>([]);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [
-    costReportInfoList,
-    setCostReportInfoList,
-  ] = useState<CostReportInfoList>();
 
   const totalMeals =
     perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
@@ -135,67 +101,9 @@ export const CostReport: FC<Props> = ({
   }, [setEvent, setLoadingEvent, serviceCallId]);
 
   const loadInit = useCallback(async () => {
-    let promises = [];
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const projects = await loadProjects();
-        setProjects(projects);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        await loadEvent();
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const statuses = await TaskClientService.loadProjectTaskStatuses();
-        setStatuses(statuses);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const priorities = await TaskClientService.loadProjectTaskPriorities();
-        setPriorities(priorities);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const departments = await loadTimesheetDepartments();
-        setDepartments(departments);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const loggedUser = await UserClientService.loadUserById(loggedUserId);
-        setLoggedUser(loggedUser);
-        resolve();
-      }),
-    );
-
-    Promise.all(promises).then(() => {
-      setLoadedInit(true);
-    });
-  }, [
-    loadEvent,
-    setProjects,
-    setStatuses,
-    setPriorities,
-    setDepartments,
-    setLoadedInit,
-    loggedUserId,
-  ]);
+    await loadEvent();
+    setLoadedInit(true);
+  }, [loadEvent, setLoadedInit, loggedUserId]);
 
   const load = useCallback(async () => {
     let promises = [];
@@ -205,29 +113,7 @@ export const CostReport: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        let taskReq = new ProjectTask();
-        taskReq.setCheckedIn(true);
-        taskReq.setCreatorUserId(loggedUserId);
-        let tasksList = await TaskClientService.BatchGetProjectTasks(taskReq);
-        let tasks = tasksList.getResultsList().map(task => {
-          return { ...task } as ExtendedProjectTaskType;
-        });
-        setCurrentCheckedInTasks(tasks);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
         await loadPrintData();
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-        setTasks(tasks);
         resolve();
       }),
     );
@@ -261,7 +147,7 @@ export const CostReport: FC<Props> = ({
 
       setLoading(false);
     });
-  }, [setLoading, serviceCallId, setTasks, loggedUserId, loadPrintData]);
+  }, [setLoading, serviceCallId, loggedUserId, loadPrintData]);
 
   useEffect(() => {
     if (!loadedInit) {
