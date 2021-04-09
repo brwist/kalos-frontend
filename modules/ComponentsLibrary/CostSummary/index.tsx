@@ -339,6 +339,7 @@ export const CostSummary: FC<Props> = ({
             { name: 'Date Started-Date Ended' },
             { name: 'Hours' },
             { name: 'Additional Info' },
+            { name: 'Processed' },
           ]}
           data={pto!.map(pt => {
             return [
@@ -366,6 +367,10 @@ export const CostSummary: FC<Props> = ({
               },
               {
                 value: pt.notes,
+              },
+              {
+                value:
+                  pt.payrollProcessed === true ? 'Completed' : 'Incomplete',
                 actions:
                   pt.payrollProcessed === false && pt.adminApprovalUserId != 0
                     ? [
@@ -396,6 +401,7 @@ export const CostSummary: FC<Props> = ({
             { name: 'Amount' },
             { name: 'Job Number' },
             { name: 'Additional Info' },
+            { name: 'Processed' },
           ]}
           data={spiffsWeekly!.map(spiff => {
             return [
@@ -409,13 +415,16 @@ export const CostSummary: FC<Props> = ({
                 value: spiff.toObject().spiffJobNumber,
               },
               {
-                value: spiff.toObject().briefDescription,
+                value:
+                  spiff.toObject().payrollProcessed === true
+                    ? 'Complete'
+                    : 'Incomplete',
                 actions:
                   spiff.toObject().payrollProcessed === false &&
                   spiff.toObject().adminActionId != 0
                     ? [
                         <IconButton
-                          key="processSpiff"
+                          key="processSpiffWeekly"
                           size="small"
                           onClick={() =>
                             toggleProcessSpiffTool(spiff.toObject())
@@ -444,6 +453,7 @@ export const CostSummary: FC<Props> = ({
               { name: 'Amount' },
               { name: 'Job Number' },
               { name: 'Additional Info' },
+              { name: 'Processed' },
             ]}
             data={spiffsMonthly!.map(spiff => {
               return [
@@ -458,12 +468,18 @@ export const CostSummary: FC<Props> = ({
                 },
                 {
                   value: spiff.toObject().briefDescription,
+                },
+                {
+                  value:
+                    spiff.toObject().payrollProcessed === true
+                      ? 'Complete'
+                      : 'Incomplete',
                   actions:
                     spiff.toObject().payrollProcessed === false &&
                     spiff.toObject().adminActionId != 0
                       ? [
                           <IconButton
-                            key="processSpiff"
+                            key="processSpiffMonthly"
                             size="small"
                             onClick={() =>
                               toggleProcessSpiffTool(spiff.toObject())
@@ -547,38 +563,49 @@ export const CostSummary: FC<Props> = ({
       <SectionBar
         title={`Total PerDiem for the Week of ${formatDateFns(startDay)}`}
       >
-        <InfoTable
-          key="PerDiem Totals"
-          columns={[
-            { name: 'Total Lodging' },
-            { name: 'Total Meals' },
-            { name: 'Total Mileage' },
-          ]}
-          data={[
-            [
-              {
-                value: totalPerDiem?.totalLodging,
-              },
-              {
-                value: totalPerDiem?.totalMeals,
-              },
-              {
-                value: totalPerDiem?.totalMileage,
-                actions: perDiems
-                  ? [
-                      <IconButton
-                        key="processPerdiem"
-                        size="small"
-                        onClick={() => toggleProcessPerDiems(perDiems)}
-                      >
-                        <CheckIcon />
-                      </IconButton>,
-                    ]
-                  : [],
-              },
-            ],
-          ]}
-        />
+        {perDiems && perDiems.length > 0 ? (
+          <InfoTable
+            key="PerDiem Totals"
+            columns={[
+              { name: 'Total Lodging' },
+              { name: 'Total Meals' },
+              { name: 'Total Mileage' },
+              { name: 'Processed' },
+            ]}
+            data={[
+              [
+                {
+                  value: totalPerDiem?.totalLodging,
+                },
+                {
+                  value: totalPerDiem?.totalMeals,
+                },
+                {
+                  value: totalPerDiem?.totalMileage,
+                },
+                {
+                  value:
+                    perDiems[0].payrollProcessed === true
+                      ? 'Complete'
+                      : 'Incomplete',
+                  actions: !perDiems[0].payrollProcessed
+                    ? [
+                        <IconButton
+                          key="processPerdiem"
+                          size="small"
+                          onClick={() => toggleProcessPerDiems(perDiems)}
+                        >
+                          <CheckIcon />
+                        </IconButton>,
+                      ]
+                    : [],
+                },
+              ],
+            ]}
+          />
+        ) : (
+          [<strong key="No PerDiems">No PerDiems for this week</strong>]
+        )}
       </SectionBar>
       {onNext != null ? (
         <Button label="Next Employee" onClick={() => onNext()}></Button>
