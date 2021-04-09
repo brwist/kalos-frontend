@@ -20,7 +20,7 @@ interface Props {
   week: string;
   role: string;
   departmentId: number;
-  userId?: number;
+  userId: number;
 }
 
 export const ToolLogs: FC<Props> = ({
@@ -132,8 +132,8 @@ export const ToolLogs: FC<Props> = ({
       {pendingView && (
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <SpiffTool
-            loggedUserId={pendingView.externalId}
-            ownerId={userId}
+            loggedUserId={userId}
+            ownerId={pendingView.externalId}
             type="Tool"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
