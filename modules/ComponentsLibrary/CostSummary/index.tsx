@@ -479,7 +479,7 @@ export const CostSummary: FC<Props> = ({
           />
         }
       </SectionBar>
-      {/*For Tools*/}
+      {/*
       <SectionBar
         title="Tool Current Total"
         asideContent={<strong>Tool Fund: {toolFund}</strong>}
@@ -543,6 +543,7 @@ export const CostSummary: FC<Props> = ({
           ]}
         />
       </SectionBar>
+      */}
       <SectionBar
         title={`Total PerDiem for the Week of ${formatDateFns(startDay)}`}
       >
