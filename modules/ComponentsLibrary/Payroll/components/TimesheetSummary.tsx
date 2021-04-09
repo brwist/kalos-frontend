@@ -103,6 +103,12 @@ export const TimesheetSummary: FC<Props> = ({
     timesheetPendingReq.setIsActive(1);
     timesheetPendingReq.setDateRangeList(['>=', startDate, '<', endDate]);
     timesheetPendingReq.setUserApprovalDatetime(NULL_TIME);
+    timesheetPendingReq.setAdminApprovalDatetime(NULL_TIME);
+    timesheetPendingReq.setFieldMaskList([
+      'UserApprovalDatetime',
+      'PayrollProcessed',
+      'AdminApprovalDatetime',
+    ]);
     //entries that still require user action
     let pendingSubmit = await client.BatchGet(timesheetPendingReq);
     if (pendingSubmit.getTotalCount() > 0) {
@@ -259,7 +265,8 @@ export const TimesheetSummary: FC<Props> = ({
                 tempWeek[m].push(
                   tempJobs[i].actions[j].classCode +
                     '-' +
-                    tempJobs[i].actions[j].time,
+                    tempJobs[i].actions[j].time +
+                    ' Hours',
                 );
                 if (tempJobs[i].actions[j].time > 0) {
                   if (tempJobs[i].actions[j].billable) {

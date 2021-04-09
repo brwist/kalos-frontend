@@ -65,7 +65,12 @@ export const Timesheet: FC<Props> = ({
       startDate: format(startDay, 'yyyy-MM-dd'),
       endDate: format(endDay, 'yyyy-MM-dd'),
     };
-
+    if (week !== OPTION_ALL && type != 'Payroll') {
+      Object.assign(filter, {
+        startDate: week,
+        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+      });
+    }
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     let sortedResultsLists = resultsList.sort((a, b) =>
