@@ -73,7 +73,12 @@ export const PayrollSummary: FC<Props> = ({
     }
     const getTimesheets = createTimesheetFetchFunction(filter);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
-    setTimesheets(resultsList);
+    let sortedResultsList = resultsList.sort((a, b) =>
+      a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
+        ? 1
+        : -1,
+    );
+    setTimesheets(sortedResultsList);
     setCount(totalCount);
     setLoading(false);
   }, [page, employeeId, week, type, toggle, departmentId, endDay, startDay]);
