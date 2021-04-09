@@ -83,6 +83,12 @@ export const Spiffs: FC<Props> = ({
         startDate: format(startDay, 'yyyy-MM-dd'),
         endDate: format(endDay, 'yyyy-MM-dd'),
       });
+      if (week !== OPTION_ALL && role != 'Payroll') {
+        Object.assign(filter, {
+          startDate: week,
+          endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+        });
+      }
     }
     if (option === 'Monthly') {
       const startMonth = getMonth(startDay) - 1;
@@ -100,12 +106,7 @@ export const Spiffs: FC<Props> = ({
         endDate: endDate,
       });
     }
-    if (week !== OPTION_ALL && role != 'Payroll') {
-      Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
-      });
-    }
+
     const { resultsList, totalCount } = await loadPendingSpiffs(filter);
     setSpiffs(resultsList);
     setCount(totalCount);
