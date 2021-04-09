@@ -62,7 +62,12 @@ export const ToolLogs: FC<Props> = ({
       startDate: startDate,
       endDate: endDate,
     });
-
+    if (week !== OPTION_ALL && role != 'Payroll') {
+      Object.assign(filter, {
+        startDate: week,
+        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+      });
+    }
     const { resultsList, totalCount } = await loadPendingToolLogs(filter);
     setToolLogs(resultsList);
     setCount(totalCount);
