@@ -795,13 +795,19 @@ export const EditProject: FC<Props> = ({
             setCheckedInTask(taskNew);
           } else {
             console.log('Would have checked out');
+            console.log('Checked in atm:', checkedInTask);
 
             let updateTask = {
               ...checkedInTask,
               id: checkedInTask.id,
-              endDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
+              startDate: checkedInTask.startDate,
+              startTime: checkedInTask.startTime,
+              endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
               endTime: format(new Date(date), 'HH-mm'),
             };
+
+            console.log('Start date before saving:', updateTask.startDate);
+            console.log('End date before saving:', updateTask.endDate);
 
             handleSaveTask(updateTask);
             setCheckedInTask(undefined);
