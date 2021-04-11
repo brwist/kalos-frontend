@@ -162,8 +162,8 @@ export const ELEVATION = {
 };
 
 // Old endpoint:
-export const ENDPOINT = 'https://core-dev.kalosflorida.com:8443';
-//export const ENDPOINT = 'https://dev-core.kalosflorida.com';
+//export const ENDPOINT = 'https://core-dev.kalosflorida.com:8443';
+export const ENDPOINT = 'https://dev-core.kalosflorida.com';
 
 export const QUOTE_PART_AVAILABILITY: { [key: number]: string } = {
   1: 'local',
