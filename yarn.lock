@@ -1215,9 +1215,9 @@
     chalk "^4.0.0"
 
 "@kalos-core/kalos-rpc@^2.60.2":
-  version "2.61.58"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.61.58.tgz#641640b1a9c8ded312a0e93c40d083eca8ef41ee"
-  integrity sha512-HGMN3QKMLn6KYg/4Ag7MujCLm4zJ46O/c9xYqRwGoeyALYlOpSJ+6ttKNKqkS2QlBFM2kkIJn1kBl+roH5DRdw==
+  version "2.61.59"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-2.61.59.tgz#773c85da4e82042b69bd50f78e4d78df18d8fcac"
+  integrity sha512-Th+yOo+/XaQPc66m7nMzhWV7DiNJ1NTYz2FpqfljV+gafrqaU4ZepkTZDR5/6rIkE+5idONOQ4GqZMKO189i1w==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -4823,15 +4823,10 @@ glogg@^1.0.0:
   dependencies:
     sparkles "^1.0.0"
 
-google-protobuf@^3.10.0:
+google-protobuf@^3.10.0, google-protobuf@^3.9.0-rc.1:
   version "3.15.8"
   resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.15.8.tgz#5f3948905e4951c867d6bc143f385a80e2a39efe"
   integrity sha512-2jtfdqTaSxk0cuBJBtTTWsot4WtR9RVr2rXg7x7OoqiuOKopPrwXpM1G4dXIkLcUNRh3RKzz76C8IOkksZSeOw==
-
-google-protobuf@^3.9.0-rc.1:
-  version "3.15.7"
-  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.15.7.tgz#c65eb96d9e1c8d146eea16508ff94b00d24dd1e3"
-  integrity sha512-S/kTHcT98AV2FxEwtT5lvgffeS87BB6hloZm+pYKkpzwtySwNiKcqXZbxpq/Odh3Wib1RdOe/oY2EHdi17YrlQ==
 
 graceful-fs@^4.0.0, graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6, graceful-fs@^4.1.9, graceful-fs@^4.2.0, graceful-fs@^4.2.4:
   version "4.2.6"
