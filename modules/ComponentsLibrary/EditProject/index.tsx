@@ -37,6 +37,7 @@ import {
   UserClientService,
   TaskEventClientService,
   loadProjects,
+  getRPCFields,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 import './styles.less';
@@ -462,6 +463,19 @@ export const EditProject: FC<Props> = ({
         checkedIn: checkedIn,
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
+
+      let pt = new ProjectTask();
+      const fieldMaskList = [];
+      for (const fieldName in formData) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        //@ts-ignore
+        pt[methodName](formData[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+
+      let taskGotten = await TaskClientService.GetProjectTask(pt);
+
+      setCheckedInTask(taskGotten as ExtendedProjectTaskType);
       setLoaded(false);
     },
     [
@@ -784,6 +798,7 @@ export const EditProject: FC<Props> = ({
 
             let updateTask = {
               ...checkedInTask,
+              id: checkedInTask.id,
               endDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
               endTime: format(new Date(date), 'HH-mm'),
             };
