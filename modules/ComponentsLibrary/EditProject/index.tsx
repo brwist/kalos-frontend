@@ -5,7 +5,7 @@ import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
 import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
 import LowIcon from '@material-ui/icons/Details';
-import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
+import { ProjectTask, Task } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -37,12 +37,14 @@ import {
   UserClientService,
   TaskEventClientService,
   loadProjects,
+  getRPCFields,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { addDays, format } from 'date-fns';
 import { Field } from '../Field';
 import { CostReport } from '../CostReport';
+import { Typography } from '@material-ui/core';
 
 export interface Props {
   serviceCallId: number;
@@ -204,6 +206,35 @@ export const EditProject: FC<Props> = ({
       new Promise<void>(async resolve => {
         const loggedUser = await UserClientService.loadUserById(loggedUserId);
         setLoggedUser(loggedUser);
+        resolve();
+      }),
+    );
+
+    promises.push(
+      new Promise<void>(async resolve => {
+        let task = new ProjectTask();
+        task.setExternalId(loggedUserId);
+        task.setCheckedIn(true);
+        let checkedTask;
+        try {
+          checkedTask = await TaskClientService.GetProjectTask(task);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
+
+        console.log('Checked in task:', checkedTask);
+
+        if (checkedTask)
+          setCheckedInTask({
+            ...checkedTask,
+            startDate: '',
+            endDate: '',
+            startTime: '',
+            endTime: '',
+          } as ExtendedProjectTaskType);
         resolve();
       }),
     );
@@ -432,6 +463,19 @@ export const EditProject: FC<Props> = ({
         checkedIn: checkedIn,
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
+
+      let pt = new ProjectTask();
+      const fieldMaskList = [];
+      for (const fieldName in formData) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        //@ts-ignore
+        pt[methodName](formData[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+
+      let taskGotten = await TaskClientService.GetProjectTask(pt);
+
+      setCheckedInTask(taskGotten as ExtendedProjectTaskType);
       setLoaded(false);
     },
     [
@@ -728,8 +772,8 @@ export const EditProject: FC<Props> = ({
         onClick={() => {
           // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
           // if there is then use that result to set it as checked in
+          const date = new Date();
           if (!checkedInTask) {
-            const date = new Date();
             let taskNew = {
               startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
               endDate: '',
@@ -751,10 +795,27 @@ export const EditProject: FC<Props> = ({
             setCheckedInTask(taskNew);
           } else {
             console.log('Would have checked out');
+            console.log('Checked in atm:', checkedInTask);
+
+            let updateTask = {
+              ...checkedInTask,
+              id: checkedInTask.id,
+              startDate: checkedInTask.startDate,
+              startTime: checkedInTask.startTime,
+              endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
+              endTime: format(new Date(date), 'HH-mm'),
+            };
+
+            console.log('Start date before saving:', updateTask.startDate);
+            console.log('End date before saving:', updateTask.endDate);
+
+            handleSaveTask(updateTask);
+            setCheckedInTask(undefined);
           }
         }}
         disabled={pendingCheckoutChange}
       />
+      <Typography>{checkedInTask?.startDate}</Typography>
       {!checkedInTask && (
         <Field
           name="Brief Description for Check-in"
