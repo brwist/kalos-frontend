@@ -193,11 +193,11 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     if (rowId) {
       trip.setPerDiemRowId(rowId);
     } else {
-      console.error('No perDiem found for this user. ');
-      this.setState({ warningNoPerDiem: true });
-      this.setState({ pendingTrip: null });
-      this.getTrips();
-      return;
+      // console.error('No perDiem found for this user. ');
+      // //this.setState({ warningNoPerDiem: true });
+      // this.setState({ pendingTrip: null });
+      // this.getTrips();
+      // return;
     }
 
     trip.setNotes(data.Notes);
@@ -317,8 +317,8 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                 this.props.perDiemRowIds == undefined ||
                 this.props.perDiemRowIds.length == 0
               ) {
-                this.setStateToNew({ warningNoPerDiem: true });
-                return;
+                //this.setStateToNew({ warningNoPerDiem: true });
+                //return;
               }
               this.setStateToNew({ pendingTrip: new Trip() });
             }}
