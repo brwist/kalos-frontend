@@ -366,7 +366,7 @@ export const TimeOff: FC<Props> = ({
   if (deleted)
     return (
       <SectionBar
-        title="Request Time Off"
+        title={'Request Time Off '}
         subtitle="This Request Time Off cannot be find (wrong ID or it was deleted)"
       />
     );
@@ -379,7 +379,11 @@ export const TimeOff: FC<Props> = ({
         onSave={data.id ? toggleDeleting : handleSubmit}
         onChange={setData}
         schema={schema}
-        title="Request Time Off"
+        title={
+          user?.firstname
+            ? 'Request Time Off for ' + user?.firstname + ' ' + user?.lastname
+            : 'Request Time Off'
+        }
         subtitle={
           pto && user ? (
             <span>
