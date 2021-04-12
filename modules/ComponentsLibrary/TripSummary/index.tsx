@@ -804,11 +804,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
   }
 
   setStateOfPerDiems = async () => {
-    this.setState({
-      perDiems: await PerDiemClientService.getPerDiemsFromIds(
+    if (this.props.perDiemRowIds) {
+      let pds = await PerDiemClientService.getPerDiemsFromIds(
         this.props.perDiemRowIds,
-      ),
-    });
+      );
+
+      this.setState({
+        perDiems: pds ? pds : null,
+      });
+    }
   };
 
   render() {
