@@ -2602,8 +2602,8 @@ export type TripsFilter = {
   destinationAddress?: string;
   weekof?: number[];
   page: number;
-  payrollProcessed: boolean;
-  approved: boolean;
+  payrollProcessed: boolean | undefined;
+  approved: boolean | undefined;
   role?: string;
   departmentId?: number;
 };
@@ -2711,8 +2711,8 @@ export const loadTripsByFilter = async ({
     //@ts-ignore
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
-  req.setApproved(filter.approved);
-  req.setPayrollProcessed(filter.payrollProcessed);
+  req.setApproved(filter.approved!);
+  req.setPayrollProcessed(filter.payrollProcessed!);
 
   if (filter.payrollProcessed) {
     req.setApproved(true);
