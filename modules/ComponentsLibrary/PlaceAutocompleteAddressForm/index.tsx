@@ -60,7 +60,9 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       validationPopupOpen: false,
       noteLengthPopupOpen: false,
       saving: false,
-      perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
+      perDiemDropDownSelected: this.props.perDiemRowIds
+        ? `${this.props.perDiemRowIds[0]} | 0`
+        : '',
       perDiems: null,
     };
   }
@@ -357,39 +359,47 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             <>
               <SectionBar title="Per Diem" uncollapsable>
                 <FormControl>
-                  <InputLabel shrink htmlFor="per-diem-select">
-                    Per Diem
-                  </InputLabel>{' '}
-                  <Select
-                    value={
-                      this.state.perDiems
-                        ? this.state.perDiemDropDownSelected
-                        : 'loading'
-                    }
-                    onChange={this.setPerDiemDropdown}
-                    label="Per Diem"
-                    inputProps={{
-                      name: 'age',
-                      id: 'per-diem-select',
-                    }}
-                  >
-                    {this.state.perDiems ? (
-                      this.state.perDiems.map((key, idx) => {
-                        return (
-                          <MenuItem
-                            value={key.id + ' | ' + idx}
-                            key={key.id + ' | ' + idx}
-                          >
-                            {key.department?.value} | Notes: "{key.notes}"
-                          </MenuItem>
-                        );
-                      })
-                    ) : (
-                      <MenuItem value={'loading'} key="Loading">
-                        Loading...
-                      </MenuItem>
-                    )}
-                  </Select>
+                  {this.state.perDiems ? (
+                    <InputLabel shrink htmlFor="per-diem-select">
+                      Per Diem
+                    </InputLabel>
+                  ) : (
+                    <></>
+                  )}
+                  {this.state.perDiems ? (
+                    <Select
+                      value={
+                        this.state.perDiems
+                          ? this.state.perDiemDropDownSelected
+                          : 'loading'
+                      }
+                      onChange={this.setPerDiemDropdown}
+                      label="Per Diem"
+                      inputProps={{
+                        name: 'age',
+                        id: 'per-diem-select',
+                      }}
+                    >
+                      {this.state.perDiems ? (
+                        this.state.perDiems.map((key, idx) => {
+                          return (
+                            <MenuItem
+                              value={key.id + ' | ' + idx}
+                              key={key.id + ' | ' + idx}
+                            >
+                              {key.department?.value} | Notes: "{key.notes}"
+                            </MenuItem>
+                          );
+                        })
+                      ) : (
+                        <MenuItem value={'loading'} key="Loading">
+                          Loading...
+                        </MenuItem>
+                      )}
+                    </Select>
+                  ) : (
+                    <></>
+                  )}
                 </FormControl>
               </SectionBar>
             </>
