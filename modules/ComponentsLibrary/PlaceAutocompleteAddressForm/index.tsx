@@ -65,49 +65,52 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         : '',
       perDiems: null,
     };
+
+    this.loadScripts();
   }
 
-  loadScriptByUrl = async (url: string, callback: () => void) => {
-    const scripts = document.getElementsByTagName('script');
-    for (let i = scripts.length; i--; ) {
-      if (scripts[i].src == url) {
-        callback(); // Already have that url assigned to a script, don't add again. Instead just
-        // call the callback and have it go on about its business in wherever it was called from
-        return;
-      }
-    }
-    let script = document.createElement('script') as any;
-    script.type = 'text/javascript';
-
-    if (script.readyState) {
-      script.onreadystatechange = () => {
-        if (
-          script.readyState === 'loaded' ||
-          script.readyState === 'complete'
-        ) {
-          script.onreadystatechange = null;
-          callback();
+  loadScriptByUrl = async (url: string) => {
+    await new Promise<void>(resolve => {
+      const scripts = document.getElementsByTagName('script');
+      for (let i = scripts.length; i--; ) {
+        if (scripts[i].src == url) {
+          resolve(); // Already have that url assigned to a script, don't add again. Instead just
+          // call the callback and have it go on about its business in wherever it was called from
+          return;
         }
-      };
-    } else {
-      script.onload = () => callback();
-    }
+      }
+      let script = document.createElement('script') as any;
+      script.type = 'text/javascript';
 
-    script.src = url;
-    document.getElementsByTagName('head')[0].appendChild(script);
+      if (script.readyState) {
+        script.onreadystatechange = () => {
+          if (
+            script.readyState === 'loaded' ||
+            script.readyState === 'complete'
+          ) {
+            script.onreadystatechange = null;
+            resolve;
+          }
+        };
+      } else {
+        script.onload = () => resolve();
+      }
+
+      script.src = url;
+      document.getElementsByTagName('head')[0].appendChild(script);
+    });
   };
 
-  loadScripts = async (callback: () => void) => {
-    this.loadScriptByUrl(
+  loadScripts = async () => {
+    await this.loadScriptByUrl(
       'https://polyfill.io/v3/polyfill.min.js?features=default',
-      () => {},
     );
-    this.loadScriptByUrl(
+    await this.loadScriptByUrl(
       `https://maps.googleapis.com/maps/api/js?key=${
         (await getKeyByKeyName('google_maps')).apiKey
       }&libraries=places`,
-      callback,
     );
+    this.handleLoad();
   };
 
   handleLoad = () => {
@@ -275,9 +278,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     }
   }
 
-  componentDidUpdate() {
-    this.loadScripts(() => this.handleLoad());
-  }
+  componentDidUpdate() {}
 
   componentDidMount() {
     this.geolocate();
