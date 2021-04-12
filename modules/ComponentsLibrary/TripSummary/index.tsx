@@ -258,7 +258,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
       filter: new Checkboxes(),
       tripToView: null,
       warningNoPerDiem: false,
-      perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
+      perDiemDropDownSelected: this.props.perDiemRowIds
+        ? `${this.props.perDiemRowIds[0]} | 0`
+        : '',
       perDiems: null,
       currentTripDepartment: null,
     };
