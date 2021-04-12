@@ -257,6 +257,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       }
     }
     this.setState({ formKey: this.state.formKey + 1 });
+    this.loadScripts(); // Hotfix to make the api reappear after key refresh
   };
 
   geolocate() {
