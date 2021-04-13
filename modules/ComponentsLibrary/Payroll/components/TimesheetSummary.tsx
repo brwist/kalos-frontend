@@ -25,9 +25,11 @@ import {
   UserClientService,
   UserType,
   loadTimeoffRequests,
+  TimeoffRequestClientService,
 } from '../../../../helpers';
 import { Loader } from '../../../Loader/main';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -63,6 +65,7 @@ export const TimesheetSummary: FC<Props> = ({
   const [totalBillableHours, setTotalBillableHours] = useState<number>();
   const [totalUnbillableHours, setTotalUnbillableHours] = useState<number>();
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
+  const [timeoff, setTimeOff] = useState<TimeoffRequest.AsObject[]>();
   const [timesheetsPending, setTimesheetsPending] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
   const [loading, setLoading] = useState<boolean>(true);
@@ -178,6 +181,7 @@ export const TimesheetSummary: FC<Props> = ({
         }
       }
     }
+    setTimeOff(results);
     return timeOffJobs;
   }, [userId, notReady, endDay, startDay]);
   const getTimesheetsPending = useCallback(async () => {
@@ -298,6 +302,15 @@ export const TimesheetSummary: FC<Props> = ({
       }
       await tslClient.Process(ids, userId);
       onClose();
+    }
+    if (timeoff && timeoff.length > 0) {
+      for (let i = 0; i < timeoff?.length; ) {
+        const req = new TimeoffRequest();
+        req.setId(timeoff[i].id);
+        req.setFieldMaskList(['PayrollProcessed']);
+        req.setPayrollProcessed(true);
+        await TimeoffRequestClientService.Update(req);
+      }
     }
   }, [timesheets, userId, onClose]);
   const RejectTimesheets = useCallback(async () => {
