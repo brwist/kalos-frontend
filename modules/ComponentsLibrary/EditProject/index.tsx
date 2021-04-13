@@ -115,7 +115,11 @@ export const EditProject: FC<Props> = ({
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [loggedUser, setLoggedUser] = useState<UserType>();
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
-  const [pendingDelete, setPendingDelete] = useState<ExtendedProjectTaskType>();
+  const [pendingDeleteEvent, setPendingDeleteEvent] = useState<EventType>();
+  const [
+    pendingDeleteTask,
+    setPendingDeleteTask,
+  ] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
 
   const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
@@ -291,10 +295,18 @@ export const EditProject: FC<Props> = ({
     },
     [setEditingTask, setTaskEventsLoaded],
   );
-  const handleSetPendingDelete = useCallback(
+
+  const handleSetPendingDeleteEvent = useCallback(
+    (pendingDelete?: EventType) => () => {
+      setPendingDeleteEvent(pendingDelete);
+    },
+    [setPendingDeleteEvent],
+  );
+
+  const handleSetPendingDeleteTask = useCallback(
     (pendingDelete?: ExtendedProjectTaskType) => () =>
-      setPendingDelete(pendingDelete),
-    [setPendingDelete],
+      setPendingDeleteTask(pendingDelete),
+    [setPendingDeleteTask],
   );
   const handleCheckout = useCallback(async () => {
     if (!editingTask) return;
@@ -496,15 +508,15 @@ export const EditProject: FC<Props> = ({
     ],
   );
   const handleDeleteTask = useCallback(async () => {
-    if (pendingDelete) {
-      const { id } = pendingDelete;
-      setPendingDelete(undefined);
+    if (pendingDeleteTask) {
+      const { id } = pendingDeleteTask;
+      setPendingDeleteTask(undefined);
       setEditingTask(undefined);
       setLoading(true);
       await TaskClientService.deleteProjectTaskById(id);
       setLoaded(false);
     }
-  }, [pendingDelete, setPendingDelete]);
+  }, [pendingDeleteTask, setPendingDeleteTask]);
   const handleAddTask = useCallback(
     (startDate: string) => {
       if (!loggedUser || !event) return;
@@ -737,6 +749,19 @@ export const EditProject: FC<Props> = ({
               statusId: 1,
               priorityId: 2,
             }),
+            disabled:
+              loading ||
+              loadingEvent ||
+              !event ||
+              !loggedUser ||
+              !(
+                isAnyManager ||
+                event.departmentId === loggedUser.employeeDepartmentId
+              ),
+          },
+          {
+            label: 'Delete Project',
+            onClick: handleSetPendingDeleteEvent(event),
             disabled:
               loading ||
               loadingEvent ||
@@ -1028,20 +1053,29 @@ export const EditProject: FC<Props> = ({
                   <Button
                     variant="outlined"
                     label="Delete Task"
-                    onClick={handleSetPendingDelete(editingTask)}
+                    onClick={handleSetPendingDeleteTask(editingTask)}
                   />
                 )}
             </div>
           </Form>
         </Modal>
       )}
-      {pendingDelete && (
+      {pendingDeleteTask && (
         <ConfirmDelete
           open
           kind="Task"
-          name={pendingDelete.briefDescription}
-          onClose={handleSetPendingDelete()}
+          name={pendingDeleteTask.briefDescription}
+          onClose={handleSetPendingDeleteTask()}
           onConfirm={handleDeleteTask}
+        />
+      )}
+      {pendingDeleteEvent && (
+        <ConfirmDelete
+          open
+          kind="Project"
+          name={''}
+          onClose={handleSetPendingDeleteEvent()}
+          onConfirm={() => alert('Would have deleted')}
         />
       )}
       {editingProject && event && (
