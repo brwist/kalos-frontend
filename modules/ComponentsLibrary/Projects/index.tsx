@@ -84,7 +84,7 @@ export const Projects: FC<Props> = ({
     setLoading(true);
     setSearch(filter);
     const { dateStarted, dateEnded, departmentId, logJobNumber } = filter;
-    const { results } = await loadEventsByFilter({
+    const { resultsList } = await loadEventsByFilter({
       page: -1,
       filter: {
         dateStarted,
@@ -98,7 +98,7 @@ export const Projects: FC<Props> = ({
         orderDir: 'ASC',
       },
     });
-    setEvents(results);
+    setEvents(resultsList);
     setLoading(false);
   }, [filter, setLoading, setEvents, setSearch]);
   useEffect(() => {

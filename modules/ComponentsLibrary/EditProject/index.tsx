@@ -245,8 +245,6 @@ export const EditProject: FC<Props> = ({
       }
     }
 
-    console.log('Checked in task:', checkedTask);
-
     if (checkedTask)
       setCheckedInTask({
         ...checkedTask,
@@ -797,15 +795,9 @@ export const EditProject: FC<Props> = ({
               checkedIn: true,
             } as ExtendedProjectTaskType;
 
-            alert('upserting task - see details in console log');
-            console.log('TASK CHECKED IN:', taskNew);
-
             handleSaveTask(taskNew);
             setCheckedInTask(taskNew);
           } else {
-            console.log('Would have checked out');
-            console.log('Checked in atm:', checkedInTask);
-
             let updateTask = {
               ...checkedInTask,
               id: checkedInTask.id,
@@ -815,9 +807,6 @@ export const EditProject: FC<Props> = ({
               endTime: format(new Date(date), 'HH-mm'),
               checkedIn: false,
             };
-
-            console.log('Start date before saving:', updateTask.startDate);
-            console.log('End date before saving:', updateTask.endDate);
 
             handleSaveTask(updateTask);
             setCheckedInTask(undefined);
