@@ -212,29 +212,7 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        let task = new Task();
-        task.setExternalId(loggedUserId);
-        task.setCheckedIn(true);
-        let checkedTask;
-        try {
-          checkedTask = await TaskClientService.Get(task);
-        } catch (err) {
-          console.log({ err });
-          if (!err.message.includes('failed to scan to struct')) {
-            console.error('Error occurred during ProjectTask query:', err);
-          }
-        }
-
-        console.log('Checked in task:', checkedTask);
-
-        if (checkedTask)
-          setCheckedInTask({
-            ...checkedTask,
-            startDate: checkedTask.hourlyStart,
-            endDate: checkedTask.hourlyEnd,
-            startTime: '',
-            endTime: '',
-          } as ExtendedProjectTaskType);
+        await getCheckedTasks();
         resolve();
       }),
     );
@@ -252,6 +230,33 @@ export const EditProject: FC<Props> = ({
     loggedUserId,
     serviceCallId,
   ]);
+
+  const getCheckedTasks = async () => {
+    let task = new Task();
+    task.setExternalId(loggedUserId);
+    task.setCheckedIn(true);
+    let checkedTask;
+    try {
+      checkedTask = await TaskClientService.Get(task);
+    } catch (err) {
+      console.log({ err });
+      if (!err.message.includes('failed to scan to struct')) {
+        console.error('Error occurred during ProjectTask query:', err);
+      }
+    }
+
+    console.log('Checked in task:', checkedTask);
+
+    if (checkedTask)
+      setCheckedInTask({
+        ...checkedTask,
+        startDate: checkedTask.hourlyStart,
+        endDate: checkedTask.hourlyEnd,
+        startTime: '',
+        endTime: '',
+      } as ExtendedProjectTaskType);
+  };
+
   const load = useCallback(async () => {
     const tasks = await EventClientService.loadProjectTasks(serviceCallId);
     setTasks(tasks);
@@ -464,21 +469,22 @@ export const EditProject: FC<Props> = ({
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
 
-      let pt = new ProjectTask();
-      const fieldMaskList = [];
-      for (const fieldName in formData) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        //@ts-ignore
-        if (pt[methodName]) {
-          // @ts-ignore
-          pt[methodName](formData[fieldName]);
-        }
-        fieldMaskList.push(upperCaseProp);
-      }
+      // let pt = new ProjectTask();
+      // const fieldMaskList = [];
+      // for (const fieldName in formData) {
+      //   const { upperCaseProp, methodName } = getRPCFields(fieldName);
+      //   //@ts-ignore
+      //   if (pt[methodName]) {
+      //     // @ts-ignore
+      //     pt[methodName](formData[fieldName]);
+      //   }
+      //   fieldMaskList.push(upperCaseProp);
+      // }
 
-      let taskGotten = await TaskClientService.GetProjectTask(pt);
+      // let taskGotten = await TaskClientService.GetProjectTask(pt);
 
-      setCheckedInTask(taskGotten as ExtendedProjectTaskType);
+      // setCheckedInTask(taskGotten as ExtendedProjectTaskType);
+      await getCheckedTasks();
       setLoaded(false);
     },
     [
