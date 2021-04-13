@@ -4,7 +4,6 @@ import {
   TimesheetLineClient,
   TimesheetLineList,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { Button } from '../../Button';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -15,13 +14,20 @@ import {
   format,
   differenceInMinutes,
   parseISO,
+  differenceInCalendarDays,
   startOfWeek,
   subDays,
   addDays,
 } from 'date-fns';
-import { roundNumber, formatDate } from '../../../../helpers';
-import { eachWeekOfIntervalWithOptions } from 'date-fns/fp';
+import {
+  roundNumber,
+  formatDate,
+  UserClientService,
+  UserType,
+  loadTimeoffRequests,
+} from '../../../../helpers';
 import { Loader } from '../../../Loader/main';
+import { User } from '@kalos-core/kalos-rpc/User';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -34,7 +40,7 @@ export type Action = {
   classCode: string;
   billable: boolean;
   day: string;
-  briefDescription: string;
+  departmentCode: string;
 };
 export type Job = {
   jobId: string;
@@ -45,6 +51,7 @@ export type Week = {
   identifyer: string;
   actionString: string[];
 };
+
 export const TimesheetSummary: FC<Props> = ({
   userId,
   loggedUserId,
@@ -60,6 +67,7 @@ export const TimesheetSummary: FC<Props> = ({
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [user, setUser] = useState<User.AsObject>();
   const [mappedElements, setMappedElements] = useState<JSX.Element[]>();
   const [
     togglePendingApprovalAlert,
@@ -86,6 +94,92 @@ export const TimesheetSummary: FC<Props> = ({
   const [subTotalDayList, setSubTotalDayList] = useState<string[][]>(
     tempDayList,
   );
+  const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
+  const getTimeoff = useCallback(async () => {
+    const startDate = format(startDay, 'yyyy-MM-dd');
+    const endDate = format(endDay, 'yyyy-MM-dd');
+    let timeOffJobs = [];
+    const filter = {
+      technicianUserID: userId,
+      requestType: 9,
+      startDate: startDate,
+      endDate: endDate,
+    };
+    const results = (await loadTimeoffRequests(filter)).resultsList;
+    let total = 0;
+    for (let i = 0; i < results.length; i++) {
+      if (results[i].allDayOff === 0) {
+        const timeFinished = results[i].timeFinished;
+        const timeStarted = results[i].timeStarted;
+        const subtotal = roundNumber(
+          differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
+            60,
+        );
+
+        total += subtotal;
+        let tempJob = {
+          jobId:
+            results[i].eventId === 0
+              ? results[i].referenceNumber === ''
+                ? 'None'
+                : results[i].referenceNumber
+              : results[i].eventId.toString(),
+          actions: [
+            {
+              time: roundNumber(
+                differenceInMinutes(
+                  parseISO(results[i].timeFinished),
+                  parseISO(results[i].timeStarted),
+                ) / 60,
+              ),
+              classCode: results[i].departmentName.substr(0, 3) + 'PTO',
+              billable: false,
+              day: format(parseISO(results[i].timeStarted), 'yyyy-MM-dd'),
+              departmentCode: results[i].departmentName,
+            },
+          ],
+        };
+        timeOffJobs.push(tempJob);
+      } else {
+        const timeFinished = results[i].timeFinished;
+        const timeStarted = results[i].timeStarted;
+        const numberOfDays =
+          differenceInCalendarDays(
+            parseISO(timeFinished),
+            parseISO(timeStarted),
+          ) + 1;
+        total += numberOfDays * 8;
+        for (let j = 0; j < numberOfDays; j++) {
+          let tempJob = {
+            jobId:
+              results[i].eventId === 0
+                ? results[i].referenceNumber === ''
+                  ? 'None'
+                  : results[i].referenceNumber
+                : results[i].eventId.toString(),
+            actions: [
+              {
+                time: 8,
+                classCode: results[i].departmentName.substr(0, 3) + 'PTO',
+                billable: false,
+                day: formatDateFns(
+                  addDays(parseISO(results[i].timeStarted), j),
+                ),
+
+                departmentCode: results[i].departmentName,
+              },
+            ],
+          };
+          if (j === 0) {
+            timeOffJobs.push(tempJob);
+          } else {
+            timeOffJobs[0].actions.push(tempJob.actions[0]);
+          }
+        }
+      }
+    }
+    return timeOffJobs;
+  }, [userId, notReady, endDay, startDay]);
   const getTimesheetsPending = useCallback(async () => {
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
@@ -128,30 +222,18 @@ export const TimesheetSummary: FC<Props> = ({
     timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
+    timesheetReq.setAdminApprovalUserId(0);
+    timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
+    timesheetReq.setFieldMaskList(['PayrollProcessed']);
+    results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
 
-    if (notReady) {
-      timesheetReq.setUserApprovalDatetime(NULL_TIME);
-      timesheetReq.setNotEqualsList(['UserApprovalDatetime']);
-      timesheetReq.setFieldMaskList([
-        'PayrollProcessed',
-        'AdminApprovalUserId',
-      ]);
-      timesheetReq.setOrderBy('time_started');
-      results = (await client.BatchGetManager(timesheetReq)).getResultsList();
-    } else {
-      timesheetReq.setAdminApprovalUserId(0);
-      timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
-      timesheetReq.setFieldMaskList(['PayrollProcessed']);
-      results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
-    }
-
-    let tempJobs = [];
+    let tempJobs = await getTimeoff();
     for (let i = 0; i < results.length; i++) {
       let tempJob = {
         jobId:
           results[i].toObject().eventId === 0
             ? results[i].toObject().referenceNumber === ''
-              ? '0'
+              ? 'None'
               : results[i].toObject().referenceNumber
             : results[i].toObject().eventId.toString(),
         actions: [
@@ -163,15 +245,17 @@ export const TimesheetSummary: FC<Props> = ({
               ) / 60,
             ),
             classCode:
-              results[i].toObject().classCodeId +
+              results[i].toObject().departmentName.substr(0, 3) +
               '-' +
-              results[i].toObject().classCode!.description,
+              results[i].toObject().classCode?.id +
+              ' \r\n' +
+              results[i].toObject().classCode!.classcodeQbName,
             billable: results[i].toObject().classCode!.billable,
             day: format(
               parseISO(results[i].toObject().timeStarted),
               'yyyy-MM-dd',
             ),
-            briefDescription: results[i].toObject().briefDescription,
+            departmentCode: results[i].toObject().departmentName,
           },
         ],
       };
@@ -180,7 +264,6 @@ export const TimesheetSummary: FC<Props> = ({
       for (let j = 0; j < tempJobs.length; j++) {
         for (let l = 0; l < tempJobs[j].actions.length; l++) {
           if (tempJobs[j].jobId === tempJob.jobId) {
-            console.log('same job');
             foundJob = true;
             if (
               tempJob.actions[0].classCode ===
@@ -232,6 +315,8 @@ export const TimesheetSummary: FC<Props> = ({
   const load = useCallback(async () => {
     await getTimesheetTotals();
     await getTimesheetsPending();
+    const tempUser = await UserClientService.loadUserById(userId);
+    setUser(tempUser);
     let subtotalsBillable = [0, 0, 0, 0, 0, 0, 0];
     let subtotalsUnbillable = [0, 0, 0, 0, 0, 0, 0];
     let subtotals = [0, 0, 0, 0, 0, 0, 0];
@@ -265,8 +350,8 @@ export const TimesheetSummary: FC<Props> = ({
                 tempWeek[m].push(
                   tempJobs[i].actions[j].classCode +
                     '-' +
-                    tempJobs[i].actions[j].time +
-                    ' Hours',
+                    ' \r\n' +
+                    (tempJobs[i].actions[j].time + ' Hours'),
                 );
                 if (tempJobs[i].actions[j].time > 0) {
                   if (tempJobs[i].actions[j].billable) {
@@ -284,8 +369,8 @@ export const TimesheetSummary: FC<Props> = ({
                   ' \r\n' +
                   tempJobs[i].actions[j].classCode +
                   '-' +
-                  tempJobs[i].actions[j].time +
-                  ' Hours';
+                  ' \r\n' +
+                  (tempJobs[i].actions[j].time + ' Hours');
                 if (tempJobs[i].actions[j].time > 0) {
                   if (tempJobs[i].actions[j].billable) {
                     subtotalsBillable[m] += tempJobs[i].actions[j].time;
@@ -307,13 +392,13 @@ export const TimesheetSummary: FC<Props> = ({
         <InfoTable
           columns={[
             { name: 'Job Number (if any)' },
-            { name: dayList![0][0] },
-            { name: dayList![1][0] },
-            { name: dayList![2][0] },
-            { name: dayList![3][0] },
-            { name: dayList![4][0] },
-            { name: dayList![5][0] },
-            { name: dayList![6][0] },
+            { name: dayList![0][0] + ' \r\n' + ' Saturday' },
+            { name: dayList![1][0] + ' \r\n' + ' Sunday' },
+            { name: dayList![2][0] + ' \r\n' + ' Monday' },
+            { name: dayList![3][0] + ' \r\n' + ' Tuesday' },
+            { name: dayList![4][0] + ' \r\n' + ' Wednesday' },
+            { name: dayList![5][0] + ' \r\n' + ' Thursday' },
+            { name: dayList![6][0] + ' \r\n' + ' Friday' },
           ]}
           key={'WeekSummary'}
           data={weekList!.map(week => {
@@ -349,13 +434,34 @@ export const TimesheetSummary: FC<Props> = ({
           })}
         />
       );
+      let total = subtotals.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0,
+      );
+      let totalBill = subtotalsBillable.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0,
+      );
+      let totalUnbill = subtotalsUnbillable.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0,
+      );
       let subtotalReport = (
         <InfoTable
           key={'Day Subtotals'}
           data={[
             [
               {
-                value: '',
+                value:
+                  'Total Billable:' +
+                  totalBill +
+                  '\r\n' +
+                  'Total Unbillable:' +
+                  totalUnbill +
+                  '\r\n' +
+                  '\r\n' +
+                  'Total:' +
+                  total,
               },
               {
                 value:
@@ -445,8 +551,8 @@ export const TimesheetSummary: FC<Props> = ({
           ]}
         ></InfoTable>
       );
-      jobReports.push(mapElements);
       jobReports.push(subtotalReport);
+      jobReports.push(mapElements);
     }
     let total = subtotals.reduce(
       (accumulator, currentValue) => accumulator + currentValue,
@@ -474,8 +580,11 @@ export const TimesheetSummary: FC<Props> = ({
     }
   }, [load, loading]);
   return loaded ? (
-    <SectionBar key="title" title="Timesheet Summary" uncollapsable={true}>
-      <strong>{username}</strong>
+    <SectionBar
+      key="title"
+      title={`Timesheet Summary for ${username}`}
+      uncollapsable={true}
+    >
       {togglePendingApprovalAlert && (
         <Alert key="pending" severity="warning">
           {' '}
@@ -513,15 +622,6 @@ export const TimesheetSummary: FC<Props> = ({
       >
         <div key="MappedList">{mappedElements}</div>
       </SectionBar>
-      <div key="Approved">
-        <strong>Total Approved Hours :{totalHours}</strong>
-      </div>
-      <div key="Billable">
-        <strong>Total Billable Hours :{totalBillableHours}</strong>
-      </div>
-      <div key="Unbillable">
-        <strong>Total Unbillable Hours :{totalUnbillableHours}</strong>
-      </div>
     </SectionBar>
   ) : (
     <Loader />
