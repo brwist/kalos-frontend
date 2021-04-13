@@ -1265,7 +1265,12 @@ export const upsertEventTask = async ({
   checkedIn,
 }: Partial<ProjectTaskType>) => {
   const req = new ProjectTask();
-  const fieldMaskList: string[] = ['ExternalCode', 'ExternalId', 'TimeCreated'];
+  const fieldMaskList: string[] = [
+    'ExternalCode',
+    'ExternalId',
+    'TimeCreated',
+    'CheckedIn',
+  ];
   req.setTimeCreated(timestamp());
   if (eventId) {
     req.setEventId(eventId);
@@ -1310,8 +1315,10 @@ export const upsertEventTask = async ({
     req.setCheckedIn(checkedIn);
     fieldMaskList.push('CheckedIn');
   }
-  req.setFieldMaskList(fieldMaskList);
-  await TaskClientService[id ? 'UpdateProjectTask' : 'CreateProjectTask'](req);
+  req.setFieldMaskList(fieldMaskList); 
+  await TaskClientService[id ? 'UpdateProjectTask' : 'CreateProjectTask'](
+    req,
+  );
 };
 
 /**
