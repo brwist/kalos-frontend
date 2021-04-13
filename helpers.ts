@@ -1315,10 +1315,8 @@ export const upsertEventTask = async ({
     req.setCheckedIn(checkedIn);
     fieldMaskList.push('CheckedIn');
   }
-  req.setFieldMaskList(fieldMaskList); 
-  await TaskClientService[id ? 'UpdateProjectTask' : 'CreateProjectTask'](
-    req,
-  );
+  req.setFieldMaskList(fieldMaskList);
+  await TaskClientService[id ? 'UpdateProjectTask' : 'CreateProjectTask'](req);
 };
 
 /**

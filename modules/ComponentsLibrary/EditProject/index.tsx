@@ -212,12 +212,12 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        let task = new ProjectTask();
+        let task = new Task();
         task.setExternalId(loggedUserId);
         task.setCheckedIn(true);
         let checkedTask;
         try {
-          checkedTask = await TaskClientService.GetProjectTask(task);
+          checkedTask = await TaskClientService.Get(task);
         } catch (err) {
           console.log({ err });
           if (!err.message.includes('failed to scan to struct')) {
@@ -230,8 +230,8 @@ export const EditProject: FC<Props> = ({
         if (checkedTask)
           setCheckedInTask({
             ...checkedTask,
-            startDate: '',
-            endDate: '',
+            startDate: checkedTask.hourlyStart,
+            endDate: checkedTask.hourlyEnd,
             startTime: '',
             endTime: '',
           } as ExtendedProjectTaskType);
@@ -469,7 +469,10 @@ export const EditProject: FC<Props> = ({
       for (const fieldName in formData) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
         //@ts-ignore
-        pt[methodName](formData[fieldName]);
+        if (pt[methodName]) {
+          // @ts-ignore
+          pt[methodName](formData[fieldName]);
+        }
         fieldMaskList.push(upperCaseProp);
       }
 
@@ -804,6 +807,7 @@ export const EditProject: FC<Props> = ({
               startTime: checkedInTask.startTime,
               endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
               endTime: format(new Date(date), 'HH-mm'),
+              checkedIn: false,
             };
 
             console.log('Start date before saving:', updateTask.startDate);
