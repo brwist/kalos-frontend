@@ -112,7 +112,10 @@ export const Projects: FC<Props> = ({
   }, [loaded, setLoaded, load, loadedInit, setLoadedInit, loadInit]);
   const handleSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleOpenEvent = useCallback(
-    (openedEvent?: EventType) => () => setOpenedEvent(openedEvent),
+    (openedEvent?: EventType) => () => {
+      setOpenedEvent(openedEvent);
+      if (!openedEvent) load();
+    },
     [setOpenedEvent],
   );
   const handleTogglePendingNew = useCallback(
