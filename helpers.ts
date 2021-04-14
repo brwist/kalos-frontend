@@ -807,6 +807,7 @@ export interface GetTimesheetConfig {
   technicianUserID?: number;
   startDate?: string;
   endDate?: string;
+  payrollProcessed?: boolean;
 }
 
 export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
@@ -819,6 +820,9 @@ export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
   }
   if (config.technicianUserID) {
     req.setUserId(config.technicianUserID);
+  }
+  if (config.payrollProcessed) {
+    req.setPayrollProcessed(true);
   }
   req.setPageNumber(config.page || 0);
   req.setOrderBy('time_started');
@@ -1265,7 +1269,12 @@ export const upsertEventTask = async ({
   checkedIn,
 }: Partial<ProjectTaskType>) => {
   const req = new ProjectTask();
-  const fieldMaskList: string[] = ['ExternalCode', 'ExternalId', 'TimeCreated'];
+  const fieldMaskList: string[] = [
+    'ExternalCode',
+    'ExternalId',
+    'TimeCreated',
+    'CheckedIn',
+  ];
   req.setTimeCreated(timestamp());
   if (eventId) {
     req.setEventId(eventId);

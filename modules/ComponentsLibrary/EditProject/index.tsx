@@ -212,29 +212,7 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        let task = new ProjectTask();
-        task.setExternalId(loggedUserId);
-        task.setCheckedIn(true);
-        let checkedTask;
-        try {
-          checkedTask = await TaskClientService.GetProjectTask(task);
-        } catch (err) {
-          console.log({ err });
-          if (!err.message.includes('failed to scan to struct')) {
-            console.error('Error occurred during ProjectTask query:', err);
-          }
-        }
-
-        console.log('Checked in task:', checkedTask);
-
-        if (checkedTask)
-          setCheckedInTask({
-            ...checkedTask,
-            startDate: '',
-            endDate: '',
-            startTime: '',
-            endTime: '',
-          } as ExtendedProjectTaskType);
+        await getCheckedTasks();
         resolve();
       }),
     );
@@ -252,6 +230,31 @@ export const EditProject: FC<Props> = ({
     loggedUserId,
     serviceCallId,
   ]);
+
+  const getCheckedTasks = async () => {
+    let task = new Task();
+    task.setExternalId(loggedUserId);
+    task.setCheckedIn(true);
+    let checkedTask;
+    try {
+      checkedTask = await TaskClientService.Get(task);
+    } catch (err) {
+      console.log({ err });
+      if (!err.message.includes('failed to scan to struct')) {
+        console.error('Error occurred during ProjectTask query:', err);
+      }
+    }
+
+    if (checkedTask)
+      setCheckedInTask({
+        ...checkedTask,
+        startDate: checkedTask.hourlyStart,
+        endDate: checkedTask.hourlyEnd,
+        startTime: '',
+        endTime: '',
+      } as ExtendedProjectTaskType);
+  };
+
   const load = useCallback(async () => {
     const tasks = await EventClientService.loadProjectTasks(serviceCallId);
     setTasks(tasks);
@@ -464,18 +467,22 @@ export const EditProject: FC<Props> = ({
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
 
-      let pt = new ProjectTask();
-      const fieldMaskList = [];
-      for (const fieldName in formData) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        //@ts-ignore
-        pt[methodName](formData[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
+      // let pt = new ProjectTask();
+      // const fieldMaskList = [];
+      // for (const fieldName in formData) {
+      //   const { upperCaseProp, methodName } = getRPCFields(fieldName);
+      //   //@ts-ignore
+      //   if (pt[methodName]) {
+      //     // @ts-ignore
+      //     pt[methodName](formData[fieldName]);
+      //   }
+      //   fieldMaskList.push(upperCaseProp);
+      // }
 
-      let taskGotten = await TaskClientService.GetProjectTask(pt);
+      // let taskGotten = await TaskClientService.GetProjectTask(pt);
 
-      setCheckedInTask(taskGotten as ExtendedProjectTaskType);
+      // setCheckedInTask(taskGotten as ExtendedProjectTaskType);
+      await getCheckedTasks();
       setLoaded(false);
     },
     [
@@ -788,15 +795,9 @@ export const EditProject: FC<Props> = ({
               checkedIn: true,
             } as ExtendedProjectTaskType;
 
-            alert('upserting task - see details in console log');
-            console.log('TASK CHECKED IN:', taskNew);
-
             handleSaveTask(taskNew);
             setCheckedInTask(taskNew);
           } else {
-            console.log('Would have checked out');
-            console.log('Checked in atm:', checkedInTask);
-
             let updateTask = {
               ...checkedInTask,
               id: checkedInTask.id,
@@ -804,10 +805,8 @@ export const EditProject: FC<Props> = ({
               startTime: checkedInTask.startTime,
               endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
               endTime: format(new Date(date), 'HH-mm'),
+              checkedIn: false,
             };
-
-            console.log('Start date before saving:', updateTask.startDate);
-            console.log('End date before saving:', updateTask.endDate);
 
             handleSaveTask(updateTask);
             setCheckedInTask(undefined);
