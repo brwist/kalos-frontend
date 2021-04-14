@@ -27,6 +27,7 @@ import {
   escapeText,
   SpiffTypeType,
   getRPCFields,
+  EventClientService,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL, ENDPOINT } from '../../../../constants';
 
@@ -146,11 +147,25 @@ export const Spiffs: FC<Props> = ({
       req.setTimeCreated(now);
       req.setTimeDue(now);
       req.setPriorityId(2);
+      console.log('We are pressing Save');
       req.setExternalCode('user');
       req.setCreatorUserId(loggedUserId);
+      console.log({ data });
       req.setBillableType('Spiff');
-      req.setReferenceNumber('');
       req.setStatusId(1);
+      let tempEvent = await EventClientService.LoadEventByServiceCallID(
+        parseInt(data.spiffJobNumber),
+      );
+      req.setSpiffAddress(
+        tempEvent.property?.address === undefined
+          ? tempEvent.customer?.address === undefined
+            ? ''
+            : tempEvent.customer.address
+          : tempEvent.property?.address,
+      );
+      data.spiffJobNumber = tempEvent.logJobNumber;
+      req.setSpiffJobNumber(data.spiffJobNumber);
+
       fieldMaskList.push(
         'TimeCreated',
         'TimeDue',
@@ -159,7 +174,8 @@ export const Spiffs: FC<Props> = ({
         'ExternalId',
         'CreatorUserId',
         'BillableType',
-        'ReferenceNumber',
+        'SpiffJobNumber',
+        'spiffAddress',
       );
       for (const fieldName in data) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
@@ -168,6 +184,7 @@ export const Spiffs: FC<Props> = ({
         fieldMaskList.push(upperCaseProp);
       }
       req.setFieldMaskList(fieldMaskList);
+      console.log({ req });
       await TaskClientService.Create(req);
       setSaving(false);
       setPendingAdd(false);
@@ -190,7 +207,7 @@ export const Spiffs: FC<Props> = ({
         type: 'number',
         required: true,
       },
-      { name: 'spiffJobNumber', label: 'Job #' },
+      { name: 'spiffJobNumber', label: 'Job #', type: 'eventId' },
       {
         name: 'datePerformed',
         label: 'Date Performed',
