@@ -197,6 +197,7 @@ export const Projects: FC<Props> = ({
                     dateEnded: dateEnd,
                     property,
                     departmentId,
+                    isActive,
                   } = event;
                   const [startDate] = dateStart.split(' ');
                   const [endDate] = dateEnd.split(' ');
@@ -204,6 +205,7 @@ export const Projects: FC<Props> = ({
                     id,
                     startDate,
                     endDate,
+                    isActive,
                     notes: description,
                     onClick: handleOpenEvent(event),
                     label: compact([
@@ -260,6 +262,7 @@ export const Projects: FC<Props> = ({
                     dateEnded: dateEnd,
                     property,
                     departmentId,
+                    isActive,
                   } = event;
                   const [startDate] = dateStart.split(' ');
                   const [endDate] = dateEnd.split(' ');
@@ -267,6 +270,7 @@ export const Projects: FC<Props> = ({
                     id,
                     startDate,
                     endDate,
+                    isActive,
                     notes: description,
                     onClick: handleOpenEvent(event),
                     label: logJobNumber,
