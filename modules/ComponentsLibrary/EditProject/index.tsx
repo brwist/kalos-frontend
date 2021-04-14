@@ -763,6 +763,7 @@ export const EditProject: FC<Props> = ({
               loadingEvent ||
               !event ||
               !loggedUser ||
+              !event.isActive ||
               !(
                 isAnyManager ||
                 event.departmentId === loggedUser.employeeDepartmentId
