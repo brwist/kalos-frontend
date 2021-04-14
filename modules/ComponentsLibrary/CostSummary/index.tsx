@@ -1,5 +1,9 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import {
+  TimesheetLine,
+  TimesheetLineClient,
+  TimesheetLineList,
+} from '@kalos-core/kalos-rpc/TimesheetLine';
 import { SectionBar } from '../SectionBar';
 import { ENDPOINT, NULL_TIME, MEALS_RATE } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
@@ -43,6 +47,7 @@ import { PerDiem, PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
+import { Info } from '@material-ui/icons';
 export const CostSummary: FC<Props> = ({
   userId,
   loggedUserId,
@@ -51,7 +56,7 @@ export const CostSummary: FC<Props> = ({
   onNext,
   username,
 }) => {
-  const [totalHours, setTotalHours] = useState<number>();
+  const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>();
   const [totalSpiffsMonthly, setTotalSpiffsMonthly] = useState<number>();
@@ -60,7 +65,7 @@ export const CostSummary: FC<Props> = ({
 
   const [totalTools, setTotalTools] = useState<number>();
   const [tools, setTools] = useState<Task[]>();
-  const [totalPTO, setTotalPTO] = useState<number>();
+  const [totalPTO, setTotalPTO] = useState<number>(0);
   const [pto, setPTO] = useState<TimeoffRequest.AsObject[]>();
   const [totalPerDiem, setTotalPerDiem] = useState<{
     totalMeals: number;
@@ -138,7 +143,7 @@ export const CostSummary: FC<Props> = ({
     );
     let totalMileage = 0;
     for (let i = 0; i < allRowsList.length; i++) {
-      let totalMileage = allRowsList[i].tripsList.reduce(
+      totalMileage = allRowsList[i].tripsList.reduce(
         (aggr, { distanceInMiles }) => aggr + distanceInMiles,
         0,
       );
@@ -150,7 +155,6 @@ export const CostSummary: FC<Props> = ({
   }, [getPerDiems, govPerDiemByZipCode, perDiems]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
-      console.log(dateType);
       const req = new Task();
       const action = new SpiffToolAdminAction();
       req.setPayrollProcessed(false);
@@ -223,6 +227,7 @@ export const CostSummary: FC<Props> = ({
       requestType: notReady ? 10 : 9,
       startDate: startDate,
       endDate: endDate,
+      payrollProcessed: true,
     };
     const results = (await loadTimeoffRequests(filter)).resultsList;
     let total = 0;
@@ -250,6 +255,33 @@ export const CostSummary: FC<Props> = ({
     setPTO(results);
     return total;
   }, [userId, notReady]);
+  const getProcessedHoursTotals = useCallback(async () => {
+    const timesheetReq = new TimesheetLine();
+    timesheetReq.setTechnicianUserId(userId);
+    timesheetReq.setIsActive(1);
+    timesheetReq.setWithoutLimit(true);
+    const startDate = format(startDay, 'yyyy-MM-dd');
+    const endDate = format(endDay, 'yyyy-MM-dd');
+    timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
+    const client = new TimesheetLineClient(ENDPOINT);
+    let results = new TimesheetLineList().getResultsList();
+    timesheetReq.setOrderBy('time_started');
+    timesheetReq.setAdminApprovalUserId(0);
+    timesheetReq.setNotEqualsList(['AdminApprovalUserId', 'PayrollProcessed']);
+    results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
+
+    let total = 0;
+    for (let i = 0; i < results.length; i++) {
+      const timeFinished = results[i].toObject().timeFinished;
+      const timeStarted = results[i].toObject().timeStarted;
+      const subtotal = roundNumber(
+        differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) / 60,
+      );
+
+      total += subtotal;
+    }
+    return total;
+  }, [endDay, startDay, userId]);
   const toggleProcessTimeoff = async (pt: TimeoffRequest.AsObject) => {
     pt.payrollProcessed = true;
     const { id } = pt;
@@ -291,10 +323,18 @@ export const CostSummary: FC<Props> = ({
     );
     promises.push(
       new Promise<void>(async resolve => {
+        setTotalHoursProcessed(await getProcessedHoursTotals());
+        resolve();
+      }),
+    );
+    /*
+    promises.push(
+      new Promise<void>(async resolve => {
         setTotalTools(await getSpiffToolTotals('Tool Purchase'));
         resolve();
       }),
     );
+    */
     promises.push(
       new Promise<void>(async resolve => {
         setTotalSpiffsWeekly(await getSpiffToolTotals('Spiff'));
@@ -329,67 +369,20 @@ export const CostSummary: FC<Props> = ({
     <div>
       <strong>{username}</strong>
       {onClose ? <Button label="Close" onClick={() => onClose()}></Button> : []}
-      <SectionBar
-        title="PTO Current Total"
-        asideContent={<strong>Total PTO Hours: {totalPTO}</strong>}
-        actionsAndAsideContentResponsive
-      >
-        <InfoTable
-          columns={[
-            { name: 'Date Started-Date Ended' },
-            { name: 'Hours' },
-            { name: 'Additional Info' },
-            { name: 'Processed' },
-          ]}
-          data={pto!.map(pt => {
-            return [
-              {
-                value:
-                  formatDate(pt.timeStarted) +
-                  ' to ' +
-                  formatDate(pt.timeFinished),
-              },
-              {
-                value:
-                  pt.allDayOff === 0
-                    ? roundNumber(
-                        differenceInMinutes(
-                          parseISO(pt.timeFinished),
-                          parseISO(pt.timeStarted),
-                        ) / 60,
-                      )
-                    : 8 *
-                      (differenceInCalendarDays(
-                        parseISO(pt.timeFinished),
-                        parseISO(pt.timeStarted),
-                      ) +
-                        1),
-              },
-              {
-                value: pt.notes,
-              },
-              {
-                value:
-                  pt.payrollProcessed === true ? 'Completed' : 'Incomplete',
-                actions:
-                  pt.payrollProcessed === false && pt.adminApprovalUserId != 0
-                    ? [
-                        <IconButton
-                          key="processPTO"
-                          size="small"
-                          onClick={() => toggleProcessTimeoff(pt)}
-                        >
-                          <CheckIcon />
-                        </IconButton>,
-                      ]
-                    : [],
-              },
-            ];
-          })}
-        />
+      <InfoTable
+        columns={[{ name: 'Week' }, { name: 'Total Hours Processed' }]}
+        data={[
+          [
+            {
+              value: formatDateFns(startDay),
+            },
+            {
+              value: totalPTO + totalHoursProcessed,
+            },
+          ],
+        ]}
+      ></InfoTable>
 
-        {/*For spiffs*/}
-      </SectionBar>
       <SectionBar
         title="Spiff Weekly Current Total"
         asideContent={<strong>Spiff Weekly Total : {totalSpiffsWeekly}</strong>}
@@ -561,6 +554,7 @@ export const CostSummary: FC<Props> = ({
       </SectionBar>
       */}
       <SectionBar
+        key="PerDiemWeek"
         title={`Total PerDiem for the Week of ${formatDateFns(startDay)}`}
       >
         {perDiems && perDiems.length > 0 ? (
