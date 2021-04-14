@@ -45,6 +45,7 @@ import { addDays, format } from 'date-fns';
 import { Field } from '../Field';
 import { CostReport } from '../CostReport';
 import { Typography } from '@material-ui/core';
+import { Loader } from '../../Loader/main';
 
 export interface Props {
   serviceCallId: number;
@@ -115,6 +116,7 @@ export const EditProject: FC<Props> = ({
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [loggedUser, setLoggedUser] = useState<UserType>();
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
+  const [deletingEvent, setDeletingEvent] = useState<boolean>(false);
   const [pendingDeleteEvent, setPendingDeleteEvent] = useState<EventType>();
   const [
     pendingDeleteTask,
@@ -296,6 +298,15 @@ export const EditProject: FC<Props> = ({
     [setEditingTask, setTaskEventsLoaded],
   );
 
+  const handleDeleteEvent = useCallback(async (eventId: number) => {
+    setDeletingEvent(true);
+    await EventClientService.deleteEventById(eventId);
+    setDeletingEvent(false);
+    setPendingDeleteEvent(undefined);
+    if (onClose) onClose();
+  }, []);
+
+  // The function used to actually delete projects (projects are of event type)
   const handleSetPendingDeleteEvent = useCallback(
     (pendingDelete?: EventType) => () => {
       setPendingDeleteEvent(pendingDelete);
@@ -479,21 +490,6 @@ export const EditProject: FC<Props> = ({
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
 
-      // let pt = new ProjectTask();
-      // const fieldMaskList = [];
-      // for (const fieldName in formData) {
-      //   const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      //   //@ts-ignore
-      //   if (pt[methodName]) {
-      //     // @ts-ignore
-      //     pt[methodName](formData[fieldName]);
-      //   }
-      //   fieldMaskList.push(upperCaseProp);
-      // }
-
-      // let taskGotten = await TaskClientService.GetProjectTask(pt);
-
-      // setCheckedInTask(taskGotten as ExtendedProjectTaskType);
       await getCheckedTasks();
       setLoaded(false);
     },
@@ -1072,12 +1068,15 @@ export const EditProject: FC<Props> = ({
       {pendingDeleteEvent && (
         <ConfirmDelete
           open
-          kind="Project"
+          kind="this project"
           name={''}
           onClose={handleSetPendingDeleteEvent()}
-          onConfirm={() => alert('Would have deleted')}
+          onConfirm={() => {
+            handleDeleteEvent(pendingDeleteEvent.id);
+          }}
         />
       )}
+      {deletingEvent && <Loader />}
       {editingProject && event && (
         <Modal open onClose={handleSetEditingProject(false)}>
           <Form
