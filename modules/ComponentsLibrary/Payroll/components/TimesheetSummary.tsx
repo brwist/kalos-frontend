@@ -251,9 +251,7 @@ export const TimesheetSummary: FC<Props> = ({
             classCode:
               results[i].toObject().departmentName.substr(0, 3) +
               '-' +
-              results[i].toObject().classCode?.id +
-              ' \r\n' +
-              results[i].toObject().classCode!.classcodeQbName,
+              results[i].toObject().classCode?.id,
             billable: results[i].toObject().classCode!.billable,
             day: format(
               parseISO(results[i].toObject().timeStarted),
@@ -362,9 +360,8 @@ export const TimesheetSummary: FC<Props> = ({
                 tempWeek.push([jobNumber]);
                 tempWeek[m].push(
                   tempJobs[i].actions[j].classCode +
-                    '-' +
-                    ' \r\n' +
-                    (tempJobs[i].actions[j].time + ' Hours'),
+                    ',' +
+                    (tempJobs[i].actions[j].time + ' Hrs'),
                 );
                 if (tempJobs[i].actions[j].time > 0) {
                   if (tempJobs[i].actions[j].billable) {
@@ -381,9 +378,7 @@ export const TimesheetSummary: FC<Props> = ({
                   tempWeek[m][1] +
                   ' \r\n' +
                   tempJobs[i].actions[j].classCode +
-                  '-' +
-                  ' \r\n' +
-                  (tempJobs[i].actions[j].time + ' Hours');
+                  (tempJobs[i].actions[j].time + ' Hrs');
                 if (tempJobs[i].actions[j].time > 0) {
                   if (tempJobs[i].actions[j].billable) {
                     subtotalsBillable[m] += tempJobs[i].actions[j].time;
@@ -405,13 +400,31 @@ export const TimesheetSummary: FC<Props> = ({
         <InfoTable
           columns={[
             { name: 'Job Number (if any)' },
-            { name: dayList![0][0] + ' \r\n' + ' Saturday' },
-            { name: dayList![1][0] + ' \r\n' + ' Sunday' },
-            { name: dayList![2][0] + ' \r\n' + ' Monday' },
-            { name: dayList![3][0] + ' \r\n' + ' Tuesday' },
-            { name: dayList![4][0] + ' \r\n' + ' Wednesday' },
-            { name: dayList![5][0] + ' \r\n' + ' Thursday' },
-            { name: dayList![6][0] + ' \r\n' + ' Friday' },
+            {
+              name:
+                dayList![0][0].substr(5, dayList![0][0].length) + ' Saturday',
+            },
+            {
+              name: dayList![1][0].substr(5, dayList![1][0].length) + ' Sunday',
+            },
+            {
+              name: dayList![2][0].substr(5, dayList![2][0].length) + ' Monday',
+            },
+            {
+              name:
+                dayList![3][0].substr(5, dayList![3][0].length) + ' Tuesday',
+            },
+            {
+              name:
+                dayList![4][0].substr(5, dayList![4][0].length) + ' Wednesday',
+            },
+            {
+              name:
+                dayList![5][0].substr(5, dayList![5][0].length) + ' Thursday',
+            },
+            {
+              name: dayList![6][0].substr(5, dayList![6][0].length) + ' Friday',
+            },
           ]}
           key={'WeekSummary'}
           data={weekList!.map(week => {
