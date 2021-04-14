@@ -202,8 +202,6 @@ const createTimesheetFetchFunction = (
   if (config.type != 'Payroll' && config.page) {
     req.setPageNumber(config.page);
   }
-  req.setNotEqualsList(['UserApprovalDatetime']);
-  req.setUserApprovalDatetime(NULL_TIME);
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
@@ -219,7 +217,7 @@ const createTimesheetFetchFunction = (
     req.setNotEqualsList(['AdminApprovalUserId']);
     req.setFieldMaskList(['PayrollProcessed']);
   } else if (config.type === 'Manager') {
-    req.addNotEquals('UserApprovalDatetime');
+    req.setFieldMaskList(['AdminApprovalUserId']);
   }
   if (config.type == 'Manager') {
     return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains
