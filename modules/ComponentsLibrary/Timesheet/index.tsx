@@ -47,6 +47,7 @@ import './styles.less';
 import { TripSummary } from '../TripSummary';
 import { RoleType } from '../Payroll';
 import { NULL_TIME_VALUE } from './constants';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -395,11 +396,30 @@ export const Timesheet: FC<Props> = props => {
         ids.push(...result.idList);
         console.log(ids);
       }
-
+      for (let i = 0; i < shownDates.length; i++) {
+        //
+        let timeoffDayList = [...data[shownDates[i]].timeoffs];
+        for (let j = 0; j < timeoffDayList.length; j++) {
+          let day = timeoffDayList[i];
+          console.log(day);
+          if (
+            day.adminApprovalUserId != 0 &&
+            day.requestStatus == 1 &&
+            (day.requestType == 9 ||
+              day.requestType == 10 ||
+              day.requestType == 11)
+          ) {
+            const req = new TimeoffRequest();
+            req.setId(day.id);
+            req.setPayrollProcessed(true);
+            await TimeoffRequestClientService.Update(req);
+          }
+        }
+      }
       await tslClient.Process(ids, userId);
       dispatch({ type: 'processTimesheet' });
     })();
-  }, [userId, data, shownDates, tslClient, user]);
+  }, [userId, data, shownDates]);
   const handleRejectTimesheet = useCallback(async () => {
     (async () => {
       const ids: number[] = [];
