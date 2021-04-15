@@ -266,8 +266,7 @@ export const CostSummary: FC<Props> = ({
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
     timesheetReq.setOrderBy('time_started');
-    timesheetReq.setAdminApprovalUserId(0);
-    timesheetReq.setNotEqualsList(['AdminApprovalUserId', 'PayrollProcessed']);
+    timesheetReq.setNotEqualsList(['PayrollProcessed']);
     results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
 
     let total = 0;
