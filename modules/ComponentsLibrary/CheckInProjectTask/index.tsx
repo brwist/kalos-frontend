@@ -47,7 +47,7 @@ export const CheckInProjectTask: FC<Props> = ({
       }
     }
 
-    if (checkedTask)
+    if (checkedTask) {
       setCheckedInTask({
         ...checkedTask,
         startDate: checkedTask.hourlyStart,
@@ -55,6 +55,7 @@ export const CheckInProjectTask: FC<Props> = ({
         startTime: '',
         endTime: '',
       } as ExtendedProjectTaskType);
+    }
   };
 
   const handleSaveTask = useCallback(
@@ -92,10 +93,12 @@ export const CheckInProjectTask: FC<Props> = ({
       await getCheckedTasks();
       setLoaded(false);
     },
-    [event, serviceCallId, loggedUserId, setLoaded],
+    [serviceCallId, loggedUserId, setLoaded],
   );
 
-  const load = useCallback(() => {}, []);
+  const load = useCallback(async () => {
+    await getCheckedTasks();
+  }, []);
 
   useEffect(() => {
     if (!loaded) {
