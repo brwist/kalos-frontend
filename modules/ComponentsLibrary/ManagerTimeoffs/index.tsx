@@ -70,9 +70,10 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
       }
     } catch (e) {
       console.log(e);
+      setLoaded(false);
       try {
         let tempDepartmentList = [];
-        let department = await (
+        let department = (
           await TimesheetDepartmentClientService.getDepartmentByManagerID(
             loggedUserId,
           )
@@ -91,14 +92,15 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
         console.log(e);
       }
     }
+    setLoaded(false);
   }, [loggedUserId, setLoaded, setTypes]);
   const load = useCallback(async () => {
+    console.log(department);
     if (!department) return;
     setLoading(true);
     const req = new TimeoffRequest();
     req.setPageNumber(page);
-    req.setDepartmentIdList(department.toString());
-    console.log(department.toString());
+    req.setDepartmentIdList(department.join(','));
     req.setAdminApprovalDatetime(NULL_TIME);
     req.setIsActive(1);
     req.setOrderBy('time_started');
@@ -123,6 +125,12 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     setLoaded,
     timeoffClient,
   ]);
+  const closeAll = () => {
+    console.log('we want to close erythang ');
+    handleEdit(undefined);
+    setEditing(undefined);
+    setInitiated(false);
+  };
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);
@@ -215,8 +223,8 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
             onCancel={handleEdit(undefined)}
             userId={editing.userId}
             cancelLabel="Close"
-            onAdminSubmit={() => setLoading(false)}
-            onSaveOrDelete={() => setLoaded(false)}
+            onAdminSubmit={() => closeAll()}
+            onSaveOrDelete={() => closeAll()}
             requestOffId={editing.id}
           />
         </Modal>

@@ -65,7 +65,7 @@ export const Timesheet: FC<Props> = ({
       startDate: format(startDay, 'yyyy-MM-dd'),
       endDate: format(endDay, 'yyyy-MM-dd'),
     };
-    if (week !== OPTION_ALL) {
+    if (week !== OPTION_ALL && type != 'Payroll') {
       Object.assign(filter, {
         startDate: week,
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
@@ -74,11 +74,12 @@ export const Timesheet: FC<Props> = ({
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     let sortedResultsLists = resultsList.sort((a, b) =>
-      a.technicianUserNameReverse > b.technicianUserNameReverse ? 1 : -1,
+      a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
+        ? 1
+        : -1,
     );
 
     setTimesheets(sortedResultsLists);
-    timesheets.sort;
     setCount(totalCount);
     setLoading(false);
   }, [page, departmentId, employeeId, week, type]);
@@ -107,7 +108,7 @@ export const Timesheet: FC<Props> = ({
         columns={[
           { name: 'Employee' },
           { name: 'Department' },
-          { name: 'Week' },
+          { name: 'Week Approved' },
         ]}
         loading={loading}
         data={
@@ -124,7 +125,7 @@ export const Timesheet: FC<Props> = ({
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: formatWeek(e.weekEnd),
+                    value: formatWeek(e.adminApprovalDatetime),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
@@ -134,10 +135,12 @@ export const Timesheet: FC<Props> = ({
                       >
                         <Visibility />
                       </IconButton>,
+
                       <IconButton
                         key="summary"
                         onClick={() => setTimesheetSummaryToggle(e)}
                         size="small"
+                        disabled={type != 'Payroll'}
                       >
                         <PageviewIcon />
                       </IconButton>,
@@ -191,19 +194,19 @@ const createTimesheetFetchFunction = (
   role: RoleType,
 ) => {
   const req = new TimesheetLine();
-  req.setPageNumber(config.page || 0);
-  req.setWithoutLimit(true);
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
-  req.setNotEqualsList(['UserApprovalDatetime']);
-  req.setUserApprovalDatetime(NULL_TIME);
-
+  if (config.type === 'Payroll') {
+    req.setWithoutLimit(true);
+  }
+  if (config.type != 'Payroll' && config.page) {
+    req.setPageNumber(config.page);
+  }
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
   }
   if (config.departmentId) {
-    console.log('We got a department');
     req.setDepartmentCode(config.departmentId);
   }
   if (config.employeeId) {
@@ -211,9 +214,10 @@ const createTimesheetFetchFunction = (
   }
 
   if (config.type === 'Payroll') {
-    req.setNotEqualsList(['UserApprovalDatetime', 'AdminApprovalUserId']);
+    req.setNotEqualsList(['AdminApprovalUserId']);
+    req.setFieldMaskList(['PayrollProcessed']);
   } else if (config.type === 'Manager') {
-    req.addNotEquals('UserApprovalDatetime');
+    req.setFieldMaskList(['AdminApprovalUserId']);
   }
   if (config.type == 'Manager') {
     return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains

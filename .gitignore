@@ -11,4 +11,5 @@ helpers.js
 constants.js
 .DS_Store
 .vscode
+.circleci
 constants.js

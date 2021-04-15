@@ -743,7 +743,6 @@ export const GetPendingTasks = (billableType: string) => {
     req.setIsActive(true);
     req.setGroupBy('external_id');
     req.setPageNumber(config.page || 0);
-    req.setOrderBy('date_performed');
     if (config.role === 'Manager') {
       req.setFieldMaskList(['AdminActionId']);
       if (billableType === 'Spiff') {
@@ -777,14 +776,14 @@ export const GetPendingTasks = (billableType: string) => {
       }
     }
     if (config.technicianUserID) {
-      req.setExternalId(config.technicianUserID);
+      //req.setExternalId(config.technicianUserID);
     }
     if (config.startDate && config.endDate) {
       req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
     }
     if (config.option) {
       const spiffType = new SpiffType();
-      spiffType.setType(config.option);
+      spiffType.setPayout(config.option);
       req.setSpiffType(spiffType);
     }
     if (config.departmentId) {
@@ -792,7 +791,7 @@ export const GetPendingTasks = (billableType: string) => {
       u.setEmployeeDepartmentId(config.departmentId);
       req.setSearchUser(u);
     }
-
+    console.log(req);
     const response = (await TaskClientService.BatchGet(req)).toObject();
     return response;
   };
@@ -808,6 +807,7 @@ export interface GetTimesheetConfig {
   technicianUserID?: number;
   startDate?: string;
   endDate?: string;
+  payrollProcessed?: boolean;
 }
 
 export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
@@ -820,6 +820,9 @@ export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
   }
   if (config.technicianUserID) {
     req.setUserId(config.technicianUserID);
+  }
+  if (config.payrollProcessed) {
+    req.setPayrollProcessed(true);
   }
   req.setPageNumber(config.page || 0);
   req.setOrderBy('time_started');
@@ -921,34 +924,16 @@ async function loadTimesheetDepartments() {
   return results;
 }
 
-/** Returns loaded Technicians
+/** Returns loads all employees unfiltered
  * @returns User[]
  */
 async function loadTechnicians() {
-  const results: UserType[] = [];
   const req = new User();
-  req.setPageNumber(0);
   req.setIsActive(1);
   req.setIsEmployee(1);
-  const { resultsList, totalCount } = (
-    await UserClientService.BatchGet(req)
-  ).toObject();
-  results.push(...resultsList);
-  if (totalCount > resultsList.length) {
-    const batchesAmount = Math.ceil(
-      (totalCount - resultsList.length) / resultsList.length,
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await UserClientService.BatchGet(req)).toObject().resultsList;
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
-  return results.sort((a, b) => {
+  req.setOverrideLimit(true);
+  const { resultsList } = (await UserClientService.BatchGet(req)).toObject();
+  return resultsList.sort((a, b) => {
     const A = `${a.firstname} ${a.lastname}`.toLocaleLowerCase();
     const B = `${b.firstname} ${b.lastname}`.toLocaleLowerCase();
     if (A < B) return -1;
@@ -957,35 +942,18 @@ async function loadTechnicians() {
   });
 }
 
-/** Returns loaded Users by department id
+/** Returns all loaded Users by department id, does not support pagination, returns in alphabetical order
  * @param departmentId: number
  * @returns User[]
  */
 async function loadUsersByDepartmentId(departmentId: number) {
   const results: UserType[] = [];
   const req = new User();
-  req.setPageNumber(0);
   req.setIsActive(1);
   req.setEmployeeDepartmentId(departmentId);
-  const { resultsList, totalCount } = (
-    await UserClientService.BatchGet(req)
-  ).toObject();
-  results.push(...resultsList);
-  if (totalCount > resultsList.length) {
-    const batchesAmount = Math.ceil(
-      (totalCount - resultsList.length) / resultsList.length,
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await UserClientService.BatchGet(req)).toObject().resultsList;
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
-  return results.sort((a, b) => {
+  req.setOverrideLimit(true);
+  const { resultsList } = (await UserClientService.BatchGet(req)).toObject();
+  return resultsList.sort((a, b) => {
     const A = `${a.firstname} ${a.lastname}`.toLocaleLowerCase();
     const B = `${b.firstname} ${b.lastname}`.toLocaleLowerCase();
     if (A < B) return -1;
@@ -1301,7 +1269,12 @@ export const upsertEventTask = async ({
   checkedIn,
 }: Partial<ProjectTaskType>) => {
   const req = new ProjectTask();
-  const fieldMaskList: string[] = ['ExternalCode', 'ExternalId', 'TimeCreated'];
+  const fieldMaskList: string[] = [
+    'ExternalCode',
+    'ExternalId',
+    'TimeCreated',
+    'CheckedIn',
+  ];
   req.setTimeCreated(timestamp());
   if (eventId) {
     req.setEventId(eventId);
@@ -1461,32 +1434,20 @@ export const downloadCSV = (filename: string, csv: string) => {
   link.click();
 };
 
-export const loadTransactionsByEventId = async (eventId: number) => {
-  const results = [];
+export const loadTransactionsByEventId = async (
+  eventId: number,
+  withoutLimit = false,
+  page = 0,
+) => {
   const req = new Transaction();
   req.setJobId(eventId);
   req.setIsActive(1);
-  req.setPageNumber(0);
+  req.setPageNumber(page);
+  req.setWithoutLimit(withoutLimit);
   const { resultsList, totalCount } = (
     await TransactionClientService.BatchGet(req)
   ).toObject();
-  results.push(...resultsList);
-  if (totalCount > resultsList.length) {
-    const batchesAmount = Math.ceil(
-      (totalCount - resultsList.length) / resultsList.length,
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await TransactionClientService.BatchGet(req)).toObject()
-          .resultsList;
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
-  return results;
+  return resultsList;
 };
 
 export const getTimeoffRequestByFilter = async (
@@ -1575,14 +1536,16 @@ export const getRowDatesFromPerDiemTrips = async (trips: Trip[]) => {
   }
   let res: { date: string; row_id: number }[] = [];
 
-  let pds = await PerDiemClientService.BatchGetPerDiemsByIds(tripIds);
+  if (tripIds.length != 0) {
+    let pds = await PerDiemClientService.BatchGetPerDiemsByIds(tripIds);
 
-  for (const perDiem of pds.getResultsList()) {
-    const obj = {
-      date: perDiem.getDateStarted(),
-      row_id: perDiem.getId(),
-    };
-    res.push(obj);
+    for (const perDiem of pds.getResultsList()) {
+      const obj = {
+        date: perDiem.getDateStarted(),
+        row_id: perDiem.getId(),
+      };
+      res.push(obj);
+    }
   }
 
   return res;
@@ -2146,7 +2109,11 @@ export const loadUsersByFilter = async ({
   req.setOrderDir(orderDir);
   req.setIsEmployee(0);
   req.setIsActive(1);
-  req.setPageNumber(page === -1 ? 0 : page);
+  if (page === -1) {
+    req.setOverrideLimit(true);
+  } else {
+    req.setPageNumber(page);
+  }
   if (withProperties) {
     req.setWithProperties(true);
   }
@@ -2162,23 +2129,8 @@ export const loadUsersByFilter = async ({
   const { resultsList, totalCount } = (
     await UserClientService.BatchGet(req)
   ).toObject();
-  results.push(...resultsList);
-  if (page === -1 && totalCount > resultsList.length) {
-    const batchesAmount = Math.ceil(
-      (totalCount - resultsList.length) / resultsList.length,
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await UserClientService.BatchGet(req)).toObject().resultsList;
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
   return {
-    results: results.sort((a, b) => {
+    results: resultsList.sort((a, b) => {
       const A = (a[orderByField] || '').toString().toLowerCase();
       const B = (b[orderByField] || '').toString().toLowerCase();
       if (A < B) return orderDir === 'DESC' ? 1 : -1;
@@ -2226,12 +2178,10 @@ export const loadDeletedServiceCallsByFilter = async ({
   const req = new Event();
   req.setFieldMaskList(['IsActive']);
   if (businessName && businessName != '') {
-    console.log('We have a business name');
     const bReq = new Property();
     bReq.setBusinessname(businessName);
     const bResult = await PropertyClientService.Get(bReq);
     if (bReq) {
-      console.log('bReq');
       req.setPropertyId(bResult.id);
       req.addFieldMask('PropertyId');
     }
@@ -2243,33 +2193,12 @@ export const loadDeletedServiceCallsByFilter = async ({
   req.setIsActive(0);
   req.setDateRangeList(['>=', dateStart, '<=', dateEnd]);
   req.setDateTargetList(['date_started', 'date_started']);
-
+  req.setWithoutLimit(true);
   const results: EventType[] = [];
   const { resultsList, totalCount } = (
     await EventClientService.BatchGet(req)
   ).toObject();
-  results.push(...resultsList);
-  if (page === -1 && totalCount > resultsList.length) {
-    const batchesAmount = Math.min(
-      MAX_PAGES,
-      Math.ceil((totalCount - resultsList.length) / resultsList.length),
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await EventClientService.BatchGet(req))
-          .getResultsList()
-          .map(item => item.toObject());
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
-  return {
-    results,
-    totalCount,
-  };
+  return { resultsList, totalCount };
 };
 
 export const loadCallbackReportByFilter = async ({
@@ -2682,8 +2611,8 @@ export type TripsFilter = {
   destinationAddress?: string;
   weekof?: number[];
   page: number;
-  payrollProcessed: boolean;
-  approved: boolean;
+  payrollProcessed: boolean | undefined;
+  approved: boolean | undefined;
   role?: string;
   departmentId?: number;
 };
@@ -2791,13 +2720,21 @@ export const loadTripsByFilter = async ({
     //@ts-ignore
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
+  req.setApproved(filter.approved!);
+  req.setPayrollProcessed(filter.payrollProcessed!);
+
   if (filter.payrollProcessed) {
     req.setApproved(true);
     req.setNotEqualsList(['PayrollProcessed']);
   }
+  if (!filter.approved) {
+    req.setNotEqualsList([...req.getNotEqualsList(), 'Approved']);
+    req.setApproved(!req.getApproved());
+  }
   //if (filter.approved) {
   //  req.setFieldMaskList(['ApproveById']);
   //}
+
   const response = await PerDiemClientService.BatchGetTrips(req);
   return {
     results: response
@@ -2913,7 +2850,6 @@ export const loadEventsByFilter = async ({
     req.setIsActive(0);
     req.addFieldMask('isActive');
   }
-  req.setPageNumber(page === -1 ? 0 : page);
   p.setIsActive(1);
   if (pendingBilling) {
     req.setLogJobStatus('Completed');
@@ -2993,32 +2929,16 @@ export const loadEventsByFilter = async ({
   }
   req.setProperty(p);
   req.setCustomer(u);
+  if (page === -1) {
+    req.setWithoutLimit(true);
+  } else {
+    req.setPageNumber(page);
+  }
   const results = [];
   const response = await EventClientService.BatchGet(req);
   const totalCount = response.getTotalCount();
   const resultsList = response.getResultsList().map(item => item.toObject());
-  results.push(...resultsList);
-  if (page === -1 && totalCount > resultsList.length) {
-    const batchesAmount = Math.min(
-      MAX_PAGES,
-      Math.ceil((totalCount - resultsList.length) / resultsList.length),
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await EventClientService.BatchGet(req))
-          .getResultsList()
-          .map(item => item.toObject());
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
-  return {
-    results,
-    totalCount,
-  };
+  return { resultsList, totalCount };
 };
 
 export const loadProjects = async () => {
@@ -3027,28 +2947,10 @@ export const loadProjects = async () => {
   req.setPageNumber(0);
   req.setOrderBy('date_started');
   req.setOrderDir('ASC');
-  const results = [];
+  req.setWithoutLimit(true);
   const response = await EventClientService.BatchGet(req);
-  const totalCount = response.getTotalCount();
   const resultsList = response.getResultsList().map(item => item.toObject());
-  results.push(...resultsList);
-  if (totalCount > resultsList.length) {
-    const batchesAmount = Math.ceil(
-      (totalCount - resultsList.length) / resultsList.length,
-    );
-    const batchResults = await Promise.all(
-      Array.from(Array(batchesAmount)).map(async (_, idx) => {
-        req.setPageNumber(idx + 1);
-        return (await EventClientService.BatchGet(req))
-          .getResultsList()
-          .map(item => item.toObject());
-      }),
-    );
-    results.push(
-      ...batchResults.reduce((aggr, item) => [...aggr, ...item], []),
-    );
-  }
-  return results;
+  return resultsList;
 };
 
 export const loadEventById = async (eventId: number) => {

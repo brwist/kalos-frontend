@@ -84,7 +84,7 @@ export const Projects: FC<Props> = ({
     setLoading(true);
     setSearch(filter);
     const { dateStarted, dateEnded, departmentId, logJobNumber } = filter;
-    const { results } = await loadEventsByFilter({
+    const { resultsList } = await loadEventsByFilter({
       page: -1,
       filter: {
         dateStarted,
@@ -98,7 +98,7 @@ export const Projects: FC<Props> = ({
         orderDir: 'ASC',
       },
     });
-    setEvents(results);
+    setEvents(resultsList);
     setLoading(false);
   }, [filter, setLoading, setEvents, setSearch]);
   useEffect(() => {
@@ -112,7 +112,10 @@ export const Projects: FC<Props> = ({
   }, [loaded, setLoaded, load, loadedInit, setLoadedInit, loadInit]);
   const handleSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleOpenEvent = useCallback(
-    (openedEvent?: EventType) => () => setOpenedEvent(openedEvent),
+    (openedEvent?: EventType) => () => {
+      setOpenedEvent(openedEvent);
+      if (!openedEvent) load();
+    },
     [setOpenedEvent],
   );
   const handleTogglePendingNew = useCallback(
@@ -197,6 +200,7 @@ export const Projects: FC<Props> = ({
                     dateEnded: dateEnd,
                     property,
                     departmentId,
+                    isActive,
                   } = event;
                   const [startDate] = dateStart.split(' ');
                   const [endDate] = dateEnd.split(' ');
@@ -204,6 +208,7 @@ export const Projects: FC<Props> = ({
                     id,
                     startDate,
                     endDate,
+                    isActive,
                     notes: description,
                     onClick: handleOpenEvent(event),
                     label: compact([
@@ -260,6 +265,7 @@ export const Projects: FC<Props> = ({
                     dateEnded: dateEnd,
                     property,
                     departmentId,
+                    isActive,
                   } = event;
                   const [startDate] = dateStart.split(' ');
                   const [endDate] = dateEnd.split(' ');
@@ -267,6 +273,7 @@ export const Projects: FC<Props> = ({
                     id,
                     startDate,
                     endDate,
+                    isActive,
                     notes: description,
                     onClick: handleOpenEvent(event),
                     label: logJobNumber,

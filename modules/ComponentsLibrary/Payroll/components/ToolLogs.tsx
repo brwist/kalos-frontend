@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { format, addDays, startOfWeek } from 'date-fns';
-import { parseISO } from 'date-fns/esm';
+import { format, addDays, startOfWeek, subDays } from 'date-fns';
+import { parseISO, getMonth, getYear, getDaysInMonth } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -20,7 +20,7 @@ interface Props {
   week: string;
   role: string;
   departmentId: number;
-  userId?: number;
+  userId: number;
 }
 
 export const ToolLogs: FC<Props> = ({
@@ -35,7 +35,11 @@ export const ToolLogs: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TaskType>();
-  console.log({ departmentId });
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 6));
+
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -44,7 +48,21 @@ export const ToolLogs: FC<Props> = ({
       role,
       departmentId,
     };
-    if (week !== OPTION_ALL) {
+    const startMonth = getMonth(new Date()) - 1;
+    const startYear = getYear(new Date());
+    const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
+    const endDate = format(
+      addDays(
+        new Date(startYear, startMonth),
+        getDaysInMonth(new Date(startYear, startMonth)) - 1,
+      ),
+      'yyyy-MM-dd',
+    );
+    Object.assign(filter, {
+      startDate: startDate,
+      endDate: endDate,
+    });
+    if (week !== OPTION_ALL && role != 'Payroll') {
       Object.assign(filter, {
         startDate: week,
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
@@ -114,8 +132,8 @@ export const ToolLogs: FC<Props> = ({
       {pendingView && (
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <SpiffTool
-            loggedUserId={pendingView.externalId}
-            ownerId={userId}
+            loggedUserId={userId}
+            ownerId={pendingView.externalId}
             type="Tool"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}

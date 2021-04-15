@@ -1,9 +1,5 @@
-import {
-  CostReportInfo,
-  CostReportInfoList,
-} from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { MEALS_RATE } from '../../../constants';
 import {
@@ -14,22 +10,12 @@ import {
   PerDiemRowType,
   EventType,
   PerDiemType,
-  ProjectTaskType,
-  TaskEventType,
-  TaskPriorityType,
-  TaskStatusType,
-  TimesheetDepartmentType,
-  TimesheetLineType,
   TransactionType,
-  UserType,
   loadPerDiemsLodging,
   PerDiemClientService,
   EventClientService,
-  TaskClientService,
-  loadProjects,
-  loadTimesheetDepartments,
-  UserClientService,
   loadTransactionsByEventId,
+  TimesheetLineClientService,
 } from '../../../helpers';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
@@ -48,44 +34,26 @@ export type SearchType = {
   priorityId: number;
 };
 
-type ExtendedProjectTaskType = ProjectTaskType & {
-  startTime: string;
-  endTime: string;
-};
-
 export const CostReport: FC<Props> = ({
-  serviceCallId: serviceCallIdInit,
+  serviceCallId,
   loggedUserId,
   onClose,
 }) => {
-  const [serviceCallId, setServiceCallId] = useState<number>(serviceCallIdInit);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
 
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>([]);
 
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
 
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
-  const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
-  const [currentCheckedInTasks, setCurrentCheckedInTasks] = useState<
-    ExtendedProjectTaskType[]
-  >();
-  const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
-  const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [event, setEvent] = useState<EventType>();
-  const [projects, setProjects] = useState<EventType[]>([]);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [
-    costReportInfoList,
-    setCostReportInfoList,
-  ] = useState<CostReportInfoList>();
 
   const totalMeals =
     perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
@@ -108,7 +76,7 @@ export const CostReport: FC<Props> = ({
     );
     const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
     setLodgings(lodgings);
-    const transactions = await loadTransactionsByEventId(serviceCallId);
+    const transactions = await loadTransactionsByEventId(serviceCallId, true);
     setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
@@ -117,7 +85,7 @@ export const CostReport: FC<Props> = ({
     setPrintStatus('loading');
     await loadPrintData();
     setPrintStatus('loaded');
-  }, [setPrintStatus, loadPrintData, serviceCallId]);
+  }, [setPrintStatus, loadPrintData]);
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
@@ -133,88 +101,15 @@ export const CostReport: FC<Props> = ({
   }, [setEvent, setLoadingEvent, serviceCallId]);
 
   const loadInit = useCallback(async () => {
-    let promises = [];
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const projects = await loadProjects();
-        setProjects(projects);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        await loadEvent();
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const statuses = await TaskClientService.loadProjectTaskStatuses();
-        setStatuses(statuses);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const priorities = await TaskClientService.loadProjectTaskPriorities();
-        setPriorities(priorities);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const departments = await loadTimesheetDepartments();
-        setDepartments(departments);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        const loggedUser = await UserClientService.loadUserById(loggedUserId);
-        setLoggedUser(loggedUser);
-        resolve();
-      }),
-    );
-
-    Promise.all(promises).then(() => {
-      setLoadedInit(true);
-    });
-  }, [
-    loadEvent,
-    setProjects,
-    setStatuses,
-    setPriorities,
-    setDepartments,
-    setLoadedInit,
-    loggedUserId,
-    serviceCallId,
-  ]);
+    await loadEvent();
+    setLoadedInit(true);
+  }, [loadEvent, setLoadedInit, loggedUserId]);
 
   const load = useCallback(async () => {
     let promises = [];
-    let timesheets: TimesheetLineType[] = [];
+    let timesheets: TimesheetLine.AsObject[] = [];
 
     setLoading(true);
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        let taskReq = new ProjectTask();
-        taskReq.setCheckedIn(true);
-        taskReq.setCreatorUserId(loggedUserId);
-        let tasksList = await TaskClientService.BatchGetProjectTasks(taskReq);
-        let tasks = tasksList.getResultsList().map(task => {
-          return { ...task } as ExtendedProjectTaskType;
-        });
-        setCurrentCheckedInTasks(tasks);
-        resolve();
-      }),
-    );
 
     promises.push(
       new Promise<void>(async resolve => {
@@ -225,39 +120,21 @@ export const CostReport: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-        setTasks(tasks);
-        resolve();
-      }),
-    );
+        try {
+          let req = new TimesheetLine();
+          req.setEventId(serviceCallId);
 
-    // promises.push(
-    //   new Promise<void>(async resolve => {
-    //     let req = new CostReportInfo();
-    //     req.setJobId(serviceCallId);
-    //     const costReportList = await EventClientService.GetCostReportInfo(req);
+          timesheets = (await TimesheetLineClientService.BatchGet(req))
+            .getResultsList()
+            .map(line => line.toObject());
 
-    //     for await (let data of costReportList.getResultsList()) {
-    //       timesheets = data.getTimesheetsList().map(line => line.toObject());
-    //     }
-    //     setCostReportInfoList(costReportList);
-
-    //     resolve();
-    //   }),
-    // );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        let req = new CostReportInfo();
-        req.setJobId(serviceCallId);
-        const costReportList = await EventClientService.GetCostReportInfo(req);
-
-        for await (let data of costReportList.getResultsList()) {
-          timesheets = data.getTimesheetsList().map(line => line.toObject());
+          resolve();
+        } catch (err) {
+          console.error(
+            'Error occurred while loading the timesheet lines for the cost report. Error: ',
+            err,
+          );
         }
-        setCostReportInfoList(costReportList);
-
-        resolve();
       }),
     );
 
@@ -270,7 +147,7 @@ export const CostReport: FC<Props> = ({
 
       setLoading(false);
     });
-  }, [setLoading, serviceCallId, setTasks]);
+  }, [setLoading, serviceCallId, loggedUserId, loadPrintData]);
 
   useEffect(() => {
     if (!loadedInit) {
@@ -349,7 +226,7 @@ export const CostReport: FC<Props> = ({
           ['Lodging', usd(totalLodging)],
           [
             '',
-            <strong>
+            <strong key="stronk">
               TOTAL: {usd(totalMeals + totalLodging + totalTransactions)}
             </strong>,
           ],

@@ -60,52 +60,57 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       validationPopupOpen: false,
       noteLengthPopupOpen: false,
       saving: false,
-      perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
+      perDiemDropDownSelected: this.props.perDiemRowIds
+        ? `${this.props.perDiemRowIds[0]} | 0`
+        : '',
       perDiems: null,
     };
+
+    this.loadScripts();
   }
 
-  loadScriptByUrl = async (url: string, callback: () => void) => {
-    const scripts = document.getElementsByTagName('script');
-    for (let i = scripts.length; i--; ) {
-      if (scripts[i].src == url) {
-        callback(); // Already have that url assigned to a script, don't add again. Instead just
-        // call the callback and have it go on about its business in wherever it was called from
-        return;
-      }
-    }
-    let script = document.createElement('script') as any;
-    script.type = 'text/javascript';
-
-    if (script.readyState) {
-      script.onreadystatechange = () => {
-        if (
-          script.readyState === 'loaded' ||
-          script.readyState === 'complete'
-        ) {
-          script.onreadystatechange = null;
-          callback();
+  loadScriptByUrl = async (url: string) => {
+    await new Promise<void>(resolve => {
+      const scripts = document.getElementsByTagName('script');
+      for (let i = scripts.length; i--; ) {
+        if (scripts[i].src == url) {
+          resolve(); // Already have that url assigned to a script, don't add again. Instead just
+          // call the callback and have it go on about its business in wherever it was called from
+          return;
         }
-      };
-    } else {
-      script.onload = () => callback();
-    }
+      }
+      let script = document.createElement('script') as any;
+      script.type = 'text/javascript';
 
-    script.src = url;
-    document.getElementsByTagName('head')[0].appendChild(script);
+      if (script.readyState) {
+        script.onreadystatechange = () => {
+          if (
+            script.readyState === 'loaded' ||
+            script.readyState === 'complete'
+          ) {
+            script.onreadystatechange = null;
+            resolve;
+          }
+        };
+      } else {
+        script.onload = () => resolve();
+      }
+
+      script.src = url;
+      document.getElementsByTagName('head')[0].appendChild(script);
+    });
   };
 
-  loadScripts = async (callback: () => void) => {
-    this.loadScriptByUrl(
+  loadScripts = async () => {
+    await this.loadScriptByUrl(
       'https://polyfill.io/v3/polyfill.min.js?features=default',
-      () => {},
     );
-    this.loadScriptByUrl(
+    await this.loadScriptByUrl(
       `https://maps.googleapis.com/maps/api/js?key=${
         (await getKeyByKeyName('google_maps')).apiKey
       }&libraries=places`,
-      callback,
     );
+    this.handleLoad();
   };
 
   handleLoad = () => {
@@ -252,6 +257,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       }
     }
     this.setState({ formKey: this.state.formKey + 1 });
+    this.loadScripts(); // Hotfix to make the api reappear after key refresh
   };
 
   geolocate() {
@@ -273,9 +279,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     }
   }
 
-  componentDidUpdate() {
-    this.loadScripts(() => this.handleLoad());
-  }
+  componentDidUpdate() {}
 
   componentDidMount() {
     this.geolocate();
@@ -357,39 +361,47 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             <>
               <SectionBar title="Per Diem" uncollapsable>
                 <FormControl>
-                  <InputLabel shrink htmlFor="per-diem-select">
-                    Per Diem
-                  </InputLabel>{' '}
-                  <Select
-                    value={
-                      this.state.perDiems
-                        ? this.state.perDiemDropDownSelected
-                        : 'loading'
-                    }
-                    onChange={this.setPerDiemDropdown}
-                    label="Per Diem"
-                    inputProps={{
-                      name: 'age',
-                      id: 'per-diem-select',
-                    }}
-                  >
-                    {this.state.perDiems ? (
-                      this.state.perDiems.map((key, idx) => {
-                        return (
-                          <MenuItem
-                            value={key.id + ' | ' + idx}
-                            key={key.id + ' | ' + idx}
-                          >
-                            {key.department?.value} | Notes: "{key.notes}"
-                          </MenuItem>
-                        );
-                      })
-                    ) : (
-                      <MenuItem value={'loading'} key="Loading">
-                        Loading...
-                      </MenuItem>
-                    )}
-                  </Select>
+                  {this.state.perDiems ? (
+                    <InputLabel shrink htmlFor="per-diem-select">
+                      Per Diem
+                    </InputLabel>
+                  ) : (
+                    <></>
+                  )}
+                  {this.state.perDiems ? (
+                    <Select
+                      value={
+                        this.state.perDiems
+                          ? this.state.perDiemDropDownSelected
+                          : 'loading'
+                      }
+                      onChange={this.setPerDiemDropdown}
+                      label="Per Diem"
+                      inputProps={{
+                        name: 'age',
+                        id: 'per-diem-select',
+                      }}
+                    >
+                      {this.state.perDiems ? (
+                        this.state.perDiems.map((key, idx) => {
+                          return (
+                            <MenuItem
+                              value={key.id + ' | ' + idx}
+                              key={key.id + ' | ' + idx}
+                            >
+                              {key.department?.value} | Notes: "{key.notes}"
+                            </MenuItem>
+                          );
+                        })
+                      ) : (
+                        <MenuItem value={'loading'} key="Loading">
+                          Loading...
+                        </MenuItem>
+                      )}
+                    </Select>
+                  ) : (
+                    <></>
+                  )}
                 </FormControl>
               </SectionBar>
             </>

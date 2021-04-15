@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
@@ -44,11 +44,14 @@ import {
   TaskEventDataType,
   UserClientService,
   formatWeek,
+  EventClientService,
+  loadUsersByDepartmentId,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
 import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
 import { PropLinkServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/prop_link_pb_service';
+import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -129,6 +132,7 @@ export const SpiffTool: FC<Props> = ({
   const [loggedInUser, setLoggedInUser] = useState<UserType>();
   const [entries, setEntries] = useState<TaskType[]>([]);
   const [count, setCount] = useState<number>(0);
+  const [departments, setDepartments] = useState<PermissionGroup.AsObject[]>();
   const [page, setPage] = useState<number>(0);
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
@@ -136,7 +140,7 @@ export const SpiffTool: FC<Props> = ({
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const [payrollOpen, setPayrollOpen] = useState<boolean>(false);
-  //const [role, setRole] = useState<RoleType>();
+  const [userRole, setUserRole] = useState<RoleType>();
   const [pendingPayroll, setPendingPayroll] = useState<TaskType>();
   const [pendingPayrollReject, setPendingPayrollReject] = useState<TaskType>();
   const [pendingAudit, setPendingAudit] = useState<TaskType>();
@@ -166,8 +170,18 @@ export const SpiffTool: FC<Props> = ({
   const loadLoggedInUser = useCallback(async () => {
     console.log(loggedUserId);
     const userResult = await UserClientService.loadUserById(loggedUserId);
-    const role = userResult.permissionGroupsList.find(p => p.type === 'role');
-
+    const tempRole = userResult.permissionGroupsList.find(
+      p => p.type === 'role',
+    );
+    const tempDepartments = userResult.permissionGroupsList.filter(
+      p => p.type === 'department',
+    );
+    if (tempRole != undefined) {
+      setUserRole(tempRole.name as RoleType);
+    }
+    if (tempDepartments) {
+      setDepartments(tempDepartments);
+    }
     setLoggedInUser(loggedInUser);
     setSearchFormKey(searchFormKey + 1);
   }, [
@@ -177,7 +191,7 @@ export const SpiffTool: FC<Props> = ({
     setSearchFormKey,
     loggedInUser,
   ]);
-  const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
+
   const load = useCallback(async () => {
     setLoading(true);
     if (type === 'Spiff' && spiffTypes.length === 0) {
@@ -359,11 +373,18 @@ export const SpiffTool: FC<Props> = ({
           req.setTimeDue(now);
           req.setPriorityId(2);
           req.setExternalCode('user');
-          req.setExternalId(loggedUserId);
           req.setCreatorUserId(loggedUserId);
-          req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
-          req.setReferenceNumber('');
+          req.setBillableType('Spiff');
           req.setStatusId(1);
+          let tempEvent = await EventClientService.LoadEventByServiceCallID(
+            parseInt(data.spiffJobNumber),
+          );
+          req.setSpiffAddress(
+            tempEvent.property ? tempEvent.property?.address : '',
+          );
+          data.spiffJobNumber = tempEvent.logJobNumber;
+          req.setSpiffJobNumber(data.spiffJobNumber);
+
           fieldMaskList.push(
             'TimeCreated',
             'TimeDue',
@@ -372,7 +393,8 @@ export const SpiffTool: FC<Props> = ({
             'ExternalId',
             'CreatorUserId',
             'BillableType',
-            'ReferenceNumber',
+            'SpiffJobNumber',
+            'spiffAddress',
           );
           if (type === 'Tool') {
             req.setToolpurchaseDate(now);
@@ -490,13 +512,14 @@ export const SpiffTool: FC<Props> = ({
     () => setUnlinkedSpiffJobNumber(''),
     [setUnlinkedSpiffJobNumber],
   );
+  const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
       loadLoggedInUser();
       load();
     }
-    if (isAdmin && !loadedTechnicians) {
+    if ((isAdmin || userRole === 'Manager') && !loadedTechnicians) {
       setLoadedTechnicians(true);
       loadUserTechnicians();
     }
@@ -515,6 +538,12 @@ export const SpiffTool: FC<Props> = ({
       ? [
           [
             {
+              name: 'externalId',
+              label: 'Technician',
+              type: 'technician',
+              disabled: role != 'Manager' ? true : false,
+            },
+            {
               name: 'timeDue',
               label: 'Claim Date',
               readOnly: true,
@@ -527,7 +556,7 @@ export const SpiffTool: FC<Props> = ({
               type: 'number',
               required: true,
             },
-            { name: 'spiffJobNumber', label: 'Job #' },
+            { name: 'spiffJobNumber', label: 'Job Number', type: 'eventId' },
             {
               name: 'datePerformed',
               label: 'Date Performed',

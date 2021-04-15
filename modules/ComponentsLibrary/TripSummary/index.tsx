@@ -207,6 +207,7 @@ interface Props {
   role?: string;
   departmentId?: number;
   checkboxes?: boolean;
+  viewingOwn?: boolean;
 }
 
 interface State {
@@ -258,7 +259,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
       filter: new Checkboxes(),
       tripToView: null,
       warningNoPerDiem: false,
-      perDiemDropDownSelected: `${this.props.perDiemRowIds[0]} | 0`,
+      perDiemDropDownSelected: this.props.perDiemRowIds
+        ? `${this.props.perDiemRowIds[0]} | 0`
+        : '',
       perDiems: null,
       currentTripDepartment: null,
     };
@@ -337,29 +340,50 @@ export class TripSummary extends React.PureComponent<Props, State> {
         tripFilter.departmentId = this.props.departmentId;
     }
 
-    const criteria: LoadTripsByFilter = {
-      page,
-      filter: tripFilter
-        ? tripFilter
-        : {
-            userId: this.props.userId != 0 ? this.props.userId : undefined,
-            weekof: this.props.perDiemRowIds,
-            page: this.state.page,
-            departmentId: this.props.departmentId,
-            payrollProcessed: tripFilter
-              ? !tripFilter!.payrollProcessed
-              : this.props.role == 'Payroll'
-              ? true
-              : false,
-            approved: tripFilter
-              ? !tripFilter!.approved
-              : this.props.role == 'Manager'
-              ? true
-              : false,
-            role: this.props.role,
-          },
-      sort: tripSort as TripsSort,
-    };
+    let criteria: LoadTripsByFilter;
+    if (!this.props.viewingOwn) {
+      criteria = {
+        page,
+        filter: tripFilter
+          ? tripFilter
+          : {
+              userId: this.props.userId != 0 ? this.props.userId : undefined,
+              weekof: this.props.perDiemRowIds,
+              page: this.state.page,
+              departmentId: this.props.departmentId,
+              payrollProcessed: tripFilter
+                ? !tripFilter!.payrollProcessed
+                : this.props.role == 'Payroll'
+                ? true
+                : false,
+              approved: tripFilter
+                ? !tripFilter!.approved
+                : this.props.role == 'Manager'
+                ? false
+                : true,
+              role: this.props.role,
+            },
+        sort: tripSort as TripsSort,
+      };
+    } else {
+      criteria = {
+        page,
+        filter: tripFilter
+          ? tripFilter
+          : {
+              userId: this.props.userId != 0 ? this.props.userId : undefined,
+              weekof: this.props.perDiemRowIds,
+              page: this.state.page,
+              departmentId: this.props.departmentId,
+              payrollProcessed: undefined,
+              approved: undefined,
+              role: this.props.role,
+            },
+        sort: tripSort as TripsSort,
+      };
+    }
+
+    console.log('FILTER: ', criteria);
 
     return await this.getFilteredTripList(criteria);
   };
@@ -732,11 +756,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
     if (rowId) {
       trip.setPerDiemRowId(rowId);
     } else {
-      console.error('No perDiem found for this user. ');
-      this.toggleWarningForNoPerDiem();
-      this.setState({ pendingTrip: null });
-      this.reloadTrips();
-      return;
+      // console.error('No perDiem found for this user. ');
+      // this.toggleWarningForNoPerDiem();
+      // this.setState({ pendingTrip: null });
+      // this.reloadTrips();
+      // return;
     }
 
     trip.setNotes(data.Notes);
@@ -765,8 +789,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
       this.props.perDiemRowIds == undefined ||
       this.props.perDiemRowIds.length == 0
     ) {
-      this.toggleWarningForNoPerDiem();
-      return;
+      //this.toggleWarningForNoPerDiem();
+      //return;
     }
     this.setPendingTripToAdd(new Trip());
   };
@@ -780,11 +804,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
   }
 
   setStateOfPerDiems = async () => {
-    this.setState({
-      perDiems: await PerDiemClientService.getPerDiemsFromIds(
+    if (this.props.perDiemRowIds) {
+      let pds = await PerDiemClientService.getPerDiemsFromIds(
         this.props.perDiemRowIds,
-      ),
-    });
+      );
+
+      this.setState({
+        perDiems: pds ? pds : null,
+      });
+    }
   };
 
   render() {

@@ -155,7 +155,7 @@ export const TimeOff: FC<Props> = ({
 
       try {
         const req = new User();
-        req.setId(user!.id);
+        req.setId(loggedUserId);
         const manager = await UserClientService.GetUserManager(req);
 
         const emailBody = getTimeoffRequestEmail(
@@ -171,6 +171,7 @@ export const TimeOff: FC<Props> = ({
           newData.id,
         );
 
+        //@ts-ignore
         const config: EmailConfig = {
           type: 'timeoff',
           body: emailBody,
@@ -207,6 +208,7 @@ export const TimeOff: FC<Props> = ({
       loggedUser,
       setFormKey,
       formKey,
+      loggedUserId,
     ],
   );
 
@@ -364,7 +366,7 @@ export const TimeOff: FC<Props> = ({
   if (deleted)
     return (
       <SectionBar
-        title="Request Time Off"
+        title={'Request Time Off '}
         subtitle="This Request Time Off cannot be find (wrong ID or it was deleted)"
       />
     );
@@ -377,7 +379,11 @@ export const TimeOff: FC<Props> = ({
         onSave={data.id ? toggleDeleting : handleSubmit}
         onChange={setData}
         schema={schema}
-        title="Request Time Off"
+        title={
+          user?.firstname
+            ? 'Request Time Off for ' + user?.firstname + ' ' + user?.lastname
+            : 'Request Time Off'
+        }
         subtitle={
           pto && user ? (
             <span>

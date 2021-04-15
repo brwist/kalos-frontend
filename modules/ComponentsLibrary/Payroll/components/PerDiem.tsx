@@ -118,7 +118,6 @@ export const PerDiem: FC<Props> = ({
   const handlePendingPayrollToggleReject = useCallback(
     (perDiem?: PerDiemType) => () => {
       setPendingPayrollReject(perDiem);
-      console.log('We called the callback');
     },
     [setPendingPayrollReject],
   );
@@ -254,7 +253,7 @@ export const PerDiem: FC<Props> = ({
                       ) : null,
                       role === 'Payroll' ? (
                         <Tooltip
-                          key="payroll"
+                          key="payroll process"
                           content="Payroll Process"
                           placement="bottom"
                         >
@@ -315,17 +314,6 @@ export const PerDiem: FC<Props> = ({
             perDiem={perDiemViewed}
             loggedUserId={loggedUserId}
           />
-          {/* {perDiemViewed.rowsList.map(row => { // FIXME
-            return (
-              <TripInfoTable
-                canAddTrips={false}
-                cannotDeleteTrips
-                perDiemRowId={row.perDiemId}
-                loggedUserId={perDiemViewed.userId}
-                key={row.id}
-              />
-            );
-          })} */}
         </Modal>
       )}
       {pendingApprove && (

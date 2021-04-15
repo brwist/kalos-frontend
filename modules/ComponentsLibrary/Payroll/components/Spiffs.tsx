@@ -1,7 +1,14 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { format, addDays, startOfWeek } from 'date-fns';
+import {
+  format,
+  addDays,
+  startOfWeek,
+  getMonth,
+  getYear,
+  getDaysInMonth,
+} from 'date-fns';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { parseISO } from 'date-fns/esm';
+import { parseISO, subDays } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -20,6 +27,7 @@ import {
   escapeText,
   SpiffTypeType,
   getRPCFields,
+  EventClientService,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL, ENDPOINT } from '../../../../constants';
 
@@ -50,6 +58,11 @@ export const Spiffs: FC<Props> = ({
   const [pendingView, setPendingView] = useState<TaskType>();
   const [pendingAdd, setPendingAdd] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 6));
+
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const init = useCallback(async () => {
     const { resultsList: spiffTypes } = (
@@ -66,17 +79,39 @@ export const Spiffs: FC<Props> = ({
       departmentId,
       option: option === 'Monthly' ? 'Monthly' : 'Weekly',
     };
-    if (week !== OPTION_ALL) {
+    if (option === 'Weekly') {
       Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+        startDate: format(startDay, 'yyyy-MM-dd'),
+        endDate: format(endDay, 'yyyy-MM-dd'),
+      });
+      if (week !== OPTION_ALL && role != 'Payroll') {
+        Object.assign(filter, {
+          startDate: week,
+          endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+        });
+      }
+    }
+    if (option === 'Monthly') {
+      const startMonth = getMonth(new Date()) - 1;
+      const startYear = getYear(new Date());
+      const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
+      const endDate = format(
+        addDays(
+          new Date(startYear, startMonth),
+          getDaysInMonth(new Date(startYear, startMonth)) - 1,
+        ),
+        'yyyy-MM-dd',
+      );
+      Object.assign(filter, {
+        startDate: startDate,
+        endDate: endDate,
       });
     }
     const { resultsList, totalCount } = await loadPendingSpiffs(filter);
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week, role]);
+  }, [page, employeeId, week, role, departmentId, option]);
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);
@@ -112,11 +147,25 @@ export const Spiffs: FC<Props> = ({
       req.setTimeCreated(now);
       req.setTimeDue(now);
       req.setPriorityId(2);
+      console.log('We are pressing Save');
       req.setExternalCode('user');
       req.setCreatorUserId(loggedUserId);
+      console.log({ data });
       req.setBillableType('Spiff');
-      req.setReferenceNumber('');
       req.setStatusId(1);
+      let tempEvent = await EventClientService.LoadEventByServiceCallID(
+        parseInt(data.spiffJobNumber),
+      );
+      req.setSpiffAddress(
+        tempEvent.property?.address === undefined
+          ? tempEvent.customer?.address === undefined
+            ? ''
+            : tempEvent.customer.address
+          : tempEvent.property?.address,
+      );
+      data.spiffJobNumber = tempEvent.logJobNumber;
+      req.setSpiffJobNumber(data.spiffJobNumber);
+
       fieldMaskList.push(
         'TimeCreated',
         'TimeDue',
@@ -125,7 +174,8 @@ export const Spiffs: FC<Props> = ({
         'ExternalId',
         'CreatorUserId',
         'BillableType',
-        'ReferenceNumber',
+        'SpiffJobNumber',
+        'spiffAddress',
       );
       for (const fieldName in data) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
@@ -134,6 +184,7 @@ export const Spiffs: FC<Props> = ({
         fieldMaskList.push(upperCaseProp);
       }
       req.setFieldMaskList(fieldMaskList);
+      console.log({ req });
       await TaskClientService.Create(req);
       setSaving(false);
       setPendingAdd(false);
@@ -156,7 +207,7 @@ export const Spiffs: FC<Props> = ({
         type: 'number',
         required: true,
       },
-      { name: 'spiffJobNumber', label: 'Job #' },
+      { name: 'spiffJobNumber', label: 'Job #', type: 'eventId' },
       {
         name: 'datePerformed',
         label: 'Date Performed',

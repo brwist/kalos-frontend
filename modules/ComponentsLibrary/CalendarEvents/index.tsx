@@ -23,6 +23,7 @@ export type CalendarEvent = {
   onClick?: () => void;
   renderTooltip?: ReactElement;
   label?: string;
+  isActive?: number | boolean;
 };
 
 type Style = {
@@ -140,6 +141,7 @@ export const CalendarEvents: FC<Props> = ({
                     onClick,
                     renderTooltip,
                     label,
+                    isActive,
                   },
                   idx,
                 ) => {
@@ -210,7 +212,12 @@ export const CalendarEvents: FC<Props> = ({
                       maxWidth={300}
                     >
                       <div
-                        className={clsx('CalendarEventsEvent', { withLabels })}
+                        className={clsx(
+                          isActive
+                            ? 'CalendarEventsEvent'
+                            : 'CalendarEventsEvent disabled',
+                          { withLabels },
+                        )}
                         style={{
                           ...(statusColor
                             ? {

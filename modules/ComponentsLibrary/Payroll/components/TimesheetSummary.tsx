@@ -4,20 +4,32 @@ import {
   TimesheetLineClient,
   TimesheetLineList,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { Button } from '../../Button';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
+import Alert from '@material-ui/lab/Alert';
+
 import {
   format,
   differenceInMinutes,
   parseISO,
+  differenceInCalendarDays,
   startOfWeek,
   subDays,
   addDays,
 } from 'date-fns';
-import { roundNumber, formatDate } from '../../../../helpers';
+import {
+  roundNumber,
+  formatDate,
+  UserClientService,
+  UserType,
+  loadTimeoffRequests,
+  TimeoffRequestClientService,
+} from '../../../../helpers';
+import { Loader } from '../../../Loader/main';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -30,11 +42,16 @@ export type Action = {
   classCode: string;
   billable: boolean;
   day: string;
-  briefDescription: string;
+  departmentCode: string;
 };
 export type Job = {
   jobId: string;
   actions: Action[];
+};
+export type Week = {
+  days: string[];
+  identifyer: string;
+  actionString: string[];
 };
 
 export const TimesheetSummary: FC<Props> = ({
@@ -45,15 +62,24 @@ export const TimesheetSummary: FC<Props> = ({
   username,
 }) => {
   const [totalHours, setTotalHours] = useState<number>();
-  const [totalBillableHours, setTotaBillablelHours] = useState<number>();
+  const [totalBillableHours, setTotalBillableHours] = useState<number>();
   const [totalUnbillableHours, setTotalUnbillableHours] = useState<number>();
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
+  const [timeoff, setTimeOff] = useState<TimeoffRequest.AsObject[]>();
+  const [timesheetsPending, setTimesheetsPending] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
-  const [timesheetsNoJobs, setTimesheetsNoJobs] = useState<Job[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [user, setUser] = useState<User.AsObject>();
   const [mappedElements, setMappedElements] = useState<JSX.Element[]>();
-
+  const [
+    togglePendingApprovalAlert,
+    setTogglePendingApprovalAlert,
+  ] = useState<boolean>();
+  const [
+    togglePendingSubmitAlert,
+    setTogglePendingSubmitAlert,
+  ] = useState<boolean>();
   const [mappedElementsNoJobs, setMappedElementsNoJobs] = useState<
     JSX.Element[]
   >();
@@ -61,7 +87,135 @@ export const TimesheetSummary: FC<Props> = ({
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
   );
+
   const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
+  let tempDayList = [];
+  for (let i = 0; i < 7; i++) {
+    tempDayList.push([format(addDays(startDay, i), 'yyyy-MM-dd')]);
+  }
+  const [dayList, setDayList] = useState<string[][]>(tempDayList);
+  const [subTotalDayList, setSubTotalDayList] = useState<string[][]>(
+    tempDayList,
+  );
+  const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
+  const getTimeoff = useCallback(async () => {
+    const startDate = format(startDay, 'yyyy-MM-dd');
+    const endDate = format(endDay, 'yyyy-MM-dd');
+    let timeOffJobs = [];
+    const filter = {
+      technicianUserID: userId,
+      requestType: 9,
+      startDate: startDate,
+      endDate: endDate,
+    };
+    const results = (await loadTimeoffRequests(filter)).resultsList;
+    let total = 0;
+    for (let i = 0; i < results.length; i++) {
+      if (results[i].allDayOff === 0) {
+        const timeFinished = results[i].timeFinished;
+        const timeStarted = results[i].timeStarted;
+        const subtotal = roundNumber(
+          differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
+            60,
+        );
+
+        total += subtotal;
+        let tempJob = {
+          jobId:
+            results[i].eventId === 0
+              ? results[i].referenceNumber === ''
+                ? 'None'
+                : results[i].referenceNumber
+              : results[i].eventId.toString(),
+          actions: [
+            {
+              time: roundNumber(
+                differenceInMinutes(
+                  parseISO(results[i].timeFinished),
+                  parseISO(results[i].timeStarted),
+                ) / 60,
+              ),
+              classCode: results[i].departmentName.substr(0, 3) + 'PTO',
+              billable: false,
+              day: format(parseISO(results[i].timeStarted), 'yyyy-MM-dd'),
+              departmentCode: results[i].departmentName,
+            },
+          ],
+        };
+        timeOffJobs.push(tempJob);
+      } else {
+        const timeFinished = results[i].timeFinished;
+        const timeStarted = results[i].timeStarted;
+        const numberOfDays =
+          differenceInCalendarDays(
+            parseISO(timeFinished),
+            parseISO(timeStarted),
+          ) + 1;
+        total += numberOfDays * 8;
+        for (let j = 0; j < numberOfDays; j++) {
+          let tempJob = {
+            jobId:
+              results[i].eventId === 0
+                ? results[i].referenceNumber === ''
+                  ? 'None'
+                  : results[i].referenceNumber
+                : results[i].eventId.toString(),
+            actions: [
+              {
+                time: 8,
+                classCode: results[i].departmentName.substr(0, 3) + 'PTO',
+                billable: false,
+                day: formatDateFns(
+                  addDays(parseISO(results[i].timeStarted), j),
+                ),
+
+                departmentCode: results[i].departmentName,
+              },
+            ],
+          };
+          if (j === 0) {
+            timeOffJobs.push(tempJob);
+          } else {
+            timeOffJobs[0].actions.push(tempJob.actions[0]);
+          }
+        }
+      }
+    }
+    setTimeOff(results);
+    return timeOffJobs;
+  }, [userId, notReady, endDay, startDay]);
+  const getTimesheetsPending = useCallback(async () => {
+    const timesheetReq = new TimesheetLine();
+    timesheetReq.setTechnicianUserId(userId);
+    timesheetReq.setIsActive(1);
+    timesheetReq.setWithoutLimit(true);
+    const startDate = format(startDay, 'yyyy-MM-dd');
+    const endDate = format(endDay, 'yyyy-MM-dd');
+    timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
+    timesheetReq.setFieldMaskList(['AdminApprovalUserId', 'PayrollProcessed']);
+    const client = new TimesheetLineClient(ENDPOINT);
+    //entries that still need admin action
+    let pendingApproval = await client.BatchGet(timesheetReq);
+    const timesheetPendingReq = new TimesheetLine();
+    timesheetPendingReq.setTechnicianUserId(userId);
+    timesheetPendingReq.setIsActive(1);
+    timesheetPendingReq.setDateRangeList(['>=', startDate, '<', endDate]);
+    timesheetPendingReq.setUserApprovalDatetime(NULL_TIME);
+    timesheetPendingReq.setAdminApprovalDatetime(NULL_TIME);
+    timesheetPendingReq.setFieldMaskList([
+      'UserApprovalDatetime',
+      'PayrollProcessed',
+      'AdminApprovalDatetime',
+    ]);
+    //entries that still require user action
+    let pendingSubmit = await client.BatchGet(timesheetPendingReq);
+    if (pendingSubmit.getTotalCount() > 0) {
+      setTogglePendingSubmitAlert(true);
+    }
+    if (pendingApproval.getTotalCount()) {
+      setTogglePendingApprovalAlert(true);
+    }
+  }, [endDay, startDay, userId]);
   const getTimesheetTotals = useCallback(async () => {
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
@@ -72,143 +226,71 @@ export const TimesheetSummary: FC<Props> = ({
     timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
+    timesheetReq.setAdminApprovalUserId(0);
+    timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
+    timesheetReq.setFieldMaskList(['PayrollProcessed']);
+    results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
 
-    if (notReady) {
-      timesheetReq.setUserApprovalDatetime(NULL_TIME);
-      timesheetReq.setNotEqualsList(['UserApprovalDatetime']);
-      timesheetReq.setFieldMaskList([
-        'PayrollProcessed',
-        'AdminApprovalUserId',
-      ]);
-      timesheetReq.setOrderBy('time_started');
-      results = (await client.BatchGetManager(timesheetReq)).getResultsList();
-    } else {
-      timesheetReq.setAdminApprovalUserId(0);
-      timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
-      timesheetReq.setFieldMaskList(['PayrollProcessed']);
-      results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
+    let tempJobs = await getTimeoff();
+    for (let i = 0; i < results.length; i++) {
+      let tempJob = {
+        jobId:
+          results[i].toObject().eventId === 0
+            ? results[i].toObject().referenceNumber === ''
+              ? 'None'
+              : results[i].toObject().referenceNumber
+            : results[i].toObject().eventId.toString(),
+        actions: [
+          {
+            time: roundNumber(
+              differenceInMinutes(
+                parseISO(results[i].toObject().timeFinished),
+                parseISO(results[i].toObject().timeStarted),
+              ) / 60,
+            ),
+            classCode:
+              results[i].toObject().departmentName.substr(0, 3) +
+              '-' +
+              results[i].toObject().classCode?.id,
+            billable: results[i].toObject().classCode!.billable,
+            day: format(
+              parseISO(results[i].toObject().timeStarted),
+              'yyyy-MM-dd',
+            ),
+            departmentCode: results[i].toObject().departmentName,
+          },
+        ],
+      };
+      let foundJob = false;
+      let foundCode = false;
+      for (let j = 0; j < tempJobs.length; j++) {
+        for (let l = 0; l < tempJobs[j].actions.length; l++) {
+          if (tempJobs[j].jobId === tempJob.jobId) {
+            foundJob = true;
+            if (
+              tempJob.actions[0].classCode ===
+                tempJobs[j].actions[l].classCode &&
+              tempJob.actions[0].day === tempJobs[j].actions[l].day
+            ) {
+              tempJobs[j].actions[l].time += tempJob.actions[0].time;
+              foundCode = true;
+              break;
+            }
+          }
+        }
+        if (foundJob === true && foundCode === false) {
+          tempJobs[j].actions.push(tempJob.actions[0]);
+          break;
+        }
+      }
+      if (foundJob === false) {
+        tempJobs.push(tempJob);
+        continue;
+      }
     }
     setTimesheets(results);
-    let tempJobs = [];
-    let tempNoJobs = [];
-    let total = 0;
-    let billableTotal = 0;
-    let unbillableTotal = 0;
-    for (let i = 0; i < results.length; i++) {
-      let subtotal = roundNumber(
-        differenceInMinutes(
-          parseISO(results[i].toObject().timeFinished),
-          parseISO(results[i].toObject().timeStarted),
-        ) / 60,
-      );
-      total += subtotal;
-      if (results[i].toObject().classCode?.billable) {
-        billableTotal += subtotal;
-      }
-      if (!results[i].toObject().classCode?.billable) {
-        unbillableTotal += subtotal;
-      }
-      if (
-        results[i].toObject().eventId != 0 &&
-        results[i].toObject().eventId != undefined
-      ) {
-        let tempJob = {
-          jobId: results[i].toObject().eventId.toString(),
-          actions: [
-            {
-              time: roundNumber(
-                differenceInMinutes(
-                  parseISO(results[i].toObject().timeFinished),
-                  parseISO(results[i].toObject().timeStarted),
-                ) / 60,
-              ),
-              classCode:
-                results[i].toObject().classCodeId +
-                '-' +
-                results[i].toObject().classCode!.classcodeQbName,
-              billable: results[i].toObject().classCode!.billable,
-              day: formatDate(results[i].toObject().timeStarted),
-              briefDescription: results[i].toObject().briefDescription,
-            },
-          ],
-        };
-        let foundJob = false;
-        let foundCode = false;
-        for (let j = 0; j < tempJobs.length; j++) {
-          for (let l = 0; l < tempJobs[j].actions.length; l++) {
-            if (tempJobs[j].jobId === tempJob.jobId) {
-              foundJob = true;
-              if (
-                tempJob.actions[0].classCode ===
-                  tempJobs[j].actions[l].classCode &&
-                tempJob.actions[0].day === tempJobs[j].actions[l].day
-              ) {
-                tempJobs[j].actions[l].time += tempJob.actions[0].time;
-                foundCode = true;
-                break;
-              }
-            }
-          }
-          if (foundJob === true && foundCode === false) {
-            tempJobs[j].actions.push(tempJob.actions[0]);
-          }
-        }
-        if (foundJob === false && foundCode === false) {
-          tempJobs.push(tempJob);
-        }
-      } else {
-        let tempNoJob = {
-          jobId: results[i].toObject().eventId.toString(),
-          actions: [
-            {
-              time: roundNumber(
-                differenceInMinutes(
-                  parseISO(results[i].toObject().timeFinished),
-                  parseISO(results[i].toObject().timeStarted),
-                ) / 60,
-              ),
-              classCode:
-                results[i].toObject().classCodeId +
-                '-' +
-                results[i].toObject().classCode!.classcodeQbName,
-              billable: results[i].toObject().classCode!.billable,
-              day: formatDate(results[i].toObject().timeStarted),
-              briefDescription: results[i].toObject().briefDescription,
-            },
-          ],
-        };
-        let foundDay = false;
-        let foundCode = false;
-        for (let j = 0; j < tempNoJobs.length; j++) {
-          for (let l = 0; l < tempNoJobs[j].actions.length; l++) {
-            if (tempNoJobs[j].actions[l].day === tempNoJob.actions[0].day) {
-              foundDay = true;
-              if (
-                tempNoJob.actions[0].classCode ===
-                tempNoJobs[j].actions[l].classCode
-              ) {
-                tempNoJobs[j].actions[l].time += tempNoJob.actions[0].time;
-                foundCode = true;
-                break;
-              }
-            }
-          }
-          if (foundDay === true && foundCode === false) {
-            tempNoJobs[j].actions.push(tempNoJob.actions[0]);
-            break;
-          }
-        }
-        if (foundDay === false && foundCode === false) {
-          tempNoJobs.push(tempNoJob);
-        }
-      }
-    }
-    setTotalHours(total);
-    setTotalUnbillableHours(unbillableTotal);
-    setTotaBillablelHours(billableTotal);
-    setTimesheetsJobs(tempJobs);
-    setTimesheetsNoJobs(tempNoJobs);
-  }, [notReady, userId]);
+    return tempJobs;
+  }, [notReady, userId, endDay, startDay]);
   const ProcessTimesheets = useCallback(async () => {
     const tslClient = new TimesheetLineClient(ENDPOINT);
     let ids = [];
@@ -219,156 +301,355 @@ export const TimesheetSummary: FC<Props> = ({
       await tslClient.Process(ids, userId);
       onClose();
     }
-  }, [timesheets, userId]);
+    if (timeoff && timeoff.length > 0) {
+      for (let i = 0; i < timeoff?.length; ) {
+        const req = new TimeoffRequest();
+        req.setId(timeoff[i].id);
+        req.setFieldMaskList(['PayrollProcessed']);
+        req.setPayrollProcessed(true);
+        await TimeoffRequestClientService.Update(req);
+      }
+    }
+  }, [timesheets, userId, onClose]);
+  const RejectTimesheets = useCallback(async () => {
+    const tslClient = new TimesheetLineClient(ENDPOINT);
+    let ids = [];
+    if (timesheets) {
+      for (let i = 0; i < timesheets!.length; i++) {
+        ids.push(timesheets[i].toObject().id);
+      }
+      await tslClient.Reject(ids, userId);
+      onClose();
+    }
+  }, [timesheets, userId, onClose]);
 
   const load = useCallback(async () => {
     await getTimesheetTotals();
-    setLoading(false);
-    setLoaded(false);
-  }, [getTimesheetTotals]);
+    await getTimesheetsPending();
+    const tempUser = await UserClientService.loadUserById(userId);
+    setUser(tempUser);
+    let subtotalsBillable = [0, 0, 0, 0, 0, 0, 0];
+    let subtotalsUnbillable = [0, 0, 0, 0, 0, 0, 0];
+    let subtotals = [0, 0, 0, 0, 0, 0, 0];
+
+    let jobReports = [];
+    let weekList = [];
+    let tempJobs = await getTimesheetTotals();
+    console.log(tempJobs);
+    let jobNumber = '0';
+
+    if (tempJobs != undefined) {
+      for (let i = 0; i < tempJobs.length; i++) {
+        let tempWeek = [];
+        for (let i = 0; i < 7; i++) {
+          tempWeek.push([
+            format(
+              addDays(
+                startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+                i,
+              ),
+              'yyyy-MM-dd',
+            ),
+          ]);
+        }
+        for (let j = 0; j < tempJobs[i].actions.length; j++) {
+          for (let m = 0; m < tempWeek.length; m++) {
+            if (dayList[m][0] === tempJobs[i].actions[j].day) {
+              if (!tempWeek[m][1]) {
+                jobNumber = tempJobs[i].jobId === '' ? '0' : tempJobs[i].jobId;
+                tempWeek.push([jobNumber]);
+                tempWeek[m].push(
+                  tempJobs[i].actions[j].classCode +
+                    ',' +
+                    (tempJobs[i].actions[j].time + ' Hrs'),
+                );
+                if (tempJobs[i].actions[j].time > 0) {
+                  if (tempJobs[i].actions[j].billable) {
+                    subtotalsBillable[m] += tempJobs[i].actions[j].time;
+                  }
+                  if (!tempJobs[i].actions[j].billable) {
+                    subtotalsUnbillable[m] += tempJobs[i].actions[j].time;
+                  }
+                  subtotals[m] += tempJobs[i].actions[j].time;
+                }
+                break;
+              } else {
+                tempWeek[m][1] =
+                  tempWeek[m][1] +
+                  ' \r\n' +
+                  tempJobs[i].actions[j].classCode +
+                  (tempJobs[i].actions[j].time + ' Hrs');
+                if (tempJobs[i].actions[j].time > 0) {
+                  if (tempJobs[i].actions[j].billable) {
+                    subtotalsBillable[m] += tempJobs[i].actions[j].time;
+                  }
+                  if (!tempJobs[i].actions[j].billable) {
+                    subtotalsUnbillable[m] += tempJobs[i].actions[j].time;
+                  }
+                  subtotals[m] += tempJobs[i].actions[j].time;
+                }
+                break;
+              }
+            }
+          }
+        }
+
+        weekList.push(tempWeek);
+      }
+      let mapElements = (
+        <InfoTable
+          columns={[
+            { name: 'Job Number (if any)' },
+            {
+              name:
+                dayList![0][0].substr(5, dayList![0][0].length) + ' Saturday',
+            },
+            {
+              name: dayList![1][0].substr(5, dayList![1][0].length) + ' Sunday',
+            },
+            {
+              name: dayList![2][0].substr(5, dayList![2][0].length) + ' Monday',
+            },
+            {
+              name:
+                dayList![3][0].substr(5, dayList![3][0].length) + ' Tuesday',
+            },
+            {
+              name:
+                dayList![4][0].substr(5, dayList![4][0].length) + ' Wednesday',
+            },
+            {
+              name:
+                dayList![5][0].substr(5, dayList![5][0].length) + ' Thursday',
+            },
+            {
+              name: dayList![6][0].substr(5, dayList![6][0].length) + ' Friday',
+            },
+          ]}
+          key={'WeekSummary'}
+          data={weekList!.map(week => {
+            return [
+              {
+                value:
+                  week[week.length - 1][0] === undefined
+                    ? 0
+                    : week[week.length - 1][0],
+              },
+              {
+                value: week![0][1] === undefined ? '' : week![0][1],
+              },
+              {
+                value: week![1][1] === undefined ? '' : week![1][1],
+              },
+              {
+                value: week![2][1] === undefined ? '' : week![2][1],
+              },
+              {
+                value: week![3][1] === undefined ? '' : week![3][1],
+              },
+              {
+                value: week![4][1] === undefined ? '' : week![4][1],
+              },
+              {
+                value: week![5][1] === undefined ? '' : week![5][1],
+              },
+              {
+                value: week![6][1] === undefined ? '' : week![6][1],
+              },
+            ];
+          })}
+        />
+      );
+      let total = subtotals.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0,
+      );
+      let totalBill = subtotalsBillable.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0,
+      );
+      let totalUnbill = subtotalsUnbillable.reduce(
+        (accumulator, currentValue) => accumulator + currentValue,
+        0,
+      );
+      let subtotalReport = (
+        <InfoTable
+          key={'Day Subtotals'}
+          data={[
+            [
+              {
+                value:
+                  'Total Billable:' +
+                  totalBill +
+                  '\r\n' +
+                  'Total Unbillable:' +
+                  totalUnbill +
+                  '\r\n' +
+                  '\r\n' +
+                  'Total:' +
+                  total,
+              },
+              {
+                value:
+                  'Billable:' +
+                  subtotalsBillable[0] +
+                  ' \r\n' +
+                  'Unbillable:' +
+                  subtotalsUnbillable[0] +
+                  ' \r\n' +
+                  ' \r\n' +
+                  'Total Hours:' +
+                  subtotals[0],
+              },
+              {
+                value:
+                  'Billable:' +
+                  subtotalsBillable[1] +
+                  ' \r\n' +
+                  'Unbillable:' +
+                  subtotalsUnbillable[1] +
+                  ' \r\n' +
+                  ' \r\n' +
+                  'Total Hours:' +
+                  subtotals[1],
+              },
+              {
+                value:
+                  'Billable:' +
+                  subtotalsBillable[2] +
+                  ' \r\n' +
+                  'Unbillable:' +
+                  subtotalsUnbillable[2] +
+                  ' \r\n' +
+                  ' \r\n' +
+                  'Total Hours:' +
+                  subtotals[2],
+              },
+              {
+                value:
+                  'Billable:' +
+                  subtotalsBillable[3] +
+                  ' \r\n' +
+                  'Unbillable:' +
+                  subtotalsUnbillable[3] +
+                  ' \r\n' +
+                  ' \r\n' +
+                  'Total Hours:' +
+                  subtotals[3],
+              },
+              {
+                value:
+                  'Billable:' +
+                  subtotalsBillable[4] +
+                  ' \r\n' +
+                  'Unbillable:' +
+                  subtotalsUnbillable[4] +
+                  ' \r\n' +
+                  ' \r\n' +
+                  'Total Hours:' +
+                  subtotals[4],
+              },
+              {
+                value:
+                  'Billable:' +
+                  subtotalsBillable[5] +
+                  ' \r\n' +
+                  'Unbillable:' +
+                  subtotalsUnbillable[5] +
+                  ' \r\n' +
+                  ' \r\n' +
+                  'Total Hours:' +
+                  subtotals[5],
+              },
+              {
+                value:
+                  'Billable:' +
+                  subtotalsBillable[6] +
+                  ' \r\n' +
+                  'Unbillable:' +
+                  subtotalsUnbillable[6] +
+                  ' \r\n' +
+                  ' \r\n' +
+                  'Total Hours:' +
+                  subtotals[6],
+              },
+            ],
+          ]}
+        ></InfoTable>
+      );
+      jobReports.push(subtotalReport);
+      jobReports.push(mapElements);
+    }
+    let total = subtotals.reduce(
+      (accumulator, currentValue) => accumulator + currentValue,
+      0,
+    );
+    let totalBill = subtotalsBillable.reduce(
+      (accumulator, currentValue) => accumulator + currentValue,
+      0,
+    );
+    let totalUnbill = subtotalsUnbillable.reduce(
+      (accumulator, currentValue) => accumulator + currentValue,
+      0,
+    );
+    setTotalHours(total);
+    setTotalUnbillableHours(totalUnbill);
+    setTotalBillableHours(totalBill);
+    setMappedElements(jobReports);
+    setLoaded(true);
+  }, [getTimesheetTotals, getTimesheetsPending, dayList]);
 
   useEffect(() => {
     if (loading) {
+      setLoading(false);
       load();
     }
-    if (!loaded) {
-      let jobReports = [];
-      if (timesheetsJobs != undefined) {
-        for (let i = 0; i < timesheetsJobs?.length; i++) {
-          let Billable = 0;
-          let Unbillable = 0;
-          for (let j = 0; j < timesheetsJobs[i].actions.length; j++) {
-            if (timesheetsJobs[i].actions[j].billable) {
-              Billable += timesheetsJobs[i].actions[j].time;
-            } else {
-              Unbillable += timesheetsJobs[i].actions[j].time;
-            }
-          }
-
-          let mapElements = (
-            <SectionBar
-              title={'Job:' + timesheetsJobs[i].jobId}
-              key={'Job:' + timesheetsJobs[i].jobId}
-            >
-              <InfoTable
-                loading={loaded}
-                key={timesheetsJobs[i].jobId}
-                columns={[
-                  { name: 'Day' },
-                  { name: 'Hours' },
-                  { name: 'ClassCode' },
-                  { name: 'Brief Description' },
-                ]}
-                data={timesheetsJobs[i].actions.map(action => {
-                  return [
-                    {
-                      value: action.day,
-                    },
-                    {
-                      value: action.time,
-                    },
-                    {
-                      value: action.classCode,
-                    },
-                    {
-                      value: action.briefDescription,
-                    },
-                  ];
-                })}
-              />
-              <strong>Billable Total: {Billable}</strong>
-              {', '}
-              <strong>UnBillable Total:{Unbillable}</strong>
-            </SectionBar>
-          );
-          jobReports.push(mapElements);
-        }
-      }
-      let noJobReports = [];
-      if (timesheetsNoJobs != undefined) {
-        for (let i = 0; i < timesheetsNoJobs?.length; i++) {
-          let Billable = 0;
-          let Unbillable = 0;
-          for (let j = 0; j < timesheetsNoJobs[i].actions.length; j++) {
-            if (timesheetsNoJobs[i].actions[j].billable) {
-              Billable += timesheetsNoJobs[i].actions[j].time;
-            } else {
-              Unbillable += timesheetsNoJobs[i].actions[j].time;
-            }
-          }
-
-          let mapElementsNoJob = (
-            <div>
-              <InfoTable
-                key={
-                  timesheetsNoJobs[i].actions[0].day +
-                  timesheetsNoJobs[i].actions[0].classCode +
-                  timesheetsNoJobs[i].actions[0].time
-                }
-                loading={loaded}
-                columns={[
-                  { name: 'Day' },
-                  { name: 'Hours' },
-                  { name: 'ClassCode' },
-                  { name: 'Brief Description' },
-                ]}
-                data={timesheetsNoJobs[i].actions.map(action => {
-                  return [
-                    {
-                      value: action.day,
-                    },
-                    {
-                      value: action.time,
-                    },
-                    {
-                      value: action.classCode,
-                    },
-                    {
-                      value: action.briefDescription,
-                    },
-                  ];
-                })}
-              />
-              <strong>Billable Total: {Billable}</strong>{' '}
-              <strong>Unbillable Total:{Unbillable}</strong>
-            </div>
-          );
-
-          noJobReports.push(mapElementsNoJob);
-        }
-      }
-      setMappedElements(jobReports);
-      setMappedElementsNoJobs(noJobReports);
-      setLoaded(true);
-    }
-  }, [loaded, load, totalHours, loading, timesheetsJobs, timesheetsNoJobs]);
+  }, [load, loading]);
   return loaded ? (
-    <SectionBar title="Timesheet Summary" uncollapsable={true}>
-      <Button label="Close" onClick={() => onClose()}></Button>
-      <Button label="Process All" onClick={() => ProcessTimesheets()}></Button>
-      {mappedElements?.length === 0 && mappedElementsNoJobs?.length === 0 && (
-        <div>
+    <SectionBar
+      key="title"
+      title={`Timesheet Summary for ${username}`}
+      uncollapsable={true}
+    >
+      {togglePendingApprovalAlert && (
+        <Alert key="pending" severity="warning">
+          {' '}
+          This User has Timesheet Entries that are still Pending Approval from a
+          Manager
+        </Alert>
+      )}
+      {togglePendingSubmitAlert && (
+        <Alert key="approve" severity="warning">
+          This User has Timesheet Entries that are still Pending Submission
+        </Alert>
+      )}
+      <Button key="close" label="Close" onClick={() => onClose()}></Button>
+      <Button
+        key="process"
+        label="Process All"
+        onClick={() => ProcessTimesheets()}
+        disabled={togglePendingSubmitAlert || togglePendingApprovalAlert}
+      ></Button>
+      <Button
+        key="reject"
+        label="Reject All"
+        onClick={() => RejectTimesheets()}
+        disabled={togglePendingSubmitAlert || togglePendingApprovalAlert}
+      ></Button>
+      {timesheets?.length === 0 && (
+        <div key="No records">
           <strong>No Timesheet Records Found</strong>
         </div>
       )}
 
-      {mappedElementsNoJobs && mappedElementsNoJobs.length > 0 ? (
-        <SectionBar title={'Week of ' + format(startDay, 'yyyy-MM-dd')}>
-          <div> {mappedElementsNoJobs}</div>
-        </SectionBar>
-      ) : (
-        []
-      )}
-      <div>{mappedElements}</div>
-      <strong>Total Approved Hours :{totalHours}</strong>
-      <div>
-        <strong>Total Billable Hours :{totalBillableHours}</strong>
-      </div>
-      <div>
-        <strong>Total Unbillable Hours :{totalUnbillableHours}</strong>
-      </div>
+      <SectionBar
+        key="week"
+        title={'Approved for of Week of ' + format(startDay, 'yyyy-MM-dd')}
+      >
+        <div key="MappedList">{mappedElements}</div>
+      </SectionBar>
     </SectionBar>
   ) : (
-    <React.Fragment></React.Fragment>
+    <Loader />
   );
 };
