@@ -80,7 +80,7 @@ export const CostSummary: FC<Props> = ({
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
   );
-  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 6));
+  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
       meals: number;
