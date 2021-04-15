@@ -18,6 +18,7 @@ import CalendarHeader from './CalendarHeader/examples';
 import CallbackReport from './CallbackReport/examples';
 import CharityReport from './CharityReport/examples';
 import Chart from './Chart/examples';
+import CheckInProjectTask from './CheckInProjectTask/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
 import ConfirmService from './ConfirmService/examples';
@@ -115,6 +116,7 @@ const COMPONENTS = {
   CallbackReport,
   CharityReport,
   Chart,
+  CheckInProjectTask, 
   Confirm,
   ConfirmDelete,
   ConfirmService,
