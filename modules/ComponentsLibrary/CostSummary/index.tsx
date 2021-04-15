@@ -31,6 +31,7 @@ import {
   PerDiemClientService,
   loadGovPerDiem,
   PerDiemType,
+  loadPerDiemByUserIdAndDateStartedAudited,
 } from '../../../helpers';
 interface Props {
   userId: number;
@@ -71,7 +72,8 @@ export const CostSummary: FC<Props> = ({
     totalMeals: number;
     totalLodging: number;
     totalMileage: number;
-  }>();
+    processed: number;
+  }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [loading, setLoading] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>();
@@ -100,9 +102,7 @@ export const CostSummary: FC<Props> = ({
     [govPerDiems],
   );
   const getPerDiems = useCallback(async () => {
-    const {
-      resultsList,
-    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
+    const { resultsList } = await loadPerDiemByUserIdAndDateStartedAudited(
       userId,
       formatDateFns(startDay),
     );
@@ -123,11 +123,18 @@ export const CostSummary: FC<Props> = ({
     }
     const govPerDiems = await loadGovPerDiem(zipCodesList, year, month);
     setGovPerDiems(govPerDiems);
-  }, [govPerDiemByZipCode, startDay, userId]);
+  }, [startDay, userId]);
   const getPerDiemTotals = useCallback(async () => {
-    await getPerDiems();
-    let filteredPerDiems = perDiems;
-
+    const tempPerDiems = perDiems;
+    let processed = 0;
+    let filteredPerDiems = tempPerDiems;
+    if (perDiems.length > 0) {
+      for (let i = 0; i < perDiems.length; i++) {
+        if (perDiems[i].payrollProcessed) {
+          processed = 1;
+        }
+      }
+    }
     let allRowsList = filteredPerDiems.reduce(
       (aggr, { rowsList }) => [...aggr, ...rowsList],
       [] as PerDiemRowType[],
@@ -149,10 +156,10 @@ export const CostSummary: FC<Props> = ({
       );
     }
 
-    const totals = { totalMeals, totalLodging, totalMileage };
+    const totals = { totalMeals, totalLodging, totalMileage, processed };
 
     return totals;
-  }, [getPerDiems, govPerDiemByZipCode, perDiems]);
+  }, [getPerDiems, govPerDiemByZipCode]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
       const req = new Task();
@@ -348,6 +355,12 @@ export const CostSummary: FC<Props> = ({
     );
     promises.push(
       new Promise<void>(async resolve => {
+        await getPerDiems();
+        resolve();
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
         setTotalPerDiem(await getPerDiemTotals());
         resolve();
       }),
@@ -360,7 +373,13 @@ export const CostSummary: FC<Props> = ({
       .catch(error => {
         console.log(error);
       });
-  }, [getTimeoffTotals, getSpiffToolTotals, userId, getPerDiemTotals]);
+  }, [
+    getTimeoffTotals,
+    getSpiffToolTotals,
+    userId,
+    getProcessedHoursTotals,
+    getPerDiemTotals,
+  ]);
   useEffect(() => {
     if (!loaded) load();
   }, [load, loaded]);
@@ -556,7 +575,7 @@ export const CostSummary: FC<Props> = ({
         key="PerDiemWeek"
         title={`Total PerDiem for the Week of ${formatDateFns(startDay)}`}
       >
-        {perDiems && perDiems.length > 0 ? (
+        {perDiems && (
           <InfoTable
             key="PerDiem Totals"
             columns={[
@@ -568,36 +587,33 @@ export const CostSummary: FC<Props> = ({
             data={[
               [
                 {
-                  value: totalPerDiem?.totalLodging,
+                  value: totalPerDiem.totalLodging,
                 },
                 {
-                  value: totalPerDiem?.totalMeals,
+                  value: totalPerDiem.totalMeals,
                 },
                 {
-                  value: totalPerDiem?.totalMileage,
+                  value: totalPerDiem.totalMileage,
                 },
                 {
                   value:
-                    perDiems[0].payrollProcessed === true
-                      ? 'Complete'
-                      : 'Incomplete',
-                  actions: !perDiems[0].payrollProcessed
-                    ? [
-                        <IconButton
-                          key="processPerdiem"
-                          size="small"
-                          onClick={() => toggleProcessPerDiems(perDiems)}
-                        >
-                          <CheckIcon />
-                        </IconButton>,
-                      ]
-                    : [],
+                    totalPerDiem.processed === 1 ? 'Complete' : 'Incomplete',
+                  actions:
+                    totalPerDiem.processed === 0
+                      ? [
+                          <IconButton
+                            key="processPerdiem"
+                            size="small"
+                            onClick={() => toggleProcessPerDiems(perDiems)}
+                          >
+                            <CheckIcon />
+                          </IconButton>,
+                        ]
+                      : [],
                 },
               ],
             ]}
           />
-        ) : (
-          [<strong key="No PerDiems">No PerDiems for this week</strong>]
         )}
       </SectionBar>
       {onNext != null ? (

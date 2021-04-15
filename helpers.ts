@@ -809,7 +809,19 @@ export interface GetTimesheetConfig {
   endDate?: string;
   payrollProcessed?: boolean;
 }
-
+export const loadPerDiemByUserIdAndDateStartedAudited = async (
+  userId: number,
+  dateStarted: string,
+) => {
+  const req = new PerDiem();
+  req.setUserId(userId);
+  req.setWithRows(true);
+  req.setIsActive(true);
+  req.setNeedsAuditing(false);
+  req.setPageNumber(0);
+  req.setDateStarted(`${dateStarted}%`);
+  return (await PerDiemClientService.BatchGet(req)).toObject();
+};
 export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
   const req = new TimeoffRequest();
   if (config.startDate && config.endDate) {
