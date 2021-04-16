@@ -45,6 +45,8 @@ import { addDays, format } from 'date-fns';
 import { Field } from '../Field';
 import { CostReport } from '../CostReport';
 import { Typography } from '@material-ui/core';
+import { Loader } from '../../Loader/main';
+import { CheckInProjectTask } from '../CheckInProjectTask';
 
 export interface Props {
   serviceCallId: number;
@@ -58,7 +60,7 @@ export type SearchType = {
   priorityId: number;
 };
 
-type ExtendedProjectTaskType = ProjectTaskType & {
+export type ExtendedProjectTaskType = ProjectTaskType & {
   startTime: string;
   endTime: string;
 };
@@ -115,7 +117,12 @@ export const EditProject: FC<Props> = ({
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [loggedUser, setLoggedUser] = useState<UserType>();
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
-  const [pendingDelete, setPendingDelete] = useState<ExtendedProjectTaskType>();
+  const [deletingEvent, setDeletingEvent] = useState<boolean>(false);
+  const [pendingDeleteEvent, setPendingDeleteEvent] = useState<EventType>();
+  const [
+    pendingDeleteTask,
+    setPendingDeleteTask,
+  ] = useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
 
   const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
@@ -141,23 +148,20 @@ export const EditProject: FC<Props> = ({
   const [event, setEvent] = useState<EventType>();
   const [projects, setProjects] = useState<EventType[]>([]);
   const [editingProject, setEditingProject] = useState<boolean>(false);
-  const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
-  const [briefDescription, setBriefDescription] = useState<string>(
-    'Automatically set description',
-  ); // sets the checked in task's brief description field
-  const handleBriefDescriptionChange = useCallback(
-    value => {
-      setBriefDescription(value);
-    },
-    [setBriefDescription],
-  );
+
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
-    //const event = await loadEventById(serviceCallId);
-    const event = await EventClientService.LoadEventByServiceCallID(
-      serviceCallId,
-    );
-    setEvent(event);
+    try {
+      const event = await EventClientService.LoadEventByServiceCallID(
+        serviceCallId,
+      );
+      setEvent(event);
+    } catch (err) {
+      console.log({ err });
+      if (!err.message.includes('failed to scan to struct')) {
+        console.error('Error occurred during ProjectTask query:', err);
+      }
+    }
     setLoadingEvent(false);
   }, [setEvent, setLoadingEvent, serviceCallId]);
   const loadInit = useCallback(async () => {
@@ -180,39 +184,60 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        const statuses = await TaskClientService.loadProjectTaskStatuses();
-        setStatuses(statuses);
+        try {
+          const statuses = await TaskClientService.loadProjectTaskStatuses();
+          setStatuses(statuses);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        const priorities = await TaskClientService.loadProjectTaskPriorities();
-        setPriorities(priorities);
+        try {
+          const priorities = await TaskClientService.loadProjectTaskPriorities();
+          setPriorities(priorities);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        const departments = await loadTimesheetDepartments();
-        setDepartments(departments);
+        try {
+          const departments = await loadTimesheetDepartments();
+          setDepartments(departments);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        const loggedUser = await UserClientService.loadUserById(loggedUserId);
-        setLoggedUser(loggedUser);
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        await getCheckedTasks();
+        try {
+          const loggedUser = await UserClientService.loadUserById(loggedUserId);
+          setLoggedUser(loggedUser);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
@@ -231,33 +256,16 @@ export const EditProject: FC<Props> = ({
     serviceCallId,
   ]);
 
-  const getCheckedTasks = async () => {
-    let task = new Task();
-    task.setExternalId(loggedUserId);
-    task.setCheckedIn(true);
-    let checkedTask;
+  const load = useCallback(async () => {
     try {
-      checkedTask = await TaskClientService.Get(task);
+      const tasks = await EventClientService.loadProjectTasks(serviceCallId);
+      setTasks(tasks);
     } catch (err) {
       console.log({ err });
       if (!err.message.includes('failed to scan to struct')) {
         console.error('Error occurred during ProjectTask query:', err);
       }
     }
-
-    if (checkedTask)
-      setCheckedInTask({
-        ...checkedTask,
-        startDate: checkedTask.hourlyStart,
-        endDate: checkedTask.hourlyEnd,
-        startTime: '',
-        endTime: '',
-      } as ExtendedProjectTaskType);
-  };
-
-  const load = useCallback(async () => {
-    const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-    setTasks(tasks);
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
@@ -291,10 +299,33 @@ export const EditProject: FC<Props> = ({
     },
     [setEditingTask, setTaskEventsLoaded],
   );
-  const handleSetPendingDelete = useCallback(
+
+  const handleDeleteEvent = useCallback(async (eventId: number) => {
+    setDeletingEvent(true);
+    try {
+      await EventClientService.deleteEventById(eventId);
+      setDeletingEvent(false);
+    } catch (err) {
+      console.error(
+        `An error occurred while attempting to delete an event by ID: ${err}`,
+      );
+    }
+    setPendingDeleteEvent(undefined);
+    if (onClose) onClose();
+  }, []);
+
+  // The function used to actually delete projects (projects are of event type)
+  const handleSetPendingDeleteEvent = useCallback(
+    (pendingDelete?: EventType) => () => {
+      setPendingDeleteEvent(pendingDelete);
+    },
+    [setPendingDeleteEvent],
+  );
+
+  const handleSetPendingDeleteTask = useCallback(
     (pendingDelete?: ExtendedProjectTaskType) => () =>
-      setPendingDelete(pendingDelete),
-    [setPendingDelete],
+      setPendingDeleteTask(pendingDelete),
+    [setPendingDeleteTask],
   );
   const handleCheckout = useCallback(async () => {
     if (!editingTask) return;
@@ -362,8 +393,21 @@ export const EditProject: FC<Props> = ({
     if (!editingTask || taskEvents.length === 0) return;
     setPendingCheckoutDelete(false);
     setPendingCheckoutChange(true);
-    await TaskEventClientService.deleteTaskEvent(taskEvents[0].id);
-    await loadTaskEvents(editingTask.id);
+    try {
+      await TaskEventClientService.deleteTaskEvent(taskEvents[0].id);
+    } catch (err) {
+      console.error(
+        `An error occurred while trying to delete a task event: ${err}`,
+      );
+    }
+    try {
+      await loadTaskEvents(editingTask.id);
+    } catch (err) {
+      console.log({ err });
+      if (!err.message.includes('failed to scan to struct')) {
+        console.error('Error occurred during ProjectTask query:', err);
+      }
+    }
     setPendingCheckoutChange(false);
   }, [
     setPendingCheckoutChange,
@@ -467,22 +511,6 @@ export const EditProject: FC<Props> = ({
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
 
-      // let pt = new ProjectTask();
-      // const fieldMaskList = [];
-      // for (const fieldName in formData) {
-      //   const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      //   //@ts-ignore
-      //   if (pt[methodName]) {
-      //     // @ts-ignore
-      //     pt[methodName](formData[fieldName]);
-      //   }
-      //   fieldMaskList.push(upperCaseProp);
-      // }
-
-      // let taskGotten = await TaskClientService.GetProjectTask(pt);
-
-      // setCheckedInTask(taskGotten as ExtendedProjectTaskType);
-      await getCheckedTasks();
       setLoaded(false);
     },
     [
@@ -496,15 +524,21 @@ export const EditProject: FC<Props> = ({
     ],
   );
   const handleDeleteTask = useCallback(async () => {
-    if (pendingDelete) {
-      const { id } = pendingDelete;
-      setPendingDelete(undefined);
+    if (pendingDeleteTask) {
+      const { id } = pendingDeleteTask;
+      setPendingDeleteTask(undefined);
       setEditingTask(undefined);
       setLoading(true);
-      await TaskClientService.deleteProjectTaskById(id);
+      try {
+        await TaskClientService.deleteProjectTaskById(id);
+      } catch (err) {
+        console.error(
+          `An error occurred while trying to delete a project task by ID: ${err}`,
+        );
+      }
       setLoaded(false);
     }
-  }, [pendingDelete, setPendingDelete]);
+  }, [pendingDeleteTask, setPendingDeleteTask]);
   const handleAddTask = useCallback(
     (startDate: string) => {
       if (!loggedUser || !event) return;
@@ -747,6 +781,20 @@ export const EditProject: FC<Props> = ({
                 event.departmentId === loggedUser.employeeDepartmentId
               ),
           },
+          {
+            label: 'Delete Project',
+            onClick: handleSetPendingDeleteEvent(event),
+            disabled:
+              loading ||
+              loadingEvent ||
+              !event ||
+              !loggedUser ||
+              !event.isActive ||
+              !(
+                isAnyManager ||
+                event.departmentId === loggedUser.employeeDepartmentId
+              ),
+          },
           ...(onClose
             ? [
                 {
@@ -773,57 +821,14 @@ export const EditProject: FC<Props> = ({
         onChange={setSearch}
         disabled={loading || loadingEvent}
       />
-      <Button
-        variant="outlined"
-        label={!checkedInTask ? `Check In` : `Check Out`}
-        onClick={() => {
-          // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
-          // if there is then use that result to set it as checked in
-          const date = new Date();
-          if (!checkedInTask) {
-            let taskNew = {
-              startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
-              endDate: '',
-              statusId: 2,
-              priorityId: 2,
-              startTime: format(new Date(date), 'HH-mm'),
-              endTime: format(addDays(new Date(date), 1), 'HH-mm'),
-              briefDescription: briefDescription
-                ? briefDescription
-                : 'Auto generated task',
-              externalId: loggedUserId,
-              checkedIn: true,
-            } as ExtendedProjectTaskType;
-
-            handleSaveTask(taskNew);
-            setCheckedInTask(taskNew);
-          } else {
-            let updateTask = {
-              ...checkedInTask,
-              id: checkedInTask.id,
-              startDate: checkedInTask.startDate,
-              startTime: checkedInTask.startTime,
-              endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
-              endTime: format(new Date(date), 'HH-mm'),
-              checkedIn: false,
-            };
-
-            handleSaveTask(updateTask);
-            setCheckedInTask(undefined);
-          }
-        }}
-        disabled={pendingCheckoutChange}
-      />
-      <Typography>{checkedInTask?.startDate}</Typography>
-      {!checkedInTask && (
-        <Field
-          name="Brief Description for Check-in"
-          onChange={changedText => {
-            handleBriefDescriptionChange(changedText.toString());
-          }}
-          type="text"
-          value={briefDescription}
+      {event ? (
+        <CheckInProjectTask
+          projectToUse={event}
+          loggedUserId={loggedUserId}
+          serviceCallId={serviceCallId}
         />
+      ) : (
+        <></>
       )}
       <Tabs
         defaultOpenIdx={0}
@@ -1028,22 +1033,34 @@ export const EditProject: FC<Props> = ({
                   <Button
                     variant="outlined"
                     label="Delete Task"
-                    onClick={handleSetPendingDelete(editingTask)}
+                    onClick={handleSetPendingDeleteTask(editingTask)}
                   />
                 )}
             </div>
           </Form>
         </Modal>
       )}
-      {pendingDelete && (
+      {pendingDeleteTask && (
         <ConfirmDelete
           open
           kind="Task"
-          name={pendingDelete.briefDescription}
-          onClose={handleSetPendingDelete()}
+          name={pendingDeleteTask.briefDescription}
+          onClose={handleSetPendingDeleteTask()}
           onConfirm={handleDeleteTask}
         />
       )}
+      {pendingDeleteEvent && (
+        <ConfirmDelete
+          open
+          kind="this project"
+          name={''}
+          onClose={handleSetPendingDeleteEvent()}
+          onConfirm={() => {
+            handleDeleteEvent(pendingDeleteEvent.id);
+          }}
+        />
+      )}
+      {deletingEvent && <Loader />}
       {editingProject && event && (
         <Modal open onClose={handleSetEditingProject(false)}>
           <Form
