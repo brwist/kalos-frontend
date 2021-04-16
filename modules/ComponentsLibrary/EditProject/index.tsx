@@ -161,10 +161,17 @@ export const EditProject: FC<Props> = ({
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
     //const event = await loadEventById(serviceCallId);
-    const event = await EventClientService.LoadEventByServiceCallID(
-      serviceCallId,
-    );
-    setEvent(event);
+    try {
+      const event = await EventClientService.LoadEventByServiceCallID(
+        serviceCallId,
+      );
+      setEvent(event);
+    } catch (err) {
+      console.log({ err });
+      if (!err.message.includes('failed to scan to struct')) {
+        console.error('Error occurred during ProjectTask query:', err);
+      }
+    }
     setLoadingEvent(false);
   }, [setEvent, setLoadingEvent, serviceCallId]);
   const loadInit = useCallback(async () => {
@@ -187,39 +194,74 @@ export const EditProject: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        const statuses = await TaskClientService.loadProjectTaskStatuses();
-        setStatuses(statuses);
+        try {
+          const statuses = await TaskClientService.loadProjectTaskStatuses();
+          setStatuses(statuses);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        const priorities = await TaskClientService.loadProjectTaskPriorities();
-        setPriorities(priorities);
+        try {
+          const priorities = await TaskClientService.loadProjectTaskPriorities();
+          setPriorities(priorities);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        const departments = await loadTimesheetDepartments();
-        setDepartments(departments);
+        try {
+          const departments = await loadTimesheetDepartments();
+          setDepartments(departments);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        const loggedUser = await UserClientService.loadUserById(loggedUserId);
-        setLoggedUser(loggedUser);
+        try {
+          const loggedUser = await UserClientService.loadUserById(loggedUserId);
+          setLoggedUser(loggedUser);
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
 
     promises.push(
       new Promise<void>(async resolve => {
-        await getCheckedTasks();
+        try {
+          await getCheckedTasks();
+        } catch (err) {
+          console.log({ err });
+          if (!err.message.includes('failed to scan to struct')) {
+            console.error('Error occurred during ProjectTask query:', err);
+          }
+        }
         resolve();
       }),
     );
@@ -247,7 +289,10 @@ export const EditProject: FC<Props> = ({
       checkedTask = await TaskClientService.Get(task);
     } catch (err) {
       console.log({ err });
-      if (!err.message.includes('failed to scan to struct')) {
+      if (
+        !err.message.includes('failed to scan to struct') &&
+        !err.message.includes('failed to scan query result')
+      ) {
         console.error('Error occurred during ProjectTask query:', err);
       }
     }
@@ -263,8 +308,15 @@ export const EditProject: FC<Props> = ({
   };
 
   const load = useCallback(async () => {
-    const tasks = await EventClientService.loadProjectTasks(serviceCallId);
-    setTasks(tasks);
+    try {
+      const tasks = await EventClientService.loadProjectTasks(serviceCallId);
+      setTasks(tasks);
+    } catch (err) {
+      console.log({ err });
+      if (!err.message.includes('failed to scan to struct')) {
+        console.error('Error occurred during ProjectTask query:', err);
+      }
+    }
     setLoading(false);
   }, [setLoading, serviceCallId, setTasks]);
   useEffect(() => {
@@ -301,8 +353,14 @@ export const EditProject: FC<Props> = ({
 
   const handleDeleteEvent = useCallback(async (eventId: number) => {
     setDeletingEvent(true);
-    await EventClientService.deleteEventById(eventId);
-    setDeletingEvent(false);
+    try {
+      await EventClientService.deleteEventById(eventId);
+      setDeletingEvent(false);
+    } catch (err) {
+      console.error(
+        `An error occurred while attempting to delete an event by ID: ${err}`,
+      );
+    }
     setPendingDeleteEvent(undefined);
     if (onClose) onClose();
   }, []);
@@ -386,8 +444,21 @@ export const EditProject: FC<Props> = ({
     if (!editingTask || taskEvents.length === 0) return;
     setPendingCheckoutDelete(false);
     setPendingCheckoutChange(true);
-    await TaskEventClientService.deleteTaskEvent(taskEvents[0].id);
-    await loadTaskEvents(editingTask.id);
+    try {
+      await TaskEventClientService.deleteTaskEvent(taskEvents[0].id);
+    } catch (err) {
+      console.error(
+        `An error occurred while trying to delete a task event: ${err}`,
+      );
+    }
+    try {
+      await loadTaskEvents(editingTask.id);
+    } catch (err) {
+      console.log({ err });
+      if (!err.message.includes('failed to scan to struct')) {
+        console.error('Error occurred during ProjectTask query:', err);
+      }
+    }
     setPendingCheckoutChange(false);
   }, [
     setPendingCheckoutChange,
@@ -510,7 +581,13 @@ export const EditProject: FC<Props> = ({
       setPendingDeleteTask(undefined);
       setEditingTask(undefined);
       setLoading(true);
-      await TaskClientService.deleteProjectTaskById(id);
+      try {
+        await TaskClientService.deleteProjectTaskById(id);
+      } catch (err) {
+        console.error(
+          `An error occurred while trying to delete a project task by ID: ${err}`,
+        );
+      }
       setLoaded(false);
     }
   }, [pendingDeleteTask, setPendingDeleteTask]);
