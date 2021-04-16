@@ -124,7 +124,6 @@ export const CheckInProjectTask: FC<Props> = ({
     }
   }, [loaded, setLoaded, load]);
 
-  console.log('Checked in tasks:', checkedInTasks);
   const data: Data = checkedInTasks
     ? checkedInTasks.map(task => {
         const date = new Date();
