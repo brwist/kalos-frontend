@@ -14,6 +14,7 @@ import { Data, InfoTable } from '../InfoTable';
 import { IconButton } from '@material-ui/core';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import { Tooltip } from '../Tooltip';
+import { Modal } from '../Modal';
 interface Props {
   projectToUse: EventType;
   loggedUserId: number;
@@ -25,9 +26,11 @@ export const CheckInProjectTask: FC<Props> = ({
   loggedUserId,
   serviceCallId,
 }) => {
-  const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
   const [checkedInTasks, setCheckedInTasks] = useState<Task[]>();
-
+  const [
+    checkInConfirmationBoxOpen,
+    setCheckInConfirmationBoxOpen,
+  ] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [briefDescription, setBriefDescription] = useState<string>(
     'Automatically set description',
@@ -40,30 +43,10 @@ export const CheckInProjectTask: FC<Props> = ({
     [setBriefDescription],
   );
 
-  const getCheckedTasks = async () => {
-    let task = new Task();
-    task.setExternalId(loggedUserId);
-    task.setCheckedIn(true);
-    let checkedTask;
-    try {
-      checkedTask = await TaskClientService.Get(task);
-    } catch (err) {
-      console.log({ err });
-      if (!err.message.includes('failed to scan to struct')) {
-        console.error('Error occurred during ProjectTask query:', err);
-      }
-    }
-
-    if (checkedTask) {
-      setCheckedInTask({
-        ...checkedTask,
-        startDate: checkedTask.hourlyStart,
-        endDate: checkedTask.hourlyEnd,
-        startTime: '',
-        endTime: '',
-      } as ExtendedProjectTaskType);
-    }
-  };
+  const handleSetCheckInConfirmationBoxOpen = useCallback(
+    isOpen => setCheckInConfirmationBoxOpen(isOpen),
+    [setCheckInConfirmationBoxOpen],
+  );
 
   const batchGetCheckedTasks = async () => {
     let task = new Task();
@@ -123,7 +106,6 @@ export const CheckInProjectTask: FC<Props> = ({
         checkedIn: checkedIn,
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
-      await getCheckedTasks();
       await batchGetCheckedTasks();
       setLoaded(false);
     },
@@ -131,7 +113,6 @@ export const CheckInProjectTask: FC<Props> = ({
   );
 
   const load = useCallback(async () => {
-    await getCheckedTasks();
     await batchGetCheckedTasks();
   }, []);
 
@@ -189,11 +170,69 @@ export const CheckInProjectTask: FC<Props> = ({
     };
 
     handleSaveTask(updateTask);
-    setCheckedInTask(undefined);
+  };
+
+  const checkInNewTask = () => {
+    // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
+    // if there is then use that result to set it as checked in
+    const date = new Date();
+    let taskNew = {
+      startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
+      endDate: '',
+      statusId: 2,
+      priorityId: 2,
+      startTime: format(new Date(date), 'HH-mm'),
+      endTime: format(addDays(new Date(date), 1), 'HH-mm'),
+      briefDescription: briefDescription
+        ? briefDescription
+        : 'Auto generated task',
+      externalId: loggedUserId,
+      checkedIn: true,
+    } as ExtendedProjectTaskType;
+
+    handleSaveTask(taskNew);
   };
 
   return (
     <>
+      {checkInConfirmationBoxOpen && (
+        <Modal
+          open={true}
+          onClose={() => handleSetCheckInConfirmationBoxOpen(false)}
+        >
+          <>
+            <Field
+              label="Name for new task"
+              onChange={changedText => {
+                handleBriefDescriptionChange(changedText.toString());
+              }}
+              actions={[
+                {
+                  label: 'Action',
+                  compact: true,
+                  onClick: () => {
+                    checkInNewTask();
+                    handleSetCheckInConfirmationBoxOpen(false);
+                  },
+                },
+              ]}
+            />
+          </>
+        </Modal>
+      )}
+      <Button
+        variant="outlined"
+        label="Check In New Tasks"
+        onClick={() => handleSetCheckInConfirmationBoxOpen(true)}
+      />
+      {/* <Field
+        name="Brief Description for Check-in"
+        onChange={changedText => {
+          handleBriefDescriptionChange(changedText.toString());
+        }}
+        type="text"
+        value={briefDescription}
+      /> */}
       {/* Need to map over the checked in tasks and then once we have them mapped over we need to make them into rows */}
       <InfoTable
         data={data}
@@ -222,40 +261,6 @@ export const CheckInProjectTask: FC<Props> = ({
             ],
           },
         ]}
-      />
-
-      <Button
-        variant="outlined"
-        label={`Check In New Tasks`}
-        onClick={() => {
-          // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
-          // if there is then use that result to set it as checked in
-          const date = new Date();
-          let taskNew = {
-            startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
-            endDate: '',
-            statusId: 2,
-            priorityId: 2,
-            startTime: format(new Date(date), 'HH-mm'),
-            endTime: format(addDays(new Date(date), 1), 'HH-mm'),
-            briefDescription: briefDescription
-              ? briefDescription
-              : 'Auto generated task',
-            externalId: loggedUserId,
-            checkedIn: true,
-          } as ExtendedProjectTaskType;
-
-          handleSaveTask(taskNew);
-          setCheckedInTask(taskNew);
-        }}
-      />
-      <Field
-        name="Brief Description for Check-in"
-        onChange={changedText => {
-          handleBriefDescriptionChange(changedText.toString());
-        }}
-        type="text"
-        value={briefDescription}
       />
     </>
   );
