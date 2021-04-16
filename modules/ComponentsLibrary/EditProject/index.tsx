@@ -148,19 +148,9 @@ export const EditProject: FC<Props> = ({
   const [event, setEvent] = useState<EventType>();
   const [projects, setProjects] = useState<EventType[]>([]);
   const [editingProject, setEditingProject] = useState<boolean>(false);
-  const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
-  const [briefDescription, setBriefDescription] = useState<string>(
-    'Automatically set description',
-  ); // sets the checked in task's brief description field
-  const handleBriefDescriptionChange = useCallback(
-    value => {
-      setBriefDescription(value);
-    },
-    [setBriefDescription],
-  );
+
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
-    //const event = await loadEventById(serviceCallId);
     try {
       const event = await EventClientService.LoadEventByServiceCallID(
         serviceCallId,
@@ -252,20 +242,6 @@ export const EditProject: FC<Props> = ({
       }),
     );
 
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          await getCheckedTasks();
-        } catch (err) {
-          console.log({ err });
-          if (!err.message.includes('failed to scan to struct')) {
-            console.error('Error occurred during ProjectTask query:', err);
-          }
-        }
-        resolve();
-      }),
-    );
-
     await Promise.all(promises);
 
     setLoadedInit(true);
@@ -279,33 +255,6 @@ export const EditProject: FC<Props> = ({
     loggedUserId,
     serviceCallId,
   ]);
-
-  const getCheckedTasks = async () => {
-    let task = new Task();
-    task.setExternalId(loggedUserId);
-    task.setCheckedIn(true);
-    let checkedTask;
-    try {
-      checkedTask = await TaskClientService.Get(task);
-    } catch (err) {
-      console.log({ err });
-      if (
-        !err.message.includes('failed to scan to struct') &&
-        !err.message.includes('failed to scan query result')
-      ) {
-        console.error('Error occurred during ProjectTask query:', err);
-      }
-    }
-
-    if (checkedTask)
-      setCheckedInTask({
-        ...checkedTask,
-        startDate: checkedTask.hourlyStart,
-        endDate: checkedTask.hourlyEnd,
-        startTime: '',
-        endTime: '',
-      } as ExtendedProjectTaskType);
-  };
 
   const load = useCallback(async () => {
     try {
@@ -562,7 +511,6 @@ export const EditProject: FC<Props> = ({
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
 
-      await getCheckedTasks();
       setLoaded(false);
     },
     [
