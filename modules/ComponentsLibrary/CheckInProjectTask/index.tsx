@@ -5,10 +5,12 @@ import { Field } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
 import {
   EventType,
+  makeFakeRows,
   TaskClientService,
   upsertEventTask,
 } from '../../../helpers';
 import { Task } from '@kalos-core/kalos-rpc/Task';
+import { Data, InfoTable } from '../InfoTable';
 interface Props {
   projectToUse: EventType;
   loggedUserId: number;
@@ -21,6 +23,8 @@ export const CheckInProjectTask: FC<Props> = ({
   serviceCallId,
 }) => {
   const [checkedInTask, setCheckedInTask] = useState<ExtendedProjectTaskType>();
+  const [checkedInTasks, setCheckedInTasks] = useState<Task[]>();
+
   const [loaded, setLoaded] = useState<boolean>(false);
   const [briefDescription, setBriefDescription] = useState<string>(
     'Automatically set description',
@@ -58,6 +62,32 @@ export const CheckInProjectTask: FC<Props> = ({
     }
   };
 
+  const batchGetCheckedTasks = async () => {
+    let task = new Task();
+    task.setExternalId(loggedUserId);
+    task.setCheckedIn(true);
+    let checkedTask;
+    try {
+      checkedTask = await TaskClientService.BatchGet(task);
+    } catch (err) {
+      console.log({ err });
+      if (!err.message.includes('failed to scan to struct')) {
+        console.error('Error occurred during ProjectTask query:', err);
+      }
+    }
+
+    if (checkedTask) {
+      let arr = [];
+      for (const val of checkedTask.getResultsList()) {
+        arr.push(val);
+      }
+
+      console.log('Array of them:', arr);
+
+      setCheckedInTasks(arr);
+    }
+  };
+
   const handleSaveTask = useCallback(
     async ({
       startDate,
@@ -91,6 +121,7 @@ export const CheckInProjectTask: FC<Props> = ({
         ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
       });
       await getCheckedTasks();
+      await batchGetCheckedTasks();
       setLoaded(false);
     },
     [serviceCallId, loggedUserId, setLoaded],
@@ -98,6 +129,7 @@ export const CheckInProjectTask: FC<Props> = ({
 
   const load = useCallback(async () => {
     await getCheckedTasks();
+    await batchGetCheckedTasks();
   }, []);
 
   useEffect(() => {
@@ -107,8 +139,19 @@ export const CheckInProjectTask: FC<Props> = ({
     }
   }, [loaded, setLoaded, load]);
 
+  console.log('Checked in tasks:', checkedInTasks);
+  const data: Data = checkedInTasks
+    ? checkedInTasks?.map(task => {
+        console.log('Task gotten inside:');
+        return [{ value: task.getId() }];
+      })
+    : makeFakeRows();
+
   return (
     <>
+      {/* Need to map over the checked in tasks and then once we have them mapped over we need to make them into rows */}
+      <InfoTable data={data} />
+
       <Button
         variant="outlined"
         label={!checkedInTask ? `Check In` : `Check Out`}
