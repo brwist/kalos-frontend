@@ -68,9 +68,6 @@ export const CheckInProjectTask: FC<Props> = ({
       for (const val of checkedTask.getResultsList()) {
         arr.push(val);
       }
-
-      console.log('Array of them:', arr);
-
       setCheckedInTasks(arr);
     }
   };
