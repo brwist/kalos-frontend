@@ -131,6 +131,9 @@ export const CheckInProjectTask: FC<Props> = ({
         return [
           {
             value: task.getId(),
+          },
+          {
+            value: task.getBriefDescription(),
             actions: [
               <Tooltip key={task.getId() + 'tooltip'} content="Check Out">
                 <IconButton
@@ -226,20 +229,14 @@ export const CheckInProjectTask: FC<Props> = ({
         label="Check In New Tasks"
         onClick={() => handleSetCheckInConfirmationBoxOpen(true)}
       />
-      {/* <Field
-        name="Brief Description for Check-in"
-        onChange={changedText => {
-          handleBriefDescriptionChange(changedText.toString());
-        }}
-        type="text"
-        value={briefDescription}
-      /> */}
-      {/* Need to map over the checked in tasks and then once we have them mapped over we need to make them into rows */}
       <InfoTable
         data={data}
         columns={[
           {
             name: 'Task ID',
+          },
+          {
+            name: 'Brief Description',
             actions: [
               {
                 label: 'Check All Out',
