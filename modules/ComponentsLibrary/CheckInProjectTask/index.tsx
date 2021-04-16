@@ -144,10 +144,8 @@ export const CheckInProjectTask: FC<Props> = ({
 
   console.log('Checked in tasks:', checkedInTasks);
   const data: Data = checkedInTasks
-    ? checkedInTasks?.map(task => {
-        console.log('Task gotten inside:');
+    ? checkedInTasks.map(task => {
         const date = new Date();
-
         return [
           {
             value: task.getId(),
@@ -207,7 +205,19 @@ export const CheckInProjectTask: FC<Props> = ({
                 label: 'Check All Out',
                 compact: true,
                 variant: 'outlined',
-                onClick: () => alert('Would have checked out'),
+                onClick: () =>
+                  checkedInTasks?.forEach(task => {
+                    const date = new Date();
+                    checkOut({
+                      ...task,
+                      id: task.getId(),
+                      startDate: task.getHourlyStart().split(' ')[0],
+                      startTime: task.getHourlyStart().split(' ')[1],
+                      endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
+                      endTime: format(new Date(date), 'HH-mm'),
+                      checkedIn: false,
+                    } as ExtendedProjectTaskType);
+                  }),
               },
             ],
           },
