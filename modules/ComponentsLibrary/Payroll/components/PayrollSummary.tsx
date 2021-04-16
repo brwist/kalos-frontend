@@ -118,7 +118,15 @@ export const PayrollSummary: FC<Props> = ({
   };
   return (
     <div>
-      <SectionBar title="Payroll Summary" />
+      <SectionBar
+        title="Payroll Summary"
+        pagination={{
+          count,
+          page,
+          rowsPerPage: ROWS_PER_PAGE,
+          onChangePage: setPage,
+        }}
+      />
       <Button
         label={
           toggle == false
