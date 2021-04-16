@@ -122,8 +122,8 @@ export const PayrollSummary: FC<Props> = ({
         title="Payroll Summary"
         pagination={{
           count,
-          page,
-          rowsPerPage: ROWS_PER_PAGE,
+          page: count - 1,
+          rowsPerPage: 1,
           onChangePage: setPage,
         }}
       />
