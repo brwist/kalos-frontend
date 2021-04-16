@@ -168,7 +168,22 @@ export const CheckInProjectTask: FC<Props> = ({
   return (
     <>
       {/* Need to map over the checked in tasks and then once we have them mapped over we need to make them into rows */}
-      <InfoTable data={data} />
+      <InfoTable
+        data={data}
+        columns={[
+          {
+            name: 'Task ID',
+            actions: [
+              {
+                label: 'Check All Out',
+                compact: true,
+                variant: 'outlined',
+                onClick: () => alert('Would have checked out'),
+              },
+            ],
+          },
+        ]}
+      />
 
       <Button
         variant="outlined"
