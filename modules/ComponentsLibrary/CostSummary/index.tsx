@@ -21,6 +21,10 @@ import {
   getDaysInMonth,
 } from 'date-fns';
 import {
+  Trip,
+  TripList,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import {
   roundNumber,
   loadTimeoffRequests,
   formatDate,
@@ -32,6 +36,8 @@ import {
   loadGovPerDiem,
   PerDiemType,
   loadPerDiemByUserIdAndDateStartedAudited,
+  loadTripsByFilter,
+  usd,
 } from '../../../helpers';
 interface Props {
   userId: number;
@@ -58,9 +64,8 @@ export const CostSummary: FC<Props> = ({
   username,
 }) => {
   const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
-  const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
-  const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>();
-  const [totalSpiffsMonthly, setTotalSpiffsMonthly] = useState<number>();
+  const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>(0);
+  const [totalSpiffsMonthly, setTotalSpiffsMonthly] = useState<number>(0);
   const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
   const [spiffsMonthly, setSpiffsMonthly] = useState<Task[]>();
 
@@ -75,6 +80,11 @@ export const CostSummary: FC<Props> = ({
     processed: number;
   }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [trips, setTrips] = useState<Trip[]>();
+  const [tripsTotal, setTripsTotal] = useState<{
+    totalDistance: number;
+    processed: boolean;
+  }>({ totalDistance: 0, processed: true });
   const [loading, setLoading] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>();
   const [today, setToday] = useState<Date>(new Date());
@@ -101,6 +111,28 @@ export const CostSummary: FC<Props> = ({
     },
     [govPerDiems],
   );
+  const getTrips = useCallback(async () => {
+    let trip = new Trip();
+    trip.setUserId(userId);
+    let processed = true;
+    let tempTripList = new TripList().getResultsList();
+    trip.setApproved(true);
+    for (let i = 0; i <= 6; i++) {
+      const startDate = format(addDays(startDay, i), 'yyyy-MM-dd');
+      trip.setDate('%' + startDate + '%');
+      const trips = await PerDiemClientService.BatchGetTrips(trip);
+      tempTripList = tempTripList.concat(trips.getResultsList());
+    }
+    let distanceSubtotal = 0;
+    for (let j = 0; j < tempTripList.length; j++) {
+      distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+      if (tempTripList[j].toObject().payrollProcessed === false) {
+        processed = false;
+      }
+    }
+    console.log(tempTripList);
+    return { totalDistance: distanceSubtotal, processed };
+  }, [startDay, userId]);
   const getPerDiems = useCallback(async () => {
     const { resultsList } = await loadPerDiemByUserIdAndDateStartedAudited(
       userId,
@@ -313,6 +345,13 @@ export const CostSummary: FC<Props> = ({
       req.setPayrollProcessed(true);
       req.setFieldMaskList(['Payroll{Processed']);
       await PerDiemClientService.Update(req);
+      if (trips && trips.length > 0) {
+        for (let i = 0; i < trips.length; i++) {
+          await PerDiemClientService.updateTripPayrollProcessed(
+            trips[i].toObject().id,
+          );
+        }
+      }
     }
   };
   const load = useCallback(async () => {
@@ -365,6 +404,12 @@ export const CostSummary: FC<Props> = ({
         resolve();
       }),
     );
+    promises.push(
+      new Promise<void>(async resolve => {
+        setTripsTotal(await getTrips());
+        resolve();
+      }),
+    );
     Promise.all(promises)
       .then(() => {
         setLoading(false);
@@ -379,6 +424,8 @@ export const CostSummary: FC<Props> = ({
     userId,
     getProcessedHoursTotals,
     getPerDiemTotals,
+    getPerDiems,
+    getTrips,
   ]);
   useEffect(() => {
     if (!loaded) load();
@@ -403,7 +450,9 @@ export const CostSummary: FC<Props> = ({
 
       <SectionBar
         title="Spiff Weekly Current Total"
-        asideContent={<strong>Spiff Weekly Total : {totalSpiffsWeekly}</strong>}
+        asideContent={
+          <strong>Spiff Weekly Total : {usd(totalSpiffsWeekly)}</strong>
+        }
         actionsAndAsideContentResponsive
       >
         <InfoTable
@@ -420,7 +469,7 @@ export const CostSummary: FC<Props> = ({
                 value: formatDate(spiff.toObject().timeCreated),
               },
               {
-                value: spiff.toObject().spiffAmount,
+                value: usd(spiff.toObject().spiffAmount),
               },
               {
                 value: spiff.toObject().spiffJobNumber,
@@ -453,7 +502,7 @@ export const CostSummary: FC<Props> = ({
       <SectionBar
         title="Spiff Monthly Current Total"
         asideContent={
-          <strong>Spiff Monthly Total : {totalSpiffsMonthly}</strong>
+          <strong>Spiff Monthly Total : {usd(totalSpiffsMonthly)}</strong>
         }
         actionsAndAsideContentResponsive
       >
@@ -472,7 +521,7 @@ export const CostSummary: FC<Props> = ({
                   value: formatDate(spiff.toObject().timeCreated),
                 },
                 {
-                  value: spiff.toObject().spiffAmount,
+                  value: usd(spiff.toObject().spiffAmount),
                 },
                 {
                   value: spiff.toObject().spiffJobNumber,
@@ -575,7 +624,7 @@ export const CostSummary: FC<Props> = ({
         key="PerDiemWeek"
         title={`Total PerDiem for the Week of ${formatDateFns(startDay)}`}
       >
-        {perDiems && (
+        {(perDiems || trips) && (
           <InfoTable
             key="PerDiem Totals"
             columns={[
@@ -587,19 +636,23 @@ export const CostSummary: FC<Props> = ({
             data={[
               [
                 {
-                  value: totalPerDiem.totalLodging,
+                  value: usd(totalPerDiem.totalLodging),
                 },
                 {
-                  value: totalPerDiem.totalMeals,
+                  value: usd(totalPerDiem.totalMeals),
                 },
                 {
-                  value: totalPerDiem.totalMileage,
+                  value: tripsTotal.totalDistance.toFixed(2) + ' miles',
                 },
                 {
                   value:
-                    totalPerDiem.processed === 1 ? 'Complete' : 'Incomplete',
+                    totalPerDiem.processed === 1 &&
+                    tripsTotal.processed === true
+                      ? 'Complete'
+                      : 'Incomplete',
                   actions:
-                    totalPerDiem.processed === 0
+                    totalPerDiem.processed === 0 ||
+                    tripsTotal.processed === false
                       ? [
                           <IconButton
                             key="processPerdiem"
