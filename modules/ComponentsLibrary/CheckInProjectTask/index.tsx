@@ -1,7 +1,7 @@
 import { addDays, format } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
-import { Field } from '../Field';
+import { Field as FieldComponent } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
 import {
   EventType,
@@ -15,6 +15,7 @@ import { IconButton } from '@material-ui/core';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
+import { EnhancedField } from '../Field/examples';
 interface Props {
   projectToUse: EventType;
   loggedUserId: number;
@@ -200,24 +201,23 @@ export const CheckInProjectTask: FC<Props> = ({
           open={true}
           onClose={() => handleSetCheckInConfirmationBoxOpen(false)}
         >
-          <>
-            <Field
-              label="Name for new task"
-              onChange={changedText => {
-                handleBriefDescriptionChange(changedText.toString());
-              }}
-              actions={[
-                {
-                  label: 'Action',
-                  compact: true,
-                  onClick: () => {
-                    checkInNewTask();
-                    handleSetCheckInConfirmationBoxOpen(false);
-                  },
+          <EnhancedField
+            label="Name for new task"
+            defaultValue="Automatically created task"
+            onChange={changedText => {
+              handleBriefDescriptionChange(changedText.toString());
+            }}
+            actions={[
+              {
+                label: 'Create',
+                compact: true,
+                onClick: () => {
+                  checkInNewTask();
+                  handleSetCheckInConfirmationBoxOpen(false);
                 },
-              ]}
-            />
-          </>
+              },
+            ]}
+          />
         </Modal>
       )}
       <Button

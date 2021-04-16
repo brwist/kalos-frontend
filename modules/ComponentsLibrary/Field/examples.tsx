@@ -26,7 +26,7 @@ const SELECT_OPTIONS_ICON: Option[] = [
   { label: 'Low', value: 4, icon: LowIcon },
 ];
 
-const EnhancedField = ({
+export const EnhancedField = ({
   defaultValue = 'John',
   onChange,
   ...props
