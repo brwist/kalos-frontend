@@ -146,6 +146,8 @@ export const CheckInProjectTask: FC<Props> = ({
   const data: Data = checkedInTasks
     ? checkedInTasks?.map(task => {
         console.log('Task gotten inside:');
+        const date = new Date();
+
         return [
           {
             value: task.getId(),
@@ -154,7 +156,17 @@ export const CheckInProjectTask: FC<Props> = ({
                 <IconButton
                   key={task.getId() + 'delete'}
                   size="small"
-                  onClick={() => alert('would remove ' + task.getId())}
+                  onClick={() =>
+                    checkOut({
+                      ...task,
+                      id: task.getId(),
+                      startDate: task.getHourlyStart().split(' ')[0],
+                      startTime: task.getHourlyStart().split(' ')[1],
+                      endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
+                      endTime: format(new Date(date), 'HH-mm'),
+                      checkedIn: false,
+                    } as ExtendedProjectTaskType)
+                  }
                 >
                   <AccessTimeIcon />
                 </IconButton>
@@ -164,6 +176,23 @@ export const CheckInProjectTask: FC<Props> = ({
         ];
       })
     : makeFakeRows();
+
+  const checkOut = (checkedInTask: ExtendedProjectTaskType) => {
+    const date = new Date();
+
+    let updateTask = {
+      ...checkedInTask,
+      id: checkedInTask.id,
+      startDate: checkedInTask.startDate,
+      startTime: checkedInTask.startTime,
+      endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
+      endTime: format(new Date(date), 'HH-mm'),
+      checkedIn: false,
+    };
+
+    handleSaveTask(updateTask);
+    setCheckedInTask(undefined);
+  };
 
   return (
     <>
@@ -210,18 +239,7 @@ export const CheckInProjectTask: FC<Props> = ({
             handleSaveTask(taskNew);
             setCheckedInTask(taskNew);
           } else {
-            let updateTask = {
-              ...checkedInTask,
-              id: checkedInTask.id,
-              startDate: checkedInTask.startDate,
-              startTime: checkedInTask.startTime,
-              endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
-              endTime: format(new Date(date), 'HH-mm'),
-              checkedIn: false,
-            };
-
-            handleSaveTask(updateTask);
-            setCheckedInTask(undefined);
+            checkOut(checkedInTask);
           }
         }}
       />
