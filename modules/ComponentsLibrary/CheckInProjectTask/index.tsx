@@ -226,31 +226,27 @@ export const CheckInProjectTask: FC<Props> = ({
 
       <Button
         variant="outlined"
-        label={!checkedInTask ? `Check In` : `Check Out`}
+        label={`Check In New Tasks`}
         onClick={() => {
           // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
           // if there is then use that result to set it as checked in
           const date = new Date();
-          if (!checkedInTask) {
-            let taskNew = {
-              startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
-              endDate: '',
-              statusId: 2,
-              priorityId: 2,
-              startTime: format(new Date(date), 'HH-mm'),
-              endTime: format(addDays(new Date(date), 1), 'HH-mm'),
-              briefDescription: briefDescription
-                ? briefDescription
-                : 'Auto generated task',
-              externalId: loggedUserId,
-              checkedIn: true,
-            } as ExtendedProjectTaskType;
+          let taskNew = {
+            startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
+            endDate: '',
+            statusId: 2,
+            priorityId: 2,
+            startTime: format(new Date(date), 'HH-mm'),
+            endTime: format(addDays(new Date(date), 1), 'HH-mm'),
+            briefDescription: briefDescription
+              ? briefDescription
+              : 'Auto generated task',
+            externalId: loggedUserId,
+            checkedIn: true,
+          } as ExtendedProjectTaskType;
 
-            handleSaveTask(taskNew);
-            setCheckedInTask(taskNew);
-          } else {
-            checkOut(checkedInTask);
-          }
+          handleSaveTask(taskNew);
+          setCheckedInTask(taskNew);
         }}
       />
       <Field
