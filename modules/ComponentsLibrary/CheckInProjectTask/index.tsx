@@ -11,6 +11,9 @@ import {
 } from '../../../helpers';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
+import { IconButton } from '@material-ui/core';
+import DeleteIcon from '@material-ui/icons/Delete';
+
 interface Props {
   projectToUse: EventType;
   loggedUserId: number;
@@ -143,7 +146,20 @@ export const CheckInProjectTask: FC<Props> = ({
   const data: Data = checkedInTasks
     ? checkedInTasks?.map(task => {
         console.log('Task gotten inside:');
-        return [{ value: task.getId() }];
+        return [
+          {
+            value: task.getId(),
+            actions: [
+              <IconButton
+                key={task.getId() + 'delete'}
+                size="small"
+                onClick={() => alert('would remove ' + task.getId())}
+              >
+                <DeleteIcon />
+              </IconButton>,
+            ],
+          },
+        ];
       })
     : makeFakeRows();
 
