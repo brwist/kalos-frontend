@@ -168,6 +168,7 @@ export const CheckInProjectTask: FC<Props> = ({
       endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
       endTime: format(new Date(date), 'HH-mm'),
       checkedIn: false,
+      externalId: loggedUserId,
     };
 
     handleSaveTask(updateTask);
