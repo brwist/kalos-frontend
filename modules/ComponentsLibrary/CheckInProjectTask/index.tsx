@@ -12,8 +12,8 @@ import {
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
 import { IconButton } from '@material-ui/core';
-import DeleteIcon from '@material-ui/icons/Delete';
-
+import AccessTimeIcon from '@material-ui/icons/AccessTime';
+import { Tooltip } from '../Tooltip';
 interface Props {
   projectToUse: EventType;
   loggedUserId: number;
@@ -150,13 +150,15 @@ export const CheckInProjectTask: FC<Props> = ({
           {
             value: task.getId(),
             actions: [
-              <IconButton
-                key={task.getId() + 'delete'}
-                size="small"
-                onClick={() => alert('would remove ' + task.getId())}
-              >
-                <DeleteIcon />
-              </IconButton>,
+              <Tooltip key={task.getId() + 'tooltip'} content="Check Out">
+                <IconButton
+                  key={task.getId() + 'delete'}
+                  size="small"
+                  onClick={() => alert('would remove ' + task.getId())}
+                >
+                  <AccessTimeIcon />
+                </IconButton>
+              </Tooltip>,
             ],
           },
         ];
