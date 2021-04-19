@@ -6,16 +6,25 @@ import React, {
   CSSProperties,
   useMemo,
 } from 'react';
-import { format, isSameMonth } from 'date-fns';
+import {
+  differenceInMinutes,
+  parseISO,
+  differenceInCalendarDays,
+  differenceInCalendarYears,
+  addYears,
+  format,
+} from 'date-fns';
 import { Form, Schema, Options } from '../Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
 import {
   TimeoffRequestType,
   UserType,
+  roundNumber,
   PTOType,
   upsertTimeoffRequest,
   timestamp,
+  loadTimeoffRequests,
   UserClientService,
   TimeoffRequestClientService,
 } from '../../../helpers';
@@ -50,6 +59,7 @@ export const TimeOff: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [typeOptions, setTypeOptions] = useState<Options>([]);
   const [pto, setPto] = useState<PTOType>();
+  const [ptoActualHours, setPtoActualHours] = useState<number>(0);
   const [user, setUser] = useState<UserType>();
   const [loggedUser, setLoggedUser] = useState<UserType>();
   const [formKey, setFormKey] = useState<number>(0);
@@ -63,12 +73,14 @@ export const TimeOff: FC<Props> = ({
     setTypeOptions(
       types.map(({ id, requestType }) => ({ label: requestType, value: id })),
     );
+    const user = await UserClientService.loadUserById(userId || loggedUserId);
+    setUser(user);
     const pto = await TimeoffRequestClientService.getPTOInquiryByUserId(
       userId || loggedUserId,
     );
     setPto(pto);
-    const user = await UserClientService.loadUserById(userId || loggedUserId);
-    setUser(user);
+    const ptoActualHours = await getTimeoffTotals(user.hireDate);
+    setPtoActualHours(ptoActualHours);
 
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedUser(loggedUser);
@@ -107,6 +119,50 @@ export const TimeOff: FC<Props> = ({
     setUser,
     loggedUserId,
   ]);
+  const getTimeoffTotals = useCallback(
+    async (hireDate: string) => {
+      hireDate = hireDate.replace(/-/g, '/');
+      const today = new Date();
+      const startDay = new Date(hireDate);
+      const yearsToAdd = differenceInCalendarYears(today, startDay);
+      const adjustedStartDay = addYears(startDay, yearsToAdd - 1);
+      const adjustedEndDay = addYears(startDay, yearsToAdd);
+      const startDate = format(adjustedStartDay, 'yyyy-MM-dd');
+      const endDate = format(adjustedEndDay, 'yyyy-MM-dd');
+      const filter = {
+        technicianUserID: userId,
+        requestType: 9,
+        startDate: startDate,
+        endDate: endDate,
+      };
+      console.log(filter);
+      const results = (await loadTimeoffRequests(filter)).resultsList;
+      let total = 0;
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].allDayOff === 0) {
+          const timeFinished = results[i].timeFinished;
+          const timeStarted = results[i].timeStarted;
+          const subtotal = roundNumber(
+            differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
+              60,
+          );
+
+          total += subtotal;
+        } else {
+          const timeFinished = results[i].timeFinished;
+          const timeStarted = results[i].timeStarted;
+          const numberOfDays =
+            differenceInCalendarDays(
+              parseISO(timeFinished),
+              parseISO(timeStarted),
+            ) + 1;
+          total += numberOfDays * 8;
+        }
+      }
+      return total;
+    },
+    [userId],
+  );
   useEffect(() => {
     if (!initiated) {
       init();
@@ -387,7 +443,7 @@ export const TimeOff: FC<Props> = ({
         subtitle={
           pto && user ? (
             <span>
-              PTO Used: <span style={css}>{pto.hoursAvailable}</span> of{' '}
+              PTO Used: <span style={css}>{ptoActualHours}</span> of{' '}
               <span style={css}>{user.annualHoursPto}</span>
             </span>
           ) : null
