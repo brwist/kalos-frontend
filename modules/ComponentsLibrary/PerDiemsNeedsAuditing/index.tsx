@@ -3,12 +3,14 @@ import sortBy from 'lodash/sortBy';
 import { format, addDays } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import FlashOff from '@material-ui/icons/FlashOff';
+import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
+import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintParagraph } from '../PrintParagraph';
@@ -29,11 +31,14 @@ import {
   usd,
   loadGovPerDiem,
   formatDate,
+  getSlackID,
+  slackNotify,
 } from '../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
 import './styles.less';
 import { parseISO } from 'date-fns/esm';
 import { TripInfoTable } from '../TripInfoTable';
+import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 
 interface Props {
   loggedUserId: number;
@@ -98,6 +103,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const [printing, setPrinting] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [perDiemsPrint, setPerDiemsPrint] = useState<PerDiemType[]>([]);
   const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
@@ -106,6 +112,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [technicians, setTechnicians] = useState<UserType[]>([]);
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
+  const [pendingReject, setPendingReject] = useState<PerDiemType>();
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [formPrintData, setFormPrintData] = useState<FormPrintData>(
@@ -219,6 +226,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     (perDiem?: PerDiemType) => () => setPendingAudited(perDiem),
     [setPendingAudited],
   );
+  const handlePendingRejectToggle = useCallback(
+    (perDiem?: PerDiemType) => () => setPendingReject(perDiem),
+    [setPendingReject],
+  );
   const handlePerDiemViewedToggle = useCallback(
     (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
@@ -232,6 +243,36 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
       setLoaded(false);
     }
   }, [pendingAudited, setLoading, setPendingAudited, setLoaded]);
+  const handleReject = useCallback(async () => {
+    if (pendingReject) {
+      const { id } = pendingReject;
+      setLoading(true);
+      const slackID = await getSlackID(pendingReject.ownerName);
+      if (slackID != '0') {
+        slackNotify(
+          slackID,
+          `Your PerDiem for ${formatWeek(
+            pendingReject.dateStarted,
+          )} was rejected for the following reason:` + rejectionMessage,
+        );
+      } else {
+        console.log('We could not find the user, but we will still reject');
+      }
+      setPendingReject(undefined);
+      setRejectionMessage('Enter Rejection Message');
+      const req = new PerDiem();
+      req.setId(id);
+      req.setDateSubmitted(NULL_TIME);
+      await PerDiemClientService.Update(req);
+      setLoaded(false);
+    }
+  }, [
+    pendingReject,
+    setLoading,
+    setPendingReject,
+    setLoaded,
+    rejectionMessage,
+  ]);
   const handleReset = useCallback(() => {
     setPage(0);
     setFormData(initialFormData);
@@ -391,10 +432,18 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
               >
                 <FlashOff />
               </IconButton>,
+              <IconButton
+                key="reject"
+                size="small"
+                onClick={handlePendingRejectToggle(entry)}
+              >
+                <NotInterestedIcon />
+              </IconButton>,
             ],
           },
         ];
       });
+
   return (
     <div>
       <SectionBar
@@ -415,6 +464,32 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
         onChange={setFormData}
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
+      {pendingReject && (
+        <Confirm
+          title="Reject PerDiem"
+          open
+          onClose={handlePendingRejectToggle()}
+          onConfirm={handleReject}
+        >
+          Are you sure Per Diem of <strong>{pendingReject.ownerName}</strong>{' '}
+          for department{' '}
+          <strong>{getDepartmentName(pendingReject.department)}</strong> for{' '}
+          <strong>{formatWeek(pendingReject.dateStarted)}</strong> should be
+          Rejected?
+          <br></br>
+          <label>
+            <strong>Reason:</strong>
+          </label>
+          <input
+            type="text"
+            value={rejectionMessage}
+            autoFocus
+            size={35}
+            placeholder="Enter a rejection reason"
+            onChange={e => setRejectionMessage(e.target.value)}
+          />
+        </Confirm>
+      )}
       {pendingAudited && (
         <Confirm
           title="Confirm Auditing"
