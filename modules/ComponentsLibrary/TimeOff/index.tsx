@@ -135,7 +135,6 @@ export const TimeOff: FC<Props> = ({
         startDate: startDate,
         endDate: endDate,
       };
-      console.log(filter);
       const results = (await loadTimeoffRequests(filter)).resultsList;
       let total = 0;
       for (let i = 0; i < results.length; i++) {

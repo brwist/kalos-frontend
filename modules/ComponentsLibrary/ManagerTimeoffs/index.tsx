@@ -95,7 +95,6 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     setLoaded(false);
   }, [loggedUserId, setLoaded, setTypes]);
   const load = useCallback(async () => {
-    console.log(department);
     if (!department) return;
     setLoading(true);
     const req = new TimeoffRequest();
@@ -126,7 +125,6 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     timeoffClient,
   ]);
   const closeAll = () => {
-    console.log('we want to close erythang ');
     handleEdit(undefined);
     setEditing(undefined);
     setInitiated(false);
