@@ -2,7 +2,7 @@ import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import sortBy from 'lodash/sortBy';
 import { format, addDays } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
-import FlashOff from '@material-ui/icons/FlashOff';
+import ThumbUpIcon from '@material-ui/icons/ThumbUp';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../SectionBar';
@@ -430,7 +430,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
                 size="small"
                 onClick={handlePendingAuditedToggle(entry)}
               >
-                <FlashOff />
+                <ThumbUpIcon />
               </IconButton>,
               <IconButton
                 key="reject"
