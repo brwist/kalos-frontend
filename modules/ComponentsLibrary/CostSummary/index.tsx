@@ -4,6 +4,14 @@ import {
   TimesheetLineClient,
   TimesheetLineList,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { Button } from '../Button';
+import CheckIcon from '@material-ui/icons/Check';
+import IconButton from '@material-ui/core/IconButton';
+import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { InfoTable } from '../InfoTable';
+import { Loader } from '../../Loader/main';
+import { Info } from '@material-ui/icons';
 import { SectionBar } from '../SectionBar';
 import { ENDPOINT, NULL_TIME, MEALS_RATE } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
@@ -47,14 +55,7 @@ interface Props {
   onNext?: (() => void) | null;
   username: string;
 }
-import { Button } from '../Button';
-import CheckIcon from '@material-ui/icons/Check';
-import IconButton from '@material-ui/core/IconButton';
-import { PerDiem, PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
-import { InfoTable } from '../InfoTable';
-import { Loader } from '../../Loader/main';
-import { Info } from '@material-ui/icons';
+
 export const CostSummary: FC<Props> = ({
   userId,
   loggedUserId,
@@ -130,7 +131,6 @@ export const CostSummary: FC<Props> = ({
         processed = false;
       }
     }
-    console.log(tempTripList);
     return { totalDistance: distanceSubtotal, processed };
   }, [startDay, userId]);
   const getPerDiems = useCallback(async () => {
