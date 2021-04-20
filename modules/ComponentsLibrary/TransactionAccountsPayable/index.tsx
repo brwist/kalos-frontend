@@ -10,12 +10,20 @@ import { SectionBar } from '../SectionBar';
 export const TransactionAccountsPayable: FC = () => {
   const [transactions, setTransactions] = useState<TransactionList>();
   const [pageNumber, setPageNumber] = useState<number>(0);
+  const [departmentSelected, setDepartmentSelected] = useState<number>(22); // Set to 22 initially so it's not just a "choose department" thing
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
       setPageNumber(pageNumberToChangeTo);
     },
     [setPageNumber],
+  );
+
+  const handleSetDepartmentSelected = useCallback(
+    (departmentId: number) => {
+      setDepartmentSelected(departmentId);
+    },
+    [setDepartmentSelected],
   );
 
   const load = useCallback(async () => {
@@ -29,12 +37,13 @@ export const TransactionAccountsPayable: FC = () => {
   return (
     <>
       <DepartmentPicker
-        selected={0}
+        selected={departmentSelected}
         renderItem={i => (
           <option value={i.id} key={`${i.id}-department-select`}>
             {i.description} - {i.value}
           </option>
         )}
+        onSelect={handleSetDepartmentSelected}
       />
       <SectionBar
         title="Transactions"
