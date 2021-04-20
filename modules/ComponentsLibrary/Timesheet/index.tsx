@@ -400,7 +400,7 @@ export const Timesheet: FC<Props> = props => {
         //
         let timeoffDayList = [...data[shownDates[i]].timeoffs];
         for (let j = 0; j < timeoffDayList.length; j++) {
-          let day = timeoffDayList[i];
+          let day = timeoffDayList[j];
           console.log(day);
           if (
             day.adminApprovalUserId != 0 &&
