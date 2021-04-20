@@ -82,7 +82,6 @@ const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {
 
   const handleCreate = useCallback(
     async (data: EntryWithDate) => {
-      console.log('Data ', data);
       setSaving(true);
       data.costCenterId = costCenterId;
       const req = new Transaction();
@@ -91,9 +90,9 @@ const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {
         //@ts-ignore
         req[methodName](data[fieldName]);
       }
-      console.log('Req: ', req);
       const result = await transactionClient.Create(req);
       onSave(result);
+      setSaving(false);
     },
     [setSaving],
   );
