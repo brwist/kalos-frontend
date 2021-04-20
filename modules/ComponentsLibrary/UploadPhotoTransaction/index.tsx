@@ -168,7 +168,20 @@ export const UploadPhotoTransaction: FC<Props> = ({
     );
   }
 
-  const SCHEMA: Schema<Entry> = [
+  let conditionalSchema = [
+    formData.tag == 'Subject=Receipt'
+      ? [
+          {
+            name: 'cost',
+            label: 'Cost',
+            type: 'number',
+            required: true,
+          },
+        ]
+      : [{}],
+  ];
+
+  let SCHEMA: Schema<Entry> = [
     [
       {
         name: 'tag',
@@ -215,22 +228,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         type: 'string',
       },
     ],
-    [
-      {
-        name: 'costCenter',
-        label: 'Purchase Type',
-        required: true,
-        options: costCenterList,
-      },
-    ],
-    [
-      {
-        name: 'cost',
-        label: 'Cost',
-        type: 'number',
-        required: true,
-      },
-    ],
+    ...conditionalSchema,
   ] as Schema<Entry>;
   return (
     <Form<Entry>
