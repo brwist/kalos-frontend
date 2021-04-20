@@ -4,6 +4,7 @@ import {
 } from '@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { TransactionClientService } from '../../../helpers';
+import { DepartmentPicker } from '../Pickers';
 import { SectionBar } from '../SectionBar';
 
 export const TransactionAccountsPayable: FC = () => {
@@ -27,6 +28,14 @@ export const TransactionAccountsPayable: FC = () => {
   }, [load]);
   return (
     <>
+      <DepartmentPicker
+        selected={0}
+        renderItem={i => (
+          <option value={i.id} key={`${i.id}-department-select`}>
+            {i.description} - {i.value}
+          </option>
+        )}
+      />
       <SectionBar
         title="Transactions"
         pagination={{
