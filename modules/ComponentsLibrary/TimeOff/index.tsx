@@ -11,6 +11,7 @@ import {
   parseISO,
   differenceInCalendarDays,
   differenceInCalendarYears,
+  differenceInBusinessDays,
   addYears,
   format,
 } from 'date-fns';
@@ -151,7 +152,7 @@ export const TimeOff: FC<Props> = ({
           const timeFinished = results[i].timeFinished;
           const timeStarted = results[i].timeStarted;
           const numberOfDays =
-            differenceInCalendarDays(
+            differenceInBusinessDays(
               parseISO(timeFinished),
               parseISO(timeStarted),
             ) + 1;

@@ -19,7 +19,7 @@ import { TaskClient, Task, SpiffType } from '@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
-  differenceInCalendarDays,
+  differenceInBusinessDays,
   subDays,
   addDays,
   startOfWeek,
@@ -284,7 +284,7 @@ export const CostSummary: FC<Props> = ({
         const timeFinished = results[i].timeFinished;
         const timeStarted = results[i].timeStarted;
         const numberOfDays =
-          differenceInCalendarDays(
+          differenceInBusinessDays(
             parseISO(timeFinished),
             parseISO(timeStarted),
           ) + 1;
