@@ -576,6 +576,7 @@ export class TransactionAdminView extends React.Component<props, state> {
   }
 
   sortTxns() {
+    console.log('state transactions: ', this.state.transactions);
     const { sortBy, sortDir } = this.state.filters.sort;
     if (sortBy === 'timestamp') {
       return this.state.transactions.sort((a, b) => {
@@ -661,7 +662,7 @@ export class TransactionAdminView extends React.Component<props, state> {
           title="Transactions"
           pagination={{
             count: this.state.count,
-            rowsPerPage: 50,
+            rowsPerPage: 25,
             page: this.state.page,
             onChangePage: this.altChangePage,
           }}
