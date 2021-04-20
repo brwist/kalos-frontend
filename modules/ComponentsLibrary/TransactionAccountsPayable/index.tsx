@@ -4,6 +4,7 @@ import {
 } from '@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { TransactionClientService } from '../../../helpers';
+import { SectionBar } from '../SectionBar';
 
 export const TransactionAccountsPayable: FC = () => {
   const [transactions, setTransactions] = useState<TransactionList>();
@@ -24,5 +25,17 @@ export const TransactionAccountsPayable: FC = () => {
   useEffect(() => {
     load();
   }, [load]);
-  return <>Testing</>;
+  return (
+    <>
+      <SectionBar
+        title="Transactions"
+        pagination={{
+          count: transactions ? transactions!.getTotalCount() : 0,
+          rowsPerPage: 25,
+          page: pageNumber,
+          onChangePage: handleChangePage,
+        }}
+      />
+    </>
+  );
 };
