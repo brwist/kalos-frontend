@@ -286,6 +286,7 @@ export const TimeoffRequests: FC<Props> = ({
         <Modal open={!!pendingApproval} onClose={closeApproval}>
           <TimeOff
             loggedUserId={loggedUserId}
+            userId={pendingApproval.userId}
             onCancel={closeApproval}
             onSaveOrDelete={closeApproval}
             onAdminSubmit={closeApproval}
