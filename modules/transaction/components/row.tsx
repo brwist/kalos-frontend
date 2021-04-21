@@ -131,6 +131,11 @@ export function TransactionRow({
     const userReq = new User();
     userReq.setId(txn.ownerId);
     const user = await clients.user.Get(userReq);
+
+    // Request for this user
+    const sendingReq = new User();
+    sendingReq.setId(userID);
+    const sendingUser = await clients.user.Get(sendingReq);
     const body = getRejectTxnBody(
       reason,
       txn.amount,
@@ -140,6 +145,8 @@ export function TransactionRow({
     const email: EmailConfig = {
       type: 'receipts',
       recipient: user.email,
+      subject: 'Receipts',
+      from: sendingUser.email,
       body,
     };
 

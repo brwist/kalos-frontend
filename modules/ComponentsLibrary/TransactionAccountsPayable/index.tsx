@@ -202,14 +202,14 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     );
     if (ok) {
       const fn = acceptOverride
-        ? makeUpdateStatus(txn.id, 3, 'accepted')
-        : makeRecordTransaction(txn.id);
+        ? async () => makeUpdateStatus(txn.id, 3, 'accepted')
+        : async () => makeRecordTransaction(txn.id);
       await fn();
       await refresh();
     }
   };
 
-  const makeUpdateStatus = (
+  const makeUpdateStatus = async (
     id: number,
     statusID: number,
     description: string,
@@ -506,6 +506,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                       Icon={RejectIcon}
                     />,
                   ],
+                  actionsFullWidth: true,
                 },
               ]) as Data)
         }
