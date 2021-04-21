@@ -256,15 +256,13 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     };
   };
 
-  const updateNotes = (id: number) => {
-    return async (notes: string) => {
-      const txn = new Transaction();
-      txn.setId(id);
-      txn.setNotes(notes);
-      txn.setFieldMaskList(['Notes']);
-      await transactionClient.Update(txn);
-      await refresh();
-    };
+  const updateNotes = async (id: number, updatedNotes: string) => {
+    const txn = new Transaction();
+    txn.setId(id);
+    txn.setNotes(updatedNotes);
+    txn.setFieldMaskList(['Notes']);
+    await transactionClient.Update(txn);
+    await refresh();
   };
 
   const refresh = async () => {
@@ -436,7 +434,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                     />,
                     <Prompt
                       key="editNotes"
-                      confirmFn={id => updateNotes(Number(id))}
+                      confirmFn={updated => updateNotes(txn.getId(), updated)}
                       text="Edit Notes"
                       prompt="Update Txn Notes: "
                       Icon={NotesIcon}
