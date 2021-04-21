@@ -3,8 +3,6 @@ import {
   TransactionClient,
   TransactionList,
 } from '@kalos-core/kalos-rpc/Transaction';
-import { EventClient } from '@kalos-core/kalos-rpc/Event';
-import { PropertyClient } from '@kalos-core/kalos-rpc/Property';
 import { parseISO } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -19,12 +17,11 @@ import { AltGallery } from '../../AltGallery/main';
 import { Prompt } from '../../Prompt/main';
 import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
-import { prettyMoney, TransactionRow } from '../../transaction/components/row';
+import { prettyMoney } from '../../transaction/components/row';
 import { Data, InfoTable } from '../InfoTable';
 import { DepartmentPicker } from '../Pickers';
 import { SectionBar } from '../SectionBar';
 import IconButton from '@material-ui/core/IconButton';
-import EditIcon from '@material-ui/icons/Edit';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
@@ -32,7 +29,6 @@ import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import NotesIcon from '@material-ui/icons/EditSharp';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
-import CloseIcon from '@material-ui/icons/Close';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
@@ -66,8 +62,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   };
 
   const transactionClient = new TransactionClient(ENDPOINT);
-  const eventClient = new EventClient(ENDPOINT);
-  const propertyClient = new PropertyClient(ENDPOINT);
 
   const getRejectTxnBody = (
     reason: string,
@@ -169,7 +163,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       type: 'receipts',
       recipient: user.email,
       subject: 'Receipts',
-      from: sendingReq.getEmail(),
+      from: sendingUser.email,
       body,
     };
 
@@ -311,7 +305,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
-      console.log('Page # changing to: ', pageNumberToChangeTo);
       pageNumber = pageNumberToChangeTo;
       refresh();
     },
@@ -339,8 +332,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   useEffect(() => {
     load();
   }, [load]);
-  console.log('Transactions:', transactions?.getResultsList());
-  console.log('PAGE: ', pageNumber);
   return (
     <>
       <DepartmentPicker
