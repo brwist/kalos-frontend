@@ -378,6 +378,7 @@ export const TimesheetSummary: FC<Props> = ({
                   tempWeek[m][1] +
                   ' \r\n' +
                   tempJobs[i].actions[j].classCode +
+                  ',' +
                   (tempJobs[i].actions[j].time + ' Hrs');
                 if (tempJobs[i].actions[j].time > 0) {
                   if (tempJobs[i].actions[j].billable) {
