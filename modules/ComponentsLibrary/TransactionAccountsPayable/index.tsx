@@ -234,26 +234,24 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     }
   };
 
-  const addJobNumber = (id: number) => {
-    return async (jobString: string) => {
-      try {
-        let jobNumber;
-        if (jobString.includes('-')) {
-          jobNumber = parseInt(jobString.split('-')[1]);
-        } else {
-          jobNumber = parseInt(jobString);
-        }
-        const txn = new Transaction();
-        txn.setId(id);
-        txn.setJobId(jobNumber);
-        txn.setFieldMaskList(['JobId']);
-        await transactionClient.Update(txn);
-        await refresh();
-      } catch (err) {
-        alert('Job number could not be set');
-        console.log(err);
+  const addJobNumber = async (id: number, newJobNumber: string) => {
+    try {
+      let jobNumber;
+      if (newJobNumber.includes('-')) {
+        jobNumber = parseInt(newJobNumber.split('-')[1]);
+      } else {
+        jobNumber = parseInt(newJobNumber);
       }
-    };
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setJobId(jobNumber);
+      txn.setFieldMaskList(['JobId']);
+      await transactionClient.Update(txn);
+      await refresh();
+    } catch (err) {
+      alert('Job number could not be set');
+      console.log(err);
+    }
   };
 
   const updateNotes = async (id: number, updatedNotes: string) => {
@@ -421,9 +419,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                     </Tooltip>,
                     <Prompt
                       key="updateJobNumber"
-                      confirmFn={id => {
+                      confirmFn={newJobNumber => {
                         try {
-                          addJobNumber(Number(id));
+                          addJobNumber(txn.getId(), newJobNumber);
                         } catch (err) {
                           console.error('Failed to add job number: ', err);
                         }
