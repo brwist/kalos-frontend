@@ -49,12 +49,13 @@ interface Props {
   loggedUserId: number;
 }
 
+let pageNumber = 0;
+
 export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
   const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<TransactionList>();
-  const [pageNumber, setPageNumber] = useState<number>(0);
   const [departmentSelected, setDepartmentSelected] = useState<number>(22); // Set to 22 initially so it's not just a "choose department" thing
   const [loading, setLoading] = useState<boolean>(true);
   const clients = {
@@ -273,9 +274,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   };
 
   const refresh = async () => {
-    let req = new Transaction();
-    req.setPageNumber(pageNumber);
-    setTransactions(await TransactionClientService.BatchGet(req));
+    await load();
   };
 
   const copyToClipboard = useCallback((text: string): void => {
@@ -312,9 +311,11 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
-      setPageNumber(pageNumberToChangeTo);
+      console.log('Page # changing to: ', pageNumberToChangeTo);
+      pageNumber = pageNumberToChangeTo;
+      refresh();
     },
-    [setPageNumber],
+    [pageNumber],
   );
 
   const handleSetDepartmentSelected = useCallback(
@@ -330,6 +331,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
 
   const load = useCallback(async () => {
     let req = new Transaction();
+    console.log('Loading req with page #:', pageNumber);
     req.setPageNumber(pageNumber);
     setTransactions(await TransactionClientService.BatchGet(req));
     setLoading(false);
@@ -337,6 +339,8 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   useEffect(() => {
     load();
   }, [load]);
+  console.log('Transactions:', transactions?.getResultsList());
+  console.log('PAGE: ', pageNumber);
   return (
     <>
       <DepartmentPicker
@@ -350,6 +354,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       />
       <SectionBar
         title="Transactions"
+        key={String(pageNumber)}
         pagination={{
           count: transactions ? transactions!.getTotalCount() : 0,
           rowsPerPage: 25,
@@ -358,6 +363,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         }}
       />
       <InfoTable
+        key={transactions?.getResultsList().toString()}
         columns={[
           {
             name: 'Date',
