@@ -12,6 +12,7 @@ import {
   loadTechnicians,
   loadTimesheetDepartments,
   makeFakeRows,
+  OrderDir,
   slackNotify,
   TimesheetDepartmentType,
   timestamp,
@@ -57,6 +58,19 @@ interface Props {
   loggedUserId: number;
 }
 
+interface TransactionSort {
+  sortBy: SortString;
+  sortDir: OrderDir | undefined;
+}
+// Date purchaser dept job # amt description actions assignment
+type SortString =
+  | 'date'
+  | 'purchaser'
+  | 'department_id'
+  | 'job_number'
+  | 'amount'
+  | 'description';
+
 let pageNumber = 0;
 
 export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
@@ -71,6 +85,10 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [sort, setSort] = useState<TransactionSort>({
+    sortBy: 'date',
+    sortDir: 'DESC',
+  } as TransactionSort);
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
@@ -351,6 +369,13 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     [pageNumber],
   );
 
+  const handleChangeSort = useCallback(
+    (newSort: SortString) => {
+      setSort({ ...sort, sortBy: newSort } as TransactionSort);
+    },
+    [setSort],
+  );
+
   const handleSetDepartmentSelected = useCallback(
     (departmentId: number) => {
       setDepartmentSelected(departmentId);
@@ -510,16 +535,21 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         columns={[
           {
             name: 'Date',
-            dir: 'DESC',
+            dir: sort.sortBy == 'date' ? sort.sortDir : undefined,
+            onClick: () => handleChangeSort('date'),
           },
-          { name: 'Purchaser' },
+          {
+            name: 'Purchaser',
+            dir: sort.sortBy == 'purchaser' ? sort.sortDir : undefined,
+            onClick: () => handleChangeSort('purchaser'),
+          },
           {
             name: 'Department',
           },
           { name: 'Job #' },
           {
             name: 'Amount',
-            dir: 'DESC',
+            dir: sort.sortBy == 'amount' ? sort.sortDir : undefined,
           },
           { name: 'Description' },
           { name: 'Actions' },
