@@ -545,13 +545,24 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           },
           {
             name: 'Department',
+            dir: sort.sortBy == 'department_id' ? sort.sortDir : undefined,
+            onClick: () => handleChangeSort('department_id'),
           },
-          { name: 'Job #' },
+          {
+            name: 'Job #',
+            dir: sort.sortBy == 'job_number' ? sort.sortDir : undefined,
+            onClick: () => handleChangeSort('job_number'),
+          },
           {
             name: 'Amount',
             dir: sort.sortBy == 'amount' ? sort.sortDir : undefined,
+            onClick: () => handleChangeSort('amount'),
           },
-          { name: 'Description' },
+          {
+            name: 'Description',
+            dir: sort.sortBy == 'description' ? sort.sortDir : undefined,
+            onClick: () => handleChangeSort('description'),
+          },
           { name: 'Actions' },
           {
             name: 'Assignment',
