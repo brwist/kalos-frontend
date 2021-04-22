@@ -45,6 +45,7 @@ import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { Modal } from '../Modal';
 import { RoleType } from '../Payroll';
+import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 
 interface Props {
   loggedUserId: number;
@@ -568,7 +569,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                         size="small"
                         onClick={() => alert('Would assign')}
                       >
-                        <CopyIcon />
+                        <AssignmentIndIcon />
                       </IconButton>
                     </Tooltip>,
                   ],
