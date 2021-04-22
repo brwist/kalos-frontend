@@ -418,6 +418,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           },
           { name: 'Description' },
           { name: 'Actions' },
+          {
+            name: 'Assignment',
+          }, // So Dani can assign employees to task
         ]}
         data={
           loading
@@ -554,6 +557,21 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                     />,
                   ],
                   actionsFullWidth: true,
+                },
+                {
+                  actions: [
+                    <Tooltip
+                      key="assign"
+                      content="Assign an employee to this task"
+                    >
+                      <IconButton
+                        size="small"
+                        onClick={() => alert('Would assign')}
+                      >
+                        <CopyIcon />
+                      </IconButton>
+                    </Tooltip>,
+                  ],
                 },
               ]) as Data)
         }
