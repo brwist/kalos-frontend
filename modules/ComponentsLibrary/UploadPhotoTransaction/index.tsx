@@ -35,6 +35,7 @@ interface Props {
   title?: string;
   bucket: string;
   onClose: (() => void) | null;
+  onUpload?: (() => void) | null;
   defaultTag?: string;
   defaultPurchase?: number;
   costCenters: TransactionAccountList;
@@ -66,6 +67,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
   defaultPurchase = 'Fuel',
   fullWidth = true,
   role,
+  onUpload,
 }) => {
   const [fileData, setFileData] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
@@ -163,6 +165,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
         setSaved(true);
         setFormKey(formKey + 1);
       }
+
+      if (onUpload) onUpload();
     },
     [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId],
   );

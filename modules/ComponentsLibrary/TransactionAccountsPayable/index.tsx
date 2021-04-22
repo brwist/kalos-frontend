@@ -363,6 +363,10 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
             costCenters={new TransactionAccountList()}
             fullWidth={false}
             role={role}
+            onUpload={() => {
+              handleSetCreatingTransaction(false);
+              refresh();
+            }}
           />
         </Modal>
       ) : (
@@ -394,7 +398,10 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         ]}
       />
       <InfoTable
-        key={transactions?.getResultsList().toString()}
+        key={
+          transactions?.getResultsList().toString() +
+          String(creatingTransaction)
+        }
         columns={[
           {
             name: 'Date',
