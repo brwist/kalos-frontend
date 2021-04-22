@@ -42,7 +42,7 @@ interface Props {
   userID: number;
 }
 
-type FilterData = {
+export type FilterData = {
   departmentId: number;
   employeeId: number;
   week: string;
