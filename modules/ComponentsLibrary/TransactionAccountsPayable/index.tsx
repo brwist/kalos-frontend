@@ -7,12 +7,15 @@ import { parseISO } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import {
+  getCustomerName,
   getSlackID,
+  loadTechnicians,
   makeFakeRows,
   slackNotify,
   timestamp,
   TransactionClientService,
   UserClientService,
+  UserType,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Prompt } from '../../Prompt/main';
@@ -20,7 +23,7 @@ import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
 import { Data, InfoTable } from '../InfoTable';
-import { DepartmentPicker } from '../Pickers';
+import { DepartmentPicker, EmployeePicker } from '../Pickers';
 import { SectionBar } from '../SectionBar';
 import IconButton from '@material-ui/core/IconButton';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
@@ -34,7 +37,7 @@ import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT } from '../../../constants';
+import { ENDPOINT, OPTION_ALL } from '../../../constants';
 import { GalleryData } from '../Gallery';
 import {
   TransactionActivityClient,
@@ -44,8 +47,9 @@ import { reject } from 'lodash';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { Modal } from '../Modal';
-import { RoleType } from '../Payroll';
+import { FilterData, RoleType } from '../Payroll';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
+import { PlainForm, Schema } from '../PlainForm';
 
 interface Props {
   loggedUserId: number;
@@ -62,6 +66,14 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
   const [role, setRole] = useState<RoleType>();
+  const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
+  const [employees, setEmployees] = useState<UserType[]>([]);
+  const [filter, setFilter] = useState<FilterData>({
+    departmentId: 0,
+    employeeId: 0,
+    week: OPTION_ALL,
+  });
+
   const clients = {
     user: new UserClient(ENDPOINT),
     email: new EmailClient(ENDPOINT),
@@ -307,6 +319,27 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     }
   }, []);
 
+  const handleSetAssigningUser = useCallback(
+    (isAssigningUser: boolean) => {
+      setAssigningUser(isAssigningUser);
+    },
+    [setAssigningUser],
+  );
+
+  const handleSetFilter = (d: FilterData) => {
+    if (!d.week) {
+      d.week = OPTION_ALL;
+    }
+    if (!d.departmentId) {
+      d.departmentId = 0;
+    }
+    if (!d.employeeId) {
+      d.employeeId = 0;
+    }
+    setFilter(d);
+    // {departmentId: 18, week: undefined, employeeId: undefined}
+  };
+
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
       pageNumber = pageNumberToChangeTo;
@@ -334,6 +367,12 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   };
 
   const load = useCallback(async () => {
+    const employees = await loadTechnicians();
+    let sortedEmployeeList = employees.sort((a, b) =>
+      a.lastname > b.lastname ? 1 : -1,
+    );
+    setEmployees(sortedEmployeeList);
+
     let req = new Transaction();
     console.log('Loading req with page #:', pageNumber);
     req.setPageNumber(pageNumber);
@@ -347,11 +386,48 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
 
     setLoading(false);
   }, []);
+
+  const SCHEMA: Schema<FilterData> = [
+    [
+      {
+        name: 'employeeId',
+        label: 'Select Employee',
+        options: [
+          { label: OPTION_ALL, value: 0 },
+          ...employees
+            .filter(el => {
+              if (filter.departmentId === 0) return true;
+              return el.employeeDepartmentId === filter.departmentId;
+            })
+            .map(el => ({
+              label: getCustomerName(el),
+              value: el.id,
+            })),
+        ],
+      },
+    ],
+  ];
+
   useEffect(() => {
     load();
   }, [load]);
   return (
     <>
+      {assigningUser ? (
+        <Modal
+          open={assigningUser}
+          onClose={() => handleSetAssigningUser(false)}
+        >
+          <PlainForm
+            data={filter}
+            onChange={handleSetFilter}
+            schema={SCHEMA}
+            className="PayrollFilter"
+          />
+        </Modal>
+      ) : (
+        <></>
+      )}
       {creatingTransaction ? (
         <Modal
           open={creatingTransaction}
@@ -567,7 +643,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                     >
                       <IconButton
                         size="small"
-                        onClick={() => alert('Would assign')}
+                        onClick={() => handleSetAssigningUser(true)}
                       >
                         <AssignmentIndIcon />
                       </IconButton>
