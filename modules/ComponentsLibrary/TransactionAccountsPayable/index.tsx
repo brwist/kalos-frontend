@@ -352,6 +352,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
             onClose={() => handleSetCreatingTransaction(false)}
             costCenters={new TransactionAccountList()}
             fullWidth={false}
+            role="Accounts_Payable" // this page should only be visible to accounts payable
           />
         </Modal>
       ) : (

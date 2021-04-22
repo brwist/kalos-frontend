@@ -27,6 +27,8 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { type } from 'os';
 import { AccountPicker } from '../Pickers';
 import { id } from 'date-fns/locale';
+import { RoleType } from '../Payroll';
+import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
 
 interface Props {
   loggedUserId: number;
@@ -37,6 +39,7 @@ interface Props {
   defaultPurchase?: number;
   costCenters: TransactionAccountList;
   fullWidth?: boolean;
+  role?: RoleType;
 }
 
 type Entry = {
@@ -62,6 +65,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
   defaultTag = 'Receipt',
   defaultPurchase = 'Fuel',
   fullWidth = true,
+  role,
 }) => {
   const [fileData, setFileData] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
@@ -189,7 +193,10 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'tag',
         label: 'Tag',
         required: true,
-        options: SUBJECT_TAGS_TRANSACTIONS,
+        options:
+          role != 'Accounts_Payable'
+            ? SUBJECT_TAGS_TRANSACTIONS
+            : SUBJECT_TAGS_ACCOUNTS_PAYABLE,
       },
     ],
     [
