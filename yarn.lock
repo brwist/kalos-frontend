@@ -1411,10 +1411,17 @@
     hyphen "^1.1.1"
     ramda "^0.26.1"
 
-"@react-pdf/unicode-properties@2.3.0", "@react-pdf/unicode-properties@^2.2.0":
+"@react-pdf/unicode-properties@2.3.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@react-pdf/unicode-properties/-/unicode-properties-2.3.0.tgz#822a7fda81b88a054fafd782170898c898b180ec"
   integrity sha512-ELUau972GjR9KCZLn3LDtSOeHQ8dAH2QVQUXw9Qn/wFeX0vU13GKZ9LDWRCgL1qBKvPo/lIe4On3U2TS2KzEbQ==
+  dependencies:
+    unicode-trie "^0.3.0"
+
+"@react-pdf/unicode-properties@^2.2.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@react-pdf/unicode-properties/-/unicode-properties-2.4.0.tgz#8cf8fe91684bba55ef7986bef6ed81f6caa0e7c9"
+  integrity sha512-k/cY6l3F2Rgmn0YFd7vqDs/nAoVcT0k+ue8Z1Xz0cqa4IHx3dzd+fCoAHMBddoijLKhPKqh2t+593rWO5FMSSw==
   dependencies:
     unicode-trie "^0.3.0"
 
@@ -1598,9 +1605,9 @@
     "@types/node" "*"
 
 "@types/google-protobuf@^3.7.2":
-  version "3.15.0"
-  resolved "https://registry.yarnpkg.com/@types/google-protobuf/-/google-protobuf-3.15.0.tgz#1df2507453a5da732b31846f0c8a64116aef21be"
-  integrity sha512-IshlR1QWD9LYQRlYMfF8dG6PqxrZHddlWB8O5+HCGwH1nv2JQ887fMwRRlXOmUEFehvg+k1THx2h7RbqPUPkGA==
+  version "3.15.1"
+  resolved "https://registry.yarnpkg.com/@types/google-protobuf/-/google-protobuf-3.15.1.tgz#18328fd1bd3ae42dbdd55aaddbf466d17f8bfc88"
+  integrity sha512-GpEv+jQXPTK7U7oznibH/L6BZMANKNISVZaSM6d5O2nnuKw8N3YIoyxaKrbIR4H4HF8ksxoFzU0kpdksJK7jfw==
 
 "@types/graceful-fs@^4.1.2":
   version "4.1.5"
