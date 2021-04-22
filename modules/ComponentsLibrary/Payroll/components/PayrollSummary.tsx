@@ -53,7 +53,7 @@ export const PayrollSummary: FC<Props> = ({
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
   );
-  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 6));
+  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -68,7 +68,7 @@ export const PayrollSummary: FC<Props> = ({
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
         startDate: week,
-        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+        endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
     const getTimesheets = createTimesheetFetchFunction(filter);
