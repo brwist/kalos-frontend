@@ -53,6 +53,7 @@ import { Modal } from '../Modal';
 import { FilterData, RoleType } from '../Payroll';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import { PlainForm, Schema } from '../PlainForm';
+import { isUndefined } from 'node:util';
 
 interface Props {
   loggedUserId: number;
@@ -60,7 +61,7 @@ interface Props {
 
 interface TransactionSort {
   sortBy: SortString;
-  sortDir: OrderDir | undefined;
+  sortDir: OrderDir | ' ' | undefined;
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
@@ -369,12 +370,24 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     [pageNumber],
   );
 
-  const handleChangeSort = useCallback(
-    (newSort: SortString) => {
-      setSort({ ...sort, sortBy: newSort } as TransactionSort);
-    },
-    [setSort],
-  );
+  const handleChangeSort = (newSort: SortString) => {
+    let newSortDir;
+
+    if (newSort == sort.sortBy) {
+      if (sort.sortDir == 'ASC') {
+        newSortDir = 'DESC';
+      } else if (sort.sortDir == 'DESC') {
+        newSortDir = ' ';
+      } else if (sort.sortDir == ' ') {
+        newSortDir = 'ASC';
+      }
+    }
+
+    setSort({
+      sortBy: newSort,
+      sortDir: newSortDir ? newSortDir : sort.sortDir,
+    } as TransactionSort);
+  };
 
   const handleSetDepartmentSelected = useCallback(
     (departmentId: number) => {
@@ -535,32 +548,62 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         columns={[
           {
             name: 'Date',
-            dir: sort.sortBy == 'date' ? sort.sortDir : undefined,
+            dir:
+              sort.sortBy == 'date'
+                ? sort.sortDir != ' '
+                  ? sort.sortDir
+                  : undefined
+                : undefined,
             onClick: () => handleChangeSort('date'),
           },
           {
             name: 'Purchaser',
-            dir: sort.sortBy == 'purchaser' ? sort.sortDir : undefined,
+            dir:
+              sort.sortBy == 'purchaser'
+                ? sort.sortDir != ' '
+                  ? sort.sortDir
+                  : undefined
+                : undefined,
             onClick: () => handleChangeSort('purchaser'),
           },
           {
             name: 'Department',
-            dir: sort.sortBy == 'department_id' ? sort.sortDir : undefined,
+            dir:
+              sort.sortBy == 'department_id'
+                ? sort.sortDir != ' '
+                  ? sort.sortDir
+                  : undefined
+                : undefined,
             onClick: () => handleChangeSort('department_id'),
           },
           {
             name: 'Job #',
-            dir: sort.sortBy == 'job_number' ? sort.sortDir : undefined,
+            dir:
+              sort.sortBy == 'job_number'
+                ? sort.sortDir != ' '
+                  ? sort.sortDir
+                  : undefined
+                : undefined,
             onClick: () => handleChangeSort('job_number'),
           },
           {
             name: 'Amount',
-            dir: sort.sortBy == 'amount' ? sort.sortDir : undefined,
+            dir:
+              sort.sortBy == 'amount'
+                ? sort.sortDir != ' '
+                  ? sort.sortDir
+                  : undefined
+                : undefined,
             onClick: () => handleChangeSort('amount'),
           },
           {
             name: 'Description',
-            dir: sort.sortBy == 'description' ? sort.sortDir : undefined,
+            dir:
+              sort.sortBy == 'description'
+                ? sort.sortDir != ' '
+                  ? sort.sortDir
+                  : undefined
+                : undefined,
             onClick: () => handleChangeSort('description'),
           },
           { name: 'Actions' },
