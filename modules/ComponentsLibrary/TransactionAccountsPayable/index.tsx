@@ -12,6 +12,7 @@ import {
   slackNotify,
   timestamp,
   TransactionClientService,
+  UserClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Prompt } from '../../Prompt/main';
@@ -58,6 +59,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const [departmentSelected, setDepartmentSelected] = useState<number>(22); // Set to 22 initially so it's not just a "choose department" thing
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
+  const [role, setRole] = useState<RoleType>();
   const clients = {
     user: new UserClient(ENDPOINT),
     email: new EmailClient(ENDPOINT),
@@ -334,6 +336,13 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     console.log('Loading req with page #:', pageNumber);
     req.setPageNumber(pageNumber);
     setTransactions(await TransactionClientService.BatchGet(req));
+
+    const user = await UserClientService.loadUserById(loggedUserId);
+
+    const role = user.permissionGroupsList.find(p => p.type === 'role');
+
+    setRole(role);
+
     setLoading(false);
   }, []);
   useEffect(() => {
@@ -352,7 +361,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
             onClose={() => handleSetCreatingTransaction(false)}
             costCenters={new TransactionAccountList()}
             fullWidth={false}
-            role="Accounts_Payable" // this page should only be visible to accounts payable
+            role={role}
           />
         </Modal>
       ) : (
