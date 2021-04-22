@@ -65,7 +65,7 @@ interface TransactionSort {
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
-  | 'date'
+  | 'timestamp'
   | 'purchaser'
   | 'department_id'
   | 'job_number'
@@ -87,7 +87,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [sort, setSort] = useState<TransactionSort>({
-    sortBy: 'date',
+    sortBy: 'timestamp',
     sortDir: 'DESC',
   } as TransactionSort);
   const [filter, setFilter] = useState<FilterData>({
@@ -387,6 +387,8 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       sortBy: newSort,
       sortDir: newSortDir ? newSortDir : sort.sortDir,
     } as TransactionSort);
+
+    refresh();
   };
 
   const handleSetDepartmentSelected = useCallback(
@@ -418,6 +420,8 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     setDepartments(departments);
 
     let req = new Transaction();
+    req.setOrderBy(sort.sortBy);
+    req.setOrderDir(sort.sortDir ? sort.sortDir : 'DESC');
     console.log('Loading req with page #:', pageNumber);
     req.setPageNumber(pageNumber);
     setTransactions(await TransactionClientService.BatchGet(req));
@@ -549,12 +553,12 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'Date',
             dir:
-              sort.sortBy == 'date'
+              sort.sortBy == 'timestamp'
                 ? sort.sortDir != ' '
                   ? sort.sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('date'),
+            onClick: () => handleChangeSort('timestamp'),
           },
           {
             name: 'Purchaser',
