@@ -10,8 +10,10 @@ import {
   getCustomerName,
   getSlackID,
   loadTechnicians,
+  loadTimesheetDepartments,
   makeFakeRows,
   slackNotify,
+  TimesheetDepartmentType,
   timestamp,
   TransactionClientService,
   UserClientService,
@@ -68,6 +70,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const [role, setRole] = useState<RoleType>();
   const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
+  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
@@ -373,6 +376,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     );
     setEmployees(sortedEmployeeList);
 
+    const departments = await loadTimesheetDepartments();
+    setDepartments(departments);
+
     let req = new Transaction();
     console.log('Loading req with page #:', pageNumber);
     req.setPageNumber(pageNumber);
@@ -390,6 +396,22 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const SCHEMA: Schema<FilterData> = [
     [
       {
+        name: 'departmentId',
+        label: 'From department:',
+        options: [
+          {
+            label: OPTION_ALL,
+            value: 0,
+          },
+          ...departments.map(dept => ({
+            label: dept.value + ' | ' + dept.description,
+            value: dept.id,
+          })),
+        ],
+      },
+    ],
+    [
+      {
         name: 'employeeId',
         label: 'Select Employee',
         options: [
@@ -400,7 +422,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
               return el.employeeDepartmentId === filter.departmentId;
             })
             .map(el => ({
-              label: getCustomerName(el),
+              label: getCustomerName(el) + ' (ID: ' + el.id + ')',
               value: el.id,
             })),
         ],
@@ -418,6 +440,12 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           open={assigningUser}
           onClose={() => handleSetAssigningUser(false)}
         >
+          <SectionBar
+            title="Assign Employee to Task"
+            actions={[
+              { label: 'Assign', onClick: () => alert('Clicked assign') },
+            ]}
+          />
           <PlainForm
             data={filter}
             onChange={handleSetFilter}
