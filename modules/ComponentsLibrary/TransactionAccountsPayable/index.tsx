@@ -44,6 +44,7 @@ import { reject } from 'lodash';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { Modal } from '../Modal';
+import { RoleType } from '../Payroll';
 
 interface Props {
   loggedUserId: number;
