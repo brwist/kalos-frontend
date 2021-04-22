@@ -40,6 +40,9 @@ import {
   TransactionActivity,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { reject } from 'lodash';
+import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
+import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { Modal } from '../Modal';
 
 interface Props {
   loggedUserId: number;
@@ -54,6 +57,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<TransactionList>();
   const [departmentSelected, setDepartmentSelected] = useState<number>(22); // Set to 22 initially so it's not just a "choose department" thing
   const [loading, setLoading] = useState<boolean>(true);
+  const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
   const clients = {
     user: new UserClient(ENDPOINT),
     email: new EmailClient(ENDPOINT),
@@ -314,6 +318,13 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     [setDepartmentSelected],
   );
 
+  const handleSetCreatingTransaction = useCallback(
+    (isCreatingTransaction: boolean) => {
+      setCreatingTransaction(isCreatingTransaction);
+    },
+    [setCreatingTransaction],
+  );
+
   const openFileInput = () => {
     FileInput.current && FileInput.current.click();
   };
@@ -330,6 +341,22 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   }, [load]);
   return (
     <>
+      {creatingTransaction ? (
+        <Modal
+          open={creatingTransaction}
+          onClose={() => handleSetCreatingTransaction(false)}
+        >
+          <UploadPhotoTransaction
+            loggedUserId={loggedUserId}
+            bucket="testbuckethelios"
+            onClose={() => handleSetCreatingTransaction(false)}
+            costCenters={new TransactionAccountList()}
+            fullWidth={false}
+          />
+        </Modal>
+      ) : (
+        <> </>
+      )}
       <DepartmentPicker
         selected={departmentSelected}
         renderItem={i => (
@@ -348,6 +375,12 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           page: pageNumber,
           onChangePage: handleChangePage,
         }}
+        actions={[
+          {
+            label: 'New Transaction',
+            onClick: () => handleSetCreatingTransaction(true), // makes uploadPhotoTransaction appear in a modal
+          },
+        ]}
       />
       <InfoTable
         key={transactions?.getResultsList().toString()}

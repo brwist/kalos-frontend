@@ -36,6 +36,7 @@ interface Props {
   defaultTag?: string;
   defaultPurchase?: number;
   costCenters: TransactionAccountList;
+  fullWidth?: boolean;
 }
 
 type Entry = {
@@ -60,6 +61,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
   title = 'Upload Transaction',
   defaultTag = 'Receipt',
   defaultPurchase = 'Fuel',
+  fullWidth = true,
 }) => {
   const [fileData, setFileData] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
@@ -252,6 +254,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         )
       }
       error={error && <>Error while uploading file. Please try again.</>}
+      fullWidth={fullWidth}
     />
   );
 };
