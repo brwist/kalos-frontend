@@ -342,7 +342,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
 
     const role = user.permissionGroupsList.find(p => p.type === 'role');
 
-    setRole(role);
+    if (role) setRole(role.name as RoleType);
 
     setLoading(false);
   }, []);
