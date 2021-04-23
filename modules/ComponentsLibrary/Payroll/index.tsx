@@ -211,8 +211,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
   ];
   let isTimesheet = true;
   let isTimeoffRequests = true;
-  let isSpiffsWeekly = true;
-  let isSpiffsMonthly = true;
+  let isSpiffs = true;
   let isToolLogs = true;
   let isPerDiem = true;
   let isTrips = true;
@@ -287,10 +286,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
                       },
                     ]
                   : []),
-                ...(isSpiffsWeekly
+                ...(isSpiffs
                   ? [
                       {
-                        label: 'Spiffs Weekly',
+                        label: 'Spiff/Bonus/Commission',
                         content: (
                           <Spiffs
                             employeeId={filter.employeeId}
@@ -299,25 +298,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             loggedUserId={userID}
                             departmentId={filter.departmentId}
                             key={filter.departmentId + 'key'}
-                            option="Weekly"
-                          />
-                        ),
-                      },
-                    ]
-                  : []),
-                ...(isSpiffsMonthly
-                  ? [
-                      {
-                        label: 'Spiffs Monthly',
-                        content: (
-                          <Spiffs
-                            employeeId={filter.employeeId}
-                            week={filter.week}
-                            role={role}
-                            loggedUserId={userID}
-                            departmentId={filter.departmentId}
-                            key={filter.departmentId + 'key2'}
-                            option="Monthly"
                           />
                         ),
                       },
@@ -368,10 +348,11 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             key={
                               loadedPerDiemIds.toString() +
                               filter.employeeId +
-                              filter.departmentId
+                              filter.departmentId +
+                              loggedUser
                             }
-                            canProcessPayroll
-                            canApprove
+                            canProcessPayroll={role === 'Payroll'}
+                            canApprove={role === 'Manager'}
                             canSlackMessageUsers
                             hoverable
                             departmentId={filter.departmentId}
