@@ -808,6 +808,7 @@ export interface GetTimesheetConfig {
   startDate?: string;
   endDate?: string;
   payrollProcessed?: boolean;
+  approved?: boolean;
 }
 export const loadPerDiemByUserIdAndDateStartedAudited = async (
   userId: number,
@@ -835,6 +836,8 @@ export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
   }
   if (config.payrollProcessed) {
     req.setPayrollProcessed(true);
+  }
+  if (config.approved === true) {
     req.setRequestStatus(1);
   }
   req.setPageNumber(config.page || 0);
