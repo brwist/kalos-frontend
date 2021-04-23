@@ -135,6 +135,7 @@ export const TimeOff: FC<Props> = ({
         requestType: 9,
         startDate: startDate,
         endDate: endDate,
+        payrollProcessed: true,
       };
       const results = (await loadTimeoffRequests(filter)).resultsList;
       let total = 0;
