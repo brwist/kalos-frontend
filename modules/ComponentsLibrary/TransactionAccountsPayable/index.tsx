@@ -379,6 +379,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       } else if (sortDir == ' ') {
         newSortDir = 'ASC';
       }
+    } else {
+      newSortDir = 'DESC';
+      pageNumber = 0;
     }
 
     sortBy = newSort;
