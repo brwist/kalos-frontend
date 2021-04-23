@@ -416,8 +416,12 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sort.sortBy);
+    console.log(
+      'SORT DIR IN RESET: ',
+      sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
+    );
     req.setOrderDir(
-      sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'ASC' : 'DESC',
+      sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
     req.setPageNumber(pageNumber);
     setTransactions(await TransactionClientService.BatchGet(req));
