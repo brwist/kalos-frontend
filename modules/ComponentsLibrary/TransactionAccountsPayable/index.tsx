@@ -66,15 +66,15 @@ interface TransactionSort {
 // Date purchaser dept job # amt description actions assignment
 type SortString =
   | 'timestamp'
-  | 'purchaser'
+  | 'owner_id'
   | 'department_id'
   | 'job_number'
   | 'amount'
   | 'description';
 
 let pageNumber = 0;
-let sortDir: string | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
-
+let sortDir: OrderDir | ' ' | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
+let sortBy: SortString | undefined = 'timestamp';
 export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
@@ -87,10 +87,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
-  const [sort, setSort] = useState<TransactionSort>({
-    sortBy: 'timestamp',
-    sortDir: 'DESC',
-  } as TransactionSort);
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
@@ -373,23 +369,19 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   );
 
   const handleChangeSort = (newSort: SortString) => {
-    let newSortDir;
+    let newSortDir: OrderDir | ' ' | undefined;
 
-    if (newSort == sort.sortBy) {
-      if (sort.sortDir == 'ASC') {
+    if (newSort == sortBy) {
+      if (sortDir == 'ASC') {
         newSortDir = 'DESC';
-      } else if (sort.sortDir == 'DESC') {
+      } else if (sortDir == 'DESC') {
         newSortDir = ' ';
-      } else if (sort.sortDir == ' ') {
+      } else if (sortDir == ' ') {
         newSortDir = 'ASC';
       }
     }
 
-    setSort({
-      sortBy: newSort,
-      sortDir: newSortDir ? newSortDir : sort.sortDir,
-    } as TransactionSort);
-
+    sortBy = newSort;
     sortDir = newSortDir;
 
     refresh();
@@ -415,7 +407,8 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
 
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
-    req.setOrderBy(sort.sortBy);
+    console.log('Sort by: ', sortBy);
+    req.setOrderBy(sortBy ? sortBy : 'timestamp');
     console.log(
       'SORT DIR IN RESET: ',
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
@@ -566,9 +559,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'Date',
             dir:
-              sort.sortBy == 'timestamp'
-                ? sort.sortDir != ' '
-                  ? sort.sortDir
+              sortBy == 'timestamp'
+                ? sortDir != ' '
+                  ? sortDir
                   : undefined
                 : undefined,
             onClick: () => handleChangeSort('timestamp'),
@@ -576,19 +569,19 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'Purchaser',
             dir:
-              sort.sortBy == 'purchaser'
-                ? sort.sortDir != ' '
-                  ? sort.sortDir
+              sortBy == 'owner_id'
+                ? sortDir != ' '
+                  ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('purchaser'),
+            onClick: () => handleChangeSort('owner_id'),
           },
           {
             name: 'Department',
             dir:
-              sort.sortBy == 'department_id'
-                ? sort.sortDir != ' '
-                  ? sort.sortDir
+              sortBy == 'department_id'
+                ? sortDir != ' '
+                  ? sortDir
                   : undefined
                 : undefined,
             onClick: () => handleChangeSort('department_id'),
@@ -596,9 +589,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'Job #',
             dir:
-              sort.sortBy == 'job_number'
-                ? sort.sortDir != ' '
-                  ? sort.sortDir
+              sortBy == 'job_number'
+                ? sortDir != ' '
+                  ? sortDir
                   : undefined
                 : undefined,
             onClick: () => handleChangeSort('job_number'),
@@ -606,9 +599,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'Amount',
             dir:
-              sort.sortBy == 'amount'
-                ? sort.sortDir != ' '
-                  ? sort.sortDir
+              sortBy == 'amount'
+                ? sortDir != ' '
+                  ? sortDir
                   : undefined
                 : undefined,
             onClick: () => handleChangeSort('amount'),
@@ -616,9 +609,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'Description',
             dir:
-              sort.sortBy == 'description'
-                ? sort.sortDir != ' '
-                  ? sort.sortDir
+              sortBy == 'description'
+                ? sortDir != ' '
+                  ? sortDir
                   : undefined
                 : undefined,
             onClick: () => handleChangeSort('description'),
