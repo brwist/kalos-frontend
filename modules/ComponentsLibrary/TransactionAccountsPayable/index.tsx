@@ -92,6 +92,11 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     employeeId: 0,
     week: OPTION_ALL,
   });
+  const [departmentFilter, setDepartmentFilter] = useState<FilterData>({
+    departmentId: 0,
+    employeeId: 0,
+    week: OPTION_ALL,
+  });
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -360,6 +365,20 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     // {departmentId: 18, week: undefined, employeeId: undefined}
   };
 
+  const handleSetDepartmentFilter = (d: FilterData) => {
+    if (!d.week) {
+      d.week = OPTION_ALL;
+    }
+    if (!d.departmentId) {
+      d.departmentId = 0;
+    }
+    if (!d.employeeId) {
+      d.employeeId = 0;
+    }
+    setDepartmentFilter(d);
+    // {departmentId: 18, week: undefined, employeeId: undefined}
+  };
+
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
       pageNumber = pageNumberToChangeTo;
@@ -528,6 +547,12 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       ) : (
         <> </>
       )}
+      <PlainForm
+        data={departmentFilter}
+        onChange={handleSetDepartmentFilter}
+        schema={SCHEMA}
+        className="PayrollFilter"
+      />
       <DepartmentPicker
         selected={departmentSelected}
         renderItem={i => (
