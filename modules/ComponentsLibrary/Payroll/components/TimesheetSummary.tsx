@@ -107,6 +107,7 @@ export const TimesheetSummary: FC<Props> = ({
       requestType: 9,
       startDate: startDate,
       endDate: endDate,
+      approved: true,
     };
     const results = (await loadTimeoffRequests(filter)).resultsList;
     let total = 0;
