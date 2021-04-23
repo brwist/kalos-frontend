@@ -233,59 +233,64 @@ export const TimesheetSummary: FC<Props> = ({
 
     let tempJobs = await getTimeoff();
     for (let i = 0; i < results.length; i++) {
-      let tempJob = {
-        jobId:
-          results[i].toObject().eventId === 0
-            ? results[i].toObject().referenceNumber === ''
-              ? 'None'
-              : results[i].toObject().referenceNumber
-            : results[i].toObject().eventId.toString(),
-        actions: [
-          {
-            time: roundNumber(
-              differenceInMinutes(
-                parseISO(results[i].toObject().timeFinished),
+      if (
+        !results[i].toObject().referenceNumber.includes('PTO') &&
+        !results[i].toObject().briefDescription.includes('PTO')
+      ) {
+        let tempJob = {
+          jobId:
+            results[i].toObject().eventId === 0
+              ? results[i].toObject().referenceNumber === ''
+                ? 'None'
+                : results[i].toObject().referenceNumber
+              : results[i].toObject().eventId.toString(),
+          actions: [
+            {
+              time: roundNumber(
+                differenceInMinutes(
+                  parseISO(results[i].toObject().timeFinished),
+                  parseISO(results[i].toObject().timeStarted),
+                ) / 60,
+              ),
+              classCode:
+                results[i].toObject().departmentName.substr(0, 3) +
+                '-' +
+                results[i].toObject().classCode?.id,
+              billable: results[i].toObject().classCode!.billable,
+              day: format(
                 parseISO(results[i].toObject().timeStarted),
-              ) / 60,
-            ),
-            classCode:
-              results[i].toObject().departmentName.substr(0, 3) +
-              '-' +
-              results[i].toObject().classCode?.id,
-            billable: results[i].toObject().classCode!.billable,
-            day: format(
-              parseISO(results[i].toObject().timeStarted),
-              'yyyy-MM-dd',
-            ),
-            departmentCode: results[i].toObject().departmentName,
-          },
-        ],
-      };
-      let foundJob = false;
-      let foundCode = false;
-      for (let j = 0; j < tempJobs.length; j++) {
-        for (let l = 0; l < tempJobs[j].actions.length; l++) {
-          if (tempJobs[j].jobId === tempJob.jobId) {
-            foundJob = true;
-            if (
-              tempJob.actions[0].classCode ===
-                tempJobs[j].actions[l].classCode &&
-              tempJob.actions[0].day === tempJobs[j].actions[l].day
-            ) {
-              tempJobs[j].actions[l].time += tempJob.actions[0].time;
-              foundCode = true;
-              break;
+                'yyyy-MM-dd',
+              ),
+              departmentCode: results[i].toObject().departmentName,
+            },
+          ],
+        };
+        let foundJob = false;
+        let foundCode = false;
+        for (let j = 0; j < tempJobs.length; j++) {
+          for (let l = 0; l < tempJobs[j].actions.length; l++) {
+            if (tempJobs[j].jobId === tempJob.jobId) {
+              foundJob = true;
+              if (
+                tempJob.actions[0].classCode ===
+                  tempJobs[j].actions[l].classCode &&
+                tempJob.actions[0].day === tempJobs[j].actions[l].day
+              ) {
+                tempJobs[j].actions[l].time += tempJob.actions[0].time;
+                foundCode = true;
+                break;
+              }
             }
           }
+          if (foundJob === true && foundCode === false) {
+            tempJobs[j].actions.push(tempJob.actions[0]);
+            break;
+          }
         }
-        if (foundJob === true && foundCode === false) {
-          tempJobs[j].actions.push(tempJob.actions[0]);
-          break;
+        if (foundJob === false) {
+          tempJobs.push(tempJob);
+          continue;
         }
-      }
-      if (foundJob === false) {
-        tempJobs.push(tempJob);
-        continue;
       }
     }
     setTimesheets(results);
