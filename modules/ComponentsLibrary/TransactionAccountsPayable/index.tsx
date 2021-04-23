@@ -68,7 +68,7 @@ type SortString =
   | 'timestamp'
   | 'owner_id'
   | 'department_id'
-  | 'job_number'
+  | 'job_id'
   | 'amount'
   | 'description';
 
@@ -592,12 +592,12 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'Job #',
             dir:
-              sortBy == 'job_number'
+              sortBy == 'job_id'
                 ? sortDir != ' '
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('job_number'),
+            onClick: () => handleChangeSort('job_id'),
           },
           {
             name: 'Amount',
