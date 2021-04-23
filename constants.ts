@@ -267,7 +267,10 @@ export const PERMISSION_ROLE = 'role';
 export const PERMISSION_DEPARTMENT = 'department';
 export const PERMISSION_NAME_MANAGER = 'Manager';
 
+export const IRS_SUGGESTED_MILE_FACTOR = 0.56; // $0.56 a mile
+
 export default {
+  IRS_SUGGESTED_MILE_FACTOR,
   BASE_URL,
   EVENT_STATUS_LIST,
   DUMMY_PWD,
