@@ -161,9 +161,7 @@ export const ELEVATION = {
   modals: '0px 20px 32px #00000052',
 };
 
-// Old endpoint:
-export const ENDPOINT = 'https://core-dev.kalosflorida.com:8443';
-//export const ENDPOINT = 'https://dev-core.kalosflorida.com';
+export const ENDPOINT = 'https://dev-core.kalosflorida.com';
 
 export const QUOTE_PART_AVAILABILITY: { [key: number]: string } = {
   1: 'local',

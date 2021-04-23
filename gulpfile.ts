@@ -321,11 +321,16 @@ async function releaseBuild(target: string) {
         jsonPlugin(),
         peerDependencies(),
         replace({
-          'process.env.NODE_ENV': JSON.stringify('production'),
-          'core-dev.kalosflorida.com': 'core.kalosflorida.com',
-          'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
-          'https://dev-core.kalosflorida.com':
-            'https://core.kalosflorida.com:8443',
+          include: ['./**/*.js'],
+          values: {
+            'process.env.NODE_ENV': JSON.stringify('production'),
+            //'core-dev.kalosflorida.com': 'core.kalosflorida.com',
+            'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
+            'https://dev-core.kalosflorida.com': JSON.stringify(
+              'https://core.kalosflorida.com:8443',
+            ),
+          },
+          delimiter: ['', ''],
         }),
       ],
     });
@@ -340,6 +345,11 @@ async function releaseBuild(target: string) {
       plugins: [],
     });
   } catch (err) {
+    console.log('in error');
+    console.log('in error');
+    console.log('in error');
+    console.log('in error');
+    console.log('in error');
     bundle = await rollup.rollup({
       input: inputStr,
       plugins: [
@@ -358,8 +368,16 @@ async function releaseBuild(target: string) {
         jsonPlugin(),
         peerDependencies(),
         replace({
-          'process.env.NODE_ENV': JSON.stringify('production'),
-          'core-dev.kalosflorida.com': 'core.kalosflorida.com',
+          include: ['./**/*.js'],
+          values: {
+            'process.env.NODE_ENV': JSON.stringify('production'),
+            //'core-dev.kalosflorida.com': 'core.kalosflorida.com',
+            'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
+            'https://dev-core.kalosflorida.com': JSON.stringify(
+              'https://core.kalosflorida.com:8443',
+            ),
+          },
+          delimiter: ['', ''],
         }),
       ],
     });
@@ -406,12 +424,12 @@ async function rollupBuild(t: string | undefined) {
       less({
         output: `build/modules/${target}Less.css`,
       }),
+      minify && terser(),
       image(),
       jsonPlugin(),
       peerDependencies(),
       replace({
         'process.env.NODE_ENV': JSON.stringify('production'),
-        'core-dev.kalosflorida.com': 'core.kalosflorida.com',
       }),
     ],
   });
@@ -427,6 +445,12 @@ async function rollupBuild(t: string | undefined) {
     },
     plugins: [],
   });
+  sh.sed(
+    '-i',
+    'dev-core.kalosflorida.com',
+    'core.kalosflorida.com:8443',
+    `build/modules/${target}.js`,
+  );
   sh.sed(
     '-i',
     'bufferEs6.hasOwnProperty(key$2)',

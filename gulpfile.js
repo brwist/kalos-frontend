@@ -386,10 +386,14 @@ function releaseBuild(target) {
                                 jsonPlugin(),
                                 peerDependencies(),
                                 replace({
-                                    'process.env.NODE_ENV': JSON.stringify('production'),
-                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com',
-                                    'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
-                                    'https://dev-core.kalosflorida.com': 'https://core.kalosflorida.com:8443'
+                                    include: ['./**/*.js'],
+                                    values: {
+                                        'process.env.NODE_ENV': JSON.stringify('production'),
+                                        //'core-dev.kalosflorida.com': 'core.kalosflorida.com',
+                                        'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
+                                        'https://dev-core.kalosflorida.com': JSON.stringify('https://core.kalosflorida.com:8443')
+                                    },
+                                    delimiter: ['', '']
                                 }),
                             ]
                         })];
@@ -410,6 +414,11 @@ function releaseBuild(target) {
                     return [3 /*break*/, 7];
                 case 4:
                     err_5 = _a.sent();
+                    console.log('in error');
+                    console.log('in error');
+                    console.log('in error');
+                    console.log('in error');
+                    console.log('in error');
                     return [4 /*yield*/, rollup.rollup({
                             input: inputStr,
                             plugins: [
@@ -428,8 +437,14 @@ function releaseBuild(target) {
                                 jsonPlugin(),
                                 peerDependencies(),
                                 replace({
-                                    'process.env.NODE_ENV': JSON.stringify('production'),
-                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com'
+                                    include: ['./**/*.js'],
+                                    values: {
+                                        'process.env.NODE_ENV': JSON.stringify('production'),
+                                        //'core-dev.kalosflorida.com': 'core.kalosflorida.com',
+                                        'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
+                                        'https://dev-core.kalosflorida.com': JSON.stringify('https://core.kalosflorida.com:8443')
+                                    },
+                                    delimiter: ['', '']
                                 }),
                             ]
                         })];
@@ -488,12 +503,12 @@ function rollupBuild(t) {
                                 less({
                                     output: "build/modules/" + target + "Less.css"
                                 }),
+                                minify && terser(),
                                 image(),
                                 jsonPlugin(),
                                 peerDependencies(),
                                 replace({
-                                    'process.env.NODE_ENV': JSON.stringify('production'),
-                                    'core-dev.kalosflorida.com': 'core.kalosflorida.com'
+                                    'process.env.NODE_ENV': JSON.stringify('production')
                                 }),
                             ]
                         })];
@@ -512,6 +527,7 @@ function rollupBuild(t) {
                         })];
                 case 2:
                     _a.sent();
+                    sh.sed('-i', 'dev-core.kalosflorida.com', 'core.kalosflorida.com:8443', "build/modules/" + target + ".js");
                     sh.sed('-i', 'bufferEs6.hasOwnProperty(key$2)', 'key$2 in bufferEs6', "build/modules/" + target + ".js");
                     sh.sed('-i', '_a = _typeModule(_typeModule)', 'var _a = _typeModule(_typeModule);', "build/modules/" + target + ".js");
                     return [2 /*return*/];
