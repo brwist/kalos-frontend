@@ -835,6 +835,7 @@ export const loadTimeoffRequests = async (config: GetTimesheetConfig) => {
   }
   if (config.payrollProcessed) {
     req.setPayrollProcessed(true);
+    req.setRequestStatus(1);
   }
   req.setPageNumber(config.page || 0);
   req.setOrderBy('time_started');
