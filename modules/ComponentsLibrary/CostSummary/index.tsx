@@ -310,13 +310,19 @@ export const CostSummary: FC<Props> = ({
 
     let total = 0;
     for (let i = 0; i < results.length; i++) {
-      const timeFinished = results[i].toObject().timeFinished;
-      const timeStarted = results[i].toObject().timeStarted;
-      const subtotal = roundNumber(
-        differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) / 60,
-      );
+      if (
+        !results[i].toObject().referenceNumber.includes('PTO') &&
+        !results[i].toObject().briefDescription.includes('PTO')
+      ) {
+        const timeFinished = results[i].toObject().timeFinished;
+        const timeStarted = results[i].toObject().timeStarted;
+        const subtotal = roundNumber(
+          differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
+            60,
+        );
 
-      total += subtotal;
+        total += subtotal;
+      }
     }
     return total;
   }, [endDay, startDay, userId]);
