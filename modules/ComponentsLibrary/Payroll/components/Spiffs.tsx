@@ -39,7 +39,6 @@ interface Props {
   role: string;
   loggedUserId: number;
   departmentId: number;
-  option: string;
 }
 
 export const Spiffs: FC<Props> = ({
@@ -48,7 +47,6 @@ export const Spiffs: FC<Props> = ({
   role,
   loggedUserId,
   departmentId,
-  option,
 }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -77,41 +75,24 @@ export const Spiffs: FC<Props> = ({
       technicianUserID: employeeId,
       role,
       departmentId,
-      option: option === 'Monthly' ? 'Monthly' : 'Weekly',
     };
-    if (option === 'Weekly') {
+
+    Object.assign(filter, {
+      startDate: format(startDay, 'yyyy-MM-dd'),
+      endDate: format(endDay, 'yyyy-MM-dd'),
+    });
+    if (week !== OPTION_ALL && role != 'Payroll') {
       Object.assign(filter, {
-        startDate: format(startDay, 'yyyy-MM-dd'),
-        endDate: format(endDay, 'yyyy-MM-dd'),
-      });
-      if (week !== OPTION_ALL && role != 'Payroll') {
-        Object.assign(filter, {
-          startDate: week,
-          endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
-        });
-      }
-    }
-    if (option === 'Monthly') {
-      const startMonth = getMonth(new Date()) - 1;
-      const startYear = getYear(new Date());
-      const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
-      const endDate = format(
-        addDays(
-          new Date(startYear, startMonth),
-          getDaysInMonth(new Date(startYear, startMonth)) - 1,
-        ),
-        'yyyy-MM-dd',
-      );
-      Object.assign(filter, {
-        startDate: startDate,
-        endDate: endDate,
+        startDate: week,
+        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
+
     const { resultsList, totalCount } = await loadPendingSpiffs(filter);
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week, role, departmentId, option]);
+  }, [page, employeeId, week, role, departmentId]);
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);

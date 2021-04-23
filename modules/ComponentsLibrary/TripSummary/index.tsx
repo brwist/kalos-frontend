@@ -817,7 +817,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   render() {
     return (
-      <>
+      <div key={'tripSummary'}>
         {this.state.warningNoPerDiem && (
           <Alert
             open={this.state.warningNoPerDiem}
@@ -837,12 +837,14 @@ export class TripSummary extends React.PureComponent<Props, State> {
           <Button
             label="Add Trip"
             size="small"
+            key={'addTrip'}
             variant="contained"
             onClick={this.handleClickAddTrip}
           />
         )}
         {this.state.pendingTripToAdd && (
           <PlaceAutocompleteAddressForm
+            key={'autocomplete'}
             perDiemRowIds={this.props.perDiemRowIds}
             onClose={() => this.setPendingTripToAdd(null)}
             onSave={async (addressPair: AddressPair.AddressPair) => {
@@ -859,6 +861,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         {/* May be useful to put this functionality into its own component */}
         {this.state.tripToView && (
           <TripViewModal
+            key={'tripView'}
             fullScreen
             schema={SCHEMA_TRIP_INFO}
             data={{
@@ -966,6 +969,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           )}
           {this.props.searchable && (
             <Form
+              key={'searchForm'}
               title="Search"
               submitLabel="Search"
               cancelLabel="Reset"
@@ -1014,7 +1018,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             onConfirm={() => this.deleteAllTrips()}
           />
         )}
-      </>
+      </div>
     );
   }
 }

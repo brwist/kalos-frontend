@@ -152,7 +152,7 @@ export const TimeOff: FC<Props> = ({
           const timeFinished = results[i].timeFinished;
           const timeStarted = results[i].timeStarted;
           const numberOfDays =
-            differenceInBusinessDays(
+            differenceInCalendarDays(
               parseISO(timeFinished),
               parseISO(timeStarted),
             ) + 1;

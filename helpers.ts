@@ -1638,7 +1638,6 @@ export const loadPerDiemsForPayroll = async (
     if (managerApproved) {
       //fetch unapproved perdiems for the department
       req.addFieldMask('ApprovedById');
-      req.addNotEquals('PayrollProcessed');
     } else if (needsProcessed) {
       //fetch all peridems that are not currently processed by payroll
       req.addNotEquals('ApprovedById');

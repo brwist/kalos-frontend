@@ -256,8 +256,9 @@ export const TimeoffRequests: FC<Props> = ({
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <TimesheetComponent
             timesheetOwnerId={pendingView.userId}
-            userId={pendingView.userId}
+            userId={loggedUserId}
             week={pendingView.timeStarted}
+            startOnWeek={true}
             onClose={handleTogglePendingView(undefined)}
           />
         </Modal>
