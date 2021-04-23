@@ -73,6 +73,7 @@ type SortString =
   | 'description';
 
 let pageNumber = 0;
+let sortDir: string | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
 
 export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const FileInput = React.createRef<HTMLInputElement>();
@@ -306,6 +307,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   };
 
   const refresh = async () => {
+    await resetTransactions();
     await load();
   };
 
@@ -388,6 +390,8 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       sortDir: newSortDir ? newSortDir : sort.sortDir,
     } as TransactionSort);
 
+    sortDir = newSortDir;
+
     refresh();
   };
 
@@ -409,6 +413,16 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     FileInput.current && FileInput.current.click();
   };
 
+  const resetTransactions = useCallback(async () => {
+    let req = new Transaction();
+    req.setOrderBy(sort.sortBy);
+    req.setOrderDir(
+      sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'ASC' : 'DESC',
+    );
+    req.setPageNumber(pageNumber);
+    setTransactions(await TransactionClientService.BatchGet(req));
+  }, [setTransactions]);
+
   const load = useCallback(async () => {
     const employees = await loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
@@ -419,12 +433,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     const departments = await loadTimesheetDepartments();
     setDepartments(departments);
 
-    let req = new Transaction();
-    req.setOrderBy(sort.sortBy);
-    req.setOrderDir(sort.sortDir ? sort.sortDir : 'DESC');
-    console.log('Loading req with page #:', pageNumber);
-    req.setPageNumber(pageNumber);
-    setTransactions(await TransactionClientService.BatchGet(req));
+    resetTransactions();
 
     const user = await UserClientService.loadUserById(loggedUserId);
 
