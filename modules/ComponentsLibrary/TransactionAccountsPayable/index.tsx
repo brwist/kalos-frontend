@@ -52,7 +52,8 @@ import { FilterData, RoleType } from '../Payroll';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import { PlainForm, Schema } from '../PlainForm';
 import { Loader } from '../../Loader/main';
-
+import DoneIcon from '@material-ui/icons/Done';
+import CloseIcon from '@material-ui/icons/Close';
 interface Props {
   loggedUserId: number;
 }
@@ -243,15 +244,14 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     id: number,
     statusID: number,
     description: string,
+    reason?: string,
   ) => {
-    return async (reason?: string) => {
-      const txn = new Transaction();
-      txn.setId(id);
-      txn.setStatusId(statusID);
-      txn.setFieldMaskList(['StatusId']);
-      await transactionClient.Update(txn);
-      await makeLog(`${description} ${reason || ''}`, id);
-    };
+    const txn = new Transaction();
+    txn.setId(id);
+    txn.setStatusId(statusID);
+    txn.setFieldMaskList(['StatusId']);
+    await transactionClient.Update(txn);
+    await makeLog(`${description} ${reason || ''}`, id);
   };
 
   const forceAccept = async (txn: Transaction.AsObject) => {
@@ -621,6 +621,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             name: 'Assignment',
           }, // So Dani can assign employees to task
+          {
+            name: 'Accepted / Rejected',
+          },
         ]}
         data={
           loading
@@ -771,6 +774,21 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                         <AssignmentIndIcon />
                       </IconButton>
                     </Tooltip>,
+                  ],
+                },
+                {
+                  actions: [
+                    <>
+                      {txn.getStatusId() === 3 ? (
+                        <Tooltip key="accepted" content="Accepted">
+                          <IconButton size="small">
+                            <DoneIcon />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <> </>
+                      )}
+                    </>,
                   ],
                 },
               ]) as Data)
