@@ -229,12 +229,11 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         `https://app.kalosflorida.com?action=admin:reports.transactions`,
       );
     } catch (err) {
-      console.log(err);
+      console.error(err);
       alert('An error occurred, user was not notified via slack');
     }
 
-    await reject(reason);
-    console.log(body);
+    reject(reason);
     await refresh();
   };
 
@@ -294,7 +293,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       await refresh();
     } catch (err) {
       alert('Job number could not be set');
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -333,7 +332,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         );
       } catch (err) {
         alert('File could not be uploaded');
-        console.log(err);
+        console.error(err);
       }
 
       await refresh();
@@ -429,12 +428,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
 
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
-    console.log('Sort by: ', sortBy);
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
-    console.log(
-      'SORT DIR IN RESET: ',
-      sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
-    );
     req.setOrderDir(
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
@@ -461,7 +455,14 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     if (role) setRole(role.name as RoleType);
 
     setLoading(false);
-  }, []);
+  }, [
+    setLoading,
+    resetTransactions,
+    setDepartments,
+    loadTimesheetDepartments,
+    setEmployees,
+    loadTechnicians,
+  ]);
 
   const SCHEMA: Schema<FilterData> = [
     [
@@ -552,15 +553,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         onChange={handleSetDepartmentFilter}
         schema={SCHEMA}
         className="PayrollFilter"
-      />
-      <DepartmentPicker
-        selected={departmentSelected}
-        renderItem={i => (
-          <option value={i.id} key={`${i.id}-department-select`}>
-            {i.description} - {i.value}
-          </option>
-        )}
-        onSelect={handleSetDepartmentSelected}
       />
       <SectionBar
         title="Transactions"
