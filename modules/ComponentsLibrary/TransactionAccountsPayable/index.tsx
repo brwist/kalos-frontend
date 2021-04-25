@@ -60,6 +60,7 @@ interface Props {
 type SortString =
   | 'timestamp'
   | 'owner_id'
+  | 'assigned_employee_id'
   | 'department_id'
   | 'job_id'
   | 'amount'
@@ -577,6 +578,16 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
             onClick: () => handleChangeSort('owner_id'),
           },
           {
+            name: 'Assigned Employee',
+            dir:
+              sortBy == 'assigned_employee_id'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('owner_id'),
+          },
+          {
             name: 'Department',
             dir:
               sortBy == 'department_id'
@@ -630,6 +641,9 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                 },
                 {
                   value: `${txn.getOwnerName()} (${txn.getOwnerId()})`,
+                },
+                {
+                  value: `${txn.getAssignedEmployeeName()} (${txn.getAssignedEmployeeId()})`,
                 },
                 {
                   value: `${txn.getDepartmentString()} - ${txn.getDepartmentId()}`,
