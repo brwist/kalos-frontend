@@ -638,7 +638,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                   value: txn.getJobId(),
                 },
                 {
-                  value: txn.getAmount(),
+                  value: `$ ${prettyMoney(txn.getAmount())}`,
                 },
                 {
                   value: txn.getDescription(),
