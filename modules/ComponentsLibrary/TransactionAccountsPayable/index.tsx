@@ -451,7 +451,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
             value: 0,
           },
           ...departments.map(dept => ({
-            label: dept.value + ' | ' + dept.description,
+            label: `${dept.value} | ${dept.description}`,
             value: dept.id,
           })),
         ],
@@ -469,8 +469,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
               return el.employeeDepartmentId === filter.departmentId;
             })
             .map(el => ({
-              label:
-                UserClientService.getCustomerName(el) + ' (ID: ' + el.id + ')',
+              label: `${UserClientService.getCustomerName(el)} (ID: ${el.id})`,
               value: el.id,
             })),
         ],
