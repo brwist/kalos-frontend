@@ -7,14 +7,10 @@ import { Tabs } from '../Tabs';
 import {
   UserClientService,
   UserType,
-  loadTimesheetDepartments,
   TimesheetDepartmentType,
-  getDepartmentName,
-  loadTechnicians,
-  getCustomerName,
   getWeekOptions,
-  getPerDiemRowIds,
   PerDiemClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
 import { PayrollSummary } from './components/PayrollSummary';
@@ -42,7 +38,7 @@ interface Props {
   userID: number;
 }
 
-type FilterData = {
+export type FilterData = {
   departmentId: number;
   employeeId: number;
   week: string;
@@ -101,7 +97,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
       } else {
         let date = new Date(dateString);
         date.setDate(date.getDate() + 1);
-        let pdList = await getPerDiemRowIds(date);
+        let pdList = await PerDiemClientService.getPerDiemRowIds(date);
         ids = pdList
           ?.getResultsList()
           .filter(perdiem =>
@@ -114,9 +110,9 @@ export const Payroll: FC<Props> = ({ userID }) => {
     [filter.employeeId, userID],
   );
   const init = useCallback(async () => {
-    const departments = await loadTimesheetDepartments();
+    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
     setDepartments(departments);
-    const employees = await loadTechnicians();
+    const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
       a.lastname > b.lastname ? 1 : -1,
     );
@@ -140,7 +136,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     return [
       { label: OPTION_ALL, value: 0 },
       ...departments.map(el => ({
-        label: getDepartmentName(el),
+        label: TimesheetDepartmentClientService.getDepartmentName(el),
         value: el.id,
       })),
     ];
@@ -191,7 +187,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
               return el.employeeDepartmentId === filter.departmentId;
             })
             .map(el => ({
-              label: getCustomerName(el),
+              label: UserClientService.getCustomerName(el),
               value: el.id,
             })),
         ],

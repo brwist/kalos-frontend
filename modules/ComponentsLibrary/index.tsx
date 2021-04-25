@@ -86,6 +86,7 @@ import TimeOff from './TimeOff/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Timesheet from './Timesheet/examples';
 import Tooltip from './Tooltip/examples';
+import TransactionAccountsPayable from './TransactionAccountsPayable/examples';
 import TripInfoTable from './TripInfoTable/examples';
 import TripSummary from './TripSummary/examples';
 import TripViewModal from './TripViewModal/examples';
@@ -116,7 +117,7 @@ const COMPONENTS = {
   CallbackReport,
   CharityReport,
   Chart,
-  CheckInProjectTask, 
+  CheckInProjectTask,
   Confirm,
   ConfirmDelete,
   ConfirmService,
@@ -184,6 +185,7 @@ const COMPONENTS = {
   TimeoffSummaryReport,
   Timesheet,
   Tooltip,
+  TransactionAccountsPayable,
   TripInfoTable,
   TripSummary,
   TripViewModal,

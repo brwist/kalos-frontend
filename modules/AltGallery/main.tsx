@@ -186,7 +186,7 @@ export class AltGallery extends React.PureComponent<props, state> {
     const el = document.createElement('a');
     el.download = img.reference;
     const blob = new Blob([img.data!], {
-      type: this.S3Client.getMimeType(img.reference) || '.png',
+      type: getMimeType(img.reference) || '.png',
     });
     el.href = URL.createObjectURL(blob);
     el.click();
@@ -250,9 +250,7 @@ export class AltGallery extends React.PureComponent<props, state> {
     ) : (
       <ButtonLib onClick={this.toggleOpen} disabled={disabled} label={text} />
     );
-    const mimeType = this.S3Client.getMimeType(
-      fileList[activeImage]?.key || '',
-    );
+    const mimeType = getMimeType(fileList[activeImage]?.key || '');
     let top = 0;
     if ((rotation / 90) % 2 !== 0) {
       top = 150;
