@@ -353,6 +353,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         d.employeeId = 0;
       }
       filter.departmentId = d.departmentId;
+      filter.employeeId = d.employeeId;
       // {departmentId: 18, week: undefined, employeeId: undefined}
 
       refresh();
@@ -409,6 +410,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     );
     req.setPageNumber(pageNumber);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
+    if (filter.employeeId != 0) req.setOwnerId(filter.employeeId);
     setTransactions(await TransactionClientService.BatchGet(req));
   }, [setTransactions]);
 
