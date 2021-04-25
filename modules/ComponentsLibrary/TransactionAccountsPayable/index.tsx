@@ -53,15 +53,9 @@ import { Modal } from '../Modal';
 import { FilterData, RoleType } from '../Payroll';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import { PlainForm, Schema } from '../PlainForm';
-import { isUndefined } from 'node:util';
 
 interface Props {
   loggedUserId: number;
-}
-
-interface TransactionSort {
-  sortBy: SortString;
-  sortDir: OrderDir | ' ' | undefined;
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
@@ -75,28 +69,22 @@ type SortString =
 let pageNumber = 0;
 let sortDir: OrderDir | ' ' | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: SortString | undefined = 'timestamp';
+let filter = {
+  departmentId: 0,
+  employeeId: 0,
+  week: OPTION_ALL,
+};
 export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
   const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<TransactionList>();
-  const [departmentSelected, setDepartmentSelected] = useState<number>(22); // Set to 22 initially so it's not just a "choose department" thing
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
   const [role, setRole] = useState<RoleType>();
   const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
-  const [filter, setFilter] = useState<FilterData>({
-    departmentId: 0,
-    employeeId: 0,
-    week: OPTION_ALL,
-  });
-  const [departmentFilter, setDepartmentFilter] = useState<FilterData>({
-    departmentId: 0,
-    employeeId: 0,
-    week: OPTION_ALL,
-  });
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -350,33 +338,24 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     [setAssigningUser],
   );
 
-  const handleSetFilter = (d: FilterData) => {
-    if (!d.week) {
-      d.week = OPTION_ALL;
-    }
-    if (!d.departmentId) {
-      d.departmentId = 0;
-    }
-    if (!d.employeeId) {
-      d.employeeId = 0;
-    }
-    setFilter(d);
-    // {departmentId: 18, week: undefined, employeeId: undefined}
-  };
+  const handleSetFilter = useCallback(
+    (d: FilterData) => {
+      if (!d.week) {
+        d.week = OPTION_ALL;
+      }
+      if (!d.departmentId) {
+        d.departmentId = 0;
+      }
+      if (!d.employeeId) {
+        d.employeeId = 0;
+      }
+      filter.departmentId = d.departmentId;
+      // {departmentId: 18, week: undefined, employeeId: undefined}
 
-  const handleSetDepartmentFilter = (d: FilterData) => {
-    if (!d.week) {
-      d.week = OPTION_ALL;
-    }
-    if (!d.departmentId) {
-      d.departmentId = 0;
-    }
-    if (!d.employeeId) {
-      d.employeeId = 0;
-    }
-    setDepartmentFilter(d);
-    // {departmentId: 18, week: undefined, employeeId: undefined}
-  };
+      refresh();
+    },
+    [filter],
+  );
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
@@ -408,13 +387,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     refresh();
   };
 
-  const handleSetDepartmentSelected = useCallback(
-    (departmentId: number) => {
-      setDepartmentSelected(departmentId);
-    },
-    [setDepartmentSelected],
-  );
-
   const handleSetCreatingTransaction = useCallback(
     (isCreatingTransaction: boolean) => {
       setCreatingTransaction(isCreatingTransaction);
@@ -433,6 +405,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
     req.setPageNumber(pageNumber);
+    if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     setTransactions(await TransactionClientService.BatchGet(req));
   }, [setTransactions]);
 
@@ -504,6 +477,12 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    resetTransactions();
+    refresh();
+  }, [filter]);
+
   return (
     <>
       {assigningUser ? (
@@ -549,8 +528,8 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
         <> </>
       )}
       <PlainForm
-        data={departmentFilter}
-        onChange={handleSetDepartmentFilter}
+        data={filter}
+        onChange={handleSetFilter}
         schema={SCHEMA}
         className="PayrollFilter"
       />
