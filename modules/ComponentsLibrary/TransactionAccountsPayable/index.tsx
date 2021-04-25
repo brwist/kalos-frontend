@@ -53,6 +53,7 @@ import { Modal } from '../Modal';
 import { FilterData, RoleType } from '../Payroll';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import { PlainForm, Schema } from '../PlainForm';
+import { Loader } from '../../Loader/main';
 
 interface Props {
   loggedUserId: number;
@@ -295,8 +296,10 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   };
 
   const refresh = async () => {
+    setLoading(true);
     await resetTransactions();
     await load();
+    setLoading(false);
   };
 
   const copyToClipboard = useCallback((text: string): void => {
@@ -485,6 +488,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
 
   return (
     <>
+      {loading ? <Loader /> : <> </>}
       {assigningUser ? (
         <Modal
           open={assigningUser}
