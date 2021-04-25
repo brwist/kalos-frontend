@@ -618,9 +618,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           },
           { name: 'Actions' },
           {
-            name: 'Assignment',
-          }, // So Dani can assign employees to task
-          {
             name: 'Accepted / Rejected',
           },
         ]}
@@ -750,18 +747,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                         <SubmitIcon />
                       </IconButton>
                     </Tooltip>,
-                    <Prompt
-                      key="reject"
-                      confirmFn={reason => dispute(reason, txn.toObject())}
-                      text="Reject transaction"
-                      prompt="Enter reason for rejection: "
-                      Icon={RejectIcon}
-                    />,
-                  ],
-                  actionsFullWidth: true,
-                },
-                {
-                  actions: [
                     <Tooltip
                       key="assign"
                       content="Assign an employee to this task"
@@ -773,7 +758,15 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                         <AssignmentIndIcon />
                       </IconButton>
                     </Tooltip>,
+                    <Prompt
+                      key="reject"
+                      confirmFn={reason => dispute(reason, txn.toObject())}
+                      text="Reject transaction"
+                      prompt="Enter reason for rejection: "
+                      Icon={RejectIcon}
+                    />,
                   ],
+                  actionsFullWidth: true,
                 },
                 {
                   actions: [
