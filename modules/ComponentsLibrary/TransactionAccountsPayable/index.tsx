@@ -629,7 +629,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                   value: txn.getTimestamp(),
                 },
                 {
-                  value: txn.getOwnerName(),
+                  value: `${txn.getOwnerName()} (${txn.getOwnerId()})`,
                 },
                 {
                   value: `${txn.getDepartmentString()} - ${txn.getDepartmentId()}`,
