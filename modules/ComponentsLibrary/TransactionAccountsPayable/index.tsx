@@ -44,7 +44,6 @@ import {
   TransactionActivityClient,
   TransactionActivity,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { reject } from 'lodash';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { Modal } from '../Modal';
@@ -221,7 +220,7 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       alert('An error occurred, user was not notified via slack');
     }
 
-    reject(reason);
+    await makeUpdateStatus(txn.id, 4, 'rejected');
     await refresh();
   };
 
@@ -783,6 +782,15 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                         <Tooltip key="accepted" content="Accepted">
                           <IconButton size="small">
                             <DoneIcon />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <> </>
+                      )}
+                      {txn.getStatusId() == 4 ? (
+                        <Tooltip key="rejected" content="Rejected">
+                          <IconButton size="small">
+                            <CloseIcon />
                           </IconButton>
                         </Tooltip>
                       ) : (
