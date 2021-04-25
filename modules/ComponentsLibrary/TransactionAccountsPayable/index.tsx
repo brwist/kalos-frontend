@@ -456,8 +456,6 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           })),
         ],
       },
-    ],
-    [
       {
         name: 'employeeId',
         label: 'Select Employee',
