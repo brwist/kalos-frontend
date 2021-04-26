@@ -26,6 +26,8 @@ import {
   formatWeek,
   TimeoffRequestClientService,
   GetTimesheetConfig,
+  slackNotify,
+  getSlackID,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import { TimeoffRequestServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb_service';
@@ -59,6 +61,7 @@ export const TimeoffRequests: FC<Props> = ({
     [],
   );
   const [page, setPage] = useState<number>(0);
+  const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TimeoffRequestType>();
   const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequestType>();
@@ -130,6 +133,18 @@ export const TimeoffRequests: FC<Props> = ({
   const handlePayrollReject = useCallback(async () => {
     if (pendingPayrollReject) {
       const { id } = pendingPayrollReject;
+      const slackID = await getSlackID(pendingPayrollReject.userName);
+      if (slackID != '0') {
+        slackNotify(
+          slackID,
+          `Your PTO for ${formatWeek(
+            pendingPayrollReject.timeStarted,
+          )} was rejected by Payroll for the following reason:` +
+            rejectionMessage,
+        );
+      } else {
+        console.log('We could not find the user, but we will still reject');
+      }
       setLoading(true);
       setPendingPayrollReject(undefined);
       const req = new TimeoffRequest();
@@ -145,7 +160,7 @@ export const TimeoffRequests: FC<Props> = ({
       await TimeoffRequestClientService.Update(req);
       load();
     }
-  }, [load, pendingPayrollReject]);
+  }, [load, pendingPayrollReject, rejectionMessage]);
 
   return (
     <div>
@@ -281,6 +296,18 @@ export const TimeoffRequests: FC<Props> = ({
           onConfirm={handlePayrollReject}
         >
           Are you sure you want to Reject this Timeoff Request?
+          <br></br>
+          <label>
+            <strong>Reason:</strong>
+          </label>
+          <input
+            type="text"
+            value={rejectionMessage}
+            autoFocus
+            size={35}
+            placeholder="Enter a rejection reason"
+            onChange={e => setRejectionMessage(e.target.value)}
+          />
         </Confirm>
       )}
       {pendingApproval && (

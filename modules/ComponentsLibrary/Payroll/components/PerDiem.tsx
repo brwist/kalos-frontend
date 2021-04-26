@@ -24,6 +24,8 @@ import {
   getDepartmentName,
   PerDiemClientService,
   approvePerDiemById,
+  getSlackID,
+  slackNotify,
 } from '../../../../helpers';
 import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
@@ -59,6 +61,8 @@ export const PerDiem: FC<Props> = ({
   const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
   const [pendingApprove, setPendingApprove] = useState<PerDiemType>();
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
+  const [pendingDeny, setPendingDeny] = useState<PerDiemType>();
+  const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [pendingPayroll, setPendingPayroll] = useState<PerDiemType>();
   const [
     pendingPayrollReject,
@@ -107,6 +111,10 @@ export const PerDiem: FC<Props> = ({
     (perDiem?: PerDiemType) => () => setPendingApprove(perDiem),
     [setPendingApprove],
   );
+  const handlePendingDenyToggle = useCallback(
+    (perDiem?: PerDiemType) => () => setPendingDeny(perDiem),
+    [setPendingDeny],
+  );
   const handlePendingAuditedToggle = useCallback(
     (perDiem?: PerDiemType) => () => setPendingAudited(perDiem),
     [setPendingAudited],
@@ -129,6 +137,28 @@ export const PerDiem: FC<Props> = ({
     await approvePerDiemById(id, loggedUserId);
     load();
   }, [load, loggedUserId, pendingApprove]);
+  const handleDeny = useCallback(async () => {
+    if (!pendingDeny) return;
+    const { id } = pendingDeny;
+    const slackID = await getSlackID(pendingDeny.ownerName);
+    if (slackID != '0') {
+      slackNotify(
+        slackID,
+        `Your PerDiem for ${formatWeek(
+          pendingDeny.dateStarted,
+        )} was denied by Managerfor the following reason:` + rejectionMessage,
+      );
+    } else {
+      console.log('We could not find the user, but we will still reject');
+    }
+    const req = new PerDiemReq();
+    req.setId(id);
+    req.setDateSubmitted(NULL_TIME);
+    setLoading(true);
+    setPendingDeny(undefined);
+    await PerDiemClientService.Update(req);
+    load();
+  }, [load, pendingDeny, rejectionMessage]);
   const handleAudit = useCallback(async () => {
     if (pendingAudited) {
       const { id } = pendingAudited;
@@ -150,6 +180,18 @@ export const PerDiem: FC<Props> = ({
   const handlePayrollRejected = useCallback(async () => {
     if (pendingPayrollReject) {
       const { id } = pendingPayrollReject;
+      const slackID = await getSlackID(pendingPayrollReject.ownerName);
+      if (slackID != '0') {
+        slackNotify(
+          slackID,
+          `Your PerDiem for ${formatWeek(
+            pendingPayrollReject.dateStarted,
+          )} was rejected by Payroll for the following reason:` +
+            rejectionMessage,
+        );
+      } else {
+        console.log('We could not find the user, but we will still reject');
+      }
       setLoading(true);
       setPendingPayrollReject(undefined);
       const req = new PerDiemReq();
@@ -161,7 +203,7 @@ export const PerDiem: FC<Props> = ({
       await PerDiemClientService.Update(req);
     }
     load();
-  }, [load, pendingPayrollReject]);
+  }, [load, pendingPayrollReject, rejectionMessage]);
   return (
     <div>
       <SectionBar
@@ -228,9 +270,20 @@ export const PerDiem: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingApproveToggle(el)}
-                              disabled={!!el.approvedById}
                             >
                               <CheckCircleOutlineIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
+                      role === 'Manager' ? (
+                        <Tooltip key="deny" content="Deny" placement="bottom">
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingDenyToggle(el)}
+                            >
+                              <NotInterestedIcon />
                             </IconButton>
                           </span>
                         </Tooltip>
@@ -326,6 +379,28 @@ export const PerDiem: FC<Props> = ({
           Are you sure you want to approve this Per Diem?
         </Confirm>
       )}
+      {pendingDeny && (
+        <Confirm
+          title="Confirm Deny"
+          open
+          onClose={handlePendingDenyToggle()}
+          onConfirm={handleDeny}
+        >
+          Are you sure you want to deny this Per Diem?
+          <br></br>
+          <label>
+            <strong>Reason:</strong>
+          </label>
+          <input
+            type="text"
+            value={rejectionMessage}
+            autoFocus
+            size={35}
+            placeholder="Enter a rejection reason"
+            onChange={e => setRejectionMessage(e.target.value)}
+          />
+        </Confirm>
+      )}
       {pendingAudited && (
         <Confirm
           title="Confirm Auditing"
@@ -354,6 +429,18 @@ export const PerDiem: FC<Props> = ({
           onConfirm={handlePayrollRejected}
         >
           Are you sure you want to reject this Per Diem?
+          <br></br>
+          <label>
+            <strong>Reason:</strong>
+          </label>
+          <input
+            type="text"
+            value={rejectionMessage}
+            autoFocus
+            size={35}
+            placeholder="Enter a rejection reason"
+            onChange={e => setRejectionMessage(e.target.value)}
+          />
         </Confirm>
       )}
     </div>
