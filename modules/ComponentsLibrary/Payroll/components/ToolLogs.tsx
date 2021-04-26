@@ -7,14 +7,14 @@ import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
+import { TaskType, makeFakeRows, formatWeek } from '../../../../helpers';
 import {
-  loadPendingToolLogs,
-  TaskType,
-  makeFakeRows,
-  formatWeek,
-} from '../../../../helpers';
-import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
-
+  TaskClient,
+  Task,
+  GetPendingSpiffConfig,
+} from '@kalos-core/kalos-rpc/Task';
+import { ROWS_PER_PAGE, OPTION_ALL, ENDPOINT } from '../../../../constants';
+const TaskClientService = new TaskClient(ENDPOINT);
 interface Props {
   employeeId: number;
   week: string;
@@ -68,7 +68,10 @@ export const ToolLogs: FC<Props> = ({
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
-    const { resultsList, totalCount } = await loadPendingToolLogs(filter);
+    const {
+      resultsList,
+      totalCount,
+    } = await TaskClientService.loadPendingToolLogs(filter);
     setToolLogs(resultsList);
     setCount(totalCount);
     setLoading(false);

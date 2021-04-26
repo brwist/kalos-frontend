@@ -6,6 +6,7 @@ import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
+
 import PageviewIcon from '@material-ui/icons/Pageview';
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
 import { TimesheetLineType, makeFakeRows, UserType } from '../../../../helpers';

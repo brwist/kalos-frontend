@@ -127,6 +127,7 @@ export const PayrollSummary: FC<Props> = ({
           onChangePage: setPage,
         }}
       />
+      {/*
       <Button
         label={
           toggle == false
@@ -135,6 +136,7 @@ export const PayrollSummary: FC<Props> = ({
         }
         onClick={handleSetToggle}
       ></Button>
+      */}
       <InfoTable
         columns={[
           { name: 'Employee' },

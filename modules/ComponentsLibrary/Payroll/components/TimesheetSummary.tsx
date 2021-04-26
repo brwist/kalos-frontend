@@ -24,7 +24,6 @@ import {
   formatDate,
   UserClientService,
   UserType,
-  loadTimeoffRequests,
   formatWeek,
   slackNotify,
   getSlackID,
@@ -74,7 +73,7 @@ export const TimesheetSummary: FC<Props> = ({
   const [pendingPayrollReject, setPendingPayrollReject] = useState<
     TimesheetLine[] | undefined
   >();
-  const [timeoff, setTimeOff] = useState<TimeoffRequest.AsObject[]>();
+  const [timeoff, setTimeOff] = useState<TimeoffRequest[]>();
   const [timesheetsPending, setTimesheetsPending] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
   const [loading, setLoading] = useState<boolean>(true);
@@ -124,12 +123,14 @@ export const TimesheetSummary: FC<Props> = ({
       endDate: endDate,
       approved: true,
     };
-    const results = (await loadTimeoffRequests(filter)).resultsList;
+    const results = (
+      await TimeoffRequestClientService.loadTimeoffRequestProtos(filter)
+    ).getResultsList();
     let total = 0;
     for (let i = 0; i < results.length; i++) {
-      if (results[i].allDayOff === 0) {
-        const timeFinished = results[i].timeFinished;
-        const timeStarted = results[i].timeStarted;
+      if (results[i].getAllDayOff() === 0) {
+        const timeFinished = results[i].getTimeFinished();
+        const timeStarted = results[i].getTimeStarted();
         const subtotal = roundNumber(
           differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
             60,
@@ -138,30 +139,30 @@ export const TimesheetSummary: FC<Props> = ({
         total += subtotal;
         let tempJob = {
           jobId:
-            results[i].eventId === 0
-              ? results[i].referenceNumber === ''
+            results[i].getEventId() === 0
+              ? results[i].getReferenceNumber() === ''
                 ? 'None'
-                : results[i].referenceNumber
-              : results[i].eventId.toString(),
+                : results[i].getReferenceNumber()
+              : results[i].getEventId().toString(),
           actions: [
             {
               time: roundNumber(
                 differenceInMinutes(
-                  parseISO(results[i].timeFinished),
-                  parseISO(results[i].timeStarted),
+                  parseISO(results[i].getTimeFinished()),
+                  parseISO(results[i].getTimeStarted()),
                 ) / 60,
               ),
-              classCode: results[i].departmentName.substr(0, 3) + 'PTO',
+              classCode: results[i].getDepartmentName().substr(0, 3) + 'PTO',
               billable: false,
-              day: format(parseISO(results[i].timeStarted), 'yyyy-MM-dd'),
-              departmentCode: results[i].departmentName,
+              day: format(parseISO(results[i].getTimeStarted()), 'yyyy-MM-dd'),
+              departmentCode: results[i].getDepartmentName(),
             },
           ],
         };
         timeOffJobs.push(tempJob);
       } else {
-        const timeFinished = results[i].timeFinished;
-        const timeStarted = results[i].timeStarted;
+        const timeFinished = results[i].getTimeFinished();
+        const timeStarted = results[i].getTimeStarted();
         const numberOfDays =
           differenceInCalendarDays(
             parseISO(timeFinished),
@@ -171,21 +172,21 @@ export const TimesheetSummary: FC<Props> = ({
         for (let j = 0; j < numberOfDays; j++) {
           let tempJob = {
             jobId:
-              results[i].eventId === 0
-                ? results[i].referenceNumber === ''
+              results[i].getEventId() === 0
+                ? results[i].getReferenceNumber() === ''
                   ? 'None'
-                  : results[i].referenceNumber
-                : results[i].eventId.toString(),
+                  : results[i].getReferenceNumber()
+                : results[i].getEventId().toString(),
             actions: [
               {
                 time: 8,
-                classCode: results[i].departmentName.substr(0, 3) + 'PTO',
+                classCode: results[i].getDepartmentName().substr(0, 3) + 'PTO',
                 billable: false,
                 day: formatDateFns(
-                  addDays(parseISO(results[i].timeStarted), j),
+                  addDays(parseISO(results[i].getTimeStarted()), j),
                 ),
 
-                departmentCode: results[i].departmentName,
+                departmentCode: results[i].getDepartmentName(),
               },
             ],
           };
@@ -325,7 +326,7 @@ export const TimesheetSummary: FC<Props> = ({
     if (timeoff && timeoff.length > 0) {
       for (let i = 0; i < timeoff?.length; ) {
         const req = new TimeoffRequest();
-        req.setId(timeoff[i].id);
+        req.setId(timeoff[i].getId());
         req.setFieldMaskList(['PayrollProcessed']);
         req.setPayrollProcessed(true);
         await TimeoffRequestClientService.Update(req);

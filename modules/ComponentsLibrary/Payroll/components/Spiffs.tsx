@@ -7,7 +7,11 @@ import {
   getYear,
   getDaysInMonth,
 } from 'date-fns';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import {
+  TaskClient,
+  Task,
+  GetPendingSpiffConfig,
+} from '@kalos-core/kalos-rpc/Task';
 import { parseISO, subDays } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
@@ -18,18 +22,21 @@ import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
 import { Form, Schema } from '../../../ComponentsLibrary/Form';
 import { Option } from '../../../ComponentsLibrary/Field';
 import {
-  loadPendingSpiffs,
   TaskType,
   makeFakeRows,
   formatWeek,
-  GetPendingSpiffConfig,
   timestamp,
   escapeText,
   SpiffTypeType,
   getRPCFields,
   EventClientService,
 } from '../../../../helpers';
-import { ROWS_PER_PAGE, OPTION_ALL, ENDPOINT } from '../../../../constants';
+import {
+  ROWS_PER_PAGE,
+  OPTION_ALL,
+  ENDPOINT,
+  NULL_TIME,
+} from '../../../../constants';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -75,31 +82,37 @@ export const Spiffs: FC<Props> = ({
       technicianUserID: employeeId,
       role,
       departmentId,
+      processed: false,
     };
 
     Object.assign(filter, {
-      startDate: format(startDay, 'yyyy-MM-dd'),
+      startDate:
+        role === 'Payroll' ? '01-01-01' : format(startDay, 'yyyy-MM-dd'),
       endDate: format(endDay, 'yyyy-MM-dd'),
+      role: role === 'Payroll' ? 'Manager' : role,
     });
     if (week !== OPTION_ALL && role != 'Payroll') {
       Object.assign(filter, {
         startDate: week,
-        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+        endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
-
-    const { resultsList, totalCount } = await loadPendingSpiffs(filter);
+    console.log(filter);
+    const {
+      resultsList,
+      totalCount,
+    } = await TaskClientService.loadPendingSpiffs(filter);
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week, role, departmentId]);
+  }, [page, employeeId, week, role, departmentId, endDay, startDay]);
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);
       init();
     }
     load();
-  }, [page, employeeId, week, initiated]);
+  }, [page, employeeId, week, initiated, init, load]);
   const handleTogglePendingView = useCallback(
     (pendingView?: TaskType) => () => setPendingView(pendingView),
     [],
@@ -128,10 +141,8 @@ export const Spiffs: FC<Props> = ({
       req.setTimeCreated(now);
       req.setTimeDue(now);
       req.setPriorityId(2);
-      console.log('We are pressing Save');
       req.setExternalCode('user');
       req.setCreatorUserId(loggedUserId);
-      console.log({ data });
       req.setBillableType('Spiff');
       req.setStatusId(1);
       let tempEvent = await EventClientService.LoadEventByServiceCallID(
@@ -269,8 +280,10 @@ export const Spiffs: FC<Props> = ({
             loggedUserId={loggedUserId}
             ownerId={pendingView.externalId}
             type="Spiff"
-            needsManagerAction={role === 'Manager' ? true : false}
-            needsPayrollAction={role === 'Payroll' ? true : false}
+            needsManagerAction={
+              role === 'Manager' || role === 'Payroll' ? true : false
+            }
+            needsPayrollAction={false}
             needsAuditAction={role === 'Auditor' ? true : false}
             role={role}
             onClose={handleTogglePendingView(undefined)}

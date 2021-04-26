@@ -31,11 +31,10 @@ import { TripInfoTable } from '../TripInfoTable';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../../constants';
 import {
-  getTimeoffRequestByFilter,
+  PerDiemClientService,
   TimeoffRequestClientService,
   TimeoffRequestTypes,
   UserClientService,
-  getPerDiemRowIds,
   UserType,
 } from '../../../helpers';
 import { getShownDates, reducer } from './reducer';
@@ -593,20 +592,22 @@ export const Timesheet: FC<Props> = props => {
           'yyyy-MM-dd',
         )}%`,
       );
-      const timeoffs = await getTimeoffRequestByFilter({
-        isActive: 1,
-        userId: timesheetOwnerId,
-        dateRangeList: [
-          '>=',
-          shownDates[0],
-          '<',
-          format(
-            addDays(parseISO(shownDates[shownDates.length - 1]), 1),
-            'yyyy-MM-dd',
-          ),
-        ],
-        dateTargetList: ['time_started', 'time_started'],
-      });
+      const timeoffs = await TimeoffRequestClientService.getTimeoffRequestByFilter(
+        {
+          isActive: 1,
+          userId: timesheetOwnerId,
+          dateRangeList: [
+            '>=',
+            shownDates[0],
+            '<',
+            format(
+              addDays(parseISO(shownDates[shownDates.length - 1]), 1),
+              'yyyy-MM-dd',
+            ),
+          ],
+          dateTargetList: ['time_started', 'time_started'],
+        },
+      );
       dispatch({
         type: 'fetchedTimesheetData',
         data: result,
@@ -625,7 +626,7 @@ export const Timesheet: FC<Props> = props => {
   const hasAccess =
     userId === timesheetOwnerId || user.timesheetAdministration || isManager;
   if (!perDiemRowId) {
-    getPerDiemRowIds(selectedDate).then(value => {
+    PerDiemClientService.getPerDiemRowIds(selectedDate).then(value => {
       if (!value) return;
 
       const pdIds: number[] = [];

@@ -23,9 +23,7 @@ import {
   UserType,
   roundNumber,
   PTOType,
-  upsertTimeoffRequest,
   timestamp,
-  loadTimeoffRequests,
   UserClientService,
   TimeoffRequestClientService,
 } from '../../../helpers';
@@ -137,7 +135,9 @@ export const TimeOff: FC<Props> = ({
         endDate: endDate,
         payrollProcessed: true,
       };
-      const results = (await loadTimeoffRequests(filter)).resultsList;
+      const results = (
+        await TimeoffRequestClientService.loadTimeoffRequests(filter)
+      ).resultsList;
       let total = 0;
       for (let i = 0; i < results.length; i++) {
         if (results[i].allDayOff === 0) {
@@ -190,7 +190,7 @@ export const TimeOff: FC<Props> = ({
         return;
       }
       setSaving(true);
-      const newData = await upsertTimeoffRequest({
+      const newData = await TimeoffRequestClientService.upsertTimeoffRequest({
         allDayOff,
         departmentCode,
         notes,
@@ -277,7 +277,7 @@ export const TimeOff: FC<Props> = ({
       reviewedBy,
       adminComments,
     } = data;
-    const newData = await upsertTimeoffRequest({
+    const newData = await TimeoffRequestClientService.upsertTimeoffRequest({
       id,
       adminApprovalDatetime,
       adminApprovalUserId: loggedUserId,
