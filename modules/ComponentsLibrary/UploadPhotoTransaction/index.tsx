@@ -14,12 +14,12 @@ import {
   uploadFileToS3Bucket,
   getFileExt,
   getMimeType,
-  upsertFile,
-  upsertTransactionDocument,
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
   UserClientService,
   timestamp,
+  TransactionDocumentClientService,
+  FileClientService,
 } from '../../../helpers';
 import './styles.less';
 import { ENDPOINT } from '../../../constants';
@@ -27,15 +27,20 @@ import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { type } from 'os';
 import { AccountPicker } from '../Pickers';
 import { id } from 'date-fns/locale';
+import { RoleType } from '../Payroll';
+import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
 
 interface Props {
   loggedUserId: number;
   title?: string;
   bucket: string;
   onClose: (() => void) | null;
+  onUpload?: (() => void) | null;
   defaultTag?: string;
   defaultPurchase?: number;
   costCenters: TransactionAccountList;
+  fullWidth?: boolean;
+  role?: RoleType;
 }
 
 type Entry = {
@@ -60,6 +65,9 @@ export const UploadPhotoTransaction: FC<Props> = ({
   title = 'Upload Transaction',
   defaultTag = 'Receipt',
   defaultPurchase = 'Fuel',
+  fullWidth = true,
+  role,
+  onUpload,
 }) => {
   const [fileData, setFileData] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
@@ -134,13 +142,13 @@ export const UploadPhotoTransaction: FC<Props> = ({
           data.tag,
         );
         if (status === 'ok') {
-          const uploadFile = await upsertFile({
+          const uploadFile = await FileClientService.upsertFile({
             bucket,
             name,
             mimeType: getMimeType(data.file),
             ownerId: loggedUserId,
           });
-          await upsertTransactionDocument({
+          await TransactionDocumentClientService.upsertTransactionDocument({
             transactionId: insert.id,
             reference: nameWithoutId,
             fileId: uploadFile.id,
@@ -157,6 +165,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
         setSaved(true);
         setFormKey(formKey + 1);
       }
+
+      if (onUpload) onUpload();
     },
     [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId],
   );
@@ -187,7 +197,10 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'tag',
         label: 'Tag',
         required: true,
-        options: SUBJECT_TAGS_TRANSACTIONS,
+        options:
+          role != 'Accounts_Payable'
+            ? SUBJECT_TAGS_TRANSACTIONS
+            : SUBJECT_TAGS_ACCOUNTS_PAYABLE,
       },
     ],
     [
@@ -252,6 +265,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         )
       }
       error={error && <>Error while uploading file. Please try again.</>}
+      fullWidth={fullWidth}
     />
   );
 };
