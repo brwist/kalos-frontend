@@ -892,6 +892,7 @@ const NAMED_EXPORTS = {
     'Empty',
     'Int32',
     'IntArray',
+    'DateRange',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_pb.js': [
     'Task',
