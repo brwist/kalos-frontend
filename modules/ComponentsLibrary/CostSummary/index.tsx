@@ -34,16 +34,13 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
-  loadTimeoffRequests,
   formatDate,
   TaskClientService,
   UserClientService,
   TimeoffRequestClientService,
   PerDiemRowType,
   PerDiemClientService,
-  loadGovPerDiem,
   PerDiemType,
-  loadPerDiemByUserIdAndDateStartedAudited,
   loadTripsByFilter,
   usd,
 } from '../../../helpers';
@@ -134,7 +131,9 @@ export const CostSummary: FC<Props> = ({
     return { totalDistance: distanceSubtotal, processed };
   }, [startDay, userId]);
   const getPerDiems = useCallback(async () => {
-    const { resultsList } = await loadPerDiemByUserIdAndDateStartedAudited(
+    const {
+      resultsList,
+    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
       userId,
       formatDateFns(startDay),
     );
@@ -153,7 +152,11 @@ export const CostSummary: FC<Props> = ({
         zipCodesList.push(zipCodes[j]);
       }
     }
-    const govPerDiems = await loadGovPerDiem(zipCodesList, year, month);
+    const govPerDiems = await PerDiemClientService.loadGovPerDiem(
+      zipCodesList,
+      year,
+      month,
+    );
     setGovPerDiems(govPerDiems);
   }, [startDay, userId]);
   const getPerDiemTotals = useCallback(async () => {
@@ -268,7 +271,9 @@ export const CostSummary: FC<Props> = ({
       endDate: endDate,
       payrollProcessed: true,
     };
-    const results = (await loadTimeoffRequests(filter)).resultsList;
+    const results = (
+      await TimeoffRequestClientService.loadTimeoffRequests(filter)
+    ).resultsList;
     let total = 0;
     for (let i = 0; i < results.length; i++) {
       if (results[i].allDayOff === 0) {

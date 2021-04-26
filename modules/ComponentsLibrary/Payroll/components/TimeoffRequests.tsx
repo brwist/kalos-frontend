@@ -7,6 +7,7 @@ import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import {
   TimeoffRequest,
   TimeoffRequestClient,
+  GetTimesheetConfig,
 } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -20,18 +21,17 @@ import { Confirm } from '../../Confirm';
 
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
 import {
-  loadTimeoffRequests,
   TimeoffRequestType,
   makeFakeRows,
   formatWeek,
   TimeoffRequestClientService,
-  GetTimesheetConfig,
   slackNotify,
   getSlackID,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import { TimeoffRequestServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb_service';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { TramRounded } from '@material-ui/icons';
 
 interface Props {
   departmentId: number;
@@ -75,6 +75,7 @@ export const TimeoffRequests: FC<Props> = ({
     const filter: GetTimesheetConfig = {
       page,
       departmentID: departmentId,
+      approved: true,
       technicianUserID: employeeId,
     };
     if (week !== OPTION_ALL) {
@@ -83,14 +84,17 @@ export const TimeoffRequests: FC<Props> = ({
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
-    if (role === 'Payroll') {
-      Object.assign(filter, { requestType: 9 });
-    }
-    const { resultsList, totalCount } = await loadTimeoffRequests(filter);
+    //if (role === 'Payroll') {
+    //  Object.assign(filter, { requestType: 9 });
+    // }
+    const {
+      resultsList,
+      totalCount,
+    } = await TimeoffRequestClientService.loadTimeoffRequests(filter);
     setTimeoffRequests(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, departmentId, employeeId, week, role]);
+  }, [page, departmentId, employeeId, week]);
   useEffect(() => {
     load();
   }, [load]);
@@ -221,7 +225,10 @@ export const TimeoffRequests: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingPayrollToggle(e)}
-                              disabled={!!e.payrollProcessed}
+                              disabled={
+                                e.payrollProcessed ||
+                                e.adminApprovalUserId === 0
+                              }
                             >
                               <AccountBalanceWalletIcon />
                             </IconButton>
@@ -238,7 +245,10 @@ export const TimeoffRequests: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingPayrollToggleReject(e)}
-                              disabled={!!e.payrollProcessed}
+                              disabled={
+                                e.payrollProcessed ||
+                                e.adminApprovalUserId === 0
+                              }
                             >
                               <NotInterestedIcon />
                             </IconButton>

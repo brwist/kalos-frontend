@@ -12,7 +12,6 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import {
   PerDiemClientService,
-  getTripDistance,
   UserClientService,
   loadTripsByFilter,
   TripsFilter,
@@ -22,10 +21,7 @@ import {
   perDiemTripMilesToUsd,
   perDiemTripMilesToUsdAsNumber,
   TimesheetDepartmentClientService,
-  getRowDatesFromPerDiemTrips,
-  upsertTrip,
-  tripAsObjectToTrip,
-  getDepartmentName,
+  MapClientService,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -282,7 +278,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   getTripDistance = async (origin: string, destination: string) => {
     try {
-      await getTripDistance(origin, destination);
+      await MapClientService.getTripDistance(origin, destination);
     } catch (error: any) {
       console.error(
         'An error occurred while calculating the trip distance: ',
@@ -295,7 +291,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
   refreshNamesAndDates = async () => {
     new Promise(async resolve => {
-      let res = await getRowDatesFromPerDiemTrips(
+      let res = await PerDiemClientService.getRowDatesFromPerDiemTrips(
         this.state.tripsOnPage.getResultsList(),
       );
       this.dateIdPair = res;
@@ -396,7 +392,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     let tripList: Trip[] = [];
     for await (const tripAsObj of res.results) {
-      tripList.push(tripAsObjectToTrip(tripAsObj));
+      tripList.push(PerDiemClientService.tripAsObjectToTrip(tripAsObj));
     }
     const tripsFinalResultList: Trip[] = [...tripList];
 
@@ -624,6 +620,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                     key={currentTrip.getId() + 'wallet' + idx}
                     size="small"
                     onClick={() => this.setPendingProcessPayroll(currentTrip)}
+                    disabled={!currentTrip.getApproved()}
                   >
                     <AccountBalanceWalletIcon />
                   </IconButton>
@@ -775,9 +772,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
         )
       ).id,
     );
-    await upsertTrip(trip.toObject(), rowId!, userId).then(() => {
-      this.setState({ pendingTrip: null });
-    });
+    await PerDiemClientService.upsertTrip(trip.toObject(), rowId!, userId).then(
+      () => {
+        this.setState({ pendingTrip: null });
+      },
+    );
 
     if (this.props.onSaveTrip) this.props.onSaveTrip();
     this.setPendingTripToAdd(null);

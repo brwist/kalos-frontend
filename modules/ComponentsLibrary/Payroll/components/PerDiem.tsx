@@ -16,19 +16,16 @@ import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import {
-  loadPerDiemsNeedsAuditing,
-  loadPerDiemsForPayroll,
   PerDiemType,
   makeFakeRows,
   formatDate,
-  getDepartmentName,
   PerDiemClientService,
-  approvePerDiemById,
   getSlackID,
   slackNotify,
 } from '../../../../helpers';
 import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
+import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
 import {
   PerDiemClient,
   PerDiem as PerDiemReq,
@@ -69,20 +66,17 @@ export const PerDiem: FC<Props> = ({
     setPendingPayrollReject,
   ] = useState<PerDiemType>();
   const [managerFilter, setManagerFilter] = useState<boolean>(
-    role == 'Manager' ? true : false,
-  );
-  const [payrollFilter, setPayrollFilter] = useState<boolean>(
-    role == 'Payroll' ? true : false,
+    role == ('Manager' || role === 'Payroll') ? true : false,
   );
   const [auditorFilter, setAuditorFilter] = useState<boolean>(
     role == 'Auditor' ? true : false,
   );
   const load = useCallback(async () => {
     setLoading(true);
-    const perDiems = await loadPerDiemsForPayroll(
+    const perDiems = await PerDiemClientService.loadPerDiemsForPayroll(
       page,
       auditorFilter,
-      payrollFilter,
+      false,
       managerFilter,
       departmentId,
       employeeId,
@@ -91,15 +85,7 @@ export const PerDiem: FC<Props> = ({
     setPerDiems(perDiems.resultsList);
     setCount(perDiems.totalCount);
     setLoading(false);
-  }, [
-    departmentId,
-    employeeId,
-    week,
-    page,
-    managerFilter,
-    payrollFilter,
-    auditorFilter,
-  ]);
+  }, [departmentId, employeeId, week, page, managerFilter, auditorFilter]);
   useEffect(() => {
     load();
   }, [load]);
@@ -134,7 +120,7 @@ export const PerDiem: FC<Props> = ({
     const { id } = pendingApprove;
     setLoading(true);
     setPendingApprove(undefined);
-    await approvePerDiemById(id, loggedUserId);
+    await PerDiemClientService.approvePerDiemById(id, loggedUserId);
     load();
   }, [load, loggedUserId, pendingApprove]);
   const handleDeny = useCallback(async () => {
@@ -314,7 +300,10 @@ export const PerDiem: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingPayrollToggle(el)}
-                              disabled={!!el.payrollProcessed}
+                              disabled={
+                                el.payrollProcessed ||
+                                el.dateApproved === NULL_TIME
+                              }
                             >
                               <AccountBalanceWalletIcon />
                             </IconButton>
@@ -331,7 +320,10 @@ export const PerDiem: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingPayrollToggleReject(el)}
-                              disabled={!!el.payrollProcessed}
+                              disabled={
+                                el.payrollProcessed ||
+                                el.dateApproved === NULL_TIME
+                              }
                             >
                               <NotInterestedIcon />
                             </IconButton>
