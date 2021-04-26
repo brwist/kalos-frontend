@@ -5,7 +5,7 @@ import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
 import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
 import LowIcon from '@material-ui/icons/Details';
-import { ProjectTask, Task } from '@kalos-core/kalos-rpc/Task';
+import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -19,34 +19,27 @@ import { Tabs } from '../Tabs';
 import {
   EventType,
   ProjectTaskType,
-  getPropertyAddress,
   formatDate,
-  upsertEventTask,
   TaskStatusType,
   TaskPriorityType,
   TaskClientService,
-  loadTimesheetDepartments,
   TimesheetDepartmentType,
-  upsertEvent,
   TaskEventType,
-  loadTaskEventsByFilter,
-  upsertTaskEvent,
   timestamp,
   UserType,
   EventClientService,
   UserClientService,
   TaskEventClientService,
   loadProjects,
-  getRPCFields,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 import './styles.less';
-import { addDays, format } from 'date-fns';
-import { Field } from '../Field';
+import { format } from 'date-fns';
 import { CostReport } from '../CostReport';
-import { Typography } from '@material-ui/core';
 import { Loader } from '../../Loader/main';
 import { CheckInProjectTask } from '../CheckInProjectTask';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 
 export interface Props {
   serviceCallId: number;
@@ -215,7 +208,7 @@ export const EditProject: FC<Props> = ({
     promises.push(
       new Promise<void>(async resolve => {
         try {
-          const departments = await loadTimesheetDepartments();
+          const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
           setDepartments(departments);
         } catch (err) {
           console.log({ err });
@@ -280,7 +273,7 @@ export const EditProject: FC<Props> = ({
   const loadTaskEvents = useCallback(
     async (taskId: number) => {
       setTaskEventsLoaded(false);
-      const taskEvents = await loadTaskEventsByFilter({
+      const taskEvents = await TaskEventClientService.loadTaskEventsByFilter({
         id: taskId,
         technicianUserId: loggedUserId,
       });
@@ -338,7 +331,7 @@ export const EditProject: FC<Props> = ({
       taskEvents.length > 0 && taskEvents[0].actionTaken === ENROUTE;
     const timeStarted = timestamp();
     if (isEnroute) {
-      await upsertTaskEvent({
+      await TaskEventClientService.upsertTaskEvent({
         taskId: editingTask.id,
         technicianUserId: loggedUserId,
         timeStarted,
@@ -346,7 +339,7 @@ export const EditProject: FC<Props> = ({
         actionTaken: ENROUTE,
       });
     } else if (isCheckIn) {
-      await upsertTaskEvent({
+      await TaskEventClientService.upsertTaskEvent({
         taskId: editingTask.id,
         technicianUserId: loggedUserId,
         timeStarted,
@@ -354,7 +347,7 @@ export const EditProject: FC<Props> = ({
         actionTaken: CHECKIN,
       });
     } else {
-      await upsertTaskEvent({
+      await TaskEventClientService.upsertTaskEvent({
         taskId: editingTask.id,
         technicianUserId: loggedUserId,
         timeStarted,
@@ -364,7 +357,7 @@ export const EditProject: FC<Props> = ({
       });
     }
     if (isEnroute || isCheckIn) {
-      await upsertEventTask({
+      await TaskClientService.upsertEventTask({
         id: editingTask.id,
         externalCode: 'user',
         externalId: loggedUserId,
@@ -502,7 +495,7 @@ export const EditProject: FC<Props> = ({
       }
       setEditingTask(undefined);
       setLoading(true);
-      await upsertEventTask({
+      await TaskClientService.upsertEventTask({
         ...formData,
         eventId: serviceCallId,
         startDate: `${startDate} ${startTime}:00`,
@@ -600,7 +593,7 @@ export const EditProject: FC<Props> = ({
         }
         setEditingProject(false);
         setLoadingEvent(true);
-        await upsertEvent({ ...formData, id: event.id });
+        await EventClientService.upsertEvent({ ...formData, id: event.id });
         loadEvent();
       }
     },
