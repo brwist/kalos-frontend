@@ -15,6 +15,7 @@ import {
 } from 'date-fns';
 import { TimeoffRequestType, TimeoffRequestTypes } from '../../../helpers';
 import { NULL_TIME_VALUE } from './constants';
+import { NULL_TIME } from '../../../constants';
 
 export type Payroll = {
   total: number | null;
@@ -121,6 +122,7 @@ export type Action =
   | { type: 'approveTimesheet' }
   | { type: 'processTimesheet' }
   | { type: 'rejectTimesheet' }
+  | { type: 'denyTimesheet' }
   | { type: 'showReceiptsIssueDialog'; value: boolean }
   | {
       type: 'setReceiptsIssue';
@@ -405,6 +407,22 @@ export const reducer = (state: State, action: Action) => {
           if (entry.adminApprovalDatetime !== NULL_TIME_VALUE) {
             entry.adminApprovalUserId = 0;
             entry.adminApprovalDatetime = NULL_TIME_VALUE;
+          }
+        });
+      }
+      return {
+        ...state,
+        data,
+      };
+    }
+    case 'denyTimesheet': {
+      const data = { ...state.data };
+      const dateTime = format(new Date(), 'yyyy-MM-dd HH:mm');
+      for (let i = 0; i < state.shownDates.length; i++) {
+        let dayList = [...data[state.shownDates[i]].timesheetLineList];
+        dayList.forEach(entry => {
+          if (entry.userApprovalDatetime !== NULL_TIME_VALUE) {
+            entry.userApprovalDatetime = NULL_TIME_VALUE;
           }
         });
       }

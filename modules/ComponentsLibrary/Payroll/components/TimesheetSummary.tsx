@@ -25,10 +25,15 @@ import {
   UserClientService,
   UserType,
   loadTimeoffRequests,
+  formatWeek,
+  slackNotify,
+  getSlackID,
   TimeoffRequestClientService,
 } from '../../../../helpers';
 import { Loader } from '../../../Loader/main';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { Confirm } from '../../Confirm';
+
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 interface Props {
   userId: number;
@@ -65,12 +70,22 @@ export const TimesheetSummary: FC<Props> = ({
   const [totalBillableHours, setTotalBillableHours] = useState<number>();
   const [totalUnbillableHours, setTotalUnbillableHours] = useState<number>();
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
+  const [rejectionMessage, setRejectionMessage] = useState<string>('');
+  const [pendingPayrollReject, setPendingPayrollReject] = useState<
+    TimesheetLine[] | undefined
+  >();
   const [timeoff, setTimeOff] = useState<TimeoffRequest.AsObject[]>();
   const [timesheetsPending, setTimesheetsPending] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [user, setUser] = useState<User.AsObject>();
+  const handlePendingPayrollToggleReject = useCallback(
+    (timesheets?: TimesheetLine[]) => () => {
+      setPendingPayrollReject(timesheets);
+    },
+    [setPendingPayrollReject],
+  );
   const [mappedElements, setMappedElements] = useState<JSX.Element[]>();
   const [
     togglePendingApprovalAlert,
@@ -316,18 +331,32 @@ export const TimesheetSummary: FC<Props> = ({
         await TimeoffRequestClientService.Update(req);
       }
     }
-  }, [timesheets, userId, onClose]);
+  }, [timesheets, userId, onClose, timeoff]);
   const RejectTimesheets = useCallback(async () => {
     const tslClient = new TimesheetLineClient(ENDPOINT);
     let ids = [];
     if (timesheets) {
+      const slackID = await getSlackID(
+        timesheets[0].toObject().technicianUserName,
+      );
+      if (slackID != '0') {
+        slackNotify(
+          slackID,
+          `Your Timesheet for ${formatWeek(
+            timesheets[0].toObject().timeStarted,
+          )} was denied by Payroll for the following reason:` +
+            rejectionMessage,
+        );
+      } else {
+        console.log('We could not find the user, but we will still reject');
+      }
       for (let i = 0; i < timesheets!.length; i++) {
         ids.push(timesheets[i].toObject().id);
       }
       await tslClient.Reject(ids, userId);
       onClose();
     }
-  }, [timesheets, userId, onClose]);
+  }, [timesheets, userId, onClose, rejectionMessage]);
 
   const load = useCallback(async () => {
     await getTimesheetTotals();
@@ -640,7 +669,7 @@ export const TimesheetSummary: FC<Props> = ({
       <Button
         key="reject"
         label="Reject All"
-        onClick={() => RejectTimesheets()}
+        onClick={() => handlePendingPayrollToggleReject(timesheets)}
         disabled={togglePendingSubmitAlert || togglePendingApprovalAlert}
       ></Button>
       {timesheets?.length === 0 && (
@@ -648,7 +677,28 @@ export const TimesheetSummary: FC<Props> = ({
           <strong>No Timesheet Records Found</strong>
         </div>
       )}
-
+      {pendingPayrollReject && (
+        <Confirm
+          title="Confirm Rejection"
+          open
+          onClose={() => handlePendingPayrollToggleReject(undefined)}
+          onConfirm={() => RejectTimesheets()}
+        >
+          Are you sure you want to reject this Timesheet?
+          <br></br>
+          <label>
+            <strong>Reason:</strong>
+          </label>
+          <input
+            type="text"
+            value={rejectionMessage}
+            autoFocus
+            size={35}
+            placeholder="Enter a rejection reason"
+            onChange={e => setRejectionMessage(e.target.value)}
+          />
+        </Confirm>
+      )}
       <SectionBar
         key="week"
         title={'Approved for of Week of ' + format(startDay, 'yyyy-MM-dd')}

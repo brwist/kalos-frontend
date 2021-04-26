@@ -469,7 +469,53 @@ export const Timesheet: FC<Props> = props => {
       dispatch({ type: 'rejectTimesheet' });
       await tslClient.Reject(ids, userId);
     })();
-  }, [userId, data, shownDates, tslClient, user]);
+  }, [userId, data, shownDates]);
+  const handleDenyTimesheet = useCallback(async () => {
+    (async () => {
+      const ids: number[] = [];
+      for (let i = 0; i < shownDates.length; i++) {
+        let dayList = [...data[shownDates[i]].timesheetLineList].sort(
+          (a, b) =>
+            parseISO(a.timeStarted).getTime() -
+            parseISO(b.timeStarted).getTime(),
+        );
+        let result = dayList.reduce(
+          (acc, current, idx, arr) => {
+            if (idx === 0 && current.userApprovalDatetime != NULL_TIME_VALUE) {
+              acc.idList.push(current.id);
+              return acc;
+            }
+
+            let previous = arr[idx - 1];
+            acc.ranges.push({
+              previous: previous,
+              current: current,
+            });
+            if (
+              current.adminApprovalUserId &&
+              current.adminApprovalUserId !== 0 &&
+              current.adminApprovalDatetime != NULL_TIME_VALUE
+            ) {
+              acc.idList.push(current.id);
+            }
+
+            return acc;
+          },
+          {
+            ranges: [] as {
+              previous: TimesheetLine.AsObject;
+              current: TimesheetLine.AsObject;
+            }[],
+            idList: [] as number[],
+          },
+        );
+        ids.push(...result.idList);
+        console.log(ids);
+      }
+      dispatch({ type: 'denyTimesheet' });
+      await tslClient.Deny(ids, userId);
+    })();
+  }, [userId, data, shownDates]);
   const fetchUsers = async () => {
     const userResult = await UserClientService.loadUserById(userId);
     const role = userResult.permissionGroupsList.find(p => p.type === 'role');
