@@ -12,7 +12,7 @@ import { Modal } from '../../Modal';
 import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
-import { loadStoredQuotes, UserType, PropertyType } from '../../../../helpers';
+import { UserType, PropertyType } from '../../../../helpers';
 import './proposal.less';
 
 interface Props {

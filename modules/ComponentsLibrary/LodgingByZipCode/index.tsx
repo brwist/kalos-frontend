@@ -3,7 +3,7 @@ import Alert from '@material-ui/lab/Alert';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
 import { InfoTable, Data } from '../InfoTable';
-import { loadGovPerDiemByZipCode, usd, makeFakeRows } from '../../../helpers';
+import { PerDiemClientService, usd, makeFakeRows } from '../../../helpers';
 
 interface Props {
   onClose?: () => void;
@@ -42,7 +42,10 @@ export const LodgingByZipCode: FC<Props> = ({ onClose }) => {
     setError(false);
     setLoading(true);
     setInitialized(true);
-    const lodging = await loadGovPerDiemByZipCode(+form.zip, form.year);
+    const lodging = await PerDiemClientService.loadGovPerDiemByZipCode(
+      +form.zip,
+      form.year,
+    );
     if (lodging) {
       setLodging(lodging);
     } else {

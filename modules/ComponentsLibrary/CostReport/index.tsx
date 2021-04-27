@@ -3,25 +3,23 @@ import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { MEALS_RATE } from '../../../constants';
 import {
-  getPropertyAddress,
   formatDate,
   usd,
-  getDepartmentName,
   PerDiemRowType,
   EventType,
   PerDiemType,
   TransactionType,
-  loadPerDiemsLodging,
   PerDiemClientService,
   EventClientService,
-  loadTransactionsByEventId,
   TimesheetLineClientService,
+  TransactionClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintTable } from '../PrintTable';
-
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -74,9 +72,14 @@ export const CostReport: FC<Props> = ({
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
-    const lodgings = await loadPerDiemsLodging(resultsList); // first # is per diem id
+    const lodgings = await PerDiemClientService.loadPerDiemsLodging(
+      resultsList,
+    ); // first # is per diem id
     setLodgings(lodgings);
-    const transactions = await loadTransactionsByEventId(serviceCallId, true);
+    const transactions = await TransactionClientService.loadTransactionsByEventId(
+      serviceCallId,
+      true,
+    );
     setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
@@ -382,7 +385,9 @@ export const CostReport: FC<Props> = ({
                     ]}
                     data={[
                       [
-                        getDepartmentName(department),
+                        TimesheetDepartmentClientService.getDepartmentName(
+                          department!,
+                        ),
                         ownerName,
                         dateSubmitted != NULL_TIME
                           ? formatDate(dateSubmitted)

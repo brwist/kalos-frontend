@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import MailIcon from '@material-ui/icons/Mail';
 import { Documents } from '../../ComponentsLibrary/Documents';
-import { loadUsersByIds } from '../../../helpers';
 
 interface Props {
   className?: string;

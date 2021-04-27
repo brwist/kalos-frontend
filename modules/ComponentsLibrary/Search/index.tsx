@@ -5,7 +5,7 @@ import { ENDPOINT } from '../../../constants';
 import { Modal } from '../Modal';
 import { Form, Schema, Options } from '../Form';
 import { InfoTable, Data, Columns } from '../InfoTable';
-import { makeFakeRows, loadUsersByIds } from '../../../helpers';
+import { makeFakeRows } from '../../../helpers';
 
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -178,7 +178,7 @@ export const Search: FC<Props> = ({
             .filter(({ id }) => id !== excludeId)
             .map(item => ({ ...item, kind: 2 }));
           entries = [...entries, ...propertyEntries]; // FIXME handle duplicated entries
-          const propertyUsers = await loadUsersByIds(
+          const propertyUsers = await UserClientService.loadUsersByIds(
             propertyEntries.map(({ userId }) => userId),
           );
           newUsers = { ...newUsers, ...propertyUsers };

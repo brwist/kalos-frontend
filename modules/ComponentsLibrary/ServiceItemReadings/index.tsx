@@ -18,7 +18,7 @@ import {
   makeFakeRows,
   getRPCFields,
   formatDate,
-  loadUsersByIds,
+  UserClientService,
   timestamp,
 } from '../../../helpers';
 
@@ -299,7 +299,7 @@ export const ServiceItemReadings: FC<Props> = ({
     try {
       const response = await ReadingClientService.BatchGet(entry);
       const { resultsList } = response.toObject();
-      const users = await loadUsersByIds(
+      const users = await UserClientService.loadUsersByIds(
         resultsList.map(({ userId }) => userId),
       );
       const maintenanceQuestions = await loadMaintenanceQuestions(

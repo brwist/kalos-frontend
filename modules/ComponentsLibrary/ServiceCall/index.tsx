@@ -7,21 +7,17 @@ import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
-  loadJobTypeSubtypes,
   getRPCFields,
-  loadEventsByPropertyId,
   makeFakeRows,
-  loadServicesRendered,
   UserType,
   PropertyType,
-  getCustomerName,
-  upsertEvent,
   PropertyClientService,
   JobTypeClientService,
   JobSubtypeClientService,
   cfURL,
-  updateMaterialUsed,
   loadProjects,
+  JobTypeSubtypeClientService,
+  ServicesRenderedClientService,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -135,7 +131,9 @@ export const ServiceCall: FC<Props> = props => {
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
         setLoading(true);
-        const servicesRendered = await loadServicesRendered(_serviceCallId);
+        const servicesRendered = await ServicesRenderedClientService.loadServicesRenderedByEventID(
+          _serviceCallId,
+        );
         setServicesRendered(servicesRendered);
         setLoading(false);
       }
@@ -167,7 +165,9 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const propertyEvents = await loadEventsByPropertyId(propertyId);
+          const propertyEvents = await EventClientService.loadEventsByPropertyId(
+            propertyId,
+          );
           setPropertyEvents(propertyEvents);
           resolve();
         }),
@@ -191,7 +191,7 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypeSubtypes = await loadJobTypeSubtypes();
+          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
           setJobTypeSubtypes(jobTypeSubtypes);
           resolve();
         }),
@@ -310,12 +310,14 @@ export const ServiceCall: FC<Props> = props => {
     setLoading,
     requestFields,
     onSave,
+    loadEntry,
+    loadServicesRenderedData,
   ]);
   const saveProject = useCallback(
     async (data: EventType) => {
       setSaving(true);
       if (confirmedParentId) data.parentId = confirmedParentId;
-      await upsertEvent(data);
+      await EventClientService.upsertEvent(data);
       setSaving(false);
       if (onSave) {
         onSave();
@@ -406,7 +408,7 @@ export const ServiceCall: FC<Props> = props => {
 
   const handleOnAddMaterials = useCallback(
     async (materialUsed, materialTotal) => {
-      await updateMaterialUsed(
+      await EventClientService.updateMaterialUsed(
         serviceCallId,
         materialUsed + entry.materialUsed,
         materialTotal + entry.materialTotal,
@@ -783,7 +785,9 @@ export const ServiceCall: FC<Props> = props => {
                         <Spiffs
                           serviceItem={entry}
                           loggedUserId={loggedUserId}
-                          loggedUserName={getCustomerName(loggedUser)}
+                          loggedUserName={UserClientService.getCustomerName(
+                            loggedUser!,
+                          )}
                         />
                       ),
                     },

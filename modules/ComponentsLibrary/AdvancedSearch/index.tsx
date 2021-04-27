@@ -1,6 +1,12 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import clsx from 'clsx';
-import { User } from '@kalos-core/kalos-rpc/User';
+import {
+  User,
+  UsersFilter,
+  UsersSort,
+  LoadUsersByFilter,
+} from '@kalos-core/kalos-rpc/User';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import cloneDeep from 'lodash/cloneDeep';
 import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
@@ -33,21 +39,13 @@ import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { Tooltip } from '../Tooltip';
 import {
   loadEventsByFilter,
-  loadUsersByFilter,
   loadPropertiesByFilter,
   loadContractsByFilter,
   makeFakeRows,
   formatDate,
-  getCustomerName,
-  getCustomerNameAndBusinessName,
-  getPropertyAddress,
-  getCustomerPhone,
   EventsFilter,
   EventsSort,
   LoadEventsByFilter,
-  UsersFilter,
-  UsersSort,
-  LoadUsersByFilter,
   PropertiesFilter,
   ContractsFilter,
   PropertiesSort,
@@ -60,12 +58,7 @@ import {
   JobTypeType,
   JobSubtypeType,
   PropertyClientService,
-  getBusinessName,
-  getCustomerPhoneWithExt,
   TimesheetDepartmentType,
-  loadTimesheetDepartments,
-  getDepartmentName,
-  saveUser,
   EmployeeFunctionType,
   CustomEventsHandler,
   uploadFileToS3Bucket,
@@ -78,6 +71,7 @@ import {
   EventClientService,
   S3ClientService,
   EmployeeFunctionClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -265,7 +259,7 @@ export const AdvancedSearch: FC<Props> = ({
     setJobSubtypes(jobSubtypes);
     setLoadingDicts(false);
     if (kinds.includes('employees')) {
-      const departments = await loadTimesheetDepartments();
+      const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       setDepartments(departments);
       const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
@@ -320,7 +314,9 @@ export const AdvancedSearch: FC<Props> = ({
       ) {
         delete criteria.filter.employeeDepartmentId;
       }
-      const { results, totalCount } = await loadUsersByFilter(criteria);
+      const { results, totalCount } = await UserClientService.loadUsersByFilter(
+        criteria,
+      );
       setCount(totalCount);
       setUsers(results);
       if (kind === 'employees') {
@@ -580,7 +576,7 @@ export const AdvancedSearch: FC<Props> = ({
             'kalos-employee-images',
           );
         }
-        await saveUser(data, pendingEmployeeEditing.id);
+        await UserClientService.saveUser(data, pendingEmployeeEditing.id);
         setPendingEmployeeEditing(undefined);
         setSaving(false);
         setLoaded(false);
@@ -1809,8 +1805,10 @@ export const AdvancedSearch: FC<Props> = ({
                     },
                     {
                       value: accounting
-                        ? getCustomerName(customer)
-                        : getCustomerNameAndBusinessName(customer),
+                        ? UserClientService.getCustomerName(customer)
+                        : UserClientService.getCustomerNameAndBusinessName(
+                            customer,
+                          ),
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
@@ -1819,7 +1817,7 @@ export const AdvancedSearch: FC<Props> = ({
                     ...(accounting
                       ? [
                           {
-                            value: getBusinessName(customer),
+                            value: UserClientService.getBusinessName(customer),
                             onClick:
                               onSelectEvent || accounting
                                 ? handleSelectEvent(entry)
@@ -1830,9 +1828,9 @@ export const AdvancedSearch: FC<Props> = ({
                     {
                       value: accounting
                         ? property?.address || ''
-                        : `${getPropertyAddress(property)} ${getCustomerPhone(
-                            customer,
-                          )}`,
+                        : `${getPropertyAddress(
+                            property,
+                          )} ${UserClientService.getCustomerPhone(customer)}`,
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
@@ -2109,7 +2107,7 @@ export const AdvancedSearch: FC<Props> = ({
                 return [
                   {
                     value: forPrint ? (
-                      getCustomerName(entry)
+                      UserClientService.getCustomerName(entry)
                     ) : (
                       <div className="AdvancedSearchEmployee">
                         <div
@@ -2124,7 +2122,7 @@ export const AdvancedSearch: FC<Props> = ({
                               : {}
                           }
                         />
-                        {getCustomerName(entry)}
+                        {UserClientService.getCustomerName(entry)}
                       </div>
                     ),
                     onClick: handlePendingEmployeeViewingToggle(entry),
@@ -2138,7 +2136,7 @@ export const AdvancedSearch: FC<Props> = ({
                     onClick: handlePendingEmployeeViewingToggle(entry),
                   },
                   {
-                    value: getCustomerPhoneWithExt(entry),
+                    value: UserClientService.getCustomerPhoneWithExt(entry),
                     onClick: handlePendingEmployeeViewingToggle(entry),
                   },
                   {
@@ -2450,10 +2448,10 @@ export const AdvancedSearch: FC<Props> = ({
         {employeeDepartmentId! > 0 && (
           <PrintHeaderSubtitleItem
             label="Department"
-            value={getDepartmentName(
+            value={TimesheetDepartmentClientService.getDepartmentName(
               departments.find(
                 ({ id }) => id === (filter as UsersFilter).employeeDepartmentId,
-              ),
+              )!,
             )}
           />
         )}
@@ -2662,7 +2660,9 @@ export const AdvancedSearch: FC<Props> = ({
           onClose={handlePendingCustomerDeletingToggle(undefined)}
           onConfirm={handleDeleteCustomer}
           kind="Customer"
-          name={getCustomerNameAndBusinessName(pendingCustomerDeleting)}
+          name={UserClientService.getCustomerNameAndBusinessName(
+            pendingCustomerDeleting,
+          )}
         />
       )}
       {pendingPropertyViewing && (
@@ -2783,7 +2783,9 @@ export const AdvancedSearch: FC<Props> = ({
           onClose={handlePendingEmployeeDeletingToggle(undefined)}
           onConfirm={handleDeleteEmployee}
           kind="Employee"
-          name={getCustomerNameAndBusinessName(pendingEmployeeDeleting)}
+          name={UserClientService.getCustomerNameAndBusinessName(
+            pendingEmployeeDeleting,
+          )}
         />
       )}
     </div>

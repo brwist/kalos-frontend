@@ -3,9 +3,6 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import {
   EventType,
-  getCustomerNameAndBusinessName,
-  getPropertyAddress,
-  getCustomerPhone,
   formatTime,
   makeFakeRows,
   loadEventsByFilter,
@@ -16,6 +13,7 @@ import { Modal } from '../ComponentsLibrary/Modal';
 import { ServiceCall } from '../ComponentsLibrary/ServiceCall';
 import { Form, Schema } from '../ComponentsLibrary/Form';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 
 interface Props extends PageWrapperProps {
   userId: number;
@@ -80,7 +78,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
 
   loadEvents = async () => {
     await this.toggleLoading();
-    const { results: calls } = await loadEventsByFilter({
+    const { resultsList: calls } = await loadEventsByFilter({
       page: -1,
       filter: {
         dateStarted: `${this.state.searchForm.date} 00:00:00`,
@@ -137,7 +135,9 @@ export class CallsByTech extends React.PureComponent<Props, state> {
                     onClick: this.toggleEditing(c),
                   },
                   {
-                    value: getCustomerNameAndBusinessName(c.customer),
+                    value: UserClientService.getCustomerNameAndBusinessName(
+                      c.customer!,
+                    ),
                     onClick: this.toggleEditing(c),
                   },
                   {
@@ -145,7 +145,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
                     onClick: this.toggleEditing(c),
                   },
                   {
-                    value: getCustomerPhone(c.customer),
+                    value: UserClientService.getCustomerPhone(c.customer!),
                     onClick: this.toggleEditing(c),
                   },
                   {

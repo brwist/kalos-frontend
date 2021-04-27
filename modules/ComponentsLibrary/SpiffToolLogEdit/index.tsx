@@ -26,10 +26,7 @@ import {
   SpiffToolAdminActionType,
   DocumentType,
   TaskClientService,
-  updateSpiffTool,
-  createTaskDocument,
-  DocumentClientService,
-  upsertSpiffToolAdminAction,
+  DocumentClientService,,
   SpiffToolAdminActionClientService,
   UserClientService,
 } from '../../../helpers';
@@ -238,7 +235,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         'testbuckethelios', // FIXME is it correct bucket name for those docs?
       );
       if (status === 'ok') {
-        await createTaskDocument(fileName, data.id, loggedUserId, description);
+        await DocumentClientService.createTaskDocument(fileName, data.id, loggedUserId, description);
         onClose();
         onReload();
         setUploading(false);
@@ -263,7 +260,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const handleSave = useCallback(
     async (form: TaskType) => {
       setSaving(true);
-      await updateSpiffTool({ ...form, id: data.id });
+      await TaskClientService.updateSpiffTool({ ...form, id: data.id });
       setSaving(false);
       onSave();
     },
@@ -278,7 +275,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
           const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
           form.reviewedBy = newReviewedBy;
         }
-        await upsertSpiffToolAdminAction({
+        await SpiffToolAdminActionClientService.upsertSpiffToolAdminAction({
           ...form,
           id: statusEditing.id,
           taskId: data.id,

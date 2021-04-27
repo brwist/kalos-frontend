@@ -33,7 +33,6 @@ import {
   makeFakeRows,
   trailingZero,
   getWeekOptions,
-  loadTechnicians,
   escapeText,
   formatDay,
   makeLast12MonthsOptions,
@@ -45,7 +44,6 @@ import {
   UserClientService,
   formatWeek,
   EventClientService,
-  loadUsersByDepartmentId,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
@@ -267,7 +265,7 @@ export const SpiffTool: FC<Props> = ({
     needsAuditAction,
   ]);
   const loadUserTechnicians = useCallback(async () => {
-    const technicians = await loadTechnicians();
+    const technicians = await UserClientService.loadTechnicians();
     setTechnicians(technicians);
   }, [setTechnicians]);
   const handleSetPayrollOpen = useCallback(

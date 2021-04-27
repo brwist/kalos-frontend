@@ -3,9 +3,8 @@ import { Property } from '@kalos-core/kalos-rpc/Property';
 import { Form, Schema } from '../Form';
 import {
   PropertyType,
-  loadGeoLocationByAddress,
-  saveProperty,
   PropertyClientService,
+  MapClientService,
 } from '../../../helpers';
 import {
   RESIDENTIAL_OPTIONS,
@@ -57,7 +56,7 @@ export const PropertyEdit: FC<Props> = ({
   }, [loaded, setLoaded, load]);
   const handleCheckLocation = useCallback(async () => {
     const { address, city, state: addressState, zip } = entry;
-    const geo = await loadGeoLocationByAddress(
+    const geo = await MapClientService.loadGeoLocationByAddress(
       `${address}, ${city}, ${addressState} ${zip}`,
     );
     if (geo) {
@@ -68,7 +67,11 @@ export const PropertyEdit: FC<Props> = ({
   const handleSave = useCallback(
     async (data: PropertyType) => {
       setSaving(true);
-      const entry = await saveProperty(data, userId, propertyId);
+      const entry = await PropertyClientService.saveProperty(
+        data,
+        userId,
+        propertyId,
+      );
       setEntry(entry);
       setPropertyId(entry.id);
       setSaving(false);

@@ -13,10 +13,9 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import {
   PerDiemClientService,
-  upsertTrip,
-  getTripDistance,
   UserClientService,
   TimesheetDepartmentClientService,
+  MapClientService,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -213,17 +212,19 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       ).id,
     );
 
-    await upsertTrip(trip.toObject(), rowId!, userId).then(() => {
-      this.setState({ pendingTrip: null });
-      this.getTrips();
-    });
+    await PerDiemClientService.upsertTrip(trip.toObject(), rowId!, userId).then(
+      () => {
+        this.setState({ pendingTrip: null });
+        this.getTrips();
+      },
+    );
 
     if (this.props.onSaveTrip) this.props.onSaveTrip();
   };
 
   getTripDistance = async (origin: string, destination: string) => {
     try {
-      await getTripDistance(origin, destination);
+      await MapClientService.getTripDistance(origin, destination);
     } catch (error: any) {
       console.error(
         'An error occurred while calculating the trip distance: ',

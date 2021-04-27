@@ -11,7 +11,7 @@ import {
   StoredQuoteClient,
   StoredQuote,
 } from '@kalos-core/kalos-rpc/StoredQuote';
-import { loadStoredQuotes, makeFakeRows, usd } from '../../../helpers';
+import { makeFakeRows, usd } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
 const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
@@ -73,7 +73,7 @@ export const StoredQuotes: FC<Props> = ({
   );
   const load = useCallback(async () => {
     setLoaded(false);
-    const storedQuotes = await loadStoredQuotes();
+    const storedQuotes = await StoredQuoteClientService.loadStoredQuotes();
     setStoredQuotes(storedQuotes);
     setLoaded(true);
   }, [setStoredQuotes, setLoaded]);

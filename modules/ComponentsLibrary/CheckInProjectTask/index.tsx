@@ -3,12 +3,7 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { Field as FieldComponent } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
-import {
-  EventType,
-  makeFakeRows,
-  TaskClientService,
-  upsertEventTask,
-} from '../../../helpers';
+import { EventType, makeFakeRows, TaskClientService } from '../../../helpers';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
 import { IconButton } from '@material-ui/core';
@@ -96,7 +91,7 @@ export const CheckInProjectTask: FC<Props> = ({
         console.error("Task's End Date cannot be after Project's End Date.");
         return;
       }
-      await upsertEventTask({
+      await TaskClientService.upsertEventTask({
         ...formData,
         eventId: serviceCallId,
         startDate: `${startDate} ${startTime}:00`,

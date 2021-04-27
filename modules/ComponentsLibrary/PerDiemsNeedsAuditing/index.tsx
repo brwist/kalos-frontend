@@ -16,23 +16,18 @@ import { PrintTable } from '../PrintTable';
 import { PrintParagraph } from '../PrintParagraph';
 import { PerDiemComponent, getStatus } from '../PerDiem';
 import {
-  loadPerDiemsNeedsAuditing,
-  loadPerDiemsReport,
   PerDiemClientService,
   PerDiemType,
   makeFakeRows,
-  getDepartmentName,
-  getCustomerName,
   getWeekOptions,
-  loadTimesheetDepartments,
   TimesheetDepartmentType,
-  loadTechnicians,
   UserType,
   usd,
-  loadGovPerDiem,
   formatDate,
   getSlackID,
   slackNotify,
+  UserClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
 import './styles.less';
@@ -124,16 +119,21 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     setGovPerDiemsByYearMonth,
   ] = useState<GovPerDiemsByYearMonth>({});
   const initialize = useCallback(async () => {
-    const technicians = await loadTechnicians();
+    const technicians = await UserClientService.loadTechnicians();
     setTechnicians(technicians);
-    const departments = await loadTimesheetDepartments();
-    setDepartments(sortBy(departments, getDepartmentName));
+    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+    setDepartments(
+      sortBy(departments, TimesheetDepartmentClientService.getDepartmentName),
+    );
     setInitialized(true);
   }, [setInitialized, setDepartments]);
   const load = useCallback(async () => {
     setLoading(true);
     const { departmentId, userId, dateStarted, needsAuditing } = formData;
-    const { resultsList, totalCount } = await loadPerDiemsNeedsAuditing(
+    const {
+      resultsList,
+      totalCount,
+    } = await PerDiemClientService.loadPerDiemsNeedsAuditing(
       page,
       needsAuditing,
       false,
@@ -186,7 +186,11 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
         zipCodesArr.map(async ({ year, month, zipCodes }) => ({
           year,
           month,
-          data: await loadGovPerDiem(zipCodes, year, month),
+          data: await PerDiemClientService.loadGovPerDiem(
+            zipCodes,
+            year,
+            month,
+          ),
         })),
       );
       const govPerDiemsByYearMonth: GovPerDiemsByYearMonth = {};
@@ -202,7 +206,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   );
   const loadPrintData = useCallback(async () => {
     const { departmentIds, userIds, weeks } = formPrintData;
-    const { resultsList } = await loadPerDiemsReport(
+    const { resultsList } = await PerDiemClientService.loadPerDiemsReport(
       departmentIds,
       userIds
         .split(',')
@@ -305,7 +309,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const techniciansOptions: Option[] = useMemo(
     () => [
       { label: OPTION_ALL, value: 0 },
-      ...technicians.map(el => ({ label: getCustomerName(el), value: el.id })),
+      ...technicians.map(el => ({
+        label: UserClientService.getCustomerName(el),
+        value: el.id,
+      })),
     ],
     [technicians],
   );
@@ -313,7 +320,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     () => [
       { label: OPTION_ALL, value: 0 },
       ...departments.map(el => ({
-        label: getDepartmentName(el),
+        label: TimesheetDepartmentClientService.getDepartmentName(el),
         value: el.id,
       })),
     ],
@@ -367,7 +374,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
         name: 'departmentIds',
         label: 'Department(s)',
         options: departments.map(el => ({
-          label: getDepartmentName(el),
+          label: TimesheetDepartmentClientService.getDepartmentName(el),
           value: el.id,
         })),
         type: 'multiselect',
@@ -399,7 +406,9 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
             onClick: handlePerDiemViewedToggle(entry),
           },
           {
-            value: getDepartmentName(department),
+            value: TimesheetDepartmentClientService.getDepartmentName(
+              department!,
+            ),
             onClick: handlePerDiemViewedToggle(entry),
           },
           {
@@ -473,8 +482,12 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
         >
           Are you sure Per Diem of <strong>{pendingReject.ownerName}</strong>{' '}
           for department{' '}
-          <strong>{getDepartmentName(pendingReject.department)}</strong> for{' '}
-          <strong>{formatWeek(pendingReject.dateStarted)}</strong> should be
+          <strong>
+            {TimesheetDepartmentClientService.getDepartmentName(
+              pendingReject.department!,
+            )}
+          </strong>{' '}
+          for <strong>{formatWeek(pendingReject.dateStarted)}</strong> should be
           Rejected?
           <br></br>
           <label>
@@ -499,9 +512,13 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
         >
           Are you sure Per Diem of <strong>{pendingAudited.ownerName}</strong>{' '}
           for department{' '}
-          <strong>{getDepartmentName(pendingAudited.department)}</strong> for{' '}
-          <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no longer
-          needs auditing?
+          <strong>
+            {TimesheetDepartmentClientService.getDepartmentName(
+              pendingAudited.department!,
+            )}
+          </strong>{' '}
+          for <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no
+          longer needs auditing?
         </Confirm>
       )}
       {perDiemViewed && (
@@ -510,7 +527,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
             title={`Per Diem: ${perDiemViewed.ownerName}`}
             subtitle={
               <>
-                Department: {getDepartmentName(perDiemViewed.department)}
+                Department:{' '}
+                {TimesheetDepartmentClientService.getDepartmentName(
+                  perDiemViewed.department!,
+                )}
                 <br />
                 {formatWeek(perDiemViewed.dateStarted)}
               </>
@@ -584,8 +604,11 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
                   return (
                     <div key={id} className="PerDiemNeedsAuditingPrintItem">
                       <PrintParagraph tag="h3">
-                        {ownerName} / {getDepartmentName(department)} /{' '}
-                        {formatWeek(dateStarted)}
+                        {ownerName} /{' '}
+                        {TimesheetDepartmentClientService.getDepartmentName(
+                          department!,
+                        )}{' '}
+                        / {formatWeek(dateStarted)}
                       </PrintParagraph>
                       <PrintTable
                         columns={[

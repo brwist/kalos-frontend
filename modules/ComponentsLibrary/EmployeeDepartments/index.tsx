@@ -13,9 +13,9 @@ import {
   makeFakeRows,
   formatDate,
   UserType,
-  upsertEmployeeFunction,
   UserClientService,
   EmployeeFunctionClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 
 interface Props {
@@ -82,7 +82,10 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
   const saveEntry = useCallback(
     async (data: EmployeeFunctionType) => {
       setSaving(true);
-      await upsertEmployeeFunction(data, loggedUserId);
+      await EmployeeFunctionClientService.upsertEmployeeFunction(
+        data,
+        loggedUserId,
+      );
       setSaving(false);
       setPendingEdit(undefined);
       setLoaded(false);

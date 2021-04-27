@@ -5,6 +5,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -18,14 +19,13 @@ import {
   formatDate,
   makeFakeRows,
   OrderDir,
-  getPropertyAddress,
   usd,
   timestamp,
   trailingZero,
   PropertyType,
   loadContractsByFilter,
-  upsertEvent,
   CustomEventsHandler,
+  EventClientService,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
@@ -233,7 +233,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
     };
     console.log(data);
     this.setState({ saving: true });
-    await upsertEvent(data);
+    await EventClientService.upsertEvent(data);
     this.setState({ saving: false, addingCustomerEntry: undefined });
     this.toggleConfirmingAdded();
     this.load();

@@ -7,7 +7,6 @@ import { Field, Value } from '../Field';
 import { Form, Schema } from '../Form';
 import { Filter } from './filter';
 import {
-  loadQuoteParts,
   makeFakeRows,
   QuotableType,
   usd,
@@ -95,7 +94,7 @@ export const QuoteSelector: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     const [quoteParts, quotable] = await Promise.all([
-      loadQuoteParts(
+      EventClientService.loadQuoteParts(
         {
           pageNumber: 0,
           isFlatrate: true,
