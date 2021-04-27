@@ -21,10 +21,10 @@ import {
   formatDateTimeDay,
   getRPCFields,
   UserType,
-  writeQuotes,
   formatDay,
   formatDate,
   formatTime,
+  EventClientService,
 } from '../../../../helpers';
 import {
   ENDPOINT,
@@ -276,7 +276,7 @@ export const Services: FC<Props> = ({
               req.setIsFlatrate(quotePart.isFlatrate);
               req.setIsComplex(quotePart.isComplex);
               req.setIsActive(true);
-              await writeQuotes(req);
+              await EventClientService.WriteQuotes(req);
             },
           ),
         );

@@ -16,12 +16,11 @@ import { ServiceItems } from '../../ComponentsLibrary/ServiceItems';
 import { PropertyEdit } from '../../ComponentsLibrary/PropertyEdit';
 import { ServiceCalls } from './ServiceCalls';
 import {
-  loadUsersByIds,
   makeFakeRows,
-  saveProperty,
   PropertyClientService,
   UserType,
   PropertyType,
+  UserClientService,
 } from '../../../helpers';
 import './propertyInfo.less';
 
@@ -131,7 +130,7 @@ export const PropertyInfo: FC<Props> = props => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const users = await loadUsersByIds([userID]);
+    const users = await UserClientService.loadUsersByIds([userID]);
     setUser(users[userID]);
     const req = new Property();
     req.setUserId(userID);
@@ -168,7 +167,11 @@ export const PropertyInfo: FC<Props> = props => {
   const handleSave = useCallback(
     async (data: PropertyType) => {
       setSaving(true);
-      const entry = await saveProperty(data, userID, propertyId);
+      const entry = await PropertyClientService.saveProperty(
+        data,
+        userID,
+        propertyId,
+      );
       setEntry(entry);
       setSaving(false);
       setEditing(false);

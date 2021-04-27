@@ -3,7 +3,7 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import InfoIcon from '@material-ui/icons/Info';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Property, getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import {
   USA_STATES_OPTIONS,
   RESIDENTIAL_OPTIONS,
@@ -16,16 +16,16 @@ import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import {
-  loadGeoLocationByAddress,
   PropertyType,
   loadPropertiesByFilter,
   PropertiesFilter,
-  saveProperty,
   PropertyClientService,
-  getPropertyAddress,
   getCFAppUrl,
+  MapClientService,
 } from '../../../helpers';
 import './properties.less';
+import { MapServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb_service';
+import { MapClient } from '@kalos-core/kalos-rpc/Maps';
 
 const PROP_LEVEL = 'Used for property-level billing only';
 
@@ -106,14 +106,14 @@ export const Properties: FC<Props> = props => {
       if (editing) {
         setSaving(true);
         const { address, city, state: addressState, zip } = data;
-        const geo = await loadGeoLocationByAddress(
+        const geo = await MapClientService.loadGeoLocationByAddress(
           `${address}, ${city}, ${addressState} ${zip}`,
         );
         if (geo) {
           data.geolocationLat = geo.geolocationLat;
           data.geolocationLng = geo.geolocationLng;
         }
-        await saveProperty(
+        await PropertyClientService.saveProperty(
           data,
           userID,
           editing.id === 0 ? undefined : editing.id,

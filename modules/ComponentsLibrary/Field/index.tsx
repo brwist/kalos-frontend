@@ -47,10 +47,10 @@ import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import {
   makeFakeRows,
-  loadTechnicians,
   trailingZero,
   EventType,
   EventClientService,
+  UserClientService,
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
@@ -175,7 +175,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
     );
     const [eventIdValue, setEventIdValue] = useState<number>(+(value || ''));
     const loadUserTechnicians = useCallback(async () => {
-      const technicians = await loadTechnicians();
+      const technicians = await UserClientService.loadTechnicians();
       setLoadedTechnicians(true);
       setTechnicians(technicians);
     }, [setLoadedTechnicians, setTechnicians]);

@@ -435,9 +435,8 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     setLoading,
     resetTransactions,
     setDepartments,
-    TimesheetDepartmentClientService.loadTimeSheetDepartments,
     setEmployees,
-    UserClientService.loadTechnicians,
+    loggedUserId,
   ]);
 
   const SCHEMA: Schema<FilterData> = [

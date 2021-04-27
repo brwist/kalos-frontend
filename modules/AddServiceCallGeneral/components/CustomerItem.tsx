@@ -1,12 +1,8 @@
 import React, { FC, useCallback } from 'react';
 import { Link } from '../../ComponentsLibrary/Link';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
-import {
-  UserType,
-  PropertyType,
-  getCustomerNameAndBusinessName,
-  getPropertyAddress,
-} from '../../../helpers';
+import { UserType, PropertyType, UserClientService } from '../../../helpers';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 
 export interface Props {
   loggedUserId: number;
@@ -45,7 +41,9 @@ export const CustomerItem: FC<Props> = ({
     (customer: UserType) => () => onAddProperty(customer),
     [onAddProperty],
   );
-  const customerNameAndBusinessName = getCustomerNameAndBusinessName(customer);
+  const customerNameAndBusinessName = UserClientService.getCustomerNameAndBusinessName(
+    customer,
+  );
   const columns: Columns = [
     {
       name: (

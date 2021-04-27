@@ -1,5 +1,7 @@
 import React, { FC, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+
 import {
   PendingBillingClient,
   PendingBilling,
@@ -15,15 +17,13 @@ import { Documents } from '../Documents';
 import {
   formatDateTime,
   UserType,
-  saveUser,
-  loadGroups,
   UserGroupLinkClientService,
   GroupType,
   UserGroupLinkType,
   UserClientService,
-  getPropertyAddress,
   CustomEventsHandler,
   getCFAppUrl,
+  GroupClientService,
 } from '../../../helpers';
 import Typography from '@material-ui/core/Typography';
 import './styles.less';
@@ -113,7 +113,7 @@ export const CustomerInformation: FC<Props> = ({
         setPendingBillingRecordCount(pendingBillingsTotalCount);
       }
     }
-    const groups = await loadGroups();
+    const groups = await GroupClientService.loadGroups();
     setGroups(groups);
     const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
       userID,
@@ -166,7 +166,7 @@ export const CustomerInformation: FC<Props> = ({
   const handleSave = useCallback(
     async (data: UserType) => {
       setSaving(true);
-      const customer = await saveUser(data, userID);
+      const customer = await UserClientService.saveUser(data, userID);
       setCustomer(customer);
       setSaving(false);
       setEditing(false);

@@ -2,12 +2,10 @@ import React, { FC, useState, useCallback, useEffect } from 'react';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import {
-  loadUsersByFilter,
   UserType,
   makeFakeRows,
   PropertyType,
-  UsersFilter,
-  LoadUsersByFilter,
+  UserClientService,
 } from '../../../helpers';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { CustomerEdit } from '../../ComponentsLibrary/CustomerEdit';
@@ -18,7 +16,7 @@ import { SearchForm } from './SearchForm';
 import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 import './addServiceCall.less';
-
+import { LoadUsersByFilter, UsersFilter } from '@kalos-core/kalos-rpc/User';
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   onClose?: () => void;
   onSave?: () => void;
@@ -50,7 +48,9 @@ export const AddServiceCall: FC<Props> = props => {
       },
       withProperties: true,
     };
-    const { results, totalCount } = await loadUsersByFilter(criteria);
+    const { results, totalCount } = await UserClientService.loadUsersByFilter(
+      criteria,
+    );
     setEntries(results);
     setCount(totalCount);
     setLoading(false);

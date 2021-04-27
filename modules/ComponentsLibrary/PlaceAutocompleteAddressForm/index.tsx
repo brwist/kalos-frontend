@@ -1,6 +1,6 @@
 // This is the google autocomplete form for address queries
 import React, { createRef } from 'react';
-import { getKeyByKeyName, PerDiemClientService } from '../../../helpers';
+import { ApiKeyClientService, PerDiemClientService } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { AddressPair } from './Address';
@@ -107,7 +107,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     );
     await this.loadScriptByUrl(
       `https://maps.googleapis.com/maps/api/js?key=${
-        (await getKeyByKeyName('google_maps')).apiKey
+        (await ApiKeyClientService.getKeyByKeyName('google_maps')).apiKey
       }&libraries=places`,
     );
     this.handleLoad();

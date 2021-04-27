@@ -16,26 +16,21 @@ import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { Documents } from '../Documents';
 import {
   TaskType,
-  loadTasks,
   makeFakeRows,
   timestamp,
   TaskClientService,
   TaskPriorityType,
   TaskStatusType,
   loadProjectTaskBillableTypes,
-  upsertTask,
   formatDateTime,
   SpiffTypeType,
   escapeText,
   UserClientService,
   TaskAssignmentClientService,
   uploadFileToS3Bucket,
-  createTaskDocument,
   DocumentType,
   DocumentClientService,
-  upsertTaskEvent,
   TaskEventType,
-  loadTaskEventsByFilter,
   TaskEventClientService,
 } from '../../../helpers';
 import {
@@ -169,7 +164,7 @@ export const Tasks: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     const { referenceNumber, priorityId, briefDescription, statusId } = search;
-    const { resultsList, totalCount } = await loadTasks({
+    const { resultsList, totalCount } = await TaskClientService.loadTasks({
       pageNumber: page,
       externalCode,
       externalId,
@@ -198,13 +193,17 @@ export const Tasks: FC<Props> = ({
       if (saveData.billableType === OPTION_BLANK) {
         saveData.billableType = '';
       }
-      if (!saveData.hasOwnProperty('priorityId')) {
+      var hasPriorityIdProperty = Object.prototype.hasOwnProperty.call(
+        saveData,
+        'priorityId',
+      );
+      if (hasPriorityIdProperty) {
         saveData.priorityId = 2;
       }
       const technicianIds = assignedTechnicians
         ? assignedTechnicians.split(',').map(id => +id)
         : [];
-      const id = await upsertTask(saveData);
+      const id = await TaskClientService.upsertTask(saveData);
       await TaskAssignmentClientService.upsertTaskAssignments(
         id,
         technicianIds,
@@ -233,7 +232,7 @@ export const Tasks: FC<Props> = ({
   const loadTaskEvents = useCallback(
     async (id: number) => {
       setTaskEventsLoading(true);
-      const taskEvents = await loadTaskEventsByFilter({
+      const taskEvents = await TaskEventClientService.loadTaskEventsByFilter({
         id,
         withTechnicianNames: true,
       });
@@ -289,7 +288,7 @@ export const Tasks: FC<Props> = ({
         'testbuckethelios', // FIXME is it correct bucket name for those docs?
       );
       if (status === 'ok') {
-        await createTaskDocument(
+        await DocumentClientService.createTaskDocument(
           fileName,
           pendingEdit.id,
           loggedUserId,
@@ -376,7 +375,7 @@ export const Tasks: FC<Props> = ({
       statusId: 2,
     };
     setTaskEventsLoading(true);
-    await upsertTaskEvent(data);
+    await TaskEventClientService.upsertTaskEvent(data);
     loadTaskEvents(pendingEdit.id);
   }, [pendingEdit, loggedUserId, setTaskEventsLoading, loadTaskEvents]);
   const handleSetTaskEventEditing = useCallback(
@@ -411,7 +410,7 @@ export const Tasks: FC<Props> = ({
       };
       setTaskEventEditing(undefined);
       setTaskEventsLoading(true);
-      await upsertTaskEvent(data);
+      await TaskEventClientService.upsertTaskEvent(data);
       loadTaskEvents(pendingEdit.id);
     },
     [taskEventEditing, pendingEdit, setTaskEventsLoading, loadTaskEvents],

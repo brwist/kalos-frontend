@@ -9,11 +9,10 @@ import {
   UserType,
   GroupType,
   UserGroupLinkType,
-  loadGroups,
   UserGroupLinkClientService,
   makeFakeRows,
-  saveUser,
   UserClientService,
+  GroupClientService,
 } from '../../../helpers';
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
 import './styles.less';
@@ -67,7 +66,7 @@ export const CustomerEdit: FC<Props> = ({
       }
     }
     if (!_groups) {
-      const groups = await loadGroups();
+      const groups = await GroupClientService.loadGroups();
       setGroups(groups);
     }
     setFormKey(formKey + 1);
@@ -215,7 +214,7 @@ export const CustomerEdit: FC<Props> = ({
   const handleSave = useCallback(
     async (data: UserType) => {
       setSaving(true);
-      const customer = await saveUser(data, userId);
+      const customer = await UserClientService.saveUser(data, userId);
       setCustomer(customer);
       setUserId(customer.id);
       await saveGroupLinks(groupLinks, groupLinksInitial, customer.id);

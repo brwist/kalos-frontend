@@ -5,8 +5,9 @@ import {
   uploadFileToS3Bucket,
   getFileExt,
   getMimeType,
-  upsertFile,
   SUBJECT_TAGS,
+  DocumentClientService,
+  FileClientService,
 } from '../../../helpers';
 import './styles.less';
 
@@ -73,7 +74,7 @@ export const UploadPhoto: FC<Props> = ({
       );
       setSaving(false);
       if (status === 'ok') {
-        await upsertFile({
+        await FileClientService.upsertFile({
           bucket,
           name,
           mimeType: getMimeType(data.file),

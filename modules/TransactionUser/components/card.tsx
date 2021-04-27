@@ -30,11 +30,12 @@ import ReIcon from '@material-ui/icons/RefreshSharp';
 import {
   timestamp,
   FileType,
-  upsertFile,
-  upsertTransactionDocument,
   S3ClientService,
   getFileExt,
   UserClientService,
+  FileClientService,
+  TransactionClientService,
+  TransactionDocumentClientService,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
@@ -49,6 +50,7 @@ import { parseISO } from 'date-fns';
 import { IconButton } from '@material-ui/core';
 import AddCircleOutlineTwoToneIcon from '@material-ui/icons/AddCircleOutlineTwoTone';
 import { UploadPhotoTransaction } from '../../ComponentsLibrary/UploadPhotoTransaction';
+import { FileServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/file_pb_service';
 interface props {
   txn: Transaction.AsObject;
   userDepartmentID: number;
@@ -306,12 +308,12 @@ export class TxnCard extends React.PureComponent<props, state> {
       );
       return;
     }
-    await upsertFile({
+    await FileClientService.upsertFile({
       id: file.id,
       ownerId: 0,
       bucket,
     });
-    await upsertTransactionDocument({
+    await TransactionDocumentClientService.upsertTransactionDocument({
       transactionId: this.state.txn.id,
       reference: file.name,
       fileId: file.id,
@@ -338,12 +340,12 @@ export class TxnCard extends React.PureComponent<props, state> {
       alert('Upload failed. Please try again, or contact an administrator');
       return;
     }
-    await upsertFile({
+    await FileClientService.upsertFile({
       id: file.id,
       ownerId: 0,
       bucket,
     });
-    await upsertTransactionDocument({
+    await TransactionDocumentClientService.upsertTransactionDocument({
       transactionId: this.state.txn.id,
       reference: file.name,
       fileId: file.id,

@@ -1,11 +1,8 @@
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { User } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import React, { FC, useState, useEffect } from 'react';
-import {
-  getRowDatesFromPerDiemTripInfos,
-  getRowDatesFromPerDiemTrips,
-  UserClientService,
-} from '../../../helpers';
+import { PerDiemClientService, UserClientService } from '../../../helpers';
+import { PerDiem } from '../../PerDiem/main';
 import { Button } from '../Button';
 import { Form, Schema } from '../Form';
 import { Modal } from '../Modal';
@@ -54,14 +51,18 @@ export const TripViewModal: FC<Props> = ({
   const [key, setKey] = useState<string>('');
 
   if (!data.weekOf)
-    getRowDatesFromPerDiemTripInfos([data]).then(result => {
-      if (result == null) {
-        console.error("Could not get week to use due to an error in getting the row dates.")
-        return
-      }
-      data.weekOf = result[0].date.split(' ')[0];
-      setKey(key + '!');
-    });
+    PerDiemClientService.getRowDatesFromPerDiemTripInfos([data]).then(
+      result => {
+        if (result == null) {
+          console.error(
+            'Could not get week to use due to an error in getting the row dates.',
+          );
+          return;
+        }
+        data.weekOf = result[0].date.split(' ')[0];
+        setKey(key + '!');
+      },
+    );
 
   if (!data.nameOfEmployee) {
     let u = new User();
