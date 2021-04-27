@@ -65,6 +65,52 @@ export const TimeOff: FC<Props> = ({
   const [error, setError] = useState<string>('');
   const emptyTO = new TimeoffRequest();
   const [data, setData] = useState<TimeoffRequestType>(emptyTO.toObject());
+  const getTimeoffTotals = useCallback(
+    async (hireDate: string) => {
+      hireDate = hireDate.replace(/-/g, '/');
+      const today = new Date();
+      const startDay = new Date(hireDate);
+      const yearsToAdd = differenceInCalendarYears(today, startDay);
+      const adjustedStartDay = addYears(startDay, yearsToAdd - 1);
+      const adjustedEndDay = addYears(startDay, yearsToAdd);
+      const startDate = format(adjustedStartDay, 'yyyy-MM-dd');
+      const endDate = format(adjustedEndDay, 'yyyy-MM-dd');
+      const filter = {
+        technicianUserID: userId,
+        requestType: 9,
+        startDate: startDate,
+        endDate: endDate,
+        payrollProcessed: true,
+      };
+      const results = (
+        await TimeoffRequestClientService.loadTimeoffRequests(filter)
+      ).resultsList;
+      let total = 0;
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].allDayOff === 0) {
+          const timeFinished = results[i].timeFinished;
+          const timeStarted = results[i].timeStarted;
+          const subtotal = roundNumber(
+            differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
+              60,
+          );
+
+          total += subtotal;
+        } else {
+          const timeFinished = results[i].timeFinished;
+          const timeStarted = results[i].timeStarted;
+          const numberOfDays =
+            differenceInCalendarDays(
+              parseISO(timeFinished),
+              parseISO(timeStarted),
+            ) + 1;
+          total += numberOfDays * 8;
+        }
+      }
+      return total;
+    },
+    [userId],
+  );
 
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
   const init = useCallback(async () => {
@@ -115,55 +161,11 @@ export const TimeOff: FC<Props> = ({
     setInitiated,
     data,
     setLoggedUser,
+    getTimeoffTotals,
     setUser,
     loggedUserId,
   ]);
-  const getTimeoffTotals = useCallback(
-    async (hireDate: string) => {
-      hireDate = hireDate.replace(/-/g, '/');
-      const today = new Date();
-      const startDay = new Date(hireDate);
-      const yearsToAdd = differenceInCalendarYears(today, startDay);
-      const adjustedStartDay = addYears(startDay, yearsToAdd - 1);
-      const adjustedEndDay = addYears(startDay, yearsToAdd);
-      const startDate = format(adjustedStartDay, 'yyyy-MM-dd');
-      const endDate = format(adjustedEndDay, 'yyyy-MM-dd');
-      const filter = {
-        technicianUserID: userId,
-        requestType: 9,
-        startDate: startDate,
-        endDate: endDate,
-        payrollProcessed: true,
-      };
-      const results = (
-        await TimeoffRequestClientService.loadTimeoffRequests(filter)
-      ).resultsList;
-      let total = 0;
-      for (let i = 0; i < results.length; i++) {
-        if (results[i].allDayOff === 0) {
-          const timeFinished = results[i].timeFinished;
-          const timeStarted = results[i].timeStarted;
-          const subtotal = roundNumber(
-            differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
-              60,
-          );
 
-          total += subtotal;
-        } else {
-          const timeFinished = results[i].timeFinished;
-          const timeStarted = results[i].timeStarted;
-          const numberOfDays =
-            differenceInCalendarDays(
-              parseISO(timeFinished),
-              parseISO(timeStarted),
-            ) + 1;
-          total += numberOfDays * 8;
-        }
-      }
-      return total;
-    },
-    [userId],
-  );
   useEffect(() => {
     if (!initiated) {
       init();
@@ -235,7 +237,7 @@ export const TimeOff: FC<Props> = ({
           recipient: manager.email,
         };
 
-        await emailClient.sendMail(config);
+        //await emailClient.sendMail(config);
       } catch (err) {
         console.log(err);
       }
