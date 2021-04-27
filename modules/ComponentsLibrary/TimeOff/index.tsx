@@ -237,7 +237,7 @@ export const TimeOff: FC<Props> = ({
           recipient: manager.email,
         };
 
-        //await emailClient.sendMail(config);
+        await emailClient.sendMail(config);
       } catch (err) {
         console.log(err);
       }
