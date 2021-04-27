@@ -83,7 +83,7 @@ export const Timesheet: FC<Props> = ({
     setTimesheets(sortedResultsLists);
     setCount(totalCount);
     setLoading(false);
-  }, [page, departmentId, employeeId, week, type]);
+  }, [page, departmentId, employeeId, week, endDay, startDay, type]);
   useEffect(() => {
     load();
   }, [load]);
@@ -109,7 +109,7 @@ export const Timesheet: FC<Props> = ({
         columns={[
           { name: 'Employee' },
           { name: 'Department' },
-          { name: 'Week Approved' },
+          { name: type === 'Manager' ? 'Week Submitted' : 'Week Approved' },
         ]}
         loading={loading}
         data={
@@ -126,7 +126,10 @@ export const Timesheet: FC<Props> = ({
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: formatWeek(e.adminApprovalDatetime),
+                    value:
+                      type === 'Manager'
+                        ? formatWeek(e.userApprovalDatetime)
+                        : formatWeek(e.adminApprovalDatetime),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
