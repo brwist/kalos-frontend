@@ -271,6 +271,21 @@ export class Dashboard extends React.PureComponent<props, state> {
                         </>
                       ),
                     },
+                    {
+                      value: this.state.currentUser.permissionGroupsList.find(
+                        p => p.type === 'role',
+                      ) ? (
+                        <Button
+                          label="View Payroll Dashboard"
+                          onClick={() =>
+                            (document.location.href =
+                              'https://app.kalosflorida.com/index.cfm?action=admin:reports.payroll')
+                          }
+                        />
+                      ) : (
+                        React.Fragment
+                      ),
+                    },
                     ...(toolFund > 0
                       ? [
                           {
