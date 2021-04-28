@@ -81,6 +81,7 @@ export const TimeOff: FC<Props> = ({
         startDate: startDate,
         endDate: endDate,
         payrollProcessed: true,
+        approved: true,
       };
       const results = (
         await TimeoffRequestClientService.loadTimeoffRequests(filter)
