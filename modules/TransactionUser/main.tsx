@@ -3,7 +3,6 @@ import { TransactionUserView } from './components/view';
 import { Loader } from '../Loader/main';
 import {
   UserType,
-  getCustomerName,
   UserClientService,
   TimesheetDepartmentClientService,
 } from '../../helpers';
@@ -127,7 +126,7 @@ const Transaction: FC<Props> = props => {
 
           <TransactionUserView
             userID={userID}
-            userName={getCustomerName(user)}
+            userName={UserClientService.getCustomerName(user)}
             departmentId={user.employeeDepartmentId}
             departmentList={managerDepartmentIds}
             isManager={isManager}

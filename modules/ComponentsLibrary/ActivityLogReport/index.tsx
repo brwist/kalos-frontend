@@ -13,8 +13,8 @@ import {
   ActivityLogsSort,
   ActivityLogsFilter,
   formatDateTime,
-  getCustomerName,
   getCurrDate,
+  UserClientService,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 
@@ -193,7 +193,7 @@ export const ActivityLogReport: FC<Props> = ({
               value: formatDateTime(activityDate),
             },
             {
-              value: getCustomerName(user, true),
+              value: UserClientService.getCustomerName(user!, true),
             },
             {
               value: activityName,
@@ -230,7 +230,7 @@ export const ActivityLogReport: FC<Props> = ({
               json={(allPrintData ? entries : printEntries).map(
                 ({ activityDate, user, activityName }) => ({
                   date: formatDateTime(activityDate),
-                  user: getCustomerName(user, true),
+                  user: UserClientService.getCustomerName(user!, true),
                   notification: activityName,
                 }),
               )}

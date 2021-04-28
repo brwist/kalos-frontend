@@ -9,15 +9,14 @@ import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { PlainForm, Schema } from '../PlainForm';
 import { Button } from '../Button';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { ServiceCall } from '../ServiceCall';
 import { Modal } from '../Modal';
 import {
   makeFakeRows,
-  loadDeletedServiceCallsByFilter,
   EventType,
   formatDate,
-  getPropertyAddress,
-  getCustomerName,
+  UserClientService,
   getCFAppUrl,
   loadEventsByFilterDeleted,
 } from '../../../helpers';
@@ -179,7 +178,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
               onClick: handleSetPendingEdit(entry),
             },
             {
-              value: getCustomerName(customer),
+              value: UserClientService.getCustomerName(customer!),
               onClick: handleSetPendingEdit(entry),
             },
             { value: name, onClick: handleSetPendingEdit(entry) },
