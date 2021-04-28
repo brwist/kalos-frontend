@@ -135,7 +135,7 @@ export const CostSummary: FC<Props> = ({
       resultsList,
     } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
       userId,
-      formatDateFns(startDay),
+      formatDateFns(endDay),
     );
     setPerDiems(resultsList);
     const year = +format(startDay, 'yyyy');

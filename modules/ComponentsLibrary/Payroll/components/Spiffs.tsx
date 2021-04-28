@@ -87,11 +87,11 @@ export const Spiffs: FC<Props> = ({
 
     Object.assign(filter, {
       startDate:
-        role === 'Payroll' ? '01-01-01' : format(startDay, 'yyyy-MM-dd'),
+        role === 'Payroll' ? '0001-01-01' : format(startDay, 'yyyy-MM-dd'),
       endDate: format(endDay, 'yyyy-MM-dd'),
       role: role === 'Payroll' ? 'Manager' : role,
     });
-    if (week !== OPTION_ALL && role != 'Payroll') {
+    if (week !== OPTION_ALL) {
       Object.assign(filter, {
         startDate: week,
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
