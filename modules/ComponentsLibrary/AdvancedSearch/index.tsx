@@ -74,11 +74,16 @@ import {
   TimesheetDepartmentClientService,
 } from '../../../helpers';
 import {
+  UsersSort,
+  UsersFilter,
+  LoadUsersByFilter,
+} from '@kalos-core/kalos-rpc/User';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import {
   ROWS_PER_PAGE,
   OPTION_ALL,
   EVENT_STATUS_LIST,
   USA_STATES_OPTIONS,
-  APP_URL,
 } from '../../../constants';
 import './styles.less';
 
@@ -131,7 +136,6 @@ export const AdvancedSearch: FC<Props> = ({
   editableCustomers,
   deletableCustomers,
   editableEmployees,
-  deletableEmployees,
   printableEmployees = false,
   editableProperties,
   deletableProperties,
@@ -331,6 +335,8 @@ export const AdvancedSearch: FC<Props> = ({
               ),
             })),
         );
+
+        // TODO fix type error
         setEmployeeImages(
           images.reduce(
             (aggr, { image, url }) => ({ ...aggr, [image]: url }),
