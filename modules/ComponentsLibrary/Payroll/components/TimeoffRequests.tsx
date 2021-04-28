@@ -72,21 +72,24 @@ export const TimeoffRequests: FC<Props> = ({
   const [pendingApproval, setPendingApproval] = useState<TimeoffRequestType>();
   const load = useCallback(async () => {
     setLoading(true);
+    //Lets grab the Timeoff requests,
+    //for managers, we should show all fo their departments
+    //For Payroll/Auditor, just PTO thats approved
     const filter: GetTimesheetConfig = {
       page,
       departmentID: departmentId,
-      approved: true,
+      approved: role != 'Manager' ? true : false,
       technicianUserID: employeeId,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
         startDate: week,
-        endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
+        endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
-    //if (role === 'Payroll') {
-    //  Object.assign(filter, { requestType: 9 });
-    // }
+    if (role === 'Payroll') {
+      Object.assign(filter, { requestType: 9 });
+    }
     const {
       resultsList,
       totalCount,
