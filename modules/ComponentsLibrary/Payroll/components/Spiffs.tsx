@@ -86,8 +86,7 @@ export const Spiffs: FC<Props> = ({
     };
 
     Object.assign(filter, {
-      startDate:
-        role === 'Payroll' ? '0001-01-01' : format(startDay, 'yyyy-MM-dd'),
+      startDate: '0001-01-01',
       endDate: format(endDay, 'yyyy-MM-dd'),
       role: role === 'Payroll' ? 'Manager' : role,
     });
