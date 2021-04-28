@@ -8,19 +8,18 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import {
   getCFAppUrl,
   loadEventsByFilter,
   EventType,
   makeFakeRows,
-  getBusinessName,
-  getCustomerName,
-  getPropertyAddress,
   formatDate,
   EventsFilter,
   EventsSort,
   cfURL,
+  UserClientService,
   EventClientService,
 } from '../../../helpers';
 import { NULL_TIME, ROWS_PER_PAGE } from '../../../constants';
@@ -48,7 +47,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
   });
   const load = useCallback(async () => {
     setLoading(true);
-    const { results, totalCount } = await loadEventsByFilter({
+    const { resultsList, totalCount } = await loadEventsByFilter({
       page,
       sort,
       filter: {
@@ -60,7 +59,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       },
       pendingBilling: true,
     });
-    setEvents(results);
+    setEvents(resultsList);
     setCount(totalCount);
     setLoading(false);
   }, [setEvents, setCount, setLoading, filter, page, sort]);
@@ -226,11 +225,11 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         };
         return [
           {
-            value: getCustomerName(customer),
+            value: UserClientService.getCustomerName(customer!),
             onClick: openEditServiceCall(event),
           },
           {
-            value: getBusinessName(customer),
+            value: UserClientService.getBusinessName(customer!),
             onClick: openEditServiceCall(event),
           },
           {

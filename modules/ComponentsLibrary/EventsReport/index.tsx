@@ -12,13 +12,13 @@ import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { ExportJSON } from '../ExportJSON';
 import { Button } from '../Button';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import {
   makeFakeRows,
   loadEventsByFilter,
   EventType,
-  getPropertyAddress,
-  getCustomerName,
   formatDate,
+  UserClientService,
   EventsSort,
   getCFAppUrl,
   EventsFilter,
@@ -65,12 +65,12 @@ export const EventsReport: FC<Props> = ({
     if (kind === 'paymentStatus') {
       filter.logPaymentStatus = status;
     }
-    const { results, totalCount } = await loadEventsByFilter({
+    const { resultsList, totalCount } = await loadEventsByFilter({
       page,
       filter,
       sort,
     });
-    setEntries(results);
+    setEntries(resultsList);
     setCount(totalCount);
     setLoading(false);
   }, [
@@ -136,12 +136,12 @@ export const EventsReport: FC<Props> = ({
     if (kind === 'paymentStatus') {
       filter.logPaymentStatus = status;
     }
-    const { results } = await loadEventsByFilter({
+    const { resultsList } = await loadEventsByFilter({
       page: -1,
       filter,
       sort,
     });
-    setPrintEntries(results);
+    setPrintEntries(resultsList);
   }, [status, startDate, endDate, sort, kind, printEntries, count]);
   const handleExport = useCallback(async () => {
     setExportStatus('loading');
@@ -284,7 +284,7 @@ export const EventsReport: FC<Props> = ({
               onClick: handlePendingEditToggle(entry),
             },
             {
-              value: getCustomerName(customer, true),
+              value: UserClientService.getCustomerName(customer!, true),
               onClick: handlePendingEditToggle(entry),
             },
             { value: logJobNumber, onClick: handlePendingEditToggle(entry) },
@@ -363,7 +363,7 @@ export const EventsReport: FC<Props> = ({
                   logPaymentStatus,
                 }) => ({
                   property: getPropertyAddress(property),
-                  customer: getCustomerName(customer),
+                  customer: UserClientService.getCustomerName(customer!),
                   jobNumber: logJobNumber,
                   date: formatDate(dateStarted),
                   status:

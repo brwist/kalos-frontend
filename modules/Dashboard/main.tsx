@@ -283,7 +283,7 @@ export class Dashboard extends React.PureComponent<props, state> {
                           }
                         />
                       ) : (
-                        React.Fragment
+                        []
                       ),
                     },
                     ...(toolFund > 0

@@ -5,7 +5,11 @@ import ReactPDF from '@react-pdf/renderer';
 import { QuoteLine, QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
 import { ENDPOINT } from '../../constants';
 import { b64toBlob, timestamp } from '../../helpers';
-import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
+import {
+  Property,
+  PropertyClient,
+  getPropertyAddress,
+} from '@kalos-core/kalos-rpc/Property';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { ApprovedProposal } from './components/ApprovedProposal';
 import { S3Client, FileObject, URLObject } from '@kalos-core/kalos-rpc/S3File';
@@ -23,7 +27,7 @@ import { InfoTable } from '../ComponentsLibrary/InfoTable';
 import { Confirm } from '../ComponentsLibrary/Confirm';
 import { Field } from '../ComponentsLibrary/Field';
 import { Loader } from '../Loader/main';
-import { getCustomerName, getPropertyAddress, usd } from '../../helpers';
+import { UserClientService, usd } from '../../helpers';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 // add any prop types here
@@ -144,7 +148,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         prevState => ({
           isLoading: !prevState.isLoading,
         }),
-        resolve,
+        () => resolve,
       );
     });
   };
@@ -391,7 +395,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         ) : (
           <>
             <SectionBar
-              title={`Proposal for ${getCustomerName(this.state.customer)}`}
+              title={`Proposal for ${UserClientService.getCustomerName(
+                this.state.customer,
+              )}`}
               subtitle={`Address: ${getPropertyAddress(this.state.property)}`}
               footer={
                 this.state.notes.length > 0 ? `Notes: ${this.state.notes}` : ''

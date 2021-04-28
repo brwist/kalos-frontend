@@ -8,10 +8,10 @@ import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import {
   makeFakeRows,
   formatDate,
-  getCustomerName,
-  getPropertyAddress,
   EventType,
+  UserClientService,
 } from '../../../helpers';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { parseISO } from 'date-fns';
 
 interface AssignmentProps {
@@ -78,7 +78,7 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
                         onClick: openServiceCall(e),
                       },
                       {
-                        value: getCustomerName(customer),
+                        value: UserClientService.getCustomerName(customer!),
                         onClick: openServiceCall(e),
                       },
                       {
