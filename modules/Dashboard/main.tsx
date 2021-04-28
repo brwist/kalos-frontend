@@ -225,6 +225,7 @@ export class Dashboard extends React.PureComponent<props, state> {
           columns={[
             { name: '', align: 'center' },
             { name: '', align: 'center' },
+            { name: '', align: 'center' },
             ...(toolFund > 0 ? [{ name: '', align: 'center' as const }] : []),
           ]}
           data={
@@ -277,13 +278,18 @@ export class Dashboard extends React.PureComponent<props, state> {
                       ? [
                           {
                             value: (
-                              <Button
-                                label="View Payroll Dashboard"
-                                onClick={() =>
-                                  (document.location.href =
-                                    'https://app.kalosflorida.com/index.cfm?action=admin:reports.payroll')
-                                }
-                              />
+                              <>
+                                <br />
+                                <br />
+                                <br />
+                                <Button
+                                  label="View Payroll Dashboard"
+                                  onClick={() =>
+                                    (document.location.href =
+                                      'https://app.kalosflorida.com/index.cfm?action=admin:reports.payroll')
+                                  }
+                                />
+                              </>
                             ),
                           },
                         ]
