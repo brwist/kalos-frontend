@@ -80,7 +80,6 @@ export const TimeOff: FC<Props> = ({
         requestType: 9,
         startDate: startDate,
         endDate: endDate,
-        payrollProcessed: true,
         approved: true,
       };
       const results = (
