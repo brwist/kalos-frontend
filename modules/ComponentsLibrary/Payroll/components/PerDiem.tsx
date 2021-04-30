@@ -132,7 +132,7 @@ export const PerDiem: FC<Props> = ({
         slackID,
         `Your PerDiem for ${formatWeek(
           pendingDeny.dateStarted,
-        )} was denied by Managerfor the following reason:` + rejectionMessage,
+        )} was denied by Manager for the following reason:` + rejectionMessage,
       );
     } else {
       console.log('We could not find the user, but we will still reject');

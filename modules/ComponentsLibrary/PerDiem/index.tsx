@@ -461,8 +461,9 @@ export const PerDiemComponent: FC<Props> = ({
       await PerDiemClientService.approvePerDiemById(id, loggedUserId);
       setSaving(false);
       setLoaded(false);
+      if (onClose) onClose();
     }
-  }, [setSaving, setLoaded, loggedUserId, pendingPerDiemApprove]);
+  }, [setSaving, onClose, setLoaded, loggedUserId, pendingPerDiemApprove]);
   const handleDeletePerDiem = useCallback(async () => {
     if (pendingPerDiemDelete) {
       const { id } = pendingPerDiemDelete;
@@ -552,11 +553,12 @@ export const PerDiemComponent: FC<Props> = ({
       ),
     [usedDepartments, departments],
   );
-  const addPerDiemDisabled = availableDapartments.length === 0;
+
   const isAnyManager =
     departments.map(({ managerId }) => managerId).includes(loggedUserId) ||
     role === 'Manager';
   const isOwner = !isAnyManager;
+  const addPerDiemDisabled = availableDapartments.length === 0;
   const SCHEMA_PER_DIEM: Schema<PerDiemType> = pendingPerDiemEdit
     ? [
         [
@@ -657,11 +659,19 @@ export const PerDiemComponent: FC<Props> = ({
       {loggedUserId > 0 && (
         <CalendarHeader
           onDateChange={handleSetDateStarted}
-          onSubmit={handlePendingPerDiemEditToggle(makeNewPerDiem())}
+          onSubmit={
+            role === 'Manager' && isOwner == false && perDiem
+              ? handlePendingPerDiemApproveToggle(perDiem)
+              : handlePendingPerDiemEditToggle(makeNewPerDiem())
+          }
           selectedDate={dateStarted}
           title={UserClientService.getCustomerName(user!)}
           weekStartsOn={6}
-          submitLabel="Add Per Diem"
+          submitLabel={
+            role === 'Manager' && isOwner == false && perDiem
+              ? 'Approve Per Diem'
+              : 'Add Per Diem'
+          }
           submitDisabled={loading || saving || addPerDiemDisabled}
           actions={[
             {
@@ -851,7 +861,7 @@ export const PerDiemComponent: FC<Props> = ({
                       dateString.startsWith(date),
                     );
                     const isPerDiemRowUndefined =
-                      (isAnyManager
+                      (isAnyManager && !perDiem
                         ? managerPerDiemsOther[userId]
                         : filteredPerDiems
                       )
