@@ -81,6 +81,8 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<TransactionList>();
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
+  const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
+  // editorial control for Dani
   const [role, setRole] = useState<RoleType>();
   const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
@@ -396,6 +398,13 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
     [setCreatingTransaction],
   );
 
+  const handleSetMergingTransaction = useCallback(
+    (isMergingTransaction: boolean) => {
+      setMergingTransaction(isMergingTransaction);
+    },
+    [setMergingTransaction],
+  );
+
   const openFileInput = () => {
     FileInput.current && FileInput.current.click();
   };
@@ -508,6 +517,16 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
       ) : (
         <></>
       )}
+      {mergingTransaction ? (
+        <Modal
+          open={mergingTransaction}
+          onClose={() => handleSetMergingTransaction(false)}
+        >
+          <>Merging</>
+        </Modal>
+      ) : (
+        <></>
+      )}
       {creatingTransaction ? (
         <Modal
           open={creatingTransaction}
@@ -548,6 +567,10 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           {
             label: 'New Transaction',
             onClick: () => handleSetCreatingTransaction(true), // makes uploadPhotoTransaction appear in a modal
+          },
+          {
+            label: 'Merge Transactions',
+            onClick: () => handleSetMergingTransaction(true), // makes merge popup come up
           },
         ]}
       />
