@@ -71,6 +71,7 @@ type SortString =
 type SelectorParams = {
   txn: Transaction;
   checked: boolean;
+  totalCount: number;
 };
 let pageNumber = 0;
 let sortDir: OrderDir | ' ' | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
@@ -96,6 +97,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
   const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [checkedTransaction, setCheckedTransaction] = useState<boolean>(false);
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -425,17 +427,21 @@ export const TransactionAccountsPayable: FC<Props> = ({
     FileInput.current && FileInput.current.click();
   };
 
-  const setTransactionChecked = (idx: number) => {
-    if (!transactions) {
-      console.error(
-        'No transactions exist but setTransactionChecked is being called. This is a no-op, returning.',
-      );
-      return;
-    }
-    let txns = transactions;
-    txns[idx] = { ...txns[idx], checked: !txns[idx].checked };
-    handleSetTransactions(txns);
-  };
+  const setTransactionChecked = useCallback(
+    (idx: number) => {
+      if (!transactions) {
+        console.error(
+          'No transactions exist but setTransactionChecked is being called. This is a no-op, returning.',
+        );
+        return;
+      }
+      let txns = transactions;
+      txns[idx] = { ...txns[idx], checked: !txns[idx].checked };
+      handleSetTransactions(txns);
+      setCheckedTransaction(!checkedTransaction);
+    },
+    [setTransactions, transactions, setCheckedTransaction, checkedTransaction],
+  );
 
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
@@ -446,12 +452,16 @@ export const TransactionAccountsPayable: FC<Props> = ({
     req.setPageNumber(pageNumber);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setOwnerId(filter.employeeId);
+    let res = await TransactionClientService.BatchGet(req);
+
     setTransactions(
-      (await TransactionClientService.BatchGet(req))
-        .getResultsList()
-        .map(txn => {
-          return { txn: txn, checked: false } as SelectorParams;
-        }),
+      res.getResultsList().map(txn => {
+        return {
+          txn: txn,
+          checked: false,
+          totalCount: res.getTotalCount(),
+        } as SelectorParams;
+      }),
     );
   }, [setTransactions]);
 
@@ -525,8 +535,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
   useEffect(() => {
     resetTransactions();
     refresh();
-  }, [filter]);
-
+  }, [filter]); 
   return (
     <>
       {loading ? <Loader /> : <> </>}
@@ -592,7 +601,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
         title="Transactions"
         key={String(pageNumber)}
         pagination={{
-          count: transactions ? transactions!.length : 0,
+          count: transactions ? transactions![0].totalCount : 0,
           rowsPerPage: 25,
           page: pageNumber,
           onChangePage: handleChangePage,
@@ -609,7 +618,13 @@ export const TransactionAccountsPayable: FC<Props> = ({
         ]}
       />
       <InfoTable
-        key={transactions?.toString() + String(creatingTransaction)}
+        key={
+          transactions?.toString() +
+          String(creatingTransaction) +
+          transactions?.values.toString() +
+          checkedTransaction
+        }
+        hoverable={false}
         columns={
           !isSelector
             ? [
@@ -690,6 +705,9 @@ export const TransactionAccountsPayable: FC<Props> = ({
               ]
             : [
                 {
+                  name: 'Is selected?',
+                },
+                {
                   name: 'Date',
                   dir:
                     sortBy == 'timestamp'
@@ -768,8 +786,10 @@ export const TransactionAccountsPayable: FC<Props> = ({
           loading
             ? makeFakeRows(8, 5)
             : (transactions?.map((selectorParam, idx) => {
-                console.log('TRANSACTION: ', selectorParam);
                 return [
+                  {
+                    value: selectorParam.checked ? 'SELECTED' : '',
+                  },
                   {
                     value: selectorParam.txn.getTimestamp(),
                     onClick: isSelector
