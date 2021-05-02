@@ -55,6 +55,7 @@ import DoneIcon from '@material-ui/icons/Done';
 import CloseIcon from '@material-ui/icons/Close';
 interface Props {
   loggedUserId: number;
+  isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
@@ -74,7 +75,10 @@ let filter = {
   employeeId: 0,
   week: OPTION_ALL,
 };
-export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
+export const TransactionAccountsPayable: FC<Props> = ({
+  loggedUserId,
+  isSelector,
+}) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
   const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
@@ -579,82 +583,160 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
           transactions?.getResultsList().toString() +
           String(creatingTransaction)
         }
-        columns={[
-          {
-            name: 'Date',
-            dir:
-              sortBy == 'timestamp'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('timestamp'),
-          },
-          {
-            name: 'Purchaser',
-            dir:
-              sortBy == 'owner_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('owner_id'),
-          },
-          {
-            name: 'Assigned Employee',
-            dir:
-              sortBy == 'assigned_employee_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('owner_id'),
-          },
-          {
-            name: 'Department',
-            dir:
-              sortBy == 'department_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('department_id'),
-          },
-          {
-            name: 'Job #',
-            dir:
-              sortBy == 'job_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('job_id'),
-          },
-          {
-            name: 'Amount',
-            dir:
-              sortBy == 'amount'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('amount'),
-          },
-          {
-            name: 'Description',
-            dir:
-              sortBy == 'description'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('description'),
-          },
-          { name: 'Actions' },
-          {
-            name: 'Accepted / Rejected',
-          },
-        ]}
+        columns={
+          !isSelector
+            ? [
+                {
+                  name: 'Date',
+                  dir:
+                    sortBy == 'timestamp'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('timestamp'),
+                },
+                {
+                  name: 'Purchaser',
+                  dir:
+                    sortBy == 'owner_id'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('owner_id'),
+                },
+                {
+                  name: 'Assigned Employee',
+                  dir:
+                    sortBy == 'assigned_employee_id'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('owner_id'),
+                },
+                {
+                  name: 'Department',
+                  dir:
+                    sortBy == 'department_id'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('department_id'),
+                },
+                {
+                  name: 'Job #',
+                  dir:
+                    sortBy == 'job_id'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('job_id'),
+                },
+                {
+                  name: 'Amount',
+                  dir:
+                    sortBy == 'amount'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('amount'),
+                },
+                {
+                  name: 'Description',
+                  dir:
+                    sortBy == 'description'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('description'),
+                },
+                { name: 'Actions' },
+                {
+                  name: 'Accepted / Rejected',
+                },
+              ]
+            : [
+                {
+                  name: 'Date',
+                  dir:
+                    sortBy == 'timestamp'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('timestamp'),
+                },
+                {
+                  name: 'Purchaser',
+                  dir:
+                    sortBy == 'owner_id'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('owner_id'),
+                },
+                {
+                  name: 'Assigned Employee',
+                  dir:
+                    sortBy == 'assigned_employee_id'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('owner_id'),
+                },
+                {
+                  name: 'Department',
+                  dir:
+                    sortBy == 'department_id'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('department_id'),
+                },
+                {
+                  name: 'Job #',
+                  dir:
+                    sortBy == 'job_id'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('job_id'),
+                },
+                {
+                  name: 'Amount',
+                  dir:
+                    sortBy == 'amount'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('amount'),
+                },
+                {
+                  name: 'Description',
+                  dir:
+                    sortBy == 'description'
+                      ? sortDir != ' '
+                        ? sortDir
+                        : undefined
+                      : undefined,
+                  onClick: () => handleChangeSort('description'),
+                },
+                {
+                  name: 'Accepted / Rejected',
+                },
+              ]
+        }
         data={
           loading
             ? makeFakeRows(8, 5)
@@ -681,128 +763,134 @@ export const TransactionAccountsPayable: FC<Props> = ({ loggedUserId }) => {
                   value: txn.getDescription(),
                 },
                 {
-                  actions: [
-                    <Tooltip key="copy" content="Copy data to clipboard">
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          copyToClipboard(
-                            `${parseISO(
-                              txn.getTimestamp().split(' ').join('T'),
-                            ).toLocaleDateString()},${txn.getDescription()},${txn.getAmount()},${txn.getOwnerName()},${txn.getVendor()}`,
-                          )
-                        }
-                      >
-                        <CopyIcon />
-                      </IconButton>
-                    </Tooltip>,
-                    <Tooltip key="upload" content="Upload File">
-                      <IconButton size="small" onClick={openFileInput}>
-                        <UploadIcon />
-                        <input
-                          type="file"
-                          ref={FileInput}
-                          onChange={() => handleFile(txn.toObject())}
-                          style={{ display: 'none' }}
-                        />
-                      </IconButton>
-                    </Tooltip>,
-                    <Prompt
-                      key="updateJobNumber"
-                      confirmFn={newJobNumber => {
-                        try {
-                          addJobNumber(txn.getId(), newJobNumber);
-                        } catch (err) {
-                          console.error('Failed to add job number: ', err);
-                        }
-                      }}
-                      text="Update Job Number"
-                      prompt="New Job Number: "
-                      Icon={KeyboardIcon}
-                    />,
-                    <Prompt
-                      key="editNotes"
-                      confirmFn={updated => updateNotes(txn.getId(), updated)}
-                      text="Edit Notes"
-                      prompt="Update Txn Notes: "
-                      Icon={NotesIcon}
-                      defaultValue={txn.getNotes()}
-                      multiline
-                    />,
-                    <AltGallery
-                      key="receiptPhotos"
-                      title="Transaction Photos"
-                      fileList={getGalleryData(txn.toObject())}
-                      transactionID={txn.getId()}
-                      text="View photos"
-                      iconButton
-                    />,
-                    <TxnLog key="txnLog" iconButton txnID={txn.getId()} />,
-                    <TxnNotes
-                      key="viewNotes"
-                      iconButton
-                      text="View notes"
-                      notes={txn.getNotes()}
-                      disabled={txn.getNotes() === ''}
-                    />,
-                    ...([9928, 9646, 1734].includes(loggedUserId)
-                      ? [
-                          <Tooltip
-                            key="audit"
-                            content={
-                              txn.getIsAudited() && loggedUserId !== 1734
-                                ? 'This transaction has already been audited'
-                                : 'Mark as correct'
-                            }
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={
-                                loggedUserId === 1734
-                                  ? () => forceAccept(txn.toObject())
-                                  : () => auditTxn(txn.toObject())
-                              }
-                              disabled={
+                  actions: !isSelector ? (
+                    [
+                      <Tooltip key="copy" content="Copy data to clipboard">
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            copyToClipboard(
+                              `${parseISO(
+                                txn.getTimestamp().split(' ').join('T'),
+                              ).toLocaleDateString()},${txn.getDescription()},${txn.getAmount()},${txn.getOwnerName()},${txn.getVendor()}`,
+                            )
+                          }
+                        >
+                          <CopyIcon />
+                        </IconButton>
+                      </Tooltip>,
+                      <Tooltip key="upload" content="Upload File">
+                        <IconButton size="small" onClick={openFileInput}>
+                          <UploadIcon />
+                          <input
+                            type="file"
+                            ref={FileInput}
+                            onChange={() => handleFile(txn.toObject())}
+                            style={{ display: 'none' }}
+                          />
+                        </IconButton>
+                      </Tooltip>,
+                      <Prompt
+                        key="updateJobNumber"
+                        confirmFn={newJobNumber => {
+                          try {
+                            addJobNumber(txn.getId(), newJobNumber);
+                          } catch (err) {
+                            console.error('Failed to add job number: ', err);
+                          }
+                        }}
+                        text="Update Job Number"
+                        prompt="New Job Number: "
+                        Icon={KeyboardIcon}
+                      />,
+                      <Prompt
+                        key="editNotes"
+                        confirmFn={updated => updateNotes(txn.getId(), updated)}
+                        text="Edit Notes"
+                        prompt="Update Txn Notes: "
+                        Icon={NotesIcon}
+                        defaultValue={txn.getNotes()}
+                        multiline
+                      />,
+                      <AltGallery
+                        key="receiptPhotos"
+                        title="Transaction Photos"
+                        fileList={getGalleryData(txn.toObject())}
+                        transactionID={txn.getId()}
+                        text="View photos"
+                        iconButton
+                      />,
+                      <TxnLog key="txnLog" iconButton txnID={txn.getId()} />,
+                      <TxnNotes
+                        key="viewNotes"
+                        iconButton
+                        text="View notes"
+                        notes={txn.getNotes()}
+                        disabled={txn.getNotes() === ''}
+                      />,
+                      ...([9928, 9646, 1734].includes(loggedUserId)
+                        ? [
+                            <Tooltip
+                              key="audit"
+                              content={
                                 txn.getIsAudited() && loggedUserId !== 1734
+                                  ? 'This transaction has already been audited'
+                                  : 'Mark as correct'
                               }
                             >
-                              <CheckIcon />
-                            </IconButton>
-                          </Tooltip>,
-                        ]
-                      : []),
-                    <Tooltip
-                      key="submit"
-                      content={
-                        acceptOverride ? 'Mark as accepted' : 'Mark as entered'
-                      }
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() => updateStatus(txn.toObject())}
+                              <IconButton
+                                size="small"
+                                onClick={
+                                  loggedUserId === 1734
+                                    ? () => forceAccept(txn.toObject())
+                                    : () => auditTxn(txn.toObject())
+                                }
+                                disabled={
+                                  txn.getIsAudited() && loggedUserId !== 1734
+                                }
+                              >
+                                <CheckIcon />
+                              </IconButton>
+                            </Tooltip>,
+                          ]
+                        : []),
+                      <Tooltip
+                        key="submit"
+                        content={
+                          acceptOverride
+                            ? 'Mark as accepted'
+                            : 'Mark as entered'
+                        }
                       >
-                        <SubmitIcon />
-                      </IconButton>
-                    </Tooltip>,
-                    <Tooltip
-                      key="assign"
-                      content="Assign an employee to this task"
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSetAssigningUser(true)}
+                        <IconButton
+                          size="small"
+                          onClick={() => updateStatus(txn.toObject())}
+                        >
+                          <SubmitIcon />
+                        </IconButton>
+                      </Tooltip>,
+                      <Tooltip
+                        key="assign"
+                        content="Assign an employee to this task"
                       >
-                        <AssignmentIndIcon />
-                      </IconButton>
-                    </Tooltip>,
-                    <Prompt
-                      key="reject"
-                      confirmFn={reason => dispute(reason, txn.toObject())}
-                      text="Reject transaction"
-                      prompt="Enter reason for rejection: "
-                      Icon={RejectIcon}
-                    />,
-                  ],
+                        <IconButton
+                          size="small"
+                          onClick={() => handleSetAssigningUser(true)}
+                        >
+                          <AssignmentIndIcon />
+                        </IconButton>
+                      </Tooltip>,
+                      <Prompt
+                        key="reject"
+                        confirmFn={reason => dispute(reason, txn.toObject())}
+                        text="Reject transaction"
+                        prompt="Enter reason for rejection: "
+                        Icon={RejectIcon}
+                      />,
+                    ]
+                  ) : (
+                    <> </>
+                  ),
                   actionsFullWidth: true,
                 },
                 {
