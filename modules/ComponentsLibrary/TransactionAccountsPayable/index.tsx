@@ -370,6 +370,13 @@ export const TransactionAccountsPayable: FC<Props> = ({
     [filter],
   );
 
+  const handleSetTransactions = useCallback(
+    (txns: SelectorParams[]) => {
+      setTransactions(txns);
+    },
+    [setTransactions],
+  );
+
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
       pageNumber = pageNumberToChangeTo;
@@ -416,6 +423,18 @@ export const TransactionAccountsPayable: FC<Props> = ({
 
   const openFileInput = () => {
     FileInput.current && FileInput.current.click();
+  };
+
+  const setTransactionChecked = (idx: number) => {
+    if (!transactions) {
+      console.error(
+        'No transactions exist but setTransactionChecked is being called. This is a no-op, returning.',
+      );
+      return;
+    }
+    let txns = transactions;
+    txns[idx] = { ...txns[idx], checked: !txns[idx].checked };
+    handleSetTransactions(txns);
   };
 
   const resetTransactions = useCallback(async () => {
@@ -748,29 +767,50 @@ export const TransactionAccountsPayable: FC<Props> = ({
         data={
           loading
             ? makeFakeRows(8, 5)
-            : (transactions?.map(selectorParam => { 
+            : (transactions?.map((selectorParam, idx) => {
                 console.log('TRANSACTION: ', selectorParam);
                 return [
                   {
                     value: selectorParam.txn.getTimestamp(),
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
                   },
                   {
                     value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
                   },
                   {
                     value: `${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`,
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
                   },
                   {
                     value: `${selectorParam.txn.getDepartmentString()} - ${selectorParam.txn.getDepartmentId()}`,
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
                   },
                   {
                     value: selectorParam.txn.getJobId(),
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
                   },
                   {
                     value: `$ ${prettyMoney(selectorParam.txn.getAmount())}`,
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
                   },
                   {
                     value: selectorParam.txn.getDescription(),
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
                   },
                   {
                     actions: !isSelector ? (
@@ -781,7 +821,10 @@ export const TransactionAccountsPayable: FC<Props> = ({
                             onClick={() =>
                               copyToClipboard(
                                 `${parseISO(
-                                  selectorParam.txn.getTimestamp().split(' ').join('T'),
+                                  selectorParam.txn
+                                    .getTimestamp()
+                                    .split(' ')
+                                    .join('T'),
                                 ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
                               )
                             }
@@ -795,7 +838,9 @@ export const TransactionAccountsPayable: FC<Props> = ({
                             <input
                               type="file"
                               ref={FileInput}
-                              onChange={() => handleFile(selectorParam.txn.toObject())}
+                              onChange={() =>
+                                handleFile(selectorParam.txn.toObject())
+                              }
                               style={{ display: 'none' }}
                             />
                           </IconButton>
@@ -804,7 +849,10 @@ export const TransactionAccountsPayable: FC<Props> = ({
                           key="updateJobNumber"
                           confirmFn={newJobNumber => {
                             try {
-                              addJobNumber(selectorParam.txn.getId(), newJobNumber);
+                              addJobNumber(
+                                selectorParam.txn.getId(),
+                                newJobNumber,
+                              );
                             } catch (err) {
                               console.error('Failed to add job number: ', err);
                             }
@@ -827,7 +875,9 @@ export const TransactionAccountsPayable: FC<Props> = ({
                         <AltGallery
                           key="receiptPhotos"
                           title="Transaction Photos"
-                          fileList={getGalleryData(selectorParam.txn.toObject())}
+                          fileList={getGalleryData(
+                            selectorParam.txn.toObject(),
+                          )}
                           transactionID={selectorParam.txn.getId()}
                           text="View photos"
                           iconButton
@@ -859,8 +909,12 @@ export const TransactionAccountsPayable: FC<Props> = ({
                                   size="small"
                                   onClick={
                                     loggedUserId === 1734
-                                      ? () => forceAccept(selectorParam.txn.toObject())
-                                      : () => auditTxn(selectorParam.txn.toObject())
+                                      ? () =>
+                                          forceAccept(
+                                            selectorParam.txn.toObject(),
+                                          )
+                                      : () =>
+                                          auditTxn(selectorParam.txn.toObject())
                                   }
                                   disabled={
                                     selectorParam.txn.getIsAudited() &&
@@ -882,7 +936,9 @@ export const TransactionAccountsPayable: FC<Props> = ({
                         >
                           <IconButton
                             size="small"
-                            onClick={() => updateStatus(selectorParam.txn.toObject())}
+                            onClick={() =>
+                              updateStatus(selectorParam.txn.toObject())
+                            }
                           >
                             <SubmitIcon />
                           </IconButton>
