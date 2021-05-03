@@ -1,11 +1,29 @@
+import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
   Transaction,
-  TransactionClient,
-  TransactionList,
+  TransactionClient
 } from '@kalos-core/kalos-rpc/Transaction';
+import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
+import {
+  TransactionActivity, TransactionActivityClient
+} from '@kalos-core/kalos-rpc/TransactionActivity';
+import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import IconButton from '@material-ui/core/IconButton';
+import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
+import CheckIcon from '@material-ui/icons/CheckCircleSharp';
+import CloseIcon from '@material-ui/icons/Close';
+import UploadIcon from '@material-ui/icons/CloudUploadSharp';
+import DoneIcon from '@material-ui/icons/Done';
+import NotesIcon from '@material-ui/icons/EditSharp';
+import CopyIcon from '@material-ui/icons/FileCopySharp';
+import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
+import RejectIcon from '@material-ui/icons/ThumbDownSharp';
+import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { parseISO } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { Tooltip } from '../../ComponentsLibrary/Tooltip';
+import { ENDPOINT, OPTION_ALL } from '../../../constants';
 import {
   getSlackID,
   makeFakeRows,
@@ -15,45 +33,24 @@ import {
   TimesheetDepartmentType,
   timestamp,
   TransactionClientService,
-  TransactionType,
+
   UserClientService,
-  UserType,
+  UserType
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
+import { Tooltip } from '../../ComponentsLibrary/Tooltip';
+import { Loader } from '../../Loader/main';
 import { Prompt } from '../../Prompt/main';
 import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
-import { Data, InfoTable } from '../InfoTable';
-import { DepartmentPicker, EmployeePicker } from '../Pickers';
-import { SectionBar } from '../SectionBar';
-import IconButton from '@material-ui/core/IconButton';
-import CopyIcon from '@material-ui/icons/FileCopySharp';
-import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
-import RejectIcon from '@material-ui/icons/ThumbDownSharp';
-import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
-import UploadIcon from '@material-ui/icons/CloudUploadSharp';
-import NotesIcon from '@material-ui/icons/EditSharp';
-import CheckIcon from '@material-ui/icons/CheckCircleSharp';
-import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
-import { S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT, OPTION_ALL } from '../../../constants';
 import { GalleryData } from '../Gallery';
-import {
-  TransactionActivityClient,
-  TransactionActivity,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
-import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
-import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { Data, InfoTable } from '../InfoTable';
 import { Modal } from '../Modal';
 import { FilterData, RoleType } from '../Payroll';
-import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import { PlainForm, Schema } from '../PlainForm';
-import { Loader } from '../../Loader/main';
-import DoneIcon from '@material-ui/icons/Done';
-import CloseIcon from '@material-ui/icons/Close';
+import { SectionBar } from '../SectionBar';
+import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
