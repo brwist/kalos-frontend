@@ -656,166 +656,85 @@ export const TransactionAccountsPayable: FC<Props> = ({
           selectedTransactions.toString()
         }
         hoverable={false}
-        columns={
-          !isSelector
-            ? [
-                {
-                  name: '',
-                },
-                {
-                  name: 'Date',
-                  dir:
-                    sortBy == 'timestamp'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('timestamp'),
-                },
-                {
-                  name: 'Purchaser',
-                  dir:
-                    sortBy == 'owner_id'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('owner_id'),
-                },
-                {
-                  name: 'Assigned Employee',
-                  dir:
-                    sortBy == 'assigned_employee_id'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('owner_id'),
-                },
-                {
-                  name: 'Department',
-                  dir:
-                    sortBy == 'department_id'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('department_id'),
-                },
-                {
-                  name: 'Job #',
-                  dir:
-                    sortBy == 'job_id'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('job_id'),
-                },
-                {
-                  name: 'Amount',
-                  dir:
-                    sortBy == 'amount'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('amount'),
-                },
-                {
-                  name: 'Description',
-                  dir:
-                    sortBy == 'description'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('description'),
-                },
-                { name: 'Actions' },
-                {
-                  name: 'Accepted / Rejected',
-                },
-              ]
-            : [
-                {
-                  name: 'Is selected?',
-                },
-                {
-                  name: 'Date',
-                  dir:
-                    sortBy == 'timestamp'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('timestamp'),
-                },
-                {
-                  name: 'Purchaser',
-                  dir:
-                    sortBy == 'owner_id'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('owner_id'),
-                },
-                {
-                  name: 'Assigned Employee',
-                  dir:
-                    sortBy == 'assigned_employee_id'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('owner_id'),
-                },
-                {
-                  name: 'Department',
-                  dir:
-                    sortBy == 'department_id'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('department_id'),
-                },
-                {
-                  name: 'Job #',
-                  dir:
-                    sortBy == 'job_id'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('job_id'),
-                },
-                {
-                  name: 'Amount',
-                  dir:
-                    sortBy == 'amount'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('amount'),
-                },
-                {
-                  name: 'Description',
-                  dir:
-                    sortBy == 'description'
-                      ? sortDir != ' '
-                        ? sortDir
-                        : undefined
-                      : undefined,
-                  onClick: () => handleChangeSort('description'),
-                },
-                {
-                  name: 'Accepted / Rejected',
-                },
-              ]
-        }
+        columns={[
+          {
+            name: isSelector ? 'Is selected?' : '',
+          },
+          {
+            name: 'Date',
+            dir:
+              sortBy == 'timestamp'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('timestamp'),
+          },
+          {
+            name: 'Purchaser',
+            dir:
+              sortBy == 'owner_id'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('owner_id'),
+          },
+          {
+            name: 'Assigned Employee',
+            dir:
+              sortBy == 'assigned_employee_id'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('owner_id'),
+          },
+          {
+            name: 'Department',
+            dir:
+              sortBy == 'department_id'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('department_id'),
+          },
+          {
+            name: 'Job #',
+            dir:
+              sortBy == 'job_id'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('job_id'),
+          },
+          {
+            name: 'Amount',
+            dir:
+              sortBy == 'amount'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('amount'),
+          },
+          {
+            name: 'Description',
+            dir:
+              sortBy == 'description'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('description'),
+          },
+          { name: 'Actions' },
+          {
+            name: 'Accepted / Rejected',
+          },
+        ]}
         data={
           loading
             ? makeFakeRows(8, 5)
