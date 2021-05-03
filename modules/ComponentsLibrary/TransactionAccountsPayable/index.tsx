@@ -445,23 +445,38 @@ export const TransactionAccountsPayable: FC<Props> = ({
         );
         return;
       }
-      let txns = transactions;
-      txns[idx] = { ...txns[idx] };
+      transactions[idx] = { ...transactions[idx] };
 
-      handleSetTransactions(txns);
-      if (!selectedTransactions.includes(txns[idx].txn)) {
+      // selectedTransactions.includes fails and I'm not sure why, so I'm writing this loop to do the same thing but check Ids
+      let contained = false;
+      selectedTransactions.forEach(txn => {
+        if (txn.getId() === transactions[idx].txn.getId()) {
+          contained = true;
+        }
+      });
+      if (!contained) {
         // We want to toggle it
-        setSelectedTransactions([...selectedTransactions, txns[idx].txn]);
+        setSelectedTransactions([
+          ...selectedTransactions,
+          transactions[idx].txn,
+        ]);
         if (onSelect)
-          onSelect(txns[idx].txn, [...selectedTransactions, txns[idx].txn]);
+          onSelect(transactions[idx].txn, [
+            ...selectedTransactions,
+            transactions[idx].txn,
+          ]);
       } else {
         setSelectedTransactions(
-          selectedTransactions.filter(txn => txn !== txns[idx].txn),
+          selectedTransactions.filter(
+            txn => txn.getId() !== transactions[idx].txn.getId(),
+          ),
         );
         if (onDeselect)
           onDeselect(
-            txns[idx].txn,
-            selectedTransactions.filter(txn => txn !== txns[idx].txn),
+            transactions[idx].txn,
+            selectedTransactions.filter(
+              txn => txn.getId() !== transactions[idx].txn.getId(),
+            ),
           );
       }
     },
