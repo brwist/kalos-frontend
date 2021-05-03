@@ -200,7 +200,7 @@ export const TimesheetSummary: FC<Props> = ({
     }
     setTimeOff(results);
     return timeOffJobs;
-  }, [userId, notReady, endDay, startDay]);
+  }, [userId, endDay, startDay]);
   const getTimesheetsPending = useCallback(async () => {
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
@@ -634,7 +634,7 @@ export const TimesheetSummary: FC<Props> = ({
     setTotalBillableHours(totalBill);
     setMappedElements(jobReports);
     setLoaded(true);
-  }, [getTimesheetTotals, getTimesheetsPending, dayList]);
+  }, [getTimesheetTotals, userId, getTimesheetsPending, dayList]);
 
   useEffect(() => {
     if (loading) {
