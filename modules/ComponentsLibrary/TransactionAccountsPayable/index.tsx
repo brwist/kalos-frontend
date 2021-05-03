@@ -44,7 +44,6 @@ import { Prompt } from '../../Prompt/main';
 import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
-import { Button } from '../Button';
 import { GalleryData } from '../Gallery';
 import { Data, InfoTable } from '../InfoTable';
 import { Modal } from '../Modal';
@@ -55,6 +54,14 @@ import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
+  onSelect?: (
+    selectedTransaction: Transaction,
+    selectedTransactions: Transaction[],
+  ) => void;
+  onDeselect?: (
+    deselectedTransaction: Transaction,
+    selectedTransactions: Transaction[],
+  ) => void;
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
@@ -82,6 +89,8 @@ let filter = {
 export const TransactionAccountsPayable: FC<Props> = ({
   loggedUserId,
   isSelector,
+  onSelect,
+  onDeselect,
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
@@ -95,9 +104,9 @@ export const TransactionAccountsPayable: FC<Props> = ({
   const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
-  const [checkedTransactions, setCheckedTransactions] = useState<Transaction[]>(
-    [],
-  );
+  const [selectedTransactions, setSelectedTransactions] = useState<
+    Transaction[]
+  >([]);
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -439,19 +448,27 @@ export const TransactionAccountsPayable: FC<Props> = ({
       txns[idx] = { ...txns[idx] };
 
       handleSetTransactions(txns);
-      if (!checkedTransactions.includes(txns[idx].txn)) {
-        setCheckedTransactions([...checkedTransactions, txns[idx].txn]);
+      if (!selectedTransactions.includes(txns[idx].txn)) {
+        // We want to toggle it
+        setSelectedTransactions([...selectedTransactions, txns[idx].txn]);
+        if (onSelect)
+          onSelect(txns[idx].txn, [...selectedTransactions, txns[idx].txn]);
       } else {
-        setCheckedTransactions(
-          checkedTransactions.filter(txn => txn !== txns[idx].txn),
+        setSelectedTransactions(
+          selectedTransactions.filter(txn => txn !== txns[idx].txn),
         );
+        if (onDeselect)
+          onDeselect(
+            txns[idx].txn,
+            selectedTransactions.filter(txn => txn !== txns[idx].txn),
+          );
       }
     },
     [
       setTransactions,
       transactions,
-      setCheckedTransactions,
-      checkedTransactions,
+      setSelectedTransactions,
+      selectedTransactions,
     ],
   );
 
@@ -630,17 +647,12 @@ export const TransactionAccountsPayable: FC<Props> = ({
           },
         ]}
       />
-      {isSelector ? (
-        <Button label="Merge" onClick={() => alert('Would merge')} />
-      ) : (
-        <> </>
-      )}
       <InfoTable
         key={
           transactions?.toString() +
           String(creatingTransaction) +
           transactions?.values.toString() +
-          checkedTransactions.toString()
+          selectedTransactions.toString()
         }
         hoverable={false}
         columns={
@@ -807,7 +819,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
           loading
             ? makeFakeRows(8, 5)
             : (transactions?.map((selectorParam, idx) => {
-                let txnWithId = checkedTransactions.filter(
+                let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
                 let selectedCol;
