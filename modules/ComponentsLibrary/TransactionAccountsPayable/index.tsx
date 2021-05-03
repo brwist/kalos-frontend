@@ -70,9 +70,9 @@ type SortString =
 
 type SelectorParams = {
   txn: Transaction;
-  checked: boolean;
   totalCount: number;
 };
+
 let pageNumber = 0;
 let sortDir: OrderDir | ' ' | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: SortString | undefined = 'timestamp';
@@ -98,6 +98,9 @@ export const TransactionAccountsPayable: FC<Props> = ({
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [checkedTransaction, setCheckedTransaction] = useState<boolean>(false);
+  const [checkedTransactions, setCheckedTransactions] = useState<Transaction[]>(
+    [],
+  );
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -436,11 +439,26 @@ export const TransactionAccountsPayable: FC<Props> = ({
         return;
       }
       let txns = transactions;
-      txns[idx] = { ...txns[idx], checked: !txns[idx].checked };
+      txns[idx] = { ...txns[idx] };
+
       handleSetTransactions(txns);
       setCheckedTransaction(!checkedTransaction);
+      if (!checkedTransactions.includes(txns[idx].txn)) {
+        setCheckedTransactions([...checkedTransactions, txns[idx].txn]);
+      } else {
+        setCheckedTransactions(
+          checkedTransactions.filter(txn => txn !== txns[idx].txn),
+        );
+      }
     },
-    [setTransactions, transactions, setCheckedTransaction, checkedTransaction],
+    [
+      setTransactions,
+      transactions,
+      setCheckedTransaction,
+      checkedTransaction,
+      setCheckedTransactions,
+      checkedTransactions,
+    ],
   );
 
   const resetTransactions = useCallback(async () => {
@@ -787,10 +805,13 @@ export const TransactionAccountsPayable: FC<Props> = ({
           loading
             ? makeFakeRows(8, 5)
             : (transactions?.map((selectorParam, idx) => {
+                let txnWithId = checkedTransactions.filter(
+                  txn => txn.getId() === selectorParam.txn.getId(),
+                );
                 return isSelector
                   ? [
                       {
-                        value: selectorParam.checked ? 'SELECTED' : '',
+                        value: txnWithId.length == 1 ? 'SELECTED' : '',
                       },
                       {
                         value: selectorParam.txn.getTimestamp(),
