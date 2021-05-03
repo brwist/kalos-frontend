@@ -223,10 +223,10 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
     req.setTechnicianUserId(config.employeeId);
   }
   if (config.departmentId) {
-    req.setDepartmentCode(config.departmentId);
-    //const tempUser = new User();
-    //tempUser.setEmployeeDepartmentId(config.departmentId);
-    //req.setSearchUser(tempUser);
+    //req.setDepartmentCode(config.departmentId);
+    const tempUser = new User();
+    tempUser.setEmployeeDepartmentId(config.departmentId);
+    req.setSearchUser(tempUser);
   }
 
   if (config.toggle === true) {
