@@ -82,7 +82,6 @@ export const Spiffs: FC<Props> = ({
       technicianUserID: employeeId,
       role,
       departmentId,
-      processed: false,
     };
 
     Object.assign(filter, {
@@ -96,7 +95,6 @@ export const Spiffs: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
-    console.log(filter);
     const {
       resultsList,
       totalCount,
@@ -104,7 +102,7 @@ export const Spiffs: FC<Props> = ({
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week, role, departmentId, endDay, startDay]);
+  }, [page, employeeId, week, role, departmentId, endDay]);
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);
