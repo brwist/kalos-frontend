@@ -6,19 +6,16 @@ import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
-import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
 import { TimesheetLineType, makeFakeRows, UserType } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
   TimesheetLineClient,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
-import { PropertyService } from '@kalos-core/kalos-rpc/compiled-protos/property_pb_service';
-import { Button } from '../../Button';
 import { NULL_TIME_VALUE } from '../../Timesheet/constants';
-import { stubFalse } from 'lodash';
 import { CostSummary } from '../../CostSummary';
 interface Props {
   departmentId: number;
@@ -154,7 +151,9 @@ export const PayrollSummary: FC<Props> = ({
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: e.departmentName,
+                    value: e.searchUser?.employeeDepartmentId
+                      ? e.searchUser.employeeDepartmentId
+                      : e.departmentName,
                     onClick: handleTogglePendingView(e),
                   },
 
@@ -224,8 +223,10 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
     req.setTechnicianUserId(config.employeeId);
   }
   if (config.departmentId) {
-    console.log('we got a department ID');
     req.setDepartmentCode(config.departmentId);
+    //const tempUser = new User();
+    //tempUser.setEmployeeDepartmentId(config.departmentId);
+    //req.setSearchUser(tempUser);
   }
 
   if (config.toggle === true) {
