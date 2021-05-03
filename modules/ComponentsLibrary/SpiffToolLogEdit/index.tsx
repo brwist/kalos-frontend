@@ -11,6 +11,7 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { Option } from '../Field';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { Task, TaskClient } from '@kalos-core/kalos-rpc/Task';
 
 import { ConfirmDelete } from '../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../InfoTable';
@@ -26,7 +27,7 @@ import {
   SpiffToolAdminActionType,
   DocumentType,
   TaskClientService,
-  DocumentClientService,,
+  DocumentClientService,
   SpiffToolAdminActionClientService,
   UserClientService,
 } from '../../../helpers';
@@ -235,7 +236,12 @@ export const SpiffToolLogEdit: FC<Props> = ({
         'testbuckethelios', // FIXME is it correct bucket name for those docs?
       );
       if (status === 'ok') {
-        await DocumentClientService.createTaskDocument(fileName, data.id, loggedUserId, description);
+        await DocumentClientService.createTaskDocument(
+          fileName,
+          data.id,
+          loggedUserId,
+          description,
+        );
         onClose();
         onReload();
         setUploading(false);
@@ -280,6 +286,11 @@ export const SpiffToolLogEdit: FC<Props> = ({
           id: statusEditing.id,
           taskId: data.id,
         });
+        const updateTask = new Task();
+        updateTask.setId(statusEditing.taskId);
+        const userInfo = await UserClientService.loadUserById(loggedUserId);
+        updateTask.setAdminActionId(userInfo.id);
+        await TaskClientService.Update(updateTask);
         onStatusChange();
       }
     },
