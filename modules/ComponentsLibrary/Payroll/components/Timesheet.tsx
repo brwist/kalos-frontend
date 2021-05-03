@@ -211,10 +211,10 @@ const createTimesheetFetchFunction = (
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
   }
   if (config.departmentId) {
-    req.setDepartmentCode(config.departmentId);
-    //const tempUser = new User();
-    //tempUser.setEmployeeDepartmentId(config.departmentId);
-    //req.setSearchUser(tempUser);
+    //req.setDepartmentCode(config.departmentId); for class code
+    const tempUser = new User();
+    tempUser.setEmployeeDepartmentId(config.departmentId);
+    req.setSearchUser(tempUser);
   }
   if (config.employeeId) {
     req.setTechnicianUserId(config.employeeId);
