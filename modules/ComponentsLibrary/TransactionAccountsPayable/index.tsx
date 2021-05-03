@@ -2,11 +2,12 @@ import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
   Transaction,
-  TransactionClient
+  TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import {
-  TransactionActivity, TransactionActivityClient
+  TransactionActivity,
+  TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
@@ -33,9 +34,8 @@ import {
   TimesheetDepartmentType,
   timestamp,
   TransactionClientService,
-
   UserClientService,
-  UserType
+  UserType,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -44,6 +44,7 @@ import { Prompt } from '../../Prompt/main';
 import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
+import { Button } from '../Button';
 import { GalleryData } from '../Gallery';
 import { Data, InfoTable } from '../InfoTable';
 import { Modal } from '../Modal';
@@ -94,7 +95,6 @@ export const TransactionAccountsPayable: FC<Props> = ({
   const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
-  const [checkedTransaction, setCheckedTransaction] = useState<boolean>(false);
   const [checkedTransactions, setCheckedTransactions] = useState<Transaction[]>(
     [],
   );
@@ -439,7 +439,6 @@ export const TransactionAccountsPayable: FC<Props> = ({
       txns[idx] = { ...txns[idx] };
 
       handleSetTransactions(txns);
-      setCheckedTransaction(!checkedTransaction);
       if (!checkedTransactions.includes(txns[idx].txn)) {
         setCheckedTransactions([...checkedTransactions, txns[idx].txn]);
       } else {
@@ -451,8 +450,6 @@ export const TransactionAccountsPayable: FC<Props> = ({
     [
       setTransactions,
       transactions,
-      setCheckedTransaction,
-      checkedTransaction,
       setCheckedTransactions,
       checkedTransactions,
     ],
@@ -633,17 +630,25 @@ export const TransactionAccountsPayable: FC<Props> = ({
           },
         ]}
       />
+      {isSelector ? (
+        <Button label="Merge" onClick={() => alert('Would merge')} />
+      ) : (
+        <> </>
+      )}
       <InfoTable
         key={
           transactions?.toString() +
           String(creatingTransaction) +
           transactions?.values.toString() +
-          checkedTransaction
+          checkedTransactions.toString()
         }
         hoverable={false}
         columns={
           !isSelector
             ? [
+                {
+                  name: '',
+                },
                 {
                   name: 'Date',
                   dir:
@@ -805,480 +810,242 @@ export const TransactionAccountsPayable: FC<Props> = ({
                 let txnWithId = checkedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
-                return isSelector
-                  ? [
-                      {
-                        value: txnWithId.length == 1 ? 'SELECTED' : '',
-                      },
-                      {
-                        value: selectorParam.txn.getTimestamp(),
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: `${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`,
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: `${selectorParam.txn.getDepartmentString()} - ${selectorParam.txn.getDepartmentId()}`,
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: selectorParam.txn.getJobId(),
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: `$ ${prettyMoney(
-                          selectorParam.txn.getAmount(),
-                        )}`,
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: selectorParam.txn.getDescription(),
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        actions: !isSelector ? (
-                          [
-                            <Tooltip
-                              key="copy"
-                              content="Copy data to clipboard"
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  copyToClipboard(
-                                    `${parseISO(
-                                      selectorParam.txn
-                                        .getTimestamp()
-                                        .split(' ')
-                                        .join('T'),
-                                    ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
-                                  )
+                let selectedCol;
+                if (isSelector) {
+                  selectedCol = {
+                    value: txnWithId.length == 1 ? 'SELECTED' : '',
+                  };
+                } else {
+                  selectedCol = {
+                    value: '',
+                  };
+                }
+                return [
+                  selectedCol,
+                  {
+                    value: selectorParam.txn.getTimestamp(),
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
+                  {
+                    value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
+                  {
+                    value: `${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`,
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
+                  {
+                    value: `${selectorParam.txn.getDepartmentString()} - ${selectorParam.txn.getDepartmentId()}`,
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
+                  {
+                    value: selectorParam.txn.getJobId(),
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
+                  {
+                    value: `$ ${prettyMoney(selectorParam.txn.getAmount())}`,
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
+                  {
+                    value: selectorParam.txn.getDescription(),
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
+                  {
+                    actions: !isSelector ? (
+                      [
+                        <Tooltip key="copy" content="Copy data to clipboard">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              copyToClipboard(
+                                `${parseISO(
+                                  selectorParam.txn
+                                    .getTimestamp()
+                                    .split(' ')
+                                    .join('T'),
+                                ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
+                              )
+                            }
+                          >
+                            <CopyIcon />
+                          </IconButton>
+                        </Tooltip>,
+                        <Tooltip key="upload" content="Upload File">
+                          <IconButton size="small" onClick={openFileInput}>
+                            <UploadIcon />
+                            <input
+                              type="file"
+                              ref={FileInput}
+                              onChange={() =>
+                                handleFile(selectorParam.txn.toObject())
+                              }
+                              style={{ display: 'none' }}
+                            />
+                          </IconButton>
+                        </Tooltip>,
+                        <Prompt
+                          key="updateJobNumber"
+                          confirmFn={newJobNumber => {
+                            try {
+                              addJobNumber(
+                                selectorParam.txn.getId(),
+                                newJobNumber,
+                              );
+                            } catch (err) {
+                              console.error('Failed to add job number: ', err);
+                            }
+                          }}
+                          text="Update Job Number"
+                          prompt="New Job Number: "
+                          Icon={KeyboardIcon}
+                        />,
+                        <Prompt
+                          key="editNotes"
+                          confirmFn={updated =>
+                            updateNotes(selectorParam.txn.getId(), updated)
+                          }
+                          text="Edit Notes"
+                          prompt="Update Txn Notes: "
+                          Icon={NotesIcon}
+                          defaultValue={selectorParam.txn.getNotes()}
+                          multiline
+                        />,
+                        <AltGallery
+                          key="receiptPhotos"
+                          title="Transaction Photos"
+                          fileList={getGalleryData(
+                            selectorParam.txn.toObject(),
+                          )}
+                          transactionID={selectorParam.txn.getId()}
+                          text="View photos"
+                          iconButton
+                        />,
+                        <TxnLog
+                          key="txnLog"
+                          iconButton
+                          txnID={selectorParam.txn.getId()}
+                        />,
+                        <TxnNotes
+                          key="viewNotes"
+                          iconButton
+                          text="View notes"
+                          notes={selectorParam.txn.getNotes()}
+                          disabled={selectorParam.txn.getNotes() === ''}
+                        />,
+                        ...([9928, 9646, 1734].includes(loggedUserId)
+                          ? [
+                              <Tooltip
+                                key="audit"
+                                content={
+                                  selectorParam.txn.getIsAudited() &&
+                                  loggedUserId !== 1734
+                                    ? 'This transaction has already been audited'
+                                    : 'Mark as correct'
                                 }
                               >
-                                <CopyIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Tooltip key="upload" content="Upload File">
-                              <IconButton size="small" onClick={openFileInput}>
-                                <UploadIcon />
-                                <input
-                                  type="file"
-                                  ref={FileInput}
-                                  onChange={() =>
-                                    handleFile(selectorParam.txn.toObject())
+                                <IconButton
+                                  size="small"
+                                  onClick={
+                                    loggedUserId === 1734
+                                      ? () =>
+                                          forceAccept(
+                                            selectorParam.txn.toObject(),
+                                          )
+                                      : () =>
+                                          auditTxn(selectorParam.txn.toObject())
                                   }
-                                  style={{ display: 'none' }}
-                                />
-                              </IconButton>
-                            </Tooltip>,
-                            <Prompt
-                              key="updateJobNumber"
-                              confirmFn={newJobNumber => {
-                                try {
-                                  addJobNumber(
-                                    selectorParam.txn.getId(),
-                                    newJobNumber,
-                                  );
-                                } catch (err) {
-                                  console.error(
-                                    'Failed to add job number: ',
-                                    err,
-                                  );
-                                }
-                              }}
-                              text="Update Job Number"
-                              prompt="New Job Number: "
-                              Icon={KeyboardIcon}
-                            />,
-                            <Prompt
-                              key="editNotes"
-                              confirmFn={updated =>
-                                updateNotes(selectorParam.txn.getId(), updated)
-                              }
-                              text="Edit Notes"
-                              prompt="Update Txn Notes: "
-                              Icon={NotesIcon}
-                              defaultValue={selectorParam.txn.getNotes()}
-                              multiline
-                            />,
-                            <AltGallery
-                              key="receiptPhotos"
-                              title="Transaction Photos"
-                              fileList={getGalleryData(
-                                selectorParam.txn.toObject(),
-                              )}
-                              transactionID={selectorParam.txn.getId()}
-                              text="View photos"
-                              iconButton
-                            />,
-                            <TxnLog
-                              key="txnLog"
-                              iconButton
-                              txnID={selectorParam.txn.getId()}
-                            />,
-                            <TxnNotes
-                              key="viewNotes"
-                              iconButton
-                              text="View notes"
-                              notes={selectorParam.txn.getNotes()}
-                              disabled={selectorParam.txn.getNotes() === ''}
-                            />,
-                            ...([9928, 9646, 1734].includes(loggedUserId)
-                              ? [
-                                  <Tooltip
-                                    key="audit"
-                                    content={
-                                      selectorParam.txn.getIsAudited() &&
-                                      loggedUserId !== 1734
-                                        ? 'This transaction has already been audited'
-                                        : 'Mark as correct'
-                                    }
-                                  >
-                                    <IconButton
-                                      size="small"
-                                      onClick={
-                                        loggedUserId === 1734
-                                          ? () =>
-                                              forceAccept(
-                                                selectorParam.txn.toObject(),
-                                              )
-                                          : () =>
-                                              auditTxn(
-                                                selectorParam.txn.toObject(),
-                                              )
-                                      }
-                                      disabled={
-                                        selectorParam.txn.getIsAudited() &&
-                                        loggedUserId !== 1734
-                                      }
-                                    >
-                                      <CheckIcon />
-                                    </IconButton>
-                                  </Tooltip>,
-                                ]
-                              : []),
-                            <Tooltip
-                              key="submit"
-                              content={
-                                acceptOverride
-                                  ? 'Mark as accepted'
-                                  : 'Mark as entered'
-                              }
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  updateStatus(selectorParam.txn.toObject())
-                                }
-                              >
-                                <SubmitIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Tooltip
-                              key="assign"
-                              content="Assign an employee to this task"
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() => handleSetAssigningUser(true)}
-                              >
-                                <AssignmentIndIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Prompt
-                              key="reject"
-                              confirmFn={reason =>
-                                dispute(reason, selectorParam.txn.toObject())
-                              }
-                              text="Reject transaction"
-                              prompt="Enter reason for rejection: "
-                              Icon={RejectIcon}
-                            />,
-                          ]
+                                  disabled={
+                                    selectorParam.txn.getIsAudited() &&
+                                    loggedUserId !== 1734
+                                  }
+                                >
+                                  <CheckIcon />
+                                </IconButton>
+                              </Tooltip>,
+                            ]
+                          : []),
+                        <Tooltip
+                          key="submit"
+                          content={
+                            acceptOverride
+                              ? 'Mark as accepted'
+                              : 'Mark as entered'
+                          }
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              updateStatus(selectorParam.txn.toObject())
+                            }
+                          >
+                            <SubmitIcon />
+                          </IconButton>
+                        </Tooltip>,
+                        <Tooltip
+                          key="assign"
+                          content="Assign an employee to this task"
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => handleSetAssigningUser(true)}
+                          >
+                            <AssignmentIndIcon />
+                          </IconButton>
+                        </Tooltip>,
+                        <Prompt
+                          key="reject"
+                          confirmFn={reason =>
+                            dispute(reason, selectorParam.txn.toObject())
+                          }
+                          text="Reject transaction"
+                          prompt="Enter reason for rejection: "
+                          Icon={RejectIcon}
+                        />,
+                      ]
+                    ) : (
+                      <> </>
+                    ),
+                    actionsFullWidth: true,
+                  },
+                  {
+                    actions: [
+                      <>
+                        {selectorParam.txn.getStatusId() === 3 ? (
+                          <Tooltip key="accepted" content="Accepted">
+                            <IconButton size="small">
+                              <DoneIcon />
+                            </IconButton>
+                          </Tooltip>
                         ) : (
                           <> </>
-                        ),
-                        actionsFullWidth: true,
-                      },
-                      {
-                        actions: [
-                          <>
-                            {selectorParam.txn.getStatusId() === 3 ? (
-                              <Tooltip key="accepted" content="Accepted">
-                                <IconButton size="small">
-                                  <DoneIcon />
-                                </IconButton>
-                              </Tooltip>
-                            ) : (
-                              <> </>
-                            )}
-                            {selectorParam.txn.getStatusId() == 4 ? (
-                              <Tooltip key="rejected" content="Rejected">
-                                <IconButton size="small">
-                                  <CloseIcon />
-                                </IconButton>
-                              </Tooltip>
-                            ) : (
-                              <> </>
-                            )}
-                          </>,
-                        ],
-                      },
-                    ]
-                  : [
-                      {
-                        value: selectorParam.txn.getTimestamp(),
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: `${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`,
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: `${selectorParam.txn.getDepartmentString()} - ${selectorParam.txn.getDepartmentId()}`,
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: selectorParam.txn.getJobId(),
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: `$ ${prettyMoney(
-                          selectorParam.txn.getAmount(),
-                        )}`,
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        value: selectorParam.txn.getDescription(),
-                        onClick: isSelector
-                          ? () => setTransactionChecked(idx)
-                          : undefined,
-                      },
-                      {
-                        actions: !isSelector ? (
-                          [
-                            <Tooltip
-                              key="copy"
-                              content="Copy data to clipboard"
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  copyToClipboard(
-                                    `${parseISO(
-                                      selectorParam.txn
-                                        .getTimestamp()
-                                        .split(' ')
-                                        .join('T'),
-                                    ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
-                                  )
-                                }
-                              >
-                                <CopyIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Tooltip key="upload" content="Upload File">
-                              <IconButton size="small" onClick={openFileInput}>
-                                <UploadIcon />
-                                <input
-                                  type="file"
-                                  ref={FileInput}
-                                  onChange={() =>
-                                    handleFile(selectorParam.txn.toObject())
-                                  }
-                                  style={{ display: 'none' }}
-                                />
-                              </IconButton>
-                            </Tooltip>,
-                            <Prompt
-                              key="updateJobNumber"
-                              confirmFn={newJobNumber => {
-                                try {
-                                  addJobNumber(
-                                    selectorParam.txn.getId(),
-                                    newJobNumber,
-                                  );
-                                } catch (err) {
-                                  console.error(
-                                    'Failed to add job number: ',
-                                    err,
-                                  );
-                                }
-                              }}
-                              text="Update Job Number"
-                              prompt="New Job Number: "
-                              Icon={KeyboardIcon}
-                            />,
-                            <Prompt
-                              key="editNotes"
-                              confirmFn={updated =>
-                                updateNotes(selectorParam.txn.getId(), updated)
-                              }
-                              text="Edit Notes"
-                              prompt="Update Txn Notes: "
-                              Icon={NotesIcon}
-                              defaultValue={selectorParam.txn.getNotes()}
-                              multiline
-                            />,
-                            <AltGallery
-                              key="receiptPhotos"
-                              title="Transaction Photos"
-                              fileList={getGalleryData(
-                                selectorParam.txn.toObject(),
-                              )}
-                              transactionID={selectorParam.txn.getId()}
-                              text="View photos"
-                              iconButton
-                            />,
-                            <TxnLog
-                              key="txnLog"
-                              iconButton
-                              txnID={selectorParam.txn.getId()}
-                            />,
-                            <TxnNotes
-                              key="viewNotes"
-                              iconButton
-                              text="View notes"
-                              notes={selectorParam.txn.getNotes()}
-                              disabled={selectorParam.txn.getNotes() === ''}
-                            />,
-                            ...([9928, 9646, 1734].includes(loggedUserId)
-                              ? [
-                                  <Tooltip
-                                    key="audit"
-                                    content={
-                                      selectorParam.txn.getIsAudited() &&
-                                      loggedUserId !== 1734
-                                        ? 'This transaction has already been audited'
-                                        : 'Mark as correct'
-                                    }
-                                  >
-                                    <IconButton
-                                      size="small"
-                                      onClick={
-                                        loggedUserId === 1734
-                                          ? () =>
-                                              forceAccept(
-                                                selectorParam.txn.toObject(),
-                                              )
-                                          : () =>
-                                              auditTxn(
-                                                selectorParam.txn.toObject(),
-                                              )
-                                      }
-                                      disabled={
-                                        selectorParam.txn.getIsAudited() &&
-                                        loggedUserId !== 1734
-                                      }
-                                    >
-                                      <CheckIcon />
-                                    </IconButton>
-                                  </Tooltip>,
-                                ]
-                              : []),
-                            <Tooltip
-                              key="submit"
-                              content={
-                                acceptOverride
-                                  ? 'Mark as accepted'
-                                  : 'Mark as entered'
-                              }
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  updateStatus(selectorParam.txn.toObject())
-                                }
-                              >
-                                <SubmitIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Tooltip
-                              key="assign"
-                              content="Assign an employee to this task"
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() => handleSetAssigningUser(true)}
-                              >
-                                <AssignmentIndIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Prompt
-                              key="reject"
-                              confirmFn={reason =>
-                                dispute(reason, selectorParam.txn.toObject())
-                              }
-                              text="Reject transaction"
-                              prompt="Enter reason for rejection: "
-                              Icon={RejectIcon}
-                            />,
-                          ]
+                        )}
+                        {selectorParam.txn.getStatusId() == 4 ? (
+                          <Tooltip key="rejected" content="Rejected">
+                            <IconButton size="small">
+                              <CloseIcon />
+                            </IconButton>
+                          </Tooltip>
                         ) : (
                           <> </>
-                        ),
-                        actionsFullWidth: true,
-                      },
-                      {
-                        actions: [
-                          <>
-                            {selectorParam.txn.getStatusId() === 3 ? (
-                              <Tooltip key="accepted" content="Accepted">
-                                <IconButton size="small">
-                                  <DoneIcon />
-                                </IconButton>
-                              </Tooltip>
-                            ) : (
-                              <> </>
-                            )}
-                            {selectorParam.txn.getStatusId() == 4 ? (
-                              <Tooltip key="rejected" content="Rejected">
-                                <IconButton size="small">
-                                  <CloseIcon />
-                                </IconButton>
-                              </Tooltip>
-                            ) : (
-                              <> </>
-                            )}
-                          </>,
-                        ],
-                      },
-                    ];
+                        )}
+                      </>,
+                    ],
+                  },
+                ];
               }) as Data)
         }
         loading={loading}
