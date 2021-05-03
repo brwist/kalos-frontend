@@ -15,9 +15,9 @@ import {
   TimesheetLine,
   TimesheetLineClient,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
-import { PropertyService } from '@kalos-core/kalos-rpc/compiled-protos/property_pb_service';
 import { TimesheetSummary } from './TimesheetSummary';
 
 interface Props {
@@ -211,7 +211,10 @@ const createTimesheetFetchFunction = (
     req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
   }
   if (config.departmentId) {
-    req.setDepartmentCode(config.departmentId);
+    //req.setDepartmentCode(config.departmentId); for class code
+    const tempUser = new User();
+    tempUser.setEmployeeDepartmentId(config.departmentId);
+    req.setSearchUser(tempUser);
   }
   if (config.employeeId) {
     req.setTechnicianUserId(config.employeeId);
