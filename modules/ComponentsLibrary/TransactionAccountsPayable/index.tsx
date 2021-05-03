@@ -106,7 +106,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
-  >([]);
+  >([]); // Transactions that are selected in the table if the isSelector prop is set
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -117,6 +117,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
 
   const transactionClient = new TransactionClient(ENDPOINT);
 
+  // For emails
   const getRejectTxnBody = (
     reason: string,
     amount: number,
