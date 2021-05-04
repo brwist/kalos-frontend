@@ -276,6 +276,13 @@ export const SpiffToolLogEdit: FC<Props> = ({
     async (form: SpiffToolAdminActionType) => {
       if (statusEditing) {
         setStatusEditing(undefined);
+        const updateTask = new Task();
+        updateTask.setId(data.id);
+        const userInfo = await UserClientService.loadUserById(loggedUserId);
+        updateTask.setAdminActionId(userInfo.id);
+        updateTask.setSpiffToolCloseoutDate(timestamp());
+        await TaskClientService.Update(updateTask);
+
         if (userId) {
           const userInfo = await UserClientService.loadUserById(loggedUserId);
           const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
@@ -286,11 +293,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
           id: statusEditing.id,
           taskId: data.id,
         });
-        const updateTask = new Task();
-        updateTask.setId(statusEditing.taskId);
-        const userInfo = await UserClientService.loadUserById(loggedUserId);
-        updateTask.setAdminActionId(userInfo.id);
-        await TaskClientService.Update(updateTask);
+
         onStatusChange();
       }
     },
