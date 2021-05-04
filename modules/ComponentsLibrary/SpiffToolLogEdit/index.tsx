@@ -288,11 +288,21 @@ export const SpiffToolLogEdit: FC<Props> = ({
           const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
           form.reviewedBy = newReviewedBy;
         }
-        await SpiffToolAdminActionClientService.upsertSpiffToolAdminAction({
-          ...form,
-          id: statusEditing.id,
-          taskId: data.id,
-        });
+        console.log({ statusEditing });
+        const adminAction = { ...form, id: statusEditing.id, taskId: data.id };
+        if (statusEditing.status === 1) {
+          Object.assign(adminAction, {
+            grantedDate: timestamp().toString(),
+          });
+        }
+        if (statusEditing.status === 3) {
+          Object.assign(adminAction, {
+            revokedDate: timestamp().toString(),
+          });
+        }
+        await SpiffToolAdminActionClientService.upsertSpiffToolAdminAction(
+          adminAction,
+        );
 
         onStatusChange();
       }
