@@ -85,6 +85,9 @@ export const CostSummary: FC<Props> = ({
     startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
   );
   const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
+  const [perDiemEndDay, setPerDiemEndDay] = useState<Date>(
+    addDays(startOfWeek(today, { weekStartsOn: 6 }), 4),
+  );
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
       meals: number;
@@ -129,7 +132,7 @@ export const CostSummary: FC<Props> = ({
       resultsList,
     } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
       userId,
-      formatDateFns(endDay),
+      formatDateFns(perDiemEndDay),
     );
     setPerDiems(resultsList);
     const year = +format(startDay, 'yyyy');
