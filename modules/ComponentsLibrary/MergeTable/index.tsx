@@ -7,9 +7,31 @@
 // There will also be editing control available as a prop, so that the user can edit the fields in the table.
 
 import React, { FC } from 'react';
+import { Columns, InfoTable, Data } from '../InfoTable';
 
-interface Props {}
+interface Props {
+  columnHeaders: Columns;
+  rows: {
+    choices: string[];
+    onSelect?: (selected: string) => void;
+  }[];
+}
 
-export const MergeTable: FC<Props> = ({}) => {
-  return <>Test</>;
+export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
+  return (
+    <>
+      <InfoTable
+        columns={columnHeaders}
+        data={
+          [
+            rows.map(row => {
+              return {
+                label: 'test',
+              };
+            }),
+          ] as Data
+        }
+      />
+    </>
+  );
 };
