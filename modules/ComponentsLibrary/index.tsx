@@ -46,6 +46,7 @@ import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
 import LodgingByZipCode from './LodgingByZipCode/examples';
 import ManagerTimeoffs from './ManagerTimeoffs/examples';
+import MergeTable from './MergeTable/examples';
 import Modal from './Modal/examples';
 import Payroll from './Payroll/examples';
 import PDFInvoice from './PDFInvoice/examples';
@@ -146,6 +147,7 @@ const COMPONENTS = {
   Link,
   LodgingByZipCode,
   ManagerTimeoffs,
+  MergeTable,
   Modal,
   Payroll,
   PDFInvoice,
