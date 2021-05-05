@@ -84,7 +84,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             //@ts-ignore
             newTransaction[keys[fieldIndex]] = fieldCurrent;
             fieldIndex++;
-
             continue;
           }
           if (fieldPreviousEmpty && fieldCurrentEmpty) {
@@ -92,7 +91,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             //@ts-ignore
             newTransaction[keys[fieldIndex]] = '';
             fieldIndex++;
-
             continue;
           }
 
