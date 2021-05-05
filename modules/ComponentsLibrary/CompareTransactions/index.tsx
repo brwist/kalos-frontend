@@ -2,6 +2,7 @@ import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useState } from 'react';
 import { SectionBar } from '../SectionBar';
 import { TransactionAccountsPayable } from '../TransactionAccountsPayable';
+import { getRPCFields } from '../../../helpers';
 
 interface Props {
   loggedUserId: number;
@@ -17,7 +18,6 @@ interface Conflict {
 
 export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
-  const [mergeResult, setMergeResult] = useState<Transaction>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
 
   const handleSetTransactions = useCallback(
@@ -35,7 +35,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
       return;
     }
     alert('Would have merged');
-    let mergedTxns: Transaction[];
+    let mergedTxns: Transaction.AsObject[] = [];
 
     let newConflicts: Conflict[] = [];
     transactions.forEach((transaction, index) => {
@@ -48,14 +48,17 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
 
       // If not null, we can compare them. If it is null, nothing to compare - just use that transaction that exists
       if (transactions[index - 1] == null) {
-        setMergeResult(transaction);
+        //mergedTxns.push(transaction);
       } else {
         // Loop over fields in the current transaction and compare that with the fields in the previous transaction at the same index
-
         let fieldIndex = 0;
         const previousTransaction = Object.values(
           transactions[index - 1].toObject(),
         );
+        const keys = Object.keys(transactions[index - 1].toObject());
+
+        let newTransaction = {} as Transaction.AsObject;
+
         for (const fieldCurrent of Object.values(transaction.toObject())) {
           let fieldCurrentEmpty = false;
           let fieldPreviousEmpty = false;
@@ -71,17 +74,25 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
 
           if (fieldCurrentEmpty && !fieldPreviousEmpty) {
             // Set the field to be the previous field
-            // TODO
+            //@ts-ignore
+            newTransaction[keys[fieldIndex]] = fieldPrevious;
+            fieldIndex++;
             continue;
           }
           if (fieldPreviousEmpty && !fieldCurrentEmpty) {
             // Set the field to be the current field
-            // TODO
+            //@ts-ignore
+            newTransaction[keys[fieldIndex]] = fieldCurrent;
+            fieldIndex++;
+
             continue;
           }
           if (fieldPreviousEmpty && fieldCurrentEmpty) {
             // Set the field empty
-            // TODO
+            //@ts-ignore
+            newTransaction[keys[fieldIndex]] = '';
+            fieldIndex++;
+
             continue;
           }
 
@@ -97,6 +108,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
         }
 
         console.log('NEW CONFLICTS:', newConflicts);
+        console.log('New transaction: ', newTransaction);
 
         // let newTransaction: Transaction = new Transaction();
         // let idx = 0;
