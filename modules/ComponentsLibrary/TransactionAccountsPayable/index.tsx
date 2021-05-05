@@ -316,12 +316,34 @@ export const TransactionAccountsPayable: FC<Props> = ({
     await refresh();
   };
 
-  const refresh = async () => {
+  const resetTransactions = useCallback(async () => {
+    let req = new Transaction();
+    req.setOrderBy(sortBy ? sortBy : 'timestamp');
+    req.setOrderDir(
+      sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
+    );
+    req.setPageNumber(pageNumber);
+    if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
+    if (filter.employeeId != 0) req.setOwnerId(filter.employeeId);
+    let res = await TransactionClientService.BatchGet(req);
+
+    setTransactions(
+      res.getResultsList().map(txn => {
+        return {
+          txn: txn,
+          checked: false,
+          totalCount: res.getTotalCount(),
+        } as SelectorParams;
+      }),
+    );
+  }, [setTransactions]);
+
+  const refresh = useCallback(async () => {
     setLoading(true);
     await resetTransactions();
     await load();
     setLoading(false);
-  };
+  }, [load, resetTransactions]);
 
   const copyToClipboard = useCallback((text: string): void => {
     const el = document.createElement('textarea');
@@ -332,28 +354,31 @@ export const TransactionAccountsPayable: FC<Props> = ({
     document.body.removeChild(el);
   }, []);
 
-  const handleFile = useCallback((txn: Transaction.AsObject) => {
-    const fr = new FileReader();
-    fr.onload = async () => {
-      try {
-        const u8 = new Uint8Array(fr.result as ArrayBuffer);
-        await clients.docs.upload(
-          txn.id,
-          FileInput.current!.files![0].name,
-          u8,
-        );
-      } catch (err) {
-        alert('File could not be uploaded');
-        console.error(err);
-      }
+  const handleFile = useCallback(
+    (txn: Transaction.AsObject) => {
+      const fr = new FileReader();
+      fr.onload = async () => {
+        try {
+          const u8 = new Uint8Array(fr.result as ArrayBuffer);
+          await clients.docs.upload(
+            txn.id,
+            FileInput.current!.files![0].name,
+            u8,
+          );
+        } catch (err) {
+          alert('File could not be uploaded');
+          console.error(err);
+        }
 
-      await refresh();
-      alert('Upload complete!');
-    };
-    if (FileInput.current && FileInput.current.files) {
-      fr.readAsArrayBuffer(FileInput.current.files[0]);
-    }
-  }, []);
+        await refresh();
+        alert('Upload complete!');
+      };
+      if (FileInput.current && FileInput.current.files) {
+        fr.readAsArrayBuffer(FileInput.current.files[0]);
+      }
+    },
+    [FileInput, clients.docs, refresh],
+  );
 
   const handleSetAssigningUser = useCallback(
     (isAssigningUser: boolean) => {
@@ -379,7 +404,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
 
       refresh();
     },
-    [filter],
+    [refresh],
   );
 
   const handleSetTransactions = useCallback(
@@ -394,7 +419,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
       pageNumber = pageNumberToChangeTo;
       refresh();
     },
-    [pageNumber],
+    [refresh],
   );
 
   const handleChangeSort = (newSort: SortString) => {
@@ -481,34 +506,13 @@ export const TransactionAccountsPayable: FC<Props> = ({
       }
     },
     [
-      setTransactions,
       transactions,
       setSelectedTransactions,
       selectedTransactions,
+      onDeselect,
+      onSelect,
     ],
   );
-
-  const resetTransactions = useCallback(async () => {
-    let req = new Transaction();
-    req.setOrderBy(sortBy ? sortBy : 'timestamp');
-    req.setOrderDir(
-      sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
-    );
-    req.setPageNumber(pageNumber);
-    if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
-    if (filter.employeeId != 0) req.setOwnerId(filter.employeeId);
-    let res = await TransactionClientService.BatchGet(req);
-
-    setTransactions(
-      res.getResultsList().map(txn => {
-        return {
-          txn: txn,
-          checked: false,
-          totalCount: res.getTotalCount(),
-        } as SelectorParams;
-      }),
-    );
-  }, [setTransactions]);
 
   const load = useCallback(async () => {
     const employees = await UserClientService.loadTechnicians();
@@ -533,9 +537,8 @@ export const TransactionAccountsPayable: FC<Props> = ({
     setLoading,
     resetTransactions,
     setDepartments,
-    TimesheetDepartmentClientService.loadTimeSheetDepartments,
     setEmployees,
-    UserClientService.loadTechnicians,
+    loggedUserId,
   ]);
 
   const SCHEMA: Schema<FilterData> = [
@@ -580,7 +583,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
   useEffect(() => {
     resetTransactions();
     refresh();
-  }, [filter]);
+  }, [refresh, resetTransactions]);
 
   return (
     <>
