@@ -11,7 +11,6 @@ import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
-import { Info } from '@material-ui/icons';
 import { SectionBar } from '../SectionBar';
 import { ENDPOINT, NULL_TIME, MEALS_RATE } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
@@ -24,9 +23,6 @@ import {
   addDays,
   startOfWeek,
   format,
-  getMonth,
-  getYear,
-  getDaysInMonth,
 } from 'date-fns';
 import {
   Trip,
@@ -41,7 +37,6 @@ import {
   PerDiemRowType,
   PerDiemClientService,
   PerDiemType,
-  loadTripsByFilter,
   usd,
 } from '../../../helpers';
 interface Props {
@@ -63,7 +58,6 @@ export const CostSummary: FC<Props> = ({
 }) => {
   const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
   const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>(0);
-  const [totalSpiffsMonthly, setTotalSpiffsMonthly] = useState<number>(0);
   const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
   const [spiffsMonthly, setSpiffsMonthly] = useState<Task[]>();
 
@@ -158,7 +152,7 @@ export const CostSummary: FC<Props> = ({
       month,
     );
     setGovPerDiems(govPerDiems);
-  }, [startDay, userId]);
+  }, [startDay, endDay, userId]);
   const getPerDiemTotals = useCallback(async () => {
     const tempPerDiems = perDiems;
     let processed = 0;
@@ -194,7 +188,7 @@ export const CostSummary: FC<Props> = ({
     const totals = { totalMeals, totalLodging, totalMileage, processed };
 
     return totals;
-  }, [getPerDiems, govPerDiemByZipCode]);
+  }, [perDiems, govPerDiemByZipCode]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
       const req = new Task();
@@ -202,23 +196,8 @@ export const CostSummary: FC<Props> = ({
       req.setPayrollProcessed(false);
       req.setCreatorUserId(userId);
       if (spiffType === 'Spiff') {
-        const startDate = format(startDay, 'yyyy-MM-dd');
+        const startDate = '0001-01-01';
         const endDate = format(endDay, 'yyyy-MM-dd');
-        req.setDateRangeList(['>=', startDate, '<', endDate]);
-        let tempSpiff = new SpiffType();
-        tempSpiff.setPayout(dateType);
-        req.setSpiffType(tempSpiff);
-      } else {
-        const startMonth = getMonth(startDay) - 1;
-        const startYear = getYear(startDay);
-        const startDate = format(new Date(startYear, startMonth), 'yyyy-MM-dd');
-        const endDate = format(
-          addDays(
-            new Date(startYear, startMonth),
-            getDaysInMonth(new Date(startYear, startMonth)) - 1,
-          ),
-          'yyyy-MM-dd',
-        );
         req.setDateRangeList(['>=', startDate, '<', endDate]);
       }
       if (!notReady) {
@@ -237,6 +216,24 @@ export const CostSummary: FC<Props> = ({
       const results = (
         await new TaskClient(ENDPOINT).BatchGet(req)
       ).getResultsList();
+      //Here, we'll run another request for revoked, and if it pops up, we will remove the approved,
+      //and treat the value as a negative
+      const revokeReq = req;
+      const revokeAction = action;
+      revokeAction.setStatus(3);
+      revokeReq.setSearchAction(revokeAction);
+      const revokeResults = (
+        await new TaskClient(ENDPOINT).BatchGet(revokeReq)
+      ).getResultsList();
+      for (let i = 0; i < revokeResults.length; i++) {
+        for (let j = 0; j < results.length; j++) {
+          if (revokeResults[i].getId() === results[j].getId()) {
+            const amount = revokeResults[i].getSpiffAmount();
+            revokeResults[i].setSpiffAmount(amount - 2 * amount);
+            results[j].setSpiffAmount(revokeResults[i].getSpiffAmount());
+          }
+        }
+      }
       let spiffTotal = 0;
       let toolTotal = 0;
       for (let i = 0; i < results.length; i++) {
@@ -249,8 +246,6 @@ export const CostSummary: FC<Props> = ({
       if (spiffType === 'Spiff') {
         if (dateType === 'Weekly') {
           setSpiffsWeekly(results);
-        } else {
-          setSpiffsMonthly(results);
         }
         return spiffTotal;
       } else {
@@ -258,7 +253,7 @@ export const CostSummary: FC<Props> = ({
         return toolTotal;
       }
     },
-    [notReady, userId, endDay, startDay],
+    [notReady, userId, endDay],
   );
 
   const getTimeoffTotals = useCallback(async () => {
@@ -399,12 +394,6 @@ export const CostSummary: FC<Props> = ({
     );
     promises.push(
       new Promise<void>(async resolve => {
-        setTotalSpiffsMonthly(await getSpiffToolTotals('Spiff', 'Monthly'));
-        resolve();
-      }),
-    );
-    promises.push(
-      new Promise<void>(async resolve => {
         await getPerDiems();
         resolve();
       }),
@@ -460,7 +449,7 @@ export const CostSummary: FC<Props> = ({
       ></InfoTable>
 
       <SectionBar
-        title="Spiff Weekly Current Total"
+        title="Spiff Current Total"
         asideContent={
           <strong>Spiff Weekly Total : {usd(totalSpiffsWeekly)}</strong>
         }
@@ -471,7 +460,6 @@ export const CostSummary: FC<Props> = ({
             { name: 'Date Created' },
             { name: 'Amount' },
             { name: 'Job Number' },
-            { name: 'Additional Info' },
             { name: 'Processed' },
           ]}
           data={spiffsWeekly!.map(spiff => {
@@ -491,8 +479,7 @@ export const CostSummary: FC<Props> = ({
                     ? 'Complete'
                     : 'Incomplete',
                 actions:
-                  spiff.toObject().payrollProcessed === false &&
-                  spiff.toObject().adminActionId != 0
+                  spiff.toObject().payrollProcessed === false
                     ? [
                         <IconButton
                           key="processSpiffWeekly"
@@ -509,62 +496,6 @@ export const CostSummary: FC<Props> = ({
             ];
           })}
         />
-      </SectionBar>
-      <SectionBar
-        title="Spiff Monthly Current Total"
-        asideContent={
-          <strong>Spiff Monthly Total : {usd(totalSpiffsMonthly)}</strong>
-        }
-        actionsAndAsideContentResponsive
-      >
-        {
-          <InfoTable
-            columns={[
-              { name: 'Date Created' },
-              { name: 'Amount' },
-              { name: 'Job Number' },
-              { name: 'Additional Info' },
-              { name: 'Processed' },
-            ]}
-            data={spiffsMonthly!.map(spiff => {
-              return [
-                {
-                  value: formatDate(spiff.toObject().timeCreated),
-                },
-                {
-                  value: usd(spiff.toObject().spiffAmount),
-                },
-                {
-                  value: spiff.toObject().spiffJobNumber,
-                },
-                {
-                  value: spiff.toObject().briefDescription,
-                },
-                {
-                  value:
-                    spiff.toObject().payrollProcessed === true
-                      ? 'Complete'
-                      : 'Incomplete',
-                  actions:
-                    spiff.toObject().payrollProcessed === false &&
-                    spiff.toObject().adminActionId != 0
-                      ? [
-                          <IconButton
-                            key="processSpiffMonthly"
-                            size="small"
-                            onClick={() =>
-                              toggleProcessSpiffTool(spiff.toObject())
-                            }
-                          >
-                            <CheckIcon />
-                          </IconButton>,
-                        ]
-                      : [],
-                },
-              ];
-            })}
-          />
-        }
       </SectionBar>
       {/*
       <SectionBar
