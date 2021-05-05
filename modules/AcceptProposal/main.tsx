@@ -10,7 +10,7 @@ import {
   PropertyClient,
   getPropertyAddress,
 } from '@kalos-core/kalos-rpc/Property';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { ApprovedProposal } from './components/ApprovedProposal';
 import { S3Client, FileObject, URLObject } from '@kalos-core/kalos-rpc/S3File';
 import { Document, DocumentClient } from '@kalos-core/kalos-rpc/Document';
@@ -59,7 +59,6 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   DocClient: DocumentClient;
   LogClient: ActivityLogClient;
   PropertyClient: PropertyClient;
-  UserClient: UserClient;
   SigPad: React.RefObject<HTMLCanvasElement>;
   S3Client: S3Client;
 
@@ -80,7 +79,6 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
     this.QLClient = new QuoteLineClient(ENDPOINT);
     this.PropertyClient = new PropertyClient(ENDPOINT);
-    this.UserClient = new UserClient(ENDPOINT);
     this.S3Client = new S3Client(ENDPOINT);
     this.QDClient = new QuoteDocumentClient(ENDPOINT);
     this.LogClient = new ActivityLogClient(ENDPOINT);
@@ -143,7 +141,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   };
 
   toggleLoading = () => {
-    return new Promise(resolve => {
+    return new Promise<void>(resolve => {
       this.setState(
         prevState => ({
           isLoading: !prevState.isLoading,
@@ -205,7 +203,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const theProperty = await this.PropertyClient.Get(p);
     const u = new User();
     u.setId(this.props.userID);
-    const theCustomer = await this.UserClient.Get(u);
+    const theCustomer = await UserClientService.Get(u);
     this.setState({
       customer: theCustomer,
       property: theProperty,
