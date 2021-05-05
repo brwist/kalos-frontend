@@ -66,7 +66,7 @@ export const Spiffs: FC<Props> = ({
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
   );
-  const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 6));
+  const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 7));
 
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const init = useCallback(async () => {
