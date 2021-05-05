@@ -11,6 +11,7 @@ import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { Option } from '../Field';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { Task, TaskClient } from '@kalos-core/kalos-rpc/Task';
 
 import { ConfirmDelete } from '../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../InfoTable';
@@ -26,7 +27,7 @@ import {
   SpiffToolAdminActionType,
   DocumentType,
   TaskClientService,
-  DocumentClientService,,
+  DocumentClientService,
   SpiffToolAdminActionClientService,
   UserClientService,
 } from '../../../helpers';
@@ -235,7 +236,12 @@ export const SpiffToolLogEdit: FC<Props> = ({
         'testbuckethelios', // FIXME is it correct bucket name for those docs?
       );
       if (status === 'ok') {
-        await DocumentClientService.createTaskDocument(fileName, data.id, loggedUserId, description);
+        await DocumentClientService.createTaskDocument(
+          fileName,
+          data.id,
+          loggedUserId,
+          description,
+        );
         onClose();
         onReload();
         setUploading(false);
@@ -270,16 +276,39 @@ export const SpiffToolLogEdit: FC<Props> = ({
     async (form: SpiffToolAdminActionType) => {
       if (statusEditing) {
         setStatusEditing(undefined);
+        const updateTask = new Task();
+        updateTask.setId(data.id);
+        const userInfo = await UserClientService.loadUserById(loggedUserId);
+        updateTask.setAdminActionId(userInfo.id);
+        if (statusEditing.status === 3) {
+          //if the Spiff has been revoke, we need payroll to
+          //process it again, Cost Summary will treat it as a negative value
+          updateTask.setPayrollProcessed(false);
+        }
+        updateTask.setSpiffToolCloseoutDate(timestamp());
+        await TaskClientService.Update(updateTask);
+
         if (userId) {
           const userInfo = await UserClientService.loadUserById(loggedUserId);
           const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
           form.reviewedBy = newReviewedBy;
         }
-        await SpiffToolAdminActionClientService.upsertSpiffToolAdminAction({
-          ...form,
-          id: statusEditing.id,
-          taskId: data.id,
-        });
+        console.log({ statusEditing });
+        const adminAction = { ...form, id: statusEditing.id, taskId: data.id };
+        if (statusEditing.status === 1) {
+          Object.assign(adminAction, {
+            grantedDate: timestamp().toString(),
+          });
+        }
+        if (statusEditing.status === 3) {
+          Object.assign(adminAction, {
+            revokedDate: timestamp().toString(),
+          });
+        }
+        await SpiffToolAdminActionClientService.upsertSpiffToolAdminAction(
+          adminAction,
+        );
+
         onStatusChange();
       }
     },

@@ -329,7 +329,9 @@ export const PerDiemComponent: FC<Props> = ({
       year,
       month,
     );
-    setGovPerDiems(govPerDiems);
+    if (!perDiem) {
+      setGovPerDiems(govPerDiems);
+    }
     setPerDiems(resultsList);
     setManagerPerDiemsOther(managerPerDiemsOther);
     setManagerPerDiems(managerPerDiemsList);
@@ -648,6 +650,7 @@ export const PerDiemComponent: FC<Props> = ({
     (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
     0,
   );
+
   const totalLodging = allRowsList.reduce(
     (aggr, { zipCode, mealsOnly }) =>
       aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
