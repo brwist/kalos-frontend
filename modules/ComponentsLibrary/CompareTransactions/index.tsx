@@ -109,62 +109,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
 
         console.log('NEW CONFLICTS:', newConflicts);
         console.log('New transaction: ', newTransaction);
-
-        // let newTransaction: Transaction = new Transaction();
-        // let idx = 0;
-        // for (const val of Object.values(transaction.toObject())) {
-        //   // Check the index of any conflicts and if it matches this instance, check all the conflicts and see if it clashes with any of the
-        //   // other transactions in that conflict. If it does, then push this txn in as well. If not, ignore.
-        //   for (const conflict of conflicts) {
-        //     if (conflict.index == idx) {
-        //       let indexOfTransactionVal = 0;
-        //       for (const conflictTransaction of conflict.transactionsAffected) {
-        //         for (const conflictTransactionVal of Object.values(
-        //           conflictTransaction.toObject(),
-        //         )) {
-        //           if (indexOfTransactionVal === idx) {
-        //             // This is the same field
-        //             if (conflictTransactionVal != val) {
-        //               console.log('Pushing to a transaction');
-        //               // push to conflict
-        //               conflicts
-        //                 .find(element => element === conflict)
-        //                 ?.transactionsAffected.push(transaction);
-        //             }
-        //           }
-        //           indexOfTransactionVal++;
-        //         }
-        //       }
-        //     }
-        //   }
-
-        //   console.log('Conflicts before check:', conflicts);
-        //   if (
-        //     conflicts.filter(conflict => conflict.index == index).length == 0
-        //   ) {
-        //     for (const valComparison of Object.values(
-        //       transactions[index - 1],
-        //     )) {
-        //       if (fieldIndex == index) {
-        //         console.log('Comparing value: ' + valComparison + ' | ' + val);
-        //         if (valComparison != val) {
-        //           let conflictsNew = conflicts;
-        //           conflictsNew.push({
-        //             index: fieldIndex,
-        //             transactionsAffected: [
-        //               transaction,
-        //               transactions[index - 1],
-        //             ],
-        //           } as Conflict);
-        //           setConflicts(conflictsNew);
-        //           console.log('Added conflict: ', conflicts);
-        //         }
-        //       }
-        //       fieldIndex++;
-        //     }
-        //   }
-        //   idx++;
-        // }
       }
     });
   }, [transactions, conflicts, setConflicts]);
