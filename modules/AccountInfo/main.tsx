@@ -5,7 +5,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { Form, Schema } from '../ComponentsLibrary/Form';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { UserType, saveUser, UserClientService } from '../../helpers';
+import { UserType, UserClientService } from '../../helpers';
 import { Loader } from '../Loader/main';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
@@ -104,7 +104,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
     if (newProp !== newProp2)
       return this.setState({ error: 'Logins do not match' });
     this.setState({ saving: true });
-    await saveUser({ login: newProp }, id);
+    await UserClientService.saveUser({ login: newProp }, id);
     this.setState({ saving: false, saved: true });
   };
 
@@ -120,14 +120,14 @@ export class AccountInfo extends React.PureComponent<props, state> {
     if (newProp !== newProp2)
       return this.setState({ error: 'Passwords do not match' });
     this.setState({ saving: true });
-    await saveUser({ pwd: newProp }, id);
+    await UserClientService.saveUser({ pwd: newProp }, id);
     this.setState({ saving: false, saved: true });
   };
 
   updateUser = async (data: Partial<UserType>) => {
     const { id } = this.state.user;
     this.setState({ saving: true });
-    const user = await saveUser(data, id);
+    const user = await UserClientService.saveUser(data, id);
     this.setState({ user, saving: false, isEditing: false });
   };
 
