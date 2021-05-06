@@ -3,6 +3,9 @@ import React, { FC, useCallback, useState } from 'react';
 import { SectionBar } from '../SectionBar';
 import { TransactionAccountsPayable } from '../TransactionAccountsPayable';
 import { getRPCFields } from '../../../helpers';
+import { Modal } from '../Modal';
+import { MergeTable } from '../MergeTable';
+import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 interface Props {
   loggedUserId: number;
@@ -54,10 +57,18 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
           const fieldPrevious = previousTransaction[fieldIndex]; // For namings' sake
           // If either of them is a '' or a null, we need to determine the one that is not null and choose that value for the merge
           // This regex determines if whitespace exists in the string
-          if (!fieldCurrent || fieldCurrent?.toString().match(/^\s+$/)) {
+          if (
+            !fieldCurrent ||
+            fieldCurrent?.toString().match(/^\s+$/) ||
+            fieldPrevious === undefined
+          ) {
             fieldCurrentEmpty = true;
           }
-          if (!fieldPrevious || fieldPrevious?.toString().match(/^\s+$/)) {
+          if (
+            !fieldPrevious ||
+            fieldPrevious?.toString().match(/^\s+$/) ||
+            fieldPrevious === undefined
+          ) {
             fieldPreviousEmpty = true;
           }
 
@@ -83,7 +94,10 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             continue;
           }
 
-          if (fieldPrevious != fieldCurrent) {
+          if (
+            fieldPrevious != fieldCurrent &&
+            fieldPrevious?.toString() != fieldCurrent?.toString()
+          ) {
             // At this point, we need to resolve the conflict at a later point so we'll shove it into a conflict.
             newConflicts.push({
               index: fieldIndex,
@@ -93,9 +107,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
 
           fieldIndex++;
         }
-
-        console.log('NEW CONFLICTS:', newConflicts);
-        console.log('New transaction: ', newTransaction);
       }
     });
     return [newConflicts, newTransaction];
@@ -121,12 +132,43 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     const [conflicts, transaction] = generateConflicts();
     console.log('Got conflicts: ', conflicts);
     console.log('Got transaction: ', transaction);
+    setConflicts(conflicts);
   }, [transactions, conflicts, setConflicts, generateConflicts]);
 
   console.log('Transactions are now: ', transactions);
 
+  // Each row is a specific conflict
+  // Each conflict holds an index and a txn
+  //
   return (
     <>
+      {conflicts && (
+        <Modal open={conflicts.length > 0} onClose={() => {}}>
+          <MergeTable
+            columnHeaders={[]}
+            rows={conflicts.map(conflict => {
+              // Need to be each conflict's relevant field
+              return {
+                choices: conflict.transactionsAffected.map(txn => {
+                  const keys = Object.keys(txn.toObject());
+                  //@ts-ignore
+                  return typeof txn.toObject()[keys[conflict.index]] !==
+                    'object'
+                    ? `${keys[conflict.index]}: ${
+                        // @ts-ignore
+                        txn.toObject()[keys[conflict.index]]
+                      }`
+                    : `${keys[conflict.index]}: ${
+                        // @ts-ignore
+                        txn.toObject()[keys[conflict.index]][0]
+                      }`;
+                }),
+              };
+            })}
+            onSubmit={(submitted: any) => alert('Clicked')}
+          />
+        </Modal>
+      )}
       <SectionBar
         title="Select Transactions To Merge"
         actions={[
