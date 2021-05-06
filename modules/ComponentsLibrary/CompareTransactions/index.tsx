@@ -20,24 +20,15 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
 
-  const handleSetTransactions = useCallback(
-    (txns: Transaction[]) => {
-      setTransactions(txns);
-    },
-    [setTransactions],
-  );
-
-  const handleMerge = useCallback(() => {
+  const generateConflicts = (): any[] => {
     if (!transactions) {
-      console.error(
-        'Cannot handle merge - no transactions available to merge.',
-      );
-      return;
+      console.error('There are no transactions to generate conflicts from.');
+      return [];
     }
-    alert('Would have merged');
-    let mergedTxns: Transaction.AsObject[] = [];
 
     let newConflicts: Conflict[] = [];
+    let newTransaction = {} as Transaction.AsObject;
+
     transactions.forEach((transaction, index) => {
       // If a field is empty on the transaction being merged or if it is equivalent on both transactions, we want to keep it to the existent one.
       // If there are different (but set) fields then the transactions should be put into a conflict. If there were never any conflicts, the
@@ -56,8 +47,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
           transactions[index - 1].toObject(),
         );
         const keys = Object.keys(transactions[index - 1].toObject());
-
-        let newTransaction = {} as Transaction.AsObject;
 
         for (const fieldCurrent of Object.values(transaction.toObject())) {
           let fieldCurrentEmpty = false;
@@ -109,7 +98,30 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
         console.log('New transaction: ', newTransaction);
       }
     });
-  }, [transactions, conflicts, setConflicts]);
+    return [newConflicts, newTransaction];
+  };
+
+  const handleSetTransactions = useCallback(
+    (txns: Transaction[]) => {
+      setTransactions(txns);
+    },
+    [setTransactions],
+  );
+
+  const handleMerge = useCallback(() => {
+    if (!transactions) {
+      console.error(
+        'Cannot handle merge - no transactions available to merge.',
+      );
+      return;
+    }
+    alert('Would have merged');
+    let mergedTxns: Transaction.AsObject[] = [];
+
+    const [conflicts, transaction] = generateConflicts();
+    console.log('Got conflicts: ', conflicts);
+    console.log('Got transaction: ', transaction);
+  }, [transactions, conflicts, setConflicts, generateConflicts]);
 
   console.log('Transactions are now: ', transactions);
 
