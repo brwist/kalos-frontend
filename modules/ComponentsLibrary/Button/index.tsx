@@ -40,6 +40,7 @@ export const Button: FC<Props> = ({
   loading,
   ...props
 }) => {
+  console.log('LABEL INBOUND: ', label);
   const Component = (
     <ButtonUI
       className={clsx(
