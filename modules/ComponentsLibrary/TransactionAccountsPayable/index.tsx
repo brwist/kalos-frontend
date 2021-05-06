@@ -338,6 +338,33 @@ export const TransactionAccountsPayable: FC<Props> = ({
     );
   }, [setTransactions]);
 
+  const load = useCallback(async () => {
+    const employees = await UserClientService.loadTechnicians();
+    let sortedEmployeeList = employees.sort((a, b) =>
+      a.lastname > b.lastname ? 1 : -1,
+    );
+    setEmployees(sortedEmployeeList);
+
+    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+    setDepartments(departments);
+
+    resetTransactions();
+
+    const user = await UserClientService.loadUserById(loggedUserId);
+
+    const role = user.permissionGroupsList.find(p => p.type === 'role');
+
+    if (role) setRole(role.name as RoleType);
+
+    setLoading(false);
+  }, [
+    setLoading,
+    resetTransactions,
+    setDepartments,
+    setEmployees,
+    loggedUserId,
+  ]);
+
   const refresh = useCallback(async () => {
     setLoading(true);
     await resetTransactions();
@@ -513,33 +540,6 @@ export const TransactionAccountsPayable: FC<Props> = ({
       onSelect,
     ],
   );
-
-  const load = useCallback(async () => {
-    const employees = await UserClientService.loadTechnicians();
-    let sortedEmployeeList = employees.sort((a, b) =>
-      a.lastname > b.lastname ? 1 : -1,
-    );
-    setEmployees(sortedEmployeeList);
-
-    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
-    setDepartments(departments);
-
-    resetTransactions();
-
-    const user = await UserClientService.loadUserById(loggedUserId);
-
-    const role = user.permissionGroupsList.find(p => p.type === 'role');
-
-    if (role) setRole(role.name as RoleType);
-
-    setLoading(false);
-  }, [
-    setLoading,
-    resetTransactions,
-    setDepartments,
-    setEmployees,
-    loggedUserId,
-  ]);
 
   const SCHEMA: Schema<FilterData> = [
     [
