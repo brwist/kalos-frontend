@@ -42,6 +42,7 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
             value: (
               <>
                 <Button
+                  style={{ textTransform: 'none' }}
                   label={choice}
                   onClick={() => {
                     handleSetSelectedChoiceIndices(choice, rowIndex);
