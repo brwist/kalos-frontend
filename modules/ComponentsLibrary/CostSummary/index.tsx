@@ -208,12 +208,22 @@ export const CostSummary: FC<Props> = ({
     setGovPerDiems(govPerDiems);
   }, [startDay, userId, perDiemEndDay]);
   const getProcessedPerDiems = useCallback(async () => {
-    const {
-      resultsList,
-    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
-      userId,
+    const req = new PerDiem();
+    req.setUserId(userId);
+    req.setWithRows(true);
+    req.setIsActive(true);
+    req.setApprovedById(0);
+    req.setPayrollProcessed(false);
+    req.setNotEqualsList(['ApprovedById', 'PayrollProcessed']);
+    req.setPageNumber(0);
+    req.setDateRangeList([
+      '>=',
+      formatDateFns(startDay),
+      '<',
       formatDateFns(perDiemEndDay),
-    );
+    ]);
+    const resultsList = (await PerDiemClientService.BatchGet(req)).toObject()
+      .resultsList;
     let processed = [];
     for (let i = 0; i < resultsList.length; i++) {
       if (resultsList[i].payrollProcessed === true) {
@@ -296,12 +306,12 @@ export const CostSummary: FC<Props> = ({
       [] as PerDiemRowType[],
     );
     let totalMeals = allRowsList.reduce(
-      (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
+      (aggr, { zipCode }) => aggr + govPerDiemByZipCodeProcessed(zipCode).meals,
       0,
     );
     let totalLodging = allRowsList.reduce(
       (aggr, { zipCode, mealsOnly }) =>
-        aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
+        aggr + (mealsOnly ? 0 : govPerDiemByZipCodeProcessed(zipCode).lodging),
       0,
     );
     let totalMileage = 0;
@@ -313,15 +323,14 @@ export const CostSummary: FC<Props> = ({
     }
 
     const totals = { totalMeals, totalLodging, totalMileage, processed };
-
     return totals;
-  }, [perDiemsProcessed, govPerDiemByZipCode]);
+  }, [perDiemsProcessed, govPerDiemByZipCodeProcessed]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
       const req = new Task();
       const action = new SpiffToolAdminAction();
       req.setPayrollProcessed(false);
-      req.setCreatorUserId(userId);
+      req.setExternalId(userId);
       if (spiffType === 'Spiff') {
         const startDate = '0001-01-01';
         const endDate = format(endDay, 'yyyy-MM-dd');
@@ -387,7 +396,7 @@ export const CostSummary: FC<Props> = ({
       const req = new Task();
       const action = new SpiffToolAdminAction();
       req.setPayrollProcessed(true);
-      req.setCreatorUserId(userId);
+      req.setExternalId(userId);
       if (spiffType === 'Spiff') {
         const startDate = format(startDay, 'yyyy-MM-dd');
         const endDate = format(endDay, 'yyyy-MM-dd');
