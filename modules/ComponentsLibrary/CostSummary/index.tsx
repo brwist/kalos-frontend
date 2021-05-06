@@ -218,7 +218,7 @@ export const CostSummary: FC<Props> = ({
     req.setPageNumber(0);
     req.setDateRangeList([
       '>=',
-      formatDateFns(startDay),
+      formatDateFns(subDays(perDiemEndDay, 2)),
       '<',
       formatDateFns(perDiemEndDay),
     ]);
