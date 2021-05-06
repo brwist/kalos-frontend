@@ -18,13 +18,14 @@ interface Props {
 }
 
 export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
-  const [selectedChoiceIndices, setSelectedChoiceIndices] = useState<number[]>(
-    rows.map(() => 0), // Actually proud of how this one works not gonna lie
+  // Index of the array is the index of the relevant row
+  const [selectedChoiceIndices, setSelectedChoiceIndices] = useState<string[]>(
+    rows.map(() => ''), // Actually proud of how this one works not gonna lie
   );
   const handleSetSelectedChoiceIndices = useCallback(
-    (selectedChoiceIndex: number, rowIndex: number) => {
+    (selectedChoice: string, rowIndex: number) => {
       let sci = selectedChoiceIndices;
-      sci[rowIndex] = selectedChoiceIndex;
+      sci[rowIndex] = selectedChoice;
       setSelectedChoiceIndices(sci);
     },
     [setSelectedChoiceIndices, selectedChoiceIndices],
@@ -36,16 +37,17 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
       // outside array due to map
 
       rowChoices.push(
-        row.choices.map((choice, choiceIndex) => {
+        row.choices.map(choice => {
           return {
             value: choice,
-            onClick: () => alert(rowIndex + ' ' + choiceIndex),
+            onClick: () => handleSetSelectedChoiceIndices(choice, rowIndex),
           };
         }),
       );
     });
     return rowChoices as Data;
   }, [rows]);
+
   return (
     <>
       <InfoTable columns={columnHeaders} data={makeData()} />
