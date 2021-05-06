@@ -6,8 +6,9 @@
 // and these choices will be given back as an array of any type once the user clicked all of the changes to accept.
 // There will also be editing control available as a prop, so that the user can edit the fields in the table.
 
-import React, { FC, useCallback, useState } from 'react';
-import { Columns, InfoTable, Data, Row } from '../InfoTable';
+import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
+import { Button } from '../Button';
+import { Columns, Data, InfoTable } from '../InfoTable';
 
 interface Props {
   columnHeaders: Columns;
@@ -22,6 +23,7 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
   const [selectedChoiceIndices, setSelectedChoiceIndices] = useState<string[]>(
     rows.map(() => ''), // Actually proud of how this one works not gonna lie
   );
+  const [data, setData] = useState<Data>();
   const handleSetSelectedChoiceIndices = useCallback(
     (selectedChoice: string, rowIndex: number) => {
       let sci = selectedChoiceIndices;
@@ -30,27 +32,50 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
     },
     [setSelectedChoiceIndices, selectedChoiceIndices],
   );
-  let makeData = useCallback(() => {
-    let rowChoices: { value: string; onClick: () => void }[][] = [];
+  let handleSetData = useCallback(() => {
+    let rowChoices: { value: ReactNode; onClick: () => void }[][] = [];
 
     rows.forEach((row, rowIndex) => {
-      // outside array due to map
-
       rowChoices.push(
         row.choices.map(choice => {
           return {
-            value: choice,
-            onClick: () => handleSetSelectedChoiceIndices(choice, rowIndex),
+            value: (
+              <>
+                <Button
+                  label={choice}
+                  onClick={() => {
+                    handleSetSelectedChoiceIndices(choice, rowIndex);
+                    handleSetData();
+                  }}
+                  disabled={
+                    selectedChoiceIndices[rowIndex] !== '' &&
+                    selectedChoiceIndices[rowIndex] !== choice
+                  }
+                />
+              </>
+            ),
+            onClick: () => {
+              handleSetSelectedChoiceIndices(choice, rowIndex);
+              handleSetData();
+            },
           };
         }),
       );
     });
-    return rowChoices as Data;
+    setData(rowChoices as Data);
   }, [rows]);
+
+  useEffect(() => {
+    handleSetData();
+  }, [handleSetData]);
 
   return (
     <>
-      <InfoTable columns={columnHeaders} data={makeData()} />
+      <InfoTable
+        key={selectedChoiceIndices.toString()}
+        columns={columnHeaders}
+        data={data}
+      />
     </>
   );
 };
