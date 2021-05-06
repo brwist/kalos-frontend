@@ -5,7 +5,10 @@ export default () => {
   return (
     <MergeTable
       columnHeaders={[{ name: 'Test' }, { name: 'ME' }, { name: 'OUT' }]}
-      rows={[{ choices: ['Out', 'Testing', 'More'] }]}
+      rows={[
+        { choices: ['Out', 'Testing', 'More'] },
+        { choices: ['Testing', 'Second', 'One', 'Out'] },
+      ]}
     />
   );
 };

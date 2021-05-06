@@ -30,15 +30,21 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
     [setSelectedChoiceIndices, selectedChoiceIndices],
   );
   let makeData = useCallback(() => {
-    let rowChoices: { value: string }[] = [];
+    let rowChoices: { value: string; onClick: () => void }[][] = [];
+
     rows.forEach((row, rowIndex) => {
       // outside array due to map
 
-      rowChoices = row.choices.map(choice => {
-        return { value: choice };
-      });
+      rowChoices.push(
+        row.choices.map((choice, choiceIndex) => {
+          return {
+            value: choice,
+            onClick: () => alert(rowIndex + ' ' + choiceIndex),
+          };
+        }),
+      );
     });
-    return [rowChoices] as Data;
+    return rowChoices as Data;
   }, [rows]);
   return (
     <>
