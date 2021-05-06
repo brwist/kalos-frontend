@@ -98,11 +98,49 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             fieldPrevious != fieldCurrent &&
             fieldPrevious?.toString() != fieldCurrent?.toString()
           ) {
+            let previousTransactionExists;
+
+            let newConflict: Conflict[];
+
+            // need to find conflicts with the same indices and then see if the members match
+            if (
+              newConflicts.filter(conflict => conflict.index === fieldIndex)
+                .length > 0
+            ) {
+              newConflict = newConflicts
+                .filter(conflict => conflict.index === fieldIndex)
+                .map(conflictMatching => {
+                  if (
+                    !conflictMatching.transactionsAffected.includes(transaction)
+                  ) {
+                    conflictMatching.transactionsAffected.push(transaction);
+                  }
+                  if (
+                    !conflictMatching.transactionsAffected.includes(
+                      transactions[index - 1],
+                    )
+                  ) {
+                    conflictMatching.transactionsAffected.push(
+                      transactions[index - 1],
+                    );
+                  }
+
+                  return conflictMatching;
+                });
+            }
+
             // At this point, we need to resolve the conflict at a later point so we'll shove it into a conflict.
-            newConflicts.push({
-              index: fieldIndex,
-              transactionsAffected: [transaction, transactions[index - 1]],
-            } as Conflict);
+            newConflicts.push(
+              newConflict!
+                ? newConflict![0]
+                : ({
+                    index: fieldIndex,
+                    transactionsAffected: [
+                      transaction,
+                      transactions[index - 1],
+                    ],
+                  } as Conflict),
+            );
           }
 
           fieldIndex++;
@@ -152,16 +190,10 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
                 choices: conflict.transactionsAffected.map(txn => {
                   const keys = Object.keys(txn.toObject());
                   //@ts-ignore
-                  return typeof txn.toObject()[keys[conflict.index]] !==
-                    'object'
-                    ? `${keys[conflict.index]}: ${
-                        // @ts-ignore
-                        txn.toObject()[keys[conflict.index]]
-                      }`
-                    : `${keys[conflict.index]}: ${
-                        // @ts-ignore
-                        txn.toObject()[keys[conflict.index]][0]
-                      }`;
+                  return `${keys[conflict.index]}: ${
+                    // @ts-ignore
+                    txn.toObject()[keys[conflict.index]]
+                  }`;
                 }),
               };
             })}
