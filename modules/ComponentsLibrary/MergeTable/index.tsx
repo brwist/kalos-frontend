@@ -6,8 +6,8 @@
 // and these choices will be given back as an array of any type once the user clicked all of the changes to accept.
 // There will also be editing control available as a prop, so that the user can edit the fields in the table.
 
-import React, { FC } from 'react';
-import { Columns, InfoTable, Data } from '../InfoTable';
+import React, { FC, useCallback, useState } from 'react';
+import { Columns, InfoTable, Data, Row } from '../InfoTable';
 
 interface Props {
   columnHeaders: Columns;
@@ -18,20 +18,31 @@ interface Props {
 }
 
 export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
+  const [selectedChoiceIndices, setSelectedChoiceIndices] = useState<number[]>(
+    rows.map(() => 0), // Actually proud of how this one works not gonna lie
+  );
+  const handleSetSelectedChoiceIndices = useCallback(
+    (selectedChoiceIndex: number, rowIndex: number) => {
+      let sci = selectedChoiceIndices;
+      sci[rowIndex] = selectedChoiceIndex;
+      setSelectedChoiceIndices(sci);
+    },
+    [setSelectedChoiceIndices, selectedChoiceIndices],
+  );
+  let makeData = useCallback(() => {
+    let rowChoices: { value: string }[] = [];
+    rows.forEach((row, rowIndex) => {
+      // outside array due to map
+
+      rowChoices = row.choices.map(choice => {
+        return { value: choice };
+      });
+    });
+    return [rowChoices] as Data;
+  }, [rows]);
   return (
     <>
-      <InfoTable
-        columns={columnHeaders}
-        data={
-          [
-            rows.map(row => {
-              return {
-                label: 'test',
-              };
-            }),
-          ] as Data
-        }
-      />
+      <InfoTable columns={columnHeaders} data={makeData()} />
     </>
   );
 };
