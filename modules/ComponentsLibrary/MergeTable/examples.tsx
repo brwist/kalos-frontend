@@ -4,11 +4,19 @@ import { MergeTable } from './index';
 export default () => {
   return (
     <MergeTable
-      columnHeaders={[{ name: 'Test' }, { name: 'ME' }, { name: 'OUT' }]}
+      columnHeaders={[{ name: 'TEST' }, { name: 'ME' }, { name: 'OUT' }]}
       rows={[
-        { choices: ['Out', 'Testing', 'More'] },
-        { choices: ['Testing', 'Second', 'One', 'Out'] },
+        { choices: ['Write', 'Multiple', 'Choices'] },
+        {
+          choices: [
+            'You can put',
+            'these just',
+            'like any other table',
+            'as well!',
+          ],
+        },
       ]}
+      onSubmit={submitted => console.log('SUBMITTED: ', submitted)}
     />
   );
 };

@@ -9,6 +9,7 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { Columns, Data, InfoTable } from '../InfoTable';
+import { SectionBar } from '../SectionBar';
 
 interface Props {
   columnHeaders: Columns;
@@ -16,21 +17,22 @@ interface Props {
     choices: string[];
     onSelect?: (selected: string) => void;
   }[];
+  onSubmit: (results: string[]) => void; // Index of the results is the index of the relevant row
 }
 
-export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
+export const MergeTable: FC<Props> = ({ columnHeaders, rows, onSubmit }) => {
   // Index of the array is the index of the relevant row
-  const [selectedChoiceIndices, setSelectedChoiceIndices] = useState<string[]>(
+  const [selectedChoices, setSelectedChoices] = useState<string[]>(
     rows.map(() => ''), // Actually proud of how this one works not gonna lie
   );
   const [data, setData] = useState<Data>();
   const handleSetSelectedChoiceIndices = useCallback(
     (selectedChoice: string, rowIndex: number) => {
-      let sci = selectedChoiceIndices;
+      let sci = selectedChoices;
       sci[rowIndex] = selectedChoice;
-      setSelectedChoiceIndices(sci);
+      setSelectedChoices(sci);
     },
-    [setSelectedChoiceIndices, selectedChoiceIndices],
+    [setSelectedChoices, selectedChoices],
   );
   let handleSetData = useCallback(() => {
     let rowChoices: { value: ReactNode; onClick: () => void }[][] = [];
@@ -49,8 +51,8 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
                     handleSetData();
                   }}
                   disabled={
-                    selectedChoiceIndices[rowIndex] !== '' &&
-                    selectedChoiceIndices[rowIndex] !== choice
+                    selectedChoices[rowIndex] !== '' &&
+                    selectedChoices[rowIndex] !== choice
                   }
                 />
               </>
@@ -66,14 +68,25 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows }) => {
     setData(rowChoices as Data);
   }, [rows]);
 
+  let handleSubmit = useCallback(
+    (submission: string[]) => onSubmit(submission),
+    [onSubmit],
+  );
+
   useEffect(() => {
     handleSetData();
   }, [handleSetData]);
 
   return (
     <>
+      <SectionBar
+        actions={[
+          { label: 'Submit', onClick: () => handleSubmit(selectedChoices) },
+        ]}
+        fixedActions
+      />
       <InfoTable
-        key={selectedChoiceIndices.toString()}
+        key={selectedChoices.toString()}
         columns={columnHeaders}
         data={data}
       />
