@@ -84,7 +84,7 @@ export const CostSummary: FC<Props> = ({
     totalDistance: number;
     processed: boolean;
   }>({ totalDistance: 0, processed: true });
-  const [loaded, setLoaded] = useState<boolean>();
+  const [loaded, setLoaded] = useState<boolean>(false);
   const today = new Date();
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
@@ -485,112 +485,121 @@ export const CostSummary: FC<Props> = ({
       }
     }
   };
-  const load = useCallback(async () => {
-    if (userId === 3639) {
-      console.log('loading for britton');
-    }
-    let promises = [];
+  useEffect(() => {
+    const load = async () => {
+      if (userId === 3639) {
+        console.log('loading for britton');
+      }
+      let promises = [];
 
-    promises.push(
-      new Promise<void>(async (resolve, reject) => {
-        if (userId === 3639) {
-          console.log('britton get timeoff totals');
-        }
-        try {
-          const total = await getTimeoffTotals();
+      promises.push(
+        new Promise<void>(async (resolve, reject) => {
           if (userId === 3639) {
-            console.log(total);
+            console.log('britton get timeoff totals');
           }
-          setTotalPTO(total);
+          try {
+            const totalPTO = await getTimeoffTotals();
+            if (userId === 3639) {
+              console.log({ totalPTO });
+            }
+            setTotalPTO(totalPTO);
+            resolve();
+          } catch (err) {
+            console.log('error setting total PTO', err);
+            reject(err);
+          }
+        }),
+      );
+      promises.push(
+        new Promise<void>(async (resolve, reject) => {
+          if (userId === 3639) {
+            console.log('britton get processed hours');
+          }
+          try {
+            const processedHours = await getProcessedHoursTotals();
+            if (userId === 3639) console.log({ processedHours });
+            setTotalHoursProcessed(processedHours);
+            resolve();
+          } catch (err) {
+            console.log('error setting total hours', err);
+            reject(err);
+          }
+        }),
+      );
+      /*
+      promises.push(
+        new Promise<void>(async resolve => {
+          setTotalTools(await getSpiffToolTotals('Tool Purchase'));
           resolve();
-        } catch (err) {
-          reject(err);
-        }
-      }),
-    );
-    promises.push(
-      new Promise<void>(async (resolve, reject) => {
-        if (userId === 3639) {
-          console.log('britton get processed hours');
-        }
-        try {
-          const processedHours = await getProcessedHoursTotals();
-          if (userId === 3639) console.log(processedHours);
-          setTotalHoursProcessed(processedHours);
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      }),
-    );
-    /*
-    promises.push(
-      new Promise<void>(async resolve => {
-        setTotalTools(await getSpiffToolTotals('Tool Purchase'));
-        resolve();
-      }),
-    );
-    */
-    promises.push(
-      new Promise<void>(async (resolve, reject) => {
-        if (userId === 3639) console.log('britton get spiff totals');
-        try {
-          const spiffToolTotals = await getSpiffToolTotals('Spiff');
-          if (userId === 3639) console.log(spiffToolTotals);
-          setTotalSpiffsWeekly(spiffToolTotals);
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      }),
-    );
-    promises.push(getPerDiems()),
+        }),
+      );
+      */
+      promises.push(
+        new Promise<void>(async (resolve, reject) => {
+          if (userId === 3639) console.log('britton get spiff totals');
+          try {
+            const spiffToolTotals = await getSpiffToolTotals('Spiff');
+            if (userId === 3639) console.log({ spiffToolTotals });
+            setTotalSpiffsWeekly(spiffToolTotals);
+            resolve();
+          } catch (err) {
+            console.log('error fetching total spiffs', err);
+            reject(err);
+          }
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async (resolve, reject) => {
+          try {
+            await getPerDiems();
+            resolve();
+          } catch (err) {
+            console.log('error getting per diem', err);
+            reject(err);
+          }
+        }),
+      );
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           if (userId === 3639) console.log('britton per diem totals');
           try {
             resolve();
             const perDiemTotals = await getPerDiemTotals();
-            if (userId === 3639) console.log(perDiemTotals);
+            if (userId === 3639) console.log({ perDiemTotals });
             setTotalPerDiem(perDiemTotals);
           } catch (err) {
+            console.log('error getting britton per diem total', err);
             reject(err);
           }
         }),
       );
-    promises.push(
-      new Promise<void>(async (resolve, reject) => {
-        if (userId === 3639) console.log('britton trips');
-        try {
-          const tripsData = await getTrips();
-          if (userId === 3639) console.log(tripsData);
-          setTripsTotal(tripsData);
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      }),
-    );
-    try {
-      await Promise.all(promises);
+      promises.push(
+        new Promise<void>(async (resolve, reject) => {
+          if (userId === 3639) console.log('britton trips');
+          try {
+            const tripsData = await getTrips();
+            if (userId === 3639) console.log({ tripsData });
+            setTripsTotal(tripsData);
+            resolve();
+          } catch (err) {
+            console.log('error getting trips', err);
+            reject(err);
+          }
+        }),
+      );
       setLoaded(true);
-    } catch (err) {
-      setLoaded(true);
-      console.log(err);
-    }
-  }, [
-    getTimeoffTotals,
-    getSpiffToolTotals,
-    getProcessedHoursTotals,
-    getPerDiemTotals,
-    getPerDiems,
-    getTrips,
-    userId,
-  ]);
-  useEffect(() => {
-    console.log({ loaded });
-    if (!loaded) load();
-  }, [load, loaded]);
+      try {
+        await Promise.all(promises);
+        console.log('all promises executed without error, setting loaded');
+        setLoaded(true);
+      } catch (err) {
+        console.log('a promise failed');
+        setLoaded(true);
+      }
+    };
+    load();
+  }, []);
   return loaded ? (
     <div>
       <strong>{username}</strong>
@@ -642,39 +651,43 @@ export const CostSummary: FC<Props> = ({
             { name: 'Job Number' },
             { name: 'Processed' },
           ]}
-          data={spiffsWeekly!.map(spiff => {
-            return [
-              {
-                value: formatDate(spiff.toObject().timeCreated),
-              },
-              {
-                value: usd(spiff.toObject().spiffAmount),
-              },
-              {
-                value: spiff.toObject().spiffJobNumber,
-              },
-              {
-                value:
-                  spiff.toObject().payrollProcessed === true
-                    ? 'Complete'
-                    : 'Incomplete',
-                actions:
-                  spiff.toObject().payrollProcessed === false
-                    ? [
-                        <IconButton
-                          key="processSpiffWeekly"
-                          size="small"
-                          onClick={() =>
-                            toggleProcessSpiffTool(spiff.toObject())
-                          }
-                        >
-                          <CheckIcon />
-                        </IconButton>,
-                      ]
-                    : [],
-              },
-            ];
-          })}
+          data={
+            spiffsWeekly
+              ? spiffsWeekly.map(spiff => {
+                  return [
+                    {
+                      value: formatDate(spiff.toObject().timeCreated),
+                    },
+                    {
+                      value: usd(spiff.toObject().spiffAmount),
+                    },
+                    {
+                      value: spiff.toObject().spiffJobNumber,
+                    },
+                    {
+                      value:
+                        spiff.toObject().payrollProcessed === true
+                          ? 'Complete'
+                          : 'Incomplete',
+                      actions:
+                        spiff.toObject().payrollProcessed === false
+                          ? [
+                              <IconButton
+                                key="processSpiffWeekly"
+                                size="small"
+                                onClick={() =>
+                                  toggleProcessSpiffTool(spiff.toObject())
+                                }
+                              >
+                                <CheckIcon />
+                              </IconButton>,
+                            ]
+                          : [],
+                    },
+                  ];
+                })
+              : []
+          }
         />
       </SectionBar>
       {/*
