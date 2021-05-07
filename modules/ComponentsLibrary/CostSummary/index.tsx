@@ -50,21 +50,18 @@ interface Props {
 
 export const CostSummary: FC<Props> = ({
   userId,
-  loggedUserId,
   notReady,
   onClose,
   onNext,
   username,
 }) => {
+  if (userId === 3639) {
+    console.log('britton was here');
+  }
   const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
   const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>(0);
   const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
-  const [spiffsMonthly, setSpiffsMonthly] = useState<Task[]>();
-
-  const [totalTools, setTotalTools] = useState<number>();
-  const [tools, setTools] = useState<Task[]>();
   const [totalPTO, setTotalPTO] = useState<number>(0);
-  const [pto, setPTO] = useState<TimeoffRequest.AsObject[]>();
   const [totalPerDiem, setTotalPerDiem] = useState<{
     totalMeals: number;
     totalLodging: number;
@@ -77,17 +74,11 @@ export const CostSummary: FC<Props> = ({
     totalDistance: number;
     processed: boolean;
   }>({ totalDistance: 0, processed: true });
-  const [loading, setLoading] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>();
-  const [today, setToday] = useState<Date>(new Date());
-  const [toolFund, setToolFund] = useState<number>(0);
-  const [startDay, setStartDay] = useState<Date>(
-    startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
-  );
-  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
-  const [perDiemEndDay, setPerDiemEndDay] = useState<Date>(
-    addDays(startOfWeek(today, { weekStartsOn: 6 }), 4),
-  );
+  const today = new Date();
+  const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
+  const endDay = addDays(startDay, 7);
+  const perDiemEndDay = addDays(startOfWeek(today, { weekStartsOn: 6 }), 4);
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
       meals: number;
@@ -111,6 +102,7 @@ export const CostSummary: FC<Props> = ({
     trip.setUserId(userId);
     let processed = true;
     let tempTripList = new TripList().getResultsList();
+    setTrips(tempTripList);
     trip.setApproved(true);
     for (let i = 0; i <= 6; i++) {
       const startDate = format(addDays(startDay, i), 'yyyy-MM-dd');
@@ -155,7 +147,7 @@ export const CostSummary: FC<Props> = ({
       month,
     );
     setGovPerDiems(govPerDiems);
-  }, [startDay, endDay, userId]);
+  }, [startDay, userId, perDiemEndDay]);
   const getPerDiemTotals = useCallback(async () => {
     const tempPerDiems = perDiems;
     let processed = 0;
@@ -252,7 +244,6 @@ export const CostSummary: FC<Props> = ({
         }
         return spiffTotal;
       } else {
-        setTools(results);
         return toolTotal;
       }
     },
@@ -294,9 +285,8 @@ export const CostSummary: FC<Props> = ({
         total += numberOfDays * 8;
       }
     }
-    setPTO(results);
     return total;
-  }, [userId, notReady]);
+  }, [userId, notReady, endDay, startDay]);
   const getProcessedHoursTotals = useCallback(async () => {
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
@@ -329,15 +319,7 @@ export const CostSummary: FC<Props> = ({
     }
     return total;
   }, [endDay, startDay, userId]);
-  const toggleProcessTimeoff = async (pt: TimeoffRequest.AsObject) => {
-    pt.payrollProcessed = true;
-    const { id } = pt;
-    const req = new TimeoffRequest();
-    req.setId(id);
-    req.setFieldMaskList(['PayrollProcessed']);
-    req.setPayrollProcessed(true);
-    await TimeoffRequestClientService.Update(req);
-  };
+
   const toggleProcessSpiffTool = async (spiffTool: Task.AsObject) => {
     spiffTool.payrollProcessed = true;
     const { id } = spiffTool;
@@ -364,20 +346,32 @@ export const CostSummary: FC<Props> = ({
     }
   };
   const load = useCallback(async () => {
-    setLoading(true);
-    const user = await UserClientService.loadUserById(userId);
-    setToolFund(user.toolFund);
+    if (userId === 3639) {
+      console.log('loading for britton');
+    }
     let promises = [];
 
     promises.push(
       new Promise<void>(async resolve => {
-        setTotalPTO(await getTimeoffTotals());
+        if (userId === 3639) {
+          console.log('britton get timeoff totals');
+        }
+        const total = await getTimeoffTotals();
+        if (userId === 3639) {
+          console.log(total);
+        }
+        setTotalPTO(total);
         resolve();
       }),
     );
     promises.push(
       new Promise<void>(async resolve => {
-        setTotalHoursProcessed(await getProcessedHoursTotals());
+        if (userId === 3639) {
+          console.log('britton get processed hours');
+        }
+        const processedHours = await getProcessedHoursTotals();
+        if (userId === 3639) console.log(processedHours);
+        setTotalHoursProcessed(processedHours);
         resolve();
       }),
     );
@@ -391,44 +385,46 @@ export const CostSummary: FC<Props> = ({
     */
     promises.push(
       new Promise<void>(async resolve => {
-        setTotalSpiffsWeekly(await getSpiffToolTotals('Spiff'));
+        if (userId === 3639) console.log('britton get spiff totals');
+        const spiffToolTotals = await getSpiffToolTotals('Spiff');
+        if (userId === 3639) console.log(spiffToolTotals);
+        setTotalSpiffsWeekly(spiffToolTotals);
         resolve();
       }),
     );
+    promises.push(getPerDiems()),
+      promises.push(
+        new Promise<void>(async resolve => {
+          if (userId === 3639) console.log('britton per diem totals');
+          const perDiemTotals = await getPerDiemTotals();
+          if (userId === 3639) console.log(perDiemTotals);
+          setTotalPerDiem(perDiemTotals);
+          resolve();
+        }),
+      );
     promises.push(
       new Promise<void>(async resolve => {
-        await getPerDiems();
+        if (userId === 3639) console.log('britton trips');
+        const tripsData = await getTrips();
+        if (userId === 3639) console.log(tripsData);
+        setTripsTotal(tripsData);
         resolve();
       }),
     );
-    promises.push(
-      new Promise<void>(async resolve => {
-        setTotalPerDiem(await getPerDiemTotals());
-        resolve();
-      }),
-    );
-    promises.push(
-      new Promise<void>(async resolve => {
-        setTripsTotal(await getTrips());
-        resolve();
-      }),
-    );
-    Promise.all(promises)
-      .then(() => {
-        setLoading(false);
-        setLoaded(true);
-      })
-      .catch(error => {
-        console.log(error);
-      });
+    try {
+      await Promise.all(promises);
+      setLoaded(true);
+    } catch (err) {
+      console.log(err);
+    }
   }, [
     getTimeoffTotals,
     getSpiffToolTotals,
-    userId,
     getProcessedHoursTotals,
     getPerDiemTotals,
     getPerDiems,
     getTrips,
+    userId,
   ]);
   useEffect(() => {
     if (!loaded) load();

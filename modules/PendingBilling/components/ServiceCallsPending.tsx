@@ -30,6 +30,8 @@ export interface Props {
 }
 
 export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
+  window.location.href =
+    'https://app.kalosflorida.com/index.cfm?action=admin:service.callsPending_old';
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
