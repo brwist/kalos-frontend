@@ -102,17 +102,6 @@ export const CostSummary: FC<Props> = ({
     };
   }>({});
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
-  const govPerDiemByZipCode = useCallback(
-    (zipCode: string) => {
-      const govPerDiem = govPerDiems[zipCode];
-      if (govPerDiem) return govPerDiem;
-      return {
-        meals: MEALS_RATE,
-        lodging: 0,
-      };
-    },
-    [govPerDiems],
-  );
   const govPerDiemByZipCodeProcessed = useCallback(
     (zipCode: string) => {
       const govPerDiem = govPerDiemsProcessed[zipCode];
@@ -167,6 +156,7 @@ export const CostSummary: FC<Props> = ({
     }
     return { totalDistance: distanceSubtotal, processed };
   }, [startDay, userId]);
+  /*
   const getPerDiems = useCallback(async () => {
     const {
       resultsList,
@@ -194,18 +184,54 @@ export const CostSummary: FC<Props> = ({
       year,
       month,
     );
-    setGovPerDiems(govPerDiems);
+    //setGovPerDiems(govPerDiems);
   }, [startDay, userId, perDiemEndDay]);
+  */
   const getPerDiemTotals = useCallback(async () => {
-    const tempPerDiems = perDiems;
+    const {
+      resultsList,
+    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
+      userId,
+      formatDateFns(perDiemEndDay),
+    );
+    //get PerDiems, set them
+    setPerDiems(resultsList);
+    console.log(resultsList);
+    const year = +format(startDay, 'yyyy');
+    const month = +format(startDay, 'M');
+    const zipCodesList = [];
+    for (let i = 0; i < resultsList.length; i++) {
+      let zipCodes = [resultsList[i]]
+        .reduce(
+          (aggr, { rowsList }) => [...aggr, ...rowsList],
+          [] as PerDiemRowType[],
+        )
+        .map(({ zipCode }) => zipCode);
+      for (let j = 0; j < zipCodes.length; j++) {
+        zipCodesList.push(zipCodes[j]);
+      }
+    }
+    const govPerDiemsTemp = await PerDiemClientService.loadGovPerDiem(
+      zipCodesList,
+      year,
+      month,
+    );
     let processed = 0;
-    let filteredPerDiems = tempPerDiems;
-    if (perDiems.length > 0) {
-      for (let i = 0; i < perDiems.length; i++) {
-        if (perDiems[i].payrollProcessed) {
+    let filteredPerDiems = resultsList;
+    if (resultsList.length > 0) {
+      for (let i = 0; i < resultsList.length; i++) {
+        if (resultsList[i].payrollProcessed) {
           processed = 1;
         }
       }
+    }
+    function govPerDiemByZipCode(zipCode: string) {
+      const govPerDiem = govPerDiemsTemp[zipCode];
+      if (govPerDiem) return govPerDiem;
+      return {
+        meals: MEALS_RATE,
+        lodging: 0,
+      };
     }
     let allRowsList = filteredPerDiems.reduce(
       (aggr, { rowsList }) => [...aggr, ...rowsList],
@@ -231,7 +257,7 @@ export const CostSummary: FC<Props> = ({
     const totals = { totalMeals, totalLodging, totalMileage, processed };
 
     return totals;
-  }, [perDiems, govPerDiemByZipCode]);
+  }, [perDiemEndDay, userId, startDay]);
 
   const getPerDiemProcessedTotals = useCallback(async () => {
     const tempPerDiems = perDiemsProcessed;
@@ -487,21 +513,12 @@ export const CostSummary: FC<Props> = ({
   };
   useEffect(() => {
     const load = async () => {
-      if (userId === 3639) {
-        console.log('loading for britton');
-      }
       let promises = [];
 
       promises.push(
         new Promise<void>(async (resolve, reject) => {
-          if (userId === 3639) {
-            console.log('britton get timeoff totals');
-          }
           try {
             const totalPTO = await getTimeoffTotals();
-            if (userId === 3639) {
-              console.log({ totalPTO });
-            }
             setTotalPTO(totalPTO);
             resolve();
           } catch (err) {
@@ -512,12 +529,8 @@ export const CostSummary: FC<Props> = ({
       );
       promises.push(
         new Promise<void>(async (resolve, reject) => {
-          if (userId === 3639) {
-            console.log('britton get processed hours');
-          }
           try {
             const processedHours = await getProcessedHoursTotals();
-            if (userId === 3639) console.log({ processedHours });
             setTotalHoursProcessed(processedHours);
             resolve();
           } catch (err) {
@@ -536,10 +549,8 @@ export const CostSummary: FC<Props> = ({
       */
       promises.push(
         new Promise<void>(async (resolve, reject) => {
-          if (userId === 3639) console.log('britton get spiff totals');
           try {
             const spiffToolTotals = await getSpiffToolTotals('Spiff');
-            if (userId === 3639) console.log({ spiffToolTotals });
             setTotalSpiffsWeekly(spiffToolTotals);
             resolve();
           } catch (err) {
@@ -548,7 +559,7 @@ export const CostSummary: FC<Props> = ({
           }
         }),
       );
-
+      /*
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {
@@ -560,26 +571,22 @@ export const CostSummary: FC<Props> = ({
           }
         }),
       );
+      */
       promises.push(
         new Promise<void>(async (resolve, reject) => {
-          if (userId === 3639) console.log('britton per diem totals');
           try {
             resolve();
             const perDiemTotals = await getPerDiemTotals();
-            if (userId === 3639) console.log({ perDiemTotals });
             setTotalPerDiem(perDiemTotals);
           } catch (err) {
-            console.log('error getting britton per diem total', err);
             reject(err);
           }
         }),
       );
       promises.push(
         new Promise<void>(async (resolve, reject) => {
-          if (userId === 3639) console.log('britton trips');
           try {
             const tripsData = await getTrips();
-            if (userId === 3639) console.log({ tripsData });
             setTripsTotal(tripsData);
             resolve();
           } catch (err) {
@@ -598,8 +605,15 @@ export const CostSummary: FC<Props> = ({
         setLoaded(true);
       }
     };
-    load();
-  }, []);
+    if (!loaded) load();
+  }, [
+    getProcessedHoursTotals,
+    getTimeoffTotals,
+    loaded,
+    getPerDiemTotals,
+    getSpiffToolTotals,
+    getTrips,
+  ]);
   return loaded ? (
     <div>
       <strong>{username}</strong>
