@@ -88,8 +88,12 @@ export const CheckInProjectTask: FC<Props> = ({
         return;
       }
       if (projectToUse.dateEnded.substr(0, 10) < endDate) {
-        console.error("Task's End Date cannot be after Project's End Date.");
-        return;
+        console.error(
+          "Task's End Date was after the Project's End Date, setting the Task's End Date as the Project's End Date.",
+        );
+        // Auto set the task end date to be the project end date
+        endDate = projectToUse.dateEnded.substr(0, 10);
+        endTime = projectToUse.timeEnded;
       }
       await TaskClientService.upsertEventTask({
         ...formData,
