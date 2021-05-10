@@ -115,10 +115,7 @@ const SideMenu = ({
         dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
       } else {
         try {
-          const dpt = new TimesheetDepartment();
-          dpt.setManagerId(userID);
-          const deptResult = await deptClient.Get(dpt);
-          if (deptResult.id !== 0) {
+          if (userResult.permissionGroupsList.find(p => p.name === 'Manager')) {
             dispatch({
               type: 'fetchedUser',
               user: userResult,
