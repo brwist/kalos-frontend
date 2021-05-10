@@ -57,9 +57,13 @@ export const MergeTable: FC<Props> = ({
           // @ts-ignore
           value: (
             <Typography>
-              {properNames[row.rowName]
-                ? properNames[row.rowName]
-                : row.rowName}
+              {
+                //@ts-ignore
+                properNames[row.rowName]
+                  ? //@ts-ignore
+                    properNames[row.rowName]
+                  : row.rowName
+              }
             </Typography>
           ),
           onClick: () => {},
