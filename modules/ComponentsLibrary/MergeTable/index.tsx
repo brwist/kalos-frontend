@@ -37,10 +37,13 @@ export const MergeTable: FC<Props> = ({
   const handleSetSelectedChoiceIndices = useCallback(
     (selectedChoice: string, rowIndex: number) => {
       let sci = selectedChoices;
-      sci[rowIndex] = selectedChoice;
+      sci[rowIndex] = selectedChoice; 
       setSelectedChoices(sci);
     },
-    [setSelectedChoices, selectedChoices],
+    [
+      setSelectedChoices,
+      selectedChoices,
+    ],
   );
   let handleSetData = useCallback(() => {
     let rowChoices: { value: ReactNode; onClick: () => void }[][] = [];
@@ -79,11 +82,19 @@ export const MergeTable: FC<Props> = ({
     });
     console.log(rowChoices);
     setData(rowChoices as Data);
-  }, [rows]);
+  }, [rows, setData]);
 
   let handleSubmit = useCallback(
-    (submission: string[]) => onSubmit(submission),
-    [onSubmit],
+    (submission: string[]) => {
+      console.log(selectedChoices.filter(choice => choice != "").length, ' : ', rows.length);
+      if (selectedChoices.filter(choice => choice != "").length < rows.length) {
+        console.error('Please fill out all of it');
+        return;
+      }
+
+      onSubmit(submission);
+    },
+    [onSubmit, selectedChoices],
   );
 
   useEffect(() => {
