@@ -19,6 +19,35 @@ interface Conflict {
   transactionsAffected: Transaction[]; // The transactions that are conflicting with each other
 }
 
+const ProperTransactionNames = {
+  id: 'Id',
+  jobId: 'Job ID',
+  departmentIdList: 'Department ID List',
+  departmentId: 'Department ID',
+  ownerId: 'Assigned Employee',
+  vendor: 'vendor',
+  costCenterId: 'Cost Center ID',
+  description: 'Description',
+  amount: 'Amount',
+  timestamp: 'Timestamp',
+  notes: 'Notes',
+  isActive: 'Active?',
+  statusId: 'Status ID',
+  status: 'Status',
+  ownerName: 'Owner Name',
+  cardUsed: 'Card Used',
+  documents: 'Documents',
+  activityLog: 'Activity Log',
+  department: 'Transaction Department',
+  costCenter: 'Cost Center',
+  isAudited: 'Audited?',
+  isRecorded: 'Recorded?',
+  artificialId: 'Artificial ID',
+  vendorCategory: 'Vendor Category',
+  assignedEmployeeId: 'Assigned Employee ID',
+  assignedEmployeeName: 'Assigned Employee Name',
+};
+
 export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
@@ -189,14 +218,17 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
               );
               return {
                 // @ts-ignore
-                rowName: keys[conflict.index],
+                rowName: ProperTransactionNames[keys[conflict.index]]
+                  ? // @ts-ignore
+                    ProperTransactionNames[keys[conflict.index]]
+                  : keys[conflict.index],
                 choices: conflict.transactionsAffected.map(txn => {
-                  const keys = Object.keys(txn.toObject());
                   // @ts-ignore
 
-                  const cast = txn.toObject()[keys[conflict.index]];
+                  let cast = txn.toObject()[keys[conflict.index]];
+
                   //@ts-ignore
-                  return `${keys[conflict.index]}: ${cast}`;
+                  return `${cast}`;
                 }),
               };
             })}
