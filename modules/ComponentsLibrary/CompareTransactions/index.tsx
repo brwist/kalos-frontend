@@ -221,10 +221,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
               );
               return {
                 // @ts-ignore
-                rowName: ProperTransactionNames[keys[conflict.index]]
-                  ? // @ts-ignore
-                    ProperTransactionNames[keys[conflict.index]]
-                  : keys[conflict.index],
+                rowName: keys[conflict.index],
                 choices: conflict.transactionsAffected.map(txn => {
                   // @ts-ignore
 
@@ -237,6 +234,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             })}
             onSubmit={(submitted: any) => alert('Clicked')}
             onCancel={() => handleSetConflicts([])}
+            properNames={ProperTransactionNames}
           />
         </Modal>
       )}
