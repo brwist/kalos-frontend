@@ -209,7 +209,10 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   return (
     <>
       {conflicts && (
-        <Modal open={conflicts.length > 0} onClose={() => {}}>
+        <Modal
+          open={conflicts.length > 0}
+          onClose={() => handleSetConflicts([])}
+        >
           <MergeTable
             columnHeaders={[{ name: 'Name of Field' }]}
             rows={conflicts.map(conflict => {
