@@ -9,6 +9,7 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import {
   PerDiemClientService,
@@ -213,6 +214,7 @@ interface State {
   pendingDeleteAllTrips: boolean;
   pendingProcessPayrollTrip: Trip | null;
   pendingApproveTrip: Trip | null;
+  pendingDenyTrip: Trip | null;
   tripsOnPage: TripList;
   totalTrips: number;
   totalTripMiles: number;
@@ -246,6 +248,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingTripToDelete: null,
       pendingTripToAdd: null,
       pendingDeleteAllTrips: false,
+      pendingDenyTrip: null,
       pendingProcessPayrollTrip: null,
       pendingApproveTrip: null,
       key: 0,
@@ -347,6 +350,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
               weekof: this.props.perDiemRowIds,
               page: this.state.page,
               departmentId: this.props.departmentId,
+              dateProcessed:
+                this.props.role === 'Manager' ? NULL_TIME : undefined,
               payrollProcessed: tripFilter
                 ? !tripFilter!.payrollProcessed
                 : this.props.role == 'Payroll'
@@ -591,7 +596,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ) : (
                 <></>
               ),
-              this.props.canApprove && currentTrip.getApproved() == false ? (
+              this.props.canApprove &&
+              currentTrip.getDateProcessed() == NULL_TIME ? (
                 <Tooltip
                   key={'approve' + idx}
                   content="Approve"
@@ -603,6 +609,25 @@ export class TripSummary extends React.PureComponent<Props, State> {
                       onClick={() => this.setPendingApproveTrip(currentTrip)}
                     >
                       <CheckCircleOutlineIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              ) : (
+                <></>
+              ),
+              this.props.canApprove &&
+              currentTrip.getDateProcessed() == NULL_TIME ? (
+                <Tooltip
+                  key={'Reject' + idx}
+                  content="Reject"
+                  placement="bottom"
+                >
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={() => this.setPendingDenyTrip(currentTrip)}
+                    >
+                      <NotInterestedIcon />
                     </IconButton>
                   </span>
                 </Tooltip>
@@ -644,8 +669,16 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setPendingApproveTrip(null);
     this.reloadTrips();
   };
+  setTripDenied = async (id: number) => {
+    await PerDiemClientService.updateTripDeny(id);
+    this.setPendingDenyTrip(null);
+    this.reloadTrips();
+  };
   setPendingApproveTrip = (trip: Trip | null) => {
     this.setState({ pendingApproveTrip: trip });
+  };
+  setPendingDenyTrip = (trip: Trip | null) => {
+    this.setState({ pendingDenyTrip: trip });
   };
   setPendingProcessPayroll = (trip: Trip | null) => {
     this.setState({ pendingProcessPayrollTrip: trip });
@@ -761,7 +794,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
 
     trip.setNotes(data.Notes);
-
+    trip.setHomeTravel(data.HomeTravel);
     trip.setDate(data.Date);
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);
@@ -963,6 +996,21 @@ export class TripSummary extends React.PureComponent<Props, State> {
             >
               <Typography>
                 Are you sure you want to approve this trip?
+              </Typography>
+            </Confirm>
+          )}
+          {this.state.pendingDenyTrip && (
+            <Confirm
+              key="ConfirmDeny"
+              title="Reject"
+              open={true}
+              onClose={() => this.setPendingDenyTrip(null)}
+              onConfirm={() =>
+                this.setTripDenied(this.state.pendingDenyTrip!.getId())
+              }
+            >
+              <Typography>
+                Are you sure you want to Reject this trip?
               </Typography>
             </Confirm>
           )}
