@@ -196,7 +196,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
       );
       return;
     }
-    alert('Would have merged');
     let mergedTxns: Transaction.AsObject[] = [];
 
     const [conflicts, transaction] = generateConflicts();
