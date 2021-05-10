@@ -1103,6 +1103,7 @@ export type TripsFilter = {
   approved: boolean | undefined;
   role?: string;
   departmentId?: number;
+  dateProcessed?: string | undefined;
 };
 /**
  * Returns Properties by filter

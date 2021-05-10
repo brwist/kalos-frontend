@@ -16,6 +16,7 @@ export namespace AddressPair {
 
     Notes: string;
     Date: string;
+    HomeTravel: boolean;
     PerDiemId: number;
   };
 
@@ -36,6 +37,7 @@ export namespace AddressPair {
 
     Notes: string;
     Date: string;
+    HomeTravel: boolean;
     PerDiemId: number;
   }
 
@@ -53,7 +55,7 @@ export namespace AddressPair {
     StateDestination: string = '';
     ZipCodeDestination: string = '';
     CountryDestination: string = '';
-
+    HomeTravel: boolean = false;
     Notes: string = '';
     Date: string = '';
     PerDiemId: number = 0;

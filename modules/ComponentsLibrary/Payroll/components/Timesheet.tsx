@@ -109,7 +109,7 @@ export const Timesheet: FC<Props> = ({
         columns={[
           { name: 'Employee' },
           { name: 'Department' },
-          { name: type === 'Manager' ? 'Week Submitted' : 'Week Approved' },
+          { name: type === 'Manager' ? 'Status' : 'Week Approved' },
         ]}
         loading={loading}
         data={
@@ -128,7 +128,9 @@ export const Timesheet: FC<Props> = ({
                   {
                     value:
                       type === 'Manager'
-                        ? formatWeek(e.userApprovalDatetime)
+                        ? formatWeek(e.userApprovalDatetime) === '1/1/1'
+                          ? 'Pending Submit'
+                          : 'Submitted'
                         : formatWeek(e.adminApprovalDatetime),
                     onClick: handleTogglePendingView(e),
                     actions: [
