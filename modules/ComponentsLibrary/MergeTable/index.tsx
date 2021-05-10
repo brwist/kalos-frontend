@@ -22,6 +22,7 @@ interface Props {
   }[];
   onSubmit: (results: string[]) => void; // Index of the results is the index of the relevant row
   onCancel: () => void;
+  properNames?: {}; // Just objects with key-value pairs that can be used to correct row names where applicable
 }
 
 export const MergeTable: FC<Props> = ({
@@ -29,6 +30,7 @@ export const MergeTable: FC<Props> = ({
   rows,
   onSubmit,
   onCancel,
+  properNames,
 }) => {
   // Index of the array is the index of the relevant row
   const [selectedChoices, setSelectedChoices] = useState<string[]>(
@@ -52,7 +54,14 @@ export const MergeTable: FC<Props> = ({
     rows.forEach((row, rowIndex) => {
       rowChoices.push([
         {
-          value: <Typography>{row.rowName}</Typography>,
+          // @ts-ignore
+          value: (
+            <Typography>
+              {properNames[row.rowName]
+                ? properNames[row.rowName]
+                : row.rowName}
+            </Typography>
+          ),
           onClick: () => {},
         },
         ...row.choices.map(choice => {
@@ -83,9 +92,9 @@ export const MergeTable: FC<Props> = ({
     });
     console.log(rowChoices);
     setData(rowChoices as Data);
-  }, [rows, setData]);
+  }, [rows, setData, properNames]);
 
-  let handleSubmit = useCallback(
+  let handleMerge = useCallback(
     (submission: string[]) => {
       console.log(
         selectedChoices.filter(choice => choice != '').length,
@@ -96,6 +105,15 @@ export const MergeTable: FC<Props> = ({
         setSelectAllPromptOpen(true);
         return;
       }
+
+      rows.forEach((row, idx) => {
+        console.log(
+          'Row name: ',
+          row.rowName,
+          ' | value set:',
+          submission[idx],
+        );
+      });
 
       onSubmit(submission);
     },
@@ -120,17 +138,16 @@ export const MergeTable: FC<Props> = ({
           title="Notice"
         >
           <Typography>
-            Please select a choice for all of the fields to merge the
-            transactions.
+            Please select a choice for all of the fields to merge
           </Typography>
         </Alert>
       )}
       <SectionBar
         actions={[
-          { label: 'Merge', onClick: () => handleSubmit(selectedChoices) },
+          { label: 'Merge', onClick: () => handleMerge(selectedChoices) },
           { label: 'Cancel', onClick: () => onCancel() },
         ]}
-        title="Resolve Transaction Conflicts to Merge Transactions"
+        title="Resolve Conflicts to Merge"
         fixedActions
       />
       <InfoTable
