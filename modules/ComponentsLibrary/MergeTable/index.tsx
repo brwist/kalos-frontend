@@ -20,9 +20,15 @@ interface Props {
     onSelect?: (selected: string) => void;
   }[];
   onSubmit: (results: string[]) => void; // Index of the results is the index of the relevant row
+  onCancel: () => void;
 }
 
-export const MergeTable: FC<Props> = ({ columnHeaders, rows, onSubmit }) => {
+export const MergeTable: FC<Props> = ({
+  columnHeaders,
+  rows,
+  onSubmit,
+  onCancel,
+}) => {
   // Index of the array is the index of the relevant row
   const [selectedChoices, setSelectedChoices] = useState<string[]>(
     rows.map(() => ''), // Actually proud of how this one works not gonna lie
@@ -89,6 +95,7 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows, onSubmit }) => {
       <SectionBar
         actions={[
           { label: 'Submit', onClick: () => handleSubmit(selectedChoices) },
+          { label: 'Cancel', onClick: () => onCancel() },
         ]}
         fixedActions
       />
