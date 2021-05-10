@@ -8,6 +8,7 @@
 
 import { Typography } from '@material-ui/core';
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
+import { Alert } from '../Alert';
 import { Button } from '../Button';
 import { Columns, Data, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
@@ -34,16 +35,16 @@ export const MergeTable: FC<Props> = ({
     rows.map(() => ''), // Actually proud of how this one works not gonna lie
   );
   const [data, setData] = useState<Data>();
+  const [selectAllPromptOpen, setSelectAllPromptOpen] = useState<boolean>(
+    false,
+  );
   const handleSetSelectedChoiceIndices = useCallback(
     (selectedChoice: string, rowIndex: number) => {
       let sci = selectedChoices;
-      sci[rowIndex] = selectedChoice; 
+      sci[rowIndex] = selectedChoice;
       setSelectedChoices(sci);
     },
-    [
-      setSelectedChoices,
-      selectedChoices,
-    ],
+    [setSelectedChoices, selectedChoices],
   );
   let handleSetData = useCallback(() => {
     let rowChoices: { value: ReactNode; onClick: () => void }[][] = [];
@@ -86,15 +87,24 @@ export const MergeTable: FC<Props> = ({
 
   let handleSubmit = useCallback(
     (submission: string[]) => {
-      console.log(selectedChoices.filter(choice => choice != "").length, ' : ', rows.length);
-      if (selectedChoices.filter(choice => choice != "").length < rows.length) {
-        console.error('Please fill out all of it');
+      console.log(
+        selectedChoices.filter(choice => choice != '').length,
+        ' : ',
+        rows.length,
+      );
+      if (selectedChoices.filter(choice => choice != '').length < rows.length) {
+        setSelectAllPromptOpen(true);
         return;
       }
 
       onSubmit(submission);
     },
-    [onSubmit, selectedChoices],
+    [onSubmit, selectedChoices, setSelectAllPromptOpen],
+  );
+
+  const handleSetSelectAllPromptOpen = useCallback(
+    (setOpen: boolean) => setSelectAllPromptOpen(setOpen),
+    [setSelectAllPromptOpen],
   );
 
   useEffect(() => {
@@ -103,6 +113,18 @@ export const MergeTable: FC<Props> = ({
 
   return (
     <>
+      {selectAllPromptOpen && (
+        <Alert
+          open={selectAllPromptOpen}
+          onClose={() => handleSetSelectAllPromptOpen(false)}
+          title="Notice"
+        >
+          <Typography>
+            Please select a choice for all of the fields to merge the
+            transactions.
+          </Typography>
+        </Alert>
+      )}
       <SectionBar
         actions={[
           { label: 'Merge', onClick: () => handleSubmit(selectedChoices) },
