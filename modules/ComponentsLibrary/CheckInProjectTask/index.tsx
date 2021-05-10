@@ -6,8 +6,7 @@ import { ExtendedProjectTaskType } from '../EditProject';
 import {
   EventType,
   makeFakeRows,
-  TaskClientService,
-  upsertEventTask,
+  TaskClientService, 
 } from '../../../helpers';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';

@@ -98,8 +98,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             fieldPrevious != fieldCurrent &&
             fieldPrevious?.toString() != fieldCurrent?.toString()
           ) {
-            let previousTransactionExists;
-
             let newConflict: Conflict[];
 
             // need to find conflicts with the same indices and then see if the members match
@@ -183,17 +181,22 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
       {conflicts && (
         <Modal open={conflicts.length > 0} onClose={() => {}}>
           <MergeTable
-            columnHeaders={[]}
+            columnHeaders={[{ name: 'Name of Field' }]}
             rows={conflicts.map(conflict => {
               // Need to be each conflict's relevant field
+              const keys = Object.keys(
+                conflict.transactionsAffected[0].toObject(),
+              );
               return {
+                // @ts-ignore
+                rowName: keys[conflict.index],
                 choices: conflict.transactionsAffected.map(txn => {
                   const keys = Object.keys(txn.toObject());
+                  // @ts-ignore
+
+                  const cast = txn.toObject()[keys[conflict.index]];
                   //@ts-ignore
-                  return `${keys[conflict.index]}: ${
-                    // @ts-ignore
-                    txn.toObject()[keys[conflict.index]]
-                  }`;
+                  return `${keys[conflict.index]}: ${cast}`;
                 }),
               };
             })}

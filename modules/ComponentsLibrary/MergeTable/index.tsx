@@ -6,6 +6,7 @@
 // and these choices will be given back as an array of any type once the user clicked all of the changes to accept.
 // There will also be editing control available as a prop, so that the user can edit the fields in the table.
 
+import { Typography } from '@material-ui/core';
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { Columns, Data, InfoTable } from '../InfoTable';
@@ -15,6 +16,7 @@ interface Props {
   columnHeaders: Columns;
   rows: {
     choices: string[];
+    rowName: string; // What is the label to display to the side?
     onSelect?: (selected: string) => void;
   }[];
   onSubmit: (results: string[]) => void; // Index of the results is the index of the relevant row
@@ -38,8 +40,12 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows, onSubmit }) => {
     let rowChoices: { value: ReactNode; onClick: () => void }[][] = [];
 
     rows.forEach((row, rowIndex) => {
-      rowChoices.push(
-        row.choices.map(choice => {
+      rowChoices.push([
+        {
+          value: <Typography>{row.rowName}</Typography>,
+          onClick: () => {},
+        },
+        ...row.choices.map(choice => {
           return {
             value: (
               <>
@@ -63,8 +69,9 @@ export const MergeTable: FC<Props> = ({ columnHeaders, rows, onSubmit }) => {
             },
           };
         }),
-      );
+      ]);
     });
+    console.log(rowChoices);
     setData(rowChoices as Data);
   }, [rows]);
 
