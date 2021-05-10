@@ -8,13 +8,12 @@ import { Button } from '../Button';
 import CheckIcon from '@material-ui/icons/Check';
 import IconButton from '@material-ui/core/IconButton';
 import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
-import { ENDPOINT, NULL_TIME, MEALS_RATE } from '../../../constants';
+import { ENDPOINT, MEALS_RATE } from '../../../constants';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { TaskClient, Task, SpiffType } from '@kalos-core/kalos-rpc/Task';
+import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
@@ -32,7 +31,6 @@ import {
   roundNumber,
   formatDate,
   TaskClientService,
-  UserClientService,
   TimeoffRequestClientService,
   PerDiemRowType,
   PerDiemClientService,
@@ -113,6 +111,7 @@ export const CostSummary: FC<Props> = ({
     },
     [govPerDiemsProcessed],
   );
+  (() => console.log)();
   const getTrips = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
@@ -598,6 +597,7 @@ export const CostSummary: FC<Props> = ({
       setLoaded(true);
       try {
         await Promise.all(promises);
+        // const res = await loadPayroll({PAYROLL PROTOBUFFER})
         console.log('all promises executed without error, setting loaded');
         setLoaded(true);
       } catch (err) {
