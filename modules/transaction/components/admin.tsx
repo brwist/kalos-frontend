@@ -331,7 +331,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     if (filters.departmentID) {
       if (obj.getDepartmentIdList() === '') {
         console.log('setting department id in applyFilters');
-        obj.setDepartmentId(filters.departmentID);
+        obj.setDepartmentIdList(`${filters.departmentID}`);
       }
     }
     if (filters.dateCreated && filters.dateCreated !== '0') {
@@ -474,7 +474,7 @@ export class TransactionAdminView extends React.Component<props, state> {
           console.log('setting department id list');
           reqObj.setDepartmentIdList(this.props.departmentIDList);
         } else {
-          reqObj.setDepartmentId(this.props.departmentID);
+          reqObj.setDepartmentIdList(`${this.props.departmentID}`);
         }
       }
       reqObj.setPageNumber(this.state.page);
