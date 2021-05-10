@@ -94,9 +94,10 @@ export const MergeTable: FC<Props> = ({
     <>
       <SectionBar
         actions={[
-          { label: 'Submit', onClick: () => handleSubmit(selectedChoices) },
+          { label: 'Merge', onClick: () => handleSubmit(selectedChoices) },
           { label: 'Cancel', onClick: () => onCancel() },
         ]}
+        title="Resolve Transaction Conflicts to Merge Transactions"
         fixedActions
       />
       <InfoTable
