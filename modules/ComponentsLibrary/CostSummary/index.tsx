@@ -22,6 +22,7 @@ import {
   addDays,
   startOfWeek,
   format,
+  endOfWeek,
 } from 'date-fns';
 import {
   Trip,
@@ -36,7 +37,10 @@ import {
   PerDiemClientService,
   PerDiemType,
   usd,
+  timestamp,
+  SpiffToolAdminActionClientService,
 } from '../../../helpers';
+import { NULL_TIME_VALUE } from '../Timesheet/constants';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -53,9 +57,6 @@ export const CostSummary: FC<Props> = ({
   onNext,
   username,
 }) => {
-  if (userId === 3639) {
-    console.log('britton was here');
-  }
   const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
 
   const [totalSpiffsProcessed, setTotalSpiffsProcessed] = useState<number>(0);
@@ -76,9 +77,13 @@ export const CostSummary: FC<Props> = ({
     processed: number;
   }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [perDiemsProcessed, setPerDiemsProcessed] = useState<PerDiemType[]>([]);
   const [trips, setTrips] = useState<Trip[]>();
   const [tripsTotal, setTripsTotal] = useState<{
+    totalDistance: number;
+    processed: boolean;
+  }>({ totalDistance: 0, processed: true });
+
+  const [tripsTotalProcessed, setTripsTotalProcessed] = useState<{
     totalDistance: number;
     processed: boolean;
   }>({ totalDistance: 0, processed: true });
@@ -87,31 +92,7 @@ export const CostSummary: FC<Props> = ({
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const perDiemEndDay = addDays(startOfWeek(today, { weekStartsOn: 6 }), 4);
-  const [govPerDiems, setGovPerDiems] = useState<{
-    [key: string]: {
-      meals: number;
-      lodging: number;
-    };
-  }>({});
-  const [govPerDiemsProcessed, setGovPerDiemsProcessed] = useState<{
-    [key: string]: {
-      meals: number;
-      lodging: number;
-    };
-  }>({});
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
-  const govPerDiemByZipCodeProcessed = useCallback(
-    (zipCode: string) => {
-      const govPerDiem = govPerDiemsProcessed[zipCode];
-      if (govPerDiem) return govPerDiem;
-      return {
-        meals: MEALS_RATE,
-        lodging: 0,
-      };
-    },
-    [govPerDiemsProcessed],
-  );
-  (() => console.log)();
   const getTrips = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
@@ -138,14 +119,18 @@ export const CostSummary: FC<Props> = ({
     let trip = new Trip();
     trip.setUserId(userId);
     let processed = true;
-    let tempTripList = new TripList().getResultsList();
-    trip.setPayrollProcessed(true);
-    for (let i = 0; i <= 6; i++) {
-      const startDate = format(addDays(startDay, i), 'yyyy-MM-dd');
-      trip.setDate('%' + startDate + '%');
-      const trips = await PerDiemClientService.BatchGetTrips(trip);
-      tempTripList = tempTripList.concat(trips.getResultsList());
-    }
+
+    trip.setDateTargetList(['date_processed']);
+    trip.setDateRangeList([
+      '>=',
+      formatDateFns(startOfWeek(new Date())),
+      '<=',
+      formatDateFns(endOfWeek(new Date())),
+    ]);
+    let tempTripList = (
+      await PerDiemClientService.BatchGetTrips(trip)
+    ).getResultsList();
+
     let distanceSubtotal = 0;
     for (let j = 0; j < tempTripList.length; j++) {
       distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
@@ -154,7 +139,7 @@ export const CostSummary: FC<Props> = ({
       }
     }
     return { totalDistance: distanceSubtotal, processed };
-  }, [startDay, userId]);
+  }, [userId]);
   /*
   const getPerDiems = useCallback(async () => {
     const {
@@ -195,7 +180,6 @@ export const CostSummary: FC<Props> = ({
     );
     //get PerDiems, set them
     setPerDiems(resultsList);
-    console.log(resultsList);
     const year = +format(startDay, 'yyyy');
     const month = +format(startDay, 'M');
     const zipCodesList = [];
@@ -258,28 +242,63 @@ export const CostSummary: FC<Props> = ({
     return totals;
   }, [perDiemEndDay, userId, startDay]);
 
-  const getPerDiemProcessedTotals = useCallback(async () => {
-    const tempPerDiems = perDiemsProcessed;
-    let processed = 0;
-    let filteredPerDiems = tempPerDiems;
-    if (perDiemsProcessed.length > 0) {
-      for (let i = 0; i < perDiemsProcessed.length; i++) {
-        if (perDiemsProcessed[i].payrollProcessed) {
-          processed = 1;
-        }
+  const getPerDiemTotalsProcessed = useCallback(async () => {
+    const perDiemReq = new PerDiem();
+    perDiemReq.setDateTargetList(['date_processed']);
+    perDiemReq.setDateRangeList([
+      '>=',
+      formatDateFns(startOfWeek(new Date())),
+      '<=',
+      formatDateFns(endOfWeek(new Date())),
+    ]);
+    console.log(perDiemReq);
+    const resultsList = (
+      await PerDiemClientService.BatchGet(perDiemReq)
+    ).getResultsList();
+
+    //get PerDiems, set them
+    const year = +format(startDay, 'yyyy');
+    const month = +format(startDay, 'M');
+    const zipCodesList = [];
+    for (let i = 0; i < resultsList.length; i++) {
+      let zipCodes = [resultsList[i].toObject()]
+        .reduce(
+          (aggr, { rowsList }) => [...aggr, ...rowsList],
+          [] as PerDiemRowType[],
+        )
+        .map(({ zipCode }) => zipCode);
+      for (let j = 0; j < zipCodes.length; j++) {
+        zipCodesList.push(zipCodes[j]);
       }
     }
+    const govPerDiemsTemp = await PerDiemClientService.loadGovPerDiem(
+      zipCodesList,
+      year,
+      month,
+    );
+
+    let filteredPerDiems = resultsList;
+    function govPerDiemByZipCode(zipCode: string) {
+      const govPerDiem = govPerDiemsTemp[zipCode];
+      if (govPerDiem) return govPerDiem;
+      return {
+        meals: MEALS_RATE,
+        lodging: 0,
+      };
+    }
+    console.log(filteredPerDiems);
+    const processed = 1;
     let allRowsList = filteredPerDiems.reduce(
-      (aggr, { rowsList }) => [...aggr, ...rowsList],
-      [] as PerDiemRowType[],
+      (aggr: PerDiemRowType[], pd) => [...aggr, ...pd.toObject().rowsList],
+      [],
     );
     let totalMeals = allRowsList.reduce(
-      (aggr, { zipCode }) => aggr + govPerDiemByZipCodeProcessed(zipCode).meals,
+      (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
       0,
     );
     let totalLodging = allRowsList.reduce(
       (aggr, { zipCode, mealsOnly }) =>
-        aggr + (mealsOnly ? 0 : govPerDiemByZipCodeProcessed(zipCode).lodging),
+        aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
       0,
     );
     let totalMileage = 0;
@@ -290,9 +309,15 @@ export const CostSummary: FC<Props> = ({
       );
     }
 
-    const totals = { totalMeals, totalLodging, totalMileage, processed };
+    const totals = {
+      totalMeals,
+      totalLodging,
+      totalMileage,
+      processed: processed,
+    };
+
     return totals;
-  }, [perDiemsProcessed, govPerDiemByZipCodeProcessed]);
+  }, [startDay]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
       const req = new Task();
@@ -365,18 +390,34 @@ export const CostSummary: FC<Props> = ({
       req.setPayrollProcessed(true);
       req.setExternalId(userId);
       if (spiffType === 'Spiff') {
-        const startDate = format(startDay, 'yyyy-MM-dd');
+        const startDate = '0001-01-01';
         const endDate = format(endDay, 'yyyy-MM-dd');
         req.setDateRangeList(['>=', startDate, '<', endDate]);
       }
+
       if (spiffType == 'Spiff') {
         req.setBillableType('Spiff');
       } else {
         req.setBillableType('Tool Purchase');
       }
-      const results = (
+      const results = [];
+      action.setDateTargetList(['date_processed']);
+      action.setDateRangeList([
+        '>=',
+        formatDateFns(startOfWeek(new Date())),
+        '<=',
+        formatDateFns(endOfWeek(new Date())),
+      ]);
+      req.setSearchAction(action);
+      const tempResults = (
         await new TaskClient(ENDPOINT).BatchGet(req)
       ).getResultsList();
+      if (tempResults.length > 0) {
+        for (let j = 0; j < tempResults.length; j++) {
+          results.push(tempResults[j]);
+        }
+      }
+
       //Here, we'll run another request for revoked, and if it pops up, we will remove the approved,
       //and treat the value as a negative
       const revokeReq = req;
@@ -405,15 +446,12 @@ export const CostSummary: FC<Props> = ({
         }
       }
       if (spiffType === 'Spiff') {
-        if (dateType === 'Weekly') {
-          setSpiffsWeekly(results);
-        }
         return spiffTotal;
       } else {
         return toolTotal;
       }
     },
-    [userId, startDay, endDay],
+    [userId, endDay],
   );
   const getTimeoffTotals = useCallback(async () => {
     const startDate = format(startDay, 'yyyy-MM-dd');
@@ -492,21 +530,33 @@ export const CostSummary: FC<Props> = ({
     req.setId(id);
     req.setFieldMaskList(['PayrollProcessed']);
     req.setPayrollProcessed(true);
+    const adminReq = new SpiffToolAdminAction();
     await TaskClientService.Update(req);
+    if (spiffTool.actionsList) {
+      for (let i = 0; i < spiffTool.actionsList.length; i++) {
+        if (spiffTool.actionsList[i].dateProcessed === NULL_TIME_VALUE) {
+          adminReq.setId(spiffTool.actionsList[i].id);
+          adminReq.setDateProcessed(timestamp());
+          adminReq.setFieldMaskList(['DateProcessed']);
+          await SpiffToolAdminActionClientService.Update(adminReq);
+        }
+      }
+    }
   };
   const toggleProcessPerDiems = async (perDiems: PerDiem.AsObject[]) => {
     for (let i = 0; i < perDiems.length; i++) {
       let req = new PerDiem();
       req.setId(perDiems[i].id);
       req.setPayrollProcessed(true);
-      req.setFieldMaskList(['Payroll{Processed']);
+      req.setFieldMaskList(['Payroll{Processed', 'DateProcessed']);
+      req.setDateProcessed(timestamp());
       await PerDiemClientService.Update(req);
-      if (trips && trips.length > 0) {
-        for (let i = 0; i < trips.length; i++) {
-          await PerDiemClientService.updateTripPayrollProcessed(
-            trips[i].toObject().id,
-          );
-        }
+    }
+    if (trips && trips.length > 0) {
+      for (let i = 0; i < trips.length; i++) {
+        await PerDiemClientService.updateTripPayrollProcessed(
+          trips[i].toObject().id,
+        );
       }
     }
   };
@@ -558,19 +608,20 @@ export const CostSummary: FC<Props> = ({
           }
         }),
       );
-      /*
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {
-            await getPerDiems();
+            const spiffToolTotalsProcessed = await getSpiffToolTotalsProcessed(
+              'Spiff',
+            );
+            setTotalSpiffsProcessed(spiffToolTotalsProcessed);
             resolve();
           } catch (err) {
-            console.log('error getting per diem', err);
+            console.log('error fetching total spiffs processed', err);
             reject(err);
           }
         }),
       );
-      */
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {
@@ -585,8 +636,31 @@ export const CostSummary: FC<Props> = ({
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {
+            resolve();
+            const perDiemTotals = await getPerDiemTotals();
+            setTotalPerDiemProcessed(await getPerDiemTotalsProcessed());
+          } catch (err) {
+            reject(err);
+          }
+        }),
+      );
+      promises.push(
+        new Promise<void>(async (resolve, reject) => {
+          try {
             const tripsData = await getTrips();
             setTripsTotal(tripsData);
+            resolve();
+          } catch (err) {
+            console.log('error getting trips', err);
+            reject(err);
+          }
+        }),
+      );
+      promises.push(
+        new Promise<void>(async (resolve, reject) => {
+          try {
+            const tripsDataProcessed = await getTripsProcessed();
+            setTripsTotalProcessed(tripsDataProcessed);
             resolve();
           } catch (err) {
             console.log('error getting trips', err);
@@ -613,6 +687,9 @@ export const CostSummary: FC<Props> = ({
     getPerDiemTotals,
     getSpiffToolTotals,
     getTrips,
+    getSpiffToolTotalsProcessed,
+    getTripsProcessed,
+    getPerDiemTotalsProcessed,
   ]);
   return loaded ? (
     <div>
@@ -642,7 +719,7 @@ export const CostSummary: FC<Props> = ({
               value: usd(totalPerDiemProcessed.totalMeals),
             },
             {
-              value: 0, //should be trip total
+              value: tripsTotalProcessed.totalDistance.toFixed(2) + ' miles',
             },
             {
               value: usd(totalSpiffsProcessed),
