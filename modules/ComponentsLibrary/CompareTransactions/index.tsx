@@ -52,6 +52,11 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
 
+  const handleSetConflicts = useCallback(
+    (conflicts: Conflict[]) => setConflicts(conflicts),
+    [setConflicts],
+  );
+
   const generateConflicts = (): any[] => {
     if (!transactions) {
       console.error('There are no transactions to generate conflicts from.');
@@ -195,12 +200,8 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     let mergedTxns: Transaction.AsObject[] = [];
 
     const [conflicts, transaction] = generateConflicts();
-    console.log('Got conflicts: ', conflicts);
-    console.log('Got transaction: ', transaction);
     setConflicts(conflicts);
   }, [transactions, conflicts, setConflicts, generateConflicts]);
-
-  console.log('Transactions are now: ', transactions);
 
   // Each row is a specific conflict
   // Each conflict holds an index and a txn
@@ -233,6 +234,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
               };
             })}
             onSubmit={(submitted: any) => alert('Clicked')}
+            onCancel={() => handleSetConflicts([])}
           />
         </Modal>
       )}
