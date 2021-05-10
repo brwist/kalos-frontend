@@ -6,11 +6,12 @@ import { ExtendedProjectTaskType } from '../EditProject';
 import { EventType, makeFakeRows, TaskClientService } from '../../../helpers';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
-import { IconButton } from '@material-ui/core';
+import { IconButton, Typography } from '@material-ui/core';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { EnhancedField } from '../Field/examples';
+import { Alert } from '../Alert';
 interface Props {
   projectToUse: EventType;
   loggedUserId: number;
@@ -31,6 +32,7 @@ export const CheckInProjectTask: FC<Props> = ({
   const [briefDescription, setBriefDescription] = useState<string>(
     'Automatically set description',
   ); // sets the checked in task's brief description field
+  const [checkInWarningBoxOpen, setCheckInWarningBoxOpen] = useState<boolean>();
 
   const handleBriefDescriptionChange = useCallback(
     value => {
@@ -67,6 +69,13 @@ export const CheckInProjectTask: FC<Props> = ({
     }
   };
 
+  const handleSetCheckInWarningBoxOpen = useCallback(
+    (isOpen: boolean) => {
+      setCheckInWarningBoxOpen(isOpen);
+    },
+    [setCheckInWarningBoxOpen],
+  );
+
   const handleSaveTask = useCallback(
     async ({
       startDate,
@@ -76,6 +85,15 @@ export const CheckInProjectTask: FC<Props> = ({
       checkedIn,
       ...formData
     }: ExtendedProjectTaskType) => {
+      const currentDate = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+
+      if (endDate < currentDate) {
+        console.error(
+          'Cannot save to the Project - the End Date has already passed.',
+        );
+        handleSetCheckInWarningBoxOpen(true);
+        return;
+      }
       if (!projectToUse) return;
       if (startDate > endDate && endDate != '') {
         console.error('Start Date cannot be after End Date.');
@@ -88,8 +106,12 @@ export const CheckInProjectTask: FC<Props> = ({
         return;
       }
       if (projectToUse.dateEnded.substr(0, 10) < endDate) {
-        console.error("Task's End Date cannot be after Project's End Date.");
-        return;
+        console.error(
+          "Task's End Date was after the Project's End Date, setting the Task's End Date as the Project's End Date.",
+        );
+        // Auto set the task end date to be the project end date
+        endDate = projectToUse.dateEnded.substr(0, 10);
+        endTime = projectToUse.timeEnded;
       }
       await TaskClientService.upsertEventTask({
         ...formData,
@@ -191,6 +213,18 @@ export const CheckInProjectTask: FC<Props> = ({
 
   return (
     <>
+      {checkInWarningBoxOpen && (
+        <Alert
+          open={checkInWarningBoxOpen}
+          onClose={() => handleSetCheckInWarningBoxOpen(false)}
+          label="Close"
+          title="Cannot Create Task"
+        >
+          <Typography>
+            Tasks cannot be created after a project has ended.
+          </Typography>
+        </Alert>
+      )}
       {checkInConfirmationBoxOpen && (
         <Modal
           open={true}
