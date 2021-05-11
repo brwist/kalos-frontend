@@ -4,7 +4,7 @@ import { SectionBar } from '../SectionBar';
 import { TransactionAccountsPayable } from '../TransactionAccountsPayable';
 import { getRPCFields } from '../../../helpers';
 import { Modal } from '../Modal';
-import { MergeTable } from '../MergeTable';
+import { MergeTable, SelectedChoice } from '../MergeTable';
 import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 interface Props {
@@ -51,7 +51,9 @@ const ProperTransactionNames = {
 export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
-  const [submissionResults, setSubmissionResults] = useState<String[]>([]);
+  const [submissionResults, setSubmissionResults] = useState<SelectedChoice[]>(
+    [],
+  );
 
   const handleSetConflicts = useCallback(
     (conflicts: Conflict[]) => setConflicts(conflicts),
@@ -59,7 +61,8 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   );
 
   const handleSetSubmissionResults = useCallback(
-    (submissionResults: string[]) => setSubmissionResults(submissionResults),
+    (submissionResults: SelectedChoice[]) =>
+      setSubmissionResults(submissionResults),
     [setSubmissionResults],
   );
 
@@ -229,6 +232,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
               return {
                 // @ts-ignore
                 rowName: keys[conflict.index],
+                rowIndex: conflict.index,
                 choices: conflict.transactionsAffected.map(txn => {
                   // @ts-ignore
 
