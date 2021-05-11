@@ -51,8 +51,9 @@ const ProperTransactionNames = {
 export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
-  const [submissionResults, setSubmissionResults] = useState<SelectedChoice[]>(
-    [],
+
+  const [transactionToSave, setTransactionToSave] = useState<Transaction>(
+    new Transaction(),
   );
 
   const handleSetConflicts = useCallback(
@@ -61,9 +62,21 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   );
 
   const handleSetSubmissionResults = useCallback(
-    (submissionResults: SelectedChoice[]) =>
-      setSubmissionResults(submissionResults),
-    [setSubmissionResults],
+    (submissionResults: SelectedChoice[]) => {
+      console.log('Transaction to save at the start: ', transactionToSave);
+      const keys = Object.keys(transactionToSave);
+
+      submissionResults.forEach(result => {
+        console.log(result.fieldIndex);
+        console.log('KEYS: ', keys);
+        console.log(keys[result.fieldIndex!]);
+        // @ts-ignore
+        transactionToSave['array'][result.fieldIndex] = result.value;
+      });
+
+      console.log('Transaction to save: ', transactionToSave);
+    },
+    [transactionToSave],
   );
 
   const generateConflicts = (): any[] => {
@@ -73,7 +86,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     }
 
     let newConflicts: Conflict[] = [];
-    let newTransaction = {} as Transaction.AsObject;
+    let newTransaction = new Transaction();
 
     transactions.forEach((transaction, index) => {
       // If a field is empty on the transaction being merged or if it is equivalent on both transactions, we want to keep it to the existent one.
@@ -118,21 +131,21 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
           if (fieldCurrentEmpty && !fieldPreviousEmpty) {
             // Set the field to be the previous field
             //@ts-ignore
-            newTransaction[keys[fieldIndex]] = fieldPrevious;
+            newTransaction['array'][fieldIndex] = fieldPrevious;
             fieldIndex++;
             continue;
           }
           if (fieldPreviousEmpty && !fieldCurrentEmpty) {
             // Set the field to be the current field
             //@ts-ignore
-            newTransaction[keys[fieldIndex]] = fieldCurrent;
+            newTransaction['array'][fieldIndex] = fieldCurrent;
             fieldIndex++;
             continue;
           }
           if (fieldPreviousEmpty && fieldCurrentEmpty) {
             // Set the field empty
             //@ts-ignore
-            newTransaction[keys[fieldIndex]] = '';
+            newTransaction['array'][fieldIndex] = '';
             fieldIndex++;
             continue;
           }
@@ -210,16 +223,26 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
       );
       return;
     }
-    let mergedTxns: Transaction.AsObject[] = [];
-
     const [conflicts, transaction] = generateConflicts();
     setConflicts(conflicts);
-  }, [transactions, conflicts, setConflicts, generateConflicts]);
+
+    console.log(
+      'Transactions: ',
+      transactions.map(transaction => transaction.toObject()),
+    );
+    console.log('Setting transaction from conflicts: ', transaction);
+    setTransactionToSave(transaction);
+  }, [
+    transactions,
+    conflicts,
+    setConflicts,
+    generateConflicts,
+    setTransactionToSave,
+  ]);
 
   // Each row is a specific conflict
   // Each conflict holds an index and a txn
   //
-  console.log('Submission results: ', submissionResults);
   return (
     <>
       {conflicts && (
