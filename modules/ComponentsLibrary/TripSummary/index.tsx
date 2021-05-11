@@ -396,7 +396,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       results: Trip.AsObject[];
       totalCount: number;
     } = await loadTripsByFilter(criteria);
-
+    console.log();
     let tripList: Trip[] = [];
     for await (const tripAsObj of res.results) {
       tripList.push(PerDiemClientService.tripAsObjectToTrip(tripAsObj));
@@ -407,10 +407,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
     resultList.setResultsList(tripsFinalResultList);
 
     this.setState({
-      totalTrips: res.totalCount,
+      totalTrips: res.results.length,
     });
 
-    resultList.setTotalCount(res.totalCount);
+    resultList.setTotalCount(res.results.length);
     return resultList;
   };
 
