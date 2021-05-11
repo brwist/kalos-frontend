@@ -63,18 +63,10 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
 
   const handleSetSubmissionResults = useCallback(
     (submissionResults: SelectedChoice[]) => {
-      console.log('Transaction to save at the start: ', transactionToSave);
-      const keys = Object.keys(transactionToSave);
-
       submissionResults.forEach(result => {
-        console.log(result.fieldIndex);
-        console.log('KEYS: ', keys);
-        console.log(keys[result.fieldIndex!]);
         // @ts-ignore
         transactionToSave['array'][result.fieldIndex] = result.value;
       });
-
-      console.log('Transaction to save: ', transactionToSave);
     },
     [transactionToSave],
   );
@@ -105,7 +97,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
         const previousTransaction = Object.values(
           transactions[index - 1].toObject(),
         );
-        const keys = Object.keys(transactions[index - 1].toObject());
 
         for (const fieldCurrent of Object.values(transaction.toObject())) {
           let fieldCurrentEmpty = false;
@@ -225,12 +216,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     }
     const [conflicts, transaction] = generateConflicts();
     setConflicts(conflicts);
-
-    console.log(
-      'Transactions: ',
-      transactions.map(transaction => transaction.toObject()),
-    );
-    console.log('Setting transaction from conflicts: ', transaction);
     setTransactionToSave(transaction);
   }, [
     transactions,
