@@ -46,9 +46,8 @@ export const MergeTable: FC<Props> = ({
     }), // Actually proud of how this one works not gonna lie
   );
   const [data, setData] = useState<Data>();
-  const [selectAllPromptOpen, setSelectAllPromptOpen] = useState<boolean>(
-    false,
-  );
+  const [selectAllPromptOpen, setSelectAllPromptOpen] =
+    useState<boolean>(false);
   const handleSetSelectedChoiceIndices = useCallback(
     (selectedChoice: SelectedChoice, rowIndex: number) => {
       let sci = selectedChoices;
@@ -94,7 +93,6 @@ export const MergeTable: FC<Props> = ({
                       rowIndex,
                     );
                     handleSetData();
-                    console.log(selectedChoices);
                   }}
                   disabled={
                     selectedChoices[rowIndex].value !== '' &&
@@ -118,7 +116,6 @@ export const MergeTable: FC<Props> = ({
         }),
       ]);
     });
-    console.log(rowChoices);
     setData(rowChoices as Data);
   }, [rows, setData, properNames]);
 
