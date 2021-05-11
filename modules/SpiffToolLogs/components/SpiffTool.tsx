@@ -374,6 +374,7 @@ export const SpiffTool: FC<Props> = ({
           req.setCreatorUserId(loggedUserId);
           req.setBillableType('Spiff');
           req.setStatusId(1);
+          req.setAdminActionId(0);
           let tempEvent = await EventClientService.LoadEventByServiceCallID(
             parseInt(data.spiffJobNumber),
           );
@@ -392,7 +393,8 @@ export const SpiffTool: FC<Props> = ({
             'CreatorUserId',
             'BillableType',
             'SpiffJobNumber',
-            'spiffAddress',
+            'SpiffAddress',
+            'AdminActionID',
           );
           if (type === 'Tool') {
             req.setToolpurchaseDate(now);
@@ -463,7 +465,7 @@ export const SpiffTool: FC<Props> = ({
       handleSetExtendedEditing(entry)();
       setStatusEditing(getStatusFormInit(+STATUSES[0].value));
     },
-    [setEditing, setStatusEditing, getStatusFormInit],
+    [setStatusEditing, handleSetExtendedEditing],
   );
   const handleClickTechnician = useCallback(
     (technician: number) => (
@@ -529,6 +531,7 @@ export const SpiffTool: FC<Props> = ({
     setLoadedTechnicians,
     loadUserTechnicians,
     load,
+    userRole,
     loadLoggedInUser,
   ]);
   const SCHEMA: Schema<TaskType> =
@@ -554,7 +557,7 @@ export const SpiffTool: FC<Props> = ({
               type: 'number',
               required: true,
             },
-            { name: 'spiffJobNumber', label: 'Job Number', type: 'eventId' },
+            { name: 'spiffJobNumber', label: 'Job Number', required: true },
             {
               name: 'datePerformed',
               label: 'Date Performed',
@@ -919,7 +922,7 @@ export const SpiffTool: FC<Props> = ({
           role === 'Manager' || role !== 'Payroll'
             ? [
                 {
-                  label: 'Add',
+                  label: 'Add Spiff',
                   onClick: handleSetEditing(makeNewTask()),
                 },
                 // {

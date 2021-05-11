@@ -142,6 +142,7 @@ export const Spiffs: FC<Props> = ({
       req.setCreatorUserId(loggedUserId);
       req.setBillableType('Spiff');
       req.setStatusId(1);
+      req.setAdminActionId(0);
       let tempEvent = await EventClientService.LoadEventByServiceCallID(
         parseInt(data.spiffJobNumber),
       );
@@ -165,6 +166,7 @@ export const Spiffs: FC<Props> = ({
         'BillableType',
         'SpiffJobNumber',
         'spiffAddress',
+        'AdminActionId',
       );
       for (const fieldName in data) {
         const { upperCaseProp, methodName } = getRPCFields(fieldName);
@@ -196,7 +198,12 @@ export const Spiffs: FC<Props> = ({
         type: 'number',
         required: true,
       },
-      { name: 'spiffJobNumber', label: 'Job #', type: 'eventId' },
+      {
+        name: 'spiffJobNumber',
+        label: 'Job #',
+        type: 'eventId',
+        required: true,
+      },
       {
         name: 'datePerformed',
         label: 'Date Performed',
@@ -231,7 +238,9 @@ export const Spiffs: FC<Props> = ({
           onChangePage: setPage,
         }}
         actions={
-          role === 'Manager' ? [{ label: 'Add', onClick: handleToggleAdd }] : []
+          role === 'Manager'
+            ? [{ label: 'Add Spiff', onClick: handleToggleAdd }]
+            : []
         }
         fixedActions
       />

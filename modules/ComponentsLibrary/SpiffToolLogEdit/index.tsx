@@ -293,7 +293,6 @@ export const SpiffToolLogEdit: FC<Props> = ({
           const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
           form.reviewedBy = newReviewedBy;
         }
-        console.log({ statusEditing });
         const adminAction = { ...form, id: statusEditing.id, taskId: data.id };
         if (statusEditing.status === 1) {
           Object.assign(adminAction, {
@@ -472,7 +471,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         title="Status"
         actions={[
           {
-            label: 'Add',
+            label: 'Approve/Reject/Revoke',
             onClick: handleSetStatusEditing(getStatusFormInit()),
             disabled: saving,
           },
