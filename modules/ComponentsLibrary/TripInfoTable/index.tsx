@@ -128,6 +128,7 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       label: 'Was this Trip To/From Home?',
       name: 'HomeTravel',
       type: 'checkbox',
+      required: false,
     },
   ],
   [
