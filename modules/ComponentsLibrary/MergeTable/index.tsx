@@ -89,7 +89,7 @@ export const MergeTable: FC<Props> = ({
                       {
                         value: choice,
                         fieldName: rows[rowIndex].rowName,
-                        fieldIndex: rowIndex,
+                        fieldIndex: rows[rowIndex].rowIndex,
                       },
                       rowIndex,
                     );
@@ -108,7 +108,7 @@ export const MergeTable: FC<Props> = ({
                 {
                   value: choice,
                   fieldName: rows[rowIndex].rowName,
-                  fieldIndex: rowIndex,
+                  fieldIndex: rows[rowIndex].rowIndex,
                 },
                 rowIndex,
               );
