@@ -170,18 +170,23 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
                 });
             }
 
-            // At this point, we need to resolve the conflict at a later point so we'll shove it into a conflict.
-            newConflicts.push(
-              newConflict!
-                ? newConflict![0]
-                : ({
-                    index: fieldIndex,
-                    transactionsAffected: [
-                      transaction,
-                      transactions[index - 1],
-                    ],
-                  } as Conflict),
-            );
+            if (
+              newConflicts.filter(conflict => conflict.index == fieldIndex)
+                .length == 0
+            ) {
+              // At this point, we need to resolve the conflict at a later point so we'll shove it into a conflict.
+              newConflicts.push(
+                newConflict!
+                  ? newConflict![0]
+                  : ({
+                      index: fieldIndex,
+                      transactionsAffected: [
+                        transaction,
+                        transactions[index - 1],
+                      ],
+                    } as Conflict),
+              );
+            }
           }
 
           fieldIndex++;
