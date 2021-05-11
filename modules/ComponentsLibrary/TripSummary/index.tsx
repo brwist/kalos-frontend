@@ -363,6 +363,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 ? false
                 : true,
               role: this.props.role,
+              isActive: true,
             },
         sort: tripSort as TripsSort,
       };
@@ -379,6 +380,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               payrollProcessed: undefined,
               approved: undefined,
               role: this.props.role,
+              isActive: true,
             },
         sort: tripSort as TripsSort,
       };

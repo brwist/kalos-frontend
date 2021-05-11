@@ -1104,6 +1104,7 @@ export type TripsFilter = {
   role?: string;
   departmentId?: number;
   dateProcessed?: string | undefined;
+  isActive?: boolean;
 };
 /**
  * Returns Properties by filter
