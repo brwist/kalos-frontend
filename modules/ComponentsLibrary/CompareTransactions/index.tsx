@@ -51,10 +51,16 @@ const ProperTransactionNames = {
 export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
+  const [submissionResults, setSubmissionResults] = useState<String[]>([]);
 
   const handleSetConflicts = useCallback(
     (conflicts: Conflict[]) => setConflicts(conflicts),
     [setConflicts],
+  );
+
+  const handleSetSubmissionResults = useCallback(
+    (submissionResults: string[]) => setSubmissionResults(submissionResults),
+    [setSubmissionResults],
   );
 
   const generateConflicts = (): any[] => {
@@ -205,6 +211,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   // Each row is a specific conflict
   // Each conflict holds an index and a txn
   //
+  console.log('Submission results: ', submissionResults);
   return (
     <>
       {conflicts && (
@@ -232,7 +239,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
                 }),
               };
             })}
-            onSubmit={(submitted: any) => alert('Clicked')}
+            onSubmit={handleSetSubmissionResults}
             onCancel={() => handleSetConflicts([])}
             properNames={ProperTransactionNames}
           />
