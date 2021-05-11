@@ -119,6 +119,8 @@ export const MergeTable: FC<Props> = ({
         );
       });
 
+
+
       onSubmit(submission);
     },
     [onSubmit, selectedChoices, setSelectAllPromptOpen],
