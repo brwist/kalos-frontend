@@ -132,16 +132,9 @@ export const MergeTable: FC<Props> = ({
         return;
       }
 
-      rows.forEach((row, idx) => {
-        console.log(
-          'Row name: ',
-          row.rowName,
-          ' | value set:',
-          submission[idx],
-        );
-      });
-
-      onSubmit(submission);
+      onSubmit(
+        submission.sort((a, b) => (a.fieldIndex! < b.fieldIndex! ? -1 : 1)),
+      );
     },
     [onSubmit, selectedChoices, setSelectAllPromptOpen],
   );
