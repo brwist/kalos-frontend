@@ -13,14 +13,21 @@ import { Button } from '../Button';
 import { Columns, Data, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 
+export interface SelectedChoice {
+  value: string;
+  fieldName: string;
+  fieldIndex: number | undefined;
+}
+
 interface Props {
   columnHeaders: Columns;
   rows: {
     choices: string[];
+    rowIndex: number;
     rowName: string; // What is the label to display to the side?
     onSelect?: (selected: string) => void;
   }[];
-  onSubmit: (results: string[]) => void; // Index of the results is the index of the relevant row
+  onSubmit: (results: SelectedChoice[]) => void; // Index of the results is the index of the relevant row
   onCancel: () => void;
   properNames?: {}; // Just objects with key-value pairs that can be used to correct row names where applicable
 }
@@ -33,15 +40,17 @@ export const MergeTable: FC<Props> = ({
   properNames,
 }) => {
   // Index of the array is the index of the relevant row
-  const [selectedChoices, setSelectedChoices] = useState<string[]>(
-    rows.map(() => ''), // Actually proud of how this one works not gonna lie
+  const [selectedChoices, setSelectedChoices] = useState<SelectedChoice[]>(
+    rows.map(() => {
+      return { value: '', fieldName: '', fieldIndex: undefined };
+    }), // Actually proud of how this one works not gonna lie
   );
   const [data, setData] = useState<Data>();
   const [selectAllPromptOpen, setSelectAllPromptOpen] = useState<boolean>(
     false,
   );
   const handleSetSelectedChoiceIndices = useCallback(
-    (selectedChoice: string, rowIndex: number) => {
+    (selectedChoice: SelectedChoice, rowIndex: number) => {
       let sci = selectedChoices;
       sci[rowIndex] = selectedChoice;
       setSelectedChoices(sci);
@@ -76,18 +85,33 @@ export const MergeTable: FC<Props> = ({
                   style={{ textTransform: 'none' }}
                   label={choice}
                   onClick={() => {
-                    handleSetSelectedChoiceIndices(choice, rowIndex);
+                    handleSetSelectedChoiceIndices(
+                      {
+                        value: choice,
+                        fieldName: rows[rowIndex].rowName,
+                        fieldIndex: rowIndex,
+                      },
+                      rowIndex,
+                    );
                     handleSetData();
+                    console.log(selectedChoices);
                   }}
                   disabled={
-                    selectedChoices[rowIndex] !== '' &&
-                    selectedChoices[rowIndex] !== choice
+                    selectedChoices[rowIndex].value !== '' &&
+                    selectedChoices[rowIndex].value !== choice
                   }
                 />
               </>
             ),
             onClick: () => {
-              handleSetSelectedChoiceIndices(choice, rowIndex);
+              handleSetSelectedChoiceIndices(
+                {
+                  value: choice,
+                  fieldName: rows[rowIndex].rowName,
+                  fieldIndex: rowIndex,
+                },
+                rowIndex,
+              );
               handleSetData();
             },
           };
@@ -99,13 +123,11 @@ export const MergeTable: FC<Props> = ({
   }, [rows, setData, properNames]);
 
   let handleMerge = useCallback(
-    (submission: string[]) => {
-      console.log(
-        selectedChoices.filter(choice => choice != '').length,
-        ' : ',
-        rows.length,
-      );
-      if (selectedChoices.filter(choice => choice != '').length < rows.length) {
+    (submission: SelectedChoice[]) => {
+      if (
+        selectedChoices.filter(choice => choice.value != '').length <
+        rows.length
+      ) {
         setSelectAllPromptOpen(true);
         return;
       }
@@ -118,8 +140,6 @@ export const MergeTable: FC<Props> = ({
           submission[idx],
         );
       });
-
-
 
       onSubmit(submission);
     },
