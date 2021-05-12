@@ -44,7 +44,7 @@ export const PayrollSummary: FC<Props> = ({
   type,
   loggedUser,
 }) => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [idList, setIDList] = useState<number[]>([]);
   const [page, setPage] = useState<number>(0);
@@ -54,7 +54,6 @@ export const PayrollSummary: FC<Props> = ({
   const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const load = useCallback(async () => {
-    setLoading(true);
     const filter = {
       page,
       employeeId,
@@ -88,8 +87,8 @@ export const PayrollSummary: FC<Props> = ({
     setLoading(false);
   }, [page, employeeId, week, type, toggle, departmentId, endDay, startDay]);
   useEffect(() => {
-    load();
-  }, [load]);
+    if (loading) load();
+  }, [load, loading]);
   const handleTogglePendingView = useCallback(
     (pendingView?: TimesheetLineType) => () => {
       setPendingView(pendingView);
