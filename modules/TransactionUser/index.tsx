@@ -7,7 +7,7 @@ import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <Transaction userID={336} withHeader />,
+    <Transaction userID={8418} withHeader />,
     document.getElementById('txn-root'),
   );
 });

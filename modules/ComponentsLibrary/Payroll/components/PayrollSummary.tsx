@@ -6,14 +6,14 @@ import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
-import { TimesheetLineType, makeFakeRows, UserType } from '../../../../helpers';
-import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
+import { TimesheetLineType, makeFakeRows } from '../../../../helpers';
+import { OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
   TimesheetLineClient,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT, NULL_TIME } from '../../../../constants';
+import { ENDPOINT } from '../../../../constants';
 import { RoleType } from '../index';
 import { NULL_TIME_VALUE } from '../../Timesheet/constants';
 import { CostSummary } from '../../CostSummary';
@@ -44,13 +44,10 @@ export const PayrollSummary: FC<Props> = ({
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [toggle, setToggle] = useState<boolean>(false);
+  const toggle = false;
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
-  const [pendingViewDefault, setPendingViewDefault] = useState<boolean>(false);
-  const [startDay, setStartDay] = useState<Date>(
-    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
-  );
-  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
+  const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
+  const endDay = addDays(startDay, 7);
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -106,13 +103,6 @@ export const PayrollSummary: FC<Props> = ({
       setPendingView(tempPendingView);
     }, 1000);
   };
-  const handleSetToggle = () => {
-    if (toggle === true) {
-      setToggle(false);
-    } else {
-      setToggle(true);
-    }
-  };
   return (
     <div>
       <SectionBar
@@ -124,16 +114,6 @@ export const PayrollSummary: FC<Props> = ({
           onChangePage: setPage,
         }}
       />
-      {/*
-      <Button
-        label={
-          toggle == false
-            ? 'Toggle For Pending Manager Approval Records'
-            : 'Toogle For Manager Approved Records'
-        }
-        onClick={handleSetToggle}
-      ></Button>
-      */}
       <InfoTable
         columns={[
           { name: 'Employee' },
@@ -236,18 +216,11 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
     req.setNotEqualsList(['UserApprovalDatetime']);
   }
   if (config.toggle === false) {
-    req.setAdminApprovalUserId(0);
-
     req.setNotEqualsList(['AdminApprovalUserId', 'PayrollProcessed']);
   }
   if (config.toggle === true) {
-    //return like manager
-    return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains
+    return () => client.BatchGetManager(req);
   } else {
-    return () => client.BatchGetPayroll(req); // Payroll does the same but to a specific Payroll view
+    return () => client.BatchGetPayroll(req);
   }
 };
-
-const getManagerTimesheets = () => {};
-
-const getPayrollTimesheets = () => {};
