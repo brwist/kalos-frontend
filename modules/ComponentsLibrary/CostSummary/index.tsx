@@ -97,24 +97,31 @@ export const CostSummary: FC<Props> = ({
     let trip = new Trip();
     trip.setUserId(userId);
     let processed = true;
-    let tempTripList = new TripList().getResultsList();
-    setTrips(tempTripList);
+
     trip.setApproved(true);
-    for (let i = 0; i <= 6; i++) {
-      const startDate = format(addDays(startDay, i), 'yyyy-MM-dd');
-      trip.setDate('%' + startDate + '%');
-      const trips = await PerDiemClientService.BatchGetTrips(trip);
-      tempTripList = tempTripList.concat(trips.getResultsList());
-    }
+    trip.setDateTargetList(['date_processed']);
+    trip.setDateRangeList(['>=', '0001-01-01', '<=', formatDateFns(endDay)]);
+    let tempTripList = (
+      await PerDiemClientService.BatchGetTrips(trip)
+    ).getResultsList();
+    setTrips(tempTripList);
     let distanceSubtotal = 0;
     for (let j = 0; j < tempTripList.length; j++) {
-      distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+      if (tempTripList[j].getHomeTravel()) {
+        if (tempTripList[j].getDistanceInMiles() < 30) {
+          distanceSubtotal += 0;
+        } else {
+          distanceSubtotal += tempTripList[j].getDistanceInMiles() - 30;
+        }
+      } else {
+        distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+      }
       if (tempTripList[j].toObject().payrollProcessed === false) {
         processed = false;
       }
     }
     return { totalDistance: distanceSubtotal, processed };
-  }, [startDay, userId]);
+  }, [endDay, userId]);
   const getTripsProcessed = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
@@ -130,47 +137,25 @@ export const CostSummary: FC<Props> = ({
     let tempTripList = (
       await PerDiemClientService.BatchGetTrips(trip)
     ).getResultsList();
-
     let distanceSubtotal = 0;
     for (let j = 0; j < tempTripList.length; j++) {
-      distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+      if (tempTripList[j].getHomeTravel()) {
+        if (tempTripList[j].getDistanceInMiles() < 30) {
+          distanceSubtotal += 0;
+        } else {
+          tempTripList[j].setDistanceInMiles(
+            (distanceSubtotal += tempTripList[j].getDistanceInMiles() - 30),
+          );
+        }
+      } else {
+        distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+      }
       if (tempTripList[j].toObject().payrollProcessed === false) {
         processed = false;
       }
     }
     return { totalDistance: distanceSubtotal, processed };
   }, [userId]);
-  /*
-  const getPerDiems = useCallback(async () => {
-    const {
-      resultsList,
-    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
-      userId,
-      formatDateFns(perDiemEndDay),
-    );
-    setPerDiems(resultsList);
-    const year = +format(startDay, 'yyyy');
-    const month = +format(startDay, 'M');
-    const zipCodesList = [];
-    for (let i = 0; i < resultsList.length; i++) {
-      let zipCodes = [resultsList[i]]
-        .reduce(
-          (aggr, { rowsList }) => [...aggr, ...rowsList],
-          [] as PerDiemRowType[],
-        )
-        .map(({ zipCode }) => zipCode);
-      for (let j = 0; j < zipCodes.length; j++) {
-        zipCodesList.push(zipCodes[j]);
-      }
-    }
-    const govPerDiems = await PerDiemClientService.loadGovPerDiem(
-      zipCodesList,
-      year,
-      month,
-    );
-    //setGovPerDiems(govPerDiems);
-  }, [startDay, userId, perDiemEndDay]);
-  */
   const getPerDiemTotals = useCallback(async () => {
     const {
       resultsList,
@@ -251,7 +236,6 @@ export const CostSummary: FC<Props> = ({
       '<=',
       formatDateFns(endOfWeek(new Date())),
     ]);
-    console.log(perDiemReq);
     const resultsList = (
       await PerDiemClientService.BatchGet(perDiemReq)
     ).getResultsList();
@@ -286,7 +270,6 @@ export const CostSummary: FC<Props> = ({
         lodging: 0,
       };
     }
-    console.log(filteredPerDiems);
     const processed = 1;
     let allRowsList = filteredPerDiems.reduce(
       (aggr: PerDiemRowType[], pd) => [...aggr, ...pd.toObject().rowsList],
@@ -661,6 +644,7 @@ export const CostSummary: FC<Props> = ({
           try {
             const tripsDataProcessed = await getTripsProcessed();
             setTripsTotalProcessed(tripsDataProcessed);
+            console.log(tripsDataProcessed);
             resolve();
           } catch (err) {
             console.log('error getting trips', err);
