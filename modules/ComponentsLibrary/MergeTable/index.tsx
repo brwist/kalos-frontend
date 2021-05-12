@@ -203,6 +203,15 @@ export const MergeTable: FC<Props> = ({
           open={fieldToEdit != undefined}
           onClose={() => handleSetFieldToEdit(undefined)}
         >
+          <SectionBar
+            actions={[
+              { label: 'OK', onClick: () => alert('Clicked ok') },
+              {
+                label: 'Cancel',
+                onClick: () => handleSetFieldToEdit(undefined),
+              },
+            ]}
+          />
           <PlainForm
             schema={SCHEMA}
             data={field}
