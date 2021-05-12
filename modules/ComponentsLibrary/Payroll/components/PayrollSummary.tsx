@@ -76,12 +76,12 @@ export const PayrollSummary: FC<Props> = ({
         ? 1
         : -1,
     );
-    const ids = await TimesheetLineClientService.GetIDsForPayroll(
-      filter.startDate,
-      filter.endDate,
-    );
-    console.log({ ids });
-    setIDList(ids);
+    // const ids = await TimesheetLineClientService.GetIDsForPayroll(
+    //   filter.startDate,
+    //   filter.endDate,
+    // );
+    // console.log({ ids });
+    // setIDList(ids);
     setTimesheets(sortedResultsList);
     setCount(totalCount);
     setLoading(false);
