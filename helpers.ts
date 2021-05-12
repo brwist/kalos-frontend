@@ -1199,6 +1199,7 @@ export const loadTripsByFilter = async ({
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Trip();
   req.setPage(page);
+  req.setIsActive(true);
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof TripsFilter];
 
@@ -1226,6 +1227,8 @@ export const loadTripsByFilter = async ({
   //}
 
   const response = await PerDiemClientService.BatchGetTrips(req);
+  console.log(response.getResultsList());
+  console.log(response.getTotalCount());
   return {
     results: response
       .getResultsList()
