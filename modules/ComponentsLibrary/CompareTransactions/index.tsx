@@ -67,6 +67,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
         // @ts-ignore
         transactionToSave['array'][result.fieldIndex] = result.value;
       });
+      console.log('WOULD SAVE: ', transactionToSave);
     },
     [transactionToSave],
   );
@@ -105,16 +106,15 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
           // If either of them is a '' or a null, we need to determine the one that is not null and choose that value for the merge
           // This regex determines if whitespace exists in the string
           if (
-            !fieldCurrent ||
+            fieldCurrent === undefined ||
             fieldCurrent?.toString().match(/^\s+$/) ||
             fieldPrevious === undefined
           ) {
             fieldCurrentEmpty = true;
           }
           if (
-            !fieldPrevious ||
-            fieldPrevious?.toString().match(/^\s+$/) ||
-            fieldPrevious === undefined
+            !fieldPrevious === undefined ||
+            fieldPrevious?.toString().match(/^\s+$/)
           ) {
             fieldPreviousEmpty = true;
           }
@@ -141,6 +141,10 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             continue;
           }
 
+          if (fieldCurrent == fieldPrevious) {
+            //@ts-ignore
+            newTransaction['array'][fieldIndex] = fieldCurrent;
+          }
           if (
             fieldPrevious != fieldCurrent &&
             fieldPrevious?.toString() != fieldCurrent?.toString()
@@ -197,6 +201,9 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
         }
       }
     });
+
+    console.log('transactions:', transactions);
+    console.log('New txn: ', newTransaction);
     return [newConflicts, newTransaction];
   };
 
@@ -242,6 +249,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
               const keys = Object.keys(
                 conflict.transactionsAffected[0].toObject(),
               );
+              console.log('Conflict.index: ', conflict.index);
               return {
                 // @ts-ignore
                 rowName: keys[conflict.index],

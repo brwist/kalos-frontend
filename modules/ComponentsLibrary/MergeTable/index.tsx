@@ -129,6 +129,8 @@ export const MergeTable: FC<Props> = ({
         return;
       }
 
+      console.log(submission);
+
       onSubmit(
         submission.sort((a, b) => (a.fieldIndex! < b.fieldIndex! ? -1 : 1)),
       );
