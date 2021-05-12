@@ -370,7 +370,6 @@ export const CostSummary: FC<Props> = ({
     async (spiffType: string, dateType = 'Weekly') => {
       const req = new Task();
       const action = new SpiffToolAdminAction();
-      req.setPayrollProcessed(true);
       req.setExternalId(userId);
       if (spiffType == 'Spiff') {
         req.setBillableType('Spiff');
@@ -378,14 +377,18 @@ export const CostSummary: FC<Props> = ({
         req.setBillableType('Tool Purchase');
       }
       const results = [];
-      action.setDateTargetList(['date_processed']);
+
       action.setDateRangeList([
         '>=',
         formatDateFns(startOfWeek(new Date())),
         '<=',
         formatDateFns(endOfWeek(new Date())),
       ]);
+      action.setDateTargetList(['date_processed']);
+
       req.setSearchAction(action);
+
+      console.log({ req });
       const tempResults = (
         await new TaskClient(ENDPOINT).BatchGet(req)
       ).getResultsList();
@@ -413,10 +416,12 @@ export const CostSummary: FC<Props> = ({
           }
         }
       }
+      console.log({ results });
       let spiffTotal = 0;
       let toolTotal = 0;
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
+          console.log(results[i].getActionsList()[0].getDateProcessed());
           spiffTotal += results[i].toObject().spiffAmount;
         } else {
           toolTotal += results[i].toObject().toolpurchaseCost;
