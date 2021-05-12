@@ -108,13 +108,15 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
           if (
             fieldCurrent === undefined ||
             fieldCurrent?.toString().match(/^\s+$/) ||
+            fieldCurrent == '' ||
             fieldPrevious === undefined
           ) {
             fieldCurrentEmpty = true;
           }
           if (
             !fieldPrevious === undefined ||
-            fieldPrevious?.toString().match(/^\s+$/)
+            fieldPrevious?.toString().match(/^\s+$/) ||
+            fieldPrevious == ''
           ) {
             fieldPreviousEmpty = true;
           }
