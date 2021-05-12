@@ -6,12 +6,16 @@
 // and these choices will be given back as an array of any type once the user clicked all of the changes to accept.
 // There will also be editing control available as a prop, so that the user can edit the fields in the table.
 
-import { Typography } from '@material-ui/core';
+import { IconButton, Typography } from '@material-ui/core';
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { Alert } from '../Alert';
 import { Button } from '../Button';
 import { Columns, Data, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
+import EditIcon from '@material-ui/icons/Edit';
+import { Tooltip } from '../Tooltip';
+import { PlainForm, Schema } from '../PlainForm';
+import { Modal } from '../Modal';
 
 export interface SelectedChoice {
   value: string;
@@ -32,6 +36,10 @@ interface Props {
   properNames?: {}; // Just objects with key-value pairs that can be used to correct row names where applicable
 }
 
+type Field = {
+  fieldData: string;
+};
+
 export const MergeTable: FC<Props> = ({
   columnHeaders,
   rows,
@@ -48,6 +56,19 @@ export const MergeTable: FC<Props> = ({
   const [data, setData] = useState<Data>();
   const [selectAllPromptOpen, setSelectAllPromptOpen] =
     useState<boolean>(false);
+  const [fieldToEdit, setFieldToEdit] =
+    useState<
+      | {
+          rowIndex: number;
+          choice: string;
+        }
+      | undefined
+    >(undefined);
+
+  let field: Field = {
+    fieldData: fieldToEdit != undefined ? fieldToEdit?.choice : '',
+  };
+
   const handleSetSelectedChoiceIndices = useCallback(
     (selectedChoice: SelectedChoice, rowIndex: number) => {
       let sci = selectedChoices;
@@ -55,6 +76,12 @@ export const MergeTable: FC<Props> = ({
       setSelectedChoices(sci);
     },
     [setSelectedChoices, selectedChoices],
+  );
+  let handleSetFieldToEdit = useCallback(
+    (fieldToEdit: { rowIndex: number; choice: string } | undefined) => {
+      setFieldToEdit(fieldToEdit);
+    },
+    [setFieldToEdit],
   );
   let handleSetData = useCallback(() => {
     let rowChoices: { value: ReactNode; onClick: () => void }[][] = [];
@@ -100,6 +127,18 @@ export const MergeTable: FC<Props> = ({
                   }
                 />
               </>
+            ),
+            actions: (
+              <Tooltip content="Edit field">
+                <IconButton
+                  size="small"
+                  onClick={() =>
+                    handleSetFieldToEdit({ rowIndex: rowIndex, choice: choice })
+                  }
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
             ),
             onClick: () => {
               handleSetSelectedChoiceIndices(
@@ -147,8 +186,30 @@ export const MergeTable: FC<Props> = ({
     handleSetData();
   }, [handleSetData]);
 
+  const SCHEMA: Schema<Field> = [
+    [
+      {
+        label: 'Field',
+        name: 'fieldData',
+        type: 'text',
+      },
+    ],
+  ];
+
   return (
     <>
+      {fieldToEdit && (
+        <Modal
+          open={fieldToEdit != undefined}
+          onClose={() => handleSetFieldToEdit(undefined)}
+        >
+          <PlainForm
+            schema={SCHEMA}
+            data={field}
+            onChange={data => console.log(data)}
+          />
+        </Modal>
+      )}
       {selectAllPromptOpen && (
         <Alert
           open={selectAllPromptOpen}
