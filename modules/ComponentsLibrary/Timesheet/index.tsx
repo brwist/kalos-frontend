@@ -745,6 +745,8 @@ export const Timesheet: FC<Props> = props => {
             canDeleteTrips
             canAddTrips
             viewingOwn
+            canApprove={role === 'Manager'}
+            canProcessPayroll={role === 'Payroll'}
           ></TripSummary>
         </Modal>
       )}
