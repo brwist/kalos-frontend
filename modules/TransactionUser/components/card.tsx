@@ -242,11 +242,12 @@ export class TxnCard extends React.PureComponent<props, state> {
               recipient: 'accounts@kalosflorida.com',
               body: mailBody,
               subject: 'Receipts',
-              from: await UserClientService.getEmailByUserID(
-                this.props.loggedUserId,
-              ),
             };
-            await this.EmailClient.sendMail(mailConfig);
+            try {
+              await this.EmailClient.sendMail(mailConfig);
+            } catch (err) {
+              console.log('failed to send mail to accounting', err);
+            }
           }
           await this.updateStatus(statusID);
           await this.makeSubmitLog(statusID, statusMessage);
@@ -263,7 +264,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         }
       }
     } catch (err) {
-      alert(err);
+      console.log(err);
     }
   }
 
