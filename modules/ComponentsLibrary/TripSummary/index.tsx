@@ -532,7 +532,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             value: currentTrip.getApproved() ? 'Yes' : 'No',
           },
           {
-            value: currentTrip.getDepartmentName(),
+            value: currentTrip.getHomeTravel() ? 'Yes' : 'No',
           },
           {
             value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',
@@ -567,10 +567,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 placement="bottom"
               >
                 <IconButton
+                  key={'viewButton' + idx}
                   size="small"
                   onClick={() => this.setTripToView(currentTrip)}
                 >
-                  <Visibility />
+                  <Visibility key={'visibility' + idx} />
                 </IconButton>
               </Tooltip>,
               this.props.canSlackMessageUsers ? (
@@ -579,14 +580,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   content="Send Message on Slack"
                   placement="bottom"
                 >
-                  <span>
+                  <span key={'MessageBox' + idx}>
                     <SlackMessageButton
+                      key={'messageSlackMember' + idx}
                       label="Message Team Member"
                       loggedUserId={this.props.loggedUserId}
                       type="icon"
                       autofillName={currentTrip.getUserName()}
                     >
-                      <MessageIcon />
+                      <MessageIcon key={'messageIcon' + idx} />
                     </SlackMessageButton>
                   </span>
                 </Tooltip>
@@ -600,8 +602,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   content="Approve"
                   placement="bottom"
                 >
-                  <span>
+                  <span key={'Approval'}>
                     <IconButton
+                      key={'approveButton' + idx}
                       size="small"
                       onClick={() => this.setPendingApproveTrip(currentTrip)}
                     >
@@ -619,8 +622,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   content="Reject"
                   placement="bottom"
                 >
-                  <span>
+                  <span key={'Rejection'}>
                     <IconButton
+                      key={'rejectButton' + idx}
                       size="small"
                       onClick={() => this.setPendingDenyTrip(currentTrip)}
                     >
@@ -698,7 +702,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             name: 'Approved?',
           },
           {
-            name: 'Department Name',
+            name: 'Home Travel',
           },
           {
             name: 'Payroll Processed?',
@@ -735,7 +739,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             name: 'Approved?',
           },
           {
-            name: 'Department Name',
+            name: 'Home Travel',
           },
           {
             name: 'Payroll Processed?',
@@ -907,6 +911,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
               this.setDepartment(null);
             }}
             open={true}
+            canProcess={this.props.canProcessPayroll}
+            canApprove={this.props.canApprove}
             onApprove={async approved => {
               await this.setTripApproved(approved.id);
               this.setTripToView(null);

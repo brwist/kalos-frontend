@@ -17,6 +17,8 @@ interface Props {
   onProcessPayroll: (processedTrip: TripInfo) => any;
   open: boolean;
   fullScreen?: boolean;
+  canApprove?: boolean;
+  canProcess?: boolean;
 }
 
 export type TripInfo = {
@@ -47,6 +49,8 @@ export const TripViewModal: FC<Props> = ({
   onProcessPayroll,
   open,
   fullScreen,
+  canApprove,
+  canProcess,
 }) => {
   const [key, setKey] = useState<string>('');
 
@@ -80,12 +84,12 @@ export const TripViewModal: FC<Props> = ({
             <>
               <Button
                 label="Approve"
-                disabled={data.approved}
+                disabled={data.approved || !canApprove}
                 onClick={() => onApprove(data)}
               />
               <Button
                 label="Process Payroll"
-                disabled={data.payrollProcessed}
+                disabled={data.payrollProcessed || !canProcess}
                 onClick={() => onProcessPayroll(data)}
               />
               <Button
