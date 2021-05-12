@@ -3,7 +3,6 @@ import { Columns, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import {
   PerDiem,
-  PerDiemList,
   Trip,
   TripList,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
@@ -18,9 +17,7 @@ import {
   TripsFilter,
   TripsSort,
   LoadTripsByFilter,
-  getRPCFields,
   perDiemTripMilesToUsd,
-  perDiemTripMilesToUsdAsNumber,
   TimesheetDepartmentClientService,
   MapClientService,
 } from '../../../helpers';
@@ -799,9 +796,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);
     trip.setDepartmentId(
-      await (
+      (
         await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          user.managedBy,
+          user.employeeDepartmentId,
         )
       ).id,
     );
