@@ -6,7 +6,11 @@ import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
-import { TimesheetLineType, makeFakeRows } from '../../../../helpers';
+import {
+  TimesheetLineType,
+  makeFakeRows,
+  TimesheetLineClientService,
+} from '../../../../helpers';
 import { OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
@@ -42,6 +46,7 @@ export const PayrollSummary: FC<Props> = ({
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
+  const [idList, setIDList] = useState<number[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const toggle = false;
@@ -72,6 +77,12 @@ export const PayrollSummary: FC<Props> = ({
         ? 1
         : -1,
     );
+    const ids = await TimesheetLineClientService.GetIDsForPayroll(
+      filter.startDate,
+      filter.endDate,
+    );
+    console.log({ ids });
+    setIDList(ids);
     setTimesheets(sortedResultsList);
     setCount(totalCount);
     setLoading(false);
