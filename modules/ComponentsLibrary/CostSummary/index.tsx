@@ -372,12 +372,6 @@ export const CostSummary: FC<Props> = ({
       const action = new SpiffToolAdminAction();
       req.setPayrollProcessed(true);
       req.setExternalId(userId);
-      if (spiffType === 'Spiff') {
-        const startDate = '0001-01-01';
-        const endDate = format(endDay, 'yyyy-MM-dd');
-        req.setDateRangeList(['>=', startDate, '<', endDate]);
-      }
-
       if (spiffType == 'Spiff') {
         req.setBillableType('Spiff');
       } else {
@@ -434,7 +428,7 @@ export const CostSummary: FC<Props> = ({
         return toolTotal;
       }
     },
-    [userId, endDay],
+    [userId],
   );
   const getTimeoffTotals = useCallback(async () => {
     const startDate = format(startDay, 'yyyy-MM-dd');
@@ -571,14 +565,6 @@ export const CostSummary: FC<Props> = ({
           }
         }),
       );
-      /*
-      promises.push(
-        new Promise<void>(async resolve => {
-          setTotalTools(await getSpiffToolTotals('Tool Purchase'));
-          resolve();
-        }),
-      );
-      */
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {
