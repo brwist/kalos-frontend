@@ -40,23 +40,16 @@ const Transaction: FC<Props> = props => {
   );
   const [role, setRole] = useState<RoleType>();
 
-  const managerCheck = useCallback(
-    async (u: User.AsObject) => {
-      try {
-        await TimesheetDepartmentClientService.getDepartmentByManagerID(userID);
-        return true;
-      } catch (e) {
-        const pg = u.permissionGroupsList.filter(
-          pg => pg.name === PERMISSION_NAME_MANAGER,
-        );
-        if (pg.length > 0) {
-          return true;
-        }
-        return false;
-      }
-    },
-    [userID],
-  );
+  const managerCheck = useCallback(async (u: User.AsObject) => {
+    const pg = u.permissionGroupsList.filter(
+      pg => pg.name === PERMISSION_NAME_MANAGER,
+    );
+    if (pg.length > 0) {
+      return true;
+    }
+    return false;
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     const req = new TransactionAccount();
@@ -84,7 +77,7 @@ const Transaction: FC<Props> = props => {
     console.log(totalDepartments);
     setIsManager(isManager || role === 'Manager');
     setLoading(false);
-  }, [setLoading, userID, managerCheck]);
+  }, [setLoading, userID, managerCheck, role]);
   useEffect(() => {
     if (!loaded || !user) {
       setLoaded(true);

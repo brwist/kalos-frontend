@@ -6,11 +6,10 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { Button } from '../Button';
 import {
   FileType,
-  loadFiles,
+  FileClientService,
   makeFakeRows,
   formatDateTime,
   S3ClientService,
-  FileClientService,
   getMimeType,
 } from '../../../helpers';
 import './styles.less';
@@ -57,7 +56,7 @@ export const FileGallery: FC<Props> = ({
   }>({});
   const load = useCallback(async () => {
     setLoading(true);
-    const { resultsList } = await loadFiles({
+    const { resultsList } = await FileClientService.loadFiles({
       bucket,
       ownerId: loggedUserId,
     });
@@ -75,7 +74,7 @@ export const FileGallery: FC<Props> = ({
       images.reduce((aggr, { name, url }) => ({ ...aggr, [name]: url }), {}),
     );
     setLoading(false);
-  }, [setLoading, loggedUserId, bucket, setFiles]);
+  }, [setLoading, loggedUserId, bucket, setFiles, inputFile]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -110,17 +109,7 @@ export const FileGallery: FC<Props> = ({
     const confirmed = true; // just here so it doesn't yell at me
     onConfirmAdd!({ confirmed });
     setConfirming(false);
-  }, [
-    adding,
-    onAdd,
-    removeFileOnAdd,
-    setLoading,
-    setLoaded,
-    images,
-    setAdding,
-    confirming,
-    setConfirming,
-  ]);
+  }, [setConfirming, onConfirmAdd]);
 
   const handleAdd = useCallback(async () => {
     if (!adding) return;
@@ -134,17 +123,7 @@ export const FileGallery: FC<Props> = ({
       await FileClientService.deleteFileById(adding.id);
       setLoaded(false);
     }
-  }, [
-    adding,
-    onAdd,
-    removeFileOnAdd,
-    setLoading,
-    setLoaded,
-    images,
-    setAdding,
-    confirming,
-    setConfirming,
-  ]);
+  }, [adding, images, onAdd, removeFileOnAdd]);
 
   const handleCancelConfirm = useCallback(() => {
     if (onConfirmAdd == undefined) {
@@ -153,18 +132,7 @@ export const FileGallery: FC<Props> = ({
     const confirmed = false;
     onConfirmAdd({ confirmed });
     return false;
-  }, [
-    adding,
-    onAdd,
-    removeFileOnAdd,
-    setLoading,
-    setLoaded,
-    images,
-    setAdding,
-    confirming,
-    setConfirming,
-    onConfirmAdd,
-  ]);
+  }, [onConfirmAdd]);
   const fileArr = [inputFile]; // workaround to allow me to "map" over the file just like
   // there was multiple files - it works, but not the
   // cleanest thing to do

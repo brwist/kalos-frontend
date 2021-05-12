@@ -90,19 +90,19 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   async fetchTxns(statusID: number) {
     const reqObj = new Transaction();
-    if (!this.props.departmentList && this.props.role != 'Accounts_Payable') {
+    if (this.props.role != 'Accounts_Payable') {
       reqObj.setOwnerId(this.props.userID);
     }
     reqObj.setPageNumber(this.state.page);
     reqObj.setStatusId(statusID);
-    if (
+    /* if (
       this.props.departmentList &&
       this.props.departmentList.length > 0 &&
       this.props.role != 'Accounts_Payable'
     ) {
       const departmentListString = this.props.departmentList.toString();
-      //reqObj.setDepartmentIdList(departmentListString);
-    }
+      reqObj.setDepartmentIdList(departmentListString);
+    }*/
     if (this.props.role === 'Accounts_Payable') {
       reqObj.setVendorCategory('%Pick%');
     }

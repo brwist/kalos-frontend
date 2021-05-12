@@ -154,16 +154,13 @@ export const Timesheet: FC<Props> = props => {
   };
 
   const handleAddNewTimeshetCardClicked = () => {
-    if (!checkReceiptIssue()) return;
     dispatch({ type: 'addNewTimesheet' });
   };
 
   const editTimesheetCard = (card: TimesheetLine.AsObject) => {
-    if (!checkReceiptIssue()) return;
     dispatch({ type: 'editTimesheetCard', data: card });
   };
   const editServicesRenderedCard = (card: ServicesRendered.AsObject) => {
-    if (!checkReceiptIssue()) return;
     dispatch({ type: 'editServicesRenderedCard', data: card });
   };
 
@@ -246,7 +243,6 @@ export const Timesheet: FC<Props> = props => {
   const checkReceiptIssue = async (): Promise<boolean> => {
     const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
     if (hasIssue) {
-      console.log(receiptsIssue.hasReceiptsIssue);
       dispatch({ type: 'showReceiptsIssueDialog', value: true });
       return false;
     }
