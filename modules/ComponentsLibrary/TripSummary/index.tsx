@@ -775,7 +775,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     userId: number,
   ) => {
     let trip = new Trip();
-
     trip.setOriginAddress(data.FullAddressOrigin);
     trip.setDestinationAddress(data.FullAddressDestination);
 
@@ -799,13 +798,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     trip.setDate(data.Date);
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);
-    trip.setDepartmentId(
-      (
-        await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          user.employeeDepartmentId,
-        )
-      ).id,
-    );
+    trip.setDepartmentId(user.employeeDepartmentId);
     await PerDiemClientService.upsertTrip(trip.toObject(), rowId!, userId).then(
       () => {
         this.setState({ pendingTrip: null });
@@ -813,6 +806,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     );
 
     if (this.props.onSaveTrip) this.props.onSaveTrip();
+
     this.setPendingTripToAdd(null);
     this.reloadTrips();
   };
