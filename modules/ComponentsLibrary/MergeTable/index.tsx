@@ -108,27 +108,25 @@ export const MergeTable: FC<Props> = ({
           return {
             value: (
               <>
-                <Tooltip content="Choose this option to keep for the merge">
-                  <Button
-                    style={{ textTransform: 'none' }}
-                    label={choice}
-                    onClick={() => {
-                      handleSetSelectedChoiceIndices(
-                        {
-                          value: choice,
-                          fieldName: rows[rowIndex].rowName,
-                          fieldIndex: rows[rowIndex].rowIndex,
-                        },
-                        rowIndex,
-                      );
-                      handleSetData();
-                    }}
-                    disabled={
-                      selectedChoices[rowIndex].value !== '' &&
-                      selectedChoices[rowIndex].value !== choice
-                    }
-                  />
-                </Tooltip>
+                <Button
+                  style={{ textTransform: 'none' }}
+                  label={choice}
+                  onClick={() => {
+                    handleSetSelectedChoiceIndices(
+                      {
+                        value: choice,
+                        fieldName: rows[rowIndex].rowName,
+                        fieldIndex: rows[rowIndex].rowIndex,
+                      },
+                      rowIndex,
+                    );
+                    handleSetData();
+                  }}
+                  disabled={
+                    selectedChoices[rowIndex].value !== '' &&
+                    selectedChoices[rowIndex].value !== choice
+                  }
+                />
               </>
             ),
             actions: (
