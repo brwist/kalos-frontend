@@ -48,6 +48,8 @@ const ProperTransactionNames = {
   assignedEmployeeName: 'Assigned Employee Name',
 };
 
+const IgnoredFieldNames: string[] = ['activityLogString', 'departmentString'];
+
 export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
@@ -81,6 +83,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     let newConflicts: Conflict[] = [];
     let newTransaction = new Transaction();
 
+    console.log('TXNS: ', transactions);
     transactions.forEach((transaction, index) => {
       // If a field is empty on the transaction being merged or if it is equivalent on both transactions, we want to keep it to the existent one.
       // If there are different (but set) fields then the transactions should be put into a conflict. If there were never any conflicts, the
@@ -99,7 +102,13 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
           transactions[index - 1].toObject(),
         );
 
+        const keys = Object.keys(transaction.toObject());
         for (const fieldCurrent of Object.values(transaction.toObject())) {
+          if (IgnoredFieldNames.includes(keys[fieldIndex])) {
+            fieldIndex++;
+            continue;
+          }
+
           let fieldCurrentEmpty = false;
           let fieldPreviousEmpty = false;
           const fieldPrevious = previousTransaction[fieldIndex]; // For namings' sake
