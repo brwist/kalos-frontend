@@ -2,7 +2,7 @@ import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useState } from 'react';
 import { SectionBar } from '../SectionBar';
 import { TransactionAccountsPayable } from '../TransactionAccountsPayable';
-import { getRPCFields } from '../../../helpers';
+import { getRPCFields, TransactionClientService } from '../../../helpers';
 import { Modal } from '../Modal';
 import { MergeTable, SelectedChoice } from '../MergeTable';
 import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
@@ -48,7 +48,13 @@ const ProperTransactionNames = {
   assignedEmployeeName: 'Assigned Employee Name',
 };
 
-const IgnoredFieldNames: string[] = ['activityLogString', 'departmentString'];
+const IgnoredFieldNames: string[] = [
+  'activityLogString',
+  'departmentString',
+  'ownerName',
+  'assignedEmployeeName',
+  'id',
+];
 
 export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
@@ -66,12 +72,36 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const handleSetSubmissionResults = useCallback(
     (submissionResults: SelectedChoice[]) => {
       submissionResults.forEach(result => {
+        console.log(
+          'FIELD NAME: ',
+          result.fieldName,
+          ' | getRPC STUFF: ',
+          getRPCFields(result.fieldName).methodName,
+        );
         // @ts-ignore
-        transactionToSave['array'][result.fieldIndex] = result.value;
+        transactionToSave[getRPCFields(result.fieldName).methodName](
+          result.value,
+        );
+        // @ts-ignore
+        //transactionToSave['array'][result.fieldIndex] = result.value;
       });
+      handleSaveTransaction(transactionToSave);
       console.log('WOULD SAVE: ', transactionToSave);
     },
     [transactionToSave],
+  );
+
+  const handleSaveTransaction = useCallback(
+    async (transaction: Transaction) => {
+      try {
+        console.log('Ownder name: ', transaction.getOwnerName());
+        const result = await TransactionClientService.Create(transaction);
+        console.log('Result when saved: ', result);
+      } catch (err) {
+        console.error(`An error occurred while saving the transaction: ${err}`);
+      }
+    },
+    [TransactionClientService],
   );
 
   const generateConflicts = (): any[] => {
