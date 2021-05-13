@@ -230,6 +230,7 @@ export const CostSummary: FC<Props> = ({
   const getPerDiemTotalsProcessed = useCallback(async () => {
     const perDiemReq = new PerDiem();
     perDiemReq.setDateTargetList(['date_processed']);
+    perDiemReq.setUserId(userId);
     perDiemReq.setDateRangeList([
       '>=',
       formatDateFns(startOfWeek(new Date())),
