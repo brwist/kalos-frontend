@@ -99,7 +99,7 @@ export const CostSummary: FC<Props> = ({
     let processed = true;
 
     trip.setApproved(true);
-    trip.setDateTargetList(['date_processed']);
+    trip.setDateTargetList(['date_processed', 'date_processed']);
     trip.setDateRangeList(['>=', '0001-01-01', '<=', formatDateFns(endDay)]);
     let tempTripList = (
       await PerDiemClientService.BatchGetTrips(trip)
@@ -127,7 +127,7 @@ export const CostSummary: FC<Props> = ({
     trip.setUserId(userId);
     let processed = true;
 
-    trip.setDateTargetList(['date_processed']);
+    trip.setDateTargetList(['date_processed', 'date_processed']);
     trip.setDateRangeList([
       '>=',
       formatDateFns(startOfWeek(new Date())),
@@ -229,7 +229,7 @@ export const CostSummary: FC<Props> = ({
 
   const getPerDiemTotalsProcessed = useCallback(async () => {
     const perDiemReq = new PerDiem();
-    perDiemReq.setDateTargetList(['date_processed']);
+    perDiemReq.setDateTargetList(['date_processed', 'date_processed']);
     perDiemReq.setUserId(userId);
     perDiemReq.setDateRangeList([
       '>=',
@@ -385,7 +385,7 @@ export const CostSummary: FC<Props> = ({
         '<=',
         formatDateFns(endOfWeek(new Date())),
       ]);
-      action.setDateTargetList(['date_processed']);
+      action.setDateTargetList(['date_processed', 'date_processed']);
 
       req.setSearchAction(action);
 
