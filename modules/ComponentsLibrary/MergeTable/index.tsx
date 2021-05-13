@@ -108,25 +108,27 @@ export const MergeTable: FC<Props> = ({
           return {
             value: (
               <>
-                <Button
-                  style={{ textTransform: 'none' }}
-                  label={choice}
-                  onClick={() => {
-                    handleSetSelectedChoiceIndices(
-                      {
-                        value: choice,
-                        fieldName: rows[rowIndex].rowName,
-                        fieldIndex: rows[rowIndex].rowIndex,
-                      },
-                      rowIndex,
-                    );
-                    handleSetData();
-                  }}
-                  disabled={
-                    selectedChoices[rowIndex].value !== '' &&
-                    selectedChoices[rowIndex].value !== choice
-                  }
-                />
+                <Tooltip content="Choose this option to keep for the merge">
+                  <Button
+                    style={{ textTransform: 'none' }}
+                    label={choice}
+                    onClick={() => {
+                      handleSetSelectedChoiceIndices(
+                        {
+                          value: choice,
+                          fieldName: rows[rowIndex].rowName,
+                          fieldIndex: rows[rowIndex].rowIndex,
+                        },
+                        rowIndex,
+                      );
+                      handleSetData();
+                    }}
+                    disabled={
+                      selectedChoices[rowIndex].value !== '' &&
+                      selectedChoices[rowIndex].value !== choice
+                    }
+                  />
+                </Tooltip>
               </>
             ),
             actions: (
@@ -279,7 +281,10 @@ export const MergeTable: FC<Props> = ({
       )}
       <SectionBar
         actions={[
-          { label: 'Merge', onClick: () => handleMerge(selectedChoices) },
+          {
+            label: 'Merge (Create New)',
+            onClick: () => handleMerge(selectedChoices),
+          },
           { label: 'Cancel', onClick: () => onCancel() },
         ]}
         title="Resolve Conflicts to Merge"
