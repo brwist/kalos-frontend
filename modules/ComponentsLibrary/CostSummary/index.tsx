@@ -832,7 +832,7 @@ export const CostSummary: FC<Props> = ({
               { name: 'Total Lodging' },
               { name: 'Total Meals' },
               { name: 'Total Mileage' },
-              { name: 'Processed' },
+              { name: 'Status' },
             ]}
             data={[
               [
@@ -847,13 +847,15 @@ export const CostSummary: FC<Props> = ({
                 },
                 {
                   value:
-                    totalPerDiem.processed === 1 &&
-                    tripsTotal.processed === true
-                      ? 'Complete'
-                      : 'Incomplete',
+                    totalPerDiem.totalLodging != 0 ||
+                    totalPerDiem.totalMeals != 0 ||
+                    tripsTotal.totalDistance != 0
+                      ? 'Incomplete'
+                      : 'No PerDiems or Trips Remain',
                   actions:
-                    totalPerDiem.processed === 0 ||
-                    tripsTotal.processed === false
+                    totalPerDiem.totalLodging != 0 ||
+                    totalPerDiem.totalMeals != 0 ||
+                    tripsTotal.totalDistance != 0
                       ? [
                           <IconButton
                             key="processPerdiem"
