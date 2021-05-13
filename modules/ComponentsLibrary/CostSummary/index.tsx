@@ -41,6 +41,7 @@ import {
   SpiffToolAdminActionClientService,
 } from '../../../helpers';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
+import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -90,20 +91,23 @@ export const CostSummary: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const today = new Date();
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
-  const endDay = addDays(startDay, 7);
+  const endDay = addDays(startDay, 8);
   const perDiemEndDay = addDays(startOfWeek(today, { weekStartsOn: 6 }), 4);
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
   const getTrips = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
     let processed = true;
-
+    trip.setDateProcessed(NULL_TIME);
+    trip.setFieldMaskList(['PayrollProcessed', 'DateProcessed']);
     trip.setApproved(true);
     trip.setDateTargetList(['date', 'date']);
     trip.setDateRangeList(['>=', '0001-01-01', '<=', formatDateFns(endDay)]);
+    console.log(trip);
     let tempTripList = (
       await PerDiemClientService.BatchGetTrips(trip)
     ).getResultsList();
+    console.log(tempTripList);
     setTrips(tempTripList);
     let distanceSubtotal = 0;
     for (let j = 0; j < tempTripList.length; j++) {
@@ -120,6 +124,7 @@ export const CostSummary: FC<Props> = ({
         processed = false;
       }
     }
+    console.log(distanceSubtotal);
     return { totalDistance: distanceSubtotal, processed };
   }, [endDay, userId]);
   const getTripsProcessed = useCallback(async () => {
@@ -389,7 +394,6 @@ export const CostSummary: FC<Props> = ({
 
       req.setSearchAction(action);
 
-      console.log({ req });
       const tempResults = (
         await new TaskClient(ENDPOINT).BatchGet(req)
       ).getResultsList();
@@ -417,12 +421,10 @@ export const CostSummary: FC<Props> = ({
           }
         }
       }
-      console.log({ results });
       let spiffTotal = 0;
       let toolTotal = 0;
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
-          console.log(results[i].getActionsList()[0].getDateProcessed());
           spiffTotal += results[i].toObject().spiffAmount;
         } else {
           toolTotal += results[i].toObject().toolpurchaseCost;
