@@ -6,6 +6,9 @@ import { getRPCFields, TransactionClientService } from '../../../helpers';
 import { Modal } from '../Modal';
 import { MergeTable, SelectedChoice } from '../MergeTable';
 import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { Alert } from '../Alert';
+import { Typography } from '@material-ui/core';
+import { Loader } from '../../Loader/main';
 
 interface Props {
   loggedUserId: number;
@@ -64,44 +67,46 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     new Transaction(),
   );
 
+  const [upsertError, setUpsertError] = useState<string>();
+
+  const [loading, setLoading] = useState<boolean>(false);
+
   const handleSetConflicts = useCallback(
     (conflicts: Conflict[]) => setConflicts(conflicts),
     [setConflicts],
   );
 
   const handleSetSubmissionResults = useCallback(
-    (submissionResults: SelectedChoice[]) => {
-      submissionResults.forEach(result => {
-        console.log(
-          'FIELD NAME: ',
-          result.fieldName,
-          ' | getRPC STUFF: ',
-          getRPCFields(result.fieldName).methodName,
-        );
+    async (submissionResults: SelectedChoice[]) => {
+      submissionResults.forEach(async result => {
         // @ts-ignore
         transactionToSave[getRPCFields(result.fieldName).methodName](
           result.value,
         );
-        // @ts-ignore
-        //transactionToSave['array'][result.fieldIndex] = result.value;
       });
-      handleSaveTransaction(transactionToSave);
-      console.log('WOULD SAVE: ', transactionToSave);
+      setLoading(true);
+      await handleSaveTransaction(transactionToSave);
+      setLoading(false);
+      setConflicts([]);
     },
-    [transactionToSave],
+    [transactionToSave, setLoading, setConflicts],
+  );
+
+  const handleSetUpsertError = useCallback(
+    (error: string) => setUpsertError(error),
+    [setUpsertError],
   );
 
   const handleSaveTransaction = useCallback(
     async (transaction: Transaction) => {
       try {
-        console.log('Ownder name: ', transaction.getOwnerName());
-        const result = await TransactionClientService.Create(transaction);
-        console.log('Result when saved: ', result);
+        await TransactionClientService.Create(transaction);
       } catch (err) {
         console.error(`An error occurred while saving the transaction: ${err}`);
+        setUpsertError(err);
       }
     },
-    [TransactionClientService],
+    [TransactionClientService, setUpsertError],
   );
 
   const generateConflicts = (): any[] => {
@@ -278,6 +283,19 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   //
   return (
     <>
+      {loading && <Loader />}
+      {upsertError && (
+        <Alert
+          open={true}
+          onClose={() => handleSetUpsertError('')}
+          title="Error"
+        >
+          <Typography>
+            {'An error occurred during the saving of the transaction. Please notify one of our web-team members. ' +
+              upsertError}
+          </Typography>
+        </Alert>
+      )}
       {conflicts && (
         <Modal
           open={conflicts.length > 0}
