@@ -202,11 +202,26 @@ export const MergeTable: FC<Props> = ({
         }),
       };
       rows = rowsNew;
+
+      let newChoices = selectedChoices.map(choiceIn => {
+        if (
+          choiceIn.value == fieldToEdit.choice &&
+          rows[fieldToEdit.rowIndex].rowName == choiceIn.fieldName
+        ) {
+          let choiceToReturn = choiceIn;
+          choiceToReturn.value = updatedChoice;
+          return choiceToReturn;
+        }
+        return choiceIn;
+      });
+
+      setSelectedChoices(newChoices);
+
       handleSetFieldToEdit(undefined);
       handleSetData();
       console.log(rows);
     },
-    [rows, handleSetFieldToEdit, handleSetData],
+    [rows, handleSetFieldToEdit, handleSetData, setSelectedChoices],
   );
 
   useEffect(() => {
