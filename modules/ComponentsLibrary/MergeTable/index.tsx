@@ -47,6 +47,7 @@ export const MergeTable: FC<Props> = ({
   onCancel,
   properNames,
 }) => {
+  let updatedFieldData = ''; // Used when updating field info, not put into a state operation to avoid re-rendering unnecessarily
   // Index of the array is the index of the relevant row
   const [selectedChoices, setSelectedChoices] = useState<SelectedChoice[]>(
     rows.map(() => {
@@ -182,6 +183,32 @@ export const MergeTable: FC<Props> = ({
     [setSelectAllPromptOpen],
   );
 
+  const handleUpdateChoice = useCallback(
+    (
+      fieldToEdit: {
+        rowIndex: number;
+        choice: string;
+      },
+      updatedChoice: string,
+    ) => {
+      let rowsNew = rows;
+      rowsNew[fieldToEdit.rowIndex] = {
+        ...rows[fieldToEdit.rowIndex],
+        choices: rows[fieldToEdit.rowIndex].choices.map(choiceIn => {
+          if (choiceIn == fieldToEdit.choice) {
+            return updatedChoice;
+          }
+          return choiceIn;
+        }),
+      };
+      rows = rowsNew;
+      handleSetFieldToEdit(undefined);
+      handleSetData();
+      console.log(rows);
+    },
+    [rows, handleSetFieldToEdit, handleSetData],
+  );
+
   useEffect(() => {
     handleSetData();
   }, [handleSetData]);
@@ -205,7 +232,11 @@ export const MergeTable: FC<Props> = ({
         >
           <SectionBar
             actions={[
-              { label: 'OK', onClick: () => alert('Clicked ok') },
+              {
+                label: 'OK',
+                onClick: () =>
+                  handleUpdateChoice(fieldToEdit, updatedFieldData),
+              },
               {
                 label: 'Cancel',
                 onClick: () => handleSetFieldToEdit(undefined),
@@ -213,9 +244,10 @@ export const MergeTable: FC<Props> = ({
             ]}
           />
           <PlainForm
+            key={rows.toString()}
             schema={SCHEMA}
             data={field}
-            onChange={data => console.log(data)}
+            onChange={data => (updatedFieldData = data.fieldData)}
           />
         </Modal>
       )}
