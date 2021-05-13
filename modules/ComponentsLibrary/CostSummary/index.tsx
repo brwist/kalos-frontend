@@ -301,7 +301,7 @@ export const CostSummary: FC<Props> = ({
     };
 
     return totals;
-  }, [startDay]);
+  }, [startDay, userId]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
       const req = new Task();
