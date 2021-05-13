@@ -99,7 +99,7 @@ export const CostSummary: FC<Props> = ({
     let processed = true;
 
     trip.setApproved(true);
-    trip.setDateTargetList(['date_processed', 'date_processed']);
+    trip.setDateTargetList(['date', 'date']);
     trip.setDateRangeList(['>=', '0001-01-01', '<=', formatDateFns(endDay)]);
     let tempTripList = (
       await PerDiemClientService.BatchGetTrips(trip)
