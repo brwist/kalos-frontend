@@ -1,13 +1,32 @@
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { EditTransaction } from '.';
-
-let transactionTest = new Transaction();
-transactionTest.setId(100100);
-transactionTest.setNotes('Testing notes');
+import { TransactionClientService } from '../../../helpers';
+import { ExampleTitle } from '../helpers';
 
 export default () => {
+  const [transactionTest, setTransactionTest] = useState<Transaction.AsObject>(
+    {} as Transaction.AsObject,
+  );
+
+  const handleLoadTransaction = useCallback(async () => {
+    let txn: Transaction = new Transaction();
+    txn.setId(3);
+    setTransactionTest(await TransactionClientService.Get(txn));
+  }, [setTransactionTest, TransactionClientService]);
+
+  useEffect(() => {
+    // Grabs a transaction:
+    handleLoadTransaction();
+  }, [transactionTest, handleLoadTransaction, TransactionClientService]);
   return (
-    <EditTransaction loggedUserId={98217} transactionInput={transactionTest} />
+    <>
+      <ExampleTitle>Transaction with ID 3 in the database: </ExampleTitle>
+      <EditTransaction
+        key={transactionTest.id}
+        loggedUserId={98217}
+        transactionInput={transactionTest}
+      />
+    </>
   );
 };

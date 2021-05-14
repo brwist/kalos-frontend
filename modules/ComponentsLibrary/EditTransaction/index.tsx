@@ -6,16 +6,15 @@ import { PlainForm } from '../PlainForm';
 
 interface Props {
   loggedUserId: number;
-  transactionInput: Transaction;
+  transactionInput: Transaction.AsObject;
 }
 
 export const EditTransaction: FC<Props> = ({
   loggedUserId,
   transactionInput,
 }) => {
-  const [transaction, setTransaction] = useState<Transaction.AsObject>(
-    transactionInput.toObject(),
-  );
+  const [transaction, setTransaction] =
+    useState<Transaction.AsObject>(transactionInput);
   const SCHEMA: Schema<Transaction.AsObject> = [
     [
       {
