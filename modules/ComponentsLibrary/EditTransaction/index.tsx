@@ -1,9 +1,139 @@
-import React, { FC } from 'react';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { Typography } from '@material-ui/core';
+import React, { FC, useState } from 'react';
+import { Form, Schema } from '../Form';
+import { PlainForm } from '../PlainForm';
 
 interface Props {
   loggedUserId: number;
+  transactionInput: Transaction;
 }
 
-export const EditTransaction: FC<Props> = ({ loggedUserId }) => {
-  return <>Test</>;
+export const EditTransaction: FC<Props> = ({
+  loggedUserId,
+  transactionInput,
+}) => {
+  const [transaction, setTransaction] = useState<Transaction.AsObject>(
+    transactionInput.toObject(),
+  );
+  const SCHEMA: Schema<Transaction.AsObject> = [
+    [
+      {
+        label: 'ID',
+        name: 'id',
+      },
+      {
+        label: 'Job ID',
+        name: 'jobId',
+      },
+      {
+        label: 'Department ID',
+        name: 'departmentId',
+      },
+    ],
+    [
+      {
+        label: 'Owner ID',
+        name: 'ownerId',
+      },
+      {
+        label: 'Vendor',
+        name: 'vendor',
+      },
+      {
+        label: 'Cost Center ID',
+        name: 'costCenterId',
+      },
+      {
+        label: 'Description',
+        name: 'description',
+      },
+    ],
+    [
+      {
+        label: 'Amount',
+        name: 'amount',
+      },
+      {
+        label: 'Timestamp',
+        name: 'timestamp',
+      },
+      {
+        label: 'Notes',
+        name: 'notes',
+      },
+    ],
+    [
+      {
+        label: 'Is active?',
+        name: 'isActive',
+        type: 'checkbox',
+      },
+      {
+        label: 'Status ID',
+        name: 'statusId',
+      },
+      {
+        label: 'Status',
+        name: 'status',
+      },
+    ],
+    [
+      {
+        label: 'Owner Name',
+        name: 'ownerName',
+      },
+      {
+        label: 'Card Used',
+        name: 'cardUsed',
+      },
+      {
+        label: 'Documents',
+        name: 'documentsList',
+      },
+    ],
+    [
+      {
+        label: 'Transaction Department',
+        name: 'department',
+      },
+      {
+        label: 'Cost Center',
+        name: 'costCenter',
+      },
+      {
+        label: 'Is audited?',
+        name: 'isAudited',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        label: 'Is recorded?',
+        name: 'isRecorded',
+        type: 'checkbox',
+      },
+      {
+        label: 'Vendor Category',
+        name: 'vendorCategory',
+      },
+      {
+        label: 'Assigned Employee Id',
+        name: 'assignedEmployeeId',
+      },
+      {
+        label: 'Assigned Employee Name',
+        name: 'assignedEmployeeName',
+      },
+    ],
+  ];
+  return (
+    <>
+      <PlainForm<Transaction.AsObject>
+        schema={SCHEMA}
+        data={transaction}
+        onChange={changed => console.log(changed)}
+      />
+    </>
+  );
 };
