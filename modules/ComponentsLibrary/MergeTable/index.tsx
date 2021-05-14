@@ -6,6 +6,9 @@
 // and these choices will be given back as an array of any type once the user clicked all of the changes to accept.
 // There will also be editing control available as a prop, so that the user can edit the fields in the table.
 
+// There is a "View Merged Transaction" feature that can be toggled on and off in the props that is bound to specifically
+// transactions, however.
+
 import { IconButton, Typography } from '@material-ui/core';
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { Alert } from '../Alert';
@@ -16,6 +19,8 @@ import EditIcon from '@material-ui/icons/Edit';
 import { Tooltip } from '../Tooltip';
 import { PlainForm, Schema } from '../PlainForm';
 import { Modal } from '../Modal';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { EditTransaction } from '../EditTransaction';
 
 export interface SelectedChoice {
   value: string;
@@ -24,6 +29,7 @@ export interface SelectedChoice {
 }
 
 interface Props {
+  loggedUserId: number;
   columnHeaders: Columns;
   rows: {
     choices: string[];
@@ -34,6 +40,8 @@ interface Props {
   onSubmit: (results: SelectedChoice[]) => void; // Index of the results is the index of the relevant row
   onCancel: () => void;
   properNames?: {}; // Just objects with key-value pairs that can be used to correct row names where applicable
+  viewMergedTransaction?: boolean; // Can you view the merged transaction if applicable?
+  transaction?: Transaction; // Optional, passed in for above
 }
 
 type Field = {
@@ -41,11 +49,14 @@ type Field = {
 };
 
 export const MergeTable: FC<Props> = ({
+  loggedUserId,
   columnHeaders,
   rows,
   onSubmit,
   onCancel,
   properNames,
+  viewMergedTransaction,
+  transaction,
 }) => {
   let updatedFieldData = ''; // Used when updating field info, not put into a state operation to avoid re-rendering unnecessarily
   // Index of the array is the index of the relevant row
@@ -57,6 +68,8 @@ export const MergeTable: FC<Props> = ({
   const [data, setData] = useState<Data>();
   const [selectAllPromptOpen, setSelectAllPromptOpen] =
     useState<boolean>(false);
+  const [transactionToView, setTransactionToView] =
+    useState<Transaction | undefined>(); // For the viewMergedTransaction part
   const [fieldToEdit, setFieldToEdit] =
     useState<
       | {
@@ -69,6 +82,13 @@ export const MergeTable: FC<Props> = ({
   let field: Field = {
     fieldData: fieldToEdit != undefined ? fieldToEdit?.choice : '',
   };
+
+  const handleSetTransactionToView = useCallback(
+    (transactionToView: Transaction | undefined) => {
+      setTransactionToView(transactionToView);
+    },
+    [setTransactionToView],
+  );
 
   const handleSetSelectedChoiceIndices = useCallback(
     (selectedChoice: SelectedChoice, rowIndex: number) => {
@@ -238,8 +258,27 @@ export const MergeTable: FC<Props> = ({
     ],
   ];
 
+  const ViewMergedTransaction = viewMergedTransaction
+    ? [
+        {
+          label: 'View Merged Transaction',
+          onClick: () => handleSetTransactionToView(transaction),
+        },
+      ]
+    : [];
   return (
     <>
+      {transactionToView && (
+        <Modal
+          open={true}
+          onClose={() => handleSetTransactionToView(undefined)}
+        >
+          <EditTransaction
+            loggedUserId={loggedUserId}
+            transactionInput={transactionToView.toObject()}
+          />
+        </Modal>
+      )}
       {fieldToEdit && (
         <Modal
           open={fieldToEdit != undefined}
@@ -279,6 +318,7 @@ export const MergeTable: FC<Props> = ({
       )}
       <SectionBar
         actions={[
+          ...ViewMergedTransaction,
           {
             label: 'Merge (Create New)',
             onClick: () => handleMerge(selectedChoices),

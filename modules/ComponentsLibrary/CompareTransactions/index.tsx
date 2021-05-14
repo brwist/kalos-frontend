@@ -336,6 +336,9 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
           onClose={() => handleSetConflicts([])}
         >
           <MergeTable
+            loggedUserId={loggedUserId}
+            transaction={transactionToSave}
+            viewMergedTransaction
             columnHeaders={[{ name: 'Name of Field' }]}
             rows={conflicts.map(conflict => {
               // Need to be each conflict's relevant field
