@@ -100,6 +100,7 @@ export default class Transaction extends React.PureComponent<props, state> {
   toggleLoading = this.toggleFlag('isLoading');
 
   async componentDidMount() {
+    await this.UserClient.GetToken('test', 'test');
     await this.getUserData();
   }
 
