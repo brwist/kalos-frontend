@@ -21,20 +21,24 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'ID',
         name: 'id',
+        type: 'number',
       },
       {
         label: 'Job ID',
         name: 'jobId',
+        type: 'number',
       },
       {
         label: 'Department ID',
         name: 'departmentId',
+        type: 'number',
       },
     ],
     [
       {
         label: 'Owner ID',
         name: 'ownerId',
+        type: 'number',
       },
       {
         label: 'Vendor',
@@ -43,6 +47,7 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Cost Center ID',
         name: 'costCenterId',
+        type: 'number',
       },
       {
         label: 'Description',
@@ -53,10 +58,12 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Amount',
         name: 'amount',
+        type: 'number',
       },
       {
         label: 'Timestamp',
         name: 'timestamp',
+        type: 'mui-datetime',
       },
       {
         label: 'Notes',
@@ -120,6 +127,7 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Assigned Employee Id',
         name: 'assignedEmployeeId',
+        type: 'number',
       },
       {
         label: 'Assigned Employee Name',
