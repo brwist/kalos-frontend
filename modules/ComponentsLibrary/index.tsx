@@ -32,6 +32,7 @@ import CustomerInformation from './CustomerInformation/examples';
 import DeletedServiceCallsReport from './DeletedServiceCallsReport/examples';
 import Documents from './Documents/examples';
 import EditProject from './EditProject/examples';
+import EditTransaction from './EditTransaction/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
 import EventsReport from './EventsReport/examples';
 import ExportJSON from './ExportJSON/examples';
@@ -133,6 +134,7 @@ const COMPONENTS = {
   DeletedServiceCallsReport,
   Documents,
   EditProject,
+  EditTransaction,
   EmployeeDepartments,
   EventsReport,
   ExportJSON,
@@ -208,9 +210,10 @@ const ComponentsLibrary = () => {
     Object.keys(COMPONENTS)[DEFAULT_COMPONENT_IDX] as keyof typeof COMPONENTS,
   );
   const Component = COMPONENTS[component];
-  const handleClickMenuItem = useCallback(v => () => setComponent(v), [
-    setComponent,
-  ]);
+  const handleClickMenuItem = useCallback(
+    v => () => setComponent(v),
+    [setComponent],
+  );
   const handleSelect = useCallback(
     ({ target: { value } }) => setComponent(value),
     [setComponent],
