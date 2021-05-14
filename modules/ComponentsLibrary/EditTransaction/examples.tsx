@@ -26,6 +26,11 @@ export default () => {
         key={transactionTest.id}
         loggedUserId={98217}
         transactionInput={transactionTest}
+        onSave={saved => {
+          alert('Check the console for results of save');
+          console.log(saved);
+        }}
+        onClose={() => alert('Would close')}
       />
     </>
   );

@@ -42,6 +42,7 @@ interface Props {
   properNames?: {}; // Just objects with key-value pairs that can be used to correct row names where applicable
   viewMergedTransaction?: boolean; // Can you view the merged transaction if applicable?
   transaction?: Transaction; // Optional, passed in for above
+  onSaveMergedTransaction?: (transaction: Transaction.AsObject) => void;
 }
 
 type Field = {
@@ -57,6 +58,7 @@ export const MergeTable: FC<Props> = ({
   properNames,
   viewMergedTransaction,
   transaction,
+  onSaveMergedTransaction,
 }) => {
   let updatedFieldData = ''; // Used when updating field info, not put into a state operation to avoid re-rendering unnecessarily
   // Index of the array is the index of the relevant row
@@ -276,6 +278,11 @@ export const MergeTable: FC<Props> = ({
           <EditTransaction
             loggedUserId={loggedUserId}
             transactionInput={transactionToView.toObject()}
+            onSave={saved => {
+              onSaveMergedTransaction!(saved);
+              handleSetTransactionToView(undefined);
+            }}
+            onClose={() => handleSetTransactionToView(undefined)}
           />
         </Modal>
       )}
