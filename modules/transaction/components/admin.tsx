@@ -324,14 +324,16 @@ export class TransactionAdminView extends React.Component<props, state> {
     if (filters.costCenterID) {
       obj.setCostCenterId(filters.costCenterID);
     }
-    if (this.props.showMultipleDepartments && this.props.departmentIDList) {
-      console.log('setting department id list in applyFilters');
+    if (
+      this.props.showMultipleDepartments &&
+      this.props.departmentIDList &&
+      !filters.departmentID
+    ) {
       obj.setDepartmentIdList(this.props.departmentIDList);
     }
     if (filters.departmentID) {
       if (obj.getDepartmentIdList() === '') {
-        console.log('setting department id in applyFilters');
-        obj.setDepartmentIdList(`${filters.departmentID}`);
+        obj.setDepartmentId(filters.departmentID);
       }
     }
     if (filters.dateCreated && filters.dateCreated !== '0') {
