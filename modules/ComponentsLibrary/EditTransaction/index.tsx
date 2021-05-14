@@ -41,25 +41,29 @@ export const EditTransaction: FC<Props> = ({
         type: 'number',
       },
       {
-        label: 'Vendor',
-        name: 'vendor',
-      },
-      {
         label: 'Cost Center ID',
         name: 'costCenterId',
         type: 'number',
       },
       {
-        label: 'Description',
-        name: 'description',
-      },
-    ],
-    [
-      {
         label: 'Amount',
         name: 'amount',
         type: 'number',
       },
+    ],
+    [
+      {
+        label: 'Assigned Employee Id',
+        name: 'assignedEmployeeId',
+        type: 'number',
+      },
+      {
+        label: 'Status ID',
+        name: 'statusId',
+        type: 'number',
+      },
+    ],
+    [
       {
         label: 'Timestamp',
         name: 'timestamp',
@@ -76,16 +80,22 @@ export const EditTransaction: FC<Props> = ({
         name: 'isActive',
         type: 'checkbox',
       },
-      {
-        label: 'Status ID',
-        name: 'statusId',
-      },
+
       {
         label: 'Status',
         name: 'status',
       },
     ],
     [
+      {
+        label: 'Vendor',
+        name: 'vendor',
+      },
+
+      {
+        label: 'Description',
+        name: 'description',
+      },
       {
         label: 'Owner Name',
         name: 'ownerName',
@@ -124,11 +134,7 @@ export const EditTransaction: FC<Props> = ({
         label: 'Vendor Category',
         name: 'vendorCategory',
       },
-      {
-        label: 'Assigned Employee Id',
-        name: 'assignedEmployeeId',
-        type: 'number',
-      },
+
       {
         label: 'Assigned Employee Name',
         name: 'assignedEmployeeName',
