@@ -91,8 +91,7 @@ export const CostSummary: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const today = new Date();
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
-  const endDay = addDays(startDay, 8);
-  const perDiemEndDay = addDays(startOfWeek(today, { weekStartsOn: 6 }), 4);
+  const endDay = addDays(startDay, 7);
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
   const getTrips = useCallback(async () => {
     let trip = new Trip();
@@ -102,12 +101,10 @@ export const CostSummary: FC<Props> = ({
     trip.setFieldMaskList(['PayrollProcessed', 'DateProcessed']);
     trip.setApproved(true);
     trip.setDateTargetList(['date', 'date']);
-    trip.setDateRangeList(['>=', '0001-01-01', '<=', formatDateFns(endDay)]);
-    console.log(trip);
+    trip.setDateRangeList(['>=', '0001-01-01', '<', formatDateFns(endDay)]);
     let tempTripList = (
       await PerDiemClientService.BatchGetTrips(trip)
     ).getResultsList();
-    console.log(tempTripList);
     setTrips(tempTripList);
     let distanceSubtotal = 0;
     for (let j = 0; j < tempTripList.length; j++) {
@@ -124,7 +121,6 @@ export const CostSummary: FC<Props> = ({
         processed = false;
       }
     }
-    console.log(distanceSubtotal);
     return { totalDistance: distanceSubtotal, processed };
   }, [endDay, userId]);
   const getTripsProcessed = useCallback(async () => {
@@ -166,7 +162,7 @@ export const CostSummary: FC<Props> = ({
       resultsList,
     } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
       userId,
-      formatDateFns(perDiemEndDay),
+      formatDateFns(endDay),
     );
     //get PerDiems, set them
     setPerDiems(resultsList);
@@ -230,7 +226,7 @@ export const CostSummary: FC<Props> = ({
     const totals = { totalMeals, totalLodging, totalMileage, processed };
 
     return totals;
-  }, [perDiemEndDay, userId, startDay]);
+  }, [userId, endDay, startDay]);
 
   const getPerDiemTotalsProcessed = useCallback(async () => {
     const perDiemReq = new PerDiem();
