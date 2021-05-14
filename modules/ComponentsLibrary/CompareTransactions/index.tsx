@@ -15,6 +15,7 @@ import { Typography } from '@material-ui/core';
 import { Loader } from '../../Loader/main';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
+import { compact } from 'lodash';
 
 interface Props {
   loggedUserId: number;
@@ -101,6 +102,14 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const handleSetUpsertError = useCallback(
     (error: string) => setUpsertError(error),
     [setUpsertError],
+  );
+
+  const handleSetTransactionToSave = useCallback(
+    (transactionToSaveNew: Transaction) => {
+      console.log('Setting it to: ', transactionToSaveNew);
+      setTransactionToSave(transactionToSaveNew);
+    },
+    [setTransactionToSave],
   );
 
   const handleSaveActivityLog = useCallback(
@@ -339,6 +348,22 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             loggedUserId={loggedUserId}
             transaction={transactionToSave}
             viewMergedTransaction
+            onSaveMergedTransaction={saved => {
+              console.log('Saved: ', saved);
+              let txn = new Transaction();
+              let idx = 0;
+              console.log('KEYS: ', Object.keys(saved));
+
+              for (const fieldName of Object.keys(saved)) {
+                //@ts-ignore
+                txn[getRPCFields(fieldName).methodName](saved[fieldName]);
+                idx++;
+              }
+
+              console.log('Created txn: ', txn);
+
+              handleSetTransactionToSave(txn);
+            }}
             columnHeaders={[{ name: 'Name of Field' }]}
             rows={conflicts.map(conflict => {
               // Need to be each conflict's relevant field

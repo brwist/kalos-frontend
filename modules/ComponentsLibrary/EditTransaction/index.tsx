@@ -7,11 +7,15 @@ import { PlainForm } from '../PlainForm';
 interface Props {
   loggedUserId: number;
   transactionInput: Transaction.AsObject;
+  onSave: (saved: Transaction.AsObject) => void;
+  onClose: () => void;
 }
 
 export const EditTransaction: FC<Props> = ({
   loggedUserId,
   transactionInput,
+  onSave,
+  onClose,
 }) => {
   const [transaction, setTransaction] =
     useState<Transaction.AsObject>(transactionInput);
@@ -142,10 +146,15 @@ export const EditTransaction: FC<Props> = ({
   ];
   return (
     <>
-      <PlainForm<Transaction.AsObject>
+      <Form<Transaction.AsObject>
         schema={SCHEMA}
         data={transaction}
         onChange={changed => console.log(changed)}
+        onSave={saved => onSave(saved)}
+        onClose={onClose}
+        submitLabel="Save"
+        cancelLabel="Cancel"
+        title="Edit Transaction Created From Merge"
       />
     </>
   );
