@@ -2,13 +2,19 @@ import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useState } from 'react';
 import { SectionBar } from '../SectionBar';
 import { TransactionAccountsPayable } from '../TransactionAccountsPayable';
-import { getRPCFields, TransactionClientService } from '../../../helpers';
+import {
+  ActivityLogClientService,
+  getRPCFields,
+  TransactionClientService,
+} from '../../../helpers';
 import { Modal } from '../Modal';
 import { MergeTable, SelectedChoice } from '../MergeTable';
 import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { Alert } from '../Alert';
 import { Typography } from '@material-ui/core';
 import { Loader } from '../../Loader/main';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { format } from 'date-fns';
 
 interface Props {
   loggedUserId: number;
@@ -97,16 +103,44 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     [setUpsertError],
   );
 
+  const handleSaveActivityLog = useCallback(
+    async (activityLog: ActivityLog) => {
+      try {
+        let activityLogMade = await ActivityLogClientService.Create(
+          activityLog,
+        );
+        console.log(activityLogMade);
+      } catch (err) {
+        console.error(
+          `An error occurred while creating the activity log for the transaction: ${err}`,
+        );
+        setUpsertError(err);
+      }
+    },
+    [ActivityLogClientService, setUpsertError],
+  );
+
   const handleSaveTransaction = useCallback(
     async (transaction: Transaction) => {
       try {
-        await TransactionClientService.Create(transaction);
+        let txnMade = await TransactionClientService.Create(transaction);
+
+        let activityLog = new ActivityLog();
+        activityLog.setActivityName(
+          `Merged Transactions - IDs: ${transactions!
+            .map(txn => txn.getId())
+            .join(' AND ')} - Created transaction with ID: ${txnMade.id}`,
+        );
+        activityLog.setUserId(loggedUserId);
+        activityLog.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+
+        await handleSaveActivityLog(activityLog);
       } catch (err) {
         console.error(`An error occurred while saving the transaction: ${err}`);
         setUpsertError(err);
       }
     },
-    [TransactionClientService, setUpsertError],
+    [TransactionClientService, setUpsertError, transactions],
   );
 
   const generateConflicts = (): any[] => {
