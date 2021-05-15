@@ -582,7 +582,6 @@ export const TransactionAccountsPayable: FC<Props> = ({
     refresh();
   }, [refresh, resetTransactions]);
 
-  console.log('Transactions: ', transactions);
   return (
     <>
       {loading ? <Loader /> : <> </>}
@@ -612,7 +611,10 @@ export const TransactionAccountsPayable: FC<Props> = ({
           open={mergingTransaction}
           onClose={() => handleSetMergingTransaction(false)}
         >
-          <CompareTransactions loggedUserId={loggedUserId} />
+          <CompareTransactions
+            loggedUserId={loggedUserId}
+            onClose={() => handleSetMergingTransaction(false)}
+          />
         </Modal>
       ) : (
         <></>
