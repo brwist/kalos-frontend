@@ -90,10 +90,17 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
   const handleSetSubmissionResults = useCallback(
     async (submissionResults: SelectedChoice[]) => {
       submissionResults.forEach(async result => {
-        // @ts-ignore
-        transactionToSave[getRPCFields(result.fieldName).methodName](
-          result.value,
-        );
+        if (
+          // @ts-ignore
+          transactionToSave[
+            `get${getRPCFields(result.fieldName).methodName.substring(3)}`
+          ]() == null
+        ) {
+          // @ts-ignore
+          transactionToSave[getRPCFields(result.fieldName).methodName](
+            result.value,
+          );
+        }
       });
       setLoading(true);
       await handleSaveTransaction(transactionToSave);
