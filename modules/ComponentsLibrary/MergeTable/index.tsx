@@ -159,18 +159,18 @@ export const MergeTable: FC<Props> = ({
                 />
               </>
             ),
-            actions: (
-              <Tooltip content="Edit field">
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    handleSetFieldToEdit({ rowIndex: rowIndex, choice: choice })
-                  }
-                >
-                  <EditIcon />
-                </IconButton>
-              </Tooltip>
-            ),
+            // actions: (
+            //   <Tooltip content="Edit field">
+            //     <IconButton
+            //       size="small"
+            //       onClick={() =>
+            //         handleSetFieldToEdit({ rowIndex: rowIndex, choice: choice })
+            //       }
+            //     >
+            //       <EditIcon />
+            //     </IconButton>
+            //   </Tooltip>
+            // ),
             onClick: () => {
               handleSetSelectedChoiceIndices(
                 {
