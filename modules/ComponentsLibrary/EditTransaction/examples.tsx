@@ -24,7 +24,6 @@ export default () => {
       <ExampleTitle>Transaction with ID 3 in the database: </ExampleTitle>
       <EditTransaction
         key={transactionTest.id}
-        loggedUserId={98217}
         transactionInput={transactionTest}
         onSave={saved => {
           alert('Check the console for results of save');

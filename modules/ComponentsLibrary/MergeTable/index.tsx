@@ -43,6 +43,7 @@ interface Props {
   viewMergedTransaction?: boolean; // Can you view the merged transaction if applicable?
   transaction?: Transaction; // Optional, passed in for above
   onSaveMergedTransaction?: (transaction: Transaction.AsObject) => void;
+  onChangeTransaction?: (newTxn: Transaction) => void;
 }
 
 type Field = {
@@ -59,6 +60,7 @@ export const MergeTable: FC<Props> = ({
   viewMergedTransaction,
   transaction,
   onSaveMergedTransaction,
+  onChangeTransaction,
 }) => {
   let updatedFieldData = ''; // Used when updating field info, not put into a state operation to avoid re-rendering unnecessarily
   // Index of the array is the index of the relevant row
@@ -97,8 +99,14 @@ export const MergeTable: FC<Props> = ({
       let sci = selectedChoices;
       sci[rowIndex] = selectedChoice;
       setSelectedChoices(sci);
+      if (transaction) {
+        let txn = transaction;
+        // @ts-ignore
+        txn['array'][selectedChoice.fieldIndex] = selectedChoice.value;
+        if (onChangeTransaction) onChangeTransaction(txn!);
+      }
     },
-    [setSelectedChoices, selectedChoices],
+    [setSelectedChoices, selectedChoices, onChangeTransaction, transaction],
   );
   let handleSetFieldToEdit = useCallback(
     (fieldToEdit: { rowIndex: number; choice: string } | undefined) => {
@@ -191,8 +199,6 @@ export const MergeTable: FC<Props> = ({
         return;
       }
 
-      console.log(submission);
-
       onSubmit(
         submission.sort((a, b) => (a.fieldIndex! < b.fieldIndex! ? -1 : 1)),
       );
@@ -241,7 +247,6 @@ export const MergeTable: FC<Props> = ({
 
       handleSetFieldToEdit(undefined);
       handleSetData();
-      console.log(rows);
     },
     [rows, handleSetFieldToEdit, handleSetData, setSelectedChoices],
   );
@@ -276,7 +281,6 @@ export const MergeTable: FC<Props> = ({
           onClose={() => handleSetTransactionToView(undefined)}
         >
           <EditTransaction
-            loggedUserId={loggedUserId}
             transactionInput={transactionToView.toObject()}
             onSave={saved => {
               onSaveMergedTransaction!(saved);

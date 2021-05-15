@@ -106,7 +106,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
 
   const handleSetTransactionToSave = useCallback(
     (transactionToSaveNew: Transaction) => {
-      console.log('Setting it to: ', transactionToSaveNew);
       setTransactionToSave(transactionToSaveNew);
     },
     [setTransactionToSave],
@@ -118,7 +117,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
         let activityLogMade = await ActivityLogClientService.Create(
           activityLog,
         );
-        console.log(activityLogMade);
       } catch (err) {
         console.error(
           `An error occurred while creating the activity log for the transaction: ${err}`,
@@ -133,7 +131,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     async (transaction: Transaction) => {
       try {
         let txnMade = await TransactionClientService.Create(transaction);
-
         let activityLog = new ActivityLog();
         activityLog.setActivityName(
           `Merged Transactions - IDs: ${transactions!
@@ -161,7 +158,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
     let newConflicts: Conflict[] = [];
     let newTransaction = new Transaction();
 
-    console.log('TXNS: ', transactions);
     transactions.forEach((transaction, index) => {
       // If a field is empty on the transaction being merged or if it is equivalent on both transactions, we want to keep it to the existent one.
       // If there are different (but set) fields then the transactions should be put into a conflict. If there were never any conflicts, the
@@ -291,8 +287,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
       }
     });
 
-    console.log('transactions:', transactions);
-    console.log('New txn: ', newTransaction);
     return [newConflicts, newTransaction];
   };
 
@@ -349,28 +343,43 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
             transaction={transactionToSave}
             viewMergedTransaction
             onSaveMergedTransaction={saved => {
-              console.log('Saved: ', saved);
               let txn = new Transaction();
-              let idx = 0;
-              console.log('KEYS: ', Object.keys(saved));
 
               for (const fieldName of Object.keys(saved)) {
-                //@ts-ignore
-                txn[getRPCFields(fieldName).methodName](saved[fieldName]);
-                idx++;
+                // @ts-ignore
+                if (saved[fieldName] != null) {
+                  // Can't seem to do this a better way
+                  txn.setJobId(saved['jobId']);
+                  txn.setDepartmentId(saved['departmentId']);
+                  txn.setOwnerId(saved['ownerId']);
+                  txn.setVendor(saved['vendor']);
+                  txn.setCostCenterId(saved['costCenterId']);
+                  txn.setDescription(saved['description']);
+                  txn.setAmount(saved['amount']);
+                  txn.setTimestamp(saved['timestamp']);
+                  txn.setNotes(saved['notes']);
+                  txn.setIsActive(saved['isActive']);
+                  txn.setStatusId(saved['statusId']);
+                  txn.setStatus(saved['status']);
+                  txn.setOwnerName(saved['ownerName']);
+                  txn.setCardUsed(saved['cardUsed']);
+                  txn.setIsAudited(saved['isAudited']);
+                  txn.setIsRecorded(saved['isRecorded']);
+                  txn.setVendorCategory(saved['vendorCategory']);
+                  txn.setAssignedEmployeeId(saved['assignedEmployeeId']);
+                  txn.setAssignedEmployeeName(saved['assignedEmployeeName']);
+                }
               }
-
-              console.log('Created txn: ', txn);
 
               handleSetTransactionToSave(txn);
             }}
+            onChangeTransaction={newTxn => handleSetTransactionToSave(newTxn)}
             columnHeaders={[{ name: 'Name of Field' }]}
             rows={conflicts.map(conflict => {
               // Need to be each conflict's relevant field
               const keys = Object.keys(
                 conflict.transactionsAffected[0].toObject(),
               );
-              console.log('Conflict.index: ', conflict.index);
               return {
                 // @ts-ignore
                 rowName: keys[conflict.index],
