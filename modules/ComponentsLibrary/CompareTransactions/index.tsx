@@ -64,6 +64,10 @@ const IgnoredFieldNames: string[] = [
   'ownerName',
   'assignedEmployeeName',
   'id',
+  'costCenterString',
+  'activityLogList',
+  'cardUsed',
+  'artificalId',
 ];
 
 export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
