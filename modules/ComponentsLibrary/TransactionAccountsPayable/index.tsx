@@ -588,6 +588,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
     refresh();
   }, [refresh, resetTransactions]);
 
+  console.log('Transactions: ', transactions);
   return (
     <>
       {loading ? <Loader /> : <> </>}
@@ -653,7 +654,10 @@ export const TransactionAccountsPayable: FC<Props> = ({
         title="Transactions"
         key={String(pageNumber)}
         pagination={{
-          count: transactions ? transactions![0].totalCount : 0,
+          count:
+            transactions && transactions.length > 0
+              ? transactions![0].totalCount
+              : 0,
           rowsPerPage: 25,
           page: pageNumber,
           onChangePage: handleChangePage,
