@@ -44,6 +44,7 @@ import { Prompt } from '../../Prompt/main';
 import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
+import { CompareTransactions } from '../CompareTransactions';
 import { GalleryData } from '../Gallery';
 import { Data, InfoTable } from '../InfoTable';
 import { Modal } from '../Modal';
@@ -437,13 +438,6 @@ export const TransactionAccountsPayable: FC<Props> = ({
     [refresh],
   );
 
-  const handleSetTransactions = useCallback(
-    (txns: SelectorParams[]) => {
-      setTransactions(txns);
-    },
-    [setTransactions],
-  );
-
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
       pageNumber = pageNumberToChangeTo;
@@ -618,7 +612,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
           open={mergingTransaction}
           onClose={() => handleSetMergingTransaction(false)}
         >
-          <>Merging</>
+          <CompareTransactions loggedUserId={loggedUserId} />
         </Modal>
       ) : (
         <></>
