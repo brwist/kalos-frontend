@@ -62,6 +62,7 @@ interface Props {
     deselectedTransaction: Transaction,
     selectedTransactions: Transaction[],
   ) => void;
+  hasActions?: boolean;
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
@@ -91,6 +92,7 @@ export const TransactionAccountsPayable: FC<Props> = ({
   isSelector,
   onSelect,
   onDeselect,
+  hasActions,
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
@@ -345,7 +347,8 @@ export const TransactionAccountsPayable: FC<Props> = ({
     );
     setEmployees(sortedEmployeeList);
 
-    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+    const departments =
+      await TimesheetDepartmentClientService.loadTimeSheetDepartments();
     setDepartments(departments);
 
     resetTransactions();
@@ -655,16 +658,20 @@ export const TransactionAccountsPayable: FC<Props> = ({
           page: pageNumber,
           onChangePage: handleChangePage,
         }}
-        actions={[
-          {
-            label: 'New Transaction',
-            onClick: () => handleSetCreatingTransaction(true), // makes uploadPhotoTransaction appear in a modal
-          },
-          {
-            label: 'Merge Transactions',
-            onClick: () => handleSetMergingTransaction(true), // makes merge popup come up
-          },
-        ]}
+        actions={
+          hasActions
+            ? [
+                {
+                  label: 'New Transaction',
+                  onClick: () => handleSetCreatingTransaction(true), // makes uploadPhotoTransaction appear in a modal
+                },
+                {
+                  label: 'Merge Transactions',
+                  onClick: () => handleSetMergingTransaction(true), // makes merge popup come up
+                },
+              ]
+            : []
+        }
       />
       <InfoTable
         key={
