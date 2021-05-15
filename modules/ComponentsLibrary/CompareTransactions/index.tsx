@@ -1,7 +1,6 @@
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useState } from 'react';
 import { SectionBar } from '../SectionBar';
-import { TransactionAccountsPayable } from '../TransactionAccountsPayable';
 import {
   ActivityLogClientService,
   getRPCFields,
@@ -16,6 +15,7 @@ import { Loader } from '../../Loader/main';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
 import { compact } from 'lodash';
+import TransactionAccountsPayable from '../../TransactionAccountsPayable/main';
 
 interface Props {
   loggedUserId: number;

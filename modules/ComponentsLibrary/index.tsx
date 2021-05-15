@@ -89,7 +89,7 @@ import TimeOff from './TimeOff/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Timesheet from './Timesheet/examples';
 import Tooltip from './Tooltip/examples';
-import TransactionAccountsPayable from './TransactionAccountsPayable/examples';
+import TransactionAccountsPayable from '../TransactionAccountsPayable/examples';
 import TripInfoTable from './TripInfoTable/examples';
 import TripSummary from './TripSummary/examples';
 import TripViewModal from './TripViewModal/examples';
