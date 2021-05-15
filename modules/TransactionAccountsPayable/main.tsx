@@ -24,7 +24,7 @@ import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { parseISO } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { ENDPOINT, OPTION_ALL } from '../../../constants';
+import { ENDPOINT, OPTION_ALL } from '../../constants';
 import {
   getSlackID,
   makeFakeRows,
@@ -36,22 +36,22 @@ import {
   TransactionClientService,
   UserClientService,
   UserType,
-} from '../../../helpers';
-import { AltGallery } from '../../AltGallery/main';
-import { Tooltip } from '../../ComponentsLibrary/Tooltip';
-import { Loader } from '../../Loader/main';
-import { Prompt } from '../../Prompt/main';
-import { TxnLog } from '../../transaction/components/log';
-import { TxnNotes } from '../../transaction/components/notes';
-import { prettyMoney } from '../../transaction/components/row';
-import { CompareTransactions } from '../CompareTransactions';
-import { GalleryData } from '../Gallery';
-import { Data, InfoTable } from '../InfoTable';
-import { Modal } from '../Modal';
-import { FilterData, RoleType } from '../Payroll';
-import { PlainForm, Schema } from '../PlainForm';
-import { SectionBar } from '../SectionBar';
-import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
+} from '../../helpers';
+import { AltGallery } from '../AltGallery/main';
+import { Tooltip } from '../ComponentsLibrary/Tooltip';
+import { Loader } from '../Loader/main';
+import { Prompt } from '../Prompt/main';
+import { TxnLog } from '../transaction/components/log';
+import { TxnNotes } from '../transaction/components/notes';
+import { prettyMoney } from '../transaction/components/row';
+import { CompareTransactions } from '../ComponentsLibrary/CompareTransactions';
+import { GalleryData } from '../ComponentsLibrary/Gallery';
+import { Data, InfoTable } from '../ComponentsLibrary/InfoTable';
+import { Modal } from '../ComponentsLibrary/Modal';
+import { FilterData, RoleType } from '../ComponentsLibrary/Payroll';
+import { PlainForm, Schema } from '../ComponentsLibrary/PlainForm';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
+import { UploadPhotoTransaction } from '../ComponentsLibrary/UploadPhotoTransaction';
 interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -88,7 +88,7 @@ let filter = {
   employeeId: 0,
   week: OPTION_ALL,
 };
-export const TransactionAccountsPayable: FC<Props> = ({
+const TransactionAccountsPayable: FC<Props> = ({
   loggedUserId,
   isSelector,
   onSelect,
@@ -1010,3 +1010,5 @@ export const TransactionAccountsPayable: FC<Props> = ({
     </>
   );
 };
+
+export default TransactionAccountsPayable;
