@@ -69,15 +69,15 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Notes',
         name: 'notes',
+        multiline: true,
       },
     ],
     [
       {
-        label: 'Is active?',
-        name: 'isActive',
-        type: 'checkbox',
+        label: 'Description',
+        name: 'description',
+        multiline: true,
       },
-
       {
         label: 'Status',
         name: 'status',
@@ -88,37 +88,11 @@ export const EditTransaction: FC<Props> = ({
         label: 'Vendor',
         name: 'vendor',
       },
-
-      {
-        label: 'Description',
-        name: 'description',
-      },
-      {
-        label: 'Owner Name',
-        name: 'ownerName',
-      },
-      {
-        label: 'Card Used',
-        name: 'cardUsed',
-      },
-      {
-        label: 'Documents',
-        name: 'documentsList',
-      },
     ],
     [
       {
-        label: 'Transaction Department',
-        name: 'department',
-      },
-      {
-        label: 'Cost Center',
-        name: 'costCenter',
-      },
-      {
-        label: 'Is audited?',
-        name: 'isAudited',
-        type: 'checkbox',
+        label: 'Vendor Category',
+        name: 'vendorCategory',
       },
     ],
     [
@@ -128,12 +102,14 @@ export const EditTransaction: FC<Props> = ({
         type: 'checkbox',
       },
       {
-        label: 'Vendor Category',
-        name: 'vendorCategory',
+        label: 'Is active?',
+        name: 'isActive',
+        type: 'checkbox',
       },
       {
-        label: 'Assigned Employee Name',
-        name: 'assignedEmployeeName',
+        label: 'Is audited?',
+        name: 'isAudited',
+        type: 'checkbox',
       },
     ],
   ];
