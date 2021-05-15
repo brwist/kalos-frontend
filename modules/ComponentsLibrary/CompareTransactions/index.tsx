@@ -19,6 +19,7 @@ import { compact } from 'lodash';
 
 interface Props {
   loggedUserId: number;
+  onClose?: () => void;
 }
 
 // Conflicts are checked before they are created, and if there is one with the same index on it then
@@ -70,7 +71,7 @@ const IgnoredFieldNames: string[] = [
   'artificalId',
 ];
 
-export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
+export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
 
@@ -413,12 +414,25 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId }) => {
       )}
       <SectionBar
         title="Select Transactions To Merge"
-        actions={[
-          {
-            label: 'Merge',
-            onClick: handleMerge,
-          },
-        ]}
+        actions={
+          !onClose
+            ? [
+                {
+                  label: 'Merge',
+                  onClick: handleMerge,
+                },
+              ]
+            : [
+                {
+                  label: 'Merge',
+                  onClick: handleMerge,
+                },
+                {
+                  label: 'Close',
+                  onClick: () => onClose(),
+                },
+              ]
+        }
       />
       <TransactionAccountsPayable
         loggedUserId={loggedUserId}
