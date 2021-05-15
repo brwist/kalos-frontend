@@ -5,27 +5,21 @@ import { Form, Schema } from '../Form';
 import { PlainForm } from '../PlainForm';
 
 interface Props {
-  loggedUserId: number;
   transactionInput: Transaction.AsObject;
   onSave: (saved: Transaction.AsObject) => void;
   onClose: () => void;
+  onChange?: (changed: Transaction.AsObject) => void;
 }
 
 export const EditTransaction: FC<Props> = ({
-  loggedUserId,
   transactionInput,
   onSave,
   onClose,
+  onChange,
 }) => {
-  const [transaction, setTransaction] =
-    useState<Transaction.AsObject>(transactionInput);
+  const [transaction] = useState<Transaction.AsObject>(transactionInput);
   const SCHEMA: Schema<Transaction.AsObject> = [
     [
-      {
-        label: 'ID',
-        name: 'id',
-        type: 'number',
-      },
       {
         label: 'Job ID',
         name: 'jobId',
@@ -137,7 +131,6 @@ export const EditTransaction: FC<Props> = ({
         label: 'Vendor Category',
         name: 'vendorCategory',
       },
-
       {
         label: 'Assigned Employee Name',
         name: 'assignedEmployeeName',
@@ -149,7 +142,7 @@ export const EditTransaction: FC<Props> = ({
       <Form<Transaction.AsObject>
         schema={SCHEMA}
         data={transaction}
-        onChange={changed => console.log(changed)}
+        onChange={onChange}
         onSave={saved => onSave(saved)}
         onClose={onClose}
         submitLabel="Save"
