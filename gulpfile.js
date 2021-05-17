@@ -1089,5 +1089,6 @@ const MODULE_MAP = {
   Timesheet: ['admin', 'timesheet', 'timesheetview_new'],
   ToolLog: [],
   Transaction: ['admin', 'reports', 'transaction_admin'],
+  TransactionAccountsPayable: ['admin', 'reports', 'transactions'],
   TransactionUser: ['admin', 'reports', 'transactions'],
 };

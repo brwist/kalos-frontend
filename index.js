@@ -47,6 +47,7 @@ export { Tables } from "./build/dist/Tables";
 export { Theme } from "./build/dist/Theme";
 export { Timesheet } from "./build/dist/Timesheet";
 export { ToolLog } from "./build/dist/ToolLog";
-export { Transaction } from "./build/dist/Transaction";
+export { Transaction } from "./build/dist/Transaction"; 
+export { TransactionAccountsPayable } from "./build/dist/TransactionAccountsPayable";
 export { TransactionUser } from "./build/dist/TransactionUser";
 export { declarations.d.ts } from "./build/dist/declarations.d.ts";

@@ -3,7 +3,11 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { Field as FieldComponent } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
-import { EventType, makeFakeRows, TaskClientService } from '../../../helpers';
+import {
+  EventType,
+  makeFakeRows,
+  TaskClientService, 
+} from '../../../helpers';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
 import { IconButton, Typography } from '@material-ui/core';
