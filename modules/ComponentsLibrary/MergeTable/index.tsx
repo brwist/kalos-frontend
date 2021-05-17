@@ -44,6 +44,7 @@ interface Props {
   transaction?: Transaction; // Optional, passed in for above
   onSaveMergedTransaction?: (transaction: Transaction.AsObject) => void;
   onChangeTransaction?: (newTxn: Transaction) => void;
+  loading?: boolean;
 }
 
 type Field = {
@@ -61,6 +62,7 @@ export const MergeTable: FC<Props> = ({
   transaction,
   onSaveMergedTransaction,
   onChangeTransaction,
+  loading,
 }) => {
   let updatedFieldData = ''; // Used when updating field info, not put into a state operation to avoid re-rendering unnecessarily
   // Index of the array is the index of the relevant row
@@ -333,6 +335,7 @@ export const MergeTable: FC<Props> = ({
           {
             label: 'Merge (Create New)',
             onClick: () => handleMerge(selectedChoices),
+            loading: loading,
           },
           { label: 'Cancel', onClick: () => onCancel() },
         ]}
