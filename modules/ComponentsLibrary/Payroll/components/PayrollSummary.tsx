@@ -76,12 +76,6 @@ export const PayrollSummary: FC<Props> = ({
         ? 1
         : -1,
     );
-    // const ids = await TimesheetLineClientService.GetIDsForPayroll(
-    //   filter.startDate,
-    //   filter.endDate,
-    // );
-    // console.log({ ids });
-    // setIDList(ids);
     setTimesheets(sortedResultsList);
     setCount(totalCount);
     setLoading(false);
@@ -109,6 +103,25 @@ export const PayrollSummary: FC<Props> = ({
         }
       }
     }
+
+    setTimeout(() => {
+      setPendingView(tempPendingView);
+    }, 1000);
+  };
+  const handlePreviousEmployee = () => {
+    let tempPendingView = pendingView;
+    setPendingView(undefined);
+    if (tempPendingView != undefined) {
+      for (let i = 0; i < timesheets.length; i++) {
+        if (
+          timesheets[i].technicianUserId === tempPendingView.technicianUserId
+        ) {
+          tempPendingView = timesheets[i - 1];
+          break;
+        }
+      }
+    }
+
     setTimeout(() => {
       setPendingView(tempPendingView);
     }, 1000);
@@ -182,6 +195,7 @@ export const PayrollSummary: FC<Props> = ({
             loggedUserId={loggedUser}
             notReady={toggle}
             onNext={() => handleNextEmployee()}
+            onPrevious={() => handlePreviousEmployee()}
           ></CostSummary>
         </Modal>
       )}
