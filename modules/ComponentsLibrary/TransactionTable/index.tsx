@@ -762,7 +762,7 @@ export const TransactionTable: FC<Props> = ({
         ]}
         data={
           loading
-            ? makeFakeRows(8, 5)
+            ? makeFakeRows(10, 20)
             : (transactions?.map((selectorParam, idx) => {
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
