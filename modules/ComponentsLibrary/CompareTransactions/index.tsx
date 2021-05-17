@@ -8,13 +8,11 @@ import {
 } from '../../../helpers';
 import { Modal } from '../Modal';
 import { MergeTable, SelectedChoice } from '../MergeTable';
-import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { Alert } from '../Alert';
 import { Typography } from '@material-ui/core';
 import { Loader } from '../../Loader/main';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
-import { compact } from 'lodash';
 import { TransactionTable } from '../TransactionTable';
 
 interface Props {
