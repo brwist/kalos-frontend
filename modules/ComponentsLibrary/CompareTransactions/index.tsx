@@ -15,6 +15,12 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
 import { TransactionTable } from '../TransactionTable';
 
+/*
+  Compares transactions with each other and has the ability to create a "diff view" sort of table which shows conflicts in the 
+  transactions. The user can click on the buttons to resolve the conflicts by choosing the correct option for them, and they can
+  modify their choices in the transaction viewer if they so choose before they upload. 
+*/
+
 interface Props {
   loggedUserId: number;
   onClose?: () => void;
@@ -28,6 +34,7 @@ interface Conflict {
   transactionsAffected: Transaction[]; // The transactions that are conflicting with each other
 }
 
+// The names displayed in the rows of the table (database name as key, display name as value)
 const ProperTransactionNames = {
   id: 'Id',
   jobId: 'Job ID',
@@ -57,6 +64,8 @@ const ProperTransactionNames = {
   assignedEmployeeName: 'Assigned Employee Name',
 };
 
+// The fields to ignore when generating conflicts. This will prevent the user from setting any value for these when upserting the
+// merged transaction to the database.
 const IgnoredFieldNames: string[] = [
   'activityLogString',
   'departmentString',
@@ -200,16 +209,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
     let newTransaction = new Transaction();
 
     transactions.forEach((transaction, index) => {
-      // If a field is empty on the transaction being merged or if it is equivalent on both transactions, we want to keep it to the existent one.
-      // If there are different (but set) fields then the transactions should be put into a conflict. If there were never any conflicts, the
-      // merge will skip the conflict resolution step. However, if there is a conflict, then it should have a conflict resolution step and
-      // the Accounts Payable employee will be able to choose each field to accept or change via a diff view. This will set the fields of a
-      // transaction in the background upon change that will be upserted in the transactions. The upsert will either keep the current ones,
-      // delete all or delete a few of the transactions.
-
-      // If not null, we can compare them. If it is null, nothing to compare - just use that transaction that exists
       if (transactions[index - 1] == null) {
-        //mergedTxns.push(transaction);
       } else {
         // Loop over fields in the current transaction and compare that with the fields in the previous transaction at the same index
         let fieldIndex = 0;
@@ -268,6 +268,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
           }
 
           if (fieldCurrent == fieldPrevious) {
+            // Set the field to the value of the current field
             //@ts-ignore
             newTransaction['array'][fieldIndex] = fieldCurrent;
           }
@@ -356,9 +357,6 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
     setTransactionToSave,
   ]);
 
-  // Each row is a specific conflict
-  // Each conflict holds an index and a txn
-  //
   return (
     <>
       {loading && <Loader />}
@@ -417,20 +415,15 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
             onChangeTransaction={newTxn => handleSetTransactionToSave(newTxn)}
             columnHeaders={[{ name: 'Name of Field' }]}
             rows={conflicts.map(conflict => {
-              // Need to be each conflict's relevant field
               const keys = Object.keys(
                 conflict.transactionsAffected[0].toObject(),
               );
               return {
-                // @ts-ignore
                 rowName: keys[conflict.index],
                 rowIndex: conflict.index,
                 choices: conflict.transactionsAffected.map(txn => {
                   // @ts-ignore
-
                   let cast = txn.toObject()[keys[conflict.index]];
-
-                  //@ts-ignore
                   return `${cast}`;
                 }),
               };
