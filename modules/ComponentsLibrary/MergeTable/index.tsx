@@ -9,14 +9,12 @@
 // There is a "View Merged Transaction" feature that can be toggled on and off in the props that is bound to specifically
 // transactions, however.
 
-import { IconButton, Typography } from '@material-ui/core';
+import { Typography } from '@material-ui/core';
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { Alert } from '../Alert';
 import { Button } from '../Button';
 import { Columns, Data, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
-import EditIcon from '@material-ui/icons/Edit';
-import { Tooltip } from '../Tooltip';
 import { PlainForm, Schema } from '../PlainForm';
 import { Modal } from '../Modal';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
@@ -272,6 +270,9 @@ export const MergeTable: FC<Props> = ({
         {
           label: 'View Merged Transaction',
           onClick: () => handleSetTransactionToView(transaction),
+          disabled:
+            selectedChoices.filter(choice => choice.fieldIndex != undefined)
+              .length != rows.length,
         },
       ]
     : [];
