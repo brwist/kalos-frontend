@@ -48,6 +48,7 @@ interface Props {
   notReady: boolean;
   onClose: (() => void) | null;
   onNext?: (() => void) | null;
+  onPrevious?: (() => void) | null;
   username: string;
 }
 
@@ -56,6 +57,7 @@ export const CostSummary: FC<Props> = ({
   notReady,
   onClose,
   onNext,
+  onPrevious,
   username,
 }) => {
   const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
@@ -871,6 +873,11 @@ export const CostSummary: FC<Props> = ({
           />
         )}
       </SectionBar>
+      {onPrevious != null ? (
+        <Button label="Previous Employee" onClick={() => onPrevious()}></Button>
+      ) : (
+        []
+      )}
       {onNext != null ? (
         <Button label="Next Employee" onClick={() => onNext()}></Button>
       ) : (
