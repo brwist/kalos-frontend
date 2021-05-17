@@ -366,10 +366,9 @@ async function releaseBuild(target) {
           values: {
             'process.env.NODE_ENV': JSON.stringify('production'),
             //'core-dev.kalosflorida.com': 'core.kalosflorida.com',
-            'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
-            'https://dev-core.kalosflorida.com': JSON.stringify(
-              'https://core.kalosflorida.com:8443',
-            ),
+            'dev-core.kalosflorida.com': 'prod-core.kalosflorida.com',
+            'https://dev-core.kalosflorida.com':
+              'https://prod-core.kalosflorida.com',
           },
           delimiter: ['', ''],
         }),
@@ -389,7 +388,7 @@ async function releaseBuild(target) {
   sh.sed(
     '-i',
     'dev-core.kalosflorida.com',
-    'core.kalosflorida.com:8443',
+    'prod-core.kalosflorida.com',
     `build/dist/${target}/index.js`,
   );
   sh.sed(
@@ -673,10 +672,8 @@ const NAMED_EXPORTS = {
     'CallAssociation',
     'CallAssociationList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/contract_frequency_pb.js': [
-    'ContractFrequency',
-    'ContractFrequencyList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/contract_frequency_pb.js':
+    ['ContractFrequency', 'ContractFrequencyList'],
   'node_modules/react-to-print/lib/index.js': ['useReactToPrint'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/contract_pb.js': [
     'Contract',
@@ -690,10 +687,8 @@ const NAMED_EXPORTS = {
     'Document',
     'DocumentList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/employee_function_pb.js': [
-    'EmployeeFunction',
-    'EmployeeFunctionList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/employee_function_pb.js':
+    ['EmployeeFunction', 'EmployeeFunctionList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/event_pb.js': [
     'Event',
     'EventList',
@@ -742,12 +737,13 @@ const NAMED_EXPORTS = {
     'PromptPaymentReport',
     'PromptPaymentReportLine',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/internal_document_pb.js': [
-    'InternalDocument',
-    'InternalDocumentList',
-    'DocumentKey',
-    'DocumentKeyList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/internal_document_pb.js':
+    [
+      'InternalDocument',
+      'InternalDocumentList',
+      'DocumentKey',
+      'DocumentKeyList',
+    ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/invoice_pb.js': [
     'Invoice',
     'InvoiceList',
@@ -768,10 +764,8 @@ const NAMED_EXPORTS = {
     'Logger',
     'LoggerList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/maintenance_question_pb.js': [
-    'MaintenanceQuestion',
-    'MaintenanceQuestionList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/maintenance_question_pb.js':
+    ['MaintenanceQuestion', 'MaintenanceQuestionList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/material_pb.js': [
     'Material',
     'MaterialList',
@@ -788,18 +782,12 @@ const NAMED_EXPORTS = {
     'PhoneCallLog',
     'PhoneCallLogList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/phone_call_log_detail_pb.js': [
-    'PhoneCallLogDetail',
-    'PhoneCallLogDetailList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/prompt_payment_override_pb.js': [
-    'PromptPaymentOverride',
-    'PromptPaymentOverrideList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/prompt_payment_rebate_pb.js': [
-    'PromptPaymentRebate',
-    'PromptPaymentRebateList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/phone_call_log_detail_pb.js':
+    ['PhoneCallLogDetail', 'PhoneCallLogDetailList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/prompt_payment_override_pb.js':
+    ['PromptPaymentOverride', 'PromptPaymentOverrideList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/prompt_payment_rebate_pb.js':
+    ['PromptPaymentRebate', 'PromptPaymentRebateList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/prop_link_pb.js': [
     'PropLink',
     'PropLinkList',
@@ -844,34 +832,22 @@ const NAMED_EXPORTS = {
     'ServiceItem',
     'ServiceItemList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/service_item_image_pb.js': [
-    'ServiceItemImage',
-    'ServiceItemImageList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/service_item_material_pb.js': [
-    'ServiceItemMaterial',
-    'ServiceItemMaterialList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/service_item_unit_pb.js': [
-    'ServiceItemUnit',
-    'ServiceItemUnitList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/service_reading_line_pb.js': [
-    'ServiceReadingLine',
-    'ServiceReadingLineList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/services_rendered_pb.js': [
-    'ServicesRendered',
-    'ServicesRenderedList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/service_item_image_pb.js':
+    ['ServiceItemImage', 'ServiceItemImageList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/service_item_material_pb.js':
+    ['ServiceItemMaterial', 'ServiceItemMaterialList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/service_item_unit_pb.js':
+    ['ServiceItemUnit', 'ServiceItemUnitList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/service_reading_line_pb.js':
+    ['ServiceReadingLine', 'ServiceReadingLineList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/services_rendered_pb.js':
+    ['ServicesRendered', 'ServicesRenderedList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/si_link_pb.js': [
     'SiLink',
     'SiLinkList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/spiff_tool_admin_action_pb.js': [
-    'SpiffToolAdminAction',
-    'SpiffToolAdminActionList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/spiff_tool_admin_action_pb.js':
+    ['SpiffToolAdminAction', 'SpiffToolAdminActionList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/stock_vendor_pb.js': [
     'StockVendor',
     'StockVendorList',
@@ -880,14 +856,10 @@ const NAMED_EXPORTS = {
     'StoredQuotes',
     'StoredQuotesList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/system_invoice_type_pb.js': [
-    'SystemInvoiceType',
-    'SystemInvoiceTypeList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/system_readings_type_pb.js': [
-    'SystemReadingsType',
-    'SystemReadingsTypeList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/system_invoice_type_pb.js':
+    ['SystemInvoiceType', 'SystemInvoiceTypeList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/system_readings_type_pb.js':
+    ['SystemReadingsType', 'SystemReadingsTypeList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/common_pb.js': [
     'Empty',
     'Int32',
@@ -935,10 +907,8 @@ const NAMED_EXPORTS = {
     'TaskEvent',
     'TaskEventList',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/technician_skills_pb.js': [
-    'TechnicianSkills',
-    'TechnicianSkillsList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/technician_skills_pb.js':
+    ['TechnicianSkills', 'TechnicianSkillsList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb.js': [
     'TimeoffRequest',
     'TimeoffRequestList',
@@ -954,35 +924,23 @@ const NAMED_EXPORTS = {
     'Timesheet',
     'TimesheetDay',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_classcode_pb.js': [
-    'TimesheetClassCode',
-    'TimesheetClassCodeList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_department_pb.js': [
-    'TimesheetDepartment',
-    'TimesheetDepartmentList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_classcode_pb.js':
+    ['TimesheetClassCode', 'TimesheetClassCodeList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/timesheet_department_pb.js':
+    ['TimesheetDepartment', 'TimesheetDepartmentList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_pb.js': [
     'Transaction',
     'TransactionList',
     'RecordPageReq',
   ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_account_pb.js': [
-    'TransactionAccount',
-    'TransactionAccountList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_activity_pb.js': [
-    'TransactionActivity',
-    'TransactionActivityList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_document_pb.js': [
-    'TransactionDocument',
-    'TransactionDocumentList',
-  ],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_status_pb.js': [
-    'TransactionStatus',
-    'TransactionStatusList',
-  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_account_pb.js':
+    ['TransactionAccount', 'TransactionAccountList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_activity_pb.js':
+    ['TransactionActivity', 'TransactionActivityList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_document_pb.js':
+    ['TransactionDocument', 'TransactionDocumentList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_status_pb.js':
+    ['TransactionStatus', 'TransactionStatusList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/user_group_link_pb.js': [
     'UserGroupLink',
     'UserGroupLinkList',
