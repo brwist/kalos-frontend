@@ -160,6 +160,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
   const handleSaveTransaction = useCallback(
     async (transaction: Transaction) => {
       try {
+        setLoading(true);
         let txnMade = await TransactionClientService.Create(transaction);
         let activityLog = new ActivityLog();
         activityLog.setActivityName(
@@ -173,6 +174,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
         await deleteTransactions();
 
         await handleSaveActivityLog(activityLog);
+        setLoading(false);
       } catch (err) {
         console.error(`An error occurred while saving the transaction: ${err}`);
         setUpsertError(err);
@@ -183,6 +185,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
       setUpsertError,
       transactions,
       deleteTransactions,
+      setLoading,
     ],
   );
 
@@ -434,6 +437,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
             onSubmit={handleSetSubmissionResults}
             onCancel={() => handleSetConflicts([])}
             properNames={ProperTransactionNames}
+            loading={loading}
           />
         </Modal>
       )}
