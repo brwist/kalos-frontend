@@ -216,7 +216,7 @@ function cfURL(action: string, qs = '') {
 /**
  *
  * @param number
- * @returns string as number with trailing zero, if number is lett than 10
+ * @returns string as number with trailing zero, if number is less than 10
  */
 function trailingZero(val: number) {
   return `${val < 10 ? 0 : ''}${val}`;
@@ -501,15 +501,17 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return ({
-    0: 'Sun',
-    1: 'Mon',
-    2: 'Tue',
-    3: 'Wed',
-    4: 'Thu',
-    5: 'Fri',
-    6: 'Sat',
-  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
+  return (
+    {
+      0: 'Sun',
+      1: 'Mon',
+      2: 'Tue',
+      3: 'Wed',
+      4: 'Thu',
+      5: 'Fri',
+      6: 'Sat',
+    } as { [key: number]: string }
+  )[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**
