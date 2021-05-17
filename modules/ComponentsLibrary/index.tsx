@@ -19,6 +19,7 @@ import CallbackReport from './CallbackReport/examples';
 import CharityReport from './CharityReport/examples';
 import Chart from './Chart/examples';
 import CheckInProjectTask from './CheckInProjectTask/examples';
+import CompareTransactions from './CompareTransactions/examples';
 import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
 import ConfirmService from './ConfirmService/examples';
@@ -31,6 +32,7 @@ import CustomerInformation from './CustomerInformation/examples';
 import DeletedServiceCallsReport from './DeletedServiceCallsReport/examples';
 import Documents from './Documents/examples';
 import EditProject from './EditProject/examples';
+import EditTransaction from './EditTransaction/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
 import EventsReport from './EventsReport/examples';
 import ExportJSON from './ExportJSON/examples';
@@ -45,6 +47,7 @@ import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
 import LodgingByZipCode from './LodgingByZipCode/examples';
 import ManagerTimeoffs from './ManagerTimeoffs/examples';
+import MergeTable from './MergeTable/examples';
 import Modal from './Modal/examples';
 import Payroll from './Payroll/examples';
 import PDFInvoice from './PDFInvoice/examples';
@@ -86,7 +89,7 @@ import TimeOff from './TimeOff/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Timesheet from './Timesheet/examples';
 import Tooltip from './Tooltip/examples';
-import TransactionAccountsPayable from './TransactionAccountsPayable/examples';
+import TransactionTable from './TransactionTable/examples';
 import TripInfoTable from './TripInfoTable/examples';
 import TripSummary from './TripSummary/examples';
 import TripViewModal from './TripViewModal/examples';
@@ -118,6 +121,7 @@ const COMPONENTS = {
   CharityReport,
   Chart,
   CheckInProjectTask,
+  CompareTransactions,
   Confirm,
   ConfirmDelete,
   ConfirmService,
@@ -130,6 +134,7 @@ const COMPONENTS = {
   DeletedServiceCallsReport,
   Documents,
   EditProject,
+  EditTransaction,
   EmployeeDepartments,
   EventsReport,
   ExportJSON,
@@ -144,6 +149,7 @@ const COMPONENTS = {
   Link,
   LodgingByZipCode,
   ManagerTimeoffs,
+  MergeTable,
   Modal,
   Payroll,
   PDFInvoice,
@@ -185,7 +191,7 @@ const COMPONENTS = {
   TimeoffSummaryReport,
   Timesheet,
   Tooltip,
-  TransactionAccountsPayable,
+  TransactionTable,
   TripInfoTable,
   TripSummary,
   TripViewModal,
@@ -204,9 +210,10 @@ const ComponentsLibrary = () => {
     Object.keys(COMPONENTS)[DEFAULT_COMPONENT_IDX] as keyof typeof COMPONENTS,
   );
   const Component = COMPONENTS[component];
-  const handleClickMenuItem = useCallback(v => () => setComponent(v), [
-    setComponent,
-  ]);
+  const handleClickMenuItem = useCallback(
+    v => () => setComponent(v),
+    [setComponent],
+  );
   const handleSelect = useCallback(
     ({ target: { value } }) => setComponent(value),
     [setComponent],
