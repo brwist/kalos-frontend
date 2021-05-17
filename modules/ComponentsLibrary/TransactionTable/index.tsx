@@ -654,7 +654,7 @@ export const TransactionTable: FC<Props> = ({
             transactions && transactions.length > 0
               ? transactions![0].totalCount
               : 0,
-          rowsPerPage: 25,
+          rowsPerPage: 50,
           page: pageNumber,
           onChangePage: handleChangePage,
         }}
@@ -762,7 +762,7 @@ export const TransactionTable: FC<Props> = ({
         ]}
         data={
           loading
-            ? makeFakeRows(10, 20)
+            ? makeFakeRows(10, 15)
             : (transactions?.map((selectorParam, idx) => {
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
