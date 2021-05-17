@@ -8,7 +8,6 @@ import { TimeOff } from '../TimeOff';
 import { Modal } from '../Modal';
 import {
   TimesheetDepartmentType,
-  getTimeoffRequestByFilter,
   TimeoffRequestType,
   formatDateTime,
   TimeoffRequestClientService,
