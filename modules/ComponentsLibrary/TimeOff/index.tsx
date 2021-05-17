@@ -186,6 +186,7 @@ export const TimeOff: FC<Props> = ({
         timeStarted,
         timeFinished,
       } = data;
+
       const userId = user?.id;
       if (timeFinished < timeStarted) {
         setError('End Time cannot be before Start Time');
@@ -201,6 +202,7 @@ export const TimeOff: FC<Props> = ({
         timeFinished,
         userId,
         briefDescription: '',
+        userApprovalDatetime: timestamp(),
       });
       const typeName = typeOptions.find(
         //@ts-ignore
@@ -469,17 +471,18 @@ export const TimeOff: FC<Props> = ({
     </>
   );
 };
-
 const getTimeoffTimestamp = function getTimeoffTimestamp(
   startDateStr: string,
   endDateStr: string,
   allDays = false,
 ) {
+  endDateStr = endDateStr.replace(/-/g, '/');
+  startDateStr = startDateStr.replace(/-/g, '/');
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
   return `${format(startDate, 'MMM dd yyyy')} - ${format(
     endDate,
-    'MMM dd yyyy',
+    'MM dd yyyy',
   )}`;
 };
 
