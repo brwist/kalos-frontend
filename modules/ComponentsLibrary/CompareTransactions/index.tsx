@@ -15,7 +15,7 @@ import { Loader } from '../../Loader/main';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
 import { compact } from 'lodash';
-import TransactionAccountsPayable from '../../TransactionAccountsPayable/main';
+import { TransactionTable } from '../TransactionTable';
 
 interface Props {
   loggedUserId: number;
@@ -459,7 +459,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
               ]
         }
       />
-      <TransactionAccountsPayable
+      <TransactionTable
         loggedUserId={loggedUserId}
         isSelector
         onSelect={(txnChanged, transactions) =>
