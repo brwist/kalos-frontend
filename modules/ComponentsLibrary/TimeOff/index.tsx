@@ -303,7 +303,9 @@ export const TimeOff: FC<Props> = ({
       onSaveOrDelete(data);
     }
   }, [requestOffId, setSaving, onSaveOrDelete, data]);
-  const isAdmin = loggedUser && loggedUser.isAdmin;
+  const isAdmin =
+    loggedUser && loggedUser.permissionGroupsList.find(p => p.type === 'role');
+  console.log(isAdmin);
   const disabled = !(data.id && isAdmin);
   const disabledAdmin = disabled || !!data.adminApprovalUserId;
   const schema: Schema<TimeoffRequestType> = [
