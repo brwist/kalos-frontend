@@ -147,6 +147,11 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
         let activityLogMade = await ActivityLogClientService.Create(
           activityLog,
         );
+        if (activityLogMade)
+          console.log(
+            'Activity log was created successfully: ',
+            activityLogMade,
+          );
       } catch (err) {
         console.error(
           `An error occurred while creating the activity log for the transaction: ${err}`,
