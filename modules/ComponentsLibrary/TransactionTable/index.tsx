@@ -73,6 +73,7 @@ type SortString =
   | 'department_id'
   | 'job_id'
   | 'amount'
+  | 'vendor'
   | 'description';
 
 type SelectorParams = {
@@ -575,7 +576,7 @@ export const TransactionTable: FC<Props> = ({
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, []);
 
   useEffect(() => {
     resetTransactions();
@@ -746,14 +747,14 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => handleChangeSort('amount'),
           },
           {
-            name: 'Description',
+            name: 'Vendor',
             dir:
-              sortBy == 'description'
+              sortBy == 'vendor'
                 ? sortDir != ' '
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('description'),
+            onClick: () => handleChangeSort('vendor'),
           },
           { name: 'Actions' },
           {
@@ -816,7 +817,7 @@ export const TransactionTable: FC<Props> = ({
                       : undefined,
                   },
                   {
-                    value: selectorParam.txn.getDescription(),
+                    value: selectorParam.txn.getVendor(),
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
