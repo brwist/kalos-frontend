@@ -83,9 +83,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
 
   // Deletes all selected transactions
   const deleteTransactions = async () => {
-    console.log('Running deleteTransactions');
     if (!transactions) {
-      console.log('No transaction to delete.');
       return;
     }
     for await (const txn of transactions) {
