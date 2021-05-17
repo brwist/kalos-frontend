@@ -83,6 +83,24 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
 
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Deletes all selected transactions
+  const deleteTransactions = async () => {
+    console.log('Running deleteTransactions');
+    if (!transactions) {
+      console.log('No transaction to delete.');
+      return;
+    }
+    for await (const txn of transactions) {
+      try {
+        const transactionResult = await TransactionClientService.Delete(txn);
+        if (transactionResult)
+          console.log('Deleted transaction: ', transactionResult);
+      } catch (err) {
+        console.error('Failed to delete transaction: ', err);
+      }
+    }
+  };
+
   const handleSetConflicts = useCallback(
     (conflicts: Conflict[]) => setConflicts(conflicts),
     [setConflicts],
@@ -152,13 +170,20 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
         activityLog.setUserId(loggedUserId);
         activityLog.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
 
+        await deleteTransactions();
+
         await handleSaveActivityLog(activityLog);
       } catch (err) {
         console.error(`An error occurred while saving the transaction: ${err}`);
         setUpsertError(err);
       }
     },
-    [TransactionClientService, setUpsertError, transactions],
+    [
+      TransactionClientService,
+      setUpsertError,
+      transactions,
+      deleteTransactions,
+    ],
   );
 
   const generateConflicts = (): any[] => {
