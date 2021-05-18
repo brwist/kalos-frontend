@@ -278,8 +278,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         setStatusEditing(undefined);
         const updateTask = new Task();
         updateTask.setId(data.id);
-        const userInfo = await UserClientService.loadUserById(loggedUserId);
-        updateTask.setAdminActionId(userInfo.id);
+        updateTask.setAdminActionId(statusEditing.id);
         if (statusEditing.status === 3) {
           //if the Spiff has been revoke, we need payroll to
           //process it again, Cost Summary will treat it as a negative value
