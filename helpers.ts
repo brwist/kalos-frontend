@@ -1843,8 +1843,8 @@ export const CustomEventsHandler = (() => {
  */
 function forceHTTPS() {
   if (
-    window.location.hostname === 'localhost' ||
-    window.location.hostname.startsWith('192.168.')
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.includes('local')
   )
     return;
   if (window.location.href.includes('http://')) {
