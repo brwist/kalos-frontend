@@ -24,31 +24,21 @@ import {
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
-import { Loader } from '../../Loader/main';
-import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
-import { AdvancedSearch } from '../AdvancedSearch';
-import { Search } from '../Search';
 import { Tooltip } from '../Tooltip';
 import { Confirm } from '../Confirm';
-import { MenuItem, Select, Typography } from '@material-ui/core';
+import { Typography } from '@material-ui/core';
 import { PlainForm } from '../PlainForm';
-import {
-  PermissionGroup,
-  User,
-} from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import MessageIcon from '@material-ui/icons/Message';
 import Visibility from '@material-ui/icons/Visibility';
-import { Modal } from '../Modal';
-import { NULL_TIME } from '../../../constants';
 import { TripInfo, TripViewModal } from '../TripViewModal';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { SlackMessageButton } from '../SlackMessageButton';
 import { Button } from '../Button';
+import { NULL_TIME } from '../../../constants';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
-import { filter } from 'lodash';
 
 export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
   [
@@ -135,12 +125,6 @@ const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
       label: 'Approved',
       readOnly: true,
     },
-    /*  May not need to audit trips, just in case though I'ma leave this here
-  {
-    name: 'needsAuditing',
-    type: 'checkbox',
-    label: 'Needs Auditing',
-  },*/
     {
       name: 'payrollProcessed',
       type: 'text',
@@ -152,7 +136,6 @@ const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
 
 type CheckboxesFilterType = {
   approved: number;
-  //needsAuditing: number;
   payrollProcessed: number;
 };
 
@@ -168,12 +151,6 @@ const CHECKBOXES_SCHEMA: Schema<CheckboxesFilterType> = [
       type: 'checkbox',
       label: 'Approved',
     },
-    /*  May not need to audit trips, just in case though I'ma leave this here
-    {
-      name: 'needsAuditing',
-      type: 'checkbox',
-      label: 'Needs Auditing',
-    },*/
     {
       name: 'payrollProcessed',
       type: 'checkbox',
@@ -250,7 +227,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       pendingApproveTrip: null,
       key: 0,
       loading: true,
-      search: undefined,
+      search: {} as TripsFilter,
       page: 0,
       filter: new Checkboxes(),
       tripToView: null,
@@ -380,8 +357,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
         sort: tripSort as TripsSort,
       };
     }
-
-    console.log('FILTER: ', criteria);
 
     return await this.getFilteredTripList(criteria);
   };
@@ -524,10 +499,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
               ' / ' +
               perDiemTripMilesToUsd(Number(currentTrip.getDistanceInMiles())),
           },
-          /*
-          {
-            value: currentTrip.getNotes(),
-          },*/
           {
             value: currentTrip.getApproved() ? 'Yes' : 'No',
           },
@@ -660,13 +631,27 @@ export class TripSummary extends React.PureComponent<Props, State> {
       });
   };
   setPayrollProcessed = async (id: number) => {
-    await PerDiemClientService.updateTripPayrollProcessed(id);
+    try {
+      await PerDiemClientService.updateTripPayrollProcessed(id);
+    } catch (err) {
+      console.error(
+        'An error occurred while updating trip payroll processed status: ',
+        err,
+      );
+    }
     this.setPendingProcessPayroll(null);
     this.reloadTrips();
   };
 
   setTripApproved = async (id: number) => {
-    await PerDiemClientService.updateTripApproved(id);
+    try {
+      await PerDiemClientService.updateTripApproved(id);
+    } catch (err) {
+      console.error(
+        'An error occurred while updating trip approved status: ',
+        err,
+      );
+    }
     this.setPendingApproveTrip(null);
     this.reloadTrips();
   };
@@ -695,14 +680,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Name' },
           { name: 'Week Of' },
           { name: 'Miles / Cost' },
-          /*{
-            name: 'Notes',
-          },*/
           {
             name: 'Approved?',
           },
           {
-            name: 'Home Travel',
+            name: 'Department Name',
           },
           {
             name: 'Payroll Processed?',
@@ -731,15 +713,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Name' },
           { name: 'Week Of' },
           { name: 'Miles / Cost' },
-          /*
-          {
-            name: 'Notes',
-          },*/
           {
             name: 'Approved?',
           },
           {
-            name: 'Home Travel',
+            name: 'Department Name',
           },
           {
             name: 'Payroll Processed?',
@@ -797,13 +775,35 @@ export class TripSummary extends React.PureComponent<Props, State> {
     trip.setHomeTravel(data.HomeTravel);
     trip.setDate(data.Date);
 
-    const user = await UserClientService.loadUserById(this.props.loggedUserId);
-    trip.setDepartmentId(user.employeeDepartmentId);
-    await PerDiemClientService.upsertTrip(trip.toObject(), rowId!, userId).then(
-      () => {
+    let user;
+    let department;
+
+    try {
+      user = await UserClientService.loadUserById(this.props.loggedUserId);
+    } catch (err) {
+      console.error('Error getting user by id: ', err);
+    }
+    if (user) {
+      try {
+        department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
+          user.managedBy,
+        );
+      } catch (err) {
+        console.error('Error getting timesheet department: ', err);
+      }
+    }
+    if (department) trip.setDepartmentId(department.id);
+    try {
+      await PerDiemClientService.upsertTrip(
+        trip.toObject(),
+        rowId!,
+        userId,
+      ).then(() => {
         this.setState({ pendingTrip: null });
-      },
-    );
+      });
+    } catch (err) {
+      console.error('An error occurred while upserting a trip: ', err);
+    }
 
     if (this.props.onSaveTrip) this.props.onSaveTrip();
 
@@ -832,13 +832,19 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   setStateOfPerDiems = async () => {
     if (this.props.perDiemRowIds) {
-      let pds = await PerDiemClientService.getPerDiemsFromIds(
-        this.props.perDiemRowIds,
-      );
-
-      this.setState({
-        perDiems: pds ? pds : null,
-      });
+      try {
+        let pds = await PerDiemClientService.getPerDiemsFromIds(
+          this.props.perDiemRowIds,
+        );
+        this.setState({
+          perDiems: pds ? pds : null,
+        });
+      } catch (err) {
+        console.error(
+          'An error occurred while getting per diems by ids: ',
+          err,
+        );
+      }
     }
   };
 
