@@ -87,7 +87,6 @@ export const Spiffs: FC<Props> = ({
     Object.assign(filter, {
       startDate: '0001-01-01',
       endDate: format(endDay, 'yyyy-MM-dd'),
-      role: role === 'Payroll' ? 'Manager' : role,
     });
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
@@ -286,10 +285,8 @@ export const Spiffs: FC<Props> = ({
             loggedUserId={loggedUserId}
             ownerId={pendingView.externalId}
             type="Spiff"
-            needsManagerAction={
-              role === 'Manager' || role === 'Payroll' ? true : false
-            }
-            needsPayrollAction={false}
+            needsManagerAction={role === 'Manager' ? true : false}
+            needsPayrollAction={role === 'Payroll' ? true : false}
             needsAuditAction={role === 'Auditor' ? true : false}
             role={role}
             onClose={handleTogglePendingView(undefined)}

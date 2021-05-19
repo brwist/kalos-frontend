@@ -65,18 +65,15 @@ export const PerDiem: FC<Props> = ({
     pendingPayrollReject,
     setPendingPayrollReject,
   ] = useState<PerDiemType>();
-  const [managerFilter, setManagerFilter] = useState<boolean>(
-    role == ('Manager' || role === 'Payroll') ? true : false,
-  );
-  const [auditorFilter, setAuditorFilter] = useState<boolean>(
-    role == 'Auditor' ? true : false,
-  );
+  const managerFilter = role === 'Manager';
+  const auditorFilter = role == 'Auditor';
+  const payrollFilter = role == 'Payroll';
   const load = useCallback(async () => {
     setLoading(true);
     const perDiems = await PerDiemClientService.loadPerDiemsForPayroll(
       page,
       auditorFilter,
-      false,
+      payrollFilter,
       managerFilter,
       departmentId,
       employeeId,
@@ -85,7 +82,15 @@ export const PerDiem: FC<Props> = ({
     setPerDiems(perDiems.resultsList);
     setCount(perDiems.totalCount);
     setLoading(false);
-  }, [departmentId, employeeId, week, page, managerFilter, auditorFilter]);
+  }, [
+    departmentId,
+    employeeId,
+    week,
+    page,
+    managerFilter,
+    payrollFilter,
+    auditorFilter,
+  ]);
   useEffect(() => {
     load();
   }, [load]);
