@@ -337,7 +337,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                         label: 'Trips',
                         content: (
                           <TripSummary
-                            role={role === 'Payroll' ? 'Manager' : role}
+                            role={role}
                             loggedUserId={loggedUser ? loggedUser!.id : 0}
                             userId={filter.employeeId}
                             perDiemRowIds={loadedPerDiemIds}

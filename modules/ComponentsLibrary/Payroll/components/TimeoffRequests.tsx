@@ -97,7 +97,7 @@ export const TimeoffRequests: FC<Props> = ({
     setTimeoffRequests(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, departmentId, employeeId, week]);
+  }, [page, role, departmentId, employeeId, week]);
   useEffect(() => {
     load();
   }, [load]);
