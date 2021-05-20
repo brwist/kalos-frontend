@@ -324,7 +324,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               weekof: this.props.perDiemRowIds,
               page: this.state.page,
               departmentId: this.props.departmentId,
-              dateProcessed:
+              adminActionDate:
                 this.props.role === 'Manager' ? NULL_TIME : undefined,
               payrollProcessed: tripFilter
                 ? !tripFilter!.payrollProcessed
@@ -358,6 +358,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
       };
     }
 
+    this.setState({ search: criteria.filter });
+    console.log('We just set the search to current critera filter');
     return await this.getFilteredTripList(criteria);
   };
 
@@ -366,7 +368,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       results: Trip.AsObject[];
       totalCount: number;
     } = await loadTripsByFilter(criteria);
-    console.log();
     let tripList: Trip[] = [];
     for await (const tripAsObj of res.results) {
       tripList.push(PerDiemClientService.tripAsObjectToTrip(tripAsObj));
@@ -385,6 +386,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   reloadTrips = () => {
+    console.log('we got called to reload');
+    console.log(this.state.search);
     this.loadTripsAndUpdate(this.state.search);
   };
 
@@ -658,6 +661,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
   setTripDenied = async (id: number) => {
     await PerDiemClientService.updateTripDeny(id);
     this.setPendingDenyTrip(null);
+    console.log('we are rejecting');
+    console.log(this.state.search);
     this.reloadTrips();
   };
   setPendingApproveTrip = (trip: Trip | null) => {
