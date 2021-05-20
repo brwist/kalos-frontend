@@ -15,6 +15,7 @@ import { TripInfoTable } from '../../TripInfoTable';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
+import { Button } from '../../Button';
 import {
   PerDiemType,
   makeFakeRows,
@@ -26,10 +27,7 @@ import {
 import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
 import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
-import {
-  PerDiemClient,
-  PerDiem as PerDiemReq,
-} from '@kalos-core/kalos-rpc/PerDiem';
+import { PerDiem as PerDiemReq } from '@kalos-core/kalos-rpc/PerDiem';
 
 interface Props {
   loggedUserId: number;
@@ -60,6 +58,7 @@ export const PerDiem: FC<Props> = ({
   const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
   const [pendingDeny, setPendingDeny] = useState<PerDiemType>();
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
+  const [toggleButton, setToggleButton] = useState<boolean>(false);
   const [pendingPayroll, setPendingPayroll] = useState<PerDiemType>();
   const [
     pendingPayrollReject,
@@ -78,18 +77,31 @@ export const PerDiem: FC<Props> = ({
       departmentId,
       employeeId,
       week === OPTION_ALL ? undefined : week,
+      toggleButton,
     );
-    setPerDiems(perDiems.resultsList);
+    if (role == 'Payroll' && toggleButton == false) {
+      let sortedList = perDiems.resultsList.sort((a, b) =>
+        a.dateApproved > b.dateApproved ? -1 : 1,
+      );
+      setPerDiems(sortedList);
+    } else {
+      let sortedList = perDiems.resultsList.sort((a, b) =>
+        a.dateStarted > b.dateStarted ? -1 : 1,
+      );
+      setPerDiems(sortedList);
+    }
     setCount(perDiems.totalCount);
     setLoading(false);
   }, [
     departmentId,
     employeeId,
     week,
+    role,
     page,
     managerFilter,
     payrollFilter,
     auditorFilter,
+    toggleButton,
   ]);
   useEffect(() => {
     load();
@@ -206,6 +218,16 @@ export const PerDiem: FC<Props> = ({
           onChangePage: setPage,
         }}
       />
+      {role === 'Payroll' && (
+        <Button
+          label={
+            toggleButton === false
+              ? 'Show Processed Records'
+              : 'Show Unprocessed Records'
+          }
+          onClick={() => setToggleButton(!toggleButton)}
+        ></Button>
+      )}
       <InfoTable
         columns={[
           { name: 'Employee' },
