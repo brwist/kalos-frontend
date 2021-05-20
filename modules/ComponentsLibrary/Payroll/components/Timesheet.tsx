@@ -6,10 +6,18 @@ import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
-
+import { Confirm } from '../../Confirm';
 import PageviewIcon from '@material-ui/icons/Pageview';
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
-import { TimesheetLineType, makeFakeRows, UserType } from '../../../../helpers';
+import {
+  TimesheetLineType,
+  makeFakeRows,
+  UserType,
+  TimesheetLineClientService,
+  UserClientService,
+  timestamp,
+  TimesheetDepartmentClientService,
+} from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
@@ -47,6 +55,7 @@ export const Timesheet: FC<Props> = ({
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
+
   const [
     timesheetSummaryToggle,
     setTimesheetSummaryToggle,
@@ -56,6 +65,10 @@ export const Timesheet: FC<Props> = ({
   );
   const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
+  const [
+    pendingCreateEmptyTimesheetLine,
+    setPendingCreateEmptyTimesheetLine,
+  ] = useState<TimesheetLineType>();
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -74,12 +87,58 @@ export const Timesheet: FC<Props> = ({
     }
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
+
+    if (departmentId && departmentId != 0 && type === 'Manager') {
+      const allTimesheetsForDepartmentReq = new TimesheetLine();
+      const userReq = new User();
+      userReq.setEmployeeDepartmentId(departmentId);
+      allTimesheetsForDepartmentReq.setSearchUser(userReq);
+      allTimesheetsForDepartmentReq.setDateRangeList([
+        '>=',
+        format(startDay, 'yyyy-MM-dd'),
+        '<=',
+        format(endDay, 'yyyy-MM-dd'),
+      ]);
+      allTimesheetsForDepartmentReq.setIsActive(1);
+      const completeResultsForDepartment = await TimesheetLineClientService.BatchGet(
+        allTimesheetsForDepartmentReq,
+      );
+      const departmentResultList = completeResultsForDepartment.getResultsList();
+      const allUsers = await UserClientService.loadUsersByDepartmentId(
+        departmentId,
+      );
+      for (let i = 0; i < allUsers.length; i++) {
+        let found = false;
+        for (let j = 0; j < departmentResultList.length; j++) {
+          if (
+            departmentResultList[j].getTechnicianUserId() === allUsers[i].id
+          ) {
+            console.log(
+              'we found' + departmentResultList[j].getTechnicianUserName(),
+            );
+            found = true;
+          }
+        }
+        if (found == false) {
+          let tempTimesheet = new TimesheetLine();
+          tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
+          tempTimesheet.setUserApprovalDatetime(NULL_TIME);
+          tempTimesheet.setTechnicianUserId(allUsers[i].id);
+          tempTimesheet.setReferenceNumber('auto');
+          tempTimesheet.setDepartmentName(allUsers[i].department!.description);
+          tempTimesheet.setTechnicianUserName(
+            allUsers[i].firstname + ' ' + allUsers[i].lastname,
+          );
+
+          resultsList.push(tempTimesheet.toObject());
+        }
+      }
+    }
     let sortedResultsLists = resultsList.sort((a, b) =>
       a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
         ? 1
         : -1,
     );
-
     setTimesheets(sortedResultsLists);
     setCount(totalCount);
     setLoading(false);
@@ -94,6 +153,35 @@ export const Timesheet: FC<Props> = ({
     },
     [load],
   );
+  const createEmptyTimesheetLine = useCallback(
+    async (emptyTimesheetLine?: TimesheetLineType) => {
+      console.log('we pressed button');
+      if (emptyTimesheetLine) {
+        setPendingCreateEmptyTimesheetLine(undefined);
+        const tempTimesheet = new TimesheetLine();
+        const time = timestamp();
+        tempTimesheet.setUserApprovalDatetime(time);
+        tempTimesheet.setAdminApprovalDatetime(time);
+        tempTimesheet.setAdminApprovalUserId(loggedUser);
+        tempTimesheet.setClassCodeId(41);
+        tempTimesheet.setTimeStarted(
+          format(addDays(startDay, 1), 'yyyy-MM-dd'),
+        );
+        tempTimesheet.setTimeFinished(
+          format(addDays(startDay, 1), 'yyyy-MM-dd'),
+        );
+        tempTimesheet.setTechnicianUserId(emptyTimesheetLine.technicianUserId);
+        tempTimesheet.setDepartmentCode(departmentId);
+        tempTimesheet.setIsActive(1);
+        tempTimesheet.setReferenceNumber('NO TIMESHEET THIS WEEK');
+
+        const result = await TimesheetLineClientService.Create(tempTimesheet);
+        load();
+      }
+    },
+    [loggedUser, startDay, load, departmentId],
+  );
+  console.log(pendingCreateEmptyTimesheetLine);
   return (
     <div>
       <SectionBar
@@ -128,8 +216,10 @@ export const Timesheet: FC<Props> = ({
                   {
                     value:
                       type === 'Manager'
-                        ? formatWeek(e.userApprovalDatetime) === '1/1/1'
-                          ? 'Pending Submit'
+                        ? e.userApprovalDatetime === NULL_TIME
+                          ? e.referenceNumber === 'auto'
+                            ? 'No Timesheet Submitted'
+                            : 'Timesheet Pending'
                           : 'Submitted'
                         : formatWeek(e.adminApprovalDatetime),
                     onClick: handleTogglePendingView(e),
@@ -141,15 +231,26 @@ export const Timesheet: FC<Props> = ({
                       >
                         <Visibility />
                       </IconButton>,
-
-                      <IconButton
-                        key="summary"
-                        onClick={() => setTimesheetSummaryToggle(e)}
-                        size="small"
-                        disabled={type != 'Payroll'}
-                      >
-                        <PageviewIcon />
-                      </IconButton>,
+                      type === 'Payroll' && (
+                        <IconButton
+                          key="summary"
+                          onClick={() => setTimesheetSummaryToggle(e)}
+                          size="small"
+                          disabled={type != 'Payroll'}
+                        >
+                          <PageviewIcon />
+                        </IconButton>
+                      ),
+                      e.referenceNumber === 'auto' && (
+                        <IconButton
+                          key="createEmpty"
+                          onClick={() => setPendingCreateEmptyTimesheetLine(e)}
+                          size="small"
+                          disabled={type != 'Manager'}
+                        >
+                          <PageviewIcon />
+                        </IconButton>
+                      ),
                     ],
                   },
                 ];
@@ -182,6 +283,19 @@ export const Timesheet: FC<Props> = ({
           ></TimesheetSummary>
         </Modal>
       )}
+      {pendingCreateEmptyTimesheetLine && (
+        <Confirm
+          title="Confirm Approve"
+          open
+          onClose={() => setPendingCreateEmptyTimesheetLine(undefined)}
+          onConfirm={() =>
+            createEmptyTimesheetLine(pendingCreateEmptyTimesheetLine)
+          }
+        >
+          Are you sure you want to create a Fake Timesheet entry? This means
+          this user does not have a Timesheet this week.
+        </Confirm>
+      )}
     </div>
   );
 };
@@ -200,6 +314,7 @@ const createTimesheetFetchFunction = (
   role: RoleType,
 ) => {
   const req = new TimesheetLine();
+  console.log(config);
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
   if (config.type === 'Payroll') {
