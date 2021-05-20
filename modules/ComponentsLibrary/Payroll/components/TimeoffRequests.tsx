@@ -18,7 +18,7 @@ import { TimeOff } from '../../../ComponentsLibrary/Timeoff';
 import FlashOff from '@material-ui/icons/FlashOff';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Confirm } from '../../Confirm';
-
+import { Button } from '../../Button';
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
 import {
   TimeoffRequestType,
@@ -57,9 +57,7 @@ export const TimeoffRequests: FC<Props> = ({
   //};
 
   const [loading, setLoading] = useState<boolean>(false);
-  const [timeoffRequests, setTimeoffRequests] = useState<TimeoffRequestType[]>(
-    [],
-  );
+  const [timeoffRequests, setTimeoffRequests] = useState<TimeoffRequest[]>([]);
   const [page, setPage] = useState<number>(0);
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [count, setCount] = useState<number>(0);
@@ -69,6 +67,7 @@ export const TimeoffRequests: FC<Props> = ({
     pendingPayrollReject,
     setPendingPayrollReject,
   ] = useState<TimeoffRequestType>();
+  const [toggleButton, setToggleButton] = useState<boolean>(true);
   const [pendingApproval, setPendingApproval] = useState<TimeoffRequestType>();
   const load = useCallback(async () => {
     setLoading(true);
@@ -79,8 +78,11 @@ export const TimeoffRequests: FC<Props> = ({
       page,
       departmentID: departmentId,
       approved: role != 'Manager' ? true : false,
+      payrollProcessed: role === 'Payroll' ? toggleButton : undefined,
       technicianUserID: employeeId,
+      requestType: role === 'Payroll' ? 9 : 0,
     };
+    console.log(filter);
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
         startDate: week,
@@ -90,14 +92,13 @@ export const TimeoffRequests: FC<Props> = ({
     if (role === 'Payroll') {
       Object.assign(filter, { requestType: 9 });
     }
-    const {
-      resultsList,
-      totalCount,
-    } = await TimeoffRequestClientService.loadTimeoffRequests(filter);
-    setTimeoffRequests(resultsList);
-    setCount(totalCount);
+    const results = await TimeoffRequestClientService.loadTimeoffRequestProtos(
+      filter,
+    );
+    setTimeoffRequests(results.getResultsList());
+    setCount(results.getTotalCount());
     setLoading(false);
-  }, [page, role, departmentId, employeeId, week]);
+  }, [page, role, departmentId, toggleButton, employeeId, week]);
   useEffect(() => {
     load();
   }, [load]);
@@ -180,6 +181,16 @@ export const TimeoffRequests: FC<Props> = ({
           onChangePage: setPage,
         }}
       />
+      {role === 'Payroll' && (
+        <Button
+          label={
+            toggleButton === true
+              ? 'Show Unprocesssed Timeoff'
+              : 'Show Processed Timeoff'
+          }
+          onClick={() => setToggleButton(!toggleButton)}
+        ></Button>
+      )}
       <InfoTable
         columns={[
           { name: 'Employee' },
@@ -192,28 +203,28 @@ export const TimeoffRequests: FC<Props> = ({
           loading
             ? makeFakeRows(3, 3)
             : timeoffRequests.map(e => {
-                const startDate = parseISO(e.timeStarted);
-                const endDate = parseISO(e.timeFinished);
+                const startDate = parseISO(e.getTimeStarted());
+                const endDate = parseISO(e.getTimeFinished());
                 return [
                   {
-                    value: e.userName,
-                    onClick: handleTogglePendingView(e),
+                    value: e.getUserName(),
+                    onClick: handleTogglePendingView(e.toObject()),
                   },
                   {
-                    value: e.departmentName,
-                    onClick: handleTogglePendingView(e),
+                    value: e.getDepartmentName(),
+                    onClick: handleTogglePendingView(e.toObject()),
                   },
                   {
                     value: format(startDate, 'MMM do, YYY'),
-                    onClick: handleTogglePendingView(e),
+                    onClick: handleTogglePendingView(e.toObject()),
                   },
                   {
                     value: format(endDate, 'MMM do, YYY'),
-                    onClick: handleTogglePendingView(e),
+                    onClick: handleTogglePendingView(e.toObject()),
                     actions: [
                       <IconButton
                         key="view"
-                        onClick={handleTogglePendingView(e)}
+                        onClick={handleTogglePendingView(e.toObject())}
                         size="small"
                       >
                         <Visibility />
@@ -227,10 +238,10 @@ export const TimeoffRequests: FC<Props> = ({
                           <span>
                             <IconButton
                               size="small"
-                              onClick={handlePendingPayrollToggle(e)}
+                              onClick={handlePendingPayrollToggle(e.toObject())}
                               disabled={
-                                e.payrollProcessed ||
-                                e.adminApprovalUserId === 0
+                                e.getPayrollProcessed() ||
+                                e.getAdminApprovalUserId() === 0
                               }
                             >
                               <AccountBalanceWalletIcon />
@@ -247,10 +258,12 @@ export const TimeoffRequests: FC<Props> = ({
                           <span>
                             <IconButton
                               size="small"
-                              onClick={handlePendingPayrollToggleReject(e)}
+                              onClick={handlePendingPayrollToggleReject(
+                                e.toObject(),
+                              )}
                               disabled={
-                                e.payrollProcessed ||
-                                e.adminApprovalUserId === 0
+                                e.getPayrollProcessed() ||
+                                e.getAdminApprovalUserId() === 0
                               }
                             >
                               <NotInterestedIcon />
@@ -267,7 +280,9 @@ export const TimeoffRequests: FC<Props> = ({
                           <span>
                             <IconButton
                               size="small"
-                              onClick={handlePendingApprovalToggle(e)}
+                              onClick={handlePendingApprovalToggle(
+                                e.toObject(),
+                              )}
                             >
                               <ThumbsUpDownIcon />
                             </IconButton>
