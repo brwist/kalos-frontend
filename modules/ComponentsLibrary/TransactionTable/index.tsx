@@ -22,9 +22,9 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
-import { parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { ENDPOINT, OPTION_ALL } from '../../../constants';
+import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import {
   getSlackID,
   makeFakeRows,
@@ -783,7 +783,13 @@ export const TransactionTable: FC<Props> = ({
                 return [
                   selectedCol,
                   {
-                    value: selectorParam.txn.getTimestamp(),
+                    value:
+                      selectorParam.txn.getTimestamp() != NULL_TIME
+                        ? format(
+                            new Date(selectorParam.txn.getTimestamp()),
+                            'yyyy-MM-dd',
+                          )
+                        : '-',
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
