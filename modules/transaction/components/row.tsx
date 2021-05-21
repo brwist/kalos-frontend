@@ -188,7 +188,7 @@ export function TransactionRow({
       value: parseISO(txn.timestamp.split(' ').join('T')).toLocaleDateString(),
     },
     {
-      value: `${txn.ownerName} (${txn.cardUsed})` || '',
+      value: `${txn.ownerName}` || '',
     },
     {
       value: editingCostCenter ? (
