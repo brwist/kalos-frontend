@@ -24,6 +24,7 @@ import { TransactionTable } from '../TransactionTable';
 interface Props {
   loggedUserId: number;
   onClose?: () => void;
+  onMerge?: () => void;
 }
 
 // Conflicts are checked before they are created, and if there is one with the same index on it then
@@ -78,7 +79,11 @@ const IgnoredFieldNames: string[] = [
   'artificalId',
 ];
 
-export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
+export const CompareTransactions: FC<Props> = ({
+  loggedUserId,
+  onClose,
+  onMerge,
+}) => {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
 
@@ -185,6 +190,7 @@ export const CompareTransactions: FC<Props> = ({ loggedUserId, onClose }) => {
 
         await handleSaveActivityLog(activityLog);
         setLoading(false);
+        if (onMerge) onMerge();
       } catch (err) {
         console.error(`An error occurred while saving the transaction: ${err}`);
         setUpsertError(err);

@@ -19,10 +19,8 @@ import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
 import {
-  TripList,
   Trip,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { MapClient } from '@kalos-core/kalos-rpc/Maps';
 import {
   UserType,
   PerDiemType,
@@ -30,7 +28,6 @@ import {
   TimesheetDepartmentType,
   formatDate,
   usd,
-  TripType,
   UserClientService,
   PerDiemClientService,
   MapClientService,
@@ -38,13 +35,6 @@ import {
 } from '../../../helpers';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
-import { TripInfoTable } from '../TripInfoTable';
-import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
-import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
-import { InfoTable, Data } from '../InfoTable';
-import IconButton from '@material-ui/core/IconButton';
-import EditIcon from '@material-ui/icons/Edit';
-import DeleteIcon from '@material-ui/icons/Delete';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { RoleType } from '../Payroll';
 

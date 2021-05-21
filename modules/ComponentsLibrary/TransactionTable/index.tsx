@@ -327,8 +327,9 @@ export const TransactionTable: FC<Props> = ({
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
     req.setPageNumber(pageNumber);
+    req.setIsActive(1);
+    req.setVendorCategory("'PickTicket','Receipt'");
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
-    if (filter.employeeId != 0) req.setOwnerId(filter.employeeId);
     let res = await TransactionClientService.BatchGet(req);
 
     setTransactions(
@@ -615,6 +616,7 @@ export const TransactionTable: FC<Props> = ({
           <CompareTransactions
             loggedUserId={loggedUserId}
             onClose={() => handleSetMergingTransaction(false)}
+            onMerge={() => resetTransactions()}
           />
         </Modal>
       ) : (
