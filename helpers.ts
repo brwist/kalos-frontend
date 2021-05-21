@@ -501,7 +501,7 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return ({
+yar  return ({
     0: 'Sun',
     1: 'Mon',
     2: 'Tue',
@@ -509,7 +509,7 @@ function formatDay(datetime: string) {
     4: 'Thu',
     5: 'Fri',
     6: 'Sat',
-  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
+  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()]
 }
 
 /**
@@ -1217,6 +1217,10 @@ export const loadTripsByFilter = async ({
 
   if (filter.payrollProcessed) {
     req.setApproved(true);
+    req.setNotEqualsList(['PayrollProcessed']);
+  }
+  if (filter.payrollProcessed===false) {
+    req.setApproved(false);
     req.setNotEqualsList(['PayrollProcessed']);
   }
   if (!filter.approved) {
