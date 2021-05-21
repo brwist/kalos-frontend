@@ -672,7 +672,7 @@ export const Timesheet: FC<Props> = props => {
               {error}
             </Alert>
           )}
-          <Box className="Timesheet">
+          <Box className="Timesheet" bgcolor="#e8e8e8">
             {hasAccess ? (
               <Container className="TimesheetWeek" maxWidth={false}>
                 {shownDates.map((date: string) => (
