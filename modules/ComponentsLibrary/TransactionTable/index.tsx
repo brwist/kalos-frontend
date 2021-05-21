@@ -689,6 +689,16 @@ export const TransactionTable: FC<Props> = ({
             name: isSelector ? 'Is selected?' : '',
           },
           {
+            name: 'Type',
+            dir:
+              sortBy == 'vendor'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('vendor'),
+          },
+          {
             name: 'Date',
             dir:
               sortBy == 'timestamp'
@@ -782,6 +792,12 @@ export const TransactionTable: FC<Props> = ({
                 }
                 return [
                   selectedCol,
+                  {
+                    value: selectorParam.txn.getVendorCategory(),
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
                   {
                     value:
                       selectorParam.txn.getTimestamp() != NULL_TIME
