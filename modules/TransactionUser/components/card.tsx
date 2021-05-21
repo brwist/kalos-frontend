@@ -32,9 +32,7 @@ import {
   FileType,
   S3ClientService,
   getFileExt,
-  UserClientService,
   FileClientService,
-  TransactionClientService,
   TransactionDocumentClientService,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
@@ -47,10 +45,7 @@ import { FileGallery } from '../../ComponentsLibrary/FileGallery';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import './card.css';
 import { parseISO } from 'date-fns';
-import { IconButton } from '@material-ui/core';
-import AddCircleOutlineTwoToneIcon from '@material-ui/icons/AddCircleOutlineTwoTone';
-import { UploadPhotoTransaction } from '../../ComponentsLibrary/UploadPhotoTransaction';
-import { FileServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/file_pb_service';
+
 interface props {
   txn: Transaction.AsObject;
   userDepartmentID: number;
@@ -67,24 +62,12 @@ interface state {
   txn: Transaction.AsObject;
   pendingAddFromGallery: boolean;
   pendingAddFromSingleFile: boolean;
-  uploadPhotoTransactionOpen: boolean;
   costCenters: TransactionAccountList;
 }
 
 const hardcodedList = [
-  1,
-  2,
-  601002,
-  674002,
-  674001,
-  673002,
-  61700,
-  681001,
-  601001,
-  51500,
-  68500,
-  62600,
-  643002,
+  1, 2, 601002, 674002, 674001, 673002, 61700, 681001, 601001, 51500, 68500,
+  62600, 643002,
 ];
 
 export class TxnCard extends React.PureComponent<props, state> {
@@ -109,7 +92,6 @@ export class TxnCard extends React.PureComponent<props, state> {
       txn: props.txn,
       pendingAddFromGallery: false,
       pendingAddFromSingleFile: false,
-      uploadPhotoTransactionOpen: false,
       costCenters: new TransactionAccountList(),
     };
     this.EmailClient = new EmailClient(ENDPOINT);
@@ -355,9 +337,10 @@ export class TxnCard extends React.PureComponent<props, state> {
     alert('Upload complete');
   };
 
-  deriveCallout(
-    txn: Transaction.AsObject,
-  ): { severity: 'error' | 'success'; text: string } {
+  deriveCallout(txn: Transaction.AsObject): {
+    severity: 'error' | 'success';
+    text: string;
+  } {
     if (!txn.costCenter || txn.costCenter.id === 0)
       return {
         severity: 'error',
@@ -546,12 +529,6 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   };
 
-  toggleUploadPhotoTransactionOpen = () => {
-    this.setState({
-      uploadPhotoTransactionOpen: !this.state.uploadPhotoTransactionOpen,
-    });
-  };
-
   setCostCenters = async () => {
     const req = new TransactionAccount();
     req.setIsActive(1);
@@ -567,20 +544,6 @@ export class TxnCard extends React.PureComponent<props, state> {
     const deriveCallout = this.deriveCallout(t);
     return (
       <>
-        {this.state.uploadPhotoTransactionOpen && (
-          <Modal open onClose={this.toggleUploadPhotoTransactionOpen}>
-            <UploadPhotoTransaction
-              loggedUserId={this.props.loggedUserId}
-              bucket="kalos-pre-transactions"
-              onClose={this.toggleUploadPhotoTransactionOpen}
-              costCenters={
-                this.state.costCenters
-                  ? this.state.costCenters
-                  : new TransactionAccountList()
-              }
-            />
-          </Modal>
-        )}
         <Paper
           elevation={4}
           style={{
@@ -595,16 +558,6 @@ export class TxnCard extends React.PureComponent<props, state> {
             subtitle={subheader}
             asideContent={
               <div className="TransactionUser_Actions">
-                <IconButton
-                  aria-label="+"
-                  size="medium"
-                  defaultValue=""
-                  onClick={() => {
-                    this.toggleUploadPhotoTransactionOpen();
-                  }}
-                >
-                  <AddCircleOutlineTwoToneIcon />
-                </IconButton>
                 <Button
                   label="Upload Photo"
                   onClick={() => {
@@ -752,18 +705,8 @@ function costCenterSortByPopularity(
 }
 
 const ALLOWED_ACCOUNT_IDS = [
-  601002,
-  673002,
-  673001,
-  51400,
-  643002,
-  643003,
-  601001,
-  51500,
-  601004,
-  1,
-  68500,
-  66600,
+  601002, 673002, 673001, 51400, 643002, 643003, 601001, 51500, 601004, 1,
+  68500, 66600,
 ];
 
 function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
