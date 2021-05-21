@@ -238,7 +238,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
       perDiems: null,
       currentTripDepartment: null,
     };
-    this.loadTripsAndUpdate();
+    // The reason this is a ternary is because the state being set to search for Payroll throws things off.
+    // I'm going to go ahead and make an issue for the future to clean this up, I really did a messy job in this particular
+    // component and should really maintain it when I'm less busy with Dani's stuff
+    this.loadTripsAndUpdate(
+      this.props.role == 'Manager' ? this.state.search : undefined,
+    );
   }
 
   getDepartmentNameById = async (id: number) => {
@@ -305,10 +310,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
     // These two cases will need certain properties reversed, since we will use not_equals to compare them
     // (we need to compare if they're true and if they are, then filter them)
     if (this.props.role == 'Payroll' && tripFilter) {
-      tripFilter.payrollProcessed = !tripFilter.payrollProcessed;
+      tripFilter.payrollProcessed = false;
     }
     if (this.props.role == 'Manager' && tripFilter) {
-      tripFilter.approved = !tripFilter.approved;
+      tripFilter.approved = false;
+      tripFilter.adminActionDate = NULL_TIME; // We want to show the trips that have not been interacted with or that are cleared
       if (tripFilter.departmentId == 0)
         tripFilter.departmentId = this.props.departmentId;
     }
@@ -359,7 +365,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
 
     this.setState({ search: criteria.filter });
-    console.log('We just set the search to current critera filter');
     return await this.getFilteredTripList(criteria);
   };
 
@@ -386,8 +391,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   reloadTrips = () => {
-    console.log('we got called to reload');
-    console.log(this.state.search);
     this.loadTripsAndUpdate(this.state.search);
   };
 
@@ -661,8 +664,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   setTripDenied = async (id: number) => {
     await PerDiemClientService.updateTripDeny(id);
     this.setPendingDenyTrip(null);
-    console.log('we are rejecting');
-    console.log(this.state.search);
     this.reloadTrips();
   };
   setPendingApproveTrip = (trip: Trip | null) => {
@@ -678,59 +679,61 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ tripToView: trip });
   };
   getColumns = () => {
-    return (this.props.canDeleteTrips
-      ? [
-          { name: 'Origin' },
-          { name: 'Destination' },
-          { name: 'Name' },
-          { name: 'Week Of' },
-          { name: 'Miles / Cost' },
-          {
-            name: 'Approved?',
-          },
-          {
-            name: 'Department Name',
-          },
-          {
-            name: 'Payroll Processed?',
-            actions: [
-              {
-                label: 'Delete All Trips',
-                compact: this.props.compact ? true : false,
-                variant: 'outlined',
-                size: 'xsmall',
-                onClick: () => {
-                  this.setStateToNew({
-                    pendingDeleteAllTrips: true,
-                  });
+    return (
+      this.props.canDeleteTrips
+        ? [
+            { name: 'Origin' },
+            { name: 'Destination' },
+            { name: 'Name' },
+            { name: 'Week Of' },
+            { name: 'Miles / Cost' },
+            {
+              name: 'Approved?',
+            },
+            {
+              name: 'Department Name',
+            },
+            {
+              name: 'Payroll Processed?',
+              actions: [
+                {
+                  label: 'Delete All Trips',
+                  compact: this.props.compact ? true : false,
+                  variant: 'outlined',
+                  size: 'xsmall',
+                  onClick: () => {
+                    this.setStateToNew({
+                      pendingDeleteAllTrips: true,
+                    });
+                  },
+                  burgeronly: 1,
                 },
-                burgeronly: 1,
-              },
-            ],
-          },
-          {
-            name: '',
-          },
-        ]
-      : [
-          { name: 'Origin' },
-          { name: 'Destination' },
-          { name: 'Name' },
-          { name: 'Week Of' },
-          { name: 'Miles / Cost' },
-          {
-            name: 'Approved?',
-          },
-          {
-            name: 'Department Name',
-          },
-          {
-            name: 'Payroll Processed?',
-          },
-          {
-            name: '',
-          },
-        ]) as Columns;
+              ],
+            },
+            {
+              name: '',
+            },
+          ]
+        : [
+            { name: 'Origin' },
+            { name: 'Destination' },
+            { name: 'Name' },
+            { name: 'Week Of' },
+            { name: 'Miles / Cost' },
+            {
+              name: 'Approved?',
+            },
+            {
+              name: 'Department Name',
+            },
+            {
+              name: 'Payroll Processed?',
+            },
+            {
+              name: '',
+            },
+          ]
+    ) as Columns;
   };
   setFilter = async (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
@@ -790,9 +793,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
     if (user) {
       try {
-        department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          user.managedBy,
-        );
+        department =
+          await TimesheetDepartmentClientService.getDepartmentByManagerID(
+            user.managedBy,
+          );
       } catch (err) {
         console.error('Error getting timesheet department: ', err);
       }
