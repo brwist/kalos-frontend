@@ -15,8 +15,7 @@ import {
   TransactionAccount,
   TransactionAccountClient,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { IconButton } from '@material-ui/core';
-import AddCircleOutlineTwoToneIcon from '@material-ui/icons/AddCircleOutlineTwoTone';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
 interface Props extends PageWrapperProps {
   userID: number;
@@ -141,14 +140,15 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           ) : null}
-          <IconButton
-            aria-label="+"
-            size="medium"
-            defaultValue=""
-            onClick={() => handleSetUploadPhotoTransactionOpen(true)}
-          >
-            <AddCircleOutlineTwoToneIcon />
-          </IconButton>
+          <SectionBar
+            actions={[
+              {
+                label: 'Upload Pick Ticket or Receipt',
+                onClick: () => handleSetUploadPhotoTransactionOpen(true),
+                fixed: true,
+              },
+            ]}
+          />
           <TransactionUserView
             userID={userID}
             userName={UserClientService.getCustomerName(user)}

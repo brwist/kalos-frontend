@@ -12,6 +12,7 @@ export type ActionsProps = (ButtonProps & {
   desktop?: boolean;
   burgeronly?: number; // Number as a workaround to a bug involving spreads
   // Read more here: https://stackoverflow.com/a/49786272
+  fixed?: boolean;
 })[];
 
 type Style = {
@@ -32,9 +33,8 @@ export const Actions: FC<Props> = ({
   responsiveColumn = false,
   disabled,
 }) => {
-  const [anchorEl, setAnchorEl] = useState<(EventTarget & HTMLElement) | null>(
-    null,
-  );
+  const [anchorEl, setAnchorEl] =
+    useState<(EventTarget & HTMLElement) | null>(null);
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
   const handleSetAnchorEl = useCallback(
@@ -45,6 +45,7 @@ export const Actions: FC<Props> = ({
   let burgerOnly = false;
   actions.forEach(action => {
     if (action.burgeronly == 1) burgerOnly = true;
+    if (action.fixed) fixed = true;
   });
   if (burgerOnly || (matches && !fixed))
     return (
