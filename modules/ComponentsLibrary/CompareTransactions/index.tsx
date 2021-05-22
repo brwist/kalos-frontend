@@ -1,4 +1,3 @@
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useState } from 'react';
 import { SectionBar } from '../SectionBar';
 import {
@@ -14,6 +13,7 @@ import { Loader } from '../../Loader/main';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
 import { TransactionTable } from '../TransactionTable';
+import { Transaction } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 /*
   Compares transactions with each other and has the ability to create a "diff view" sort of table which shows conflicts in the 
@@ -102,9 +102,36 @@ export const CompareTransactions: FC<Props> = ({
     }
     for await (const txn of transactions) {
       try {
-        const transactionResult = await TransactionClientService.Delete(txn);
-        if (transactionResult)
-          console.log('Deleted transaction: ', transactionResult);
+        // Delete is not working atm, leaving a todo here for future reference but using update as a replacement
+        // TODO
+        txn.setIsActive(0);
+        // First gonna make sure that the fields not included aren't still set
+        // These aren't relevant to the deletion so I'm setting these undefined
+        // Please forgive me for all these ts-ignores, for I have sinned
+        // @ts-ignore
+        txn.setOwnerName(undefined);
+        // @ts-ignore
+        txn.setActivityLogString(undefined);
+        // @ts-ignore
+        txn.setDepartmentString(undefined);
+        // @ts-ignore
+        txn.setAssignedEmployeeName(undefined);
+        // @ts-ignore
+        txn.setCostCenterString(undefined);
+        // @ts-ignore
+        txn.setActivityLogList(undefined);
+        // @ts-ignore
+        txn.setCardUsed(undefined);
+        // @ts-ignore
+        txn.setArtificalId(undefined);
+        // @ts-ignore
+        txn.setVendorCategory(undefined);
+
+        txn.setFieldMaskList(['IsActive']);
+        const updateResult = await TransactionClientService.Update(txn);
+        // const transactionResult = await TransactionClientService.Delete(txn);
+        // if (transactionResult)
+        //   console.log('Deleted transaction: ', transactionResult);
       } catch (err) {
         console.error('Failed to delete transaction: ', err);
       }
@@ -154,14 +181,7 @@ export const CompareTransactions: FC<Props> = ({
   const handleSaveActivityLog = useCallback(
     async (activityLog: ActivityLog) => {
       try {
-        let activityLogMade = await ActivityLogClientService.Create(
-          activityLog,
-        );
-        if (activityLogMade)
-          console.log(
-            'Activity log was created successfully: ',
-            activityLogMade,
-          );
+        await ActivityLogClientService.Create(activityLog);
       } catch (err) {
         console.error(
           `An error occurred while creating the activity log for the transaction: ${err}`,
