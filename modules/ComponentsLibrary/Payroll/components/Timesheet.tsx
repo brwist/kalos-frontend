@@ -52,6 +52,8 @@ export const Timesheet: FC<Props> = ({
   loggedUser,
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
+  const [loaded, setLoaded] = useState<boolean>(false);
+
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -60,17 +62,14 @@ export const Timesheet: FC<Props> = ({
     timesheetSummaryToggle,
     setTimesheetSummaryToggle,
   ] = useState<TimesheetLineType>();
-  const [startDay, setStartDay] = useState<Date>(
-    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
-  );
-  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
+  const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
+  const endDay = addDays(startDay, 7);
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
   const [
     pendingCreateEmptyTimesheetLine,
     setPendingCreateEmptyTimesheetLine,
   ] = useState<TimesheetLineType>();
   const load = useCallback(async () => {
-    setLoading(true);
     const filter = {
       page,
       departmentId,
@@ -141,7 +140,7 @@ export const Timesheet: FC<Props> = ({
             allUsers[i].firstname + ' ' + allUsers[i].lastname,
           );
 
-          //resultsList.push(tempTimesheet.toObject());
+          resultsList.push(tempTimesheet.toObject());
         }
       }
     }
@@ -176,7 +175,7 @@ export const Timesheet: FC<Props> = ({
           userInfo.firstname + ' ' + userInfo.lastname,
         );
 
-        //resultsList.push(tempTimesheet.toObject());
+        resultsList.push(tempTimesheet.toObject());
       }
     }
 
@@ -188,6 +187,7 @@ export const Timesheet: FC<Props> = ({
     setTimesheets(sortedResultsLists);
     setCount(sortedResultsLists.length);
     setLoading(false);
+    setLoaded(true);
   }, [page, departmentId, employeeId, week, endDay, startDay, type]);
   useEffect(() => {
     load();
@@ -247,7 +247,7 @@ export const Timesheet: FC<Props> = ({
         ]}
         loading={loading}
         data={
-          loading
+          !loaded
             ? makeFakeRows(3, 3)
             : timesheets.map(e => {
                 return [
