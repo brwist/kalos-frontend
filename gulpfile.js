@@ -319,9 +319,9 @@ async function releaseBuild(target) {
           values: {
             'process.env.NODE_ENV': JSON.stringify('production'),
             //'core-dev.kalosflorida.com': 'core.kalosflorida.com',
-            'dev-core.kalosflorida.com': 'core.kalosflorida.com:8443',
+            'dev-core.kalosflorida.com': 'prod-core.kalosflorida.com',
             'https://dev-core.kalosflorida.com': JSON.stringify(
-              'https://core.kalosflorida.com:8443',
+              'https://prod-core.kalosflorida.com',
             ),
           },
           delimiter: ['', ''],
@@ -459,7 +459,7 @@ async function rollupBuild(t) {
   sh.sed(
     '-i',
     'dev-core.kalosflorida.com',
-    'core.kalosflorida.com:8443',
+    'prod-core.kalosflorida.com',
     `build/modules/${target}.js`,
   );
   sh.sed(
