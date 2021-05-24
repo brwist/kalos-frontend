@@ -1,11 +1,7 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { TransactionUserView } from './components/view';
 import { Loader } from '../Loader/main';
-import {
-  UserType,
-  UserClientService,
-  TimesheetDepartmentClientService,
-} from '../../helpers';
+import { UserType, UserClientService } from '../../helpers';
 import { ENDPOINT, PERMISSION_NAME_MANAGER } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { User } from '@kalos-core/kalos-rpc/User';
@@ -19,6 +15,7 @@ import {
   TransactionAccount,
   TransactionAccountClient,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
 interface Props extends PageWrapperProps {
   userID: number;
@@ -29,12 +26,13 @@ const Transaction: FC<Props> = props => {
   const { userID } = props;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [uploadPhotoTransactionOpen, setUploadPhotoTransactionOpen] =
+    useState<boolean>(false);
   const [user, setUser] = useState<UserType>();
   const [costCenters, setCostCenters] = useState<TransactionAccountList>();
   const [isManager, setIsManager] = useState<boolean>(false);
-  const [toggleAddTransaction, setToggleAddTransaction] = useState<boolean>(
-    false,
-  );
+  const [toggleAddTransaction, setToggleAddTransaction] =
+    useState<boolean>(false);
   const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
     [],
   );
@@ -50,12 +48,23 @@ const Transaction: FC<Props> = props => {
     return false;
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const handleSetUploadPhotoTransactionOpen = useCallback(
+    (isOpen: boolean) => {
+      setUploadPhotoTransactionOpen(isOpen);
+    },
+    [setUploadPhotoTransactionOpen],
+  );
+
+  const loadCostCenters = useCallback(async () => {
     const req = new TransactionAccount();
     req.setIsActive(1);
     const results = await new TransactionAccountClient(ENDPOINT).BatchGet(req);
     setCostCenters(results);
+  }, [setCostCenters]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    await loadCostCenters();
     await UserClientService.refreshToken();
     const user = await UserClientService.loadUserById(userID);
     setUser(user);
@@ -93,6 +102,21 @@ const Transaction: FC<Props> = props => {
         <Loader />
       ) : (
         <React.Fragment>
+          {uploadPhotoTransactionOpen && (
+            <Modal
+              open
+              onClose={() => handleSetUploadPhotoTransactionOpen(false)}
+            >
+              <UploadPhotoTransaction
+                loggedUserId={props.userID}
+                bucket="kalos-pre-transactions"
+                onClose={() => handleSetUploadPhotoTransactionOpen(false)}
+                costCenters={
+                  costCenters ? costCenters : new TransactionAccountList()
+                }
+              />
+            </Modal>
+          )}
           {role === 'Accounts_Payable' ? (
             <Button
               label="Add Transaction"
@@ -116,7 +140,15 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           ) : null}
-
+          <SectionBar
+            actions={[
+              {
+                label: 'Upload Pick Ticket or Receipt',
+                onClick: () => handleSetUploadPhotoTransactionOpen(true),
+                fixed: true,
+              },
+            ]}
+          />
           <TransactionUserView
             userID={userID}
             userName={UserClientService.getCustomerName(user)}
