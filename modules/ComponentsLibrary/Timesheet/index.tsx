@@ -672,7 +672,10 @@ export const Timesheet: FC<Props> = props => {
               {error}
             </Alert>
           )}
-          <Box className="Timesheet" bgcolor="#e8e8e8">
+          <Box
+            className="Timesheet"
+            bgcolor={role === 'Payroll' ? '#e8e8e8' : null}
+          >
             {hasAccess ? (
               <Container className="TimesheetWeek" maxWidth={false}>
                 {shownDates.map((date: string) => (
