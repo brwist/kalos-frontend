@@ -141,7 +141,7 @@ export const Timesheet: FC<Props> = ({
             allUsers[i].firstname + ' ' + allUsers[i].lastname,
           );
 
-          resultsList.push(tempTimesheet.toObject());
+          //resultsList.push(tempTimesheet.toObject());
         }
       }
     }
@@ -176,7 +176,7 @@ export const Timesheet: FC<Props> = ({
           userInfo.firstname + ' ' + userInfo.lastname,
         );
 
-        resultsList.push(tempTimesheet.toObject());
+        //resultsList.push(tempTimesheet.toObject());
       }
     }
 
