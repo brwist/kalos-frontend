@@ -27,6 +27,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
 import { TimesheetSummary } from './TimesheetSummary';
+import { userInfo } from 'os';
 
 interface Props {
   departmentId: number;
@@ -51,9 +52,7 @@ export const Timesheet: FC<Props> = ({
   type,
   loggedUser,
 }) => {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loaded, setLoaded] = useState<boolean>(false);
-
+  const [loading, setLoading] = useState<boolean>(false);
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -62,14 +61,17 @@ export const Timesheet: FC<Props> = ({
     timesheetSummaryToggle,
     setTimesheetSummaryToggle,
   ] = useState<TimesheetLineType>();
-  const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
-  const endDay = addDays(startDay, 7);
+  const [startDay, setStartDay] = useState<Date>(
+    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+  );
+  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
   const [pendingView, setPendingView] = useState<TimesheetLineType>();
   const [
     pendingCreateEmptyTimesheetLine,
     setPendingCreateEmptyTimesheetLine,
   ] = useState<TimesheetLineType>();
   const load = useCallback(async () => {
+    setLoading(true);
     const filter = {
       page,
       departmentId,
@@ -90,38 +92,17 @@ export const Timesheet: FC<Props> = ({
     if (
       departmentId &&
       departmentId != 0 &&
-      type === 'Manager' &&
-      !employeeId
+      employeeId == 0 &&
+      type === 'Manager'
     ) {
-      const allTimesheetsForDepartmentReq = new TimesheetLine();
-      const userReq = new User();
-      userReq.setEmployeeDepartmentId(departmentId);
-      allTimesheetsForDepartmentReq.setSearchUser(userReq);
-      allTimesheetsForDepartmentReq.setWithoutLimit(true);
-      allTimesheetsForDepartmentReq.setDateRangeList([
-        '>=',
-        format(startDay, 'yyyy-MM-dd'),
-        '<=',
-        format(endDay, 'yyyy-MM-dd'),
-      ]);
-      console.log(allTimesheetsForDepartmentReq.getDateRangeList());
-      allTimesheetsForDepartmentReq.setIsActive(1);
-      const completeResultsForDepartment = await TimesheetLineClientService.BatchGet(
-        allTimesheetsForDepartmentReq,
-      );
-      const departmentResultList = completeResultsForDepartment.getResultsList();
       const allUsers = await UserClientService.loadUsersByDepartmentId(
         departmentId,
       );
       for (let i = 0; i < allUsers.length; i++) {
         let found = false;
-        for (let j = 0; j < departmentResultList.length; j++) {
-          if (
-            departmentResultList[j].getTechnicianUserId() === allUsers[i].id
-          ) {
-            console.log(
-              'we found' + departmentResultList[j].getTechnicianUserName(),
-            );
+        for (let j = 0; j < resultsList.length; j++) {
+          if (resultsList[j].technicianUserId === allUsers[i].id) {
+            console.log('we found' + resultsList[j].technicianUserId);
             found = true;
           }
         }
@@ -131,54 +112,33 @@ export const Timesheet: FC<Props> = ({
           tempTimesheet.setUserApprovalDatetime(NULL_TIME);
           tempTimesheet.setTechnicianUserId(allUsers[i].id);
           tempTimesheet.setReferenceNumber('auto');
-          tempTimesheet.setDepartmentName(
-            allUsers[i].department!.value +
-              ' - ' +
-              allUsers[i].department!.description,
-          );
+          tempTimesheet.setDepartmentName(allUsers[i].department!.description);
           tempTimesheet.setTechnicianUserName(
             allUsers[i].firstname + ' ' + allUsers[i].lastname,
           );
-
           resultsList.push(tempTimesheet.toObject());
         }
       }
     }
-    if (employeeId && type === 'Manager') {
-      const allTimesheetsForUserReq = new TimesheetLine();
-      const userReq = new User();
-      userReq.setId(employeeId);
-      allTimesheetsForUserReq.setSearchUser(userReq);
-      allTimesheetsForUserReq.setDateRangeList([
-        '>=',
-        format(startDay, 'yyyy-MM-dd'),
-        '<=',
-        format(endDay, 'yyyy-MM-dd'),
-      ]);
-      allTimesheetsForUserReq.setIsActive(1);
-      allTimesheetsForUserReq.setWithoutLimit(true);
-      const completeResultsForUser = await TimesheetLineClientService.BatchGet(
-        allTimesheetsForUserReq,
-      );
-      const userResultList = completeResultsForUser.getResultsList();
-      const userInfo = await UserClientService.Get(userReq);
-      if (userResultList.length <= 0) {
+    if (employeeId && employeeId != 0 && type === 'Manager') {
+      console.log('we made it to user');
+      const tempUser = new User();
+      tempUser.setId(employeeId);
+      const userResult = await UserClientService.Get(tempUser);
+      if (resultsList.length < 1) {
+        console.log('we did not find the single employee, create one');
         let tempTimesheet = new TimesheetLine();
         tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
         tempTimesheet.setUserApprovalDatetime(NULL_TIME);
         tempTimesheet.setTechnicianUserId(employeeId);
         tempTimesheet.setReferenceNumber('auto');
-        tempTimesheet.setDepartmentName(
-          userInfo.department!.value + ' - ' + userInfo.department!.description,
-        );
+        tempTimesheet.setDepartmentName(userResult.department!.value);
         tempTimesheet.setTechnicianUserName(
-          userInfo.firstname + ' ' + userInfo.lastname,
+          userResult.firstname + ' ' + userResult.lastname,
         );
-
         resultsList.push(tempTimesheet.toObject());
       }
     }
-
     let sortedResultsLists = resultsList.sort((a, b) =>
       a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
         ? 1
@@ -187,7 +147,6 @@ export const Timesheet: FC<Props> = ({
     setTimesheets(sortedResultsLists);
     setCount(sortedResultsLists.length);
     setLoading(false);
-    setLoaded(true);
   }, [page, departmentId, employeeId, week, endDay, startDay, type]);
   useEffect(() => {
     load();
@@ -221,13 +180,12 @@ export const Timesheet: FC<Props> = ({
         tempTimesheet.setIsActive(1);
         tempTimesheet.setReferenceNumber('NO TIMESHEET THIS WEEK');
 
-        await TimesheetLineClientService.Create(tempTimesheet);
+        const result = await TimesheetLineClientService.Create(tempTimesheet);
         load();
       }
     },
     [loggedUser, startDay, load, departmentId],
   );
-  console.log(pendingCreateEmptyTimesheetLine);
   return (
     <div>
       <SectionBar
@@ -247,7 +205,7 @@ export const Timesheet: FC<Props> = ({
         ]}
         loading={loading}
         data={
-          !loaded
+          loading
             ? makeFakeRows(3, 3)
             : timesheets.map(e => {
                 return [
