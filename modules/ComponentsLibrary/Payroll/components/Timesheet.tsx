@@ -99,6 +99,7 @@ export const Timesheet: FC<Props> = ({
         '<=',
         format(endDay, 'yyyy-MM-dd'),
       ]);
+      console.log(allTimesheetsForDepartmentReq.getDateRangeList());
       allTimesheetsForDepartmentReq.setIsActive(1);
       const completeResultsForDepartment = await TimesheetLineClientService.BatchGet(
         allTimesheetsForDepartmentReq,
@@ -130,7 +131,7 @@ export const Timesheet: FC<Props> = ({
             allUsers[i].firstname + ' ' + allUsers[i].lastname,
           );
 
-          resultsList.push(tempTimesheet.toObject());
+          //resultsList.push(tempTimesheet.toObject());
         }
       }
     }
@@ -175,7 +176,7 @@ export const Timesheet: FC<Props> = ({
         tempTimesheet.setIsActive(1);
         tempTimesheet.setReferenceNumber('NO TIMESHEET THIS WEEK');
 
-        const result = await TimesheetLineClientService.Create(tempTimesheet);
+        await TimesheetLineClientService.Create(tempTimesheet);
         load();
       }
     },
