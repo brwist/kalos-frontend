@@ -51,7 +51,7 @@ export const Timesheet: FC<Props> = ({
   type,
   loggedUser,
 }) => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -88,11 +88,17 @@ export const Timesheet: FC<Props> = ({
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
 
-    if (departmentId && departmentId != 0 && type === 'Manager') {
+    if (
+      departmentId &&
+      departmentId != 0 &&
+      type === 'Manager' &&
+      !employeeId
+    ) {
       const allTimesheetsForDepartmentReq = new TimesheetLine();
       const userReq = new User();
       userReq.setEmployeeDepartmentId(departmentId);
       allTimesheetsForDepartmentReq.setSearchUser(userReq);
+      allTimesheetsForDepartmentReq.setWithoutLimit(true);
       allTimesheetsForDepartmentReq.setDateRangeList([
         '>=',
         format(startDay, 'yyyy-MM-dd'),
@@ -126,22 +132,61 @@ export const Timesheet: FC<Props> = ({
           tempTimesheet.setUserApprovalDatetime(NULL_TIME);
           tempTimesheet.setTechnicianUserId(allUsers[i].id);
           tempTimesheet.setReferenceNumber('auto');
-          tempTimesheet.setDepartmentName(allUsers[i].department!.description);
+          tempTimesheet.setDepartmentName(
+            allUsers[i].department!.value +
+              ' - ' +
+              allUsers[i].department!.description,
+          );
           tempTimesheet.setTechnicianUserName(
             allUsers[i].firstname + ' ' + allUsers[i].lastname,
           );
 
-          //resultsList.push(tempTimesheet.toObject());
+          resultsList.push(tempTimesheet.toObject());
         }
       }
     }
+    if (employeeId && type === 'Manager') {
+      const allTimesheetsForUserReq = new TimesheetLine();
+      const userReq = new User();
+      userReq.setId(employeeId);
+      allTimesheetsForUserReq.setSearchUser(userReq);
+      allTimesheetsForUserReq.setDateRangeList([
+        '>=',
+        format(startDay, 'yyyy-MM-dd'),
+        '<=',
+        format(endDay, 'yyyy-MM-dd'),
+      ]);
+      allTimesheetsForUserReq.setIsActive(1);
+      allTimesheetsForUserReq.setWithoutLimit(true);
+      const completeResultsForUser = await TimesheetLineClientService.BatchGet(
+        allTimesheetsForUserReq,
+      );
+      const userResultList = completeResultsForUser.getResultsList();
+      const userInfo = await UserClientService.Get(userReq);
+      if (userResultList.length <= 0) {
+        let tempTimesheet = new TimesheetLine();
+        tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
+        tempTimesheet.setUserApprovalDatetime(NULL_TIME);
+        tempTimesheet.setTechnicianUserId(employeeId);
+        tempTimesheet.setReferenceNumber('auto');
+        tempTimesheet.setDepartmentName(
+          userInfo.department!.value + ' - ' + userInfo.department!.description,
+        );
+        tempTimesheet.setTechnicianUserName(
+          userInfo.firstname + ' ' + userInfo.lastname,
+        );
+
+        resultsList.push(tempTimesheet.toObject());
+      }
+    }
+
     let sortedResultsLists = resultsList.sort((a, b) =>
       a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
         ? 1
         : -1,
     );
     setTimesheets(sortedResultsLists);
-    setCount(totalCount);
+    setCount(sortedResultsLists.length);
     setLoading(false);
   }, [page, departmentId, employeeId, week, endDay, startDay, type]);
   useEffect(() => {
