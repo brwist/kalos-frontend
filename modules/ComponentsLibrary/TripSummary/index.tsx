@@ -20,6 +20,7 @@ import {
   perDiemTripMilesToUsd,
   TimesheetDepartmentClientService,
   MapClientService,
+  formatDateDay,
 } from '../../../helpers';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -90,9 +91,9 @@ const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
   ],
   [
     {
-      label: 'Week Of',
+      label: 'Day Of',
       type: 'text',
-      name: 'weekOf',
+      name: 'date',
     },
   ],
   [
@@ -320,7 +321,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
       if (tripFilter.departmentId == 0)
         tripFilter.departmentId = this.props.departmentId;
     }
-    console.log('cool beans', this.state.toggleButton);
     let criteria: LoadTripsByFilter;
     if (!this.props.viewingOwn) {
       criteria = {
@@ -507,9 +507,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             value: currentTrip.getUserName(),
           },
           {
-            value: this.getRowStartDateById(
-              currentTrip.getPerDiemRowId(),
-            )?.split(' ')[0],
+            value: formatDateDay(currentTrip.getDate()),
           },
           {
             value:
@@ -696,7 +694,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Origin' },
           { name: 'Destination' },
           { name: 'Name' },
-          { name: 'Week Of' },
+          { name: 'Day of' },
           { name: 'Miles / Cost' },
           {
             name: 'Approved?',
@@ -729,7 +727,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Origin' },
           { name: 'Destination' },
           { name: 'Name' },
-          { name: 'Week Of' },
+          { name: 'Day Of' },
           { name: 'Miles / Cost' },
           {
             name: 'Approved?',

@@ -37,6 +37,7 @@ export type TripInfo = {
 
   distanceInDollars: string;
   weekOf: string;
+  date: string;
   nameOfEmployee: string;
   departmentName: string;
 };
