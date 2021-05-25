@@ -86,33 +86,58 @@ export const Timesheet: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
+
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
-
+    const tempResults = [];
     if (
       departmentId &&
       departmentId != 0 &&
       employeeId == 0 &&
       type === 'Manager'
     ) {
+      const departmentTimesheetsReq = new TimesheetLine();
+      departmentTimesheetsReq.setIsActive(1);
+      departmentTimesheetsReq.setWithoutLimit(true);
+      const searchUser = new User();
+      searchUser.setEmployeeDepartmentId(departmentId);
+      departmentTimesheetsReq.setSearchUser(searchUser);
+      departmentTimesheetsReq.setGroupBy('technician_user_id');
+      departmentTimesheetsReq.setDateRangeList([
+        '>=',
+        filter.startDate,
+        '<=',
+        filter.endDate,
+      ]);
+      const departmentResults = (
+        await TimesheetLineClientService.BatchGet(departmentTimesheetsReq)
+      ).getResultsList();
+      console.log({ departmentResults });
       const allUsers = await UserClientService.loadUsersByDepartmentId(
         departmentId,
       );
       for (let i = 0; i < allUsers.length; i++) {
         let found = false;
-        for (let j = 0; j < resultsList.length; j++) {
-          if (resultsList[j].technicianUserId === allUsers[i].id) {
-            console.log('we found' + resultsList[j].technicianUserId);
+        for (let j = 0; j < departmentResults.length; j++) {
+          if (departmentResults[j].getTechnicianUserId() === allUsers[i].id) {
+            console.log(
+              'we found' + departmentResults[j].getTechnicianUserId(),
+            );
             found = true;
           }
         }
         if (found == false) {
+          console.log('we did not find someone');
           let tempTimesheet = new TimesheetLine();
           tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
           tempTimesheet.setUserApprovalDatetime(NULL_TIME);
           tempTimesheet.setTechnicianUserId(allUsers[i].id);
           tempTimesheet.setReferenceNumber('auto');
-          tempTimesheet.setDepartmentName(allUsers[i].department!.description);
+          tempTimesheet.setDepartmentName(
+            allUsers[i].department!.value +
+              ' - ' +
+              allUsers[i].department!.description,
+          );
           tempTimesheet.setTechnicianUserName(
             allUsers[i].firstname + ' ' + allUsers[i].lastname,
           );
@@ -121,11 +146,27 @@ export const Timesheet: FC<Props> = ({
       }
     }
     if (employeeId && employeeId != 0 && type === 'Manager') {
-      console.log('we made it to user');
+      const employeeReq = new TimesheetLine();
+      employeeReq.setIsActive(1);
+      employeeReq.setWithoutLimit(true);
+      const searchUser = new User();
+      searchUser.setId(employeeId);
+      employeeReq.setSearchUser(searchUser);
+      employeeReq.setGroupBy('technician_user_id');
+      employeeReq.setDateRangeList([
+        '>=',
+        filter.startDate,
+        '<=',
+        filter.endDate,
+      ]);
+      const employeeResults = (
+        await TimesheetLineClientService.BatchGet(employeeReq)
+      ).getResultsList();
+      console.log({ employeeResults });
       const tempUser = new User();
       tempUser.setId(employeeId);
       const userResult = await UserClientService.Get(tempUser);
-      if (resultsList.length < 1) {
+      if (employeeResults.length < 1) {
         console.log('we did not find the single employee, create one');
         let tempTimesheet = new TimesheetLine();
         tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
@@ -139,6 +180,7 @@ export const Timesheet: FC<Props> = ({
         resultsList.push(tempTimesheet.toObject());
       }
     }
+
     let sortedResultsLists = resultsList.sort((a, b) =>
       a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
         ? 1
