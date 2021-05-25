@@ -501,17 +501,15 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return (
-    {
-      0: 'Sun',
-      1: 'Mon',
-      2: 'Tue',
-      3: 'Wed',
-      4: 'Thu',
-      5: 'Fri',
-      6: 'Sat',
-    } as { [key: number]: string }
-  )[new Date(datetime.substr(0, 10)).getDay()];
+  return ({
+    0: 'Sun',
+    1: 'Mon',
+    2: 'Tue',
+    3: 'Wed',
+    4: 'Thu',
+    5: 'Fri',
+    6: 'Sat',
+  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**
@@ -538,6 +536,14 @@ function formatDateTimeDay(datetime: string) {
   );
 }
 
+/**
+ *
+ * @param datetime date in format YYYY-MM-DD HH:MM:SS (ie. 2020-06-01 15:28:31)
+ * @returns format Day M/D/YYYY h:MMa (ie. Tue 6/1/2020)
+ */
+function formatDateDay(datetime: string) {
+  return formatDay(datetime) + ', ' + formatDate(datetime);
+}
 /**
  * Returns array of fake rows for InfoTable component
  * @param columns: number (default 1)
@@ -1926,6 +1932,7 @@ export {
   formatTime,
   formatDate,
   formatDay,
+  formatDateDay,
   formatDateTimeDay,
   makeFakeRows,
   getRPCFields,
