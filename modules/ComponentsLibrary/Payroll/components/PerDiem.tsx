@@ -78,25 +78,16 @@ export const PerDiem: FC<Props> = ({
       employeeId,
       week === OPTION_ALL ? undefined : week,
       toggleButton,
+      'date_submitted',
+      'ASC',
     );
-    if (role == 'Payroll' && toggleButton == false) {
-      let sortedList = perDiems.resultsList.sort((a, b) =>
-        a.dateApproved > b.dateApproved ? -1 : 1,
-      );
-      setPerDiems(sortedList);
-    } else {
-      let sortedList = perDiems.resultsList.sort((a, b) =>
-        a.dateStarted > b.dateStarted ? -1 : 1,
-      );
-      setPerDiems(sortedList);
-    }
+    setPerDiems(perDiems.resultsList);
     setCount(perDiems.totalCount);
     setLoading(false);
   }, [
     departmentId,
     employeeId,
     week,
-    role,
     page,
     managerFilter,
     payrollFilter,
@@ -132,6 +123,10 @@ export const PerDiem: FC<Props> = ({
     },
     [setPendingPayrollReject],
   );
+  const handleToggleButton = useCallback(() => {
+    setToggleButton(!toggleButton);
+    setPage(0);
+  }, [toggleButton]);
   const handleApprove = useCallback(async () => {
     if (!pendingApprove) return;
     const { id } = pendingApprove;
@@ -225,7 +220,7 @@ export const PerDiem: FC<Props> = ({
               ? 'Show Processed Records'
               : 'Show Unprocessed Records'
           }
-          onClick={() => setToggleButton(!toggleButton)}
+          onClick={() => handleToggleButton()}
         ></Button>
       )}
       <InfoTable

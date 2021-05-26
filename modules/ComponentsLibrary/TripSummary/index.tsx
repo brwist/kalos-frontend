@@ -245,7 +245,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
     // I'm going to go ahead and make an issue for the future to clean this up, I really did a messy job in this particular
     // component and should really maintain it when I'm less busy with Dani's stuff
     this.loadTripsAndUpdate(
-      this.props.role == 'Manager' ? this.state.search : undefined,
+      this.props.role == 'Manager' || this.props.role === 'Payroll'
+        ? this.state.search
+        : undefined,
+      this.state.toggleButton,
     );
   }
 
@@ -312,8 +315,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
     // These two cases will need certain properties reversed, since we will use not_equals to compare them
     // (we need to compare if they're true and if they are, then filter them)
-    if (this.props.role == 'Payroll' && tripFilter) {
+    if (this.props.role == 'Payroll' && tripFilter && toggleButton == false) {
       tripFilter.payrollProcessed = false;
+      tripFilter.approved = true;
+    }
+    if (this.props.role == 'Payroll' && tripFilter && toggleButton == true) {
+      tripFilter.payrollProcessed = true;
+      tripFilter.approved = true;
     }
     if (this.props.role == 'Manager' && tripFilter) {
       tripFilter.approved = false;
@@ -385,10 +393,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
     resultList.setResultsList(tripsFinalResultList);
 
     this.setState({
-      totalTrips: res.results.length,
+      totalTrips: res.totalCount,
     });
-
-    resultList.setTotalCount(res.results.length);
+    resultList.setTotalCount(res.totalCount);
     return resultList;
   };
 
@@ -489,10 +496,8 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.loadTripsAndUpdate(currentSearch);
   };
   handleToggleButton = () => {
-    console.log('we press button');
-    this.setState({ toggleButton: !this.state.toggleButton }, () => {
-      console.log(this.state.toggleButton);
-    });
+    this.setState({ page: 0 });
+    this.setState({ toggleButton: !this.state.toggleButton }, () => {});
     this.loadTripsAndUpdate(undefined, !this.state.toggleButton);
   };
   getData = () => {
@@ -688,61 +693,59 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ tripToView: trip });
   };
   getColumns = () => {
-    return (
-      this.props.canDeleteTrips
-        ? [
-            { name: 'Origin' },
-            { name: 'Destination' },
-            { name: 'Name' },
-            { name: 'Day of' },
-            { name: 'Miles / Cost' },
-            {
-              name: 'Approved?',
-            },
-            {
-              name: 'Department Name',
-            },
-            {
-              name: 'Payroll Processed?',
-              actions: [
-                {
-                  label: 'Delete All Trips',
-                  compact: this.props.compact ? true : false,
-                  variant: 'outlined',
-                  size: 'xsmall',
-                  onClick: () => {
-                    this.setStateToNew({
-                      pendingDeleteAllTrips: true,
-                    });
-                  },
-                  burgeronly: 1,
+    return (this.props.canDeleteTrips
+      ? [
+          { name: 'Origin' },
+          { name: 'Destination' },
+          { name: 'Name' },
+          { name: 'Day of' },
+          { name: 'Miles / Cost' },
+          {
+            name: 'Approved?',
+          },
+          {
+            name: 'Department Name',
+          },
+          {
+            name: 'Payroll Processed?',
+            actions: [
+              {
+                label: 'Delete All Trips',
+                compact: this.props.compact ? true : false,
+                variant: 'outlined',
+                size: 'xsmall',
+                onClick: () => {
+                  this.setStateToNew({
+                    pendingDeleteAllTrips: true,
+                  });
                 },
-              ],
-            },
-            {
-              name: '',
-            },
-          ]
-        : [
-            { name: 'Origin' },
-            { name: 'Destination' },
-            { name: 'Name' },
-            { name: 'Day Of' },
-            { name: 'Miles / Cost' },
-            {
-              name: 'Approved?',
-            },
-            {
-              name: 'Department Name',
-            },
-            {
-              name: 'Payroll Processed?',
-            },
-            {
-              name: '',
-            },
-          ]
-    ) as Columns;
+                burgeronly: 1,
+              },
+            ],
+          },
+          {
+            name: '',
+          },
+        ]
+      : [
+          { name: 'Origin' },
+          { name: 'Destination' },
+          { name: 'Name' },
+          { name: 'Day Of' },
+          { name: 'Miles / Cost' },
+          {
+            name: 'Approved?',
+          },
+          {
+            name: 'Department Name',
+          },
+          {
+            name: 'Payroll Processed?',
+          },
+          {
+            name: '',
+          },
+        ]) as Columns;
   };
   setFilter = async (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
@@ -802,10 +805,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
     if (user) {
       try {
-        department =
-          await TimesheetDepartmentClientService.getDepartmentByManagerID(
-            user.managedBy,
-          );
+        department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
+          user.managedBy,
+        );
       } catch (err) {
         console.error('Error getting timesheet department: ', err);
       }
@@ -867,7 +869,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   };
 
   render() {
-    console.log(this.state.toggleButton);
     return (
       <div key={'tripSummary'}>
         {this.state.warningNoPerDiem && (
@@ -952,7 +953,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         {this.props.canProcessPayroll === true && (
           <Button
             label={
-              this.state.toggleButton === true
+              this.state.toggleButton === false
                 ? 'Show Unprocessed Records'
                 : 'Show Processed Records'
             }
