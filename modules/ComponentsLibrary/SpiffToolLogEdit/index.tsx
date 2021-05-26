@@ -276,37 +276,46 @@ export const SpiffToolLogEdit: FC<Props> = ({
     async (form: SpiffToolAdminActionType) => {
       if (statusEditing) {
         setStatusEditing(undefined);
-        const updateTask = new Task();
-        updateTask.setId(data.id);
-        updateTask.setAdminActionId(statusEditing.id);
-        if (statusEditing.status === 3) {
-          //if the Spiff has been revoke, we need payroll to
-          //process it again, Cost Summary will treat it as a negative value
-          updateTask.setPayrollProcessed(false);
-        }
-        updateTask.setSpiffToolCloseoutDate(timestamp());
-        await TaskClientService.Update(updateTask);
 
         if (userId) {
           const userInfo = await UserClientService.loadUserById(loggedUserId);
           const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
           form.reviewedBy = newReviewedBy;
         }
+        const timestampValue = timestamp().toString();
         const adminAction = { ...form, id: statusEditing.id, taskId: data.id };
         if (statusEditing.status === 1) {
           Object.assign(adminAction, {
-            grantedDate: timestamp().toString(),
+            grantedDate: timestampValue,
           });
         }
         if (statusEditing.status === 3) {
           Object.assign(adminAction, {
-            revokedDate: timestamp().toString(),
+            revokedDate: timestampValue,
           });
         }
         await SpiffToolAdminActionClientService.upsertSpiffToolAdminAction(
           adminAction,
         );
 
+        const updateTask = new Task();
+        const action = new SpiffToolAdminAction();
+        action.setTaskId(data.id);
+        action.setCreatedDate(timestampValue);
+        action.setReviewedBy(statusEditing.reviewedBy);
+        const newData = await SpiffToolAdminActionClientService.Get(action);
+        updateTask.setId(data.id);
+        updateTask.setAdminActionId(newData.id);
+
+        if (statusEditing.status === 3) {
+          //if the Spiff has been revoke, we need payroll to
+          //process it again, Cost Summary will treat it as a negative value
+          updateTask.setPayrollProcessed(false);
+          updateTask.addFieldMask('PayrollProcessed');
+        }
+        updateTask.setSpiffToolCloseoutDate(timestamp());
+        updateTask.addFieldMask('AdminActionId');
+        await TaskClientService.Update(updateTask);
         onStatusChange();
       }
     },
