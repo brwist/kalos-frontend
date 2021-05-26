@@ -248,7 +248,7 @@ export const TimesheetSummary: FC<Props> = ({
     timesheetReq.setFieldMaskList(['PayrollProcessed']);
     results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
 
-    let tempJobs = await getTimeoff();
+    let tempJobs = [];
     for (let i = 0; i < results.length; i++) {
       if (
         !results[i].toObject().referenceNumber.includes('PTO') &&
@@ -312,7 +312,7 @@ export const TimesheetSummary: FC<Props> = ({
     }
     setTimesheets(results);
     return tempJobs;
-  }, [notReady, userId, endDay, startDay]);
+  }, [userId, endDay, startDay]);
   const ProcessTimesheets = useCallback(async () => {
     const tslClient = new TimesheetLineClient(ENDPOINT);
     let ids = [];
