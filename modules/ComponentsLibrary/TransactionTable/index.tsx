@@ -64,6 +64,7 @@ export interface Props {
     selectedTransactions: Transaction[],
   ) => void;
   hasActions?: boolean;
+  key: any;
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
@@ -95,6 +96,7 @@ export const TransactionTable: FC<Props> = ({
   onSelect,
   onDeselect,
   hasActions,
+  key,
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
@@ -321,6 +323,7 @@ export const TransactionTable: FC<Props> = ({
   };
 
   const resetTransactions = useCallback(async () => {
+    setLoading(true);
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
     req.setOrderDir(
@@ -341,7 +344,8 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-  }, [setTransactions]);
+    setLoading(false);
+  }, [setTransactions, setLoading]);
 
   const load = useCallback(async () => {
     const employees = await UserClientService.loadTechnicians();
