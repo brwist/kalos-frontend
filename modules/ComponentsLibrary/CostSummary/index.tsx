@@ -435,7 +435,7 @@ export const CostSummary: FC<Props> = ({
       }
     },
     [userId],
-  );
+  ); /*
   const getTimeoffTotals = useCallback(async () => {
     const startDate = format(startDay, 'yyyy-MM-dd');
     const endDate = format(endDay, 'yyyy-MM-dd');
@@ -473,6 +473,7 @@ export const CostSummary: FC<Props> = ({
     }
     return total;
   }, [userId, notReady, endDay, startDay]);
+  */
   const getProcessedHoursTotals = useCallback(async () => {
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
@@ -481,6 +482,7 @@ export const CostSummary: FC<Props> = ({
     const startDate = format(startDay, 'yyyy-MM-dd');
     const endDate = format(endDay, 'yyyy-MM-dd');
     timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
+    console.log(endDay);
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
     timesheetReq.setOrderBy('time_started');
@@ -489,10 +491,7 @@ export const CostSummary: FC<Props> = ({
 
     let total = 0;
     for (let i = 0; i < results.length; i++) {
-      if (
-        !results[i].toObject().referenceNumber.includes('PTO') &&
-        !results[i].toObject().briefDescription.includes('PTO')
-      ) {
+      {
         const timeFinished = results[i].toObject().timeFinished;
         const timeStarted = results[i].toObject().timeStarted;
         const subtotal = roundNumber(
@@ -546,7 +545,7 @@ export const CostSummary: FC<Props> = ({
   useEffect(() => {
     const load = async () => {
       let promises = [];
-
+      /*
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {
@@ -559,6 +558,7 @@ export const CostSummary: FC<Props> = ({
           }
         }),
       );
+      */
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {
@@ -658,7 +658,7 @@ export const CostSummary: FC<Props> = ({
     if (!loaded) load();
   }, [
     getProcessedHoursTotals,
-    getTimeoffTotals,
+    // getTimeoffTotals,
     loaded,
     getPerDiemTotals,
     getSpiffToolTotals,
