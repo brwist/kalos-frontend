@@ -94,10 +94,8 @@ export const Spiffs: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
-    const {
-      resultsList,
-      totalCount,
-    } = await TaskClientService.loadPendingSpiffs(filter);
+    const { resultsList, totalCount } =
+      await TaskClientService.loadPendingSpiffs(filter);
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
@@ -113,9 +111,10 @@ export const Spiffs: FC<Props> = ({
     (pendingView?: TaskType) => () => setPendingView(pendingView),
     [],
   );
-  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
-    pendingAdd,
-  ]);
+  const handleToggleAdd = useCallback(
+    () => setPendingAdd(!pendingAdd),
+    [pendingAdd],
+  );
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );

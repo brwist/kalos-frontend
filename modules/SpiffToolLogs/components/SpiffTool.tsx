@@ -143,17 +143,12 @@ export const SpiffTool: FC<Props> = ({
   const [pendingPayrollReject, setPendingPayrollReject] = useState<TaskType>();
   const [pendingAudit, setPendingAudit] = useState<TaskType>();
 
-  const [
-    serviceCallEditing,
-    setServiceCallEditing,
-  ] = useState<TaskEventDataType>();
-  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
-    '',
-  );
-  const [
-    statusEditing,
-    setStatusEditing,
-  ] = useState<SpiffToolAdminActionType>();
+  const [serviceCallEditing, setServiceCallEditing] =
+    useState<TaskEventDataType>();
+  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] =
+    useState<string>('');
+  const [statusEditing, setStatusEditing] =
+    useState<SpiffToolAdminActionType>();
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );
@@ -192,65 +187,69 @@ export const SpiffTool: FC<Props> = ({
 
   const load = useCallback(async () => {
     setLoading(true);
-    if (type === 'Spiff' && spiffTypes.length === 0) {
-      const { resultsList: spiffTypes } = (
-        await TaskClientService.GetSpiffTypes()
-      ).toObject();
-      setSpiffTypes(spiffTypes);
-    }
-
-    const { description, month, kind, technician } = searchForm;
-    const req = new Task();
-    req.setPageNumber(page);
-    req.setIsActive(true);
-    req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
-    req.setOrderDir('ASC');
-    if (needsManagerAction) {
-      req.setFieldMaskList(['AdminActionId']);
-    }
-    if (needsPayrollAction) {
-      req.setNotEqualsList(['AdminActionId']);
-      req.setFieldMaskList(['PayrollProcessed']);
-      const action = new SpiffToolAdminAction();
-      action.setStatus(1);
-      req.setSearchAction(action);
-    }
-    if (needsAuditAction) {
-      req.setNotEqualsList(['AdminActionId']);
-      req.setFieldMaskList(['NeedsAuditing']);
-      req.setNeedsAuditing(true);
-      const action = new SpiffToolAdminAction();
-      action.setStatus(1);
-      req.setSearchAction(action);
-    }
-    if (technician) {
-      req.setExternalId(technician);
-    }
-    req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
-    if (description !== '') {
-      req.setBriefDescription(`%${description}%`);
-    }
-    const action = new SpiffToolAdminAction();
-    action.setStatus(1);
-    if (kind === MONTHLY) {
-      if (month !== OPTION_ALL) {
-        req.setDatePerformed(month);
+    try {
+      if (type === 'Spiff' && spiffTypes.length === 0) {
+        const { resultsList: spiffTypes } = (
+          await TaskClientService.GetSpiffTypes()
+        ).toObject();
+        setSpiffTypes(spiffTypes);
       }
-    } else {
-      const [y, m, d] = month.split('-');
-      const n = new Date(+y, +m - 1, +d + 7, 0, 0, 0);
-      const ltDate = `${n.getFullYear()}-${trailingZero(
-        n.getMonth() + 1,
-      )}-${trailingZero(n.getDate())}`;
-      req.setDateRangeList(['>=', month, '<', ltDate]);
+
+      const { description, month, kind, technician } = searchForm;
+      const req = new Task();
+      req.setPageNumber(page);
+      req.setIsActive(true);
+      req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
+      req.setOrderDir('ASC');
+      if (needsManagerAction) {
+        req.setFieldMaskList(['AdminActionId']);
+      }
+      if (needsPayrollAction) {
+        req.setNotEqualsList(['AdminActionId']);
+        req.setFieldMaskList(['PayrollProcessed']);
+        const action = new SpiffToolAdminAction();
+        action.setStatus(1);
+        req.setSearchAction(action);
+      }
+      if (needsAuditAction) {
+        req.setNotEqualsList(['AdminActionId']);
+        req.setFieldMaskList(['NeedsAuditing']);
+        req.setNeedsAuditing(true);
+        const action = new SpiffToolAdminAction();
+        action.setStatus(1);
+        req.setSearchAction(action);
+      }
+      if (technician) {
+        req.setExternalId(technician);
+      }
+      req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
+      if (description !== '') {
+        req.setBriefDescription(`%${description}%`);
+      }
+      const action = new SpiffToolAdminAction();
+      action.setStatus(1);
+      if (kind === MONTHLY) {
+        if (month !== OPTION_ALL) {
+          req.setDatePerformed(month);
+        }
+      } else {
+        const [y, m, d] = month.split('-');
+        const n = new Date(+y, +m - 1, +d + 7, 0, 0, 0);
+        const ltDate = `${n.getFullYear()}-${trailingZero(
+          n.getMonth() + 1,
+        )}-${trailingZero(n.getDate())}`;
+        req.setDateRangeList(['>=', month, '<', ltDate]);
+      }
+      const res = await TaskClientService.BatchGet(req);
+      const resultsList = res.getResultsList().map(el => el.toObject());
+      const count = res.getTotalCount();
+      setCount(count);
+      setEntries(resultsList);
+      setLoading(false);
+      return resultsList;
+    } catch (err) {
+      console.log(err);
     }
-    const res = await TaskClientService.BatchGet(req);
-    const resultsList = res.getResultsList().map(el => el.toObject());
-    const count = res.getTotalCount();
-    setCount(count);
-    setEntries(resultsList);
-    setLoading(false);
-    return resultsList;
   }, [
     setEntries,
     setLoading,
@@ -468,14 +467,13 @@ export const SpiffTool: FC<Props> = ({
     [setStatusEditing, handleSetExtendedEditing],
   );
   const handleClickTechnician = useCallback(
-    (technician: number) => (
-      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      event.preventDefault();
-      setSearchForm({ ...searchForm, technician });
-      setSearchFormKey(searchFormKey + 1);
-      handleMakeSearch();
-    },
+    (technician: number) =>
+      (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        event.preventDefault();
+        setSearchForm({ ...searchForm, technician });
+        setSearchFormKey(searchFormKey + 1);
+        handleMakeSearch();
+      },
     [
       searchForm,
       setSearchForm,
@@ -485,14 +483,13 @@ export const SpiffTool: FC<Props> = ({
     ],
   );
   const handleOpenServiceCall = useCallback(
-    (entry: TaskType) => (
-      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      e.preventDefault();
-      const { event } = entry;
-      if (!event) return;
-      setServiceCallEditing(event);
-    },
+    (entry: TaskType) =>
+      (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        e.preventDefault();
+        const { event } = entry;
+        if (!event) return;
+        setServiceCallEditing(event);
+      },
     [setServiceCallEditing],
   );
   const handleUnsetServiceCallEditing = useCallback(
@@ -500,12 +497,11 @@ export const SpiffTool: FC<Props> = ({
     [setServiceCallEditing],
   );
   const handleClickSpiffJobNumber = useCallback(
-    (spiffJobNumber: string) => (
-      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      e.preventDefault();
-      setUnlinkedSpiffJobNumber(spiffJobNumber);
-    },
+    (spiffJobNumber: string) =>
+      (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        e.preventDefault();
+        setUnlinkedSpiffJobNumber(spiffJobNumber);
+      },
     [setUnlinkedSpiffJobNumber],
   );
   const handleClearUnlinkedSpiffJobNumber = useCallback(

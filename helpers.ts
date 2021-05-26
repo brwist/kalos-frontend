@@ -281,17 +281,6 @@ async function slackNotify(id: string, text: string) {
   );
 }
 
-// Replacement for lodash uniq
-function unique(original: any[]) {
-  let container: any[] = [];
-  for (const el of original) {
-    if (!container.includes(el)) {
-      container.push(el);
-    }
-  }
-  return container;
-}
-
 async function getSlackList(skipCache = false): Promise<SlackUser[]> {
   const KALOS_BOT = await ApiKeyClientService.getKeyByKeyName('kalos_bot');
   try {
@@ -668,6 +657,7 @@ export const loadPerformanceMetricsByFilter = async ({
 };
 
 export const loadDeletedServiceCallsByFilter = async ({
+  // FIXME move to event client
   page,
   filter: { dateStart, dateEnd, businessName, lastname },
 }: LoadMetricsBySearchFilter) => {
@@ -698,6 +688,7 @@ export const loadDeletedServiceCallsByFilter = async ({
 };
 
 export const loadCallbackReportByFilter = async ({
+  //FIXME make this load real data, move to client
   page,
   filter: { dateStart, dateEnd },
 }: LoadMetricsByFilter) => {
@@ -725,10 +716,8 @@ export type BillingAuditType = {
   }[];
 };
 
-export const loadBillingAuditReport = async (
-  startDate: string,
-  endDate: string,
-) => {
+export const loadBillingAuditReport = async (startDate: string) => {
+  //FIXME make this load real data, move to client
   const [year, month] = startDate.split('-');
   return [...Array(160)].map(() => ({
     date: `${year}-${month}-${getRandomNumber(1, 31)}`,
@@ -757,6 +746,7 @@ export const loadBillingAuditReport = async (
 };
 
 export const loadCharityReport = async (month: string) => {
+  //FIXME make this load real data, move to client
   return {
     residentialServiceTotal: getRandomDigits(6),
     residentialAorTotal: getRandomDigits(6),
@@ -769,6 +759,7 @@ export const loadCharityReport = async (month: string) => {
 };
 
 export const loadTimeoffSummaryReport = async (year: number) => {
+  //FIXME make this load real data, move to client
   return [...Array(100)].map(() => ({
     employeeName: getRandomName(),
     hireDate: [
@@ -784,6 +775,7 @@ export const loadTimeoffSummaryReport = async (year: number) => {
 };
 
 export const loadWarrantyReport = async () => {
+  //FIXME make this load real data, move to client
   return [...Array(130)].map(() => ({
     briefDdescription: randomize([
       'Broken',
@@ -809,7 +801,7 @@ export type LoadMetricsByWeekFilter = {
 export const loadServiceCallMetricsByFilter = async ({
   filter: { week },
 }: LoadMetricsByWeekFilter) => {
-  // FIXME
+  // //FIXME make this load real data, move to client
   return {
     serviceCallInformation: [...Array(5 + getRandomDigit())].map(() => ({
       averageCustomerAnnualValue: getRandomAge(),
@@ -846,6 +838,7 @@ export type PromptPaymentData = {
 };
 
 export const loadPromptPaymentData = async (month: string) => {
+  //FIXME finish implementation, move to reports client
   const req = new PromptPaymentReportLine();
   const date = `${month.replace('%', '01')} 00:00:00`;
   const startDate = format(addDays(new Date(date), -1), 'yyyy-MM-dd');
@@ -913,8 +906,6 @@ export const loadPromptPaymentData = async (month: string) => {
     };
   };
 
-  console.log();
-
   return Object.values(data)
     .concat()
     .sort(fn('customerName'))
@@ -948,6 +939,7 @@ export const loadSpiffReportByFilter = async ({
   type,
   users,
 }: LoadSpiffReportByFilter) => {
+  //FIXME finish this, move to report client
   const req = new SpiffReportLine();
   req.setIsActive(true);
   req.setOrderBy('timestamp');
@@ -1013,6 +1005,7 @@ export const loadActivityLogsByFilter = async ({
   filter: { activityDateStart, activityDateEnd, activityName, withUser },
   sort,
 }: LoadActivityLogsByFilter) => {
+  //FIXME move to activity log client
   const { orderBy, orderDir, orderByField } = sort;
   const req = new ActivityLog();
   const u = new User();
@@ -1127,6 +1120,7 @@ export const loadPropertiesByFilter = async ({
   filter,
   sort,
 }: LoadPropertiesByFilter) => {
+  // FIXME move to property client
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Property();
   req.setIsActive(1);
@@ -1170,6 +1164,7 @@ export const loadContractsByFilter = async ({
   filter,
   sort,
 }: LoadContractsByFilter) => {
+  // FIXME, move to contract client
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Contract();
   req.setIsActive(1);
@@ -1205,6 +1200,7 @@ export const loadTripsByFilter = async ({
   filter,
   sort,
 }: LoadTripsByFilter) => {
+  // FIXME move to trips client
   const { orderBy, orderDir, orderByField } = sort;
   const req = new Trip();
   req.setPage(page);
@@ -1306,6 +1302,7 @@ export const loadEventsByFilter = async ({
   sort,
   pendingBilling = false,
 }: LoadEventsByFilter) => {
+  // FIXME, move to event client
   const {
     logJobNumber,
     dateStarted,
@@ -1448,6 +1445,7 @@ export const loadEventsByFilter = async ({
 };
 
 export const loadProjects = async () => {
+  // FIXME move to event client
   const req = new Event();
   req.setNotEqualsList(['DepartmentId']);
   req.setPageNumber(0);
@@ -1460,6 +1458,7 @@ export const loadProjects = async () => {
 };
 
 export const loadEventById = async (eventId: number) => {
+  // FIXME move to event client
   return await EventClientService.loadEvent(eventId);
 };
 
@@ -1469,6 +1468,7 @@ export const loadEventsByFilterDeleted = async ({
   sort,
   pendingBilling = false,
 }: LoadEventsByFilter) => {
+  // FIXME move to event client
   const {
     logJobNumber,
     dateStarted,
@@ -1635,6 +1635,7 @@ export const uploadFileToS3Bucket = async (
   bucketName: string,
   tagString?: string,
 ) => {
+  // FIXME move to s3 client
   try {
     const urlObj = new URLObject();
     urlObj.setKey(fileName);
