@@ -16,7 +16,6 @@ import {
   TimesheetLineClientService,
   UserClientService,
   timestamp,
-  TimesheetDepartmentClientService,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import {
@@ -27,8 +26,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
 import { TimesheetSummary } from './TimesheetSummary';
-import { userInfo } from 'os';
-
+import AddIcon from '@material-ui/icons/Add';
 interface Props {
   departmentId: number;
   employeeId: number;
@@ -99,6 +97,7 @@ export const Timesheet: FC<Props> = ({
       const departmentTimesheetsReq = new TimesheetLine();
       departmentTimesheetsReq.setIsActive(1);
       departmentTimesheetsReq.setWithoutLimit(true);
+      departmentTimesheetsReq.setPageNumber(0);
       const searchUser = new User();
       searchUser.setEmployeeDepartmentId(departmentId);
       departmentTimesheetsReq.setSearchUser(searchUser);
@@ -112,7 +111,6 @@ export const Timesheet: FC<Props> = ({
       const departmentResults = (
         await TimesheetLineClientService.BatchGet(departmentTimesheetsReq)
       ).getResultsList();
-      console.log({ departmentResults });
       const allUsers = await UserClientService.loadUsersByDepartmentId(
         departmentId,
       );
@@ -120,14 +118,10 @@ export const Timesheet: FC<Props> = ({
         let found = false;
         for (let j = 0; j < departmentResults.length; j++) {
           if (departmentResults[j].getTechnicianUserId() === allUsers[i].id) {
-            console.log(
-              'we found' + departmentResults[j].getTechnicianUserId(),
-            );
             found = true;
           }
         }
         if (found == false) {
-          console.log('we did not find someone');
           let tempTimesheet = new TimesheetLine();
           tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
           tempTimesheet.setUserApprovalDatetime(NULL_TIME);
@@ -162,12 +156,10 @@ export const Timesheet: FC<Props> = ({
       const employeeResults = (
         await TimesheetLineClientService.BatchGet(employeeReq)
       ).getResultsList();
-      console.log({ employeeResults });
       const tempUser = new User();
       tempUser.setId(employeeId);
       const userResult = await UserClientService.Get(tempUser);
       if (employeeResults.length < 1) {
-        console.log('we did not find the single employee, create one');
         let tempTimesheet = new TimesheetLine();
         tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
         tempTimesheet.setUserApprovalDatetime(NULL_TIME);
@@ -202,7 +194,6 @@ export const Timesheet: FC<Props> = ({
   );
   const createEmptyTimesheetLine = useCallback(
     async (emptyTimesheetLine?: TimesheetLineType) => {
-      console.log('we pressed button');
       if (emptyTimesheetLine) {
         setPendingCreateEmptyTimesheetLine(undefined);
         const tempTimesheet = new TimesheetLine();
@@ -294,7 +285,7 @@ export const Timesheet: FC<Props> = ({
                           size="small"
                           disabled={type != 'Manager'}
                         >
-                          <PageviewIcon />
+                          <AddIcon />
                         </IconButton>
                       ),
                     ],
@@ -360,7 +351,6 @@ const createTimesheetFetchFunction = (
   role: RoleType,
 ) => {
   const req = new TimesheetLine();
-  console.log(config);
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
   if (config.type === 'Payroll') {
