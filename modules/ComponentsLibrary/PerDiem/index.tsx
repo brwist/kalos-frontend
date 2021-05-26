@@ -18,9 +18,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
-import {
-  Trip,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   UserType,
   PerDiemType,
@@ -42,6 +40,7 @@ export interface Props {
   loggedUserId: number;
   onClose?: () => void;
   perDiem?: PerDiemType;
+  ownerId?: number;
 }
 
 export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip.AsObject> = [
@@ -167,6 +166,7 @@ export const PerDiemComponent: FC<Props> = ({
   loggedUserId = 0,
   onClose,
   perDiem,
+  ownerId,
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -329,6 +329,7 @@ export const PerDiemComponent: FC<Props> = ({
     loggedUserId,
     setLoading,
     setPerDiems,
+    perDiem,
     dateStarted,
     managerDepartmentIds,
     setManagerPerDiems,
@@ -399,6 +400,7 @@ export const PerDiemComponent: FC<Props> = ({
   );
   const handleSavePerDiemRow = useCallback(
     async (perDiemRow: PerDiemRowType) => {
+      console.log('we are');
       setSaving(true);
       await PerDiemClientService.upsertPerDiemRow(perDiemRow);
       setPendingPerDiemRowEdit(undefined);
@@ -590,7 +592,9 @@ export const PerDiemComponent: FC<Props> = ({
   const makeNewPerDiem = useCallback(() => {
     const req = new PerDiem();
     if (user) {
-      if (!isAnyManager) {
+      if (loggedUserId && ownerId) {
+        req.setUserId(ownerId);
+      } else {
         req.setUserId(loggedUserId);
       }
       req.setDateStarted(formatDateFns(dateStarted));
@@ -608,10 +612,10 @@ export const PerDiemComponent: FC<Props> = ({
     loggedUserId,
     dateStarted,
     user,
+    ownerId,
     perDiems,
     departments,
     availableDapartments,
-    isAnyManager,
   ]);
   const makeNewPerDiemRow = useCallback(
     (perDiemId: number, dateString: string) => {
@@ -811,20 +815,20 @@ export const PerDiemComponent: FC<Props> = ({
                   </>
                 }
                 actions={
-                  perDiem
+                  perDiem && role! != 'Manager'
                     ? []
                     : [
                         {
                           label: 'Delete',
                           variant: 'outlined',
                           onClick: handlePendingPerDiemDeleteToggle(entry),
-                          disabled: buttonDisabled,
+                          disabled: buttonDisabled && role != 'Manager',
                         },
                         {
                           label: 'Edit',
                           variant: 'outlined',
                           onClick: handlePendingPerDiemEditToggle(entry),
-                          disabled: buttonDisabled,
+                          disabled: buttonDisabled && role != 'Manager',
                         },
                         {
                           label: status.button,
@@ -832,7 +836,7 @@ export const PerDiemComponent: FC<Props> = ({
                             isAnyManager && status.status === 'PENDING_APPROVE'
                               ? handlePendingPerDiemApproveToggle(entry)
                               : handlePendingPerDiemSubmitToggle(entry),
-                          disabled: buttonDisabled,
+                          disabled: buttonDisabled && role != 'Manager',
                         },
                       ]
                 }
@@ -887,8 +891,7 @@ export const PerDiemComponent: FC<Props> = ({
                         )}
                         {((isOwner && status.status === 'PENDING_SUBMIT') ||
                           (isManager && status.status !== 'APPROVED')) &&
-                          isPerDiemRowUndefined &&
-                          !perDiem && (
+                          isPerDiemRowUndefined && (
                             <Button
                               label="Add Per Diem Day"
                               compact
@@ -917,10 +920,9 @@ export const PerDiemComponent: FC<Props> = ({
                               title={status.text.toUpperCase()}
                               statusColor={status.color}
                               onClick={
-                                !perDiem &&
-                                ((isOwner &&
+                                (isOwner &&
                                   status.status === 'PENDING_SUBMIT') ||
-                                  (isManager && status.status !== 'APPROVED'))
+                                (isManager && status.status !== 'APPROVED')
                                   ? handlePendingPerDiemRowEditToggle(entry)
                                   : undefined
                               }

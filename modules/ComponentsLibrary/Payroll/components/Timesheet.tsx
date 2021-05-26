@@ -27,6 +27,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
 import { TimesheetSummary } from './TimesheetSummary';
+import { userInfo } from 'os';
 
 interface Props {
   departmentId: number;
@@ -85,62 +86,108 @@ export const Timesheet: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
+
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
-
-    if (departmentId && departmentId != 0 && type === 'Manager') {
-      const allTimesheetsForDepartmentReq = new TimesheetLine();
-      const userReq = new User();
-      userReq.setEmployeeDepartmentId(departmentId);
-      allTimesheetsForDepartmentReq.setSearchUser(userReq);
-      allTimesheetsForDepartmentReq.setDateRangeList([
+    const tempResults = [];
+    if (
+      departmentId &&
+      departmentId != 0 &&
+      employeeId == 0 &&
+      type === 'Manager'
+    ) {
+      const departmentTimesheetsReq = new TimesheetLine();
+      departmentTimesheetsReq.setIsActive(1);
+      departmentTimesheetsReq.setWithoutLimit(true);
+      const searchUser = new User();
+      searchUser.setEmployeeDepartmentId(departmentId);
+      departmentTimesheetsReq.setSearchUser(searchUser);
+      departmentTimesheetsReq.setGroupBy('technician_user_id');
+      departmentTimesheetsReq.setDateRangeList([
         '>=',
-        format(startDay, 'yyyy-MM-dd'),
+        filter.startDate,
         '<=',
-        format(endDay, 'yyyy-MM-dd'),
+        filter.endDate,
       ]);
-      allTimesheetsForDepartmentReq.setIsActive(1);
-      const completeResultsForDepartment = await TimesheetLineClientService.BatchGet(
-        allTimesheetsForDepartmentReq,
-      );
-      const departmentResultList = completeResultsForDepartment.getResultsList();
+      const departmentResults = (
+        await TimesheetLineClientService.BatchGet(departmentTimesheetsReq)
+      ).getResultsList();
+      console.log({ departmentResults });
       const allUsers = await UserClientService.loadUsersByDepartmentId(
         departmentId,
       );
       for (let i = 0; i < allUsers.length; i++) {
         let found = false;
-        for (let j = 0; j < departmentResultList.length; j++) {
-          if (
-            departmentResultList[j].getTechnicianUserId() === allUsers[i].id
-          ) {
+        for (let j = 0; j < departmentResults.length; j++) {
+          if (departmentResults[j].getTechnicianUserId() === allUsers[i].id) {
             console.log(
-              'we found' + departmentResultList[j].getTechnicianUserName(),
+              'we found' + departmentResults[j].getTechnicianUserId(),
             );
             found = true;
           }
         }
         if (found == false) {
+          console.log('we did not find someone');
           let tempTimesheet = new TimesheetLine();
           tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
           tempTimesheet.setUserApprovalDatetime(NULL_TIME);
           tempTimesheet.setTechnicianUserId(allUsers[i].id);
           tempTimesheet.setReferenceNumber('auto');
-          tempTimesheet.setDepartmentName(allUsers[i].department!.description);
+          tempTimesheet.setDepartmentName(
+            allUsers[i].department!.value +
+              ' - ' +
+              allUsers[i].department!.description,
+          );
           tempTimesheet.setTechnicianUserName(
             allUsers[i].firstname + ' ' + allUsers[i].lastname,
           );
-
           resultsList.push(tempTimesheet.toObject());
         }
       }
     }
+    if (employeeId && employeeId != 0 && type === 'Manager') {
+      const employeeReq = new TimesheetLine();
+      employeeReq.setIsActive(1);
+      employeeReq.setWithoutLimit(true);
+      const searchUser = new User();
+      searchUser.setId(employeeId);
+      employeeReq.setSearchUser(searchUser);
+      employeeReq.setGroupBy('technician_user_id');
+      employeeReq.setDateRangeList([
+        '>=',
+        filter.startDate,
+        '<=',
+        filter.endDate,
+      ]);
+      const employeeResults = (
+        await TimesheetLineClientService.BatchGet(employeeReq)
+      ).getResultsList();
+      console.log({ employeeResults });
+      const tempUser = new User();
+      tempUser.setId(employeeId);
+      const userResult = await UserClientService.Get(tempUser);
+      if (employeeResults.length < 1) {
+        console.log('we did not find the single employee, create one');
+        let tempTimesheet = new TimesheetLine();
+        tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
+        tempTimesheet.setUserApprovalDatetime(NULL_TIME);
+        tempTimesheet.setTechnicianUserId(employeeId);
+        tempTimesheet.setReferenceNumber('auto');
+        tempTimesheet.setDepartmentName(userResult.department!.value);
+        tempTimesheet.setTechnicianUserName(
+          userResult.firstname + ' ' + userResult.lastname,
+        );
+        resultsList.push(tempTimesheet.toObject());
+      }
+    }
+
     let sortedResultsLists = resultsList.sort((a, b) =>
       a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
         ? 1
         : -1,
     );
     setTimesheets(sortedResultsLists);
-    setCount(totalCount);
+    setCount(sortedResultsLists.length);
     setLoading(false);
   }, [page, departmentId, employeeId, week, endDay, startDay, type]);
   useEffect(() => {
@@ -181,7 +228,6 @@ export const Timesheet: FC<Props> = ({
     },
     [loggedUser, startDay, load, departmentId],
   );
-  console.log(pendingCreateEmptyTimesheetLine);
   return (
     <div>
       <SectionBar
