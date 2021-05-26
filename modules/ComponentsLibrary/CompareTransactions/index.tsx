@@ -102,6 +102,7 @@ export const CompareTransactions: FC<Props> = ({
     }
     for await (const txn of transactions) {
       try {
+        setLoading(true);
         // Delete is not working atm, leaving a todo here for future reference but using update as a replacement
         // TODO
         txn.setIsActive(0);
@@ -128,12 +129,14 @@ export const CompareTransactions: FC<Props> = ({
         txn.setVendorCategory(undefined);
 
         txn.setFieldMaskList(['IsActive']);
-        const updateResult = await TransactionClientService.Update(txn);
+        await TransactionClientService.Update(txn);
+        setLoading(false);
         // const transactionResult = await TransactionClientService.Delete(txn);
         // if (transactionResult)
         //   console.log('Deleted transaction: ', transactionResult);
       } catch (err) {
         console.error('Failed to delete transaction: ', err);
+        setLoading(false);
       }
     }
   };
@@ -483,7 +486,9 @@ export const CompareTransactions: FC<Props> = ({
               ]
         }
       />
+      {/* @ts-ignore */}
       <TransactionTable
+        key={loading}
         loggedUserId={loggedUserId}
         isSelector
         onSelect={(txnChanged, transactions) =>
