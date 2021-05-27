@@ -107,7 +107,8 @@ export const TransactionTable: FC<Props> = ({
   const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
   const [role, setRole] = useState<RoleType>();
-  const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
+  const [assigningUser, setAssigningUser] =
+    useState<{ isAssigning: boolean; transactionId: number }>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
@@ -418,8 +419,11 @@ export const TransactionTable: FC<Props> = ({
   );
 
   const handleSetAssigningUser = useCallback(
-    (isAssigningUser: boolean) => {
-      setAssigningUser(isAssigningUser);
+    (isAssigningUser: boolean, transactionId: number) => {
+      setAssigningUser({
+        isAssigning: isAssigningUser,
+        transactionId: transactionId,
+      });
     },
     [setAssigningUser],
   );
@@ -486,6 +490,25 @@ export const TransactionTable: FC<Props> = ({
       setMergingTransaction(isMergingTransaction);
     },
     [setMergingTransaction],
+  );
+
+  const handleAssignEmployee = useCallback(
+    async (employeeIdToAssign: number, transactionId: number) => {
+      try {
+        let req = new Transaction();
+        req.setId(transactionId);
+        req.setAssignedEmployeeId(employeeIdToAssign);
+        req.setFieldMaskList(['AssignedEmployeeId']);
+        let result = await TransactionClientService.Update(req);
+        if (!result) {
+          console.error('Unable to assign employee.');
+        }
+        setAssigningUser({ isAssigning: false, transactionId: -1 });
+      } catch (err) {
+        console.error('An error occurred while assigning an employee: ', err);
+      }
+    },
+    [setAssigningUser],
   );
 
   const openFileInput = () => {
@@ -593,13 +616,20 @@ export const TransactionTable: FC<Props> = ({
       {loading ? <Loader /> : <> </>}
       {assigningUser ? (
         <Modal
-          open={assigningUser}
-          onClose={() => handleSetAssigningUser(false)}
+          open={assigningUser.isAssigning}
+          onClose={() => handleSetAssigningUser(false, -1)}
         >
           <SectionBar
             title="Assign Employee to Task"
             actions={[
-              { label: 'Assign', onClick: () => alert('Clicked assign') },
+              {
+                label: 'Assign',
+                onClick: () =>
+                  handleAssignEmployee(
+                    filter.employeeId,
+                    assigningUser.transactionId,
+                  ),
+              },
             ]}
           />
           <PlainForm
@@ -987,7 +1017,12 @@ export const TransactionTable: FC<Props> = ({
                         >
                           <IconButton
                             size="small"
-                            onClick={() => handleSetAssigningUser(true)}
+                            onClick={() =>
+                              handleSetAssigningUser(
+                                true,
+                                selectorParam.txn.getId(),
+                              )
+                            }
                           >
                             <AssignmentIndIcon />
                           </IconButton>
