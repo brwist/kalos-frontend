@@ -42,6 +42,8 @@ export type FilterData = {
   departmentId: number;
   employeeId: number;
   week: string;
+  vendor?: string;
+  accepted?: boolean;
 };
 
 export const Payroll: FC<Props> = ({ userID }) => {
@@ -110,7 +112,8 @@ export const Payroll: FC<Props> = ({ userID }) => {
     [filter.employeeId, userID],
   );
   const init = useCallback(async () => {
-    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+    const departments =
+      await TimesheetDepartmentClientService.loadTimeSheetDepartments();
     setDepartments(departments);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>

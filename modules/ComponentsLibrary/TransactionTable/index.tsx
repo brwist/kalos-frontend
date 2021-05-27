@@ -1,3 +1,4 @@
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
@@ -52,6 +53,7 @@ import { FilterData, RoleType } from '../Payroll';
 import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
+import { ActivityLogClientService, getRPCFields } from '../../../helpers';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -89,6 +91,8 @@ let filter = {
   departmentId: 0,
   employeeId: 0,
   week: OPTION_ALL,
+  vendor: '',
+  isAccepted: false,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -107,7 +111,8 @@ export const TransactionTable: FC<Props> = ({
   const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
   const [role, setRole] = useState<RoleType>();
-  const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
+  const [assigningUser, setAssigningUser] =
+    useState<{ isAssigning: boolean; transactionId: number }>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
@@ -229,28 +234,28 @@ export const TransactionTable: FC<Props> = ({
     };
 
     try {
-      await clients.email.sendMail(email);
+      //await clients.email.sendMail(email);
     } catch (err) {
       alert('An error occurred, user was not notified via email');
     }
     try {
-      const id = await getSlackID(txn.ownerName);
-      await slackNotify(
-        id,
-        `A receipt you submitted has been rejected | ${
-          txn.description
-        } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
-      );
-      await slackNotify(
-        id,
-        `https://app.kalosflorida.com?action=admin:reports.transactions`,
-      );
+      //const id = await getSlackID(txn.ownerName);
+      // await slackNotify(
+      //   id,
+      //   `A receipt you submitted has been rejected | ${
+      //     txn.description
+      //   } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
+      // );
+      // await slackNotify(
+      //   id,
+      //   `https://app.kalosflorida.com?action=admin:reports.transactions`,
+      // );
     } catch (err) {
       console.error(err);
       alert('An error occurred, user was not notified via slack');
     }
 
-    await makeUpdateStatus(txn.id, 4, 'rejected');
+    await makeUpdateStatus(txn.id, 4, 'rejected', reason);
     await refresh();
   };
 
@@ -323,7 +328,6 @@ export const TransactionTable: FC<Props> = ({
   };
 
   const resetTransactions = useCallback(async () => {
-    setLoading(true);
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
     req.setOrderDir(
@@ -332,6 +336,10 @@ export const TransactionTable: FC<Props> = ({
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
+    if (filter.isAccepted) {
+      req.setStatusId(3);
+    }
+    if (filter.vendor) req.setVendor(filter.vendor);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     let res = await TransactionClientService.BatchGet(req);
 
@@ -344,10 +352,10 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-    setLoading(false);
-  }, [setTransactions, setLoading]);
+  }, [setTransactions]);
 
   const load = useCallback(async () => {
+    setLoading(true);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
       a.lastname > b.lastname ? 1 : -1,
@@ -358,7 +366,8 @@ export const TransactionTable: FC<Props> = ({
       await TimesheetDepartmentClientService.loadTimeSheetDepartments();
     setDepartments(departments);
 
-    resetTransactions();
+    await resetTransactions();
+    setLoading(true);
 
     const user = await UserClientService.loadUserById(loggedUserId);
 
@@ -376,10 +385,7 @@ export const TransactionTable: FC<Props> = ({
   ]);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    await resetTransactions();
     await load();
-    setLoading(false);
   }, [load, resetTransactions]);
 
   const copyToClipboard = useCallback((text: string): void => {
@@ -418,8 +424,11 @@ export const TransactionTable: FC<Props> = ({
   );
 
   const handleSetAssigningUser = useCallback(
-    (isAssigningUser: boolean) => {
-      setAssigningUser(isAssigningUser);
+    (isAssigningUser: boolean, transactionId: number) => {
+      setAssigningUser({
+        isAssigning: isAssigningUser,
+        transactionId: transactionId,
+      });
     },
     [setAssigningUser],
   );
@@ -435,9 +444,14 @@ export const TransactionTable: FC<Props> = ({
       if (!d.employeeId) {
         d.employeeId = 0;
       }
+      if (!d.vendor) {
+        d.vendor = '';
+      }
       filter.departmentId = d.departmentId;
       filter.employeeId = d.employeeId;
-      // {departmentId: 18, week: undefined, employeeId: undefined}
+      filter.vendor = d.vendor;
+      // @ts-ignore
+      filter.isAccepted = d.accepted ? d.accepted : undefined;
 
       refresh();
     },
@@ -486,6 +500,25 @@ export const TransactionTable: FC<Props> = ({
       setMergingTransaction(isMergingTransaction);
     },
     [setMergingTransaction],
+  );
+
+  const handleAssignEmployee = useCallback(
+    async (employeeIdToAssign: number, transactionId: number) => {
+      try {
+        let req = new Transaction();
+        req.setId(transactionId);
+        req.setAssignedEmployeeId(employeeIdToAssign);
+        req.setFieldMaskList(['AssignedEmployeeId']);
+        let result = await TransactionClientService.Update(req);
+        if (!result) {
+          console.error('Unable to assign employee.');
+        }
+        setAssigningUser({ isAssigning: false, transactionId: -1 });
+      } catch (err) {
+        console.error('An error occurred while assigning an employee: ', err);
+      }
+    },
+    [setAssigningUser],
   );
 
   const openFileInput = () => {
@@ -577,6 +610,18 @@ export const TransactionTable: FC<Props> = ({
         ],
       },
     ],
+    [
+      {
+        name: 'vendor',
+        label: 'Search Vendor',
+        type: 'search',
+      },
+      {
+        name: 'accepted',
+        label: 'Is Accepted?',
+        type: 'checkbox',
+      },
+    ],
   ];
 
   useEffect(() => {
@@ -593,13 +638,20 @@ export const TransactionTable: FC<Props> = ({
       {loading ? <Loader /> : <> </>}
       {assigningUser ? (
         <Modal
-          open={assigningUser}
-          onClose={() => handleSetAssigningUser(false)}
+          open={assigningUser.isAssigning}
+          onClose={() => handleSetAssigningUser(false, -1)}
         >
           <SectionBar
             title="Assign Employee to Task"
             actions={[
-              { label: 'Assign', onClick: () => alert('Clicked assign') },
+              {
+                label: 'Assign',
+                onClick: () =>
+                  handleAssignEmployee(
+                    filter.employeeId,
+                    assigningUser.transactionId,
+                  ),
+              },
             ]}
           />
           <PlainForm
@@ -987,7 +1039,12 @@ export const TransactionTable: FC<Props> = ({
                         >
                           <IconButton
                             size="small"
-                            onClick={() => handleSetAssigningUser(true)}
+                            onClick={() =>
+                              handleSetAssigningUser(
+                                true,
+                                selectorParam.txn.getId(),
+                              )
+                            }
                           >
                             <AssignmentIndIcon />
                           </IconButton>
