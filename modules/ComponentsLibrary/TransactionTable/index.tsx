@@ -326,7 +326,6 @@ export const TransactionTable: FC<Props> = ({
   };
 
   const resetTransactions = useCallback(async () => {
-    setLoading(true);
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
     req.setOrderDir(
@@ -351,10 +350,10 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-    setLoading(false);
-  }, [setTransactions, setLoading]);
+  }, [setTransactions]);
 
   const load = useCallback(async () => {
+    setLoading(true);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
       a.lastname > b.lastname ? 1 : -1,
@@ -365,7 +364,8 @@ export const TransactionTable: FC<Props> = ({
       await TimesheetDepartmentClientService.loadTimeSheetDepartments();
     setDepartments(departments);
 
-    resetTransactions();
+    await resetTransactions();
+    setLoading(true);
 
     const user = await UserClientService.loadUserById(loggedUserId);
 
@@ -383,10 +383,7 @@ export const TransactionTable: FC<Props> = ({
   ]);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    await resetTransactions();
     await load();
-    setLoading(false);
   }, [load, resetTransactions]);
 
   const copyToClipboard = useCallback((text: string): void => {
@@ -453,7 +450,6 @@ export const TransactionTable: FC<Props> = ({
       filter.vendor = d.vendor;
       // @ts-ignore
       filter.isAccepted = d.accepted ? d.accepted : undefined;
-      // {departmentId: 18, week: undefined, employeeId: undefined}
 
       refresh();
     },
