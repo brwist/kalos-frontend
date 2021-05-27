@@ -90,6 +90,7 @@ let filter = {
   employeeId: 0,
   week: OPTION_ALL,
   vendor: '',
+  isAccepted: false,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -334,6 +335,9 @@ export const TransactionTable: FC<Props> = ({
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
+    if (filter.isAccepted) {
+      req.setStatusId(3);
+    }
     if (filter.vendor) req.setVendor(filter.vendor);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     let res = await TransactionClientService.BatchGet(req);
@@ -447,6 +451,8 @@ export const TransactionTable: FC<Props> = ({
       filter.departmentId = d.departmentId;
       filter.employeeId = d.employeeId;
       filter.vendor = d.vendor;
+      // @ts-ignore
+      filter.isAccepted = d.accepted ? d.accepted : undefined;
       // {departmentId: 18, week: undefined, employeeId: undefined}
 
       refresh();
@@ -611,6 +617,11 @@ export const TransactionTable: FC<Props> = ({
         name: 'vendor',
         label: 'Search Vendor',
         type: 'search',
+      },
+      {
+        name: 'accepted',
+        label: 'Is Accepted?',
+        type: 'checkbox',
       },
     ],
   ];
