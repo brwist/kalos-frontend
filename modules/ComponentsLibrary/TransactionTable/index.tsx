@@ -66,7 +66,7 @@ export interface Props {
     selectedTransactions: Transaction[],
   ) => void;
   hasActions?: boolean;
-  key: any;
+  key?: any;
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
