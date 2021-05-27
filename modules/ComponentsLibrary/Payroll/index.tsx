@@ -43,6 +43,7 @@ export type FilterData = {
   employeeId: number;
   week: string;
   vendor?: string;
+  accepted?: boolean;
 };
 
 export const Payroll: FC<Props> = ({ userID }) => {
