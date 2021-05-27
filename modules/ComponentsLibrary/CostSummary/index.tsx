@@ -315,6 +315,7 @@ export const CostSummary: FC<Props> = ({
         const startDate = '0001-01-01';
         const endDate = format(endDay, 'yyyy-MM-dd');
         req.setDateRangeList(['>=', startDate, '<', endDate]);
+        //req.setDateTargetList(['time_created', 'time_created']);
       }
       if (!notReady) {
         action.setStatus(1);
@@ -362,7 +363,6 @@ export const CostSummary: FC<Props> = ({
       if (spiffType === 'Spiff') {
         if (dateType === 'Weekly') {
           setSpiffsWeekly(results);
-          console.log({ results });
         }
         return spiffTotal;
       } else {
@@ -715,6 +715,7 @@ export const CostSummary: FC<Props> = ({
         <InfoTable
           columns={[
             { name: 'Decision Date for Spiff' },
+            { name: 'Date that Spiff was Created' },
             { name: 'Amount' },
             { name: 'Job Number' },
             { name: 'Processed' },
@@ -729,6 +730,9 @@ export const CostSummary: FC<Props> = ({
                           .getActionsList()
                           [spiff.getActionsList().length - 1].getDecisionDate(),
                       ),
+                    },
+                    {
+                      value: formatDate(spiff.toObject().timeCreated),
                     },
                     {
                       value: usd(spiff.toObject().spiffAmount),
