@@ -726,9 +726,10 @@ export const CostSummary: FC<Props> = ({
                   return [
                     {
                       value: formatDate(
-                        spiff
-                          .getActionsList()
-                          [spiff.getActionsList().length - 1].getDecisionDate(),
+                        spiff.getActionsList()[
+                          //eslint-disable-next-line
+                          spiff.getActionsList().length - 1
+                        ].getDecisionDate(),
                       ),
                     },
                     {
