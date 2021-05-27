@@ -89,6 +89,7 @@ let filter = {
   departmentId: 0,
   employeeId: 0,
   week: OPTION_ALL,
+  vendor: '',
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -333,6 +334,7 @@ export const TransactionTable: FC<Props> = ({
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
+    if (filter.vendor) req.setVendor(filter.vendor);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     let res = await TransactionClientService.BatchGet(req);
 
@@ -439,8 +441,12 @@ export const TransactionTable: FC<Props> = ({
       if (!d.employeeId) {
         d.employeeId = 0;
       }
+      if (!d.vendor) {
+        d.vendor = '';
+      }
       filter.departmentId = d.departmentId;
       filter.employeeId = d.employeeId;
+      filter.vendor = d.vendor;
       // {departmentId: 18, week: undefined, employeeId: undefined}
 
       refresh();
@@ -598,6 +604,13 @@ export const TransactionTable: FC<Props> = ({
               value: el.id,
             })),
         ],
+      },
+    ],
+    [
+      {
+        name: 'vendor',
+        label: 'Search Vendor',
+        type: 'search',
       },
     ],
   ];
