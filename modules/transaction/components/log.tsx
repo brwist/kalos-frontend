@@ -126,6 +126,7 @@ export class TxnLog extends React.PureComponent<props, state> {
                   <TableCell>Action Date</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell>Actor</TableCell>
+                  <TableCell>Reason</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -141,6 +142,9 @@ export class TxnLog extends React.PureComponent<props, state> {
                       <TableCell>{activity.description}</TableCell>
                       <TableCell>
                         {this.state.actorMap.get(activity.id)}
+                      </TableCell>
+                      <TableCell>
+                        {activity.description.replace('rejected', '')}
                       </TableCell>
                     </TableRow>
                   ))}

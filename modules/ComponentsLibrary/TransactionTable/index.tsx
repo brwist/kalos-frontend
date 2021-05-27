@@ -1,3 +1,4 @@
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
@@ -52,6 +53,7 @@ import { FilterData, RoleType } from '../Payroll';
 import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
+import { ActivityLogClientService, getRPCFields } from '../../../helpers';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -232,28 +234,28 @@ export const TransactionTable: FC<Props> = ({
     };
 
     try {
-      await clients.email.sendMail(email);
+      //await clients.email.sendMail(email);
     } catch (err) {
       alert('An error occurred, user was not notified via email');
     }
     try {
-      const id = await getSlackID(txn.ownerName);
-      await slackNotify(
-        id,
-        `A receipt you submitted has been rejected | ${
-          txn.description
-        } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
-      );
-      await slackNotify(
-        id,
-        `https://app.kalosflorida.com?action=admin:reports.transactions`,
-      );
+      //const id = await getSlackID(txn.ownerName);
+      // await slackNotify(
+      //   id,
+      //   `A receipt you submitted has been rejected | ${
+      //     txn.description
+      //   } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
+      // );
+      // await slackNotify(
+      //   id,
+      //   `https://app.kalosflorida.com?action=admin:reports.transactions`,
+      // );
     } catch (err) {
       console.error(err);
       alert('An error occurred, user was not notified via slack');
     }
 
-    await makeUpdateStatus(txn.id, 4, 'rejected');
+    await makeUpdateStatus(txn.id, 4, 'rejected', reason);
     await refresh();
   };
 
