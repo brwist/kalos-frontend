@@ -362,6 +362,7 @@ export const CostSummary: FC<Props> = ({
       if (spiffType === 'Spiff') {
         if (dateType === 'Weekly') {
           setSpiffsWeekly(results);
+          console.log({ results });
         }
         return spiffTotal;
       } else {
@@ -713,7 +714,7 @@ export const CostSummary: FC<Props> = ({
       >
         <InfoTable
           columns={[
-            { name: 'Date Created' },
+            { name: 'Decision Date for Spiff' },
             { name: 'Amount' },
             { name: 'Job Number' },
             { name: 'Processed' },
@@ -723,7 +724,11 @@ export const CostSummary: FC<Props> = ({
               ? spiffsWeekly.map(spiff => {
                   return [
                     {
-                      value: formatDate(spiff.toObject().timeCreated),
+                      value: formatDate(
+                        spiff
+                          .getActionsList()
+                          [spiff.getActionsList().length - 1].getDecisionDate(),
+                      ),
                     },
                     {
                       value: usd(spiff.toObject().spiffAmount),
