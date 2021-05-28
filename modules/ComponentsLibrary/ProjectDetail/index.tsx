@@ -4,7 +4,7 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '@kalos-core/kalos-rpc/Property';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   getRPCFields,
@@ -29,9 +29,6 @@ import { Form, Schema } from '../Form';
 import { Request } from './components/Request';
 import { Equipment } from './components/Equipment';
 import { Services } from './components/Services';
-import { Invoice } from './components/Invoice';
-import { Proposal } from './components/Proposal';
-import { Spiffs } from './components/Spiffs';
 import { Confirm } from '../Confirm';
 import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
