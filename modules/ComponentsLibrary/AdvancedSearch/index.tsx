@@ -6,7 +6,7 @@ import {
   UsersSort,
   LoadUsersByFilter,
 } from '@kalos-core/kalos-rpc/User';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { getPropertyAddress, Property } from '@kalos-core/kalos-rpc/Property';
 import cloneDeep from 'lodash/cloneDeep';
 import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
@@ -51,15 +51,7 @@ import {
   PropertiesSort,
   LoadPropertiesByFilter,
   LoadContractsByFilter,
-  EventType,
-  UserType,
-  PropertyType,
-  ContractType,
-  JobTypeType,
-  JobSubtypeType,
   PropertyClientService,
-  TimesheetDepartmentType,
-  EmployeeFunctionType,
   CustomEventsHandler,
   uploadFileToS3Bucket,
   getCFAppUrl,
@@ -80,6 +72,12 @@ import {
   USA_STATES_OPTIONS,
 } from '../../../constants';
 import './styles.less';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 
 type Kind =
   | 'serviceCalls'
@@ -103,7 +101,7 @@ export interface Props {
   eventsWithAccounting?: boolean;
   eventsWithAdd?: boolean;
   propertyCustomerId?: number;
-  onSelectEvent?: (event: EventType) => void;
+  onSelectEvent?: (event: Event) => void;
   onClose?: () => void;
 }
 
@@ -142,8 +140,8 @@ export const AdvancedSearch: FC<Props> = ({
   const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
-  const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
-  const [jobSubtypes, setJobSubtypes] = useState<JobSubtypeType[]>([]);
+  const [jobTypes, setJobTypes] = useState<JobType[]>([]);
+  const [jobSubtypes, setJobSubtypes] = useState<JobSubtype[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -162,62 +160,58 @@ export const AdvancedSearch: FC<Props> = ({
   );
   const [filter, setFilter] = useState<SearchForm>(defaultFilter);
   const [formKey, setFormKey] = useState<number>(0);
-  const [events, setEvents] = useState<EventType[]>([]);
-  const [users, setUsers] = useState<UserType[]>([]);
-  const [contracts, setContracts] = useState<ContractType[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [employeeImages, setEmployeeImages] = useState<{
     [key: string]: string;
   }>({});
-  const [properties, setProperties] = useState<PropertyType[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [eventsSort, setEventsSort] = useState<EventsSort>({
-    orderByField: 'dateStarted',
+    orderByField: 'getDateStarted',
     orderBy: 'date_started',
     orderDir: 'DESC',
   });
   const [usersSort, setUsersSort] = useState<UsersSort>({
-    orderByField: 'setLastname',
+    orderByField: 'getLastname',
     orderBy: 'user_lastname',
     orderDir: 'ASC',
   });
   const [propertiesSort, setPropertiesSort] = useState<PropertiesSort>({
-    orderByField: 'address',
+    orderByField: 'getAddress',
     orderBy: 'property_address',
     orderDir: 'ASC',
   });
   const [contractsSort, setContractsSort] = useState<ContractsSort>({
-    orderByField: 'number',
+    orderByField: 'getNumber',
     orderBy: 'number',
     orderDir: 'ASC',
   });
 
   const [saving, setSaving] = useState<boolean>(false);
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
-  const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
-  const [pendingEventDeleting, setPendingEventDeleting] = useState<EventType>();
+  const [pendingEventEditing, setPendingEventEditing] = useState<Event>();
+  const [pendingEventDeleting, setPendingEventDeleting] = useState<Event>();
   const [employeeUploadedPhoto, setEmployeeUploadedPhoto] =
     useState<string>('');
   const [employeeFormKey, setEmployeeFormKey] = useState<number>(0);
-  const [pendingEmployeeViewing, setPendingEmployeeViewing] =
-    useState<UserType>();
-  const [pendingEmployeeEditing, setPendingEmployeeEditing] =
-    useState<UserType>();
+  const [pendingEmployeeViewing, setPendingEmployeeViewing] = useState<User>();
+  const [pendingEmployeeEditing, setPendingEmployeeEditing] = useState<User>();
   const [pendingEmployeeDeleting, setPendingEmployeeDeleting] =
-    useState<UserType>();
-  const [pendingCustomerViewing, setPendingCustomerViewing] =
-    useState<UserType>();
-  const [pendingCustomerEditing, setPendingCustomerEditing] =
-    useState<UserType>();
+    useState<User>();
+  const [pendingCustomerViewing, setPendingCustomerViewing] = useState<User>();
+  const [pendingCustomerEditing, setPendingCustomerEditing] = useState<User>();
   const [pendingCustomerDeleting, setPendingCustomerDeleting] =
-    useState<UserType>();
+    useState<User>();
   const [pendingPropertyViewing, setPendingPropertyViewing] =
-    useState<PropertyType>();
+    useState<Property>();
   const [pendingPropertyEditing, setPendingPropertyEditing] =
-    useState<PropertyType>();
+    useState<Property>();
   const [pendingPropertyDeleting, setPendingPropertyDeleting] =
-    useState<PropertyType>();
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+    useState<Property>();
+  const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [employeeFunctions, setEmployeeFunctions] = useState<
-    EmployeeFunctionType[]
+    EmployeeFunction[]
   >([]);
   const [employeeDepartmentsOpen, setEmployeeDepartmentsOpen] =
     useState<boolean>(false);
@@ -242,7 +236,7 @@ export const AdvancedSearch: FC<Props> = ({
         await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
       const loggedUser = await UserClientService.loadUserById(loggedUserId);
-      setIsAdmin(loggedUser.isAdmin);
+      setIsAdmin(loggedUser.getIsAdmin());
     }
     setFormKey(formKey + 1);
     setLoadedDicts(true);
@@ -300,11 +294,11 @@ export const AdvancedSearch: FC<Props> = ({
       if (kind === 'employees') {
         const images = await Promise.all(
           results
-            .filter(({ image }) => !!image)
-            .map(async ({ image }) => ({
-              image,
+            .filter(u => !!u.getImage())
+            .map(async u => ({
+              image: u.getImage(),
               url: await S3ClientService.getFileS3BucketUrl(
-                image,
+                u.getImage(),
                 'kalos-employee-images',
               ),
             })),
@@ -447,13 +441,13 @@ export const AdvancedSearch: FC<Props> = ({
     [setPendingEventAdding],
   );
   const handlePendingEventEditingToggle = useCallback(
-    (pendingEventEditing?: EventType) => () => {
+    (pendingEventEditing?: Event) => () => {
       if (pendingEventEditing) {
         document.location.href = [
           getCFAppUrl('admin:service.editServicecall'),
-          `id=${pendingEventEditing.id}`,
-          `user_id=${pendingEventEditing.customer!.id}`,
-          `property_id=${pendingEventEditing.property!.id}`,
+          `id=${pendingEventEditing.getId()}`,
+          `user_id=${pendingEventEditing.getCustomer()?.getId()}`,
+          `property_id=${pendingEventEditing?.getProperty()?.getId()}`,
         ].join('&');
       }
       // setPendingEventEditing(pendingEventEditing); // TODO restore when EditServiceCall is finished
@@ -461,13 +455,13 @@ export const AdvancedSearch: FC<Props> = ({
     [],
   );
   const handlePendingEventDeletingToggle = useCallback(
-    (pendingEventDeleting?: EventType) => () =>
+    (pendingEventDeleting?: Event) => () =>
       setPendingEventDeleting(pendingEventDeleting),
     [setPendingEventDeleting],
   );
   const handleDeleteServiceCall = useCallback(async () => {
     if (pendingEventDeleting) {
-      const { id } = pendingEventDeleting;
+      const id = pendingEventDeleting.getId();
       setPendingEventDeleting(undefined);
       setLoading(true);
       await EventClientService.deleteEventById(id);
@@ -476,7 +470,7 @@ export const AdvancedSearch: FC<Props> = ({
   }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
   const handleDeleteCustomer = useCallback(async () => {
     if (pendingCustomerDeleting) {
-      const { id } = pendingCustomerDeleting;
+      const id = pendingCustomerDeleting.getId();
       setPendingCustomerDeleting(undefined);
       setLoading(true);
       await UserClientService.deleteUserById(id);
@@ -490,7 +484,7 @@ export const AdvancedSearch: FC<Props> = ({
   ]);
   const handleDeleteEmployee = useCallback(async () => {
     if (pendingEmployeeDeleting) {
-      const { id } = pendingEmployeeDeleting;
+      const id = pendingEmployeeDeleting.getId();
       setPendingEmployeeDeleting(undefined);
       setLoading(true);
       await UserClientService.deleteUserById(id);
@@ -504,7 +498,7 @@ export const AdvancedSearch: FC<Props> = ({
   ]);
   const handleDeleteProperty = useCallback(async () => {
     if (pendingPropertyDeleting) {
-      const { id } = pendingPropertyDeleting;
+      const id = pendingPropertyDeleting.getId();
       setPendingPropertyDeleting(undefined);
       setLoading(true);
       await PropertyClientService.deletePropertyById(id);
@@ -517,27 +511,27 @@ export const AdvancedSearch: FC<Props> = ({
     setLoading,
   ]);
   const handlePendingEmployeeViewingToggle = useCallback(
-    (pendingEmployeeViewing?: UserType) => () =>
+    (pendingEmployeeViewing?: User) => () =>
       setPendingEmployeeViewing(pendingEmployeeViewing),
     [setPendingEmployeeViewing],
   );
   const handlePendingEmployeeEditingToggle = useCallback(
-    (pendingEmployeeEditing?: UserType) => () =>
+    (pendingEmployeeEditing?: User) => () =>
       setPendingEmployeeEditing(pendingEmployeeEditing),
     [setPendingEmployeeEditing],
   );
   const handlePendingEmployeeDeletingToggle = useCallback(
-    (pendingEmployeeDeleting?: UserType) => () =>
+    (pendingEmployeeDeleting?: User) => () =>
       setPendingEmployeeDeleting(pendingEmployeeDeleting),
     [setPendingEmployeeDeleting],
   );
   const handlePendingCustomerViewingToggle = useCallback(
-    (pendingCustomerViewing?: UserType) => () =>
+    (pendingCustomerViewing?: User) => () =>
       setPendingCustomerViewing(pendingCustomerViewing),
     [setPendingCustomerViewing],
   );
   const handlePendingCustomerEditingToggle = useCallback(
-    (pendingCustomerEditing?: UserType) => () =>
+    (pendingCustomerEditing?: User) => () =>
       setPendingCustomerEditing(pendingCustomerEditing),
     [setPendingCustomerEditing],
   );
@@ -546,7 +540,7 @@ export const AdvancedSearch: FC<Props> = ({
     setLoaded(false);
   }, [setPendingCustomerEditing, setLoaded]);
   const onSaveEmployee = useCallback(
-    async (data: UserType) => {
+    async (data: User) => {
       if (pendingEmployeeEditing) {
         setSaving(true);
         if (employeeUploadedPhoto) {
@@ -571,17 +565,17 @@ export const AdvancedSearch: FC<Props> = ({
     ],
   );
   const handlePendingCustomerDeletingToggle = useCallback(
-    (pendingCustomerDeleting?: UserType) => () =>
+    (pendingCustomerDeleting?: User) => () =>
       setPendingCustomerDeleting(pendingCustomerDeleting),
     [setPendingCustomerDeleting],
   );
   const handlePendingPropertyViewingToggle = useCallback(
-    (pendingPropertyViewing?: PropertyType) => () =>
+    (pendingPropertyViewing?: Property) => () =>
       setPendingPropertyViewing(pendingPropertyViewing),
     [setPendingPropertyViewing],
   );
   const handlePendingPropertyEditingToggle = useCallback(
-    (pendingPropertyEditing?: PropertyType) => () =>
+    (pendingPropertyEditing?: Property) => () =>
       setPendingPropertyEditing(pendingPropertyEditing),
     [setPendingPropertyEditing],
   );
@@ -591,7 +585,7 @@ export const AdvancedSearch: FC<Props> = ({
     setLoaded(false);
   }, [setPendingPropertyEditing, setLoaded, setPendingAddProperty]);
   const handlePendingPropertyDeletingToggle = useCallback(
-    (pendingPropertyDeleting?: PropertyType) => () =>
+    (pendingPropertyDeleting?: Property) => () =>
       setPendingPropertyDeleting(pendingPropertyDeleting),
     [setPendingPropertyDeleting],
   );
@@ -600,7 +594,7 @@ export const AdvancedSearch: FC<Props> = ({
     [accounting, setAccounting],
   );
   const handleSelectEvent = useCallback(
-    (event: EventType) => () => {
+    (event: Event) => () => {
       if (accounting) {
         window.open(
           [
@@ -876,7 +870,7 @@ export const AdvancedSearch: FC<Props> = ({
     [departments, searchActions],
   );
 
-  const SCHEMA_EMPLOYEES_VIEW: Schema<UserType> = [
+  const SCHEMA_EMPLOYEES_VIEW: Schema<User> = [
     [
       {
         name: 'email',
@@ -931,7 +925,7 @@ export const AdvancedSearch: FC<Props> = ({
       },
     ],
   ];
-  const makeSchemaEmployeesEdit = (entry: UserType): Schema<UserType> => [
+  const makeSchemaEmployeesEdit = (entry: User): Schema<User> => [
     [{ name: 'isEmployee', type: 'hidden' }],
     [{ headline: true, label: 'Personal Details' }],
     [
