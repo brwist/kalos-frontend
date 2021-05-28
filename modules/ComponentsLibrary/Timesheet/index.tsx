@@ -612,7 +612,7 @@ export const Timesheet: FC<Props> = props => {
     })();
   };
 
-  useEffect(reload, [shownDates]);
+  useEffect(reload, [shownDates, timesheetOwnerId]);
 
   if (!user) {
     return null;
@@ -704,6 +704,7 @@ export const Timesheet: FC<Props> = props => {
                 !!user.timesheetAdministration || isManager
               }
               role={role}
+              defaultDepartment={user.employeeDepartmentId}
               onClose={handleCloseModal}
               onSave={handleOnSave}
               action={editing.action}
