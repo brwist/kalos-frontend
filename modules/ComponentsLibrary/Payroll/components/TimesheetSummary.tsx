@@ -70,15 +70,14 @@ export const TimesheetSummary: FC<Props> = ({
   const [totalUnbillableHours, setTotalUnbillableHours] = useState<number>();
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
-  const [pendingPayrollReject, setPendingPayrollReject] = useState<
-    TimesheetLine[] | undefined
-  >();
+  const [pendingPayrollReject, setPendingPayrollReject] =
+    useState<TimesheetLine[] | undefined>();
   const [timeoff, setTimeOff] = useState<TimeoffRequest[]>();
   const [timesheetsPending, setTimesheetsPending] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [user, setUser] = useState<User.AsObject>();
+  const [user, setUser] = useState<User>();
   const handlePendingPayrollToggleReject = useCallback(
     (timesheets?: TimesheetLine[]) => () => {
       setPendingPayrollReject(timesheets);
@@ -86,17 +85,12 @@ export const TimesheetSummary: FC<Props> = ({
     [setPendingPayrollReject],
   );
   const [mappedElements, setMappedElements] = useState<JSX.Element[]>();
-  const [
-    togglePendingApprovalAlert,
-    setTogglePendingApprovalAlert,
-  ] = useState<boolean>();
-  const [
-    togglePendingSubmitAlert,
-    setTogglePendingSubmitAlert,
-  ] = useState<boolean>();
-  const [mappedElementsNoJobs, setMappedElementsNoJobs] = useState<
-    JSX.Element[]
-  >();
+  const [togglePendingApprovalAlert, setTogglePendingApprovalAlert] =
+    useState<boolean>();
+  const [togglePendingSubmitAlert, setTogglePendingSubmitAlert] =
+    useState<boolean>();
+  const [mappedElementsNoJobs, setMappedElementsNoJobs] =
+    useState<JSX.Element[]>();
   const [today, setToday] = useState<Date>(new Date());
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
@@ -108,9 +102,8 @@ export const TimesheetSummary: FC<Props> = ({
     tempDayList.push([format(addDays(startDay, i), 'yyyy-MM-dd')]);
   }
   const [dayList, setDayList] = useState<string[][]>(tempDayList);
-  const [subTotalDayList, setSubTotalDayList] = useState<string[][]>(
-    tempDayList,
-  );
+  const [subTotalDayList, setSubTotalDayList] =
+    useState<string[][]>(tempDayList);
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
   const getTimeoff = useCallback(async () => {
     const startDate = format(startDay, 'yyyy-MM-dd');

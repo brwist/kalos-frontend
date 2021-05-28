@@ -27,7 +27,7 @@ import { NULL_TIME_VALUE } from '../constants';
 const srClient = new ServicesRenderedClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
 
-type Entry = TimesheetLine.AsObject;
+type Entry = TimesheetLine;
 
 interface EntryWithDate extends Entry {
   date?: string;
@@ -49,7 +49,7 @@ type Props = {
     | 'reject'
     | '';
   onSave: (
-    entry: TimesheetLine.AsObject,
+    entry: TimesheetLine,
     action?: 'delete' | 'approve' | 'reject',
   ) => void;
   onClose: () => void;

@@ -41,7 +41,7 @@ import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
 
-export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
+export const SCHEMA_TRIP_SEARCH: Schema<Trip> = [
   [
     {
       label: 'ID',
@@ -203,8 +203,8 @@ interface State {
   warningNoPerDiem: boolean; // When there is no per-diem this is true and it displays
   // a dialogue
   perDiemDropDownSelected: string;
-  perDiems: PerDiem.AsObject[] | null;
-  currentTripDepartment: TimesheetDepartment.AsObject | null;
+  perDiems: PerDiem[] | null;
+  currentTripDepartment: TimesheetDepartment | null;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -212,7 +212,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
   deptNameIdPair: { name: string; id: number }[] = [];
   dateIdPair: { date: string; row_id: number }[] = [];
   resultsPerPage: number = 25;
-  department: TimesheetDepartment.AsObject | null = null;
+  department: TimesheetDepartment | null = null;
   numFilteredTrips: number = 0;
   constructor(props: Props) {
     super(props);
@@ -257,7 +257,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ currentTripDepartment: dept });
   };
 
-  setDepartment = (value: TimesheetDepartment.AsObject | null) => {
+  setDepartment = (value: TimesheetDepartment | null) => {
     this.setState({ currentTripDepartment: value });
   };
 
@@ -372,7 +372,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   getFilteredTripList = async (criteria: LoadTripsByFilter) => {
     const res: {
-      results: Trip.AsObject[];
+      results: Trip[];
       totalCount: number;
     } = await loadTripsByFilter(criteria);
     let tripList: Trip[] = [];
@@ -764,11 +764,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ warningNoPerDiem: !this.state.warningNoPerDiem });
   };
 
-  saveTrip = async (
-    data: AddressPair.AsObject,
-    rowId: number,
-    userId: number,
-  ) => {
+  saveTrip = async (data: AddressPair, rowId: number, userId: number) => {
     let trip = new Trip();
     trip.setOriginAddress(data.FullAddressOrigin);
     trip.setDestinationAddress(data.FullAddressDestination);
@@ -1053,7 +1049,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               submitLabel="Search"
               cancelLabel="Reset"
               schema={SCHEMA_TRIP_SEARCH}
-              data={this.state.search as Trip.AsObject}
+              data={this.state.search as Trip}
               onClose={() => {
                 this.loadTripsAndUpdate();
               }}

@@ -42,7 +42,7 @@ export const CostReport: FC<Props> = ({
 
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLine[]>([]);
 
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
@@ -76,10 +76,11 @@ export const CostReport: FC<Props> = ({
       resultsList,
     ); // first # is per diem id
     setLodgings(lodgings);
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
     setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
@@ -89,9 +90,10 @@ export const CostReport: FC<Props> = ({
     await loadPrintData();
     setPrintStatus('loaded');
   }, [setPrintStatus, loadPrintData]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
 
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
@@ -110,7 +112,7 @@ export const CostReport: FC<Props> = ({
 
   const load = useCallback(async () => {
     let promises = [];
-    let timesheets: TimesheetLine.AsObject[] = [];
+    let timesheets: TimesheetLine[] = [];
 
     setLoading(true);
 

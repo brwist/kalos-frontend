@@ -16,7 +16,7 @@ interface props extends PageWrapperProps {
 }
 
 interface state {
-  list: Event.AsObject[];
+  list: Event[];
   page: number;
   totalCount: number;
 }

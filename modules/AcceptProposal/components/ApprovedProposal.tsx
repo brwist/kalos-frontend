@@ -85,8 +85,8 @@ const styles = ReactPDF.StyleSheet.create({
 
 interface props {
   sigURL: string;
-  quoteLines: QuoteLine.AsObject[];
-  property: Property.AsObject;
+  quoteLines: QuoteLine[];
+  property: Property;
   name: string;
   jobNumber: number;
   total: number;

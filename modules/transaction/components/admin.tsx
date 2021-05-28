@@ -43,7 +43,7 @@ interface props {
 interface state {
   page: number;
   isLoading: boolean;
-  transactions: Transaction.AsObject[];
+  transactions: Transaction[];
   filters: IFilter;
   departmentView: boolean;
   count: number;
@@ -163,7 +163,7 @@ export class TransactionAdminView extends React.Component<props, state> {
 
   copyPage() {
     const dataStr = this.state.transactions.reduce(
-      (acc: string, curr: Transaction.AsObject) => {
+      (acc: string, curr: Transaction) => {
         if (acc.length === 0) {
           return `${new Date(
             curr.timestamp.split(' ').join('T'),
@@ -642,7 +642,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     }));
   };
 
-  handleSave = (entry: Transaction.AsObject): void => {
+  handleSave = (entry: Transaction): void => {
     this.setState(prev => ({
       ...prev,
       showCreateModal: false,
@@ -854,7 +854,7 @@ export class TransactionAdminView extends React.Component<props, state> {
         </div>
         <CreateModal
           show={this.state.showCreateModal}
-          entry={{} as Transaction.AsObject}
+          entry={{} as Transaction}
           onClose={this.toggleCreateModal}
           onSave={this.handleSave}
         />
@@ -914,7 +914,7 @@ export class TransactionAdminView extends React.Component<props, state> {
 }
 
 function makeEmployeeTest(departmentID: number) {
-  return (user: User.AsObject) => {
+  return (user: User) => {
     return user.employeeDepartmentId === departmentID;
   };
 }

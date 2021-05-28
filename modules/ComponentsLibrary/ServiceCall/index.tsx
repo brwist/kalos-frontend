@@ -40,11 +40,11 @@ import { Typography } from '@material-ui/core';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
-export type EventType = Event.AsObject;
-type JobTypeType = JobType.AsObject;
-type JobSubtypeType = JobSubtype.AsObject;
-export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
-export type ServicesRenderedType = ServicesRendered.AsObject;
+export type EventType = Event;
+type JobTypeType = JobType;
+type JobSubtypeType = JobSubtype;
+export type JobTypeSubtypeType = JobTypeSubtype;
+export type ServicesRenderedType = ServicesRendered;
 
 export interface Props {
   userID: number;
@@ -105,17 +105,14 @@ export const ServiceCall: FC<Props> = props => {
     ServicesRenderedType[]
   >([]);
   const [loggedUser, setLoggedUser] = useState<UserType>();
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
   const [projects, setProjects] = useState<EventType[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
-    null,
-  );
+  const [confirmedParentId, setConfirmedParentId] =
+    useState<number | null>(null);
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
@@ -131,9 +128,10 @@ export const ServiceCall: FC<Props> = props => {
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
         setLoading(true);
-        const servicesRendered = await ServicesRenderedClientService.loadServicesRenderedByEventID(
-          _serviceCallId,
-        );
+        const servicesRendered =
+          await ServicesRenderedClientService.loadServicesRenderedByEventID(
+            _serviceCallId,
+          );
         setServicesRendered(servicesRendered);
         setLoading(false);
       }
@@ -165,9 +163,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const propertyEvents = await EventClientService.loadEventsByPropertyId(
-            propertyId,
-          );
+          const propertyEvents =
+            await EventClientService.loadEventsByPropertyId(propertyId);
           setPropertyEvents(propertyEvents);
           resolve();
         }),
@@ -191,7 +188,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+          const jobTypeSubtypes =
+            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
           setJobTypeSubtypes(jobTypeSubtypes);
           resolve();
         }),
