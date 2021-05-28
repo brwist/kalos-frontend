@@ -22,6 +22,7 @@ import { useConfirm } from '../../ConfirmService';
 import { ENDPOINT } from '../../../../constants';
 import './editModal.less';
 import { NULL_TIME_VALUE } from '../constants';
+import { UserClientService } from '../../../../helpers';
 
 const srClient = new ServicesRenderedClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
@@ -40,6 +41,7 @@ type Props = {
   timesheetAdministration: boolean;
   create?: boolean;
   role?: string;
+  defaultDepartment?: number;
   action:
     | 'create'
     | 'update'
@@ -60,11 +62,13 @@ const EditTimesheetModal: FC<Props> = ({
   timesheetOwnerId,
   userId,
   timesheetAdministration,
+  defaultDepartment,
   role,
   action,
   onSave,
   onClose,
 }): JSX.Element => {
+  console.log(defaultDepartment);
   const confirm = useConfirm();
   const [saving, setSaving] = useState<boolean>(false);
   const SCHEMA: Schema<EntryWithDate> = [
@@ -84,6 +88,7 @@ const EditTimesheetModal: FC<Props> = ({
         name: 'departmentCode',
         type: 'department',
         required: true,
+        content: action === 'create' ? defaultDepartment : null,
       },
     ],
     [
@@ -320,7 +325,7 @@ const EditTimesheetModal: FC<Props> = ({
           return false;
       }
     },
-    [action],
+    [action, handleCreate, handleUpdate],
   );
 
   return (
