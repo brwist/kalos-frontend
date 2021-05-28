@@ -54,7 +54,6 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       technicians: [],
       isEditing: false,
     };
-    const endpoint = 'https://core-dev.kalosflorida.com:8443';
     this.toggleEditing = this.toggleEditing.bind(this);
     this.UserClient = new UserClient(ENDPOINT);
     this.fetchTechnicians = this.fetchTechnicians.bind(this);
