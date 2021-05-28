@@ -19,7 +19,6 @@ import {
 import { Modal } from '../../Modal';
 import { Form, Schema } from '../../Form';
 import { useConfirm } from '../../ConfirmService';
-import { getRPCFields } from '../../../../helpers';
 import { ENDPOINT } from '../../../../constants';
 import './editModal.less';
 import { NULL_TIME_VALUE } from '../constants';
@@ -31,6 +30,7 @@ type Entry = TimesheetLine.AsObject;
 
 interface EntryWithDate extends Entry {
   date?: string;
+  jobId?: string;
 }
 
 type Props = {
@@ -68,7 +68,7 @@ const EditTimesheetModal: FC<Props> = ({
   const confirm = useConfirm();
   const [saving, setSaving] = useState<boolean>(false);
   const SCHEMA: Schema<EntryWithDate> = [
-    [{ label: 'Reference', name: 'referenceNumber' }],
+    [{ label: 'Reference', name: 'jobId', type: 'eventId' }],
     [{ label: 'Brief Description', name: 'briefDescription' }],
     [
       {
@@ -143,19 +143,32 @@ const EditTimesheetModal: FC<Props> = ({
       delete data.date;
       const req = new TimesheetLine();
       req.setId(id);
-      const fieldMaskList = [];
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        //@ts-ignore
-        req[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      req.setFieldMaskList(fieldMaskList);
+      console.log(data);
+      console.log(entry);
+      //reference number,time started,timefinished,departmentcode, class code,brief desc, notes
+      if (data.jobId) req.setReferenceNumber(data.jobId.toString());
+      console.log(data.jobId);
+      req.setTimeStarted(data.timeStarted);
+      req.setTimeFinished(data.timeFinished);
+      req.setDepartmentCode(data.departmentCode);
+      req.setClassCodeId(data.classCodeId);
+      req.setBriefDescription(data.briefDescription);
+      req.setNotes(data.notes);
+
+      req.setFieldMaskList([
+        'ReferenceNumber',
+        'TimeStarted',
+        'TimeFinished',
+        'DepartmentCode',
+        'ClassCodeId',
+        'BriefDescription',
+        'Notes',
+      ]);
       const result = await tslClient.Update(req);
       setSaving(false);
       onSave(result);
     },
-    [setSaving, entry],
+    [setSaving, id, entry, onSave],
   );
 
   const handleCreate = useCallback(
@@ -170,15 +183,35 @@ const EditTimesheetModal: FC<Props> = ({
         'yyyy-MM-dd',
       )} ${format(parseISO(data.timeFinished), 'HH:mm')}`;
       delete data.date;
+      console.log(data);
+      console.log(entry);
       data.technicianUserId = timesheetOwnerId;
       data.servicesRenderedId = entry.servicesRenderedId;
       data.eventId = entry.eventId;
       const req = new TimesheetLine();
-      for (const fieldName in data) {
-        const { methodName } = getRPCFields(fieldName);
-        //@ts-ignore
-        req[methodName](data[fieldName]);
-      }
+      if (data.jobId) req.setReferenceNumber(data.jobId.toString());
+      console.log(data.jobId);
+      req.setTimeStarted(data.timeStarted);
+      req.setTimeFinished(data.timeFinished);
+      req.setDepartmentCode(data.departmentCode);
+      req.setClassCodeId(data.classCodeId);
+      req.setBriefDescription(data.briefDescription);
+      req.setNotes(data.notes);
+      req.setTechnicianUserId(data.technicianUserId);
+      req.setServicesRenderedId(data.servicesRenderedId);
+      req.setEventId(data.eventId);
+      req.setFieldMaskList([
+        'ReferenceNumber',
+        'TimeStarted',
+        'TimeFinished',
+        'DepartmentCode',
+        'ClassCodeId',
+        'BriefDescription',
+        'Notes',
+        'TechnicianUserId',
+        'EventId',
+        'ServicesRenderedId',
+      ]);
       const result = await tslClient.Create(req);
       if (action === 'convert' && result.servicesRenderedId) {
         const reqSR = new ServicesRendered();
@@ -190,7 +223,7 @@ const EditTimesheetModal: FC<Props> = ({
       setSaving(false);
       onSave(result);
     },
-    [setSaving, entry, action],
+    [setSaving, entry, onSave, timesheetOwnerId, action],
   );
 
   const handleApprove = useCallback(async () => {
@@ -216,7 +249,7 @@ const EditTimesheetModal: FC<Props> = ({
       setSaving(false);
       onSave(result);
     });
-  }, [id, userId, timesheetAdministration]);
+  }, [id, userId, onSave, confirm, timesheetAdministration]);
 
   const handleProcess = useCallback(async () => {
     confirm({
@@ -232,7 +265,7 @@ const EditTimesheetModal: FC<Props> = ({
       setSaving(false);
       onSave(result);
     });
-  }, [id, userId, timesheetAdministration, confirm, onSave]);
+  }, [id, confirm, onSave]);
 
   const handleRevoke = useCallback(async () => {
     confirm({
@@ -254,7 +287,7 @@ const EditTimesheetModal: FC<Props> = ({
       setSaving(false);
       onSave(result);
     });
-  }, [id, userId, timesheetAdministration, confirm, onSave]);
+  }, [id, confirm, onSave]);
   const handleDelete = useCallback(async () => {
     confirm({
       catchOnCancel: true,
