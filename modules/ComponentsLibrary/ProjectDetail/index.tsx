@@ -741,10 +741,10 @@ export const ProjectDetail: FC<Props> = props => {
                     },
                   ]
                 : []),
-              {
-                label: 'Billing',
-                content: <BillingTab />,
-              },
+                {
+                    label: "Billing",
+                    content: <BillingTab />
+                }
             ]}
           />
         </>
