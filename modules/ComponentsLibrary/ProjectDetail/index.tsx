@@ -743,54 +743,6 @@ export const ProjectDetail: FC<Props> = props => {
                     },
                   ]
                 : []),
-              {
-                label: 'Invoice',
-                content: loading ? (
-                  <InfoTable data={makeFakeRows(4, 5)} loading />
-                ) : (
-                  <Invoice
-                    serviceItem={entry}
-                    onChange={handleChangeEntry}
-                    disabled={saving}
-                    servicesRendered={servicesRendered}
-                    onInitSchema={handleSetRequestfields}
-                  />
-                ),
-              },
-              ...(serviceCallId
-                ? [
-                    {
-                      label: 'Proposal',
-                      content: loading ? (
-                        <InfoTable data={makeFakeRows(2, 5)} loading />
-                      ) : (
-                        <Proposal
-                          serviceItem={entry}
-                          customer={customer}
-                          property={property}
-                        />
-                      ),
-                    },
-                  ]
-                : []),
-              ...(serviceCallId
-                ? [
-                    {
-                      label: 'Spiffs',
-                      content: loading ? (
-                        <InfoTable data={makeFakeRows(8, 5)} loading />
-                      ) : (
-                        <Spiffs
-                          serviceItem={entry}
-                          loggedUserId={loggedUserId}
-                          loggedUserName={UserClientService.getCustomerName(
-                            loggedUser!,
-                          )}
-                        />
-                      ),
-                    },
-                  ]
-                : []),
             ]}
           />
         </>
