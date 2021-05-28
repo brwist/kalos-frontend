@@ -33,6 +33,7 @@ import { Confirm } from '../Confirm';
 import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
 import { Typography } from '@material-ui/core';
+import { BillingTab } from './components/Billing';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -740,6 +741,10 @@ export const ProjectDetail: FC<Props> = props => {
                     },
                   ]
                 : []),
+              {
+                label: 'Billing',
+                content: <BillingTab />,
+              },
             ]}
           />
         </>
