@@ -12,7 +12,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
 import { makeFakeRows, getRPCFields } from '../../../helpers';
 
-type Entry = PropLink.AsObject;
+type Entry = PropLink;
 
 interface Props {
   kind: string;
@@ -127,14 +127,8 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
   };
 
   render() {
-    const {
-      props,
-      state,
-      setEditing,
-      handleSave,
-      handleDelete,
-      setDeleting,
-    } = this;
+    const { props, state, setEditing, handleSave, handleDelete, setDeleting } =
+      this;
     const { kind, title = '', onClose, viewedAsCustomer = false } = props;
     const { entries, loading, saving, editedEntry, deletingEntry } = state;
     const data: Data = loading

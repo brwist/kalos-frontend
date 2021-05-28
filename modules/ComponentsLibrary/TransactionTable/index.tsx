@@ -150,7 +150,7 @@ export const TransactionTable: FC<Props> = ({
   </body>`;
   };
 
-  const getGalleryData = (txn: Transaction.AsObject): GalleryData[] => {
+  const getGalleryData = (txn: Transaction): GalleryData[] => {
     return txn.documentsList.map(d => {
       return {
         key: `${txn.id}-${d.reference}`,
@@ -183,7 +183,7 @@ export const TransactionTable: FC<Props> = ({
     };
   };
 
-  const auditTxn = async (txn: Transaction.AsObject) => {
+  const auditTxn = async (txn: Transaction) => {
     const ok = confirm(
       'Are you sure you want to mark all the information on this transaction (including all attached photos) as correct? This action is irreversible.',
     );
@@ -204,7 +204,7 @@ export const TransactionTable: FC<Props> = ({
     await client.Create(activity);
   };
 
-  const dispute = async (reason: string, txn: Transaction.AsObject) => {
+  const dispute = async (reason: string, txn: Transaction) => {
     const userReq = new User();
     userReq.setId(txn.ownerId);
     const user = await clients.user.Get(userReq);
@@ -254,7 +254,7 @@ export const TransactionTable: FC<Props> = ({
     await refresh();
   };
 
-  const updateStatus = async (txn: Transaction.AsObject) => {
+  const updateStatus = async (txn: Transaction) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as ${
         acceptOverride ? 'accepted' : 'recorded'
@@ -283,7 +283,7 @@ export const TransactionTable: FC<Props> = ({
     await makeLog(`${description} ${reason || ''}`, id);
   };
 
-  const forceAccept = async (txn: Transaction.AsObject) => {
+  const forceAccept = async (txn: Transaction) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as accepted?`,
     );
@@ -392,7 +392,7 @@ export const TransactionTable: FC<Props> = ({
   }, []);
 
   const handleFile = useCallback(
-    (txn: Transaction.AsObject) => {
+    (txn: Transaction) => {
       const fr = new FileReader();
       fr.onload = async () => {
         try {

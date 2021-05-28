@@ -160,12 +160,11 @@ export const CostSummary: FC<Props> = ({
     return { totalDistance: distanceSubtotal, processed };
   }, [userId]);
   const getPerDiemTotals = useCallback(async () => {
-    const {
-      resultsList,
-    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
-      userId,
-      formatDateFns(endDay),
-    );
+    const { resultsList } =
+      await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
+        userId,
+        formatDateFns(endDay),
+      );
     //get PerDiems, set them
     setPerDiems(resultsList);
     const year = +format(startDay, 'yyyy');
@@ -506,7 +505,7 @@ export const CostSummary: FC<Props> = ({
     return total;
   }, [endDay, startDay, userId]);
 
-  const toggleProcessSpiffTool = async (spiffTool: Task.AsObject) => {
+  const toggleProcessSpiffTool = async (spiffTool: Task) => {
     spiffTool.payrollProcessed = true;
     const { id } = spiffTool;
     const req = new Task();
@@ -526,7 +525,7 @@ export const CostSummary: FC<Props> = ({
       }
     }
   };
-  const toggleProcessPerDiems = async (perDiems: PerDiem.AsObject[]) => {
+  const toggleProcessPerDiems = async (perDiems: PerDiem[]) => {
     for (let i = 0; i < perDiems.length; i++) {
       let req = new PerDiem();
       req.setId(perDiems[i].id);

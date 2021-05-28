@@ -68,7 +68,7 @@ const renderSelectOptions = (i: SelectOption) => (
   </option>
 );
 
-type UserType = User.AsObject;
+type UserType = User;
 
 export type Type =
   | 'text'
@@ -533,7 +533,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           <DateTimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -555,7 +555,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           <DatePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -576,7 +576,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           <TimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -848,7 +848,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
             className={clsx('FieldInput', { compact, disabled })}
             withinForm
             renderItem={renderSelectOptions}
-            selected={(props.value as unknown) as number}
+            selected={props.value as unknown as number}
             onSelect={handleChange}
             disabled={disabled}
             required={required}
@@ -871,7 +871,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           className={clsx('FieldInput', className, { compact, disabled })}
           withinForm
           renderItem={renderSelectOptions}
-          selected={(props.value as unknown) as number}
+          selected={props.value as unknown as number}
           onSelect={handleChange}
           disabled={disabled}
           required={required}

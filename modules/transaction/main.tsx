@@ -63,7 +63,7 @@ export default class Transaction extends React.PureComponent<props, state> {
     });
   }
 
-  getDepartmentList(pgList: PermissionGroup.AsObject[]) {
+  getDepartmentList(pgList: PermissionGroup[]) {
     let departmentList: string[] = [];
     const dpts = pgList.filter(pg => pg.type === PERMISSION_DEPARTMENT);
     console.log({ pgList, dpts });

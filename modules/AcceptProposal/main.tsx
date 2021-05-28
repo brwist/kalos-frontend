@@ -46,10 +46,10 @@ interface state {
   isLoading: boolean;
   total: number;
   docID: number;
-  quoteLines: QuoteLine.AsObject[];
+  quoteLines: QuoteLine[];
   selected: number[];
-  property: Property.AsObject;
-  customer: User.AsObject;
+  property: Property;
+  customer: User;
   notes: string;
 }
 
@@ -72,8 +72,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       total: 0,
       quoteLines: [],
       selected: [],
-      property: new Property().toObject(),
-      customer: new User().toObject(),
+      property: new Property(),
+      customer: new User(),
       docID: 0,
     };
 
@@ -86,12 +86,15 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     this.SigPad = React.createRef();
   }
 
-  addQuoteLine = (ql: QuoteLine.AsObject) => {
-    ql.description = ql.description
-      .replace(/---\w{11}---/g, '"')
-      .replace(/-\w{11}-/g, "'")
-      .replace(/-percent-/g, '%')
-      .replace(/-and-/g, '&');
+  addQuoteLine = (ql: QuoteLine) => {
+    ql.setDescription(
+      ql
+        .getDescription()
+        .replace(/---\w{11}---/g, '"')
+        .replace(/-\w{11}-/g, "'")
+        .replace(/-percent-/g, '%')
+        .replace(/-and-/g, '&'),
+    );
     this.setState(prevState => ({
       quoteLines: prevState.quoteLines.concat(ql),
     }));
@@ -133,10 +136,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   getTotal = () => {
     const qls = this.state.quoteLines.filter(ql =>
-      this.state.selected.includes(ql.id),
+      this.state.selected.includes(ql.getId()),
     );
-    return qls.reduce((acc: number, curr: QuoteLine.AsObject) => {
-      return acc + parseInt(curr.adjustment);
+    return qls.reduce((acc: number, curr: QuoteLine) => {
+      return acc + parseInt(curr.getAdjustment());
     }, 0);
   };
 

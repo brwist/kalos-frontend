@@ -24,7 +24,7 @@ interface props {
 }
 
 interface state {
-  list: TransactionActivity.AsObject[];
+  list: TransactionActivity[];
   actorMap: Map<number, string>;
   isOpen: boolean;
 }
@@ -53,7 +53,7 @@ export class TxnLog extends React.PureComponent<props, state> {
     this.setState(prevState => ({ isOpen: !prevState.isOpen }));
   }
 
-  async addLog(log: TransactionActivity.AsObject) {
+  async addLog(log: TransactionActivity) {
     const user = new User();
     user.setId(log.userId);
     const res = await this.UserClient.Get(user);

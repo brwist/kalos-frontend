@@ -36,9 +36,9 @@ interface props extends PageWrapperProps {
 }
 
 interface state {
-  technicians: User.AsObject[];
-  event: Event.AsObject;
-  callbacks: Event.AsObject[];
+  technicians: User[];
+  event: Event;
+  callbacks: Event[];
   isEditing: boolean;
 }
 
@@ -104,8 +104,8 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     }));
   }
 
-  updateEvent<K extends keyof Event.AsObject>(prop: K) {
-    return async (value: Event.AsObject[K]) => {
+  updateEvent<K extends keyof Event>(prop: K) {
+    return async (value: Event[K]) => {
       const event = new Event();
       const upperCaseProp = `${prop[0].toUpperCase()}${prop.slice(1)}`;
       const methodName = `set${upperCaseProp}`;

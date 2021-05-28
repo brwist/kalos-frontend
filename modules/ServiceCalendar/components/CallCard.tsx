@@ -56,7 +56,7 @@ const ColorIndicator = ({
 };
 
 interface TimeoffProps {
-  card: TimeoffRequest.AsObject & {
+  card: TimeoffRequest & {
     requestTypeName?: string;
   };
   loggedUserId: number;
@@ -194,7 +194,7 @@ export const TimeoffCard = ({
 };
 
 type CallProps = {
-  card: Event.AsObject;
+  card: Event;
   type?: string;
 };
 

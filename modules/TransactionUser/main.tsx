@@ -38,7 +38,7 @@ const Transaction: FC<Props> = props => {
   );
   const [role, setRole] = useState<RoleType>();
 
-  const managerCheck = useCallback(async (u: User.AsObject) => {
+  const managerCheck = useCallback(async (u: User) => {
     const pg = u.permissionGroupsList.filter(
       pg => pg.name === PERMISSION_NAME_MANAGER,
     );

@@ -47,7 +47,7 @@ import './card.css';
 import { parseISO } from 'date-fns';
 
 interface props {
-  txn: Transaction.AsObject;
+  txn: Transaction;
   userDepartmentID: number;
   userName: string;
   userID: number;
@@ -59,7 +59,7 @@ interface props {
 }
 
 interface state {
-  txn: Transaction.AsObject;
+  txn: Transaction;
   pendingAddFromGallery: boolean;
   pendingAddFromSingleFile: boolean;
   costCenters: TransactionAccountList;
@@ -112,10 +112,10 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.LastSingleFileUpload = null; // Will be set when user uploads an image
   }
 
-  async makeLog<K extends keyof Transaction.AsObject>(
+  async makeLog<K extends keyof Transaction>(
     prop: K,
-    oldValue: Transaction.AsObject[K],
-    newValue: Transaction.AsObject[K],
+    oldValue: Transaction[K],
+    newValue: Transaction[K],
   ) {
     try {
       const log = new TransactionActivity();
@@ -130,8 +130,8 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
-  updateTransaction<K extends keyof Transaction.AsObject>(prop: K) {
-    return async (value: Transaction.AsObject[K]) => {
+  updateTransaction<K extends keyof Transaction>(prop: K) {
+    return async (value: Transaction[K]) => {
       try {
         const reqObj = new Transaction();
         const upperCaseProp = `${prop[0].toLocaleUpperCase()}${prop.slice(1)}`;
@@ -259,7 +259,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     await this.LogClient.Create(log);
   }
 
-  testCostCenter(acc: TransactionAccount.AsObject) {
+  testCostCenter(acc: TransactionAccount) {
     return hardcodedList.includes(acc.id);
   }
 
@@ -337,7 +337,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     alert('Upload complete');
   };
 
-  deriveCallout(txn: Transaction.AsObject): {
+  deriveCallout(txn: Transaction): {
     severity: 'error' | 'success';
     text: string;
   } {
@@ -698,8 +698,8 @@ export function getMimeType(fileType: string) {
 }
 
 function costCenterSortByPopularity(
-  a: TransactionAccount.AsObject,
-  b: TransactionAccount.AsObject,
+  a: TransactionAccount,
+  b: TransactionAccount,
 ) {
   return b.popularity - a.popularity;
 }
@@ -709,7 +709,7 @@ const ALLOWED_ACCOUNT_IDS = [
   68500, 66600,
 ];
 
-function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
+function getGalleryData(txn: Transaction): GalleryData[] {
   return txn.documentsList.map(d => {
     return {
       key: `${txn.id}-${d.reference}`,
@@ -718,7 +718,7 @@ function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
   });
 }
 
-function getTransactionTypeString(txn: Transaction.AsObject) {
+function getTransactionTypeString(txn: Transaction) {
   if (txn.costCenterId === 2 || txn.costCenter?.id === 2) {
     return 'fraudulent';
   } else if (txn.costCenterId === 1 || txn.costCenter?.id === 1) {

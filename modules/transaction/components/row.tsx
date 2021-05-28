@@ -26,7 +26,7 @@ import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { parseISO } from 'date-fns';
 
 interface props {
-  txn: Transaction.AsObject;
+  txn: Transaction;
   departmentView: boolean;
   acceptOverride: boolean;
   userID: number;
@@ -350,7 +350,7 @@ export function prettyMoney(amount: number): string {
   }
 }
 
-function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
+function getGalleryData(txn: Transaction): GalleryData[] {
   return txn.documentsList.map(d => {
     return {
       key: `${txn.id}-${d.reference}`,

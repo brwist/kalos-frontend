@@ -10,9 +10,9 @@ import { makeFakeRows } from '../../../helpers';
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
 
-type Entry = (User.AsObject | Property.AsObject) & {
+type Entry = (User | Property) & {
   kind: number;
-  __user?: User.AsObject;
+  __user?: User;
 };
 
 export type Kind = 'Customers' | 'Properties';
@@ -36,7 +36,7 @@ const makeSearchUser = ({
   businessname,
   phone,
   email,
-}: User.AsObject) => {
+}: User) => {
   const entry = new User();
   if (firstname) {
     entry.setFirstname(`%${firstname}%`);
@@ -56,12 +56,7 @@ const makeSearchUser = ({
   return entry;
 };
 
-const makeSearchProperty = ({
-  address,
-  subdivision,
-  city,
-  zip,
-}: Property.AsObject) => {
+const makeSearchProperty = ({ address, subdivision, city, zip }: Property) => {
   const entry = new Property();
   if (address) {
     entry.setAddress(`%${address}%`);
@@ -90,7 +85,7 @@ export const Search: FC<Props> = ({
     value: kindsByName[kind],
   }));
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [users, setUsers] = useState<{ [key: number]: User.AsObject }>({});
+  const [users, setUsers] = useState<{ [key: number]: User }>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<Entry>({
     kind: kindsByName[kinds[0]],
@@ -105,15 +100,10 @@ export const Search: FC<Props> = ({
       const { kind } = search;
       let newUsers = {};
       if (kind === 1) {
-        const {
-          firstname,
-          lastname,
-          businessname,
-          phone,
-          email,
-        } = search as Property.AsObject;
+        const { firstname, lastname, businessname, phone, email } =
+          search as Property;
         if (firstname || lastname || businessname || phone || email) {
-          const entry = makeSearchUser(search as User.AsObject);
+          const entry = makeSearchUser(search as User);
           const { resultsList } = (
             await UserClientService.BatchGet(entry)
           ).toObject();
@@ -135,9 +125,9 @@ export const Search: FC<Props> = ({
           businessname,
           phone,
           email,
-        } = search as Property.AsObject;
+        } = search as Property;
         if (firstname || lastname || businessname || phone || email) {
-          const user = makeSearchUser(search as User.AsObject);
+          const user = makeSearchUser(search as User);
           const { resultsList: resultsListUsers } = (
             await UserClientService.BatchGet(user)
           ).toObject();
@@ -153,7 +143,7 @@ export const Search: FC<Props> = ({
             .filter(id => id !== excludeId);
           const usersProperties = await Promise.all(
             userIds.map(async userId => {
-              const entry = makeSearchProperty(search as Property.AsObject);
+              const entry = makeSearchProperty(search as Property);
               entry.setUserId(userId);
               try {
                 const { resultsList } = (
@@ -170,7 +160,7 @@ export const Search: FC<Props> = ({
             ...usersProperties.reduce((aggr, item) => [...aggr, ...item], []),
           ];
         } else if (address || subdivision || city || zip) {
-          const entry = makeSearchProperty(search as Property.AsObject);
+          const entry = makeSearchProperty(search as Property);
           const { resultsList } = (
             await PropertyClientService.BatchGet(entry)
           ).toObject();
@@ -214,7 +204,7 @@ export const Search: FC<Props> = ({
         ...entry,
         ...(entry.hasOwnProperty('userId')
           ? {
-              __user: users[(entry as Property.AsObject).userId],
+              __user: users[(entry as Property).userId],
             }
           : {}),
       });
@@ -289,13 +279,8 @@ export const Search: FC<Props> = ({
     ? makeFakeRows()
     : entries.map(entry => {
         if (kind === 1) {
-          const {
-            firstname,
-            lastname,
-            businessname,
-            phone,
-            email,
-          } = entry as User.AsObject;
+          const { firstname, lastname, businessname, phone, email } =
+            entry as User;
           return [
             {
               value: `${firstname} ${lastname}`,
@@ -316,14 +301,8 @@ export const Search: FC<Props> = ({
           ];
         }
         if (kind === 2) {
-          const {
-            userId,
-            address,
-            subdivision,
-            city,
-            state,
-            zip,
-          } = entry as Property.AsObject;
+          const { userId, address, subdivision, city, state, zip } =
+            entry as Property;
           return [
             {
               value: `${address}, ${city}, ${state} ${zip}`,

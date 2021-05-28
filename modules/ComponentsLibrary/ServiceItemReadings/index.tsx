@@ -237,8 +237,8 @@ const sort = (a: Entry, b: Entry) => {
   return 0;
 };
 
-type Entry = Reading.AsObject;
-type MaintenanceEntry = MaintenanceQuestion.AsObject;
+type Entry = Reading;
+type MaintenanceEntry = MaintenanceQuestion;
 
 interface Props {
   serviceItemId: number;
@@ -250,17 +250,15 @@ export const ServiceItemReadings: FC<Props> = ({
   loggedUserId,
 }) => {
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [users, setUsers] = useState<{ [key: number]: User.AsObject }>({});
+  const [users, setUsers] = useState<{ [key: number]: User }>({});
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [editedEntry, setEditedEntry] = useState<Entry>();
   const [deletingEntry, setDeletingEntry] = useState<Entry>();
-  const [
-    editedMaintenanceEntry,
-    setEditedMaintenanceEntry,
-  ] = useState<MaintenanceEntry>();
+  const [editedMaintenanceEntry, setEditedMaintenanceEntry] =
+    useState<MaintenanceEntry>();
   const [maintenanceQuestions, setMaintenanceQuestions] = useState<{
     [key: number]: MaintenanceEntry;
   }>({});

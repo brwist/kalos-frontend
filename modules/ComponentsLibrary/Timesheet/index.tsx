@@ -60,13 +60,13 @@ export type Props = {
 };
 
 type EditTimesheetContext = {
-  editTimesheetCard: (card: TimesheetLine.AsObject) => void;
-  editServicesRenderedCard: (card: ServicesRendered.AsObject) => void;
+  editTimesheetCard: (card: TimesheetLine) => void;
+  editServicesRenderedCard: (card: ServicesRendered) => void;
 };
 
 export const EditTimesheetContext = createContext<EditTimesheetContext>({
-  editTimesheetCard: (card: TimesheetLine.AsObject) => {},
-  editServicesRenderedCard: (card: ServicesRendered.AsObject) => {},
+  editTimesheetCard: (card: TimesheetLine) => {},
+  editServicesRenderedCard: (card: ServicesRendered) => {},
 });
 
 const getWeekStart = (
@@ -142,7 +142,7 @@ export const Timesheet: FC<Props> = props => {
     receiptsIssue,
   } = state;
   const handleOnSave = (
-    card: TimesheetLine.AsObject,
+    card: TimesheetLine,
     action?: 'delete' | 'approve' | 'reject',
   ) => {
     dispatch({
@@ -157,10 +157,10 @@ export const Timesheet: FC<Props> = props => {
     dispatch({ type: 'addNewTimesheet' });
   };
 
-  const editTimesheetCard = (card: TimesheetLine.AsObject) => {
+  const editTimesheetCard = (card: TimesheetLine) => {
     dispatch({ type: 'editTimesheetCard', data: card });
   };
-  const editServicesRenderedCard = (card: ServicesRendered.AsObject) => {
+  const editServicesRenderedCard = (card: ServicesRendered) => {
     dispatch({ type: 'editServicesRenderedCard', data: card });
   };
 
@@ -198,8 +198,7 @@ export const Timesheet: FC<Props> = props => {
     {
       icon: <AddAlertIcon />,
       name: 'Reminder',
-      url:
-        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
     },
     {
       icon: <AssignmentIndIcon />,
@@ -302,8 +301,8 @@ export const Timesheet: FC<Props> = props => {
           },
           {
             ranges: [] as {
-              previous: TimesheetLine.AsObject;
-              current: TimesheetLine.AsObject;
+              previous: TimesheetLine;
+              current: TimesheetLine;
             }[],
             idList: [] as number[],
           },
@@ -382,8 +381,8 @@ export const Timesheet: FC<Props> = props => {
           },
           {
             ranges: [] as {
-              previous: TimesheetLine.AsObject;
-              current: TimesheetLine.AsObject;
+              previous: TimesheetLine;
+              current: TimesheetLine;
             }[],
             idList: [] as number[],
           },
@@ -452,8 +451,8 @@ export const Timesheet: FC<Props> = props => {
           },
           {
             ranges: [] as {
-              previous: TimesheetLine.AsObject;
-              current: TimesheetLine.AsObject;
+              previous: TimesheetLine;
+              current: TimesheetLine;
             }[],
             idList: [] as number[],
           },
@@ -498,8 +497,8 @@ export const Timesheet: FC<Props> = props => {
           },
           {
             ranges: [] as {
-              previous: TimesheetLine.AsObject;
-              current: TimesheetLine.AsObject;
+              previous: TimesheetLine;
+              current: TimesheetLine;
             }[],
             idList: [] as number[],
           },
@@ -546,7 +545,8 @@ export const Timesheet: FC<Props> = props => {
   };
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
+    const timeoffRequestTypes =
+      await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
@@ -588,8 +588,8 @@ export const Timesheet: FC<Props> = props => {
           'yyyy-MM-dd',
         )}%`,
       );
-      const timeoffs = await TimeoffRequestClientService.getTimeoffRequestByFilter(
-        {
+      const timeoffs =
+        await TimeoffRequestClientService.getTimeoffRequestByFilter({
           isActive: 1,
           userId: timesheetOwnerId,
           dateRangeList: [
@@ -602,8 +602,7 @@ export const Timesheet: FC<Props> = props => {
             ),
           ],
           dateTargetList: ['time_started', 'time_started'],
-        },
-      );
+        });
       dispatch({
         type: 'fetchedTimesheetData',
         data: result,

@@ -46,7 +46,7 @@ interface state {
   availablePTO: number;
   isLoading: boolean;
   currentUser: UserType;
-  spiffs: Spiff.AsObject[];
+  spiffs: Spiff[];
 }
 
 export class Dashboard extends React.PureComponent<props, state> {
