@@ -5,6 +5,6 @@ import { ExampleTitle } from '../helpers';
 export default () => (
   <>
     <ExampleTitle>default</ExampleTitle>
-    <ProjectDetail userID={98217} eventID={0} />
+    <ProjectDetail userID={0} loggedUserId={98217} propertyId={0} />
   </>
 );

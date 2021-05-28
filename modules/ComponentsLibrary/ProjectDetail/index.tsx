@@ -1,506 +1,850 @@
-import React, { ChangeEvent, ReactNode } from 'react';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
-import Grid from '@material-ui/core/Grid';
-import DateFnsUtils from '@date-io/date-fns';
+import React, { FC, useState, useEffect, useCallback, useRef } from 'react';
+import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
+import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
-  DatePicker,
-  MuiPickersUtilsProvider,
-  TimePicker,
-} from '@material-ui/pickers';
-import { MaterialUiPickersDate } from '@material-ui/pickers/typings/date';
-import { JobTypePicker } from '../Pickers/JobType';
-import { JobSubtypePicker } from '../Pickers/JobSubtype';
-import NativeSelect from '@material-ui/core/NativeSelect';
-import {
-  InputLabel,
-  FormControl,
-  TextField,
-  Select,
-  Input,
-  MenuItem,
-  Chip,
-  FormControlLabel,
-  Switch,
-} from '@material-ui/core';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import {
-  EVENT_STATUS_LIST,
-  PAYMENT_TYPE_LIST,
-  ENDPOINT,
-} from '../../../constants';
+  getRPCFields,
+  makeFakeRows,
+  UserType,
+  PropertyType,
+  PropertyClientService,
+  JobTypeClientService,
+  JobSubtypeClientService,
+  cfURL,
+  loadProjects,
+  JobTypeSubtypeClientService,
+  ServicesRenderedClientService,
+} from '../../../helpers';
+import { ENDPOINT, OPTION_BLANK } from '../../../constants';
+import { Modal } from '../Modal';
+import { SectionBar } from '../SectionBar';
+import { InfoTable, Data } from '../InfoTable';
+import { Tabs } from '../Tabs';
+import { Option } from '../Field';
+import { Form, Schema } from '../Form';
+import { Request } from './components/Request';
+import { Equipment } from './components/Equipment';
+import { Services } from './components/Services';
+import { Invoice } from './components/Invoice';
+import { Proposal } from './components/Proposal';
+import { Spiffs } from './components/Spiffs';
+import { Confirm } from '../Confirm';
+import { GanttChart } from '../GanttChart';
+import { Loader } from '../../Loader/main';
+import { Typography } from '@material-ui/core';
+
+const EventClientService = new EventClient(ENDPOINT);
+const UserClientService = new UserClient(ENDPOINT);
+
+export type EventType = Event.AsObject;
+type JobTypeType = JobType.AsObject;
+type JobSubtypeType = JobSubtype.AsObject;
+export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
+export type ServicesRenderedType = ServicesRendered.AsObject;
 
 export interface Props {
-  eventID: number;
   userID: number;
+  propertyId: number;
+  serviceCallId?: number;
+  loggedUserId: number;
+  onClose?: () => void;
+  onSave?: () => void;
+  asProject?: boolean;
+  projectParentId?: number;
 }
 
-interface State {
-  technicians: User.AsObject[];
-  event: Event.AsObject;
-  callbacks: Event.AsObject[];
-  isEditing: boolean;
-}
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
+  [
+    {
+      label: 'Notification',
+      name: 'notification',
+      required: true,
+      multiline: true,
+    },
+  ],
+];
 
-export class ProjectDetail extends React.PureComponent<Props, State> {
-  EventClient: EventClient;
-  UserClient: UserClient;
+export const ProjectDetail: FC<Props> = props => {
+  const {
+    userID,
+    propertyId,
+    serviceCallId: eventId,
+    loggedUserId,
+    onClose,
+    onSave,
+    asProject = false,
+  } = props;
+  const requestRef = useRef(null);
+  const [requestFields, setRequestfields] = useState<string[]>([]);
+  const [tabIdx, setTabIdx] = useState<number>(0);
+  const [tabKey, setTabKey] = useState<number>(0);
+  const [pendingSave, setPendingSave] = useState<boolean>(false);
+  const [requestValid, setRequestValid] = useState<boolean>(false);
+  const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
+  const [entry, setEntry] = useState<EventType>(new Event().toObject());
+  const [property, setProperty] = useState<PropertyType>(
+    new Property().toObject(),
+  );
+  const [customer, setCustomer] = useState<UserType>(new User().toObject());
+  const [propertyEvents, setPropertyEvents] = useState<EventType[]>([]);
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
+  const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
+  const [jobSubtypes, setJobSubtype] = useState<JobSubtypeType[]>([]);
+  const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
+    [],
+  );
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      event: new Event().toObject(),
-      callbacks: [],
-      technicians: [],
-      isEditing: false,
-    };
-    this.toggleEditing = this.toggleEditing.bind(this);
-    this.UserClient = new UserClient(ENDPOINT);
-    this.fetchTechnicians = this.fetchTechnicians.bind(this);
-    this.fetchCallbacks = this.fetchCallbacks.bind(this);
-    this.EventClient = new EventClient(ENDPOINT);
-    this.fetchEvent = this.fetchEvent.bind(this);
-    this.updateEvent = this.updateEvent.bind(this);
-    this.onDateChange = this.onDateChange.bind(this);
-    this.handleTechnicianSelect = this.handleTechnicianSelect.bind(this);
-  }
+  const [servicesRendered, setServicesRendered] = useState<
+    ServicesRenderedType[]
+  >([]);
+  const [loggedUser, setLoggedUser] = useState<UserType>();
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
+  const [projects, setProjects] = useState<EventType[]>([]);
+  const [parentId, setParentId] = useState<number | null>(null);
+  const [confirmedParentId, setConfirmedParentId] =
+    useState<number | null>(null);
+  const loadEntry = useCallback(
+    async (_serviceCallId = serviceCallId) => {
+      if (_serviceCallId) {
+        const req = new Event();
+        req.setId(_serviceCallId);
+        const entry = await EventClientService.Get(req);
+        setEntry(entry);
+      }
+    },
+    [setEntry, serviceCallId],
+  );
+  const loadServicesRenderedData = useCallback(
+    async (_serviceCallId = serviceCallId) => {
+      if (_serviceCallId) {
+        setLoading(true);
+        const servicesRendered =
+          await ServicesRenderedClientService.loadServicesRenderedByEventID(
+            _serviceCallId,
+          );
+        setServicesRendered(servicesRendered);
+        setLoading(false);
+      }
+    },
+    [setServicesRendered, serviceCallId],
+  );
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      let promises = [];
 
-  async fetchCallbacks() {
+      promises.push(
+        new Promise<void>(async resolve => {
+          const property = await PropertyClientService.loadPropertyByID(
+            propertyId,
+          );
+          setProperty(property);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const customer = await UserClientService.loadUserById(userID);
+          setCustomer(customer);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const propertyEvents =
+            await EventClientService.loadEventsByPropertyId(propertyId);
+          setPropertyEvents(propertyEvents);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobTypes = await JobTypeClientService.loadJobTypes();
+          setJobTypes(jobTypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
+          setJobSubtype(jobSubtypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const jobTypeSubtypes =
+            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+          setJobTypeSubtypes(jobTypeSubtypes);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const loggedUser = await UserClientService.loadUserById(loggedUserId);
+          setLoggedUser(loggedUser);
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          await loadEntry();
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          await loadServicesRenderedData();
+          resolve();
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          const projects = await loadProjects();
+          setProjects(projects);
+          resolve();
+        }),
+      );
+
+      Promise.all(promises).then(() => {
+        setLoaded(true);
+        setLoading(false);
+      });
+    } catch (e) {
+      setError(true);
+    }
+  }, [
+    setLoading,
+    setError,
+    setLoaded,
+    setJobTypes,
+    userID,
+    propertyId,
+    setPropertyEvents,
+    loggedUserId,
+    setLoggedUser,
+    setProperty,
+    setCustomer,
+    setProjects,
+  ]);
+
+  const handleSetParentId = useCallback(
+    id => {
+      setParentId(id);
+    },
+    [setParentId],
+  );
+
+  const handleSetConfirmedIsChild = useCallback(
+    id => {
+      setConfirmedParentId(id);
+    },
+    [setConfirmedParentId],
+  );
+
+  const handleSave = useCallback(async () => {
+    setPendingSave(true);
+    if (tabIdx !== 0) {
+      setTabIdx(0);
+      setTabKey(tabKey + 1);
+    }
+  }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
+  const saveServiceCall = useCallback(async () => {
+    setSaving(true);
     const req = new Event();
-    req.setPropertyId(this.state.event.propertyId);
     req.setIsActive(1);
-    const result = await this.EventClient.BatchGet(req);
-    this.setState({
-      callbacks: result.toObject().resultsList,
-    });
-  }
-
-  async fetchTechnicians(page = 0) {
-    const req = new User();
-    req.setIsEmployee(1);
-    req.setIsActive(1);
-    req.setIsOfficeStaff(0);
-    req.setIsHvacTech(1);
-    req.setPageNumber(page);
-    const result = await this.UserClient.BatchGet(req);
-    this.setState(
-      prevState => ({
-        technicians: prevState.technicians.concat(
-          result.toObject().resultsList,
-        ),
-      }),
-      async () => {
-        if (this.state.technicians.length !== result.getTotalCount()) {
-          page = page + 1;
-          await this.fetchTechnicians(page);
-        }
-      },
-    );
-  }
-  toggleEditing() {
-    this.setState(prevState => ({
-      isEditing: !prevState.isEditing,
-    }));
-  }
-
-  updateEvent<K extends keyof Event.AsObject>(prop: K) {
-    return async (value: Event.AsObject[K]) => {
-      const event = new Event();
-      const upperCaseProp = `${prop[0].toUpperCase()}${prop.slice(1)}`;
-      const methodName = `set${upperCaseProp}`;
-      event.setId(this.state.event.id);
+    const fieldMaskList: string[] = ['IsActive'];
+    if (serviceCallId) {
+      req.setId(serviceCallId);
+    } else {
+      setLoading(true);
+    }
+    requestFields.forEach(fieldName => {
       //@ts-ignore
-      event[methodName](value);
-      event.setFieldMaskList([upperCaseProp]);
-      const updatedEvent = await this.EventClient.Update(event);
-      this.setState(() => ({ event: updatedEvent }));
-    };
-  }
-
-  updateAssignedTechnician = this.updateEvent('logTechnicianAssigned');
-  updateCallBackOriginalId = this.updateEvent('callbackOriginalId');
-  updateLogNotes = this.updateEvent('logNotes');
-  updateDescription = this.updateEvent('description');
-  updatePaymentType = this.updateEvent('logPaymentType');
-  updateStatus = this.updateEvent('logJobStatus');
-  updateJobType = this.updateEvent('jobTypeId');
-  updateSubType = this.updateEvent('jobSubtypeId');
-  updateBriefDescription = this.updateEvent('name');
-  updateAmountQuoted = this.updateEvent('amountQuoted');
-  updateIsCallback = this.updateEvent('isCallback');
-  updateIsLMPC = this.updateEvent('isLmpc');
-  updateIsDiagnosticQuoted = this.updateEvent('diagnosticQuoted');
-  updateIsResidential = this.updateEvent('isResidential');
-  updateDateStarted = this.updateEvent('dateStarted');
-  updateDateEnded = this.updateEvent('dateEnded');
-  updateTimeStarted = this.updateEvent('timeStarted');
-  updateTimeEnded = this.updateEvent('timeEnded');
-
-  handleTextInput(fn: (val: string) => Promise<void>) {
-    return (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      fn(e.target.value);
-    };
-  }
-  handleDescription = this.handleTextInput(this.updateDescription);
-  handleNotes = this.handleTextInput(this.updateLogNotes);
-  handleAmountQuoted = this.handleTextInput(this.updateAmountQuoted);
-
-  handleSelect(fn: (val: number) => Promise<void>) {
-    return (e: React.SyntheticEvent<HTMLSelectElement>) => {
-      const value = parseInt(e.currentTarget.value);
-      if (value !== undefined) {
-        fn(value);
-      }
-    };
-  }
-
-  handleCallbackSelect = this.handleSelect(this.updateCallBackOriginalId);
-  handleIsCallback = this.handleSelect(this.updateIsCallback);
-  handleIsLMPC = this.handleSelect(this.updateIsLMPC);
-  handleIsResidentialChange = this.handleSelect(this.updateIsResidential);
-  handleIsDiagnosticQuoted = this.handleSelect(this.updateIsDiagnosticQuoted);
-
-  handleTechnicianSelect(
-    e: ChangeEvent<{ name?: string | undefined; value: unknown }>,
-    child: ReactNode,
-  ) {
-    const { event } = this.state;
-    let assigned = event.logTechnicianAssigned.split(',');
-    assigned = assigned.filter(a => a !== '0');
-    const id = e.currentTarget.name;
-    if (assigned.includes(id!)) {
-      assigned = assigned.filter(a => a !== id);
-    } else {
-      assigned = assigned.concat(id!);
-    }
-    if (assigned.length === 0) {
-      this.updateAssignedTechnician('0');
-    } else {
-      this.updateAssignedTechnician(assigned.join(','));
-    }
-    //this.updateAssignedTechnician(idStr);
-  }
-
-  onDateChange(fn: (str: string) => Promise<void>) {
-    return (date: MaterialUiPickersDate) => {
-      if (date) {
-        const monthPrefix = date.getMonth() + 1 < 10 ? '0' : '';
-        const dayPrefix = date.getDate() < 10 ? '0' : '';
-        const dateString = `${date.getFullYear()}-${monthPrefix}${
-          date.getMonth() + 1
-        }-${dayPrefix}${date.getDate()} 00:00:00`;
-        fn(dateString);
-      }
-    };
-  }
-  onStartDateChange = this.onDateChange(this.updateDateStarted);
-  onEndDateChange = this.onDateChange(this.updateDateEnded);
-
-  onTimeChange(fn: (str: string) => Promise<void>) {
-    return (date: MaterialUiPickersDate) => {
-      if (date) {
-        const hourPrefix = date.getHours() < 10 ? '0' : '';
-        const minutePrefix = date.getMinutes() < 10 ? '0' : '';
-        const dateString = `${hourPrefix}${date.getHours()}:${minutePrefix}${date.getMinutes()}`;
-        fn(dateString);
-      }
-    };
-  }
-  onStartTimeChange = this.onTimeChange(this.updateTimeStarted);
-  onEndTimeChange = this.onTimeChange(this.updateTimeEnded);
-
-  async fetchEvent() {
-    const event = new Event();
-    event.setId(this.props.eventID);
-    const result = await this.EventClient.Get(event);
-    this.setState({
-      event: result,
+      if (fieldName === 'id' || typeof entry[fieldName] === 'object') return;
+      const { upperCaseProp, methodName } = getRPCFields(fieldName);
+      //@ts-ignore
+      req[methodName](entry[fieldName]);
+      fieldMaskList.push(upperCaseProp);
     });
-  }
-
-  async componentDidMount() {
-    await this.fetchEvent();
-    await this.fetchCallbacks();
-    await this.fetchTechnicians();
-  }
-
-  render() {
-    const { event, isEditing } = this.state;
-    const startTime = event.dateStarted.split(' ')[0] + 'T' + event.timeStarted;
-    const endTime = event.dateEnded.split(' ')[0] + 'T' + event.timeEnded;
-
-    return (
-      <Grid container direction="column" alignItems="center">
-        <FormControlLabel
-          control={
-            <Switch
-              checked={this.state.isEditing}
-              onChange={this.toggleEditing}
-              value="isEditing"
-              color="primary"
-            />
-          }
-          label={this.state.isEditing ? 'Editing Enabled' : 'Editing Disabled'}
-        />
-        <Grid container direction="row" justify="space-evenly" wrap="nowrap">
-          <Grid container direction="column" style={{ padding: 5 }}>
-            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-              <DatePicker
-                format="MM/dd/yyyy"
-                margin="normal"
-                id="date-picker-inline"
-                label="Date Started"
-                value={new Date(event.dateStarted.replace(' ', 'T'))}
-                onChange={this.onStartDateChange}
-                disabled={!isEditing}
-              />
-              <DatePicker
-                format="MM/dd/yyyy"
-                margin="normal"
-                id="date-picker-inline"
-                label="Date Ended"
-                value={new Date(event.dateEnded.replace(' ', 'T'))}
-                onChange={this.onEndDateChange}
-                disabled={!isEditing}
-              />
-            </MuiPickersUtilsProvider>
-            <JobTypePicker
-              disabled={!isEditing}
-              selected={event.jobTypeId}
-              onSelect={this.updateJobType}
-            />
-            <JobSubtypePicker
-              disabled={!isEditing}
-              onSelect={this.updateSubType}
-              selected={event.jobSubtypeId}
-              jobTypeID={event.jobTypeId}
-            />
-            <FormControl style={{ marginTop: 10 }}>
-              <InputLabel htmlFor="Status-select">Job Status</InputLabel>
-              <NativeSelect
-                disabled={!isEditing}
-                value={event.logJobStatus}
-                onChange={e => this.updateStatus(e.currentTarget.value)}
-                inputProps={{
-                  id: 'Status-select',
-                }}
-              >
-                {(EVENT_STATUS_LIST as string[]).map(status => (
-                  <option value={status} key={status}>
-                    {status}
-                  </option>
-                ))}
-              </NativeSelect>
-            </FormControl>
-            <FormControl style={{ marginTop: 10 }}>
-              <InputLabel htmlFor="Payment-select">Payment Type</InputLabel>
-              <NativeSelect
-                disabled={!isEditing}
-                value={event.logPaymentType}
-                onChange={e => this.updatePaymentType(e.currentTarget.value)}
-                inputProps={{
-                  id: 'Payment-select',
-                }}
-              >
-                {(PAYMENT_TYPE_LIST as string[]).map(type => (
-                  <option value={type} key={type}>
-                    {type}
-                  </option>
-                ))}
-              </NativeSelect>
-            </FormControl>
-            <TextField
-              disabled={!isEditing}
-              onChange={this.handleAmountQuoted}
-              label="Amount Quoted"
-              margin="normal"
-              variant="outlined"
-              defaultValue={event.amountQuoted}
-            />
-            <FormControl style={{ marginTop: 10 }}>
-              <InputLabel htmlFor="tech-select-input">
-                Technician Assigned
-              </InputLabel>
-              <Select
-                disabled={!isEditing}
-                value={event.logTechnicianAssigned.split(',')}
-                multiple
-                onChange={this.handleTechnicianSelect}
-                input={<Input id="tech-select-input" />}
-                renderValue={selected => (
-                  <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                    {(selected as string[]).map(s => {
-                      const tech = this.state.technicians.find(
-                        t => t.id === parseInt(s),
-                      );
-                      if (tech) {
-                        return (
-                          <Chip
-                            key={s}
-                            label={`${tech.firstname} ${tech.lastname}`}
-                            style={{ margin: 2 }}
-                          />
-                        );
-                      } else {
-                        return (
-                          <Chip
-                            key="unassigned"
-                            label="unassigned"
-                            style={{ margin: 2 }}
-                          />
-                        );
-                      }
-                    })}
-                  </div>
-                )}
-              >
-                {this.state.technicians.map(t => (
-                  <MenuItem
-                    key={`${t.firstname}-${t.lastname}-${t.id}`}
-                    value={`${t.id}`}
-                  >
-                    {t.firstname} {t.lastname}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid
-            container
-            direction="column"
-            justify="space-between"
-            style={{ padding: 5 }}
-          >
-            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-              <TimePicker
-                disabled={!isEditing}
-                label="Start Time"
-                margin="normal"
-                value={startTime}
-                onChange={this.onStartTimeChange}
-                minutesStep={5}
-              />
-              <TimePicker
-                disabled={!isEditing}
-                label="End Time"
-                margin="normal"
-                value={endTime}
-                onChange={this.onEndTimeChange}
-                minutesStep={5}
-              />
-            </MuiPickersUtilsProvider>
-            <FormControl style={{ marginTop: 10 }}>
-              <InputLabel htmlFor="age-native-helper">Sector</InputLabel>
-              <NativeSelect
-                disabled={!isEditing}
-                value={event.isResidential}
-                onChange={this.handleIsResidentialChange}
-                inputProps={{
-                  id: 'age-native-helper',
-                }}
-              >
-                <option value={0}>Commercial</option>
-                <option value={1}>Residential</option>
-              </NativeSelect>
-            </FormControl>
-            <FormControl style={{ marginTop: 10 }}>
-              <InputLabel htmlFor="dq-select">Diagnostic Quoted</InputLabel>
-              <NativeSelect
-                disabled={!isEditing}
-                value={event.diagnosticQuoted}
-                onChange={this.handleIsDiagnosticQuoted}
-                inputProps={{
-                  id: 'dq-select',
-                }}
-              >
-                <option value={0}>No</option>
-                <option value={1}>Yes</option>
-              </NativeSelect>
-            </FormControl>
-            <FormControl style={{ marginTop: 10 }}>
-              <InputLabel htmlFor="LMPC-select">Is LMPC?</InputLabel>
-              <NativeSelect
-                disabled={!isEditing}
-                value={event.isLmpc}
-                onChange={this.handleIsLMPC}
-                inputProps={{
-                  id: 'LMPC-select',
-                }}
-              >
-                <option value={0}>No</option>
-                <option value={1}>Yes</option>
-              </NativeSelect>
-            </FormControl>
-            <FormControl style={{ marginTop: 10 }}>
-              <InputLabel htmlFor="IsCallback-select">Is Callback?</InputLabel>
-              <NativeSelect
-                disabled={!isEditing}
-                value={event.isCallback}
-                onChange={this.handleIsCallback}
-                inputProps={{
-                  id: 'IsCallback-select',
-                }}
-              >
-                <option value={0}>No</option>
-                <option value={1}>Yes</option>
-              </NativeSelect>
-            </FormControl>
-            <FormControl style={{ marginTop: 10 }}>
-              <InputLabel htmlFor="Callback-select">
-                Reason Of Callback
-              </InputLabel>
-              <NativeSelect
-                disabled={!event.isCallback}
-                value={event.callbackOriginalId}
-                onChange={this.handleCallbackSelect}
-                inputProps={{
-                  id: 'Callback-select',
-                }}
-              >
-                <option value={0}>Select Original Call</option>
-                {this.state.callbacks.map(cb => (
-                  <option value={cb.id} key={`${cb.name}-${cb.id}`}>
-                    {cb.name}
-                  </option>
-                ))}
-              </NativeSelect>
-            </FormControl>
-          </Grid>
-        </Grid>
-        <Grid
-          container
-          direction="row"
-          alignItems="center"
-          justify="space-evenly"
-          wrap="nowrap"
-        >
-          <TextField
-            disabled={!isEditing}
-            onChange={this.handleDescription}
-            label="Service Needed"
-            margin="normal"
-            variant="outlined"
-            defaultValue={event.description}
-            multiline
-            fullWidth
-            style={{ padding: 5 }}
-          />
-          <TextField
-            disabled={!isEditing}
-            onChange={this.handleNotes}
-            label="Service Call Notes"
-            margin="normal"
-            variant="outlined"
-            defaultValue={event.logNotes}
-            multiline
-            fullWidth
-            style={{ padding: 5 }}
-          />
-        </Grid>
-        {/*<Button variant="contained" onClick={() => alert("No me likey")}>
-          Click
-    </Button>*/}
-      </Grid>
+    req.setFieldMaskList(fieldMaskList);
+    const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
+      req,
     );
-  }
-}
+    setEntry(res);
+    setSaving(false);
+    if (!serviceCallId) {
+      setServiceCallId(res.id);
+      await loadEntry(res.id);
+      await loadServicesRenderedData(res.id);
+    }
+    if (onSave) {
+      onSave();
+    }
+  }, [
+    entry,
+    serviceCallId,
+    setEntry,
+    setSaving,
+    setLoading,
+    requestFields,
+    onSave,
+    loadEntry,
+    loadServicesRenderedData,
+  ]);
+  const saveProject = useCallback(
+    async (data: EventType) => {
+      setSaving(true);
+      if (confirmedParentId) data.parentId = confirmedParentId;
+      await EventClientService.upsertEvent(data);
+      setSaving(false);
+      if (onSave) {
+        onSave();
+      }
+      if (onClose) {
+        onClose();
+      }
+    },
+    [onSave, onClose, confirmedParentId],
+  );
+  useEffect(() => {
+    if (!loaded) {
+      load();
+      setLoaded(true);
+    }
+    if (entry && entry.customer && entry.customer.notification !== '') {
+      setNotificationViewing(true);
+    }
+    if (pendingSave && requestValid) {
+      setPendingSave(false);
+      saveServiceCall();
+    }
+    if (pendingSave && tabIdx === 0 && requestRef.current) {
+      //@ts-ignore
+      requestRef.current.click();
+    }
+  }, [
+    entry,
+    loaded,
+    load,
+    setLoaded,
+    setNotificationViewing,
+    pendingSave,
+    requestValid,
+    setPendingSave,
+    saveServiceCall,
+    tabIdx,
+    requestRef,
+  ]);
+
+  const handleSetRequestfields = useCallback(
+    fields => {
+      setRequestfields([...requestFields, ...fields]);
+    },
+    [requestFields, setRequestfields],
+  );
+
+  const handleChangeEntry = useCallback(
+    (data: EventType) => {
+      setEntry({ ...entry, ...data });
+      setPendingSave(false);
+    },
+    [entry, setEntry, setPendingSave],
+  );
+
+  const handleSetNotificationEditing = useCallback(
+    (notificationEditing: boolean) => () =>
+      setNotificationEditing(notificationEditing),
+    [setNotificationEditing],
+  );
+
+  const handleSetNotificationViewing = useCallback(
+    (notificationViewing: boolean) => () =>
+      setNotificationViewing(notificationViewing),
+    [setNotificationViewing],
+  );
+
+  const handleSaveCustomer = useCallback(
+    async (data: UserType) => {
+      setSaving(true);
+      const entry = new User();
+      entry.setId(userID);
+      const fieldMaskList = [];
+      for (const fieldName in data) {
+        const { upperCaseProp, methodName } = getRPCFields(fieldName);
+        // @ts-ignore
+        entry[methodName](data[fieldName]);
+        fieldMaskList.push(upperCaseProp);
+      }
+      entry.setFieldMaskList(fieldMaskList);
+      await UserClientService.Update(entry);
+      await loadEntry();
+      setSaving(false);
+      handleSetNotificationEditing(false)();
+    },
+    [setSaving, userID, handleSetNotificationEditing],
+  );
+
+  const handleOnAddMaterials = useCallback(
+    async (materialUsed, materialTotal) => {
+      await EventClientService.updateMaterialUsed(
+        serviceCallId,
+        materialUsed + entry.materialUsed,
+        materialTotal + entry.materialTotal,
+      );
+      await loadEntry();
+    },
+    [serviceCallId, entry],
+  );
+
+  const jobTypeOptions: Option[] = jobTypes.map(
+    ({ id: value, name: label }) => ({ label, value }),
+  );
+
+  const jobSubtypeOptions: Option[] = [
+    { label: OPTION_BLANK, value: 0 },
+    ...jobTypeSubtypes
+      .filter(({ jobTypeId }) => jobTypeId === entry.jobTypeId)
+      .map(({ jobSubtypeId }) => ({
+        value: jobSubtypeId,
+        label: jobSubtypes.find(({ id }) => id === jobSubtypeId)?.name || '',
+      })),
+  ];
+
+  const { id, logJobNumber, contractNumber } = entry;
+  const {
+    firstname,
+    lastname,
+    businessname,
+    phone,
+    altphone,
+    cellphone,
+    fax,
+    email,
+    billingTerms,
+    notification,
+  } = customer;
+  const { address, city, state, zip } = property;
+  const data: Data = [
+    [
+      { label: 'Customer', value: `${firstname} ${lastname}` },
+      { label: 'Business Name', value: businessname },
+    ],
+    [
+      { label: 'Primary Phone', value: phone, href: 'tel' },
+      { label: 'Alternate Phone', value: altphone, href: 'tel' },
+    ],
+    [
+      { label: 'Cell Phone', value: cellphone, href: 'tel' },
+      { label: 'Fax', value: fax, href: 'tel' },
+    ],
+    [
+      { label: 'Billing Terms', value: billingTerms },
+      { label: 'Email', value: email, href: 'mailto' },
+    ],
+    [
+      { label: 'Property', value: address },
+      { label: 'City, State, Zip', value: `${city}, ${state} ${zip}` },
+    ],
+    ...(serviceCallId
+      ? [
+          [
+            { label: 'Job Number', value: logJobNumber },
+            { label: 'Contract Number', value: contractNumber },
+          ],
+        ]
+      : []),
+  ];
+  const SCHEMA_PROJECT: Schema<EventType> = [
+    [
+      {
+        name: 'dateStarted',
+        label: 'Start Date',
+        type: 'date',
+        required: true,
+      },
+      {
+        name: 'dateEnded',
+        label: 'End Date',
+        type: 'date',
+        required: true,
+      },
+      {
+        name: 'timeStarted',
+        label: 'Time Started',
+        type: 'time',
+        required: true,
+      },
+      {
+        name: 'timeEnded',
+        label: 'Time Ended',
+        type: 'time',
+        required: true,
+      },
+    ],
+    [
+      {
+        name: 'departmentId',
+        label: 'Department',
+        type: 'department',
+        required: true,
+      },
+      {
+        name: 'description',
+        label: 'Description',
+        multiline: true,
+      },
+    ],
+    [
+      {
+        name: 'isAllDay',
+        label: 'Is all-day?',
+        type: 'checkbox',
+      },
+      {
+        name: 'isLmpc',
+        label: 'Is LMPC?',
+        type: 'checkbox',
+      },
+      {
+        name: 'highPriority',
+        label: 'High priority?',
+        type: 'checkbox',
+      },
+      {
+        name: 'isResidential',
+        label: 'Is residential?',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'color',
+        label: 'Color',
+        type: 'color',
+      },
+    ],
+    [
+      {
+        name: 'propertyId',
+        type: 'hidden',
+      },
+    ],
+  ];
+  return (
+    <div>
+      <SectionBar
+        title={asProject ? 'Project Details' : 'Service Call Details'}
+        actions={
+          serviceCallId
+            ? [
+                {
+                  label: 'Spiff Apply',
+                  url: cfURL(
+                    [
+                      'tasks.addtask',
+                      'type=Spiff',
+                      `job_no=${logJobNumber}`,
+                    ].join('&'),
+                  ),
+                  target: '_blank',
+                },
+                {
+                  label: 'Job Activity',
+                  url: cfURL(['service.viewlogs', `id=${id}`].join('&')),
+                },
+                {
+                  label: notification ? 'Notification' : 'Add Notification',
+                  onClick: notification
+                    ? handleSetNotificationViewing(true)
+                    : handleSetNotificationEditing(true),
+                },
+                {
+                  label: 'Service Call Search',
+                  url: cfURL('service.calls'),
+                },
+                {
+                  label: 'Close',
+                  ...(onClose
+                    ? { onClick: onClose }
+                    : {
+                        url: cfURL(
+                          [
+                            'properties.details',
+                            `property_id=${propertyId}`,
+                            `user_id=${userID}`,
+                          ].join('&'),
+                        ),
+                      }),
+                },
+              ]
+            : []
+        }
+      >
+        <InfoTable data={data} loading={loading} error={error} />
+      </SectionBar>
+      {asProject ? (
+        <>
+          <Form
+            title="Project Data"
+            schema={SCHEMA_PROJECT}
+            data={{ ...new Event().toObject(), propertyId }}
+            onClose={onClose || (() => {})}
+            onSave={(data: EventType) =>
+              saveProject({ ...data, departmentId: Number(data.departmentId) })
+            }
+          />
+          {parentId != confirmedParentId && parentId != null && (
+            <Confirm
+              title="Confirm Parent"
+              open={true}
+              onClose={() => handleSetParentId(null)}
+              onConfirm={() => handleSetConfirmedIsChild(parentId)}
+            >
+              Are you sure you want to set this project as the parent to the new
+              project?
+            </Confirm>
+          )}
+          {confirmedParentId && (
+            <Typography variant="h5">Parent ID: {confirmedParentId}</Typography>
+          )}
+          {loaded && projects.length > 0 ? (
+            <GanttChart
+              events={projects.map(task => {
+                const {
+                  id,
+                  description,
+                  dateStarted: dateStart,
+                  dateEnded: dateEnd,
+                  logJobStatus,
+                  color,
+                } = task;
+                const [startDate, startHour] = dateStart.split(' ');
+                const [endDate, endHour] = dateEnd.split(' ');
+                return {
+                  id,
+                  startDate,
+                  endDate,
+                  startHour,
+                  endHour,
+                  notes: description,
+                  statusColor: '#' + color,
+                  onClick: () => {
+                    handleSetParentId(id);
+                  },
+                };
+              })}
+              startDate={projects[0].dateStarted.substr(0, 10)}
+              endDate={projects[projects.length - 1].dateEnded.substr(0, 10)}
+              loading={loading}
+            />
+          ) : (
+            <Loader />
+          )}
+        </>
+      ) : (
+        <>
+          <SectionBar
+            title="Service Call Data"
+            actions={[
+              {
+                label: 'Save Service Call Only',
+                onClick: handleSave,
+                disabled: loading || saving,
+              },
+              {
+                label: 'Save and Invoice',
+                // onClick: // TODO
+                disabled: loading || saving,
+              },
+              {
+                label: 'Cancel',
+                url: [
+                  '/index.cfm?action=admin:properties.details',
+                  `property_id=${propertyId}`,
+                  `user_id=${userID}`,
+                ].join('&'),
+                disabled: loading || saving,
+              },
+            ]}
+          />
+          <Tabs
+            key={tabKey}
+            defaultOpenIdx={tabIdx}
+            onChange={setTabIdx}
+            tabs={[
+              {
+                label: 'Request',
+                content: (
+                  <Request
+                    //@ts-ignore
+                    ref={requestRef}
+                    serviceItem={entry}
+                    propertyEvents={propertyEvents}
+                    loading={loading}
+                    jobTypeOptions={jobTypeOptions}
+                    jobSubtypeOptions={jobSubtypeOptions}
+                    jobTypeSubtypes={jobTypeSubtypes}
+                    onChange={handleChangeEntry}
+                    disabled={saving}
+                    onValid={setRequestValid}
+                    onInitSchema={handleSetRequestfields}
+                  />
+                ),
+              },
+              {
+                label: 'Equipment',
+                content: loading ? (
+                  <InfoTable data={makeFakeRows(4, 4)} loading />
+                ) : (
+                  <Equipment
+                    {...props}
+                    serviceItem={entry}
+                    customer={customer}
+                    property={property}
+                  />
+                ),
+              },
+              ...(serviceCallId
+                ? [
+                    {
+                      label: 'Services',
+                      content: loggedUser ? (
+                        <Services
+                          serviceCallId={serviceCallId}
+                          servicesRendered={servicesRendered}
+                          loggedUser={loggedUser}
+                          loadServicesRendered={loadServicesRenderedData}
+                          loading={loading}
+                          onAddMaterials={handleOnAddMaterials}
+                        />
+                      ) : (
+                        <InfoTable data={makeFakeRows(4, 4)} loading />
+                      ),
+                    },
+                  ]
+                : []),
+              {
+                label: 'Invoice',
+                content: loading ? (
+                  <InfoTable data={makeFakeRows(4, 5)} loading />
+                ) : (
+                  <Invoice
+                    serviceItem={entry}
+                    onChange={handleChangeEntry}
+                    disabled={saving}
+                    servicesRendered={servicesRendered}
+                    onInitSchema={handleSetRequestfields}
+                  />
+                ),
+              },
+              ...(serviceCallId
+                ? [
+                    {
+                      label: 'Proposal',
+                      content: loading ? (
+                        <InfoTable data={makeFakeRows(2, 5)} loading />
+                      ) : (
+                        <Proposal
+                          serviceItem={entry}
+                          customer={customer}
+                          property={property}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
+              ...(serviceCallId
+                ? [
+                    {
+                      label: 'Spiffs',
+                      content: loading ? (
+                        <InfoTable data={makeFakeRows(8, 5)} loading />
+                      ) : (
+                        <Spiffs
+                          serviceItem={entry}
+                          loggedUserId={loggedUserId}
+                          loggedUserName={UserClientService.getCustomerName(
+                            loggedUser!,
+                          )}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </>
+      )}
+      {customer && serviceCallId > 0 && (
+        <Modal
+          open={notificationEditing || notificationViewing}
+          onClose={() => {
+            handleSetNotificationViewing(false)();
+            handleSetNotificationEditing(false)();
+          }}
+        >
+          <Form<UserType>
+            title={
+              notificationViewing
+                ? 'Customer Notification'
+                : `${
+                    notification === '' ? 'Add' : 'Edit'
+                  } Customer Notification`
+            }
+            schema={SCHEMA_PROPERTY_NOTIFICATION}
+            data={customer}
+            onSave={handleSaveCustomer}
+            onClose={() => {
+              handleSetNotificationViewing(false)();
+              handleSetNotificationEditing(false)();
+            }}
+            disabled={saving}
+            readOnly={notificationViewing}
+            actions={
+              notificationViewing
+                ? [
+                    {
+                      label: 'Edit',
+                      variant: 'outlined',
+                      onClick: () => {
+                        handleSetNotificationViewing(false)();
+                        handleSetNotificationEditing(true)();
+                      },
+                    },
+                    {
+                      label: 'Delete',
+                      variant: 'outlined',
+                      onClick: () => {
+                        handleSetNotificationViewing(false)();
+                        handleSaveCustomer({ notification: '' } as UserType);
+                      },
+                    },
+                  ]
+                : []
+            }
+          />
+        </Modal>
+      )}
+    </div>
+  );
+};
