@@ -6,7 +6,7 @@ import {
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 export const ProjectDetail: FC<Props & PageWrapperProps> = props => (
-  <PageWrapper {...props} userID={props.loggedUserId}>
+  <PageWrapper {...props} userID={props.userID}>
     <Details {...props} />
   </PageWrapper>
 );
