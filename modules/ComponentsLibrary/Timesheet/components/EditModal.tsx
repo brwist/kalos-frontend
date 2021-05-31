@@ -88,7 +88,6 @@ const EditTimesheetModal: FC<Props> = ({
         name: 'departmentCode',
         type: 'department',
         required: true,
-        content: action === 'create' ? defaultDepartment : null,
       },
     ],
     [
@@ -110,6 +109,8 @@ const EditTimesheetModal: FC<Props> = ({
   ];
   const { id = 0 } = entry;
   const data = { ...entry };
+  if (defaultDepartment && action === 'create')
+    data.departmentCode = defaultDepartment;
   if (data.timeStarted) {
     data.date = format(parseISO(data.timeStarted), 'yyyy-MM-dd');
     data.timeStarted = format(
