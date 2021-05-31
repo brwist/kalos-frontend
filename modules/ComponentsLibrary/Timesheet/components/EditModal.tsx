@@ -31,7 +31,7 @@ type Entry = TimesheetLine.AsObject;
 
 interface EntryWithDate extends Entry {
   date?: string;
-  jobId?: string;
+  jobId?: number;
 }
 
 type Props = {
@@ -72,7 +72,7 @@ const EditTimesheetModal: FC<Props> = ({
   const confirm = useConfirm();
   const [saving, setSaving] = useState<boolean>(false);
   const SCHEMA: Schema<EntryWithDate> = [
-    [{ label: 'Reference', name: 'jobId', type: 'eventId' }],
+    [{ label: 'Job Number', name: 'jobId', type: 'eventId' }],
     [{ label: 'Brief Description', name: 'briefDescription' }],
     [
       {
@@ -109,8 +109,12 @@ const EditTimesheetModal: FC<Props> = ({
   ];
   const { id = 0 } = entry;
   const data = { ...entry };
+
   if (defaultDepartment && action === 'create')
     data.departmentCode = defaultDepartment;
+  if (action != 'create' && data.referenceNumber)
+    data.jobId = parseInt(data.referenceNumber);
+  console.log(data.jobId);
   if (data.timeStarted) {
     data.date = format(parseISO(data.timeStarted), 'yyyy-MM-dd');
     data.timeStarted = format(
@@ -132,6 +136,7 @@ const EditTimesheetModal: FC<Props> = ({
       'yyyy-MM-dd HH:mm',
     );
   }
+  console.log(data);
   const handleUpdate = useCallback(
     async (data: EntryWithDate) => {
       setSaving(true);
