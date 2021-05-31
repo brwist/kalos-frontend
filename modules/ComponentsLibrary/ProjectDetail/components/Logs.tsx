@@ -6,16 +6,19 @@ import {
 } from '../../../../helpers';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { Data, InfoTable, Row } from '../../InfoTable';
+import { Loader } from '../../../Loader/main';
 
 export interface Props {}
 
 export const LogsTab: FC<Props> = ({}) => {
   const [projectLogs, setProjectLogs] = useState<ActivityLog[]>();
+  const [loading, setLoading] = useState<boolean>();
 
   const load = useCallback(async () => {
+    setLoading(true);
     let req: any = new ActivityLog();
     req.setNotEqualsList(['EventId']);
-    const logs = await ActivityLogClientService.BatchGet(req);
+    let logs = await ActivityLogClientService.BatchGet(req);
 
     // Would have done all of this with a protobuffer field and an @inject_tag in the backend,
     // but the ActivityLog would have to import Event to display an event and that would cause a
@@ -40,11 +43,14 @@ export const LogsTab: FC<Props> = ({}) => {
     logs.setResultsList(newResList);
     setProjectLogs(logs.getResultsList());
     console.log('Has loaded! ', projectLogs);
-  }, [setProjectLogs]);
+    setLoading(false);
+  }, [setProjectLogs, setLoading]);
   useEffect(() => {
     load();
   }, [load]);
-  return (
+  return loading ? (
+    <Loader />
+  ) : (
     <>
       <InfoTable
         key={projectLogs?.toString()}
