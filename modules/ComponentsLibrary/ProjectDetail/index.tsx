@@ -18,6 +18,7 @@ import {
   loadProjects,
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
+  ActivityLogClientService,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -34,6 +35,7 @@ import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
 import { Typography } from '@material-ui/core';
 import { BillingTab } from './components/Billing';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -98,6 +100,7 @@ export const ProjectDetail: FC<Props> = props => {
   const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
     [],
   );
+  const [projectLogs, setProjectLogs] = useState<ActivityLog[]>();
 
   const [servicesRendered, setServicesRendered] = useState<
     ServicesRenderedType[]
@@ -140,6 +143,37 @@ export const ProjectDetail: FC<Props> = props => {
     setLoading(true);
     try {
       let promises = [];
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          let req: any = new ActivityLog();
+          req.setNotEqualsList(['EventId']);
+          const logs = await ActivityLogClientService.BatchGet(req);
+
+          // Would have done all of this with a protobuffer field and an @inject_tag in the backend,
+          // but the ActivityLog would have to import Event to display an event and that would cause a
+          // circular dependency
+
+          // As a result, I'm just grabbing all of the projects and checking each real fast and filtering the logs
+          // by that. This isn't the fastest solution but it works for now and it's not terrible, still ~O(n^2)
+          req = new Event();
+          req.setNotEqualsList(['DepartmentId']);
+          req.setDepartmentId(0);
+          const projectEvents = await EventClientService.BatchGet(req);
+          let newResList = logs.getResultsList().filter(log => {
+            let isInside = false;
+            projectEvents.getResultsList().forEach(projectEvent => {
+              if (projectEvent.getId() === log.getEventId()) {
+                isInside = true;
+              }
+            });
+
+            return isInside;
+          });
+          logs.setResultsList(newResList);
+          resolve();
+        }),
+      );
 
       promises.push(
         new Promise<void>(async resolve => {
