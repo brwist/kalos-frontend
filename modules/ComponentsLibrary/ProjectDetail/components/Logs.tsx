@@ -54,7 +54,7 @@ export const LogsTab: FC<Props> = ({}) => {
             { value: log.getUserId() },
             { value: log.getActivityName() },
             { value: log.getActivityDate() },
-            { name: log.getPropertyId() },
+            { value: log.getPropertyId() },
           ] as Row;
         })}
         columns={[
