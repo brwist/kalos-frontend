@@ -477,8 +477,11 @@ export const CompareTransactions: FC<Props> = ({
               ]
             : [
                 {
-                  label: 'Merge',
+                  label: `Merge ${
+                    transactions ? `(${transactions?.length} selected)` : ''
+                  }`,
                   onClick: handleMerge,
+                  disabled: !transactions,
                 },
                 {
                   label: 'Close',
