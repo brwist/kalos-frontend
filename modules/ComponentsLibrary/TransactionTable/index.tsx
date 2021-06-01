@@ -708,6 +708,7 @@ export const TransactionTable: FC<Props> = ({
       <SectionBar
         title="Transactions"
         key={String(pageNumber)}
+        fixedActions
         pagination={{
           count:
             transactions && transactions.length > 0
