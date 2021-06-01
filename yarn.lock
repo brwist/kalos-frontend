@@ -8243,9 +8243,9 @@ react-test-renderer@^17.0.1:
     scheduler "^0.20.2"
 
 react-to-print@^2.6.3:
-  version "2.12.5"
-  resolved "https://registry.yarnpkg.com/react-to-print/-/react-to-print-2.12.5.tgz#f9d7e7ee125a8b497e7e812e8cfbee1d4296096b"
-  integrity sha512-gnLMHs2t8m33qW8Jp482Dd9mNghF0OTtb5ePhzmPjy483Dv/s3kWrwxLFDcUOX1LXw9yjeMvWzR3ZlbQoSF+FA==
+  version "2.12.6"
+  resolved "https://registry.yarnpkg.com/react-to-print/-/react-to-print-2.12.6.tgz#ac4537e12528ce865a1a652dcdfb19c5b20c9cce"
+  integrity sha512-O4hpQZX8pOd3W910n+WkT9Jvpd3tFcEWqTFHrm69bCGI/Nh5g2CoLrzaXObQW9BA9mK1K4+3qG88Q6DAJs+oWg==
   dependencies:
     prop-types "^15.7.2"
 
