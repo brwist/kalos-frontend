@@ -7,7 +7,7 @@ import { TransactionAccountsPayable } from './main';
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <TransactionAccountsPayable loggedUserId={98217} hasActions />,
+    <TransactionAccountsPayable key={''} loggedUserId={98217} hasActions />,
     document.getElementById('txn-root'),
   );
 });
