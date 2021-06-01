@@ -493,7 +493,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
       currentSearch = new Trip().toObject();
     }
     currentSearch.page = page;
-    this.loadTripsAndUpdate(currentSearch);
+    if (this.props.role === 'Payroll')
+      this.loadTripsAndUpdate(currentSearch, this.state.toggleButton);
+    else {
+      this.loadTripsAndUpdate(currentSearch);
+    }
   };
   handleToggleButton = () => {
     this.setState({ page: 0 });
