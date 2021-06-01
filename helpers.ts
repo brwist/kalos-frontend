@@ -1216,24 +1216,24 @@ export const loadTripsByFilter = async ({
     //@ts-ignore
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
-  req.setApproved(filter.approved!);
-  req.setPayrollProcessed(filter.payrollProcessed!);
 
-  if (filter.payrollProcessed) {
-    req.setApproved(true);
-    req.setNotEqualsList(['PayrollProcessed']);
+  if (filter.payrollProcessed == true) {
+    req.setPayrollProcessed(false);
+    req.addNotEquals('PayrollProcessed');
   }
   if (filter.payrollProcessed === false) {
+    req.setPayrollProcessed(true);
+    req.addNotEquals('PayrollProcessed');
+  }
+  if (filter.approved === false) {
+    req.addNotEquals('Approved');
+    req.setApproved(true);
+  }
+
+  if (filter.approved === true) {
+    req.addNotEquals('Approved');
     req.setApproved(false);
-    req.setNotEqualsList(['PayrollProcessed']);
   }
-  if (!filter.approved) {
-    req.setNotEqualsList([...req.getNotEqualsList(), 'Approved']);
-    req.setApproved(!req.getApproved());
-  }
-  //if (filter.approved) {
-  //  req.setFieldMaskList(['ApproveById']);
-  //}
 
   const response = await PerDiemClientService.BatchGetTrips(req);
   console.log(response.getResultsList());
