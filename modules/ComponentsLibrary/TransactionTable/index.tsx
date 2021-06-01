@@ -339,7 +339,7 @@ export const TransactionTable: FC<Props> = ({
     if (filter.isAccepted) {
       req.setStatusId(3);
     }
-    if (filter.vendor) req.setVendor(filter.vendor);
+    if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     let res = await TransactionClientService.BatchGet(req);
 
