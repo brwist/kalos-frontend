@@ -466,6 +466,7 @@ export const CompareTransactions: FC<Props> = ({
       )}
       <SectionBar
         title="Select Transactions To Merge"
+        fixedActions
         actions={
           !onClose
             ? [
