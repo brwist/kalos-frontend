@@ -6,7 +6,12 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   EventClientService,
   EventType,
+  PerDiemClientService,
+  PerDiemType,
   TimesheetLineClientService,
+  TransactionClientService,
+  TransactionType,
+  usd,
 } from '../../../../helpers';
 import { Loader } from '../../../Loader/main';
 import { InfoTable } from '../../InfoTable';
@@ -20,8 +25,14 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
   const sizeOfText: Variant = 'subtitle1';
 
   const [event, setEvent] = useState<EventType>();
+  const [transactions, setTransactions] = useState<TransactionType[]>([]);
+  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>();
+  const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
+
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>();
+  const [totalTransactions, setTotalTransactions] = useState<number>();
+
   const [loadingEvent, setLoadingEvent] = useState<boolean>();
 
   const loadEvent = useCallback(async () => {
@@ -32,6 +43,32 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
     setEvent(event);
     setLoadingEvent(false);
   }, [setEvent, setLoadingEvent, serviceCallId]);
+
+  const loadPrintData = useCallback(async () => {
+    const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
+      serviceCallId,
+    );
+    const lodgings = await PerDiemClientService.loadPerDiemsLodging(
+      resultsList,
+    ); // first # is per diem id
+    setLodgings(lodgings);
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
+    setTransactions(transactions);
+    setTotalTransactions(
+      transactions.reduce((aggr, { amount }) => aggr + amount, 0),
+    );
+    setPerDiems(resultsList);
+  }, [
+    serviceCallId,
+    setPerDiems,
+    setLodgings,
+    setTransactions,
+    setTotalTransactions,
+  ]);
 
   const loadTimesheets = useCallback(async () => {
     try {
@@ -61,6 +98,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
     loadEvent();
     loadTimesheets();
     calculateTotalHoursWorked();
+    loadPrintData();
   }, []);
 
   useEffect(() => {
@@ -107,6 +145,24 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                     : `${totalHoursWorked} hr`
                   : ''
               }`,
+            },
+          ],
+        ]}
+      />
+
+      <SectionBar title="Costs" />
+      <InfoTable
+        columns={[
+          { name: 'Type', align: 'left' },
+          { name: 'Cost', align: 'right' },
+        ]}
+        data={[
+          [
+            {
+              value: 'Transactions',
+            },
+            {
+              value: totalTransactions ? usd(totalTransactions) : usd(0),
             },
           ],
         ]}
