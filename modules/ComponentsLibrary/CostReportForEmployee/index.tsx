@@ -39,44 +39,35 @@ import {
 } from '../../../helpers';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { Button } from '@material-ui/core';
 interface Props {
   userId: number;
   loggedUserId: number;
-  notReady: boolean;
-
-  onClose: (() => void) | null;
-  onNext?: (() => void) | null;
-  onPrevious?: (() => void) | null;
+  week: string;
+  onClose: () => void;
   username: string;
 }
 export const CostReportForEmployee: FC<Props> = ({
   userId,
-  notReady,
+  week,
   onClose,
-  onNext,
-  onPrevious,
   username,
 }) => {
   const [trips, setTrips] = useState<Trip[]>();
-  const [perDiems, setPerDiems] = useState<PerDiemList>();
+  const [perDiems, setPerDiems] = useState<PerDiem[]>();
   const [spiffs, setSpiffs] = useState<Task[]>();
   const [hours, setHours] = useState<number>();
   const [loaded, setLoaded] = useState<boolean>(false);
-  const today = new Date();
-  const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
-  const endDay = addDays(startDay, 7);
+  const startDay = week;
+
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
+  const endDay = formatDateFns(addDays(new Date(startDay), 7));
   const getTrips = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
     trip.setIsActive(true);
     trip.setDateTargetList(['date', 'date']);
-    trip.setDateRangeList([
-      '>=',
-      formatDateFns(startDay),
-      '<',
-      formatDateFns(endDay),
-    ]);
+    trip.setDateRangeList(['>=', startDay, '<', endDay]);
     let tempTripList = (
       await PerDiemClientService.BatchGetTrips(trip)
     ).getResultsList();
@@ -87,13 +78,10 @@ export const CostReportForEmployee: FC<Props> = ({
   const getPerDiems = useCallback(async () => {
     const req = new PerDiem();
     req.setUserId(userId);
-    req.setDateRangeList([
-      '>=',
-      formatDateFns(startDay),
-      '<',
-      formatDateFns(endDay),
-    ]);
-    const resultsList = await PerDiemClientService.BatchGet(req);
+    req.setDateRangeList(['>=', startDay, '<', endDay]);
+    const resultsList = (
+      await PerDiemClientService.BatchGet(req)
+    ).getResultsList();
     //get PerDiems, set them
 
     return resultsList;
@@ -102,8 +90,8 @@ export const CostReportForEmployee: FC<Props> = ({
   const getSpiffs = useCallback(async () => {
     const req = new Task();
     req.setExternalId(userId);
-    const startDate = format(startDay, 'yyyy-MM-dd');
-    const endDate = format(endDay, 'yyyy-MM-dd');
+    const startDate = startDay;
+    const endDate = endDay;
     req.setDateRangeList(['>=', startDate, '<', endDate]);
     req.setBillableType('Spiff');
     req.setDateTargetList(['time_created', 'time_created']);
@@ -119,10 +107,9 @@ export const CostReportForEmployee: FC<Props> = ({
     timesheetReq.setTechnicianUserId(userId);
     timesheetReq.setIsActive(1);
     timesheetReq.setWithoutLimit(true);
-    const startDate = format(startDay, 'yyyy-MM-dd');
-    const endDate = format(endDay, 'yyyy-MM-dd');
+    const startDate = startDay;
+    const endDate = endDay;
     timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
-    console.log(endDay);
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
     timesheetReq.setOrderBy('time_started');
@@ -255,6 +242,41 @@ export const CostReportForEmployee: FC<Props> = ({
             : []
         }
       />
+      <InfoTable
+        columns={[
+          { name: 'Date' },
+          { name: 'ZipCode' },
+          { name: 'Approved By' },
+          { name: 'Processed' },
+        ]}
+        data={
+          perDiems
+            ? perDiems.map(perDiem => {
+                return [
+                  {
+                    value: formatDate(perDiem.getDateStarted()),
+                  },
+                  {
+                    value: perDiem.getRowsList()[0].getZipCode(),
+                  },
+                  {
+                    value:
+                      perDiem.getApprovedById() != 0
+                        ? perDiem.getApprovedByName()
+                        : 'Not Approved',
+                  },
+                  {
+                    value:
+                      perDiem.getPayrollProcessed() === false
+                        ? 'Not Processed'
+                        : 'Processed',
+                  },
+                ];
+              })
+            : []
+        }
+      />
+      <Button onClick={() => onClose()}></Button>
     </SectionBar>
   ) : (
     <Loader />
