@@ -358,6 +358,66 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                     ],
                   ]}
                 />
+                <SectionBar title="Per Diem Days" small />
+                <InfoTable
+                  columns={[
+                    {
+                      name: 'Date',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Zip Code',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Meals Only',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Meals',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Lodging',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Notes',
+                      align: 'right',
+                    },
+                  ]}
+                  data={rowsList.map(
+                    ({
+                      id,
+                      dateString,
+                      zipCode,
+                      mealsOnly,
+                      notes,
+                      perDiemId,
+                    }) => {
+                      return [
+                        {
+                          value: formatDate(dateString),
+                        },
+                        {
+                          value: zipCode,
+                        },
+                        {
+                          value: mealsOnly ? 'Yes' : 'No',
+                        },
+                        {
+                          value: usd(MEALS_RATE),
+                        },
+                        {
+                          value: lodgings[id] ? usd(lodgings[id]) : '-',
+                        },
+                        {
+                          value: notes,
+                        },
+                      ];
+                    },
+                  )}
+                />
               </div>
             );
           },
