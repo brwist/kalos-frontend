@@ -71,7 +71,6 @@ export const LogsTab: FC<Props> = ({}) => {
       });
       logs.setResultsList(newResList);
       setProjectLogs(logs.getResultsList());
-      console.log('Has loaded! ', projectLogs);
       setLoading(false);
     });
   }, [setProjectLogs, setLoading]);
