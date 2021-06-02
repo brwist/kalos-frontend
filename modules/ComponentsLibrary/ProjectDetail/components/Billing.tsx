@@ -6,6 +6,7 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   EventClientService,
   EventType,
+  formatDate,
   PerDiemClientService,
   PerDiemType,
   TimesheetLineClientService,
@@ -105,7 +106,6 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
     load();
   }, []);
 
-  console.log('Total hours worked: ', totalHoursWorked);
   return loadingEvent ? (
     <Loader />
   ) : (
@@ -175,6 +175,80 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
             },
           ],
         ]}
+      />
+
+      <SectionBar title="Transactions" />
+      <InfoTable
+        columns={[
+          {
+            name: 'Department',
+            align: 'left',
+          },
+          {
+            name: 'Owner',
+            align: 'left',
+          },
+          {
+            name: 'Cost Center / Vendor',
+            align: 'left',
+          },
+          {
+            name: 'Date',
+            align: 'left',
+          },
+          {
+            name: 'Amount',
+            align: 'left',
+          },
+          {
+            name: 'Notes',
+            align: 'right',
+          },
+        ]}
+        data={transactions.map(
+          ({
+            department,
+            ownerName,
+            amount,
+            notes,
+            costCenter,
+            timestamp,
+            vendor,
+          }) => {
+            return [
+              {
+                value: department ? (
+                  <>
+                    {department.classification} - {department.description}
+                  </>
+                ) : (
+                  '-'
+                ),
+              },
+              {
+                value: ownerName,
+              },
+              {
+                value: (
+                  <>
+                    {`${costCenter?.description}` + ' - '}
+                    <br />
+                    {vendor}
+                  </>
+                ),
+              },
+              {
+                value: formatDate(timestamp),
+              },
+              {
+                value: usd(amount),
+              },
+              {
+                value: notes,
+              },
+            ];
+          },
+        )}
       />
     </>
   );
