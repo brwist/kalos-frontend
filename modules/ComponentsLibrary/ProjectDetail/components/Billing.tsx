@@ -105,6 +105,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
     load();
   }, []);
 
+  console.log('Total hours worked: ', totalHoursWorked);
   return loadingEvent ? (
     <Loader />
   ) : (
@@ -136,15 +137,23 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
         data={[
           [
             {
-              value: `Total Hours Worked: ${
-                totalHoursWorked
+              value: 'Total Hours Worked: ',
+            },
+            {
+              value:
+                // If totalHoursWorked is set and the totalHoursWorked > 1, displays "totalHoursWorked hrs"
+                // else if totalHoursWorked is 0 then
+                // "None"
+                // Otherwise it must be 1, so display "totalHoursWorked hr"
+                // If it is undefined, then simply display an empty character
+                // I really hope that cleared this up
+                totalHoursWorked !== undefined
                   ? totalHoursWorked > 1
                     ? `${totalHoursWorked} hrs`
                     : totalHoursWorked == 0
                     ? 'None'
                     : `${totalHoursWorked} hr`
-                  : ''
-              }`,
+                  : '',
             },
           ],
         ]}
