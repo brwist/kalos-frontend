@@ -84,6 +84,13 @@ export const LogsTab: FC<Props> = ({}) => {
     <>
       <InfoTable
         key={projectLogs?.toString()}
+        columns={[
+          { name: 'ID' },
+          { name: 'User ID' },
+          { name: 'Description' },
+          { name: 'Date' },
+          { name: 'Property ID' },
+        ]}
         data={projectLogs?.map(log => {
           return [
             { value: log.getId() },
@@ -93,13 +100,6 @@ export const LogsTab: FC<Props> = ({}) => {
             { value: log.getPropertyId() },
           ] as Row;
         })}
-        columns={[
-          { name: 'ID' },
-          { name: 'User ID' },
-          { name: 'Description' },
-          { name: 'Date' },
-          { name: 'Property ID' },
-        ]}
       />
     </>
   );
