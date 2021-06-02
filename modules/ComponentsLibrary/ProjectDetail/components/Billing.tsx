@@ -284,7 +284,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
               }` + `${ownerName ? ` - ${ownerName}` : ''}`;
             return (
               <div key={id}>
-                <Typography>{perDiemString}</Typography>
+                <SectionBar title={perDiemString} small />
                 <InfoTable
                   columns={[
                     {
