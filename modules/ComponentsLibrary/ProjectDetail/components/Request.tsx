@@ -137,12 +137,6 @@ export const Request: FC<Props> = forwardRef(
           options: PAYMENT_TYPE_LIST,
         },
         {
-          label: 'Sector',
-          name: 'isResidential',
-          required: true,
-          options: RESIDENTIAL_OPTIONS,
-        },
-        {
           label: 'Amount Quoted',
           name: 'amountQuoted',
           startAdornment: '$',
