@@ -84,15 +84,25 @@ type SelectorParams = {
   totalCount: number;
 };
 
+interface FilterType {
+  departmentId: number;
+  employeeId: number;
+  week: string;
+  vendor: string;
+  isAccepted: boolean | undefined;
+  isRejected: boolean | undefined;
+}
+
 let pageNumber = 0;
 let sortDir: OrderDir | ' ' | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: SortString | undefined = 'timestamp';
-let filter = {
+let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
   week: OPTION_ALL,
   vendor: '',
   isAccepted: false,
+  isRejected: false,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -339,6 +349,10 @@ export const TransactionTable: FC<Props> = ({
     if (filter.isAccepted) {
       req.setStatusId(3);
     }
+    console.log(filter);
+    if (filter.isRejected) {
+      req.setStatusId(4);
+    }
     if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
@@ -450,8 +464,8 @@ export const TransactionTable: FC<Props> = ({
     filter.departmentId = d.departmentId;
     filter.employeeId = d.employeeId;
     filter.vendor = d.vendor;
-    // @ts-ignore
     filter.isAccepted = d.accepted ? d.accepted : undefined;
+    filter.isRejected = d.rejected ? d.rejected : undefined;
   }, []);
 
   const handleChangePage = useCallback(
@@ -610,6 +624,11 @@ export const TransactionTable: FC<Props> = ({
       {
         name: 'accepted',
         label: 'Is Accepted?',
+        type: 'checkbox',
+      },
+      {
+        name: 'rejected',
+        label: 'Is Rejected?',
         type: 'checkbox',
       },
       {
