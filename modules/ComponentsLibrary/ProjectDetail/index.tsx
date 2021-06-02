@@ -54,7 +54,6 @@ export interface Props {
   loggedUserId: number;
   onClose?: () => void;
   onSave?: () => void;
-  asProject?: boolean;
   projectParentId?: number;
 }
 
@@ -77,7 +76,6 @@ export const ProjectDetail: FC<Props> = props => {
     loggedUserId,
     onClose,
     onSave,
-    asProject = false,
   } = props;
   const requestRef = useRef(null);
   const [requestFields, setRequestfields] = useState<string[]>([]);
@@ -554,7 +552,7 @@ export const ProjectDetail: FC<Props> = props => {
   return (
     <div>
       <SectionBar
-        title={asProject ? 'Project Details' : 'Service Call Details'}
+        title={'Project Details'}
         actions={
           serviceCallId
             ? [
@@ -603,17 +601,8 @@ export const ProjectDetail: FC<Props> = props => {
       >
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
-      {asProject ? (
+      {
         <>
-          <Form
-            title="Project Data"
-            schema={SCHEMA_PROJECT}
-            data={{ ...new Event().toObject(), propertyId }}
-            onClose={onClose || (() => {})}
-            onSave={(data: EventType) =>
-              saveProject({ ...data, departmentId: Number(data.departmentId) })
-            }
-          />
           {parentId != confirmedParentId && parentId != null && (
             <Confirm
               title="Confirm Parent"
@@ -628,66 +617,7 @@ export const ProjectDetail: FC<Props> = props => {
           {confirmedParentId && (
             <Typography variant="h5">Parent ID: {confirmedParentId}</Typography>
           )}
-          {loaded && projects.length > 0 ? (
-            <GanttChart
-              events={projects.map(task => {
-                const {
-                  id,
-                  description,
-                  dateStarted: dateStart,
-                  dateEnded: dateEnd,
-                  logJobStatus,
-                  color,
-                } = task;
-                const [startDate, startHour] = dateStart.split(' ');
-                const [endDate, endHour] = dateEnd.split(' ');
-                return {
-                  id,
-                  startDate,
-                  endDate,
-                  startHour,
-                  endHour,
-                  notes: description,
-                  statusColor: '#' + color,
-                  onClick: () => {
-                    handleSetParentId(id);
-                  },
-                };
-              })}
-              startDate={projects[0].dateStarted.substr(0, 10)}
-              endDate={projects[projects.length - 1].dateEnded.substr(0, 10)}
-              loading={loading}
-            />
-          ) : (
-            <Loader />
-          )}
-        </>
-      ) : (
-        <>
-          <SectionBar
-            title="Service Call Data"
-            actions={[
-              {
-                label: 'Save Service Call Only',
-                onClick: handleSave,
-                disabled: loading || saving,
-              },
-              {
-                label: 'Save and Invoice',
-                // onClick: // TODO
-                disabled: loading || saving,
-              },
-              {
-                label: 'Cancel',
-                url: [
-                  '/index.cfm?action=admin:properties.details',
-                  `property_id=${propertyId}`,
-                  `user_id=${userID}`,
-                ].join('&'),
-                disabled: loading || saving,
-              },
-            ]}
-          />
+
           <Tabs
             key={tabKey}
             defaultOpenIdx={tabIdx}
@@ -752,10 +682,65 @@ export const ProjectDetail: FC<Props> = props => {
                 label: 'Logs',
                 content: <LogsTab />,
               },
+              {
+                label: 'Project Data',
+                content: (
+                  <>
+                    <Form
+                      title="Project Data"
+                      schema={SCHEMA_PROJECT}
+                      data={{ ...new Event().toObject(), propertyId }}
+                      onClose={onClose || (() => {})}
+                      onSave={(data: EventType) =>
+                        saveProject({
+                          ...data,
+                          departmentId: Number(data.departmentId),
+                        })
+                      }
+                    />
+                    {loaded && projects.length > 0 ? (
+                      <GanttChart
+                        events={projects.map(task => {
+                          const {
+                            id,
+                            description,
+                            dateStarted: dateStart,
+                            dateEnded: dateEnd,
+                            logJobStatus,
+                            color,
+                          } = task;
+                          const [startDate, startHour] = dateStart.split(' ');
+                          const [endDate, endHour] = dateEnd.split(' ');
+                          return {
+                            id,
+                            startDate,
+                            endDate,
+                            startHour,
+                            endHour,
+                            notes: description,
+                            statusColor: '#' + color,
+                            onClick: () => {
+                              handleSetParentId(id);
+                            },
+                          };
+                        })}
+                        startDate={projects[0].dateStarted.substr(0, 10)}
+                        endDate={projects[projects.length - 1].dateEnded.substr(
+                          0,
+                          10,
+                        )}
+                        loading={loading}
+                      />
+                    ) : (
+                      <Loader />
+                    )}
+                  </>
+                ),
+              },
             ]}
           />
         </>
-      )}
+      }
       {customer && serviceCallId > 0 && (
         <Modal
           open={notificationEditing || notificationViewing}
