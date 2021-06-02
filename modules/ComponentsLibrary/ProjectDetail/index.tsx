@@ -662,11 +662,7 @@ export const ProjectDetail: FC<Props> = props => {
                       content: loggedUser ? (
                         <Services
                           serviceCallId={serviceCallId}
-                          servicesRendered={servicesRendered}
                           loggedUser={loggedUser}
-                          loadServicesRendered={loadServicesRenderedData}
-                          loading={loading}
-                          onAddMaterials={handleOnAddMaterials}
                         />
                       ) : (
                         <InfoTable data={makeFakeRows(4, 4)} loading />
