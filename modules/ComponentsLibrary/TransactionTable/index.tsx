@@ -341,6 +341,7 @@ export const TransactionTable: FC<Props> = ({
     }
     if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
+    if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     let res = await TransactionClientService.BatchGet(req);
 
     setTransactions(
@@ -386,7 +387,7 @@ export const TransactionTable: FC<Props> = ({
 
   const refresh = useCallback(async () => {
     await load();
-  }, [load, resetTransactions]);
+  }, [load]);
 
   const copyToClipboard = useCallback((text: string): void => {
     const el = document.createElement('textarea');
@@ -433,30 +434,25 @@ export const TransactionTable: FC<Props> = ({
     [setAssigningUser],
   );
 
-  const handleSetFilter = useCallback(
-    (d: FilterData) => {
-      if (!d.week) {
-        d.week = OPTION_ALL;
-      }
-      if (!d.departmentId) {
-        d.departmentId = 0;
-      }
-      if (!d.employeeId) {
-        d.employeeId = 0;
-      }
-      if (!d.vendor) {
-        d.vendor = '';
-      }
-      filter.departmentId = d.departmentId;
-      filter.employeeId = d.employeeId;
-      filter.vendor = d.vendor;
-      // @ts-ignore
-      filter.isAccepted = d.accepted ? d.accepted : undefined;
-
-      refresh();
-    },
-    [refresh],
-  );
+  const handleSetFilter = useCallback((d: FilterData) => {
+    if (!d.week) {
+      d.week = OPTION_ALL;
+    }
+    if (!d.departmentId) {
+      d.departmentId = 0;
+    }
+    if (!d.employeeId) {
+      d.employeeId = 0;
+    }
+    if (!d.vendor) {
+      d.vendor = '';
+    }
+    filter.departmentId = d.departmentId;
+    filter.employeeId = d.employeeId;
+    filter.vendor = d.vendor;
+    // @ts-ignore
+    filter.isAccepted = d.accepted ? d.accepted : undefined;
+  }, []);
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
@@ -612,21 +608,27 @@ export const TransactionTable: FC<Props> = ({
     ],
     [
       {
-        name: 'vendor',
-        label: 'Search Vendor',
-        type: 'search',
-      },
-      {
         name: 'accepted',
         label: 'Is Accepted?',
         type: 'checkbox',
+      },
+      {
+        name: 'vendor',
+        label: 'Search Vendor',
+        type: 'search',
+        actions: [
+          {
+            label: 'search',
+            onClick: () => refresh(),
+          },
+        ],
       },
     ],
   ];
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   useEffect(() => {
     resetTransactions();
