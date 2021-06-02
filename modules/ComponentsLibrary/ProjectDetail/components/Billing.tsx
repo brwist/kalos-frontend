@@ -112,24 +112,26 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
     <Loader />
   ) : (
     <>
-      <SectionBar title="Project Details" />
-      <Typography variant={sizeOfText}>
-        {event?.property ? `Address: ${event.property.address}` : ''}
-      </Typography>
-      <Typography variant={sizeOfText}>
-        {event?.dateStarted
-          ? `Start Date: ${format(new Date(event.dateStarted), 'yyyy-MM-dd')}`
-          : ''}
-      </Typography>
-      <Typography variant={sizeOfText}>
-        {event?.dateEnded
-          ? `End Date: ${format(new Date(event.dateEnded), 'yyyy-MM-dd')}`
-          : ''}
-      </Typography>
-      <Typography variant={sizeOfText}>
-        {event?.logJobNumber ? `Job Number: ${event.logJobNumber}` : ''}
-      </Typography>
-      <SectionBar title="Summary Info" />
+      <SectionBar title="Project Details">
+        <Typography variant={sizeOfText}>
+          {event?.property ? `Address: ${event.property.address}` : ''}
+        </Typography>
+        <Typography variant={sizeOfText}>
+          {event?.dateStarted
+            ? `Start Date: ${format(new Date(event.dateStarted), 'yyyy-MM-dd')}`
+            : ''}
+        </Typography>
+        <Typography variant={sizeOfText}>
+          {event?.dateEnded
+            ? `End Date: ${format(new Date(event.dateEnded), 'yyyy-MM-dd')}`
+            : ''}
+        </Typography>
+        <Typography variant={sizeOfText}>
+          {event?.logJobNumber ? `Job Number: ${event.logJobNumber}` : ''}
+        </Typography>
+      </SectionBar>
+
+      <SectionBar title="Summary Info" >
       <InfoTable
         columns={[
           { name: 'Type', align: 'left' },
@@ -159,7 +161,9 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
           ],
         ]}
       />
-      <SectionBar title="Costs" />
+      </SectionBar>
+
+      <SectionBar title="Costs" > 
       <InfoTable
         columns={[
           { name: 'Type', align: 'left' },
@@ -176,7 +180,9 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
           ],
         ]}
       />
-      <SectionBar title="Transactions" />
+      </SectionBar>
+
+      <SectionBar title="Transactions" >
       <InfoTable
         columns={[
           {
@@ -249,7 +255,9 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
           },
         )}
       />
-      <SectionBar title="Per Diems" />
+      </SectionBar>
+
+      <SectionBar title="Per Diems" >
       {perDiems
         .sort((a, b) => (a.dateSubmitted > b.dateSubmitted ? -1 : 1))
         .map(
@@ -276,7 +284,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
               `Per Diem ${
                 dateSubmitted.split(' ')[0] != NULL_TIME.split(' ')[0]
                   ? `- ${dateSubmitted.split(' ')[0]}`
-                  : ''
+                  : '' 
               }` + `${ownerName ? ` - ${ownerName}` : ''}`;
             return (
               <div key={id}>
@@ -418,7 +426,8 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
             );
           },
         )}
-      <SectionBar title="Timesheet Lines" />
+        </SectionBar>
+      <SectionBar title="Timesheet Lines" >
       {timesheets?.map(
         ({
           id,
@@ -507,6 +516,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
           );
         },
       )}
+      </SectionBar> 
     </>
   );
 };
