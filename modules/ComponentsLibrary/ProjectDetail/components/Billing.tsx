@@ -129,7 +129,6 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
       <Typography variant={sizeOfText}>
         {event?.logJobNumber ? `Job Number: ${event.logJobNumber}` : ''}
       </Typography>
-
       <SectionBar title="Summary Info" />
       <InfoTable
         columns={[
@@ -160,7 +159,6 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
           ],
         ]}
       />
-
       <SectionBar title="Costs" />
       <InfoTable
         columns={[
@@ -178,7 +176,6 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
           ],
         ]}
       />
-
       <SectionBar title="Transactions" />
       <InfoTable
         columns={[
@@ -252,7 +249,6 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
           },
         )}
       />
-
       <SectionBar title="Per Diems" />
       {perDiems
         .sort((a, b) => (a.dateSubmitted > b.dateSubmitted ? -1 : 1))
@@ -418,100 +414,99 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                     },
                   )}
                 />
-                <SectionBar title="Timesheet Lines" />
-                {timesheets?.map(
-                  ({
-                    id,
-                    departmentName,
-                    timeStarted,
-                    timeFinished,
-                    adminApprovalUserName,
-                    notes,
-                    briefDescription,
-                    technicianUserName,
-                    technicianUserId,
-                    hoursWorked,
-                  }) => {
-                    return (
-                      <div key={id}>
-                        <InfoTable
-                          columns={[
-                            {
-                              name: 'Technician',
-                              align: 'left',
-                            },
-                            {
-                              name: 'Department',
-                              align: 'left',
-                            },
-                            {
-                              name: 'Approved By',
-                              align: 'left',
-                            },
-                            {
-                              name: 'Time Started',
-                              align: 'left',
-                            },
-                            {
-                              name: 'Time Finished',
-                              align: 'left',
-                            },
-                            {
-                              name: 'Brief Description',
-                              align: 'left',
-                            },
-                            {
-                              name: 'Hours Worked',
-                              align: 'left',
-                            },
-                            {
-                              name: 'Notes',
-                              align: 'right',
-                            },
-                          ]}
-                          data={[
-                            [
-                              {
-                                value:
-                                  technicianUserName + ` (${technicianUserId})`,
-                              },
-                              {
-                                value: departmentName,
-                              },
-                              {
-                                value: adminApprovalUserName,
-                              },
-                              {
-                                value: formatDate(timeStarted) || '-',
-                              },
-                              {
-                                value: formatDate(timeFinished) || '-',
-                              },
-                              {
-                                value: briefDescription,
-                              },
-                              {
-                                value:
-                                  hoursWorked != 0
-                                    ? hoursWorked > 1
-                                      ? `${hoursWorked} hrs`
-                                      : `${hoursWorked} hr`
-                                    : '-',
-                              },
-                              {
-                                value: notes,
-                              },
-                            ],
-                          ]}
-                        />
-                      </div>
-                    );
-                  },
-                )}{' '}
               </div>
             );
           },
         )}
+      <SectionBar title="Timesheet Lines" />
+      {timesheets?.map(
+        ({
+          id,
+          departmentName,
+          timeStarted,
+          timeFinished,
+          adminApprovalUserName,
+          notes,
+          briefDescription,
+          technicianUserName,
+          technicianUserId,
+          hoursWorked,
+        }) => {
+          return (
+            <div key={id}>
+              <InfoTable
+                columns={[
+                  {
+                    name: 'Technician',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Department',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Approved By',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Time Started',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Time Finished',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Brief Description',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Hours Worked',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Notes',
+                    align: 'right',
+                  },
+                ]}
+                data={[
+                  [
+                    {
+                      value: technicianUserName + ` (${technicianUserId})`,
+                    },
+                    {
+                      value: departmentName,
+                    },
+                    {
+                      value: adminApprovalUserName,
+                    },
+                    {
+                      value: formatDate(timeStarted) || '-',
+                    },
+                    {
+                      value: formatDate(timeFinished) || '-',
+                    },
+                    {
+                      value: briefDescription,
+                    },
+                    {
+                      value:
+                        hoursWorked != 0
+                          ? hoursWorked > 1
+                            ? `${hoursWorked} hrs`
+                            : `${hoursWorked} hr`
+                          : '-',
+                    },
+                    {
+                      value: notes,
+                    },
+                  ],
+                ]}
+              />
+            </div>
+          );
+        },
+      )}
     </>
   );
 };
