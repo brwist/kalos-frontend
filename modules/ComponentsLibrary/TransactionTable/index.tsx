@@ -796,16 +796,6 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => handleChangeSort('owner_id'),
           },
           {
-            name: 'Assigned Employee',
-            dir:
-              sortBy == 'assigned_employee_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('owner_id'),
-          },
-          {
             name: 'Department',
             dir:
               sortBy == 'department_id'
@@ -888,19 +878,15 @@ export const TransactionTable: FC<Props> = ({
                       : undefined,
                   },
                   {
-                    value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
+                    value: `${selectorParam.txn.getOwnerName()}`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
                   },
                   {
-                    value: `${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn.getDepartmentString()} - ${selectorParam.txn.getDepartmentId()}`,
+                    value: `${selectorParam.txn
+                      .getDepartment()
+                      ?.getDescription()}`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
