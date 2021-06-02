@@ -746,7 +746,7 @@ export const ProjectDetail: FC<Props> = props => {
                 : []),
               {
                 label: 'Billing',
-                content: <BillingTab />,
+                content: <BillingTab serviceCallId={serviceCallId} />,
               },
               {
                 label: 'Logs',
