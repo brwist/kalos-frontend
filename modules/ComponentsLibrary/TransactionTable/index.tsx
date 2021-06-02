@@ -349,7 +349,6 @@ export const TransactionTable: FC<Props> = ({
     if (filter.isAccepted) {
       req.setStatusId(3);
     }
-    console.log(filter);
     if (filter.isRejected) {
       req.setStatusId(4);
     }
