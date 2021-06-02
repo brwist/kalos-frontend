@@ -683,11 +683,11 @@ export const ProjectDetail: FC<Props> = props => {
                 content: <LogsTab />,
               },
               {
-                label: 'Project Data',
+                label: 'Create',
                 content: (
                   <>
                     <Form
-                      title="Project Data"
+                      title="Create Project"
                       schema={SCHEMA_PROJECT}
                       data={{ ...new Event().toObject(), propertyId }}
                       onClose={onClose || (() => {})}
