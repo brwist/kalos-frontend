@@ -3,12 +3,14 @@ import { Typography } from '@material-ui/core';
 import { Variant } from '@material-ui/core/styles/createTypography';
 import { format } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
+import { MEALS_RATE, NULL_TIME } from '../../../../constants';
 import {
   EventClientService,
   EventType,
   formatDate,
   PerDiemClientService,
   PerDiemType,
+  TimesheetDepartmentClientService,
   TimesheetLineClientService,
   TransactionClientService,
   TransactionType,
@@ -250,6 +252,116 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
           },
         )}
       />
+
+      <SectionBar title="Per Diems" />
+      {perDiems
+        .sort((a, b) => (a.dateSubmitted > b.dateSubmitted ? -1 : 1))
+        .map(
+          ({
+            id,
+            department,
+            ownerName,
+            dateSubmitted,
+            approvedByName,
+            dateApproved,
+            notes,
+            rowsList,
+          }) => {
+            const totalMeals = MEALS_RATE * rowsList.length;
+            const totalLodging = rowsList.reduce(
+              (aggr, { id, mealsOnly }) =>
+                aggr + (mealsOnly ? 0 : lodgings[id]),
+              0,
+            );
+            if (totalMeals == 0 && totalLodging == 0) {
+              return <></>; // Don't show it
+            }
+            let perDiemString =
+              `Per Diem ${
+                dateSubmitted.split(' ')[0] != NULL_TIME.split(' ')[0]
+                  ? `- ${dateSubmitted.split(' ')[0]}`
+                  : ''
+              }` + `${ownerName ? ` - ${ownerName}` : ''}`;
+            return (
+              <div key={id}>
+                <Typography>{perDiemString}</Typography>
+                <InfoTable
+                  columns={[
+                    {
+                      name: 'Department',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Owner',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Submitted At',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Approved By',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Approved At',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Total Meals',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Total Lodging',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Notes',
+                      align: 'right',
+                    },
+                  ]}
+                  data={[
+                    [
+                      {
+                        value:
+                          TimesheetDepartmentClientService.getDepartmentName(
+                            department!,
+                          ),
+                      },
+                      {
+                        value: ownerName,
+                      },
+                      {
+                        value:
+                          dateSubmitted != NULL_TIME
+                            ? formatDate(dateSubmitted)
+                            : '-' || '-',
+                      },
+                      {
+                        value: approvedByName || '-',
+                      },
+                      {
+                        value:
+                          dateApproved != NULL_TIME
+                            ? formatDate(dateApproved)
+                            : '-' || '-',
+                      },
+                      {
+                        value: usd(totalMeals),
+                      },
+                      {
+                        value: totalLodging != 0 ? usd(totalLodging) : '-',
+                      },
+                      {
+                        value: notes,
+                      },
+                    ],
+                  ]}
+                />
+              </div>
+            );
+          },
+        )}
     </>
   );
 };
