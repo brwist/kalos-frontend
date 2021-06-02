@@ -212,13 +212,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     trip.setDate(data.Date);
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);
-    trip.setDepartmentId(
-      await (
-        await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          user.managedBy,
-        )
-      ).id,
-    );
+    trip.setDepartmentId(user.employeeDepartmentId);
 
     await PerDiemClientService.upsertTrip(trip.toObject(), rowId!, userId).then(
       () => {
