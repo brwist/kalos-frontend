@@ -351,7 +351,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   finalize = async () => {
     try {
-      await this.toggleLoading();
+      //await this.toggleLoading();
       await this.approveProposal();
       await this.uploadPDF();
       try {
@@ -371,18 +371,18 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       alert(
         'Something went wrong, please refresh and try again. If you continue to experience issues, please contact office@kalosflorida.com',
       );
-      await this.toggleLoading();
+      //await this.toggleLoading();
     }
   };
 
   async componentDidMount() {
     await this.PropertyClient.GetToken('test', 'test');
-    await this.toggleLoading();
+    //await this.toggleLoading();
     await this.getCustomerData();
     await this.getQuoteLines();
     await this.getDocumentID();
     await this.getJobNotes();
-    await this.toggleLoading();
+    //await this.toggleLoading();
   }
 
   render() {

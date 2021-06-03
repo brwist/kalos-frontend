@@ -54,6 +54,8 @@ import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { ActivityLogClientService, getRPCFields } from '../../../helpers';
+import LineWeightIcon from '@material-ui/icons/LineWeight';
+import { EditTransaction } from '../EditTransaction';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -84,15 +86,25 @@ type SelectorParams = {
   totalCount: number;
 };
 
+interface FilterType {
+  departmentId: number;
+  employeeId: number;
+  week: string;
+  vendor: string;
+  isAccepted: boolean | undefined;
+  isRejected: boolean | undefined;
+}
+
 let pageNumber = 0;
 let sortDir: OrderDir | ' ' | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: SortString | undefined = 'timestamp';
-let filter = {
+let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
   week: OPTION_ALL,
   vendor: '',
   isAccepted: false,
+  isRejected: false,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -106,6 +118,8 @@ export const TransactionTable: FC<Props> = ({
 
   const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<SelectorParams[]>();
+  const [transactionToEdit, setTransactionToEdit] =
+    useState<Transaction | undefined>();
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
   const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
@@ -118,6 +132,13 @@ export const TransactionTable: FC<Props> = ({
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
+
+  const handleSetTransactionToEdit = useCallback(
+    (transaction: Transaction | undefined) => {
+      setTransactionToEdit(transaction);
+    },
+    [setTransactionToEdit],
+  );
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -339,8 +360,12 @@ export const TransactionTable: FC<Props> = ({
     if (filter.isAccepted) {
       req.setStatusId(3);
     }
-    if (filter.vendor) req.setVendor(filter.vendor);
+    if (filter.isRejected) {
+      req.setStatusId(4);
+    }
+    if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
+    if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     let res = await TransactionClientService.BatchGet(req);
 
     setTransactions(
@@ -386,7 +411,7 @@ export const TransactionTable: FC<Props> = ({
 
   const refresh = useCallback(async () => {
     await load();
-  }, [load, resetTransactions]);
+  }, [load]);
 
   const copyToClipboard = useCallback((text: string): void => {
     const el = document.createElement('textarea');
@@ -433,30 +458,25 @@ export const TransactionTable: FC<Props> = ({
     [setAssigningUser],
   );
 
-  const handleSetFilter = useCallback(
-    (d: FilterData) => {
-      if (!d.week) {
-        d.week = OPTION_ALL;
-      }
-      if (!d.departmentId) {
-        d.departmentId = 0;
-      }
-      if (!d.employeeId) {
-        d.employeeId = 0;
-      }
-      if (!d.vendor) {
-        d.vendor = '';
-      }
-      filter.departmentId = d.departmentId;
-      filter.employeeId = d.employeeId;
-      filter.vendor = d.vendor;
-      // @ts-ignore
-      filter.isAccepted = d.accepted ? d.accepted : undefined;
-
-      refresh();
-    },
-    [refresh],
-  );
+  const handleSetFilter = useCallback((d: FilterData) => {
+    if (!d.week) {
+      d.week = OPTION_ALL;
+    }
+    if (!d.departmentId) {
+      d.departmentId = 0;
+    }
+    if (!d.employeeId) {
+      d.employeeId = 0;
+    }
+    if (!d.vendor) {
+      d.vendor = '';
+    }
+    filter.departmentId = d.departmentId;
+    filter.employeeId = d.employeeId;
+    filter.vendor = d.vendor;
+    filter.isAccepted = d.accepted ? d.accepted : undefined;
+    filter.isRejected = d.rejected ? d.rejected : undefined;
+  }, []);
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
@@ -464,6 +484,22 @@ export const TransactionTable: FC<Props> = ({
       refresh();
     },
     [refresh],
+  );
+
+  const handleUpdateTransaction = useCallback(
+    async (transactionToSave: Transaction) => {
+      try {
+        const response = await TransactionClientService.Update(
+          transactionToSave,
+        );
+        setTransactionToEdit(undefined);
+        refresh();
+      } catch (err) {
+        console.error('An error occurred while updating a transaction: ', err);
+        setTransactionToEdit(undefined);
+      }
+    },
+    [setTransactionToEdit, refresh],
   );
 
   const handleChangeSort = (newSort: SortString) => {
@@ -612,21 +648,32 @@ export const TransactionTable: FC<Props> = ({
     ],
     [
       {
-        name: 'vendor',
-        label: 'Search Vendor',
-        type: 'search',
-      },
-      {
         name: 'accepted',
         label: 'Is Accepted?',
         type: 'checkbox',
+      },
+      {
+        name: 'rejected',
+        label: 'Is Rejected?',
+        type: 'checkbox',
+      },
+      {
+        name: 'vendor',
+        label: 'Search Vendor',
+        type: 'search',
+        actions: [
+          {
+            label: 'search',
+            onClick: () => refresh(),
+          },
+        ],
       },
     ],
   ];
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   useEffect(() => {
     resetTransactions();
@@ -636,6 +683,21 @@ export const TransactionTable: FC<Props> = ({
   return (
     <>
       {loading ? <Loader /> : <> </>}
+      {transactionToEdit && (
+        <Modal
+          open={true}
+          onClose={() => handleSetTransactionToEdit(undefined)}
+        >
+          <EditTransaction
+            transactionInput={transactionToEdit}
+            onSave={saved => {
+              saved.setId(transactionToEdit.getId());
+              handleUpdateTransaction(saved);
+            }}
+            onClose={() => handleSetTransactionToEdit(undefined)}
+          />
+        </Modal>
+      )}
       {assigningUser ? (
         <Modal
           open={assigningUser.isAssigning}
@@ -708,6 +770,7 @@ export const TransactionTable: FC<Props> = ({
       <SectionBar
         title="Transactions"
         key={String(pageNumber)}
+        fixedActions
         pagination={{
           count:
             transactions && transactions.length > 0
@@ -768,16 +831,6 @@ export const TransactionTable: FC<Props> = ({
             name: 'Purchaser',
             dir:
               sortBy == 'owner_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('owner_id'),
-          },
-          {
-            name: 'Assigned Employee',
-            dir:
-              sortBy == 'assigned_employee_id'
                 ? sortDir != ' '
                   ? sortDir
                   : undefined
@@ -867,19 +920,15 @@ export const TransactionTable: FC<Props> = ({
                       : undefined,
                   },
                   {
-                    value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
+                    value: `${selectorParam.txn.getOwnerName()}`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
                   },
                   {
-                    value: `${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn.getDepartmentString()} - ${selectorParam.txn.getDepartmentId()}`,
+                    value: `${selectorParam.txn
+                      .getDepartment()
+                      ?.getDescription()}`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
@@ -920,6 +969,16 @@ export const TransactionTable: FC<Props> = ({
                             }
                           >
                             <CopyIcon />
+                          </IconButton>
+                        </Tooltip>,
+                        <Tooltip key="editAll" content="Edit this transaction">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              handleSetTransactionToEdit(selectorParam.txn)
+                            }
+                          >
+                            <LineWeightIcon />
                           </IconButton>
                         </Tooltip>,
                         <Tooltip key="upload" content="Upload File">

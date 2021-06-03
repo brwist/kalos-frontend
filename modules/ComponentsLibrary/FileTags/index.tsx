@@ -11,7 +11,6 @@ import { Form, Schema } from '../Form';
 import {
   DocumentKeyType,
   makeFakeRows,
-  saveDocumentKey,
   InternalDocumentClientService,
 } from '../../../helpers';
 
@@ -86,7 +85,7 @@ export const FileTags: FC<Props> = ({
       if (pendingEdit) {
         setSaving(true);
         const { id } = pendingEdit;
-        await saveDocumentKey(data, id);
+        await InternalDocumentClientService.saveDocumentKey(data, id);
         setPendingEdit(undefined);
         setLoading(true);
         setSaving(false);

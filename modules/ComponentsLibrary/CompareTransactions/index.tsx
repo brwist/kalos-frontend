@@ -92,11 +92,12 @@ export const CompareTransactions: FC<Props> = ({
   );
 
   const [upsertError, setUpsertError] = useState<string>();
+  const [sameTransactionError, setSameTransactionError] = useState<string>();
 
   const [loading, setLoading] = useState<boolean>(false);
 
   // Deletes all selected transactions
-  const deleteTransactions = async () => {
+  const deleteTransactions = useCallback(async () => {
     if (!transactions) {
       return;
     }
@@ -139,47 +140,7 @@ export const CompareTransactions: FC<Props> = ({
         setLoading(false);
       }
     }
-  };
-
-  const handleSetConflicts = useCallback(
-    (conflicts: Conflict[]) => setConflicts(conflicts),
-    [setConflicts],
-  );
-
-  const handleSetSubmissionResults = useCallback(
-    async (submissionResults: SelectedChoice[]) => {
-      submissionResults.forEach(async result => {
-        if (
-          // @ts-ignore
-          transactionToSave[
-            `get${getRPCFields(result.fieldName).methodName.substring(3)}`
-          ]() == null
-        ) {
-          // @ts-ignore
-          transactionToSave[getRPCFields(result.fieldName).methodName](
-            result.value,
-          );
-        }
-      });
-      setLoading(true);
-      await handleSaveTransaction(transactionToSave);
-      setLoading(false);
-      setConflicts([]);
-    },
-    [transactionToSave, setLoading, setConflicts],
-  );
-
-  const handleSetUpsertError = useCallback(
-    (error: string) => setUpsertError(error),
-    [setUpsertError],
-  );
-
-  const handleSetTransactionToSave = useCallback(
-    (transactionToSaveNew: Transaction) => {
-      setTransactionToSave(transactionToSaveNew);
-    },
-    [setTransactionToSave],
-  );
+  }, [transactions]);
 
   const handleSaveActivityLog = useCallback(
     async (activityLog: ActivityLog) => {
@@ -192,7 +153,12 @@ export const CompareTransactions: FC<Props> = ({
         setUpsertError(err);
       }
     },
-    [ActivityLogClientService, setUpsertError],
+    [setUpsertError],
+  );
+
+  const handleSetConflicts = useCallback(
+    (conflicts: Conflict[]) => setConflicts(conflicts),
+    [setConflicts],
   );
 
   const handleSaveTransaction = useCallback(
@@ -220,15 +186,57 @@ export const CompareTransactions: FC<Props> = ({
       }
     },
     [
-      TransactionClientService,
       setUpsertError,
       transactions,
       deleteTransactions,
       setLoading,
+      handleSaveActivityLog,
+      loggedUserId,
+      onMerge,
     ],
   );
 
-  const generateConflicts = (): any[] => {
+  const handleSetSubmissionResults = useCallback(
+    async (submissionResults: SelectedChoice[]) => {
+      submissionResults.forEach(async result => {
+        if (
+          // @ts-ignore
+          transactionToSave[
+            `get${getRPCFields(result.fieldName).methodName.substring(3)}`
+          ]() == null
+        ) {
+          // @ts-ignore
+          transactionToSave[getRPCFields(result.fieldName).methodName](
+            result.value,
+          );
+        }
+      });
+      setLoading(true);
+      await handleSaveTransaction(transactionToSave);
+      setLoading(false);
+      setConflicts([]);
+    },
+    [transactionToSave, setLoading, setConflicts, handleSaveTransaction],
+  );
+
+  const handleSetUpsertError = useCallback(
+    (error: string) => setUpsertError(error),
+    [setUpsertError],
+  );
+
+  const handleSetSameTransactionError = useCallback(
+    (error: string) => setSameTransactionError(error),
+    [setSameTransactionError],
+  );
+
+  const handleSetTransactionToSave = useCallback(
+    (transactionToSaveNew: Transaction) => {
+      setTransactionToSave(transactionToSaveNew);
+    },
+    [setTransactionToSave],
+  );
+
+  const generateConflicts = useCallback(() => {
     if (!transactions) {
       console.error('There are no transactions to generate conflicts from.');
       return [];
@@ -238,8 +246,7 @@ export const CompareTransactions: FC<Props> = ({
     let newTransaction = new Transaction();
 
     transactions.forEach((transaction, index) => {
-      if (transactions[index - 1] == null) {
-      } else {
+      if (transactions[index - 1] != null) {
         // Loop over fields in the current transaction and compare that with the fields in the previous transaction at the same index
         let fieldIndex = 0;
         const previousTransaction = Object.values(
@@ -359,7 +366,7 @@ export const CompareTransactions: FC<Props> = ({
     });
 
     return [newConflicts, newTransaction];
-  };
+  }, [transactions]);
 
   const handleSetTransactions = useCallback(
     (txns: Transaction[]) => {
@@ -376,19 +383,32 @@ export const CompareTransactions: FC<Props> = ({
       return;
     }
     const [conflicts, transaction] = generateConflicts();
-    setConflicts(conflicts);
-    setTransactionToSave(transaction);
+    if ((conflicts as Conflict[]).length === 0)
+      setSameTransactionError(
+        'The transactions are the same. There is nothing to merge.',
+      );
+    setConflicts(conflicts as Conflict[]);
+    setTransactionToSave(transaction as Transaction);
   }, [
     transactions,
-    conflicts,
     setConflicts,
     generateConflicts,
     setTransactionToSave,
+    setSameTransactionError,
   ]);
 
   return (
     <>
       {loading && <Loader />}
+      {sameTransactionError && (
+        <Alert
+          open={true}
+          onClose={() => handleSetSameTransactionError('')}
+          title="Error"
+        >
+          <Typography>{sameTransactionError}</Typography>
+        </Alert>
+      )}
       {upsertError && (
         <Alert
           open={true}
@@ -417,25 +437,25 @@ export const CompareTransactions: FC<Props> = ({
                 // @ts-ignore
                 if (saved[fieldName] != null) {
                   // Can't seem to do this a better way
-                  txn.setJobId(saved['jobId']);
-                  txn.setDepartmentId(saved['departmentId']);
-                  txn.setOwnerId(saved['ownerId']);
-                  txn.setVendor(saved['vendor']);
-                  txn.setCostCenterId(saved['costCenterId']);
-                  txn.setDescription(saved['description']);
-                  txn.setAmount(saved['amount']);
-                  txn.setTimestamp(saved['timestamp']);
-                  txn.setNotes(saved['notes']);
-                  txn.setIsActive(saved['isActive']);
-                  txn.setStatusId(saved['statusId']);
-                  txn.setStatus(saved['status']);
-                  txn.setOwnerName(saved['ownerName']);
-                  txn.setCardUsed(saved['cardUsed']);
-                  txn.setIsAudited(saved['isAudited']);
-                  txn.setIsRecorded(saved['isRecorded']);
-                  txn.setVendorCategory(saved['vendorCategory']);
-                  txn.setAssignedEmployeeId(saved['assignedEmployeeId']);
-                  txn.setAssignedEmployeeName(saved['assignedEmployeeName']);
+                  txn.setJobId(saved.getJobId());
+                  txn.setDepartmentId(saved.getDepartmentId());
+                  txn.setOwnerId(saved.getOwnerId());
+                  txn.setVendor(saved.getVendor());
+                  txn.setCostCenterId(saved.getCostCenterId());
+                  txn.setDescription(saved.getDescription());
+                  txn.setAmount(saved.getAmount());
+                  txn.setTimestamp(saved.getTimestamp());
+                  txn.setNotes(saved.getNotes());
+                  txn.setIsActive(saved.getIsActive());
+                  txn.setStatusId(saved.getStatusId());
+                  txn.setStatus(saved.getStatus());
+                  txn.setOwnerName(saved.getOwnerName());
+                  txn.setCardUsed(saved.getCardUsed());
+                  txn.setIsAudited(saved.getIsAudited());
+                  txn.setIsRecorded(saved.getIsRecorded());
+                  txn.setVendorCategory(saved.getVendorCategory());
+                  txn.setAssignedEmployeeId(saved.getAssignedEmployeeId());
+                  txn.setAssignedEmployeeName(saved.getAssignedEmployeeName());
                 }
               }
 
@@ -466,6 +486,7 @@ export const CompareTransactions: FC<Props> = ({
       )}
       <SectionBar
         title="Select Transactions To Merge"
+        fixedActions
         actions={
           !onClose
             ? [
@@ -476,8 +497,11 @@ export const CompareTransactions: FC<Props> = ({
               ]
             : [
                 {
-                  label: 'Merge',
+                  label: `Merge ${
+                    transactions ? `(${transactions?.length} selected)` : ''
+                  }`,
                   onClick: handleMerge,
+                  disabled: !transactions,
                 },
                 {
                   label: 'Close',
