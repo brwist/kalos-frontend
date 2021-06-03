@@ -817,7 +817,11 @@ export const SpiffTool: FC<Props> = ({
             value:
               actionsList.length === 0
                 ? 'No Action Taken '
-                : formatDate(actionsList[0].dateProcessed) === '1/1/1'
+                : formatDate(actionsList[0].dateProcessed) === '1/1/1' &&
+                  entry.payrollProcessed == true
+                ? 'Processed, no Date'
+                : formatDate(actionsList[0].dateProcessed) === '1/1/1' &&
+                  entry.payrollProcessed == false
                 ? 'Not Processed'
                 : formatDate(actionsList[0].dateProcessed),
           },
