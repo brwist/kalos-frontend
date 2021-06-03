@@ -55,6 +55,7 @@ import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { ActivityLogClientService, getRPCFields } from '../../../helpers';
 import LineWeightIcon from '@material-ui/icons/LineWeight';
+import { EditTransaction } from '../EditTransaction';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -117,6 +118,8 @@ export const TransactionTable: FC<Props> = ({
 
   const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<SelectorParams[]>();
+  const [transactionToEdit, setTransactionToEdit] =
+    useState<Transaction | undefined>();
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
   const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
@@ -129,6 +132,13 @@ export const TransactionTable: FC<Props> = ({
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
+
+  const handleSetTransactionToEdit = useCallback(
+    (transaction: Transaction | undefined) => {
+      setTransactionToEdit(transaction);
+    },
+    [setTransactionToEdit],
+  );
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -657,6 +667,20 @@ export const TransactionTable: FC<Props> = ({
   return (
     <>
       {loading ? <Loader /> : <> </>}
+      {transactionToEdit && (
+        <Modal
+          open={true}
+          onClose={() => handleSetTransactionToEdit(undefined)}
+        >
+          <EditTransaction
+            transactionInput={transactionToEdit}
+            onSave={saved => {
+              console.log('Would save: ', saved);
+            }}
+            onClose={() => handleSetTransactionToEdit(undefined)}
+          />
+        </Modal>
+      )}
       {assigningUser ? (
         <Modal
           open={assigningUser.isAssigning}
@@ -933,7 +957,9 @@ export const TransactionTable: FC<Props> = ({
                         <Tooltip key="editAll" content="Edit this transaction">
                           <IconButton
                             size="small"
-                            onClick={() => alert('clicked new icon')}
+                            onClick={() =>
+                              handleSetTransactionToEdit(selectorParam.txn)
+                            }
                           >
                             <LineWeightIcon />
                           </IconButton>
