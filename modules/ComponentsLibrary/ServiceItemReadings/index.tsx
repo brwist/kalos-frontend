@@ -250,7 +250,7 @@ export const ServiceItemReadings: FC<Props> = ({
   loggedUserId,
 }) => {
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [users, setUsers] = useState<{ [key: number]: User.AsObject }>({});
+  const [users, setUsers] = useState<User[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -302,12 +302,13 @@ export const ServiceItemReadings: FC<Props> = ({
       const users = await UserClientService.loadUsersByIds(
         resultsList.map(({ userId }) => userId),
       );
+      const userArray = users.getResultsList();
       const maintenanceQuestions = await loadMaintenanceQuestions(
         resultsList.map(({ id }) => id),
       );
       setEntries(resultsList.sort(sort));
       setMaintenanceQuestions(maintenanceQuestions);
-      setUsers(users);
+      setUsers(userArray);
       setLoading(false);
       setLoaded(true);
     } catch (e) {
@@ -431,7 +432,17 @@ export const ServiceItemReadings: FC<Props> = ({
       await load();
     }
   }, [setDeleting, deletingEntry, load]);
-
+  const findUser = (value: number) => {
+    if (users) {
+      for (let i = 0; i < users.length; i += 1) {
+        if (users[i].getId() === value) {
+          return i;
+        }
+      }
+      return -1;
+    }
+    return -1;
+  };
   const data: Data = loading
     ? makeFakeRows()
     : entries.map(entry => {
@@ -444,9 +455,11 @@ export const ServiceItemReadings: FC<Props> = ({
               formatDate(date),
               '-',
               maintenanceQuestions[id] ? 'Maintenance' : 'Service',
-              userId === 0
+              userId === 0 && users != []
                 ? ''
-                : ` - ${users[userId].firstname} ${users[userId].lastname}`,
+                : ` - ${users[findUser(userId)].getFirstname()} ${users[
+                    findUser(userId)
+                  ].getLastname()}`,
             ].join(' '),
             onClick: setEditing(entry),
             actions: [
@@ -527,11 +540,13 @@ export const ServiceItemReadings: FC<Props> = ({
             formatDate(deletingEntry.date),
             '-',
             maintenanceQuestions[deletingEntry.id] ? 'Maintenance' : 'Service',
-            deletingEntry.userId === 0
+            deletingEntry.userId === 0 && users != []
               ? ''
-              : ` - ${users[deletingEntry.userId].firstname} ${
-                  users[deletingEntry.userId].lastname
-                }`,
+              : ` - ${users[
+                  findUser(deletingEntry.userId)
+                ].getFirstname()} ${users[
+                  findUser(deletingEntry.userId)
+                ].getLastname()}`,
           ]
             .join(' ')
             .trim()}

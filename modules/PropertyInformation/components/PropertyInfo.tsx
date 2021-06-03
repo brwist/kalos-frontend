@@ -130,8 +130,8 @@ export const PropertyInfo: FC<Props> = props => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const users = await UserClientService.loadUsersByIds([userID]);
-    setUser(users[userID]);
+    const user = await UserClientService.loadUserById(userID);
+    setUser(user);
     const req = new Property();
     req.setUserId(userID);
     req.setId(propertyId);
