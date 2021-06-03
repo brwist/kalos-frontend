@@ -63,9 +63,31 @@ export const EditTransaction: FC<Props> = ({
     txn.setCardUsed(asObject.cardUsed);
     txn.setIsAudited(asObject.isAudited);
     txn.setIsRecorded(asObject.isRecorded);
-    txn.setVendorCategory(asObject.vendorCategory);
+    // TODO: When vendor category issues are fixed in the backend, uncomment these fields so they are also updated for Dani.
+    //txn.setVendorCategory(asObject.vendorCategory);
     txn.setAssignedEmployeeId(asObject.assignedEmployeeId);
     txn.setAssignedEmployeeName(asObject.assignedEmployeeName);
+    txn.setFieldMaskList([
+      'JobId',
+      'DepartmentId',
+      'OwnerId',
+      'Vendor',
+      'CostCenterId',
+      'Description',
+      'Amount',
+      'Timestamp',
+      'Notes',
+      'IsActive',
+      'StatusId',
+      'Status',
+      'OwnerName',
+      'CardUsed',
+      'IsAudited',
+      'IsRecorded',
+      //'VendorCategory',
+      'AssignedEmployeeId',
+      'AssignedEmployeeName',
+    ]);
     return txn;
   };
 
