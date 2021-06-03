@@ -54,6 +54,7 @@ import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { ActivityLogClientService, getRPCFields } from '../../../helpers';
+import LineWeightIcon from '@material-ui/icons/LineWeight';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -927,6 +928,14 @@ export const TransactionTable: FC<Props> = ({
                             }
                           >
                             <CopyIcon />
+                          </IconButton>
+                        </Tooltip>,
+                        <Tooltip key="editAll" content="Edit this transaction">
+                          <IconButton
+                            size="small"
+                            onClick={() => alert('clicked new icon')}
+                          >
+                            <LineWeightIcon />
                           </IconButton>
                         </Tooltip>,
                         <Tooltip key="upload" content="Upload File">
