@@ -320,7 +320,7 @@ export const Timesheet: FC<Props> = props => {
       }
       if (overlapped) {
         dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
-      } else if (sameTimeConflict) {
+      } else if (sameTimeConflict && role != 'Payroll') {
         dispatch({
           type: 'error',
           text: 'Timesheet contains value with same Start and End time.', // dispatch the error
