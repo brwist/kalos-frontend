@@ -486,6 +486,22 @@ export const TransactionTable: FC<Props> = ({
     [refresh],
   );
 
+  const handleUpdateTransaction = useCallback(
+    async (transactionToSave: Transaction) => {
+      try {
+        const response = await TransactionClientService.Update(
+          transactionToSave,
+        );
+        setTransactionToEdit(undefined);
+        refresh();
+      } catch (err) {
+        console.error('An error occurred while updating a transaction: ', err);
+        setTransactionToEdit(undefined);
+      }
+    },
+    [setTransactionToEdit, refresh],
+  );
+
   const handleChangeSort = (newSort: SortString) => {
     let newSortDir: OrderDir | ' ' | undefined;
 
@@ -675,7 +691,8 @@ export const TransactionTable: FC<Props> = ({
           <EditTransaction
             transactionInput={transactionToEdit}
             onSave={saved => {
-              console.log('Would save: ', saved);
+              saved.setId(transactionToEdit.getId());
+              handleUpdateTransaction(saved);
             }}
             onClose={() => handleSetTransactionToEdit(undefined)}
           />
