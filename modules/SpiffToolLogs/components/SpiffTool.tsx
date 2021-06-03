@@ -89,6 +89,7 @@ export interface Props {
   needsAuditAction?: boolean;
   option?: string;
   role?: string;
+  toggle: boolean;
   onClose?: () => void;
 }
 
@@ -103,6 +104,7 @@ export const SpiffTool: FC<Props> = ({
   needsPayrollAction,
   needsAuditAction,
   role,
+  toggle,
   onClose,
 }) => {
   const WEEK_OPTIONS =
@@ -143,12 +145,17 @@ export const SpiffTool: FC<Props> = ({
   const [pendingPayrollReject, setPendingPayrollReject] = useState<TaskType>();
   const [pendingAudit, setPendingAudit] = useState<TaskType>();
 
-  const [serviceCallEditing, setServiceCallEditing] =
-    useState<TaskEventDataType>();
-  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] =
-    useState<string>('');
-  const [statusEditing, setStatusEditing] =
-    useState<SpiffToolAdminActionType>();
+  const [
+    serviceCallEditing,
+    setServiceCallEditing,
+  ] = useState<TaskEventDataType>();
+  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
+    '',
+  );
+  const [
+    statusEditing,
+    setStatusEditing,
+  ] = useState<SpiffToolAdminActionType>();
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );
@@ -200,16 +207,24 @@ export const SpiffTool: FC<Props> = ({
       req.setPageNumber(page);
       req.setIsActive(true);
       req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
-      req.setOrderDir('ASC');
+      req.setOrderDir('DESC');
       if (needsManagerAction) {
         req.setFieldMaskList(['AdminActionId']);
       }
-      if (needsPayrollAction) {
-        req.setNotEqualsList(['AdminActionId']);
-        req.setFieldMaskList(['PayrollProcessed']);
+      if (needsPayrollAction && toggle == false) {
+        console.log('we want to see things that are not processed');
+        req.setAdminActionId(0);
+        req.setPayrollProcessed(true);
+        req.setNotEqualsList(['AdminActionId', 'PayrollProcessed']);
+        //req.setFieldMaskList(['PayrollProcessed']);
         const action = new SpiffToolAdminAction();
         action.setStatus(1);
         req.setSearchAction(action);
+      }
+      if (needsPayrollAction && toggle == true) {
+        console.log('we want to see stuff we have done');
+        req.setPayrollProcessed(false);
+        req.setNotEqualsList(['PayrollProcessed']);
       }
       if (needsAuditAction) {
         req.setNotEqualsList(['AdminActionId']);
@@ -226,8 +241,8 @@ export const SpiffTool: FC<Props> = ({
       if (description !== '') {
         req.setBriefDescription(`%${description}%`);
       }
-      const action = new SpiffToolAdminAction();
-      action.setStatus(1);
+      //const action = new SpiffToolAdminAction();
+      //action.setStatus(1);
       if (kind === MONTHLY) {
         if (month !== OPTION_ALL) {
           req.setDatePerformed(month);
@@ -240,6 +255,7 @@ export const SpiffTool: FC<Props> = ({
         )}-${trailingZero(n.getDate())}`;
         req.setDateRangeList(['>=', month, '<', ltDate]);
       }
+      console.log(req);
       const res = await TaskClientService.BatchGet(req);
       const resultsList = res.getResultsList().map(el => el.toObject());
       const count = res.getTotalCount();
@@ -262,6 +278,7 @@ export const SpiffTool: FC<Props> = ({
     needsManagerAction,
     needsPayrollAction,
     needsAuditAction,
+    toggle,
   ]);
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await UserClientService.loadTechnicians();
@@ -467,13 +484,14 @@ export const SpiffTool: FC<Props> = ({
     [setStatusEditing, handleSetExtendedEditing],
   );
   const handleClickTechnician = useCallback(
-    (technician: number) =>
-      (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-        event.preventDefault();
-        setSearchForm({ ...searchForm, technician });
-        setSearchFormKey(searchFormKey + 1);
-        handleMakeSearch();
-      },
+    (technician: number) => (
+      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    ) => {
+      event.preventDefault();
+      setSearchForm({ ...searchForm, technician });
+      setSearchFormKey(searchFormKey + 1);
+      handleMakeSearch();
+    },
     [
       searchForm,
       setSearchForm,
@@ -483,13 +501,14 @@ export const SpiffTool: FC<Props> = ({
     ],
   );
   const handleOpenServiceCall = useCallback(
-    (entry: TaskType) =>
-      (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-        e.preventDefault();
-        const { event } = entry;
-        if (!event) return;
-        setServiceCallEditing(event);
-      },
+    (entry: TaskType) => (
+      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    ) => {
+      e.preventDefault();
+      const { event } = entry;
+      if (!event) return;
+      setServiceCallEditing(event);
+    },
     [setServiceCallEditing],
   );
   const handleUnsetServiceCallEditing = useCallback(
@@ -497,11 +516,12 @@ export const SpiffTool: FC<Props> = ({
     [setServiceCallEditing],
   );
   const handleClickSpiffJobNumber = useCallback(
-    (spiffJobNumber: string) =>
-      (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-        e.preventDefault();
-        setUnlinkedSpiffJobNumber(spiffJobNumber);
-      },
+    (spiffJobNumber: string) => (
+      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    ) => {
+      e.preventDefault();
+      setUnlinkedSpiffJobNumber(spiffJobNumber);
+    },
     [setUnlinkedSpiffJobNumber],
   );
   const handleClearUnlinkedSpiffJobNumber = useCallback(
@@ -607,6 +627,7 @@ export const SpiffTool: FC<Props> = ({
     { name: 'Technician' },
     { name: type === 'Spiff' ? 'Job #' : 'Reference #' },
     { name: 'Status' },
+    { name: 'Processed Date' },
     { name: 'Amount' },
     ...(type === 'Spiff' ? [{ name: 'Duplicates' }] : []),
   ];
@@ -663,6 +684,7 @@ export const SpiffTool: FC<Props> = ({
           externalId,
           toolpurchaseCost,
           spiffTypeId,
+          payrollProcessed,
           referenceNumber,
           actionsList,
           event,
@@ -790,6 +812,14 @@ export const SpiffTool: FC<Props> = ({
           {
             value: renderActionsList(actionsList),
             onClick: handleSetExtendedEditing(entry),
+          },
+          {
+            value:
+              actionsList.length === 0
+                ? 'No Action Taken '
+                : formatDate(actionsList[0].dateProcessed) === '1/1/1'
+                ? 'Not Processed'
+                : formatDate(actionsList[0].dateProcessed),
           },
           {
             value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost),
