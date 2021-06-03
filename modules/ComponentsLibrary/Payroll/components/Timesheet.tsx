@@ -84,7 +84,6 @@ export const Timesheet: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
-
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     const tempResults = [];
@@ -105,7 +104,7 @@ export const Timesheet: FC<Props> = ({
       departmentTimesheetsReq.setDateRangeList([
         '>=',
         filter.startDate,
-        '<=',
+        '<',
         filter.endDate,
       ]);
       const departmentResults = (
@@ -150,7 +149,7 @@ export const Timesheet: FC<Props> = ({
       employeeReq.setDateRangeList([
         '>=',
         filter.startDate,
-        '<=',
+        '<',
         filter.endDate,
       ]);
       const employeeResults = (
@@ -361,7 +360,7 @@ const createTimesheetFetchFunction = (
   }
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
-    req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
+    req.setDateRangeList(['>=', config.startDate, '<', config.endDate]);
   }
   if (config.departmentId) {
     //req.setDepartmentCode(config.departmentId); for class code

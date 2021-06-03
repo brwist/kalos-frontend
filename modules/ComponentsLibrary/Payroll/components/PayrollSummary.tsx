@@ -71,11 +71,20 @@ export const PayrollSummary: FC<Props> = ({
     }
     const getTimesheets = createTimesheetFetchFunction(filter);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
-    let sortedResultsList = resultsList.sort((a, b) =>
-      a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
-        ? 1
-        : -1,
-    );
+    const compare = (a: TimesheetLine.AsObject, b: TimesheetLine.AsObject) => {
+      const splitA = a.technicianUserName.split(' ');
+      const splitB = b.technicianUserName.split(' ');
+      const lastA = splitA[splitA.length - 1].toLowerCase();
+      const lastB = splitB[splitB.length - 1].toLowerCase();
+      const firstA = splitA[0].toLowerCase();
+      const firstB = splitB[0].toLowerCase();
+
+      if (lastA + firstA < lastB + firstB) return -1;
+      if (lastA + firstA > lastB + firstB) return 1;
+      return 0;
+    };
+    const sortedResultsList = resultsList.sort(compare);
+
     setTimesheets(sortedResultsList);
     setCount(totalCount);
     setLoading(false);
@@ -221,7 +230,8 @@ const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   req.setWithoutLimit(true);
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
-    req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
+    req.setDateRangeList(['>=', config.startDate, '<', config.endDate]);
+    req.setDateTargetList(['time_started', 'time_started']);
   }
   if (config.employeeId) {
     req.setTechnicianUserId(config.employeeId);
