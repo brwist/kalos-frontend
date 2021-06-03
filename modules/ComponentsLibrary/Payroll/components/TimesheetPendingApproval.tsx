@@ -3,12 +3,12 @@ import { format, addDays, subDays, startOfWeek } from 'date-fns';
 import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
-import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
-import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
-import { Modal } from '../../../ComponentsLibrary/Modal';
+import { SectionBar } from '../../SectionBar';
+import { InfoTable } from '../../InfoTable';
+import { Modal } from '../../Modal';
 import { Confirm } from '../../Confirm';
 import PageviewIcon from '@material-ui/icons/Pageview';
-import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
+import { Timesheet as TimesheetComponent } from '../../Timesheet';
 import {
   TimesheetLineType,
   makeFakeRows,
@@ -43,7 +43,7 @@ const formatWeek = (date: string) => {
   )}`;
 };
 
-export const Timesheet: FC<Props> = ({
+export const TimesheetPendingApproval: FC<Props> = ({
   departmentId,
   employeeId,
   week,
@@ -84,94 +84,9 @@ export const Timesheet: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
+
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
-    const tempResults = [];
-    if (
-      departmentId &&
-      departmentId != 0 &&
-      employeeId == 0 &&
-      type === 'Manager'
-    ) {
-      const departmentTimesheetsReq = new TimesheetLine();
-      departmentTimesheetsReq.setIsActive(1);
-      departmentTimesheetsReq.setWithoutLimit(true);
-      departmentTimesheetsReq.setPageNumber(0);
-      const searchUser = new User();
-      searchUser.setEmployeeDepartmentId(departmentId);
-      departmentTimesheetsReq.setSearchUser(searchUser);
-      departmentTimesheetsReq.setGroupBy('technician_user_id');
-      departmentTimesheetsReq.setDateRangeList([
-        '>=',
-        filter.startDate,
-        '<',
-        filter.endDate,
-      ]);
-      const departmentResults = (
-        await TimesheetLineClientService.BatchGet(departmentTimesheetsReq)
-      ).getResultsList();
-      const allUsers = await UserClientService.loadUsersByDepartmentId(
-        departmentId,
-      );
-      for (let i = 0; i < allUsers.length; i++) {
-        let found = false;
-        for (let j = 0; j < departmentResults.length; j++) {
-          if (departmentResults[j].getTechnicianUserId() === allUsers[i].id) {
-            found = true;
-          }
-        }
-        if (found == false) {
-          let tempTimesheet = new TimesheetLine();
-          tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
-          tempTimesheet.setUserApprovalDatetime(NULL_TIME);
-          tempTimesheet.setTechnicianUserId(allUsers[i].id);
-          tempTimesheet.setReferenceNumber('auto');
-          tempTimesheet.setDepartmentName(
-            allUsers[i].department!.value +
-              ' - ' +
-              allUsers[i].department!.description,
-          );
-          tempTimesheet.setTechnicianUserName(
-            allUsers[i].firstname + ' ' + allUsers[i].lastname,
-          );
-          resultsList.push(tempTimesheet.toObject());
-        }
-      }
-    }
-    if (employeeId && employeeId != 0 && type === 'Manager') {
-      const employeeReq = new TimesheetLine();
-      employeeReq.setIsActive(1);
-      employeeReq.setWithoutLimit(true);
-      const searchUser = new User();
-      searchUser.setId(employeeId);
-      employeeReq.setSearchUser(searchUser);
-      employeeReq.setGroupBy('technician_user_id');
-      employeeReq.setDateRangeList([
-        '>=',
-        filter.startDate,
-        '<',
-        filter.endDate,
-      ]);
-      const employeeResults = (
-        await TimesheetLineClientService.BatchGet(employeeReq)
-      ).getResultsList();
-      const tempUser = new User();
-      tempUser.setId(employeeId);
-      const userResult = await UserClientService.Get(tempUser);
-      if (employeeResults.length < 1) {
-        let tempTimesheet = new TimesheetLine();
-        tempTimesheet.setAdminApprovalDatetime(NULL_TIME);
-        tempTimesheet.setUserApprovalDatetime(NULL_TIME);
-        tempTimesheet.setTechnicianUserId(employeeId);
-        tempTimesheet.setReferenceNumber('auto');
-        tempTimesheet.setDepartmentName(userResult.department!.value);
-        tempTimesheet.setTechnicianUserName(
-          userResult.firstname + ' ' + userResult.lastname,
-        );
-        resultsList.push(tempTimesheet.toObject());
-      }
-    }
-
     let sortedResultsLists = resultsList.sort((a, b) =>
       a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
         ? 1
@@ -191,33 +106,7 @@ export const Timesheet: FC<Props> = ({
     },
     [load],
   );
-  const createEmptyTimesheetLine = useCallback(
-    async (emptyTimesheetLine?: TimesheetLineType) => {
-      if (emptyTimesheetLine) {
-        setPendingCreateEmptyTimesheetLine(undefined);
-        const tempTimesheet = new TimesheetLine();
-        const time = timestamp();
-        tempTimesheet.setUserApprovalDatetime(time);
-        tempTimesheet.setAdminApprovalDatetime(time);
-        tempTimesheet.setAdminApprovalUserId(loggedUser);
-        tempTimesheet.setClassCodeId(41);
-        tempTimesheet.setTimeStarted(
-          format(addDays(startDay, 1), 'yyyy-MM-dd'),
-        );
-        tempTimesheet.setTimeFinished(
-          format(addDays(startDay, 1), 'yyyy-MM-dd'),
-        );
-        tempTimesheet.setTechnicianUserId(emptyTimesheetLine.technicianUserId);
-        tempTimesheet.setDepartmentCode(departmentId);
-        tempTimesheet.setIsActive(1);
-        tempTimesheet.setReferenceNumber('NO TIMESHEET THIS WEEK');
 
-        const result = await TimesheetLineClientService.Create(tempTimesheet);
-        load();
-      }
-    },
-    [loggedUser, startDay, load, departmentId],
-  );
   return (
     <div>
       <SectionBar
@@ -318,19 +207,6 @@ export const Timesheet: FC<Props> = ({
             username={timesheetSummaryToggle.technicianUserName}
           ></TimesheetSummary>
         </Modal>
-      )}
-      {pendingCreateEmptyTimesheetLine && (
-        <Confirm
-          title="Confirm Approve"
-          open
-          onClose={() => setPendingCreateEmptyTimesheetLine(undefined)}
-          onConfirm={() =>
-            createEmptyTimesheetLine(pendingCreateEmptyTimesheetLine)
-          }
-        >
-          Are you sure you want to create a Fake Timesheet entry? This means
-          this user does not have a Timesheet this week.
-        </Confirm>
       )}
     </div>
   );

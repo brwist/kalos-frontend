@@ -14,22 +14,23 @@ import {
   makeFakeRows,
   InternalDocumentType,
   DocumentKeyType,
-  InternalDocumentsFilter,
-  InternalDocumentsSort,
-  loadInternalDocuments,
   formatDate,
-  openFile,
-  upsertInternalDocument,
   uploadFileToS3Bucket,
   InternalDocumentClientService,
   FileClientService,
+  S3ClientService,
+  DocumentClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
   OPTION_ALL,
   INTERNAL_DOCUMENTS_BUCKET,
 } from '../../../constants';
-import { InternalDocument } from '@kalos-core/kalos-rpc/InternalDocument';
+import {
+  InternalDocument,
+  InternalDocumentsFilter,
+  InternalDocumentsSort,
+} from '@kalos-core/kalos-rpc/InternalDocument';
 import './styles.less';
 
 const defaultFilter: InternalDocumentsFilter = { tag: -1 };
@@ -48,7 +49,7 @@ export const InternalDocuments: FC = () => {
   const [documentFile, setDocumentFile] = useState<string>('');
   const [formKey, setFormKey] = useState<number>(0);
   const [sort, setSort] = useState<InternalDocumentsSort>({
-    orderByField: 'name',
+    orderByField: 'filename',
     orderBy: 'name',
     orderDir: 'ASC',
   });
@@ -56,7 +57,10 @@ export const InternalDocuments: FC = () => {
   const [page, setPage] = useState<number>(0);
   const load = useCallback(async () => {
     setLoading(true);
-    const { resultsList, totalCount } = await loadInternalDocuments({
+    const {
+      resultsList,
+      totalCount,
+    } = await InternalDocumentClientService.loadInternalDocuments({
       page,
       filter,
       sort,
@@ -117,7 +121,7 @@ export const InternalDocuments: FC = () => {
   );
   const handleView = useCallback(
     (entry: InternalDocumentType) => () => {
-      openFile(entry.filename, INTERNAL_DOCUMENTS_BUCKET);
+      S3ClientService.openFile(entry.filename, INTERNAL_DOCUMENTS_BUCKET);
     },
     [],
   );
@@ -138,7 +142,7 @@ export const InternalDocuments: FC = () => {
         documentFile,
         INTERNAL_DOCUMENTS_BUCKET,
       );
-      await upsertInternalDocument(data);
+      await InternalDocumentClientService.upsertInternalDocument(data);
       setLoaded(false);
     },
     [setEditing, setLoading, setLoaded, documentFile],
@@ -162,16 +166,16 @@ export const InternalDocuments: FC = () => {
       [
         {
           name: 'Document Description',
-          ...(sort.orderByField === 'name'
+          ...(sort.orderByField === 'filename'
             ? {
                 dir: sort.orderDir,
               }
             : {}),
           onClick: handleSortChange({
-            orderByField: 'name',
+            orderByField: 'filename',
             orderBy: 'name',
             orderDir:
-              sort.orderByField === 'name' && sort.orderDir === 'ASC'
+              sort.orderByField === 'filename' && sort.orderDir === 'ASC'
                 ? 'DESC'
                 : 'ASC',
           }),

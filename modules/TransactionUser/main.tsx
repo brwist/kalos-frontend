@@ -26,13 +26,16 @@ const Transaction: FC<Props> = props => {
   const { userID } = props;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [uploadPhotoTransactionOpen, setUploadPhotoTransactionOpen] =
-    useState<boolean>(false);
+  const [
+    uploadPhotoTransactionOpen,
+    setUploadPhotoTransactionOpen,
+  ] = useState<boolean>(false);
   const [user, setUser] = useState<UserType>();
   const [costCenters, setCostCenters] = useState<TransactionAccountList>();
   const [isManager, setIsManager] = useState<boolean>(false);
-  const [toggleAddTransaction, setToggleAddTransaction] =
-    useState<boolean>(false);
+  const [toggleAddTransaction, setToggleAddTransaction] = useState<boolean>(
+    false,
+  );
   const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
     [],
   );
@@ -65,7 +68,7 @@ const Transaction: FC<Props> = props => {
   const load = useCallback(async () => {
     setLoading(true);
     await loadCostCenters();
-    await UserClientService.refreshToken();
+    //await UserClientService.refreshToken();
     const user = await UserClientService.loadUserById(userID);
     setUser(user);
     const foundRole = user.permissionGroupsList.find(p => p.type === 'role');
@@ -140,15 +143,17 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           ) : null}
-          <SectionBar
-            actions={[
-              {
-                label: 'Upload Pick Ticket or Receipt',
-                onClick: () => handleSetUploadPhotoTransactionOpen(true),
-                fixed: true,
-              },
-            ]}
-          />
+          {
+            <SectionBar
+              actions={[
+                {
+                  label: 'Upload Pick Ticket or Receipt',
+                  onClick: () => handleSetUploadPhotoTransactionOpen(true),
+                  fixed: true,
+                },
+              ]}
+            />
+          }
           <TransactionUserView
             userID={userID}
             userName={UserClientService.getCustomerName(user)}

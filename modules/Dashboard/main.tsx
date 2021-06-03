@@ -195,7 +195,7 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    await UserClientService.refreshToken();
+    // await UserClientService.refreshToken();
     await this.toggleLoading();
     await this.getIdentity();
     await this.getPTO();

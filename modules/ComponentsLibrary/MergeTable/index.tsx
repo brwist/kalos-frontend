@@ -40,7 +40,7 @@ interface Props {
   properNames?: {}; // Just objects with key-value pairs that can be used to correct row names where applicable
   viewMergedTransaction?: boolean; // Can you view the merged transaction if applicable?
   transaction?: Transaction; // Optional, passed in for above
-  onSaveMergedTransaction?: (transaction: Transaction.AsObject) => void;
+  onSaveMergedTransaction?: (transaction: Transaction) => void;
   onChangeTransaction?: (newTxn: Transaction) => void;
   loading?: boolean;
 }
@@ -187,7 +187,13 @@ export const MergeTable: FC<Props> = ({
       ]);
     });
     setData(rowChoices as Data);
-  }, [rows, setData, properNames]);
+  }, [
+    rows,
+    setData,
+    properNames,
+    handleSetSelectedChoiceIndices,
+    selectedChoices,
+  ]);
 
   let handleMerge = useCallback(
     (submission: SelectedChoice[]) => {
@@ -203,7 +209,7 @@ export const MergeTable: FC<Props> = ({
         submission.sort((a, b) => (a.fieldIndex! < b.fieldIndex! ? -1 : 1)),
       );
     },
-    [onSubmit, selectedChoices, setSelectAllPromptOpen],
+    [onSubmit, selectedChoices, setSelectAllPromptOpen, rows.length],
   );
 
   const handleSetSelectAllPromptOpen = useCallback(
@@ -229,7 +235,6 @@ export const MergeTable: FC<Props> = ({
           return choiceIn;
         }),
       };
-      rows = rowsNew;
 
       let newChoices = selectedChoices.map(choiceIn => {
         if (
@@ -248,7 +253,13 @@ export const MergeTable: FC<Props> = ({
       handleSetFieldToEdit(undefined);
       handleSetData();
     },
-    [rows, handleSetFieldToEdit, handleSetData, setSelectedChoices],
+    [
+      rows,
+      handleSetFieldToEdit,
+      handleSetData,
+      setSelectedChoices,
+      selectedChoices,
+    ],
   );
 
   useEffect(() => {
@@ -284,7 +295,7 @@ export const MergeTable: FC<Props> = ({
           onClose={() => handleSetTransactionToView(undefined)}
         >
           <EditTransaction
-            transactionInput={transactionToView.toObject()}
+            transactionInput={transactionToView}
             onSave={saved => {
               onSaveMergedTransaction!(saved);
               handleSetTransactionToView(undefined);

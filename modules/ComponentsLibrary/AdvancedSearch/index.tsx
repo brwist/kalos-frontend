@@ -74,12 +74,6 @@ import {
   TimesheetDepartmentClientService,
 } from '../../../helpers';
 import {
-  UsersSort,
-  UsersFilter,
-  LoadUsersByFilter,
-} from '@kalos-core/kalos-rpc/User';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
-import {
   ROWS_PER_PAGE,
   OPTION_ALL,
   EVENT_STATUS_LIST,
@@ -200,54 +194,33 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<EventType>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<EventType>();
-  const [employeeUploadedPhoto, setEmployeeUploadedPhoto] = useState<string>(
-    '',
-  );
+  const [employeeUploadedPhoto, setEmployeeUploadedPhoto] =
+    useState<string>('');
   const [employeeFormKey, setEmployeeFormKey] = useState<number>(0);
-  const [
-    pendingEmployeeViewing,
-    setPendingEmployeeViewing,
-  ] = useState<UserType>();
-  const [
-    pendingEmployeeEditing,
-    setPendingEmployeeEditing,
-  ] = useState<UserType>();
-  const [
-    pendingEmployeeDeleting,
-    setPendingEmployeeDeleting,
-  ] = useState<UserType>();
-  const [
-    pendingCustomerViewing,
-    setPendingCustomerViewing,
-  ] = useState<UserType>();
-  const [
-    pendingCustomerEditing,
-    setPendingCustomerEditing,
-  ] = useState<UserType>();
-  const [
-    pendingCustomerDeleting,
-    setPendingCustomerDeleting,
-  ] = useState<UserType>();
-  const [
-    pendingPropertyViewing,
-    setPendingPropertyViewing,
-  ] = useState<PropertyType>();
-  const [
-    pendingPropertyEditing,
-    setPendingPropertyEditing,
-  ] = useState<PropertyType>();
-  const [
-    pendingPropertyDeleting,
-    setPendingPropertyDeleting,
-  ] = useState<PropertyType>();
+  const [pendingEmployeeViewing, setPendingEmployeeViewing] =
+    useState<UserType>();
+  const [pendingEmployeeEditing, setPendingEmployeeEditing] =
+    useState<UserType>();
+  const [pendingEmployeeDeleting, setPendingEmployeeDeleting] =
+    useState<UserType>();
+  const [pendingCustomerViewing, setPendingCustomerViewing] =
+    useState<UserType>();
+  const [pendingCustomerEditing, setPendingCustomerEditing] =
+    useState<UserType>();
+  const [pendingCustomerDeleting, setPendingCustomerDeleting] =
+    useState<UserType>();
+  const [pendingPropertyViewing, setPendingPropertyViewing] =
+    useState<PropertyType>();
+  const [pendingPropertyEditing, setPendingPropertyEditing] =
+    useState<PropertyType>();
+  const [pendingPropertyDeleting, setPendingPropertyDeleting] =
+    useState<PropertyType>();
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [employeeFunctions, setEmployeeFunctions] = useState<
     EmployeeFunctionType[]
   >([]);
-  const [
-    employeeDepartmentsOpen,
-    setEmployeeDepartmentsOpen,
-  ] = useState<boolean>(false);
+  const [employeeDepartmentsOpen, setEmployeeDepartmentsOpen] =
+    useState<boolean>(false);
   const [pendingAddProperty, setPendingAddProperty] = useState<boolean>(false);
   const handleTogglePendingAddProperty = useCallback(
     (pendingAddProperty: boolean) => () =>
@@ -255,7 +228,7 @@ export const AdvancedSearch: FC<Props> = ({
     [setPendingAddProperty],
   );
   const loadDicts = useCallback(async () => {
-    await UserClientService.refreshToken();
+    await UserClientService;
     setLoadingDicts(true);
     const jobTypes = await JobTypeClientService.loadJobTypes();
     setJobTypes(jobTypes);
@@ -263,9 +236,11 @@ export const AdvancedSearch: FC<Props> = ({
     setJobSubtypes(jobSubtypes);
     setLoadingDicts(false);
     if (kinds.includes('employees')) {
-      const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+      const departments =
+        await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       setDepartments(departments);
-      const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
+      const employeeFunctions =
+        await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
       const loggedUser = await UserClientService.loadUserById(loggedUserId);
       setIsAdmin(loggedUser.isAdmin);
@@ -621,10 +596,10 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingPropertyDeleting(pendingPropertyDeleting),
     [setPendingPropertyDeleting],
   );
-  const handleAccountingToggle = useCallback(() => setAccounting(!accounting), [
-    accounting,
-    setAccounting,
-  ]);
+  const handleAccountingToggle = useCallback(
+    () => setAccounting(!accounting),
+    [accounting, setAccounting],
+  );
   const handleSelectEvent = useCallback(
     (event: EventType) => () => {
       if (accounting) {
@@ -2342,13 +2317,8 @@ export const AdvancedSearch: FC<Props> = ({
         return loading
           ? makeFakeRows(5, 3)
           : contracts.map(entry => {
-              const {
-                number,
-                dateStarted,
-                dateEnded,
-                lastName,
-                businessName,
-              } = entry;
+              const { number, dateStarted, dateEnded, lastName, businessName } =
+                entry;
               const user = new User();
               user.setId(entry.userId);
               console.log({ dateStarted, dateEnded });

@@ -316,11 +316,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
     // These two cases will need certain properties reversed, since we will use not_equals to compare them
     // (we need to compare if they're true and if they are, then filter them)
     if (this.props.role == 'Payroll' && tripFilter && toggleButton == false) {
-      tripFilter.payrollProcessed = false;
+      tripFilter.payrollProcessed = true;
       tripFilter.approved = true;
     }
     if (this.props.role == 'Payroll' && tripFilter && toggleButton == true) {
-      tripFilter.payrollProcessed = true;
+      tripFilter.payrollProcessed = false;
       tripFilter.approved = true;
     }
     if (this.props.role == 'Manager' && tripFilter) {
@@ -344,7 +344,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 this.props.role === 'Manager' ? NULL_TIME : undefined,
               payrollProcessed: tripFilter
                 ? !tripFilter!.payrollProcessed
-                : this.props.role == 'Payroll' && toggleButton
+                : this.props.role == 'Payroll' && !toggleButton
                 ? true
                 : false,
               approved: tripFilter
@@ -493,7 +493,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
       currentSearch = new Trip().toObject();
     }
     currentSearch.page = page;
-    this.loadTripsAndUpdate(currentSearch);
+    if (this.props.role === 'Payroll')
+      this.loadTripsAndUpdate(currentSearch, this.state.toggleButton);
+    else {
+      this.loadTripsAndUpdate(currentSearch);
+    }
   };
   handleToggleButton = () => {
     this.setState({ page: 0 });

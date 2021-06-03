@@ -21,6 +21,7 @@ import { Modal } from '../../../ComponentsLibrary/Modal';
 import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
 import { Form, Schema } from '../../../ComponentsLibrary/Form';
 import { Option } from '../../../ComponentsLibrary/Field';
+import { Button } from '../../Button';
 import {
   TaskType,
   makeFakeRows,
@@ -67,7 +68,7 @@ export const Spiffs: FC<Props> = ({
     startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
   );
   const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 7));
-
+  const [toggleButton, setToggleButton] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
   const init = useCallback(async () => {
     const { resultsList: spiffTypes } = (
@@ -82,6 +83,7 @@ export const Spiffs: FC<Props> = ({
       technicianUserID: employeeId,
       role,
       departmentId,
+      processed: toggleButton,
     };
 
     Object.assign(filter, {
@@ -94,12 +96,14 @@ export const Spiffs: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
-    const { resultsList, totalCount } =
-      await TaskClientService.loadPendingSpiffs(filter);
+    const {
+      resultsList,
+      totalCount,
+    } = await TaskClientService.loadPendingSpiffs(filter);
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
-  }, [page, employeeId, week, role, departmentId, endDay]);
+  }, [page, employeeId, week, role, toggleButton, departmentId, endDay]);
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);
@@ -111,10 +115,14 @@ export const Spiffs: FC<Props> = ({
     (pendingView?: TaskType) => () => setPendingView(pendingView),
     [],
   );
-  const handleToggleAdd = useCallback(
-    () => setPendingAdd(!pendingAdd),
-    [pendingAdd],
-  );
+  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
+    pendingAdd,
+  ]);
+  const handleToggleButton = useCallback(() => {
+    setToggleButton(!toggleButton);
+    setPage(0);
+  }, [toggleButton]);
+
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
     ({ type, id: value }) => ({ label: escapeText(type), value }),
   );
@@ -242,6 +250,16 @@ export const Spiffs: FC<Props> = ({
         }
         fixedActions
       />
+      {role === 'Payroll' && (
+        <Button
+          label={
+            toggleButton === false
+              ? 'Search For Processed Spiffs'
+              : 'Search For Unprocessed'
+          }
+          onClick={() => handleToggleButton()}
+        ></Button>
+      )}
       <InfoTable
         columns={[{ name: 'Employee' }, { name: 'Week' }]}
         loading={loading}
@@ -287,6 +305,7 @@ export const Spiffs: FC<Props> = ({
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
             needsAuditAction={role === 'Auditor' ? true : false}
+            toggle={toggleButton}
             role={role}
             onClose={handleTogglePendingView(undefined)}
           />
