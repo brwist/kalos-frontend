@@ -383,13 +383,11 @@ export const CompareTransactions: FC<Props> = ({
       return;
     }
     const [conflicts, transaction] = generateConflicts();
-    console.log('Conflicts: ', conflicts);
     if ((conflicts as Conflict[]).length === 0)
       setSameTransactionError(
         'The transactions are the same. There is nothing to merge.',
       );
     setConflicts(conflicts as Conflict[]);
-    console.log(transaction);
     setTransactionToSave(transaction as Transaction);
   }, [
     transactions,
