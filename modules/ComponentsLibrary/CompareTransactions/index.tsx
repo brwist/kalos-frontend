@@ -92,6 +92,7 @@ export const CompareTransactions: FC<Props> = ({
   );
 
   const [upsertError, setUpsertError] = useState<string>();
+  const [sameTransactionError, setSameTransactionError] = useState<string>();
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -221,6 +222,11 @@ export const CompareTransactions: FC<Props> = ({
   const handleSetUpsertError = useCallback(
     (error: string) => setUpsertError(error),
     [setUpsertError],
+  );
+
+  const handleSetSameTransactionError = useCallback(
+    (error: string) => setSameTransactionError(error),
+    [setSameTransactionError],
   );
 
   const handleSetTransactionToSave = useCallback(
@@ -377,13 +383,34 @@ export const CompareTransactions: FC<Props> = ({
       return;
     }
     const [conflicts, transaction] = generateConflicts();
+    console.log('Conflicts: ', conflicts);
+    if ((conflicts as Conflict[]).length === 0)
+      setSameTransactionError(
+        'The transactions are the same. There is nothing to merge.',
+      );
     setConflicts(conflicts as Conflict[]);
+    console.log(transaction);
     setTransactionToSave(transaction as Transaction);
-  }, [transactions, setConflicts, generateConflicts, setTransactionToSave]);
+  }, [
+    transactions,
+    setConflicts,
+    generateConflicts,
+    setTransactionToSave,
+    setSameTransactionError,
+  ]);
 
   return (
     <>
       {loading && <Loader />}
+      {sameTransactionError && (
+        <Alert
+          open={true}
+          onClose={() => handleSetSameTransactionError('')}
+          title="Error"
+        >
+          <Typography>{sameTransactionError}</Typography>
+        </Alert>
+      )}
       {upsertError && (
         <Alert
           open={true}
@@ -412,25 +439,25 @@ export const CompareTransactions: FC<Props> = ({
                 // @ts-ignore
                 if (saved[fieldName] != null) {
                   // Can't seem to do this a better way
-                  txn.setJobId(saved['jobId']);
-                  txn.setDepartmentId(saved['departmentId']);
-                  txn.setOwnerId(saved['ownerId']);
-                  txn.setVendor(saved['vendor']);
-                  txn.setCostCenterId(saved['costCenterId']);
-                  txn.setDescription(saved['description']);
-                  txn.setAmount(saved['amount']);
-                  txn.setTimestamp(saved['timestamp']);
-                  txn.setNotes(saved['notes']);
-                  txn.setIsActive(saved['isActive']);
-                  txn.setStatusId(saved['statusId']);
-                  txn.setStatus(saved['status']);
-                  txn.setOwnerName(saved['ownerName']);
-                  txn.setCardUsed(saved['cardUsed']);
-                  txn.setIsAudited(saved['isAudited']);
-                  txn.setIsRecorded(saved['isRecorded']);
-                  txn.setVendorCategory(saved['vendorCategory']);
-                  txn.setAssignedEmployeeId(saved['assignedEmployeeId']);
-                  txn.setAssignedEmployeeName(saved['assignedEmployeeName']);
+                  txn.setJobId(saved.getJobId());
+                  txn.setDepartmentId(saved.getDepartmentId());
+                  txn.setOwnerId(saved.getOwnerId());
+                  txn.setVendor(saved.getVendor());
+                  txn.setCostCenterId(saved.getCostCenterId());
+                  txn.setDescription(saved.getDescription());
+                  txn.setAmount(saved.getAmount());
+                  txn.setTimestamp(saved.getTimestamp());
+                  txn.setNotes(saved.getNotes());
+                  txn.setIsActive(saved.getIsActive());
+                  txn.setStatusId(saved.getStatusId());
+                  txn.setStatus(saved.getStatus());
+                  txn.setOwnerName(saved.getOwnerName());
+                  txn.setCardUsed(saved.getCardUsed());
+                  txn.setIsAudited(saved.getIsAudited());
+                  txn.setIsRecorded(saved.getIsRecorded());
+                  txn.setVendorCategory(saved.getVendorCategory());
+                  txn.setAssignedEmployeeId(saved.getAssignedEmployeeId());
+                  txn.setAssignedEmployeeName(saved.getAssignedEmployeeName());
                 }
               }
 

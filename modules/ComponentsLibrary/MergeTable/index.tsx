@@ -40,7 +40,7 @@ interface Props {
   properNames?: {}; // Just objects with key-value pairs that can be used to correct row names where applicable
   viewMergedTransaction?: boolean; // Can you view the merged transaction if applicable?
   transaction?: Transaction; // Optional, passed in for above
-  onSaveMergedTransaction?: (transaction: Transaction.AsObject) => void;
+  onSaveMergedTransaction?: (transaction: Transaction) => void;
   onChangeTransaction?: (newTxn: Transaction) => void;
   loading?: boolean;
 }
@@ -290,7 +290,7 @@ export const MergeTable: FC<Props> = ({
           onClose={() => handleSetTransactionToView(undefined)}
         >
           <EditTransaction
-            transactionInput={transactionToView.toObject()}
+            transactionInput={transactionToView}
             onSave={saved => {
               onSaveMergedTransaction!(saved);
               handleSetTransactionToView(undefined);

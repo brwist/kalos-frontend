@@ -5,10 +5,10 @@ import { Form, Schema } from '../Form';
 import { PlainForm } from '../PlainForm';
 
 interface Props {
-  transactionInput: Transaction.AsObject;
-  onSave: (saved: Transaction.AsObject) => void;
+  transactionInput: Transaction;
+  onSave: (saved: Transaction) => void;
   onClose: () => void;
-  onChange?: (changed: Transaction.AsObject) => void;
+  onChange?: (changed: Transaction) => void;
 }
 
 export const EditTransaction: FC<Props> = ({
@@ -17,7 +17,58 @@ export const EditTransaction: FC<Props> = ({
   onClose,
   onChange,
 }) => {
-  const [transaction] = useState<Transaction.AsObject>(transactionInput);
+  // TODO: Remake this into a function that auto-generates it instead.
+  // Would have not made it this way with the AsObject figuring we were phasing out of it, but atm Form
+  // is difficult to use without AsObject because Transaction would just use getJobId for example, but
+  // that isn't called so the form is blank with that.
+  const [transaction] = useState<Transaction.AsObject>({
+    jobId: transactionInput.getJobId(),
+    departmentId: transactionInput.getDepartmentId(),
+    ownerId: transactionInput.getOwnerId(),
+    vendor: transactionInput.getVendor(),
+    costCenterId: transactionInput.getCostCenterId(),
+    description: transactionInput.getDescription(),
+    amount: transactionInput.getAmount(),
+    timestamp: transactionInput.getTimestamp(),
+    notes: transactionInput.getNotes(),
+    isActive: transactionInput.getIsActive(),
+    statusId: transactionInput.getStatusId(),
+    status: transactionInput.getStatus(),
+    ownerName: transactionInput.getOwnerName(),
+    cardUsed: transactionInput.getCardUsed(),
+    isAudited: transactionInput.getIsAudited(),
+    isRecorded: transactionInput.getIsRecorded(),
+    vendorCategory: transactionInput.getVendorCategory(),
+    assignedEmployeeId: transactionInput.getAssignedEmployeeId(),
+    assignedEmployeeName: transactionInput.getAssignedEmployeeName(),
+  } as Transaction.AsObject);
+
+  const convertTransactionAsObjectToTransaction = (
+    asObject: Transaction.AsObject,
+  ) => {
+    let txn = new Transaction();
+    txn.setJobId(asObject.jobId);
+    txn.setDepartmentId(asObject.departmentId);
+    txn.setOwnerId(asObject.ownerId);
+    txn.setVendor(asObject.vendor);
+    txn.setCostCenterId(asObject.costCenterId);
+    txn.setDescription(asObject.description);
+    txn.setAmount(asObject.amount);
+    txn.setTimestamp(asObject.timestamp);
+    txn.setNotes(asObject.notes);
+    txn.setIsActive(asObject.isActive);
+    txn.setStatusId(asObject.statusId);
+    txn.setStatus(asObject.status);
+    txn.setOwnerName(asObject.ownerName);
+    txn.setCardUsed(asObject.cardUsed);
+    txn.setIsAudited(asObject.isAudited);
+    txn.setIsRecorded(asObject.isRecorded);
+    txn.setVendorCategory(asObject.vendorCategory);
+    txn.setAssignedEmployeeId(asObject.assignedEmployeeId);
+    txn.setAssignedEmployeeName(asObject.assignedEmployeeName);
+    return txn;
+  };
+
   const SCHEMA: Schema<Transaction.AsObject> = [
     [
       {
@@ -118,8 +169,12 @@ export const EditTransaction: FC<Props> = ({
       <Form<Transaction.AsObject>
         schema={SCHEMA}
         data={transaction}
-        onChange={onChange}
-        onSave={saved => onSave(saved)}
+        onChange={() => {
+          onChange;
+        }}
+        onSave={saved => {
+          onSave(convertTransactionAsObjectToTransaction(saved));
+        }}
         onClose={onClose}
         submitLabel="Save"
         cancelLabel="Cancel"
