@@ -187,7 +187,13 @@ export const MergeTable: FC<Props> = ({
       ]);
     });
     setData(rowChoices as Data);
-  }, [rows, setData, properNames]);
+  }, [
+    rows,
+    setData,
+    properNames,
+    handleSetSelectedChoiceIndices,
+    selectedChoices,
+  ]);
 
   let handleMerge = useCallback(
     (submission: SelectedChoice[]) => {
@@ -203,7 +209,7 @@ export const MergeTable: FC<Props> = ({
         submission.sort((a, b) => (a.fieldIndex! < b.fieldIndex! ? -1 : 1)),
       );
     },
-    [onSubmit, selectedChoices, setSelectAllPromptOpen],
+    [onSubmit, selectedChoices, setSelectAllPromptOpen, rows.length],
   );
 
   const handleSetSelectAllPromptOpen = useCallback(
