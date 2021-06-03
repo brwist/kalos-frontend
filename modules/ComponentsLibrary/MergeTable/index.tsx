@@ -235,7 +235,6 @@ export const MergeTable: FC<Props> = ({
           return choiceIn;
         }),
       };
-      rows = rowsNew;
 
       let newChoices = selectedChoices.map(choiceIn => {
         if (
@@ -254,7 +253,13 @@ export const MergeTable: FC<Props> = ({
       handleSetFieldToEdit(undefined);
       handleSetData();
     },
-    [rows, handleSetFieldToEdit, handleSetData, setSelectedChoices],
+    [
+      rows,
+      handleSetFieldToEdit,
+      handleSetData,
+      setSelectedChoices,
+      selectedChoices,
+    ],
   );
 
   useEffect(() => {
