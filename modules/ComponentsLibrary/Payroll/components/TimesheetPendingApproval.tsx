@@ -236,7 +236,7 @@ const createTimesheetFetchFunction = (
   }
   const client = new TimesheetLineClient(ENDPOINT);
   if (config.startDate && config.endDate) {
-    req.setDateRangeList(['>=', config.startDate, '<=', config.endDate]);
+    req.setDateRangeList(['>=', config.startDate, '<', config.endDate]);
   }
   if (config.departmentId) {
     //req.setDepartmentCode(config.departmentId); for class code
