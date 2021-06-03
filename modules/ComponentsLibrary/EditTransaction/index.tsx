@@ -63,8 +63,7 @@ export const EditTransaction: FC<Props> = ({
     txn.setCardUsed(asObject.cardUsed);
     txn.setIsAudited(asObject.isAudited);
     txn.setIsRecorded(asObject.isRecorded);
-    // TODO: When vendor category issues are fixed in the backend, uncomment these fields so they are also updated for Dani.
-    //txn.setVendorCategory(asObject.vendorCategory);
+    txn.setVendorCategory(asObject.vendorCategory);
     txn.setAssignedEmployeeId(asObject.assignedEmployeeId);
     txn.setAssignedEmployeeName(asObject.assignedEmployeeName);
     txn.setFieldMaskList([
@@ -84,7 +83,7 @@ export const EditTransaction: FC<Props> = ({
       'CardUsed',
       'IsAudited',
       'IsRecorded',
-      //'VendorCategory',
+      'VendorCategory',
       'AssignedEmployeeId',
       'AssignedEmployeeName',
     ]);
