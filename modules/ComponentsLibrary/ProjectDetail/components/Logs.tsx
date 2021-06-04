@@ -6,14 +6,24 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   ActivityLogClientService,
   EventClientService,
+  EventType,
 } from '../../../../helpers';
-import { EventClient, Event, EventList } from '@kalos-core/kalos-rpc/Event';
-import { Data, InfoTable, Row } from '../../InfoTable';
+import { Event, EventList } from '@kalos-core/kalos-rpc/Event';
+import { InfoTable, Row } from '../../InfoTable';
 import { Loader } from '../../../Loader/main';
+import { CheckInProjectTask } from '../../CheckInProjectTask';
 
-export interface Props {}
+export interface Props {
+  serviceCallId: number;
+  loggedUserId: number;
+  project: EventType;
+}
 
-export const LogsTab: FC<Props> = ({}) => {
+export const LogsTab: FC<Props> = ({
+  serviceCallId,
+  loggedUserId,
+  project,
+}) => {
   const [projectLogs, setProjectLogs] = useState<ActivityLog[]>();
   const [loading, setLoading] = useState<boolean>();
 
@@ -81,6 +91,11 @@ export const LogsTab: FC<Props> = ({}) => {
     <Loader />
   ) : (
     <>
+      <CheckInProjectTask
+        projectToUse={project!}
+        loggedUserId={loggedUserId}
+        serviceCallId={serviceCallId}
+      />
       <InfoTable
         key={projectLogs?.toString()}
         columns={[
