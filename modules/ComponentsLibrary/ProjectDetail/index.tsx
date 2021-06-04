@@ -639,21 +639,6 @@ export const ProjectDetail: FC<Props> = props => {
                   />
                 ),
               },
-              ...(serviceCallId
-                ? [
-                    {
-                      label: 'Services',
-                      content: loggedUser ? (
-                        <Services
-                          serviceCallId={serviceCallId}
-                          loggedUser={loggedUser}
-                        />
-                      ) : (
-                        <InfoTable data={makeFakeRows(4, 4)} loading />
-                      ),
-                    },
-                  ]
-                : []),
               {
                 label: 'Billing',
                 content: <BillingTab serviceCallId={serviceCallId} />,
