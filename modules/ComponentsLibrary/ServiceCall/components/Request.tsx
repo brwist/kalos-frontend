@@ -102,122 +102,125 @@ export const Request: FC<Props> = forwardRef(
       [propertyEvents],
     );
     const { isCallback } = serviceItem;
-    const SCHEMA: Schema<EventType> = [
-      [
-        {
-          label: 'Date of Service',
-          name: 'dateStarted',
-          type: 'date',
-          required: true,
-        },
-        {
-          label: 'Begin Time',
-          name: 'timeStarted',
-          type: 'time',
-          required: true,
-        },
-        {
-          label: 'End Date',
-          name: 'dateEnded',
-          type: 'date',
-          required: true,
-        },
-        {
-          label: 'End Time',
-          name: 'timeEnded',
-          type: 'time',
-          required: true,
-        },
+    const SCHEMA: Schema<EventType> = useMemo(
+      () => [
+        [
+          {
+            label: 'Date of Service',
+            name: 'dateStarted',
+            type: 'date',
+            required: true,
+          },
+          {
+            label: 'Begin Time',
+            name: 'timeStarted',
+            type: 'time',
+            required: true,
+          },
+          {
+            label: 'End Date',
+            name: 'dateEnded',
+            type: 'date',
+            required: true,
+          },
+          {
+            label: 'End Time',
+            name: 'timeEnded',
+            type: 'time',
+            required: true,
+          },
+        ],
+        [
+          {
+            label: 'Payment Type',
+            name: 'logPaymentType',
+            required: true,
+            options: PAYMENT_TYPE_LIST,
+          },
+          {
+            label: 'Sector',
+            name: 'isResidential',
+            required: true,
+            options: RESIDENTIAL_OPTIONS,
+          },
+          {
+            label: 'Amount Quoted',
+            name: 'amountQuoted',
+            startAdornment: '$',
+          },
+          {
+            label: 'Diagnostic Quoted',
+            name: 'diagnosticQuoted',
+            type: 'checkbox',
+          },
+        ],
+        [
+          {
+            label: 'Job Status',
+            name: 'logJobStatus',
+            required: true,
+            options: JOB_STATUS_OPTIONS,
+          },
+          {
+            label: 'Job Type',
+            name: 'jobTypeId',
+            required: true,
+            options: jobTypeOptions,
+          },
+          {
+            label: 'Sub Type',
+            name: 'jobSubtypeId',
+            options: jobSubtypeOptions,
+          },
+          {
+            label: 'Priority',
+            name: 'highPriority',
+            required: true,
+            type: 'checkbox',
+          },
+        ],
+        [
+          {
+            label: 'Is LMPC?',
+            name: 'isLmpc',
+            type: 'checkbox',
+          },
+          {
+            label: 'Is Callback?',
+            name: 'isCallback',
+            type: 'checkbox',
+          },
+          {
+            label: 'Callback Regarding Service Call',
+            name: 'callbackOriginalId',
+            options: callbackOriginalOptions,
+            disabled: !isCallback,
+          },
+          {},
+        ],
+        [
+          {
+            label: 'Technician Assigned',
+            name: 'logTechnicianAssigned',
+            type: 'technicians',
+            required: true,
+          },
+          {
+            label: 'Service Needed',
+            name: 'description',
+            required: true,
+            multiline: true,
+          },
+          {
+            label: 'Service Call Notes',
+            name: 'logNotes',
+            description: 'For internal use',
+            multiline: true,
+          },
+        ],
       ],
-      [
-        {
-          label: 'Payment Type',
-          name: 'logPaymentType',
-          required: true,
-          options: PAYMENT_TYPE_LIST,
-        },
-        {
-          label: 'Sector',
-          name: 'isResidential',
-          required: true,
-          options: RESIDENTIAL_OPTIONS,
-        },
-        {
-          label: 'Amount Quoted',
-          name: 'amountQuoted',
-          startAdornment: '$',
-        },
-        {
-          label: 'Diagnostic Quoted',
-          name: 'diagnosticQuoted',
-          type: 'checkbox',
-        },
-      ],
-      [
-        {
-          label: 'Job Status',
-          name: 'logJobStatus',
-          required: true,
-          options: JOB_STATUS_OPTIONS,
-        },
-        {
-          label: 'Job Type',
-          name: 'jobTypeId',
-          required: true,
-          options: jobTypeOptions,
-        },
-        {
-          label: 'Sub Type',
-          name: 'jobSubtypeId',
-          options: jobSubtypeOptions,
-        },
-        {
-          label: 'Priority',
-          name: 'highPriority',
-          required: true,
-          type: 'checkbox',
-        },
-      ],
-      [
-        {
-          label: 'Is LMPC?',
-          name: 'isLmpc',
-          type: 'checkbox',
-        },
-        {
-          label: 'Is Callback?',
-          name: 'isCallback',
-          type: 'checkbox',
-        },
-        {
-          label: 'Callback Regarding Service Call',
-          name: 'callbackOriginalId',
-          options: callbackOriginalOptions,
-          disabled: !isCallback,
-        },
-        {},
-      ],
-      [
-        {
-          label: 'Technician Assigned',
-          name: 'logTechnicianAssigned',
-          type: 'technicians',
-          required: true,
-        },
-        {
-          label: 'Service Needed',
-          name: 'description',
-          required: true,
-          multiline: true,
-        },
-        {
-          label: 'Service Call Notes',
-          name: 'logNotes',
-          description: 'For internal use',
-          multiline: true,
-        },
-      ],
-    ];
+      [callbackOriginalOptions, isCallback, jobSubtypeOptions, jobTypeOptions],
+    );
     useEffect(() => {
       if (!initSchemaCalled) {
         setInitSchemaCalled(true);
