@@ -26,7 +26,7 @@ import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
 import { Option } from '../Field';
 import { Form, Schema } from '../Form';
-import { Request } from './components/Request';
+import { General } from './components/General';
 import { Equipment } from './components/Equipment';
 import { Services } from './components/Services';
 import { Confirm } from '../Confirm';
@@ -480,48 +480,7 @@ export const ProjectDetail: FC<Props> = props => {
     notification,
   } = customer;
   const { address, city, state, zip } = property;
-  let data_project: Data = [];
-  if (loading == false) {
-    const {
-      id,
-      description,
-      notes,
-      name,
-      dateStarted,
-      dateEnded,
-      departmentId,
-    } = project!;
-    const deptName = getDepartmentName(timesheetDepartment!);
-    data_project = [
-      [
-        { label: 'Id', value: id },
-        { label: 'Name', value: name },
-      ],
-      [
-        {
-          label: 'Notes',
-          value: notes,
-        },
-        { label: 'Description', value: description },
-      ],
-      [
-        {
-          label: 'Date Started',
-          value: format(new Date(dateStarted), 'yyyy-MM-dd'),
-        },
-        {
-          label: 'Date Ended',
-          value: format(new Date(dateEnded), 'yyyy-MM-dd'),
-        },
-      ],
-      [
-        {
-          label: 'Department',
-          value: deptName,
-        },
-      ],
-    ];
-  }
+
   const data: Data = [
     [
       { label: 'Customer', value: `${firstname} ${lastname}` },
@@ -631,13 +590,6 @@ export const ProjectDetail: FC<Props> = props => {
   ];
   return (
     <div>
-      {loading ? (
-        <Loader />
-      ) : (
-        <SectionBar title={'Project Details'} actions={[]}>
-          <InfoTable data={data_project} loading={loading} error={error} />
-        </SectionBar>
-      )}
       <SectionBar title={'Customer / Property Details'} actions={[]}>
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
@@ -664,21 +616,13 @@ export const ProjectDetail: FC<Props> = props => {
             onChange={setTabIdx}
             tabs={[
               {
-                label: 'Request',
-                content: (
-                  <Request
-                    //@ts-ignore
-                    ref={requestRef}
-                    serviceItem={entry}
-                    propertyEvents={propertyEvents}
-                    loading={loading}
-                    jobTypeOptions={jobTypeOptions}
-                    jobSubtypeOptions={jobSubtypeOptions}
-                    jobTypeSubtypes={jobTypeSubtypes}
-                    onChange={handleChangeEntry}
-                    disabled={saving}
-                    onValid={setRequestValid}
-                    onInitSchema={handleSetRequestfields}
+                label: 'General',
+                content: loading ? (
+                  <Loader />
+                ) : (
+                  <General
+                    project={project!}
+                    projectDepartment={timesheetDepartment!}
                   />
                 ),
               },
