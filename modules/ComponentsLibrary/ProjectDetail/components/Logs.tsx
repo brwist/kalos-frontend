@@ -36,7 +36,8 @@ export const LogsTab: FC<Props> = ({
       new Promise<void>(async resolve => {
         try {
           let req: any = new ActivityLog();
-          req.setNotEqualsList(['EventId']);
+          req.setPageNumber(0);
+          req.setEventId(project.id);
           logs = await ActivityLogClientService.BatchGet(req);
           resolve();
         } catch (err) {
@@ -62,28 +63,10 @@ export const LogsTab: FC<Props> = ({
     );
 
     Promise.all(promises).then(() => {
-      // Would have done all of this with a protobuffer field and an @inject_tag in the backend,
-      // but the ActivityLog would have to import Event to display an event and that would cause a
-      // circular dependency
-
-      // As a result, I'm just grabbing all of the projects and checking each real fast and filtering the logs
-      // by that. This isn't the fastest solution but it works for now and it's not terrible, still ~O(n^2)
-
-      let newResList = logs.getResultsList().filter(log => {
-        let isInside = false;
-        projectEvents.getResultsList().forEach(projectEvent => {
-          if (projectEvent.getId() === log.getEventId()) {
-            isInside = true;
-          }
-        });
-
-        return isInside;
-      });
-      logs.setResultsList(newResList);
       setProjectLogs(logs.getResultsList());
       setLoading(false);
     });
-  }, [setProjectLogs, setLoading]);
+  }, [setProjectLogs, setLoading, project.id]);
   useEffect(() => {
     load();
   }, [load]);
