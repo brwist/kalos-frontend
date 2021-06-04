@@ -221,6 +221,19 @@ export class Dashboard extends React.PureComponent<props, state> {
     } = this.state;
     return (
       <PageWrapper {...this.props} userID={this.props.userId}>
+        {this.state.currentUser.isEmployee ? (
+          <div
+            style={{
+              textAlign: 'center',
+              alignContent: 'center',
+              alignSelf: 'center',
+            }}
+          >
+            <strong>Employee Badge ID:{this.state.currentUser.id}</strong>
+          </div>
+        ) : (
+          []
+        )}
         <InfoTable
           columns={[
             { name: '', align: 'center' },
