@@ -209,12 +209,15 @@ export const CostReportForEmployee: FC<Props> = ({
             ? spiffs.map(spiff => {
                 return [
                   {
-                    value: formatDate(
-                      spiff.getActionsList()[
-                        //eslint-disable-next-line
-                        spiff.getActionsList().length - 1
-                      ].getDecisionDate(),
-                    ),
+                    value:
+                      spiff.getActionsList().length > 0
+                        ? formatDate(
+                            spiff.getActionsList()[
+                              //eslint-disable-next-line
+                              spiff.getActionsList().length - 1
+                            ].getDecisionDate(),
+                          )
+                        : 'No Action Taken',
                   },
                   {
                     value: formatDate(spiff.toObject().timeCreated),
@@ -224,12 +227,6 @@ export const CostReportForEmployee: FC<Props> = ({
                   },
                   {
                     value: spiff.toObject().spiffJobNumber,
-                  },
-                  {
-                    value:
-                      spiff.toObject().payrollProcessed === true
-                        ? 'Processed'
-                        : 'Not Processed',
                   },
                   {
                     value:
@@ -257,7 +254,10 @@ export const CostReportForEmployee: FC<Props> = ({
                     value: formatDate(perDiem.getDateStarted()),
                   },
                   {
-                    value: perDiem.getRowsList()[0].getZipCode(),
+                    value:
+                      perDiem.getRowsList().length > 0
+                        ? perDiem.getRowsList()[0].getZipCode()
+                        : 'No Days Found',
                   },
                   {
                     value:
