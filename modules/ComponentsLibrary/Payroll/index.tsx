@@ -212,7 +212,23 @@ export const Payroll: FC<Props> = ({ userID }) => {
         : []),
     ],
   ];
-
+  const generateReport = () => {
+    if (
+      filter.employeeId != 0 &&
+      filter.employeeId != null &&
+      filter.week != OPTION_ALL
+    )
+      return (
+        <CostReportForEmployee
+          userId={userID}
+          onClose={() => setViewReport(false)}
+          loggedUserId={loggedUser!.id}
+          week={filter.week}
+          username={filter.employeeId.toString()}
+        ></CostReportForEmployee>
+      );
+    return <div>No Fitler Detected</div>;
+  };
   let isTimesheet = true;
   let isTimeoffRequests = true;
   let isSpiffs = true;
@@ -233,6 +249,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
   if (role === 'Manager') {
     isEmployeeReport = true;
   }
+  const report = {};
   return (
     <div>
       <SectionBar title="Payroll" />
@@ -393,7 +410,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                         content: (
                           <Button
                             label="Generate Report Based on Filter"
-                            onClick={() => setViewReport(!viewReport)}
+                            onClick={report => generateReport()}
                           ></Button>
                         ),
                       },
@@ -410,18 +427,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
       ) : (
         <Loader />
       )}
-      {viewReport &&
-        filter.employeeId != 0 &&
-        filter.employeeId != null &&
-        filter.week != OPTION_ALL && (
-          <CostReportForEmployee
-            userId={userID}
-            onClose={() => setViewReport(false)}
-            loggedUserId={loggedUser!.id}
-            week={filter.week}
-            username={filter.employeeId.toString()}
-          ></CostReportForEmployee>
-        )}
     </div>
   );
 };
