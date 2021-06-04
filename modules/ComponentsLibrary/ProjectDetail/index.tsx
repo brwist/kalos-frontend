@@ -14,11 +14,10 @@ import {
   PropertyClientService,
   JobTypeClientService,
   JobSubtypeClientService,
-  cfURL,
   loadProjects,
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
-  ActivityLogClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -35,8 +34,10 @@ import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
 import { Typography } from '@material-ui/core';
 import { BillingTab } from './components/Billing';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { LogsTab } from './components/Logs';
+import { format } from 'date-fns';
+import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -54,7 +55,6 @@ export interface Props {
   loggedUserId: number;
   onClose?: () => void;
   onSave?: () => void;
-  projectParentId?: number;
 }
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
@@ -112,6 +112,9 @@ export const ProjectDetail: FC<Props> = props => {
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] =
     useState<number | null>(null);
+  const [project, setProject] = useState<Event.AsObject>();
+  const [timesheetDepartment, setTimesheetDepartment] =
+    useState<TimesheetDepartment.AsObject>();
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
@@ -141,6 +144,25 @@ export const ProjectDetail: FC<Props> = props => {
     setLoading(true);
     try {
       let promises = [];
+
+      let projectGotten: Event.AsObject;
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          try {
+            let req = new Event();
+            req.setId(serviceCallId);
+            const response = await EventClientService.Get(req);
+            projectGotten = response;
+            setProject(response);
+            const responses = await EventClientService.BatchGet(req);
+            resolve();
+          } catch (err) {
+            console.error('An error occurred while getting the project: ', err);
+            resolve();
+          }
+        }),
+      );
 
       promises.push(
         new Promise<void>(async resolve => {
@@ -224,7 +246,19 @@ export const ProjectDetail: FC<Props> = props => {
         }),
       );
 
-      Promise.all(promises).then(() => {
+      Promise.all(promises).then(async () => {
+        try {
+          let req = new TimesheetDepartment();
+          req.setId(projectGotten!.departmentId);
+          const timesheetDepartment =
+            await TimesheetDepartmentClientService.Get(req);
+          setTimesheetDepartment(timesheetDepartment);
+        } catch (err) {
+          console.error(
+            'An error occurred while getting the timesheet department: ',
+            err,
+          );
+        }
         setLoaded(true);
         setLoading(false);
       });
@@ -244,6 +278,9 @@ export const ProjectDetail: FC<Props> = props => {
     setProperty,
     setCustomer,
     setProjects,
+    loadEntry,
+    loadServicesRenderedData,
+    serviceCallId,
   ]);
 
   const handleSetParentId = useCallback(
@@ -400,7 +437,7 @@ export const ProjectDetail: FC<Props> = props => {
       setSaving(false);
       handleSetNotificationEditing(false)();
     },
-    [setSaving, userID, handleSetNotificationEditing],
+    [setSaving, userID, handleSetNotificationEditing, loadEntry],
   );
 
   const handleOnAddMaterials = useCallback(
@@ -412,7 +449,7 @@ export const ProjectDetail: FC<Props> = props => {
       );
       await loadEntry();
     },
-    [serviceCallId, entry],
+    [serviceCallId, entry, loadEntry],
   );
 
   const jobTypeOptions: Option[] = jobTypes.map(
@@ -443,6 +480,48 @@ export const ProjectDetail: FC<Props> = props => {
     notification,
   } = customer;
   const { address, city, state, zip } = property;
+  let data_project: Data = [];
+  if (loading == false) {
+    const {
+      id,
+      description,
+      notes,
+      name,
+      dateStarted,
+      dateEnded,
+      departmentId,
+    } = project!;
+    const deptName = getDepartmentName(timesheetDepartment!);
+    data_project = [
+      [
+        { label: 'Id', value: id },
+        { label: 'Name', value: name },
+      ],
+      [
+        {
+          label: 'Notes',
+          value: notes,
+        },
+        { label: 'Description', value: description },
+      ],
+      [
+        {
+          label: 'Date Started',
+          value: format(new Date(dateStarted), 'yyyy-MM-dd'),
+        },
+        {
+          label: 'Date Ended',
+          value: format(new Date(dateEnded), 'yyyy-MM-dd'),
+        },
+      ],
+      [
+        {
+          label: 'Department',
+          value: deptName,
+        },
+      ],
+    ];
+  }
   const data: Data = [
     [
       { label: 'Customer', value: `${firstname} ${lastname}` },
@@ -473,6 +552,7 @@ export const ProjectDetail: FC<Props> = props => {
         ]
       : []),
   ];
+
   const SCHEMA_PROJECT: Schema<EventType> = [
     [
       {
@@ -551,54 +631,14 @@ export const ProjectDetail: FC<Props> = props => {
   ];
   return (
     <div>
-      <SectionBar
-        title={'Project Details'}
-        actions={
-          serviceCallId
-            ? [
-                {
-                  label: 'Spiff Apply',
-                  url: cfURL(
-                    [
-                      'tasks.addtask',
-                      'type=Spiff',
-                      `job_no=${logJobNumber}`,
-                    ].join('&'),
-                  ),
-                  target: '_blank',
-                },
-                {
-                  label: 'Job Activity',
-                  url: cfURL(['service.viewlogs', `id=${id}`].join('&')),
-                },
-                {
-                  label: notification ? 'Notification' : 'Add Notification',
-                  onClick: notification
-                    ? handleSetNotificationViewing(true)
-                    : handleSetNotificationEditing(true),
-                },
-                {
-                  label: 'Service Call Search',
-                  url: cfURL('service.calls'),
-                },
-                {
-                  label: 'Close',
-                  ...(onClose
-                    ? { onClick: onClose }
-                    : {
-                        url: cfURL(
-                          [
-                            'properties.details',
-                            `property_id=${propertyId}`,
-                            `user_id=${userID}`,
-                          ].join('&'),
-                        ),
-                      }),
-                },
-              ]
-            : []
-        }
-      >
+      {loading ? (
+        <Loader />
+      ) : (
+        <SectionBar title={'Project Details'} actions={[]}>
+          <InfoTable data={data_project} loading={loading} error={error} />
+        </SectionBar>
+      )}
+      <SectionBar title={'Customer / Property Details'} actions={[]}>
         <InfoTable data={data} loading={loading} error={error} />
       </SectionBar>
       {
@@ -676,7 +716,13 @@ export const ProjectDetail: FC<Props> = props => {
               },
               {
                 label: 'Logs',
-                content: <LogsTab />,
+                content: (
+                  <LogsTab
+                    serviceCallId={serviceCallId}
+                    loggedUserId={loggedUserId}
+                    project={project!}
+                  />
+                ),
               },
               {
                 label: 'Create',
