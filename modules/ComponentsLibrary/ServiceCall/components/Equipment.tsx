@@ -34,12 +34,20 @@ export const Equipment: FC<Props> = ({
   let selectedInitial = [];
   try {
     repairsInitial = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
-  } catch (e) {}
+  } catch (e) {
+    console.error(
+      `An error has occurred while parsing for initial repairs: ${e}`,
+    );
+  }
   try {
     selectedInitial = JSON.parse(
       localStorage.getItem(localStorageSelectedKey) || '[]',
     );
-  } catch (e) {}
+  } catch (e) {
+    console.error(
+      `An error has occurred while parsing for selected initial repairs: ${e}`,
+    );
+  }
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
   const [selected, setSelected] = useState<Entry[]>(selectedInitial);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);

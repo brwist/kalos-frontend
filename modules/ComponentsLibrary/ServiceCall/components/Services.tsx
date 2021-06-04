@@ -194,17 +194,13 @@ export const Services: FC<Props> = ({
 }) => {
   const { isAdmin } = loggedUser;
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
-  const [
-    serviceRenderedForm,
-    setServicesRenderedForm,
-  ] = useState<ServicesRenderedType>(new ServicesRendered().toObject());
+  const [serviceRenderedForm, setServicesRenderedForm] =
+    useState<ServicesRenderedType>(new ServicesRendered().toObject());
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
-  const [signatureForm, setSignatureForm] = useState<SignatureType>(
-    SIGNATURE_INITIAL,
-  );
-  const [paymentFormPart, setPaymentFormPart] = useState<PaymentPartType>(
-    PAYMENT_PART_INITIAL,
-  );
+  const [signatureForm, setSignatureForm] =
+    useState<SignatureType>(SIGNATURE_INITIAL);
+  const [paymentFormPart, setPaymentFormPart] =
+    useState<PaymentPartType>(PAYMENT_PART_INITIAL);
   const [deleting, setDeleting] = useState<ServicesRenderedType>();
   const [editing, setEditing] = useState<ServicesRenderedType>();
   const [saving, setSaving] = useState<boolean>(false);
@@ -324,7 +320,6 @@ export const Services: FC<Props> = ({
       setServicesRenderedForm,
       setPaymentFormPart,
       setPaymentForm,
-      setSignatureForm,
       signatureForm,
       paymentForm,
       pendingSelectedQuote,
@@ -354,7 +349,7 @@ export const Services: FC<Props> = ({
         setEditing(undefined);
       }
     },
-    [editing, SCHEMA_ON_CALL, setSaving, setEditing, loadServicesRendered],
+    [editing, setSaving, setEditing, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
     (editing?: ServicesRenderedType) => () => setEditing(editing),
