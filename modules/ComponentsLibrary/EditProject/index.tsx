@@ -634,7 +634,26 @@ export const EditProject: FC<Props> = ({
         }
         setEditingProject(false);
         setLoadingEvent(true);
-        await EventClientService.upsertEvent({ ...formData, id: event.id });
+        try {
+          const createdEvent = await EventClientService.upsertEvent({
+            ...formData,
+            id: event.id,
+          });
+          try {
+            let req = new ActivityLog();
+            req.setUserId(loggedUserId);
+            req.setActivityName(
+              `Edited project: ${event.id} and re-saved it to id: ${createdEvent.id}`,
+            );
+            req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+            req.setEventId(event.id);
+            await ActivityLogClientService.Create(req);
+          } catch (err) {
+            console.error(`An error occurred while creating a log: ${err}`);
+          }
+        } catch (err) {
+          console.error(`An error occurred while upserting the event: ${err}`);
+        }
         loadEvent();
       }
     },
