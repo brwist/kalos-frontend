@@ -54,7 +54,7 @@ export const AddServiceCall: FC<Props> = props => {
     setEntries(results);
     setCount(totalCount);
     setLoading(false);
-  }, [setEntries, setCount, setLoading, search]);
+  }, [setEntries, setCount, setLoading, search, page]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -82,9 +82,10 @@ export const AddServiceCall: FC<Props> = props => {
     (addCustomer: boolean) => () => setAddCustomer(addCustomer),
     [setAddCustomer],
   );
-  const handlePropertyClose = useCallback(() => setPropertyOpened(undefined), [
-    setPropertyOpened,
-  ]);
+  const handlePropertyClose = useCallback(
+    () => setPropertyOpened(undefined),
+    [setPropertyOpened],
+  );
   const handleServiceCallClose = useCallback(
     () => setServiceCallOpened(undefined),
     [setServiceCallOpened],
@@ -93,9 +94,10 @@ export const AddServiceCall: FC<Props> = props => {
     (customerOpened?: UserType) => setCustomerOpened(customerOpened),
     [setCustomerOpened],
   );
-  const handleCustomerClose = useCallback(() => setCustomerOpened(undefined), [
-    setCustomerOpened,
-  ]);
+  const handleCustomerClose = useCallback(
+    () => setCustomerOpened(undefined),
+    [setCustomerOpened],
+  );
   const handleCustomerSave = useCallback(
     (data: UserType) => {
       setAddCustomer(false);
