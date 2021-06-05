@@ -657,14 +657,7 @@ export const EditProject: FC<Props> = ({
         loadEvent();
       }
     },
-    [
-      event,
-      loadEvent,
-      setEditingProject,
-      setLoadingEvent,
-      tasks,
-      setErrorProject,
-    ],
+    [event, tasks, loadEvent, loggedUserId],
   );
 
   const SCHEMA_SEARCH: Schema<SearchType> = [
