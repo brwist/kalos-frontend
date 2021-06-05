@@ -36,6 +36,7 @@ import { Confirm } from '../Confirm';
 import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
 import { Typography } from '@material-ui/core';
+import { Alert } from '../Alert';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -94,7 +95,6 @@ export const ServiceCall: FC<Props> = props => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
   const [jobSubtypes, setJobSubtype] = useState<JobSubtypeType[]>([]);
   const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
@@ -113,6 +113,7 @@ export const ServiceCall: FC<Props> = props => {
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] =
     useState<number | null>(null);
+  const [error, setError] = useState<string>('');
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
@@ -138,6 +139,12 @@ export const ServiceCall: FC<Props> = props => {
     },
     [setServicesRendered, serviceCallId],
   );
+
+  const handleSetError = useCallback(
+    (errorMessage: string) => setError(errorMessage),
+    [setError],
+  );
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -230,11 +237,12 @@ export const ServiceCall: FC<Props> = props => {
         setLoading(false);
       });
     } catch (e) {
-      setError(true);
+      handleSetError(e);
+      setLoaded(true);
+      setLoading(false);
     }
   }, [
     setLoading,
-    setError,
     setLoaded,
     setJobTypes,
     userID,
@@ -247,6 +255,7 @@ export const ServiceCall: FC<Props> = props => {
     setProjects,
     loadEntry,
     loadServicesRenderedData,
+    handleSetError,
   ]);
 
   const handleSetParentId = useCallback(
@@ -317,16 +326,22 @@ export const ServiceCall: FC<Props> = props => {
     async (data: EventType) => {
       setSaving(true);
       if (confirmedParentId) data.parentId = confirmedParentId;
-      await EventClientService.upsertEvent(data);
-      setSaving(false);
-      if (onSave) {
-        onSave();
-      }
-      if (onClose) {
-        onClose();
+      try {
+        await EventClientService.upsertEvent(data);
+
+        setSaving(false);
+        if (onSave) {
+          onSave();
+        }
+        if (onClose) {
+          onClose();
+        }
+      } catch (err) {
+        console.error('An error occurred while uploading the project: ', err);
+        handleSetError(err);
       }
     },
-    [onSave, onClose, confirmedParentId],
+    [onSave, onClose, confirmedParentId, handleSetError],
   );
   useEffect(() => {
     if (!loaded) {
@@ -554,6 +569,11 @@ export const ServiceCall: FC<Props> = props => {
   ];
   return (
     <div>
+      {error && (
+        <Alert title="Error" open={true} onClose={() => handleSetError('')}>
+          {`${error}`}
+        </Alert>
+      )}
       <SectionBar
         title={asProject ? 'Project Details' : 'Service Call Details'}
         actions={
@@ -602,7 +622,11 @@ export const ServiceCall: FC<Props> = props => {
             : []
         }
       >
-        <InfoTable data={data} loading={loading} error={error} />
+        <InfoTable
+          data={data}
+          loading={loading}
+          error={error !== '' && error !== undefined}
+        />
       </SectionBar>
       {asProject ? (
         <>
