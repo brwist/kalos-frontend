@@ -44,6 +44,7 @@ export { SideMenu } from "./build/dist/SideMenu";
 export { SpiffLog } from "./build/dist/SpiffLog";
 export { SpiffToolLogs } from "./build/dist/SpiffToolLogs";
 export { Tables } from "./build/dist/Tables";
+export { Teams } from "./build/dist/Teams";
 export { Theme } from "./build/dist/Theme";
 export { Timesheet } from "./build/dist/Timesheet";
 export { ToolLog } from "./build/dist/ToolLog";
