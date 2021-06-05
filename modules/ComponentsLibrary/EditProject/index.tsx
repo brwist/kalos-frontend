@@ -527,8 +527,7 @@ export const EditProject: FC<Props> = ({
           req.setActivityName(`Created task for project ${serviceCallId}`);
           req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
           req.setEventId(serviceCallId);
-          const log = await ActivityLogClientService.Create(req);
-          console.log('Made log: ', log);
+          await ActivityLogClientService.Create(req);
         } catch (err) {
           console.error(
             `An error occurred while trying to create a log: ${err}`,
