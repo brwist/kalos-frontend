@@ -292,16 +292,6 @@ export const EditProject: FC<Props> = ({
     [setEditingTask, loadTaskEvents],
   );
 
-  const handleUploadLog = useCallback(async (req: ActivityLog) => {
-    try {
-      let log = await ActivityLogClientService.Create(req);
-    } catch (err) {
-      console.error(
-        `An error occurred while attempting to create an activity log: ${err}`,
-      );
-    }
-  }, []);
-
   const handleDeleteEvent = useCallback(
     async (eventId: number) => {
       setDeletingEvent(true);
@@ -309,12 +299,17 @@ export const EditProject: FC<Props> = ({
         await EventClientService.deleteEventById(eventId);
         setDeletingEvent(false);
 
-        let req = new ActivityLog();
-        req.setActivityName(`Deleted event: ${eventId}`);
-        req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-        req.setUserId(loggedUserId);
-        req.setEventId(eventId);
-        handleUploadLog(req);
+        try {
+          let req = new ActivityLog();
+          req.setActivityName(`Deleted event: ${eventId}`);
+          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          req.setUserId(loggedUserId);
+          req.setEventId(eventId);
+        } catch (err) {
+          console.error(
+            `An error occurred while attempting to create a log: ${err}`,
+          );
+        }
       } catch (err) {
         console.error(
           `An error occurred while attempting to delete an event by ID: ${err}`,
@@ -324,7 +319,7 @@ export const EditProject: FC<Props> = ({
       setPendingDeleteEvent(undefined);
       if (onClose) onClose();
     },
-    [handleUploadLog, loggedUserId, onClose],
+    [loggedUserId, onClose],
   );
 
   // The function used to actually delete projects (projects are of event type)
