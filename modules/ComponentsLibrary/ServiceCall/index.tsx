@@ -18,6 +18,7 @@ import {
   loadProjects,
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
+  ActivityLogClientService,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -37,6 +38,8 @@ import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
 import { Typography } from '@material-ui/core';
 import { Alert } from '../Alert';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { format } from 'date-fns';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -327,9 +330,31 @@ export const ServiceCall: FC<Props> = props => {
       setSaving(true);
       if (confirmedParentId) data.parentId = confirmedParentId;
       try {
-        await EventClientService.upsertEvent(data);
+        const event = await EventClientService.upsertEvent(data);
 
         setSaving(false);
+        try {
+          let req = new ActivityLog();
+          req.setUserId(loggedUserId);
+          req.setActivityName(
+            `Created event: ${event.id} ${
+              asProject
+                ? `as project with department id: ${event.departmentId}`
+                : ''
+            }`,
+          );
+          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          req.setPropertyId(property.id);
+          req.setEventId(event.id);
+          await ActivityLogClientService.Create(req);
+        } catch (err) {
+          console.error(
+            `An error occurred while uploading the log for the project: ${err}. If this issue persists, please inform a member of the webtech team.`,
+          );
+          handleSetError(
+            `An error occurred while uploading the log for the project: ${err}. If this issue persists, please inform a member of the webtech team.`,
+          );
+        }
         if (onSave) {
           onSave();
         }
@@ -337,11 +362,19 @@ export const ServiceCall: FC<Props> = props => {
           onClose();
         }
       } catch (err) {
-        console.error('An error occurred while uploading the project: ', err);
-        handleSetError(err);
+        console.error('An error occurred while uploading the project: ', err, '. If this issue persists, please inform a member of the webtech team.');
+        handleSetError(`An error occurred while uploading the project: ${err}. If this issue persists, please inform a member of the webtech team.`);
       }
     },
-    [onSave, onClose, confirmedParentId, handleSetError],
+    [
+      onSave,
+      onClose,
+      confirmedParentId,
+      handleSetError,
+      asProject,
+      loggedUserId,
+      property.id,
+    ],
   );
   useEffect(() => {
     if (!loaded) {
