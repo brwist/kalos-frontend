@@ -65,7 +65,15 @@ export const Spiffs: FC<Props> = ({
       setEdited(resultsList.find(({ id }) => id === edited.id));
     }
     setLoading(false);
-  }, [setLoading, setEntries, setCount, page, edited, setEdited]);
+  }, [
+    setLoading,
+    setEntries,
+    setCount,
+    page,
+    edited,
+    setEdited,
+    serviceItem.logJobNumber,
+  ]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);

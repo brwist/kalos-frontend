@@ -3,7 +3,12 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { Field as FieldComponent } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
-import { EventType, makeFakeRows, TaskClientService } from '../../../helpers';
+import {
+  ActivityLogClientService,
+  EventType,
+  makeFakeRows,
+  TaskClientService,
+} from '../../../helpers';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
 import { IconButton, Typography } from '@material-ui/core';
@@ -12,6 +17,7 @@ import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { EnhancedField } from '../Field/examples';
 import { Alert } from '../Alert';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 interface Props {
   projectToUse: EventType;
   loggedUserId: number;
@@ -44,7 +50,7 @@ export const CheckInProjectTask: FC<Props> = ({
     [setCheckInConfirmationBoxOpen],
   );
 
-  const batchGetCheckedTasks = async () => {
+  const batchGetCheckedTasks = useCallback(async () => {
     let task = new Task();
     task.setExternalId(loggedUserId);
     task.setCheckedIn(true);
@@ -65,7 +71,7 @@ export const CheckInProjectTask: FC<Props> = ({
       }
       setCheckedInTasks(arr);
     }
-  };
+  }, [loggedUserId]);
 
   const handleSetCheckInWarningBoxOpen = useCallback(
     (isOpen: boolean) => {
@@ -75,14 +81,17 @@ export const CheckInProjectTask: FC<Props> = ({
   );
 
   const handleSaveTask = useCallback(
-    async ({
-      startDate,
-      startTime,
-      endDate,
-      endTime,
-      checkedIn,
-      ...formData
-    }: ExtendedProjectTaskType) => {
+    async (
+      {
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        checkedIn,
+        ...formData
+      }: ExtendedProjectTaskType,
+      typeOfTask: 'check-in' | 'check-out',
+    ) => {
       const currentDate = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
       if (projectToUse.dateEnded < currentDate) {
         console.error(
@@ -110,23 +119,49 @@ export const CheckInProjectTask: FC<Props> = ({
         endDate = projectToUse.dateEnded.substr(0, 10);
         endTime = projectToUse.timeEnded;
       }
-      await TaskClientService.upsertEventTask({
-        ...formData,
-        eventId: serviceCallId,
-        startDate: `${startDate} ${startTime}:00`,
-        endDate: `${endDate} ${endTime}:00`,
-        checkedIn: checkedIn,
-        ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
-      });
+      try {
+        await TaskClientService.upsertEventTask({
+          ...formData,
+          eventId: serviceCallId,
+          startDate: `${startDate} ${startTime}`,
+          endDate: `${endDate} ${endTime}`,
+          checkedIn: checkedIn,
+          ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
+        });
+        try {
+          let req = new ActivityLog();
+          req.setUserId(loggedUserId);
+          req.setActivityName(
+            `Created task for project ${serviceCallId} (${typeOfTask})`,
+          );
+          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          req.setEventId(serviceCallId);
+          await ActivityLogClientService.Create(req);
+        } catch (err) {
+          console.error(
+            `An error occurred while attempting to create a log: ${err}`,
+          );
+        }
+      } catch (err) {
+        console.error(
+          `An error occurred while attempting to upsert an task: ${err}`,
+        );
+      }
       await batchGetCheckedTasks();
       setLoaded(false);
     },
-    [serviceCallId, loggedUserId, setLoaded],
+    [
+      projectToUse,
+      serviceCallId,
+      loggedUserId,
+      batchGetCheckedTasks,
+      handleSetCheckInWarningBoxOpen,
+    ],
   );
 
   const load = useCallback(async () => {
     await batchGetCheckedTasks();
-  }, []);
+  }, [batchGetCheckedTasks]);
 
   useEffect(() => {
     if (!loaded) {
@@ -171,41 +206,34 @@ export const CheckInProjectTask: FC<Props> = ({
     : makeFakeRows();
 
   const checkOut = (checkedInTask: ExtendedProjectTaskType) => {
-    const date = new Date();
-
     let updateTask = {
       ...checkedInTask,
       id: checkedInTask.id,
       startDate: checkedInTask.startDate,
       startTime: checkedInTask.startTime,
-      endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
-      endTime: format(new Date(date), 'HH-mm'),
+      endDate: format(new Date(), 'yyyy-MM-dd hh:mm:ss'),
+      endTime: format(new Date(), 'HH-mm'),
       checkedIn: false,
       externalId: loggedUserId,
     };
-
-    handleSaveTask(updateTask);
+    handleSaveTask(updateTask, 'check-out');
   };
 
   const checkInNewTask = () => {
-    // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
-    // if there is then use that result to set it as checked in
-    const date = new Date();
     let taskNew = {
-      startDate: format(new Date(date), 'yyyy-MM-dd HH-mm-ss'),
+      startDate: format(new Date(), 'yyyy-MM-dd hh:mm:ss'),
       endDate: '',
       statusId: 2,
       priorityId: 2,
-      startTime: format(new Date(date), 'HH-mm'),
-      endTime: format(addDays(new Date(date), 1), 'HH-mm'),
+      startTime: format(new Date(), 'hh:mm:ss'),
+      endTime: format(addDays(new Date(), 1), 'hh:mm:ss'),
       briefDescription: briefDescription
         ? briefDescription
         : 'Auto generated task',
       externalId: loggedUserId,
       checkedIn: true,
     } as ExtendedProjectTaskType;
-
-    handleSaveTask(taskNew);
+    handleSaveTask(taskNew, 'check-in');
   };
 
   return (

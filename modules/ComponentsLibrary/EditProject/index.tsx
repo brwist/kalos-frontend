@@ -246,7 +246,6 @@ export const EditProject: FC<Props> = ({
     setDepartments,
     setLoadedInit,
     loggedUserId,
-    serviceCallId,
   ]);
 
   const load = useCallback(async () => {
@@ -290,40 +289,38 @@ export const EditProject: FC<Props> = ({
         await loadTaskEvents(editingTask.id);
       }
     },
-    [setEditingTask, setTaskEventsLoaded],
+    [setEditingTask, loadTaskEvents],
   );
 
-  const handleUploadLog = useCallback(async (req: ActivityLog) => {
-    try {
-      let log = await ActivityLogClientService.Create(req);
-    } catch (err) {
-      console.error(
-        `An error occurred while attempting to create an activity log: ${err}`,
-      );
-    }
-  }, []);
+  const handleDeleteEvent = useCallback(
+    async (eventId: number) => {
+      setDeletingEvent(true);
+      try {
+        await EventClientService.deleteEventById(eventId);
+        setDeletingEvent(false);
 
-  const handleDeleteEvent = useCallback(async (eventId: number) => {
-    setDeletingEvent(true);
-    try {
-      await EventClientService.deleteEventById(eventId);
-      setDeletingEvent(false);
+        try {
+          let req = new ActivityLog();
+          req.setActivityName(`Deleted event: ${eventId}`);
+          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          req.setUserId(loggedUserId);
+          req.setEventId(eventId);
+        } catch (err) {
+          console.error(
+            `An error occurred while attempting to create a log: ${err}`,
+          );
+        }
+      } catch (err) {
+        console.error(
+          `An error occurred while attempting to delete an event by ID: ${err}`,
+        );
+      }
 
-      let req = new ActivityLog();
-      req.setActivityName(`Deleted event: ${eventId}`);
-      req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-      req.setUserId(loggedUserId);
-      req.setEventId(eventId);
-      handleUploadLog(req);
-    } catch (err) {
-      console.error(
-        `An error occurred while attempting to delete an event by ID: ${err}`,
-      );
-    }
-
-    setPendingDeleteEvent(undefined);
-    if (onClose) onClose();
-  }, []);
+      setPendingDeleteEvent(undefined);
+      if (onClose) onClose();
+    },
+    [loggedUserId, onClose],
+  );
 
   // The function used to actually delete projects (projects are of event type)
   const handleSetPendingDeleteEvent = useCallback(
@@ -489,6 +486,7 @@ export const EditProject: FC<Props> = ({
       endDate,
       endTime,
       checkedIn,
+      id,
       ...formData
     }: ExtendedProjectTaskType) => {
       if (!event) return;
@@ -513,14 +511,33 @@ export const EditProject: FC<Props> = ({
       }
       setEditingTask(undefined);
       setLoading(true);
-      await TaskClientService.upsertEventTask({
-        ...formData,
-        eventId: serviceCallId,
-        startDate: `${startDate} ${startTime}:00`,
-        endDate: `${endDate} ${endTime}:00`,
-        checkedIn: checkedIn,
-        ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
-      });
+      try {
+        await TaskClientService.upsertEventTask({
+          ...formData,
+          eventId: serviceCallId,
+          startDate: `${startDate} ${startTime}:00`,
+          endDate: `${endDate} ${endTime}:00`,
+          checkedIn: checkedIn,
+          ...(!formData.eventId ? { creatorUserId: loggedUserId } : {}), // There was a !formData.id here in the conditional part of the ternary, I'm guessing
+          // he wanted eventId instead
+        });
+        try {
+          let req = new ActivityLog();
+          req.setUserId(loggedUserId);
+          req.setActivityName(`Created task for project ${serviceCallId}`);
+          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          req.setEventId(serviceCallId);
+          await ActivityLogClientService.Create(req);
+        } catch (err) {
+          console.error(
+            `An error occurred while trying to create a log: ${err}`,
+          );
+        }
+      } catch (err) {
+        console.error(
+          `An error occurred while trying to upsert an event task: ${err}`,
+        );
+      }
 
       setLoaded(false);
     },
@@ -611,18 +628,30 @@ export const EditProject: FC<Props> = ({
         }
         setEditingProject(false);
         setLoadingEvent(true);
-        await EventClientService.upsertEvent({ ...formData, id: event.id });
+        try {
+          const createdEvent = await EventClientService.upsertEvent({
+            ...formData,
+            id: event.id,
+          });
+          try {
+            let req = new ActivityLog();
+            req.setUserId(loggedUserId);
+            req.setActivityName(
+              `Edited project: ${event.id} and re-saved it to id: ${createdEvent.id}`,
+            );
+            req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+            req.setEventId(event.id);
+            await ActivityLogClientService.Create(req);
+          } catch (err) {
+            console.error(`An error occurred while creating a log: ${err}`);
+          }
+        } catch (err) {
+          console.error(`An error occurred while upserting the event: ${err}`);
+        }
         loadEvent();
       }
     },
-    [
-      event,
-      loadEvent,
-      setEditingProject,
-      setLoadingEvent,
-      tasks,
-      setErrorProject,
-    ],
+    [event, tasks, loadEvent, loggedUserId],
   );
 
   const SCHEMA_SEARCH: Schema<SearchType> = [
@@ -904,12 +933,6 @@ export const EditProject: FC<Props> = ({
             content: event ? (
               <GanttChart
                 events={filteredTasks.map(task => {
-                  // This one is in-progress
-                  if (
-                    task.endDate == '2009-00-00 00:00:00' &&
-                    task.statusId == 2
-                  ) {
-                  }
                   const {
                     id,
                     briefDescription,
