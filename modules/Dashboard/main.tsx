@@ -96,6 +96,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     const txn = new Transaction();
     txn.setOwnerId(this.props.userId);
     txn.setStatusId(1);
+    txn.setIsActive(1);
     const res = await this.TxnClient.BatchGet(txn);
     this.setState({
       receiptCount: res.getTotalCount(),
