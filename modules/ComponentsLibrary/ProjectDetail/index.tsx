@@ -28,16 +28,14 @@ import { Option } from '../Field';
 import { Form, Schema } from '../Form';
 import { General } from './components/General';
 import { Equipment } from './components/Equipment';
-import { Services } from './components/Services';
 import { Confirm } from '../Confirm';
 import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
 import { Typography } from '@material-ui/core';
 import { BillingTab } from './components/Billing';
 import { LogsTab } from './components/Logs';
-import { format } from 'date-fns';
-import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { RoleType } from '../Payroll';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -82,14 +80,12 @@ export const ProjectDetail: FC<Props> = props => {
   const [tabIdx, setTabIdx] = useState<number>(0);
   const [tabKey, setTabKey] = useState<number>(0);
   const [pendingSave, setPendingSave] = useState<boolean>(false);
-  const [requestValid, setRequestValid] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
   const [property, setProperty] = useState<PropertyType>(
     new Property().toObject(),
   );
   const [customer, setCustomer] = useState<UserType>(new User().toObject());
-  const [propertyEvents, setPropertyEvents] = useState<EventType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -99,11 +95,7 @@ export const ProjectDetail: FC<Props> = props => {
   const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
     [],
   );
-
-  const [servicesRendered, setServicesRendered] = useState<
-    ServicesRenderedType[]
-  >([]);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
+  const [role, setRole] = useState<RoleType>();
   const [notificationEditing, setNotificationEditing] =
     useState<boolean>(false);
   const [notificationViewing, setNotificationViewing] =
@@ -126,20 +118,6 @@ export const ProjectDetail: FC<Props> = props => {
     },
     [setEntry, serviceCallId],
   );
-  const loadServicesRenderedData = useCallback(
-    async (_serviceCallId = serviceCallId) => {
-      if (_serviceCallId) {
-        setLoading(true);
-        const servicesRendered =
-          await ServicesRenderedClientService.loadServicesRenderedByEventID(
-            _serviceCallId,
-          );
-        setServicesRendered(servicesRendered);
-        setLoading(false);
-      }
-    },
-    [setServicesRendered, serviceCallId],
-  );
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -150,12 +128,31 @@ export const ProjectDetail: FC<Props> = props => {
       promises.push(
         new Promise<void>(async resolve => {
           try {
+            const loggedUser = await UserClientService.loadUserById(userID);
+            if (loggedUser.permissionGroupsList) {
+              const roleGotten = loggedUser.permissionGroupsList.find(
+                p => p.type === 'role',
+              );
+              if (roleGotten) setRole(roleGotten.name as RoleType);
+            }
+            resolve();
+          } catch (err) {
+            console.error(
+              `An error occurred while getting the logged user or role type: ${err}`,
+            );
+            resolve();
+          }
+        }),
+      );
+
+      promises.push(
+        new Promise<void>(async resolve => {
+          try {
             let req = new Event();
             req.setId(serviceCallId);
             const response = await EventClientService.Get(req);
             projectGotten = response;
             setProject(response);
-            const responses = await EventClientService.BatchGet(req);
             resolve();
           } catch (err) {
             console.error('An error occurred while getting the project: ', err);
@@ -178,15 +175,6 @@ export const ProjectDetail: FC<Props> = props => {
         new Promise<void>(async resolve => {
           const customer = await UserClientService.loadUserById(userID);
           setCustomer(customer);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const propertyEvents =
-            await EventClientService.loadEventsByPropertyId(propertyId);
-          setPropertyEvents(propertyEvents);
           resolve();
         }),
       );
@@ -218,22 +206,7 @@ export const ProjectDetail: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const loggedUser = await UserClientService.loadUserById(loggedUserId);
-          setLoggedUser(loggedUser);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
           await loadEntry();
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          await loadServicesRenderedData();
           resolve();
         }),
       );
@@ -272,14 +245,10 @@ export const ProjectDetail: FC<Props> = props => {
     setJobTypes,
     userID,
     propertyId,
-    setPropertyEvents,
-    loggedUserId,
-    setLoggedUser,
     setProperty,
     setCustomer,
     setProjects,
     loadEntry,
-    loadServicesRenderedData,
     serviceCallId,
   ]);
 
@@ -331,7 +300,6 @@ export const ProjectDetail: FC<Props> = props => {
     if (!serviceCallId) {
       setServiceCallId(res.id);
       await loadEntry(res.id);
-      await loadServicesRenderedData(res.id);
     }
     if (onSave) {
       onSave();
@@ -345,7 +313,6 @@ export const ProjectDetail: FC<Props> = props => {
     requestFields,
     onSave,
     loadEntry,
-    loadServicesRenderedData,
   ]);
   const saveProject = useCallback(
     async (data: EventType) => {
@@ -370,10 +337,6 @@ export const ProjectDetail: FC<Props> = props => {
     if (entry && entry.customer && entry.customer.notification !== '') {
       setNotificationViewing(true);
     }
-    if (pendingSave && requestValid) {
-      setPendingSave(false);
-      saveServiceCall();
-    }
     if (pendingSave && tabIdx === 0 && requestRef.current) {
       //@ts-ignore
       requestRef.current.click();
@@ -385,7 +348,6 @@ export const ProjectDetail: FC<Props> = props => {
     setLoaded,
     setNotificationViewing,
     pendingSave,
-    requestValid,
     setPendingSave,
     saveServiceCall,
     tabIdx,
@@ -588,6 +550,7 @@ export const ProjectDetail: FC<Props> = props => {
       },
     ],
   ];
+
   return (
     <div>
       <SectionBar title={'Customer / Property Details'} actions={[]}>
@@ -645,11 +608,14 @@ export const ProjectDetail: FC<Props> = props => {
               },
               {
                 label: 'Logs',
-                content: (
+                content: loading ? (
+                  <Loader />
+                ) : (
                   <LogsTab
                     serviceCallId={serviceCallId}
                     loggedUserId={loggedUserId}
                     project={project!}
+                    role={role!}
                   />
                 ),
               },
