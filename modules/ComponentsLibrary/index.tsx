@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom';
 import { StyledPage } from '../PageWrapper/styled';
 import Actions from './Actions/examples';
 import ActivityLogReport from './ActivityLogReport/examples';
+import AddLog from './AddLog/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
 import Alert from './Alert/examples';
@@ -108,6 +109,7 @@ const DEFAULT_COMPONENT_IDX = 0;
 const COMPONENTS = {
   Actions,
   ActivityLogReport,
+  AddLog,
   AddNewButton,
   AdvancedSearch,
   Alert,
