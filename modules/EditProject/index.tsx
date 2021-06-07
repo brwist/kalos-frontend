@@ -4,10 +4,7 @@ import ReactDOM from 'react-dom';
 import { ENDPOINT } from '../../constants';
 import { EditProject } from './main';
 import './nothing.less';
-const u = new UserClient(ENDPOINT);
-u.GetToken('test', 'test').then(() => {
-  ReactDOM.render(
-    <EditProject serviceCallId={86246} loggedUserId={101253} withHeader />,
-    document.getElementById('root'),
-  );
-});
+ReactDOM.render(
+  <EditProject serviceCallId={86246} loggedUserId={101253} withHeader />,
+  document.getElementById('root'),
+);
