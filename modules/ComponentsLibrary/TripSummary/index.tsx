@@ -544,6 +544,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   <IconButton
                     key={currentTrip.getId() + 'delete' + idx}
                     size="small"
+                    disabled={currentTrip.getPayrollProcessed() === true}
                     onClick={() =>
                       this.setStateToNew({
                         pendingTripToDelete: currentTrip,

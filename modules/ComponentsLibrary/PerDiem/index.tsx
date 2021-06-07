@@ -552,43 +552,48 @@ export const PerDiemComponent: FC<Props> = ({
     role === 'Manager';
   const isOwner = !isAnyManager;
   const addPerDiemDisabled = availableDapartments.length === 0;
-  const SCHEMA_PER_DIEM: Schema<PerDiemType> = pendingPerDiemEdit
-    ? [
-        [
-          { name: 'id', type: 'hidden' },
-          { name: 'dateStarted', type: 'hidden' },
-        ],
-        [
-          {
-            name: 'userId',
-            label: 'Technician',
-            type:
-              isAnyManager && !pendingPerDiemEdit.id ? 'technician' : 'hidden',
-            required: true,
-          },
-        ],
-        [
-          ...(pendingPerDiemEdit.id
-            ? []
-            : [
-                {
-                  name: 'departmentId' as const,
-                  label: 'Department',
-                  options: departmentsOptions,
-                  required: true,
-                  type: isAnyManager ? ('hidden' as const) : ('text' as const),
-                },
-              ]),
-        ],
-        [
-          {
-            name: 'notes',
-            label: 'Notes',
-            multiline: true,
-          },
-        ],
-      ]
-    : [];
+  const SCHEMA_PER_DIEM: Schema<PerDiemType> =
+    pendingPerDiemEdit && pendingPerDiemEdit.payrollProcessed == false
+      ? [
+          [
+            { name: 'id', type: 'hidden' },
+            { name: 'dateStarted', type: 'hidden' },
+          ],
+          [
+            {
+              name: 'userId',
+              label: 'Technician',
+              type:
+                isAnyManager && !pendingPerDiemEdit.id
+                  ? 'technician'
+                  : 'hidden',
+              required: true,
+            },
+          ],
+          [
+            ...(pendingPerDiemEdit.id
+              ? []
+              : [
+                  {
+                    name: 'departmentId' as const,
+                    label: 'Department',
+                    options: departmentsOptions,
+                    required: true,
+                    type: isAnyManager
+                      ? ('hidden' as const)
+                      : ('text' as const),
+                  },
+                ]),
+          ],
+          [
+            {
+              name: 'notes',
+              label: 'Notes',
+              multiline: true,
+            },
+          ],
+        ]
+      : [];
   const makeNewPerDiem = useCallback(() => {
     const req = new PerDiem();
     if (user) {
