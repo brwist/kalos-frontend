@@ -106,7 +106,7 @@ export const CostReport: FC<Props> = ({
   const loadInit = useCallback(async () => {
     await loadEvent();
     setLoadedInit(true);
-  }, [loadEvent, setLoadedInit, loggedUserId]);
+  }, [loadEvent, setLoadedInit]);
 
   const load = useCallback(async () => {
     let promises = [];
@@ -150,7 +150,7 @@ export const CostReport: FC<Props> = ({
 
       setLoading(false);
     });
-  }, [setLoading, serviceCallId, loggedUserId, loadPrintData]);
+  }, [setLoading, serviceCallId, loadPrintData]);
 
   useEffect(() => {
     if (!loadedInit) {
