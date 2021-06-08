@@ -11,10 +11,11 @@ import { Form, Schema } from '../Form';
 
 interface Props {
   onClose: () => any;
+  onSave?: (savedLog: ActivityLog) => void;
   loggedUserId: number;
 }
 
-export const AddLog: FC<Props> = ({ onClose, loggedUserId }) => {
+export const AddLog: FC<Props> = ({ onClose, onSave, loggedUserId }) => {
   const [log] = useState<ActivityLog.AsObject>(new ActivityLog().toObject());
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
@@ -25,6 +26,7 @@ export const AddLog: FC<Props> = ({ onClose, loggedUserId }) => {
       try {
         setSaving(true);
         const response = await ActivityLogClientService.Create(logToSave);
+        if (onSave) onSave(logToSave);
         setSaving(false);
         if (!response) {
           throw new Error(
@@ -41,7 +43,7 @@ export const AddLog: FC<Props> = ({ onClose, loggedUserId }) => {
         setSaving(false);
       }
     },
-    [setSaving, loggedUserId],
+    [loggedUserId, onSave],
   );
 
   const handleSetError = useCallback(
