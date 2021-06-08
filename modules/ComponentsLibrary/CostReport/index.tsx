@@ -68,7 +68,7 @@ export const CostReport: FC<Props> = ({
     0,
   );
 
-  const loadPrintData = useCallback(async () => {
+  const loadResources = useCallback(async () => {
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
@@ -86,9 +86,9 @@ export const CostReport: FC<Props> = ({
 
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
-    await loadPrintData();
+    await loadResources();
     setPrintStatus('loaded');
-  }, [setPrintStatus, loadPrintData]);
+  }, [setPrintStatus, loadResources]);
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
@@ -106,7 +106,7 @@ export const CostReport: FC<Props> = ({
   const loadInit = useCallback(async () => {
     await loadEvent();
     setLoadedInit(true);
-  }, [loadEvent, setLoadedInit, loggedUserId]);
+  }, [loadEvent, setLoadedInit]);
 
   const load = useCallback(async () => {
     let promises = [];
@@ -116,7 +116,7 @@ export const CostReport: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        await loadPrintData();
+        await loadResources();
         resolve();
       }),
     );
@@ -150,7 +150,7 @@ export const CostReport: FC<Props> = ({
 
       setLoading(false);
     });
-  }, [setLoading, serviceCallId, loggedUserId, loadPrintData]);
+  }, [setLoading, serviceCallId, loadResources]);
 
   useEffect(() => {
     if (!loadedInit) {
