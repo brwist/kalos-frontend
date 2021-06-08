@@ -3,12 +3,7 @@ import {
   ActivityLogList,
 } from '@kalos-core/kalos-rpc/ActivityLog';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import {
-  ActivityLogClientService,
-  EventClientService,
-  EventType,
-} from '../../../../helpers';
-import { Event, EventList } from '@kalos-core/kalos-rpc/Event';
+import { ActivityLogClientService, EventType } from '../../../../helpers';
 import { InfoTable, Row } from '../../InfoTable';
 import { Loader } from '../../../Loader/main';
 import { CheckInProjectTask } from '../../CheckInProjectTask';
@@ -72,7 +67,7 @@ export const LogsTab: FC<Props> = ({
     <>
       {addingLog && (
         <Modal open={true} onClose={() => handleSetAddingLog(false)}>
-          <AddLog />
+          <AddLog onClose={() => handleSetAddingLog(false)} />
         </Modal>
       )}
       <CheckInProjectTask
