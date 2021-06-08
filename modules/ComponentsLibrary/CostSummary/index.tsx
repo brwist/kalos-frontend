@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, useReducer } from 'react';
 import {
   TimesheetLine,
   TimesheetLineClient,
@@ -17,22 +17,17 @@ import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
-  differenceInCalendarDays,
   subDays,
   addDays,
   startOfWeek,
   format,
   endOfWeek,
 } from 'date-fns';
-import {
-  Trip,
-  TripList,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
   formatDate,
   TaskClientService,
-  TimeoffRequestClientService,
   PerDiemRowType,
   PerDiemClientService,
   PerDiemType,
@@ -40,8 +35,10 @@ import {
   timestamp,
   SpiffToolAdminActionClientService,
 } from '../../../helpers';
+import { reducer } from './reducer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { fi } from 'date-fns/locale';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -65,7 +62,6 @@ export const CostSummary: FC<Props> = ({
   const [totalSpiffsProcessed, setTotalSpiffsProcessed] = useState<number>(0);
 
   const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>(0);
-  const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
   const [totalPTO, setTotalPTO] = useState<number>(0);
   const [totalPerDiem, setTotalPerDiem] = useState<{
     totalMeals: number;
@@ -95,6 +91,13 @@ export const CostSummary: FC<Props> = ({
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
+
+  const [state, dispatch] = useReducer(reducer, {
+    spiffs: undefined,
+  });
+
+  const { spiffs } = state;
+
   const getTrips = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
@@ -362,7 +365,7 @@ export const CostSummary: FC<Props> = ({
       }
       if (spiffType === 'Spiff') {
         if (dateType === 'Weekly') {
-          setSpiffsWeekly(results);
+          dispatch({ type: 'updateSpiffs', data: results });
         }
         return spiffTotal;
       } else {
@@ -506,25 +509,36 @@ export const CostSummary: FC<Props> = ({
     return total;
   }, [endDay, startDay, userId]);
 
-  const toggleProcessSpiffTool = async (spiffTool: Task.AsObject) => {
-    spiffTool.payrollProcessed = true;
-    const { id } = spiffTool;
+  const toggleProcessSpiffTool = async (spiffTool: Task) => {
+    const tempSpiffs = spiffs;
+    for (let i = 0; i < spiffs!.length; i++) {
+      if (tempSpiffs![i].getId() == spiffTool.getId()) {
+        console.log('we found it');
+        tempSpiffs![i].setPayrollProcessed(true);
+      }
+    }
+    dispatch({ type: 'updateSpiff', data: spiffTool });
+
+    const id = spiffTool.getId();
     const req = new Task();
     req.setId(id);
     req.setFieldMaskList(['PayrollProcessed']);
     req.setPayrollProcessed(true);
     const adminReq = new SpiffToolAdminAction();
     await TaskClientService.Update(req);
-    if (spiffTool.actionsList) {
-      for (let i = 0; i < spiffTool.actionsList.length; i++) {
-        if (spiffTool.actionsList[i].dateProcessed === NULL_TIME_VALUE) {
-          adminReq.setId(spiffTool.actionsList[i].id);
+    if (spiffTool.getActionsList()) {
+      for (let i = 0; i < spiffTool.getActionsList().length; i++) {
+        if (
+          spiffTool.getActionsList()[i].getDateProcessed() === NULL_TIME_VALUE
+        ) {
+          adminReq.setId(spiffTool.getActionsList()[i].getId());
           adminReq.setDateProcessed(timestamp());
           adminReq.setFieldMaskList(['DateProcessed']);
           await SpiffToolAdminActionClientService.Update(adminReq);
         }
       }
     }
+    //setSpiffsWeekly(tempSpiffs);
   };
   const toggleProcessPerDiems = async (perDiems: PerDiem.AsObject[]) => {
     for (let i = 0; i < perDiems.length; i++) {
@@ -721,8 +735,8 @@ export const CostSummary: FC<Props> = ({
             { name: 'Processed' },
           ]}
           data={
-            spiffsWeekly
-              ? spiffsWeekly.map(spiff => {
+            spiffs
+              ? spiffs.map(spiff => {
                   return [
                     {
                       value: formatDate(
@@ -752,9 +766,8 @@ export const CostSummary: FC<Props> = ({
                               <IconButton
                                 key="processSpiffWeekly"
                                 size="small"
-                                onClick={() =>
-                                  toggleProcessSpiffTool(spiff.toObject())
-                                }
+                                disabled={spiff.getPayrollProcessed() === true}
+                                onClick={() => toggleProcessSpiffTool(spiff)}
                               >
                                 <CheckIcon />
                               </IconButton>,

@@ -10,35 +10,15 @@ import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
 import { ENDPOINT, MEALS_RATE } from '../../../constants';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import {
-  differenceInMinutes,
-  parseISO,
-  differenceInCalendarDays,
-  subDays,
-  addDays,
-  startOfWeek,
-  format,
-  endOfWeek,
-} from 'date-fns';
-import {
-  Trip,
-  TripList,
-  PerDiemList,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { differenceInMinutes, parseISO, addDays, format } from 'date-fns';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
   formatDate,
-  TaskClientService,
-  TimeoffRequestClientService,
-  PerDiemRowType,
   PerDiemClientService,
-  PerDiemType,
   usd,
-  timestamp,
-  SpiffToolAdminActionClientService,
 } from '../../../helpers';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { Button } from '@material-ui/core';
 interface Props {
   userId: number;
@@ -56,7 +36,12 @@ export const CostReportForEmployee: FC<Props> = ({
   const [trips, setTrips] = useState<Trip[]>();
   const [perDiems, setPerDiems] = useState<PerDiem[]>();
   const [spiffs, setSpiffs] = useState<Task[]>();
-  const [hours, setHours] = useState<number>();
+  const [hours, setHours] = useState<{
+    processed: number;
+    approved: number;
+    submitted: number;
+    pending: number;
+  }>();
   const [loaded, setLoaded] = useState<boolean>(false);
   const startDay = week;
 
@@ -110,12 +95,14 @@ export const CostReportForEmployee: FC<Props> = ({
     const startDate = startDay;
     const endDate = endDay;
     timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
+    timesheetReq.setDateTargetList(['time_started', 'time_started']);
     const client = new TimesheetLineClient(ENDPOINT);
-    let results = new TimesheetLineList().getResultsList();
     timesheetReq.setOrderBy('time_started');
-    results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
-
-    let total = 0;
+    let results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
+    let processed = 0;
+    let approved = 0;
+    let submitted = 0;
+    let pending = 0;
     for (let i = 0; i < results.length; i++) {
       {
         const timeFinished = results[i].toObject().timeFinished;
@@ -125,10 +112,18 @@ export const CostReportForEmployee: FC<Props> = ({
             60,
         );
 
-        total += subtotal;
+        if (results[i].getPayrollProcessed() === true) {
+          processed += subtotal;
+        } else if (results[i].getAdminApprovalUserId() !== 0) {
+          approved += subtotal;
+        } else if (results[i].getUserApprovalDatetime() != NULL_TIME_VALUE) {
+          submitted += subtotal;
+        } else {
+          pending += subtotal;
+        }
       }
     }
-    return total;
+    return { processed, approved, submitted, pending };
   }, [endDay, startDay, userId]);
 
   useEffect(() => {
@@ -196,6 +191,34 @@ export const CostReportForEmployee: FC<Props> = ({
   }, [loaded, getPerDiems, getHours, getSpiffs, getTrips]);
   return loaded ? (
     <SectionBar title="Employee Report">
+      <InfoTable
+        columns={[
+          { name: 'Processed Hours' },
+          { name: 'Approved Hours, Not Processed' },
+          { name: 'Submitted Hours, Not Approved' },
+          { name: 'Pending Hours, Not Submitted' },
+        ]}
+        data={
+          hours
+            ? [
+                [
+                  {
+                    value: hours.processed,
+                  },
+                  {
+                    value: hours.approved,
+                  },
+                  {
+                    value: hours.submitted,
+                  },
+                  {
+                    value: hours.pending,
+                  },
+                ],
+              ]
+            : []
+        }
+      />
       <InfoTable
         columns={[
           { name: 'Decision Date for Spiff' },
@@ -268,6 +291,45 @@ export const CostReportForEmployee: FC<Props> = ({
                   {
                     value:
                       perDiem.getPayrollProcessed() === false
+                        ? 'Not Processed'
+                        : 'Processed',
+                  },
+                ];
+              })
+            : []
+        }
+      />
+      <InfoTable
+        columns={[
+          { name: 'Date' },
+          { name: 'Distance' },
+          { name: 'Start' },
+          { name: 'End' },
+          { name: 'Approved?' },
+          { name: 'Processed?' },
+        ]}
+        data={
+          trips
+            ? trips.map(trip => {
+                return [
+                  {
+                    value: formatDate(trip.getDate()),
+                  },
+                  {
+                    value: trip.getDistanceInMiles(),
+                  },
+                  {
+                    value: trip.getOriginAddress(),
+                  },
+                  {
+                    value: trip.getDestinationAddress(),
+                  },
+                  {
+                    value: trip.getApproved() === true ? 'Yes' : 'No',
+                  },
+                  {
+                    value:
+                      trip.getPayrollProcessed() === false
                         ? 'Not Processed'
                         : 'Processed',
                   },
