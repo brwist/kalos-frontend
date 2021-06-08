@@ -13,10 +13,18 @@ interface Props {
   onClose: () => any;
   onSave?: (savedLog: ActivityLog) => void;
   loggedUserId: number;
+  eventId?: number; // Will pre-fill event id when adding log
 }
 
-export const AddLog: FC<Props> = ({ onClose, onSave, loggedUserId }) => {
-  const [log] = useState<ActivityLog.AsObject>(new ActivityLog().toObject());
+export const AddLog: FC<Props> = ({
+  onClose,
+  onSave,
+  loggedUserId,
+  eventId,
+}) => {
+  const [log] = useState<ActivityLog.AsObject>({
+    eventId: eventId,
+  } as ActivityLog.AsObject);
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
 

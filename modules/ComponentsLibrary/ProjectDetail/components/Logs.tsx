@@ -74,6 +74,7 @@ export const LogsTab: FC<Props> = ({
               load();
             }}
             loggedUserId={loggedUserId}
+            eventId={serviceCallId}
           />
         </Modal>
       )}
