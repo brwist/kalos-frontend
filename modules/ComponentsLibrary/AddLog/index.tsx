@@ -16,17 +16,23 @@ interface Props {
   eventId?: number; // Will pre-fill event id when adding log
 }
 
+interface FileLog extends ActivityLog.AsObject {
+  fileData: string;
+}
+const PreviewImageSize = [200, 200]; // size of img in px
+
 export const AddLog: FC<Props> = ({
   onClose,
   onSave,
   loggedUserId,
   eventId,
 }) => {
-  const [log] = useState<ActivityLog.AsObject>({
+  const [log] = useState<FileLog>({
     eventId: eventId,
-  } as ActivityLog.AsObject);
+  } as FileLog);
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
+  const [fileData, setFileData] = useState<string | ArrayBuffer | null>('');
 
   const handleSaveLog = useCallback(
     async (logToSave: ActivityLog) => {
@@ -59,8 +65,13 @@ export const AddLog: FC<Props> = ({
     [setError],
   );
 
+  const handleSetFileData = useCallback(
+    (fileData: string | ArrayBuffer | null) => setFileData(fileData),
+    [setFileData],
+  );
+
   // TODO This is set as an AsObject until the Form and Schema can handle non-AsObject forms
-  const SCHEMA: Schema<ActivityLog.AsObject> = [
+  const SCHEMA: Schema<FileLog> = [
     [
       {
         name: 'activityName',
@@ -116,9 +127,28 @@ export const AddLog: FC<Props> = ({
         type: 'number',
       },
     ],
+    [
+      {
+        name: 'fileData',
+        label: 'Upload Photo',
+        type: 'file',
+        onFileLoad: data => handleSetFileData(data),
+      },
+    ],
   ];
   return (
     <>
+      {fileData && (
+        <img
+          src={String(fileData)}
+          className="FileGalleryImg"
+          id="SingleUploadImgPreview"
+          style={{
+            width: PreviewImageSize[0],
+            height: PreviewImageSize[1],
+          }}
+        />
+      )}
       {saving && <Loader />}
       {error && (
         <Alert open={true} onClose={() => handleSetError('')}>
@@ -127,9 +157,12 @@ export const AddLog: FC<Props> = ({
       )}
       <Form
         title="Log Details"
-        onSave={(savedLog: ActivityLog.AsObject) => {
+        onSave={(savedLog: FileLog) => {
           let saved = new ActivityLog();
           for (const field in savedLog) {
+            if (field == 'fileData') {
+              continue;
+            }
             // @ts-ignore
             saved[getRPCFields(field).methodName](savedLog[field]);
           }
