@@ -21,7 +21,6 @@ interface Props {
 interface FileLog extends ActivityLog.AsObject {
   fileData: string;
 }
-const PreviewImageSize = [200, 200]; // size of img in px
 
 export const AddLog: FC<Props> = ({
   onClose,
@@ -34,8 +33,54 @@ export const AddLog: FC<Props> = ({
   } as FileLog);
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
+  const [confirmed, setConfirmed] = useState<boolean>(); // For if the image is confirmed to be uploaded as well
   const [fileData, setFileData] =
     useState<{ fileData: string; fileName: string } | undefined>();
+
+  const handleSetError = useCallback(
+    (err: string) => setError(err),
+    [setError],
+  );
+
+  const handleSetFileData = useCallback(
+    (fileData: string, fileName: string) => setFileData({ fileData, fileName }),
+    [setFileData],
+  );
+
+  const handleSetConfirmed = useCallback(
+    (confirmed: boolean) => setConfirmed(confirmed),
+    [setConfirmed],
+  );
+
+  const handleSubmitFileToS3 = useCallback(
+    async (fileData: string, fileName, logId: number) => {
+      try {
+        const split = fileName.split('.');
+        const result = await S3ClientService.uploadFileToS3Bucket(
+          // TODO probably shouldn't do it this way permanently, but creating a log image with the name itself specified is probably
+          // the easiest way to do it until Kalos RPC 3 is ready and all the issues are fixed
+          // I also made sure to set the tag as well so we can use that later on once we can modify the S3ClientService to actually use that
+          // information to grab stuff from S3
+          `EventID-${eventId}-LogID-${logId}.${split[split.length - 1]}`,
+          fileData,
+          'project-log-images',
+          eventId ? `EventID-${eventId}` : undefined, // Images submitted to S3 are tracked by event ID this way
+        );
+        if (result === 'nok') {
+          throw new Error(
+            'An unknown error occurred while uploading the file.',
+          );
+        }
+        handleSetFileData('', '');
+        setConfirmed(false);
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading the file to S3: ${err}`,
+        );
+      }
+    },
+    [eventId, handleSetFileData],
+  );
 
   const handleSaveLog = useCallback(
     async (logToSave: ActivityLog) => {
@@ -50,6 +95,14 @@ export const AddLog: FC<Props> = ({
             `No response was given from the client service - an error occurred. `,
           );
         }
+
+        if (!fileData) return; // no image along with the log
+
+        handleSubmitFileToS3(
+          fileData!.fileData,
+          fileData!.fileName,
+          response.id,
+        );
       } catch (err) {
         console.error(
           `An error occurred while attempting to create a new log: ${err}`,
@@ -60,42 +113,7 @@ export const AddLog: FC<Props> = ({
         setSaving(false);
       }
     },
-    [loggedUserId, onSave],
-  );
-
-  const handleSetError = useCallback(
-    (err: string) => setError(err),
-    [setError],
-  );
-
-  const handleSetFileData = useCallback(
-    (fileData: string, fileName: string) => setFileData({ fileData, fileName }),
-    [setFileData],
-  );
-
-  const handleSubmitFileToS3 = useCallback(
-    async (fileData: string, fileName) => {
-      try {
-        const result = await S3ClientService.uploadFileToS3Bucket(
-          fileName,
-          fileData,
-          'project-log-images',
-          eventId ? `LogId-${eventId}` : undefined, // Images submitted to S3 are tracked by event ID this way
-        );
-        if (result === 'nok') {
-          throw new Error(
-            'An unknown error occurred while uploading the file.',
-          );
-        }
-        console.log('Result: ', result);
-        handleSetFileData('', '');
-      } catch (err) {
-        console.error(
-          `An error occurred while uploading the file to S3: ${err}`,
-        );
-      }
-    },
-    [eventId, handleSetFileData],
+    [fileData, handleSubmitFileToS3, loggedUserId, onSave],
   );
 
   // TODO This is set as an AsObject until the Form and Schema can handle non-AsObject forms
@@ -202,14 +220,21 @@ export const AddLog: FC<Props> = ({
         submitLabel="Save"
         cancelLabel="Close"
       />
-      {fileData?.fileData && (
-        <Modal open={true} onClose={() => handleSetFileData('', '')}>
+      {fileData?.fileData && !confirmed && (
+        <Modal
+          open={true}
+          onClose={() => {
+            handleSetFileData('', '');
+            handleSetConfirmed(false);
+          }}
+        >
           <ImagePreview
             fileData={fileData.fileData}
-            onSubmit={() =>
-              handleSubmitFileToS3(fileData.fileData, fileData.fileName)
-            }
-            onClose={() => handleSetFileData('', '')}
+            onSubmit={() => handleSetConfirmed(true)}
+            onClose={() => {
+              handleSetFileData('', '');
+              handleSetConfirmed(false); 
+            }}
           />
         </Modal>
       )}
