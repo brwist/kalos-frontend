@@ -11,15 +11,17 @@ import { Form, Schema } from '../Form';
 
 interface Props {
   onClose: () => any;
+  loggedUserId: number;
 }
 
-export const AddLog: FC<Props> = ({ onClose }) => {
+export const AddLog: FC<Props> = ({ onClose, loggedUserId }) => {
   const [log] = useState<ActivityLog.AsObject>(new ActivityLog().toObject());
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
 
   const handleSaveLog = useCallback(
     async (logToSave: ActivityLog) => {
+      logToSave.setUserId(loggedUserId);
       try {
         setSaving(true);
         const response = await ActivityLogClientService.Create(logToSave);
@@ -29,7 +31,6 @@ export const AddLog: FC<Props> = ({ onClose }) => {
             `No response was given from the client service - an error occurred. `,
           );
         }
-        console.log('Response: ', response);
       } catch (err) {
         console.error(
           `An error occurred while attempting to create a new log: ${err}`,
@@ -40,7 +41,7 @@ export const AddLog: FC<Props> = ({ onClose }) => {
         setSaving(false);
       }
     },
-    [setSaving],
+    [setSaving, loggedUserId],
   );
 
   const handleSetError = useCallback(
@@ -59,6 +60,50 @@ export const AddLog: FC<Props> = ({ onClose }) => {
         name: 'activityDate',
         label: 'Date',
         type: 'mui-datetime',
+      },
+    ],
+    [
+      {
+        name: 'propertyId',
+        label: 'Property ID',
+        type: 'number',
+      },
+      {
+        name: 'contractId',
+        label: 'Contract ID',
+        type: 'number',
+      },
+      {
+        name: 'customerId',
+        label: 'Customer ID',
+        type: 'number',
+      },
+      {
+        name: 'taskId',
+        label: 'Task ID',
+        type: 'number',
+      },
+      {
+        name: 'timesheetLineId',
+        label: 'Timesheet ID',
+        type: 'number',
+      },
+      {
+        name: 'eventId',
+        label: 'Event / Project ID',
+        type: 'number',
+      },
+    ],
+    [
+      {
+        name: 'geolocationLat',
+        label: 'Latitude',
+        type: 'number',
+      },
+      {
+        name: 'geolocationLng',
+        label: 'Longitude',
+        type: 'number',
       },
     ],
   ];
