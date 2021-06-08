@@ -69,6 +69,10 @@ export const LogsTab: FC<Props> = ({
         <Modal open={true} onClose={() => handleSetAddingLog(false)}>
           <AddLog
             onClose={() => handleSetAddingLog(false)}
+            onSave={() => {
+              handleSetAddingLog(false);
+              load();
+            }}
             loggedUserId={loggedUserId}
           />
         </Modal>
