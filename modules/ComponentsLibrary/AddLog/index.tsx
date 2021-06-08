@@ -79,7 +79,7 @@ export const AddLog: FC<Props> = ({
         const result = await S3ClientService.uploadFileToS3Bucket(
           fileName,
           fileData,
-          'testbuckethelios',
+          'project-log-images',
         );
         if (result === 'nok') {
           throw new Error(
