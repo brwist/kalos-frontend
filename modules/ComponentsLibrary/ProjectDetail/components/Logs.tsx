@@ -3,16 +3,13 @@ import {
   ActivityLogList,
 } from '@kalos-core/kalos-rpc/ActivityLog';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import {
-  ActivityLogClientService,
-  EventClientService,
-  EventType,
-} from '../../../../helpers';
-import { Event, EventList } from '@kalos-core/kalos-rpc/Event';
+import { ActivityLogClientService, EventType } from '../../../../helpers';
 import { InfoTable, Row } from '../../InfoTable';
 import { Loader } from '../../../Loader/main';
 import { CheckInProjectTask } from '../../CheckInProjectTask';
 import { RoleType } from '../../Payroll';
+import { Modal } from '../../Modal';
+import { AddLog } from '../../AddLog';
 
 export interface Props {
   serviceCallId: number;
@@ -29,6 +26,12 @@ export const LogsTab: FC<Props> = ({
 }) => {
   const [projectLogs, setProjectLogs] = useState<ActivityLog[]>();
   const [loading, setLoading] = useState<boolean>();
+  const [addingLog, setAddingLog] = useState<boolean>();
+
+  const handleSetAddingLog = useCallback(
+    (addingLog: boolean) => setAddingLog(addingLog),
+    [setAddingLog],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,6 +65,19 @@ export const LogsTab: FC<Props> = ({
     <Loader />
   ) : (
     <>
+      {addingLog && (
+        <Modal open={true} onClose={() => handleSetAddingLog(false)}>
+          <AddLog
+            onClose={() => handleSetAddingLog(false)}
+            onSave={() => {
+              handleSetAddingLog(false);
+              load();
+            }}
+            loggedUserId={loggedUserId}
+            eventId={serviceCallId}
+          />
+        </Modal>
+      )}
       <CheckInProjectTask
         projectToUse={project!}
         loggedUserId={loggedUserId}
@@ -74,7 +90,15 @@ export const LogsTab: FC<Props> = ({
           { name: 'User ID' },
           { name: 'Description' },
           { name: 'Date' },
-          { name: 'Property ID' },
+          {
+            name: 'Property ID',
+            actions: [
+              {
+                label: 'Add Log',
+                onClick: () => handleSetAddingLog(true),
+              },
+            ],
+          },
         ]}
         data={projectLogs?.map(log => {
           return [

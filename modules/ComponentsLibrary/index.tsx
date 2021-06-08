@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom';
 import { StyledPage } from '../PageWrapper/styled';
 import Actions from './Actions/examples';
 import ActivityLogReport from './ActivityLogReport/examples';
+import AddLog from './AddLog/examples';
 import AddNewButton from './AddNewButton/examples';
 import AdvancedSearch from './AdvancedSearch/examples';
 import Alert from './Alert/examples';
@@ -42,6 +43,7 @@ import FileTags from './FileTags/examples';
 import Form from './Form/examples';
 import Gallery from './Gallery/examples';
 import GanttChart from './GanttChart/examples';
+import ImagePreview from './ImagePreview/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
@@ -108,6 +110,7 @@ const DEFAULT_COMPONENT_IDX = 0;
 const COMPONENTS = {
   Actions,
   ActivityLogReport,
+  AddLog,
   AddNewButton,
   AdvancedSearch,
   Alert,
@@ -145,6 +148,7 @@ const COMPONENTS = {
   Form,
   Gallery,
   GanttChart,
+  ImagePreview,
   InfoTable,
   InternalDocuments,
   Link,
