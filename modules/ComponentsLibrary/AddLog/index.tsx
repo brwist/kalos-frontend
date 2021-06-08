@@ -4,10 +4,12 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { getRPCFields } from '@kalos-core/kalos-rpc/Common';
 import { Typography } from '@material-ui/core';
 import React, { FC, useCallback, useState } from 'react';
-import { ActivityLogClientService } from '../../../helpers';
+import { ActivityLogClientService, S3ClientService } from '../../../helpers';
 import { Loader } from '../../Loader/main';
 import { Alert } from '../Alert';
 import { Form, Schema } from '../Form';
+import { ImagePreview } from '../ImagePreview';
+import { Modal } from '../Modal';
 
 interface Props {
   onClose: () => any;
@@ -32,7 +34,8 @@ export const AddLog: FC<Props> = ({
   } as FileLog);
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
-  const [fileData, setFileData] = useState<string | ArrayBuffer | null>('');
+  const [fileData, setFileData] =
+    useState<{ fileData: string; fileName: string } | undefined>();
 
   const handleSaveLog = useCallback(
     async (logToSave: ActivityLog) => {
@@ -66,8 +69,32 @@ export const AddLog: FC<Props> = ({
   );
 
   const handleSetFileData = useCallback(
-    (fileData: string | ArrayBuffer | null) => setFileData(fileData),
+    (fileData: string, fileName: string) => setFileData({ fileData, fileName }),
     [setFileData],
+  );
+
+  const handleSubmitFileToS3 = useCallback(
+    async (fileData: string, fileName) => {
+      try {
+        const result = await S3ClientService.uploadFileToS3Bucket(
+          fileName,
+          fileData,
+          'testbuckethelios',
+        );
+        if (result === 'nok') {
+          throw new Error(
+            'An unknown error occurred while uploading the file.',
+          );
+        }
+        console.log('Result: ', result);
+        handleSetFileData('', '');
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading the file to S3: ${err}`,
+        );
+      }
+    },
+    [handleSetFileData],
   );
 
   // TODO This is set as an AsObject until the Form and Schema can handle non-AsObject forms
@@ -132,23 +159,23 @@ export const AddLog: FC<Props> = ({
         name: 'fileData',
         label: 'Upload Photo',
         type: 'file',
-        onFileLoad: data => handleSetFileData(data),
+        onFileLoad: (data, fileName) => {
+          if (data === null) {
+            return;
+          }
+          if (typeof data === 'string') {
+            handleSetFileData(String(data), fileName);
+          } else {
+            let decoder = new TextDecoder();
+            let dataNew = decoder.decode(data); // Converting it to string
+            handleSetFileData(dataNew, fileName);
+          }
+        },
       },
     ],
   ];
   return (
     <>
-      {fileData && (
-        <img
-          src={String(fileData)}
-          className="FileGalleryImg"
-          id="SingleUploadImgPreview"
-          style={{
-            width: PreviewImageSize[0],
-            height: PreviewImageSize[1],
-          }}
-        />
-      )}
       {saving && <Loader />}
       {error && (
         <Alert open={true} onClose={() => handleSetError('')}>
@@ -174,6 +201,17 @@ export const AddLog: FC<Props> = ({
         submitLabel="Save"
         cancelLabel="Close"
       />
+      {fileData?.fileData && (
+        <Modal open={true} onClose={() => handleSetFileData('', '')}>
+          <ImagePreview
+            fileData={fileData.fileData}
+            onSubmit={() =>
+              handleSubmitFileToS3(fileData.fileData, fileData.fileName)
+            }
+            onClose={() => handleSetFileData('', '')}
+          />
+        </Modal>
+      )}
     </>
   );
 };

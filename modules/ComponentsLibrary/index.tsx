@@ -43,6 +43,7 @@ import FileTags from './FileTags/examples';
 import Form from './Form/examples';
 import Gallery from './Gallery/examples';
 import GanttChart from './GanttChart/examples';
+import ImagePreview from './ImagePreview/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
 import Link from './Link/examples';
@@ -147,6 +148,7 @@ const COMPONENTS = {
   Form,
   Gallery,
   GanttChart,
+  ImagePreview,
   InfoTable,
   InternalDocuments,
   Link,
