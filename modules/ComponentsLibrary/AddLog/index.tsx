@@ -80,6 +80,7 @@ export const AddLog: FC<Props> = ({
           fileName,
           fileData,
           'project-log-images',
+          eventId ? `LogId-${eventId}` : undefined, // Images submitted to S3 are tracked by event ID this way
         );
         if (result === 'nok') {
           throw new Error(
@@ -94,7 +95,7 @@ export const AddLog: FC<Props> = ({
         );
       }
     },
-    [handleSetFileData],
+    [eventId, handleSetFileData],
   );
 
   // TODO This is set as an AsObject until the Form and Schema can handle non-AsObject forms
