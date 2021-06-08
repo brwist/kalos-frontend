@@ -67,7 +67,10 @@ export const LogsTab: FC<Props> = ({
     <>
       {addingLog && (
         <Modal open={true} onClose={() => handleSetAddingLog(false)}>
-          <AddLog onClose={() => handleSetAddingLog(false)} />
+          <AddLog
+            onClose={() => handleSetAddingLog(false)}
+            loggedUserId={loggedUserId}
+          />
         </Modal>
       )}
       <CheckInProjectTask
