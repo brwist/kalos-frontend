@@ -6,7 +6,7 @@ export default () => {
   return (
     <>
       <ExampleTitle>Default</ExampleTitle>
-      <AddLog />
+      <AddLog onClose={() => alert('Would close')} />
     </>
   );
 };
