@@ -8,6 +8,7 @@ ReactDOM.render(
     startDate={'2020-11-01'}
     endDate={'2021-06-09'}
     withHeader
+    withLabels
     macro
   />,
   document.getElementById('root'),
