@@ -124,8 +124,14 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> =
 
       const handleChange = useCallback(
         name => (value: Value) => {
-          const data = { ...formData, [name]: value };
-          setFormData(data);
+          if (name.includes('set')) {
+            // @ts-ignore
+            formData[name](value);
+            setFormData(formData);
+          } else {
+            const data = { ...formData, [name]: value };
+            setFormData(data);
+          }
           const field = schema
             .reduce((aggr, fields) => [...aggr, ...fields], [])
             .find(field => field.name === name);
@@ -134,7 +140,7 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> =
           }
           onChange(data);
         },
-        [formData, setFormData, onChange, schema],
+        [formData, setFormData, onChange, schema, data],
       );
 
       let indexOfInputField = 0;
