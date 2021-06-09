@@ -5,8 +5,8 @@ import { TransactionClientService } from '../../../helpers';
 import { ExampleTitle } from '../helpers';
 
 export default () => {
-  const [transactionTest, setTransactionTest] = useState<Transaction>(
-    {} as Transaction,
+  const [transactionTest, setTransactionTest] = useState<Transaction.AsObject>(
+    {} as Transaction.AsObject,
   );
 
   const handleLoadTransaction = useCallback(async () => {

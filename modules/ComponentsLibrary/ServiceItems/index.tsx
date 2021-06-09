@@ -39,8 +39,8 @@ const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
 );
 const MaterialClientService = new MaterialClient(ENDPOINT);
 
-export type Entry = ServiceItem;
-type MaterialType = Material;
+export type Entry = ServiceItem.AsObject;
+type MaterialType = Material.AsObject;
 
 const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Straight-cool AC w/ heatstrips', value: '1' },
@@ -511,14 +511,13 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleDeleteRepair = useCallback(
-    ({ id }: Repair) =>
-      () => {
-        const newRepairs = repairs.filter(item => item.id !== id);
-        setRepairs(newRepairs);
-        if (onRepairsChange) {
-          onRepairsChange(newRepairs);
-        }
-      },
+    ({ id }: Repair) => () => {
+      const newRepairs = repairs.filter(item => item.id !== id);
+      setRepairs(newRepairs);
+      if (onRepairsChange) {
+        onRepairsChange(newRepairs);
+      }
+    },
     [setRepairs, repairs],
   );
 

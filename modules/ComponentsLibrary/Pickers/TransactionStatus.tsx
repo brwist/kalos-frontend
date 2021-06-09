@@ -12,13 +12,13 @@ interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: TransactionStatus): boolean;
+  test?(item: TransactionStatus.AsObject): boolean;
   label?: string;
   useDevClient?: boolean;
 }
 
 interface state {
-  list: TransactionStatus[];
+  list: TransactionStatus.AsObject[];
 }
 
 export class TxnStatusPicker extends React.PureComponent<props, state> {
@@ -44,8 +44,8 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
     }
   }
 
-  addToList(item: TransactionStatus) {
-    this.setState(prevState => ({
+  addToList(item: TransactionStatus.AsObject) {
+    this.setState((prevState) => ({
       list: prevState.list.concat(item),
     }));
   }
@@ -72,7 +72,7 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
           inputProps={{ id: 'txn-status-picker' }}
         >
           <option value={0}>Select Status</option>
-          {this.state.list.map(item => (
+          {this.state.list.map((item) => (
             <option value={item.id} key={`${item.description}-${item.id}`}>
               {item.description}
             </option>

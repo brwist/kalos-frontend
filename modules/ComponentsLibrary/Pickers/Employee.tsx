@@ -9,15 +9,15 @@ interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: User): boolean;
-  sort?(a: User, b: User): number;
+  test?(item: User.AsObject): boolean;
+  sort?(a: User.AsObject, b: User.AsObject): number;
   showInactive?: boolean;
   label?: string;
   useDevClient?: boolean;
 }
 
 interface state {
-  list: User[];
+  list: User.AsObject[];
 }
 
 export class EmployeePicker extends React.PureComponent<props, state> {
@@ -44,7 +44,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     }
   }
 
-  addItem(item: User) {
+  addItem(item: User.AsObject) {
     if (this.props.test) {
       if (this.props.test(item)) {
         this.setState(prevState => ({

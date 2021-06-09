@@ -10,12 +10,12 @@ interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: JobType): boolean;
+  test?(item: JobType.AsObject): boolean;
   useDevClient?: boolean;
 }
 
 interface state {
-  list: JobType[];
+  list: JobType.AsObject[];
 }
 
 export class JobTypePicker extends React.PureComponent<props, state> {
@@ -42,7 +42,7 @@ export class JobTypePicker extends React.PureComponent<props, state> {
     }
   }
 
-  addItem(item: JobType) {
+  addItem(item: JobType.AsObject) {
     if (this.props.test) {
       if (this.props.test(item)) {
         this.setState(prevState => ({

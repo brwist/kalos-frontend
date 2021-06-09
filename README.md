@@ -92,7 +92,7 @@ Every client shares a common `GetToken` method, which accepts a username and pas
 ### Fetching a user by user ID
 
 ```javascript
-async function getUserByID(ID: number): User {
+async function getUserByID(ID: number): User.AsObject {
   const client = new UserClient();
   const req = new User();
   req.setId(ID);
@@ -106,7 +106,7 @@ async function getUserByID(ID: number): User {
 Fetching lists requires you to specify the page (the API is constrained to return arrays with 25 entities at a time to simplify API usage and server code). Unlike the other methods, the `BatchGet` method returns a protobuf. Simply call the `toObject` method available to all protobufs to convert it to an object and then access the `resultsList` property. Under the hood this type will always be called `XList` where `X` is the kind of entity the client works with (in this case `UserList`).
 
 ```javascript
-async function getEmployeeList(page = 0): User[] {
+async function getEmployeeList(page = 0): User.AsObject[] {
   const client = new UserClient();
   const req = new User();
   req.setIsEmployee(1);
@@ -114,9 +114,9 @@ async function getEmployeeList(page = 0): User[] {
   req.setPage(page);
   const res: UserList = await client.BatchGet(req);
 
-  const resAsObject: UserList = res.toObject();
-  // UserList {
-  //   resultsList: User[];
+  const resAsObject: UserList.AsObject = res.toObject();
+  // UserList.AsObject {
+  //   resultsList: User.AsObject[];
   //   totalCount: number;
   // }
 
@@ -144,11 +144,11 @@ async function convertEmployeeToCustomer(ID: number): void {
 The list method is generally only used for small, cacheable sets of information. The List method requires a callback to handle new incoming messages. For example, the `TransactionStatus` client is a great candidate for the `List` method:
 
 ```javascript
-function handleMessage(txnStatus: TransactionStatus): void {
+function handleMessage(txnStatus: TransactionStatus.AsObject): void {
   // do something with the status, usually setState
 }
 
-function getTransactionStatuses(): TransactionStatusList {
+function getTransactionStatuses(): TransactionStatusList.AsObject {
   const client = new TransactionStatusClient();
   client.List(new TransactionStatus(), handleMessage);
 }
@@ -161,7 +161,7 @@ function getTransactionStatuses(): TransactionStatusList {
 It is common to encounter two database entities with some relationship, for example in our database each `user` can have one or more `properties`. Our current system does not (in most cases) automatically handle these relationships and so it must be handled client side. For example, getting an array of all `properties` belonging to a single `user` must be done explicitly:
 
 ```javascript
-async function getUserProperties(userID: number): PropertyList {
+async function getUserProperties(userID: number): PropertyList.AsObject {
   const client = new PropertyClient();
   const req = new Property();
   req.setUserId(userID);
@@ -174,8 +174,8 @@ Or, more commonly, a list of `ServicesRendered` (note: `ServicesRendered` is a b
 
 ```javascript
 async function getServicesRenderedByUserID(
-  userID: number,
-): ServicesRenderedList {
+  userID: number
+): ServicesRenderedList.AsObject {
   const client = new ServicesRenderedClient();
   const req = new ServicesRendered();
   req.setTechnicianUserId(userID);

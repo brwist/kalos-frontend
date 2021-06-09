@@ -37,14 +37,14 @@ export type Props = {
 type State = {
   isManager: boolean;
   isOpen: boolean;
-  user: User;
+  user: User.AsObject;
   reportBugFormShown: boolean;
 };
 
 type Action =
   | { type: 'toggleMenu' }
   | { type: 'closeMenu' }
-  | { type: 'fetchedUser'; user: User; isManager: boolean }
+  | { type: 'fetchedUser'; user: User.AsObject; isManager: boolean }
   | { type: 'showReportBugForm' }
   | { type: 'hideReportBugForm' };
 

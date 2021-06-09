@@ -24,15 +24,15 @@ export type Payroll = {
 };
 
 type RawDayData = {
-  servicesRenderedList: ServicesRendered[];
-  timesheetLineList: TimesheetLine[];
+  servicesRenderedList: ServicesRendered.AsObject[];
+  timesheetLineList: TimesheetLine.AsObject[];
   getServicesRenderedList: () => ServicesRendered[];
   getTimesheetLineList: () => TimesheetLine[];
 };
 
 type DayData = {
-  servicesRenderedList: ServicesRendered[];
-  timesheetLineList: TimesheetLine[];
+  servicesRenderedList: ServicesRendered.AsObject[];
+  timesheetLineList: TimesheetLine.AsObject[];
   payroll: Payroll;
   timeoffs: TimeoffRequestType[];
 };
@@ -41,12 +41,12 @@ export type DataList = {
   [key: string]: DayData;
 };
 
-interface EditedEntry extends TimesheetLine {
+interface EditedEntry extends TimesheetLine.AsObject {
   action: string;
 }
 
 type EditingState = {
-  entry: TimesheetLine;
+  entry: TimesheetLine.AsObject;
   modalShown: boolean;
   action:
     | 'create'
@@ -57,13 +57,13 @@ type EditingState = {
     | 'reject'
     | '';
   editedEntries: EditedEntry[];
-  hiddenSR: ServicesRendered[];
-  convertingSR?: ServicesRendered;
+  hiddenSR: ServicesRendered.AsObject[];
+  convertingSR?: ServicesRendered.AsObject;
 };
 
 export type State = {
-  user?: User;
-  owner?: User;
+  user?: User.AsObject;
+  owner?: User.AsObject;
   fetchingTimesheetData: boolean;
   data: DataList;
   timeoffOpen: boolean;
@@ -95,8 +95,8 @@ export type Action =
   | {
       type: 'setUsers';
       data: {
-        user: User;
-        owner: User;
+        user: User.AsObject;
+        owner: User.AsObject;
         hasReceiptsIssue: boolean;
         receiptsIssueStr: string;
       };
@@ -109,9 +109,9 @@ export type Action =
     }
   | { type: 'changeDate'; value: Date }
   | { type: 'addNewTimesheet' }
-  | { type: 'editTimesheetCard'; data: TimesheetLine }
-  | { type: 'editServicesRenderedCard'; data: ServicesRendered }
-  | { type: 'saveTimecard'; data: TimesheetLine; action: string }
+  | { type: 'editTimesheetCard'; data: TimesheetLine.AsObject }
+  | { type: 'editServicesRenderedCard'; data: ServicesRendered.AsObject }
+  | { type: 'saveTimecard'; data: TimesheetLine.AsObject; action: string }
   | { type: 'closeEditingModal' }
   | { type: 'error'; text: string }
   | { type: 'submitTimesheet' }
@@ -176,7 +176,7 @@ export const reducer = (state: State, action: Action) => {
           const srList =
             dayData?.getServicesRenderedList().map(i => i.toObject()) || [];
           const servicesRenderedList = srList.filter(
-            (item: ServicesRendered) =>
+            (item: ServicesRendered.AsObject) =>
               !item.hideFromTimesheet &&
               item.status !== 'Completed' &&
               item.status !== 'Incomplete',

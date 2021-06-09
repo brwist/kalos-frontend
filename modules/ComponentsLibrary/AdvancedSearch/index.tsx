@@ -6,7 +6,7 @@ import {
   UsersSort,
   LoadUsersByFilter,
 } from '@kalos-core/kalos-rpc/User';
-import { getPropertyAddress, Property } from '@kalos-core/kalos-rpc/Property';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import cloneDeep from 'lodash/cloneDeep';
 import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
@@ -71,13 +71,15 @@ import {
   EVENT_STATUS_LIST,
   USA_STATES_OPTIONS,
 } from '../../../constants';
-import './styles.less';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+
+import './styles.less';
 
 type Kind =
   | 'serviceCalls'
@@ -222,6 +224,7 @@ export const AdvancedSearch: FC<Props> = ({
     [setPendingAddProperty],
   );
   const loadDicts = useCallback(async () => {
+    await UserClientService;
     setLoadingDicts(true);
     const jobTypes = await JobTypeClientService.loadJobTypes();
     setJobTypes(jobTypes);
@@ -266,6 +269,7 @@ export const AdvancedSearch: FC<Props> = ({
         page,
         filter: filterCriteria,
         sort: eventsSort,
+        req: new Event(),
       };
       const { resultsList, totalCount } = await loadEventsByFilter(criteria);
       setCount(totalCount);
@@ -294,11 +298,11 @@ export const AdvancedSearch: FC<Props> = ({
       if (kind === 'employees') {
         const images = await Promise.all(
           results
-            .filter(u => !!u.getImage())
-            .map(async u => ({
-              image: u.getImage(),
+            .filter(i => !!i.getImage())
+            .map(async i => ({
+              image: i.getImage(),
               url: await S3ClientService.getFileS3BucketUrl(
-                u.getImage(),
+                i.getImage(),
                 'kalos-employee-images',
               ),
             })),
@@ -318,6 +322,7 @@ export const AdvancedSearch: FC<Props> = ({
         page,
         filter: filterCriteria as PropertiesFilter,
         sort: propertiesSort,
+        req: new Property(),
       };
       //@ts-ignore
       delete criteria.filter.employeeDepartmentId;
@@ -330,6 +335,7 @@ export const AdvancedSearch: FC<Props> = ({
         page,
         filter: filterCriteria as ContractsFilter,
         sort: contractsSort,
+        req: new Contract(),
       };
       //@ts-ignore
       delete criteria.filter.employeeDepartmentId;
@@ -447,7 +453,7 @@ export const AdvancedSearch: FC<Props> = ({
           getCFAppUrl('admin:service.editServicecall'),
           `id=${pendingEventEditing.getId()}`,
           `user_id=${pendingEventEditing.getCustomer()?.getId()}`,
-          `property_id=${pendingEventEditing?.getProperty()?.getId()}`,
+          `property_id=${pendingEventEditing.getProperty()?.getId()}`,
         ].join('&');
       }
       // setPendingEventEditing(pendingEventEditing); // TODO restore when EditServiceCall is finished
@@ -545,12 +551,12 @@ export const AdvancedSearch: FC<Props> = ({
         setSaving(true);
         if (employeeUploadedPhoto) {
           await uploadFileToS3Bucket(
-            data.image,
+            data.getImage(),
             employeeUploadedPhoto,
             'kalos-employee-images',
           );
         }
-        await UserClientService.saveUser(data, pendingEmployeeEditing.id);
+        await UserClientService.saveUser(data, pendingEmployeeEditing.getId());
         setPendingEmployeeEditing(undefined);
         setSaving(false);
         setLoaded(false);
@@ -599,9 +605,9 @@ export const AdvancedSearch: FC<Props> = ({
         window.open(
           [
             getCFAppUrl('admin:service.editServicecall'),
-            `id=${event.id}`,
-            `user_id=${event.customer!.id}`,
-            `property_id=${event.property!.id}`,
+            `id=${event.getId()}`,
+            `user_id=${event.getCustomer()?.getId()}`,
+            `property_id=${event.getProperty()?.getId()}`,
           ].join('&'),
           '_blank',
         );
@@ -630,7 +636,7 @@ export const AdvancedSearch: FC<Props> = ({
   const handleDeleteEmployeePhoto = useCallback(() => {
     if (!pendingEmployeeEditing) return;
     setEmployeeUploadedPhoto('');
-    setPendingEmployeeEditing({ ...pendingEmployeeEditing, image: '' });
+    setPendingEmployeeEditing(pendingEmployeeEditing);
     setEmployeeFormKey(employeeFormKey + 1);
   }, [
     setEmployeeUploadedPhoto,
@@ -727,7 +733,7 @@ export const AdvancedSearch: FC<Props> = ({
           label: 'Job Type',
           options: [
             { label: OPTION_ALL, value: 0 },
-            ...jobTypes.map(({ id: value, name: label }) => ({ label, value })),
+            ...jobTypes.map(jt => ({ label: jt.getName(), value: jt.getId() })),
           ],
         },
         {
@@ -735,9 +741,9 @@ export const AdvancedSearch: FC<Props> = ({
           label: 'Job Subtype',
           options: [
             { label: OPTION_ALL, value: 0 },
-            ...jobSubtypes.map(({ id: value, name: label }) => ({
-              label,
-              value,
+            ...jobSubtypes.map(jst => ({
+              label: jst.getName(),
+              value: jst.getId(),
             })),
           ],
         },
@@ -831,9 +837,9 @@ export const AdvancedSearch: FC<Props> = ({
           label: 'Department',
           options: [
             { label: OPTION_ALL, value: -1 },
-            ...departments.map(({ id, description, value }) => ({
-              label: `${value} - ${description}`,
-              value: id,
+            ...departments.map(d => ({
+              label: `${d.getValue()} - ${d.getDescription()}`,
+              value: d.getId(),
             })),
           ],
         },
@@ -873,96 +879,96 @@ export const AdvancedSearch: FC<Props> = ({
   const SCHEMA_EMPLOYEES_VIEW: Schema<User> = [
     [
       {
-        name: 'email',
+        name: 'getEmail',
         label: 'Email',
         readOnly: true,
       },
     ],
     [
       {
-        name: 'firstname',
+        name: 'getFirstname',
         label: 'First Name',
         readOnly: true,
       },
     ],
     [
       {
-        name: 'lastname',
+        name: 'getLastname',
         label: 'Last Name',
         readOnly: true,
       },
     ],
     [
       {
-        name: 'phone',
+        name: 'getPhone',
         label: 'Phone',
         readOnly: true,
       },
     ],
     [
       {
-        name: 'ext',
+        name: 'getExt',
         label: 'Phone ext.',
         readOnly: true,
       },
     ],
     [
       {
-        name: 'empTitle',
+        name: 'getEmpTitle',
         label: 'Title',
         readOnly: true,
       },
     ],
     [
       {
-        name: 'employeeDepartmentId',
+        name: 'getEmployeeDepartmentId',
         label: 'Department',
-        options: departments.map(({ id, description, value }) => ({
-          label: `${value} - ${description}`,
-          value: id,
+        options: departments.map(d => ({
+          label: `${d.getValue()} - ${d.getDescription()}`,
+          value: d.getId(),
         })),
         readOnly: true,
       },
     ],
   ];
   const makeSchemaEmployeesEdit = (entry: User): Schema<User> => [
-    [{ name: 'isEmployee', type: 'hidden' }],
+    [{ name: 'getIsEmployee', type: 'hidden' }],
     [{ headline: true, label: 'Personal Details' }],
     [
       {
-        name: 'firstname',
+        name: 'getFirstname',
         label: 'First Name',
         required: true,
       },
       {
-        name: 'lastname',
+        name: 'getLastname',
         label: 'Last Name',
         required: true,
       },
     ],
     [
       {
-        name: 'address',
+        name: 'getAddress',
         label: 'Street Address',
         multiline: true,
       },
       {
-        name: 'city',
+        name: 'getCity',
         label: 'City',
       },
       {
-        name: 'zip',
+        name: 'getZip',
         label: 'Zipcode',
       },
       {
-        name: 'state',
+        name: 'getState',
         label: 'State',
         options: USA_STATES_OPTIONS,
       },
     ],
     [
       {
-        name: 'empTitle',
+        name: 'getEmpTitle',
         label: 'Title',
       },
       // {
@@ -970,48 +976,48 @@ export const AdvancedSearch: FC<Props> = ({
       //   label: 'Hire Date',
       // },
       {
-        name: 'employeeFunctionId',
+        name: 'getEmployeeFunctionId',
         label: 'Employee Role',
-        options: employeeFunctions.map(({ id, name }) => ({
-          label: name,
-          value: id,
+        options: employeeFunctions.map(ef => ({
+          label: ef.getName(),
+          value: ef.getId(),
         })),
       },
       {
-        name: 'employeeDepartmentId',
+        name: 'getEmployeeDepartmentId',
         label: 'Employee Segment',
-        options: departments.map(({ id, description, value }) => ({
-          label: `${value} - ${description}`,
-          value: id,
+        options: departments.map(d => ({
+          label: `${d.getValue()} - ${d.getDescription()}`,
+          value: d.getId(),
         })),
         required: true,
       },
     ],
     [
       {
-        name: 'phone',
+        name: 'getPhone',
         label: 'Primary Phone',
       },
       {
-        name: 'cellphone',
+        name: 'getCellphone',
         label: 'Cell Phone',
       },
       {
-        name: 'ext',
+        name: 'getExt',
         label: 'Ext',
       },
       {
-        name: 'toolFund',
+        name: 'getToolFund',
         label: 'Tool Fund Allowance',
       },
     ],
     [
       {
-        name: 'email',
+        name: 'getEmail',
         label: 'Email',
       },
       {
-        name: 'phoneEmail',
+        name: 'getPhoneEmail',
         label: 'Email-to-SMS',
       },
       {},
@@ -1020,12 +1026,12 @@ export const AdvancedSearch: FC<Props> = ({
     [{ headline: true, label: 'Employee Permission Details' }],
     [
       {
-        name: 'serviceCalls',
+        name: 'getServiceCalls',
         label: 'Runs Service Calls',
         type: 'checkbox',
       },
       {
-        name: 'isAdmin',
+        name: 'getIsAdmin',
         label: 'Admin Menu Rights',
         type: 'checkbox',
       },
@@ -1040,12 +1046,12 @@ export const AdvancedSearch: FC<Props> = ({
       //   type: 'checkbox',
       // },
       {
-        name: 'paidServiceCallStatus',
+        name: 'getPaidServiceCallStatus',
         label: '"Paid" Service Call Status',
         type: 'checkbox',
       },
       {
-        name: 'showBilling',
+        name: 'getShowBilling',
         label: 'Show billing to user',
         type: 'checkbox',
       },
@@ -1057,12 +1063,12 @@ export const AdvancedSearch: FC<Props> = ({
       //   type: 'checkbox',
       // },
       {
-        name: 'isOfficeStaff',
+        name: 'getIsOfficeStaff',
         label: 'Office Staff',
         type: 'checkbox',
       },
       {
-        name: 'isHvacTech',
+        name: 'getIsHvacTech',
         label: 'Hvac Tech',
         type: 'checkbox',
       },
@@ -1072,7 +1078,7 @@ export const AdvancedSearch: FC<Props> = ({
       //   type: 'checkbox',
       // },
       {
-        name: 'techAssist',
+        name: 'getTechAssist',
         label: 'Tech Assist',
         type: 'checkbox',
       },
@@ -1137,7 +1143,7 @@ export const AdvancedSearch: FC<Props> = ({
     [{ headline: true, label: 'Kalos Special Features' }],
     [
       {
-        name: 'isColorMute',
+        name: 'getIsColorMute',
         label: 'Color Mute [2017]',
         type: 'checkbox',
       },
@@ -1181,12 +1187,16 @@ export const AdvancedSearch: FC<Props> = ({
     [{ headline: true, label: 'Paid Time-Off' }],
     [
       {
-        name: 'hireDate',
+        name: 'getHireDate',
         label: 'Hire Date',
         type: 'date',
         disabled: true,
       },
-      { name: 'annualHoursPto', label: 'Annual PTO Allowance', type: 'number' },
+      {
+        name: 'getAnnualHoursPto',
+        label: 'Annual PTO Allowance',
+        type: 'number',
+      },
       /*{
         name: 'currentPtoAmount',
         label: 'Current Available PTO',
@@ -1219,10 +1229,10 @@ export const AdvancedSearch: FC<Props> = ({
           <div
             className="AdvancedSearchEmployeeImageBig"
             style={
-              employeeUploadedPhoto || entry.image
+              employeeUploadedPhoto || entry.getImage()
                 ? {
                     backgroundImage: `url('${
-                      employeeUploadedPhoto || employeeImages[entry.image]
+                      employeeUploadedPhoto || employeeImages[entry.getImage()]
                     }')`,
                   }
                 : {}
@@ -1231,7 +1241,7 @@ export const AdvancedSearch: FC<Props> = ({
         ),
       },
       {
-        name: 'image',
+        name: 'getImage',
         type: 'file',
         label: 'Photo',
         actions: [
@@ -1351,13 +1361,13 @@ export const AdvancedSearch: FC<Props> = ({
         ? [
             {
               name: 'Date Started',
-              ...(eventsSort.orderByField === 'dateStarted'
+              ...(eventsSort.orderByField === 'getDateStarted'
                 ? {
                     dir: eventsSort.orderDir,
                   }
                 : {}),
               onClick: handleEventsSortChange({
-                orderByField: 'dateStarted',
+                orderByField: 'getDateStarted',
                 orderBy: 'date_started',
                 orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
               }),
@@ -1370,39 +1380,39 @@ export const AdvancedSearch: FC<Props> = ({
             { name: 'Phone' },
             {
               name: 'Job # / PO',
-              ...(eventsSort.orderByField === 'logJobNumber'
+              ...(eventsSort.orderByField === 'getLogJobNumber'
                 ? {
                     dir: eventsSort.orderDir,
                   }
                 : {}),
               onClick: handleEventsSortChange({
-                orderByField: 'logJobNumber',
+                orderByField: 'getLogJobNumber',
                 orderBy: 'log_jobNumber',
                 orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
               }),
             },
             {
               name: 'Job Type',
-              ...(eventsSort.orderByField === 'jobTypeId'
+              ...(eventsSort.orderByField === 'getJobTypeId'
                 ? {
                     dir: eventsSort.orderDir,
                   }
                 : {}),
               onClick: handleEventsSortChange({
-                orderByField: 'jobTypeId',
+                orderByField: 'getJobTypeId',
                 orderBy: 'job_type_id',
                 orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
               }),
             },
             {
               name: 'Subtype',
-              ...(eventsSort.orderByField === 'jobSubtypeId'
+              ...(eventsSort.orderByField === 'getJobSubtypeId'
                 ? {
                     dir: eventsSort.orderDir,
                   }
                 : {}),
               onClick: handleEventsSortChange({
-                orderByField: 'jobSubtypeId',
+                orderByField: 'getJobSubtypeId',
                 orderBy: 'job_subtype_id',
                 orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
               }),
@@ -1411,13 +1421,13 @@ export const AdvancedSearch: FC<Props> = ({
         : [
             {
               name: 'Date Started',
-              ...(eventsSort.orderByField === 'dateStarted'
+              ...(eventsSort.orderByField === 'getDateStarted'
                 ? {
                     dir: eventsSort.orderDir,
                   }
                 : {}),
               onClick: handleEventsSortChange({
-                orderByField: 'dateStarted',
+                orderByField: 'getDateStarted',
                 orderBy: 'date_started',
                 orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
               }),
@@ -1426,39 +1436,39 @@ export const AdvancedSearch: FC<Props> = ({
             { name: 'Address City Zip Phone' },
             {
               name: 'Job # / PO',
-              ...(eventsSort.orderByField === 'logJobNumber'
+              ...(eventsSort.orderByField === 'getLogJobNumber'
                 ? {
                     dir: eventsSort.orderDir,
                   }
                 : {}),
               onClick: handleEventsSortChange({
-                orderByField: 'logJobNumber',
+                orderByField: 'getLogJobNumber',
                 orderBy: 'log_jobNumber',
                 orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
               }),
             },
             {
               name: 'Job Type / Subtype',
-              ...(eventsSort.orderByField === 'jobTypeId'
+              ...(eventsSort.orderByField === 'getJobTypeId'
                 ? {
                     dir: eventsSort.orderDir,
                   }
                 : {}),
               onClick: handleEventsSortChange({
-                orderByField: 'jobTypeId',
+                orderByField: 'getJobTypeId',
                 orderBy: 'job_type_id',
                 orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
               }),
             },
             {
               name: 'Job Status',
-              ...(eventsSort.orderByField === 'logJobStatus'
+              ...(eventsSort.orderByField === 'getLogJobStatus'
                 ? {
                     dir: eventsSort.orderDir,
                   }
                 : {}),
               onClick: handleEventsSortChange({
-                orderByField: 'logJobStatus',
+                orderByField: 'getLogJobStatus',
                 orderBy: 'log_jobStatus',
                 orderDir: eventsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
               }),
@@ -1468,65 +1478,65 @@ export const AdvancedSearch: FC<Props> = ({
       return [
         {
           name: 'First Name',
-          ...(usersSort.orderByField === 'firstname'
+          ...(usersSort.orderByField === 'getFirstname'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'firstname',
+            orderByField: 'getFirstname',
             orderBy: 'user_firstname',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Last Name',
-          ...(usersSort.orderByField === 'lastname'
+          ...(usersSort.orderByField === 'getLastname'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'lastname',
+            orderByField: 'getLastname',
             orderBy: 'user_lastname',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Business Name',
-          ...(usersSort.orderByField === 'businessname'
+          ...(usersSort.orderByField === 'getBusinessname'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'businessname',
+            orderByField: 'getBusinessname',
             orderBy: 'user_businessname',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Primary Phone',
-          ...(usersSort.orderByField === 'phone'
+          ...(usersSort.orderByField === 'getPhone'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'phone',
+            orderByField: 'getPhone',
             orderBy: 'user_phone',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Email',
-          ...(usersSort.orderByField === 'email'
+          ...(usersSort.orderByField === 'getEmail'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'email',
+            orderByField: 'getEmail',
             orderBy: 'user_email',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
@@ -1537,65 +1547,65 @@ export const AdvancedSearch: FC<Props> = ({
       return [
         {
           name: 'Name',
-          ...(usersSort.orderByField === 'lastname'
+          ...(usersSort.orderByField === 'getLastname'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'lastname',
+            orderByField: 'getLastname',
             orderBy: 'user_lastname',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Title',
-          ...(usersSort.orderByField === 'businessname'
+          ...(usersSort.orderByField === 'getBusinessname'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'businessname',
+            orderByField: 'getBusinessname',
             orderBy: 'user_businessname',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Email',
-          ...(usersSort.orderByField === 'email'
+          ...(usersSort.orderByField === 'getEmail'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'email',
+            orderByField: 'getEmail',
             orderBy: 'user_email',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Office, ext.',
-          ...(usersSort.orderByField === 'phone'
+          ...(usersSort.orderByField === 'getPhone'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'phone',
+            orderByField: 'getPhone',
             orderBy: 'user_phone',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Cell',
-          ...(usersSort.orderByField === 'cellphone'
+          ...(usersSort.orderByField === 'getCellphone'
             ? {
                 dir: usersSort.orderDir,
               }
             : {}),
           onClick: handleUsersSortChange({
-            orderByField: 'cellphone',
+            orderByField: 'getCellphone',
             orderBy: 'user_cellphone',
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
@@ -1605,52 +1615,52 @@ export const AdvancedSearch: FC<Props> = ({
       return [
         {
           name: 'Address',
-          ...(propertiesSort.orderByField === 'address'
+          ...(propertiesSort.orderByField === 'getAddress'
             ? {
                 dir: propertiesSort.orderDir,
               }
             : {}),
           onClick: handlePropertiesSortChange({
-            orderByField: 'address',
+            orderByField: 'getAddress',
             orderBy: 'property_address',
             orderDir: propertiesSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Subdivision',
-          ...(propertiesSort.orderByField === 'subdivision'
+          ...(propertiesSort.orderByField === 'getSubdivision'
             ? {
                 dir: propertiesSort.orderDir,
               }
             : {}),
           onClick: handlePropertiesSortChange({
-            orderByField: 'subdivision',
+            orderByField: 'getSubdivision',
             orderBy: 'property_subdivision',
             orderDir: propertiesSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'City',
-          ...(propertiesSort.orderByField === 'city'
+          ...(propertiesSort.orderByField === 'getCity'
             ? {
                 dir: propertiesSort.orderDir,
               }
             : {}),
           onClick: handlePropertiesSortChange({
-            orderByField: 'city',
+            orderByField: 'getCity',
             orderBy: 'property_City',
             orderDir: propertiesSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Zip Code',
-          ...(propertiesSort.orderByField === 'zip'
+          ...(propertiesSort.orderByField === 'getZip'
             ? {
                 dir: propertiesSort.orderDir,
               }
             : {}),
           onClick: handlePropertiesSortChange({
-            orderByField: 'zip',
+            orderByField: 'getZip',
             orderBy: 'property_zip',
             orderDir: propertiesSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
@@ -1660,65 +1670,65 @@ export const AdvancedSearch: FC<Props> = ({
       return [
         {
           name: 'Contract #',
-          ...(contractsSort.orderByField === 'number'
+          ...(contractsSort.orderByField === 'getNumber'
             ? {
                 dir: contractsSort.orderDir,
               }
             : {}),
           onClick: handleContractsSortChange({
-            orderByField: 'number',
+            orderByField: 'getNumber',
             orderBy: 'number',
             orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Contract Start Date',
-          ...(contractsSort.orderByField === 'dateStarted'
+          ...(contractsSort.orderByField === 'getDateStarted'
             ? {
                 dir: contractsSort.orderDir,
               }
             : {}),
           onClick: handleContractsSortChange({
-            orderByField: 'dateStarted',
+            orderByField: 'getDateStarted',
             orderBy: 'dateStarted',
             orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Contract End Date',
-          ...(contractsSort.orderByField === 'dateEnded'
+          ...(contractsSort.orderByField === 'getDateEnded'
             ? {
                 dir: contractsSort.orderDir,
               }
             : {}),
           onClick: handleContractsSortChange({
-            orderByField: 'dateEnded',
+            orderByField: 'getDateEnded',
             orderBy: 'dateEnded',
             orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Contract Business Name',
-          ...(contractsSort.orderByField === 'businessName'
+          ...(contractsSort.orderByField === 'getBusinessName'
             ? {
                 dir: contractsSort.orderDir,
               }
             : {}),
           onClick: handleContractsSortChange({
-            orderByField: 'businessName',
+            orderByField: 'getBusinessName',
             orderBy: 'businessName',
             orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
         {
           name: 'Contract Last Name',
-          ...(contractsSort.orderByField === 'lastName'
+          ...(contractsSort.orderByField === 'getLastName'
             ? {
                 dir: contractsSort.orderDir,
               }
             : {}),
           onClick: handleContractsSortChange({
-            orderByField: 'lastName',
+            orderByField: 'getLastName',
             orderBy: 'lastName',
             orderDir: contractsSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
@@ -1728,12 +1738,12 @@ export const AdvancedSearch: FC<Props> = ({
     return [];
   };
   const handleContractClick = useCallback(
-    (entry: ContractType) => () => {
+    (entry: Contract) => () => {
       console.log(entry);
       window.open(
         cfURL(
           'admin:contracts.summary',
-          `&contract_id=${entry.id}&lsort=contract_number&lorder=ASC&lmaxrow=40&lstartrow=1&lnamesearch=&lsearchfield=special`,
+          `&contract_id=${entry.getId()}&lsort=contract_number&lorder=ASC&lmaxrow=40&lstartrow=1&lnamesearch=&lsearchfield=special`,
         ),
         '_blank',
       );
@@ -1747,16 +1757,14 @@ export const AdvancedSearch: FC<Props> = ({
         return loading || loadingDicts
           ? makeFakeRows(accounting ? 10 : 6, 3)
           : events.map(entry => {
-              const {
-                dateStarted,
-                customer,
-                property,
-                logJobNumber,
-                jobType,
-                jobSubtype,
-                logJobStatus,
-                logPo,
-              } = entry;
+              const dateStarted = entry.getDateStarted();
+              const customer = entry.getCustomer();
+              const property = entry.getProperty();
+              const logJobNumber = entry.getLogJobNumber();
+              const jt = entry.getJobType();
+              const jst = entry.getJobSubtype();
+              const logJobStatus = entry.getLogJobStatus();
+              const logPo = entry.getLogPo();
               const canceledStyle =
                 !accounting && logJobStatus === 'Canceled'
                   ? { color: 'red' }
@@ -1772,7 +1780,7 @@ export const AdvancedSearch: FC<Props> = ({
                               window.open(
                                 cfURL(
                                   'service.editServiceCall',
-                                  `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                  `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
                                 ),
                                 '_blank',
                               ),
@@ -1786,7 +1794,7 @@ export const AdvancedSearch: FC<Props> = ({
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : handlePendingCustomerViewingToggle(entry.customer),
+                          : handlePendingCustomerViewingToggle(customer),
                     },
                     ...(accounting
                       ? [
@@ -1801,19 +1809,19 @@ export const AdvancedSearch: FC<Props> = ({
                       : []),
                     {
                       value: accounting
-                        ? property?.address || ''
+                        ? property?.getAddress() || ''
                         : `${getPropertyAddress(
                             property,
                           )} ${UserClientService.getCustomerPhone(customer)}`,
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : handlePendingPropertyViewingToggle(entry.property),
+                          : handlePendingPropertyViewingToggle(property),
                     },
                     ...(accounting
                       ? [
                           {
-                            value: property?.city || '',
+                            value: property?.getCity() || '',
                             onClick:
                               onSelectEvent || accounting
                                 ? handleSelectEvent(entry)
@@ -1824,7 +1832,7 @@ export const AdvancedSearch: FC<Props> = ({
                     ...(accounting
                       ? [
                           {
-                            value: property?.zip || '',
+                            value: property?.getZip() || '',
                             onClick:
                               onSelectEvent || accounting
                                 ? handleSelectEvent(entry)
@@ -1835,7 +1843,7 @@ export const AdvancedSearch: FC<Props> = ({
                     ...(accounting
                       ? [
                           {
-                            value: property?.phone || '',
+                            value: property?.getPhone() || '',
                             onClick:
                               onSelectEvent || accounting
                                 ? handleSelectEvent(entry)
@@ -1866,7 +1874,7 @@ export const AdvancedSearch: FC<Props> = ({
                               window.open(
                                 cfURL(
                                   'service.editServiceCall',
-                                  `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                  `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
                                 ),
                                 '_blank',
                               ),
@@ -1874,7 +1882,7 @@ export const AdvancedSearch: FC<Props> = ({
                     {
                       value: (
                         <span style={canceledStyle}>
-                          {accounting ? jobType : `${jobType} / ${jobSubtype}`}
+                          {accounting ? jt : `${jt} / ${jst}`}
                         </span>
                       ),
                       onClick:
@@ -1884,7 +1892,7 @@ export const AdvancedSearch: FC<Props> = ({
                               window.open(
                                 cfURL(
                                   'service.editServiceCall',
-                                  `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                  `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
                                 ),
                                 '_blank',
                               ),
@@ -1892,7 +1900,7 @@ export const AdvancedSearch: FC<Props> = ({
                     {
                       value: (
                         <span style={canceledStyle}>
-                          {accounting ? jobSubtype : logJobStatus}
+                          {accounting ? jst : logJobStatus}
                         </span>
                       ),
                       onClick:
@@ -1902,7 +1910,7 @@ export const AdvancedSearch: FC<Props> = ({
                               window.open(
                                 cfURL(
                                   'service.editServiceCall',
-                                  `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                  `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
                                 ),
                                 '_blank',
                               ),
@@ -1918,7 +1926,7 @@ export const AdvancedSearch: FC<Props> = ({
                                     window.open(
                                       cfURL(
                                         'service.editServiceCall',
-                                        `&id=${entry.id}&user_id=${entry.property?.userId}&property_id=${entry.propertyId}`,
+                                        `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
                                       ),
                                     );
                                     /* TODO: complete edit service call module */
@@ -1950,26 +1958,25 @@ export const AdvancedSearch: FC<Props> = ({
         return loading
           ? makeFakeRows(6, 3)
           : users.map(entry => {
-              const { firstname, lastname, businessname, phone, email } = entry;
               return [
                 {
-                  value: firstname,
+                  value: entry.getFirstname(),
                   onClick: handlePendingCustomerViewingToggle(entry),
                 },
                 {
-                  value: lastname,
+                  value: entry.getLastname(),
                   onClick: handlePendingCustomerViewingToggle(entry),
                 },
                 {
-                  value: businessname,
+                  value: entry.getBusinessname(),
                   onClick: handlePendingCustomerViewingToggle(entry),
                 },
                 {
-                  value: phone,
+                  value: entry.getPhone(),
                   onClick: handlePendingCustomerViewingToggle(entry),
                 },
                 {
-                  value: email,
+                  value: entry.getEmail(),
                   onClick: handlePendingCustomerViewingToggle(entry),
                 },
                 {
@@ -2013,71 +2020,73 @@ export const AdvancedSearch: FC<Props> = ({
         return loading
           ? makeFakeRows(5, 3)
           : users
-              .filter(
-                ({
-                  firstname,
-                  lastname,
-                  empTitle,
-                  email,
-                  phone,
-                  ext,
-                  cellphone,
-                  employeeDepartmentId,
-                }) => {
-                  const usersFilter = filter as UsersFilter;
-                  const matchedFirstname = usersFilter.firstname
-                    ? firstname
-                        .toLowerCase()
-                        .includes(usersFilter.firstname.toLowerCase())
+              .filter(u => {
+                const usersFilter = filter as UsersFilter;
+                const matchedFirstname = usersFilter.firstname
+                  ? u
+                      .getFirstname()
+                      .toLowerCase()
+                      .includes(usersFilter.firstname.toLowerCase())
+                  : true;
+                const matchedLastname = usersFilter.lastname
+                  ? u
+                      .getLastname()
+                      .toLowerCase()
+                      .includes(usersFilter.lastname.toLowerCase())
+                  : true;
+                const matchedEmpTitle = usersFilter.empTitle
+                  ? u
+                      .getEmpTitle()
+                      .toLowerCase()
+                      .includes(usersFilter.empTitle.toLowerCase())
+                  : true;
+                const matchedEmail = usersFilter.email
+                  ? u
+                      .getEmail()
+                      .toLowerCase()
+                      .includes(usersFilter.email.toLowerCase())
+                  : true;
+                const matchedPhone = usersFilter.phone
+                  ? u
+                      .getPhone()
+                      .toLowerCase()
+                      .includes(usersFilter.phone.toLowerCase())
+                  : true;
+                const matchedExt = usersFilter.ext
+                  ? u
+                      .getExt()
+                      .toLowerCase()
+                      .includes(usersFilter.ext.toLowerCase())
+                  : true;
+                const matchedCellphone = usersFilter.cellphone
+                  ? u
+                      .getCellphone()
+                      .toLowerCase()
+                      .includes(usersFilter.cellphone.toLowerCase())
+                  : true;
+                const matchedDepartment =
+                  usersFilter.employeeDepartmentId &&
+                  usersFilter.employeeDepartmentId > 0
+                    ? u.getEmployeeDepartmentId() ===
+                      usersFilter.employeeDepartmentId
                     : true;
-                  const matchedLastname = usersFilter.lastname
-                    ? lastname
-                        .toLowerCase()
-                        .includes(usersFilter.lastname.toLowerCase())
-                    : true;
-                  const matchedEmpTitle = usersFilter.empTitle
-                    ? empTitle
-                        .toLowerCase()
-                        .includes(usersFilter.empTitle.toLowerCase())
-                    : true;
-                  const matchedEmail = usersFilter.email
-                    ? email
-                        .toLowerCase()
-                        .includes(usersFilter.email.toLowerCase())
-                    : true;
-                  const matchedPhone = usersFilter.phone
-                    ? phone
-                        .toLowerCase()
-                        .includes(usersFilter.phone.toLowerCase())
-                    : true;
-                  const matchedExt = usersFilter.ext
-                    ? ext.toLowerCase().includes(usersFilter.ext.toLowerCase())
-                    : true;
-                  const matchedCellphone = usersFilter.cellphone
-                    ? cellphone
-                        .toLowerCase()
-                        .includes(usersFilter.cellphone.toLowerCase())
-                    : true;
-                  const matchedDepartment =
-                    usersFilter.employeeDepartmentId &&
-                    usersFilter.employeeDepartmentId > 0
-                      ? employeeDepartmentId ===
-                        usersFilter.employeeDepartmentId
-                      : true;
-                  return (
-                    matchedFirstname &&
-                    matchedLastname &&
-                    matchedEmpTitle &&
-                    matchedEmail &&
-                    matchedPhone &&
-                    matchedExt &&
-                    matchedCellphone &&
-                    matchedDepartment
-                  );
-                },
-              )
+                return (
+                  matchedFirstname &&
+                  matchedLastname &&
+                  matchedEmpTitle &&
+                  matchedEmail &&
+                  matchedPhone &&
+                  matchedExt &&
+                  matchedCellphone &&
+                  matchedDepartment
+                );
+              })
               .map(entry => {
-                const { id, empTitle, email, cellphone, image } = entry;
+                const image = entry.getImage();
+                const id = entry.getId();
+                const email = entry.getEmail();
+                const cellphone = entry.getCellphone();
+                const empTitle = entry.getEmpTitle();
                 return [
                   {
                     value: forPrint ? (
@@ -2255,7 +2264,10 @@ export const AdvancedSearch: FC<Props> = ({
         return loading
           ? makeFakeRows(4, 3)
           : properties.map(entry => {
-              const { address, city, zip, subdivision } = entry;
+              const address = entry.getAddress();
+              const city = entry.getCity();
+              const zip = entry.getZip();
+              const subdivision = entry.getSubdivision();
               return [
                 {
                   value: address,
@@ -2310,10 +2322,13 @@ export const AdvancedSearch: FC<Props> = ({
         return loading
           ? makeFakeRows(5, 3)
           : contracts.map(entry => {
-              const { number, dateStarted, dateEnded, lastName, businessName } =
-                entry;
+              const number = entry.getNumber();
+              const dateStarted = entry.getDateStarted();
+              const dateEnded = entry.getDateEnded();
+              const lastName = entry.getLastName();
+              const businessName = entry.getBusinessName();
               const user = new User();
-              user.setId(entry.userId);
+              user.setId(entry.getUserId());
               console.log({ dateStarted, dateEnded });
               const formattedDS = formatDate(dateStarted);
               const formattedDE = formatDate(dateEnded);
@@ -2349,9 +2364,7 @@ export const AdvancedSearch: FC<Props> = ({
                     <IconButton
                       key="user"
                       size="small"
-                      onClick={handlePendingCustomerViewingToggle(
-                        user.toObject(),
-                      )}
+                      onClick={handlePendingCustomerViewingToggle(user)}
                     >
                       <PersonIcon />
                     </IconButton>,
@@ -2395,7 +2408,7 @@ export const AdvancedSearch: FC<Props> = ({
   const makeNewEmployee = () => {
     const req = new User();
     req.setIsEmployee(1);
-    return req.toObject();
+    return req;
   };
   const printHeaderSubtitle = useMemo(() => {
     const {
@@ -2419,7 +2432,7 @@ export const AdvancedSearch: FC<Props> = ({
             label="Department"
             value={TimesheetDepartmentClientService.getDepartmentName(
               departments.find(
-                ({ id }) => id === (filter as UsersFilter).employeeDepartmentId,
+                u => u.getId() === (filter as UsersFilter).employeeDepartmentId,
               )!,
             )}
           />
@@ -2571,7 +2584,7 @@ export const AdvancedSearch: FC<Props> = ({
           />
         </Modal>
       )}
-      {pendingEventEditing && pendingEventEditing.customer && (
+      {pendingEventEditing && pendingEventEditing.getCustomer() && (
         <Modal
           open
           onClose={handlePendingEventEditingToggle(undefined)}
@@ -2579,9 +2592,9 @@ export const AdvancedSearch: FC<Props> = ({
         >
           <ServiceCall
             loggedUserId={loggedUserId}
-            serviceCallId={pendingEventEditing.id}
-            userID={pendingEventEditing.customer.id}
-            propertyId={pendingEventEditing.propertyId}
+            serviceCallId={pendingEventEditing.getId()}
+            userID={pendingEventEditing.getCustomer()?.getId() || 0}
+            propertyId={pendingEventEditing.getPropertyId()}
             onClose={handlePendingEventEditingToggle(undefined)}
             onSave={reload}
           />
@@ -2593,7 +2606,7 @@ export const AdvancedSearch: FC<Props> = ({
           onClose={handlePendingEventDeletingToggle(undefined)}
           onConfirm={handleDeleteServiceCall}
           kind="Service Call"
-          name={`with Job # ${pendingEventDeleting.logJobNumber}`}
+          name={`with Job # ${pendingEventDeleting.getLogJobNumber()}`}
         />
       )}
       {pendingCustomerViewing && (
@@ -2604,7 +2617,7 @@ export const AdvancedSearch: FC<Props> = ({
         >
           <CustomerDetails
             loggedUserId={loggedUserId}
-            userID={pendingCustomerViewing.id}
+            userID={pendingCustomerViewing.getId()}
             onClose={handlePendingCustomerViewingToggle(undefined)}
           />
         </Modal>
@@ -2617,7 +2630,7 @@ export const AdvancedSearch: FC<Props> = ({
         >
           <CustomerEdit
             onClose={handlePendingCustomerEditingToggle(undefined)}
-            userId={pendingCustomerEditing.id}
+            userId={pendingCustomerEditing.getId()}
             customer={pendingCustomerEditing}
             onSave={onSaveCustomer}
           />
@@ -2642,15 +2655,15 @@ export const AdvancedSearch: FC<Props> = ({
         >
           {!propertyCustomerId && (
             <CustomerInformation
-              userID={pendingPropertyViewing.userId}
-              propertyId={pendingPropertyViewing.id}
+              userID={pendingPropertyViewing.getUserId()}
+              propertyId={pendingPropertyViewing.getId()}
               onClose={handlePendingPropertyViewingToggle(undefined)}
             />
           )}
           <PropertyInfo
             loggedUserId={loggedUserId}
-            userID={pendingPropertyViewing.userId}
-            propertyId={pendingPropertyViewing.id}
+            userID={pendingPropertyViewing.getUserId()}
+            propertyId={pendingPropertyViewing.getId()}
             viewedAsCustomer={!!propertyCustomerId}
             onClose={handlePendingPropertyViewingToggle(undefined)}
           />
@@ -2659,8 +2672,8 @@ export const AdvancedSearch: FC<Props> = ({
       {pendingPropertyEditing && (
         <Modal open onClose={handlePendingPropertyEditingToggle(undefined)}>
           <PropertyEdit
-            userId={pendingPropertyEditing.userId}
-            propertyId={pendingPropertyEditing.id}
+            userId={pendingPropertyEditing.getUserId()}
+            propertyId={pendingPropertyEditing.getId()}
             property={pendingPropertyEditing}
             onSave={onSaveProperty}
             onClose={handlePendingPropertyEditingToggle(undefined)}
@@ -2712,10 +2725,10 @@ export const AdvancedSearch: FC<Props> = ({
           <div
             className="AdvancedSearchEmployeeImageBig"
             style={
-              pendingEmployeeViewing.image
+              pendingEmployeeViewing.getImage()
                 ? {
                     backgroundImage: `url('${
-                      employeeImages[pendingEmployeeViewing.image]
+                      employeeImages[pendingEmployeeViewing.getImage()]
                     }')`,
                   }
                 : {}
@@ -2736,7 +2749,9 @@ export const AdvancedSearch: FC<Props> = ({
         >
           <Form
             key={employeeFormKey}
-            title={`${pendingEmployeeEditing.id ? 'Edit' : 'Add'} Employee`}
+            title={`${
+              pendingEmployeeEditing.getId() ? 'Edit' : 'Add'
+            } Employee`}
             schema={makeSchemaEmployeesEdit(pendingEmployeeEditing)}
             data={pendingEmployeeEditing}
             onClose={handlePendingEmployeeEditingToggle(undefined)}

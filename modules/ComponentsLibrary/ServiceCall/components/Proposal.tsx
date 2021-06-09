@@ -113,7 +113,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
     [setTable, setEditing, table],
   );
   const handleQuickAdd = useCallback(
-    (entry: StoredQuote) => {
+    (entry: StoredQuote.AsObject) => {
       handleSaveEntry({ ...entry, predefined: true, remember: 0 });
     },
     [handleSaveEntry],

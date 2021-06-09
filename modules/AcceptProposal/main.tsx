@@ -46,10 +46,10 @@ interface state {
   isLoading: boolean;
   total: number;
   docID: number;
-  quoteLines: QuoteLine[];
+  quoteLines: QuoteLine.AsObject[];
   selected: number[];
-  property: Property;
-  customer: User;
+  property: Property.AsObject;
+  customer: User.AsObject;
   notes: string;
 }
 
@@ -72,8 +72,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       total: 0,
       quoteLines: [],
       selected: [],
-      property: new Property(),
-      customer: new User(),
+      property: new Property().toObject(),
+      customer: new User().toObject(),
       docID: 0,
     };
 
@@ -86,15 +86,12 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     this.SigPad = React.createRef();
   }
 
-  addQuoteLine = (ql: QuoteLine) => {
-    ql.setDescription(
-      ql
-        .getDescription()
-        .replace(/---\w{11}---/g, '"')
-        .replace(/-\w{11}-/g, "'")
-        .replace(/-percent-/g, '%')
-        .replace(/-and-/g, '&'),
-    );
+  addQuoteLine = (ql: QuoteLine.AsObject) => {
+    ql.description = ql.description
+      .replace(/---\w{11}---/g, '"')
+      .replace(/-\w{11}-/g, "'")
+      .replace(/-percent-/g, '%')
+      .replace(/-and-/g, '&');
     this.setState(prevState => ({
       quoteLines: prevState.quoteLines.concat(ql),
     }));
@@ -136,10 +133,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   getTotal = () => {
     const qls = this.state.quoteLines.filter(ql =>
-      this.state.selected.includes(ql.getId()),
+      this.state.selected.includes(ql.id),
     );
-    return qls.reduce((acc: number, curr: QuoteLine) => {
-      return acc + parseInt(curr.getAdjustment());
+    return qls.reduce((acc: number, curr: QuoteLine.AsObject) => {
+      return acc + parseInt(curr.adjustment);
     }, 0);
   };
 
@@ -354,7 +351,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   finalize = async () => {
     try {
-      await this.toggleLoading();
+      //await this.toggleLoading();
       await this.approveProposal();
       await this.uploadPDF();
       try {
@@ -374,18 +371,18 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       alert(
         'Something went wrong, please refresh and try again. If you continue to experience issues, please contact office@kalosflorida.com',
       );
-      await this.toggleLoading();
+      //await this.toggleLoading();
     }
   };
 
   async componentDidMount() {
     await this.PropertyClient.GetToken('test', 'test');
-    await this.toggleLoading();
+    //await this.toggleLoading();
     await this.getCustomerData();
     await this.getQuoteLines();
     await this.getDocumentID();
     await this.getJobNotes();
-    await this.toggleLoading();
+    //await this.toggleLoading();
   }
 
   render() {

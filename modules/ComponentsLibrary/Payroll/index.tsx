@@ -17,6 +17,7 @@ import { PayrollSummary } from './components/PayrollSummary';
 import { PerDiem } from './components/PerDiem';
 import { Timesheet } from './components/Timesheet';
 import { TimeoffRequests } from './components/TimeoffRequests';
+import { TimesheetPendingApproval } from './components/TimesheetPendingApproval';
 import { Spiffs } from './components/Spiffs';
 import { ToolLogs } from './components/ToolLogs';
 import './styles.less';
@@ -42,6 +43,9 @@ export type FilterData = {
   departmentId: number;
   employeeId: number;
   week: string;
+  vendor?: string;
+  accepted?: boolean;
+  rejected?: boolean;
 };
 
 export const Payroll: FC<Props> = ({ userID }) => {
@@ -211,9 +215,11 @@ export const Payroll: FC<Props> = ({ userID }) => {
   let isToolLogs = true;
   let isPerDiem = true;
   let isTrips = true;
+  let isPendingTimesheet = false;
   let isPayrollSummary = false;
   if (role === 'Payroll') {
     isPayrollSummary = true;
+    isPendingTimesheet = true;
   }
   if (role === 'Auditor') {
     isTimesheet = false;
@@ -260,6 +266,22 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             employeeId={filter.employeeId}
                             week={filter.week}
                             type={role}
+                            loggedUser={userID}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(isPendingTimesheet
+                  ? [
+                      {
+                        label: 'Pending Timesheets',
+                        content: (
+                          <TimesheetPendingApproval
+                            departmentId={filter.departmentId}
+                            employeeId={filter.employeeId}
+                            week={filter.week}
+                            type={'Manager'}
                             loggedUser={userID}
                           />
                         ),

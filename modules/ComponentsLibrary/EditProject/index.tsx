@@ -32,6 +32,7 @@ import {
   TaskEventClientService,
   loadProjects,
   TimesheetDepartmentClientService,
+  ActivityLogClientService,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
 import './styles.less';
@@ -40,6 +41,7 @@ import { CostReport } from '../CostReport';
 import { Loader } from '../../Loader/main';
 import { CheckInProjectTask } from '../CheckInProjectTask';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 
 export interface Props {
   serviceCallId: number;
@@ -112,21 +114,17 @@ export const EditProject: FC<Props> = ({
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [deletingEvent, setDeletingEvent] = useState<boolean>(false);
   const [pendingDeleteEvent, setPendingDeleteEvent] = useState<EventType>();
-  const [
-    pendingDeleteTask,
-    setPendingDeleteTask,
-  ] = useState<ExtendedProjectTaskType>();
+  const [pendingDeleteTask, setPendingDeleteTask] =
+    useState<ExtendedProjectTaskType>();
   const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
 
   const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
   const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
   const [pendingCheckout, setPendingCheckout] = useState<boolean>(false);
-  const [pendingCheckoutChange, setPendingCheckoutChange] = useState<boolean>(
-    false,
-  );
-  const [pendingCheckoutDelete, setPendingCheckoutDelete] = useState<boolean>(
-    false,
-  );
+  const [pendingCheckoutChange, setPendingCheckoutChange] =
+    useState<boolean>(false);
+  const [pendingCheckoutDelete, setPendingCheckoutDelete] =
+    useState<boolean>(false);
   const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
   const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
@@ -193,7 +191,8 @@ export const EditProject: FC<Props> = ({
     promises.push(
       new Promise<void>(async resolve => {
         try {
-          const priorities = await TaskClientService.loadProjectTaskPriorities();
+          const priorities =
+            await TaskClientService.loadProjectTaskPriorities();
           setPriorities(priorities);
         } catch (err) {
           console.log({ err });
@@ -208,7 +207,8 @@ export const EditProject: FC<Props> = ({
     promises.push(
       new Promise<void>(async resolve => {
         try {
-          const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+          const departments =
+            await TimesheetDepartmentClientService.loadTimeSheetDepartments();
           setDepartments(departments);
         } catch (err) {
           console.log({ err });
@@ -293,16 +293,34 @@ export const EditProject: FC<Props> = ({
     [setEditingTask, setTaskEventsLoaded],
   );
 
+  const handleUploadLog = useCallback(async (req: ActivityLog) => {
+    try {
+      let log = await ActivityLogClientService.Create(req);
+    } catch (err) {
+      console.error(
+        `An error occurred while attempting to create an activity log: ${err}`,
+      );
+    }
+  }, []);
+
   const handleDeleteEvent = useCallback(async (eventId: number) => {
     setDeletingEvent(true);
     try {
       await EventClientService.deleteEventById(eventId);
       setDeletingEvent(false);
+
+      let req = new ActivityLog();
+      req.setActivityName(`Deleted event: ${eventId}`);
+      req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+      req.setUserId(loggedUserId);
+      req.setEventId(eventId);
+      handleUploadLog(req);
     } catch (err) {
       console.error(
         `An error occurred while attempting to delete an event by ID: ${err}`,
       );
     }
+
     setPendingDeleteEvent(undefined);
     if (onClose) onClose();
   }, []);

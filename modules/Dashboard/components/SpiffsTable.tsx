@@ -8,7 +8,7 @@ import { makeFakeRows, formatDate, usd } from '../../../helpers';
 import { parseISO } from 'date-fns';
 
 interface SpiffProps {
-  spiffs: Spiff[];
+  spiffs: Spiff.AsObject[];
   isLoading: boolean;
 }
 

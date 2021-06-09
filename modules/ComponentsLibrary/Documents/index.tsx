@@ -21,11 +21,16 @@ import { Link } from '../Link';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
-import { makeFakeRows, formatDateTime, cfURL } from '../../../helpers';
+import {
+  makeFakeRows,
+  formatDateTime,
+  cfURL,
+  cleanOrderByField,
+} from '../../../helpers';
 
 const DocumentClientService = new DocumentClient(ENDPOINT);
 
-type DocumentType = Document;
+type DocumentType = Document.AsObject;
 
 type OrderByDirective =
   | 'document_date_created'
@@ -108,8 +113,7 @@ export const Documents: FC<Props> = ({
       }
       try {
         entry.setOrderDir(displayInAscendingOrder ? 'asc' : 'desc');
-        entry.setOrderBy(orderBy);
-        console.log(entry.toObject());
+        entry.setOrderBy(cleanOrderByField(orderBy));
         const response = await DocumentClientService.BatchGet(entry);
         const { resultsList, totalCount } = response.toObject();
         console.log(response.toObject());
@@ -120,16 +124,25 @@ export const Documents: FC<Props> = ({
       }
       setLoading(false);
     },
-    [displayInAscendingOrder, fieldMask, orderBy, propertyId, taskId, userId],
+    [
+      displayInAscendingOrder,
+      fieldMask,
+      orderBy,
+      propertyId,
+      taskId,
+      userId,
+      ignoreUserId,
+    ],
   );
 
-  const handleEditFilename = (entry: Document) => async (filename: string) => {
-    const req = new Document();
-    req.setId(entry.id);
-    req.setDescription(filename);
-    await DocumentClientService.Update(req);
-    load();
-  };
+  const handleEditFilename =
+    (entry: Document.AsObject) => async (filename: string) => {
+      const req = new Document();
+      req.setId(entry.id);
+      req.setDescription(filename);
+      await DocumentClientService.Update(req);
+      load();
+    };
 
   const handleDownload = useCallback(
     (
@@ -157,9 +170,9 @@ export const Documents: FC<Props> = ({
           url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
           const dlURL = await S3.GetDownloadURL(url);
           if (realDownload) {
-            window.open(dlURL.url, '_blank'); // TODO: implement real download, instead of opening in new tab
+            window.open(dlURL.getUrl(), '_blank'); // TODO: implement real download, instead of opening in new tab
           } else {
-            window.open(dlURL.url, '_blank');
+            window.open(dlURL.getUrl(), '_blank');
           }
         }
       },

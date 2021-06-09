@@ -24,7 +24,7 @@ interface props {
 }
 
 interface state {
-  list: TransactionActivity[];
+  list: TransactionActivity.AsObject[];
   actorMap: Map<number, string>;
   isOpen: boolean;
 }
@@ -53,7 +53,7 @@ export class TxnLog extends React.PureComponent<props, state> {
     this.setState(prevState => ({ isOpen: !prevState.isOpen }));
   }
 
-  async addLog(log: TransactionActivity) {
+  async addLog(log: TransactionActivity.AsObject) {
     const user = new User();
     user.setId(log.userId);
     const res = await this.UserClient.Get(user);
@@ -126,6 +126,7 @@ export class TxnLog extends React.PureComponent<props, state> {
                   <TableCell>Action Date</TableCell>
                   <TableCell>Description</TableCell>
                   <TableCell>Actor</TableCell>
+                  <TableCell>Reason</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -141,6 +142,9 @@ export class TxnLog extends React.PureComponent<props, state> {
                       <TableCell>{activity.description}</TableCell>
                       <TableCell>
                         {this.state.actorMap.get(activity.id)}
+                      </TableCell>
+                      <TableCell>
+                        {activity.description.replace('rejected', '')}
                       </TableCell>
                     </TableRow>
                   ))}

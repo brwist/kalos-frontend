@@ -115,7 +115,7 @@ type Filters = {
 };
 
 type State = {
-  user?: User;
+  user?: User.AsObject;
   fetchingCalendarData: boolean;
   datesMap?: jspb.Map<string, CalendarDay>;
   customersMap: MapList;
@@ -131,7 +131,7 @@ type State = {
 
 type Action =
   | { type: 'toggleAddCustomer'; value: boolean }
-  | { type: 'setUser'; value: User }
+  | { type: 'setUser'; value: User.AsObject }
   | { type: 'fetchingCalendarData' }
   | { type: 'fetchedCalendarData'; data: CalendarData }
   | { type: 'viewBy'; value: string }
@@ -236,7 +236,7 @@ const initialState: State = {
 };
 
 type EmployeesContext = {
-  employees: User[];
+  employees: User.AsObject[];
   employeesLoading: boolean;
 };
 
@@ -302,8 +302,10 @@ export const ServiceCalendar: FC<Props> = props => {
   ] = useReducer(reducer, initialState);
   const [customerOpened, setCustomerOpened] = useState<UserType>();
   const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
-  const [timeoffRequestTypes, setTimeoffRequestTypes] =
-    useState<TimeoffRequestTypes>();
+  const [
+    timeoffRequestTypes,
+    setTimeoffRequestTypes,
+  ] = useState<TimeoffRequestTypes>();
 
   const fetchUser = useCallback(async () => {
     const req = new User();
@@ -324,12 +326,12 @@ export const ServiceCalendar: FC<Props> = props => {
     return (await userClient.BatchGet(user)).toObject();
   }, []);
 
-  const { data: employees, isLoading: employeesLoading } =
-    useFetchAll(fetchEmployees);
+  const { data: employees, isLoading: employeesLoading } = useFetchAll(
+    fetchEmployees,
+  );
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes =
-      await TimeoffRequestClientService.getTimeoffRequestTypes();
+    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
@@ -396,7 +398,8 @@ export const ServiceCalendar: FC<Props> = props => {
     {
       icon: <AddAlertIcon />,
       name: 'Reminder',
-      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+      url:
+        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
     },
     /*{
       icon: <EventIcon />,

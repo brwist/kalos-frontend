@@ -3,11 +3,7 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { Field as FieldComponent } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
-import {
-  EventType,
-  makeFakeRows,
-  TaskClientService, 
-} from '../../../helpers';
+import { EventType, makeFakeRows, TaskClientService } from '../../../helpers';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
 import { IconButton, Typography } from '@material-ui/core';
@@ -28,10 +24,8 @@ export const CheckInProjectTask: FC<Props> = ({
   serviceCallId,
 }) => {
   const [checkedInTasks, setCheckedInTasks] = useState<Task[]>();
-  const [
-    checkInConfirmationBoxOpen,
-    setCheckInConfirmationBoxOpen,
-  ] = useState<boolean>(false);
+  const [checkInConfirmationBoxOpen, setCheckInConfirmationBoxOpen] =
+    useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [briefDescription, setBriefDescription] = useState<string>(
     'Automatically set description',
@@ -90,8 +84,7 @@ export const CheckInProjectTask: FC<Props> = ({
       ...formData
     }: ExtendedProjectTaskType) => {
       const currentDate = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
-
-      if (endDate < currentDate) {
+      if (projectToUse.dateEnded < currentDate) {
         console.error(
           'Cannot save to the Project - the End Date has already passed.',
         );

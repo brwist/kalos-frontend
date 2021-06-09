@@ -16,7 +16,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { parseISO } from 'date-fns';
 
 interface EventProps {
-  events: Event[];
+  events: Event.AsObject[];
   title?: string;
   isLoading: boolean;
 }
@@ -180,7 +180,7 @@ export const EventTable = ({ events, isLoading, title }: EventProps) => {
   );
 };
 
-function getCustomerName(c?: User): string {
+function getCustomerName(c?: User.AsObject): string {
   let res = '';
   if (c) {
     res = `${c.firstname} ${c.lastname}`;
@@ -191,7 +191,7 @@ function getCustomerName(c?: User): string {
   return res;
 }
 
-function getPropertyAddress(p?: Property): string {
+function getPropertyAddress(p?: Property.AsObject): string {
   let res = '';
   if (p) {
     res = `${p.address}, ${p.city}, ${p.state} ${p.zip}`;
@@ -199,7 +199,7 @@ function getPropertyAddress(p?: Property): string {
   return res;
 }
 
-function openServiceCall(e: Event) {
+function openServiceCall(e: Event.AsObject) {
   return () => {
     const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${
       e.id

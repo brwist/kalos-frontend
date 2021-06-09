@@ -52,24 +52,28 @@ interface Props {
 export const PropertyInfo: FC<Props> = props => {
   const { userID, propertyId, viewedAsCustomer = false, onClose } = props;
   const [entry, setEntry] = useState<PropertyType>(new Property().toObject());
-  const [user, setUser] = useState<User>();
+  const [user, setUser] = useState<User.AsObject>();
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const [notificationEditing, setNotificationEditing] =
-    useState<boolean>(false);
-  const [notificationViewing, setNotificationViewing] =
-    useState<boolean>(false);
-  const [editMenuAnchorEl, setEditMenuAnchorEl] =
-    useState<(EventTarget & HTMLElement) | null>(null);
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
+  const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<
+    (EventTarget & HTMLElement) | null
+  >(null);
   const [linksViewing, setLinksViewing] = useState<boolean>(false);
   const [changingOwner, setChangingOwner] = useState<boolean>(false);
   const [pendingChangeOwner, setPendingChangeOwner] = useState<UserType>();
   const [merging, setMerging] = useState<boolean>(false);
-  const [pendingMerge, setPendingMerge] =
-    useState<PropertyType & { __user: UserType }>();
+  const [pendingMerge, setPendingMerge] = useState<
+    PropertyType & { __user: UserType }
+  >();
 
   const handleSetEditing = useCallback(
     (editing: boolean) => () => setEditing(editing),
@@ -126,8 +130,8 @@ export const PropertyInfo: FC<Props> = props => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const users = await UserClientService.loadUsersByIds([userID]);
-    setUser(users[userID]);
+    const user = await UserClientService.loadUserById(userID);
+    setUser(user);
     const req = new Property();
     req.setUserId(userID);
     req.setId(propertyId);

@@ -1,3 +1,4 @@
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
@@ -52,6 +53,9 @@ import { FilterData, RoleType } from '../Payroll';
 import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
+import { ActivityLogClientService, getRPCFields } from '../../../helpers';
+import LineWeightIcon from '@material-ui/icons/LineWeight';
+import { EditTransaction } from '../EditTransaction';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -64,7 +68,7 @@ export interface Props {
     selectedTransactions: Transaction[],
   ) => void;
   hasActions?: boolean;
-  key: any;
+  key?: any;
 }
 // Date purchaser dept job # amt description actions assignment
 type SortString =
@@ -82,13 +86,25 @@ type SelectorParams = {
   totalCount: number;
 };
 
+interface FilterType {
+  departmentId: number;
+  employeeId: number;
+  week: string;
+  vendor: string;
+  isAccepted: boolean | undefined;
+  isRejected: boolean | undefined;
+}
+
 let pageNumber = 0;
 let sortDir: OrderDir | ' ' | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: SortString | undefined = 'timestamp';
-let filter = {
+let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
   week: OPTION_ALL,
+  vendor: '',
+  isAccepted: false,
+  isRejected: false,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -102,17 +118,27 @@ export const TransactionTable: FC<Props> = ({
 
   const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<SelectorParams[]>();
+  const [transactionToEdit, setTransactionToEdit] =
+    useState<Transaction | undefined>();
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
   const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
   const [role, setRole] = useState<RoleType>();
-  const [assigningUser, setAssigningUser] = useState<boolean>(); // sets open an employee picker in a modal
+  const [assigningUser, setAssigningUser] =
+    useState<{ isAssigning: boolean; transactionId: number }>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
+
+  const handleSetTransactionToEdit = useCallback(
+    (transaction: Transaction | undefined) => {
+      setTransactionToEdit(transaction);
+    },
+    [setTransactionToEdit],
+  );
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -150,7 +176,7 @@ export const TransactionTable: FC<Props> = ({
   </body>`;
   };
 
-  const getGalleryData = (txn: Transaction): GalleryData[] => {
+  const getGalleryData = (txn: Transaction.AsObject): GalleryData[] => {
     return txn.documentsList.map(d => {
       return {
         key: `${txn.id}-${d.reference}`,
@@ -183,7 +209,7 @@ export const TransactionTable: FC<Props> = ({
     };
   };
 
-  const auditTxn = async (txn: Transaction) => {
+  const auditTxn = async (txn: Transaction.AsObject) => {
     const ok = confirm(
       'Are you sure you want to mark all the information on this transaction (including all attached photos) as correct? This action is irreversible.',
     );
@@ -204,7 +230,7 @@ export const TransactionTable: FC<Props> = ({
     await client.Create(activity);
   };
 
-  const dispute = async (reason: string, txn: Transaction) => {
+  const dispute = async (reason: string, txn: Transaction.AsObject) => {
     const userReq = new User();
     userReq.setId(txn.ownerId);
     const user = await clients.user.Get(userReq);
@@ -229,32 +255,32 @@ export const TransactionTable: FC<Props> = ({
     };
 
     try {
-      await clients.email.sendMail(email);
+      //await clients.email.sendMail(email);
     } catch (err) {
       alert('An error occurred, user was not notified via email');
     }
     try {
-      const id = await getSlackID(txn.ownerName);
-      await slackNotify(
-        id,
-        `A receipt you submitted has been rejected | ${
-          txn.description
-        } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
-      );
-      await slackNotify(
-        id,
-        `https://app.kalosflorida.com?action=admin:reports.transactions`,
-      );
+      //const id = await getSlackID(txn.ownerName);
+      // await slackNotify(
+      //   id,
+      //   `A receipt you submitted has been rejected | ${
+      //     txn.description
+      //   } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
+      // );
+      // await slackNotify(
+      //   id,
+      //   `https://app.kalosflorida.com?action=admin:reports.transactions`,
+      // );
     } catch (err) {
       console.error(err);
       alert('An error occurred, user was not notified via slack');
     }
 
-    await makeUpdateStatus(txn.id, 4, 'rejected');
+    await makeUpdateStatus(txn.id, 4, 'rejected', reason);
     await refresh();
   };
 
-  const updateStatus = async (txn: Transaction) => {
+  const updateStatus = async (txn: Transaction.AsObject) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as ${
         acceptOverride ? 'accepted' : 'recorded'
@@ -283,7 +309,7 @@ export const TransactionTable: FC<Props> = ({
     await makeLog(`${description} ${reason || ''}`, id);
   };
 
-  const forceAccept = async (txn: Transaction) => {
+  const forceAccept = async (txn: Transaction.AsObject) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as accepted?`,
     );
@@ -323,7 +349,6 @@ export const TransactionTable: FC<Props> = ({
   };
 
   const resetTransactions = useCallback(async () => {
-    setLoading(true);
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
     req.setOrderDir(
@@ -332,7 +357,15 @@ export const TransactionTable: FC<Props> = ({
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
+    if (filter.isAccepted) {
+      req.setStatusId(3);
+    }
+    if (filter.isRejected) {
+      req.setStatusId(4);
+    }
+    if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
+    if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     let res = await TransactionClientService.BatchGet(req);
 
     setTransactions(
@@ -344,10 +377,10 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-    setLoading(false);
-  }, [setTransactions, setLoading]);
+  }, [setTransactions]);
 
   const load = useCallback(async () => {
+    setLoading(true);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
       a.lastname > b.lastname ? 1 : -1,
@@ -358,7 +391,8 @@ export const TransactionTable: FC<Props> = ({
       await TimesheetDepartmentClientService.loadTimeSheetDepartments();
     setDepartments(departments);
 
-    resetTransactions();
+    await resetTransactions();
+    setLoading(true);
 
     const user = await UserClientService.loadUserById(loggedUserId);
 
@@ -376,11 +410,8 @@ export const TransactionTable: FC<Props> = ({
   ]);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    await resetTransactions();
     await load();
-    setLoading(false);
-  }, [load, resetTransactions]);
+  }, [load]);
 
   const copyToClipboard = useCallback((text: string): void => {
     const el = document.createElement('textarea');
@@ -392,7 +423,7 @@ export const TransactionTable: FC<Props> = ({
   }, []);
 
   const handleFile = useCallback(
-    (txn: Transaction) => {
+    (txn: Transaction.AsObject) => {
       const fr = new FileReader();
       fr.onload = async () => {
         try {
@@ -418,31 +449,34 @@ export const TransactionTable: FC<Props> = ({
   );
 
   const handleSetAssigningUser = useCallback(
-    (isAssigningUser: boolean) => {
-      setAssigningUser(isAssigningUser);
+    (isAssigningUser: boolean, transactionId: number) => {
+      setAssigningUser({
+        isAssigning: isAssigningUser,
+        transactionId: transactionId,
+      });
     },
     [setAssigningUser],
   );
 
-  const handleSetFilter = useCallback(
-    (d: FilterData) => {
-      if (!d.week) {
-        d.week = OPTION_ALL;
-      }
-      if (!d.departmentId) {
-        d.departmentId = 0;
-      }
-      if (!d.employeeId) {
-        d.employeeId = 0;
-      }
-      filter.departmentId = d.departmentId;
-      filter.employeeId = d.employeeId;
-      // {departmentId: 18, week: undefined, employeeId: undefined}
-
-      refresh();
-    },
-    [refresh],
-  );
+  const handleSetFilter = useCallback((d: FilterData) => {
+    if (!d.week) {
+      d.week = OPTION_ALL;
+    }
+    if (!d.departmentId) {
+      d.departmentId = 0;
+    }
+    if (!d.employeeId) {
+      d.employeeId = 0;
+    }
+    if (!d.vendor) {
+      d.vendor = '';
+    }
+    filter.departmentId = d.departmentId;
+    filter.employeeId = d.employeeId;
+    filter.vendor = d.vendor;
+    filter.isAccepted = d.accepted ? d.accepted : undefined;
+    filter.isRejected = d.rejected ? d.rejected : undefined;
+  }, []);
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
@@ -450,6 +484,22 @@ export const TransactionTable: FC<Props> = ({
       refresh();
     },
     [refresh],
+  );
+
+  const handleUpdateTransaction = useCallback(
+    async (transactionToSave: Transaction) => {
+      try {
+        const response = await TransactionClientService.Update(
+          transactionToSave,
+        );
+        setTransactionToEdit(undefined);
+        refresh();
+      } catch (err) {
+        console.error('An error occurred while updating a transaction: ', err);
+        setTransactionToEdit(undefined);
+      }
+    },
+    [setTransactionToEdit, refresh],
   );
 
   const handleChangeSort = (newSort: SortString) => {
@@ -486,6 +536,25 @@ export const TransactionTable: FC<Props> = ({
       setMergingTransaction(isMergingTransaction);
     },
     [setMergingTransaction],
+  );
+
+  const handleAssignEmployee = useCallback(
+    async (employeeIdToAssign: number, transactionId: number) => {
+      try {
+        let req = new Transaction();
+        req.setId(transactionId);
+        req.setAssignedEmployeeId(employeeIdToAssign);
+        req.setFieldMaskList(['AssignedEmployeeId']);
+        let result = await TransactionClientService.Update(req);
+        if (!result) {
+          console.error('Unable to assign employee.');
+        }
+        setAssigningUser({ isAssigning: false, transactionId: -1 });
+      } catch (err) {
+        console.error('An error occurred while assigning an employee: ', err);
+      }
+    },
+    [setAssigningUser],
   );
 
   const openFileInput = () => {
@@ -577,11 +646,34 @@ export const TransactionTable: FC<Props> = ({
         ],
       },
     ],
+    [
+      {
+        name: 'accepted',
+        label: 'Is Accepted?',
+        type: 'checkbox',
+      },
+      {
+        name: 'rejected',
+        label: 'Is Rejected?',
+        type: 'checkbox',
+      },
+      {
+        name: 'vendor',
+        label: 'Search Vendor',
+        type: 'search',
+        actions: [
+          {
+            label: 'search',
+            onClick: () => refresh(),
+          },
+        ],
+      },
+    ],
   ];
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   useEffect(() => {
     resetTransactions();
@@ -591,15 +683,37 @@ export const TransactionTable: FC<Props> = ({
   return (
     <>
       {loading ? <Loader /> : <> </>}
+      {transactionToEdit && (
+        <Modal
+          open={true}
+          onClose={() => handleSetTransactionToEdit(undefined)}
+        >
+          <EditTransaction
+            transactionInput={transactionToEdit}
+            onSave={saved => {
+              saved.setId(transactionToEdit.getId());
+              handleUpdateTransaction(saved);
+            }}
+            onClose={() => handleSetTransactionToEdit(undefined)}
+          />
+        </Modal>
+      )}
       {assigningUser ? (
         <Modal
-          open={assigningUser}
-          onClose={() => handleSetAssigningUser(false)}
+          open={assigningUser.isAssigning}
+          onClose={() => handleSetAssigningUser(false, -1)}
         >
           <SectionBar
             title="Assign Employee to Task"
             actions={[
-              { label: 'Assign', onClick: () => alert('Clicked assign') },
+              {
+                label: 'Assign',
+                onClick: () =>
+                  handleAssignEmployee(
+                    filter.employeeId,
+                    assigningUser.transactionId,
+                  ),
+              },
             ]}
           />
           <PlainForm
@@ -656,6 +770,7 @@ export const TransactionTable: FC<Props> = ({
       <SectionBar
         title="Transactions"
         key={String(pageNumber)}
+        fixedActions
         pagination={{
           count:
             transactions && transactions.length > 0
@@ -716,16 +831,6 @@ export const TransactionTable: FC<Props> = ({
             name: 'Purchaser',
             dir:
               sortBy == 'owner_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('owner_id'),
-          },
-          {
-            name: 'Assigned Employee',
-            dir:
-              sortBy == 'assigned_employee_id'
                 ? sortDir != ' '
                   ? sortDir
                   : undefined
@@ -815,19 +920,15 @@ export const TransactionTable: FC<Props> = ({
                       : undefined,
                   },
                   {
-                    value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
+                    value: `${selectorParam.txn.getOwnerName()}`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
                   },
                   {
-                    value: `${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn.getDepartmentString()} - ${selectorParam.txn.getDepartmentId()}`,
+                    value: `${selectorParam.txn
+                      .getDepartment()
+                      ?.getDescription()}`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
@@ -868,6 +969,16 @@ export const TransactionTable: FC<Props> = ({
                             }
                           >
                             <CopyIcon />
+                          </IconButton>
+                        </Tooltip>,
+                        <Tooltip key="editAll" content="Edit this transaction">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              handleSetTransactionToEdit(selectorParam.txn)
+                            }
+                          >
+                            <LineWeightIcon />
                           </IconButton>
                         </Tooltip>,
                         <Tooltip key="upload" content="Upload File">
@@ -987,7 +1098,12 @@ export const TransactionTable: FC<Props> = ({
                         >
                           <IconButton
                             size="small"
-                            onClick={() => handleSetAssigningUser(true)}
+                            onClick={() =>
+                              handleSetAssigningUser(
+                                true,
+                                selectorParam.txn.getId(),
+                              )
+                            }
                           >
                             <AssignmentIndIcon />
                           </IconButton>

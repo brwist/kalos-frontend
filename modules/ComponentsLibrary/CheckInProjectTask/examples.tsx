@@ -5,7 +5,7 @@ import { Event } from '@kalos-core/kalos-rpc/Event/index';
 import { ExampleTitle } from '../helpers';
 
 export default () => {
-  const [project, setProject] = useState<Event>({} as Event);
+  const [project, setProject] = useState<Event.AsObject>({} as Event.AsObject);
   const load = async () => {
     const req = new Event();
     req.setId(70);

@@ -22,7 +22,7 @@ interface Props {
 }
 
 export type TripInfo = {
-  // Could be a way to spread these onto the type or something, these are from Trip
+  // Could be a way to spread these onto the type or something, these are from Trip.AsObject
   id: number;
   distanceInMiles: number;
   originAddress: string;

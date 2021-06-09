@@ -16,7 +16,7 @@ import { ENDPOINT } from '../../../constants';
 
 const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
 
-type StoredQuoteType = StoredQuote;
+type StoredQuoteType = StoredQuote.AsObject;
 
 interface Props {
   label?: string;

@@ -22,7 +22,7 @@ interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair.AddressPair) => void;
   addressFields: number;
-  schema: Schema<AddressPair>;
+  schema: Schema<AddressPair.AsObject>;
   perDiemRowIds: number[];
 }
 
@@ -33,7 +33,7 @@ interface State {
   noteLengthPopupOpen: boolean;
   saving: boolean;
   perDiemDropDownSelected: any;
-  perDiems: PerDiem[] | null;
+  perDiems: PerDiem.AsObject[] | null;
 }
 
 const componentForm = {
@@ -107,9 +107,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     );
     await this.loadScriptByUrl(
       `https://maps.googleapis.com/maps/api/js?key=${
-        (
-          await ApiKeyClientService.getKeyByKeyName('google_maps')
-        ).apiKey
+        (await ApiKeyClientService.getKeyByKeyName('google_maps')).apiKey
       }&libraries=places`,
     );
     this.handleLoad();
@@ -289,7 +287,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   getPerDiemsFromIds = async (ids: number[]) => {
-    let list: PerDiem[] = [];
+    let list: PerDiem.AsObject[] = [];
     for await (const id of ids) {
       let pd = new PerDiem();
       pd.setId(id);
