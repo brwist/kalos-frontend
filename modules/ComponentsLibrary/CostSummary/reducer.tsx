@@ -1,13 +1,34 @@
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import { Spiffs } from '../ServiceCall/components/Spiffs';
 
+export type PerDiemSum = {
+  totalMeals: number;
+  totalLodging: number;
+  totalMileage: number;
+  processed: number;
+};
+
+export type TripSum = {
+  totalDistance: number;
+  processed: boolean;
+};
 export type State = {
   spiffs: Task[] | undefined;
+  totalPerDiem: PerDiemSum;
+  tripsTotal: TripSum;
+  totalSpiffsProcessed: number;
+  totalPerDiemProcessed: PerDiemSum;
+  totalTripsProcessed: TripSum;
 };
 
 export type Action =
   | { type: 'updateSpiff'; data: Task }
-  | { type: 'updateSpiffs'; data: Task[] };
+  | { type: 'updateSpiffs'; data: Task[] }
+  | { type: 'updateTotalSpiffsProcessed'; value: number }
+  | { type: 'updateTripsTotal'; data: TripSum }
+  | { type: 'updatePerDiemTotal'; data: PerDiemSum }
+  | { type: 'updatePerDiemTotalProcessed'; data: PerDiemSum }
+  | { type: 'updateTripsTotalProcessed'; data: TripSum };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -29,6 +50,37 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         spiffs: data,
+      };
+    }
+    case 'updateTripsTotal': {
+      return {
+        ...state,
+        tripsTotal: action.data,
+      };
+    }
+    case 'updatePerDiemTotal': {
+      return {
+        ...state,
+        totalPerDiem: action.data,
+      };
+    }
+    case 'updatePerDiemTotalProcessed': {
+      return {
+        ...state,
+        totalPerDiem: action.data,
+      };
+    }
+    case 'updateTripsTotalProcessed': {
+      return {
+        ...state,
+        tripsTotal: action.data,
+      };
+    }
+    case 'updateTotalSpiffsProcessed': {
+      const temp = state.totalSpiffsProcessed + action.value;
+      return {
+        ...state,
+        totalSpiffsProcessed: temp,
       };
     }
     default:
