@@ -24,7 +24,7 @@ interface props {
 }
 
 interface state {
-  list: TransactionActivity.AsObject[];
+  list: TransactionActivity[];
   actorMap: Map<number, string>;
   isOpen: boolean;
 }
@@ -53,13 +53,16 @@ export class TxnLog extends React.PureComponent<props, state> {
     this.setState(prevState => ({ isOpen: !prevState.isOpen }));
   }
 
-  async addLog(log: TransactionActivity.AsObject) {
+  async addLog(log: TransactionActivity) {
     const user = new User();
-    user.setId(log.userId);
+    user.setId(log.getUserId());
     const res = await this.UserClient.Get(user);
     this.setState(prevState => {
       const map = new Map(prevState.actorMap);
-      map.set(log.id, `${res.firstname} ${res.lastname} ${res.id}`);
+      map.set(
+        log.getId(),
+        `${res.getFirstname()} ${res.getLastname()} ${res.getId()}`,
+      );
       return {
         list: prevState.list.concat(log),
         actorMap: map,
@@ -133,18 +136,18 @@ export class TxnLog extends React.PureComponent<props, state> {
                 {this.state.list
                   .filter(
                     activity =>
-                      !activity.description.includes('[old.') ||
-                      !activity.description.includes('[new.'),
+                      !activity.getDescription().includes('[old.') ||
+                      !activity.getDescription().includes('[new.'),
                   )
                   .map(activity => (
-                    <TableRow key={`activity_${activity.id}`}>
-                      <TableCell>{activity.timestamp}</TableCell>
-                      <TableCell>{activity.description}</TableCell>
+                    <TableRow key={`activity_${activity.getId()}`}>
+                      <TableCell>{activity.getTimestamp()}</TableCell>
+                      <TableCell>{activity.getDescription()}</TableCell>
                       <TableCell>
-                        {this.state.actorMap.get(activity.id)}
+                        {this.state.actorMap.get(activity.getId())}
                       </TableCell>
                       <TableCell>
-                        {activity.description.replace('rejected', '')}
+                        {activity.getDescription().replace('rejected', '')}
                       </TableCell>
                     </TableRow>
                   ))}
