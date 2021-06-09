@@ -4,7 +4,12 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { getRPCFields } from '@kalos-core/kalos-rpc/Common';
 import { Typography } from '@material-ui/core';
 import React, { FC, useCallback, useState } from 'react';
-import { ActivityLogClientService, S3ClientService } from '../../../helpers';
+import { LOG_IMAGE_BUCKET } from '../../../constants';
+import {
+  ActivityLogClientService,
+  getS3LogImageFileName,
+  S3ClientService,
+} from '../../../helpers';
 import { Loader } from '../../Loader/main';
 import { Alert } from '../Alert';
 import { Form, Schema } from '../Form';
@@ -55,15 +60,10 @@ export const AddLog: FC<Props> = ({
   const handleSubmitFileToS3 = useCallback(
     async (fileData: string, fileName, logId: number) => {
       try {
-        const split = fileName.split('.');
         const result = await S3ClientService.uploadFileToS3Bucket(
-          // TODO probably shouldn't do it this way permanently, but creating a log image with the name itself specified is probably
-          // the easiest way to do it until Kalos RPC 3 is ready and all the issues are fixed
-          // I also made sure to set the tag as well so we can use that later on once we can modify the S3ClientService to actually use that
-          // information to grab stuff from S3
-          `EventID-${eventId}-LogID-${logId}.${split[split.length - 1]}`,
+          getS3LogImageFileName(fileName, eventId, logId),
           fileData,
-          'project-log-images',
+          LOG_IMAGE_BUCKET,
           eventId ? `EventID-${eventId}` : undefined, // Images submitted to S3 are tracked by event ID this way
         );
         if (result === 'nok') {
@@ -233,7 +233,7 @@ export const AddLog: FC<Props> = ({
             onSubmit={() => handleSetConfirmed(true)}
             onClose={() => {
               handleSetFileData('', '');
-              handleSetConfirmed(false); 
+              handleSetConfirmed(false);
             }}
           />
         </Modal>

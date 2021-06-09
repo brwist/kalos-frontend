@@ -31,6 +31,8 @@ import {
   SPIFF_KIND_TYPE_LIST,
 } from '../../../constants';
 import './styles.less';
+import { EditProject } from '../EditProject';
+import { CostReport } from '../CostReport';
 
 export type FilterForm = {
   status?: string;
@@ -41,6 +43,10 @@ export type FilterForm = {
   monthlyWeekly?: string;
   users?: string;
   blank?: string;
+};
+
+type JobReportForm = {
+  jobNumber: number;
 };
 
 export interface Props {
@@ -233,72 +239,46 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [jobStatusReport, setJobStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
-  const [jobStatusDatesError, setJobStatusDatesError] = useState<boolean>(
-    false,
-  );
-  const [jobStatusReportOpen, setJobStatusReportOpen] = useState<boolean>(
-    false,
-  );
+  const [jobStatusDatesError, setJobStatusDatesError] =
+    useState<boolean>(false);
+  const [jobStatusReportOpen, setJobStatusReportOpen] =
+    useState<boolean>(false);
   const [billingStatusReport, setBillingStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
-  const [
-    billingStatusDatesError,
-    setBillingStatusDatesError,
-  ] = useState<boolean>(false);
-  const [
-    billingStatusReportOpen,
-    setBillingStatusReportOpen,
-  ] = useState<boolean>(false);
+  const [billingStatusDatesError, setBillingStatusDatesError] =
+    useState<boolean>(false);
+  const [billingStatusReportOpen, setBillingStatusReportOpen] =
+    useState<boolean>(false);
   const [notificationsReport, setNotificationsReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
-  const [
-    notificationsDatesError,
-    setNotificationsDatesError,
-  ] = useState<boolean>(false);
-  const [
-    notificationsReportOpen,
-    setNotificationsReportOpen,
-  ] = useState<boolean>(false);
-  const [
-    performanceMetricsReport,
-    setPerformanceMetricsReport,
-  ] = useState<FilterForm>({});
-  const [
-    performanceMetricsDatesError,
-    setPerformanceMetricsDatesError,
-  ] = useState<boolean>(false);
-  const [
-    performanceMetricsReportOpen,
-    setPerformanceMetricsReportOpen,
-  ] = useState<boolean>(false);
-  const [
-    deletedServiceCallsReport,
-    setDeletedServiceCallsReport,
-  ] = useState<FilterForm>({});
-  const [
-    deletedServiceCallsDatesError,
-    setDeletedServiceCallsDatesError,
-  ] = useState<boolean>(false);
-  const [
-    deletedServiceCallsReportOpen,
-    setDeletedServiceCallsReportOpen,
-  ] = useState<boolean>(false);
+  const [notificationsDatesError, setNotificationsDatesError] =
+    useState<boolean>(false);
+  const [notificationsReportOpen, setNotificationsReportOpen] =
+    useState<boolean>(false);
+  const [performanceMetricsReport, setPerformanceMetricsReport] =
+    useState<FilterForm>({});
+  const [performanceMetricsDatesError, setPerformanceMetricsDatesError] =
+    useState<boolean>(false);
+  const [performanceMetricsReportOpen, setPerformanceMetricsReportOpen] =
+    useState<boolean>(false);
+  const [deletedServiceCallsReport, setDeletedServiceCallsReport] =
+    useState<FilterForm>({});
+  const [deletedServiceCallsDatesError, setDeletedServiceCallsDatesError] =
+    useState<boolean>(false);
+  const [deletedServiceCallsReportOpen, setDeletedServiceCallsReportOpen] =
+    useState<boolean>(false);
   const [callbackReport, setCallbackReport] = useState<FilterForm>({});
   const [callbackDatesError, setCallbackDatesError] = useState<boolean>(false);
   const [callbackReportOpen, setCallbackReportOpen] = useState<boolean>(false);
-  const [
-    serviceCallMetricsReport,
-    setServiceCallMetricsReport,
-  ] = useState<FilterForm>({
-    week: getCurrWeek(),
-  });
+  const [serviceCallMetricsReport, setServiceCallMetricsReport] =
+    useState<FilterForm>({
+      week: getCurrWeek(),
+    });
 
-  const [
-    serviceCallMetricsReportOpen,
-    setServiceCallMetricsReportOpen,
-  ] = useState<boolean>(false);
+  const [serviceCallMetricsReportOpen, setServiceCallMetricsReportOpen] =
+    useState<boolean>(false);
   const [spiffReport, setSpiffReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_1[0].value,
     monthlyWeekly: 'Monthly',
@@ -306,27 +286,17 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   });
   const [spiffReportKey, setSpiffReportKey] = useState<number>(0);
   const [spiffReportOpen, setSpiffReportOpen] = useState<boolean>(false);
-  const [
-    finalizeApprovedSpiffsOpen,
-    setFinalizeApprovedSpiffsOpen,
-  ] = useState<boolean>(false);
-  const [
-    serviceCallZipCodeReportOpen,
-    setServiceCallZipCodeReportOpen,
-  ] = useState<boolean>(false);
+  const [finalizeApprovedSpiffsOpen, setFinalizeApprovedSpiffsOpen] =
+    useState<boolean>(false);
+  const [serviceCallZipCodeReportOpen, setServiceCallZipCodeReportOpen] =
+    useState<boolean>(false);
   const [warrantyReportOpen, setWarrantyReportOpen] = useState<boolean>(false);
-  const [
-    trainingMetricsReport,
-    setTrainingMetricsReport,
-  ] = useState<FilterForm>({});
-  const [
-    trainingMetricsDatesError,
-    setTrainingMetricsDatesError,
-  ] = useState<boolean>(false);
-  const [
-    trainingMetricsReportOpen,
-    setTrainingMetricsReportOpen,
-  ] = useState<boolean>(false);
+  const [trainingMetricsReport, setTrainingMetricsReport] =
+    useState<FilterForm>({});
+  const [trainingMetricsDatesError, setTrainingMetricsDatesError] =
+    useState<boolean>(false);
+  const [trainingMetricsReportOpen, setTrainingMetricsReportOpen] =
+    useState<boolean>(false);
   const [charityReport, setCharityReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_0[0].value,
   });
@@ -334,20 +304,18 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [billingAuditReport, setBillingAuditReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_1[0].value,
   });
-  const [billingAuditReportOpen, setBillingAuditReportOpen] = useState<boolean>(
-    false,
-  );
+  const [billingAuditReportOpen, setBillingAuditReportOpen] =
+    useState<boolean>(false);
   const [promptPaymentReport, setPromptPaymentReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_1[0].value,
   });
-  const [
-    promptPaymentReportOpen,
-    setPromptPaymentReportOpen,
-  ] = useState<boolean>(false);
-  const [
-    timeoffSummaryReportOpen,
-    setTimeoffSummaryReportOpen,
-  ] = useState<boolean>(false);
+  const [promptPaymentReportOpen, setPromptPaymentReportOpen] =
+    useState<boolean>(false);
+  const [timeoffSummaryReportOpen, setTimeoffSummaryReportOpen] =
+    useState<boolean>(false);
+  const [jobNumberBasedReportOpen, setJobNumberBasedReportOpen] =
+    useState<JobReportForm | undefined>();
+  const [jobNumberForReport] = useState<JobReportForm>({} as JobReportForm);
   const handleOpenJobStatusReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
       setJobStatusDatesError(false);
@@ -430,11 +398,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       }
       setPerformanceMetricsReportOpen(open);
     },
-    [
-      setPerformanceMetricsReport,
-      setNotificationsReportOpen,
-      setPerformanceMetricsDatesError,
-    ],
+    [setPerformanceMetricsReport, setPerformanceMetricsDatesError],
   );
   const handleOpenDeletedServiceCallsReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
@@ -564,6 +528,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     (open: boolean) => () => setTimeoffSummaryReportOpen(open),
     [setTimeoffSummaryReportOpen],
   );
+  const handleOpenJobNumberBasedReportToggle = useCallback(
+    (open: JobReportForm | undefined) => setJobNumberBasedReportOpen(open),
+    [setJobNumberBasedReportOpen],
+  );
   const handleSpiffReportChange = useCallback(
     (data: FilterForm) => {
       const spiffReportData: FilterForm = { ...data };
@@ -608,6 +576,15 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         label: 'Select Users',
         type: 'technicians',
         required: true,
+      },
+    ],
+  ];
+  const SCHEMA_JOB_REPORTS: Schema<JobReportForm> = [
+    [
+      {
+        name: 'jobNumber',
+        label: 'Job Number for Report',
+        type: 'number',
       },
     ],
   ];
@@ -758,6 +735,16 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           },
         ]}
         fixedActions
+      />
+      <Form
+        title="Job Number Report"
+        schema={SCHEMA_JOB_REPORTS}
+        data={jobNumberForReport}
+        onClose={null}
+        onSave={(saved: JobReportForm) =>
+          handleOpenJobNumberBasedReportToggle(saved)
+        }
+        submitLabel="Report"
       />
       {jobStatusReportOpen && (
         <Modal open onClose={handleOpenJobStatusReportToggle(false)} fullScreen>
@@ -977,6 +964,27 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         >
           <TimeoffSummaryReport
             onClose={handleOpenTimeoffSummaryReportToggle(false)}
+          />
+        </Modal>
+      )}
+      {jobNumberBasedReportOpen && (
+        <Modal
+          open
+          onClose={() => handleOpenJobNumberBasedReportToggle(undefined)}
+        >
+          <SectionBar
+            title="Job Number Report"
+            actions={[
+              {
+                label: 'Close',
+                onClick: () => handleOpenJobNumberBasedReportToggle(undefined),
+              },
+            ]}
+            fixedActions
+          />
+          <CostReport
+            serviceCallId={jobNumberBasedReportOpen.jobNumber}
+            loggedUserId={loggedUserId}
           />
         </Modal>
       )}
