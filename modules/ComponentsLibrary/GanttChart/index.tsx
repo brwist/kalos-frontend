@@ -307,6 +307,7 @@ export const GanttChart: FC<Props> = ({
             endHour,
             onClick,
             label,
+            notes,
           }) => (
             <div key={id} className="GanttChartGanttRow">
               {[...Array(totalDays + offsetStart + offsetEnd + 1)].map(
@@ -335,6 +336,13 @@ export const GanttChart: FC<Props> = ({
                             marginBottom: uncollapsed[id] ? heights[id] - 4 : 0,
                           }}
                           onClick={onClick}
+                          title={
+                            notes +
+                            ` (${format(
+                              new Date(dateStart),
+                              'yyyy-MM-dd',
+                            )} - ${format(new Date(dateEnd), 'yyyy-MM-dd')})`
+                          }
                         >
                           <div
                             className={clsx('GanttChartHour', { withLabels })}
