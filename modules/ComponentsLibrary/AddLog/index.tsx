@@ -4,6 +4,7 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { getRPCFields } from '@kalos-core/kalos-rpc/Common';
 import { Typography } from '@material-ui/core';
 import React, { FC, useCallback, useState } from 'react';
+import { LOG_IMAGE_BUCKET } from '../../../constants';
 import {
   ActivityLogClientService,
   getS3LogImageFileName,
@@ -62,7 +63,7 @@ export const AddLog: FC<Props> = ({
         const result = await S3ClientService.uploadFileToS3Bucket(
           getS3LogImageFileName(fileName, eventId, logId),
           fileData,
-          'project-log-images',
+          LOG_IMAGE_BUCKET,
           eventId ? `EventID-${eventId}` : undefined, // Images submitted to S3 are tracked by event ID this way
         );
         if (result === 'nok') {
