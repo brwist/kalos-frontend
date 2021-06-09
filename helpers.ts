@@ -921,7 +921,7 @@ export const loadActivityLogsByFilter = async ({
   const req = new ActivityLog();
   const u = new User();
   req.setUser(u);
-  req.setOrderBy(orderBy);
+  req.setOrderBy(cleanOrderByField(orderBy));
   req.setOrderDir(orderDir);
   req.setPageNumber(page === -1 ? 0 : page);
   if (activityDateStart && activityDateEnd) {
@@ -1237,14 +1237,14 @@ export const loadEventsByFilter = async ({
   const p = new Property();
   const u = new User();
   if (orderByField === 'getLastname') {
-    u.setOrderBy(orderBy);
+    u.setOrderBy(cleanOrderByField(orderBy));
     u.setOrderDir(orderDir);
   } else if (orderByField === 'getAddress') {
     // FIXME - missing setOrderBy/setOrderDir in Property RPC
     // p.setOrderBy(orderBy);
     // p.setOrderDir(orderDir)
   } else {
-    req.setOrderBy(orderBy);
+    req.setOrderBy(cleanOrderByField(orderBy));
     req.setOrderDir(orderDir);
   }
   if (fieldMaskList) {
@@ -1409,9 +1409,10 @@ export const loadEventsByFilterDeleted = async ({
     // p.setOrderBy(orderBy);
     // p.setOrderDir(orderDir)
   } else {
-    req.setOrderBy(orderBy);
+    req.setOrderBy(cleanOrderByField(orderBy));
     req.setOrderDir(orderDir);
   }
+
   if (fieldMaskList) {
     req.setFieldMaskList(['IsActive']);
   }
@@ -1854,4 +1855,5 @@ export {
   newBugReportImage,
   forceHTTPS,
   customerCheck,
+  cleanOrderByField,
 };

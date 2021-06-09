@@ -166,14 +166,15 @@ export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           schema={schema}
           data={data}
           onChange={handleChange}
-          children={children}
           disabled={disabled}
           error={error}
           readOnly={readOnly}
           validations={validations}
           ref={functionRef}
           inputFieldRefs={inputFieldRefs}
-        />
+        >
+          {children}
+        </PlainForm>
         {!title && (
           <button
             //@ts-ignore

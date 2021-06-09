@@ -23,6 +23,7 @@ export const SearchFormComponent: FC<Props> = ({
   const [formData, setFormData] = useState<SearchForm>(data);
   const handleChange = useCallback(
     (data: SearchForm) => {
+      console.log({ data });
       setFormData(data);
       onChange(data);
     },
