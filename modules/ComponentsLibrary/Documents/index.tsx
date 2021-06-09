@@ -21,7 +21,12 @@ import { Link } from '../Link';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
-import { makeFakeRows, formatDateTime, cfURL } from '../../../helpers';
+import {
+  makeFakeRows,
+  formatDateTime,
+  cfURL,
+  cleanOrderByField,
+} from '../../../helpers';
 
 const DocumentClientService = new DocumentClient(ENDPOINT);
 
@@ -108,8 +113,7 @@ export const Documents: FC<Props> = ({
       }
       try {
         entry.setOrderDir(displayInAscendingOrder ? 'asc' : 'desc');
-        entry.setOrderBy(orderBy);
-        console.log(entry.toObject());
+        entry.setOrderBy(cleanOrderByField(orderBy));
         const response = await DocumentClientService.BatchGet(entry);
         const { resultsList, totalCount } = response.toObject();
         console.log(response.toObject());
@@ -120,50 +124,58 @@ export const Documents: FC<Props> = ({
       }
       setLoading(false);
     },
-    [displayInAscendingOrder, fieldMask, orderBy, propertyId, taskId, userId],
+    [
+      displayInAscendingOrder,
+      fieldMask,
+      orderBy,
+      propertyId,
+      taskId,
+      userId,
+      ignoreUserId,
+    ],
   );
 
-  const handleEditFilename = (entry: Document.AsObject) => async (
-    filename: string,
-  ) => {
-    const req = new Document();
-    req.setId(entry.id);
-    req.setDescription(filename);
-    await DocumentClientService.Update(req);
-    load();
-  };
+  const handleEditFilename =
+    (entry: Document.AsObject) => async (filename: string) => {
+      const req = new Document();
+      req.setId(entry.id);
+      req.setDescription(filename);
+      await DocumentClientService.Update(req);
+      load();
+    };
 
   const handleDownload = useCallback(
     (
-      filename: string,
-      type: number,
-      docId: number,
-      realDownload: boolean = false,
-    ) => async (
-      event: React.MouseEvent<
-        HTMLButtonElement | HTMLAnchorElement,
-        MouseEvent
-      >,
-    ) => {
-      event.preventDefault();
-      const res = filename.match(/\d{2}-(\d{3,})[A-z]?-/);
-      if (filename.toLowerCase().startsWith('maintenance') && res) {
-        window.open(
-          `https://app.kalosflorida.com/index.cfm?action=admin:properties.showMaintenanceSheet&event_id=${res[1]}&user_id=${userId}&document_id=${docId}&property_id=${propertyId}`,
-        );
-      } else {
-        const S3 = new S3Client(ENDPOINT);
-        const url = new URLObject();
-        url.setKey(filename);
-        url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
-        const dlURL = await S3.GetDownloadURL(url);
-        if (realDownload) {
-          window.open(dlURL.url, '_blank'); // TODO: implement real download, instead of opening in new tab
+        filename: string,
+        type: number,
+        docId: number,
+        realDownload: boolean = false,
+      ) =>
+      async (
+        event: React.MouseEvent<
+          HTMLButtonElement | HTMLAnchorElement,
+          MouseEvent
+        >,
+      ) => {
+        event.preventDefault();
+        const res = filename.match(/\d{2}-(\d{3,})[A-z]?-/);
+        if (filename.toLowerCase().startsWith('maintenance') && res) {
+          window.open(
+            `https://app.kalosflorida.com/index.cfm?action=admin:properties.showMaintenanceSheet&event_id=${res[1]}&user_id=${userId}&document_id=${docId}&property_id=${propertyId}`,
+          );
         } else {
-          window.open(dlURL.url, '_blank');
+          const S3 = new S3Client(ENDPOINT);
+          const url = new URLObject();
+          url.setKey(filename);
+          url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
+          const dlURL = await S3.GetDownloadURL(url);
+          if (realDownload) {
+            window.open(dlURL.getUrl(), '_blank'); // TODO: implement real download, instead of opening in new tab
+          } else {
+            window.open(dlURL.getUrl(), '_blank');
+          }
         }
-      }
-    },
+      },
     [propertyId, userId],
   );
 
