@@ -20,7 +20,7 @@ interface props {
 }
 
 interface state {
-  list: JobSubtype[];
+  list: JobSubtype.AsObject[];
   allowed: number[];
 }
 
@@ -50,7 +50,7 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
     }
   }
 
-  addItem(item: JobSubtype) {
+  addItem(item: JobSubtype.AsObject) {
     if (this.state.allowed.includes(item.id)) {
       this.setState(prevState => ({
         list: prevState.list.concat(item),

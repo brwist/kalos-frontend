@@ -26,7 +26,7 @@ const ColorIndicator = ({ status }: ColorIndicatorProps) => (
 );
 
 type TimesheetLineProps = {
-  card: TimesheetLine;
+  card: TimesheetLine.AsObject;
 };
 
 export const TimesheetLineCard: FC<TimesheetLineProps> = ({
@@ -148,7 +148,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
 };
 
 type ServicesRenderedProps = {
-  card: ServicesRendered;
+  card: ServicesRendered.AsObject;
 };
 
 export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({

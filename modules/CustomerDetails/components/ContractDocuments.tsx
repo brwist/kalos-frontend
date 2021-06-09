@@ -6,7 +6,7 @@ import { ENDPOINT } from '../../../constants';
 import { makeFakeRows, getCFAppUrl } from '../../../helpers';
 import { Documents } from '../../ComponentsLibrary/Documents';
 
-type Entry = Document;
+type Entry = Document.AsObject;
 
 interface Props {
   className?: string;

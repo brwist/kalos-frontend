@@ -30,7 +30,7 @@ import {
 import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
 
-type Entry = Event;
+type Entry = Event.AsObject;
 
 interface Props {
   className?: string;
@@ -132,23 +132,25 @@ export class ServiceCalls extends PureComponent<Props, State> {
     }
   };
 
-  handleOrder =
-    (orderByDBField: string, orderByFields: (keyof Entry)[]) => () => {
-      this.setState(
-        {
-          page: 0,
-          orderByFields,
-          orderByDBField,
-          dir:
-            orderByDBField !== this.state.orderByDBField
-              ? 'ASC'
-              : this.state.dir === 'ASC'
-              ? 'DESC'
-              : 'ASC',
-        },
-        this.load,
-      );
-    };
+  handleOrder = (
+    orderByDBField: string,
+    orderByFields: (keyof Entry)[],
+  ) => () => {
+    this.setState(
+      {
+        page: 0,
+        orderByFields,
+        orderByDBField,
+        dir:
+          orderByDBField !== this.state.orderByDBField
+            ? 'ASC'
+            : this.state.dir === 'ASC'
+            ? 'DESC'
+            : 'ASC',
+      },
+      this.load,
+    );
+  };
 
   handleDelete = async () => {
     // FIXME: service call is not actually deleted for some reason

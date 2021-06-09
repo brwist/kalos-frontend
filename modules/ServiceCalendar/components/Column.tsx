@@ -37,11 +37,11 @@ type Props = {
 };
 
 type CallsList = {
-  [key: string]: Event[] | TimeoffRequest[];
-  completedServiceCallsList: Event[];
-  remindersList: Event[];
-  serviceCallsList: Event[];
-  timeoffRequestsList: TimeoffRequest[];
+  [key: string]: Event.AsObject[] | TimeoffRequest.AsObject[];
+  completedServiceCallsList: Event.AsObject[];
+  remindersList: Event.AsObject[];
+  serviceCallsList: Event.AsObject[];
+  timeoffRequestsList: TimeoffRequest.AsObject[];
 };
 
 const Column = ({
@@ -94,7 +94,7 @@ const Column = ({
         (acc: CallsList, key) => {
           // @ts-ignore
           let calls = calendarDay[key];
-          acc[key] = calls.filter((call: Event) => {
+          acc[key] = calls.filter((call: Event.AsObject) => {
             const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
               .map(Number)
               .filter(e => e !== 0);

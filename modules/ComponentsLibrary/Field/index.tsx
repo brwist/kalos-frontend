@@ -48,12 +48,12 @@ import { InfoTable, Data } from '../InfoTable';
 import {
   makeFakeRows,
   trailingZero,
-  EventType,
   EventClientService,
   UserClientService,
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import './styles.less';
 import { Form, Schema } from '../Form';
 
@@ -67,8 +67,6 @@ const renderSelectOptions = (i: SelectOption) => (
     {i.description}
   </option>
 );
-
-type UserType = User;
 
 export type Type =
   | 'text'
@@ -161,7 +159,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       type === 'date' ? (props.value + '').substr(11, 8) : '';
     const value =
       type === 'date' ? (props.value + '').substr(0, 10) : props.value;
-    const [technicians, setTechnicians] = useState<UserType[]>([]);
+    const [technicians, setTechnicians] = useState<User[]>([]);
     const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
     const [eventsOpened, setEventsOpened] = useState<boolean>(false);
     const [techniciansOpened, setTechniciansOpened] = useState<boolean>(false);
@@ -197,7 +195,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           eventIdValue,
         );
         if (onChange) {
-          onChange(event.id);
+          onChange(event.getId());
         }
         setEventStatus(1);
       } catch (e) {
@@ -206,11 +204,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
       }
     }, [setEventStatus, eventIdValue, onChange, setEventsOpened]);
     const handleEventSelect = useCallback(
-      (event: EventType) => {
+      (event: Event) => {
         if (onChange) {
-          onChange(event.id);
+          onChange(event.getId());
         }
-        setEventIdValue(event.id);
+        setEventIdValue(event.getId());
         setEventStatus(1);
       },
       [onChange, setEventStatus, setEventIdValue],
@@ -624,10 +622,11 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           ? 'Unassigned'
           : ids
               .map(id => {
-                const technician = technicians.find(item => item.id === id);
+                const technician = technicians.find(
+                  item => item.getId() === id,
+                );
                 if (!technician) return 'Loading...';
-                const { firstname, lastname } = technician;
-                return `${firstname} ${lastname}`;
+                return `${technician.getFirstname()} ${technician.getLastname()}`;
               })
               .join('\n');
       const searchTechnicianPhrase = (searchTechnician + '').toLowerCase();
@@ -649,20 +648,26 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
             ],
             ...technicians
               .filter(
-                ({ firstname, lastname }) =>
-                  firstname.toLowerCase().includes(searchTechnicianPhrase) ||
-                  lastname.toLowerCase().includes(searchTechnicianPhrase),
+                t =>
+                  t
+                    .getFirstname()
+                    .toLowerCase()
+                    .includes(searchTechnicianPhrase) ||
+                  t
+                    .getLastname()
+                    .toLowerCase()
+                    .includes(searchTechnicianPhrase),
               )
-              .map(({ id, firstname, lastname }) => [
+              .map(t => [
                 {
                   value: (
                     <Field
                       name={`technician-${id}`}
-                      value={techniciansIds.includes(id)}
-                      label={`${firstname} ${lastname}`}
+                      value={techniciansIds.includes(t.getId())}
+                      label={`${t.getFirstname()} ${t.getLastname()}`}
                       type="checkbox"
                       className="FieldTechnician"
-                      onChange={handleTechnicianChecked(id)}
+                      onChange={handleTechnicianChecked(t.getId())}
                     />
                   ),
                 },

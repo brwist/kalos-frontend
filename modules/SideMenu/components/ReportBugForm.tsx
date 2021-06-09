@@ -22,7 +22,7 @@ import ImageUploader from './ImageUploader';
 import './reportBugForm.less';
 
 type Props = {
-  user: User;
+  user: User.AsObject;
   onClose: () => void;
 };
 

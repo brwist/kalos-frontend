@@ -14,7 +14,7 @@ import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
 import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
-import { TaskEventClient } from '@kalos-core/kalos-rpc/TaskEvent';
+import { TaskEvent, TaskEventClient } from '@kalos-core/kalos-rpc/TaskEvent';
 import { TaskClient } from '@kalos-core/kalos-rpc/Task';
 import { TaskAssignmentClient } from '@kalos-core/kalos-rpc/TaskAssignment';
 import {
@@ -66,6 +66,7 @@ import {
   randomize,
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
+export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
 
 export type SimpleFile = {
   key: string;
@@ -561,6 +562,7 @@ export type LoadMetricsByFilter = {
 export type LoadMetricsBySearchFilter = {
   page: number;
   filter: DateStartEndSearchFilter;
+  req: Event;
 };
 
 export const loadPerformanceMetricsByFilter = async ({
@@ -578,8 +580,8 @@ export const loadDeletedServiceCallsByFilter = async ({
   // FIXME move to event client
   page,
   filter: { dateStart, dateEnd, businessName, lastname },
+  req,
 }: LoadMetricsBySearchFilter) => {
-  const req = new Event();
   req.setFieldMaskList(['IsActive']);
   if (businessName && businessName != '') {
     const bReq = new Property();
@@ -765,8 +767,8 @@ export const loadPromptPaymentData = async (month: string) => {
     [key: string]: PromptPaymentData;
   } = {};
   res.getDataList().forEach(entry => {
-    const userBusinessName = entry.getUserBusinessName();
     const userId = entry.getUserId();
+    const userBusinessName = entry.getUserBusinessName();
     const paymentTerms = entry.getPaymentTerms();
     const daysToPay = entry.getDaysToPay();
     const payable = entry.getPayable();
@@ -919,7 +921,7 @@ export const loadActivityLogsByFilter = async ({
   const req = new ActivityLog();
   const u = new User();
   req.setUser(u);
-  req.setOrderBy(orderBy);
+  req.setOrderBy(cleanOrderByField(orderBy));
   req.setOrderDir(orderDir);
   req.setPageNumber(page === -1 ? 0 : page);
   if (activityDateStart && activityDateEnd) {
@@ -933,10 +935,10 @@ export const loadActivityLogsByFilter = async ({
   }
   const results: ActivityLog[] = [];
   const res = await ActivityLogClientService.BatchGet(req);
-  const resultsList = res.getResultsList();
-  const len = resultsList.length;
+  results.push(...res.getResultsList());
   const totalCount = res.getTotalCount();
-  results.concat(resultsList);
+  const len = res.getResultsList().length;
+
   if (page === -1 && totalCount > len) {
     const batchesAmount = Math.min(
       MAX_PAGES,
@@ -974,16 +976,19 @@ export type LoadPropertiesByFilter = {
   page: number;
   filter: PropertiesFilter;
   sort: PropertiesSort;
+  req: Property;
 };
 export type LoadContractsByFilter = {
   page: number;
   filter: ContractsFilter;
   sort: ContractsSort;
+  req: Contract;
 };
 export type LoadTripsByFilter = {
   page: number;
   filter: TripsFilter;
   sort: TripsSort;
+  req: Trip;
 };
 export type PropertiesFilter = {
   subdivision?: string;
@@ -1027,10 +1032,10 @@ export const loadPropertiesByFilter = async ({
   page,
   filter,
   sort,
+  req,
 }: LoadPropertiesByFilter) => {
   // FIXME move to property client
   const { orderBy, orderDir, orderByField } = sort;
-  const req = new Property();
   req.setIsActive(1);
   req.setPageNumber(page);
   // req.setOrderBy(orderBy);
@@ -1068,10 +1073,10 @@ export const loadContractsByFilter = async ({
   page,
   filter,
   sort,
+  req,
 }: LoadContractsByFilter) => {
   // FIXME, move to contract client
   const { orderBy, orderDir, orderByField } = sort;
-  const req = new Contract();
   req.setIsActive(1);
   req.setPageNumber(page);
   for (const fieldName in filter) {
@@ -1101,10 +1106,10 @@ export const loadTripsByFilter = async ({
   page,
   filter,
   sort,
+  req,
 }: LoadTripsByFilter) => {
   // FIXME move to trips client
-  const { orderDir, orderByField } = sort;
-  const req = new Trip();
+  const { orderBy, orderDir, orderByField } = sort;
   req.setPage(page);
   req.setIsActive(true);
   for (const fieldName in filter) {
@@ -1118,31 +1123,31 @@ export const loadTripsByFilter = async ({
     //@ts-ignore
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
-  req.setApproved(filter.approved!);
-  req.setPayrollProcessed(filter.payrollProcessed!);
 
-  if (filter.payrollProcessed) {
-    req.setApproved(true);
-    req.setNotEqualsList(['PayrollProcessed']);
+  if (filter.payrollProcessed == true) {
+    req.setPayrollProcessed(false);
+    req.addNotEquals('PayrollProcessed');
   }
   if (filter.payrollProcessed === false) {
+    req.setPayrollProcessed(true);
+    req.addNotEquals('PayrollProcessed');
+  }
+  if (filter.approved === false) {
+    req.addNotEquals('Approved');
+    req.setApproved(true);
+  }
+
+  if (filter.approved === true) {
+    req.addNotEquals('Approved');
     req.setApproved(false);
-    req.setNotEqualsList(['PayrollProcessed']);
   }
-  if (!filter.approved) {
-    req.setNotEqualsList([...req.getNotEqualsList(), 'Approved']);
-    req.setApproved(!req.getApproved());
-  }
-  //if (filter.approved) {
-  //  req.setFieldMaskList(['ApproveById']);
-  //}
 
   const response = await PerDiemClientService.BatchGetTrips(req);
+  console.log(response.getResultsList());
+  console.log(response.getTotalCount());
   return {
     results: response.getResultsList().sort((a, b) => {
-      //@ts-ignore
       const A = (a[orderByField] || '').toString().toLowerCase();
-      //@ts-ignore
       const B = (b[orderByField] || '').toString().toLowerCase();
       if (A < B) return orderDir === 'DESC' ? 1 : -1;
       if (A > B) return orderDir === 'DESC' ? -1 : 1;
@@ -1184,6 +1189,7 @@ export type EventsFilter = {
 export type LoadEventsByFilter = {
   page: number;
   filter: EventsFilter;
+  req: Event;
   sort: EventsSort;
   pendingBilling?: boolean;
 };
@@ -1200,6 +1206,7 @@ export const loadEventsByFilter = async ({
   filter,
   sort,
   pendingBilling = false,
+  req,
 }: LoadEventsByFilter) => {
   // FIXME, move to event client
   const {
@@ -1227,18 +1234,17 @@ export const loadEventsByFilter = async ({
     isActive,
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
-  const req = new Event();
   const p = new Property();
   const u = new User();
   if (orderByField === 'getLastname') {
-    u.setOrderBy(orderBy);
+    u.setOrderBy(cleanOrderByField(orderBy));
     u.setOrderDir(orderDir);
   } else if (orderByField === 'getAddress') {
     // FIXME - missing setOrderBy/setOrderDir in Property RPC
     // p.setOrderBy(orderBy);
     // p.setOrderDir(orderDir)
   } else {
-    req.setOrderBy(orderBy);
+    req.setOrderBy(cleanOrderByField(orderBy));
     req.setOrderDir(orderDir);
   }
   if (fieldMaskList) {
@@ -1336,6 +1342,7 @@ export const loadEventsByFilter = async ({
   } else {
     req.setPageNumber(page);
   }
+  const results = [];
   const response = await EventClientService.BatchGet(req);
   const totalCount = response.getTotalCount();
   const resultsList = response.getResultsList();
@@ -1351,7 +1358,8 @@ export const loadProjects = async () => {
   req.setOrderDir('ASC');
   req.setWithoutLimit(true);
   const response = await EventClientService.BatchGet(req);
-  return response.getResultsList();
+  const resultsList = response.getResultsList();
+  return resultsList;
 };
 
 export const loadEventById = async (eventId: number) => {
@@ -1364,6 +1372,7 @@ export const loadEventsByFilterDeleted = async ({
   filter,
   sort,
   pendingBilling = false,
+  req,
 }: LoadEventsByFilter) => {
   // FIXME move to event client
   const {
@@ -1389,22 +1398,21 @@ export const loadEventsByFilterDeleted = async ({
     notEqualsList,
     fieldMaskList,
   } = filter;
-  console.log({ filter });
   const { orderBy, orderDir, orderByField } = sort;
-  const req = new Event();
   const p = new Property();
   const u = new User();
   if (orderByField === 'getLastname') {
-    u.setOrderBy(orderBy);
+    u.setOrderBy(cleanOrderByField(orderBy));
     u.setOrderDir(orderDir);
   } else if (orderByField === 'getAddress') {
     // FIXME - missing setOrderBy/setOrderDir in Property RPC
     // p.setOrderBy(orderBy);
     // p.setOrderDir(orderDir)
   } else {
-    req.setOrderBy(orderBy);
+    req.setOrderBy(cleanOrderByField(orderBy));
     req.setOrderDir(orderDir);
   }
+
   if (fieldMaskList) {
     req.setFieldMaskList(['IsActive']);
   }
@@ -1810,6 +1818,12 @@ function getDateTimeArgs(str: string): dateTimeRes {
   ];
 }
 
+const cleanOrderByField = function cleanOrderByField(f: string) {
+  const parts = f.replace('get', '').split(/(?=[A-Z])/g);
+  const lowerParts = parts.map(p => p.toLowerCase());
+  return lowerParts.join('_');
+};
+
 export {
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
@@ -1841,4 +1855,5 @@ export {
   newBugReportImage,
   forceHTTPS,
   customerCheck,
+  cleanOrderByField,
 };

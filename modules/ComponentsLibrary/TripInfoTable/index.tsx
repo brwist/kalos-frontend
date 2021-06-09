@@ -24,7 +24,7 @@ import { Loader } from '../../Loader/main';
 import { User } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 // Schema will be adjusted down the line to include as many addresses as it can
-export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair> = [
+export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   [
     {
       label: 'Origin',
@@ -182,7 +182,11 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     this.getTrips();
   }
 
-  saveTrip = async (data: AddressPair, rowId: number, userId: number) => {
+  saveTrip = async (
+    data: AddressPair.AsObject,
+    rowId: number,
+    userId: number,
+  ) => {
     let trip = new Trip();
 
     trip.setOriginAddress(data.FullAddressOrigin);
@@ -208,13 +212,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     trip.setDate(data.Date);
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);
-    trip.setDepartmentId(
-      await (
-        await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          user.managedBy,
-        )
-      ).id,
-    );
+    trip.setDepartmentId(user.employeeDepartmentId);
 
     await PerDiemClientService.upsertTrip(trip.toObject(), rowId!, userId).then(
       () => {

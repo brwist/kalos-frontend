@@ -538,9 +538,9 @@ class Cache<T> {
 
 export class AccountPicker extends Picker<
   TransactionAccount,
-  TransactionAccount
+  TransactionAccount.AsObject
 > {
-  constructor(props: props<TransactionAccount, TransactionAccount>) {
+  constructor(props: props<TransactionAccount, TransactionAccount.AsObject>) {
     super(props, 'Purchase Type', 'COST_CENTER_LIST', VersionNumber);
     this.Client = new TransactionAccountClient(ENDPOINT);
     this.req = new TransactionAccount();
@@ -550,9 +550,9 @@ export class AccountPicker extends Picker<
 
 export class DepartmentPicker extends Picker<
   TimesheetDepartment,
-  TimesheetDepartment
+  TimesheetDepartment.AsObject
 > {
-  constructor(props: props<TimesheetDepartment, TimesheetDepartment>) {
+  constructor(props: props<TimesheetDepartment, TimesheetDepartment.AsObject>) {
     super(props, 'Department', 'DEPARTMENT_LIST', VersionNumber);
     this.Client = new TimesheetDepartmentClient(ENDPOINT);
     this.req = new TimesheetDepartment();
@@ -560,8 +560,8 @@ export class DepartmentPicker extends Picker<
   }
 }
 
-export class ClassCodePicker extends Picker<ClassCode, ClassCode> {
-  constructor(props: props<ClassCode, ClassCode>) {
+export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
+  constructor(props: props<ClassCode, ClassCode.AsObject>) {
     super(props, 'Class Code', 'CLASS_CODE_LIST', VersionNumber);
     this.Client = new ClassCodeClient(ENDPOINT);
     this.req = new ClassCode();
@@ -569,8 +569,8 @@ export class ClassCodePicker extends Picker<ClassCode, ClassCode> {
   }
 }
 
-export class EmployeePicker extends Picker<User, User> {
-  constructor(props: props<User, User>) {
+export class EmployeePicker extends Picker<User, User.AsObject> {
+  constructor(props: props<User, User.AsObject>) {
     super(props, 'Employee', 'EMPLOYEE_LIST_X', VersionNumber);
     this.Client = new UserClient(ENDPOINT);
     this.req = new User();

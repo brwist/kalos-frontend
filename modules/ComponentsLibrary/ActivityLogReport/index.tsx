@@ -7,7 +7,6 @@ import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { ExportJSON } from '../ExportJSON';
 import { Button } from '../Button';
 import {
-  ActivityLogType,
   makeFakeRows,
   loadActivityLogsByFilter,
   ActivityLogsSort,
@@ -17,6 +16,7 @@ import {
   UserClientService,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 
 interface Props {
   onClose?: () => void;
@@ -48,15 +48,15 @@ export const ActivityLogReport: FC<Props> = ({
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [entries, setEntries] = useState<ActivityLogType[]>([]);
-  const [printEntries, setPrintEntries] = useState<ActivityLogType[]>([]);
+  const [entries, setEntries] = useState<ActivityLog[]>([]);
+  const [printEntries, setPrintEntries] = useState<ActivityLog[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [exportStatus, setExportStatus] = useState<Status>('idle');
   const [sort, setSort] = useState<ActivityLogsSort>({
     orderBy: 'activity_date',
-    orderByField: 'activityDate',
+    orderByField: 'getActivityDate',
     orderDir: 'DESC',
   });
   const getFilter = useCallback(() => {
@@ -111,17 +111,19 @@ export const ActivityLogReport: FC<Props> = ({
     await loadPrintEntries();
     setExportStatus('loaded');
   }, [loadPrintEntries, setExportStatus]);
-  const handleExported = useCallback(() => setExportStatus('idle'), [
-    setExportStatus,
-  ]);
+  const handleExported = useCallback(
+    () => setExportStatus('idle'),
+    [setExportStatus],
+  );
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
     await loadPrintEntries();
     setPrintStatus('loaded');
   }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
   const handleSortChange = useCallback(
     (sort: ActivityLogsSort) => () => {
       setSort(sort);
@@ -134,16 +136,16 @@ export const ActivityLogReport: FC<Props> = ({
     {
       name: 'Date',
       width: 150,
-      ...(sort.orderByField === 'activityDate'
+      ...(sort.orderByField === 'getActivityDate'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'activityDate',
+        orderByField: 'getActivityDate',
         orderBy: 'activity_date',
         orderDir:
-          sort.orderByField === 'activityDate' && sort.orderDir === 'ASC'
+          sort.orderByField === 'getActivityDate' && sort.orderDir === 'ASC'
             ? 'DESC'
             : 'ASC',
       }),
@@ -151,16 +153,16 @@ export const ActivityLogReport: FC<Props> = ({
     {
       name: 'User',
       width: 200,
-      ...(sort.orderByField === 'lastname'
+      ...(sort.orderByField === 'getLastname'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'lastname',
+        orderByField: 'getLastname',
         orderBy: 'userz.user_lastname',
         orderDir:
-          sort.orderByField === 'lastname' && sort.orderDir === 'ASC'
+          sort.orderByField === 'getLastname' && sort.orderDir === 'ASC'
             ? 'DESC'
             : 'ASC',
       }),
@@ -168,26 +170,28 @@ export const ActivityLogReport: FC<Props> = ({
     {
       name: 'Notification',
       width: -1,
-      ...(sort.orderByField === 'activityName'
+      ...(sort.orderByField === 'getActivityName'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'activityName',
+        orderByField: 'getActivityName',
         orderBy: 'activity_name',
         orderDir:
-          sort.orderByField === 'activityName' && sort.orderDir === 'ASC'
+          sort.orderByField === 'getActivityName' && sort.orderDir === 'ASC'
             ? 'DESC'
             : 'ASC',
       }),
     },
   ];
-  const getData = (entries: ActivityLogType[]): Data =>
+  const getData = (entries: ActivityLog[]): Data =>
     loading
       ? makeFakeRows(3, 5)
       : entries.map(entry => {
-          const { activityDate, user, activityName } = entry;
+          const activityDate = entry.getActivityDate();
+          const user = entry.getUser();
+          const activityName = entry.getActivityName();
           return [
             {
               value: formatDateTime(activityDate),
@@ -227,13 +231,11 @@ export const ActivityLogReport: FC<Props> = ({
         asideContent={
           <>
             <ExportJSON
-              json={(allPrintData ? entries : printEntries).map(
-                ({ activityDate, user, activityName }) => ({
-                  date: formatDateTime(activityDate),
-                  user: UserClientService.getCustomerName(user!, true),
-                  notification: activityName,
-                }),
-              )}
+              json={(allPrintData ? entries : printEntries).map(entry => ({
+                date: formatDateTime(entry.getActivityDate()),
+                user: UserClientService.getCustomerName(entry.getUser()!, true),
+                notification: entry.getActivityName(),
+              }))}
               fields={EXPORT_COLUMNS}
               filename={`Notification_Status_Report_${getCurrDate()}`}
               onExport={allPrintData ? undefined : handleExport}

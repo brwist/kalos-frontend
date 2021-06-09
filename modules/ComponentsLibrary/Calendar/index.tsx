@@ -16,6 +16,7 @@ export const Calendar: FC<Props> = ({ error, className, children }) => (
       <Alert severity="error">{error}</Alert>
     ) : (
       <Container className={clsx('CalendarWeek', className)} maxWidth={false}>
+        {/* @ts-ignore */}
         {children}
       </Container>
     )}

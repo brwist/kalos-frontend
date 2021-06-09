@@ -11,7 +11,7 @@ import { getRPCFields } from '../../../helpers';
 
 const transactionClient = new TransactionClient(ENDPOINT);
 
-type Entry = Transaction;
+type Entry = Transaction.AsObject;
 
 interface EntryWithDate extends Entry {
   date?: string;
@@ -21,7 +21,7 @@ type Props = {
   show: boolean;
   entry: EntryWithDate;
   onClose: () => void;
-  onSave: (entry: Transaction) => void;
+  onSave: (entry: Transaction.AsObject) => void;
 };
 
 const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {

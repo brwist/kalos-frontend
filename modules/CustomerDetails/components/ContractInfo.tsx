@@ -30,10 +30,10 @@ const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
 const InvoiceClientService = new InvoiceClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
 
-type Entry = Contract;
-type ContractFrequencyType = ContractFrequency;
-type InvoiceType = Invoice;
-type PropertyType = Property;
+type Entry = Contract.AsObject;
+type ContractFrequencyType = ContractFrequency.AsObject;
+type InvoiceType = Invoice.AsObject;
+type PropertyType = Property.AsObject;
 
 const BILLING_OPTIONS: Options = [
   { label: 'Site', value: 0 },

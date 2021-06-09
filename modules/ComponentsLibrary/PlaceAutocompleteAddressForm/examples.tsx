@@ -3,7 +3,7 @@ import { PlaceAutocompleteAddressForm } from './index';
 import { AddressPair } from './Address';
 import { Schema } from '../Form';
 
-const SCHEMA_EXAMPLE: Schema<AddressPair> = [
+const SCHEMA_EXAMPLE: Schema<AddressPair.AsObject> = [
   [
     {
       label: 'Origin',

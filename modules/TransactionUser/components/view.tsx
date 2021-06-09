@@ -26,7 +26,7 @@ interface props {
 interface state {
   page: number;
   isLoading: boolean;
-  transactions: Transaction[];
+  transactions: Transaction.AsObject[];
   totalCount: number;
   role?: RoleType;
 }
@@ -165,7 +165,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     }
   }
 
-  handleCostCenterChange(txn: Transaction) {
+  handleCostCenterChange(txn: Transaction.AsObject) {
     let IDList: number[] = [];
     for (const t of this.state.transactions) {
       if (t.vendor === txn.vendor) {

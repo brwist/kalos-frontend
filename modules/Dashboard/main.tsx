@@ -46,7 +46,7 @@ interface state {
   availablePTO: number;
   isLoading: boolean;
   currentUser: UserType;
-  spiffs: Spiff[];
+  spiffs: Spiff.AsObject[];
 }
 
 export class Dashboard extends React.PureComponent<props, state> {
@@ -195,7 +195,7 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async componentDidMount() {
-    await UserClientService.refreshToken();
+    // await UserClientService.refreshToken();
     await this.toggleLoading();
     await this.getIdentity();
     await this.getPTO();
