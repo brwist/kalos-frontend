@@ -10,6 +10,8 @@ import { CheckInProjectTask } from '../../CheckInProjectTask';
 import { RoleType } from '../../Payroll';
 import { Modal } from '../../Modal';
 import { AddLog } from '../../AddLog';
+import { SectionBar } from '../../SectionBar';
+import { ceil } from 'lodash';
 
 export interface Props {
   serviceCallId: number;
@@ -24,13 +26,19 @@ export const LogsTab: FC<Props> = ({
   project,
   role,
 }) => {
-  const [projectLogs, setProjectLogs] = useState<ActivityLog[]>();
+  const [projectLogs, setProjectLogs] = useState<ActivityLogList>();
   const [loading, setLoading] = useState<boolean>();
   const [addingLog, setAddingLog] = useState<boolean>();
+  const [pageNumber, setPageNumber] = useState<number>(0);
 
   const handleSetAddingLog = useCallback(
     (addingLog: boolean) => setAddingLog(addingLog),
     [setAddingLog],
+  );
+
+  const handleSetPageNumber = useCallback(
+    (pageNumber: number) => setPageNumber(pageNumber),
+    [setPageNumber],
   );
 
   const load = useCallback(async () => {
@@ -41,7 +49,7 @@ export const LogsTab: FC<Props> = ({
       new Promise<void>(async resolve => {
         try {
           let req: any = new ActivityLog();
-          req.setPageNumber(0);
+          req.setPageNumber(pageNumber);
           req.setEventId(project.id);
           if (role !== 'Manager') req.setUserId(loggedUserId);
           logs = await ActivityLogClientService.BatchGet(req);
@@ -54,10 +62,10 @@ export const LogsTab: FC<Props> = ({
     );
 
     Promise.all(promises).then(() => {
-      setProjectLogs(logs.getResultsList());
+      setProjectLogs(logs);
       setLoading(false);
     });
-  }, [setProjectLogs, setLoading, project.id, loggedUserId, role]);
+  }, [pageNumber, project.id, role, loggedUserId]);
   useEffect(() => {
     load();
   }, [load]);
@@ -83,6 +91,14 @@ export const LogsTab: FC<Props> = ({
         loggedUserId={loggedUserId}
         serviceCallId={serviceCallId}
       />
+      <SectionBar
+        title="Project Logs"
+        pagination={{
+          count: projectLogs ? ceil(projectLogs!.getTotalCount() / 25) : 0,
+          onChangePage: (page: number) => setPageNumber(page),
+          page: pageNumber,
+        }}
+      />
       <InfoTable
         key={projectLogs?.toString()}
         columns={[
@@ -100,7 +116,7 @@ export const LogsTab: FC<Props> = ({
             ],
           },
         ]}
-        data={projectLogs?.map(log => {
+        data={projectLogs?.getResultsList().map(log => {
           return [
             { value: log.getId() },
             { value: log.getUserId() },
