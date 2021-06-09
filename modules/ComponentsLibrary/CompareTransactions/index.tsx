@@ -107,28 +107,6 @@ export const CompareTransactions: FC<Props> = ({
         // Delete is not working atm, leaving a todo here for future reference but using update as a replacement
         // TODO
         txn.setIsActive(0);
-        // First gonna make sure that the fields not included aren't still set
-        // These aren't relevant to the deletion so I'm setting these undefined
-        // Please forgive me for all these ts-ignores, for I have sinned
-        // @ts-ignore
-        txn.setOwnerName(undefined);
-        // @ts-ignore
-        txn.setActivityLogString(undefined);
-        // @ts-ignore
-        txn.setDepartmentString(undefined);
-        // @ts-ignore
-        txn.setAssignedEmployeeName(undefined);
-        // @ts-ignore
-        txn.setCostCenterString(undefined);
-        // @ts-ignore
-        txn.setActivityLogList(undefined);
-        // @ts-ignore
-        txn.setCardUsed(undefined);
-        // @ts-ignore
-        txn.setArtificalId(undefined);
-        // @ts-ignore
-        txn.setVendorCategory(undefined);
-
         txn.setFieldMaskList(['IsActive']);
         await TransactionClientService.Update(txn);
         setLoading(false);

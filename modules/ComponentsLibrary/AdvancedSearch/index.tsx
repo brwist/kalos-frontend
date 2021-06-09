@@ -51,14 +51,7 @@ import {
   PropertiesSort,
   LoadPropertiesByFilter,
   LoadContractsByFilter,
-  EventType,
-  UserType,
-  PropertyType,
-  ContractType,
-  JobTypeType,
-  JobSubtypeType,
   PropertyClientService,
-  TimesheetDepartmentType,
   EmployeeFunctionType,
   CustomEventsHandler,
   uploadFileToS3Bucket,
@@ -79,6 +72,14 @@ import {
   EVENT_STATUS_LIST,
   USA_STATES_OPTIONS,
 } from '../../../constants';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
+
 import './styles.less';
 
 type Kind =
@@ -103,7 +104,7 @@ export interface Props {
   eventsWithAccounting?: boolean;
   eventsWithAdd?: boolean;
   propertyCustomerId?: number;
-  onSelectEvent?: (event: EventType) => void;
+  onSelectEvent?: (event: Event) => void;
   onClose?: () => void;
 }
 
@@ -142,8 +143,8 @@ export const AdvancedSearch: FC<Props> = ({
   const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
-  const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
-  const [jobSubtypes, setJobSubtypes] = useState<JobSubtypeType[]>([]);
+  const [jobTypes, setJobTypes] = useState<JobType[]>([]);
+  const [jobSubtypes, setJobSubtypes] = useState<JobSubtype[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -162,30 +163,30 @@ export const AdvancedSearch: FC<Props> = ({
   );
   const [filter, setFilter] = useState<SearchForm>(defaultFilter);
   const [formKey, setFormKey] = useState<number>(0);
-  const [events, setEvents] = useState<EventType[]>([]);
-  const [users, setUsers] = useState<UserType[]>([]);
-  const [contracts, setContracts] = useState<ContractType[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [employeeImages, setEmployeeImages] = useState<{
     [key: string]: string;
   }>({});
-  const [properties, setProperties] = useState<PropertyType[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [eventsSort, setEventsSort] = useState<EventsSort>({
     orderByField: 'dateStarted',
     orderBy: 'date_started',
     orderDir: 'DESC',
   });
   const [usersSort, setUsersSort] = useState<UsersSort>({
-    orderByField: 'lastname',
+    orderByField: 'getLastname',
     orderBy: 'user_lastname',
     orderDir: 'ASC',
   });
   const [propertiesSort, setPropertiesSort] = useState<PropertiesSort>({
-    orderByField: 'address',
+    orderByField: 'getAddress',
     orderBy: 'property_address',
     orderDir: 'ASC',
   });
   const [contractsSort, setContractsSort] = useState<ContractsSort>({
-    orderByField: 'number',
+    orderByField: 'getNumber',
     orderBy: 'number',
     orderDir: 'ASC',
   });
