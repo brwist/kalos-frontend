@@ -65,15 +65,12 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [load, setLoad] = useState<boolean>(false);
   let temp = costCenters.getResultsList().map(entry => {
     return {
       value: entry.toObject().id,
       label: entry.toObject().description,
     };
   });
-  const [costCenterList, setCostCenterList] = useState<CostCenter[]>(temp);
-  console.log({ costCenterList });
   const [formData, setFormData] = useState<Entry>({
     file: '',
     description: '',
@@ -164,13 +161,6 @@ export const UploadPhotoTransaction: FC<Props> = ({
     },
     [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId, onUpload],
   );
-  console.log({ costCenterList });
-
-  if (SUBJECT_TAGS_TRANSACTIONS === undefined) {
-    console.error(
-      'SUBJECT_TAGS_TRANSACTIONS is undefined. You should try manually deleting the .cache folder and compiling helpers.ts, then try again.',
-    );
-  }
 
   let conditionalSchema = [
     formData.tag == 'Subject=Receipt'
