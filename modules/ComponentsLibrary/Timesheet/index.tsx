@@ -15,7 +15,6 @@ import DriveEtaIcon from '@material-ui/icons/DriveEta';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import Alert from '@material-ui/lab/Alert';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   TimesheetLineClient,
@@ -27,7 +26,6 @@ import { AddNewButton } from '../AddNewButton';
 import { ConfirmServiceProvider } from '../ConfirmService';
 import Toolbar from './components/Toolbar';
 import Column from './components/Column';
-import { TripInfoTable } from '../TripInfoTable';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../../constants';
 import {
@@ -35,7 +33,6 @@ import {
   TimeoffRequestClientService,
   TimeoffRequestTypes,
   UserClientService,
-  UserType,
 } from '../../../helpers';
 import { getShownDates, reducer } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
@@ -198,8 +195,7 @@ export const Timesheet: FC<Props> = props => {
     {
       icon: <AddAlertIcon />,
       name: 'Reminder',
-      url:
-        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
     },
     {
       icon: <AssignmentIndIcon />,
@@ -240,14 +236,14 @@ export const Timesheet: FC<Props> = props => {
     });
   };
 
-  const checkReceiptIssue = async (): Promise<boolean> => {
+  const checkReceiptIssue = useCallback(async (): Promise<boolean> => {
     const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
     if (hasIssue) {
       dispatch({ type: 'showReceiptsIssueDialog', value: true });
       return false;
     }
     return true;
-  };
+  }, [userId]);
 
   const handleSubmitTimesheet = useCallback(async () => {
     (async () => {
@@ -344,7 +340,16 @@ export const Timesheet: FC<Props> = props => {
         }
       }
     })();
-  }, [userId, data, shownDates, tslClient]);
+  }, [
+    checkReceiptIssue,
+    role,
+    shownDates,
+    data,
+    user,
+    props.userId,
+    props.timesheetOwnerId,
+    userId,
+  ]);
   const handleProcessTimesheet = useCallback(async () => {
     (async () => {
       const ids: number[] = [];
@@ -511,7 +516,7 @@ export const Timesheet: FC<Props> = props => {
       await tslClient.Deny(ids, userId);
     })();
   }, [userId, data, shownDates]);
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     const userResult = await UserClientService.loadUserById(userId);
     const role = userResult.permissionGroupsList.find(p => p.type === 'role');
     if (role) {
@@ -543,10 +548,11 @@ export const Timesheet: FC<Props> = props => {
         },
       });
     }
-  };
+  }, [timesheetOwnerId, userId]);
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
+    const timeoffRequestTypes =
+      await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
@@ -563,7 +569,12 @@ export const Timesheet: FC<Props> = props => {
       setTimeoffRequestTypes({});
       fetchTimeoffRequestTypes();
     }
-  }, [timeoffRequestTypes]);
+  }, [
+    fetchTimeoffRequestTypes,
+    fetchUsers,
+    setTimeoffRequestTypes,
+    timeoffRequestTypes,
+  ]);
 
   const reload = () => {
     dispatch({ type: 'fetchingTimesheetData' });
@@ -588,8 +599,8 @@ export const Timesheet: FC<Props> = props => {
           'yyyy-MM-dd',
         )}%`,
       );
-      const timeoffs = await TimeoffRequestClientService.getTimeoffRequestByFilter(
-        {
+      const timeoffs =
+        await TimeoffRequestClientService.getTimeoffRequestByFilter({
           isActive: 1,
           userId: timesheetOwnerId,
           dateRangeList: [
@@ -602,8 +613,7 @@ export const Timesheet: FC<Props> = props => {
             ),
           ],
           dateTargetList: ['time_started', 'time_started'],
-        },
-      );
+        });
       dispatch({
         type: 'fetchedTimesheetData',
         data: result,
