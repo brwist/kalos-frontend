@@ -5,10 +5,6 @@ import { MEALS_RATE } from '../../../constants';
 import {
   formatDate,
   usd,
-  PerDiemRowType,
-  EventType,
-  PerDiemType,
-  TransactionType,
   PerDiemClientService,
   EventClientService,
   TimesheetLineClientService,
@@ -20,6 +16,9 @@ import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintTable } from '../PrintTable';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -41,47 +40,46 @@ export const CostReport: FC<Props> = ({
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
 
   const [printStatus, setPrintStatus] = useState<Status>('idle');
-  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>([]);
+  const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLine[]>([]);
 
-  const [transactions, setTransactions] = useState<TransactionType[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
 
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>(0);
 
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
-  const [event, setEvent] = useState<EventType>();
+  const [event, setEvent] = useState<Event>();
   const [loaded, setLoaded] = useState<boolean>(false);
 
   const totalMeals =
-    perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
+    perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
     MEALS_RATE;
   const totalLodging = perDiems
-    .reduce(
-      (aggr, { rowsList }) => [...aggr, ...rowsList],
-      [] as PerDiemRowType[],
-    )
-    .filter(({ mealsOnly }) => !mealsOnly)
-    .reduce((aggr, { id }) => aggr + lodgings[id], 0);
+    .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
+    .filter(pd => !pd.getMealsOnly())
+    .reduce((aggr, pd) => aggr + lodgings[pd.getId()], 0);
   const totalTransactions = transactions.reduce(
-    (aggr, { amount }) => aggr + amount,
+    (aggr, pd) => aggr + pd.getAmount(),
     0,
   );
 
   const loadPrintData = useCallback(async () => {
-    const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
+    const eventRes = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
-    const lodgings = await PerDiemClientService.loadPerDiemsLodging(
-      resultsList,
+    // TODO: loadPerDiemsLodging
+    const lodgingRes = await PerDiemClientService.loadPerDiemsLodging(
+      eventRes.getResultsList(),
     ); // first # is per diem id
-    setLodgings(lodgings);
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
+    setLodgings(lodgingRes);
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
     setTransactions(transactions);
-    setPerDiems(resultsList);
+    setPerDiems(eventRes.getResultsList());
   }, [serviceCallId, setPerDiems, setLodgings]);
 
   const handlePrint = useCallback(async () => {
@@ -89,9 +87,10 @@ export const CostReport: FC<Props> = ({
     await loadPrintData();
     setPrintStatus('loaded');
   }, [setPrintStatus, loadPrintData]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
 
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
@@ -106,11 +105,11 @@ export const CostReport: FC<Props> = ({
   const loadInit = useCallback(async () => {
     await loadEvent();
     setLoadedInit(true);
-  }, [loadEvent, setLoadedInit, loggedUserId]);
+  }, [loadEvent, setLoadedInit]);
 
   const load = useCallback(async () => {
     let promises = [];
-    let timesheets: TimesheetLine.AsObject[] = [];
+    let timesheets: TimesheetLine[] = [];
 
     setLoading(true);
 
@@ -127,9 +126,9 @@ export const CostReport: FC<Props> = ({
           let req = new TimesheetLine();
           req.setEventId(serviceCallId);
 
-          timesheets = (await TimesheetLineClientService.BatchGet(req))
-            .getResultsList()
-            .map(line => line.toObject());
+          timesheets = (
+            await TimesheetLineClientService.BatchGet(req)
+          ).getResultsList();
 
           resolve();
         } catch (err) {
@@ -145,12 +144,14 @@ export const CostReport: FC<Props> = ({
       setTimesheets(timesheets);
 
       let total = 0;
-      timesheets.forEach(timesheet => (total = total + timesheet.hoursWorked));
+      timesheets.forEach(
+        timesheet => (total = total + timesheet.getHoursWorked()),
+      );
       setTotalHoursWorked(total);
 
       setLoading(false);
     });
-  }, [setLoading, serviceCallId, loggedUserId, loadPrintData]);
+  }, [setLoading, serviceCallId, loadPrintData]);
 
   useEffect(() => {
     if (!loadedInit) {
@@ -183,19 +184,19 @@ export const CostReport: FC<Props> = ({
           items={[
             <>
               <strong>Address: </strong>
-              {getPropertyAddress(event.property)}
+              {getPropertyAddress(event.getProperty())}
             </>,
             <>
               <strong>Start Date: </strong>
-              {formatDate(event.dateStarted)}
+              {formatDate(event.getDateStarted())}
             </>,
             <>
               <strong>End Date: </strong>
-              {formatDate(event.dateEnded)}
+              {formatDate(event.getDateEnded())}
             </>,
             <>
               <strong>Job Number: </strong>
-              {event.logJobNumber}
+              {event.getLogJobNumber()}
             </>,
           ]}
         />
@@ -268,285 +269,244 @@ export const CostReport: FC<Props> = ({
             widthPercentage: 20,
           },
         ]}
-        data={transactions.map(
-          ({
-            department,
-            ownerName,
-            amount,
-            notes,
-            costCenter,
-            timestamp,
-            vendor,
-          }) => {
-            return [
-              department ? (
-                <>
-                  {department.classification} - {department.description}
-                </>
-              ) : (
-                '-'
-              ),
-              ownerName,
+        data={transactions.map(txn => {
+          return [
+            txn.getDepartment() ? (
               <>
-                {`${costCenter?.description}` + ' - '}
-                <br />
-                {vendor}
-              </>,
-              formatDate(timestamp),
-              usd(amount),
-              notes,
-            ];
-          },
-        )}
+                {txn.getDepartment()?.getClassification()} -{' '}
+                {txn.getDepartment()?.getDescription()}
+              </>
+            ) : (
+              '-'
+            ),
+            txn.getOwnerName(),
+            <>
+              {`${txn.getCostCenter()?.getDescription()}` + ' - '}
+              <br />
+              {txn.getVendor()}
+            </>,
+            formatDate(txn.getTimestamp()),
+            usd(txn.getAmount()),
+            txn.getNotes(),
+          ];
+        })}
       />
       <PrintParagraph tag="h2">Per Diem</PrintParagraph>
       {perDiems
-        .sort((a, b) => (a.dateSubmitted > b.dateSubmitted ? -1 : 1))
-        .map(
-          ({
-            id,
-            department,
-            ownerName,
-            dateSubmitted,
-            approvedByName,
-            dateApproved,
-            notes,
-            rowsList,
-          }) => {
-            const totalMeals = MEALS_RATE * rowsList.length;
-            const totalLodging = rowsList.reduce(
-              (aggr, { id, mealsOnly }) =>
-                aggr + (mealsOnly ? 0 : lodgings[id]),
-              0,
-            );
-            if (totalMeals == 0 && totalLodging == 0) {
-              return <></>; // Don't show it
-            }
-            return (
-              <div key={id}>
-                <PrintParagraph tag="h3">
-                  Per Diem{' '}
-                  {dateSubmitted.split(' ')[0] != NULL_TIME.split(' ')[0]
-                    ? '-'
-                    : ''}{' '}
-                  {dateSubmitted.split(' ')[0] != NULL_TIME.split(' ')[0]
-                    ? dateSubmitted.split(' ')[0]
-                    : ''}{' '}
-                  {ownerName ? '-' : ''} {ownerName}
-                </PrintParagraph>
-                <div
-                  style={{
-                    breakInside: 'avoid',
-                    display: 'inline-block',
-                    width: '100%',
-                  }}
-                >
-                  <PrintTable
-                    columns={[
-                      {
-                        title: 'Department',
-                        align: 'left',
-                      },
-                      {
-                        title: 'Owner',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Submitted At',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Approved By',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Approved At',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Total Meals',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Total Lodging',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Notes',
-                        align: 'right',
-                        widthPercentage: 20,
-                      },
-                    ]}
-                    data={[
-                      [
-                        TimesheetDepartmentClientService.getDepartmentName(
-                          department!,
-                        ),
-                        ownerName,
-                        dateSubmitted != NULL_TIME
-                          ? formatDate(dateSubmitted)
-                          : '-' || '-',
-                        approvedByName || '-',
-                        dateApproved != NULL_TIME
-                          ? formatDate(dateApproved)
-                          : '-' || '-',
-                        usd(totalMeals),
-                        totalLodging != 0 ? usd(totalLodging) : '-',
-                        notes,
-                      ],
-                    ]}
-                  />
-                </div>
-                <PrintParagraph tag="h4">Per Diem Days</PrintParagraph>
-                <div
-                  style={{
-                    breakInside: 'avoid',
-                    display: 'inline-block',
-                    width: '100%',
-                  }}
-                >
-                  <PrintTable
-                    columns={[
-                      {
-                        title: 'Date',
-                        align: 'left',
-                      },
-                      {
-                        title: 'Zip Code',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Meals Only',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Meals',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Lodging',
-                        align: 'left',
-                        widthPercentage: 10,
-                      },
-                      {
-                        title: 'Notes',
-                        align: 'right',
-                        widthPercentage: 20,
-                      },
-                    ]}
-                    data={rowsList.map(
-                      ({
-                        id,
-                        dateString,
-                        zipCode,
-                        mealsOnly,
-                        notes,
-                        perDiemId,
-                      }) => {
-                        return [
-                          formatDate(dateString),
-                          zipCode,
-                          mealsOnly ? 'Yes' : 'No',
-                          usd(MEALS_RATE),
-                          lodgings[id] ? usd(lodgings[id]) : '-',
-                          notes,
-                        ];
-                      },
-                    )}
-                  />
-                </div>
-              </div>
-            );
-          },
-        )}
-      <PrintParagraph tag="h2">Timesheet Lines</PrintParagraph>
-      {timesheets.map(
-        ({
-          id,
-          departmentName,
-          timeStarted,
-          timeFinished,
-          adminApprovalUserName,
-          notes,
-          briefDescription,
-          technicianUserName,
-          technicianUserId,
-          hoursWorked,
-        }) => {
+        .sort((a, b) => (a.getDateSubmitted() > b.getDateSubmitted() ? -1 : 1))
+        .map(pd => {
+          const rowsList = pd.getRowsList();
+          const totalMeals = MEALS_RATE * rowsList.length;
+          const totalLodging = rowsList.reduce(
+            (aggr, pd) => aggr + (pd.getMealsOnly() ? 0 : lodgings[pd.getId()]),
+            0,
+          );
+          if (totalMeals == 0 && totalLodging == 0) {
+            return <></>; // Don't show it
+          }
           return (
-            <div key={id}>
-              <PrintTable
-                columns={[
-                  {
-                    title: 'Technician',
-                    align: 'left',
-                  },
-                  {
-                    title: 'Department',
-                    align: 'left',
-                    widthPercentage: 10,
-                  },
-                  {
-                    title: 'Approved By',
-                    align: 'left',
-                    widthPercentage: 10,
-                  },
-                  {
-                    title: 'Time Started',
-                    align: 'left',
-                    widthPercentage: 10,
-                  },
-                  {
-                    title: 'Time Finished',
-                    align: 'left',
-                    widthPercentage: 10,
-                  },
-                  {
-                    title: 'Brief Description',
-                    align: 'left',
-                    widthPercentage: 10,
-                  },
-                  {
-                    title: 'Hours Worked',
-                    align: 'left',
-                    widthPercentage: 10,
-                  },
-                  {
-                    title: 'Notes',
-                    align: 'right',
-                    widthPercentage: 20,
-                  },
-                ]}
-                data={[
-                  [
-                    technicianUserName + ` (${technicianUserId})`,
-                    departmentName,
-                    adminApprovalUserName,
-                    formatDate(timeStarted) || '-',
-                    formatDate(timeFinished) || '-',
-                    briefDescription,
-                    hoursWorked != 0
-                      ? hoursWorked > 1
-                        ? `${hoursWorked} hrs`
-                        : `${hoursWorked} hr`
-                      : '-',
-                    notes,
-                  ],
-                ]}
-              />
+            <div key={pd.getId()}>
+              <PrintParagraph tag="h3">
+                Per Diem{' '}
+                {pd.getDateSubmitted().split(' ')[0] != NULL_TIME.split(' ')[0]
+                  ? '-'
+                  : ''}{' '}
+                {pd.getDateSubmitted().split(' ')[0] != NULL_TIME.split(' ')[0]
+                  ? pd.getDateSubmitted().split(' ')[0]
+                  : ''}{' '}
+                {pd.getOwnerName() ? '-' : ''} {pd.getOwnerName()}
+              </PrintParagraph>
+              <div
+                style={{
+                  breakInside: 'avoid',
+                  display: 'inline-block',
+                  width: '100%',
+                }}
+              >
+                <PrintTable
+                  columns={[
+                    {
+                      title: 'Department',
+                      align: 'left',
+                    },
+                    {
+                      title: 'Owner',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Submitted At',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Approved By',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Approved At',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Total Meals',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Total Lodging',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Notes',
+                      align: 'right',
+                      widthPercentage: 20,
+                    },
+                  ]}
+                  data={[
+                    [
+                      TimesheetDepartmentClientService.getDepartmentName(
+                        pd.getDepartment()!,
+                      ),
+                      pd.getOwnerName(),
+                      pd.getDateSubmitted() != NULL_TIME
+                        ? formatDate(pd.getDateSubmitted())
+                        : '-' || '-',
+                      pd.getApprovedByName() || '-',
+                      pd.getDateApproved() != NULL_TIME
+                        ? formatDate(pd.getDateApproved())
+                        : '-' || '-',
+                      usd(totalMeals),
+                      totalLodging != 0 ? usd(totalLodging) : '-',
+                      pd.getNotes(),
+                    ],
+                  ]}
+                />
+              </div>
+              <PrintParagraph tag="h4">Per Diem Days</PrintParagraph>
+              <div
+                style={{
+                  breakInside: 'avoid',
+                  display: 'inline-block',
+                  width: '100%',
+                }}
+              >
+                <PrintTable
+                  columns={[
+                    {
+                      title: 'Date',
+                      align: 'left',
+                    },
+                    {
+                      title: 'Zip Code',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Meals Only',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Meals',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Lodging',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Notes',
+                      align: 'right',
+                      widthPercentage: 20,
+                    },
+                  ]}
+                  data={rowsList.map(pdr => {
+                    return [
+                      formatDate(pdr.getDateString()),
+                      pdr.getZipCode(),
+                      pdr.getMealsOnly() ? 'Yes' : 'No',
+                      usd(MEALS_RATE),
+                      lodgings[pdr.getId()] ? usd(lodgings[pdr.getId()]) : '-',
+                      pdr.getNotes(),
+                    ];
+                  })}
+                />
+              </div>
             </div>
           );
-        },
-      )}
+        })}
+      <PrintParagraph tag="h2">Timesheet Lines</PrintParagraph>
+      {timesheets.map(tsl => {
+        return (
+          <div key={tsl.getId()}>
+            <PrintTable
+              columns={[
+                {
+                  title: 'Technician',
+                  align: 'left',
+                },
+                {
+                  title: 'Department',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Approved By',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Time Started',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Time Finished',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Brief Description',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Hours Worked',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Notes',
+                  align: 'right',
+                  widthPercentage: 20,
+                },
+              ]}
+              data={[
+                [
+                  tsl.getTechnicianUserName() +
+                    ` (${tsl.getTechnicianUserId()})`,
+                  tsl.getDepartmentName(),
+                  tsl.getAdminApprovalUserName(),
+                  formatDate(tsl.getTimeStarted()) || '-',
+                  formatDate(tsl.getTimeFinished()) || '-',
+                  tsl.getBriefDescription(),
+                  tsl.getHoursWorked() != 0
+                    ? tsl.getHoursWorked() > 1
+                      ? `${tsl.getHoursWorked()} hrs`
+                      : `${tsl.getHoursWorked()} hr`
+                    : '-',
+                  tsl.getNotes(),
+                ],
+              ]}
+            />
+          </div>
+        );
+      })}
     </PrintPage>
   );
 };

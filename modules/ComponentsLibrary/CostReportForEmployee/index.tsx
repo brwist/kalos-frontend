@@ -8,37 +8,27 @@ import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
-import { ENDPOINT, MEALS_RATE } from '../../../constants';
+import { ENDPOINT } from '../../../constants';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
-  differenceInCalendarDays,
   subDays,
   addDays,
   startOfWeek,
   format,
-  endOfWeek,
 } from 'date-fns';
 import {
   Trip,
-  TripList,
   PerDiemList,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
   formatDate,
-  TaskClientService,
-  TimeoffRequestClientService,
-  PerDiemRowType,
   PerDiemClientService,
-  PerDiemType,
   usd,
-  timestamp,
-  SpiffToolAdminActionClientService,
 } from '../../../helpers';
-import { NULL_TIME_VALUE } from '../Timesheet/constants';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -49,14 +39,8 @@ interface Props {
   onPrevious?: (() => void) | null;
   username: string;
 }
-export const CostReportForEmployee: FC<Props> = ({
-  userId,
-  notReady,
-  onClose,
-  onNext,
-  onPrevious,
-  username,
-}) => {
+
+export const CostReportForEmployee: FC<Props> = ({ userId }) => {
   const [trips, setTrips] = useState<Trip[]>();
   const [perDiems, setPerDiems] = useState<PerDiemList>();
   const [spiffs, setSpiffs] = useState<Task[]>();
