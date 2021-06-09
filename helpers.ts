@@ -274,7 +274,7 @@ function timestamp(dateOnly = false, date?: Date) {
 async function slackNotify(id: string, text: string) {
   const KALOS_BOT = await ApiKeyClientService.getKeyByKeyName('kalos_bot');
   await fetch(
-    `https://slack.com/api/chat.postMessage?token=${KALOS_BOT.apiKey}&channel=${id}&text=${text}`,
+    `https://slack.com/api/chat.postMessage?token=${KALOS_BOT.getApiKey()}&channel=${id}&text=${text}`,
     {
       method: 'POST',
     },
@@ -294,7 +294,7 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
       }
     }
     const res = await fetch(
-      `https://slack.com/api/users.list?token=${KALOS_BOT.apiKey}`,
+      `https://slack.com/api/users.list?token=${KALOS_BOT.getApiKey()}`,
     );
     const jsonRes = await res.json();
     try {
@@ -670,7 +670,7 @@ export const loadDeletedServiceCallsByFilter = async ({
     bReq.setBusinessname(businessName);
     const bResult = await PropertyClientService.Get(bReq);
     if (bReq) {
-      req.setPropertyId(bResult.id);
+      req.setPropertyId(bResult.getId());
       req.addFieldMask('PropertyId');
     }
   }
@@ -1661,7 +1661,7 @@ export const uploadFileToS3Bucket = async (
       urlObj.setTagString(tagString);
     }
     const urlRes = await S3ClientService.GetUploadURL(urlObj);
-    const uploadRes = await fetch(urlRes.url, {
+    const uploadRes = await fetch(urlRes.getUrl(), {
       body: b64toBlob(fileData.split(';base64,')[1], fileName),
       method: 'PUT',
       headers: tagString
@@ -1776,7 +1776,7 @@ async function newBugReport(data: IBugReport) {
     req.setTextId('github_key');
     const key = await client.Get(req);
     data.labels = [BUG_REPORT_LABEL];
-    const authString = `token ${key.apiKey}`;
+    const authString = `token ${key.getApiKey()}`;
     const postData = {
       method: 'POST',
       headers: {
@@ -1785,7 +1785,7 @@ async function newBugReport(data: IBugReport) {
       },
       body: JSON.stringify(data),
     };
-    await fetch(key.apiEndpoint, postData);
+    await fetch(key.getApiEndpoint(), postData);
   } catch (err) {
     console.log('error generating bug report', err);
   }
@@ -1797,10 +1797,7 @@ export type BugReportImage = {
   url?: string;
 };
 
-async function newBugReportImage(
-  user: User.AsObject,
-  images: BugReportImage[],
-) {
+async function newBugReportImage(user: User, images: BugReportImage[]) {
   try {
     const timestamp = new Date().getTime();
     const client = new ApiKeyClient(ENDPOINT);
@@ -1810,11 +1807,11 @@ async function newBugReportImage(
     const common = {
       message: 'bug report image',
       committer: {
-        name: `${user.firstname} ${user.lastname}`,
-        email: user.email,
+        name: `${user.getFirstname()} ${user.getLastname()}`,
+        email: user.getEmail(),
       },
     };
-    const authString = `token ${key.apiKey}`;
+    const authString = `token ${key.getApiKey()}`;
     const result: { filename: string; url: string }[] = [];
     for (const img of images) {
       const data = { ...common, content: img.data };
@@ -1828,7 +1825,7 @@ async function newBugReportImage(
       };
       try {
         await fetch(
-          `${key.apiEndpoint}/images/${timestamp}/${img.label}`,
+          `${key.getApiEndpoint()}/images/${timestamp}/${img.label}`,
           putData,
         );
         result.push({

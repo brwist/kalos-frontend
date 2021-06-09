@@ -10,9 +10,9 @@ import { makeFakeRows } from '../../../helpers';
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
 
-type Entry = (User.AsObject | Property.AsObject) & {
+type Entry = (User | Property) & {
   kind: number;
-  __user?: User.AsObject;
+  __user?: User;
 };
 
 export type Kind = 'Customers' | 'Properties';
@@ -28,32 +28,6 @@ interface Props {
 const kindsByName: { [key in Kind]: number } = {
   Customers: 1,
   Properties: 2,
-};
-
-const makeSearchUser = ({
-  firstname,
-  lastname,
-  businessname,
-  phone,
-  email,
-}: User.AsObject) => {
-  const entry = new User();
-  if (firstname) {
-    entry.setFirstname(`%${firstname}%`);
-  }
-  if (lastname) {
-    entry.setLastname(`%${lastname}%`);
-  }
-  if (businessname) {
-    entry.setBusinessname(`%${businessname}%`);
-  }
-  if (phone) {
-    entry.setPhone(`%${phone}%`);
-  }
-  if (email) {
-    entry.setEmail(`%${email}%`);
-  }
-  return entry;
 };
 
 const makeSearchProperty = ({
@@ -105,61 +79,49 @@ export const Search: FC<Props> = ({
       const { kind } = search;
       let newUsers = {};
       if (kind === 1) {
-        const {
-          firstname,
-          lastname,
-          businessname,
-          phone,
-          email,
-        } = search as Property.AsObject;
-        if (firstname || lastname || businessname || phone || email) {
-          const entry = makeSearchUser(search as User.AsObject);
-          const { resultsList } = (
-            await UserClientService.BatchGet(entry)
-          ).toObject();
+        if (
+          search.getFirstname() ||
+          search.getLastname() ||
+          search.getBusinessname() ||
+          search.getPhone() ||
+          search.getEmail()
+        ) {
+          const res = await UserClientService.BatchGet(search as User);
           entries = [
             ...entries,
-            ...resultsList
-              .filter(({ id }) => id !== excludeId)
+            ...res
+              .getResultsList()
+              .filter(e => e.getId() !== excludeId)
               .map(item => ({ ...item, kind: 1 })),
           ];
         }
       } else if (kind === 2) {
-        const {
-          address,
-          subdivision,
-          city,
-          zip,
-          firstname,
-          lastname,
-          businessname,
-          phone,
-          email,
-        } = search as Property.AsObject;
-        if (firstname || lastname || businessname || phone || email) {
-          const user = makeSearchUser(search as User.AsObject);
-          const { resultsList: resultsListUsers } = (
-            await UserClientService.BatchGet(user)
-          ).toObject();
+        if (
+          search.getFirstname() ||
+          search.getLastname() ||
+          search.getBusinessname() ||
+          search.getPhone() ||
+          search.getEmail()
+        ) {
+          const res = await UserClientService.BatchGet(search as User);
           newUsers = {
             ...newUsers,
-            ...resultsListUsers.reduce(
-              (aggr, item) => ({ ...aggr, [item.id]: item }),
-              {},
-            ),
+            ...res
+              .getResultsList()
+              .reduce((aggr, item) => ({ ...aggr, [item.id]: item }), {}),
           };
-          const userIds = resultsListUsers
-            .map(({ id }) => id)
+          const userIds = res
+            .getResultsList()
+            .map(e => e.getId())
             .filter(id => id !== excludeId);
           const usersProperties = await Promise.all(
             userIds.map(async userId => {
-              const entry = makeSearchProperty(search as Property.AsObject);
-              entry.setUserId(userId);
+              search.setId(userId);
               try {
-                const { resultsList } = (
-                  await PropertyClientService.BatchGet(entry)
-                ).toObject();
-                return resultsList.map(item => ({ ...item, kind: 2 }));
+                const res = await PropertyClientService.BatchGet(
+                  search as Property,
+                );
+                return res.getResultsList().map(item => ({ ...item, kind: 2 }));
               } catch (e) {
                 return [];
               }
@@ -169,14 +131,11 @@ export const Search: FC<Props> = ({
             ...entries,
             ...usersProperties.reduce((aggr, item) => [...aggr, ...item], []),
           ];
-        } else if (address || subdivision || city || zip) {
-          const entry = makeSearchProperty(search as Property.AsObject);
-          const { resultsList } = (
-            await PropertyClientService.BatchGet(entry)
-          ).toObject();
-          const propertyEntries = resultsList
-            .filter(({ id }) => id !== excludeId)
-            .map(item => ({ ...item, kind: 2 }));
+        } else if (search.getAddress() || search.getCity() || search.getZip()) {
+          const res = await PropertyClientService.BatchGet(search as Property);
+          const propertyEntries = res
+            .getResultsList()
+            .filter(e => e.getId() !== excludeId);
           entries = [...entries, ...propertyEntries]; // FIXME handle duplicated entries
           const propertyUsers = await UserClientService.loadUsersByIds(
             propertyEntries.map(({ userId }) => userId),
@@ -188,7 +147,7 @@ export const Search: FC<Props> = ({
       setUsers({ ...users, ...newUsers });
       setLoading(false);
     },
-    [setLoading, setEntries, search, excludeId, users],
+    [setLoading, setEntries, excludeId, users],
   );
 
   const handleSearch = useCallback(
@@ -214,7 +173,7 @@ export const Search: FC<Props> = ({
         ...entry,
         ...(entry.hasOwnProperty('userId')
           ? {
-              __user: users[(entry as Property.AsObject).userId],
+              __user: users[entry.getId()],
             }
           : {}),
       });
@@ -289,54 +248,39 @@ export const Search: FC<Props> = ({
     ? makeFakeRows()
     : entries.map(entry => {
         if (kind === 1) {
-          const {
-            firstname,
-            lastname,
-            businessname,
-            phone,
-            email,
-          } = entry as User.AsObject;
           return [
             {
-              value: `${firstname} ${lastname}`,
+              value: `${entry.getFirstname()} ${entry.getLastname()}`,
               onClick: handleSelect(entry),
             },
             {
-              value: businessname,
+              value: entry.getBusinessname(),
               onClick: handleSelect(entry),
             },
             {
-              value: phone,
+              value: entry.getPhone(),
               onClick: handleSelect(entry),
             },
             {
-              value: email,
+              value: entry.getEmail(),
               onClick: handleSelect(entry),
             },
           ];
         }
         if (kind === 2) {
-          const {
-            userId,
-            address,
-            subdivision,
-            city,
-            state,
-            zip,
-          } = entry as Property.AsObject;
           return [
             {
-              value: `${address}, ${city}, ${state} ${zip}`,
+              value: `${entry.getAddress()}, ${entry.getCity()}, ${entry.getState()} ${entry.getZip()}`,
               onClick: handleSelect(entry),
             },
             {
-              value: subdivision,
+              value: '',
               onClick: handleSelect(entry),
             },
             {
               value: (
                 <>
-                  {users[userId].firstname} {users[userId].lastname}
+                  {users[entry.getUserId()].firstname} {users[userId].lastname}
                   {users[userId].businessname
                     ? `, ${users[userId].businessname}`
                     : ''}

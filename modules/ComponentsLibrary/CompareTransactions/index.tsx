@@ -170,7 +170,7 @@ export const CompareTransactions: FC<Props> = ({
         activityLog.setActivityName(
           `Merged Transactions - IDs: ${transactions!
             .map(txn => txn.getId())
-            .join(' AND ')} - Created transaction with ID: ${txnMade.id}`,
+            .join(' AND ')} - Created transaction with ID: ${txnMade.getId()}`,
         );
         activityLog.setUserId(loggedUserId);
         activityLog.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));

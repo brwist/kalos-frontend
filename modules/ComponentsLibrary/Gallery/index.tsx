@@ -98,21 +98,23 @@ export class Gallery extends React.PureComponent<props, state> {
   }
 
   fetchData() {
-    return new Promise(async resolve => {
+    return new Promise<void>(async resolve => {
       const docs = await this.DocClient.byTransactionID(
         this.props.transactionID,
       );
       const galleryData = docs.map(d => {
         return {
-          key: `${this.props.transactionID}-${d.reference}`,
+          key: `${this.props.transactionID}-${d.getReference()}`,
           bucket: 'kalos-transactions',
         };
       });
       const documentList = docs.map(d => ({
-        reference: d.reference,
-        id: d.transactionId,
+        reference: d.getReference(),
+        id: d.getTransactionId(),
       }));
-      this.setState({ fileList: galleryData, documentList }, resolve);
+      this.setState({ fileList: galleryData, documentList }, () => {
+        resolve();
+      });
     });
   }
 
@@ -184,7 +186,7 @@ export class Gallery extends React.PureComponent<props, state> {
     const el = document.createElement('a');
     el.download = img.reference;
     const blob = new Blob([img.data!], {
-      type: this.S3Client.getMimeType(img.reference) || '.png',
+      type: getMimeType(img.reference) || '.png',
     });
     el.href = URL.createObjectURL(blob);
     el.click();
@@ -250,9 +252,7 @@ export class Gallery extends React.PureComponent<props, state> {
     ) : (
       <ButtonLib onClick={this.toggleOpen} disabled={disabled} label={text} />
     );
-    const mimeType = this.S3Client.getMimeType(
-      fileList[activeImage]?.key || '',
-    );
+    const mimeType = getMimeType(fileList[activeImage]?.key || 'image/jpeg');
     let top = 0;
     if ((rotation / 90) % 2 !== 0) {
       top = 150;
