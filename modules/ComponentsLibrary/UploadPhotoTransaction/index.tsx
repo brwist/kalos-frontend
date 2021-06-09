@@ -168,7 +168,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
 
       if (onUpload) onUpload();
     },
-    [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId],
+    [loggedUserId, onUpload, fileData, bucket, formKey],
   );
   console.log({ costCenterList });
 

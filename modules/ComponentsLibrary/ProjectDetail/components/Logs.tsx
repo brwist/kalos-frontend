@@ -3,16 +3,15 @@ import {
   ActivityLogList,
 } from '@kalos-core/kalos-rpc/ActivityLog';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import {
-  ActivityLogClientService,
-  EventClientService,
-  EventType,
-} from '../../../../helpers';
-import { Event, EventList } from '@kalos-core/kalos-rpc/Event';
+import { ActivityLogClientService, EventType } from '../../../../helpers';
 import { InfoTable, Row } from '../../InfoTable';
 import { Loader } from '../../../Loader/main';
 import { CheckInProjectTask } from '../../CheckInProjectTask';
 import { RoleType } from '../../Payroll';
+import { Modal } from '../../Modal';
+import { AddLog } from '../../AddLog';
+import { SectionBar } from '../../SectionBar';
+import { ceil } from 'lodash';
 
 export interface Props {
   serviceCallId: number;
@@ -27,8 +26,20 @@ export const LogsTab: FC<Props> = ({
   project,
   role,
 }) => {
-  const [projectLogs, setProjectLogs] = useState<ActivityLog[]>();
+  const [projectLogs, setProjectLogs] = useState<ActivityLogList>();
   const [loading, setLoading] = useState<boolean>();
+  const [addingLog, setAddingLog] = useState<boolean>();
+  const [pageNumber, setPageNumber] = useState<number>(0);
+
+  const handleSetAddingLog = useCallback(
+    (addingLog: boolean) => setAddingLog(addingLog),
+    [setAddingLog],
+  );
+
+  const handleSetPageNumber = useCallback(
+    (pageNumber: number) => setPageNumber(pageNumber),
+    [setPageNumber],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -38,7 +49,7 @@ export const LogsTab: FC<Props> = ({
       new Promise<void>(async resolve => {
         try {
           let req: any = new ActivityLog();
-          req.setPageNumber(0);
+          req.setPageNumber(pageNumber);
           req.setEventId(project.id);
           if (role !== 'Manager') req.setUserId(loggedUserId);
           logs = await ActivityLogClientService.BatchGet(req);
@@ -51,10 +62,10 @@ export const LogsTab: FC<Props> = ({
     );
 
     Promise.all(promises).then(() => {
-      setProjectLogs(logs.getResultsList());
+      setProjectLogs(logs);
       setLoading(false);
     });
-  }, [setProjectLogs, setLoading, project.id, loggedUserId, role]);
+  }, [pageNumber, project.id, role, loggedUserId]);
   useEffect(() => {
     load();
   }, [load]);
@@ -62,10 +73,31 @@ export const LogsTab: FC<Props> = ({
     <Loader />
   ) : (
     <>
+      {addingLog && (
+        <Modal open={true} onClose={() => handleSetAddingLog(false)}>
+          <AddLog
+            onClose={() => handleSetAddingLog(false)}
+            onSave={() => {
+              handleSetAddingLog(false);
+              load();
+            }}
+            loggedUserId={loggedUserId}
+            eventId={serviceCallId}
+          />
+        </Modal>
+      )}
       <CheckInProjectTask
         projectToUse={project!}
         loggedUserId={loggedUserId}
         serviceCallId={serviceCallId}
+      />
+      <SectionBar
+        title="Project Logs"
+        pagination={{
+          count: projectLogs ? ceil(projectLogs!.getTotalCount() / 25) : 0,
+          onChangePage: (page: number) => handleSetPageNumber(page),
+          page: pageNumber,
+        }}
       />
       <InfoTable
         key={projectLogs?.toString()}
@@ -74,9 +106,17 @@ export const LogsTab: FC<Props> = ({
           { name: 'User ID' },
           { name: 'Description' },
           { name: 'Date' },
-          { name: 'Property ID' },
+          {
+            name: 'Property ID',
+            actions: [
+              {
+                label: 'Add Log',
+                onClick: () => handleSetAddingLog(true),
+              },
+            ],
+          },
         ]}
-        data={projectLogs?.map(log => {
+        data={projectLogs?.getResultsList().map(log => {
           return [
             { value: log.getId() },
             { value: log.getUserId() },

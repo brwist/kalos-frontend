@@ -544,6 +544,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   <IconButton
                     key={currentTrip.getId() + 'delete' + idx}
                     size="small"
+                    disabled={currentTrip.getPayrollProcessed() === true}
                     onClick={() =>
                       this.setStateToNew({
                         pendingTripToDelete: currentTrip,
@@ -809,14 +810,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
     if (user) {
       try {
-        department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          user.managedBy,
-        );
+        department = user.employeeDepartmentId;
       } catch (err) {
         console.error('Error getting timesheet department: ', err);
       }
     }
-    if (department) trip.setDepartmentId(department.id);
+    if (department) trip.setDepartmentId(department);
     try {
       await PerDiemClientService.upsertTrip(
         trip.toObject(),

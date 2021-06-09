@@ -10,6 +10,8 @@ export const BASE_URL = `${APP_URL}index.cfm`;
 export const OPTION_BLANK = '-- Select --';
 export const OPTION_ALL = '-- All --';
 
+export const LOG_IMAGE_BUCKET = 'project-log-images';
+
 export const CREDIT_CARD_ACCOUNTS = [
   'Capital One (1974)',
   'Capital One (1440)',
