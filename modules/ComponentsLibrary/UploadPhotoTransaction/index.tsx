@@ -5,30 +5,22 @@ import {
   Transaction,
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
-import {
-  TransactionAccount,
-  TransactionAccountList,
-  TransactionAccountClient,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import {
   uploadFileToS3Bucket,
   getFileExt,
   getMimeType,
-  SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
-  UserClientService,
   timestamp,
   TransactionDocumentClientService,
   FileClientService,
 } from '../../../helpers';
 import './styles.less';
 import { ENDPOINT } from '../../../constants';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { type } from 'os';
-import { AccountPicker } from '../Pickers';
-import { id } from 'date-fns/locale';
 import { RoleType } from '../Payroll';
 import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
+import { File } from '@kalos-core/kalos-rpc/File';
+import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
 
 interface Props {
   loggedUserId: number;
@@ -73,15 +65,12 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [load, setLoad] = useState<boolean>(false);
   let temp = costCenters.getResultsList().map(entry => {
     return {
       value: entry.toObject().id,
       label: entry.toObject().description,
     };
   });
-  const [costCenterList, setCostCenterList] = useState<CostCenter[]>(temp);
-  console.log({ costCenterList });
   const [formData, setFormData] = useState<Entry>({
     file: '',
     description: '',
@@ -128,7 +117,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       const insert = await insertRecord.Create(newTransaction);
       if (data.file) {
         const ext = getFileExt(data.file);
-        const name = `${insert.id}-${data.description}-${Math.floor(
+        const name = `${insert.getId()}-${data.description}-${Math.floor(
           Date.now() / 1000,
         )}.${ext}`;
         const nameWithoutId = `${data.description}-${Math.floor(
@@ -142,18 +131,20 @@ export const UploadPhotoTransaction: FC<Props> = ({
           data.tag,
         );
         if (status === 'ok') {
-          const uploadFile = await FileClientService.upsertFile({
-            bucket,
-            name,
-            mimeType: getMimeType(data.file),
-            ownerId: loggedUserId,
-          });
-          await TransactionDocumentClientService.upsertTransactionDocument({
-            transactionId: insert.id,
-            reference: nameWithoutId,
-            fileId: uploadFile.id,
-            typeId: 1,
-          });
+          const f = new File();
+          f.setBucket(bucket);
+          f.setName(name);
+          f.setMimeType(getMimeType(data.file) || 'image/jpeg');
+          f.setOwnerId(loggedUserId);
+
+          const uploadFile = await FileClientService.upsertFile(f);
+
+          const td = new TransactionDocument();
+          td.setTransactionId(insert.getId());
+          td.setReference(nameWithoutId);
+          td.setFileId(uploadFile.getId());
+          td.setTypeId(1);
+          await TransactionDocumentClientService.upsertTransactionDocument(td);
           setSaving(false);
           setSaved(true);
           setFormKey(formKey + 1);
@@ -168,15 +159,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
 
       if (onUpload) onUpload();
     },
-    [loggedUserId, onUpload, fileData, bucket, formKey],
+    [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId, onUpload],
   );
-  console.log({ costCenterList });
-
-  if (SUBJECT_TAGS_TRANSACTIONS === undefined) {
-    console.error(
-      'SUBJECT_TAGS_TRANSACTIONS is undefined. You should try manually deleting the .cache folder and compiling helpers.ts, then try again.',
-    );
-  }
 
   let conditionalSchema = [
     formData.tag == 'Subject=Receipt'

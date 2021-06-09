@@ -76,10 +76,11 @@ export const CostReport: FC<Props> = ({
       resultsList,
     ); // first # is per diem id
     setLodgings(lodgings);
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
     setTransactions(transactions);
     setPerDiems(resultsList);
   }, [serviceCallId, setPerDiems, setLodgings]);
@@ -89,9 +90,10 @@ export const CostReport: FC<Props> = ({
     await loadResources();
     setPrintStatus('loaded');
   }, [setPrintStatus, loadResources]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
 
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
@@ -166,7 +168,7 @@ export const CostReport: FC<Props> = ({
     <PrintPage
       buttonProps={{
         label: 'Print Cost Report',
-        disabled: loading || loadingEvent || printStatus === 'loading',
+        loading: loading || loadingEvent || printStatus === 'loading',
       }}
       downloadLabel="Download Cost Report"
       downloadPdfFilename="Cost-Report"
