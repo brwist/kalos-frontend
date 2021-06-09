@@ -15,7 +15,7 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import IconButton from '@material-ui/core/IconButton';
 import { format, addDays, getDay, differenceInDays, parseISO } from 'date-fns';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
-import { formatDate, formatTime } from '../../../helpers';
+import { formatDate, formatTime, loadProjects } from '../../../helpers';
 import './styles.less';
 
 export type CalendarEvent = {
@@ -40,12 +40,14 @@ type Style = {
   loading?: boolean;
 };
 
-interface Props extends Style {
+export interface Props extends Style {
   events: CalendarEvent[];
   startDate: string;
   endDate: string;
   onAdd?: (startDate: string) => void;
   withLabels?: boolean;
+  macro?: boolean; // Loads all of the projects into it, meant for an overview
+  loggedUserId: number;
 }
 
 export const GanttChart: FC<Props> = ({
@@ -55,6 +57,8 @@ export const GanttChart: FC<Props> = ({
   endDate: dateEnd,
   onAdd,
   withLabels = false,
+  loggedUserId,
+  macro,
 }) => {
   const [uncollapsed, setUncollapsed] = useState<{ [key: number]: boolean }>(
     {},
@@ -67,14 +71,47 @@ export const GanttChart: FC<Props> = ({
   const totalDays = differenceInDays(endDate, startDate);
   const offsetStart = getDay(startDate);
   const offsetEnd = 6 - getDay(endDate);
-  const arrLength = events.length;
-  useEffect(
-    () =>
+  const [arrLength, setArrLength] = useState<number>(events.length);
+  const [projects, setProjects] = useState<CalendarEvent[] | undefined>();
+  const [loaded, setLoaded] = useState<boolean>();
+  const loadProjectsMacro = useCallback(async () => {
+    setLoaded(false);
+    try {
+      const projects = await loadProjects();
+      setArrLength(projects.length);
+      setProjects(
+        projects.map(project => {
+          return {
+            ...project,
+            startDate: project.dateStarted,
+            endDate: project.dateEnded,
+          } as CalendarEvent;
+        }),
+      );
+      setElRefs(elRefs =>
+        [...Array(projects.length)].map((_, i) => elRefs[i] || createRef()),
+      );
+    } catch (err) {
+      console.error(
+        `An error occurred while getting projects for the Macro Gantt Chart: ${err}`,
+      );
+      setLoaded(true);
+    }
+    setLoaded(true);
+  }, [setElRefs, setProjects, setArrLength, setLoaded]);
+
+  useEffect(() => {
+    if (macro) {
+      loadProjectsMacro();
+    } else {
+      // setElRefs requires a valid array length which cannot be known when it's a macro chart on start time, so
+      // this else will be used when it's not macro, otherwise this same call will happen in loadProjectsMacro
+      setLoaded(true);
       setElRefs(elRefs =>
         [...Array(arrLength)].map((_, i) => elRefs[i] || createRef()),
-      ),
-    [arrLength],
-  );
+      );
+    }
+  }, [arrLength, loadProjectsMacro, macro, setLoaded]);
   const handleAddClick = useCallback(
     (startDate: string) => () => {
       if (onAdd) {
@@ -94,119 +131,129 @@ export const GanttChart: FC<Props> = ({
     },
     [setUncollapsed, uncollapsed, elRefs, setHeights, heights],
   );
-  const handleToggleCollapsed = useCallback(() => setCollapsed(!collapsed), [
-    setCollapsed,
-    collapsed,
-  ]);
-
+  const handleToggleCollapsed = useCallback(
+    () => setCollapsed(!collapsed),
+    [setCollapsed, collapsed],
+  );
   return (
     <div className={clsx('GanttChart', { loading })}>
       <div className={clsx('GanttChartAside', { collapsed })}>
-        {events.map(
-          (
-            {
-              id,
-              notes,
-              priorityId,
-              assignee,
-              startDate,
-              endDate,
-              startHour,
-              endHour,
-              priority,
-              status,
-              renderDetails,
-              subtitle,
-            },
-            idx,
-          ) => {
-            const PriorityIcon = priorityId
-              ? PROJECT_TASK_PRIORITY_ICONS[priorityId]
-              : null;
-            return (
-              <div
-                key={id}
-                className="GanttChartAsideRow"
-                onClick={handleToggleCollapse(id, idx)}
-              >
-                <div className="GanttChartAsideRowTitle">
-                  {uncollapsed[id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                  {PriorityIcon && (
-                    <PriorityIcon
-                      style={{
-                        fontSize: 16,
-                        marginRight: 4,
-                        verticalAlign: 'middle',
-                        display: 'inline-flex',
-                      }}
-                    />
-                  )}
-                  <div className={clsx('GanttChartAsideRowDesc', { subtitle })}>
-                    {subtitle && (
-                      <div className="GanttChartAsideRowSubtitle">
-                        {subtitle}
+        {loaded && (
+          <>
+            {(projects ? projects : events).map(
+              (
+                {
+                  id,
+                  notes,
+                  priorityId,
+                  assignee,
+                  startDate,
+                  endDate,
+                  startHour,
+                  endHour,
+                  priority,
+                  status,
+                  renderDetails,
+                  subtitle,
+                },
+                idx,
+              ) => {
+                const PriorityIcon = priorityId
+                  ? PROJECT_TASK_PRIORITY_ICONS[priorityId]
+                  : null;
+                return (
+                  <div
+                    key={id}
+                    className="GanttChartAsideRow"
+                    onClick={handleToggleCollapse(id, idx)}
+                  >
+                    <div className="GanttChartAsideRowTitle">
+                      {uncollapsed[id] ? (
+                        <ExpandLessIcon />
+                      ) : (
+                        <ExpandMoreIcon />
+                      )}
+                      {PriorityIcon && (
+                        <PriorityIcon
+                          style={{
+                            fontSize: 16,
+                            marginRight: 4,
+                            verticalAlign: 'middle',
+                            display: 'inline-flex',
+                          }}
+                        />
+                      )}
+                      <div
+                        className={clsx('GanttChartAsideRowDesc', { subtitle })}
+                      >
+                        {subtitle && (
+                          <div className="GanttChartAsideRowSubtitle">
+                            {subtitle}
+                          </div>
+                        )}
+                        {notes}
                       </div>
-                    )}
-                    {notes}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    overflow: 'hidden',
-                    height: uncollapsed[id] ? 'auto' : 0,
-                  }}
-                >
-                  <div ref={elRefs[idx]}>
-                    {renderDetails || (
-                      <>
-                        {assignee && (
-                          <div>
-                            <strong>Assigned Employee: </strong>
-                            {assignee}
-                          </div>
-                        )}
-                        <div>
-                          <strong>Brief Description: </strong>
-                          {notes}
-                        </div>
-                        <div>
-                          <strong>Start Date: </strong>
-                          {formatDate(startDate)}{' '}
-                          {startHour && formatTime(startHour)}
-                        </div>
-                        <div>
-                          <strong>End Date: </strong>
-                          {formatDate(endDate)} {endHour && formatTime(endHour)}
-                        </div>
-                        {status && (
-                          <div>
-                            <strong>Status: </strong>
-                            {status}
-                          </div>
-                        )}
-                        {priority && (
-                          <div>
-                            <strong>Priority: </strong>
-                            {PriorityIcon && (
-                              <PriorityIcon
-                                style={{
-                                  fontSize: 16,
-                                  marginRight: 4,
-                                  verticalAlign: 'middle',
-                                  display: 'inline-flex',
-                                }}
-                              />
+                    </div>
+                    <div
+                      style={{
+                        overflow: 'hidden',
+                        height: uncollapsed[id] ? 'auto' : 0,
+                      }}
+                    >
+                      <div ref={elRefs[idx]}>
+                        {renderDetails || (
+                          <>
+                            {assignee && (
+                              <div>
+                                <strong>Assigned Employee: </strong>
+                                {assignee}
+                              </div>
                             )}
-                            {priority}
-                          </div>
+                            <div>
+                              <strong>Brief Description: </strong>
+                              {notes}
+                            </div>
+                            <div>
+                              <strong>Start Date: </strong>
+                              {formatDate(startDate)}{' '}
+                              {startHour && formatTime(startHour)}
+                            </div>
+                            <div>
+                              <strong>End Date: </strong>
+                              {formatDate(endDate)}{' '}
+                              {endHour && formatTime(endHour)}
+                            </div>
+                            {status && (
+                              <div>
+                                <strong>Status: </strong>
+                                {status}
+                              </div>
+                            )}
+                            {priority && (
+                              <div>
+                                <strong>Priority: </strong>
+                                {PriorityIcon && (
+                                  <PriorityIcon
+                                    style={{
+                                      fontSize: 16,
+                                      marginRight: 4,
+                                      verticalAlign: 'middle',
+                                      display: 'inline-flex',
+                                    }}
+                                  />
+                                )}
+                                {priority}
+                              </div>
+                            )}
+                          </>
                         )}
-                      </>
-                    )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          },
+                );
+              },
+            )}
+          </>
         )}
       </div>
       <div className="GanttChartGantt">
@@ -250,7 +297,7 @@ export const GanttChart: FC<Props> = ({
             );
           })}
         </div>
-        {events.map(
+        {(projects ? projects : events).map(
           ({
             id,
             startDate: dateStart,

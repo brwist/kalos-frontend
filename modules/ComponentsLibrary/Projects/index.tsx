@@ -311,6 +311,7 @@ export const Projects: FC<Props> = ({
                 startDate={dateStarted.substr(0, 10)}
                 endDate={dateEnded.substr(0, 10)}
                 loading={loading || loadingInit}
+                loggedUserId={loggedUserId}
                 withLabels
               />
             ),

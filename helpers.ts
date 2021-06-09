@@ -1446,14 +1446,19 @@ export const loadEventsByFilter = async ({
   return { resultsList, totalCount };
 };
 
-export const loadProjects = async () => {
+export const loadProjects = async (
+  pageNumber?: number,
+  orderBy?: string,
+  orderDir?: 'ASC' | 'DESC',
+  setWithoutLimit?: boolean,
+) => {
   // FIXME move to event client
   const req = new Event();
   req.setNotEqualsList(['DepartmentId']);
-  req.setPageNumber(0);
-  req.setOrderBy('date_started');
-  req.setOrderDir('ASC');
-  req.setWithoutLimit(true);
+  req.setPageNumber(pageNumber ? pageNumber : 0);
+  req.setOrderBy(orderBy ? orderBy : 'date_started');
+  req.setOrderDir(orderDir ? orderDir : 'ASC');
+  req.setWithoutLimit(setWithoutLimit ? setWithoutLimit : true);
   const response = await EventClientService.BatchGet(req);
   const resultsList = response.getResultsList().map(item => item.toObject());
   return resultsList;

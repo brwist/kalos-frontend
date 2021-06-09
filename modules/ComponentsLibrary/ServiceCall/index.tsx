@@ -4,7 +4,7 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '@kalos-core/kalos-rpc/Property';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   getRPCFields,
@@ -362,8 +362,14 @@ export const ServiceCall: FC<Props> = props => {
           onClose();
         }
       } catch (err) {
-        console.error('An error occurred while uploading the project: ', err, '. If this issue persists, please inform a member of the webtech team.');
-        handleSetError(`An error occurred while uploading the project: ${err}. If this issue persists, please inform a member of the webtech team.`);
+        console.error(
+          'An error occurred while uploading the project: ',
+          err,
+          '. If this issue persists, please inform a member of the webtech team.',
+        );
+        handleSetError(
+          `An error occurred while uploading the project: ${err}. If this issue persists, please inform a member of the webtech team.`,
+        );
       }
     },
     [
@@ -714,6 +720,7 @@ export const ServiceCall: FC<Props> = props => {
               })}
               startDate={projects[0].dateStarted.substr(0, 10)}
               endDate={projects[projects.length - 1].dateEnded.substr(0, 10)}
+              loggedUserId={loggedUserId}
               loading={loading}
             />
           ) : (

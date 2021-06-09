@@ -16,7 +16,6 @@ import {
   JobSubtypeClientService,
   loadProjects,
   JobTypeSubtypeClientService,
-  ServicesRenderedClientService,
   TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
@@ -666,6 +665,7 @@ export const ProjectDetail: FC<Props> = props => {
                           0,
                           10,
                         )}
+                        loggedUserId={loggedUserId}
                         loading={loading}
                       />
                     ) : (

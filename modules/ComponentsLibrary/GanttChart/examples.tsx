@@ -49,6 +49,7 @@ export default () => (
       startDate="2019-12-30"
       endDate="2020-02-02"
       onAdd={() => console.log('ADD')}
+      loggedUserId={101253}
     />
     <ExampleTitle>withLabels</ExampleTitle>
     <GanttChart
@@ -60,6 +61,7 @@ export default () => (
       startDate="2019-12-30"
       endDate="2020-02-02"
       onAdd={() => console.log('ADD')}
+      loggedUserId={101253}
       withLabels
     />
     <ExampleTitle>with renderDetails</ExampleTitle>
@@ -75,12 +77,14 @@ export default () => (
       startDate="2019-12-30"
       endDate="2020-02-02"
       onAdd={() => console.log('ADD')}
+      loggedUserId={101253}
     />
     <ExampleTitle>loading</ExampleTitle>
     <GanttChart
       events={EVENTS}
       startDate="2019-12-30"
       endDate="2020-02-02"
+      loggedUserId={101253}
       loading
     />
   </>

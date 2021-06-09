@@ -975,6 +975,7 @@ export const EditProject: FC<Props> = ({
                 endDate={event.dateEnded.substr(0, 10)}
                 loading={loading || loadingEvent}
                 onAdd={handleAddTask}
+                loggedUserId={loggedUserId}
               />
             ) : null,
           },
@@ -1016,6 +1017,7 @@ export const EditProject: FC<Props> = ({
                     10,
                   )}
                   loading={loading || loadingEvent}
+                  loggedUserId={loggedUserId}
                 />
               ) : (
                 <div />
