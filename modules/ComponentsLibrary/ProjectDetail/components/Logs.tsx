@@ -95,7 +95,7 @@ export const LogsTab: FC<Props> = ({
         title="Project Logs"
         pagination={{
           count: projectLogs ? ceil(projectLogs!.getTotalCount() / 25) : 0,
-          onChangePage: (page: number) => setPageNumber(page),
+          onChangePage: (page: number) => handleSetPageNumber(page),
           page: pageNumber,
         }}
       />
