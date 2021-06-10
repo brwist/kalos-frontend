@@ -67,13 +67,13 @@ export const reducer = (state: State, action: Action) => {
     case 'updatePerDiemTotalProcessed': {
       return {
         ...state,
-        totalPerDiem: action.data,
+        totalPerDiemProcessed: action.data,
       };
     }
     case 'updateTripsTotalProcessed': {
       return {
         ...state,
-        tripsTotal: action.data,
+        totalTripsProcessed: action.data,
       };
     }
     case 'updateTotalSpiffsProcessed': {

@@ -546,6 +546,8 @@ export const CostSummary: FC<Props> = ({
       let req = new PerDiem();
       const tempPerDiem = totalPerDiem;
       const tempTrips = tripsTotal;
+      dispatch({ type: 'updateTripsTotalProcessed', data: tempTrips });
+      dispatch({ type: 'updatePerDiemTotalProcessed', data: tempPerDiem });
       tempPerDiem.processed = 1;
       tempTrips.processed = true;
       tempTrips.totalDistance = 0;
@@ -557,7 +559,7 @@ export const CostSummary: FC<Props> = ({
 
       req.setId(perDiems[i].id);
       req.setPayrollProcessed(true);
-      req.setFieldMaskList(['Payroll{Processed', 'DateProcessed']);
+      req.setFieldMaskList(['PayrollProcessed', 'DateProcessed']);
       req.setDateProcessed(timestamp());
       await PerDiemClientService.Update(req);
     }
