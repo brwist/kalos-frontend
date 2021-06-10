@@ -80,17 +80,6 @@ const Column = ({
       }
     }
   }, [date, autoScrollInitialized, datesMap, dayView, fetchingCalendarData]);
-  const findCommonArrayElement = (array1: number[], array2: number[]) => {
-    for (let i = 0; i < array1.length; i++) {
-      for (let j = 0; j < array2.length; j++) {
-        if (array1[i] === array2[j]) {
-          console.log('we found a match');
-          return true;
-        }
-      }
-    }
-    return false;
-  };
   const filterCalls = useCallback(
     (calendarDay: CalendarDay): CallsList => {
       const {
@@ -117,7 +106,7 @@ const Column = ({
               )
                 return false;
               const techIds = call.logTechnicianAssigned.split(',').map(Number);
-              if (findCommonArrayElement(techIds, techIdsFilterArr)) {
+              if (techIdsFilterArr.find(item => techIds.includes(item))) {
                 console.log('they got it');
                 return true;
               } else {
