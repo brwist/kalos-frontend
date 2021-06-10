@@ -76,9 +76,7 @@ export const ProjectDetail: FC<Props> = props => {
     onSave,
   } = props;
   const requestRef = useRef(null);
-  const [requestFields, setRequestfields] = useState<string[]>([]);
   const [tabIdx, setTabIdx] = useState<number>(0);
-  const [tabKey, setTabKey] = useState<number>(0);
   const [pendingSave, setPendingSave] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
   const [entry, setEntry] = useState<EventType>(new Event().toObject());
@@ -90,11 +88,6 @@ export const ProjectDetail: FC<Props> = props => {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
-  const [jobSubtypes, setJobSubtype] = useState<JobSubtypeType[]>([]);
-  const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
-    [],
-  );
   const [role, setRole] = useState<RoleType>();
   const [notificationEditing, setNotificationEditing] =
     useState<boolean>(false);
@@ -181,31 +174,6 @@ export const ProjectDetail: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypes = await JobTypeClientService.loadJobTypes();
-          setJobTypes(jobTypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
-          setJobSubtype(jobSubtypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const jobTypeSubtypes =
-            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
-          setJobTypeSubtypes(jobTypeSubtypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
           await loadEntry();
           resolve();
         }),
@@ -242,7 +210,6 @@ export const ProjectDetail: FC<Props> = props => {
     setLoading,
     setError,
     setLoaded,
-    setJobTypes,
     userID,
     propertyId,
     setProperty,
@@ -266,13 +233,6 @@ export const ProjectDetail: FC<Props> = props => {
     [setConfirmedParentId],
   );
 
-  const handleSave = useCallback(async () => {
-    setPendingSave(true);
-    if (tabIdx !== 0) {
-      setTabIdx(0);
-      setTabKey(tabKey + 1);
-    }
-  }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
   const saveServiceCall = useCallback(async () => {
     setSaving(true);
     const req = new Event();
@@ -283,14 +243,6 @@ export const ProjectDetail: FC<Props> = props => {
     } else {
       setLoading(true);
     }
-    requestFields.forEach(fieldName => {
-      //@ts-ignore
-      if (fieldName === 'id' || typeof entry[fieldName] === 'object') return;
-      const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      //@ts-ignore
-      req[methodName](entry[fieldName]);
-      fieldMaskList.push(upperCaseProp);
-    });
     req.setFieldMaskList(fieldMaskList);
     const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
       req,
@@ -304,16 +256,7 @@ export const ProjectDetail: FC<Props> = props => {
     if (onSave) {
       onSave();
     }
-  }, [
-    entry,
-    serviceCallId,
-    setEntry,
-    setSaving,
-    setLoading,
-    requestFields,
-    onSave,
-    loadEntry,
-  ]);
+  }, [serviceCallId, setEntry, setSaving, setLoading, onSave, loadEntry]);
   const saveProject = useCallback(
     async (data: EventType) => {
       setSaving(true);
@@ -354,21 +297,6 @@ export const ProjectDetail: FC<Props> = props => {
     requestRef,
   ]);
 
-  const handleSetRequestfields = useCallback(
-    fields => {
-      setRequestfields([...requestFields, ...fields]);
-    },
-    [requestFields, setRequestfields],
-  );
-
-  const handleChangeEntry = useCallback(
-    (data: EventType) => {
-      setEntry({ ...entry, ...data });
-      setPendingSave(false);
-    },
-    [entry, setEntry, setPendingSave],
-  );
-
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
       setNotificationEditing(notificationEditing),
@@ -402,33 +330,7 @@ export const ProjectDetail: FC<Props> = props => {
     [setSaving, userID, handleSetNotificationEditing, loadEntry],
   );
 
-  const handleOnAddMaterials = useCallback(
-    async (materialUsed, materialTotal) => {
-      await EventClientService.updateMaterialUsed(
-        serviceCallId,
-        materialUsed + entry.materialUsed,
-        materialTotal + entry.materialTotal,
-      );
-      await loadEntry();
-    },
-    [serviceCallId, entry, loadEntry],
-  );
-
-  const jobTypeOptions: Option[] = jobTypes.map(
-    ({ id: value, name: label }) => ({ label, value }),
-  );
-
-  const jobSubtypeOptions: Option[] = [
-    { label: OPTION_BLANK, value: 0 },
-    ...jobTypeSubtypes
-      .filter(({ jobTypeId }) => jobTypeId === entry.jobTypeId)
-      .map(({ jobSubtypeId }) => ({
-        value: jobSubtypeId,
-        label: jobSubtypes.find(({ id }) => id === jobSubtypeId)?.name || '',
-      })),
-  ];
-
-  const { id, logJobNumber, contractNumber } = entry;
+  const { logJobNumber, contractNumber } = entry;
   const {
     firstname,
     lastname,
@@ -574,7 +476,6 @@ export const ProjectDetail: FC<Props> = props => {
           )}
 
           <Tabs
-            key={tabKey}
             defaultOpenIdx={tabIdx}
             onChange={setTabIdx}
             tabs={[
@@ -643,7 +544,6 @@ export const ProjectDetail: FC<Props> = props => {
                             description,
                             dateStarted: dateStart,
                             dateEnded: dateEnd,
-                            logJobStatus,
                             color,
                           } = task;
                           const [startDate, startHour] = dateStart.split(' ');
