@@ -314,7 +314,7 @@ export const CostSummary: FC<Props> = ({
       if (spiffType === 'Spiff') {
         const startDate = '0001-01-01';
         const endDate = format(endDay, 'yyyy-MM-dd');
-        req.setDateRangeList(['>=', startDate, '<', endDate]);
+        //req.setDateRangeList(['>=', startDate, '<', endDate]);
         //req.setDateTargetList(['time_created', 'time_created']);
       }
       if (!notReady) {
