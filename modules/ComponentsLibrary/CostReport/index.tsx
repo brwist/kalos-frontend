@@ -110,6 +110,16 @@ export const CostReport: FC<Props> = ({
     setLoadedInit(true);
   }, [loadEvent, setLoadedInit]);
 
+  const getMinutesFromTimeString = (timeStarted: string, timeEnded: string) => {
+    return Math.abs(
+      Math.round(
+        (new Date(timeStarted).getTime() - new Date(timeEnded).getTime()) /
+          1000 /
+          60,
+      ),
+    );
+  };
+
   const load = useCallback(async () => {
     let promises = [];
     let timesheets: TimesheetLine.AsObject[] = [];
@@ -147,7 +157,15 @@ export const CostReport: FC<Props> = ({
       setTimesheets(timesheets);
 
       let total = 0;
-      timesheets.forEach(timesheet => (total = total + timesheet.hoursWorked));
+
+      timesheets.forEach(timesheet => {
+        let hoursWorked =
+          getMinutesFromTimeString(
+            timesheet.timeStarted,
+            timesheet.timeFinished,
+          ) / 60;
+        total = total + hoursWorked;
+      });
       setTotalHoursWorked(total);
 
       setLoading(false);
@@ -482,8 +500,9 @@ export const CostReport: FC<Props> = ({
           briefDescription,
           technicianUserName,
           technicianUserId,
-          hoursWorked,
         }) => {
+          let hrsWorked =
+            getMinutesFromTimeString(timeFinished, timeStarted) / 60;
           return (
             <div key={id}>
               <PrintTable
@@ -536,10 +555,10 @@ export const CostReport: FC<Props> = ({
                     formatDate(timeStarted) || '-',
                     formatDate(timeFinished) || '-',
                     briefDescription,
-                    hoursWorked != 0
-                      ? hoursWorked > 1
-                        ? `${hoursWorked} hrs`
-                        : `${hoursWorked} hr`
+                    hrsWorked != 0
+                      ? hrsWorked > 1
+                        ? `${hrsWorked} hrs`
+                        : `${hrsWorked} hr`
                       : '-',
                     notes,
                   ],
