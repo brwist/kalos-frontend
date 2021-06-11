@@ -14,12 +14,15 @@ import {
   TimesheetLineClientService,
   TransactionClientService,
   TimesheetDepartmentClientService,
+  TaskClientService,
 } from '../../../helpers';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintTable } from '../PrintTable';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { Task } from '@kalos-core/kalos-rpc/Task';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -30,6 +33,10 @@ export type SearchType = {
   technicians: string;
   statusId: number;
   priorityId: number;
+};
+
+export const GetTotalTransactions = (transactions: Transaction.AsObject[]) => {
+  return transactions.reduce((aggr, { amount }) => aggr + amount, 0);
 };
 
 export const CostReport: FC<Props> = ({
@@ -43,6 +50,7 @@ export const CostReport: FC<Props> = ({
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>([]);
+  const [tasks, setTasks] = useState<Task.AsObject[]>([]);
 
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
@@ -63,10 +71,7 @@ export const CostReport: FC<Props> = ({
     )
     .filter(({ mealsOnly }) => !mealsOnly)
     .reduce((aggr, { id }) => aggr + lodgings[id], 0);
-  const totalTransactions = transactions.reduce(
-    (aggr, { amount }) => aggr + amount,
-    0,
-  );
+  const totalTransactions = GetTotalTransactions(transactions);
 
   const loadResources = useCallback(async () => {
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
@@ -123,6 +128,7 @@ export const CostReport: FC<Props> = ({
   const load = useCallback(async () => {
     let promises = [];
     let timesheets: TimesheetLine.AsObject[] = [];
+    let tasks: Task.AsObject[] = [];
 
     setLoading(true);
 
@@ -153,8 +159,28 @@ export const CostReport: FC<Props> = ({
       }),
     );
 
+    promises.push(
+      new Promise<void>(async resolve => {
+        try {
+          let req = new Task();
+          req.setEventId(serviceCallId);
+
+          tasks = (await TaskClientService.BatchGet(req))
+            .getResultsList()
+            .map(task => task.toObject());
+
+          resolve();
+        } catch (err) {
+          console.error(
+            `Error occurred while loading the tasks for the cost report. Error: ${err}`,
+          );
+        }
+      }),
+    );
+
     Promise.all(promises).then(() => {
       setTimesheets(timesheets);
+      setTasks(tasks);
 
       let total = 0;
 
@@ -568,6 +594,70 @@ export const CostReport: FC<Props> = ({
           );
         },
       )}
+      <PrintParagraph tag="h2">Project Tasks</PrintParagraph>
+      {tasks.map(task => {
+        return (
+          <div key={task.id}>
+            {' '}
+            <PrintTable
+              columns={[
+                {
+                  title: 'Creator',
+                  align: 'left',
+                },
+                {
+                  title: 'Address',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Billable Type',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Billable Amount',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Time Started',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Time Finished',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Brief Description',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+
+                {
+                  title: 'Notes',
+                  align: 'right',
+                  widthPercentage: 20,
+                },
+              ]}
+              data={[
+                [
+                  task.creatorUserId,
+                  task.address,
+                  task.billableType,
+                  task.billable,
+                  formatDate(task.hourlyStart) || '-',
+                  formatDate(task.hourlyEnd) || '-',
+                  task.briefDescription,
+                  task.notes,
+                ],
+              ]}
+            />
+          </div>
+        );
+      })}
     </PrintPage>
   );
 };

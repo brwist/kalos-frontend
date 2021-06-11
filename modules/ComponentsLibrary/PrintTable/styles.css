@@ -27,6 +27,7 @@
 .PrintTable td {
   padding: 2px;
   vertical-align: top;
+  page-break-inside: avoid;
 }
 
 .PrintTable th {
