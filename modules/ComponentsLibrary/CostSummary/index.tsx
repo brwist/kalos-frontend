@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, useReducer } from 'react';
 import {
   TimesheetLine,
   TimesheetLineClient,
@@ -17,22 +17,17 @@ import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
-  differenceInCalendarDays,
   subDays,
   addDays,
   startOfWeek,
   format,
   endOfWeek,
 } from 'date-fns';
-import {
-  Trip,
-  TripList,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
   formatDate,
   TaskClientService,
-  TimeoffRequestClientService,
   PerDiemRowType,
   PerDiemClientService,
   PerDiemType,
@@ -40,8 +35,10 @@ import {
   timestamp,
   SpiffToolAdminActionClientService,
 } from '../../../helpers';
+import { reducer } from './reducer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { fi } from 'date-fns/locale';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -62,45 +59,48 @@ export const CostSummary: FC<Props> = ({
 }) => {
   const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
 
-  const [totalSpiffsProcessed, setTotalSpiffsProcessed] = useState<number>(0);
-
   const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>(0);
-  const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
-  const [totalPTO, setTotalPTO] = useState<number>(0);
-  const [totalPerDiem, setTotalPerDiem] = useState<{
-    totalMeals: number;
-    totalLodging: number;
-    totalMileage: number;
-    processed: number;
-  }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
-  const [totalPerDiemProcessed, setTotalPerDiemProcessed] = useState<{
-    totalMeals: number;
-    totalLodging: number;
-    totalMileage: number;
-    processed: number;
-  }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
   const [trips, setTrips] = useState<Trip[]>();
-  const [tripsTotal, setTripsTotal] = useState<{
-    totalDistance: number;
-    processed: boolean;
-  }>({ totalDistance: 0, processed: true });
-
-  const [tripsTotalProcessed, setTripsTotalProcessed] = useState<{
-    totalDistance: number;
-    processed: boolean;
-  }>({ totalDistance: 0, processed: true });
   const [loaded, setLoaded] = useState<boolean>(false);
   const today = new Date();
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
+  const [state, dispatch] = useReducer(reducer, {
+    spiffs: undefined,
+    totalPerDiem: {
+      totalMeals: 0,
+      totalLodging: 0,
+      totalMileage: 0,
+      processed: 0,
+    },
+    totalPerDiemProcessed: {
+      totalMeals: 0,
+      totalLodging: 0,
+      totalMileage: 0,
+      processed: 0,
+    },
+    totalSpiffsProcessed: 0,
+    tripsTotal: { totalDistance: 0, processed: true },
+    totalTripsProcessed: { totalDistance: 0, processed: true },
+  });
+
+  const {
+    spiffs,
+    totalPerDiem,
+    tripsTotal,
+    totalPerDiemProcessed,
+    totalSpiffsProcessed,
+    totalTripsProcessed,
+  } = state;
+
   const getTrips = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
     let processed = true;
     trip.setDateProcessed(NULL_TIME);
-    trip.setFieldMaskList(['PayrollProcessed', 'DateProcessed']);
+    trip.setFieldMaskList(['PayrollProcessed']);
     trip.setApproved(true);
     trip.setDateTargetList(['date', 'date']);
     trip.setDateRangeList(['>=', '0001-01-01', '<', formatDateFns(endDay)]);
@@ -314,7 +314,7 @@ export const CostSummary: FC<Props> = ({
       if (spiffType === 'Spiff') {
         const startDate = '0001-01-01';
         const endDate = format(endDay, 'yyyy-MM-dd');
-        req.setDateRangeList(['>=', startDate, '<', endDate]);
+        //req.setDateRangeList(['>=', startDate, '<', endDate]);
         //req.setDateTargetList(['time_created', 'time_created']);
       }
       if (!notReady) {
@@ -362,7 +362,7 @@ export const CostSummary: FC<Props> = ({
       }
       if (spiffType === 'Spiff') {
         if (dateType === 'Weekly') {
-          setSpiffsWeekly(results);
+          dispatch({ type: 'updateSpiffs', data: results });
         }
         return spiffTotal;
       } else {
@@ -422,6 +422,7 @@ export const CostSummary: FC<Props> = ({
       }
       let spiffTotal = 0;
       let toolTotal = 0;
+      console.log(tempResults);
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
           spiffTotal += results[i].toObject().spiffAmount;
@@ -483,7 +484,6 @@ export const CostSummary: FC<Props> = ({
     const startDate = format(startDay, 'yyyy-MM-dd');
     const endDate = format(endDay, 'yyyy-MM-dd');
     timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
-    console.log(endDay);
     const client = new TimesheetLineClient(ENDPOINT);
     let results = new TimesheetLineList().getResultsList();
     timesheetReq.setOrderBy('time_started');
@@ -506,32 +506,60 @@ export const CostSummary: FC<Props> = ({
     return total;
   }, [endDay, startDay, userId]);
 
-  const toggleProcessSpiffTool = async (spiffTool: Task.AsObject) => {
-    spiffTool.payrollProcessed = true;
-    const { id } = spiffTool;
+  const toggleProcessSpiffTool = async (spiffTool: Task) => {
+    const tempSpiffs = spiffs;
+    for (let i = 0; i < spiffs!.length; i++) {
+      if (tempSpiffs![i].getId() == spiffTool.getId()) {
+        console.log('we found it');
+        tempSpiffs![i].setPayrollProcessed(true);
+      }
+    }
+    dispatch({ type: 'updateSpiff', data: spiffTool });
+    dispatch({
+      type: 'updateTotalSpiffsProcessed',
+      value: spiffTool.getSpiffAmount(),
+    });
+
+    const id = spiffTool.getId();
     const req = new Task();
     req.setId(id);
     req.setFieldMaskList(['PayrollProcessed']);
     req.setPayrollProcessed(true);
     const adminReq = new SpiffToolAdminAction();
     await TaskClientService.Update(req);
-    if (spiffTool.actionsList) {
-      for (let i = 0; i < spiffTool.actionsList.length; i++) {
-        if (spiffTool.actionsList[i].dateProcessed === NULL_TIME_VALUE) {
-          adminReq.setId(spiffTool.actionsList[i].id);
+    if (spiffTool.getActionsList()) {
+      for (let i = 0; i < spiffTool.getActionsList().length; i++) {
+        if (
+          spiffTool.getActionsList()[i].getDateProcessed() === NULL_TIME_VALUE
+        ) {
+          adminReq.setId(spiffTool.getActionsList()[i].getId());
           adminReq.setDateProcessed(timestamp());
           adminReq.setFieldMaskList(['DateProcessed']);
           await SpiffToolAdminActionClientService.Update(adminReq);
         }
       }
     }
+    //setSpiffsWeekly(tempSpiffs);
   };
   const toggleProcessPerDiems = async (perDiems: PerDiem.AsObject[]) => {
     for (let i = 0; i < perDiems.length; i++) {
       let req = new PerDiem();
+      const tempPerDiem = totalPerDiem;
+      const tempTrips = tripsTotal;
+      dispatch({ type: 'updateTripsTotalProcessed', data: tempTrips });
+      dispatch({ type: 'updatePerDiemTotalProcessed', data: tempPerDiem });
+      tempPerDiem.processed = 1;
+      tempTrips.processed = true;
+      tempTrips.totalDistance = 0;
+      tempPerDiem.totalLodging = 0;
+      tempPerDiem.totalMeals = 0;
+
+      dispatch({ type: 'updateTripsTotal', data: tempTrips });
+      dispatch({ type: 'updatePerDiemTotal', data: tempPerDiem });
+
       req.setId(perDiems[i].id);
       req.setPayrollProcessed(true);
-      req.setFieldMaskList(['Payroll{Processed', 'DateProcessed']);
+      req.setFieldMaskList(['PayrollProcessed', 'DateProcessed']);
       req.setDateProcessed(timestamp());
       await PerDiemClientService.Update(req);
     }
@@ -587,11 +615,15 @@ export const CostSummary: FC<Props> = ({
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {
+            resolve();
             const spiffToolTotalsProcessed = await getSpiffToolTotalsProcessed(
               'Spiff',
             );
-            setTotalSpiffsProcessed(spiffToolTotalsProcessed);
-            resolve();
+            console.log(spiffToolTotalsProcessed);
+            dispatch({
+              type: 'updateTotalSpiffsProcessed',
+              value: spiffToolTotalsProcessed,
+            });
           } catch (err) {
             console.log('error fetching total spiffs processed', err);
             reject(err);
@@ -603,7 +635,8 @@ export const CostSummary: FC<Props> = ({
           try {
             resolve();
             const perDiemTotals = await getPerDiemTotals();
-            setTotalPerDiem(perDiemTotals);
+            //setTotalPerDiem(perDiemTotals);
+            dispatch({ type: 'updatePerDiemTotal', data: perDiemTotals });
           } catch (err) {
             reject(err);
           }
@@ -613,8 +646,12 @@ export const CostSummary: FC<Props> = ({
         new Promise<void>(async (resolve, reject) => {
           try {
             resolve();
-            const perDiemTotals = await getPerDiemTotals();
-            setTotalPerDiemProcessed(await getPerDiemTotalsProcessed());
+            const perDiemTotals = await getPerDiemTotalsProcessed();
+            dispatch({
+              type: 'updatePerDiemTotalProcessed',
+              data: perDiemTotals,
+            });
+            //setTotalPerDiemProcessed(perDiemTotals);
           } catch (err) {
             reject(err);
           }
@@ -624,7 +661,8 @@ export const CostSummary: FC<Props> = ({
         new Promise<void>(async (resolve, reject) => {
           try {
             const tripsData = await getTrips();
-            setTripsTotal(tripsData);
+            //setTripsTotal(tripsData);
+            dispatch({ type: 'updateTripsTotal', data: tripsData });
             resolve();
           } catch (err) {
             console.log('error getting trips', err);
@@ -636,7 +674,10 @@ export const CostSummary: FC<Props> = ({
         new Promise<void>(async (resolve, reject) => {
           try {
             const tripsDataProcessed = await getTripsProcessed();
-            setTripsTotalProcessed(tripsDataProcessed);
+            dispatch({
+              type: 'updateTripsTotalProcessed',
+              data: tripsDataProcessed,
+            });
             console.log(tripsDataProcessed);
             resolve();
           } catch (err) {
@@ -687,7 +728,7 @@ export const CostSummary: FC<Props> = ({
               value: formatDateFns(startDay),
             },
             {
-              value: totalPTO + totalHoursProcessed,
+              value: totalHoursProcessed,
             },
             {
               value: usd(totalPerDiemProcessed.totalLodging),
@@ -696,7 +737,7 @@ export const CostSummary: FC<Props> = ({
               value: usd(totalPerDiemProcessed.totalMeals),
             },
             {
-              value: tripsTotalProcessed.totalDistance.toFixed(2) + ' miles',
+              value: totalTripsProcessed.totalDistance.toFixed(2) + ' miles',
             },
             {
               value: usd(totalSpiffsProcessed),
@@ -721,8 +762,8 @@ export const CostSummary: FC<Props> = ({
             { name: 'Processed' },
           ]}
           data={
-            spiffsWeekly
-              ? spiffsWeekly.map(spiff => {
+            spiffs
+              ? spiffs.map(spiff => {
                   return [
                     {
                       value: formatDate(
@@ -752,9 +793,8 @@ export const CostSummary: FC<Props> = ({
                               <IconButton
                                 key="processSpiffWeekly"
                                 size="small"
-                                onClick={() =>
-                                  toggleProcessSpiffTool(spiff.toObject())
-                                }
+                                disabled={spiff.getPayrollProcessed() === true}
+                                onClick={() => toggleProcessSpiffTool(spiff)}
                               >
                                 <CheckIcon />
                               </IconButton>,
@@ -866,7 +906,7 @@ export const CostSummary: FC<Props> = ({
                   actions:
                     totalPerDiem.totalLodging != 0 ||
                     totalPerDiem.totalMeals != 0 ||
-                    tripsTotal.totalDistance != 0
+                    tripsTotal.totalDistance !== 0
                       ? [
                           <IconButton
                             key="processPerdiem"
