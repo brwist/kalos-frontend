@@ -56,6 +56,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
     const req = new PerDiem();
     req.setUserId(userId);
     req.setDateRangeList(['>=', startDay, '<', endDay]);
+    req.setIsActive(true);
     const resultsList = (
       await PerDiemClientService.BatchGet(req)
     ).getResultsList();
@@ -67,6 +68,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
   const getSpiffs = useCallback(async () => {
     const req = new Task();
     req.setExternalId(userId);
+    req.setIsActive(true);
     const startDate = startDay;
     const endDate = endDay;
     req.setDateRangeList(['>=', startDate, '<', endDate]);
