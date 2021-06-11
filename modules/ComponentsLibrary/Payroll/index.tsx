@@ -14,19 +14,21 @@ import {
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
 import { PayrollSummary } from './components/PayrollSummary';
+import { JobSummary } from './components/JobSummary';
 import { PerDiem } from './components/PerDiem';
 import { Timesheet } from './components/Timesheet';
 import { TimeoffRequests } from './components/TimeoffRequests';
 import { TimesheetPendingApproval } from './components/TimesheetPendingApproval';
 import { Spiffs } from './components/Spiffs';
+import { Modal } from '../Modal';
 import { ToolLogs } from './components/ToolLogs';
+import { Button } from '../Button';
 import './styles.less';
 import { TripSummary } from '../TripSummary';
 import {
   PerDiemList,
   PerDiem as pd,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 
 export type RoleType =
   | 'Manager'
@@ -51,6 +53,8 @@ export type FilterData = {
 export const Payroll: FC<Props> = ({ userID }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
   const [initiatedRole, setInitiatedRole] = useState<boolean>(false);
+  const [openReport, setOpenReport] = useState<boolean>(false);
+
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
@@ -217,6 +221,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
   let isTrips = true;
   let isPendingTimesheet = false;
   let isPayrollSummary = false;
+  let isJobSummary = true;
   if (role === 'Payroll') {
     isPayrollSummary = true;
     isPendingTimesheet = true;
@@ -238,6 +243,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
               schema={SCHEMA}
               className="PayrollFilter"
             />
+            <Button
+              label={'Open Job Report for Hours'}
+              onClick={() => setOpenReport(true)}
+            ></Button>
             <Tabs
               tabs={[
                 ...(isTimesheet
@@ -381,6 +390,19 @@ export const Payroll: FC<Props> = ({ userID }) => {
                   : []),
               ]}
             />
+            {openReport && (
+              <Modal
+                open
+                fullScreen={true}
+                onClose={() => setOpenReport(false)}
+              >
+                <JobSummary
+                  employees={employees}
+                  departments={departments}
+                  onClose={() => setOpenReport(false)}
+                ></JobSummary>
+              </Modal>
+            )}
           </>
         ) : (
           <Alert severity="error">
