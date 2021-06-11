@@ -395,12 +395,9 @@ export const Payroll: FC<Props> = ({ userID }) => {
                           filter.week != OPTION_ALL ? (
                             <div>
                               <CostReportForEmployee
-                                key={userID.toString() + filter.week}
+                                key={filter.employeeId + filter.week}
                                 userId={filter.employeeId}
-                                onClose={() => setViewReport(false)}
-                                loggedUserId={loggedUser!.id}
                                 week={filter.week}
-                                username={filter.employeeId.toString()}
                               ></CostReportForEmployee>
                             </div>
                           ) : (

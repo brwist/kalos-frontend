@@ -630,6 +630,8 @@ const NAMED_EXPORTS = {
   ],
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.js': ['grpc'],
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js': ['grpc'],
+  'node_modules/@kalos-core/kalos-rpc/node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js':
+  ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb.js': [
     'Place',
     'Places',

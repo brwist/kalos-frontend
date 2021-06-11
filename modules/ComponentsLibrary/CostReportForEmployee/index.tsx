@@ -22,17 +22,9 @@ import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import { Button } from '@material-ui/core';
 interface Props {
   userId: number;
-  loggedUserId: number;
   week: string;
-  onClose: () => void;
-  username: string;
 }
-export const CostReportForEmployee: FC<Props> = ({
-  userId,
-  week,
-  onClose,
-  username,
-}) => {
+export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
   const [trips, setTrips] = useState<Trip[]>();
   const [perDiems, setPerDiems] = useState<PerDiem[]>();
   const [spiffs, setSpiffs] = useState<Task[]>();
@@ -191,154 +183,161 @@ export const CostReportForEmployee: FC<Props> = ({
   }, [loaded, getPerDiems, getHours, getSpiffs, getTrips]);
   return loaded ? (
     <SectionBar title="Employee Report">
-      <InfoTable
-        columns={[
-          { name: 'Processed Hours' },
-          { name: 'Approved Hours, Not Processed' },
-          { name: 'Submitted Hours, Not Approved' },
-          { name: 'Pending Hours, Not Submitted' },
-        ]}
-        data={
-          hours
-            ? [
-                [
-                  {
-                    value: hours.processed,
-                  },
-                  {
-                    value: hours.approved,
-                  },
-                  {
-                    value: hours.submitted,
-                  },
-                  {
-                    value: hours.pending,
-                  },
-                ],
-              ]
-            : []
-        }
-      />
-      <InfoTable
-        columns={[
-          { name: 'Decision Date for Spiff' },
-          { name: 'Date that Spiff was Created' },
-          { name: 'Amount' },
-          { name: 'Job Number' },
-          { name: 'Processed' },
-        ]}
-        data={
-          spiffs
-            ? spiffs.map(spiff => {
-                return [
-                  {
-                    value:
-                      spiff.getActionsList().length > 0
-                        ? formatDate(
-                            spiff.getActionsList()[
-                              //eslint-disable-next-line
-                              spiff.getActionsList().length - 1
-                            ].getDecisionDate(),
-                          )
-                        : 'No Action Taken',
-                  },
-                  {
-                    value: formatDate(spiff.toObject().timeCreated),
-                  },
-                  {
-                    value: usd(spiff.toObject().spiffAmount),
-                  },
-                  {
-                    value: spiff.toObject().spiffJobNumber,
-                  },
-                  {
-                    value:
-                      spiff.toObject().payrollProcessed === true
-                        ? 'Processed'
-                        : 'Not Processed',
-                  },
-                ];
-              })
-            : []
-        }
-      />
-      <InfoTable
-        columns={[
-          { name: 'Date' },
-          { name: 'ZipCode' },
-          { name: 'Approved By' },
-          { name: 'Processed' },
-        ]}
-        data={
-          perDiems
-            ? perDiems.map(perDiem => {
-                return [
-                  {
-                    value: formatDate(perDiem.getDateStarted()),
-                  },
-                  {
-                    value:
-                      perDiem.getRowsList().length > 0
-                        ? perDiem.getRowsList()[0].getZipCode()
-                        : 'No Days Found',
-                  },
-                  {
-                    value:
-                      perDiem.getApprovedById() != 0
-                        ? perDiem.getApprovedByName()
-                        : 'Not Approved',
-                  },
-                  {
-                    value:
-                      perDiem.getPayrollProcessed() === false
-                        ? 'Not Processed'
-                        : 'Processed',
-                  },
-                ];
-              })
-            : []
-        }
-      />
-      <InfoTable
-        columns={[
-          { name: 'Date' },
-          { name: 'Distance' },
-          { name: 'Start' },
-          { name: 'End' },
-          { name: 'Approved?' },
-          { name: 'Processed?' },
-        ]}
-        data={
-          trips
-            ? trips.map(trip => {
-                return [
-                  {
-                    value: formatDate(trip.getDate()),
-                  },
-                  {
-                    value: trip.getDistanceInMiles(),
-                  },
-                  {
-                    value: trip.getOriginAddress(),
-                  },
-                  {
-                    value: trip.getDestinationAddress(),
-                  },
-                  {
-                    value: trip.getApproved() === true ? 'Yes' : 'No',
-                  },
-                  {
-                    value:
-                      trip.getPayrollProcessed() === false
-                        ? 'Not Processed'
-                        : 'Processed',
-                  },
-                ];
-              })
-            : []
-        }
-      />
-      <Button onClick={() => onClose()}></Button>
+      <SectionBar title="Hours">
+        <InfoTable
+          columns={[
+            { name: 'Processed Hours' },
+            { name: 'Approved Hours, Not Processed' },
+            { name: 'Submitted Hours, Not Approved' },
+            { name: 'Pending Hours, Not Submitted' },
+          ]}
+          data={
+            hours
+              ? [
+                  [
+                    {
+                      value: hours.processed,
+                    },
+                    {
+                      value: hours.approved,
+                    },
+                    {
+                      value: hours.submitted,
+                    },
+                    {
+                      value: hours.pending,
+                    },
+                  ],
+                ]
+              : []
+          }
+        />
+      </SectionBar>
+      <SectionBar title="Spiff/Bonus/Commission">
+        <InfoTable
+          columns={[
+            { name: 'Decision Date' },
+            { name: 'Date Created' },
+            { name: 'Amount' },
+            { name: 'Job Number' },
+            { name: 'Processed' },
+          ]}
+          data={
+            spiffs
+              ? spiffs.map(spiff => {
+                  return [
+                    {
+                      value:
+                        spiff.getActionsList().length > 0
+                          ? formatDate(
+                              spiff.getActionsList()[
+                                //eslint-disable-next-line
+                                spiff.getActionsList().length - 1
+                              ].getDecisionDate(),
+                            )
+                          : 'No Action Taken',
+                    },
+                    {
+                      value: formatDate(spiff.toObject().timeCreated),
+                    },
+                    {
+                      value: usd(spiff.toObject().spiffAmount),
+                    },
+                    {
+                      value: spiff.toObject().spiffJobNumber,
+                    },
+                    {
+                      value:
+                        spiff.toObject().payrollProcessed === true
+                          ? 'Processed'
+                          : 'Not Processed',
+                    },
+                  ];
+                })
+              : []
+          }
+        />
+      </SectionBar>
+      <SectionBar title="Per Diems">
+        <InfoTable
+          columns={[
+            { name: 'Date' },
+            { name: 'ZipCode' },
+            { name: 'Approved By' },
+            { name: 'Processed' },
+          ]}
+          data={
+            perDiems
+              ? perDiems.map(perDiem => {
+                  return [
+                    {
+                      value: formatDate(perDiem.getDateStarted()),
+                    },
+                    {
+                      value:
+                        perDiem.getRowsList().length > 0
+                          ? perDiem.getRowsList()[0].getZipCode()
+                          : 'No Days Found',
+                    },
+                    {
+                      value:
+                        perDiem.getApprovedById() != 0
+                          ? perDiem.getApprovedByName()
+                          : 'Not Approved',
+                    },
+                    {
+                      value:
+                        perDiem.getPayrollProcessed() === false
+                          ? 'Not Processed'
+                          : 'Processed',
+                    },
+                  ];
+                })
+              : []
+          }
+        />
+      </SectionBar>
+      <SectionBar title="Trips">
+        <InfoTable
+          columns={[
+            { name: 'Date' },
+            { name: 'Distance' },
+            { name: 'Start' },
+            { name: 'End' },
+            { name: 'Approved?' },
+            { name: 'Processed?' },
+          ]}
+          data={
+            trips
+              ? trips.map(trip => {
+                  return [
+                    {
+                      value: formatDate(trip.getDate()),
+                    },
+                    {
+                      value: trip.getDistanceInMiles(),
+                    },
+                    {
+                      value: trip.getOriginAddress(),
+                    },
+                    {
+                      value: trip.getDestinationAddress(),
+                    },
+                    {
+                      value: trip.getApproved() === true ? 'Yes' : 'No',
+                    },
+                    {
+                      value:
+                        trip.getPayrollProcessed() === false
+                          ? 'Not Processed'
+                          : 'Processed',
+                    },
+                  ];
+                })
+              : []
+          }
+        />
+      </SectionBar>
     </SectionBar>
   ) : (
     <Loader />
