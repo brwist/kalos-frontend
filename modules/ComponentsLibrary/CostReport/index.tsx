@@ -62,6 +62,8 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
   const [event, setEvent] = useState<EventType>();
   const [loaded, setLoaded] = useState<boolean>(false);
 
+  const [trips, setTrips] = useState<Trip.AsObject[]>([]);
+
   const totalMeals =
     perDiems.reduce((aggr, { rowsList }) => aggr + rowsList.length, 0) *
     MEALS_RATE;
@@ -122,6 +124,15 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
         arr.push(result);
       }
     });
+
+    let allTrips: Trip.AsObject[] = [];
+    arr.forEach(pd =>
+      pd.rowsList.forEach(row => {
+        allTrips.push(...row.tripsList);
+      }),
+    );
+
+    setTrips(allTrips);
 
     setPerDiems(arr);
   }, [serviceCallId, setPerDiems, setLodgings, setTripsTotal]);
@@ -243,9 +254,6 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
       load();
     }
   }, [loadedInit, loadInit, loaded, setLoaded, load]);
-
-  // TODO clean this up for myself because dang this is some 1 am code.
-  let collectionOfRenderedTrips: { id: number; reactCode: any }[] = [];
 
   return (
     <PrintPage
@@ -421,6 +429,7 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
             if (totalMeals == 0 && totalLodging == 0) {
               return <></>; // Don't show it
             }
+
             return (
               <div key={id}>
                 <PrintParagraph tag="h3">
@@ -568,105 +577,6 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
                     )}
                   />
                 </div>
-                <PrintParagraph tag="h4">Related Trips</PrintParagraph>
-                {/* {rowsList.map((row, idx) => {
-                  if (row.tripsList.length == 0 && idx == 0)
-                    return <PrintParagraph>No trips.</PrintParagraph>;
-                  row.tripsList.forEach(trip => {
-                    let included = false;
-                    for (const includedInCollection of collectionOfRenderedTrips) {
-                      console.log(
-                        `${trip.id} == ${includedInCollection.id} is ${
-                          trip.id == includedInCollection.id
-                        }`,
-                      );
-                      if (trip.id == includedInCollection.id) {
-                        included = true;
-                      }
-                    }
-
-                    if (!included) {
-                      console.log('NOT INCLUDED: ', trip.id);
-                      collectionOfRenderedTrips.push({
-                        id: trip.id,
-                        reactCode: (
-                          <div key={trip.id}>
-                            <PrintTable
-                              columns={[
-                                {
-                                  title: 'Date',
-                                  align: 'left',
-                                },
-                                {
-                                  title: 'Origin Address',
-                                  align: 'left',
-                                  widthPercentage: 10,
-                                },
-                                {
-                                  title: 'Destination Address',
-                                  align: 'left',
-                                  widthPercentage: 10,
-                                },
-                                {
-                                  title: 'Distance (Miles)',
-                                  align: 'left',
-                                  widthPercentage: 10,
-                                },
-                                {
-                                  title: 'Notes',
-                                  align: 'left',
-                                  widthPercentage: 10,
-                                },
-                                {
-                                  title: 'Home Travel',
-                                  align: 'right',
-                                  widthPercentage: 20,
-                                },
-                                {
-                                  title: `Cost (${usd(
-                                    IRS_SUGGESTED_MILE_FACTOR,
-                                  )}/mi)`,
-                                  align: 'right',
-                                  widthPercentage: 20,
-                                },
-                              ]}
-                              data={[
-                                [
-                                  formatDate(trip.date),
-                                  trip.originAddress,
-                                  trip.destinationAddress,
-                                  trip.distanceInMiles.toFixed(2),
-                                  trip.notes,
-                                  trip.homeTravel,
-                                  `${usd(
-                                    trip.distanceInMiles > 30 && trip.homeTravel
-                                      ? Number(
-                                          (
-                                            (trip.distanceInMiles - 30) *
-                                            IRS_SUGGESTED_MILE_FACTOR
-                                          ).toFixed(2),
-                                        )
-                                      : Number(
-                                          (
-                                            trip.distanceInMiles *
-                                            IRS_SUGGESTED_MILE_FACTOR
-                                          ).toFixed(2),
-                                        ),
-                                  )} ${
-                                    trip.distanceInMiles > 30 && trip.homeTravel
-                                      ? '(30 miles docked for home travel)'
-                                      : ''
-                                  }`,
-                                ],
-                              ]}
-                            />
-                          </div>
-                        ),
-                      });
-                    }
-                  });
-                  return collectionOfRenderedTrips.map(coll => coll.reactCode);
-                })} */}
               </div>
             );
           },
@@ -809,6 +719,85 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
                   formatDate(task.hourlyEnd) || '-',
                   task.briefDescription,
                   task.notes,
+                ],
+              ]}
+            />
+          </div>
+        );
+      })}
+      <PrintParagraph tag="h2">Related Trips</PrintParagraph>
+      {trips.map(trip => {
+        return (
+          <div key={trip.id}>
+            <PrintTable
+              columns={[
+                {
+                  title: 'Date',
+                  align: 'left',
+                },
+                {
+                  title: 'Origin Address',
+                  align: 'left',
+                  widthPercentage: 20,
+                },
+                {
+                  title: 'Destination Address',
+                  align: 'left',
+                  widthPercentage: 20,
+                },
+                {
+                  title: 'Distance (Miles)',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Notes',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Home Travel',
+                  align: 'right',
+                  widthPercentage: 10,
+                },
+                {
+                  title: `Cost (${usd(IRS_SUGGESTED_MILE_FACTOR)}/mi)`,
+                  align: 'right',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Per Diem Row ID',
+                  align: 'right',
+                  widthPercentage: 10,
+                },
+              ]}
+              data={[
+                [
+                  formatDate(trip.date),
+                  trip.originAddress,
+                  trip.destinationAddress,
+                  trip.distanceInMiles.toFixed(2),
+                  trip.notes,
+                  trip.homeTravel,
+                  `${usd(
+                    trip.distanceInMiles > 30 && trip.homeTravel
+                      ? Number(
+                          (
+                            (trip.distanceInMiles - 30) *
+                            IRS_SUGGESTED_MILE_FACTOR
+                          ).toFixed(2),
+                        )
+                      : Number(
+                          (
+                            trip.distanceInMiles * IRS_SUGGESTED_MILE_FACTOR
+                          ).toFixed(2),
+                        ),
+                  )} ${
+                    trip.distanceInMiles > 30 && trip.homeTravel
+                      ? '(30 miles docked for home travel)'
+                      : ''
+                  }`,
+                  trip.perDiemRowId,
                 ],
               ]}
             />
