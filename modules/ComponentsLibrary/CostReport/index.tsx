@@ -41,7 +41,6 @@ export const GetTotalTransactions = (transactions: Transaction.AsObject[]) => {
 
 export const CostReport: FC<Props> = ({
   serviceCallId,
-  loggedUserId,
   onClose,
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -71,6 +70,12 @@ export const CostReport: FC<Props> = ({
     )
     .filter(({ mealsOnly }) => !mealsOnly)
     .reduce((aggr, { id }) => aggr + lodgings[id], 0);
+
+  const totalTasksBillable = tasks.reduce(
+    (aggr, { billable }) => aggr + billable,
+    0,
+  );
+
   const totalTransactions = GetTotalTransactions(transactions);
 
   const loadResources = useCallback(async () => {
@@ -273,10 +278,17 @@ export const CostReport: FC<Props> = ({
           ['Transactions', usd(totalTransactions)],
           ['Meals', usd(totalMeals)],
           ['Lodging', usd(totalLodging)],
+          ['Tasks Billable', usd(totalTasksBillable)],
           [
             '',
             <strong key="stronk">
-              TOTAL: {usd(totalMeals + totalLodging + totalTransactions)}
+              TOTAL:{' '}
+              {usd(
+                totalMeals +
+                  totalLodging +
+                  totalTransactions +
+                  totalTasksBillable,
+              )}
             </strong>,
           ],
         ]}
@@ -647,7 +659,7 @@ export const CostReport: FC<Props> = ({
                   task.creatorUserId,
                   task.address,
                   task.billableType,
-                  task.billable,
+                  usd(task.billable),
                   formatDate(task.hourlyStart) || '-',
                   formatDate(task.hourlyEnd) || '-',
                   task.briefDescription,
