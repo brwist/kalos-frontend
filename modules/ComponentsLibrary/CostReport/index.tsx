@@ -44,6 +44,8 @@ export const GetTotalTransactions = (transactions: Transaction.AsObject[]) => {
 };
 
 export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
+  let tripsRendered: Trip.AsObject[] = [];
+
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
 
@@ -727,6 +729,13 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
       })}
       <PrintParagraph tag="h2">Related Trips</PrintParagraph>
       {trips.map(trip => {
+        let included = false;
+        tripsRendered.forEach(tripRendered => {
+          if (tripRendered.id == trip.id) included = true;
+        });
+        if (included) return <> </>;
+
+        tripsRendered.push(trip);
         return (
           <div key={trip.id}>
             <PrintTable
