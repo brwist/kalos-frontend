@@ -599,7 +599,14 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
           let hrsWorked =
             getMinutesFromTimeString(timeFinished, timeStarted) / 60;
           return (
-            <div key={id}>
+            <div
+              key={id}
+              style={{
+                breakInside: 'avoid',
+                display: 'inline-block',
+                width: '100%',
+              }}
+            >
               <PrintTable
                 columns={[
                   {
@@ -666,7 +673,14 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
       <PrintParagraph tag="h2">Project Tasks</PrintParagraph>
       {tasks.map(task => {
         return (
-          <div key={task.id}>
+          <div
+            key={task.id}
+            style={{
+              breakInside: 'avoid',
+              display: 'inline-block',
+              width: '100%',
+            }}
+          >
             <PrintTable
               columns={[
                 {
@@ -736,7 +750,14 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
 
         tripsRendered.push(trip);
         return (
-          <div key={trip.id}>
+          <div
+            key={trip.id}
+            style={{
+              breakInside: 'avoid',
+              display: 'inline-block',
+              width: '100%',
+            }}
+          >
             <PrintTable
               columns={[
                 {
