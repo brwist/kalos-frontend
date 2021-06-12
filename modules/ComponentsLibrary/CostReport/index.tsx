@@ -23,7 +23,10 @@ import { PrintTable } from '../PrintTable';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { Task } from '@kalos-core/kalos-rpc/Task';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import {
+  PerDiem,
+  Trip,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -108,7 +111,19 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
 
     setTripsTotal(allTripsTotal);
 
-    setPerDiems(resultsList);
+    let arr: PerDiem.AsObject[] = [];
+
+    resultsList.forEach(result => {
+      let isIncluded = false;
+      arr.forEach(arrItem => {
+        if (arrItem.id == result.id) isIncluded = true;
+      });
+      if (!isIncluded) {
+        arr.push(result);
+      }
+    });
+
+    setPerDiems(arr);
   }, [serviceCallId, setPerDiems, setLodgings, setTripsTotal]);
 
   const handlePrint = useCallback(async () => {
@@ -229,6 +244,9 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
     }
   }, [loadedInit, loadInit, loaded, setLoaded, load]);
 
+  // TODO clean this up for myself because dang this is some 1 am code.
+  let collectionOfRenderedTrips: { id: number; reactCode: any }[] = [];
+
   return (
     <PrintPage
       buttonProps={{
@@ -314,6 +332,10 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
       <PrintTable
         columns={[
           {
+            title: 'ID',
+            align: 'left',
+          },
+          {
             title: 'Department',
             align: 'left',
           },
@@ -345,6 +367,7 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
         ]}
         data={transactions.map(
           ({
+            id,
             department,
             ownerName,
             amount,
@@ -354,6 +377,7 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
             vendor,
           }) => {
             return [
+              id,
               department ? (
                 <>
                   {department.classification} - {department.description}
@@ -489,6 +513,10 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
                   <PrintTable
                     columns={[
                       {
+                        title: 'ID',
+                        align: 'left',
+                      },
+                      {
                         title: 'Date',
                         align: 'left',
                       },
@@ -528,6 +556,7 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
                         perDiemId,
                       }) => {
                         return [
+                          id,
                           formatDate(dateString),
                           zipCode,
                           mealsOnly ? 'Yes' : 'No',
@@ -540,75 +569,104 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
                   />
                 </div>
                 <PrintParagraph tag="h4">Related Trips</PrintParagraph>
-                {rowsList.map(row => {
-                  return row.tripsList.map(trip => {
-                    return (
-                      <div key={trip.id}>
-                        <PrintTable
-                          columns={[
-                            {
-                              title: 'Date',
-                              align: 'left',
-                            },
-                            {
-                              title: 'Origin Address',
-                              align: 'left',
-                              widthPercentage: 10,
-                            },
-                            {
-                              title: 'Destination Address',
-                              align: 'left',
-                              widthPercentage: 10,
-                            },
-                            {
-                              title: 'Distance (Miles)',
-                              align: 'left',
-                              widthPercentage: 10,
-                            },
-                            {
-                              title: 'Notes',
-                              align: 'left',
-                              widthPercentage: 10,
-                            },
-                            {
-                              title: 'Home Travel',
-                              align: 'right',
-                              widthPercentage: 20,
-                            },
-                            {
-                              title: `Cost (${usd(
-                                IRS_SUGGESTED_MILE_FACTOR,
-                              )}/mi)`,
-                              align: 'right',
-                              widthPercentage: 20,
-                            },
-                          ]}
-                          data={[
-                            [
-                              formatDate(trip.date),
-                              trip.originAddress,
-                              trip.destinationAddress,
-                              trip.distanceInMiles,
-                              trip.notes,
-                              trip.homeTravel,
-                              `${usd(
-                                trip.distanceInMiles > 30 && trip.homeTravel
-                                  ? (trip.distanceInMiles - 30) *
-                                      IRS_SUGGESTED_MILE_FACTOR
-                                  : trip.distanceInMiles *
-                                      IRS_SUGGESTED_MILE_FACTOR,
-                              )} ${
-                                trip.distanceInMiles > 30 && trip.homeTravel
-                                  ? '(30 miles docked for home travel)'
-                                  : ''
-                              }`,
-                            ],
-                          ]}
-                        />
-                      </div>
-                    );
+                {/* {rowsList.map((row, idx) => {
+                  if (row.tripsList.length == 0 && idx == 0)
+                    return <PrintParagraph>No trips.</PrintParagraph>;
+                  row.tripsList.forEach(trip => {
+                    let included = false;
+                    for (const includedInCollection of collectionOfRenderedTrips) {
+                      console.log(
+                        `${trip.id} == ${includedInCollection.id} is ${
+                          trip.id == includedInCollection.id
+                        }`,
+                      );
+                      if (trip.id == includedInCollection.id) {
+                        included = true;
+                      }
+                    }
+
+                    if (!included) {
+                      console.log('NOT INCLUDED: ', trip.id);
+                      collectionOfRenderedTrips.push({
+                        id: trip.id,
+                        reactCode: (
+                          <div key={trip.id}>
+                            <PrintTable
+                              columns={[
+                                {
+                                  title: 'Date',
+                                  align: 'left',
+                                },
+                                {
+                                  title: 'Origin Address',
+                                  align: 'left',
+                                  widthPercentage: 10,
+                                },
+                                {
+                                  title: 'Destination Address',
+                                  align: 'left',
+                                  widthPercentage: 10,
+                                },
+                                {
+                                  title: 'Distance (Miles)',
+                                  align: 'left',
+                                  widthPercentage: 10,
+                                },
+                                {
+                                  title: 'Notes',
+                                  align: 'left',
+                                  widthPercentage: 10,
+                                },
+                                {
+                                  title: 'Home Travel',
+                                  align: 'right',
+                                  widthPercentage: 20,
+                                },
+                                {
+                                  title: `Cost (${usd(
+                                    IRS_SUGGESTED_MILE_FACTOR,
+                                  )}/mi)`,
+                                  align: 'right',
+                                  widthPercentage: 20,
+                                },
+                              ]}
+                              data={[
+                                [
+                                  formatDate(trip.date),
+                                  trip.originAddress,
+                                  trip.destinationAddress,
+                                  trip.distanceInMiles.toFixed(2),
+                                  trip.notes,
+                                  trip.homeTravel,
+                                  `${usd(
+                                    trip.distanceInMiles > 30 && trip.homeTravel
+                                      ? Number(
+                                          (
+                                            (trip.distanceInMiles - 30) *
+                                            IRS_SUGGESTED_MILE_FACTOR
+                                          ).toFixed(2),
+                                        )
+                                      : Number(
+                                          (
+                                            trip.distanceInMiles *
+                                            IRS_SUGGESTED_MILE_FACTOR
+                                          ).toFixed(2),
+                                        ),
+                                  )} ${
+                                    trip.distanceInMiles > 30 && trip.homeTravel
+                                      ? '(30 miles docked for home travel)'
+                                      : ''
+                                  }`,
+                                ],
+                              ]}
+                            />
+                          </div>
+                        ),
+                      });
+                    }
                   });
-                })}
+                  return collectionOfRenderedTrips.map(coll => coll.reactCode);
+                })} */}
               </div>
             );
           },
