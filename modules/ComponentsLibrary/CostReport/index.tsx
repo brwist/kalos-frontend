@@ -667,7 +667,6 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
       {tasks.map(task => {
         return (
           <div key={task.id}>
-            {' '}
             <PrintTable
               columns={[
                 {

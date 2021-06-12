@@ -7,6 +7,15 @@
   break-inside: avoid;
 }
 
+.PrintTable tbody {
+  display: 'table-row-group';
+}
+
+.PrintTable thead,
+.PrintTable tfoot {
+  display: 'table-header-group';
+}
+
 .PrintTable,
 .PrintTable th,
 .PrintTable td {
@@ -27,7 +36,6 @@
 .PrintTable td {
   padding: 2px;
   vertical-align: top;
-  page-break-inside: avoid;
 }
 
 .PrintTable th {
