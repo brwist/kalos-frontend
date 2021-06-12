@@ -1,7 +1,7 @@
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { MEALS_RATE } from '../../../constants';
+import { IRS_SUGGESTED_MILE_FACTOR, MEALS_RATE } from '../../../constants';
 import {
   formatDate,
   usd,
@@ -23,6 +23,7 @@ import { PrintTable } from '../PrintTable';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { Task } from '@kalos-core/kalos-rpc/Task';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -39,15 +40,13 @@ export const GetTotalTransactions = (transactions: Transaction.AsObject[]) => {
   return transactions.reduce((aggr, { amount }) => aggr + amount, 0);
 };
 
-export const CostReport: FC<Props> = ({
-  serviceCallId,
-  onClose,
-}) => {
+export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
 
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [tripsTotal, setTripsTotal] = useState<number>(0);
   const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>([]);
   const [tasks, setTasks] = useState<Task.AsObject[]>([]);
 
@@ -92,8 +91,25 @@ export const CostReport: FC<Props> = ({
         true,
       );
     setTransactions(transactions);
+
+    let allTripsTotal = 0;
+    resultsList.forEach(perDiem => {
+      perDiem.rowsList.forEach(row => {
+        row.tripsList.forEach(trip => {
+          // Subtracting 30 miles flat from trip distance in accordance
+          // with reimbursement from home rule
+          allTripsTotal +=
+            trip.distanceInMiles > 30 && trip.homeTravel
+              ? (trip.distanceInMiles - 30) * IRS_SUGGESTED_MILE_FACTOR
+              : trip.distanceInMiles * IRS_SUGGESTED_MILE_FACTOR;
+        });
+      });
+    });
+
+    setTripsTotal(allTripsTotal);
+
     setPerDiems(resultsList);
-  }, [serviceCallId, setPerDiems, setLodgings]);
+  }, [serviceCallId, setPerDiems, setLodgings, setTripsTotal]);
 
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
@@ -279,6 +295,7 @@ export const CostReport: FC<Props> = ({
           ['Meals', usd(totalMeals)],
           ['Lodging', usd(totalLodging)],
           ['Tasks Billable', usd(totalTasksBillable)],
+          ['Trips Total', usd(tripsTotal)],
           [
             '',
             <strong key="stronk">
@@ -522,6 +539,76 @@ export const CostReport: FC<Props> = ({
                     )}
                   />
                 </div>
+                <PrintParagraph tag="h4">Related Trips</PrintParagraph>
+                {rowsList.map(row => {
+                  return row.tripsList.map(trip => {
+                    return (
+                      <div key={trip.id}>
+                        <PrintTable
+                          columns={[
+                            {
+                              title: 'Date',
+                              align: 'left',
+                            },
+                            {
+                              title: 'Origin Address',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Destination Address',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Distance (Miles)',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Notes',
+                              align: 'left',
+                              widthPercentage: 10,
+                            },
+                            {
+                              title: 'Home Travel',
+                              align: 'right',
+                              widthPercentage: 20,
+                            },
+                            {
+                              title: `Cost (${usd(
+                                IRS_SUGGESTED_MILE_FACTOR,
+                              )}/mi)`,
+                              align: 'right',
+                              widthPercentage: 20,
+                            },
+                          ]}
+                          data={[
+                            [
+                              formatDate(trip.date),
+                              trip.originAddress,
+                              trip.destinationAddress,
+                              trip.distanceInMiles,
+                              trip.notes,
+                              trip.homeTravel,
+                              `${usd(
+                                trip.distanceInMiles > 30 && trip.homeTravel
+                                  ? (trip.distanceInMiles - 30) *
+                                      IRS_SUGGESTED_MILE_FACTOR
+                                  : trip.distanceInMiles *
+                                      IRS_SUGGESTED_MILE_FACTOR,
+                              )} ${
+                                trip.distanceInMiles > 30 && trip.homeTravel
+                                  ? '(30 miles docked for home travel)'
+                                  : ''
+                              }`,
+                            ],
+                          ]}
+                        />
+                      </div>
+                    );
+                  });
+                })}
               </div>
             );
           },
