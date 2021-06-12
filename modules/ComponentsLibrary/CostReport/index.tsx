@@ -88,32 +88,6 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
     const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
       serviceCallId,
     );
-    const lodgings = await PerDiemClientService.loadPerDiemsLodging(
-      resultsList,
-    ); // first # is per diem id
-    setLodgings(lodgings);
-    const transactions =
-      await TransactionClientService.loadTransactionsByEventId(
-        serviceCallId,
-        true,
-      );
-    setTransactions(transactions);
-
-    let allTripsTotal = 0;
-    resultsList.forEach(perDiem => {
-      perDiem.rowsList.forEach(row => {
-        row.tripsList.forEach(trip => {
-          // Subtracting 30 miles flat from trip distance in accordance
-          // with reimbursement from home rule
-          allTripsTotal +=
-            trip.distanceInMiles > 30 && trip.homeTravel
-              ? (trip.distanceInMiles - 30) * IRS_SUGGESTED_MILE_FACTOR
-              : trip.distanceInMiles * IRS_SUGGESTED_MILE_FACTOR;
-        });
-      });
-    });
-
-    setTripsTotal(allTripsTotal);
 
     let arr: PerDiem.AsObject[] = [];
 
@@ -135,6 +109,31 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
     );
 
     setTrips(allTrips);
+
+    const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
+    setLodgings(lodgings);
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
+    setTransactions(transactions);
+
+    let allTripsTotal = 0;
+    arr.forEach(perDiem => {
+      perDiem.rowsList.forEach(row => {
+        row.tripsList.forEach(trip => {
+          // Subtracting 30 miles flat from trip distance in accordance
+          // with reimbursement from home rule
+          allTripsTotal +=
+            trip.distanceInMiles > 30 && trip.homeTravel
+              ? (trip.distanceInMiles - 30) * IRS_SUGGESTED_MILE_FACTOR
+              : trip.distanceInMiles * IRS_SUGGESTED_MILE_FACTOR;
+        });
+      });
+    });
+
+    setTripsTotal(allTripsTotal);
 
     setPerDiems(arr);
   }, [serviceCallId, setPerDiems, setLodgings, setTripsTotal]);
