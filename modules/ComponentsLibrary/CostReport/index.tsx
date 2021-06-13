@@ -338,75 +338,79 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
         ]}
       />
       <PrintParagraph tag="h2">Transactions</PrintParagraph>
-      <PrintTable
-        columns={[
-          {
-            title: 'ID',
-            align: 'left',
-          },
-          {
-            title: 'Department',
-            align: 'left',
-          },
-          {
-            title: 'Owner',
-            align: 'left',
-            widthPercentage: 10,
-          },
-          {
-            title: 'Cost Center / Vendor',
-            align: 'left',
-            widthPercentage: 10,
-          },
-          {
-            title: 'Date',
-            align: 'left',
-            widthPercentage: 10,
-          },
-          {
-            title: 'Amount',
-            align: 'left',
-            widthPercentage: 10,
-          },
-          {
-            title: 'Notes',
-            align: 'right',
-            widthPercentage: 20,
-          },
-        ]}
-        data={transactions.map(
-          ({
-            id,
-            department,
-            ownerName,
-            amount,
-            notes,
-            costCenter,
-            timestamp,
-            vendor,
-          }) => {
-            return [
-              id,
-              department ? (
-                <>
-                  {department.classification} - {department.description}
-                </>
-              ) : (
-                '-'
-              ),
-              ownerName,
-              <>
-                {`${costCenter?.description}` + ' - '}
-                <br />
-                {vendor}
-              </>,
-              formatDate(timestamp),
-              usd(amount),
-              notes,
-            ];
-          },
-        )}
-      />
+      {transactions.map(txn => {
+        return (
+          <div
+            key={txn.id}
+            style={{
+              breakInside: 'avoid',
+              display: 'inline-block',
+              width: '100%',
+            }}
+          >
+            <PrintTable
+              columns={[
+                {
+                  title: 'ID',
+                  align: 'left',
+                },
+                {
+                  title: 'Department',
+                  align: 'left',
+                },
+                {
+                  title: 'Owner',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Cost Center / Vendor',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Date',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Amount',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Notes',
+                  align: 'right',
+                  widthPercentage: 20,
+                },
+              ]}
+              data={[
+                [
+                  txn.id,
+                  txn.department ? (
+                    <>
+                      {txn.department.classification} -{' '}
+                      {txn.department.description}
+                    </>
+                  ) : (
+                    '-'
+                  ),
+                  txn.ownerName,
+                  <>
+                    {`${txn.costCenter?.description}` + ' - '}
+                    <br />
+                    {txn.vendor}
+                  </>,
+                  formatDate(txn.timestamp),
+                  usd(txn.amount),
+                  txn.notes,
+                ],
+              ]}
+            />
+          </div>
+        );
+      })}
+
       <PrintParagraph tag="h2">Per Diem</PrintParagraph>
       {perDiems
         .sort((a, b) => (a.dateSubmitted > b.dateSubmitted ? -1 : 1))
