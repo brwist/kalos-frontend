@@ -37,14 +37,14 @@ export type Props = {
 type State = {
   isManager: boolean;
   isOpen: boolean;
-  user: User;
+  user: User.AsObject;
   reportBugFormShown: boolean;
 };
 
 type Action =
   | { type: 'toggleMenu' }
   | { type: 'closeMenu' }
-  | { type: 'fetchedUser'; user: User; isManager: boolean }
+  | { type: 'fetchedUser'; user: User.AsObject; isManager: boolean }
   | { type: 'showReportBugForm' }
   | { type: 'hideReportBugForm' };
 
@@ -85,7 +85,7 @@ const SideMenu = ({
   imgURL = 'https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png',
 }: Props) => {
   const [state, dispatch] = useReducer(reducer, {
-    user: new User(),
+    user: new User().toObject(),
     isManager: false,
     isOpen: false,
     reportBugFormShown: false,
@@ -111,15 +111,11 @@ const SideMenu = ({
       await userClient.GetToken('test', 'test');
       const userResult = await UserClientService.loadUserById(userID);
       //customerCheck(userResult);
-      if (userResult.getIsSu() === 1) {
+      if (userResult.isSu === 1) {
         dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
       } else {
         try {
-          if (
-            userResult
-              .getPermissionGroupsList()
-              .find(p => p.getName() === 'Manager')
-          ) {
+          if (userResult.permissionGroupsList.find(p => p.name === 'Manager')) {
             dispatch({
               type: 'fetchedUser',
               user: userResult,
@@ -139,7 +135,7 @@ const SideMenu = ({
     })();
   }, [userID]);
 
-  if (!user?.getId()) {
+  if (!user?.id) {
     return null;
   }
 
@@ -169,7 +165,7 @@ const SideMenu = ({
         style={{ width: 250, padding: 10 }}
       >
         <List style={{ width: 250 }}>
-          {user.getIsEmployee() === 1 &&
+          {user.isEmployee === 1 &&
             employeeItems({
               toggleUploadReceipt: toggleOpenUploadReceipt,
             }).map(item => (
@@ -179,7 +175,7 @@ const SideMenu = ({
                 userId={userID}
               />
             ))}
-          {user.getIsAdmin() === 1 && (
+          {user.isAdmin === 1 && (
             <>
               {adminItems.map(item => (
                 <KalosMenuItem
@@ -201,7 +197,7 @@ const SideMenu = ({
               ))}
             </>
           )}
-          {user.getIsEmployee() === 0 &&
+          {user.isEmployee === 0 &&
             customerItems(toggleMenu).map(item => (
               <KalosMenuItem
                 key={`customer_${item?.title || 'divider'}`}
@@ -209,7 +205,7 @@ const SideMenu = ({
                 userId={userID}
               />
             ))}
-          {user.getIsEmployee() === 1 &&
+          {user.isEmployee === 1 &&
             commonItems.map(item => {
               if (item.title === 'Report a Bug') {
                 return (
