@@ -1795,7 +1795,10 @@ export type BugReportImage = {
   url?: string;
 };
 
-async function newBugReportImage(user: User, images: BugReportImage[]) {
+async function newBugReportImage(
+  user: User.AsObject,
+  images: BugReportImage[],
+) {
   try {
     const timestamp = new Date().getTime();
     const client = new ApiKeyClient(ENDPOINT);
@@ -1805,8 +1808,8 @@ async function newBugReportImage(user: User, images: BugReportImage[]) {
     const common = {
       message: 'bug report image',
       committer: {
-        name: `${user.getFirstname()} ${user.getLastname()}`,
-        email: user.getEmail(),
+        name: `${user.firstname} ${user.lastname}`,
+        email: user.email,
       },
     };
     const authString = `token ${key.apiKey}`;
