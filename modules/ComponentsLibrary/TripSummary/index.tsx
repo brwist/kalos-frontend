@@ -524,6 +524,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               perDiemTripMilesToUsd(Number(currentTrip.getDistanceInMiles())),
           },
           {
+            value: currentTrip.getDepartmentName(),
+          },
+          {
             value: currentTrip.getApproved() ? 'Yes' : 'No',
           },
           {
@@ -705,11 +708,12 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Name' },
           { name: 'Day of' },
           { name: 'Miles / Cost' },
+          { name: 'Department Name' },
           {
             name: 'Approved?',
           },
           {
-            name: 'Department Name',
+            name: 'Home Travel',
           },
           {
             name: 'Payroll Processed?',
@@ -743,7 +747,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             name: 'Approved?',
           },
           {
-            name: 'Department Name',
+            name: 'Home Travel',
           },
           {
             name: 'Payroll Processed?',
