@@ -250,10 +250,12 @@ export const Payroll: FC<Props> = ({ userID }) => {
               schema={SCHEMA}
               className="PayrollFilter"
             />
-            <Button
-              label={'Open Job Report for Hours'}
-              onClick={() => setOpenReport(true)}
-            ></Button>
+            {role === 'Manager' && (
+              <Button
+                label={'Open Job Report for Hours'}
+                onClick={() => setOpenReport(true)}
+              ></Button>
+            )}
             <Tabs
               tabs={[
                 ...(isTimesheet

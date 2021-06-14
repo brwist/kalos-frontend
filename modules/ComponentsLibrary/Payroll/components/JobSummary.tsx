@@ -1,4 +1,11 @@
-import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  FC,
+  useState,
+  useEffect,
+  useReducer,
+  useCallback,
+  useMemo,
+} from 'react';
 import {
   TimesheetLine,
   TimesheetLineClient,
@@ -32,13 +39,10 @@ import {
   timestamp,
 } from '../../../../helpers';
 import { Loader } from '../../../Loader/main';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Confirm } from '../../Confirm';
 export type FilterData = {
   jobNumber: number;
   week: string;
 };
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 interface Props {
   employees: UserType[];
   departments: TimesheetDepartmentType[];
@@ -55,16 +59,31 @@ export type Job = {
   jobId: string;
   actions: Action[];
 };
+type State = {
+  downloadButton: boolean;
+};
 
+type ActionType = { type: 'setDownloadButton'; value: boolean };
+
+const reducer = (state: State, action: ActionType) => {
+  switch (action.type) {
+    case 'setDownloadButton':
+      return {
+        ...state,
+        downloadButton: action.value,
+      };
+    default:
+      return state;
+  }
+};
 export const JobSummary: FC<Props> = ({ employees, departments, onClose }) => {
+  const [state, dispatch] = useReducer(reducer, {
+    downloadButton: true,
+  });
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [today, setToday] = useState<Date>(new Date());
-  const [startDay, setStartDay] = useState<Date>(
-    startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
-  );
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -79,7 +98,6 @@ export const JobSummary: FC<Props> = ({ employees, departments, onClose }) => {
   const handleSelectNewWeek = useCallback(async dateString => {
     console.log(dateString);
   }, []);
-  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
   const SCHEMA: Schema<FilterData> = [
     [
@@ -98,6 +116,7 @@ export const JobSummary: FC<Props> = ({ employees, departments, onClose }) => {
   ];
   const getTimesheetTotals = useCallback(async () => {
     if (filter.week != OPTION_ALL && filter.jobNumber != 0) {
+      dispatch({ type: 'setDownloadButton', value: false });
       const timesheetReq = new TimesheetLine();
       //Add reference number
       timesheetReq.setIsActive(1);
@@ -169,6 +188,7 @@ export const JobSummary: FC<Props> = ({ employees, departments, onClose }) => {
       setLoading(false);
       return completeEmployeeListOfHours;
     } else {
+      dispatch({ type: 'setDownloadButton', value: true });
       setLoaded(true);
       setLoading(false);
       setTimesheets([]);
@@ -253,7 +273,11 @@ export const JobSummary: FC<Props> = ({ employees, departments, onClose }) => {
         </div>
       )}
       <Button label={'Close'} onClick={() => onClose()}></Button>
-      <Button label={'Download'} onClick={() => downloadReport()}></Button>
+      <Button
+        label={'Download'}
+        disabled={state.downloadButton}
+        onClick={() => downloadReport()}
+      ></Button>
     </SectionBar>
   ) : (
     <Loader />
