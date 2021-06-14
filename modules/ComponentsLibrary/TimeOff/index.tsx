@@ -124,6 +124,7 @@ export const TimeOff: FC<Props> = ({
       userId || loggedUserId,
     );
     setPto(pto);
+    console.log(pto);
     const ptoActualHours = await getTimeoffTotals(user.hireDate);
     setPtoActualHours(ptoActualHours);
 
@@ -450,7 +451,7 @@ export const TimeOff: FC<Props> = ({
         subtitle={
           pto && user ? (
             <span>
-              PTO Used: <span style={css}>{pto}</span> of{' '}
+              PTO Used: <span style={css}>{pto.hoursAvailable}</span> of{' '}
               <span style={css}>{user.annualHoursPto}</span>
             </span>
           ) : null
