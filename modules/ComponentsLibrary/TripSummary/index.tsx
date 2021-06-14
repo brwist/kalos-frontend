@@ -743,6 +743,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           { name: 'Name' },
           { name: 'Day Of' },
           { name: 'Miles / Cost' },
+          { name: 'Department Name' },
           {
             name: 'Approved?',
           },
