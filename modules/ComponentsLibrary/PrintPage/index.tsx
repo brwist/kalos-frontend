@@ -8,6 +8,7 @@ import { PrintHeader, Props as HeaderProps } from '../PrintHeader';
 import { PrintFooter, Props as FooterProps } from '../PrintFooter';
 import { Button, Props as ButtonProps } from '../Button';
 import { setInlineStyles, PDFClientService } from '../../../helpers';
+import { Alert } from '../Alert';
 import './styles.css';
 
 export type Status = 'idle' | 'loading' | 'loaded';
@@ -43,13 +44,22 @@ export const PrintPage: FC<Props> = ({
   const printRef = useRef(null);
   const [fileReturned, setFileReturned] = useState<boolean>(false);
   const [downloading, setDownloading] = useState<boolean>(false);
+  const [alertOpen, setAlertOpen] = useState<boolean>();
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
     copyStyles: true,
     pageStyle: '',
   });
+  const handleSetAlertOpen = useCallback(
+    (isOpen: boolean) => setAlertOpen(isOpen),
+    [setAlertOpen],
+  );
   const handleDownload = useCallback(
     (open: boolean) => async () => {
+      if (buttonProps.loading) {
+        handleSetAlertOpen(true);
+        return;
+      }
       if (printRef.current) {
         setDownloading(true);
         // @ts-ignore
@@ -78,7 +88,7 @@ export const PrintPage: FC<Props> = ({
         return url;
       }
     },
-    [printRef, setDownloading, downloadPdfFilename],
+    [buttonProps.loading, handleSetAlertOpen, downloadPdfFilename],
   );
   const handleFileCreated = useCallback(async () => {
     const url = await handleDownload(false)();
@@ -125,6 +135,15 @@ export const PrintPage: FC<Props> = ({
   ]);
   return (
     <>
+      {alertOpen && (
+        <Alert
+          title="Notice"
+          open={true}
+          onClose={() => handleSetAlertOpen(false)}
+        >
+          The file is not ready to view yet.{' '}
+        </Alert>
+      )}
       <span className={className}>
         {downloadPdfFilename &&
           (icons ? (
@@ -163,7 +182,11 @@ export const PrintPage: FC<Props> = ({
           ))}
         {onFileCreated ? null : icons ? (
           <IconButton
-            onClick={onPrint || handlePrint!}
+            onClick={
+              buttonProps.loading
+                ? () => handleSetAlertOpen(true)
+                : onPrint || handlePrint!
+            }
             size="small"
             disabled={status === 'loading' || buttonProps.disabled}
           >
@@ -172,7 +195,11 @@ export const PrintPage: FC<Props> = ({
         ) : (
           <Button
             label="Print"
-            onClick={onPrint || handlePrint!}
+            onClick={
+              buttonProps.loading
+                ? () => handleSetAlertOpen(true)
+                : onPrint || handlePrint!
+            }
             {...buttonProps}
             disabled={status === 'loading' || buttonProps.disabled}
           >
