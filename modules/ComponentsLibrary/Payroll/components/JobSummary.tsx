@@ -28,6 +28,8 @@ import {
   UserType,
   TimesheetDepartmentType,
   UserClientService,
+  downloadCSV,
+  timestamp,
 } from '../../../../helpers';
 import { Loader } from '../../../Loader/main';
 import { User } from '@kalos-core/kalos-rpc/User';
@@ -173,7 +175,23 @@ export const JobSummary: FC<Props> = ({ employees, departments, onClose }) => {
       return [];
     }
   }, [filter.jobNumber, filter.week]);
+  const downloadReport = () => {
+    if (timesheetsJobs) {
+      let fullString = 'Employee,Hours,Job Number' + `\r\n`;
+      for (let i = 0; i < timesheetsJobs.length; i++) {
+        let tempString =
+          timesheetsJobs[i].actions[0].userName +
+          ',' +
+          timesheetsJobs[i].actions[0].time +
+          ',' +
+          timesheetsJobs[i].jobId +
+          `\r\n`;
+        fullString = fullString + tempString;
+      }
 
+      downloadCSV(timestamp(), fullString);
+    }
+  };
   const load = useCallback(async () => {
     setTimesheetsJobs(await getTimesheetTotals());
   }, [getTimesheetTotals]);
@@ -235,6 +253,7 @@ export const JobSummary: FC<Props> = ({ employees, departments, onClose }) => {
         </div>
       )}
       <Button label={'Close'} onClick={() => onClose()}></Button>
+      <Button label={'Download'} onClick={() => downloadReport()}></Button>
     </SectionBar>
   ) : (
     <Loader />
