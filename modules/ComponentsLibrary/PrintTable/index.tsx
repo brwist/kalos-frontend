@@ -59,14 +59,14 @@ export const PrintTable: FC<Props> = ({
                   : {}),
               }}
             >
-              {typeof column === 'string' ? column : column.title} 
+              {typeof column === 'string' ? column : column.title}
             </th>
           ))}
         </tr>
       </thead>
-      <tbody style={{ display: 'table-row-group' }}>
+      <tbody className={clsx('PrintTable')}>
         {data.map((cells, idxRow) => (
-          <tr key={idxRow} style={{ pageBreakInside: 'avoid' }}>
+          <tr key={idxRow}>
             {cells.map((cell, idxColumn) => (
               <td
                 key={idxColumn}

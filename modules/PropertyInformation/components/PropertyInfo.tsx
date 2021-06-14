@@ -18,8 +18,6 @@ import { ServiceCalls } from './ServiceCalls';
 import {
   makeFakeRows,
   PropertyClientService,
-  UserType,
-  PropertyType,
   UserClientService,
 } from '../../../helpers';
 import './propertyInfo.less';
@@ -51,29 +49,25 @@ interface Props {
 
 export const PropertyInfo: FC<Props> = props => {
   const { userID, propertyId, viewedAsCustomer = false, onClose } = props;
-  const [entry, setEntry] = useState<PropertyType>(new Property().toObject());
-  const [user, setUser] = useState<User.AsObject>();
+  const [entry, setEntry] = useState<Property>(new Property());
+  const [user, setUser] = useState<User>();
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
-  const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<
-    (EventTarget & HTMLElement) | null
-  >(null);
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
+  const [editMenuAnchorEl, setEditMenuAnchorEl] =
+    useState<(EventTarget & HTMLElement) | null>(null);
   const [linksViewing, setLinksViewing] = useState<boolean>(false);
   const [changingOwner, setChangingOwner] = useState<boolean>(false);
-  const [pendingChangeOwner, setPendingChangeOwner] = useState<UserType>();
+  const [pendingChangeOwner, setPendingChangeOwner] = useState<User>();
   const [merging, setMerging] = useState<boolean>(false);
-  const [pendingMerge, setPendingMerge] = useState<
-    PropertyType & { __user: UserType }
-  >();
+  const [pendingMerge, setPendingMerge] =
+    useState<Property & { __user: User }>();
 
   const handleSetEditing = useCallback(
     (editing: boolean) => () => setEditing(editing),
@@ -524,7 +518,8 @@ export const PropertyInfo: FC<Props> = props => {
         >
           Are you sure you want to move this property to{' '}
           <strong>
-            {pendingChangeOwner.firstname} {pendingChangeOwner.lastname}
+            {pendingChangeOwner.getFirstname()}{' '}
+            {pendingChangeOwner.getLastname()}
           </strong>
           ?
         </Confirm>

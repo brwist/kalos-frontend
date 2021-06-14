@@ -69,6 +69,7 @@ export const PayrollSummary: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
+
     const getTimesheets = createTimesheetFetchFunction(filter);
     const { resultsList, totalCount } = (await getTimesheets()).toObject();
     const compare = (a: TimesheetLine.AsObject, b: TimesheetLine.AsObject) => {
