@@ -718,6 +718,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                 label: 'Delete All Trips',
                 compact: this.props.compact ? true : false,
                 variant: 'outlined',
+                disabled: true,
                 size: 'xsmall',
                 onClick: () => {
                   this.setStateToNew({
