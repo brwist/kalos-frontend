@@ -1,11 +1,21 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
-import { ENROUTE, CHECKIN, CHECKOUT } from '@kalos-core/kalos-rpc/TaskEvent';
+import {
+  ENROUTE,
+  CHECKIN,
+  CHECKOUT,
+  TaskEvent,
+} from '@kalos-core/kalos-rpc/TaskEvent';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
 import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
 import LowIcon from '@material-ui/icons/Details';
-import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
+import {
+  ProjectTask,
+  Task,
+  TaskPriority,
+  TaskStatus,
+} from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -17,16 +27,10 @@ import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
 import { Tabs } from '../Tabs';
 import {
-  EventType,
-  ProjectTaskType,
   formatDate,
-  TaskStatusType,
-  TaskPriorityType,
   TaskClientService,
-  TimesheetDepartmentType,
   TaskEventType,
   timestamp,
-  UserType,
   EventClientService,
   UserClientService,
   TaskEventClientService,
@@ -42,6 +46,9 @@ import { Loader } from '../../Loader/main';
 import { CheckInProjectTask } from '../CheckInProjectTask';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export interface Props {
   serviceCallId: number;
@@ -55,7 +62,7 @@ export type SearchType = {
   priorityId: number;
 };
 
-export type ExtendedProjectTaskType = ProjectTaskType & {
+export type ExtendedProjectTaskType = ProjectTask & {
   startTime: string;
   endTime: string;
 };
@@ -69,30 +76,30 @@ export const PROJECT_TASK_PRIORITY_ICONS: {
   4: HighestIcon,
 };
 
-export const SCHEMA_PROJECT: Schema<EventType> = [
+export const SCHEMA_PROJECT: Schema<Event> = [
   [
     {
-      name: 'dateStarted',
+      name: 'getDateStarted',
       label: 'Start Date',
       type: 'date',
     },
 
     {
-      name: 'dateEnded',
+      name: 'getDateEnded',
       label: 'End Date',
       type: 'date',
     },
   ],
   [
     {
-      name: 'departmentId',
+      name: 'getDepartmentId',
       label: 'Department',
       type: 'department',
     },
   ],
   [
     {
-      name: 'description',
+      name: 'getDescription',
       label: 'Description',
       type: 'text',
       multiline: true,
@@ -110,24 +117,24 @@ export const EditProject: FC<Props> = ({
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
+  const [loggedUser, setLoggedUser] = useState<User>();
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [deletingEvent, setDeletingEvent] = useState<boolean>(false);
-  const [pendingDeleteEvent, setPendingDeleteEvent] = useState<EventType>();
+  const [pendingDeleteEvent, setPendingDeleteEvent] = useState<Event>();
   const [pendingDeleteTask, setPendingDeleteTask] =
     useState<ExtendedProjectTaskType>();
-  const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
+  const [tasks, setTasks] = useState<ProjectTask[]>([]);
 
-  const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
+  const [taskEvents, setTaskEvents] = useState<TaskEvent[]>([]);
   const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
   const [pendingCheckout, setPendingCheckout] = useState<boolean>(false);
   const [pendingCheckoutChange, setPendingCheckoutChange] =
     useState<boolean>(false);
   const [pendingCheckoutDelete, setPendingCheckoutDelete] =
     useState<boolean>(false);
-  const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
-  const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [statuses, setStatuses] = useState<TaskStatus[]>([]);
+  const [priorities, setPriorities] = useState<TaskPriority[]>([]);
+  const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [errorProject, setErrorProject] = useState<string>('');
   const [errorTask, setErrorTask] = useState<string>('');
 
@@ -136,8 +143,8 @@ export const EditProject: FC<Props> = ({
     statusId: 0,
     priorityId: 0,
   });
-  const [event, setEvent] = useState<EventType>();
-  const [projects, setProjects] = useState<EventType[]>([]);
+  const [event, setEvent] = useState<Event>();
+  const [projects, setProjects] = useState<Event[]>([]);
   const [editingProject, setEditingProject] = useState<boolean>(false);
 
   const loadEvent = useCallback(async () => {
@@ -246,7 +253,6 @@ export const EditProject: FC<Props> = ({
     setDepartments,
     setLoadedInit,
     loggedUserId,
-    serviceCallId,
   ]);
 
   const load = useCallback(async () => {
@@ -286,11 +292,11 @@ export const EditProject: FC<Props> = ({
     (editingTask?: ExtendedProjectTaskType) => async () => {
       setErrorTask('');
       setEditingTask(editingTask);
-      if (editingTask && editingTask.id) {
-        await loadTaskEvents(editingTask.id);
+      if (editingTask && editingTask.getId()) {
+        await loadTaskEvents(editingTask.getId());
       }
     },
-    [setEditingTask, setTaskEventsLoaded],
+    [setEditingTask, loadTaskEvents],
   );
 
   const handleUploadLog = useCallback(async (req: ActivityLog) => {
@@ -303,31 +309,34 @@ export const EditProject: FC<Props> = ({
     }
   }, []);
 
-  const handleDeleteEvent = useCallback(async (eventId: number) => {
-    setDeletingEvent(true);
-    try {
-      await EventClientService.deleteEventById(eventId);
-      setDeletingEvent(false);
+  const handleDeleteEvent = useCallback(
+    async (eventId: number) => {
+      setDeletingEvent(true);
+      try {
+        await EventClientService.deleteEventById(eventId);
+        setDeletingEvent(false);
 
-      let req = new ActivityLog();
-      req.setActivityName(`Deleted event: ${eventId}`);
-      req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-      req.setUserId(loggedUserId);
-      req.setEventId(eventId);
-      handleUploadLog(req);
-    } catch (err) {
-      console.error(
-        `An error occurred while attempting to delete an event by ID: ${err}`,
-      );
-    }
+        let req = new ActivityLog();
+        req.setActivityName(`Deleted event: ${eventId}`);
+        req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        req.setUserId(loggedUserId);
+        req.setEventId(eventId);
+        handleUploadLog(req);
+      } catch (err) {
+        console.error(
+          `An error occurred while attempting to delete an event by ID: ${err}`,
+        );
+      }
 
-    setPendingDeleteEvent(undefined);
-    if (onClose) onClose();
-  }, []);
+      setPendingDeleteEvent(undefined);
+      if (onClose) onClose();
+    },
+    [handleUploadLog, loggedUserId, onClose],
+  );
 
   // The function used to actually delete projects (projects are of event type)
   const handleSetPendingDeleteEvent = useCallback(
-    (pendingDelete?: EventType) => () => {
+    (pendingDelete?: Event) => () => {
       setPendingDeleteEvent(pendingDelete);
     },
     [setPendingDeleteEvent],
@@ -344,51 +353,36 @@ export const EditProject: FC<Props> = ({
     setPendingCheckoutChange(true);
     const isEnroute =
       taskEvents.length === 0 ||
-      (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT);
+      (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT);
     const isCheckIn =
-      taskEvents.length > 0 && taskEvents[0].actionTaken === ENROUTE;
+      taskEvents.length > 0 && taskEvents[0].getActionTaken() === ENROUTE;
     const timeStarted = timestamp();
+    const req = new TaskEvent();
+    req.setTaskId(editingTask.getId());
+    req.setTechnicianUserId(loggedUserId);
+    req.setTimeStarted(timeStarted);
+    req.setStatusId(1);
     if (isEnroute) {
-      await TaskEventClientService.upsertTaskEvent({
-        taskId: editingTask.id,
-        technicianUserId: loggedUserId,
-        timeStarted,
-        statusId: 1,
-        actionTaken: ENROUTE,
-      });
+      req.setActionTaken(ENROUTE);
+      await TaskEventClientService.upsertTaskEvent(req);
     } else if (isCheckIn) {
-      await TaskEventClientService.upsertTaskEvent({
-        taskId: editingTask.id,
-        technicianUserId: loggedUserId,
-        timeStarted,
-        statusId: 1,
-        actionTaken: CHECKIN,
-      });
+      req.setActionTaken(CHECKIN);
+      await TaskEventClientService.upsertTaskEvent(req);
     } else {
-      await TaskEventClientService.upsertTaskEvent({
-        taskId: editingTask.id,
-        technicianUserId: loggedUserId,
-        timeStarted,
-        timeFinished: timeStarted,
-        statusId: 1,
-        actionTaken: CHECKOUT,
-      });
+      req.setActionTaken(CHECKOUT);
+      await TaskEventClientService.upsertTaskEvent(req);
     }
     if (isEnroute || isCheckIn) {
-      await TaskClientService.upsertEventTask({
-        id: editingTask.id,
-        externalCode: 'user',
-        externalId: loggedUserId,
-      });
+      const pt = new ProjectTask();
+      pt.setId(editingTask.getId());
+      pt.setExternalCode('user');
+      pt.setExternalId(loggedUserId);
+      await TaskClientService.upsertEventTask(pt);
       setEditingTask(undefined);
-      setEditingTask({
-        ...editingTask,
-        externalCode: 'user',
-        externalId: loggedUserId,
-      });
+      setEditingTask(pt);
       setLoaded(false);
     }
-    await loadTaskEvents(editingTask.id);
+    await loadTaskEvents(editingTask.getId());
     setPendingCheckoutChange(false);
   }, [
     editingTask,
@@ -405,14 +399,14 @@ export const EditProject: FC<Props> = ({
     setPendingCheckoutDelete(false);
     setPendingCheckoutChange(true);
     try {
-      await TaskEventClientService.deleteTaskEvent(taskEvents[0].id);
+      await TaskEventClientService.deleteTaskEvent(taskEvents[0].getId());
     } catch (err) {
       console.error(
         `An error occurred while trying to delete a task event: ${err}`,
       );
     }
     try {
-      await loadTaskEvents(editingTask.id);
+      await loadTaskEvents(editingTask.getId());
     } catch (err) {
       console.log({ err });
       if (!err.message.includes('failed to scan to struct')) {
@@ -437,15 +431,16 @@ export const EditProject: FC<Props> = ({
     [setPendingCheckoutDelete],
   );
 
+  //TODO change to permission groups check
   const isAnyManager = useMemo(
-    () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
+    () => departments.map(dpt => dpt.getManagerId()).includes(loggedUserId),
     [departments, loggedUserId],
   );
   const isAssignedToAnyTask = useMemo(
     () =>
       tasks.some(
-        ({ externalCode, externalId }) =>
-          externalCode === 'user' && externalId === loggedUserId,
+        t =>
+          t.getExternalCode() === 'user' && t.getExternalId() === loggedUserId,
       ),
     [tasks, loggedUserId],
   );
@@ -453,15 +448,15 @@ export const EditProject: FC<Props> = ({
   const isOwner = useMemo(
     () =>
       editingTask &&
-      (editingTask.creatorUserId === loggedUserId || !editingTask.id),
+      (editingTask.getCreatorUserId() === loggedUserId || !editingTask.getId()),
     [editingTask, loggedUserId],
   );
   const statusOptions = useMemo(
     () =>
-      statuses.map(({ id, description }) => ({
-        value: id,
-        label: description,
-        color: PROJECT_TASK_STATUS_COLORS[id],
+      statuses.map(ts => ({
+        value: ts.getId(),
+        label: ts.getDescription(),
+        color: PROJECT_TASK_STATUS_COLORS[ts.getId()],
       })),
     [statuses],
   );
@@ -471,10 +466,10 @@ export const EditProject: FC<Props> = ({
   );
   const priorityOptions = useMemo(
     () =>
-      priorities.map(({ id, description }) => ({
-        value: id,
-        label: description,
-        icon: PROJECT_TASK_PRIORITY_ICONS[id],
+      priorities.map(tp => ({
+        value: tp.getId(),
+        label: tp.getDescription(),
+        icon: PROJECT_TASK_PRIORITY_ICONS[tp.getId()],
       })),
     [priorities],
   );

@@ -10,6 +10,7 @@ import {
   FileClientService,
 } from '../../../helpers';
 import './styles.less';
+import { File } from '@kalos-core/kalos-rpc/File';
 
 interface Props {
   loggedUserId: number;
@@ -74,12 +75,12 @@ export const UploadPhoto: FC<Props> = ({
       );
       setSaving(false);
       if (status === 'ok') {
-        await FileClientService.upsertFile({
-          bucket,
-          name,
-          mimeType: getMimeType(data.file),
-          ownerId: loggedUserId,
-        });
+        const fReq = new File();
+        fReq.setBucket(bucket);
+        fReq.setName(name);
+        fReq.setMimeType(data.file);
+        fReq.setOwnerId(loggedUserId);
+        await FileClientService.upsertFile(fReq);
         setSaved(true);
         setFormKey(formKey + 1);
       } else {

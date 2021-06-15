@@ -41,22 +41,22 @@ import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
 
-export const SCHEMA_TRIP_SEARCH: Schema<Trip.AsObject> = [
+export const SCHEMA_TRIP_SEARCH: Schema<Trip> = [
   [
     {
       label: 'ID',
       type: 'text',
-      name: 'id',
+      name: 'getId',
     },
     {
       label: 'Origin',
       type: 'text',
-      name: 'originAddress',
+      name: 'getOriginAddress',
     },
     {
       label: 'Destination',
       type: 'text',
-      name: 'destinationAddress',
+      name: 'getDestinationAddress',
     },
   ],
 ];
@@ -257,10 +257,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
     req.setId(id);
     const dept = await TimesheetDepartmentClientService.Get(req);
 
-    this.setState({ currentTripDepartment: dept });
+    this.setState({ currentTripDepartment: dept.toObject() });
   };
 
-  setDepartment = (value: TimesheetDepartment.AsObject | null) => {
+  setDepartment = (value: TimesheetDepartment | null) => {
     this.setState({ currentTripDepartment: value });
   };
 
@@ -697,59 +697,61 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ tripToView: trip });
   };
   getColumns = () => {
-    return (this.props.canDeleteTrips
-      ? [
-          { name: 'Origin' },
-          { name: 'Destination' },
-          { name: 'Name' },
-          { name: 'Day of' },
-          { name: 'Miles / Cost' },
-          {
-            name: 'Approved?',
-          },
-          {
-            name: 'Department Name',
-          },
-          {
-            name: 'Payroll Processed?',
-            actions: [
-              {
-                label: 'Delete All Trips',
-                compact: this.props.compact ? true : false,
-                variant: 'outlined',
-                size: 'xsmall',
-                onClick: () => {
-                  this.setStateToNew({
-                    pendingDeleteAllTrips: true,
-                  });
+    return (
+      this.props.canDeleteTrips
+        ? [
+            { name: 'Origin' },
+            { name: 'Destination' },
+            { name: 'Name' },
+            { name: 'Day of' },
+            { name: 'Miles / Cost' },
+            {
+              name: 'Approved?',
+            },
+            {
+              name: 'Department Name',
+            },
+            {
+              name: 'Payroll Processed?',
+              actions: [
+                {
+                  label: 'Delete All Trips',
+                  compact: this.props.compact ? true : false,
+                  variant: 'outlined',
+                  size: 'xsmall',
+                  onClick: () => {
+                    this.setStateToNew({
+                      pendingDeleteAllTrips: true,
+                    });
+                  },
+                  burgeronly: 1,
                 },
-                burgeronly: 1,
-              },
-            ],
-          },
-          {
-            name: '',
-          },
-        ]
-      : [
-          { name: 'Origin' },
-          { name: 'Destination' },
-          { name: 'Name' },
-          { name: 'Day Of' },
-          { name: 'Miles / Cost' },
-          {
-            name: 'Approved?',
-          },
-          {
-            name: 'Department Name',
-          },
-          {
-            name: 'Payroll Processed?',
-          },
-          {
-            name: '',
-          },
-        ]) as Columns;
+              ],
+            },
+            {
+              name: '',
+            },
+          ]
+        : [
+            { name: 'Origin' },
+            { name: 'Destination' },
+            { name: 'Name' },
+            { name: 'Day Of' },
+            { name: 'Miles / Cost' },
+            {
+              name: 'Approved?',
+            },
+            {
+              name: 'Department Name',
+            },
+            {
+              name: 'Payroll Processed?',
+            },
+            {
+              name: '',
+            },
+          ]
+    ) as Columns;
   };
   setFilter = async (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
@@ -809,9 +811,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
     if (user) {
       try {
-        department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          user.managedBy,
-        );
+        department =
+          await TimesheetDepartmentClientService.getDepartmentByManagerID(
+            user.managedBy,
+          );
       } catch (err) {
         console.error('Error getting timesheet department: ', err);
       }
