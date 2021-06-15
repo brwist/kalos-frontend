@@ -133,11 +133,9 @@ export const PropertyInfo: FC<Props> = props => {
     req.setId(propertyId);
     req.setIsActive(1);
     try {
-      const { resultsList, totalCount } = (
-        await PropertyClientService.BatchGet(req)
-      ).toObject();
-      if (totalCount === 1) {
-        const entry = resultsList[0];
+      const results = await PropertyClientService.BatchGet(req);
+      if (results.getTotalCount() === 1) {
+        const entry = results.getResultsList()[0];
         setEntry(entry);
         setLoading(false);
         return entry;
