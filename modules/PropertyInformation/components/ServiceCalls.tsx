@@ -112,10 +112,9 @@ export class ServiceCalls extends PureComponent<Props, State> {
     }
     try {
       const response = await this.EventClient.BatchGet(entry);
-      const { resultsList, totalCount: count } = response.toObject();
       this.setState({
-        entries: resultsList.sort(this.sort), // TODO has to be fixed in RPC
-        count,
+        entries: response.getResultsList().sort(this.sort),
+        count: response.getTotalCount(),
         loading: false,
       });
     } catch (e) {
