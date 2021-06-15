@@ -8,7 +8,7 @@ import MuiToolbar from '@material-ui/core/Toolbar';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 
 import { WeekPicker } from '../../WeekPicker';
-import { TextField } from '../../CustomControls';
+import { DatePicker, TextField } from '../../CustomControls';
 import { MenuItem } from '@material-ui/core';
 
 type Props = {
@@ -29,6 +29,8 @@ const TimeSelector: FC<Props> = ({
     [setViewBy],
   );
 
+  const getCalendarView = () => (viewBy === 'month' ? 'month' : 'date');
+
   return (
     <MuiToolbar className="TimesheetToolbarBar">
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -46,15 +48,28 @@ const TimeSelector: FC<Props> = ({
           <MenuItem value="week">Week</MenuItem>
           <MenuItem value="month">Month</MenuItem>
         </TextField>
-        <WeekPicker
-          white
-          label="Set a Period"
-          inputVariant="outlined"
-          size="small"
-          value={selectedDate}
-          onChange={handleDateChange}
-          weekStartsOn={6}
-        />
+        {viewBy === 'week' ? (
+          <WeekPicker
+            white
+            label="Set a Period"
+            value={selectedDate}
+            inputVariant="outlined"
+            size="small"
+            onChange={handleDateChange}
+            weekStartsOn={1}
+          />
+        ) : (
+          <DatePicker
+            white
+            views={[getCalendarView()]}
+            label="Set a Period"
+            inputVariant="outlined"
+            size="small"
+            value={selectedDate}
+            // @ts-ignore
+            onChange={handleDateChange}
+          />
+        )}
       </MuiPickersUtilsProvider>
     </MuiToolbar>
   );
