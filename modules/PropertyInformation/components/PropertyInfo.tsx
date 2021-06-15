@@ -1,3 +1,5 @@
+// !PropertyType is same as Property.AsObject, we need to convert it to property
+
 import React, { FC, useCallback, useState, useEffect } from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -18,24 +20,22 @@ import { ServiceCalls } from './ServiceCalls';
 import {
   makeFakeRows,
   PropertyClientService,
-  UserType,
-  PropertyType,
   UserClientService,
 } from '../../../helpers';
 import './propertyInfo.less';
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<PropertyType> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<Property> = [
   [
     {
       label: 'Notification',
-      name: 'notification',
+      name: 'setNotification',
       required: true,
       multiline: true,
     },
   ],
   [
     {
-      name: 'id',
+      name: 'setId',
       type: 'hidden',
     },
   ],
@@ -51,29 +51,25 @@ interface Props {
 
 export const PropertyInfo: FC<Props> = props => {
   const { userID, propertyId, viewedAsCustomer = false, onClose } = props;
-  const [entry, setEntry] = useState<PropertyType>(new Property().toObject());
-  const [user, setUser] = useState<User.AsObject>();
+  const [entry, setEntry] = useState<Property>(new Property());
+  const [user, setUser] = useState<User>();
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
-  const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<
-    (EventTarget & HTMLElement) | null
-  >(null);
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
+  const [editMenuAnchorEl, setEditMenuAnchorEl] =
+    useState<(EventTarget & HTMLElement) | null>(null);
   const [linksViewing, setLinksViewing] = useState<boolean>(false);
   const [changingOwner, setChangingOwner] = useState<boolean>(false);
-  const [pendingChangeOwner, setPendingChangeOwner] = useState<UserType>();
+  const [pendingChangeOwner, setPendingChangeOwner] = useState<User>();
   const [merging, setMerging] = useState<boolean>(false);
-  const [pendingMerge, setPendingMerge] = useState<
-    PropertyType & { __user: UserType }
-  >();
+  const [pendingMerge, setPendingMerge] =
+    useState<Property & { __user: User }>();
 
   const handleSetEditing = useCallback(
     (editing: boolean) => () => setEditing(editing),
@@ -156,16 +152,16 @@ export const PropertyInfo: FC<Props> = props => {
   }, [setLoading, userID, propertyId, setEntry, setError, setUser]);
 
   useEffect(() => {
-    if (!entry.id) {
+    if (!entry.getId()) {
       load();
     }
-    if (!viewedAsCustomer && entry.notification !== '') {
+    if (!viewedAsCustomer && entry.getNotification() !== '') {
       setNotificationViewing(true);
     }
   }, [entry, load, setNotificationViewing, viewedAsCustomer]);
 
   const handleSave = useCallback(
-    async (data: PropertyType) => {
+    async (data: Property) => {
       setSaving(true);
       const entry = await PropertyClientService.saveProperty(
         data,
@@ -197,7 +193,7 @@ export const PropertyInfo: FC<Props> = props => {
 
   const handleChangeOwner = useCallback(async () => {
     if (pendingChangeOwner) {
-      const { id } = pendingChangeOwner;
+      const id = pendingChangeOwner.getId();
       setPendingChangeOwner(undefined);
       setError(false);
       const entry = new Property();
@@ -226,30 +222,13 @@ export const PropertyInfo: FC<Props> = props => {
         [
           '/index.cfm?action=admin:properties.mergeproperty',
           `oldPropertyId=${propertyId}`,
-          `newPropertyId=${pendingMerge.id}`,
-          `newOwnerId=${pendingMerge.__user.id}`,
+          `newPropertyId=${pendingMerge.getId()}`,
+          `newOwnerId=${pendingMerge.__user.getId()}`,
         ].join('&'),
       );
     }
   }, [pendingMerge, setPendingMerge, propertyId]);
-
-  const {
-    firstname,
-    lastname,
-    businessname,
-    phone,
-    altphone,
-    email,
-    address,
-    city,
-    state: addressState,
-    zip,
-    subdivision,
-    notes,
-    notification,
-    directions,
-  } = entry;
-  if (entry.id === 0)
+  if (entry.getId() === 0)
     return (
       <>
         <SectionBar title="Property Information">
@@ -262,26 +241,33 @@ export const PropertyInfo: FC<Props> = props => {
       ? []
       : ([
           [
-            { label: 'Name', value: `${firstname} ${lastname}` },
-            { label: 'Business Name', value: businessname },
+            {
+              label: 'Name',
+              value: `${entry.getFirstname()} ${entry.getLastname()}`,
+            },
+            { label: 'Business Name', value: entry.getBusinessname() },
           ],
           [
-            { label: 'Primary Phone', value: phone, href: 'tel' },
-            { label: 'Alternate Phone', value: altphone, href: 'tel' },
+            { label: 'Primary Phone', value: entry.getPhone(), href: 'tel' },
+            {
+              label: 'Alternate Phone',
+              value: entry.getAltphone(),
+              href: 'tel',
+            },
           ],
-          [{ label: 'Email', value: email, href: 'mailto' }],
+          [{ label: 'Email', value: entry.getEmail(), href: 'mailto' }],
         ] as Data)),
     [
       {
         label: 'Address',
-        value: `${address}, ${city}, ${addressState} ${zip}`,
+        value: `${entry.getAddress()}, ${entry.getCity()}, ${entry.getState()} ${entry.getZip()}`,
       },
     ],
     [
-      { label: 'Directions', value: directions },
-      { label: 'Subdivision', value: subdivision },
+      { label: 'Directions', value: entry.getDirections() },
+      { label: 'Subdivision', value: entry.getSubdivision() },
     ],
-    [{ label: 'Notes', value: notes }],
+    [{ label: 'Notes', value: entry.getNotes() }],
   ];
   console.log({ props });
   return (
@@ -308,8 +294,10 @@ export const PropertyInfo: FC<Props> = props => {
                       url: `/index.cfm?action=admin:tasks.list&code=properties&id=${propertyId}`,
                     },
                     {
-                      label: notification ? 'Notification' : 'Add Notification',
-                      onClick: notification
+                      label: entry.getNotification()
+                        ? 'Notification'
+                        : 'Add Notification',
+                      onClick: entry.getNotification()
                         ? handleSetNotificationViewing(true)
                         : handleSetNotificationEditing(true),
                     },
@@ -348,7 +336,7 @@ export const PropertyInfo: FC<Props> = props => {
                     },
                     {
                       label: 'Owner Details',
-                      url: `/index.cfm?action=admin:customers.details&user_id=${entry.userId}`,
+                      url: `/index.cfm?action=admin:customers.details&user_id=${entry.getUserId()}`,
                     },
                     {
                       label: 'Links',
@@ -389,11 +377,13 @@ export const PropertyInfo: FC<Props> = props => {
           handleSetNotificationEditing(false)();
         }}
       >
-        <Form<PropertyType>
+        <Form<Property>
           title={
             notificationViewing
               ? 'Property Notification'
-              : `${notification === '' ? 'Add' : 'Edit'} Property Notification`
+              : `${
+                  entry.getNotification() === '' ? 'Add' : 'Edit'
+                } Property Notification`
           }
           schema={SCHEMA_PROPERTY_NOTIFICATION}
           data={entry}
@@ -420,7 +410,9 @@ export const PropertyInfo: FC<Props> = props => {
                     variant: 'outlined',
                     onClick: () => {
                       handleSetNotificationViewing(false)();
-                      handleSave({ notification: '' } as PropertyType);
+                      let newProp = new Property();
+                      newProp.setNotification('');
+                      handleSave(newProp);
                     },
                   },
                 ]
@@ -499,7 +491,7 @@ export const PropertyInfo: FC<Props> = props => {
         onClose={handleSetDeleting(false)}
         onConfirm={handleDelete}
         kind="Property Information"
-        name={`${firstname} ${lastname}`}
+        name={`${entry.getFirstname()} ${entry.getLastname()}`}
       />
       <Search
         kinds={['Customers']}
@@ -524,7 +516,8 @@ export const PropertyInfo: FC<Props> = props => {
         >
           Are you sure you want to move this property to{' '}
           <strong>
-            {pendingChangeOwner.firstname} {pendingChangeOwner.lastname}
+            {pendingChangeOwner.getFirstname()}{' '}
+            {pendingChangeOwner.getLastname()}
           </strong>
           ?
         </Confirm>
@@ -538,21 +531,23 @@ export const PropertyInfo: FC<Props> = props => {
         >
           Are you sure you want to remove all information from{' '}
           <strong>
-            {entry.address}, {entry.city}, {entry.state} {entry.zip}
+            {entry.getAddress()}, {entry.getCity()}, {entry.getState()}{' '}
+            {entry.getZip()}
           </strong>
           , under{' '}
           <strong>
-            {user.businessname || `${user.firstname} ${user.lastname}`}
+            {user.getBusinessname() ||
+              `${user.getFirstname()} ${user.getLastname()}`}
           </strong>
           , and merge it into{' '}
           <strong>
-            {pendingMerge.address}, {pendingMerge.city}, {pendingMerge.state}{' '}
-            {pendingMerge.zip}
+            {pendingMerge.getAddress()}, {pendingMerge.getCity()},{' '}
+            {pendingMerge.getState()} {pendingMerge.getZip()}
           </strong>
           , under{' '}
           <strong>
-            {pendingMerge.__user.businessname ||
-              `${pendingMerge.__user.firstname} ${pendingMerge.__user.lastname}`}
+            {pendingMerge.__user.getBusinessname() ||
+              `${pendingMerge.__user.getFirstname()} ${pendingMerge.__user.getLastname()}`}
           </strong>
           ?
         </Confirm>

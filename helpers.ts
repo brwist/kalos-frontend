@@ -588,7 +588,7 @@ export const loadDeletedServiceCallsByFilter = async ({
     bReq.setBusinessname(businessName);
     const bResult = await PropertyClientService.Get(bReq);
     if (bReq) {
-      req.setPropertyId(bResult.id);
+      req.setPropertyId(bResult.getId());
       req.addFieldMask('PropertyId');
     }
   }
@@ -1004,6 +1004,7 @@ export type ContractsFilter = {
   businessName?: string;
   dateStarted?: string;
   dateEnded?: number;
+  userId?: number;
 };
 export type TripsFilter = {
   id?: number;
@@ -1551,7 +1552,7 @@ export const uploadFileToS3Bucket = async (
       urlObj.setTagString(tagString);
     }
     const urlRes = await S3ClientService.GetUploadURL(urlObj);
-    const uploadRes = await fetch(urlRes.url, {
+    const uploadRes = await fetch(urlRes.getUrl(), {
       body: b64toBlob(fileData.split(';base64,')[1], fileName),
       method: 'PUT',
       headers: tagString
@@ -1666,7 +1667,7 @@ async function newBugReport(data: IBugReport) {
     req.setTextId('github_key');
     const key = await client.Get(req);
     data.labels = [BUG_REPORT_LABEL];
-    const authString = `token ${key.apiKey}`;
+    const authString = `token ${key.getApiKey()}`;
     const postData = {
       method: 'POST',
       headers: {
@@ -1675,7 +1676,7 @@ async function newBugReport(data: IBugReport) {
       },
       body: JSON.stringify(data),
     };
-    await fetch(key.apiEndpoint, postData);
+    await fetch(key.getApiEndpoint(), postData);
   } catch (err) {
     console.log('error generating bug report', err);
   }
@@ -1701,7 +1702,7 @@ async function newBugReportImage(user: User, images: BugReportImage[]) {
         email: user.getEmail(),
       },
     };
-    const authString = `token ${key.apiKey}`;
+    const authString = `token ${key.getApiKey()}`;
     const result: { filename: string; url: string }[] = [];
     for (const img of images) {
       const data = { ...common, content: img.data };
@@ -1715,7 +1716,7 @@ async function newBugReportImage(user: User, images: BugReportImage[]) {
       };
       try {
         await fetch(
-          `${key.apiEndpoint}/images/${timestamp}/${img.label}`,
+          `${key.getApiEndpoint()}/images/${timestamp}/${img.label}`,
           putData,
         );
         result.push({
