@@ -13,9 +13,18 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import IconButton from '@material-ui/core/IconButton';
-import { format, addDays, getDay, differenceInDays, parseISO } from 'date-fns';
+import {
+  format,
+  addDays,
+  getDay,
+  differenceInDays,
+  parseISO,
+  startOfWeek,
+  subDays,
+} from 'date-fns';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { formatDate, formatTime, loadProjects } from '../../../helpers';
+import TimeSelector from './components/TimeSelector';
 import './styles.less';
 
 export type CalendarEvent = {
@@ -48,6 +57,8 @@ export interface Props extends Style {
   withLabels?: boolean;
   macro?: boolean; // Loads all of the projects into it, meant for an overview
   loggedUserId: number;
+  week?: string;
+  startOnWeek: boolean;
 }
 
 export const GanttChart: FC<Props> = ({
@@ -57,9 +68,17 @@ export const GanttChart: FC<Props> = ({
   endDate: dateEnd,
   onAdd,
   withLabels = false,
-  loggedUserId,
   macro,
+  week,
+  startOnWeek,
 }) => {
+  const getWeekStart = (week?: string, toggleStartOnWeek?: boolean) => {
+    const today = week ? parseISO(week) : new Date();
+    return toggleStartOnWeek === true
+      ? startOfWeek(today, { weekStartsOn: 6 })
+      : startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
+  };
+
   const [uncollapsed, setUncollapsed] = useState<{ [key: number]: boolean }>(
     {},
   );
@@ -74,6 +93,10 @@ export const GanttChart: FC<Props> = ({
   const [arrLength, setArrLength] = useState<number>(events.length);
   const [projects, setProjects] = useState<CalendarEvent[] | undefined>();
   const [loaded, setLoaded] = useState<boolean>();
+  const [dateSelected, setDateSelected] = useState<Date>(
+    getWeekStart(week, startOnWeek),
+  );
+
   const loadProjectsMacro = useCallback(async () => {
     setLoaded(false);
     try {
@@ -135,8 +158,16 @@ export const GanttChart: FC<Props> = ({
     () => setCollapsed(!collapsed),
     [setCollapsed, collapsed],
   );
+
+  const handleDateChange = useCallback((newDate: Date) => {
+    console.log(newDate);
+  }, []);
   return (
     <div className={clsx('GanttChart', { loading })}>
+      <TimeSelector
+        selectedDate={dateSelected}
+        handleDateChange={handleDateChange}
+      />
       <div className={clsx('GanttChartAside', { collapsed })}>
         {loaded && (
           <>
