@@ -15,7 +15,6 @@ import DriveEtaIcon from '@material-ui/icons/DriveEta';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import Alert from '@material-ui/lab/Alert';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   TimesheetLineClient,
@@ -28,7 +27,6 @@ import { AddNewButton } from '../AddNewButton';
 import { ConfirmServiceProvider } from '../ConfirmService';
 import Toolbar from './components/Toolbar';
 import Column from './components/Column';
-import { TripInfoTable } from '../TripInfoTable';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../../constants';
 import {
@@ -344,14 +342,14 @@ export const Timesheet: FC<Props> = props => {
       }
     })();
   }, [
-    userId,
-    data,
-    shownDates,
-    props.timesheetOwnerId,
-    props.userId,
     checkReceiptIssue,
     role,
+    shownDates,
+    data,
     user,
+    props.userId,
+    props.timesheetOwnerId,
+    userId,
   ]);
   const handleProcessTimesheet = useCallback(async () => {
     (async () => {
@@ -519,7 +517,7 @@ export const Timesheet: FC<Props> = props => {
       await tslClient.Deny(ids, userId);
     })();
   }, [userId, data, shownDates]);
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     const userResult = await UserClientService.loadUserById(userId);
     const role = userResult
       .getPermissionGroupsList()
@@ -553,7 +551,7 @@ export const Timesheet: FC<Props> = props => {
         },
       });
     }
-  };
+  }, [timesheetOwnerId, userId]);
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
     const timeoffRequestTypes =
@@ -574,7 +572,12 @@ export const Timesheet: FC<Props> = props => {
       setTimeoffRequestTypes({});
       fetchTimeoffRequestTypes();
     }
-  }, [timeoffRequestTypes]);
+  }, [
+    fetchTimeoffRequestTypes,
+    fetchUsers,
+    setTimeoffRequestTypes,
+    timeoffRequestTypes,
+  ]);
 
   const reload = () => {
     dispatch({ type: 'fetchingTimesheetData' });
