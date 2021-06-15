@@ -120,6 +120,9 @@ export const Documents: FC<Props> = ({
         setEntries(resultsList);
         setCount(totalCount);
       } catch (e) {
+        console.error(
+          `An error was caught while batch-getting documents from DocumentClientService: ${e}`,
+        );
         setError(true);
       }
       setLoading(false);
@@ -215,6 +218,9 @@ export const Documents: FC<Props> = ({
         await DocumentClientService.Delete(entry);
         load();
       } catch (e) {
+        console.error(
+          `An error was caught while deleting an S3 bucket entry and deleting a document: ${e}`,
+        );
         setError(true);
         setLoading(false);
       }

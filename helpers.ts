@@ -1819,7 +1819,7 @@ function getDateTimeArgs(str: string): dateTimeRes {
   ];
 }
 
-const cleanOrderByField = function cleanOrderByField(f: string) {
+const cleanOrderByField = (f: string) => {
   const parts = f.replace('get', '').split(/(?=[A-Z])/g);
   const lowerParts = parts.map(p => p.toLowerCase());
   return lowerParts.join('_');
