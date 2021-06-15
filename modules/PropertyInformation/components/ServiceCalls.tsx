@@ -26,6 +26,7 @@ import {
   CustomEventsHandler,
   EventClientService,
   ContractsFilter,
+  loadPropertiesByFilter,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
@@ -120,9 +121,9 @@ export class ServiceCalls extends PureComponent<Props, State> {
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
-    let req = new Contract();
+    let req = new Property();
     if (viewedAsCustomer) {
-      const { results } = await loadContractsByFilter({
+      const { results } = await loadPropertiesByFilter({
         page: 0,
         filter: { userId: userID },
         sort: {
