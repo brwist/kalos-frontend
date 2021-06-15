@@ -1,7 +1,8 @@
 import React, { FC, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { Group } from '@kalos-core/kalos-rpc/Group';
+import { UserGroupLink } from '@kalos-core/kalos-rpc/UserGroupLink';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
-
 import {
   PendingBillingClient,
   PendingBilling,
@@ -16,32 +17,28 @@ import { CustomerEdit } from '../CustomerEdit';
 import { Documents } from '../Documents';
 import {
   formatDateTime,
-  UserType,
   UserGroupLinkClientService,
-  GroupType,
-  UserGroupLinkType,
   UserClientService,
   CustomEventsHandler,
   getCFAppUrl,
   GroupClientService,
 } from '../../../helpers';
-import Typography from '@material-ui/core/Typography';
 import './styles.less';
 
 const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
   [
     {
       label: 'Notification',
-      name: 'notification',
+      name: 'getNotification',
       required: true,
       multiline: true,
     },
   ],
   [
     {
-      name: 'id',
+      name: 'getId',
       type: 'hidden',
     },
   ],
@@ -51,7 +48,7 @@ interface Props {
   userID: number;
   viewedAsCustomer?: boolean;
   propertyId?: number;
-  renderChildren?: (customer: UserType) => ReactNode;
+  renderChildren?: (customer: User) => ReactNode;
   onClose?: () => void;
 }
 
@@ -63,30 +60,26 @@ export const CustomerInformation: FC<Props> = ({
   children,
   viewedAsCustomer = false,
 }) => {
-  const [customer, setCustomer] = useState<UserType>(new User().toObject());
-  const [
-    pendingBillingRecordCount,
-    setPendingBillingRecordCount,
-  ] = useState<number>(0);
+  const [customer, setCustomer] = useState<User>(new User());
+  const [pendingBillingRecordCount, setPendingBillingRecordCount] =
+    useState<number>(0);
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
-  const [groups, setGroups] = useState<GroupType[]>([]);
-  const [groupLinks, setGroupLinks] = useState<UserGroupLinkType[]>([]);
-  const [groupLinksInitial, setGroupLinksInitial] = useState<
-    UserGroupLinkType[]
-  >([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [groupLinks, setGroupLinks] = useState<UserGroupLink[]>([]);
+  const [groupLinksInitial, setGroupLinksInitial] = useState<UserGroupLink[]>(
+    [],
+  );
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [documentsOpened, setDocumentsOpened] = useState<boolean>(false);
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
 
-  const groupLinksInitialIds = groupLinksInitial.map(({ groupId }) => groupId);
+  const groupLinksInitialIds = groupLinksInitial.map(g => g.getGroupId());
 
   const handleToggleEditing = useCallback(() => {
     setEditing(!editing);
@@ -115,9 +108,8 @@ export const CustomerInformation: FC<Props> = ({
     }
     const groups = await GroupClientService.loadGroups();
     setGroups(groups);
-    const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
-      userID,
-    );
+    const groupLinks =
+      await UserGroupLinkClientService.loadUserGroupLinksByUserId(userID);
     setGroupLinks(groupLinks);
     setGroupLinksInitial(groupLinks);
     const entry = new User();
@@ -144,6 +136,7 @@ export const CustomerInformation: FC<Props> = ({
     setGroups,
     viewedAsCustomer,
     handleToggleDocuments,
+    handleToggleEditing,
   ]);
 
   const handleSetNotificationEditing = useCallback(
@@ -164,7 +157,7 @@ export const CustomerInformation: FC<Props> = ({
   );
 
   const handleSave = useCallback(
-    async (data: UserType) => {
+    async (data: User) => {
       setSaving(true);
       const customer = await UserClientService.saveUser(data, userID);
       setCustomer(customer);
@@ -184,80 +177,59 @@ export const CustomerInformation: FC<Props> = ({
   }, [userID, setDeleting]);
 
   useEffect(() => {
-    if (!customer.id) {
+    if (!customer.getId()) {
       load();
     }
-    if (!viewedAsCustomer && customer.notification !== '') {
+    if (!viewedAsCustomer && customer.getNotification() !== '') {
       setNotificationViewing(true);
     }
   }, [customer, load, setNotificationViewing, viewedAsCustomer]);
 
-  const {
-    id,
-    firstname,
-    lastname,
-    businessname,
-    phone,
-    altphone,
-    cellphone,
-    fax,
-    email,
-    address,
-    city,
-    state,
-    zip,
-    billingTerms,
-    notes,
-    intNotes,
-    dateCreated,
-    lastLogin,
-    login,
-    notification,
-    receiveemail,
-    recommendedBy,
-  } = customer;
   const data: Data = [
     [
-      { label: 'Name', value: `${firstname} ${lastname}` },
-      { label: 'Business Name', value: businessname },
+      {
+        label: 'Name',
+        value: `${customer.getFirstname()} ${customer.getLastname()}`,
+      },
+      { label: 'Business Name', value: customer.getBusinessname() },
     ],
     [
-      { label: 'Primary Phone', value: phone, href: 'tel' },
-      { label: 'Cell Phone', value: cellphone, href: 'tel' },
+      { label: 'Primary Phone', value: customer.getPhone(), href: 'tel' },
+      { label: 'Cell Phone', value: customer.getCellphone(), href: 'tel' },
     ],
     [
-      { label: 'Alternate Phone', value: altphone, href: 'tel' },
-      { label: 'Fax', value: fax },
+      { label: 'Alternate Phone', value: customer.getAltphone(), href: 'tel' },
+      { label: 'Fax', value: customer.getFax() },
     ],
     [
       {
         label: 'Billing Address',
-        value: `${address}, ${city}, ${state} ${zip}`,
+        value: `${customer.getAddress()}, ${customer.getCity()}, ${customer.getState()} ${customer.getZip()}`,
       },
-      { label: 'Email', value: email, href: 'mailto' },
+      { label: 'Email', value: customer.getEmail(), href: 'mailto' },
     ],
     ...(viewedAsCustomer
       ? []
       : [
-          [{ label: 'Billing Terms', value: billingTerms }],
+          [{ label: 'Billing Terms', value: customer.getBillingTerms() }],
           [
             {
               label: 'Customer Notes',
-              value: notes,
+              value: customer.getNotes(),
             },
-            { label: 'Internal Notes', value: intNotes },
+            { label: 'Internal Notes', value: customer.getIntNotes() },
           ],
           [
             {
               label: 'Groups',
               value: groups
-                .filter(({ id }) => groupLinksInitialIds.includes(id))
-                .map(({ name }) => name)
+                .filter(u => groupLinksInitialIds.includes(u.getId()))
+                .map(u => u.getName())
                 .join(', '),
             },
             {
               label: 'Referred By',
-              value: recommendedBy,
+              value: customer.getRecommendedBy(),
             },
           ],
         ]),
@@ -266,25 +238,31 @@ export const CustomerInformation: FC<Props> = ({
     [
       {
         label: 'Created',
-        value: dateCreated === '' ? '' : formatDateTime(dateCreated),
+        value:
+          customer.getDateCreated() === ''
+            ? ''
+            : formatDateTime(customer.getDateCreated()),
       },
     ],
     [
       {
         label: 'Last Login',
-        value: lastLogin === '' ? '' : formatDateTime(lastLogin),
+        value:
+          customer.getLastLogin() === ''
+            ? ''
+            : formatDateTime(customer.getLastLogin()),
       },
     ],
     [
       {
         label: 'Login ID',
-        value: login,
+        value: customer.getLogin(),
       },
     ],
     [
       {
         label: 'Wishes to receive promotional emails',
-        value: receiveemail ? 'Yes' : 'No',
+        value: customer.getReceiveemail() ? 'Yes' : 'No',
       },
     ],
   ];
@@ -343,8 +321,10 @@ export const CustomerInformation: FC<Props> = ({
                       ].join('&'),
                     },
                     {
-                      label: notification ? 'Notification' : 'Add Notification',
-                      onClick: notification
+                      label: customer.getNotification()
+                        ? 'Notification'
+                        : 'Add Notification',
+                      onClick: customer.getNotification()
                         ? handleSetNotificationViewing(true)
                         : handleSetNotificationEditing(true),
                     },
@@ -367,13 +347,21 @@ export const CustomerInformation: FC<Props> = ({
                   ]
             }
           >
-            <InfoTable data={data} loading={id === 0} error={error} />
+            <InfoTable
+              data={data}
+              loading={customer.getId() === 0}
+              error={error}
+            />
           </SectionBar>
         </div>
         {!viewedAsCustomer && (
           <div className="CustomerInformationAsidePanel">
             <SectionBar title="System Information">
-              <InfoTable data={systemData} loading={id === 0} error={error} />
+              <InfoTable
+                data={systemData}
+                loading={customer.getId() === 0}
+                error={error}
+              />
             </SectionBar>
             <SectionBar
               title="Pending Billing"
@@ -406,7 +394,7 @@ export const CustomerInformation: FC<Props> = ({
       {children}
       <Modal open={editing} onClose={handleToggleEditing}>
         <CustomerEdit
-          userId={customer.id}
+          userId={customer.getId()}
           onSave={customer => {
             setCustomer(customer);
             setEditing(false);
@@ -426,11 +414,13 @@ export const CustomerInformation: FC<Props> = ({
           handleSetNotificationEditing(false)();
         }}
       >
-        <Form<UserType>
+        <Form<User>
           title={
             notificationViewing
               ? 'Customer Notification'
-              : `${notification === '' ? 'Add' : 'Edit'} Customer Notification`
+              : `${
+                  customer.getNotification() === '' ? 'Add' : 'Edit'
+                } Customer Notification`
           }
           schema={SCHEMA_PROPERTY_NOTIFICATION}
           data={customer}
@@ -457,7 +447,7 @@ export const CustomerInformation: FC<Props> = ({
                     variant: 'outlined',
                     onClick: () => {
                       handleSetNotificationViewing(false)();
-                      handleSave({ notification: '' } as UserType);
+                      handleSave(new User());
                     },
                   },
                 ]
@@ -470,7 +460,7 @@ export const CustomerInformation: FC<Props> = ({
         onClose={handleSetDeleting(false)}
         onConfirm={handleDelete}
         kind="Customer"
-        name={`${firstname} ${lastname}`}
+        name={`${customer.getFirstname()} ${customer.getLastname()}`}
       />
       <Modal open={documentsOpened} onClose={handleToggleDocuments}>
         <SectionBar
@@ -478,14 +468,15 @@ export const CustomerInformation: FC<Props> = ({
           actions={[{ label: 'Close', onClick: handleToggleDocuments }]}
           fixedActions
         />
-        {customer.propertiesList
-          .filter(({ isActive }) => !!isActive)
+        {customer
+          .getPropertiesList()
+          .filter(p => !!p.getIsActive())
           .map(prop => (
             <Documents
-              key={prop.id}
+              key={prop.getId()}
               title={getPropertyAddress(prop)}
-              propertyId={prop.id}
-              userId={customer.id}
+              propertyId={prop.getId()}
+              userId={customer.getId()}
               ignoreUserId
               deletable={false}
               stickySectionBar={false}

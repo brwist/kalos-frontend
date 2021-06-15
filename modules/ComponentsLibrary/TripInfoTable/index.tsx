@@ -212,14 +212,12 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     trip.setDate(data.Date);
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);
-    trip.setDepartmentId(user.employeeDepartmentId);
+    trip.setDepartmentId(user.getEmployeeDepartmentId());
 
-    await PerDiemClientService.upsertTrip(trip.toObject(), rowId!, userId).then(
-      () => {
-        this.setState({ pendingTrip: null });
-        this.getTrips();
-      },
-    );
+    await PerDiemClientService.upsertTrip(trip, rowId!, userId).then(() => {
+      this.setState({ pendingTrip: null });
+      this.getTrips();
+    });
 
     if (this.props.onSaveTrip) this.props.onSaveTrip();
   };

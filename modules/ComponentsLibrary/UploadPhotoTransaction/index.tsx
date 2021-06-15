@@ -29,6 +29,8 @@ import { AccountPicker } from '../Pickers';
 import { id } from 'date-fns/locale';
 import { RoleType } from '../Payroll';
 import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
+import { File } from '@kalos-core/kalos-rpc/File';
+import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
 
 interface Props {
   loggedUserId: number;
@@ -128,7 +130,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       const insert = await insertRecord.Create(newTransaction);
       if (data.file) {
         const ext = getFileExt(data.file);
-        const name = `${insert.id}-${data.description}-${Math.floor(
+        const name = `${insert.getId()}-${data.description}-${Math.floor(
           Date.now() / 1000,
         )}.${ext}`;
         const nameWithoutId = `${data.description}-${Math.floor(
@@ -142,18 +144,21 @@ export const UploadPhotoTransaction: FC<Props> = ({
           data.tag,
         );
         if (status === 'ok') {
-          const uploadFile = await FileClientService.upsertFile({
-            bucket,
-            name,
-            mimeType: getMimeType(data.file),
-            ownerId: loggedUserId,
-          });
-          await TransactionDocumentClientService.upsertTransactionDocument({
-            transactionId: insert.id,
-            reference: nameWithoutId,
-            fileId: uploadFile.id,
-            typeId: 1,
-          });
+          const fReq = new File();
+          fReq.setBucket(bucket);
+          fReq.setName(name);
+          fReq.setMimeType(data.file);
+          fReq.setOwnerId(loggedUserId);
+          const uploadFile = await FileClientService.upsertFile(fReq);
+
+          const tDoc = new TransactionDocument();
+          tDoc.setTransactionId(insert.getId());
+          tDoc.setReference(nameWithoutId);
+          tDoc.setFileId(uploadFile.getId());
+          tDoc.setTypeId(1);
+          await TransactionDocumentClientService.upsertTransactionDocument(
+            tDoc,
+          );
           setSaving(false);
           setSaved(true);
           setFormKey(formKey + 1);
@@ -168,7 +173,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
 
       if (onUpload) onUpload();
     },
-    [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId],
+    [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId, onUpload],
   );
   console.log({ costCenterList });
 

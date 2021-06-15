@@ -1,4 +1,3 @@
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
@@ -27,16 +26,12 @@ import { format, parseISO } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import {
-  getSlackID,
   makeFakeRows,
   OrderDir,
-  slackNotify,
   TimesheetDepartmentClientService,
-  TimesheetDepartmentType,
   timestamp,
   TransactionClientService,
   UserClientService,
-  UserType,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -56,6 +51,7 @@ import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { ActivityLogClientService, getRPCFields } from '../../../helpers';
 import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -127,8 +123,8 @@ export const TransactionTable: FC<Props> = ({
   const [role, setRole] = useState<RoleType>();
   const [assigningUser, setAssigningUser] =
     useState<{ isAssigning: boolean; transactionId: number }>(); // sets open an employee picker in a modal
-  const [employees, setEmployees] = useState<UserType[]>([]);
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
@@ -230,9 +226,9 @@ export const TransactionTable: FC<Props> = ({
     await client.Create(activity);
   };
 
-  const dispute = async (reason: string, txn: Transaction.AsObject) => {
+  const dispute = async (reason: string, txn: Transaction) => {
     const userReq = new User();
-    userReq.setId(txn.ownerId);
+    userReq.setId(txn.getOwnerId());
     const user = await clients.user.Get(userReq);
 
     // Request for this user
@@ -242,15 +238,15 @@ export const TransactionTable: FC<Props> = ({
 
     const body = getRejectTxnBody(
       reason,
-      txn.amount,
-      txn.description,
-      txn.vendor,
+      txn.getAmount(),
+      txn.getDescription(),
+      txn.getVendor(),
     );
     const email: EmailConfig = {
       type: 'receipts',
-      recipient: user.email,
+      recipient: user.getEmail(),
       subject: 'Receipts',
-      from: sendingUser.email,
+      from: sendingUser.getEmail(),
       body,
     };
 
@@ -276,7 +272,7 @@ export const TransactionTable: FC<Props> = ({
       alert('An error occurred, user was not notified via slack');
     }
 
-    await makeUpdateStatus(txn.id, 4, 'rejected', reason);
+    await makeUpdateStatus(txn.getId(), 4, 'rejected', reason);
     await refresh();
   };
 
@@ -383,7 +379,7 @@ export const TransactionTable: FC<Props> = ({
     setLoading(true);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
-      a.lastname > b.lastname ? 1 : -1,
+      a.getLastname() > b.getLastname() ? 1 : -1,
     );
     setEmployees(sortedEmployeeList);
 
@@ -396,9 +392,11 @@ export const TransactionTable: FC<Props> = ({
 
     const user = await UserClientService.loadUserById(loggedUserId);
 
-    const role = user.permissionGroupsList.find(p => p.type === 'role');
+    const role = user
+      .getPermissionGroupsList()
+      .find(p => p.getType() === 'role');
 
-    if (role) setRole(role.name as RoleType);
+    if (role) setRole(role.getName() as RoleType);
 
     setLoading(false);
   }, [
@@ -624,8 +622,8 @@ export const TransactionTable: FC<Props> = ({
             value: 0,
           },
           ...departments.map(dept => ({
-            label: `${dept.value} | ${dept.description}`,
-            value: dept.id,
+            label: `${dept.getValue()} | ${dept.getDescription()}`,
+            value: dept.getId(),
           })),
         ],
       },
@@ -637,11 +635,13 @@ export const TransactionTable: FC<Props> = ({
           ...employees
             .filter(el => {
               if (filter.departmentId === 0) return true;
-              return el.employeeDepartmentId === filter.departmentId;
+              return el.getEmployeeDepartmentId() === filter.departmentId;
             })
             .map(el => ({
-              label: `${UserClientService.getCustomerName(el)} (ID: ${el.id})`,
-              value: el.id,
+              label: `${UserClientService.getCustomerName(
+                el,
+              )} (ID: ${el.getId()})`,
+              value: el.getId(),
             })),
         ],
       },
@@ -1111,7 +1111,7 @@ export const TransactionTable: FC<Props> = ({
                         <Prompt
                           key="reject"
                           confirmFn={reason =>
-                            dispute(reason, selectorParam.txn.toObject())
+                            dispute(reason, selectorParam.txn)
                           }
                           text="Reject transaction"
                           prompt="Enter reason for rejection: "
