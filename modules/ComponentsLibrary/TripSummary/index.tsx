@@ -367,7 +367,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               page: this.state.page,
               departmentId: this.props.departmentId,
               payrollProcessed: undefined,
-              approved: undefined,
+              approved: false,
               role: this.props.role,
             },
         sort: tripSort as TripsSort,
