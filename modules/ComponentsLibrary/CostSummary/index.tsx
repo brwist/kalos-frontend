@@ -313,9 +313,9 @@ export const CostSummary: FC<Props> = ({
       req.setExternalId(userId);
       if (spiffType === 'Spiff') {
         const startDate = '0001-01-01';
-        const endDate = format(endDay, 'yyyy-MM-dd');
-        //req.setDateRangeList(['>=', startDate, '<', endDate]);
-        //req.setDateTargetList(['time_created', 'time_created']);
+        const endDayForSpiffs = format(addDays(startDay, 11), 'yyyy-MM-dd');
+        req.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
+        req.setDateTargetList(['time_created', 'time_created']);
       }
       if (!notReady) {
         action.setStatus(1);
