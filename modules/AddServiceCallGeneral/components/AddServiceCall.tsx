@@ -24,6 +24,8 @@ export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   projectParentId?: number;
 };
 
+// TODO do not release yet, still has issues with the Search capability.
+
 export const AddServiceCall: FC<Props> = props => {
   const { loggedUserId, onClose, onSave, asProject = false } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
