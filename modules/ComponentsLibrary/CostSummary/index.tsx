@@ -114,9 +114,9 @@ export const CostSummary: FC<Props> = ({
           distanceSubtotal += tempTripList[j].getDistanceInMiles() - 30;
         }
       } else {
-        distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+        distanceSubtotal += tempTripList[j].getDistanceInMiles();
       }
-      if (tempTripList[j].toObject().payrollProcessed === false) {
+      if (tempTripList[j].getPayrollProcessed() === false) {
         processed = false;
       }
     }
@@ -148,20 +148,19 @@ export const CostSummary: FC<Props> = ({
           );
         }
       } else {
-        distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+        distanceSubtotal += tempTripList[j].getDistanceInMiles();
       }
-      if (tempTripList[j].toObject().payrollProcessed === false) {
+      if (tempTripList[j].getPayrollProcessed() === false) {
         processed = false;
       }
     }
     return { totalDistance: distanceSubtotal, processed };
   }, [userId]);
   const getPerDiemTotals = useCallback(async () => {
-    const pdRes =
-      await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
-        userId,
-        formatDateFns(endDay),
-      );
+    const pdRes = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
+      userId,
+      formatDateFns(endDay),
+    );
     //get PerDiems, set them
     const resultsList = pdRes.getResultsList();
     setPerDiems(resultsList);
@@ -356,9 +355,9 @@ export const CostSummary: FC<Props> = ({
       let toolTotal = 0;
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
-          spiffTotal += results[i].toObject().spiffAmount;
+          spiffTotal += results[i].getSpiffAmount();
         } else {
-          toolTotal += results[i].toObject().toolpurchaseCost;
+          toolTotal += results[i].getToolpurchaseCost();
         }
       }
       if (spiffType === 'Spiff') {
@@ -425,9 +424,9 @@ export const CostSummary: FC<Props> = ({
       let toolTotal = 0;
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
-          spiffTotal += results[i].toObject().spiffAmount;
+          spiffTotal += results[i].getSpiffAmount();
         } else {
-          toolTotal += results[i].toObject().toolpurchaseCost;
+          toolTotal += results[i].getToolpurchaseCost();
         }
       }
       if (spiffType === 'Spiff') {
@@ -494,8 +493,8 @@ export const CostSummary: FC<Props> = ({
     let total = 0;
     for (let i = 0; i < results.length; i++) {
       {
-        const timeFinished = results[i].toObject().timeFinished;
-        const timeStarted = results[i].toObject().timeStarted;
+        const timeFinished = results[i].getTimeFinished();
+        const timeStarted = results[i].getTimeStarted();
         const subtotal = roundNumber(
           differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
             60,
@@ -728,21 +727,21 @@ export const CostSummary: FC<Props> = ({
                       ),
                     },
                     {
-                      value: formatDate(spiff.toObject().timeCreated),
+                      value: formatDate(spiff.getTimeCreated()),
                     },
                     {
-                      value: usd(spiff.toObject().spiffAmount),
+                      value: usd(spiff.getSpiffAmount()),
                     },
                     {
-                      value: spiff.toObject().spiffJobNumber,
+                      value: spiff.getSpiffJobNumber(),
                     },
                     {
                       value:
-                        spiff.toObject().payrollProcessed === true
+                        spiff.getPayrollProcessed() === true
                           ? 'Complete'
                           : 'Incomplete',
                       actions:
-                        spiff.toObject().payrollProcessed === false
+                        spiff.getPayrollProcessed() === false
                           ? [
                               <IconButton
                                 key="processSpiffWeekly"
