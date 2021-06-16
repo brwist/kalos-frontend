@@ -4,6 +4,7 @@ import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { Form, Schema } from '../ComponentsLibrary/Form';
 import { Modal } from '../ComponentsLibrary/Modal';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { UserType, UserClientService } from '../../helpers';
 import { Loader } from '../Loader/main';
@@ -14,7 +15,7 @@ interface props extends PageWrapperProps {
 }
 
 interface state {
-  user: Partial<UserType>;
+  user: User;
   isModalOpen: boolean;
   isEditing: boolean;
   isLoginModalOpen: boolean;
@@ -31,19 +32,19 @@ type ChangeProp = {
   newProp2: string;
 };
 
-const SCHEMA_USER: Schema<Partial<UserType>> = [
+const SCHEMA_USER: Schema<User> = [
   [
-    { name: 'firstname', label: 'First Name', required: true },
-    { name: 'lastname', label: 'Last Name', required: true },
+    { name: 'getFirstname', label: 'First Name', required: true },
+    { name: 'getLastname', label: 'Last Name', required: true },
   ],
   [
-    { name: 'phone', label: 'Phone Number' },
-    { name: 'email', label: 'Email' },
+    { name: 'getPhone', label: 'Phone Number' },
+    { name: 'getEmail', label: 'Email' },
   ],
   [
-    { name: 'address', label: 'Street Address' },
-    { name: 'city', label: 'City' },
-    { name: 'zip', label: 'Zip Code' },
+    { name: 'getAddress', label: 'Street Address' },
+    { name: 'getCity', label: 'City' },
+    { name: 'getZip', label: 'Zip Code' },
     {},
   ],
 ];
@@ -61,7 +62,7 @@ export class AccountInfo extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      user: {},
+      user: new User(),
       isModalOpen: false,
       isEditing: false,
       isLoginModalOpen: false,
@@ -74,8 +75,8 @@ export class AccountInfo extends React.PureComponent<props, state> {
   }
 
   fetchUser = async () => {
-    const user = await UserClientService.loadUserById(this.props.userId);
-    this.setState({ user });
+    const userResult = await UserClientService.loadUserById(this.props.userId);
+    this.setState({ user: userResult });
   };
 
   toggleEditing = () =>
@@ -98,19 +99,22 @@ export class AccountInfo extends React.PureComponent<props, state> {
 
   handleUpdateLogin = async ({ oldProp, newProp, newProp2 }: ChangeProp) => {
     this.setState({ error: '' });
-    const { id, login } = this.state.user;
+    const id = this.state.user.getId();
+    const login = this.state.user.getLogin();
     if (oldProp !== login)
       return this.setState({ error: 'Old Login is incorrect' });
     if (newProp !== newProp2)
       return this.setState({ error: 'Logins do not match' });
     this.setState({ saving: true });
-    await UserClientService.saveUser({ login: newProp }, id);
+    this.state.user.setLogin(newProp);
+    await UserClientService.saveUser(this.state.user, id);
     this.setState({ saving: false, saved: true });
   };
 
   handleUpdatePassword = async ({ oldProp, newProp, newProp2 }: ChangeProp) => {
     this.setState({ error: '' });
-    const { id, pwd } = this.state.user;
+    const id = this.state.user.getId();
+    const pwd = this.state.user.getPwd();
     if (oldProp !== pwd)
       return this.setState({ error: 'Old Password is incorrect' });
     if (newProp.length < 8)
@@ -120,19 +124,19 @@ export class AccountInfo extends React.PureComponent<props, state> {
     if (newProp !== newProp2)
       return this.setState({ error: 'Passwords do not match' });
     this.setState({ saving: true });
-    await UserClientService.saveUser({ pwd: newProp }, id);
+    this.state.user.setPwd(newProp);
+    await UserClientService.saveUser(this.state.user, id);
     this.setState({ saving: false, saved: true });
   };
 
-  updateUser = async (data: Partial<UserType>) => {
-    const { id } = this.state.user;
+  updateUser = async (data: User) => {
+    const id = this.state.user.getId();
     this.setState({ saving: true });
     const user = await UserClientService.saveUser(data, id);
     this.setState({ user, saving: false, isEditing: false });
   };
 
   async componentDidMount() {
-    await UserClientService.refreshToken();
     await this.fetchUser();
   }
 
@@ -149,14 +153,14 @@ export class AccountInfo extends React.PureComponent<props, state> {
     } = this.state;
     return (
       <PageWrapper {...this.props} userID={this.props.userId}>
-        {!this.state.user.id ? (
+        {!this.state.user.getId() ? (
           <Loader />
         ) : (
-          <Form<Partial<UserType>>
+          <Form<User>
             key={formKey}
             title="Account Information"
             schema={SCHEMA_USER}
-            data={user}
+            data={this.state.user}
             onSave={this.updateUser}
             onClose={null}
             disabled={!isEditing || saving}
