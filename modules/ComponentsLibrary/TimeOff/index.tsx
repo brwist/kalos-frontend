@@ -9,7 +9,6 @@ import React, {
 import {
   differenceInMinutes,
   parseISO,
-  differenceInCalendarDays,
   differenceInCalendarYears,
   differenceInBusinessDays,
   addYears,
@@ -19,10 +18,7 @@ import { Form, Schema, Options } from '../Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
 import {
-  TimeoffRequestType,
-  UserType,
   roundNumber,
-  PTOType,
   timestamp,
   UserClientService,
   TimeoffRequestClientService,
@@ -30,14 +26,15 @@ import {
 import { OPTION_BLANK, ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+
 export interface Props {
   loggedUserId: number;
   userId?: number;
   requestOffId?: number;
   onCancel: () => void;
-  onSaveOrDelete: (data: TimeoffRequestType) => void;
-  onAdminSubmit?: (data: TimeoffRequestType) => void;
+  onSaveOrDelete: (data: TimeoffRequest) => void;
+  onAdminSubmit?: (data: TimeoffRequest) => void;
   cancelLabel?: string;
   submitDisabled?: boolean;
 }
@@ -57,14 +54,14 @@ export const TimeOff: FC<Props> = ({
   const [deleted, setDeleted] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [typeOptions, setTypeOptions] = useState<Options>([]);
-  const [pto, setPto] = useState<PTOType>();
+  const [pto, setPto] = useState<PTO>();
   const [ptoActualHours, setPtoActualHours] = useState<number>(0);
-  const [user, setUser] = useState<UserType>();
-  const [loggedUser, setLoggedUser] = useState<UserType>();
+  const [user, setUser] = useState<User>();
+  const [loggedUser, setLoggedUser] = useState<User>();
   const [formKey, setFormKey] = useState<number>(0);
   const [error, setError] = useState<string>('');
   const emptyTO = new TimeoffRequest();
-  const [data, setData] = useState<TimeoffRequestType>(emptyTO.toObject());
+  const [data, setData] = useState<TimeoffRequest>(emptyTO);
   const getTimeoffTotals = useCallback(
     async (hireDate: string) => {
       hireDate = hireDate.replace(/-/g, '/');
@@ -84,12 +81,12 @@ export const TimeOff: FC<Props> = ({
       };
       const results = (
         await TimeoffRequestClientService.loadTimeoffRequests(filter)
-      ).resultsList;
+      ).getResultsList();
       let total = 0;
       for (let i = 0; i < results.length; i++) {
-        if (results[i].allDayOff === 0) {
-          const timeFinished = results[i].timeFinished;
-          const timeStarted = results[i].timeStarted;
+        if (results[i].getAllDayOff() === 0) {
+          const timeFinished = results[i].getTimeFinished();
+          const timeStarted = results[i].getTimeStarted();
           const subtotal = roundNumber(
             differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
               60,
@@ -97,8 +94,8 @@ export const TimeOff: FC<Props> = ({
 
           total += subtotal;
         } else {
-          const timeFinished = results[i].timeFinished;
-          const timeStarted = results[i].timeStarted;
+          const timeFinished = results[i].getTimeFinished();
+          const timeStarted = results[i].getTimeStarted();
           const numberOfDays =
             differenceInBusinessDays(
               parseISO(timeFinished),
@@ -116,7 +113,7 @@ export const TimeOff: FC<Props> = ({
   const init = useCallback(async () => {
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTypeOptions(
-      types.map(({ id, requestType }) => ({ label: requestType, value: id })),
+      types.map(t => ({ label: t.getRequestType(), value: t.getId() })),
     );
     const user = await UserClientService.loadUserById(userId || loggedUserId);
     setUser(user);
@@ -124,7 +121,7 @@ export const TimeOff: FC<Props> = ({
       userId || loggedUserId,
     );
     setPto(pto);
-    const ptoActualHours = await getTimeoffTotals(user.hireDate);
+    const ptoActualHours = await getTimeoffTotals(user.getHireDate());
     setPtoActualHours(ptoActualHours);
 
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
@@ -138,15 +135,18 @@ export const TimeOff: FC<Props> = ({
         setInitiated(true);
         return;
       }
-      if (!req.adminApprovalUserId) {
-        req.requestStatus = 1;
-        req.adminApprovalDatetime = timestamp(true);
-        req.reviewedBy = loggedUser.firstname + ' ' + loggedUser.lastname;
+      if (!req.getAdminApprovalUserId()) {
+        req.setRequestStatus(1);
+        req.setAdminApprovalDatetime(timestamp(true));
+        req.setReviewedBy(
+          `${loggedUser.getFirstname()} ${loggedUser.getLastname()}`,
+        );
       }
       setData(req);
       setFormKey(formKey + 1);
     } else {
-      setData({ ...data, departmentCode: user.employeeDepartmentId });
+      data.setDepartmentCode(user.getEmployeeDepartmentId());
+      setData(data);
       setFormKey(formKey + 1);
     }
     setInitiated(true);
@@ -171,43 +171,35 @@ export const TimeOff: FC<Props> = ({
       init();
     }
   }, [initiated, init]);
-  const toggleDeleting = useCallback(() => setDeleting(!deleting), [
-    deleting,
-    setDeleting,
-  ]);
+  const toggleDeleting = useCallback(
+    () => setDeleting(!deleting),
+    [deleting, setDeleting],
+  );
   const handleSubmit = useCallback(
-    async (data: TimeoffRequestType) => {
+    async (data: TimeoffRequest) => {
       setError('');
-      const {
-        allDayOff,
-        departmentCode,
-        notes,
-        requestType,
-        timeStarted,
-        timeFinished,
-      } = data;
+      const allDayOff = data.getAllDayOff();
+      const departmentCode = data.getDepartmentCode();
+      const notes = data.getNotes();
+      const requestType = data.getNotes();
+      const timeStarted = data.getTimeStarted();
+      const timeFinished = data.getTimeFinished();
 
-      const userId = user?.id;
+      const userId = user?.getId();
       if (timeFinished < timeStarted) {
         setError('End Time cannot be before Start Time');
         return;
       }
       setSaving(true);
-      const newData = await TimeoffRequestClientService.upsertTimeoffRequest({
-        allDayOff,
-        departmentCode,
-        notes,
-        requestType,
-        timeStarted,
-        timeFinished,
-        userId,
-        briefDescription: '',
-        userApprovalDatetime: timestamp(),
-      });
+      data.setUserId(userId!);
+      data.setUserApprovalDatetime(timestamp());
+      const newData = await TimeoffRequestClientService.upsertTimeoffRequest(
+        data,
+      );
       const typeName = typeOptions.find(
         //@ts-ignore
         (val: { label: string; value: number }) => {
-          if (val.value === requestType) {
+          if (val.value === +requestType) {
             return true;
           }
           return false;
@@ -220,23 +212,22 @@ export const TimeOff: FC<Props> = ({
         const manager = await UserClientService.GetUserManager(req);
 
         const emailBody = getTimeoffRequestEmail(
-          `${user?.firstname} ${user?.lastname}`,
+          `${user?.getFirstname()} ${user?.getLastname()}`,
           getTimeoffTimestamp(
-            newData.timeStarted,
-            newData.timeFinished,
-            !!newData.allDayOff,
+            newData.getTimeStarted(),
+            newData.getTimeFinished(),
           ),
           //@ts-ignore
           typeName ? typeName.label : '',
-          newData.notes,
-          newData.id,
+          newData.getNotes(),
+          newData.getId(),
         );
 
         //@ts-ignore
         const config: EmailConfig = {
           type: 'timeoff',
           body: emailBody,
-          recipient: manager.email,
+          recipient: manager.getEmail(),
         };
 
         await emailClient.sendMail(config);
@@ -244,16 +235,14 @@ export const TimeOff: FC<Props> = ({
         console.log(err);
       }
 
-      setData({
-        ...newData,
-        ...(loggedUser!.isAdmin
-          ? {
-              requestStatus: 1,
-              adminApprovalDatetime: timestamp(true),
-              reviewedBy: loggedUser!.firstname + ' ' + loggedUser!.lastname,
-            }
-          : {}),
-      });
+      if (loggedUser!.getIsAdmin()) {
+        newData.setRequestStatus(1);
+        newData.setAdminApprovalDatetime(timestamp(true));
+        newData.setReviewedBy(
+          `${loggedUser!.getFirstname()} ${loggedUser!.getLastname()}`,
+        );
+      }
+      setData(newData);
       setFormKey(formKey + 1);
       setSaving(false);
       onSaveOrDelete(newData);
@@ -274,22 +263,10 @@ export const TimeOff: FC<Props> = ({
   );
 
   const handleSubmitAdmin = useCallback(async () => {
-    const {
-      id,
-      adminApprovalDatetime,
-      requestStatus,
-      reviewedBy,
-      adminComments,
-    } = data;
-    const newData = await TimeoffRequestClientService.upsertTimeoffRequest({
-      id,
-      adminApprovalDatetime,
-      adminApprovalUserId: loggedUserId,
-      requestStatus,
-      reviewedBy,
-      adminComments,
-      briefDescription: '',
-    });
+    data.setAdminApprovalUserId(loggedUserId);
+    const newData = await TimeoffRequestClientService.upsertTimeoffRequest(
+      data,
+    );
     setData(newData);
     if (onAdminSubmit) {
       onAdminSubmit(newData);
@@ -304,14 +281,14 @@ export const TimeOff: FC<Props> = ({
     }
   }, [requestOffId, setSaving, onSaveOrDelete, data]);
   const isAdmin =
-    loggedUser && loggedUser.permissionGroupsList.find(p => p.type === 'role');
-  console.log(isAdmin);
-  const disabled = !(data.id && isAdmin);
-  const disabledAdmin = disabled || !!data.adminApprovalUserId;
-  const schema: Schema<TimeoffRequestType> = [
+    loggedUser &&
+    loggedUser.getPermissionGroupsList().find(p => p.getType() === 'role');
+  const disabled = !(data.getId() && isAdmin);
+  const disabledAdmin = disabled || !!data.getAdminApprovalUserId();
+  const schema: Schema<TimeoffRequest> = [
     [
       {
-        name: 'timeStarted',
+        name: 'getTimeStarted',
         label: 'Start Time',
         type: 'mui-datetime',
         minutesStep: 5,
@@ -319,7 +296,7 @@ export const TimeOff: FC<Props> = ({
         disabled: !disabled,
       },
       {
-        name: 'timeFinished',
+        name: 'getTimeFinished',
         label: 'End Time',
         type: 'mui-datetime',
         minutesStep: 5,
@@ -327,7 +304,7 @@ export const TimeOff: FC<Props> = ({
         disabled: !disabled,
       },
       {
-        name: 'allDayOff',
+        name: 'getAllDayOff',
         label: 'All Days?',
         options: [
           { label: 'No', value: 0 },
@@ -338,24 +315,24 @@ export const TimeOff: FC<Props> = ({
     ],
     [
       {
-        name: 'userId',
+        name: 'getUserId',
         type: 'hidden',
       },
       {
-        name: 'id',
+        name: 'getId',
         type: 'hidden',
       },
     ],
     [
       {
-        name: 'departmentCode',
+        name: 'getDepartmentCode',
         label: 'Select Your Department',
         type: 'department',
         required: true,
         disabled: !disabled,
       },
       {
-        name: 'requestType',
+        name: 'getRequestType',
         label: 'Select Your Request Type',
         required: true,
         disabled: !disabled,
@@ -368,7 +345,7 @@ export const TimeOff: FC<Props> = ({
         ],
       },
       {
-        name: 'notes',
+        name: 'getNotes',
         multiline: true,
         label: 'Request Off Details',
         disabled: !disabled,
@@ -392,7 +369,7 @@ export const TimeOff: FC<Props> = ({
     ],
     [
       {
-        name: 'requestStatus',
+        name: 'getRequestStatus',
         label: 'Status',
         options: [
           { value: 0, label: 'Not approved' },
@@ -401,20 +378,20 @@ export const TimeOff: FC<Props> = ({
         disabled: disabledAdmin,
       },
       {
-        name: 'adminApprovalDatetime',
+        name: 'getAdminApprovalDatetime',
         label: 'Decision Date',
         type: 'date',
         disabled: disabledAdmin,
       },
       {
-        name: 'reviewedBy',
+        name: 'getReviewedBy',
         label: 'Reviewer',
         disabled: disabledAdmin,
       },
     ],
     [
       {
-        name: 'adminComments',
+        name: 'getAdminComments',
         label: 'Comments',
         disabled: disabledAdmin,
       },
@@ -422,7 +399,7 @@ export const TimeOff: FC<Props> = ({
   ];
   const css: CSSProperties =
     pto && user
-      ? pto.hoursAvailable > user.annualHoursPto
+      ? pto.getHoursAvailable() > user.getAnnualHoursPto()
         ? { color: '#d22' }
         : {}
       : {};
@@ -435,30 +412,33 @@ export const TimeOff: FC<Props> = ({
     );
   return (
     <>
-      <Form<TimeoffRequestType>
+      <Form<TimeoffRequest>
         key={formKey}
         data={data}
         onClose={onCancel}
-        onSave={data.id ? toggleDeleting : handleSubmit}
+        onSave={data.getId() ? toggleDeleting : handleSubmit}
         onChange={setData}
         schema={schema}
         title={
-          user?.firstname
-            ? 'Request Time Off for ' + user?.firstname + ' ' + user?.lastname
+          user?.getFirstname()
+            ? 'Request Time Off for ' +
+              user?.getFirstname() +
+              ' ' +
+              user?.getLastname()
             : 'Request Time Off'
         }
         subtitle={
           pto && user ? (
             <span>
               PTO Used: <span style={css}>{ptoActualHours}</span> of{' '}
-              <span style={css}>{user.annualHoursPto}</span>
+              <span style={css}>{user.getAnnualHoursPto()}</span>
             </span>
           ) : null
         }
         disabled={!initiated || saving}
-        submitLabel={data.id ? 'Delete' : 'Save'}
+        submitLabel={data.getId() ? 'Delete' : 'Save'}
         cancelLabel={cancelLabel}
-        submitDisabled={submitDisabled || !!data.adminApprovalUserId}
+        submitDisabled={submitDisabled || !!data.getAdminApprovalUserId()}
         error={error}
       />
       {deleting && (
@@ -473,10 +453,10 @@ export const TimeOff: FC<Props> = ({
     </>
   );
 };
+
 const getTimeoffTimestamp = function getTimeoffTimestamp(
   startDateStr: string,
   endDateStr: string,
-  allDays = false,
 ) {
   endDateStr = endDateStr.replace(/-/g, '/');
   startDateStr = startDateStr.replace(/-/g, '/');
