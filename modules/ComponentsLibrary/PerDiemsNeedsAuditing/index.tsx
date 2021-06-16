@@ -17,11 +17,8 @@ import { PrintParagraph } from '../PrintParagraph';
 import { PerDiemComponent, getStatus } from '../PerDiem';
 import {
   PerDiemClientService,
-  PerDiemType,
   makeFakeRows,
   getWeekOptions,
-  TimesheetDepartmentType,
-  UserType,
   usd,
   formatDate,
   getSlackID,
@@ -34,6 +31,8 @@ import './styles.less';
 import { parseISO } from 'date-fns/esm';
 import { TripInfoTable } from '../TripInfoTable';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 interface Props {
   loggedUserId: number;
@@ -47,7 +46,7 @@ const COLUMNS: Columns = [
 ];
 
 type FormData = Pick<
-  PerDiemType,
+  PerDiem.AsObject,
   'dateStarted' | 'departmentId' | 'userId' | 'needsAuditing'
 >;
 
@@ -68,7 +67,7 @@ type GovPerDiemsByYearMonth = {
   };
 };
 
-const initialFormData: FormData = {
+const initialFormData = {
   needsAuditing: true,
   dateStarted: OPTION_ALL,
   departmentId: 0,
@@ -99,15 +98,15 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
-  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [perDiemsPrint, setPerDiemsPrint] = useState<PerDiemType[]>([]);
-  const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
+  const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
+  const [perDiemsPrint, setPerDiemsPrint] = useState<PerDiem[]>([]);
+  const [perDiemViewed, setPerDiemViewed] = useState<PerDiem>();
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
-  const [technicians, setTechnicians] = useState<UserType[]>([]);
-  const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
-  const [pendingReject, setPendingReject] = useState<PerDiemType>();
+  const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
+  const [technicians, setTechnicians] = useState<User[]>([]);
+  const [pendingAudited, setPendingAudited] = useState<PerDiem>();
+  const [pendingReject, setPendingReject] = useState<PerDiem>();
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [formPrintData, setFormPrintData] = useState<FormPrintData>(
@@ -130,10 +129,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const load = useCallback(async () => {
     setLoading(true);
     const { departmentId, userId, dateStarted, needsAuditing } = formData;
-    const {
-      resultsList,
-      totalCount,
-    } = await PerDiemClientService.loadPerDiemsNeedsAuditing(
+    const response = await PerDiemClientService.loadPerDiemsNeedsAuditing(
       page,
       needsAuditing,
       false,
@@ -141,20 +137,21 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
       userId ? userId : undefined,
       dateStarted !== OPTION_ALL ? dateStarted : undefined,
     );
-    setPerDiems(resultsList);
-    setCount(totalCount);
+
+    setPerDiems(response.getResultsList());
+    setCount(response.getTotalCount());
     setLoading(false);
   }, [setLoading, formData, page]);
   const loadLodging = useCallback(
-    async (perDiems: PerDiemType[]) => {
+    async (perDiems: PerDiem[]) => {
       const zipCodesByYearMonth: {
         [key: number]: {
           [key: number]: string[];
         };
       } = {};
-      perDiems.forEach(({ rowsList }) =>
-        rowsList.forEach(({ dateString, zipCode }) => {
-          const [y, m] = dateString.split('-');
+      perDiems.forEach(perDiem =>
+        perDiem.getRowsList().forEach(pdr => {
+          const [y, m] = pdr.getDateString().split('-');
           const year = +y;
           const month = +m;
           if (!zipCodesByYearMonth[year]) {
@@ -163,8 +160,8 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
           if (!zipCodesByYearMonth[year][month]) {
             zipCodesByYearMonth[year][month] = [];
           }
-          if (!zipCodesByYearMonth[year][month].includes(zipCode)) {
-            zipCodesByYearMonth[year][month].push(zipCode);
+          if (!zipCodesByYearMonth[year][month].includes(pdr.getZipCode())) {
+            zipCodesByYearMonth[year][month].push(pdr.getZipCode());
           }
         }),
       );
@@ -206,7 +203,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   );
   const loadPrintData = useCallback(async () => {
     const { departmentIds, userIds, weeks } = formPrintData;
-    const { resultsList } = await PerDiemClientService.loadPerDiemsReport(
+    const resultsList = await PerDiemClientService.loadPerDiemsReport(
       departmentIds,
       userIds
         .split(',')
@@ -214,8 +211,8 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
         .map(id => +id),
       weeks,
     );
-    setPerDiemsPrint(resultsList);
-    await loadLodging(resultsList);
+    setPerDiemsPrint(resultsList.getResultsList());
+    await loadLodging(resultsList.getResultsList());
   }, [formPrintData, setPerDiemsPrint, loadLodging]);
   useEffect(() => {
     if (!initialized) {
@@ -227,20 +224,20 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     }
   }, [initialized, initialize, loaded, setLoaded, load]);
   const handlePendingAuditedToggle = useCallback(
-    (perDiem?: PerDiemType) => () => setPendingAudited(perDiem),
+    (perDiem?: PerDiem) => () => setPendingAudited(perDiem),
     [setPendingAudited],
   );
   const handlePendingRejectToggle = useCallback(
-    (perDiem?: PerDiemType) => () => setPendingReject(perDiem),
+    (perDiem?: PerDiem) => () => setPendingReject(perDiem),
     [setPendingReject],
   );
   const handlePerDiemViewedToggle = useCallback(
-    (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
+    (perDiem?: PerDiem) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
   );
   const handleAudit = useCallback(async () => {
     if (pendingAudited) {
-      const { id } = pendingAudited;
+      const id = pendingAudited.getId();
       setLoading(true);
       setPendingAudited(undefined);
       await PerDiemClientService.updatePerDiemNeedsAudit(id);
@@ -249,14 +246,14 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   }, [pendingAudited, setLoading, setPendingAudited, setLoaded]);
   const handleReject = useCallback(async () => {
     if (pendingReject) {
-      const { id } = pendingReject;
+      const id = pendingReject.getId();
       setLoading(true);
-      const slackID = await getSlackID(pendingReject.ownerName);
+      const slackID = await getSlackID(pendingReject.getOwnerName());
       if (slackID != '0') {
         slackNotify(
           slackID,
           `Your PerDiem for ${formatWeek(
-            pendingReject.dateStarted,
+            pendingReject.getDateStarted(),
           )} was rejected for the following reason:` + rejectionMessage,
         );
       } else {
@@ -311,7 +308,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
       { label: OPTION_ALL, value: 0 },
       ...technicians.map(el => ({
         label: UserClientService.getCustomerName(el),
-        value: el.id,
+        value: el.getId(),
       })),
     ],
     [technicians],
@@ -321,7 +318,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
       { label: OPTION_ALL, value: 0 },
       ...departments.map(el => ({
         label: TimesheetDepartmentClientService.getDepartmentName(el),
-        value: el.id,
+        value: el.getId(),
       })),
     ],
     [departments],
@@ -375,7 +372,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
         label: 'Department(s)',
         options: departments.map(el => ({
           label: TimesheetDepartmentClientService.getDepartmentName(el),
-          value: el.id,
+          value: el.getId(),
         })),
         type: 'multiselect',
       },
@@ -392,27 +389,24 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const data: Data = loading
     ? makeFakeRows(4, 5)
     : perDiems.map(entry => {
-        const {
-          dateStarted,
-          ownerName,
-          department,
-          dateApproved,
-          dateSubmitted,
-        } = entry;
-        const { text, color } = getStatus(dateApproved, dateSubmitted, false);
+        const { text, color } = getStatus(
+          entry.getDateApproved(),
+          entry.getDateSubmitted(),
+          false,
+        );
         return [
           {
-            value: ownerName,
+            value: entry.getOwnerName(),
             onClick: handlePerDiemViewedToggle(entry),
           },
           {
             value: TimesheetDepartmentClientService.getDepartmentName(
-              department!,
+              entry.getDepartment()!,
             ),
             onClick: handlePerDiemViewedToggle(entry),
           },
           {
-            value: formatWeek(dateStarted),
+            value: formatWeek(entry.getDateStarted()),
             onClick: handlePerDiemViewedToggle(entry),
           },
           {
@@ -480,15 +474,15 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
           onClose={handlePendingRejectToggle()}
           onConfirm={handleReject}
         >
-          Are you sure Per Diem of <strong>{pendingReject.ownerName}</strong>{' '}
-          for department{' '}
+          Are you sure Per Diem of{' '}
+          <strong>{pendingReject.getOwnerName()}</strong> for department{' '}
           <strong>
             {TimesheetDepartmentClientService.getDepartmentName(
-              pendingReject.department!,
+              pendingReject.getDepartment()!,
             )}
           </strong>{' '}
-          for <strong>{formatWeek(pendingReject.dateStarted)}</strong> should be
-          Rejected?
+          for <strong>{formatWeek(pendingReject.getDateStarted())}</strong>{' '}
+          should be Rejected?
           <br></br>
           <label>
             <strong>Reason:</strong>
@@ -510,29 +504,29 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
           onClose={handlePendingAuditedToggle()}
           onConfirm={handleAudit}
         >
-          Are you sure Per Diem of <strong>{pendingAudited.ownerName}</strong>{' '}
-          for department{' '}
+          Are you sure Per Diem of{' '}
+          <strong>{pendingAudited.getOwnerName()}</strong> for department{' '}
           <strong>
             {TimesheetDepartmentClientService.getDepartmentName(
-              pendingAudited.department!,
+              pendingAudited.getDepartment()!,
             )}
           </strong>{' '}
-          for <strong>{formatWeek(pendingAudited.dateStarted)}</strong> no
+          for <strong>{formatWeek(pendingAudited.getDateStarted())}</strong> no
           longer needs auditing?
         </Confirm>
       )}
       {perDiemViewed && (
         <Modal open onClose={handlePerDiemViewedToggle(undefined)} fullScreen>
           <SectionBar
-            title={`Per Diem: ${perDiemViewed.ownerName}`}
+            title={`Per Diem: ${perDiemViewed.getOwnerName()}`}
             subtitle={
               <>
                 Department:{' '}
                 {TimesheetDepartmentClientService.getDepartmentName(
-                  perDiemViewed.department!,
+                  perDiemViewed.getDepartment()!,
                 )}
                 <br />
-                {formatWeek(perDiemViewed.dateStarted)}
+                {formatWeek(perDiemViewed.getDateStarted())}
               </>
             }
             actions={[
@@ -578,111 +572,106 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
             className="PerDiemNeedsAuditingPrintBtn"
           >
             {printStatus === 'loaded' &&
-              perDiemsPrint.map(
-                ({
-                  id,
-                  ownerName,
-                  department,
-                  dateStarted,
-                  rowsList,
-                  dateSubmitted,
-                  dateApproved,
-                  notes,
-                }) => {
-                  const totalMeals = rowsList.length * MEALS_RATE;
-                  const totalLodging = rowsList
-                    .filter(({ mealsOnly }) => !mealsOnly)
-                    .reduce((aggr, { dateString, zipCode }) => {
-                      const [y, m] = dateString.split('-');
-                      const year = +y;
-                      const month = +m;
-                      return (
-                        aggr +
-                        govPerDiemsByYearMonth[year][month][zipCode].lodging
-                      );
-                    }, 0);
-                  return (
-                    <div key={id} className="PerDiemNeedsAuditingPrintItem">
-                      <PrintParagraph tag="h3">
-                        {ownerName} /{' '}
-                        {TimesheetDepartmentClientService.getDepartmentName(
-                          department!,
-                        )}{' '}
-                        / {formatWeek(dateStarted)}
-                      </PrintParagraph>
-                      <PrintTable
-                        columns={[
-                          `Total Meals: ${usd(totalMeals)}`,
-                          `Total Lodging: ${usd(totalLodging)}`,
-                          dateSubmitted
-                            ? `Date submited: ${formatDate(dateSubmitted)}`
-                            : '',
-                          dateApproved
-                            ? `Date approved: ${formatDate(dateApproved)}`
-                            : '',
-                        ]}
-                        data={[]}
-                        skipNoEntriesTest
-                        equalColWidths
-                        noBorders
-                      />
-                      {notes && <PrintParagraph>Notes: {notes}</PrintParagraph>}
-                      <PrintTable
-                        key={id}
-                        equalColWidths
-                        columns={[...Array(7)].map((_, idx) => {
+              perDiemsPrint.map(entry => {
+                const totalMeals = entry.getRowsList().length * MEALS_RATE;
+                const totalLodging = entry
+                  .getRowsList()
+                  .filter(pdr => !pdr.getMealsOnly())
+                  .reduce((aggr, pdr) => {
+                    const [y, m] = pdr.getDateString().split('-');
+                    const year = +y;
+                    const month = +m;
+                    return (
+                      aggr +
+                      govPerDiemsByYearMonth[year][month][pdr.getZipCode()]
+                        .lodging
+                    );
+                  }, 0);
+                return (
+                  <div
+                    key={entry.getId()}
+                    className="PerDiemNeedsAuditingPrintItem"
+                  >
+                    <PrintParagraph tag="h3">
+                      {entry.getOwnerName()} /{' '}
+                      {TimesheetDepartmentClientService.getDepartmentName(
+                        entry.getDepartment()!,
+                      )}{' '}
+                      / {formatWeek(entry.getDateStarted())}
+                    </PrintParagraph>
+                    <PrintTable
+                      columns={[
+                        `Total Meals: ${usd(totalMeals)}`,
+                        `Total Lodging: ${usd(totalLodging)}`,
+                        entry.getDateSubmitted()
+                          ? `Date submited: ${formatDate(
+                              entry.getDateSubmitted(),
+                            )}`
+                          : '',
+                        entry.getDateApproved()
+                          ? `Date approved: ${formatDate(
+                              entry.getDateApproved(),
+                            )}`
+                          : '',
+                      ]}
+                      data={[]}
+                      skipNoEntriesTest
+                      equalColWidths
+                      noBorders
+                    />
+                    {entry.getNotes() && (
+                      <PrintParagraph>Notes: {entry.getNotes()}</PrintParagraph>
+                    )}
+                    <PrintTable
+                      key={entry.getId()}
+                      equalColWidths
+                      columns={[...Array(7)].map((_, idx) => {
+                        const date = format(
+                          addDays(parseISO(entry.getDateStarted()), idx),
+                          'do, iiii',
+                        );
+                        return date;
+                      })}
+                      data={[
+                        [...Array(7)].map((_, idx) => {
                           const date = format(
-                            addDays(parseISO(dateStarted), idx),
-                            'do, iiii',
+                            addDays(parseISO(entry.getDateStarted()), idx),
+                            'yyyy-MM-dd',
                           );
-                          return date;
-                        })}
-                        data={[
-                          [...Array(7)].map((_, idx) => {
-                            const date = format(
-                              addDays(parseISO(dateStarted), idx),
-                              'yyyy-MM-dd',
-                            );
-                            const row = rowsList.find(({ dateString }) =>
-                              dateString.includes(date),
-                            );
-                            if (!row) return '';
-                            const {
-                              dateString,
-                              zipCode,
-                              serviceCallId,
-                              mealsOnly,
-                              notes,
-                            } = row;
-                            const [y, m] = dateString.split('-');
-                            const year = +y;
-                            const month = +m;
-                            return (
-                              <>
-                                <div>Zip Code: {zipCode}</div>
-                                <div>Job Number: {serviceCallId}</div>
-                                <div>Meals: {usd(MEALS_RATE)}</div>
-                                {!mealsOnly && (
-                                  <div>
-                                    Lodging:{' '}
-                                    {usd(
-                                      govPerDiemsByYearMonth[year][month][
-                                        zipCode
-                                      ].lodging,
-                                    )}
-                                  </div>
-                                )}
-                                {notes && <div>Notes: {notes}</div>}
-                              </>
-                            );
-                          }),
-                        ]}
-                        noBorders
-                      />
-                    </div>
-                  );
-                },
-              )}
+                          const row = entry
+                            .getRowsList()
+                            .find(pdr => pdr.getDateString().includes(date));
+                          if (!row) return '';
+                          const [y, m] = row.getDateString().split('-');
+                          const year = +y;
+                          const month = +m;
+                          return (
+                            <>
+                              <div>Zip Code: {row.getZipCode()}</div>
+                              <div>Job Number: {row.getServiceCallId()}</div>
+                              <div>Meals: {usd(MEALS_RATE)}</div>
+                              {!row.getMealsOnly() && (
+                                <div>
+                                  Lodging:{' '}
+                                  {usd(
+                                    govPerDiemsByYearMonth[year][month][
+                                      row.getZipCode()
+                                    ].lodging,
+                                  )}
+                                </div>
+                              )}
+                              {row.getNotes() && (
+                                <div>Notes: {row.getNotes()}</div>
+                              )}
+                            </>
+                          );
+                        }),
+                      ]}
+                      noBorders
+                    />
+                  </div>
+                );
+              })}
           </PrintPage>
         </Modal>
       )}
