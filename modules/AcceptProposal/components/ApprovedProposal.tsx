@@ -85,8 +85,8 @@ const styles = ReactPDF.StyleSheet.create({
 
 interface props {
   sigURL: string;
-  quoteLines: QuoteLine.AsObject[];
-  property: Property.AsObject;
+  quoteLines: QuoteLine[];
+  property: Property;
   name: string;
   jobNumber: number;
   total: number;
@@ -143,7 +143,8 @@ export const ApprovedProposal = ({
             </ReactPDF.Text>
             <ReactPDF.Text style={styles.infoLine}>For: {name}</ReactPDF.Text>
             <ReactPDF.Text style={styles.infoLine}>
-              {property.address}, {property.city}, {property.state || 'FL'}
+              {property.getAddress()}, {property.getCity()},{' '}
+              {property.getState() || 'FL'}
             </ReactPDF.Text>
           </ReactPDF.View>
         </ReactPDF.View>
@@ -179,16 +180,16 @@ export const ApprovedProposal = ({
           {quoteLines.map(ql => (
             <ReactPDF.View
               style={styles.tableRow}
-              key={`quote_line_pdf_row_${ql.id}`}
+              key={`quote_line_pdf_row_${ql.getId()}`}
             >
               <ReactPDF.View style={[styles.tableCol, { width: '80%' }]}>
                 <ReactPDF.Text style={styles.tableCell}>
-                  {ql.description}
+                  {ql.getDescription()}
                 </ReactPDF.Text>
               </ReactPDF.View>
               <ReactPDF.View style={[styles.tableCol, { width: '20%' }]}>
                 <ReactPDF.Text style={styles.tableCell}>
-                  ${ql.adjustment}
+                  ${ql.getAdjustment()}
                 </ReactPDF.Text>
               </ReactPDF.View>
             </ReactPDF.View>

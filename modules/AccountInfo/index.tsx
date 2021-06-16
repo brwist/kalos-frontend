@@ -3,6 +3,6 @@ import ReactDOM from 'react-dom';
 import { AccountInfo } from './main';
 
 ReactDOM.render(
-  <AccountInfo userId={100452} withHeader />,
+  <AccountInfo userId={8418} withHeader />,
   document.getElementById('root'),
 );
