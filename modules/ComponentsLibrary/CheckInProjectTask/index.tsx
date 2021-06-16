@@ -3,8 +3,8 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { Field as FieldComponent } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
-import { EventType, makeFakeRows, TaskClientService } from '../../../helpers';
-import { Task } from '@kalos-core/kalos-rpc/Task';
+import { makeFakeRows, TaskClientService } from '../../../helpers';
+import { ProjectTask, Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
 import { IconButton, Typography } from '@material-ui/core';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
@@ -44,7 +44,7 @@ export const CheckInProjectTask: FC<Props> = ({
     [setCheckInConfirmationBoxOpen],
   );
 
-  const batchGetCheckedTasks = async () => {
+  const batchGetCheckedTasks = useCallback(async () => {
     let task = new Task();
     task.setExternalId(loggedUserId);
     task.setCheckedIn(true);
@@ -65,7 +65,7 @@ export const CheckInProjectTask: FC<Props> = ({
       }
       setCheckedInTasks(arr);
     }
-  };
+  }, [loggedUserId]);
 
   const handleSetCheckInWarningBoxOpen = useCallback(
     (isOpen: boolean) => {
@@ -75,14 +75,7 @@ export const CheckInProjectTask: FC<Props> = ({
   );
 
   const handleSaveTask = useCallback(
-    async ({
-      startDate,
-      startTime,
-      endDate,
-      endTime,
-      checkedIn,
-      ...formData
-    }: ExtendedProjectTaskType) => {
+    async (formData: ExtendedProjectTaskType) => {
       const currentDate = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
       if (projectToUse.dateEnded < currentDate) {
         console.error(
@@ -92,41 +85,50 @@ export const CheckInProjectTask: FC<Props> = ({
         return;
       }
       if (!projectToUse) return;
-      if (startDate > endDate && endDate != '') {
+      if (
+        formData.getStartDate() > formData.getEndDate() &&
+        formData.getEndDate() != ''
+      ) {
         console.error('Start Date cannot be after End Date.');
         return;
       }
-      if (projectToUse.dateStarted.substr(0, 10) > startDate) {
+      if (projectToUse.dateStarted.substr(0, 10) > formData.getStartDate()) {
         console.error(
           "Task's Start Date cannot be before Project's Start Date.",
         );
         return;
       }
-      if (projectToUse.dateEnded.substr(0, 10) < endDate) {
+      if (projectToUse.dateEnded.substr(0, 10) < formData.getEndDate()) {
         console.error(
           "Task's End Date was after the Project's End Date, setting the Task's End Date as the Project's End Date.",
         );
         // Auto set the task end date to be the project end date
-        endDate = projectToUse.dateEnded.substr(0, 10);
-        endTime = projectToUse.timeEnded;
+        formData.setEndDate(projectToUse.dateEnded.substr(0, 10));
+        formData.endTime = projectToUse.timeEnded;
       }
-      await TaskClientService.upsertEventTask({
-        ...formData,
-        eventId: serviceCallId,
-        startDate: `${startDate} ${startTime}:00`,
-        endDate: `${endDate} ${endTime}:00`,
-        checkedIn: checkedIn,
-        ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
-      });
+
+      let req = new ProjectTask();
+      req.setEventId(formData.getEventId());
+      req.setStartDate(`${formData.getStartDate()} ${formData.startTime}:00`);
+      req.setEndDate(`${formData.getEndDate()} ${formData.endTime}:00`);
+      req.setCheckedIn(formData.getCheckedIn());
+      if (!formData.getId()) req.setCreatorUserId(loggedUserId);
+
+      await TaskClientService.upsertEventTask(req);
       await batchGetCheckedTasks();
       setLoaded(false);
     },
-    [serviceCallId, loggedUserId, setLoaded],
+    [
+      projectToUse,
+      loggedUserId,
+      batchGetCheckedTasks,
+      handleSetCheckInWarningBoxOpen,
+    ],
   );
 
   const load = useCallback(async () => {
     await batchGetCheckedTasks();
-  }, []);
+  }, [batchGetCheckedTasks]);
 
   useEffect(() => {
     if (!loaded) {
@@ -149,7 +151,9 @@ export const CheckInProjectTask: FC<Props> = ({
                 <IconButton
                   key={task.getId() + 'delete'}
                   size="small"
-                  onClick={() =>
+                  onClick={() => {
+                    
+
                     checkOut({
                       ...task,
                       id: task.getId(),
@@ -158,8 +162,8 @@ export const CheckInProjectTask: FC<Props> = ({
                       endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
                       endTime: format(new Date(date), 'HH-mm'),
                       checkedIn: false,
-                    } as ExtendedProjectTaskType)
-                  }
+                    } as ExtendedProjectTaskType);
+                  }}
                 >
                   <AccessTimeIcon />
                 </IconButton>
