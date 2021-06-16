@@ -257,7 +257,7 @@ export const Timesheet: FC<Props> = props => {
         for (var val of days) {
           //iterate through each card in the day, as long as it is defined
           if (val != undefined) {
-            if (val.timeFinished === val.timeStarted) {
+            if (val.getTimeFinished() === val.getTimeStarted()) {
               //if the Start and End time are the same, trip the flag
               sameTimeConflict = true;
             }
@@ -267,19 +267,19 @@ export const Timesheet: FC<Props> = props => {
       for (let i = 0; i < shownDates.length; i++) {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
           (a, b) =>
-            parseISO(a.timeStarted).getTime() -
-            parseISO(b.timeStarted).getTime(),
+            parseISO(a.getTimeStarted()).getTime() -
+            parseISO(b.getTimeStarted()).getTime(),
         );
         let result = dayList.reduce(
           (acc, current, idx, arr) => {
             if (idx === 0) {
-              acc.idList.push(current.id);
+              acc.idList.push(current.getId());
               return acc;
             }
 
             let previous = arr[idx - 1];
-            let previousEnd = parseISO(previous.timeFinished).getTime();
-            let currentStart = parseISO(current.timeStarted).getTime();
+            let previousEnd = parseISO(previous.getTimeFinished()).getTime();
+            let currentStart = parseISO(current.getTimeStarted()).getTime();
             let overlap = previousEnd > currentStart;
             if (overlap) {
               overlapped = true;
@@ -289,10 +289,10 @@ export const Timesheet: FC<Props> = props => {
                 current: current,
               });
               if (
-                !current.adminApprovalUserId ||
-                current.adminApprovalUserId === 0
+                !current.getAdminApprovalUserId() ||
+                current.getAdminApprovalUserId() === 0
               ) {
-                acc.idList.push(current.id);
+                acc.idList.push(current.getId());
               }
             }
             return acc;
@@ -324,13 +324,13 @@ export const Timesheet: FC<Props> = props => {
         });
       } else {
         let isManager = false;
-        console.log(ids);
         if (user) {
-          const { permissionGroupsList } = user;
-          isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
+          isManager = !!user
+            .getPermissionGroupsList()
+            .find(p => p.getName() === 'Manager');
         }
         if (
-          (user?.timesheetAdministration || isManager) &&
+          (user?.getTimesheetAdministration() || isManager) &&
           props.userId !== props.timesheetOwnerId
         ) {
           await tslClient.Approve(ids, userId);
@@ -357,17 +357,17 @@ export const Timesheet: FC<Props> = props => {
       for (let i = 0; i < shownDates.length; i++) {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
           (a, b) =>
-            parseISO(a.timeStarted).getTime() -
-            parseISO(b.timeStarted).getTime(),
+            parseISO(a.getTimeStarted()).getTime() -
+            parseISO(b.getTimeStarted()).getTime(),
         );
         let result = dayList.reduce(
           (acc, current, idx, arr) => {
             if (
               idx === 0 &&
-              current.adminApprovalUserId &&
-              current.adminApprovalUserId != 0
+              current.getAdminApprovalUserId() &&
+              current.getAdminApprovalUserId() != 0
             ) {
-              acc.idList.push(current.id);
+              acc.idList.push(current.getId());
               return acc;
             }
 
@@ -377,11 +377,10 @@ export const Timesheet: FC<Props> = props => {
               current: current,
             });
             if (
-              current.adminApprovalUserId &&
-              current.adminApprovalUserId !== 0 &&
-              current.adminApprovalDatetime != NULL_TIME_VALUE
+              current.getAdminApprovalUserId() !== 0 &&
+              current.getAdminApprovalDatetime() != NULL_TIME_VALUE
             ) {
-              acc.idList.push(current.id);
+              acc.idList.push(current.getId());
             }
 
             return acc;
@@ -404,14 +403,12 @@ export const Timesheet: FC<Props> = props => {
           let day = timeoffDayList[j];
           console.log(day);
           if (
-            day.adminApprovalUserId != 0 &&
-            day.requestStatus == 1 &&
-            (day.requestType == 9 ||
-              day.requestType == 10 ||
-              day.requestType == 11)
+            day.getAdminApprovalUserId() != 0 &&
+            day.getRequestStatus() == 1 &&
+            [9, 10, 11].includes(day.getRequestType())
           ) {
             const req = new TimeoffRequest();
-            req.setId(day.id);
+            req.setId(day.getId());
             req.setPayrollProcessed(true);
             await TimeoffRequestClientService.Update(req);
           }
@@ -427,17 +424,17 @@ export const Timesheet: FC<Props> = props => {
       for (let i = 0; i < shownDates.length; i++) {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
           (a, b) =>
-            parseISO(a.timeStarted).getTime() -
-            parseISO(b.timeStarted).getTime(),
+            parseISO(a.getTimeStarted()).getTime() -
+            parseISO(b.getTimeStarted()).getTime(),
         );
         let result = dayList.reduce(
           (acc, current, idx, arr) => {
             if (
               idx === 0 &&
-              current.adminApprovalUserId &&
-              current.adminApprovalUserId != 0
+              current.getAdminApprovalUserId() &&
+              current.getAdminApprovalUserId() != 0
             ) {
-              acc.idList.push(current.id);
+              acc.idList.push(current.getId());
               return acc;
             }
 
@@ -447,11 +444,10 @@ export const Timesheet: FC<Props> = props => {
               current: current,
             });
             if (
-              current.adminApprovalUserId &&
-              current.adminApprovalUserId !== 0 &&
-              current.adminApprovalDatetime != NULL_TIME_VALUE
+              current.getAdminApprovalUserId() !== 0 &&
+              current.getAdminApprovalDatetime() != NULL_TIME_VALUE
             ) {
-              acc.idList.push(current.id);
+              acc.idList.push(current.getId());
             }
 
             return acc;
@@ -477,13 +473,16 @@ export const Timesheet: FC<Props> = props => {
       for (let i = 0; i < shownDates.length; i++) {
         let dayList = [...data[shownDates[i]].timesheetLineList].sort(
           (a, b) =>
-            parseISO(a.timeStarted).getTime() -
-            parseISO(b.timeStarted).getTime(),
+            parseISO(a.getTimeStarted()).getTime() -
+            parseISO(b.getTimeStarted()).getTime(),
         );
         let result = dayList.reduce(
           (acc, current, idx, arr) => {
-            if (idx === 0 && current.userApprovalDatetime != NULL_TIME_VALUE) {
-              acc.idList.push(current.id);
+            if (
+              idx === 0 &&
+              current.getUserApprovalDatetime() != NULL_TIME_VALUE
+            ) {
+              acc.idList.push(current.getId());
               return acc;
             }
 
@@ -493,11 +492,10 @@ export const Timesheet: FC<Props> = props => {
               current: current,
             });
             if (
-              current.adminApprovalUserId &&
-              current.adminApprovalUserId !== 0 &&
-              current.adminApprovalDatetime != NULL_TIME_VALUE
+              current.getAdminApprovalUserId() !== 0 &&
+              current.getAdminApprovalDatetime() != NULL_TIME_VALUE
             ) {
-              acc.idList.push(current.id);
+              acc.idList.push(current.getId());
             }
 
             return acc;
@@ -558,7 +556,7 @@ export const Timesheet: FC<Props> = props => {
       await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
-        (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
+        (aggr, item) => ({ ...aggr, [item.getId()]: item.getRequestType() }),
         {},
       ),
     );
@@ -602,21 +600,21 @@ export const Timesheet: FC<Props> = props => {
           'yyyy-MM-dd',
         )}%`,
       );
+      const toReq = new TimeoffRequest();
+      toReq.setIsActive(1);
+      toReq.setUserId(timesheetOwnerId);
+      toReq.setDateRangeList([
+        '>=',
+        shownDates[0],
+        '<',
+        format(
+          addDays(parseISO(shownDates[shownDates.length - 1]), 1),
+          'yyyy-MM-dd',
+        ),
+      ]);
+      toReq.setDateTargetList(['time_started', 'time_started']);
       const timeoffs =
-        await TimeoffRequestClientService.getTimeoffRequestByFilter({
-          isActive: 1,
-          userId: timesheetOwnerId,
-          dateRangeList: [
-            '>=',
-            shownDates[0],
-            '<',
-            format(
-              addDays(parseISO(shownDates[shownDates.length - 1]), 1),
-              'yyyy-MM-dd',
-            ),
-          ],
-          dateTargetList: ['time_started', 'time_started'],
-        });
+        await TimeoffRequestClientService.getTimeoffRequestByFilter(toReq);
       dispatch({
         type: 'fetchedTimesheetData',
         data: result,
@@ -630,10 +628,13 @@ export const Timesheet: FC<Props> = props => {
   if (!user) {
     return null;
   }
-  const { permissionGroupsList } = user;
-  const isManager = !!permissionGroupsList.find(p => p.name === 'Manager');
+  const isManager = !!user
+    .getPermissionGroupsList()
+    .find(p => p.getName() === 'Manager');
   const hasAccess =
-    userId === timesheetOwnerId || user.timesheetAdministration || isManager;
+    userId === timesheetOwnerId ||
+    user.getTimesheetAdministration() ||
+    isManager;
   if (!perDiemRowId) {
     PerDiemClientService.getPerDiemRowIds(selectedDate).then(value => {
       if (!value) return;
@@ -663,9 +664,9 @@ export const Timesheet: FC<Props> = props => {
           <Toolbar
             selectedDate={selectedDate}
             handleDateChange={handleDateChange}
-            userName={`${owner?.firstname} ${owner?.lastname}`}
+            userName={`${owner?.getFirstname()} ${owner?.getLastname()}`}
             timesheetAdministration={
-              !!user.timesheetAdministration || isManager
+              !!user.getTimesheetAdministration() || isManager
             }
             payroll={payroll}
             submitTimesheet={handleSubmitTimesheet}
@@ -714,10 +715,10 @@ export const Timesheet: FC<Props> = props => {
               timesheetOwnerId={timesheetOwnerId}
               userId={userId}
               timesheetAdministration={
-                !!user.timesheetAdministration || isManager
+                !!user.getTimesheetAdministration() || isManager
               }
               role={role}
-              defaultDepartment={user.employeeDepartmentId}
+              defaultDepartment={user.getEmployeeDepartmentId()}
               onClose={handleCloseModal}
               onSave={handleOnSave}
               action={editing.action}
@@ -728,7 +729,7 @@ export const Timesheet: FC<Props> = props => {
       </ConfirmServiceProvider>
       {receiptsIssue.shown && (
         <ReceiptsIssueDialog
-          isAdmin={user.timesheetAdministration || isManager}
+          isAdmin={user.getTimesheetAdministration() || isManager}
           receiptsIssueStr={receiptsIssue.receiptsIssueStr}
           handleTimeout={handleTimeout}
         />
