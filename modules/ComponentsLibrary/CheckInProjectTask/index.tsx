@@ -12,8 +12,10 @@ import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { EnhancedField } from '../Field/examples';
 import { Alert } from '../Alert';
+import { EventType } from '../ProjectDetail';
+import { Event } from '@kalos-core/kalos-rpc/Event/index';
 interface Props {
-  projectToUse: EventType;
+  projectToUse: Event;
   loggedUserId: number;
   serviceCallId: number;
 }
@@ -23,6 +25,7 @@ export const CheckInProjectTask: FC<Props> = ({
   loggedUserId,
   serviceCallId,
 }) => {
+  console.log('project:', projectToUse);
   const [checkedInTasks, setCheckedInTasks] = useState<Task[]>();
   const [checkInConfirmationBoxOpen, setCheckInConfirmationBoxOpen] =
     useState<boolean>(false);
@@ -80,7 +83,7 @@ export const CheckInProjectTask: FC<Props> = ({
   const handleSaveTask = useCallback(
     async (formData: ExtendedProjectTaskType) => {
       const currentDate = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
-      if (projectToUse.dateEnded < currentDate) {
+      if (projectToUse.getDateEnded() < currentDate) {
         console.error(
           'Cannot save to the Project - the End Date has already passed.',
         );
@@ -95,19 +98,21 @@ export const CheckInProjectTask: FC<Props> = ({
         console.error('Start Date cannot be after End Date.');
         return;
       }
-      if (projectToUse.dateStarted.substr(0, 10) > formData.getStartDate()) {
+      if (
+        projectToUse.getDateStarted().substr(0, 10) > formData.getStartDate()
+      ) {
         console.error(
           "Task's Start Date cannot be before Project's Start Date.",
         );
         return;
       }
-      if (projectToUse.dateEnded.substr(0, 10) < formData.getEndDate()) {
+      if (projectToUse.getDateEnded().substr(0, 10) < formData.getEndDate()) {
         console.error(
           "Task's End Date was after the Project's End Date, setting the Task's End Date as the Project's End Date.",
         );
         // Auto set the task end date to be the project end date
-        formData.setEndDate(projectToUse.dateEnded.substr(0, 10));
-        formData.endTime = projectToUse.timeEnded;
+        formData.setEndDate(projectToUse.getDateEnded().substr(0, 10));
+        formData.endTime = projectToUse.getTimeEnded();
       }
 
       let req = new ProjectTask();
