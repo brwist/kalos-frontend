@@ -78,6 +78,7 @@ export const CustomerInformation: FC<Props> = ({
     useState<boolean>(false);
   const [notificationViewing, setNotificationViewing] =
     useState<boolean>(false);
+  const [pendingBillingsLoaded, setPendingBillingsLoaded] = useState<boolean>();
 
   const groupLinksInitialIds = groupLinksInitial.map(g => g.getGroupId());
 
@@ -98,9 +99,16 @@ export const CustomerInformation: FC<Props> = ({
       const pendingBilling = new PendingBilling();
       pendingBilling.setUserId(userID);
       pendingBilling.setPropertyId(propertyId);
-      const { totalCount: pendingBillingsTotalCount } = (
-        await PendingBillingClientService.BatchGet(pendingBilling)
-      ).toObject();
+      let pendingBillingsTotalCount = 0;
+      try {
+        let result = await PendingBillingClientService.BatchGet(pendingBilling);
+        pendingBillingsTotalCount = result.getTotalCount();
+        setPendingBillingsLoaded(true);
+      } catch (err) {
+        console.error(
+          `An error occurred while batch-getting pending bills: ${err}`,
+        );
+      }
       if (pendingBillingsTotalCount > 0) {
         setPendingBilling(true);
         setPendingBillingRecordCount(pendingBillingsTotalCount);
@@ -122,6 +130,7 @@ export const CustomerInformation: FC<Props> = ({
       );
       setCustomer(customer);
     } catch (e) {
+      console.error(`An error occurred while loading user by id, error: ${e}`);
       setError(true);
     }
     CustomEventsHandler.listen('ShowDocuments', handleToggleDocuments);
@@ -137,6 +146,7 @@ export const CustomerInformation: FC<Props> = ({
     viewedAsCustomer,
     handleToggleDocuments,
     handleToggleEditing,
+    setPendingBillingsLoaded,
   ]);
 
   const handleSetNotificationEditing = useCallback(
@@ -384,7 +394,7 @@ export const CustomerInformation: FC<Props> = ({
                 data={[
                   [{ label: 'Record Count', value: pendingBillingRecordCount }],
                 ]}
-                loading={pendingBillingRecordCount === 0}
+                loading={!pendingBillingsLoaded}
               />
             </SectionBar>
           </div>
