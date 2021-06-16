@@ -8,12 +8,11 @@ import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import { WeekPicker } from '../../WeekPicker';
 import { Button } from '../../Button';
 import { Payroll } from '../reducer';
-import { roundNumber, UserClientService, UserType } from '../../../../helpers';
+import { roundNumber } from '../../../../helpers';
 import { useConfirm } from '../../ConfirmService';
 import './toolbar.less';
-import { RoleType, Payroll as PayrollComponent } from '../../Payroll';
+import { Payroll as PayrollComponent } from '../../Payroll';
 import { Modal } from '../../Modal';
-import { Fullscreen } from '@material-ui/icons';
 import { SectionBar } from '../../SectionBar';
 
 type Props = {
