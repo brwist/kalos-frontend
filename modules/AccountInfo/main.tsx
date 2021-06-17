@@ -6,7 +6,7 @@ import { Form, Schema } from '../ComponentsLibrary/Form';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { UserType, UserClientService } from '../../helpers';
+import { UserClientService } from '../../helpers';
 import { Loader } from '../Loader/main';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
@@ -34,17 +34,17 @@ type ChangeProp = {
 
 const SCHEMA_USER: Schema<User> = [
   [
-    { name: 'getFirstname', label: 'First Name', required: true },
-    { name: 'getLastname', label: 'Last Name', required: true },
+    { name: 'setFirstname', label: 'First Name', required: true },
+    { name: 'setLastname', label: 'Last Name', required: true },
   ],
   [
-    { name: 'getPhone', label: 'Phone Number' },
-    { name: 'getEmail', label: 'Email' },
+    { name: 'setPhone', label: 'Phone Number' },
+    { name: 'setEmail', label: 'Email' },
   ],
   [
-    { name: 'getAddress', label: 'Street Address' },
-    { name: 'getCity', label: 'City' },
-    { name: 'getZip', label: 'Zip Code' },
+    { name: 'setAddress', label: 'Street Address' },
+    { name: 'setCity', label: 'City' },
+    { name: 'setZip', label: 'Zip Code' },
     {},
   ],
 ];
