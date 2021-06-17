@@ -90,6 +90,7 @@ export const CheckInProjectTask: FC<Props> = ({
         handleSetCheckInWarningBoxOpen(true);
         return;
       }
+      console.log('Checked in: ', formData.projectTask);
       if (!projectToUse) return;
       if (
         formData.projectTask.getStartDate() >
@@ -99,6 +100,11 @@ export const CheckInProjectTask: FC<Props> = ({
         console.error('Start Date cannot be after End Date.');
         return;
       }
+      console.log(
+        projectToUse.getDateStarted().substr(0, 10),
+        ' > ',
+        formData.projectTask.getStartDate(),
+      );
       if (
         projectToUse.getDateStarted().substr(0, 10) >
         formData.projectTask.getStartDate()
@@ -123,6 +129,7 @@ export const CheckInProjectTask: FC<Props> = ({
       }
 
       let req = new ProjectTask();
+      req.setId(formData.projectTask.getId());
       req.setEventId(formData.projectTask.getEventId());
       req.setStartDate(
         `${formData.projectTask.getStartDate()} ${formData.startTime}:00`,
@@ -130,6 +137,7 @@ export const CheckInProjectTask: FC<Props> = ({
       req.setEndDate(
         `${formData.projectTask.getEndDate()} ${formData.endTime}:00`,
       );
+      console.log('Set checked in as: ', formData.projectTask.getCheckedIn());
       req.setCheckedIn(formData.projectTask.getCheckedIn());
       req.setFieldMaskList([
         'Id',
@@ -143,7 +151,9 @@ export const CheckInProjectTask: FC<Props> = ({
       req.setExternalId(loggedUserId);
       if (!formData.projectTask.getId()) req.setCreatorUserId(loggedUserId);
 
-      await TaskClientService.upsertEventTask(req);
+      console.log('SAVING : ', req);
+      const result = await TaskClientService.upsertEventTask(req);
+      console.log(result);
       await batchGetCheckedTasks();
       setLoaded(false);
     },
@@ -181,10 +191,13 @@ export const CheckInProjectTask: FC<Props> = ({
                   key={task.getId() + 'delete'}
                   size="small"
                   onClick={() => {
-                    let projectTask = { ...task } as ProjectTask;
+                    console.log('TASK: ', task);
+                    let projectTask = new ProjectTask();
+                    console.log('This one');
                     projectTask.setStartDate(
                       task.getHourlyStart().split(' ')[0],
                     );
+                    console.log('Didnt crash');
                     projectTask.setEndDate(
                       format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
                     );
@@ -192,7 +205,7 @@ export const CheckInProjectTask: FC<Props> = ({
                     projectTask.setCheckedIn(false);
 
                     checkOut({
-                      ...projectTask,
+                      projectTask,
                       startTime: task.getHourlyStart().split(' ')[1],
                       endTime: format(new Date(date), 'HH-mm'),
                     } as ExtendedProjectTaskType);
@@ -210,12 +223,11 @@ export const CheckInProjectTask: FC<Props> = ({
   const checkOut = (checkedInTask: ExtendedProjectTaskType) => {
     const date = new Date();
 
-    checkedInTask.projectTask.setId(checkedInTask.projectTask.getId());
-    checkedInTask.projectTask.setEndDate(
-      format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
-    );
     checkedInTask.projectTask.setCheckedIn(false);
-    checkedInTask.projectTask.setExternalId(loggedUserId);
+    checkedInTask.projectTask.setFieldMaskList([
+      ...checkedInTask.projectTask.getFieldMaskList(),
+      'CheckedIn',
+    ]);
 
     let updateTask = {
       projectTask: checkedInTask.projectTask,
@@ -319,7 +331,7 @@ export const CheckInProjectTask: FC<Props> = ({
                     projectTask.setCheckedIn(false);
 
                     checkOut({
-                      ...projectTask,
+                      projectTask,
                       startTime: task.getHourlyStart().split(' ')[1],
                       endTime: format(new Date(date), 'HH-mm'),
                     } as ExtendedProjectTaskType);
