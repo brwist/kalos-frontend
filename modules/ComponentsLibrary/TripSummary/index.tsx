@@ -41,7 +41,7 @@ import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
 
-export const SCHEMA_TRIP_SEARCH: Schema<Trip> = [
+export const SCHEMA_TRIP_SEARCH: Schema<TripsFilter> = [
   [
     {
       label: 'ID',
@@ -203,8 +203,8 @@ interface State {
   warningNoPerDiem: boolean; // When there is no per-diem this is true and it displays
   // a dialogue
   perDiemDropDownSelected: string;
-  perDiems: PerDiem.AsObject[] | null;
-  currentTripDepartment: TimesheetDepartment.AsObject | null;
+  perDiems: PerDiem[] | null;
+  currentTripDepartment: TimesheetDepartment | null;
 }
 
 export class TripSummary extends React.PureComponent<Props, State> {
@@ -257,7 +257,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     req.setId(id);
     const dept = await TimesheetDepartmentClientService.Get(req);
 
-    this.setState({ currentTripDepartment: dept.toObject() });
+    this.setState({ currentTripDepartment: dept });
   };
 
   setDepartment = (value: TimesheetDepartment | null) => {
@@ -330,6 +330,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
         tripFilter.departmentId = this.props.departmentId;
     }
     let criteria: LoadTripsByFilter;
+    let tripReq: Trip = new Trip();
     if (!this.props.viewingOwn) {
       criteria = {
         page,
@@ -355,6 +356,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               role: this.props.role,
             },
         sort: tripSort as TripsSort,
+        req: tripReq,
       };
     } else {
       criteria = {
@@ -371,6 +373,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               role: this.props.role,
             },
         sort: tripSort as TripsSort,
+        req: tripReq,
       };
     }
 
@@ -380,7 +383,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
 
   getFilteredTripList = async (criteria: LoadTripsByFilter) => {
     const res: {
-      results: Trip.AsObject[];
+      results: Trip[];
       totalCount: number;
     } = await loadTripsByFilter(criteria);
     let tripList: Trip[] = [];
@@ -813,19 +816,15 @@ export class TripSummary extends React.PureComponent<Props, State> {
       try {
         department =
           await TimesheetDepartmentClientService.getDepartmentByManagerID(
-            user.managedBy,
+            user.getManagedBy(),
           );
       } catch (err) {
         console.error('Error getting timesheet department: ', err);
       }
     }
-    if (department) trip.setDepartmentId(department.id);
+    if (department) trip.setDepartmentId(department.getId());
     try {
-      await PerDiemClientService.upsertTrip(
-        trip.toObject(),
-        rowId!,
-        userId,
-      ).then(() => {
+      await PerDiemClientService.upsertTrip(trip, rowId!, userId).then(() => {
         this.setState({ pendingTrip: null });
       });
     } catch (err) {
@@ -856,6 +855,22 @@ export class TripSummary extends React.PureComponent<Props, State> {
   componentDidMount() {
     this.setStateOfPerDiems();
   }
+
+  convertFilterToTrip = (filter: TripsFilter) => {
+    let trip = new Trip();
+    for (const field in Object.keys(filter)) {
+      // ? Basically loops over the trip filter fields and makes the setter get called (similar to getRPCFields)
+      // ! ts-ignore is there to prevent typescript from yelling about how the string is technically of type "any"
+      // @ts-ignore
+      if (filter[field])
+        // @ts-ignore
+        trip[`set${field.charAt(0).toUpperCase + field.slice(1)}`](
+          // @ts-ignore
+          filter[field],
+        );
+    }
+    return trip;
+  };
 
   setStateOfPerDiems = async () => {
     if (this.props.perDiemRowIds) {
@@ -1055,13 +1070,13 @@ export class TripSummary extends React.PureComponent<Props, State> {
             </Confirm>
           )}
           {this.props.searchable && (
-            <Form
+            <Form<TripsFilter>
               key={'searchForm'}
               title="Search"
               submitLabel="Search"
               cancelLabel="Reset"
               schema={SCHEMA_TRIP_SEARCH}
-              data={this.state.search as Trip.AsObject}
+              data={this.state.search!}
               onClose={() => {
                 this.loadTripsAndUpdate();
               }}
