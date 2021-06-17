@@ -1,7 +1,6 @@
 import { addDays, format } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
-import { Field as FieldComponent } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
 import { makeFakeRows, TaskClientService } from '../../../helpers';
 import { ProjectTask, Task } from '@kalos-core/kalos-rpc/Task';
@@ -12,7 +11,6 @@ import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { EnhancedField } from '../Field/examples';
 import { Alert } from '../Alert';
-import { EventType } from '../ProjectDetail';
 import { Event } from '@kalos-core/kalos-rpc/Event/index';
 interface Props {
   projectToUse: Event;
@@ -23,9 +21,7 @@ interface Props {
 export const CheckInProjectTask: FC<Props> = ({
   projectToUse,
   loggedUserId,
-  serviceCallId,
 }) => {
-  console.log('project:', projectToUse);
   const [checkedInTasks, setCheckedInTasks] = useState<Task[]>();
   const [checkInConfirmationBoxOpen, setCheckInConfirmationBoxOpen] =
     useState<boolean>(false);
@@ -90,7 +86,6 @@ export const CheckInProjectTask: FC<Props> = ({
         handleSetCheckInWarningBoxOpen(true);
         return;
       }
-      console.log('Checked in: ', formData.projectTask);
       if (!projectToUse) return;
       if (
         formData.projectTask.getStartDate() >
@@ -100,11 +95,6 @@ export const CheckInProjectTask: FC<Props> = ({
         console.error('Start Date cannot be after End Date.');
         return;
       }
-      console.log(
-        projectToUse.getDateStarted().substr(0, 10),
-        ' > ',
-        formData.projectTask.getStartDate(),
-      );
       if (
         projectToUse.getDateStarted().substr(0, 10) >
         formData.projectTask.getStartDate()
@@ -137,7 +127,6 @@ export const CheckInProjectTask: FC<Props> = ({
       req.setEndDate(
         `${formData.projectTask.getEndDate()} ${formData.endTime}:00`,
       );
-      console.log('Set checked in as: ', formData.projectTask.getCheckedIn());
       req.setCheckedIn(formData.projectTask.getCheckedIn());
       req.setFieldMaskList([
         'Id',
@@ -151,9 +140,7 @@ export const CheckInProjectTask: FC<Props> = ({
       req.setExternalId(loggedUserId);
       if (!formData.projectTask.getId()) req.setCreatorUserId(loggedUserId);
 
-      console.log('SAVING : ', req);
       const result = await TaskClientService.upsertEventTask(req);
-      console.log(result);
       await batchGetCheckedTasks();
       setLoaded(false);
     },
@@ -191,13 +178,10 @@ export const CheckInProjectTask: FC<Props> = ({
                   key={task.getId() + 'delete'}
                   size="small"
                   onClick={() => {
-                    console.log('TASK: ', task);
                     let projectTask = new ProjectTask();
-                    console.log('This one');
                     projectTask.setStartDate(
                       task.getHourlyStart().split(' ')[0],
                     );
-                    console.log('Didnt crash');
                     projectTask.setEndDate(
                       format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
                     );
@@ -320,7 +304,7 @@ export const CheckInProjectTask: FC<Props> = ({
                 onClick: () =>
                   checkedInTasks?.forEach(task => {
                     const date = new Date();
-                    let projectTask = { ...task } as ProjectTask;
+                    let projectTask = new ProjectTask();
                     projectTask.setStartDate(
                       task.getHourlyStart().split(' ')[0],
                     );
