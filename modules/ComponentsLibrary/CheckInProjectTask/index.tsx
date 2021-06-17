@@ -92,35 +92,54 @@ export const CheckInProjectTask: FC<Props> = ({
       }
       if (!projectToUse) return;
       if (
-        formData.getStartDate() > formData.getEndDate() &&
-        formData.getEndDate() != ''
+        formData.projectTask.getStartDate() >
+          formData.projectTask.getEndDate() &&
+        formData.projectTask.getEndDate() != ''
       ) {
         console.error('Start Date cannot be after End Date.');
         return;
       }
       if (
-        projectToUse.getDateStarted().substr(0, 10) > formData.getStartDate()
+        projectToUse.getDateStarted().substr(0, 10) >
+        formData.projectTask.getStartDate()
       ) {
         console.error(
           "Task's Start Date cannot be before Project's Start Date.",
         );
         return;
       }
-      if (projectToUse.getDateEnded().substr(0, 10) < formData.getEndDate()) {
+      if (
+        projectToUse.getDateEnded().substr(0, 10) <
+        formData.projectTask.getEndDate()
+      ) {
         console.error(
           "Task's End Date was after the Project's End Date, setting the Task's End Date as the Project's End Date.",
         );
         // Auto set the task end date to be the project end date
-        formData.setEndDate(projectToUse.getDateEnded().substr(0, 10));
+        formData.projectTask.setEndDate(
+          projectToUse.getDateEnded().substr(0, 10),
+        );
         formData.endTime = projectToUse.getTimeEnded();
       }
 
       let req = new ProjectTask();
-      req.setEventId(formData.getEventId());
-      req.setStartDate(`${formData.getStartDate()} ${formData.startTime}:00`);
-      req.setEndDate(`${formData.getEndDate()} ${formData.endTime}:00`);
-      req.setCheckedIn(formData.getCheckedIn());
-      if (!formData.getId()) req.setCreatorUserId(loggedUserId);
+      req.setEventId(formData.projectTask.getEventId());
+      req.setStartDate(
+        `${formData.projectTask.getStartDate()} ${formData.startTime}:00`,
+      );
+      req.setEndDate(
+        `${formData.projectTask.getEndDate()} ${formData.endTime}:00`,
+      );
+      req.setCheckedIn(formData.projectTask.getCheckedIn());
+      req.setFieldMaskList([
+        'Id',
+        'StartDate',
+        'EndDate',
+        'CheckedIn',
+        'CreatorUserId',
+      ]);
+      req.setPriorityId(3);
+      if (!formData.projectTask.getId()) req.setCreatorUserId(loggedUserId);
 
       await TaskClientService.upsertEventTask(req);
       await batchGetCheckedTasks();
@@ -189,13 +208,15 @@ export const CheckInProjectTask: FC<Props> = ({
   const checkOut = (checkedInTask: ExtendedProjectTaskType) => {
     const date = new Date();
 
-    checkedInTask.setId(checkedInTask.getId());
-    checkedInTask.setEndDate(format(new Date(date), 'yyyy-MM-dd HH:mm:ss'));
-    checkedInTask.setCheckedIn(false);
-    checkedInTask.setExternalId(loggedUserId);
+    checkedInTask.projectTask.setId(checkedInTask.projectTask.getId());
+    checkedInTask.projectTask.setEndDate(
+      format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
+    );
+    checkedInTask.projectTask.setCheckedIn(false);
+    checkedInTask.projectTask.setExternalId(loggedUserId);
 
     let updateTask = {
-      ...checkedInTask,
+      projectTask: checkedInTask.projectTask,
       startTime: checkedInTask.startTime,
       endTime: format(new Date(date), 'HH-mm'),
     } as ExtendedProjectTaskType;
@@ -218,7 +239,7 @@ export const CheckInProjectTask: FC<Props> = ({
     projectTask.setExternalId(loggedUserId);
     projectTask.setCheckedIn(true);
     let taskNew = {
-      ...projectTask,
+      projectTask,
       startTime: format(new Date(date), 'HH-mm'),
       endTime: format(addDays(new Date(date), 1), 'HH-mm'),
     } as ExtendedProjectTaskType;
