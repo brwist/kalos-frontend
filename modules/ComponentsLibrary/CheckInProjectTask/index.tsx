@@ -138,7 +138,9 @@ export const CheckInProjectTask: FC<Props> = ({
         'CheckedIn',
         'CreatorUserId',
       ]);
+      req.setBriefDescription(formData.projectTask.getBriefDescription());
       req.setPriorityId(3);
+      req.setExternalId(loggedUserId);
       if (!formData.projectTask.getId()) req.setCreatorUserId(loggedUserId);
 
       await TaskClientService.upsertEventTask(req);
