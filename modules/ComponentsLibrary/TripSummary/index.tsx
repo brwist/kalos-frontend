@@ -46,17 +46,17 @@ export const SCHEMA_TRIP_SEARCH: Schema<TripsFilter> = [
     {
       label: 'ID',
       type: 'text',
-      name: 'getId',
+      name: 'id',
     },
     {
       label: 'Origin',
       type: 'text',
-      name: 'getOriginAddress',
+      name: 'originAddress',
     },
     {
       label: 'Destination',
       type: 'text',
-      name: 'getDestinationAddress',
+      name: 'destinationAddress',
     },
   ],
 ];
@@ -213,7 +213,6 @@ export class TripSummary extends React.PureComponent<Props, State> {
   dateIdPair: { date: string; row_id: number }[] = [];
   resultsPerPage: number = 25;
   department: TimesheetDepartment.AsObject | null = null;
-  numFilteredTrips: number = 0;
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -304,7 +303,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
       tripFilter.departmentId = this.props.departmentId;
     }
 
-    this.numFilteredTrips = 0;
+    // IF trip filter is defined then if tripfilter page is undefined then 0 else tripFilter page else 0
 
     const page =
       tripFilter != undefined
@@ -343,16 +342,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               departmentId: this.props.departmentId,
               adminActionDate:
                 this.props.role === 'Manager' ? NULL_TIME : undefined,
-              payrollProcessed: tripFilter
-                ? !tripFilter!.payrollProcessed
-                : this.props.role == 'Payroll' && !toggleButton
-                ? true
-                : false,
-              approved: tripFilter
-                ? !tripFilter!.approved
-                : this.props.role == 'Manager'
-                ? false
-                : true,
+              payrollProcessed:
+                this.props.role == 'Payroll' && !toggleButton ? true : false,
+              approved: this.props.role == 'Manager' ? false : true,
               role: this.props.role,
             },
         sort: tripSort as TripsSort,
@@ -410,12 +402,11 @@ export class TripSummary extends React.PureComponent<Props, State> {
     tripFilter?: TripsFilter,
     toggleButton?: boolean,
   ) => {
-    await this.loadTrips(tripFilter, toggleButton).then(async result => {
-      this.setState({ tripsOnPage: result });
-      await this.refreshNamesAndDates();
-      this.setState({
-        totalTripMiles: await this.getTotalTripDistance(),
-      });
+    let result = await this.loadTrips(tripFilter, toggleButton);
+    this.setState({ tripsOnPage: result });
+    await this.refreshNamesAndDates();
+    this.setState({
+      totalTripMiles: await this.getTotalTripDistance(),
     });
   };
 

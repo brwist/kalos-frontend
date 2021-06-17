@@ -1110,7 +1110,7 @@ export const loadTripsByFilter = async ({
   req,
 }: LoadTripsByFilter) => {
   // FIXME move to trips client
-  const { orderBy, orderDir, orderByField } = sort;
+  const { orderDir, orderByField } = sort;
   req.setPage(page);
   req.setIsActive(true);
   for (const fieldName in filter) {
