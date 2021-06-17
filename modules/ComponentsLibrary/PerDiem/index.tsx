@@ -49,16 +49,16 @@ export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
   [
     {
       label: 'Origin Address',
-      name: 'getOriginAddress',
+      name: 'setOriginAddress',
       type: 'text',
     },
     {
       label: 'Destination Address',
-      name: 'getDestinationAddress',
+      name: 'setDestinationAddress',
       type: 'text',
     },
     {
-      name: 'getPerDiemRowId',
+      name: 'setPerDiemRowId',
       type: 'hidden',
     },
   ],
@@ -115,20 +115,20 @@ export const getStatus = (
 const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRow> = [
   [
     {
-      name: 'getId',
+      name: 'setId',
       type: 'hidden',
     },
   ],
   [
     {
-      name: 'getPerDiemId',
+      name: 'setPerDiemId',
       type: 'hidden',
     },
   ],
   [
     {
       label: 'Date',
-      name: 'getDateString',
+      name: 'setDateString',
       type: 'date',
       readOnly: true,
     },
@@ -136,14 +136,14 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRow> = [
   [
     {
       label: 'Zip Code',
-      name: 'getZipCode',
+      name: 'setZipCode',
       required: true,
     },
   ],
   [
     {
       label: 'Service Call ID',
-      name: 'getServiceCallId',
+      name: 'setServiceCallId',
       type: 'eventId',
       required: true,
     },
@@ -151,14 +151,14 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRow> = [
   [
     {
       label: 'Notes',
-      name: 'getNotes',
+      name: 'setNotes',
       multiline: true,
     },
   ],
   [
     {
       label: 'Meals Only',
-      name: 'getMealsOnly',
+      name: 'setMealsOnly',
       type: 'checkbox',
     },
   ],
@@ -550,12 +550,12 @@ export const PerDiemComponent: FC<Props> = ({
   const SCHEMA_PER_DIEM: Schema<PerDiem> = pendingPerDiemEdit
     ? [
         [
-          { name: 'getId', type: 'hidden' },
-          { name: 'getDateStarted', type: 'hidden' },
+          { name: 'setId', type: 'hidden' },
+          { name: 'setDateStarted', type: 'hidden' },
         ],
         [
           {
-            name: 'getUserId',
+            name: 'setUserId',
             label: 'Technician',
             type:
               isAnyManager && !pendingPerDiemEdit.getId()
@@ -569,7 +569,7 @@ export const PerDiemComponent: FC<Props> = ({
             ? []
             : [
                 {
-                  name: 'getDepartmentId' as const,
+                  name: 'setDepartmentId' as const,
                   label: 'Department',
                   options: departmentsOptions,
                   required: true,
@@ -579,7 +579,7 @@ export const PerDiemComponent: FC<Props> = ({
         ],
         [
           {
-            name: 'getNotes',
+            name: 'setNotes',
             label: 'Notes',
             multiline: true,
           },
