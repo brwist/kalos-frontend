@@ -10,9 +10,11 @@ import {
 import {
   TaskClient,
   Task,
+  SpiffType,
   GetPendingSpiffConfig,
 } from '@kalos-core/kalos-rpc/Task';
 import { parseISO, subDays } from 'date-fns/esm';
+
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -23,12 +25,10 @@ import { Form, Schema } from '../../../ComponentsLibrary/Form';
 import { Option } from '../../../ComponentsLibrary/Field';
 import { Button } from '../../Button';
 import {
-  TaskType,
   makeFakeRows,
   formatWeek,
   timestamp,
   escapeText,
-  SpiffTypeType,
   getRPCFields,
   EventClientService,
 } from '../../../../helpers';
@@ -38,6 +38,7 @@ import {
   ENDPOINT,
   NULL_TIME,
 } from '../../../../constants';
+import { types } from '@babel/core';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -58,10 +59,10 @@ export const Spiffs: FC<Props> = ({
 }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [spiffs, setSpiffs] = useState<TaskType[]>([]);
+  const [spiffs, setSpiffs] = useState<Task[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [pendingView, setPendingView] = useState<TaskType>();
+  const [pendingView, setPendingView] = useState<Task>();
   const [pendingAdd, setPendingAdd] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [startDay, setStartDay] = useState<Date>(
@@ -69,11 +70,11 @@ export const Spiffs: FC<Props> = ({
   );
   const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 7));
   const [toggleButton, setToggleButton] = useState<boolean>(false);
-  const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
   const init = useCallback(async () => {
-    const { resultsList: spiffTypes } = (
+    const spiffTypes = await (
       await TaskClientService.GetSpiffTypes()
-    ).toObject();
+    ).getResultsList();
     setSpiffTypes(spiffTypes);
   }, []);
   const load = useCallback(async () => {
@@ -96,10 +97,9 @@ export const Spiffs: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
-    const {
-      resultsList,
-      totalCount,
-    } = await TaskClientService.loadPendingSpiffs(filter);
+    const results = await TaskClientService.loadPendingSpiffs(filter);
+    const resultsList = results.getResultsList();
+    const totalCount = results.getTotalCount();
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
@@ -112,7 +112,7 @@ export const Spiffs: FC<Props> = ({
     load();
   }, [page, employeeId, week, initiated, init, load]);
   const handleTogglePendingView = useCallback(
-    (pendingView?: TaskType) => () => setPendingView(pendingView),
+    (pendingView?: Task) => () => setPendingView(pendingView),
     [],
   );
   const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
@@ -123,9 +123,10 @@ export const Spiffs: FC<Props> = ({
     setPage(0);
   }, [toggleButton]);
 
-  const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
-    ({ type, id: value }) => ({ label: escapeText(type), value }),
-  );
+  const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(type => ({
+    label: escapeText(type.getType()),
+    value: type.getId(),
+  }));
   const makeNewTask = useCallback(() => {
     const newTask = new Task();
     newTask.setTimeDue(timestamp());
@@ -133,10 +134,10 @@ export const Spiffs: FC<Props> = ({
     if (SPIFF_TYPES_OPTIONS.length > 0) {
       newTask.setSpiffTypeId(+SPIFF_TYPES_OPTIONS[0].value);
     }
-    return newTask.toObject();
+    return newTask;
   }, [SPIFF_TYPES_OPTIONS]);
   const handleSave = useCallback(
-    async (data: TaskType) => {
+    async (data: Task) => {
       setSaving(true);
       const now = timestamp();
       const req = new Task();
@@ -150,17 +151,17 @@ export const Spiffs: FC<Props> = ({
       req.setStatusId(1);
       req.setAdminActionId(0);
       let tempEvent = await EventClientService.LoadEventByServiceCallID(
-        parseInt(data.spiffJobNumber),
+        parseInt(data.getSpiffJobNumber()),
       );
       req.setSpiffAddress(
-        tempEvent.property?.address === undefined
-          ? tempEvent.customer?.address === undefined
+        tempEvent.getProperty()?.getAddress() === undefined
+          ? tempEvent.getCustomer()?.getAddress() === undefined
             ? ''
-            : tempEvent.customer.address
-          : tempEvent.property?.address,
+            : tempEvent.getCustomer()!.getAddress()
+          : tempEvent.getProperty()!.getAddress(),
       );
-      data.spiffJobNumber = tempEvent.logJobNumber;
-      req.setSpiffJobNumber(data.spiffJobNumber);
+      data.setSpiffJobNumber(tempEvent.getLogJobNumber());
+      req.setSpiffJobNumber(data.getSpiffJobNumber());
 
       fieldMaskList.push(
         'TimeCreated',
@@ -189,29 +190,29 @@ export const Spiffs: FC<Props> = ({
     },
     [loggedUserId, load],
   );
-  const SCHEMA: Schema<TaskType> = [
+  const SCHEMA: Schema<Task> = [
     [
       {
-        name: 'timeDue',
+        name: 'setTimeDue',
         label: 'Claim Date',
         readOnly: true,
         type: 'date',
       },
       {
-        name: 'spiffAmount',
+        name: 'setSpiffAmount',
         label: 'Amount',
         startAdornment: '$',
         type: 'number',
         required: true,
       },
       {
-        name: 'spiffJobNumber',
+        name: 'setSpiffJobNumber',
         label: 'Job #',
         type: 'eventId',
         required: true,
       },
       {
-        name: 'datePerformed',
+        name: 'setDatePerformed',
         label: 'Date Performed',
         type: 'date',
         required: true,
@@ -219,19 +220,19 @@ export const Spiffs: FC<Props> = ({
     ],
     [
       {
-        name: 'externalId',
+        name: 'setExternalId',
         label: 'Employee',
         type: 'technician',
         required: true,
       },
       {
-        name: 'spiffTypeId',
+        name: 'setSpiffTypeId',
         label: 'Spiff Type',
         options: SPIFF_TYPES_OPTIONS,
         required: true,
       },
     ],
-    [{ name: 'briefDescription', label: 'Description', multiline: true }],
+    [{ name: 'setBriefDescription', label: 'Description', multiline: true }],
   ];
   return (
     <div>
@@ -269,13 +270,13 @@ export const Spiffs: FC<Props> = ({
             : spiffs.map(e => {
                 return [
                   {
-                    value: e.ownerName,
+                    value: e.getOwnerName(),
                     onClick: handleTogglePendingView(e),
                   },
                   {
                     value: formatWeek(
                       format(
-                        startOfWeek(parseISO(e.datePerformed), {
+                        startOfWeek(parseISO(e.getDatePerformed()), {
                           weekStartsOn: 6,
                         }),
                         'yyyy-MM-dd',
@@ -300,7 +301,7 @@ export const Spiffs: FC<Props> = ({
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <SpiffTool
             loggedUserId={loggedUserId}
-            ownerId={pendingView.externalId}
+            ownerId={pendingView.getExternalId()}
             type="Spiff"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
@@ -313,7 +314,7 @@ export const Spiffs: FC<Props> = ({
       )}
       {pendingAdd && (
         <Modal open onClose={handleToggleAdd}>
-          <Form<TaskType>
+          <Form<Task>
             title="Add Spiff Request"
             schema={SCHEMA}
             onClose={handleToggleAdd}

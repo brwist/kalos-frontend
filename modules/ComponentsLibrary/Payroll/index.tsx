@@ -6,16 +6,16 @@ import { Loader } from '../../Loader/main';
 import { Tabs } from '../Tabs';
 import {
   UserClientService,
-  UserType,
-  TimesheetDepartmentType,
   getWeekOptions,
   PerDiemClientService,
   TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
 import { PayrollSummary } from './components/PayrollSummary';
-import { PerDiem } from './components/PerDiem';
+import { PerDiems } from './components/PerDiems';
 import { Timesheet } from './components/Timesheet';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { TimeoffRequests } from './components/TimeoffRequests';
 import { TimesheetPendingApproval } from './components/TimesheetPendingApproval';
 import { Spiffs } from './components/Spiffs';
@@ -71,10 +71,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
     // {departmentId: 18, week: undefined, employeeId: undefined}
   };
 
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
+  const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
+  const [loggedUser, setLoggedUser] = useState<User>();
   const [role, setRole] = useState<RoleType>('');
-  const [employees, setEmployees] = useState<UserType[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
   const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
   const weekOptions = useMemo(
     () => [
@@ -118,15 +118,17 @@ export const Payroll: FC<Props> = ({ userID }) => {
     setDepartments(departments);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
-      a.lastname > b.lastname ? 1 : -1,
+      a.getLastname() > b.getLastname() ? 1 : -1,
     );
     setEmployees(sortedEmployeeList);
     handleSelectNewWeek('-- All --');
     const loggedUser = await UserClientService.loadUserById(userID);
     setLoggedUser(loggedUser);
-    const role = loggedUser.permissionGroupsList.find(p => p.type === 'role');
+    const role = loggedUser
+      .getPermissionGroupsList()
+      .find(p => p.getType() === 'role');
     if (role) {
-      setRole(role.name as RoleType);
+      setRole(role.getName() as RoleType);
     }
     setInitiated(true);
   }, [handleSelectNewWeek, userID]);
@@ -141,7 +143,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
       { label: OPTION_ALL, value: 0 },
       ...departments.map(el => ({
         label: TimesheetDepartmentClientService.getDepartmentName(el),
-        value: el.id,
+        value: el.getId(),
       })),
     ];
   };
@@ -149,10 +151,11 @@ export const Payroll: FC<Props> = ({ userID }) => {
     departments,
   ]);
   if (loggedUser && role === 'Manager') {
-    const departments = loggedUser.permissionGroupsList
-      .filter(p => p.type === 'department')
+    const departments = loggedUser
+      .getPermissionGroupsList()
+      .filter(p => p.getType() === 'department')
       .reduce(
-        (aggr, item) => [...aggr, +JSON.parse(item.filterData).value],
+        (aggr, item) => [...aggr, +JSON.parse(item.getFilterData()).value],
         [] as number[],
       );
     if (departments.length > 0) {
@@ -161,7 +164,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
       );
     } else {
       departmentOptions = departmentOptions.filter(
-        p => +p.value === loggedUser.employeeDepartmentId,
+        p => +p.value === loggedUser.getEmployeeDepartmentId(),
       );
     }
   }
@@ -188,11 +191,11 @@ export const Payroll: FC<Props> = ({ userID }) => {
           ...employees
             .filter(el => {
               if (filter.departmentId === 0) return true;
-              return el.employeeDepartmentId === filter.departmentId;
+              return el.getEmployeeDepartmentId() === filter.departmentId;
             })
             .map(el => ({
               label: UserClientService.getCustomerName(el),
-              value: el.id,
+              value: el.getId(),
             })),
         ],
       },
@@ -342,7 +345,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                       {
                         label: 'Per Diem',
                         content: (
-                          <PerDiem
+                          <PerDiems
                             departmentId={filter.departmentId}
                             employeeId={filter.employeeId}
                             week={filter.week}
@@ -360,7 +363,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                         content: (
                           <TripSummary
                             role={role}
-                            loggedUserId={loggedUser ? loggedUser!.id : 0}
+                            loggedUserId={loggedUser ? loggedUser!.getId() : 0}
                             userId={filter.employeeId}
                             perDiemRowIds={loadedPerDiemIds}
                             key={
