@@ -247,7 +247,25 @@ export const TripSummaryNew: FC<Props> = ({
     ],
   ];
 
-  const loadTrips = useCallback(() => {}, []);
+  const loadTrips = useCallback(() => {
+    switch (role) {
+      case 'Payroll':
+        setFilter({
+          ...filter,
+          payrollProcessed: !toggleButton,
+          approved: true,
+        });
+        break;
+      case 'Manager':
+        setFilter({
+          ...filter,
+          approved: false,
+          adminActionDate: NULL_TIME,
+          departmentId,
+        });
+        break;
+    }
+  }, [departmentId, filter, role, toggleButton]);
 
   const load = useCallback(() => {}, []);
 
