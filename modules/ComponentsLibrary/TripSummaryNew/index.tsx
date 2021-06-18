@@ -41,6 +41,16 @@ import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
 
+type CheckboxesFilterType = {
+  approved: number;
+  payrollProcessed: number;
+};
+
+class Checkboxes implements CheckboxesFilterType {
+  approved: number = 0;
+  payrollProcessed: number = 0;
+}
+
 interface Props {
   loggedUserId: number;
   perDiemRowIds: number[];
@@ -95,7 +105,7 @@ export const TripSummaryNew: FC<Props> = ({
     [setPendingTripToProcessPayroll],
   );
   const handleSetPendingTripToDeny = useCallback(
-    (tripToDeny: Trip) => setPendingTripToDeny,
+    (tripToDeny: Trip) => setPendingTripToDeny(tripToDeny),
     [setPendingTripToDeny],
   );
   let deleteActions: any[] = [];
@@ -110,6 +120,116 @@ export const TripSummaryNew: FC<Props> = ({
         burgeronly: 1,
       },
     ];
+
+  const SCHEMA_TRIP_SEARCH: Schema<TripsFilter> = [
+    [
+      {
+        label: 'ID',
+        type: 'text',
+        name: 'id',
+      },
+      {
+        label: 'Origin',
+        type: 'text',
+        name: 'originAddress',
+      },
+      {
+        label: 'Destination',
+        type: 'text',
+        name: 'destinationAddress',
+      },
+    ],
+  ];
+
+  const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
+    [{ headline: true, label: 'Monetary' }],
+    [
+      {
+        label: 'Distance in Miles',
+        type: 'text',
+        name: 'distanceInMiles',
+      },
+      {
+        name: 'distanceInDollars',
+        type: 'text',
+        label: 'Amount for Trip',
+        readOnly: true,
+      },
+    ],
+    [{ headline: true, label: 'General' }],
+    [
+      {
+        label: 'Employee Name',
+        type: 'text',
+        name: 'nameOfEmployee',
+      },
+      {
+        label: 'Department',
+        type: 'text',
+        name: 'departmentName',
+      },
+    ],
+    [
+      {
+        label: 'Day Of',
+        type: 'text',
+        name: 'date',
+      },
+    ],
+    [
+      {
+        label: 'Origin Address',
+        type: 'text',
+        name: 'originAddress',
+      },
+    ],
+    [
+      {
+        label: 'Destination Address',
+        type: 'text',
+        name: 'destinationAddress',
+      },
+    ],
+    [
+      {
+        label: 'Notes',
+        type: 'text',
+        name: 'notes',
+        multiline: true,
+      },
+    ],
+    [{ headline: true, label: 'Approval' }],
+    [
+      {
+        name: 'approved',
+        type: 'text',
+        label: 'Approved',
+        readOnly: true,
+      },
+      {
+        name: 'payrollProcessed',
+        type: 'text',
+        label: 'Payroll Processed',
+        readOnly: true,
+      },
+    ],
+  ];
+
+  const CHECKBOXES_SCHEMA: Schema<CheckboxesFilterType> = [
+    [
+      {
+        name: 'approved',
+        type: 'checkbox',
+        label: 'Approved',
+      },
+      {
+        name: 'payrollProcessed',
+        type: 'checkbox',
+        label: 'Payroll Processed',
+      },
+    ],
+  ];
+
   return (
     <>
       <InfoTable
