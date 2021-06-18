@@ -89,6 +89,8 @@ export const TripSummaryNew: FC<Props> = ({
     useState<Trip | undefined>();
   const [pendingTripToDeny, setPendingTripToDeny] =
     useState<Trip | undefined>();
+  const [toggleApproveOrProcess, setToggleApproveOrProcess] =
+    useState<boolean>(false);
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
   const [filter, setFilter] = useState<TripFilter>({
@@ -99,6 +101,10 @@ export const TripSummaryNew: FC<Props> = ({
   } as TripFilter);
   const [page, setPage] = useState<number>(0);
   const [toggleButton, setToggleButton] = useState<boolean>();
+  const handleSetToggleApproveOrProcess = useCallback(
+    () => setToggleApproveOrProcess(!toggleApproveOrProcess),
+    [toggleApproveOrProcess],
+  );
   const handleSetToggleButton = useCallback(
     (toggled: boolean) => setToggleButton(toggled),
     [setToggleButton],
@@ -116,12 +122,18 @@ export const TripSummaryNew: FC<Props> = ({
     [setTripToView],
   );
   const handleSetPendingTripToApprove = useCallback(
-    (tripToApprove: Trip) => setPendingTripToApprove(tripToApprove),
-    [setPendingTripToApprove],
+    (tripToApprove: Trip) => {
+      setPendingTripToApprove(tripToApprove);
+      handleSetToggleApproveOrProcess();
+    },
+    [handleSetToggleApproveOrProcess],
   );
   const handleSetPendingTripToProcessPayroll = useCallback(
-    (tripToProcess: Trip) => setPendingTripToProcessPayroll(tripToProcess),
-    [setPendingTripToProcessPayroll],
+    (tripToProcess: Trip) => {
+      setPendingTripToProcessPayroll(tripToProcess);
+      handleSetToggleApproveOrProcess();
+    },
+    [handleSetToggleApproveOrProcess],
   );
   const handleSetPendingTripToDeny = useCallback(
     (tripToDeny: Trip) => setPendingTripToDeny(tripToDeny),
@@ -292,6 +304,7 @@ export const TripSummaryNew: FC<Props> = ({
       try {
         await PerDiemClientService.updateTripPayrollProcessed(id);
         setPendingTripToProcessPayroll(undefined);
+        loadTrips();
       } catch (err) {
         console.error(
           'An error occurred while updating trip payroll processed status: ',
@@ -299,14 +312,16 @@ export const TripSummaryNew: FC<Props> = ({
         );
       }
     },
-    [setPendingTripToProcessPayroll],
+    [loadTrips],
   );
 
   const handleApproveTrip = useCallback(
     async (id: number) => {
       try {
+        console.log('update trip id: ', id);
         await PerDiemClientService.updateTripApproved(id);
         setPendingTripToApprove(undefined);
+        loadTrips();
       } catch (err) {
         console.error(
           'An error occurred while updating trip approved status: ',
@@ -315,7 +330,7 @@ export const TripSummaryNew: FC<Props> = ({
         setPendingTripToApprove(undefined);
       }
     },
-    [setPendingTripToApprove],
+    [loadTrips],
   );
 
   const load = useCallback(async () => {
@@ -342,7 +357,6 @@ export const TripSummaryNew: FC<Props> = ({
       )}
       {tripToView && (
         <TripViewModal
-          key={'tripView'}
           fullScreen
           schema={SCHEMA_TRIP_INFO}
           data={{
@@ -362,16 +376,18 @@ export const TripSummaryNew: FC<Props> = ({
           canApprove={canApprove}
           onApprove={async approved => {
             await handleApproveTrip(approved.id);
+            handleSetToggleApproveOrProcess();
             handleSetTripToView(undefined);
           }}
           onProcessPayroll={async processed => {
             await handleProcessPayroll(processed.id);
+            handleSetToggleApproveOrProcess();
             handleSetTripToView(undefined);
           }}
         />
       )}
       <InfoTable
-        key={loaded.toString()}
+        key={loaded.toString() + toggleApproveOrProcess.toString()}
         loading={!loaded}
         columns={[
           { name: 'Origin' },
@@ -399,10 +415,6 @@ export const TripSummaryNew: FC<Props> = ({
         data={
           loaded
             ? tripsLoaded!.map((currentTrip: Trip, idx: number) => {
-                console.log(
-                  'Current trip payroll: ',
-                  currentTrip.getPayrollProcessed(),
-                );
                 return [
                   { value: currentTrip.getOriginAddress() },
                   { value: currentTrip.getDestinationAddress() },
