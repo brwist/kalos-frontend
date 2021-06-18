@@ -80,7 +80,7 @@ export const TripSummaryNew: FC<Props> = ({
   viewingOwn,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
-  const [loaded, setLoaded] = useState<boolean>();
+  const [loaded, setLoaded] = useState<boolean>(false);
   const [pendingTripToDelete, setPendingTripToDelete] =
     useState<Trip | undefined>();
   const [pendingTripToProcessPayroll, setPendingTripToProcessPayroll] =
@@ -112,7 +112,7 @@ export const TripSummaryNew: FC<Props> = ({
     [setPendingTripToDelete],
   );
   const handleSetTripToView = useCallback(
-    (tripToView: Trip) => setTripToView(tripToView),
+    (tripToView: Trip | undefined) => setTripToView(tripToView),
     [setTripToView],
   );
   const handleSetPendingTripToApprove = useCallback(
@@ -287,13 +287,46 @@ export const TripSummaryNew: FC<Props> = ({
     }
   }, [departmentId, filter, page, role, toggleButton]);
 
-  const load = useCallback(() => {
+  const handleProcessPayroll = useCallback(
+    async (id: number) => {
+      try {
+        await PerDiemClientService.updateTripPayrollProcessed(id);
+        setPendingTripToProcessPayroll(undefined);
+      } catch (err) {
+        console.error(
+          'An error occurred while updating trip payroll processed status: ',
+          err,
+        );
+      }
+    },
+    [setPendingTripToProcessPayroll],
+  );
+
+  const handleApproveTrip = useCallback(
+    async (id: number) => {
+      try {
+        await PerDiemClientService.updateTripApproved(id);
+        setPendingTripToApprove(undefined);
+      } catch (err) {
+        console.error(
+          'An error occurred while updating trip approved status: ',
+          err,
+        );
+        setPendingTripToApprove(undefined);
+      }
+    },
+    [setPendingTripToApprove],
+  );
+
+  const load = useCallback(async () => {
     setLoaded(false);
-    loadTrips();
+    await loadTrips();
     setLoaded(true);
   }, [loadTrips, setLoaded]);
 
-  useEffect(() => load(), [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <>
@@ -307,7 +340,39 @@ export const TripSummaryNew: FC<Props> = ({
           onClick={() => handleSetToggleButton(!toggleButton)}
         />
       )}
+      {tripToView && (
+        <TripViewModal
+          key={'tripView'}
+          fullScreen
+          schema={SCHEMA_TRIP_INFO}
+          data={{
+            ...tripToView.toObject(),
+            distanceInDollars: perDiemTripMilesToUsd(
+              tripToView.toObject().distanceInMiles,
+            ),
+            nameOfEmployee: tripToView.getUserName(),
+            weekOf: '', // Will be filled out but this is to stop the schema from screaming at us
+            departmentName: tripToView.getDepartmentName(),
+          }}
+          onClose={() => {
+            handleSetTripToView(undefined);
+          }}
+          open={true}
+          canProcess={canProcessPayroll}
+          canApprove={canApprove}
+          onApprove={async approved => {
+            await handleApproveTrip(approved.id);
+            handleSetTripToView(undefined);
+          }}
+          onProcessPayroll={async processed => {
+            await handleProcessPayroll(processed.id);
+            handleSetTripToView(undefined);
+          }}
+        />
+      )}
       <InfoTable
+        key={loaded.toString()}
+        loading={!loaded}
         columns={[
           { name: 'Origin' },
           { name: 'Destination' },
