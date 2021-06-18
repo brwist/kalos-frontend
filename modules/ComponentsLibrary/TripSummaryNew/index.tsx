@@ -19,7 +19,7 @@ import {
   PerDiemClientService,
   UserClientService,
   loadTripsByFilter,
-  TripsFilter,
+  TripsFilter as TripFilter,
   TripsSort,
   LoadTripsByFilter,
   TimesheetDepartmentClientService,
@@ -56,6 +56,7 @@ interface Props {
   loggedUserId: number;
   perDiemRowIds: number[];
   userId: number; // The id to filter to
+  departmentId?: number;
   canDeleteTrips?: boolean;
   compact?: boolean;
   canSlackMessage?: boolean;
@@ -66,6 +67,7 @@ interface Props {
 
 export const TripSummaryNew: FC<Props> = ({
   loggedUserId,
+  departmentId,
   perDiemRowIds,
   userId,
   canDeleteTrips,
@@ -87,7 +89,12 @@ export const TripSummaryNew: FC<Props> = ({
     useState<Trip | undefined>();
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
-  const [filter, setFilter] = useState<TripsFilter>({} as TripsFilter);
+  const [filter, setFilter] = useState<TripFilter>({
+    role,
+    weekof: perDiemRowIds,
+    userId,
+    departmentId,
+  } as TripFilter);
   const handleSetPendingDeleteAllTrips = useCallback(
     (pending: boolean) => setPendingDeleteAllTrips(pending),
     [setPendingDeleteAllTrips],
@@ -125,7 +132,7 @@ export const TripSummaryNew: FC<Props> = ({
       },
     ];
 
-  const SCHEMA_TRIP_SEARCH: Schema<TripsFilter> = [
+  const SCHEMA_TRIP_SEARCH: Schema<TripFilter> = [
     [
       {
         label: 'ID',
