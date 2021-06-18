@@ -1143,19 +1143,21 @@ export const loadTripsByFilter = async ({
     req.setApproved(false);
   }
 
-  const response = await PerDiemClientService.BatchGetTrips(req);
-  console.log(response.getResultsList());
-  console.log(response.getTotalCount());
-  return {
-    results: response.getResultsList().sort((a, b) => {
-      const A = (a[orderByField] || '').toString().toLowerCase();
-      const B = (b[orderByField] || '').toString().toLowerCase();
-      if (A < B) return orderDir === 'DESC' ? 1 : -1;
-      if (A > B) return orderDir === 'DESC' ? -1 : 1;
-      return 0;
-    }),
-    totalCount: response.getTotalCount(),
-  };
+  try {
+    const response = await PerDiemClientService.BatchGetTrips(req);
+    return {
+      results: response.getResultsList().sort((a, b) => {
+        const A = (a[orderByField] || '').toString().toLowerCase();
+        const B = (b[orderByField] || '').toString().toLowerCase();
+        if (A < B) return orderDir === 'DESC' ? 1 : -1;
+        if (A > B) return orderDir === 'DESC' ? -1 : 1;
+        return 0;
+      }),
+      totalCount: response.getTotalCount(),
+    };
+  } catch (err) {
+    throw new Error(`An error occurred while batch-getting trips: ${err}`) // To be caught at a higher call
+  }
 };
 
 export type EventsSort = {

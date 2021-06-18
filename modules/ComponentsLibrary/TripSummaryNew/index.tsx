@@ -279,8 +279,12 @@ export const TripSummaryNew: FC<Props> = ({
       filter,
     };
 
-    const results = await loadTripsByFilter(criteria);
-    console.log('RESULTS: ', results);
+    try {
+      const results = await loadTripsByFilter(criteria);
+      console.log('RESULTS: ', results);
+    } catch (err) {
+      console.error(err);
+    }
   }, [departmentId, filter, page, role, toggleButton]);
 
   const load = useCallback(() => {
