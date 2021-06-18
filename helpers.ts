@@ -1156,7 +1156,7 @@ export const loadTripsByFilter = async ({
       totalCount: response.getTotalCount(),
     };
   } catch (err) {
-    throw new Error(`An error occurred while batch-getting trips: ${err}`) // To be caught at a higher call
+    throw new Error(`An error occurred while batch-getting trips: ${err}`); // To be caught at a higher call
   }
 };
 
@@ -1827,6 +1827,30 @@ const cleanOrderByField = (f: string) => {
   return lowerParts.join('_');
 };
 
+const cleanFieldMaskField = (f: string) => {
+  console.log(f.slice(3));
+  if (f.startsWith('get') || f.startsWith('set')) {
+    return f.slice(3);
+  }
+};
+
+const makeSafeFormObject = function makeSafeFormObject<T>(data: T, result: T) {
+  const keys = Object.keys(data);
+  for (const key of keys) {
+    if (key.startsWith('get')) {
+      try {
+        // @ts-ignore
+        result[key.replace('get', 'set')](data[key]);
+        // @ts-ignore
+        result.addFieldMask(key.slice(3));
+      } catch (err) {
+        console.log('failed to set value on request object', err);
+      }
+    }
+  }
+  return result;
+};
+
 export {
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
@@ -1859,4 +1883,6 @@ export {
   forceHTTPS,
   customerCheck,
   cleanOrderByField,
+  cleanFieldMaskField,
+  makeSafeFormObject,
 };
