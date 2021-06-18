@@ -281,15 +281,17 @@ export const TripSummaryNew: FC<Props> = ({
 
     try {
       const results = await loadTripsByFilter(criteria);
-      console.log('RESULTS: ', results);
+      setTripsLoaded(results.results);
     } catch (err) {
       console.error(err);
     }
   }, [departmentId, filter, page, role, toggleButton]);
 
   const load = useCallback(() => {
+    setLoaded(false);
     loadTrips();
-  }, [loadTrips]);
+    setLoaded(true);
+  }, [loadTrips, setLoaded]);
 
   useEffect(() => load(), [load]);
 
