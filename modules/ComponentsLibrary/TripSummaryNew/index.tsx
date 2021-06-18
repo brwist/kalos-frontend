@@ -376,6 +376,9 @@ export const TripSummaryNew: FC<Props> = ({
         columns={[
           { name: 'Origin' },
           { name: 'Destination' },
+          {
+            name: 'Department Name',
+          },
           { name: 'Name' },
           { name: 'Day of' },
           { name: 'Miles / Cost' },
@@ -383,19 +386,29 @@ export const TripSummaryNew: FC<Props> = ({
             name: 'Approved?',
           },
           {
-            name: 'Department Name',
+            name: 'Home Travel',
           },
           {
             name: 'Payroll Processed?',
             actions: deleteActions,
           },
+          {
+            name: ' ',
+          },
         ]}
         data={
           loaded
             ? tripsLoaded!.map((currentTrip: Trip, idx: number) => {
+                console.log(
+                  'Current trip payroll: ',
+                  currentTrip.getPayrollProcessed(),
+                );
                 return [
                   { value: currentTrip.getOriginAddress() },
                   { value: currentTrip.getDestinationAddress() },
+                  {
+                    value: currentTrip.getDepartmentName(),
+                  },
                   {
                     value: currentTrip.getUserName(),
                   },
