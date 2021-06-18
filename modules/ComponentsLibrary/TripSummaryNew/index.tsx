@@ -63,6 +63,7 @@ interface Props {
   canApprove?: boolean;
   canProcessPayroll?: boolean;
   role?: RoleType;
+  viewingOwn?: boolean;
 }
 
 export const TripSummaryNew: FC<Props> = ({
@@ -76,6 +77,7 @@ export const TripSummaryNew: FC<Props> = ({
   canApprove,
   canProcessPayroll,
   role,
+  viewingOwn,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>();
@@ -265,7 +267,21 @@ export const TripSummaryNew: FC<Props> = ({
         });
         break;
     }
-  }, [departmentId, filter, role, toggleButton]);
+    let criteria: LoadTripsByFilter;
+    let tripReq = new Trip();
+    if (viewingOwn) {
+      criteria = {
+        page,
+        sort: {
+          orderByField: 'getUserId',
+          orderBy: 'getUserId',
+          orderDir: 'ASC',
+        } as TripsSort,
+        req: tripReq,
+        filter,
+      };
+    }
+  }, [departmentId, filter, page, role, toggleButton, viewingOwn]);
 
   const load = useCallback(() => {}, []);
 
