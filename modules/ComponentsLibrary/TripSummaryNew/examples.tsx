@@ -12,6 +12,13 @@ export default () => {
         loggedUserId={101275}
         userId={0}
       />
+      <ExampleTitle>Toggle Button</ExampleTitle>{' '}
+      <TripSummaryNew
+        perDiemRowIds={[rowIdToUse]}
+        loggedUserId={101275}
+        userId={0}
+        canProcessPayroll
+      />
     </>
   );
 };

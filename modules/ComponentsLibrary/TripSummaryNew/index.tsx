@@ -95,6 +95,12 @@ export const TripSummaryNew: FC<Props> = ({
     userId,
     departmentId,
   } as TripFilter);
+  const [page, setPage] = useState<number>(0);
+  const [toggleButton, setToggleButton] = useState<boolean>();
+  const handleSetToggleButton = useCallback(
+    (toggled: boolean) => setToggleButton(toggled),
+    [setToggleButton],
+  );
   const handleSetPendingDeleteAllTrips = useCallback(
     (pending: boolean) => setPendingDeleteAllTrips(pending),
     [setPendingDeleteAllTrips],
@@ -249,6 +255,16 @@ export const TripSummaryNew: FC<Props> = ({
 
   return (
     <>
+      {canProcessPayroll && (
+        <Button
+          label={
+            toggleButton === false
+              ? 'Show Unprocessed Records'
+              : 'Show Processed Records'
+          }
+          onClick={() => handleSetToggleButton(!toggleButton)}
+        />
+      )}
       <InfoTable
         columns={[
           { name: 'Origin' },
