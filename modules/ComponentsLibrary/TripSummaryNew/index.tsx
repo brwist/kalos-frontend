@@ -1,5 +1,5 @@
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useState, useEffect } from 'react';
 import { InfoTable } from '../InfoTable';
 import { formatDateDay, perDiemTripMilesToUsd } from '../../../helpers';
 import { Tooltip } from '../Tooltip';
@@ -40,6 +40,7 @@ import { NULL_TIME } from '../../../constants';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
+import { RoleType } from '../Payroll';
 
 type CheckboxesFilterType = {
   approved: number;
@@ -60,6 +61,7 @@ interface Props {
   canSlackMessage?: boolean;
   canApprove?: boolean;
   canProcessPayroll?: boolean;
+  role?: RoleType;
 }
 
 export const TripSummaryNew: FC<Props> = ({
@@ -71,6 +73,7 @@ export const TripSummaryNew: FC<Props> = ({
   canSlackMessage,
   canApprove,
   canProcessPayroll,
+  role,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>();
@@ -84,6 +87,7 @@ export const TripSummaryNew: FC<Props> = ({
     useState<Trip | undefined>();
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
+  const [filter, setFilter] = useState<TripsFilter>({} as TripsFilter);
   const handleSetPendingDeleteAllTrips = useCallback(
     (pending: boolean) => setPendingDeleteAllTrips(pending),
     [setPendingDeleteAllTrips],
@@ -229,6 +233,12 @@ export const TripSummaryNew: FC<Props> = ({
       },
     ],
   ];
+
+  const loadTrips = useCallback(() => {}, []);
+
+  const load = useCallback(() => {}, []);
+
+  useEffect(() => load(), [load]);
 
   return (
     <>
