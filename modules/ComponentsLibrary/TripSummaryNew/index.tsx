@@ -249,7 +249,7 @@ export const TripSummaryNew: FC<Props> = ({
     ],
   ];
 
-  const loadTrips = useCallback(() => {
+  const loadTrips = useCallback(async () => {
     switch (role) {
       case 'Payroll':
         setFilter({
@@ -267,23 +267,25 @@ export const TripSummaryNew: FC<Props> = ({
         });
         break;
     }
-    let criteria: LoadTripsByFilter;
     let tripReq = new Trip();
-    if (viewingOwn) {
-      criteria = {
-        page,
-        sort: {
-          orderByField: 'getUserId',
-          orderBy: 'getUserId',
-          orderDir: 'ASC',
-        } as TripsSort,
-        req: tripReq,
-        filter,
-      };
-    }
-  }, [departmentId, filter, page, role, toggleButton, viewingOwn]);
+    let criteria = {
+      page,
+      sort: {
+        orderByField: 'getUserId',
+        orderBy: 'getUserId',
+        orderDir: 'ASC',
+      } as TripsSort,
+      req: tripReq,
+      filter,
+    };
 
-  const load = useCallback(() => {}, []);
+    const results = await loadTripsByFilter(criteria);
+    console.log('RESULTS: ', results);
+  }, [departmentId, filter, page, role, toggleButton]);
+
+  const load = useCallback(() => {
+    loadTrips();
+  }, [loadTrips]);
 
   useEffect(() => load(), [load]);
 
