@@ -1,7 +1,11 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { Form, Schema } from '../Form';
-import { PropertyClientService, MapClientService } from '../../../helpers';
+import {
+  PropertyClientService,
+  MapClientService,
+  makeSafeFormObject,
+} from '../../../helpers';
 import {
   RESIDENTIAL_OPTIONS,
   PROP_LEVEL,
@@ -66,6 +70,7 @@ export const PropertyEdit: FC<Props> = ({
   const handleSave = useCallback(
     async (data: Property) => {
       setSaving(true);
+      const temp = makeSafeFormObject(data, new Property());
       const entry = await PropertyClientService.saveProperty(
         data,
         userId,
@@ -92,9 +97,9 @@ export const PropertyEdit: FC<Props> = ({
             },
           ],
           [
-            { label: 'First Name', name: 'setFirstname' },
-            { label: 'Last Name', name: 'setLastname' },
-            { label: 'Business Name', name: 'setBusinessname' },
+            { label: 'First Name', name: 'getFirstname' },
+            { label: 'Last Name', name: 'getLastname' },
+            { label: 'Business Name', name: 'getBusinessname' },
           ],
           [
             {
@@ -104,22 +109,22 @@ export const PropertyEdit: FC<Props> = ({
             },
           ],
           [
-            { label: 'Primary Phone', name: 'setPhone' },
-            { label: 'Alternate Phone', name: 'setAltphone' },
+            { label: 'Primary Phone', name: 'getPhone' },
+            { label: 'Alternate Phone', name: 'getAltphone' },
             { label: 'Email', name: 'setEmail' },
           ],
         ] as Schema<Property>)),
     [{ label: 'Address Details', headline: true }],
     [
-      { label: 'Address', name: 'setAddress', required: true, multiline: true },
-      { label: 'City', name: 'setCity', required: true },
+      { label: 'Address', name: 'getAddress', required: true, multiline: true },
+      { label: 'City', name: 'getCity', required: true },
       {
         label: 'State',
-        name: 'setState',
+        name: 'getState',
         options: USA_STATES_OPTIONS,
         required: true,
       },
-      { label: 'Zip Code', name: 'setZip', required: true },
+      { label: 'Zip Code', name: 'getZip', required: true },
     ],
     [
       {

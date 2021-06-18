@@ -10,6 +10,7 @@ import {
   makeFakeRows,
   UserClientService,
   GroupClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
 import './styles.less';
@@ -54,8 +55,9 @@ export const CustomerEdit: FC<Props> = ({
         setCustomer(customer);
       }
       if (!_groupLinks) {
-        const groupLinks =
-          await UserGroupLinkClientService.loadUserGroupLinksByUserId(userId);
+        const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
+          userId,
+        );
         setGroupLinks(groupLinks);
         setGroupLinksInitial(groupLinks);
       }
@@ -87,36 +89,36 @@ export const CustomerEdit: FC<Props> = ({
   const SCHEMA: Schema<User> = [
     [{ label: 'Personal Details', headline: true }],
     [
-      { label: 'First Name', name: 'setFirstname', required: true },
-      { label: 'Last Name', name: 'setLastname', required: true },
-      { label: 'Business Name', name: 'setBusinessname', multiline: true },
+      { label: 'First Name', name: 'getFirstname', required: true },
+      { label: 'Last Name', name: 'getLastname', required: true },
+      { label: 'Business Name', name: 'getBusinessname', multiline: true },
     ],
     [{ label: 'Contact Details', headline: true }],
     [
-      { label: 'Primary Phone', name: 'setPhone' },
-      { label: 'Alternate Phone', name: 'setAltphone' },
-      { label: 'Cell Phone', name: 'setCellphone' },
+      { label: 'Primary Phone', name: 'getPhone' },
+      { label: 'Alternate Phone', name: 'getAltphone' },
+      { label: 'Cell Phone', name: 'getCellphone' },
     ],
     [
-      { label: 'Email', name: 'setEmail', required: true },
+      { label: 'Email', name: 'getEmail', required: true },
 
       {
         label: 'Alternate Email(s)',
-        name: 'setAltEmail',
+        name: 'getAltEmail',
         helperText: 'Separate multiple email addresses w/comma',
       },
       {
         label: 'Wishes to receive promotional emails',
-        name: 'setReceiveemail',
+        name: 'getReceiveemail',
         type: 'checkbox',
       },
     ],
     [{ label: 'Address Details', headline: true }],
     [
-      { label: 'Bulling Address', name: 'setAddress', multiline: true },
-      { label: 'Billing City', name: 'setCity' },
-      { label: 'Billing State', name: 'setState', options: USA_STATES_OPTIONS },
-      { label: 'Billing Zip Code', name: 'setZip' },
+      { label: 'Bulling Address', name: 'getAddress', multiline: true },
+      { label: 'Billing City', name: 'getCity' },
+      { label: 'Billing State', name: 'getState', options: USA_STATES_OPTIONS },
+      { label: 'Billing Zip Code', name: 'getZip' },
     ],
     [{ label: 'Billing Details', headline: true }],
     [
@@ -127,21 +129,21 @@ export const CustomerEdit: FC<Props> = ({
       },
       {
         label: 'Discount',
-        name: 'setDiscount',
+        name: 'getDiscount',
         required: true,
         type: 'number',
         endAdornment: '%',
       },
       {
         label: 'Rebate',
-        name: 'setRebate' as keyof User,
+        name: 'getRebate' as keyof User,
         required: true,
         type: 'number',
         endAdornment: '%',
       },
       {
         label: 'Referred By',
-        name: 'setRecommendedBy' as keyof User,
+        name: 'getRecommendedBy' as keyof User,
         type: 'text',
       },
     ],
@@ -149,13 +151,13 @@ export const CustomerEdit: FC<Props> = ({
     [
       {
         label: viewedAsCustomer ? 'Additional Notes' : 'Customer Notes',
-        name: 'setNotes',
+        name: 'getNotes',
         helperText: viewedAsCustomer ? '' : 'Visible to customer',
         multiline: true,
       },
       {
         label: 'Internal Notes',
-        name: 'setIntNotes',
+        name: 'getIntNotes',
         helperText: 'NOT visible to customer',
         multiline: true,
       },
@@ -201,7 +203,8 @@ export const CustomerEdit: FC<Props> = ({
   const handleSave = useCallback(
     async (data: User) => {
       setSaving(true);
-      const customer = await UserClientService.saveUser(data, userId);
+      const temp = makeSafeFormObject(data, new User());
+      const customer = await UserClientService.saveUser(temp, userId);
       setCustomer(customer);
       setUserId(customer.getId());
       await saveGroupLinks(groupLinks, groupLinksInitial, customer.getId());

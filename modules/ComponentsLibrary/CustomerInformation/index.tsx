@@ -22,6 +22,7 @@ import {
   CustomEventsHandler,
   getCFAppUrl,
   GroupClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import './styles.less';
 
@@ -61,8 +62,10 @@ export const CustomerInformation: FC<Props> = ({
   viewedAsCustomer = false,
 }) => {
   const [customer, setCustomer] = useState<User>(new User());
-  const [pendingBillingRecordCount, setPendingBillingRecordCount] =
-    useState<number>(0);
+  const [
+    pendingBillingRecordCount,
+    setPendingBillingRecordCount,
+  ] = useState<number>(0);
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupLinks, setGroupLinks] = useState<UserGroupLink[]>([]);
@@ -74,10 +77,12 @@ export const CustomerInformation: FC<Props> = ({
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [documentsOpened, setDocumentsOpened] = useState<boolean>(false);
-  const [notificationEditing, setNotificationEditing] =
-    useState<boolean>(false);
-  const [notificationViewing, setNotificationViewing] =
-    useState<boolean>(false);
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
   const [pendingBillingsLoaded, setPendingBillingsLoaded] = useState<boolean>();
 
   const groupLinksInitialIds = groupLinksInitial.map(g => g.getGroupId());
@@ -116,8 +121,9 @@ export const CustomerInformation: FC<Props> = ({
     }
     const groups = await GroupClientService.loadGroups();
     setGroups(groups);
-    const groupLinks =
-      await UserGroupLinkClientService.loadUserGroupLinksByUserId(userID);
+    const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
+      userID,
+    );
     setGroupLinks(groupLinks);
     setGroupLinksInitial(groupLinks);
     const entry = new User();
@@ -169,7 +175,8 @@ export const CustomerInformation: FC<Props> = ({
   const handleSave = useCallback(
     async (data: User) => {
       setSaving(true);
-      const customer = await UserClientService.saveUser(data, userID);
+      const temp = makeSafeFormObject(data, new User());
+      const customer = await UserClientService.saveUser(temp, userID);
       setCustomer(customer);
       setSaving(false);
       setEditing(false);

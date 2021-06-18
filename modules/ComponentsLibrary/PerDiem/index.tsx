@@ -30,6 +30,7 @@ import {
   PerDiemClientService,
   MapClientService,
   TimesheetDepartmentClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
@@ -49,16 +50,16 @@ export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
   [
     {
       label: 'Origin Address',
-      name: 'setOriginAddress',
+      name: 'getOriginAddress',
       type: 'text',
     },
     {
       label: 'Destination Address',
-      name: 'setDestinationAddress',
+      name: 'getDestinationAddress',
       type: 'text',
     },
     {
-      name: 'setPerDiemRowId',
+      name: 'getPerDiemRowId',
       type: 'hidden',
     },
   ],
@@ -115,20 +116,20 @@ export const getStatus = (
 const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRow> = [
   [
     {
-      name: 'setId',
+      name: 'getId',
       type: 'hidden',
     },
   ],
   [
     {
-      name: 'setPerDiemId',
+      name: 'getPerDiemId',
       type: 'hidden',
     },
   ],
   [
     {
       label: 'Date',
-      name: 'setDateString',
+      name: 'getDateString',
       type: 'date',
       readOnly: true,
     },
@@ -136,14 +137,14 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRow> = [
   [
     {
       label: 'Zip Code',
-      name: 'setZipCode',
+      name: 'getZipCode',
       required: true,
     },
   ],
   [
     {
       label: 'Service Call ID',
-      name: 'setServiceCallId',
+      name: 'getServiceCallId',
       type: 'eventId',
       required: true,
     },
@@ -151,14 +152,14 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRow> = [
   [
     {
       label: 'Notes',
-      name: 'setNotes',
+      name: 'getNotes',
       multiline: true,
     },
   ],
   [
     {
       label: 'Meals Only',
-      name: 'setMealsOnly',
+      name: 'getMealsOnly',
       type: 'checkbox',
     },
   ],
@@ -368,6 +369,7 @@ export const PerDiemComponent: FC<Props> = ({
   const handleSavePerDiem = useCallback(
     async (data: PerDiem) => {
       setPendingPerDiemEditDuplicated(false);
+      console.log('given to handleSave', data);
       if (
         managerPerDiems.find(
           perDiem =>
@@ -379,7 +381,10 @@ export const PerDiemComponent: FC<Props> = ({
         return;
       }
       setSaving(true);
-      await PerDiemClientService.upsertPerDiem(data);
+      console.log('true data', data);
+      const temp = makeSafeFormObject(data, new PerDiem());
+      console.log('data', temp);
+      await PerDiemClientService.upsertPerDiem(temp);
       setPendingPerDiemEdit(undefined);
       setSaving(false);
       setLoaded(false);
@@ -396,7 +401,8 @@ export const PerDiemComponent: FC<Props> = ({
     async (perDiemRow: PerDiemRow) => {
       console.log('value', perDiemRow);
       setSaving(true);
-      await PerDiemClientService.upsertPerDiemRow(perDiemRow);
+      const temp = makeSafeFormObject(perDiemRow, new PerDiemRow());
+      await PerDiemClientService.upsertPerDiemRow(temp);
       setPendingPerDiemRowEdit(undefined);
       setSaving(false);
       setLoaded(false);
@@ -550,12 +556,12 @@ export const PerDiemComponent: FC<Props> = ({
   const SCHEMA_PER_DIEM: Schema<PerDiem> = pendingPerDiemEdit
     ? [
         [
-          { name: 'setId', type: 'hidden' },
-          { name: 'setDateStarted', type: 'hidden' },
+          { name: 'getId', type: 'hidden' },
+          { name: 'getDateStarted', type: 'hidden' },
         ],
         [
           {
-            name: 'setUserId',
+            name: 'getUserId',
             label: 'Technician',
             type:
               isAnyManager && !pendingPerDiemEdit.getId()
@@ -569,7 +575,7 @@ export const PerDiemComponent: FC<Props> = ({
             ? []
             : [
                 {
-                  name: 'setDepartmentId' as const,
+                  name: 'getDepartmentId' as const,
                   label: 'Department',
                   options: departmentsOptions,
                   required: true,
@@ -579,7 +585,7 @@ export const PerDiemComponent: FC<Props> = ({
         ],
         [
           {
-            name: 'setNotes',
+            name: 'getNotes',
             label: 'Notes',
             multiline: true,
           },
@@ -587,6 +593,7 @@ export const PerDiemComponent: FC<Props> = ({
       ]
     : [];
   const makeNewPerDiem = useCallback(() => {
+    console.log('we have been called');
     const req = new PerDiem();
     if (user) {
       if (loggedUserId && ownerId) {
@@ -608,6 +615,7 @@ export const PerDiemComponent: FC<Props> = ({
           : departments[0].getId(),
       );
     }
+    console.log('req', req);
     return req;
   }, [
     loggedUserId,
