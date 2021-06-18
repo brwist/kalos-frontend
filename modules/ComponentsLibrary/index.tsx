@@ -93,6 +93,7 @@ import Tooltip from './Tooltip/examples';
 import TransactionTable from './TransactionTable/examples';
 import TripInfoTable from './TripInfoTable/examples';
 import TripSummary from './TripSummary/examples';
+import TripSummaryNew from './TripSummaryNew/examples';
 import TripViewModal from './TripViewModal/examples';
 import UploadPhoto from './UploadPhoto/examples';
 import UploadPhotoTransaction from './UploadPhotoTransaction/examples';
@@ -196,6 +197,7 @@ const COMPONENTS = {
   TransactionTable,
   TripInfoTable,
   TripSummary,
+  TripSummaryNew,
   TripViewModal,
   UploadPhoto,
   UploadPhotoTransaction,
