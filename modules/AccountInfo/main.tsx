@@ -6,7 +6,11 @@ import { Form, Schema } from '../ComponentsLibrary/Form';
 import { Modal } from '../ComponentsLibrary/Modal';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { UserClientService } from '../../helpers';
+import {
+  UserClientService,
+  cleanFieldMaskField,
+  makeSafeFormObject,
+} from '../../helpers';
 import { Loader } from '../Loader/main';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
@@ -34,17 +38,17 @@ type ChangeProp = {
 
 const SCHEMA_USER: Schema<User> = [
   [
-    { name: 'setFirstname', label: 'First Name', required: true },
-    { name: 'setLastname', label: 'Last Name', required: true },
+    { name: 'getFirstname', label: 'First Name', required: true },
+    { name: 'getLastname', label: 'Last Name', required: true },
   ],
   [
-    { name: 'setPhone', label: 'Phone Number' },
-    { name: 'setEmail', label: 'Email' },
+    { name: 'getPhone', label: 'Phone Number' },
+    { name: 'getEmail', label: 'Email' },
   ],
   [
-    { name: 'setAddress', label: 'Street Address' },
-    { name: 'setCity', label: 'City' },
-    { name: 'setZip', label: 'Zip Code' },
+    { name: 'getAddress', label: 'Street Address' },
+    { name: 'getCity', label: 'City' },
+    { name: 'getZip', label: 'Zip Code' },
     {},
   ],
 ];
@@ -132,7 +136,10 @@ export class AccountInfo extends React.PureComponent<props, state> {
   updateUser = async (data: User) => {
     const id = this.state.user.getId();
     this.setState({ saving: true });
-    const user = await UserClientService.saveUser(data, id);
+    const user = await UserClientService.saveUser(
+      makeSafeFormObject(data, new User()),
+      id,
+    );
     this.setState({ user, saving: false, isEditing: false });
   };
 

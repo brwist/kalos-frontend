@@ -102,6 +102,29 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> =
 
       const [formData, setFormData] = useState(
         schema.reduce((aggr, fields) => {
+          const fieldObj = fields.reduce((aggr, field) => {
+            if (field.name !== undefined) {
+              return {
+                ...aggr,
+                [field.name]:
+                  // @ts-ignore
+                  data[field.name]() || getDefaultValueByType(field.type!),
+              };
+            } else {
+              return aggr;
+            }
+          }, {});
+          console.log({ aggr });
+          return {
+            ...aggr,
+            ...fieldObj,
+          };
+        }, {} as typeof data),
+      );
+
+      /*
+      const [formData, setFormData] = useState(
+        schema.reduce((aggr, fields) => {
           return {
             ...aggr,
             ...fields.reduce((aggr, field) => {
@@ -111,51 +134,20 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> =
                 return {
                   ...aggr,
                   [field.name]:
-                    data[field.name] || getDefaultValueByType(field.type!),
+                    // @ts-ignore
+                    data[field.name]() || getDefaultValueByType(field.type!),
                 };
               }
             }),
           };
         }, {} as typeof data),
-      );
-      console.log({ formData });
-      /*const [formData, setFormData] = useState(
-        schema.reduce(
-          (aggr, fields) => ({
-            ...aggr,
-            ...fields.reduce(
-              (aggr, { name, type = 'text' }) =>
-                name === undefined
-                  ? aggr
-                  : {
-                      ...aggr,
-                      [name]:
-                        data[name] !== undefined
-                          ? data[name]
-                          : getDefaultValueByType(type),
-                    },
-              {},
-            ),
-          }),
-          {} as typeof data,
-        ),
       );*/
 
       const handleChange = useCallback(
         name => (value: Value) => {
-          if (name.startsWith('set')) {
-            //@ts-ignore
-            formData[name](value);
-            setFormData(formData);
-          } else if (name.startsWith('get')) {
-            const rename = name.replace('get', 'set');
-            //@ts-ignore
-            formData[rename](value);
-            setFormData(formData);
-          } else {
-            const data = { ...formData, [name]: value };
-            setFormData(data);
-          }
+          const data = { ...formData, [name]: value };
+          setFormData(data);
+
           const field = schema
             .reduce((aggr, fields) => [...aggr, ...fields], [])
             .find(field => field.name === name);
@@ -164,7 +156,7 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> =
           }
           onChange(data);
         },
-        [formData, setFormData, onChange, schema, data],
+        [formData, setFormData, onChange, schema],
       );
 
       let indexOfInputField = 0;
