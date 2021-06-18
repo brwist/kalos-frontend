@@ -9,8 +9,6 @@ import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   getRPCFields,
   makeFakeRows,
-  UserType,
-  PropertyType,
   PropertyClientService,
   JobTypeClientService,
   JobSubtypeClientService,
@@ -18,6 +16,7 @@ import {
   loadProjects,
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -57,11 +56,11 @@ export interface Props {
   projectParentId?: number;
 }
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
   [
     {
       label: 'Notification',
-      name: 'notification',
+      name: 'getNotification',
       required: true,
       multiline: true,
     },
@@ -85,33 +84,29 @@ export const ServiceCall: FC<Props> = props => {
   const [pendingSave, setPendingSave] = useState<boolean>(false);
   const [requestValid, setRequestValid] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
-  const [entry, setEntry] = useState<EventType>(new Event().toObject());
-  const [property, setProperty] = useState<PropertyType>(
-    new Property().toObject(),
-  );
-  const [customer, setCustomer] = useState<UserType>(new User().toObject());
-  const [propertyEvents, setPropertyEvents] = useState<EventType[]>([]);
+  const [entry, setEntry] = useState<Event>(new Event());
+  const [property, setProperty] = useState<Property>(new Property());
+  const [customer, setCustomer] = useState<User>(new User());
+  const [propertyEvents, setPropertyEvents] = useState<Event[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
-  const [jobSubtypes, setJobSubtype] = useState<JobSubtypeType[]>([]);
-  const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
+  const [jobTypes, setJobTypes] = useState<JobType[]>([]);
+  const [jobSubtypes, setJobSubtype] = useState<JobSubtype[]>([]);
+  const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtype[]>([]);
+
+  const [servicesRendered, setServicesRendered] = useState<ServicesRendered[]>(
     [],
   );
-
-  const [servicesRendered, setServicesRendered] = useState<
-    ServicesRenderedType[]
-  >([]);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
+  const [loggedUser, setLoggedUser] = useState<User>();
   const [notificationEditing, setNotificationEditing] = useState<boolean>(
     false,
   );
   const [notificationViewing, setNotificationViewing] = useState<boolean>(
     false,
   );
-  const [projects, setProjects] = useState<EventType[]>([]);
+  const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
     null,
@@ -295,9 +290,9 @@ export const ServiceCall: FC<Props> = props => {
     setEntry(res);
     setSaving(false);
     if (!serviceCallId) {
-      setServiceCallId(res.id);
-      await loadEntry(res.id);
-      await loadServicesRenderedData(res.id);
+      setServiceCallId(res.getId());
+      await loadEntry(res.getId());
+      await loadServicesRenderedData(res.getId());
     }
     if (onSave) {
       onSave();
@@ -314,9 +309,12 @@ export const ServiceCall: FC<Props> = props => {
     loadServicesRenderedData,
   ]);
   const saveProject = useCallback(
-    async (data: EventType) => {
+    async (data: Event) => {
       setSaving(true);
-      if (confirmedParentId) data.parentId = confirmedParentId;
+      if (confirmedParentId) {
+        data.setParentId(confirmedParentId);
+      }
+      const temp = makeSafeFormObject(data, new Event());
       await EventClientService.upsertEvent(data);
       setSaving(false);
       if (onSave) {
@@ -333,7 +331,11 @@ export const ServiceCall: FC<Props> = props => {
       load();
       setLoaded(true);
     }
-    if (entry && entry.customer && entry.customer.notification !== '') {
+    if (
+      entry &&
+      entry.getCustomer() &&
+      entry.getCustomer()!.getNotification() !== ''
+    ) {
       setNotificationViewing(true);
     }
     if (pendingSave && requestValid) {
@@ -366,8 +368,10 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleChangeEntry = useCallback(
-    (data: EventType) => {
-      setEntry({ ...entry, ...data });
+    (data: Event) => {
+      const temp = makeSafeFormObject(data, new Event());
+      const tempObject = Object.assign(entry, temp);
+      setEntry(tempObject);
       setPendingSave(false);
     },
     [entry, setEntry, setPendingSave],
@@ -410,17 +414,18 @@ export const ServiceCall: FC<Props> = props => {
     async (materialUsed, materialTotal) => {
       await EventClientService.updateMaterialUsed(
         serviceCallId,
-        materialUsed + entry.materialUsed,
-        materialTotal + entry.materialTotal,
+        materialUsed + entry.getMaterialUsed(),
+        materialTotal + entry.getMaterialTotal(),
       );
       await loadEntry();
     },
     [serviceCallId, entry],
   );
 
-  const jobTypeOptions: Option[] = jobTypes.map(
-    ({ id: value, name: label }) => ({ label, value }),
-  );
+  const jobTypeOptions: Option[] = jobTypes.map(id => ({
+    label: id.getName(),
+    value: id.getId(),
+  }));
 
   const jobSubtypeOptions: Option[] = [
     { label: OPTION_BLANK, value: 0 },
