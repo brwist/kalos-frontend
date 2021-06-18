@@ -101,6 +101,25 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> =
       const matches = useMediaQuery(theme.breakpoints.up('sm'));
 
       const [formData, setFormData] = useState(
+        schema.reduce((aggr, fields) => {
+          return {
+            ...aggr,
+            ...fields.reduce((aggr, field) => {
+              if (field.name === undefined) {
+                return aggr;
+              } else {
+                return {
+                  ...aggr,
+                  [field.name]:
+                    data[field.name] || getDefaultValueByType(field.type!),
+                };
+              }
+            }),
+          };
+        }, {} as typeof data),
+      );
+      console.log({ formData });
+      /*const [formData, setFormData] = useState(
         schema.reduce(
           (aggr, fields) => ({
             ...aggr,
@@ -120,13 +139,18 @@ export const PlainForm: <T>(props: Props<T>) => ReactElement<Props<T>> =
           }),
           {} as typeof data,
         ),
-      );
+      );*/
 
       const handleChange = useCallback(
         name => (value: Value) => {
-          if (name.includes('set')) {
-            // @ts-ignore
+          if (name.startsWith('set')) {
+            //@ts-ignore
             formData[name](value);
+            setFormData(formData);
+          } else if (name.startsWith('get')) {
+            const rename = name.replace('get', 'set');
+            //@ts-ignore
+            formData[rename](value);
             setFormData(formData);
           } else {
             const data = { ...formData, [name]: value };

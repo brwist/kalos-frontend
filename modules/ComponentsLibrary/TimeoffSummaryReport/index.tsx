@@ -41,13 +41,14 @@ export const TimeoffSummaryReport: FC<Props> = ({ onClose }) => {
       load();
     }
   }, [loaded, setLoaded, load]);
+  const { year, employeeName } = form;
   const handleYearChange = useCallback(
     (step: number) => () => {
       setForm({ employeeName: '', year: year + step });
       setFormKey(formKey + 1);
       setLoaded(false);
     },
-    [setForm, formKey, setFormKey],
+    [setForm, formKey, setFormKey, year],
   );
   const SCHEMA: Schema<FilterForm> = [
     [
@@ -73,7 +74,6 @@ export const TimeoffSummaryReport: FC<Props> = ({ onClose }) => {
       },
     ],
   ];
-  const { year, employeeName } = form;
   const employeeNamePhrase = employeeName.toLowerCase();
   const filteredData = data.filter(({ employeeName }) =>
     employeeName.toLowerCase().includes(employeeNamePhrase),
