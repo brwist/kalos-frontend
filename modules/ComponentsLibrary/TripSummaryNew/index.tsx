@@ -122,7 +122,7 @@ export const TripSummaryNew: FC<Props> = ({
     [setTripToView],
   );
   const handleSetPendingTripToApprove = useCallback(
-    (tripToApprove: Trip) => {
+    (tripToApprove: Trip | undefined) => {
       setPendingTripToApprove(tripToApprove);
       handleSetToggleApproveOrProcess();
     },
@@ -345,6 +345,17 @@ export const TripSummaryNew: FC<Props> = ({
 
   return (
     <>
+      {pendingTripToApprove && (
+        <Confirm
+          key="ConfirmApproved"
+          title="Are you sure?"
+          open={true}
+          onClose={() => handleSetPendingTripToApprove(undefined)}
+          onConfirm={() => handleApproveTrip(pendingTripToApprove!.getId())}
+        >
+          <Typography>Are you sure you want to approve this trip?</Typography>
+        </Confirm>
+      )}
       {canProcessPayroll && (
         <Button
           label={
