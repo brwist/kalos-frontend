@@ -92,6 +92,7 @@ export const TripSummaryNew: FC<Props> = ({
   const [toggleApproveOrProcess, setToggleApproveOrProcess] =
     useState<boolean>(false);
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
+  const [totalTripCount, setTotalTripCount] = useState<number>(0);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
   const [filter, setFilter] = useState<TripFilter>({
     role,
@@ -101,6 +102,12 @@ export const TripSummaryNew: FC<Props> = ({
   } as TripFilter);
   const [page, setPage] = useState<number>(0);
   const [toggleButton, setToggleButton] = useState<boolean>();
+  const [totalTripDistance, setTotalTripDistance] = useState<number>(0);
+
+  const handleSetPage = useCallback(
+    (newPage: number) => setPage(newPage),
+    [setPage],
+  );
   const handleSetToggleApproveOrProcess = useCallback(
     () => setToggleApproveOrProcess(!toggleApproveOrProcess),
     [toggleApproveOrProcess],
@@ -294,10 +301,16 @@ export const TripSummaryNew: FC<Props> = ({
     try {
       const results = await loadTripsByFilter(criteria);
       setTripsLoaded(results.results);
+      setTotalTripCount(results.totalCount);
+      setTotalTripDistance(
+        results.results
+          .map(trip => trip.getDistanceInMiles())
+          .reduce((acc, curr) => acc + curr),
+      );
     } catch (err) {
       console.error(err);
     }
-  }, [departmentId, filter, page, role, toggleButton]);
+  }, [departmentId, filter, page, role, toggleButton, setTotalTripDistance]);
 
   const handleProcessPayroll = useCallback(
     async (id: number) => {
@@ -412,6 +425,24 @@ export const TripSummaryNew: FC<Props> = ({
           }}
         />
       )}
+      {
+        <SectionBar
+          title="Trips"
+          pagination={{
+            count: loaded ? totalTripCount : 0,
+            page: page,
+            rowsPerPage: 25,
+            onChangePage: newPage => handleSetPage(newPage),
+          }}
+          footer={
+            loaded && totalTripDistance != 0
+              ? `Total miles: ${totalTripDistance.toFixed(1)} miles`
+              : 'Total miles: None'
+          }
+          small={compact}
+          key={tripsLoaded!.length}
+        />
+      }
       <InfoTable
         key={loaded.toString() + toggleApproveOrProcess.toString()}
         loading={!loaded}
