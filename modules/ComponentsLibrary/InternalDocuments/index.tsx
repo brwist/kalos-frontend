@@ -12,8 +12,6 @@ import { Form } from '../Form';
 import { ConfirmDelete } from '../ConfirmDelete';
 import {
   makeFakeRows,
-  InternalDocumentType,
-  DocumentKeyType,
   formatDate,
   uploadFileToS3Bucket,
   InternalDocumentClientService,
@@ -30,6 +28,7 @@ import {
   InternalDocument,
   InternalDocumentsFilter,
   InternalDocumentsSort,
+  DocumentKey,
 } from '@kalos-core/kalos-rpc/InternalDocument';
 import './styles.less';
 
@@ -40,16 +39,16 @@ export const InternalDocuments: FC = () => {
   const [loadedFileTags, setLoadedFileTags] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingFileTags, setLoadingFileTags] = useState<boolean>(false);
-  const [entries, setEntries] = useState<InternalDocumentType[]>([]);
-  const [fileTags, setFileTags] = useState<DocumentKeyType[]>([]);
+  const [entries, setEntries] = useState<InternalDocument[]>([]);
+  const [fileTags, setFileTags] = useState<DocumentKey[]>([]);
   const [filter, setFilter] = useState<InternalDocumentsFilter>(defaultFilter);
   const [fileTagsOpened, setFileTagsOpened] = useState<boolean>(false);
-  const [editing, setEditing] = useState<InternalDocumentType>();
-  const [deleting, setDeleting] = useState<InternalDocumentType>();
+  const [editing, setEditing] = useState<InternalDocument>();
+  const [deleting, setDeleting] = useState<InternalDocument>();
   const [documentFile, setDocumentFile] = useState<string>('');
   const [formKey, setFormKey] = useState<number>(0);
   const [sort, setSort] = useState<InternalDocumentsSort>({
-    orderByField: 'filename',
+    orderByField: 'getFilename',
     orderBy: 'name',
     orderDir: 'ASC',
   });
@@ -57,16 +56,14 @@ export const InternalDocuments: FC = () => {
   const [page, setPage] = useState<number>(0);
   const load = useCallback(async () => {
     setLoading(true);
-    const {
-      resultsList,
-      totalCount,
-    } = await InternalDocumentClientService.loadInternalDocuments({
+    const results = await InternalDocumentClientService.loadInternalDocuments({
       page,
       filter,
       sort,
     });
-    setEntries(resultsList);
-    setCount(totalCount);
+
+    setEntries(results.getResultsList());
+    setCount(results.getTotalCount());
     setLoading(false);
   }, [setLoading, setEntries, setCount, page, filter, sort]);
   const loadFileTags = useCallback(async () => {
@@ -120,25 +117,25 @@ export const InternalDocuments: FC = () => {
     [setFileTagsOpened],
   );
   const handleView = useCallback(
-    (entry: InternalDocumentType) => () => {
-      S3ClientService.openFile(entry.filename, INTERNAL_DOCUMENTS_BUCKET);
+    (entry: InternalDocument) => () => {
+      S3ClientService.openFile(entry.getFilename(), INTERNAL_DOCUMENTS_BUCKET);
     },
     [],
   );
   const handleSetEditing = useCallback(
-    (editing?: InternalDocumentType) => () => setEditing(editing),
+    (editing?: InternalDocument) => () => setEditing(editing),
     [setEditing],
   );
   const handleSetDeleting = useCallback(
-    (deleting?: InternalDocumentType) => () => setDeleting(deleting),
+    (deleting?: InternalDocument) => () => setDeleting(deleting),
     [setDeleting],
   );
   const handleSave = useCallback(
-    async (data: InternalDocumentType) => {
+    async (data: InternalDocument) => {
       setEditing(undefined);
       setLoading(true);
       await uploadFileToS3Bucket(
-        data.filename,
+        data.getFilename(),
         documentFile,
         INTERNAL_DOCUMENTS_BUCKET,
       );
@@ -149,7 +146,8 @@ export const InternalDocuments: FC = () => {
   );
   const handleDelete = useCallback(async () => {
     if (deleting) {
-      const { id, fileId } = deleting;
+      const id = deleting.getId();
+      const fileId = deleting.getFileId();
       setDeleting(undefined);
       setLoading(true);
       await FileClientService.deleteFileById(fileId);
@@ -166,48 +164,48 @@ export const InternalDocuments: FC = () => {
       [
         {
           name: 'Document Description',
-          ...(sort.orderByField === 'filename'
+          ...(sort.orderByField === 'getFilename'
             ? {
                 dir: sort.orderDir,
               }
             : {}),
           onClick: handleSortChange({
-            orderByField: 'filename',
+            orderByField: 'getFilename',
             orderBy: 'name',
             orderDir:
-              sort.orderByField === 'filename' && sort.orderDir === 'ASC'
+              sort.orderByField === 'getFilename' && sort.orderDir === 'ASC'
                 ? 'DESC'
                 : 'ASC',
           }),
         },
         {
           name: 'Added',
-          ...(sort.orderByField === 'dateCreated'
+          ...(sort.orderByField === 'getDateCreated'
             ? {
                 dir: sort.orderDir,
               }
             : {}),
           onClick: handleSortChange({
-            orderByField: 'dateCreated',
+            orderByField: 'getDateCreated',
             orderBy: 'idocument_date_created',
             orderDir:
-              sort.orderByField === 'dateCreated' && sort.orderDir === 'ASC'
+              sort.orderByField === 'getDateCreated' && sort.orderDir === 'ASC'
                 ? 'DESC'
                 : 'ASC',
           }),
         },
         {
           name: 'Modified',
-          ...(sort.orderByField === 'dateModified'
+          ...(sort.orderByField === 'getDateModified'
             ? {
                 dir: sort.orderDir,
               }
             : {}),
           onClick: handleSortChange({
-            orderByField: 'dateModified',
+            orderByField: 'getDateModified',
             orderBy: 'idocument_date_modified',
             orderDir:
-              sort.orderByField === 'dateModified' && sort.orderDir === 'ASC'
+              sort.orderByField === 'getDateModified' && sort.orderDir === 'ASC'
                 ? 'DESC'
                 : 'ASC',
           }),
@@ -218,11 +216,7 @@ export const InternalDocuments: FC = () => {
   const getFileTagsOptions = useCallback(
     (options = []) => [
       ...options,
-      ...fileTags.map(({ id: value, name: label, color }) => ({
-        value,
-        label,
-        color,
-      })),
+      ...fileTags.map(file => (file.getId(), file.getName(), file.getColor())),
     ],
     [fileTags],
   );
@@ -265,22 +259,22 @@ export const InternalDocuments: FC = () => {
       ] as Schema<InternalDocumentsFilter>,
     [fileTags, formKey],
   );
-  const SCHEMA_EDIT: Schema<InternalDocumentType> = useMemo(
+  const SCHEMA_EDIT: Schema<InternalDocument> = useMemo(
     () =>
       [
         [
           {
-            name: 'id',
+            name: 'getId',
             type: 'hidden',
           },
           {
-            name: 'fileId',
+            name: 'getFileId',
             type: 'hidden',
           },
         ],
         [
           {
-            name: 'filename',
+            name: 'getFilename',
             label: 'File',
             type: 'file',
             required: true,
@@ -289,7 +283,7 @@ export const InternalDocuments: FC = () => {
         ],
         [
           {
-            name: 'description',
+            name: 'getDescription',
             label: 'Description',
             helperText: '(Short and Descriptive)',
             required: true,
@@ -297,22 +291,26 @@ export const InternalDocuments: FC = () => {
         ],
         [
           {
-            name: 'tag',
+            name: 'getTag',
             label: 'File Tag',
             options: getFileTagsOptions(),
             required: true,
           },
         ],
-      ] as Schema<InternalDocumentType>,
+      ] as Schema<InternalDocument>,
     [fileTags],
   );
   const data: Data =
     loading || loadingFileTags
       ? makeFakeRows(3, 5)
       : (entries.map(entry => {
-          const { description, dateCreated, dateModified, tagData } = entry;
-          const backgroundColor = tagData ? tagData.color : '';
-          const tagName = tagData ? tagData.name : '';
+          //const { description, dateCreated, dateModified, tagData } = entry;
+          const description = entry.getDescription();
+          const dateCreated = entry.getDateCreated();
+          const dateModified = entry.getDateModified();
+          const tagData = entry.getTagData();
+          const backgroundColor = tagData ? tagData.getColor() : '';
+          const tagName = tagData ? tagData.getName() : '';
           return [
             {
               value: (
@@ -362,7 +360,7 @@ export const InternalDocuments: FC = () => {
         actions={[
           {
             label: 'Add Document',
-            onClick: handleSetEditing(new InternalDocument().toObject()),
+            onClick: handleSetEditing(new InternalDocument()),
           },
         ]}
         fixedActions
@@ -398,7 +396,7 @@ export const InternalDocuments: FC = () => {
       {editing && (
         <Modal open onClose={handleSetEditing(undefined)}>
           <Form
-            title={`${editing.id ? 'Edit' : 'Add'} Kalos Document`}
+            title={`${editing.getId() ? 'Edit' : 'Add'} Kalos Document`}
             schema={SCHEMA_EDIT}
             data={editing}
             onClose={handleSetEditing(undefined)}
@@ -410,7 +408,9 @@ export const InternalDocuments: FC = () => {
         <ConfirmDelete
           open
           kind="Internal Document"
-          name={`${deleting.tagData?.name} ${deleting.description}`}
+          name={`${deleting
+            .getTagData()
+            ?.getName()} ${deleting.getDescription()}`}
           onClose={handleSetDeleting(undefined)}
           onConfirm={handleDelete}
         />
