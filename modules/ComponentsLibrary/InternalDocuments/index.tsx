@@ -18,6 +18,7 @@ import {
   FileClientService,
   S3ClientService,
   DocumentClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -134,12 +135,13 @@ export const InternalDocuments: FC = () => {
     async (data: InternalDocument) => {
       setEditing(undefined);
       setLoading(true);
+      const temp = makeSafeFormObject(data, new InternalDocument());
       await uploadFileToS3Bucket(
-        data.getFilename(),
+        temp.getFilename(),
         documentFile,
         INTERNAL_DOCUMENTS_BUCKET,
       );
-      await InternalDocumentClientService.upsertInternalDocument(data);
+      await InternalDocumentClientService.upsertInternalDocument(temp);
       setLoaded(false);
     },
     [setEditing, setLoading, setLoaded, documentFile],
