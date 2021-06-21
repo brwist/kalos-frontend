@@ -7,8 +7,6 @@ import { InfoTable, Columns, Data } from '../InfoTable';
 import { TimeOff } from '../TimeOff';
 import { Modal } from '../Modal';
 import {
-  TimesheetDepartmentType,
-  TimeoffRequestType,
   formatDateTime,
   TimeoffRequestClientService,
   makeFakeRows,
@@ -41,28 +39,28 @@ const COLUMNS: Columns = [
 export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
   const timeoffClient = useMemo(() => new TimeoffRequestClient(ENDPOINT), []);
   const [department, setDepartment] = useState<number[]>();
-  const [editing, setEditing] = useState<TimeoffRequestType>();
+  const [editing, setEditing] = useState<TimeoffRequest>();
   const [initiated, setInitiated] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [loaded, setLoaded] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [types, setTypes] = useState<{ [key: number]: string }>({});
-  const [timeoffRequests, setTimeoffRequests] = useState<TimeoffRequestType[]>(
-    [],
-  );
+  const [timeoffRequests, setTimeoffRequests] = useState<TimeoffRequest[]>([]);
   const init = useCallback(async () => {
     try {
       let user = await UserClientService.loadUserById(loggedUserId);
-      let role = user.permissionGroupsList.find(p => p.type === 'role');
+      let role = user
+        .getPermissionGroupsList()
+        .find(p => p.getType() === 'role');
       if (role) {
-        if (role.name === 'Manager') {
-          let department = user.permissionGroupsList.filter(
-            p => p.type === 'department',
-          );
+        if (role.getName() === 'Manager') {
+          let department = user
+            .getPermissionGroupsList()
+            .filter(p => p.getType() === 'department');
           let tempDepartmentList = [];
           for (let i = 0; i < department.length; i++) {
-            tempDepartmentList.push(department[i].id);
+            tempDepartmentList.push(department[i].getId());
           }
           setDepartment(tempDepartmentList);
         }
@@ -76,13 +74,16 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
           await TimesheetDepartmentClientService.getDepartmentByManagerID(
             loggedUserId,
           )
-        ).id;
+        ).getId();
         tempDepartmentList.push(department);
         setDepartment(tempDepartmentList);
         const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
         setTypes(
           types.reduce(
-            (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
+            (aggr, item) => ({
+              ...aggr,
+              [item.getId()]: item.getRequestType(),
+            }),
             {},
           ),
         );
@@ -109,9 +110,8 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
       departmentCode: department.id,
       adminApprovalUserId: 0,
     });*/
-    const { resultsList, totalCount } = timeoffs.toObject();
-    setTimeoffRequests(resultsList);
-    setCount(totalCount);
+    setTimeoffRequests(timeoffs.getResultsList());
+    setCount(timeoffs.getTotalCount());
     setLoading(false);
     setLoaded(true);
   }, [
@@ -138,13 +138,14 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
     }
   }, [initiated, setInitiated, loaded, load, init]);
   const handleEdit = useCallback(
-    (editing?: TimeoffRequestType) => () => setEditing(editing),
+    (editing?: TimeoffRequest) => () => setEditing(editing),
     [setEditing],
   );
   if (!initiated || (initiated && !department)) return null;
   const data: Data = loading
     ? makeFakeRows(7, 5)
     : timeoffRequests.map(entry => {
+        /*
         const {
           userName,
           timeStarted,
@@ -154,6 +155,14 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
           requestClass,
           notes,
         } = entry;
+        */
+        const userName = entry.getUserName();
+        const timeStarted = entry.getTimeStarted();
+        const timeFinished = entry.getTimeFinished();
+        const allDayOff = entry.getAllDayOff();
+        const requestType = entry.getRequestType();
+        const requestClass = entry.getRequestClass();
+        const notes = entry.getNotes();
         return [
           {
             value: userName,
@@ -218,11 +227,11 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
           <TimeOff
             loggedUserId={loggedUserId}
             onCancel={handleEdit(undefined)}
-            userId={editing.userId}
+            userId={editing.getUserId()}
             cancelLabel="Close"
             onAdminSubmit={() => closeAll()}
             onSaveOrDelete={() => closeAll()}
-            requestOffId={editing.id}
+            requestOffId={editing.getId()}
           />
         </Modal>
       )}
