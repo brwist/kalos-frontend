@@ -558,7 +558,8 @@ export const TripSummaryNew: FC<Props> = ({
                         <></>
                       ),
                       canApprove &&
-                      currentTrip.getDateProcessed() == NULL_TIME ? (
+                      currentTrip.getDateProcessed() == NULL_TIME &&
+                      !currentTrip.getApproved() ? (
                         <Tooltip
                           key={'approve' + idx}
                           content="Approve"
