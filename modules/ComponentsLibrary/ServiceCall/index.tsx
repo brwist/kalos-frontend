@@ -390,8 +390,10 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleSaveCustomer = useCallback(
-    async (data: UserType) => {
+    async (data: User) => {
       setSaving(true);
+      const temp = makeSafeFormObject(data, new User());
+      console.log(temp);
       const entry = new User();
       entry.setId(userID);
       const fieldMaskList = [];
@@ -401,8 +403,9 @@ export const ServiceCall: FC<Props> = props => {
         entry[methodName](data[fieldName]);
         fieldMaskList.push(upperCaseProp);
       }
+      console.log(temp);
       entry.setFieldMaskList(fieldMaskList);
-      await UserClientService.Update(entry);
+      //await UserClientService.Update(entry);
       await loadEntry();
       setSaving(false);
       handleSetNotificationEditing(false)();
@@ -430,10 +433,13 @@ export const ServiceCall: FC<Props> = props => {
   const jobSubtypeOptions: Option[] = [
     { label: OPTION_BLANK, value: 0 },
     ...jobTypeSubtypes
-      .filter(({ jobTypeId }) => jobTypeId === entry.jobTypeId)
-      .map(({ jobSubtypeId }) => ({
-        value: jobSubtypeId,
-        label: jobSubtypes.find(({ id }) => id === jobSubtypeId)?.name || '',
+      .filter(jobTypeId => jobTypeId.getJobTypeId() === entry.getJobTypeId())
+      .map(jobSubtypeId => ({
+        value: jobSubtypeId.getId(),
+        label:
+          jobSubtypes
+            .find(id => id.getId() === jobSubtypeId.getId())
+            ?.getName() || '',
       })),
   ];
 
