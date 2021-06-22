@@ -61,6 +61,7 @@ interface Props {
   perDiemRowIds: number[];
   userId: number; // The id to filter to
   departmentId?: number;
+  canAddTrips?: boolean;
   canDeleteTrips?: boolean;
   compact?: boolean;
   canSlackMessage?: boolean;
@@ -70,6 +71,15 @@ interface Props {
   viewingOwn?: boolean;
   checkboxes?: boolean;
   searchable?: boolean;
+  onSaveTrip?: (savedTrip?: Trip) => any;
+  /*
+  canAddTrips?: boolean; 
+  hoverable?: boolean;
+  displayTripDistance?: boolean;
+  onSaveTrip?: (savedTrip?: Trip) => any;
+  onDeleteTrip?: () => any;
+  onDeleteAllTrips?: () => any; 
+  */
 }
 
 export const TripSummaryNew: FC<Props> = ({
@@ -86,6 +96,8 @@ export const TripSummaryNew: FC<Props> = ({
   viewingOwn,
   checkboxes,
   searchable,
+  canAddTrips,
+  onSaveTrip,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -97,6 +109,7 @@ export const TripSummaryNew: FC<Props> = ({
   const [pendingTripToApprove, setPendingTripToApprove] = useState<
     Trip | undefined
   >();
+  const [pendingTripToAdd, setPendingTripToAdd] = useState<Trip | undefined>();
   const [pendingTripToDeny, setPendingTripToDeny] = useState<
     Trip | undefined
   >();
@@ -122,6 +135,17 @@ export const TripSummaryNew: FC<Props> = ({
   const [totalTripDistance, setTotalTripDistance] = useState<number>(0);
   const [search, setSearch] = useState<Trip>(new Trip());
 
+  const handleAddTrip = useCallback(() => {
+    if (perDiemRowIds == undefined || perDiemRowIds.length == 0) {
+      //this.toggleWarningForNoPerDiem();
+      //return;
+    }
+    setPendingTripToAdd(new Trip());
+  }, [perDiemRowIds]);
+  const handleSetPendingTripToAdd = useCallback(
+    (tripToAdd: Trip | undefined) => setPendingTripToAdd(tripToAdd),
+    [setPendingTripToAdd],
+  );
   const handleSetSearch = useCallback(
     (newTrip: Trip) => setSearch(newTrip),
     [setSearch],
@@ -391,6 +415,82 @@ export const TripSummaryNew: FC<Props> = ({
     [loadTrips],
   );
 
+  const getTripDistance = useCallback(
+    async (origin: string, destination: string) => {
+      try {
+        await MapClientService.getTripDistance(origin, destination);
+      } catch (error: any) {
+        console.error(
+          'An error occurred while calculating the trip distance: ',
+          error,
+        );
+        alert(
+          'An error occurred while calculating the trip distance. Please try again, or contact your administrator if this error persists.',
+        );
+      }
+    },
+    [],
+  );
+
+  const saveTrip = async (
+    data: AddressPair.AsObject,
+    rowId: number,
+    userId: number,
+  ) => {
+    let trip = new Trip();
+    trip.setOriginAddress(data.FullAddressOrigin);
+    trip.setDestinationAddress(data.FullAddressDestination);
+
+    await getTripDistance(
+      String(data.FullAddressOrigin),
+      String(data.FullAddressDestination),
+    );
+
+    if (rowId) {
+      trip.setPerDiemRowId(rowId);
+    } else {
+      // console.error('No perDiem found for this user. ');
+      // this.toggleWarningForNoPerDiem();
+      // this.setState({ pendingTrip: null });
+      // this.reloadTrips();
+      // return;
+    }
+
+    trip.setNotes(data.Notes);
+    trip.setHomeTravel(data.HomeTravel);
+    trip.setDate(data.Date);
+
+    let user;
+    let department;
+
+    try {
+      user = await UserClientService.loadUserById(loggedUserId);
+    } catch (err) {
+      console.error('Error getting user by id: ', err);
+    }
+    if (user) {
+      try {
+        department =
+          await TimesheetDepartmentClientService.getDepartmentByManagerID(
+            user.getManagedBy(),
+          );
+      } catch (err) {
+        console.error('Error getting timesheet department: ', err);
+      }
+    }
+    if (department) trip.setDepartmentId(department.getId());
+    try {
+      await PerDiemClientService.upsertTrip(trip, rowId!, userId);
+    } catch (err) {
+      console.error('An error occurred while upserting a trip: ', err);
+    }
+
+    if (onSaveTrip) onSaveTrip();
+
+    handleSetPendingTripToAdd(undefined);
+    loadTrips();
+  };
+
   const load = useCallback(async () => {
     setLoaded(false);
     await loadTrips();
@@ -446,6 +546,27 @@ export const TripSummaryNew: FC<Props> = ({
         >
           <Typography>Are you sure you want to reject this trip?</Typography>
         </Confirm>
+      )}
+      {canAddTrips && (
+        <Button
+          label="Add Trip"
+          size="small"
+          key={'addTrip'}
+          variant="contained"
+          onClick={handleAddTrip}
+        />
+      )}
+      {pendingTripToAdd && (
+        <PlaceAutocompleteAddressForm
+          key={'autocomplete'}
+          perDiemRowIds={perDiemRowIds}
+          onClose={() => handleSetPendingTripToAdd(undefined)}
+          onSave={async (addressPair: AddressPair.AddressPair) => {
+            saveTrip(addressPair, addressPair.PerDiemId, loggedUserId);
+          }}
+          addressFields={2}
+          schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
+        />
       )}
       {canProcessPayroll && (
         <Button
