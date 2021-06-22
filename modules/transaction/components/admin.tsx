@@ -78,7 +78,8 @@ type sortString =
   | 'cost_center_id'
   | 'department_id'
   | 'job_number'
-  | 'amount';
+  | 'amount'
+  | 'owner_name';
 
 export class TransactionAdminView extends React.Component<props, state> {
   TxnClient: TransactionClient;
@@ -621,7 +622,43 @@ export class TransactionAdminView extends React.Component<props, state> {
         }
       });
     }
+    if (sortBy === 'owner_name') {
+      return this.state.transactions.sort((a, b) => {
+        if (sortDir === 'asc') {
+          const splitA = a.ownerName.split(' ');
+          const splitB = b.ownerName.split(' ');
+          const lastA = splitA[splitA.length - 1].toLowerCase();
+          const lastB = splitB[splitB.length - 1].toLowerCase();
+          const firstA = splitA[0].toLowerCase();
+          const firstB = splitB[0].toLowerCase();
 
+          if (lastA + firstA < lastB + firstB) {
+            return -1;
+          }
+
+          if (lastA + firstA > lastB + firstB) {
+            return 1;
+          }
+          return 0;
+        } else {
+          const splitA = a.ownerName.split(' ');
+          const splitB = b.ownerName.split(' ');
+          const lastA = splitA[splitA.length - 1].toLowerCase();
+          const lastB = splitB[splitB.length - 1].toLowerCase();
+          const firstA = splitA[0].toLowerCase();
+          const firstB = splitB[0].toLowerCase();
+
+          if (lastA + firstA > lastB + firstB) {
+            return -1;
+          }
+
+          if (lastA + firstA < lastB + firstB) {
+            return 1;
+          }
+          return 0;
+        }
+      });
+    }
     if (sortBy === 'description') {
       return this.state.transactions.sort((a, b) => {
         if (sortDir === 'asc') {
@@ -866,8 +903,16 @@ export class TransactionAdminView extends React.Component<props, state> {
               dir: 'DESC',
               onClick: () => this.setSort('timestamp'),
             },
-            { name: 'Purchaser' },
-            { name: 'Account', onClick: () => this.setSort('cost_center_id') },
+            {
+              name: 'Purchaser',
+              onClick: () => this.setSort('owner_name'),
+              dir: 'DESC',
+            },
+            {
+              name: 'Account',
+              onClick: () => this.setSort('cost_center_id'),
+              dir: 'DESC',
+            },
             {
               name: 'Department',
               onClick: () => this.setSort('department_id'),
