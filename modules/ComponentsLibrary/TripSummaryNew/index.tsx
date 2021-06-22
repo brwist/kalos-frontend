@@ -64,6 +64,7 @@ interface Props {
   canProcessPayroll?: boolean;
   role?: RoleType;
   viewingOwn?: boolean;
+  checkboxes?: boolean;
 }
 
 export const TripSummaryNew: FC<Props> = ({
@@ -78,6 +79,7 @@ export const TripSummaryNew: FC<Props> = ({
   canProcessPayroll,
   role,
   viewingOwn,
+  checkboxes,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -100,10 +102,17 @@ export const TripSummaryNew: FC<Props> = ({
     userId,
     departmentId,
   } as TripFilter);
+  const [checkboxFilter, setCheckboxFilter] = useState<Checkboxes>(
+    new Checkboxes(),
+  );
   const [page, setPage] = useState<number>(0);
   const [toggleButton, setToggleButton] = useState<boolean>();
   const [totalTripDistance, setTotalTripDistance] = useState<number>(0);
 
+  const handleSetCheckboxFilter = useCallback(
+    (newFilter: Checkboxes) => setCheckboxFilter(newFilter),
+    [setCheckboxFilter],
+  );
   const handleSetPage = useCallback(
     (newPage: number) => setPage(newPage),
     [setPage],
@@ -376,6 +385,13 @@ export const TripSummaryNew: FC<Props> = ({
 
   return (
     <>
+      {checkboxes && (
+        <PlainForm<Checkboxes>
+          schema={CHECKBOXES_SCHEMA}
+          data={checkboxFilter}
+          onChange={handleSetCheckboxFilter}
+        />
+      )}
       {pendingTripToProcessPayroll && (
         <Confirm
           key="ConfirmProcessed"
