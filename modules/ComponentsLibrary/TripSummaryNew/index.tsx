@@ -1,7 +1,11 @@
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import React, { FC, useCallback, useState, useEffect } from 'react';
 import { InfoTable } from '../InfoTable';
-import { formatDateDay, perDiemTripMilesToUsd } from '../../../helpers';
+import {
+  formatDateDay,
+  makeSafeFormObject,
+  perDiemTripMilesToUsd,
+} from '../../../helpers';
 import { Tooltip } from '../Tooltip';
 import { IconButton } from '@material-ui/core';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -65,6 +69,7 @@ interface Props {
   role?: RoleType;
   viewingOwn?: boolean;
   checkboxes?: boolean;
+  searchable?: boolean;
 }
 
 export const TripSummaryNew: FC<Props> = ({
@@ -80,24 +85,28 @@ export const TripSummaryNew: FC<Props> = ({
   role,
   viewingOwn,
   checkboxes,
+  searchable,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [pendingTripToDelete, setPendingTripToDelete] =
-    useState<Trip | undefined>();
+  const [pendingTripToDelete, setPendingTripToDelete] = useState<
+    Trip | undefined
+  >();
   const [pendingTripToProcessPayroll, setPendingTripToProcessPayroll] =
     useState<Trip | undefined>();
-  const [pendingTripToApprove, setPendingTripToApprove] =
-    useState<Trip | undefined>();
-  const [pendingTripToDeny, setPendingTripToDeny] =
-    useState<Trip | undefined>();
+  const [pendingTripToApprove, setPendingTripToApprove] = useState<
+    Trip | undefined
+  >();
+  const [pendingTripToDeny, setPendingTripToDeny] = useState<
+    Trip | undefined
+  >();
   const [toggleApproveOrProcess, setToggleApproveOrProcess] =
     useState<boolean>(false);
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
   const [toggleButton, setToggleButton] = useState<boolean>();
-  const [filter, setFilter] = useState<TripFilter>({
+  const [tripFilter, setFilter] = useState<TripFilter>({
     role,
     weekof: perDiemRowIds,
     userId,
@@ -111,7 +120,12 @@ export const TripSummaryNew: FC<Props> = ({
   );
   const [page, setPage] = useState<number>(0);
   const [totalTripDistance, setTotalTripDistance] = useState<number>(0);
+  const [search, setSearch] = useState<Trip>(new Trip());
 
+  const handleSetSearch = useCallback(
+    (newTrip: Trip) => setSearch(newTrip),
+    [setSearch],
+  );
   const handleSetCheckboxFilter = useCallback(
     (newFilter: Checkboxes) => setCheckboxFilter(newFilter),
     [setCheckboxFilter],
@@ -171,22 +185,22 @@ export const TripSummaryNew: FC<Props> = ({
       },
     ];
 
-  const SCHEMA_TRIP_SEARCH: Schema<TripFilter> = [
+  const SCHEMA_TRIP_SEARCH: Schema<Trip> = [
     [
       {
         label: 'ID',
         type: 'text',
-        name: 'id',
+        name: 'getId',
       },
       {
         label: 'Origin',
         type: 'text',
-        name: 'originAddress',
+        name: 'getOriginAddress',
       },
       {
         label: 'Destination',
         type: 'text',
-        name: 'destinationAddress',
+        name: 'getDestinationAddress',
       },
     ],
   ];
@@ -291,11 +305,19 @@ export const TripSummaryNew: FC<Props> = ({
       } as TripsSort,
       req: tripReq,
       filter: {
-        ...filter,
-        approved: checkboxFilter.approved ? true : filter.approved,
+        ...tripFilter,
+        id: search.getId() ? search.getId() : tripFilter.id,
+        destinationAddress: search.getDestinationAddress()
+          ? search.getDestinationAddress()
+          : tripFilter.destinationAddress,
+        originAddress: search.getOriginAddress()
+          ? search.getOriginAddress()
+          : tripFilter.originAddress,
+
+        approved: checkboxFilter.approved ? true : tripFilter.approved,
         payrollProcessed: checkboxFilter.payrollProcessed
           ? true
-          : filter.payrollProcessed,
+          : tripFilter.payrollProcessed,
       },
     };
 
@@ -311,7 +333,13 @@ export const TripSummaryNew: FC<Props> = ({
     } catch (err) {
       console.error(err);
     }
-  }, [checkboxFilter.approved, checkboxFilter.payrollProcessed, filter, page]);
+  }, [
+    page,
+    tripFilter,
+    search,
+    checkboxFilter.approved,
+    checkboxFilter.payrollProcessed,
+  ]);
 
   const handleProcessPayroll = useCallback(
     async (id: number) => {
@@ -332,7 +360,6 @@ export const TripSummaryNew: FC<Props> = ({
   const handleApproveTrip = useCallback(
     async (id: number) => {
       try {
-        console.log('update trip id: ', id);
         await PerDiemClientService.updateTripApproved(id);
         setPendingTripToApprove(undefined);
         loadTrips();
@@ -350,7 +377,6 @@ export const TripSummaryNew: FC<Props> = ({
   const handleRejectTrip = useCallback(
     async (id: number) => {
       try {
-        console.log('Trip id: ', id);
         await PerDiemClientService.updateTripDeny(id);
         setPendingTripToDeny(undefined);
         loadTrips();
@@ -480,6 +506,22 @@ export const TripSummaryNew: FC<Props> = ({
           key={tripsLoaded!.length}
         />
       }
+      {searchable && (
+        <Form<Trip>
+          key={'searchForm'}
+          title="Search"
+          submitLabel="Search"
+          cancelLabel="Reset"
+          schema={SCHEMA_TRIP_SEARCH}
+          data={search}
+          onClose={() => loadTrips()}
+          onSave={tripOut => {
+            const safe = makeSafeFormObject(tripOut, new Trip());
+            handleSetSearch(safe);
+            loadTrips();
+          }}
+        />
+      )}
       <InfoTable
         key={
           loaded.toString() +
