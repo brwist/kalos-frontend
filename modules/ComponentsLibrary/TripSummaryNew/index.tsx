@@ -64,6 +64,7 @@ interface Props {
   canProcessPayroll?: boolean;
   role?: RoleType;
   viewingOwn?: boolean;
+  checkboxes?: boolean;
 }
 
 export const TripSummaryNew: FC<Props> = ({
@@ -78,6 +79,7 @@ export const TripSummaryNew: FC<Props> = ({
   canProcessPayroll,
   role,
   viewingOwn,
+  checkboxes,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -94,16 +96,26 @@ export const TripSummaryNew: FC<Props> = ({
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
+  const [toggleButton, setToggleButton] = useState<boolean>();
   const [filter, setFilter] = useState<TripFilter>({
     role,
     weekof: perDiemRowIds,
     userId,
     departmentId,
+    payrollProcessed: role == 'Payroll' ? !toggleButton : undefined,
+    approved: role == 'Payroll' ? true : role == 'Manager' ? false : undefined,
+    adminActionDate: NULL_TIME,
   } as TripFilter);
+  const [checkboxFilter, setCheckboxFilter] = useState<Checkboxes>(
+    new Checkboxes(),
+  );
   const [page, setPage] = useState<number>(0);
-  const [toggleButton, setToggleButton] = useState<boolean>();
   const [totalTripDistance, setTotalTripDistance] = useState<number>(0);
 
+  const handleSetCheckboxFilter = useCallback(
+    (newFilter: Checkboxes) => setCheckboxFilter(newFilter),
+    [setCheckboxFilter],
+  );
   const handleSetPage = useCallback(
     (newPage: number) => setPage(newPage),
     [setPage],
@@ -143,7 +155,7 @@ export const TripSummaryNew: FC<Props> = ({
     [handleSetToggleApproveOrProcess],
   );
   const handleSetPendingTripToDeny = useCallback(
-    (tripToDeny: Trip) => setPendingTripToDeny(tripToDeny),
+    (tripToDeny: Trip | undefined) => setPendingTripToDeny(tripToDeny),
     [setPendingTripToDeny],
   );
   let deleteActions: any[] = [];
@@ -269,23 +281,6 @@ export const TripSummaryNew: FC<Props> = ({
   ];
 
   const loadTrips = useCallback(async () => {
-    switch (role) {
-      case 'Payroll':
-        setFilter({
-          ...filter,
-          payrollProcessed: !toggleButton,
-          approved: true,
-        });
-        break;
-      case 'Manager':
-        setFilter({
-          ...filter,
-          approved: false,
-          adminActionDate: NULL_TIME,
-          departmentId,
-        });
-        break;
-    }
     let tripReq = new Trip();
     let criteria = {
       page,
@@ -295,7 +290,13 @@ export const TripSummaryNew: FC<Props> = ({
         orderDir: 'ASC',
       } as TripsSort,
       req: tripReq,
-      filter,
+      filter: {
+        ...filter,
+        approved: checkboxFilter.approved ? true : filter.approved,
+        payrollProcessed: checkboxFilter.payrollProcessed
+          ? true
+          : filter.payrollProcessed,
+      },
     };
 
     try {
@@ -310,7 +311,7 @@ export const TripSummaryNew: FC<Props> = ({
     } catch (err) {
       console.error(err);
     }
-  }, [departmentId, filter, page, role, toggleButton, setTotalTripDistance]);
+  }, [checkboxFilter.approved, checkboxFilter.payrollProcessed, filter, page]);
 
   const handleProcessPayroll = useCallback(
     async (id: number) => {
@@ -346,6 +347,24 @@ export const TripSummaryNew: FC<Props> = ({
     [loadTrips],
   );
 
+  const handleRejectTrip = useCallback(
+    async (id: number) => {
+      try {
+        console.log('Trip id: ', id);
+        await PerDiemClientService.updateTripDeny(id);
+        setPendingTripToDeny(undefined);
+        loadTrips();
+      } catch (err) {
+        console.error(
+          'An error occurred while updating trip approved status: ',
+          err,
+        );
+        setPendingTripToDeny(undefined);
+      }
+    },
+    [loadTrips],
+  );
+
   const load = useCallback(async () => {
     setLoaded(false);
     await loadTrips();
@@ -358,6 +377,13 @@ export const TripSummaryNew: FC<Props> = ({
 
   return (
     <>
+      {checkboxes && (
+        <PlainForm<Checkboxes>
+          schema={CHECKBOXES_SCHEMA}
+          data={checkboxFilter}
+          onChange={handleSetCheckboxFilter}
+        />
+      )}
       {pendingTripToProcessPayroll && (
         <Confirm
           key="ConfirmProcessed"
@@ -382,6 +408,17 @@ export const TripSummaryNew: FC<Props> = ({
           onConfirm={() => handleApproveTrip(pendingTripToApprove!.getId())}
         >
           <Typography>Are you sure you want to approve this trip?</Typography>
+        </Confirm>
+      )}
+      {pendingTripToDeny && (
+        <Confirm
+          key="ConfirmRejected"
+          title="Are you sure?"
+          open={true}
+          onClose={() => handleSetPendingTripToDeny(undefined)}
+          onConfirm={() => handleRejectTrip(pendingTripToDeny!.getId())}
+        >
+          <Typography>Are you sure you want to reject this trip?</Typography>
         </Confirm>
       )}
       {canProcessPayroll && (
@@ -444,7 +481,11 @@ export const TripSummaryNew: FC<Props> = ({
         />
       }
       <InfoTable
-        key={loaded.toString() + toggleApproveOrProcess.toString()}
+        key={
+          loaded.toString() +
+          toggleApproveOrProcess.toString() +
+          pendingTripToDeny
+        }
         loading={!loaded}
         columns={[
           { name: 'Origin' },
@@ -558,7 +599,8 @@ export const TripSummaryNew: FC<Props> = ({
                         <></>
                       ),
                       canApprove &&
-                      currentTrip.getDateProcessed() == NULL_TIME ? (
+                      currentTrip.getDateProcessed() == NULL_TIME &&
+                      !currentTrip.getApproved() ? (
                         <Tooltip
                           key={'approve' + idx}
                           content="Approve"
