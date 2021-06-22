@@ -9,7 +9,7 @@ import React, {
 import { PlainForm, Option } from '../../PlainForm';
 import { Form, Schema } from '../../Form';
 import { InfoTable } from '../../InfoTable';
-import { makeFakeRows } from '../../../../helpers';
+import { makeFakeRows, makeSafeFormObject } from '../../../../helpers';
 import {
   RESIDENTIAL_OPTIONS,
   EVENT_STATUS_LIST,
@@ -17,7 +17,8 @@ import {
   JOB_STATUS_COLORS,
   OPTION_BLANK,
 } from '../../../../constants';
-import { EventType, JobTypeSubtypeType } from '../';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 
 const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
   label,
@@ -28,12 +29,12 @@ const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
 interface Props {
   loading: boolean;
   disabled: boolean;
-  serviceItem: EventType;
-  propertyEvents: EventType[];
+  serviceItem: Event;
+  propertyEvents: Event[];
   jobTypeOptions: Option[];
   jobSubtypeOptions: Option[];
-  jobTypeSubtypes: JobTypeSubtypeType[];
-  onChange: (serviceItem: EventType) => void;
+  jobTypeSubtypes: JobTypeSubtype[];
+  onChange: (serviceItem: Event) => void;
   onValid: (valid: boolean) => void;
   onInitSchema: (fields: string[]) => void;
 }
@@ -56,10 +57,23 @@ export const Request: FC<Props> = forwardRef(
     const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
     const [resetId, setResetId] = useState<number>(0);
     const handleChange = useCallback(
-      (data: EventType) => {
-        const { jobTypeId, jobSubtypeId, logJobStatus } = data;
+      (data: Event) => {
+        //const { jobTypeId, jobSubtypeId, logJobStatus } = data;
+        const jobTypeId = data.getJobTypeId();
+        const jobSubtypeId = data.getJobSubtypeId();
+        const logJobStatus = data.getLogJobStatus();
+        const formData = makeSafeFormObject(data, new Event());
+        formData.setJobType(
+          jobTypeOptions.find(({ value }) => value === jobTypeId)?.label || '',
+        );
+        formData.setJobSubtype(
+          jobSubtypeOptions.find(({ value }) => value === jobSubtypeId)
+            ?.label || '',
+        );
+        formData.setColor(JOB_STATUS_COLORS[logJobStatus]);
+        /*
         const formData = {
-          ...data,
+          jobTypeId:job
           jobType:
             jobTypeOptions.find(({ value }) => value === jobTypeId)?.label ||
             '',
@@ -68,13 +82,14 @@ export const Request: FC<Props> = forwardRef(
               ?.label || '',
           color: JOB_STATUS_COLORS[logJobStatus],
         };
-        if (formData.jobTypeId !== serviceItem.jobTypeId) {
-          formData.jobSubtypeId = 0;
-          formData.jobSubtype = '';
+        */
+        if (formData.getJobTypeId() !== serviceItem.getJobTypeId()) {
+          formData.setJobSubtypeId(0);
+          formData.setJobSubtype('');
           setResetId(resetId + 1);
         }
-        if (!formData.isCallback && serviceItem.isCallback) {
-          formData.callbackOriginalId = 0;
+        if (!formData.getIsCallback() && serviceItem.getIsCallback()) {
+          formData.setCallbackOriginalId(0);
           setResetId(resetId + 1);
         }
         onChange(formData);
@@ -94,37 +109,37 @@ export const Request: FC<Props> = forwardRef(
     const callbackOriginalOptions: Option[] = useMemo(
       () => [
         { label: OPTION_BLANK, value: 0 },
-        ...propertyEvents.map(({ id, logJobNumber, name }) => ({
-          label: `${logJobNumber} - ${name}`,
-          value: id,
+        ...propertyEvents.map(event => ({
+          label: `${event.getLogJobNumber()} - ${event.getName()}`,
+          value: event.getId(),
         })),
       ],
       [propertyEvents],
     );
-    const { isCallback } = serviceItem;
-    const SCHEMA: Schema<EventType> = [
+    const isCallback = serviceItem.getIsCallback();
+    const SCHEMA: Schema<Event> = [
       [
         {
           label: 'Date of Service',
-          name: 'dateStarted',
+          name: 'getDateStarted',
           type: 'date',
           required: true,
         },
         {
           label: 'Begin Time',
-          name: 'timeStarted',
+          name: 'getTimeStarted',
           type: 'time',
           required: true,
         },
         {
           label: 'End Date',
-          name: 'dateEnded',
+          name: 'getDateEnded',
           type: 'date',
           required: true,
         },
         {
           label: 'End Time',
-          name: 'timeEnded',
+          name: 'getTimeEnded',
           type: 'time',
           required: true,
         },
@@ -132,48 +147,48 @@ export const Request: FC<Props> = forwardRef(
       [
         {
           label: 'Payment Type',
-          name: 'logPaymentType',
+          name: 'getLogPaymentType',
           required: true,
           options: PAYMENT_TYPE_LIST,
         },
         {
           label: 'Sector',
-          name: 'isResidential',
+          name: 'getIsResidential',
           required: true,
           options: RESIDENTIAL_OPTIONS,
         },
         {
           label: 'Amount Quoted',
-          name: 'amountQuoted',
+          name: 'getAmountQuoted',
           startAdornment: '$',
         },
         {
           label: 'Diagnostic Quoted',
-          name: 'diagnosticQuoted',
+          name: 'getDiagnosticQuoted',
           type: 'checkbox',
         },
       ],
       [
         {
           label: 'Job Status',
-          name: 'logJobStatus',
+          name: 'getLogJobStatus',
           required: true,
           options: JOB_STATUS_OPTIONS,
         },
         {
           label: 'Job Type',
-          name: 'jobTypeId',
+          name: 'getJobTypeId',
           required: true,
           options: jobTypeOptions,
         },
         {
           label: 'Sub Type',
-          name: 'jobSubtypeId',
+          name: 'getJobSubtypeId',
           options: jobSubtypeOptions,
         },
         {
           label: 'Priority',
-          name: 'highPriority',
+          name: 'getHighPriority',
           required: true,
           type: 'checkbox',
         },
@@ -181,17 +196,17 @@ export const Request: FC<Props> = forwardRef(
       [
         {
           label: 'Is LMPC?',
-          name: 'isLmpc',
+          name: 'getIsLmpc',
           type: 'checkbox',
         },
         {
           label: 'Is Callback?',
-          name: 'isCallback',
+          name: 'getIsCallback',
           type: 'checkbox',
         },
         {
           label: 'Callback Regarding Service Call',
-          name: 'callbackOriginalId',
+          name: 'getCallbackOriginalId',
           options: callbackOriginalOptions,
           disabled: !isCallback,
         },
@@ -200,19 +215,19 @@ export const Request: FC<Props> = forwardRef(
       [
         {
           label: 'Technician Assigned',
-          name: 'logTechnicianAssigned',
+          name: 'getLogTechnicianAssigned',
           type: 'technicians',
           required: true,
         },
         {
           label: 'Service Needed',
-          name: 'description',
+          name: 'getDescription',
           required: true,
           multiline: true,
         },
         {
           label: 'Service Call Notes',
-          name: 'logNotes',
+          name: 'getLogNotes',
           description: 'For internal use',
           multiline: true,
         },
@@ -229,7 +244,7 @@ export const Request: FC<Props> = forwardRef(
     }, [initSchemaCalled, setInitSchemaCalled, onInitSchema, SCHEMA]);
     if (loading) return <InfoTable data={makeFakeRows(4, 5)} loading />;
     return (
-      <Form<EventType>
+      <Form<Event>
         //@ts-ignore
         ref={ref}
         key={resetId}
