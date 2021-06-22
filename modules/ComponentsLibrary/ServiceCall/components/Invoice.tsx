@@ -1,29 +1,38 @@
-import React, {FC, useState, useCallback, useEffect} from 'react';
-import {ServiceItem, ServiceItemClient} from '@kalos-core/kalos-rpc/ServiceItem';
-import { InvoiceClient, Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
+import React, { FC, useState, useCallback, useEffect } from 'react';
+import {
+  ServiceItem,
+  ServiceItemClient,
+} from '@kalos-core/kalos-rpc/ServiceItem';
+import {
+  InvoiceClient,
+  Invoice as InvoiceType,
+} from '@kalos-core/kalos-rpc/Invoice';
 import { EventType, ServicesRenderedType } from '../';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Field } from '../../Field';
 import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../../constants';
-import { formatDateTimeDay } from '../../../../helpers';
+import { formatDateTimeDay, makeSafeFormObject } from '../../../../helpers';
 import { ENDPOINT } from '../../../../constants';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 
 const sic = new ServiceItemClient(ENDPOINT);
 const { COMPLETED, INCOMPLETE } = SERVICE_STATUSES;
 
-type EventTypeExtended = EventType & {
-  grandTotal: number;
-};
-
 interface Props {
   disabled: boolean;
-  serviceItem: EventType;
-  servicesRendered: ServicesRenderedType[];
+  serviceItem: Event;
+  servicesRendered: ServicesRendered[];
   onInitSchema: (fields: string[]) => void;
-  onChange: (serviceItem: EventType) => void;
+  onChange: (serviceItem: Event) => void;
 }
 
-export const Invoice: FC<Props> = ({ serviceItem, servicesRendered, onInitSchema, onChange }) => {
+export const Invoice: FC<Props> = ({
+  serviceItem,
+  servicesRendered,
+  onInitSchema,
+  onChange,
+}) => {
   /*
     useEffect(() => {
       (async () => {
@@ -37,66 +46,79 @@ export const Invoice: FC<Props> = ({ serviceItem, servicesRendered, onInitSchema
   */
 
   const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
-
-  const transformData = (data: EventType) => {
+  let grandTotal = 0;
+  const transformData = (data: Event) => {
+    /*
     const {
       totalamountrow1,
       totalamountrow2,
       totalamountrow3,
       totalamountrow4,
     } = data;
+    */
+
+    const totalamountrow1 = data.getTotalamountrow1();
+    const totalamountrow2 = data.getTotalamountrow2();
+    const totalamountrow3 = data.getTotalamountrow3();
+    const totalamountrow4 = data.getTotalamountrow4();
+
     const total1 = +totalamountrow1;
     const total2 = +totalamountrow2;
     const total3 = +totalamountrow3;
     const total4 = +totalamountrow4;
-    const grandTotal = total1 + total2 + total3 + total4;
-    return Object.assign({ ...data }, {
-      totalamountrow1: total1.toString(),
-      totalamountrow2: total2.toString(),
-      totalamountrow3: total3.toString(),
-      totalamountrow4: total4.toString(),
-      grandTotal,
-    } as EventTypeExtended);
+    data.setTotalamountrow1(total1.toString());
+    data.setTotalamountrow2(total2.toString());
+    data.setTotalamountrow3(total3.toString());
+    data.setTotalamountrow4(total4.toString());
+    grandTotal = total1 + total2 + total3 + total4;
+    return data;
   };
-
   const [formKey, setFormKey] = useState<number>(0);
   const data = transformData(serviceItem);
 
   const handleChange = useCallback(
-    (data: EventTypeExtended) => onChange(transformData(data)),
+    (data: Event) =>
+      onChange(transformData(makeSafeFormObject(data, new Event()))),
     [onChange],
   );
 
   const handleCopyFromServicesRendered = useCallback(() => {
     const servicesRenderedNotes: string = servicesRendered
-      .filter(({ status }) => [COMPLETED, INCOMPLETE].includes(status))
-      .map(({ datetime, name, serviceRendered }) =>
-        [formatDateTimeDay(datetime), name, '-', serviceRendered].join(' '),
+      .filter(status => [COMPLETED, INCOMPLETE].includes(status.getStatus()))
+      .map(service =>
+        [
+          formatDateTimeDay(service.getDatetime()),
+          service.getName(),
+          '-',
+          service.getServiceRendered(),
+        ].join(' '),
       )
       .join('\n');
-    onChange({ ...data, notes: servicesRenderedNotes });
+    data.setNotes(servicesRenderedNotes);
+    onChange(data);
     setFormKey(formKey + 1);
   }, [onChange, data, setFormKey, formKey]);
 
-  const SCHEMA: Schema<EventTypeExtended> = [
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const SCHEMA: Schema<Event> = [
     [
       {
         label: 'Services Performed (1)',
-        name: 'servicesperformedrow1',
+        name: 'getServicesperformedrow1',
       },
       {
         label: 'Total Amount (1)',
-        name: 'totalamountrow1',
+        name: 'getTotalamountrow1',
         type: 'number',
         startAdornment: '$',
       },
       {
         label: 'Services Performed (2)',
-        name: 'servicesperformedrow2',
+        name: 'getServicesperformedrow2',
       },
       {
         label: 'Total Amount (2)',
-        name: 'totalamountrow2',
+        name: 'getTotalamountrow2',
         type: 'number',
         startAdornment: '$',
       },
@@ -104,21 +126,21 @@ export const Invoice: FC<Props> = ({ serviceItem, servicesRendered, onInitSchema
     [
       {
         label: 'Services Performed (3)',
-        name: 'servicesperformedrow3',
+        name: 'getServicesperformedrow3',
       },
       {
         label: 'Total Amount (3)',
-        name: 'totalamountrow3',
+        name: 'getTotalamountrow3',
         type: 'number',
         startAdornment: '$',
       },
       {
         label: 'Services Performed (4)',
-        name: 'servicesperformedrow4',
+        name: 'getServicesperformedrow4',
       },
       {
         label: 'Total Amount (4)',
-        name: 'totalamountrow4',
+        name: 'getTotalamountrow4',
         type: 'number',
         startAdornment: '$',
       },
@@ -126,45 +148,51 @@ export const Invoice: FC<Props> = ({ serviceItem, servicesRendered, onInitSchema
     [
       {
         label: 'Material Used',
-        name: 'materialUsed',
+        name: 'getMaterialUsed',
         readOnly: true,
         multiline: true,
       },
       {
         label: 'Material Total',
-        name: 'materialTotal',
+        name: 'getMaterialTotal',
         readOnly: true,
         type: 'number',
         startAdornment: '$',
       },
       {
         content: (
-          <Field label="Payment" name="payment" value={0} startAdornment="$" />
+          <Field
+            label="Payment"
+            name="getPayment"
+            value={0}
+            startAdornment="$"
+          />
         ), // FIXME
       },
       {
         label: 'Discount',
-        name: 'discount',
+        name: 'getDiscount',
         type: 'number',
         endAdornment: '%',
       },
     ],
     [
+      /*
       {
         content: (
           <Field
             label="Grand Total"
-            name="grandTotal"
-            value={data.grandTotal}
-            startAdornment="$"
+            name={undefined}
+            value={grandTotal}
           />
         ),
       },
+      */
       {
         content: (
           <Field
             label="Payments"
-            name="payments"
+            name="getPayments"
             value={0}
             startAdornment="$"
           />
@@ -174,36 +202,36 @@ export const Invoice: FC<Props> = ({ serviceItem, servicesRendered, onInitSchema
         content: (
           <Field
             label="Remaining due"
-            name="remainingDue"
-            value={(1 - +data.discount / 100) * data.grandTotal} // FIXME
+            name="getRemainingDue"
+            value={(1 - +data.getDiscount() / 100) * grandTotal} // FIXME
             startAdornment="$"
           />
         ),
       },
       {
         label: 'Billing Date',
-        name: 'logBillingDate',
+        name: 'getLogBillingDate',
         type: 'date',
       },
     ],
     [
       {
         label: 'Payment Type',
-        name: 'logPaymentType',
+        name: 'getLogPaymentType',
         options: PAYMENT_TYPE_LIST,
       },
       {
         label: 'PO',
-        name: 'logPo',
+        name: 'getLogPo',
       },
       {
         label: 'Use Property-level Billing?',
-        name: 'propertyBilling',
+        name: 'getPropertyBilling',
         type: 'checkbox',
       },
       {
         label: 'Invoice Notes',
-        name: 'notes',
+        name: 'getNotes',
         multiline: true,
         actions: [
           {

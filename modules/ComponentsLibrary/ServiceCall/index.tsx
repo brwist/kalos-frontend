@@ -443,7 +443,8 @@ export const ServiceCall: FC<Props> = props => {
       })),
   ];
 
-  const { id, logJobNumber, contractNumber } = entry;
+  //const { id, logJobNumber, contractNumber } = entry;
+  /*
   const {
     firstname,
     lastname,
@@ -456,7 +457,26 @@ export const ServiceCall: FC<Props> = props => {
     billingTerms,
     notification,
   } = customer;
+
   const { address, city, state, zip } = property;
+  */
+  const id = entry.getId();
+  const logJobNumber = entry.getLogJobNumber();
+  const contractNumber = entry.getContractNumber();
+  const firstname = customer.getFirstname();
+  const lastname = customer.getLastname();
+  const businessname = customer.getBusinessname();
+  const phone = customer.getPhone();
+  const altphone = customer.getAltphone();
+  const cellphone = customer.getCellphone();
+  const fax = customer.getFax();
+  const email = customer.getEmail();
+  const billingTerms = customer.getBillingTerms();
+  const notification = customer.getNotification();
+  const address = property.getAddress();
+  const city = property.getCity();
+  const state = property.getState();
+  const zip = property.getZip();
   const data: Data = [
     [
       { label: 'Customer', value: `${firstname} ${lastname}` },
@@ -643,14 +663,12 @@ export const ServiceCall: FC<Props> = props => {
           {loaded && projects.length > 0 ? (
             <GanttChart
               events={projects.map(task => {
-                const {
-                  id,
-                  description,
-                  dateStarted: dateStart,
-                  dateEnded: dateEnd,
-                  logJobStatus,
-                  color,
-                } = task;
+                const id = task.getId();
+                const description = task.getDescription();
+                const dateStart = task.getDateStarted();
+                const dateEnd = task.getDateEnded();
+                const logJobStatus = task.getLogJobNumber();
+                const color = task.getColor();
                 const [startDate, startHour] = dateStart.split(' ');
                 const [endDate, endHour] = dateEnd.split(' ');
                 return {
@@ -666,8 +684,10 @@ export const ServiceCall: FC<Props> = props => {
                   },
                 };
               })}
-              startDate={projects[0].dateStarted.substr(0, 10)}
-              endDate={projects[projects.length - 1].dateEnded.substr(0, 10)}
+              startDate={projects[0].getDateStarted().substr(0, 10)}
+              endDate={projects[projects.length - 1]
+                .getDateEnded()
+                .substr(0, 10)}
               loading={loading}
             />
           ) : (
