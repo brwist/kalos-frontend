@@ -1,8 +1,10 @@
 import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
 import { ServiceItems, Entry, Repair } from '../../ServiceItems';
-import { UserType, PropertyType } from '../../../../helpers';
-import { EventType } from '../';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+
 import { ProposalPrint } from './ProposalPrint';
 import './equipment.less';
 
@@ -10,9 +12,9 @@ interface Props {
   userID: number;
   loggedUserId: number;
   propertyId: number;
-  property: PropertyType;
-  serviceItem: EventType;
-  customer: UserType;
+  property: Property;
+  serviceItem: Event;
+  customer: User;
 }
 
 type Form = {
@@ -27,7 +29,10 @@ export const Equipment: FC<Props> = ({
   property,
   ...props
 }) => {
-  const { notes, logJobNumber, id } = serviceItem;
+  //const { notes, logJobNumber, id } = serviceItem;
+  const notes = serviceItem.getNotes();
+  const logJobNumber = serviceItem.getLogJobNumber();
+  const id = serviceItem.getId();
   const localStorageKey = `SERVICE_CALL_EQUIPMENT_${id}`;
   const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
   let repairsInitial = [];
@@ -40,7 +45,7 @@ export const Equipment: FC<Props> = ({
       localStorage.getItem(localStorageSelectedKey) || '[]',
     );
   } catch (e) {}
-  const customerName = `${customer?.firstname} ${customer?.lastname}`;
+  const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
   const [selected, setSelected] = useState<Entry[]>(selectedInitial);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [data, setData] = useState<Form>({
@@ -58,7 +63,7 @@ export const Equipment: FC<Props> = ({
   const handleSetSelected = useCallback(
     (selected: Entry[]) => {
       setSelected(selected);
-      const { id } = serviceItem;
+      const id = serviceItem.getId();
       const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
       localStorage.setItem(localStorageKey, JSON.stringify(selected));
     },
