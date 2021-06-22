@@ -72,7 +72,7 @@ export const PropertyEdit: FC<Props> = ({
       setSaving(true);
       const temp = makeSafeFormObject(data, new Property());
       const entry = await PropertyClientService.saveProperty(
-        data,
+        temp,
         userId,
         propertyId,
       );
@@ -111,7 +111,7 @@ export const PropertyEdit: FC<Props> = ({
           [
             { label: 'Primary Phone', name: 'getPhone' },
             { label: 'Alternate Phone', name: 'getAltphone' },
-            { label: 'Email', name: 'setEmail' },
+            { label: 'Email', name: 'getEmail' },
           ],
         ] as Schema<Property>)),
     [{ label: 'Address Details', headline: true }],
@@ -145,8 +145,8 @@ export const PropertyEdit: FC<Props> = ({
       },
     ],
     [
-      { label: 'Directions', name: 'setDirections', multiline: true },
-      { label: 'Subdivision', name: 'setSubdivision' },
+      { label: 'Directions', name: 'getDirections', multiline: true },
+      { label: 'Subdivision', name: 'getSubdivision' },
     ],
     ...(viewedAsCustomer
       ? []
@@ -154,15 +154,15 @@ export const PropertyEdit: FC<Props> = ({
           [
             {
               label: 'Zoning',
-              name: 'setIsResidential',
+              name: 'getIsResidential',
               options: RESIDENTIAL_OPTIONS,
             },
-            { label: 'Latitude', name: 'setGeolocationLat', type: 'number' },
-            { label: 'Longitude', name: 'setGeolocationLng', type: 'number' },
+            { label: 'Latitude', name: 'getGeolocationLat', type: 'number' },
+            { label: 'Longitude', name: 'getGeolocationLng', type: 'number' },
           ],
         ] as Schema<Property>)),
     [{ label: 'Notes', headline: true }],
-    [{ label: 'Notes', name: 'setNotes', multiline: true }],
+    [{ label: 'Notes', name: 'getNotes', multiline: true }],
   ];
   return (
     <Form<Property>

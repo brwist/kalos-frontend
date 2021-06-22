@@ -22,6 +22,7 @@ import {
   timestamp,
   UserClientService,
   TimeoffRequestClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import { OPTION_BLANK, ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
@@ -108,7 +109,10 @@ export const TimeOff: FC<Props> = ({
     },
     [userId],
   );
-
+  const setSafeData = () => {
+    const tempData = makeSafeFormObject(data, new TimeoffRequest());
+    setData(tempData);
+  };
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
   const init = useCallback(async () => {
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
@@ -171,19 +175,20 @@ export const TimeOff: FC<Props> = ({
       init();
     }
   }, [initiated, init]);
-  const toggleDeleting = useCallback(
-    () => setDeleting(!deleting),
-    [deleting, setDeleting],
-  );
+  const toggleDeleting = useCallback(() => setDeleting(!deleting), [
+    deleting,
+    setDeleting,
+  ]);
   const handleSubmit = useCallback(
     async (data: TimeoffRequest) => {
       setError('');
-      const allDayOff = data.getAllDayOff();
-      const departmentCode = data.getDepartmentCode();
-      const notes = data.getNotes();
-      const requestType = data.getNotes();
-      const timeStarted = data.getTimeStarted();
-      const timeFinished = data.getTimeFinished();
+      const temp = makeSafeFormObject(data, new TimeoffRequest());
+      const allDayOff = temp.getAllDayOff();
+      const departmentCode = temp.getDepartmentCode();
+      const notes = temp.getNotes();
+      const requestType = temp.getNotes();
+      const timeStarted = temp.getTimeStarted();
+      const timeFinished = temp.getTimeFinished();
 
       const userId = user?.getId();
       if (timeFinished < timeStarted) {
@@ -191,10 +196,10 @@ export const TimeOff: FC<Props> = ({
         return;
       }
       setSaving(true);
-      data.setUserId(userId!);
-      data.setUserApprovalDatetime(timestamp());
+      temp.setUserId(userId!);
+      temp.setUserApprovalDatetime(timestamp());
       const newData = await TimeoffRequestClientService.upsertTimeoffRequest(
-        data,
+        temp,
       );
       const typeName = typeOptions.find(
         //@ts-ignore
@@ -230,7 +235,7 @@ export const TimeOff: FC<Props> = ({
           recipient: manager.getEmail(),
         };
 
-        await emailClient.sendMail(config);
+        //await emailClient.sendMail(config);
       } catch (err) {
         console.log(err);
       }
@@ -417,7 +422,7 @@ export const TimeOff: FC<Props> = ({
         data={data}
         onClose={onCancel}
         onSave={data.getId() ? toggleDeleting : handleSubmit}
-        onChange={setData}
+        onChange={setSafeData}
         schema={schema}
         title={
           user?.getFirstname()
@@ -430,7 +435,7 @@ export const TimeOff: FC<Props> = ({
         subtitle={
           pto && user ? (
             <span>
-              PTO Used: <span style={css}>{ptoActualHours}</span> of{' '}
+              PTO Used: <span style={css}>{pto.getDaysAvailable()}</span> of{' '}
               <span style={css}>{user.getAnnualHoursPto()}</span>
             </span>
           ) : null
