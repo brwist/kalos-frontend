@@ -143,7 +143,7 @@ export const TripSummaryNew: FC<Props> = ({
     [handleSetToggleApproveOrProcess],
   );
   const handleSetPendingTripToDeny = useCallback(
-    (tripToDeny: Trip) => setPendingTripToDeny(tripToDeny),
+    (tripToDeny: Trip | undefined) => setPendingTripToDeny(tripToDeny),
     [setPendingTripToDeny],
   );
   let deleteActions: any[] = [];
@@ -346,6 +346,24 @@ export const TripSummaryNew: FC<Props> = ({
     [loadTrips],
   );
 
+  const handleRejectTrip = useCallback(
+    async (id: number) => {
+      try {
+        console.log('Trip id: ', id);
+        await PerDiemClientService.updateTripDeny(id);
+        setPendingTripToDeny(undefined);
+        loadTrips();
+      } catch (err) {
+        console.error(
+          'An error occurred while updating trip approved status: ',
+          err,
+        );
+        setPendingTripToDeny(undefined);
+      }
+    },
+    [loadTrips],
+  );
+
   const load = useCallback(async () => {
     setLoaded(false);
     await loadTrips();
@@ -382,6 +400,17 @@ export const TripSummaryNew: FC<Props> = ({
           onConfirm={() => handleApproveTrip(pendingTripToApprove!.getId())}
         >
           <Typography>Are you sure you want to approve this trip?</Typography>
+        </Confirm>
+      )}
+      {pendingTripToDeny && (
+        <Confirm
+          key="ConfirmRejected"
+          title="Are you sure?"
+          open={true}
+          onClose={() => handleSetPendingTripToDeny(undefined)}
+          onConfirm={() => handleRejectTrip(pendingTripToDeny!.getId())}
+        >
+          <Typography>Are you sure you want to reject this trip?</Typography>
         </Confirm>
       )}
       {canProcessPayroll && (
@@ -444,7 +473,11 @@ export const TripSummaryNew: FC<Props> = ({
         />
       }
       <InfoTable
-        key={loaded.toString() + toggleApproveOrProcess.toString()}
+        key={
+          loaded.toString() +
+          toggleApproveOrProcess.toString() +
+          pendingTripToDeny
+        }
         loading={!loaded}
         columns={[
           { name: 'Origin' },
