@@ -18,6 +18,7 @@ export default () => {
         loggedUserId={101275}
         userId={0}
         searchable
+        canAddTrips
       />
       <ExampleTitle>Toggle Button</ExampleTitle>{' '}
       <TripSummaryNew
