@@ -19,6 +19,14 @@ export default () => {
         userId={0}
         canProcessPayroll
       />
+      <ExampleTitle>Checkboxes</ExampleTitle>{' '}
+      <TripSummaryNew
+        perDiemRowIds={[rowIdToUse]}
+        loggedUserId={101275}
+        userId={0}
+        canProcessPayroll
+        checkboxes
+      />
       <ExampleTitle>Can Approve and Process Payroll</ExampleTitle>{' '}
       <TripSummaryNew
         perDiemRowIds={[rowIdToUse]}
