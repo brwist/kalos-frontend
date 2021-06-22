@@ -96,17 +96,20 @@ export const TripSummaryNew: FC<Props> = ({
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
+  const [toggleButton, setToggleButton] = useState<boolean>();
   const [filter, setFilter] = useState<TripFilter>({
     role,
     weekof: perDiemRowIds,
     userId,
     departmentId,
+    payrollProcessed: role == 'Payroll' ? !toggleButton : undefined,
+    approved: role == 'Payroll' ? true : role == 'Manager' ? false : undefined,
+    adminActionDate: NULL_TIME,
   } as TripFilter);
   const [checkboxFilter, setCheckboxFilter] = useState<Checkboxes>(
     new Checkboxes(),
   );
   const [page, setPage] = useState<number>(0);
-  const [toggleButton, setToggleButton] = useState<boolean>();
   const [totalTripDistance, setTotalTripDistance] = useState<number>(0);
 
   const handleSetCheckboxFilter = useCallback(
@@ -278,23 +281,6 @@ export const TripSummaryNew: FC<Props> = ({
   ];
 
   const loadTrips = useCallback(async () => {
-    switch (role) {
-      case 'Payroll':
-        setFilter({
-          ...filter,
-          payrollProcessed: !toggleButton,
-          approved: true,
-        });
-        break;
-      case 'Manager':
-        setFilter({
-          ...filter,
-          approved: false,
-          adminActionDate: NULL_TIME,
-          departmentId,
-        });
-        break;
-    }
     let tripReq = new Trip();
     let criteria = {
       page,
@@ -304,7 +290,13 @@ export const TripSummaryNew: FC<Props> = ({
         orderDir: 'ASC',
       } as TripsSort,
       req: tripReq,
-      filter,
+      filter: {
+        ...filter,
+        approved: checkboxFilter.approved ? true : filter.approved,
+        payrollProcessed: checkboxFilter.payrollProcessed
+          ? true
+          : filter.payrollProcessed,
+      },
     };
 
     try {
@@ -319,7 +311,7 @@ export const TripSummaryNew: FC<Props> = ({
     } catch (err) {
       console.error(err);
     }
-  }, [departmentId, filter, page, role, toggleButton, setTotalTripDistance]);
+  }, [checkboxFilter.approved, checkboxFilter.payrollProcessed, filter, page]);
 
   const handleProcessPayroll = useCallback(
     async (id: number) => {
