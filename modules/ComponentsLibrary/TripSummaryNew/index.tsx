@@ -72,14 +72,9 @@ interface Props {
   checkboxes?: boolean;
   searchable?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
-  /*
-  canAddTrips?: boolean; 
-  hoverable?: boolean;
+  onDeleteTrip?: (deletedTrip?: Trip) => any;
+  onDeleteAllTrips?: (deletedTrips?: Trip[]) => any;
   displayTripDistance?: boolean;
-  onSaveTrip?: (savedTrip?: Trip) => any;
-  onDeleteTrip?: () => any;
-  onDeleteAllTrips?: () => any; 
-  */
 }
 
 export const TripSummaryNew: FC<Props> = ({
@@ -98,6 +93,9 @@ export const TripSummaryNew: FC<Props> = ({
   searchable,
   canAddTrips,
   onSaveTrip,
+  displayTripDistance,
+  onDeleteTrip,
+  onDeleteAllTrips,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -619,8 +617,10 @@ export const TripSummaryNew: FC<Props> = ({
             onChangePage: newPage => handleSetPage(newPage),
           }}
           footer={
-            loaded && totalTripDistance != 0
-              ? `Total miles: ${totalTripDistance.toFixed(1)} miles`
+            displayTripDistance
+              ? loaded && totalTripDistance != 0
+                ? `Total miles: ${totalTripDistance.toFixed(1)} miles`
+                : 'Total miles: None'
               : 'Total miles: None'
           }
           small={compact}
