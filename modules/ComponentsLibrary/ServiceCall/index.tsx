@@ -43,7 +43,7 @@ export type EventType = Event;
 type JobTypeType = JobType.AsObject;
 type JobSubtypeType = JobSubtype.AsObject;
 export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
-export type ServicesRenderedType = ServicesRendered.AsObject;
+export type ServicesRenderedType = ServicesRendered;
 
 export interface Props {
   userID: number;

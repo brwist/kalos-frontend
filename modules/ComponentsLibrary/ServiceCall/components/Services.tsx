@@ -20,7 +20,6 @@ import {
   formatDateTime,
   formatDateTimeDay,
   getRPCFields,
-  UserType,
   formatDay,
   formatDate,
   formatTime,
@@ -36,6 +35,7 @@ import {
 } from '../../../../constants';
 import { ServicesRenderedType } from '../';
 import './services.less';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
@@ -77,7 +77,7 @@ type PaymentPartType = {
 
 interface Props {
   serviceCallId: number;
-  loggedUser: UserType;
+  loggedUser: User;
   servicesRendered: ServicesRenderedType[];
   loadServicesRendered: () => void;
   loading: boolean;
@@ -148,12 +148,12 @@ const SCHEMA_ON_CALL: Schema<ServicesRenderedType> = [
   [
     {
       label: 'Services Rendered',
-      name: 'serviceRendered',
+      name: 'getServiceRendered',
       multiline: true,
     },
     {
       label: 'Technician Notes',
-      name: 'techNotes',
+      name: 'getTechNotes',
       multiline: true,
       helperText: 'For internal use',
     },
@@ -192,19 +192,14 @@ export const Services: FC<Props> = ({
   loading,
   onAddMaterials,
 }) => {
-  const { isAdmin } = loggedUser;
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
-  const [
-    serviceRenderedForm,
-    setServicesRenderedForm,
-  ] = useState<ServicesRenderedType>(new ServicesRendered().toObject());
+  const [serviceRenderedForm, setServicesRenderedForm] =
+    useState<ServicesRenderedType>(new ServicesRendered());
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
-  const [signatureForm, setSignatureForm] = useState<SignatureType>(
-    SIGNATURE_INITIAL,
-  );
-  const [paymentFormPart, setPaymentFormPart] = useState<PaymentPartType>(
-    PAYMENT_PART_INITIAL,
-  );
+  const [signatureForm, setSignatureForm] =
+    useState<SignatureType>(SIGNATURE_INITIAL);
+  const [paymentFormPart, setPaymentFormPart] =
+    useState<PaymentPartType>(PAYMENT_PART_INITIAL);
   const [deleting, setDeleting] = useState<ServicesRenderedType>();
   const [editing, setEditing] = useState<ServicesRenderedType>();
   const [saving, setSaving] = useState<boolean>(false);
@@ -220,7 +215,7 @@ export const Services: FC<Props> = ({
     if (deleting) {
       setDeleting(undefined);
       const req = new ServicesRendered();
-      req.setId(deleting.id);
+      req.setId(deleting.getId());
       await ServicesRenderedClientService.Delete(req);
       loadServicesRendered();
     }
@@ -246,7 +241,7 @@ export const Services: FC<Props> = ({
               signatureForm.authorizedSignorName ||
               paymentForm.authorizedSignorName
             }`
-          : `${loggedUser.firstname} ${loggedUser.lastname}`,
+          : `${loggedUser.getFirstname()} ${loggedUser.getLastname()}`,
       );
       req.setDatetime(timestamp());
       const fieldMaskList = ['EventId', 'Status', 'Name', 'Datetime'];
@@ -266,15 +261,15 @@ export const Services: FC<Props> = ({
             async ({ billable, quantity, quotePart }) => {
               const req = new Quotable();
               req.setEventId(serviceCallId);
-              req.setServicesRenderedId(res.id);
-              req.setQuoteLineId(quotePart.quoteLineId);
+              req.setServicesRenderedId(res.getId());
+              req.setQuoteLineId(quotePart.getQuoteLineId());
               req.setIsBillable(billable);
               req.setQuantity(quantity);
-              req.setDescription(quotePart.description);
-              req.setQuotedPrice(quotePart.quotedPrice);
-              req.setIsLmpc(quotePart.isLmpc);
-              req.setIsFlatrate(quotePart.isFlatrate);
-              req.setIsComplex(quotePart.isComplex);
+              req.setDescription(quotePart.getDescription());
+              req.setQuotedPrice(quotePart.getQuotedPrice());
+              req.setIsLmpc(quotePart.getIsLmpc());
+              req.setIsFlatrate(quotePart.getIsFlatrate());
+              req.setIsComplex(quotePart.getIsComplex());
               req.setIsActive(true);
               await EventClientService.WriteQuotes(req);
             },
@@ -288,7 +283,7 @@ export const Services: FC<Props> = ({
           ' ' +
           formatTime(hour) +
           ' ' +
-          `${loggedUser.firstname} ${loggedUser.lastname}` +
+          `${loggedUser.getFirstname()} ${loggedUser.getLastname()}` +
           ' - ' +
           pendingSelectedQuote
             .map(
@@ -296,21 +291,23 @@ export const Services: FC<Props> = ({
                 '(' +
                 quantity +
                 ')' +
-                quotePart.description +
+                quotePart.getDescription() +
                 ' - $' +
-                quantity * quotePart.quotedPrice,
+                quantity * quotePart.getQuotedPrice(),
             )
             .join(', ') +
           `
 `;
         const materialTotal = pendingSelectedQuote
-          .map(({ quantity, quotePart }) => quantity * quotePart.quotedPrice)
+          .map(
+            ({ quantity, quotePart }) => quantity * quotePart.getQuotedPrice(),
+          )
           .reduce((aggr, item) => aggr + item, 0);
         onAddMaterials(materialUsed, materialTotal);
         setPendingSelectedQuote([]);
       }
       loadServicesRendered();
-      setServicesRenderedForm(new ServicesRendered().toObject());
+      setServicesRenderedForm(new ServicesRendered());
       setPaymentFormPart(PAYMENT_PART_INITIAL);
       setPaymentForm(PAYMENT_INITIAL);
       setSignatureForm(SIGNATURE_INITIAL);
@@ -324,7 +321,6 @@ export const Services: FC<Props> = ({
       setServicesRenderedForm,
       setPaymentFormPart,
       setPaymentForm,
-      setSignatureForm,
       signatureForm,
       paymentForm,
       pendingSelectedQuote,
@@ -337,7 +333,7 @@ export const Services: FC<Props> = ({
       if (editing) {
         setSaving(true);
         const req = new ServicesRendered();
-        req.setId(editing.id);
+        req.setId(editing.getId());
         const fieldMaskList: string[] = [];
         SCHEMA_ON_CALL.forEach(row =>
           row.forEach(({ name }) => {
@@ -354,7 +350,7 @@ export const Services: FC<Props> = ({
         setEditing(undefined);
       }
     },
-    [editing, SCHEMA_ON_CALL, setSaving, setEditing, loadServicesRendered],
+    [editing, setSaving, setEditing, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
     (editing?: ServicesRenderedType) => () => setEditing(editing),
@@ -381,10 +377,9 @@ export const Services: FC<Props> = ({
   const data: Data = loading
     ? makeFakeRows(4, 3)
     : servicesRendered.map(props => {
-        const { datetime, name, status } = props;
         return [
-          { value: formatDateTime(datetime) },
-          { value: name },
+          { value: formatDateTime(props.getDatetime()) },
+          { value: props.getName() },
           {
             value: (
               <span
@@ -418,21 +413,21 @@ export const Services: FC<Props> = ({
           },
         ];
       });
-  let lastStatus = servicesRendered[0] ? servicesRendered[0].status : '';
+  let lastStatus = servicesRendered[0] ? servicesRendered[0].getStatus() : '';
   if (lastStatus.startsWith(SIGNED_AS)) {
     lastStatus = SIGNED_AS;
   }
   const servicesRenderedData: Data = servicesRendered
     .filter(
-      ({ status, serviceRendered, techNotes }) =>
-        [COMPLETED, INCOMPLETE].includes(status) &&
-        !(serviceRendered === '' && techNotes === ''),
+      sr =>
+        [COMPLETED, INCOMPLETE].includes(sr.getStatus()) &&
+        !(sr.getServiceRendered() === '' && sr.getTechNotes() === ''),
     )
-    .map(({ datetime, name, serviceRendered, techNotes }) => [
-      { value: formatDateTimeDay(datetime) },
-      { value: name },
-      { value: serviceRendered },
-      { value: techNotes },
+    .map(sr => [
+      { value: formatDateTimeDay(sr.getDatetime()) },
+      { value: sr.getName() },
+      { value: sr.getServiceRendered() },
+      { value: sr.getTechNotes() },
     ]);
   const SCHEMA_PAYMENT_PART: Schema<PaymentPartType> = [
     [
@@ -531,7 +526,7 @@ export const Services: FC<Props> = ({
                   SIGNATURE,
                   ADMIN,
                   SIGNED_AS,
-                ].includes(lastStatus) && isAdmin
+                ].includes(lastStatus) && loggedUser.getIsAdmin()
                   ? [
                       {
                         label: ADMIN,
@@ -630,7 +625,7 @@ export const Services: FC<Props> = ({
           open
           onClose={handleDeleting()}
           kind="Service Rendered Item"
-          name={`Technician: ${deleting.name}, Status: ${deleting.status}`}
+          name={`Technician: ${deleting.getName()}, Status: ${deleting.getStatus()}`}
           onConfirm={handleDelete}
         />
       )}
