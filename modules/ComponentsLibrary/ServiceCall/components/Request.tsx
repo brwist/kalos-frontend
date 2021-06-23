@@ -117,122 +117,125 @@ export const Request: FC<Props> = forwardRef(
       [propertyEvents],
     );
     const isCallback = serviceItem.getIsCallback();
-    const SCHEMA: Schema<Event> = [
-      [
-        {
-          label: 'Date of Service',
-          name: 'getDateStarted',
-          type: 'date',
-          required: true,
-        },
-        {
-          label: 'Begin Time',
-          name: 'getTimeStarted',
-          type: 'time',
-          required: true,
-        },
-        {
-          label: 'End Date',
-          name: 'getDateEnded',
-          type: 'date',
-          required: true,
-        },
-        {
-          label: 'End Time',
-          name: 'getTimeEnded',
-          type: 'time',
-          required: true,
-        },
+    const SCHEMA: Schema<Event> = useMemo(
+      () => [
+        [
+          {
+            label: 'Date of Service',
+            name: 'getDateStarted',
+            type: 'date',
+            required: true,
+          },
+          {
+            label: 'Begin Time',
+            name: 'getTimeStarted',
+            type: 'time',
+            required: true,
+          },
+          {
+            label: 'End Date',
+            name: 'getDateEnded',
+            type: 'date',
+            required: true,
+          },
+          {
+            label: 'End Time',
+            name: 'getTimeEnded',
+            type: 'time',
+            required: true,
+          },
+        ],
+        [
+          {
+            label: 'Payment Type',
+            name: 'getLogPaymentType',
+            required: true,
+            options: PAYMENT_TYPE_LIST,
+          },
+          {
+            label: 'Sector',
+            name: 'getIsResidential',
+            required: true,
+            options: RESIDENTIAL_OPTIONS,
+          },
+          {
+            label: 'Amount Quoted',
+            name: 'getAmountQuoted',
+            startAdornment: '$',
+          },
+          {
+            label: 'Diagnostic Quoted',
+            name: 'getDiagnosticQuoted',
+            type: 'checkbox',
+          },
+        ],
+        [
+          {
+            label: 'Job Status',
+            name: 'getLogJobStatus',
+            required: true,
+            options: JOB_STATUS_OPTIONS,
+          },
+          {
+            label: 'Job Type',
+            name: 'getJobTypeId',
+            required: true,
+            options: jobTypeOptions,
+          },
+          {
+            label: 'Sub Type',
+            name: 'getJobSubtypeId',
+            options: jobSubtypeOptions,
+          },
+          {
+            label: 'Priority',
+            name: 'getHighPriority',
+            required: true,
+            type: 'checkbox',
+          },
+        ],
+        [
+          {
+            label: 'Is LMPC?',
+            name: 'getIsLmpc',
+            type: 'checkbox',
+          },
+          {
+            label: 'Is Callback?',
+            name: 'getIsCallback',
+            type: 'checkbox',
+          },
+          {
+            label: 'Callback Regarding Service Call',
+            name: 'getCallbackOriginalId',
+            options: callbackOriginalOptions,
+            disabled: !isCallback,
+          },
+          {},
+        ],
+        [
+          {
+            label: 'Technician Assigned',
+            name: 'getLogTechnicianAssigned',
+            type: 'technicians',
+            required: true,
+          },
+          {
+            label: 'Service Needed',
+            name: 'getDescription',
+            required: true,
+            multiline: true,
+          },
+          {
+            label: 'Service Call Notes',
+            name: 'getLogNotes',
+            description: 'For internal use',
+            multiline: true,
+          },
+        ],
       ],
-      [
-        {
-          label: 'Payment Type',
-          name: 'getLogPaymentType',
-          required: true,
-          options: PAYMENT_TYPE_LIST,
-        },
-        {
-          label: 'Sector',
-          name: 'getIsResidential',
-          required: true,
-          options: RESIDENTIAL_OPTIONS,
-        },
-        {
-          label: 'Amount Quoted',
-          name: 'getAmountQuoted',
-          startAdornment: '$',
-        },
-        {
-          label: 'Diagnostic Quoted',
-          name: 'getDiagnosticQuoted',
-          type: 'checkbox',
-        },
-      ],
-      [
-        {
-          label: 'Job Status',
-          name: 'getLogJobStatus',
-          required: true,
-          options: JOB_STATUS_OPTIONS,
-        },
-        {
-          label: 'Job Type',
-          name: 'getJobTypeId',
-          required: true,
-          options: jobTypeOptions,
-        },
-        {
-          label: 'Sub Type',
-          name: 'getJobSubtypeId',
-          options: jobSubtypeOptions,
-        },
-        {
-          label: 'Priority',
-          name: 'getHighPriority',
-          required: true,
-          type: 'checkbox',
-        },
-      ],
-      [
-        {
-          label: 'Is LMPC?',
-          name: 'getIsLmpc',
-          type: 'checkbox',
-        },
-        {
-          label: 'Is Callback?',
-          name: 'getIsCallback',
-          type: 'checkbox',
-        },
-        {
-          label: 'Callback Regarding Service Call',
-          name: 'getCallbackOriginalId',
-          options: callbackOriginalOptions,
-          disabled: !isCallback,
-        },
-        {},
-      ],
-      [
-        {
-          label: 'Technician Assigned',
-          name: 'getLogTechnicianAssigned',
-          type: 'technicians',
-          required: true,
-        },
-        {
-          label: 'Service Needed',
-          name: 'getDescription',
-          required: true,
-          multiline: true,
-        },
-        {
-          label: 'Service Call Notes',
-          name: 'getLogNotes',
-          description: 'For internal use',
-          multiline: true,
-        },
-      ],
-    ];
+      [callbackOriginalOptions, isCallback, jobSubtypeOptions, jobTypeOptions],
+    );
     useEffect(() => {
       if (!initSchemaCalled) {
         setInitSchemaCalled(true);
