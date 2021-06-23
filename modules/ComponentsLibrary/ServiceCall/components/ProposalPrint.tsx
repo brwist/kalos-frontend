@@ -3,7 +3,8 @@ import compact from 'lodash/compact';
 import { PrintPage } from '../../PrintPage';
 import { PrintParagraph } from '../../PrintParagraph';
 import { PrintTable } from '../../PrintTable';
-import { UserType, usd, formatDate, PropertyType } from '../../../../helpers';
+import { usd, formatDate } from '../../../../helpers';
+import { Property } from '@kalos-core/kalos-rpc/Property';
 
 interface Props {
   displayName: string;
@@ -14,7 +15,7 @@ interface Props {
     price: number;
   }[];
   logJobNumber: string;
-  property: PropertyType;
+  property: Property;
   withDiagnosis?: boolean;
 }
 
@@ -44,9 +45,13 @@ export const ProposalPrint: FC<Props> = ({
     <PrintParagraph tag="h2">
       {displayName}
       <br />
-      {property.address}
+      {property.getAddress()}
       <br />
-      {compact([property.city, property.state, property.zip]).join(', ')}
+      {compact([
+        property.getCity(),
+        property.getState(),
+        property.getZip(),
+      ]).join(', ')}
     </PrintParagraph>
     <PrintParagraph tag="h1" align="center">
       Proposed Services
