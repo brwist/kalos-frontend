@@ -835,7 +835,7 @@ export const ServiceCall: FC<Props> = props => {
             handleSetNotificationEditing(false)();
           }}
         >
-          <Form<UserType>
+          <Form<User>
             title={
               notificationViewing
                 ? 'Customer Notification'
@@ -868,7 +868,9 @@ export const ServiceCall: FC<Props> = props => {
                       variant: 'outlined',
                       onClick: () => {
                         handleSetNotificationViewing(false)();
-                        handleSaveCustomer({ notification: '' } as UserType);
+                        let newUser = new User();
+                        newUser.setNotification('');
+                        handleSaveCustomer(newUser);
                       },
                     },
                   ]
