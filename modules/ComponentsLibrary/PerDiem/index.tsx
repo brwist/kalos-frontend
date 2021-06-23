@@ -369,7 +369,6 @@ export const PerDiemComponent: FC<Props> = ({
   const handleSavePerDiem = useCallback(
     async (data: PerDiem) => {
       setPendingPerDiemEditDuplicated(false);
-      console.log('given to handleSave', data);
       if (
         managerPerDiems.find(
           perDiem =>
@@ -381,9 +380,7 @@ export const PerDiemComponent: FC<Props> = ({
         return;
       }
       setSaving(true);
-      console.log('true data', data);
       const temp = makeSafeFormObject(data, new PerDiem());
-      console.log('data', temp);
       await PerDiemClientService.upsertPerDiem(temp);
       setPendingPerDiemEdit(undefined);
       setSaving(false);
@@ -399,10 +396,14 @@ export const PerDiemComponent: FC<Props> = ({
   );
   const handleSavePerDiemRow = useCallback(
     async (perDiemRow: PerDiemRow) => {
-      console.log('value', perDiemRow);
       setSaving(true);
       const temp = makeSafeFormObject(perDiemRow, new PerDiemRow());
-      await PerDiemClientService.upsertPerDiemRow(temp);
+      const req = new PerDiemRow();
+      if (temp.getId() == 0) {
+        await PerDiemClientService.CreateRow(temp);
+      } else {
+        await PerDiemClientService.UpdateRow(temp);
+      }
       setPendingPerDiemRowEdit(undefined);
       setSaving(false);
       setLoaded(false);
@@ -593,7 +594,6 @@ export const PerDiemComponent: FC<Props> = ({
       ]
     : [];
   const makeNewPerDiem = useCallback(() => {
-    console.log('we have been called');
     const req = new PerDiem();
     if (user) {
       if (loggedUserId && ownerId) {
@@ -615,7 +615,6 @@ export const PerDiemComponent: FC<Props> = ({
           : departments[0].getId(),
       );
     }
-    console.log('req', req);
     return req;
   }, [
     loggedUserId,
