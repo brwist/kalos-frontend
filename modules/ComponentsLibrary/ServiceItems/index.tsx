@@ -27,7 +27,11 @@ import { ActionsProps } from '../Actions';
 import { Form, Schema, Options } from '../Form';
 import { PlainForm } from '../PlainForm';
 import { ConfirmDelete } from '../ConfirmDelete';
-import { makeFakeRows, getRPCFields } from '../../../helpers';
+import {
+  makeFakeRows,
+  getRPCFields,
+  makeSafeFormObject,
+} from '../../../helpers';
 import { ServiceItemLinks } from '../ServiceItemLinks';
 import { ServiceItemReadings } from '../ServiceItemReadings';
 import './styles.less';
@@ -39,8 +43,7 @@ const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
 );
 const MaterialClientService = new MaterialClient(ENDPOINT);
 
-export type Entry = ServiceItem.AsObject;
-type MaterialType = Material.AsObject;
+export type Entry = ServiceItem;
 
 const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Straight-cool AC w/ heatstrips', value: '1' },
@@ -55,13 +58,13 @@ const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Other', value: '10' },
 ];
 
-const MATERIAL_SCHEMA: Schema<MaterialType> = [
+const MATERIAL_SCHEMA: Schema<Material> = [
   [
-    { label: 'Name', name: 'name' },
-    { label: 'Quantity', name: 'quantity' },
-    { label: 'Part #', name: 'partNumber' },
-    { label: 'Vendor', name: 'vendor' },
-    { name: 'id', type: 'hidden' },
+    { label: 'Name', name: 'getName' },
+    { label: 'Quantity', name: 'getQuantity' },
+    { label: 'Part #', name: 'getPartNumber' },
+    { label: 'Vendor', name: 'getVendor' },
+    { name: 'getId', type: 'hidden' },
   ],
 ];
 
@@ -101,8 +104,8 @@ const REPAIR_SCHEMA: Schema<Repair> = [
 ];
 
 const sort = (a: Entry, b: Entry) => {
-  if (a.sortOrder < b.sortOrder) return -1;
-  if (a.sortOrder > b.sortOrder) return 1;
+  if (a.getSortOrder() < b.getSortOrder()) return -1;
+  if (a.getSortOrder() > b.getSortOrder()) return 1;
   return 0;
 };
 
@@ -126,7 +129,7 @@ export const ServiceItems: FC<Props> = props => {
   } = props;
   const [entries, setEntries] = useState<Entry[]>([]);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
-  const [materials, setMaterials] = useState<MaterialType[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
   const [materialsIds, setMaterialsIds] = useState<number[]>([]);
   const [loadingMaterials, setLoadingMaterials] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -141,9 +144,10 @@ export const ServiceItems: FC<Props> = props => {
   const [selected, setSelected] = useState<Entry[]>(selectedInitial || []);
 
   const handleMaterialChange = useCallback(
-    (idx: number) => (data: MaterialType) => {
+    (idx: number) => (data: Material) => {
+      const temp = makeSafeFormObject(data, new Material());
       const newMaterials = [...materials];
-      newMaterials[idx] = data;
+      newMaterials[idx] = temp;
       setMaterials(newMaterials);
     },
     [materials, setMaterials],
@@ -152,7 +156,7 @@ export const ServiceItems: FC<Props> = props => {
   const handleAddMaterial = useCallback(() => {
     const newMaterial = new Material();
     newMaterial.setId(Date.now());
-    const newMaterials = [...materials, newMaterial.toObject()];
+    const newMaterials = [...materials, newMaterial];
     setMaterials(newMaterials);
   }, [materials, setMaterials]);
 
@@ -187,8 +191,8 @@ export const ServiceItems: FC<Props> = props => {
         [
           {
             content: (
-              <PlainForm<MaterialType>
-                key={materials[idx].id}
+              <PlainForm<Material>
+                key={materials[idx].getId()}
                 schema={MATERIAL_SCHEMA}
                 data={materials[idx]}
                 onChange={handleMaterialChange(idx)}
@@ -204,49 +208,49 @@ export const ServiceItems: FC<Props> = props => {
 
   const SCHEMA: Schema<Entry> = [
     [
-      { label: 'System Description', name: 'type', required: true },
+      { label: 'System Description', name: 'getType', required: true },
       {
         label: 'System Type',
-        name: 'systemReadingsTypeId',
+        name: 'getSystemReadingsTypeId',
         required: true,
         options: SYSTEM_READINGS_TYPE_OPTIONS,
       },
     ],
     [
-      { label: 'Start Date', name: 'startDate' },
-      { label: 'Item Location', name: 'location' },
+      { label: 'Start Date', name: 'getStartDate' },
+      { label: 'Item Location', name: 'getLocation' },
     ],
     [{ label: '#1', headline: true }],
     [
-      { label: 'Item', name: 'item' },
-      { label: 'Brand', name: 'brand' },
-      { label: 'Model #', name: 'model' },
-      { label: 'Serial #', name: 'serial' },
+      { label: 'Item', name: 'getItem' },
+      { label: 'Brand', name: 'getBrand' },
+      { label: 'Model #', name: 'getModel' },
+      { label: 'Serial #', name: 'getSerial' },
     ],
     [{ label: '#2', headline: true }],
     [
-      { label: 'Item', name: 'item2' },
-      { label: 'Brand', name: 'brand2' },
-      { label: 'Model #', name: 'model2' },
-      { label: 'Serial #', name: 'serial2' },
+      { label: 'Item', name: 'getItem2' },
+      { label: 'Brand', name: 'getBrand2' },
+      { label: 'Model #', name: 'getModel2' },
+      { label: 'Serial #', name: 'getSerial2' },
     ],
     [{ label: '#3', headline: true }],
     [
-      { label: 'Item', name: 'item3' },
-      { label: 'Brand', name: 'brand3' },
-      { label: 'Model #', name: 'model3' },
-      { label: 'Serial #', name: 'serial3' },
+      { label: 'Item', name: 'getItem3' },
+      { label: 'Brand', name: 'getBrand3' },
+      { label: 'Model #', name: 'getModel3' },
+      { label: 'Serial #', name: 'getSerial3' },
     ],
     [{ label: 'Filter', headline: true }],
     [
-      { label: 'Width', name: 'filterWidth' },
-      { label: 'Length', name: 'filterLength' },
-      { label: 'Thickness', name: 'filterThickness' },
-      { label: 'Quantity', name: 'filterQty' },
+      { label: 'Width', name: 'getFilterWidth' },
+      { label: 'Length', name: 'getFilterLength' },
+      { label: 'Thickness', name: 'getFilterThickness' },
+      { label: 'Quantity', name: 'getFilterQty' },
     ],
     [
-      { label: 'Part #', name: 'filterPartNumber' },
-      { label: 'Vendor', name: 'filterVendor' },
+      { label: 'Part #', name: 'getFilterPartNumber' },
+      { label: 'Vendor', name: 'getFilterVendor' },
     ],
     [
       {
@@ -292,7 +296,7 @@ export const ServiceItems: FC<Props> = props => {
         ]
       : MATERIALS_SCHEMA),
     [{ label: 'Notes', headline: true }],
-    [{ label: 'Additional Notes', name: 'notes', multiline: true }],
+    [{ label: 'Additional Notes', name: 'getNotes', multiline: true }],
   ];
 
   const load = useCallback(async () => {
@@ -303,7 +307,8 @@ export const ServiceItems: FC<Props> = props => {
     entry.setIsActive(1);
     try {
       const response = await ServiceItemClientService.BatchGet(entry);
-      const { resultsList, totalCount: count } = response.toObject();
+      const resultsList = response.getResultsList();
+      const count = response.getTotalCount();
       setEntries(resultsList.sort(sort));
       setCount(count);
       setLoading(false);
@@ -321,12 +326,12 @@ export const ServiceItems: FC<Props> = props => {
   }, [loaded, load]);
 
   const handleMaterials = async (
-    materials: MaterialType[],
+    materials: Material[],
     materialsIds: number[],
     serviceItemId: number,
   ) => {
     const formFields = MATERIAL_SCHEMA[0].map(({ name }) => name as string);
-    const ids = materials.map(({ id }) => id);
+    const ids = materials.map(id => id.getId());
     await Promise.all(
       materialsIds
         .filter(id => !ids.includes(id))
@@ -353,8 +358,8 @@ export const ServiceItems: FC<Props> = props => {
         fieldMaskList.push(upperCaseProp);
       }
       entry.setFieldMaskList(fieldMaskList);
-      if (materialsIds.includes(materials[i].id)) {
-        entry.setId(materials[i].id);
+      if (materialsIds.includes(materials[i].getId())) {
+        entry.setId(materials[i].getId());
         operations.push({ operation: 'Update', entry });
       } else {
         operations.push({ operation: 'Create', entry });
@@ -375,12 +380,12 @@ export const ServiceItems: FC<Props> = props => {
         const entry = new ServiceItem();
         entry.setPropertyId(propertyId);
         const fieldMaskList = ['PropertyId'];
-        const isNew = !editing.id;
+        const isNew = !editing.getId();
         if (!isNew) {
-          entry.setId(editing.id);
+          entry.setId(editing.getId());
         } else {
           const sortOrder = Math.max(
-            entries[entries.length - 1].sortOrder + 1,
+            entries[entries.length - 1].getSortOrder() + 1,
             entries.length,
           );
           entry.setSortOrder(sortOrder);
@@ -393,10 +398,10 @@ export const ServiceItems: FC<Props> = props => {
           fieldMaskList.push(upperCaseProp);
         }
         entry.setFieldMaskList(fieldMaskList);
-        const { id } = await ServiceItemClientService[
-          isNew ? 'Create' : 'Update'
-        ](entry);
-        await handleMaterials(materials, materialsIds, id);
+        const id = await ServiceItemClientService[isNew ? 'Create' : 'Update'](
+          entry,
+        );
+        await handleMaterials(materials, materialsIds, id.getId());
         setSaving(false);
         setEditing(undefined);
         await load();
@@ -410,7 +415,7 @@ export const ServiceItems: FC<Props> = props => {
     if (deletingEntry) {
       setLoading(true);
       const reading = new Reading();
-      reading.setServiceItemId(deletingEntry.id);
+      reading.setServiceItemId(deletingEntry.getId());
       const response = await ReadingClientService.BatchGet(reading);
       const readingIds = response.toObject().resultsList.map(({ id }) => id);
       await Promise.all(
@@ -430,14 +435,14 @@ export const ServiceItems: FC<Props> = props => {
         }),
       );
       const newRepairs = repairs.filter(
-        ({ serviceItemId }) => serviceItemId !== deletingEntry.id,
+        ({ serviceItemId }) => serviceItemId !== deletingEntry.getId(),
       );
       setRepairs(newRepairs);
       if (onRepairsChange) {
         onRepairsChange(newRepairs);
       }
       const entry = new ServiceItem();
-      entry.setId(deletingEntry.id);
+      entry.setId(deletingEntry.getId());
       await ServiceItemClientService.Delete(entry);
       await load();
     }
@@ -454,9 +459,9 @@ export const ServiceItems: FC<Props> = props => {
   const handleSelectedChange = useCallback(
     (entry: Entry) => () => {
       const newSelected: Entry[] = [
-        ...selected.filter(item => item.id !== entry.id),
+        ...selected.filter(item => item.getId() !== entry.getId()),
       ];
-      const isSelected = selected.find(item => item.id === entry.id);
+      const isSelected = selected.find(item => item.getId() === entry.getId());
       if (!isSelected) {
         newSelected.push(entry);
       }
@@ -475,11 +480,11 @@ export const ServiceItems: FC<Props> = props => {
       const nextItem = entries[idx + step];
       const entry = new ServiceItem();
       entry.setFieldMaskList(['SortOrder']);
-      entry.setId(currentItem.id);
-      entry.setSortOrder(nextItem.sortOrder);
+      entry.setId(currentItem.getId());
+      entry.setSortOrder(nextItem.getSortOrder());
       await ServiceItemClientService.Update(entry);
-      entry.setId(nextItem.id);
-      entry.setSortOrder(currentItem.sortOrder);
+      entry.setId(nextItem.getId());
+      entry.setSortOrder(currentItem.getSortOrder());
       await ServiceItemClientService.Update(entry);
       await load();
     },
@@ -493,7 +498,7 @@ export const ServiceItems: FC<Props> = props => {
 
   const handleAddRepair = useCallback(
     (entry: Entry) => () => {
-      const { id } = entry;
+      const id = entry.getId();
       const repair: Repair = {
         id: uniqueId(),
         serviceItemId: id,
@@ -545,15 +550,15 @@ export const ServiceItems: FC<Props> = props => {
   const handleEditing = useCallback(
     (editing?: Entry) => async () => {
       setEditing(editing);
-      if (editing && editing.id) {
+      if (editing && editing.getId()) {
         const entry = new Material();
-        entry.setServiceItemId(editing.id);
+        entry.setServiceItemId(editing.getId());
         setLoadingMaterials(true);
-        const { resultsList } = (
+        const resultsList = (
           await MaterialClientService.BatchGet(entry)
-        ).toObject();
+        ).getResultsList();
         setMaterials(resultsList);
-        setMaterialsIds(resultsList.map(({ id }) => id));
+        setMaterialsIds(resultsList.map(id => id.getId()));
         setLoadingMaterials(false);
       } else {
         setMaterials([]);
@@ -571,7 +576,9 @@ export const ServiceItems: FC<Props> = props => {
   const makeData = () => {
     const data: Data = [];
     entries.forEach((entry, idx) => {
-      const { id, type: value } = entry;
+      // const { id, type: value } = entry;
+      const id = entry.getId();
+      const value = entry.getType();
       data.push([
         {
           value: (
@@ -580,7 +587,7 @@ export const ServiceItems: FC<Props> = props => {
                 <Field
                   name="name"
                   type="checkbox"
-                  value={!!selected.find(item => item.id === id)}
+                  value={!!selected.find(item => item.getId() === id)}
                   onChange={handleSelectedChange(entry)}
                   className="ServiceItemsCheckbox"
                 />
@@ -725,7 +732,7 @@ export const ServiceItems: FC<Props> = props => {
         <Modal open onClose={handleSetLinkId(undefined)}>
           <ServiceItemLinks
             kind="Service Item Link"
-            title={entries.find(({ id }) => id === linkId)?.type}
+            title={entries.find(id => id.getId() === linkId)?.getType()}
             serviceItemId={linkId}
             onClose={handleSetLinkId(undefined)}
             viewedAsCustomer={viewedAsCustomer}
@@ -737,7 +744,7 @@ export const ServiceItems: FC<Props> = props => {
           <div className="ServiceItemsModal">
             <Form<Entry>
               title={`${
-                editing.id ? (viewedAsCustomer ? 'View' : 'Edit') : 'Add'
+                editing.getId() ? (viewedAsCustomer ? 'View' : 'Edit') : 'Add'
               } Service Item`}
               schema={SCHEMA}
               data={editing}
@@ -747,9 +754,12 @@ export const ServiceItems: FC<Props> = props => {
               className="ServiceItemsForm"
               readOnly={viewedAsCustomer}
             />
-            {!viewedAsCustomer && editing.id && (
+            {!viewedAsCustomer && editing.getId() && (
               <div className="ServiceItemsReadings">
-                <ServiceItemReadings {...props} serviceItemId={editing.id} />
+                <ServiceItemReadings
+                  {...props}
+                  serviceItemId={editing.getId()}
+                />
               </div>
             )}
           </div>
@@ -761,7 +771,7 @@ export const ServiceItems: FC<Props> = props => {
           onClose={setDeleting()}
           onConfirm={handleDelete}
           kind="Service Item"
-          name={deletingEntry.type}
+          name={deletingEntry.getType()}
         />
       )}
     </div>
