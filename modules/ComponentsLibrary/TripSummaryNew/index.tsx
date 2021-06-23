@@ -140,6 +140,10 @@ export const TripSummaryNew: FC<Props> = ({
     }
     setPendingTripToAdd(new Trip());
   }, [perDiemRowIds]);
+  const handleSetTripsLoaded = useCallback(
+    (tripsLoaded: Trip[]) => setTripsLoaded(tripsLoaded),
+    [setTripsLoaded],
+  );
   const handleSetPendingTripToAdd = useCallback(
     (tripToAdd: Trip | undefined) => setPendingTripToAdd(tripToAdd),
     [setPendingTripToAdd],
@@ -169,7 +173,7 @@ export const TripSummaryNew: FC<Props> = ({
     [setPendingDeleteAllTrips],
   );
   const handleSetPendingTripToDelete = useCallback(
-    (tripToDelete: Trip) => setPendingTripToDelete(tripToDelete),
+    (tripToDelete: Trip | undefined) => setPendingTripToDelete(tripToDelete),
     [setPendingTripToDelete],
   );
   const handleSetTripToView = useCallback(
@@ -467,6 +471,7 @@ export const TripSummaryNew: FC<Props> = ({
       console.error('Error getting user by id: ', err);
     }
     if (user) {
+      // ! This is a patch for the departments.
       try {
         department =
           await TimesheetDepartmentClientService.getDepartmentByManagerID(
@@ -488,6 +493,37 @@ export const TripSummaryNew: FC<Props> = ({
     handleSetPendingTripToAdd(undefined);
     loadTrips();
   };
+  const deleteTrip = useCallback(
+    async (tripToDelete: Trip) => {
+      try {
+        if (!tripsLoaded) {
+          console.error('Deletion was attempted but trips are not loaded yet.');
+          return;
+        }
+        await PerDiemClientService.DeleteTrip(tripToDelete);
+        let trips = tripsLoaded;
+        let t = trips.indexOf(tripToDelete);
+        trips.splice(t, 1);
+        handleSetTripsLoaded(trips);
+        if (onDeleteTrip) onDeleteTrip();
+      } catch (err: any) {
+        console.error('An error occurred while deleting a trip: ', err);
+        alert(
+          'The trip was not able to be deleted. Please try again, or if this keeps happening please contact the webtech team.',
+        );
+        handleSetPendingTripToDelete(undefined);
+        return Error(err);
+      }
+      loadTrips();
+    },
+    [
+      handleSetPendingTripToDelete,
+      handleSetTripsLoaded,
+      loadTrips,
+      onDeleteTrip,
+      tripsLoaded,
+    ],
+  );
 
   const load = useCallback(async () => {
     setLoaded(false);
@@ -834,6 +870,26 @@ export const TripSummaryNew: FC<Props> = ({
             : []
         }
       />
+      {pendingTripToDelete && (
+        <ConfirmDelete
+          key="DeleteTrip"
+          open={pendingTripToDelete != null}
+          onClose={() => handleSetPendingTripToDelete(undefined)}
+          kind="" // Purposely left blank for clarity purposes in the box
+          name="this trip"
+          onConfirm={() => deleteTrip(pendingTripToDelete!)}
+        />
+      )}
+      {pendingDeleteAllTrips && (
+        <ConfirmDelete
+          key="DeleteAllTrips"
+          open={pendingDeleteAllTrips}
+          onClose={() => handleSetPendingDeleteAllTrips(false)}
+          kind="" // Purposely left blank for clarity purposes in the box
+          name="all of the trips in this week (this action cannot be undone)"
+          onConfirm={() => deleteAllTrips()}
+        />
+      )}
     </>
   );
 };
