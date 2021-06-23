@@ -506,6 +506,7 @@ export const TripSummaryNew: FC<Props> = ({
         trips.splice(t, 1);
         handleSetTripsLoaded(trips);
         if (onDeleteTrip) onDeleteTrip();
+        handleSetPendingTripToDelete(undefined);
       } catch (err: any) {
         console.error('An error occurred while deleting a trip: ', err);
         alert(
@@ -532,6 +533,8 @@ export const TripSummaryNew: FC<Props> = ({
         trip.setPerDiemRowId(id);
         await PerDiemClientService.BatchDeleteTrips(trip);
         if (onDeleteAllTrips) onDeleteAllTrips();
+        loadTrips();
+        handleSetPendingDeleteAllTrips(false);
       } catch (err: any) {
         console.error(
           'An error occurred while deleting the trips for this week: ',
@@ -544,8 +547,6 @@ export const TripSummaryNew: FC<Props> = ({
         return;
       }
     });
-    loadTrips();
-    handleSetPendingDeleteAllTrips(false);
   }, [
     handleSetPendingDeleteAllTrips,
     loadTrips,

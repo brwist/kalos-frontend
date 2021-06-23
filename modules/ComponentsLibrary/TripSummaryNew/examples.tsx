@@ -43,6 +43,15 @@ export default () => {
         canProcessPayroll
         canApprove
       />
+      <ExampleTitle>Can Delete</ExampleTitle>{' '}
+      <TripSummaryNew
+        perDiemRowIds={[rowIdToUse]}
+        loggedUserId={101275}
+        userId={0}
+        canProcessPayroll
+        searchable // Searchable to test Delete All
+        canDeleteTrips
+      />
     </>
   );
 };
