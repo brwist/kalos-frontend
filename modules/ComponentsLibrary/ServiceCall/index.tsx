@@ -39,7 +39,7 @@ import { Typography } from '@material-ui/core';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
-export type EventType = Event.AsObject;
+export type EventType = Event;
 type JobTypeType = JobType.AsObject;
 type JobSubtypeType = JobSubtype.AsObject;
 export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
@@ -100,17 +100,16 @@ export const ServiceCall: FC<Props> = props => {
     [],
   );
   const [loggedUser, setLoggedUser] = useState<User>();
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
   const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
     null,
   );
+  const [projectData, setProjectData] = useState<Event>(new Event());
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
@@ -126,9 +125,10 @@ export const ServiceCall: FC<Props> = props => {
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
         setLoading(true);
-        const servicesRendered = await ServicesRenderedClientService.loadServicesRenderedByEventID(
-          _serviceCallId,
-        );
+        const servicesRendered =
+          await ServicesRenderedClientService.loadServicesRenderedByEventID(
+            _serviceCallId,
+          );
         setServicesRendered(servicesRendered);
         setLoading(false);
       }
@@ -137,6 +137,9 @@ export const ServiceCall: FC<Props> = props => {
   );
   const load = useCallback(async () => {
     setLoading(true);
+    let newProjectData = projectData;
+    newProjectData.setPropertyId(propertyId);
+    setProjectData(newProjectData);
     try {
       let promises = [];
 
@@ -160,9 +163,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const propertyEvents = await EventClientService.loadEventsByPropertyId(
-            propertyId,
-          );
+          const propertyEvents =
+            await EventClientService.loadEventsByPropertyId(propertyId);
           setPropertyEvents(propertyEvents);
           resolve();
         }),
@@ -186,7 +188,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+          const jobTypeSubtypes =
+            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
           setJobTypeSubtypes(jobTypeSubtypes);
           resolve();
         }),
@@ -229,7 +232,14 @@ export const ServiceCall: FC<Props> = props => {
     } catch (e) {
       setError(true);
     }
-  }, [propertyId, userID, loggedUserId, loadEntry, loadServicesRenderedData]);
+  }, [
+    projectData,
+    propertyId,
+    userID,
+    loggedUserId,
+    loadEntry,
+    loadServicesRenderedData,
+  ]);
 
   const handleSetParentId = useCallback(
     id => {
@@ -497,25 +507,25 @@ export const ServiceCall: FC<Props> = props => {
   const SCHEMA_PROJECT: Schema<EventType> = [
     [
       {
-        name: 'dateStarted',
+        name: 'getDateStarted',
         label: 'Start Date',
         type: 'date',
         required: true,
       },
       {
-        name: 'dateEnded',
+        name: 'getDateEnded',
         label: 'End Date',
         type: 'date',
         required: true,
       },
       {
-        name: 'timeStarted',
+        name: 'getTimeStarted',
         label: 'Time Started',
         type: 'time',
         required: true,
       },
       {
-        name: 'timeEnded',
+        name: 'getTimeEnded',
         label: 'Time Ended',
         type: 'time',
         required: true,
@@ -523,49 +533,49 @@ export const ServiceCall: FC<Props> = props => {
     ],
     [
       {
-        name: 'departmentId',
+        name: 'getDepartmentId',
         label: 'Department',
         type: 'department',
         required: true,
       },
       {
-        name: 'description',
+        name: 'getDescription',
         label: 'Description',
         multiline: true,
       },
     ],
     [
       {
-        name: 'isAllDay',
+        name: 'getIsAllDay',
         label: 'Is all-day?',
         type: 'checkbox',
       },
       {
-        name: 'isLmpc',
+        name: 'getIsLmpc',
         label: 'Is LMPC?',
         type: 'checkbox',
       },
       {
-        name: 'highPriority',
+        name: 'getHighPriority',
         label: 'High priority?',
         type: 'checkbox',
       },
       {
-        name: 'isResidential',
+        name: 'getIsResidential',
         label: 'Is residential?',
         type: 'checkbox',
       },
     ],
     [
       {
-        name: 'color',
+        name: 'getColor',
         label: 'Color',
         type: 'color',
       },
     ],
     [
       {
-        name: 'propertyId',
+        name: 'getPropertyId',
         type: 'hidden',
       },
     ],
@@ -627,11 +637,13 @@ export const ServiceCall: FC<Props> = props => {
           <Form
             title="Project Data"
             schema={SCHEMA_PROJECT}
-            data={{ ...new Event().toObject(), propertyId }}
+            data={projectData}
             onClose={onClose || (() => {})}
-            onSave={(data: EventType) =>
-              saveProject({ ...data, departmentId: Number(data.departmentId) })
-            }
+            onSave={(data: Event) => {
+              let newData = makeSafeFormObject(data, new Event());
+              newData.setDepartmentId(Number(newData.getDepartmentId()));
+              saveProject(newData);
+            }}
           />
           {parentId != confirmedParentId && parentId != null && (
             <Confirm
