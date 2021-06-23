@@ -229,20 +229,7 @@ export const ServiceCall: FC<Props> = props => {
     } catch (e) {
       setError(true);
     }
-  }, [
-    setLoading,
-    setError,
-    setLoaded,
-    setJobTypes,
-    userID,
-    propertyId,
-    setPropertyEvents,
-    loggedUserId,
-    setLoggedUser,
-    setProperty,
-    setCustomer,
-    setProjects,
-  ]);
+  }, [propertyId, userID, loggedUserId, loadEntry, loadServicesRenderedData]);
 
   const handleSetParentId = useCallback(
     id => {
@@ -410,7 +397,7 @@ export const ServiceCall: FC<Props> = props => {
       setSaving(false);
       handleSetNotificationEditing(false)();
     },
-    [setSaving, userID, handleSetNotificationEditing],
+    [userID, loadEntry, handleSetNotificationEditing],
   );
 
   const handleOnAddMaterials = useCallback(
@@ -422,7 +409,7 @@ export const ServiceCall: FC<Props> = props => {
       );
       await loadEntry();
     },
-    [serviceCallId, entry],
+    [serviceCallId, entry, loadEntry],
   );
 
   const jobTypeOptions: Option[] = jobTypes.map(id => ({
