@@ -525,6 +525,34 @@ export const TripSummaryNew: FC<Props> = ({
     ],
   );
 
+  const deleteAllTrips = useCallback(() => {
+    perDiemRowIds.forEach(async id => {
+      try {
+        let trip = new Trip();
+        trip.setPerDiemRowId(id);
+        await PerDiemClientService.BatchDeleteTrips(trip);
+        if (onDeleteAllTrips) onDeleteAllTrips();
+      } catch (err: any) {
+        console.error(
+          'An error occurred while deleting the trips for this week: ',
+          err,
+        );
+        alert(
+          'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+        );
+        handleSetPendingDeleteAllTrips(false);
+        return;
+      }
+    });
+    loadTrips();
+    handleSetPendingDeleteAllTrips(false);
+  }, [
+    handleSetPendingDeleteAllTrips,
+    loadTrips,
+    onDeleteAllTrips,
+    perDiemRowIds,
+  ]);
+
   const load = useCallback(async () => {
     setLoaded(false);
     await loadTrips();
