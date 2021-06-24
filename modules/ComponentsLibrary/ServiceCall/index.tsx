@@ -581,8 +581,9 @@ export const ServiceCall: FC<Props> = props => {
     ],
   ];
   return (
-    <div>
+    <>
       <SectionBar
+        key={loading.toString()}
         title={asProject ? 'Project Details' : 'Service Call Details'}
         actions={
           serviceCallId
@@ -720,7 +721,7 @@ export const ServiceCall: FC<Props> = props => {
             ]}
           />
           <Tabs
-            key={tabKey}
+            key={tabKey + loading.toString()}
             defaultOpenIdx={tabIdx}
             onChange={setTabIdx}
             tabs={[
@@ -728,6 +729,7 @@ export const ServiceCall: FC<Props> = props => {
                 label: 'Request',
                 content: (
                   <Request
+                    key={loading.toString()}
                     //@ts-ignore
                     ref={requestRef}
                     serviceItem={entry}
@@ -879,6 +881,6 @@ export const ServiceCall: FC<Props> = props => {
           />
         </Modal>
       )}
-    </div>
+    </>
   );
 };
