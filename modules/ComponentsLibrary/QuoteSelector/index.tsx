@@ -212,14 +212,14 @@ export const QuoteSelector: FC<Props> = ({
       setNewQuotable(false);
       setOpen(false);
     },
-    [onAddQuotes, billable, pendingQuotable, pendingNewQuotable],
+    [pendingNewQuotable, onAddQuotes, billable, quoteParts],
   );
   // console.log({ quotable, quoteParts });
   const data: Data = loading
     ? makeFakeRows(6, 20)
     : quoteParts
         .filter(quote =>
-          !!filter
+          filter
             ? quote
                 .getDescription()
                 .toLocaleLowerCase()
