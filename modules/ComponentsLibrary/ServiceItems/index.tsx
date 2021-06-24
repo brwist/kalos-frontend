@@ -135,17 +135,20 @@ export const ServiceItems: FC<Props> = props => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
-  const [editing, setEditing] = useState<Entry>();
-  const [deletingEntry, setDeletingEntry] = useState<Entry>();
+  const [editing, setEditing] = useState<ServiceItem>();
+  const [deletingEntry, setDeletingEntry] = useState<ServiceItem>();
   const [saving, setSaving] = useState<boolean>(false);
   const [linkId, setLinkId] = useState<number>();
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
-  const [selected, setSelected] = useState<Entry[]>(selectedInitial || []);
+  const [selected, setSelected] = useState<ServiceItem[]>(
+    selectedInitial || [],
+  );
 
   const handleMaterialChange = useCallback(
     (idx: number) => (data: Material) => {
       const temp = makeSafeFormObject(data, new Material());
+      console.log(temp);
       const newMaterials = [...materials];
       newMaterials[idx] = temp;
       setMaterials(newMaterials);
@@ -206,7 +209,7 @@ export const ServiceItems: FC<Props> = props => {
     )
     .reduce((aggr, item) => [...aggr, ...item], []);
 
-  const SCHEMA: Schema<Entry> = [
+  const SCHEMA: Schema<ServiceItem> = [
     [
       { label: 'System Description', name: 'getType', required: true },
       {
@@ -330,7 +333,7 @@ export const ServiceItems: FC<Props> = props => {
     materialsIds: number[],
     serviceItemId: number,
   ) => {
-    const formFields = MATERIAL_SCHEMA[0].map(({ name }) => name as string);
+    console.log('we called handle material');
     const ids = materials.map(id => id.getId());
     await Promise.all(
       materialsIds
@@ -346,18 +349,8 @@ export const ServiceItems: FC<Props> = props => {
       entry: Material;
     }[] = [];
     for (let i = 0; i < materials.length; i += 1) {
-      const entry = new Material();
+      let entry = materials[i];
       entry.setServiceItemId(serviceItemId);
-      const fieldMaskList = ['ServiceItemId'];
-      for (const fieldName in materials[i]) {
-        if (!fieldName || fieldName === 'id' || !formFields.includes(fieldName))
-          continue;
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        entry[methodName](materials[i][fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      entry.setFieldMaskList(fieldMaskList);
       if (materialsIds.includes(materials[i].getId())) {
         entry.setId(materials[i].getId());
         operations.push({ operation: 'Update', entry });
@@ -365,21 +358,30 @@ export const ServiceItems: FC<Props> = props => {
         operations.push({ operation: 'Create', entry });
       }
     }
-    await Promise.all(
-      operations.map(
-        async ({ operation, entry }) =>
-          await MaterialClientService[operation](entry),
-      ),
-    );
+    for (let i = 0; i < operations.length; i++) {
+      if (operations[i].operation == 'Create') {
+        await MaterialClientService.Create(operations[i].entry);
+      } else {
+        await MaterialClientService.Update(operations[i].entry);
+      }
+    }
   };
 
   const handleSave = useCallback(
-    async (data: Entry) => {
+    async (data: ServiceItem) => {
       if (editing) {
         setSaving(true);
-        const entry = new ServiceItem();
+        console.log(editing);
+
+        //onst entry = editing;
+
+        let entry = makeSafeFormObject(data, new ServiceItem());
+        if (typeof entry.getBrand() === 'function') {
+          //for some reason, if the form value hasn't changed,it throws an
+          //error, this prevents the error
+          entry = editing;
+        }
         entry.setPropertyId(propertyId);
-        const fieldMaskList = ['PropertyId'];
         const isNew = !editing.getId();
         if (!isNew) {
           entry.setId(editing.getId());
@@ -389,15 +391,9 @@ export const ServiceItems: FC<Props> = props => {
             entries.length,
           );
           entry.setSortOrder(sortOrder);
-          fieldMaskList.push('SortOrder');
+          entry.addFieldMask('SortOrder');
         }
-        for (const fieldName in data) {
-          const { upperCaseProp, methodName } = getRPCFields(fieldName);
-          // @ts-ignore
-          entry[methodName](data[fieldName]);
-          fieldMaskList.push(upperCaseProp);
-        }
-        entry.setFieldMaskList(fieldMaskList);
+        console.log(entry);
         const id = await ServiceItemClientService[isNew ? 'Create' : 'Update'](
           entry,
         );
@@ -407,7 +403,16 @@ export const ServiceItems: FC<Props> = props => {
         await load();
       }
     },
-    [editing, setSaving, entries, setEditing, load, materials, materialsIds],
+    [
+      editing,
+      setSaving,
+      propertyId,
+      entries,
+      setEditing,
+      load,
+      materials,
+      materialsIds,
+    ],
   );
 
   const handleDelete = useCallback(async () => {
@@ -564,6 +569,7 @@ export const ServiceItems: FC<Props> = props => {
         setMaterials([]);
         setMaterialsIds([]);
       }
+      console.log('we are editing');
     },
     [setEditing, setMaterials],
   );
@@ -705,7 +711,7 @@ export const ServiceItems: FC<Props> = props => {
                 })),
                 {
                   label: 'Add',
-                  onClick: handleEditing({} as Entry),
+                  onClick: handleEditing({} as ServiceItem),
                   disabled: loading || loadingProp,
                 },
               ]

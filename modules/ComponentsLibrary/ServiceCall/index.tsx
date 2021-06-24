@@ -40,9 +40,7 @@ const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
 export type EventType = Event;
-type JobTypeType = JobType.AsObject;
-type JobSubtypeType = JobSubtype.AsObject;
-export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
+export type JobTypeSubtypeType = JobTypeSubtype;
 export type ServicesRenderedType = ServicesRendered;
 
 export interface Props {
@@ -100,10 +98,12 @@ export const ServiceCall: FC<Props> = props => {
     [],
   );
   const [loggedUser, setLoggedUser] = useState<User>();
-  const [notificationEditing, setNotificationEditing] =
-    useState<boolean>(false);
-  const [notificationViewing, setNotificationViewing] =
-    useState<boolean>(false);
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
   const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
@@ -125,10 +125,15 @@ export const ServiceCall: FC<Props> = props => {
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
         setLoading(true);
-        const servicesRendered =
-          await ServicesRenderedClientService.loadServicesRenderedByEventID(
-            _serviceCallId,
-          );
+        const req = new ServicesRendered();
+        req.setIsActive(1);
+        req.setEventId(_serviceCallId);
+        const servicesRendered = (
+          await ServicesRenderedClientService.BatchGet(req)
+        ).getResultsList();
+        //const servicesRendered = await ServicesRenderedClientService.loadServicesRenderedByEventID(
+        //  _serviceCallId,
+        //);
         setServicesRendered(servicesRendered);
         setLoading(false);
       }
@@ -163,8 +168,9 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const propertyEvents =
-            await EventClientService.loadEventsByPropertyId(propertyId);
+          const propertyEvents = await EventClientService.loadEventsByPropertyId(
+            propertyId,
+          );
           setPropertyEvents(propertyEvents);
           resolve();
         }),
@@ -188,8 +194,7 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypeSubtypes =
-            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
           setJobTypeSubtypes(jobTypeSubtypes);
           resolve();
         }),
@@ -264,14 +269,23 @@ export const ServiceCall: FC<Props> = props => {
   }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
   const saveServiceCall = useCallback(async () => {
     setSaving(true);
-    const req = new Event();
+    const req = entry;
     req.setIsActive(1);
-    const fieldMaskList: string[] = ['IsActive'];
     if (serviceCallId) {
       req.setId(serviceCallId);
+      req.addFieldMask('Id');
     } else {
       setLoading(true);
     }
+    let res = new Event();
+    if (serviceCallId) {
+      console.log('saving existing ID');
+      res = await EventClientService.Update(req);
+    } else {
+      res = await EventClientService.Create(req);
+      console.log('creating new one');
+    }
+    /*
     requestFields.forEach(fieldName => {
       //@ts-ignore
       if (fieldName === 'id' || typeof entry[fieldName] === 'object') return;
@@ -284,6 +298,7 @@ export const ServiceCall: FC<Props> = props => {
     const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
       req,
     );
+    */
     setEntry(res);
     setSaving(false);
     if (!serviceCallId) {
@@ -390,7 +405,6 @@ export const ServiceCall: FC<Props> = props => {
     async (data: User) => {
       setSaving(true);
       const temp = makeSafeFormObject(data, new User());
-      console.log(temp);
       const entry = new User();
       entry.setId(userID);
       const fieldMaskList = [];
@@ -400,7 +414,6 @@ export const ServiceCall: FC<Props> = props => {
         entry[methodName](data[fieldName]);
         fieldMaskList.push(upperCaseProp);
       }
-      console.log(temp);
       entry.setFieldMaskList(fieldMaskList);
       //await UserClientService.Update(entry);
       await loadEntry();
