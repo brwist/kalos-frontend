@@ -12,7 +12,8 @@ import { Form, Schema } from '../Form';
 import { Option } from '../Field';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Task, TaskClient } from '@kalos-core/kalos-rpc/Task';
-
+import { Document } from '@kalos-core/kalos-rpc/Document';
+import { SpiffType } from '@kalos-core/kalos-rpc/Task';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../InfoTable';
 import { Documents } from '../Documents';
@@ -22,10 +23,6 @@ import {
   makeFakeRows,
   escapeText,
   uploadFileToS3Bucket,
-  TaskType,
-  SpiffTypeType,
-  SpiffToolAdminActionType,
-  DocumentType,
   TaskClientService,
   DocumentClientService,
   SpiffToolAdminActionClientService,
@@ -59,27 +56,27 @@ const STATUSES_COLUMNS: Columns = [
   { name: '' },
 ];
 
-const SCHEMA_DOCUMENT_EDIT: Schema<DocumentType> = [
+const SCHEMA_DOCUMENT_EDIT: Schema<Document> = [
   [
     {
-      name: 'filename',
+      name: 'getFilename',
       label: 'File',
       readOnly: true,
     },
   ],
   [
     {
-      name: 'description',
+      name: 'getDescription',
       label: 'Title/Description',
       helperText: 'Keep as short/descriptive as possible',
     },
   ],
 ];
 
-const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
+const SCHEMA_STATUS: Schema<SpiffToolAdminAction> = [
   [
     {
-      name: 'decisionDate',
+      name: 'getDecisionDate',
       label: 'Decision Date',
       required: true,
       type: 'date',
@@ -87,13 +84,13 @@ const SCHEMA_STATUS: Schema<SpiffToolAdminActionType> = [
   ],
   [
     {
-      name: 'reviewedBy',
+      name: 'getReviewedBy',
       label: 'Reviewed By',
       disabled: true,
     },
   ],
-  [{ name: 'status', label: 'Status', options: STATUSES }],
-  [{ name: 'reason', label: 'Reason', multiline: true }],
+  [{ name: 'getStatus', label: 'Status', options: STATUSES }],
+  [{ name: 'getReason', label: 'Reason', multiline: true }],
 ];
 
 interface Props {
@@ -103,10 +100,10 @@ interface Props {
   onClose: () => void;
   onSave: () => void;
   onStatusChange: () => void;
-  data: TaskType;
+  data: Task;
   loading: boolean;
   cancelLabel?: string;
-  statusEditing?: SpiffToolAdminActionType;
+  statusEditing?: SpiffToolAdminAction;
 }
 
 export const SpiffStatus: FC<{ status: number }> = ({ status }) => (
@@ -120,10 +117,13 @@ export const SpiffStatus: FC<{ status: number }> = ({ status }) => (
 );
 
 export const SpiffActionsList: FC<{
-  actionsList: SpiffToolAdminActionType[];
+  actionsList: SpiffToolAdminAction[];
 }> = ({ actionsList }) => {
   if (actionsList.length === 0) return null;
-  const { status, reason, reviewedBy } = actionsList[0];
+  //const { status, reason, reviewedBy } = actionsList[0];
+  const status = actionsList[0].getStatus();
+  const reason = actionsList[0].getReason();
+  const reviewedBy = actionsList[0].getReviewedBy();
   return (
     <Tooltip
       content={
@@ -166,14 +166,11 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const [loading, setLoading] = useState<boolean>(loadingInitial);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
-  const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
   const [statusEditing, setStatusEditing] = useState<
-    SpiffToolAdminActionType | undefined
+    SpiffToolAdminAction | undefined
   >(statusEditingInitial);
-  const [
-    statusDeleting,
-    setStatusDeleting,
-  ] = useState<SpiffToolAdminActionType>();
+  const [statusDeleting, setStatusDeleting] = useState<SpiffToolAdminAction>();
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadFailed, setUploadFailed] = useState<boolean>(false);
   const [documentFile, setDocumentFile] = useState<string>('');
@@ -199,12 +196,12 @@ export const SpiffToolLogEdit: FC<Props> = ({
     return entry.toObject();
   };
   const handleSetStatusEditing = useCallback(
-    (statusEditing?: SpiffToolAdminActionType) => () =>
+    (statusEditing?: SpiffToolAdminAction) => () =>
       setStatusEditing(statusEditing),
     [setStatusEditing],
   );
   const handleSetStatusDeleting = useCallback(
-    (statusDeleting?: SpiffToolAdminActionType) => () =>
+    (statusDeleting?: SpiffToolAdminAction) => () =>
       setStatusDeleting(statusDeleting),
     [setStatusDeleting],
   );
@@ -222,8 +219,8 @@ export const SpiffToolLogEdit: FC<Props> = ({
       const fileName =
         kebabCase(
           [
-            data.id,
-            data.referenceNumber,
+            data.getId(),
+            data.getReferenceNumber(),
             timestamp(true).split('-').reverse(),
             description.trim() || filename.replace('.' + ext, ''),
           ].join(' '),
@@ -238,7 +235,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
       if (status === 'ok') {
         await DocumentClientService.createTaskDocument(
           fileName,
-          data.id,
+          data.getId(),
           loggedUserId,
           description,
         );
@@ -253,9 +250,9 @@ export const SpiffToolLogEdit: FC<Props> = ({
     [documentFile, loggedUserId, data, setUploadFailed, setUploading],
   );
   const handleDocumentUpdate = useCallback(
-    (onClose, onReload, { id }) => async (form: DocumentType) => {
+    (onClose, onReload, { id }) => async (form: Document) => {
       setDocumentSaving(true);
-      const { description } = form;
+      const description = form.getDescription();
       await DocumentClientService.updateDocumentDescription(id, description);
       setDocumentSaving(false);
       onClose();
