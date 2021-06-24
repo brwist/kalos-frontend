@@ -339,9 +339,10 @@ export const SpiffToolLogEdit: FC<Props> = ({
       onStatusChange();
     }
   }, [statusDeleting, setStatusDeleting, onStatusChange]);
-  const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
-    ({ type, id: value }) => ({ label: escapeText(type), value }),
-  );
+  const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(spiffType => ({
+    label: escapeText(spiffType.getType()),
+    value: spiffType.getId(),
+  }));
   const SCHEMA_DOCUMENT: Schema<DocumentUpload> = [
     [
       {
@@ -364,11 +365,11 @@ export const SpiffToolLogEdit: FC<Props> = ({
     type === 'Spiff'
       ? [
           [
-            { name: 'spiffToolId', label: 'Spiff ID #', readOnly: true },
-            { name: 'referenceUrl', label: 'External URL' },
-            { name: 'referenceNumber', label: 'Reference #' },
+            { name: 'getSpiffToolId', label: 'Spiff ID #', readOnly: true },
+            { name: 'getReferenceUrl', label: 'External URL' },
+            { name: 'getReferenceNumber', label: 'Reference #' },
             {
-              name: 'timeDue',
+              name: 'getTimeDue',
               label: 'Time due',
               readOnly: true,
               type: 'date',
@@ -376,70 +377,79 @@ export const SpiffToolLogEdit: FC<Props> = ({
           ],
           [
             {
-              name: 'spiffAmount',
+              name: 'getSpiffAmount',
               label: 'Amount',
               startAdornment: '$',
               type: 'number',
               required: true,
             },
-            { name: 'spiffJobNumber', label: 'Job #' },
+            { name: 'getSpiffJobNumber', label: 'Job #' },
             {
-              name: 'datePerformed',
+              name: 'getDatePerformed',
               label: 'Date Performed',
               type: 'date',
               required: true,
             },
-            { name: 'spiffAddress', label: 'Address', multiline: true },
+            { name: 'getSpiffAddress', label: 'Address', multiline: true },
           ],
           [
             {
-              name: 'spiffTypeId',
+              name: 'getSpiffTypeId',
               label: 'Spiff Type',
               options: SPIFF_TYPES_OPTIONS,
               required: true,
             },
-            { name: 'briefDescription', label: 'Description', multiline: true },
+            {
+              name: 'getBriefDescription',
+              label: 'Description',
+              multiline: true,
+            },
           ],
         ]
       : [
           [
-            { name: 'spiffToolId', label: 'Tool ID #', readOnly: true },
-            { name: 'referenceNumber', label: 'Reference #' },
+            { name: 'getSpiffToolId', label: 'Tool ID #', readOnly: true },
+            { name: 'getReferenceNumber', label: 'Reference #' },
             {
-              name: 'toolpurchaseCost',
+              name: 'getToolpurchaseCost',
               label: 'Tool Cost',
               startAdornment: '$',
               type: 'number',
               required: true,
             },
             {
-              name: 'toolpurchaseDate',
+              name: 'getToolpurchaseDate',
               label: 'Purchase Date',
               type: 'date',
               required: true,
             },
           ],
-          [{ name: 'briefDescription', label: 'Description', multiline: true }],
+          [
+            {
+              name: 'getBriefDescription',
+              label: 'Description',
+              multiline: true,
+            },
+          ],
         ];
   const statusesData: Data = loadingInitial
     ? makeFakeRows(5, 3)
-    : data.actionsList.map(entry => {
-        const { decisionDate, reviewedBy, status, reason } = entry;
+    : data.getActionsList().map(entry => {
         return [
           {
-            value: formatDate(decisionDate),
+            value: formatDate(entry.getDecisionDate()),
             onClick: handleSetStatusEditing(entry),
           },
           {
-            value: reviewedBy,
+            value: entry.getReviewedBy(),
             onClick: handleSetStatusEditing(entry),
           },
           {
-            value: <SpiffStatus status={status} />,
+            value: <SpiffStatus status={entry.getStatus()} />,
             onClick: handleSetStatusEditing(entry),
           },
           {
-            value: reason,
+            value: entry.getReason(),
             onClick: handleSetStatusEditing(entry),
           },
           {
@@ -468,7 +478,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
       });
   return (
     <>
-      <Form<TaskType>
+      <Form<Task>
         title={`${type === 'Spiff' ? 'Spiff' : 'Tool Purchase'} Request`}
         schema={SCHEMA_EXTENDED}
         onClose={onClose}
@@ -526,7 +536,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
           </Form>
         )}
         renderEditing={(onClose, onReload, document) => (
-          <Form<DocumentType>
+          <Form<Document>
             title="Edit Document"
             data={document}
             schema={SCHEMA_DOCUMENT_EDIT}
@@ -538,7 +548,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
       />
       {statusEditing && (
         <Modal open onClose={handleSetStatusEditing()}>
-          <Form<SpiffToolAdminActionType>
+          <Form<SpiffToolAdminAction>
             title={`${statusEditing.id ? 'Edit' : 'Add'} Status`}
             schema={SCHEMA_STATUS}
             data={statusEditing}
@@ -551,7 +561,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         <ConfirmDelete
           open
           kind="Status reviewed by"
-          name={statusDeleting.reviewedBy}
+          name={statusDeleting.getReviewedBy()}
           onClose={handleSetStatusDeleting()}
           onConfirm={handleDeleteStatus}
         />
