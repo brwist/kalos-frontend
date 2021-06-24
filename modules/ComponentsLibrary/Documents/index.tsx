@@ -30,7 +30,7 @@ import {
 
 const DocumentClientService = new DocumentClient(ENDPOINT);
 
-type DocumentType = Document.AsObject;
+type DocumentType = Document;
 
 type OrderByDirective =
   | 'document_date_created'
@@ -115,10 +115,8 @@ export const Documents: FC<Props> = ({
         entry.setOrderDir(displayInAscendingOrder ? 'asc' : 'desc');
         entry.setOrderBy(cleanOrderByField(orderBy));
         const response = await DocumentClientService.BatchGet(entry);
-        const { resultsList, totalCount } = response.toObject();
-        console.log(response.toObject());
-        setEntries(resultsList);
-        setCount(totalCount);
+        setEntries(response.getResultsList());
+        setCount(response.getTotalCount());
       } catch (e) {
         console.error(
           `An error was caught while batch-getting documents from DocumentClientService: ${e}`,
@@ -138,14 +136,13 @@ export const Documents: FC<Props> = ({
     ],
   );
 
-  const handleEditFilename =
-    (entry: Document.AsObject) => async (filename: string) => {
-      const req = new Document();
-      req.setId(entry.id);
-      req.setDescription(filename);
-      await DocumentClientService.Update(req);
-      load();
-    };
+  const handleEditFilename = (entry: Document) => async (filename: string) => {
+    const req = new Document();
+    req.setId(entry.getId());
+    req.setDescription(filename);
+    await DocumentClientService.Update(req);
+    load();
+  };
 
   const handleDownload = useCallback(
     (
@@ -205,16 +202,17 @@ export const Documents: FC<Props> = ({
   const handleDelete = useCallback(async () => {
     if (deleting) {
       try {
-        const { filename, type } = deleting;
         setLoading(true);
         setDeleting(undefined);
         const S3 = new S3Client(ENDPOINT);
         const file = new FileObject();
-        file.setKey(filename);
-        file.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
+        file.setKey(deleting.getFilename());
+        file.setBucket(
+          deleting.getType() === 5 ? 'testbuckethelios' : 'kalosdocs-prod',
+        );
         await S3.Delete(file);
         const entry = new Document();
-        entry.setId(deleting.id);
+        entry.setId(deleting.getId());
         await DocumentClientService.Delete(entry);
         load();
       } catch (e) {
@@ -237,25 +235,36 @@ export const Documents: FC<Props> = ({
   const data: Data = loading
     ? makeFakeRows(withDateCreated ? 2 : 1, 3)
     : entries.map(entry => {
-        const { id, filename, type, description: value, dateCreated } = entry;
         return [
           ...(withDateCreated
             ? [
                 {
-                  value: formatDateTime(dateCreated),
+                  value: formatDateTime(entry.getDateCreated()),
                 },
               ]
             : []),
           {
             value: (
-              <Link onClick={handleDownload(filename, type, id)}>{value}</Link>
+              <Link
+                onClick={handleDownload(
+                  entry.getFilename(),
+                  entry.getType(),
+                  entry.getId(),
+                )}
+              >
+                {entry.getDescription()}
+              </Link>
             ),
             actions: [
               <IconButton
                 key="open"
                 style={{ marginLeft: 4 }}
                 size="small"
-                onClick={handleDownload(filename, type, id)}
+                onClick={handleDownload(
+                  entry.getFilename(),
+                  entry.getType(),
+                  entry.getId(),
+                )}
               >
                 <OpenIcon />
               </IconButton>,
@@ -270,12 +279,14 @@ export const Documents: FC<Props> = ({
                       ? 'contracts.docemail&'
                       : 'properties.docemail&',
                     !ignoreUserId
-                      ? [`user_id=${userId}`, `document_id=${id}`, `p=1`].join(
-                          '&',
-                        )
+                      ? [
+                          `user_id=${userId}`,
+                          `document_id=${entry.getId()}`,
+                          `p=1`,
+                        ].join('&')
                       : [
                           `user_id=${userId}`,
-                          `document_id=${id}`,
+                          `document_id=${entry.getId()}`,
                           `property_id=${propertyId}`,
                           `p=2`,
                         ].join('&'),
@@ -291,7 +302,12 @@ export const Documents: FC<Props> = ({
                       key="download"
                       style={{ marginLeft: 4 }}
                       size="small"
-                      onClick={handleDownload(filename, type, id, true)}
+                      onClick={handleDownload(
+                        entry.getFilename(),
+                        entry.getType(),
+                        entry.getId(),
+                        true,
+                      )}
                     >
                       <DownloadIcon />
                     </IconButton>,
@@ -326,7 +342,7 @@ export const Documents: FC<Props> = ({
                 Icon={EditIcon}
                 prompt={'Update Filename'}
                 text="Update Filename"
-                defaultValue={entry.filename}
+                defaultValue={entry.getFilename()}
                 confirmFn={handleEditFilename(entry)}
               />,
             ],
@@ -371,7 +387,7 @@ export const Documents: FC<Props> = ({
           onClose={handleSetDeleting()}
           onConfirm={handleDelete}
           kind="Document"
-          name={deleting.description}
+          name={deleting.getDescription()}
         />
       )}
       {adding && renderAdding && (
