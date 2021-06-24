@@ -106,7 +106,6 @@ export const PlainForm: <T>(
         const fieldObj = fields.reduce((aggr, field) => {
           if (field.name !== undefined) {
             if (typeof data[field.name] === 'function') {
-              console.log('it is a function');
               return {
                 ...aggr,
                 [field.name]:
