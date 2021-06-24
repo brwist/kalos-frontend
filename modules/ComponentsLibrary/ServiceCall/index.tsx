@@ -630,7 +630,7 @@ export const ServiceCall: FC<Props> = props => {
             : []
         }
       >
-        <InfoTable data={data} loading={loading} error={error} />
+        <InfoTable data={data} error={error} />
       </SectionBar>
       {asProject ? (
         <>
