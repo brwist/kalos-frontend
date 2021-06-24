@@ -193,7 +193,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
     const entry = new SpiffToolAdminAction();
     entry.setDecisionDate(timestamp(true));
     entry.setStatus(+STATUSES[0].value);
-    return entry.toObject();
+    return entry;
   };
   const handleSetStatusEditing = useCallback(
     (statusEditing?: SpiffToolAdminAction) => () =>
@@ -261,50 +261,55 @@ export const SpiffToolLogEdit: FC<Props> = ({
     [setDocumentSaving],
   );
   const handleSave = useCallback(
-    async (form: TaskType) => {
+    async (form: Task) => {
       setSaving(true);
-      await TaskClientService.updateSpiffTool({ ...form, id: data.id });
+      let currentTask = form;
+      currentTask.setId(data.getId());
+      await TaskClientService.updateSpiffTool(currentTask);
       setSaving(false);
       onSave();
     },
     [data, setSaving, onSave],
   );
   const handleSaveStatus = useCallback(
-    async (form: SpiffToolAdminActionType) => {
+    async (form: SpiffToolAdminAction) => {
       if (statusEditing) {
         setStatusEditing(undefined);
 
         if (userId) {
           const userInfo = await UserClientService.loadUserById(loggedUserId);
-          const newReviewedBy = userInfo.firstname + ' ' + userInfo.lastname;
-          form.reviewedBy = newReviewedBy;
+          const newReviewedBy =
+            userInfo.getFirstname() + ' ' + userInfo.getLastname();
+          form.setReviewedBy(newReviewedBy);
         }
         const timestampValue = timestamp().toString();
-        const adminAction = { ...form, id: statusEditing.id, taskId: data.id };
-        if (statusEditing.status === 1) {
-          Object.assign(adminAction, {
+        let adminActionNew = form;
+        adminActionNew.setId(statusEditing.getId());
+        adminActionNew.setTaskId(data.getId());
+        if (statusEditing.getStatus() === 1) {
+          Object.assign(adminActionNew, {
             grantedDate: timestampValue,
           });
         }
-        if (statusEditing.status === 3) {
-          Object.assign(adminAction, {
+        if (statusEditing.getStatus() === 3) {
+          Object.assign(adminActionNew, {
             revokedDate: timestampValue,
           });
         }
         await SpiffToolAdminActionClientService.upsertSpiffToolAdminAction(
-          adminAction,
+          adminActionNew,
         );
 
         const updateTask = new Task();
         const action = new SpiffToolAdminAction();
-        action.setTaskId(data.id);
+        action.setTaskId(data.getId());
         action.setCreatedDate(timestampValue);
-        action.setReviewedBy(statusEditing.reviewedBy);
+        action.setReviewedBy(statusEditing.getReviewedBy());
         const newData = await SpiffToolAdminActionClientService.Get(action);
-        updateTask.setId(data.id);
-        updateTask.setAdminActionId(newData.id);
+        updateTask.setId(data.getId());
+        updateTask.setAdminActionId(newData.getId());
 
-        if (statusEditing.status === 3) {
+        if (statusEditing.getStatus() === 3) {
           //if the Spiff has been revoke, we need payroll to
           //process it again, Cost Summary will treat it as a negative value
           updateTask.setPayrollProcessed(false);
@@ -329,7 +334,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
     if (statusDeleting) {
       setStatusDeleting(undefined);
       await SpiffToolAdminActionClientService.deletetSpiffToolAdminAction(
-        statusDeleting.id,
+        statusDeleting.getId(),
       );
       onStatusChange();
     }
@@ -355,7 +360,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
       },
     ],
   ];
-  const SCHEMA_EXTENDED: Schema<TaskType> =
+  const SCHEMA_EXTENDED: Schema<Task> =
     type === 'Spiff'
       ? [
           [
@@ -490,7 +495,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
       />
       <Documents
         title="Documents"
-        taskId={data.id}
+        taskId={data.getId()}
         withDateCreated
         renderAdding={(onClose, onReload) => (
           <Form<DocumentUpload>
