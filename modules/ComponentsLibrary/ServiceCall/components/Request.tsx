@@ -58,20 +58,23 @@ export const Request: FC<Props> = forwardRef(
     const [resetId, setResetId] = useState<number>(0);
     const handleChange = useCallback(
       (data: Event) => {
-        //const { jobTypeId, jobSubtypeId, logJobStatus } = data;
-        const jobTypeId = data.getJobTypeId();
-        const jobSubtypeId = data.getJobSubtypeId();
-        const logJobStatus = data.getLogJobStatus();
-        const formData = makeSafeFormObject(data, new Event());
+        /*
+        const { jobTypeId, jobSubtypeId, logJobStatus } = data;
+        const formData = data;
+        
+        const jobTypeId = formData.getJobTypeId();
+        const jobSubtypeId = formData.getJobSubtypeId();
+        const logJobStatus = formData.getLogJobStatus();
+
         formData.setJobType(
-          jobTypeOptions.find(({ value }) => value === jobTypeId)?.label || '',
+          jobTypeOptions.find(value => value.value === jobTypeId)?.label || '',
         );
         formData.setJobSubtype(
-          jobSubtypeOptions.find(({ value }) => value === jobSubtypeId)
+          jobSubtypeOptions.find(value => value.value === jobSubtypeId)
             ?.label || '',
         );
         formData.setColor(JOB_STATUS_COLORS[logJobStatus]);
-        /*
+        
         const formData = {
           jobTypeId:job
           jobType:
@@ -82,7 +85,7 @@ export const Request: FC<Props> = forwardRef(
               ?.label || '',
           color: JOB_STATUS_COLORS[logJobStatus],
         };
-        */
+        
         if (formData.getJobTypeId() !== serviceItem.getJobTypeId()) {
           formData.setJobSubtypeId(0);
           formData.setJobSubtype('');
@@ -92,7 +95,8 @@ export const Request: FC<Props> = forwardRef(
           formData.setCallbackOriginalId(0);
           setResetId(resetId + 1);
         }
-        onChange(formData);
+        */
+        onChange(data);
         onValid(false);
       },
       [
