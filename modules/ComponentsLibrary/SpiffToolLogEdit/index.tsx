@@ -30,6 +30,7 @@ import {
   makeSafeFormObject,
 } from '../../../helpers';
 import './styles.less';
+import { stat } from 'fs';
 
 type DocumentUpload = {
   filename: '';
@@ -275,17 +276,12 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const handleSaveStatus = useCallback(
     async (form: SpiffToolAdminAction) => {
       let temp = makeSafeFormObject(form, new SpiffToolAdminAction());
-      console.log('data', data);
-      console.log('admin aciton', temp);
 
       if (statusEditing) {
-        setStatusEditing(undefined);
         if (loggedUserId) {
           const userReq = new User();
           userReq.setId(loggedUserId);
           const userInfo = await UserClientService.Get(userReq);
-          //const userInfo = await UserClientService.loadUserById(loggedUserId);
-          console.log(userInfo, 'user');
           const newReviewedBy =
             userInfo.getFirstname() + ' ' + userInfo.getLastname();
           temp.setReviewedBy(newReviewedBy);
@@ -295,35 +291,32 @@ export const SpiffToolLogEdit: FC<Props> = ({
 
         adminActionNew.setId(statusEditing.getId());
         adminActionNew.setTaskId(data.getId());
-        if (statusEditing.getStatus() === 1) {
-          Object.assign(adminActionNew, {
-            grantedDate: timestampValue,
-          });
+        if (temp.getStatus() === 1) {
+          adminActionNew.setGrantedDate(timestampValue);
+          console.log('granted');
+          adminActionNew.addFieldMask('GrantedDate');
         }
-        if (statusEditing.getStatus() === 3) {
-          Object.assign(adminActionNew, {
-            revokedDate: timestampValue,
-          });
+        if (temp.getStatus() === 3) {
+          console.log('revoked');
+          adminActionNew.setRevokedDate(timestampValue);
+          adminActionNew.addFieldMask('RevokedDate');
         }
+        console.log(adminActionNew);
         let res = 0;
         if (adminActionNew.getId() == 0) {
-          console.log('new status');
           res = (
             await SpiffToolAdminActionClientService.Create(adminActionNew)
           ).getId();
         } else {
-          console.log('update status');
           res = (
             await SpiffToolAdminActionClientService.Update(adminActionNew)
           ).getId();
         }
-        console.log('admin action req', adminActionNew);
         const updateTask = new Task();
         const action = new SpiffToolAdminAction();
         action.setTaskId(data.getId());
         action.setCreatedDate(timestampValue);
         action.setReviewedBy(statusEditing.getReviewedBy());
-        console.log('action', action);
         updateTask.setId(data.getId());
         updateTask.setAdminActionId(res);
 
@@ -337,6 +330,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         updateTask.addFieldMask('AdminActionId');
         console.log('update task', updateTask);
         await TaskClientService.Update(updateTask);
+        setStatusEditing(undefined);
         onStatusChange();
       }
     },
