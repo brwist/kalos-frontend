@@ -860,45 +860,35 @@ export const EditProject: FC<Props> = ({
                   if (task.getEndDate() == '0000-00-00 00:00:00') {
                     let date = new Date();
                     date.setMinutes(date.getMinutes() + 1);
-                    task.getEndDate() = format(date, 'yyyy-MM-dd hh-mm-ss');
+                    task.setEndDate(format(date, 'yyyy-MM-dd hh-mm-ss'));
                   }
-                  const {
-                    id,
-                    briefDescription,
-                    startDate: dateStart,
-                    endDate: dateEnd,
-                    statusId,
-                    priorityId,
-                    ownerName,
-                    creatorUserId,
-                  } = task;
-                  const [startDate, startHour] = dateStart.split(' ');
-                  const [endDate, endHour] = dateEnd.split(' ');
+                  const [startDate, startHour] = task.getStartDate().split(' ');
+                  const [endDate, endHour] = task.getEndDate().split(' ');
                   return {
-                    id,
-                    startDate,
-                    endDate,
-                    startHour,
-                    endHour,
-                    notes: briefDescription,
+                    id: task.getId(),
+                    startDate: task.getStartDate(),
+                    endDate: task.getEndDate(),
+                    startHour: startHour,
+                    endHour: endHour,
+                    notes: task.getBriefDescription(),
                     status: statuses
-                      .find(({ id }) => id === statusId)
+                      .find(status => status.getId() === task.getStatusId())
                       ?.getDescription(),
-                    statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
+                    statusColor: PROJECT_TASK_STATUS_COLORS[task.getStatusId()],
                     priority: priorities
-                      .find(({ id }) => id === priorityId)
+                      .find(
+                        priority => priority.getId() === task.getPriorityId(),
+                      )
                       ?.getDescription(),
-                    priorityId,
-                    assignee: ownerName,
+                    priorityId: task.getPriorityId(),
+                    assignee: task.getOwnerName(),
                     onClick:
-                      creatorUserId === loggedUserId || hasEditRights
+                      task.getCreatorUserId() === loggedUserId || hasEditRights
                         ? handleSetEditing({
                             ...task,
-                            startDate,
-                            endDate,
                             startTime: startHour.substr(0, 5),
                             endTime: endHour.substr(0, 5),
-                          })
+                          } as ExtendedProjectTaskType)
                         : undefined,
                   };
                 })}
