@@ -62,8 +62,7 @@ export type SearchType = {
   priorityId: number;
 };
 
-export type ExtendedProjectTaskType = {
-  projectTask: ProjectTask;
+export type ExtendedProjectTaskType = ProjectTask & {
   startTime: string;
   endTime: string;
 };
@@ -293,8 +292,8 @@ export const EditProject: FC<Props> = ({
     (editingTask?: ExtendedProjectTaskType) => async () => {
       setErrorTask('');
       setEditingTask(editingTask);
-      if (editingTask && editingTask.projectTask.getId()) {
-        await loadTaskEvents(editingTask.projectTask.getId());
+      if (editingTask && editingTask.getId()) {
+        await loadTaskEvents(editingTask.getId());
       }
     },
     [setEditingTask, loadTaskEvents],
@@ -359,7 +358,7 @@ export const EditProject: FC<Props> = ({
       taskEvents.length > 0 && taskEvents[0].getActionTaken() === ENROUTE;
     const timeStarted = timestamp();
     const req = new TaskEvent();
-    req.setTaskId(editingTask.projectTask.getId());
+    req.setTaskId(editingTask.getId());
     req.setTechnicianUserId(loggedUserId);
     req.setTimeStarted(timeStarted);
     req.setStatusId(1);
@@ -375,15 +374,15 @@ export const EditProject: FC<Props> = ({
     }
     if (isEnroute || isCheckIn) {
       const pt = new ProjectTask();
-      pt.setId(editingTask.projectTask.getId());
+      pt.setId(editingTask.getId());
       pt.setExternalCode('user');
       pt.setExternalId(loggedUserId);
       await TaskClientService.upsertEventTask(pt);
       setEditingTask(undefined);
-      setEditingTask(pt);
+      setEditingTask({ ...pt } as ExtendedProjectTaskType);
       setLoaded(false);
     }
-    await loadTaskEvents(editingTask.projectTask.getId());
+    await loadTaskEvents(editingTask.getId());
     setPendingCheckoutChange(false);
   }, [
     editingTask,
@@ -407,7 +406,7 @@ export const EditProject: FC<Props> = ({
       );
     }
     try {
-      await loadTaskEvents(editingTask.projectTask.getId());
+      await loadTaskEvents(editingTask.getId());
     } catch (err) {
       console.log({ err });
       if (!err.message.includes('failed to scan to struct')) {
@@ -449,8 +448,7 @@ export const EditProject: FC<Props> = ({
   const isOwner = useMemo(
     () =>
       editingTask &&
-      (editingTask.projectTask.getCreatorUserId() === loggedUserId ||
-        !editingTask.projectTask.getId()),
+      (editingTask.getCreatorUserId() === loggedUserId || !editingTask.getId()),
     [editingTask, loggedUserId],
   );
   const statusOptions = useMemo(
@@ -552,13 +550,14 @@ export const EditProject: FC<Props> = ({
       if (!loggedUser || !event) return;
       if (
         !(
-          isAnyManager || event.departmentId === loggedUser.employeeDepartmentId
+          isAnyManager ||
+          event.getDepartmentId() === loggedUser.getEmployeeDepartmentId()
         )
       )
         return;
       setEditingTask({
-        ...new ProjectTask().toObject(),
-        startDate,
+        ...new ProjectTask(),
+        startDate: startDate,
         endDate: startDate,
         startTime: '09:00',
         endTime: '10:00',
@@ -576,18 +575,20 @@ export const EditProject: FC<Props> = ({
     [setEditingProject],
   );
   const handleSaveProject = useCallback(
-    async (formData: EventType) => {
+    async (formData: Event) => {
       if (event) {
         if (
-          formData.dateEnded.substr(0, 10) < formData.dateStarted.substr(0, 10)
+          formData.getDateEnded().substr(0, 10) <
+          formData.getDateStarted().substr(0, 10)
         ) {
           setErrorProject('Start Date cannot be after End date.');
           return;
         }
         if (
           tasks.some(
-            ({ startDate }) =>
-              startDate.substr(0, 10) < formData.dateStarted.substr(0, 10),
+            task =>
+              task.getStartDate().substr(0, 10) <
+              formData.getDateStarted().substr(0, 10),
           )
         ) {
           setErrorProject(
@@ -597,8 +598,9 @@ export const EditProject: FC<Props> = ({
         }
         if (
           tasks.some(
-            ({ endDate }) =>
-              endDate.substr(0, 10) > formData.dateEnded.substr(0, 10),
+            task =>
+              task.getEndDate().substr(0, 10) >
+              formData.getDateEnded().substr(0, 10),
           )
         ) {
           setErrorProject(
@@ -608,7 +610,10 @@ export const EditProject: FC<Props> = ({
         }
         setEditingProject(false);
         setLoadingEvent(true);
-        await EventClientService.upsertEvent({ ...formData, id: event.id });
+        await EventClientService.upsertEvent({
+          ...formData,
+          id: event.getId(),
+        });
         loadEvent();
       }
     },
@@ -645,13 +650,13 @@ export const EditProject: FC<Props> = ({
   const SCHEMA: Schema<ExtendedProjectTaskType> = [
     [
       {
-        name: 'id',
+        name: 'getId',
         type: 'hidden',
       },
     ],
     [
       {
-        name: 'externalId',
+        name: 'getExternalId',
         label: 'Assigned Employee',
         type: 'technician',
         disabled: !hasEditRights,
@@ -660,7 +665,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'briefDescription',
+        name: 'getBriefDescription',
         label: 'Brief Description',
         multiline: true,
         required: !hasEditRights,
@@ -669,7 +674,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'startDate',
+        name: 'getStartDate',
         label: 'Start Date',
         type: 'date',
         required: true,
@@ -685,7 +690,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'endDate',
+        name: 'getEndDate',
         label: 'End Date',
         type: 'date',
         required: true,
@@ -701,7 +706,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'statusId',
+        name: 'getStatusId',
         label: 'Status',
         required: true,
         options: statusOptions,
@@ -710,7 +715,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'priorityId',
+        name: 'getPriorityId',
         label: 'Priority',
         required: true,
         options: priorityOptions,
