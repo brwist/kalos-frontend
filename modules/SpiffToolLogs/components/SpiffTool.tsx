@@ -203,7 +203,8 @@ export const SpiffTool: FC<Props> = ({
       req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
       req.setOrderDir('DESC');
       if (needsManagerAction) {
-        req.setFieldMaskList(['AdminActionId']);
+        //req.setAdminActionId(0);
+        req.addFieldMask('AdminActionId');
       }
       if (needsPayrollAction && toggle == false) {
         console.log('we want to see things that are not processed');
@@ -249,9 +250,9 @@ export const SpiffTool: FC<Props> = ({
         )}-${trailingZero(n.getDate())}`;
         req.setDateRangeList(['>=', month, '<', ltDate]);
       }
-      console.log(req);
+      console.log('req', req);
       const res = await TaskClientService.BatchGet(req);
-      const resultsList = res.getResultsList().map(el => el);
+      const resultsList = res.getResultsList();
       const count = res.getTotalCount();
       setCount(count);
       setEntries(resultsList);
@@ -848,26 +849,29 @@ export const SpiffTool: FC<Props> = ({
                               actions => actions.getActionsList().length > 0,
                             )
                             .map(idx => (
-                              <div key={entry.getId()}>
+                              <div key={idx.getId()}>
                                 {/*idx !== 0 && <hr />}*/}
                                 <strong>Tech Name: </strong>
-                                {entry.getOwnerName()}
+                                {idx.getOwnerName()}
                                 <br />
                                 <strong>Spiff: </strong>
-                                {SPIFF_TYPE[entry.getSpiffTypeId()]}
+                                {SPIFF_TYPE[idx.getSpiffTypeId()]}
                                 <br />
                                 <strong>Reviewed By: </strong>
-                                {entry
+                                {idx
                                   .getActionsList()[0]
                                   .getReviewedBy()
                                   .toUpperCase()}
                                 <br />
                                 <strong>Reason: </strong>
-                                {entry.getActionsList()[0].getReason()}
+                                {idx.getActionsList()[0].getReason() ===
+                                undefined
+                                  ? 'No Reason'
+                                  : idx.getActionsList()[0].getReason()}
                                 <br />
                                 <strong>Date Claimed: </strong>
-                                {formatDay(entry.getTimeDue())}{' '}
-                                {formatDate(entry.getTimeDue())}
+                                {formatDay(idx.getTimeDue())}{' '}
+                                {formatDate(idx.getTimeDue())}
                               </div>
                             ))}
                         </>

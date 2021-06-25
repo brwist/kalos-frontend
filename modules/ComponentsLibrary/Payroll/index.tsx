@@ -21,7 +21,7 @@ import { TimesheetPendingApproval } from './components/TimesheetPendingApproval'
 import { Spiffs } from './components/Spiffs';
 import { ToolLogs } from './components/ToolLogs';
 import './styles.less';
-import { TripSummary } from '../TripSummary';
+import { TripSummaryNew } from '../TripSummaryNew';
 import {
   PerDiemList,
   PerDiem as pd,
@@ -114,7 +114,12 @@ export const Payroll: FC<Props> = ({ userID }) => {
     [filter.employeeId, userID],
   );
   const init = useCallback(async () => {
-    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+    const depReq = new TimesheetDepartment();
+    depReq.setIsActive(1);
+    const departments = await (
+      await TimesheetDepartmentClientService.BatchGet(depReq)
+    ).getResultsList();
+    console.log(departments);
     setDepartments(departments);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
@@ -158,6 +163,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
         (aggr, item) => [...aggr, +JSON.parse(item.getFilterData()).value],
         [] as number[],
       );
+    console.log(departments);
     if (departments.length > 0) {
       departmentOptions = departmentOptions.filter(p =>
         departments.includes(+p.value),
@@ -361,7 +367,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                       {
                         label: 'Trips',
                         content: (
-                          <TripSummary
+                          <TripSummaryNew
                             role={role}
                             loggedUserId={loggedUser ? loggedUser!.getId() : 0}
                             userId={filter.employeeId}
@@ -374,8 +380,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             }
                             canProcessPayroll={role === 'Payroll'}
                             canApprove={role === 'Manager'}
-                            canSlackMessageUsers
-                            hoverable
                             departmentId={filter.departmentId}
                           />
                         ),
