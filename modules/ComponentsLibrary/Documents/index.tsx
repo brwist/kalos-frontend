@@ -43,7 +43,7 @@ interface Props {
   taskId?: number;
   contractId?: number;
   fieldMask?: Array<string>;
-  actions?: (document: DocumentType) => ReactElement[];
+  actions?: (document: Document) => ReactElement[];
   addUrl?: string;
   className?: string;
   renderAdding?: (

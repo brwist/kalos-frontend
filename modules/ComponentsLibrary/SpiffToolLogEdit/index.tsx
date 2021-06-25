@@ -274,9 +274,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
   );
   const handleSaveStatus = useCallback(
     async (form: SpiffToolAdminAction) => {
-      //let tempData = makeSafeFormObject(data, new Task());
       let temp = makeSafeFormObject(form, new SpiffToolAdminAction());
-      //console.log('our action', temp);
       console.log('data', data);
       console.log('admin aciton', temp);
 
@@ -307,12 +305,17 @@ export const SpiffToolLogEdit: FC<Props> = ({
             revokedDate: timestampValue,
           });
         }
+        let res = 0;
         if (adminActionNew.getId() == 0) {
           console.log('new status');
-          await SpiffToolAdminActionClientService.Create(adminActionNew);
+          res = (
+            await SpiffToolAdminActionClientService.Create(adminActionNew)
+          ).getId();
         } else {
           console.log('update status');
-          await SpiffToolAdminActionClientService.Update(adminActionNew);
+          res = (
+            await SpiffToolAdminActionClientService.Update(adminActionNew)
+          ).getId();
         }
         console.log('admin action req', adminActionNew);
         const updateTask = new Task();
@@ -321,10 +324,8 @@ export const SpiffToolLogEdit: FC<Props> = ({
         action.setCreatedDate(timestampValue);
         action.setReviewedBy(statusEditing.getReviewedBy());
         console.log('action', action);
-        const newData = await SpiffToolAdminActionClientService.Get(action);
-        console.log('new data', newData);
         updateTask.setId(data.getId());
-        updateTask.setAdminActionId(newData.getId());
+        updateTask.setAdminActionId(res);
 
         if (statusEditing.getStatus() === 3) {
           //if the Spiff has been revoke, we need payroll to
