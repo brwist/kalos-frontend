@@ -53,7 +53,7 @@ interface Props {
   renderEditing?: (
     onClose: () => void,
     onReload: () => Promise<void>,
-    document: DocumentType,
+    document: Document,
   ) => ReactNode;
   withDateCreated?: boolean;
   withDownloadIcon?: boolean;
@@ -146,36 +146,35 @@ export const Documents: FC<Props> = ({
 
   const handleDownload = useCallback(
     (
-        filename: string,
-        type: number,
-        docId: number,
-        realDownload: boolean = false,
-      ) =>
-      async (
-        event: React.MouseEvent<
-          HTMLButtonElement | HTMLAnchorElement,
-          MouseEvent
-        >,
-      ) => {
-        event.preventDefault();
-        const res = filename.match(/\d{2}-(\d{3,})[A-z]?-/);
-        if (filename.toLowerCase().startsWith('maintenance') && res) {
-          window.open(
-            `https://app.kalosflorida.com/index.cfm?action=admin:properties.showMaintenanceSheet&event_id=${res[1]}&user_id=${userId}&document_id=${docId}&property_id=${propertyId}`,
-          );
+      filename: string,
+      type: number,
+      docId: number,
+      realDownload: boolean = false,
+    ) => async (
+      event: React.MouseEvent<
+        HTMLButtonElement | HTMLAnchorElement,
+        MouseEvent
+      >,
+    ) => {
+      event.preventDefault();
+      const res = filename.match(/\d{2}-(\d{3,})[A-z]?-/);
+      if (filename.toLowerCase().startsWith('maintenance') && res) {
+        window.open(
+          `https://app.kalosflorida.com/index.cfm?action=admin:properties.showMaintenanceSheet&event_id=${res[1]}&user_id=${userId}&document_id=${docId}&property_id=${propertyId}`,
+        );
+      } else {
+        const S3 = new S3Client(ENDPOINT);
+        const url = new URLObject();
+        url.setKey(filename);
+        url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
+        const dlURL = await S3.GetDownloadURL(url);
+        if (realDownload) {
+          window.open(dlURL.getUrl(), '_blank'); // TODO: implement real download, instead of opening in new tab
         } else {
-          const S3 = new S3Client(ENDPOINT);
-          const url = new URLObject();
-          url.setKey(filename);
-          url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
-          const dlURL = await S3.GetDownloadURL(url);
-          if (realDownload) {
-            window.open(dlURL.getUrl(), '_blank'); // TODO: implement real download, instead of opening in new tab
-          } else {
-            window.open(dlURL.getUrl(), '_blank');
-          }
+          window.open(dlURL.getUrl(), '_blank');
         }
-      },
+      }
+    },
     [propertyId, userId],
   );
 

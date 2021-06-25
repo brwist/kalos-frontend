@@ -27,6 +27,7 @@ import {
   DocumentClientService,
   SpiffToolAdminActionClientService,
   UserClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import './styles.less';
 
@@ -205,65 +206,65 @@ export const SpiffToolLogEdit: FC<Props> = ({
       setStatusDeleting(statusDeleting),
     [setStatusDeleting],
   );
-  const handleFileLoad = useCallback(
-    file => setDocumentFile(file),
-    [setDocumentFile],
-  );
+  const handleFileLoad = useCallback(file => setDocumentFile(file), [
+    setDocumentFile,
+  ]);
   const handleDocumentUpload = useCallback(
-    (onClose, onReload) =>
-      async ({ filename, description }: DocumentUpload) => {
-        setUploadFailed(false);
-        setUploading(true);
-        const ext = filename.split('.').pop();
-        const fileName =
-          kebabCase(
-            [
-              data.getId(),
-              data.getReferenceNumber(),
-              timestamp(true).split('-').reverse(),
-              description.trim() || filename.replace('.' + ext, ''),
-            ].join(' '),
-          ) +
-          '.' +
-          ext;
-        const status = await uploadFileToS3Bucket(
-          fileName,
-          documentFile,
-          'testbuckethelios', // FIXME is it correct bucket name for those docs?
-        );
-        if (status === 'ok') {
-          await DocumentClientService.createTaskDocument(
-            fileName,
+    (onClose, onReload) => async ({
+      filename,
+      description,
+    }: DocumentUpload) => {
+      setUploadFailed(false);
+      setUploading(true);
+      const ext = filename.split('.').pop();
+      const fileName =
+        kebabCase(
+          [
             data.getId(),
-            loggedUserId,
-            description,
-          );
-          onClose();
-          onReload();
-          setUploading(false);
-        } else {
-          setUploadFailed(true);
-          setUploading(false);
-        }
-      },
+            data.getReferenceNumber(),
+            timestamp(true).split('-').reverse(),
+            description.trim() || filename.replace('.' + ext, ''),
+          ].join(' '),
+        ) +
+        '.' +
+        ext;
+      const status = await uploadFileToS3Bucket(
+        fileName,
+        documentFile,
+        'testbuckethelios', // FIXME is it correct bucket name for those docs?
+      );
+      if (status === 'ok') {
+        await DocumentClientService.createTaskDocument(
+          fileName,
+          data.getId(),
+          loggedUserId,
+          description,
+        );
+        onClose();
+        onReload();
+        setUploading(false);
+      } else {
+        setUploadFailed(true);
+        setUploading(false);
+      }
+    },
     [documentFile, loggedUserId, data, setUploadFailed, setUploading],
   );
   const handleDocumentUpdate = useCallback(
-    (onClose, onReload, { id }) =>
-      async (form: Document) => {
-        setDocumentSaving(true);
-        const description = form.getDescription();
-        await DocumentClientService.updateDocumentDescription(id, description);
-        setDocumentSaving(false);
-        onClose();
-        onReload();
-      },
+    (onClose, onReload, { id }) => async (form: Document) => {
+      setDocumentSaving(true);
+      const description = form.getDescription();
+      await DocumentClientService.updateDocumentDescription(id, description);
+      setDocumentSaving(false);
+      onClose();
+      onReload();
+    },
     [setDocumentSaving],
   );
   const handleSave = useCallback(
     async (form: Task) => {
       setSaving(true);
-      let currentTask = form;
+      let currentTask = makeSafeFormObject(form, new Task());
       currentTask.setId(data.getId());
       await TaskClientService.updateSpiffTool(currentTask);
       setSaving(false);
@@ -273,17 +274,27 @@ export const SpiffToolLogEdit: FC<Props> = ({
   );
   const handleSaveStatus = useCallback(
     async (form: SpiffToolAdminAction) => {
+      //let tempData = makeSafeFormObject(data, new Task());
+      let temp = makeSafeFormObject(form, new SpiffToolAdminAction());
+      //console.log('our action', temp);
+      console.log('data', data);
+      console.log('admin aciton', temp);
+
       if (statusEditing) {
         setStatusEditing(undefined);
-
-        if (userId) {
-          const userInfo = await UserClientService.loadUserById(loggedUserId);
+        if (loggedUserId) {
+          const userReq = new User();
+          userReq.setId(loggedUserId);
+          const userInfo = await UserClientService.Get(userReq);
+          //const userInfo = await UserClientService.loadUserById(loggedUserId);
+          console.log(userInfo, 'user');
           const newReviewedBy =
             userInfo.getFirstname() + ' ' + userInfo.getLastname();
-          form.setReviewedBy(newReviewedBy);
+          temp.setReviewedBy(newReviewedBy);
         }
         const timestampValue = timestamp().toString();
-        let adminActionNew = form;
+        let adminActionNew = temp;
+
         adminActionNew.setId(statusEditing.getId());
         adminActionNew.setTaskId(data.getId());
         if (statusEditing.getStatus() === 1) {
@@ -296,16 +307,22 @@ export const SpiffToolLogEdit: FC<Props> = ({
             revokedDate: timestampValue,
           });
         }
-        await SpiffToolAdminActionClientService.upsertSpiffToolAdminAction(
-          adminActionNew,
-        );
-
+        if (adminActionNew.getId() == 0) {
+          console.log('new status');
+          await SpiffToolAdminActionClientService.Create(adminActionNew);
+        } else {
+          console.log('update status');
+          await SpiffToolAdminActionClientService.Update(adminActionNew);
+        }
+        console.log('admin action req', adminActionNew);
         const updateTask = new Task();
         const action = new SpiffToolAdminAction();
         action.setTaskId(data.getId());
         action.setCreatedDate(timestampValue);
         action.setReviewedBy(statusEditing.getReviewedBy());
+        console.log('action', action);
         const newData = await SpiffToolAdminActionClientService.Get(action);
+        console.log('new data', newData);
         updateTask.setId(data.getId());
         updateTask.setAdminActionId(newData.getId());
 
@@ -317,6 +334,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         }
         updateTask.setSpiffToolCloseoutDate(timestamp());
         updateTask.addFieldMask('AdminActionId');
+        console.log('update task', updateTask);
         await TaskClientService.Update(updateTask);
         onStatusChange();
       }
