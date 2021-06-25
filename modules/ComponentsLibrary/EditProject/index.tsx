@@ -611,10 +611,10 @@ export const EditProject: FC<Props> = ({
         }
         setEditingProject(false);
         setLoadingEvent(true);
+        formData.setId(event.getId());
         await EventClientService.upsertEvent({
           ...formData,
-          id: event.getId(),
-        });
+        } as Event);
         loadEvent();
       }
     },
@@ -725,21 +725,21 @@ export const EditProject: FC<Props> = ({
     ],
   ];
   const filteredTasks = tasks.filter(
-    ({ statusId, priorityId, externalCode, externalId }) => {
+    (task) => {
       if (search.statusId) {
-        if (statusId !== search.statusId) return false;
+        if (task.getStatusId() !== search.statusId) return false;
       }
       if (search.priorityId) {
-        if (priorityId !== search.priorityId) return false;
+        if (task.getPriorityId() !== search.priorityId) return false;
       }
       if (search.technicians) {
         if (
-          externalCode === 'project' ||
-          (externalCode === 'user' &&
+          task.getExternalCode() === 'project' ||
+          (task.getExternalCode() === 'user' &&
             !search.technicians
               .split(',')
               .map(id => +id)
-              .includes(externalId))
+              .includes(task.getExternalId()))
         )
           return false;
       }
