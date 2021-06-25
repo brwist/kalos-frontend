@@ -102,7 +102,7 @@ export const PrintPage: FC<Props> = ({
       };
       fr.readAsArrayBuffer(blob);
     }
-  }, [handleDownload]);
+  }, [downloadPdfFilename, handleDownload, onFileCreated]);
   useEffect(() => {
     if (status === 'loaded') {
       handlePrint!();
@@ -146,20 +146,19 @@ export const PrintPage: FC<Props> = ({
           ) : (
             <Button
               onClick={handleDownload(true)}
-              children={
-                (status === 'loading' || downloading) && (
-                  <CircularProgress
-                    style={{ color: '#FFF', marginRight: 8 }}
-                    size={16}
-                  />
-                )
-              }
               {...buttonProps}
               disabled={
                 status === 'loading' || downloading || buttonProps.disabled
               }
               label={downloadLabel}
-            />
+            >
+              {(status === 'loading' || downloading) && (
+                <CircularProgress
+                  style={{ color: '#FFF', marginRight: 8 }}
+                  size={16}
+                />
+              )}
+            </Button>
           ))}
         {onFileCreated ? null : icons ? (
           <IconButton
@@ -173,17 +172,16 @@ export const PrintPage: FC<Props> = ({
           <Button
             label="Print"
             onClick={onPrint || handlePrint!}
-            children={
-              status === 'loading' && (
-                <CircularProgress
-                  style={{ color: '#FFF', marginRight: 8 }}
-                  size={16}
-                />
-              )
-            }
             {...buttonProps}
             disabled={status === 'loading' || buttonProps.disabled}
-          />
+          >
+            {status === 'loading' && (
+              <CircularProgress
+                style={{ color: '#FFF', marginRight: 8 }}
+                size={16}
+              />
+            )}
+          </Button>
         )}
       </span>
       <div className="PrintPage">
