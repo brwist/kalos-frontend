@@ -945,26 +945,20 @@ export const EditProject: FC<Props> = ({
               projects.length > 0 ? (
                 <GanttChart
                   events={projects.map(task => {
-                    const {
-                      id,
-                      description,
-                      dateStarted: dateStart,
-                      dateEnded: dateEnd,
-                      logJobStatus,
-                      color,
-                    } = task;
-                    const [startDate, startHour] = dateStart.split(' ');
-                    const [endDate, endHour] = dateEnd.split(' ');
+                    const [startDate, startHour] = task
+                      .getDateStarted()
+                      .split(' ');
+                    const [endDate, endHour] = task.getDateEnded().split(' ');
                     return {
-                      id,
+                      id: task.getId(),
                       startDate,
                       endDate,
                       startHour,
                       endHour,
-                      notes: description,
-                      statusColor: '#' + color,
+                      notes: task.getDescription(),
+                      statusColor: '#' + task.getColor(),
                       onClick: () => {
-                        setServiceCallId(id);
+                        setServiceCallId(task.getId());
                         setLoaded(false);
                         setLoadedInit(false);
                         // load();
