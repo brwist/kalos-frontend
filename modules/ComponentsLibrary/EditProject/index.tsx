@@ -478,21 +478,17 @@ export const EditProject: FC<Props> = ({
     [priorityOptions],
   );
   const handleSaveTask = useCallback(
-    async ({
-      startDate,
-      startTime,
-      endDate,
-      endTime,
-      checkedIn,
-      ...formData
-    }: ExtendedProjectTaskType) => {
+    async (startTime: string, endTime: string, formData: ProjectTask) => {
       if (!event) return;
-      if (startDate > endDate && endDate != '') {
+      if (
+        formData.getStartDate() > formData.getEndDate() &&
+        formData.getEndDate() != ''
+      ) {
         setErrorTask('Start Date cannot be after End Date.');
         console.error('Start Date cannot be after End Date.');
         return;
       }
-      if (event.dateStarted.substr(0, 10) > startDate) {
+      if (event.getDateStarted().substr(0, 10) > formData.getStartDate()) {
         setErrorTask(
           "Task's Start Date cannot be before Project's Start Date.",
         );
@@ -501,21 +497,19 @@ export const EditProject: FC<Props> = ({
         );
         return;
       }
-      if (event.dateEnded.substr(0, 10) < endDate) {
+      if (event.getDateEnded().substr(0, 10) < formData.getEndDate()) {
         setErrorTask("Task's End Date cannot be after Project's End Date.");
         console.error("Task's End Date cannot be after Project's End Date.");
         return;
       }
       setEditingTask(undefined);
       setLoading(true);
-      await TaskClientService.upsertEventTask({
-        ...formData,
-        eventId: serviceCallId,
-        startDate: `${startDate} ${startTime}:00`,
-        endDate: `${endDate} ${endTime}:00`,
-        checkedIn: checkedIn,
-        ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
-      });
+      formData.setEventId(serviceCallId);
+      formData.setStartDate(`${formData.getStartDate()} ${startTime}:00`);
+      formData.setEndDate(`${formData.getEndDate()} ${endTime}:00`);
+      formData.setCheckedIn(formData.getCheckedIn());
+      if (formData.getId()) formData.setCreatorUserId(loggedUserId);
+      await TaskClientService.upsertEventTask(formData);
 
       setLoaded(false);
     },
@@ -983,7 +977,9 @@ export const EditProject: FC<Props> = ({
             schema={SCHEMA}
             data={editingTask}
             onClose={handleSetEditing()}
-            onSave={handleSaveTask}
+            onSave={(task: ExtendedProjectTaskType) =>
+              handleSaveTask(task.startTime, task.endTime, task)
+            }
             title={`${editingTask.getId() ? 'Edit' : 'Add'} Task`}
             error={errorTask}
           >
