@@ -549,7 +549,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
       {statusEditing && (
         <Modal open onClose={handleSetStatusEditing()}>
           <Form<SpiffToolAdminAction>
-            title={`${statusEditing.id ? 'Edit' : 'Add'} Status`}
+            title={`${statusEditing.getId() ? 'Edit' : 'Add'} Status`}
             schema={SCHEMA_STATUS}
             data={statusEditing}
             onSave={handleSaveStatus}
