@@ -293,8 +293,8 @@ export const EditProject: FC<Props> = ({
     (editingTask?: ExtendedProjectTaskType) => async () => {
       setErrorTask('');
       setEditingTask(editingTask);
-      if (editingTask && editingTask.getId()) {
-        await loadTaskEvents(editingTask.getId());
+      if (editingTask && editingTask.projectTask.getId()) {
+        await loadTaskEvents(editingTask.projectTask.getId());
       }
     },
     [setEditingTask, loadTaskEvents],
@@ -359,7 +359,7 @@ export const EditProject: FC<Props> = ({
       taskEvents.length > 0 && taskEvents[0].getActionTaken() === ENROUTE;
     const timeStarted = timestamp();
     const req = new TaskEvent();
-    req.setTaskId(editingTask.getId());
+    req.setTaskId(editingTask.projectTask.getId());
     req.setTechnicianUserId(loggedUserId);
     req.setTimeStarted(timeStarted);
     req.setStatusId(1);
@@ -375,7 +375,7 @@ export const EditProject: FC<Props> = ({
     }
     if (isEnroute || isCheckIn) {
       const pt = new ProjectTask();
-      pt.setId(editingTask.getId());
+      pt.setId(editingTask.projectTask.getId());
       pt.setExternalCode('user');
       pt.setExternalId(loggedUserId);
       await TaskClientService.upsertEventTask(pt);
@@ -383,7 +383,7 @@ export const EditProject: FC<Props> = ({
       setEditingTask(pt);
       setLoaded(false);
     }
-    await loadTaskEvents(editingTask.getId());
+    await loadTaskEvents(editingTask.projectTask.getId());
     setPendingCheckoutChange(false);
   }, [
     editingTask,
@@ -407,7 +407,7 @@ export const EditProject: FC<Props> = ({
       );
     }
     try {
-      await loadTaskEvents(editingTask.getId());
+      await loadTaskEvents(editingTask.projectTask.getId());
     } catch (err) {
       console.log({ err });
       if (!err.message.includes('failed to scan to struct')) {
@@ -449,7 +449,8 @@ export const EditProject: FC<Props> = ({
   const isOwner = useMemo(
     () =>
       editingTask &&
-      (editingTask.getCreatorUserId() === loggedUserId || !editingTask.getId()),
+      (editingTask.projectTask.getCreatorUserId() === loggedUserId ||
+        !editingTask.projectTask.getId()),
     [editingTask, loggedUserId],
   );
   const statusOptions = useMemo(
