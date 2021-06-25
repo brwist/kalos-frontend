@@ -31,6 +31,7 @@ import {
   escapeText,
   getRPCFields,
   EventClientService,
+  makeSafeFormObject,
 } from '../../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -140,7 +141,9 @@ export const Spiffs: FC<Props> = ({
     async (data: Task) => {
       setSaving(true);
       const now = timestamp();
-      const req = new Task();
+      console.log('saving spiff');
+      const req = makeSafeFormObject(data, new Task());
+      console.log(req.getExternalId());
       const fieldMaskList = [];
       req.setTimeCreated(now);
       req.setTimeDue(now);
@@ -149,9 +152,9 @@ export const Spiffs: FC<Props> = ({
       req.setCreatorUserId(loggedUserId);
       req.setBillableType('Spiff');
       req.setStatusId(1);
-      req.setAdminActionId(0);
+      req.addFieldMask('AdminActionId');
       let tempEvent = await EventClientService.LoadEventByServiceCallID(
-        parseInt(data.getSpiffJobNumber()),
+        parseInt(req.getSpiffJobNumber()),
       );
       req.setSpiffAddress(
         tempEvent.getProperty()?.getAddress() === undefined
@@ -160,28 +163,7 @@ export const Spiffs: FC<Props> = ({
             : tempEvent.getCustomer()!.getAddress()
           : tempEvent.getProperty()!.getAddress(),
       );
-      data.setSpiffJobNumber(tempEvent.getLogJobNumber());
-      req.setSpiffJobNumber(data.getSpiffJobNumber());
-
-      fieldMaskList.push(
-        'TimeCreated',
-        'TimeDue',
-        'PriorityId',
-        'ExternalCode',
-        'ExternalId',
-        'CreatorUserId',
-        'BillableType',
-        'SpiffJobNumber',
-        'spiffAddress',
-        'AdminActionId',
-      );
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        req[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      req.setFieldMaskList(fieldMaskList);
+      req.setSpiffJobNumber(tempEvent.getLogJobNumber());
       console.log({ req });
       await TaskClientService.Create(req);
       setSaving(false);
@@ -193,26 +175,26 @@ export const Spiffs: FC<Props> = ({
   const SCHEMA: Schema<Task> = [
     [
       {
-        name: 'setTimeDue',
+        name: 'getTimeDue',
         label: 'Claim Date',
         readOnly: true,
         type: 'date',
       },
       {
-        name: 'setSpiffAmount',
+        name: 'getSpiffAmount',
         label: 'Amount',
         startAdornment: '$',
         type: 'number',
         required: true,
       },
       {
-        name: 'setSpiffJobNumber',
+        name: 'getSpiffJobNumber',
         label: 'Job #',
         type: 'eventId',
         required: true,
       },
       {
-        name: 'setDatePerformed',
+        name: 'getDatePerformed',
         label: 'Date Performed',
         type: 'date',
         required: true,
@@ -220,19 +202,19 @@ export const Spiffs: FC<Props> = ({
     ],
     [
       {
-        name: 'setExternalId',
+        name: 'getExternalId',
         label: 'Employee',
         type: 'technician',
         required: true,
       },
       {
-        name: 'setSpiffTypeId',
+        name: 'getSpiffTypeId',
         label: 'Spiff Type',
         options: SPIFF_TYPES_OPTIONS,
         required: true,
       },
     ],
-    [{ name: 'setBriefDescription', label: 'Description', multiline: true }],
+    [{ name: 'getBriefDescription', label: 'Description', multiline: true }],
   ];
   return (
     <div>

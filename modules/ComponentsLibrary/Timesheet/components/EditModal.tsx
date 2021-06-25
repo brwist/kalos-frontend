@@ -12,6 +12,7 @@ import { useConfirm } from '../../ConfirmService';
 import { ENDPOINT } from '../../../../constants';
 import './editModal.less';
 import { NULL_TIME_VALUE } from '../constants';
+import { makeSafeFormObject } from '../../../../helpers';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 
@@ -138,6 +139,7 @@ const EditTimesheetModal: FC<Props> = ({
   const handleUpdate = useCallback(
     async (data: EntryWithDate) => {
       setSaving(true);
+      data = makeSafeFormObject(data, new TimesheetLine());
       data.setTimeStarted(
         `${format(
           data.date ? parseISO(data.date) : new Date(),
@@ -160,7 +162,7 @@ const EditTimesheetModal: FC<Props> = ({
       }
       delete data.date;
       const req = new TimesheetLine();
-      //req.setId(id);
+      req.setId(id);
       if (data.jobId) {
         req.setReferenceNumber(data.jobId.toString());
       }
@@ -180,6 +182,7 @@ const EditTimesheetModal: FC<Props> = ({
         'BriefDescription',
         'Notes',
       ]);
+      console.log(req);
       const result = await tslClient.Update(req);
       setSaving(false);
       onSave(result);
@@ -190,6 +193,7 @@ const EditTimesheetModal: FC<Props> = ({
   const handleCreate = useCallback(
     async (data: EntryWithDate) => {
       setSaving(true);
+      data = makeSafeFormObject(data, new TimesheetLine());
       data.setTimeStarted(
         `${format(
           data.date ? parseISO(data.date) : new Date(),
