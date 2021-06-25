@@ -754,11 +754,11 @@ export const EditProject: FC<Props> = ({
         footer={
           event && !loadingEvent ? (
             <>
-              <div>Address: {getPropertyAddress(event.property)}</div>
-              <div>Start date: {formatDate(event.dateStarted)}</div>
-              <div>End date: {formatDate(event.dateEnded)}</div>
-              <div>Job Number: {event.logJobNumber}</div>
-              <div>Description: {event.description}</div>
+              <div>Address: {getPropertyAddress(event.getProperty())}</div>
+              <div>Start date: {formatDate(event.getDateStarted())}</div>
+              <div>End date: {formatDate(event.getDateEnded())}</div>
+              <div>Job Number: {event.getLogJobNumber()}</div>
+              <div>Description: {event.getDescription()}</div>
             </>
           ) : (
             'Loading...'
@@ -778,8 +778,8 @@ export const EditProject: FC<Props> = ({
             label: 'Add Task',
             onClick: handleSetEditing({
               ...new ProjectTask().toObject(),
-              startDate: event ? event.dateStarted.substr(0, 10) : '',
-              endDate: event ? event.dateStarted.substr(0, 10) : '',
+              startDate: event ? event.getDateStarted().substr(0, 10) : '',
+              endDate: event ? event.getDateStarted().substr(0, 10) : '',
               startTime: '09:00',
               endTime: '10:00',
               statusId: 1,
@@ -792,7 +792,7 @@ export const EditProject: FC<Props> = ({
               !loggedUser ||
               !(
                 isAnyManager ||
-                event.departmentId === loggedUser.employeeDepartmentId
+                event.getDepartmentId() === loggedUser.getEmployeeDepartmentId()
               ),
           },
           {
@@ -803,10 +803,10 @@ export const EditProject: FC<Props> = ({
               loadingEvent ||
               !event ||
               !loggedUser ||
-              !event.isActive ||
+              !event.getIsActive() ||
               !(
                 isAnyManager ||
-                event.departmentId === loggedUser.employeeDepartmentId
+                event.getDepartmentId() === loggedUser.getEmployeeDepartmentId()
               ),
           },
           ...(onClose
@@ -852,10 +852,10 @@ export const EditProject: FC<Props> = ({
             content: event ? (
               <CalendarEvents
                 events={filteredTasks.map(task => {
-                  if (task.endDate == '0000-00-00 00:00:00') {
+                  if (task.getEndDate() == '0000-00-00 00:00:00') {
                     let date = new Date();
                     date.setMinutes(date.getMinutes() + 1);
-                    task.endDate = format(date, 'yyyy-MM-dd hh-mm-ss');
+                    task.getEndDate() = format(date, 'yyyy-MM-dd hh-mm-ss');
                   }
                   const {
                     id,
@@ -877,10 +877,10 @@ export const EditProject: FC<Props> = ({
                     endHour,
                     notes: briefDescription,
                     status: statuses.find(({ id }) => id === statusId)
-                      ?.description,
+                      ?.getDescription(),
                     statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
                     priority: priorities.find(({ id }) => id === priorityId)
-                      ?.description,
+                      ?.getDescription(),
                     priorityId,
                     assignee: ownerName,
                     onClick:
@@ -895,8 +895,8 @@ export const EditProject: FC<Props> = ({
                         : undefined,
                   };
                 })}
-                startDate={event.dateStarted.substr(0, 10)}
-                endDate={event.dateEnded.substr(0, 10)}
+                startDate={event.getDateStarted().substr(0, 10)}
+                endDate={event.getDateEnded().substr(0, 10)}
                 loading={loading || loadingEvent}
                 onAdd={handleAddTask}
               />
@@ -909,8 +909,8 @@ export const EditProject: FC<Props> = ({
                 events={filteredTasks.map(task => {
                   // This one is in-progress
                   if (
-                    task.endDate == '2009-00-00 00:00:00' &&
-                    task.statusId == 2
+                    task.getEndDate() == '2009-00-00 00:00:00' &&
+                    task.getStatusId() == 2
                   ) {
                   }
                   const {
@@ -933,10 +933,10 @@ export const EditProject: FC<Props> = ({
                     endHour,
                     notes: briefDescription,
                     status: statuses.find(({ id }) => id === statusId)
-                      ?.description,
+                      ?.getDescription(),
                     statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
                     priority: priorities.find(({ id }) => id === priorityId)
-                      ?.description,
+                      ?.getDescription(),
                     priorityId,
                     assignee: ownerName,
                     onClick:
@@ -951,8 +951,8 @@ export const EditProject: FC<Props> = ({
                         : undefined,
                   };
                 })}
-                startDate={event.dateStarted.substr(0, 10)}
-                endDate={event.dateEnded.substr(0, 10)}
+                startDate={event.getDateStarted().substr(0, 10)}
+                endDate={event.getDateEnded().substr(0, 10)}
                 loading={loading || loadingEvent}
                 onAdd={handleAddTask}
               />
@@ -990,8 +990,8 @@ export const EditProject: FC<Props> = ({
                       },
                     };
                   })}
-                  startDate={projects[0].dateStarted.substr(0, 10)}
-                  endDate={projects[projects.length - 1].dateEnded.substr(
+                  startDate={projects[0].getDateStarted().substr(0, 10)}
+                  endDate={projects[projects.length - 1].getDateEnded().substr(
                     0,
                     10,
                   )}
@@ -1010,7 +1010,7 @@ export const EditProject: FC<Props> = ({
             data={editingTask}
             onClose={handleSetEditing()}
             onSave={handleSaveTask}
-            title={`${editingTask.id ? 'Edit' : 'Add'} Task`}
+            title={`${editingTask.getId() ? 'Edit' : 'Add'} Task`}
             error={errorTask}
           >
             <div className="EditProjectDelete">
@@ -1020,11 +1020,11 @@ export const EditProject: FC<Props> = ({
                     variant="outlined"
                     label={
                       taskEvents.length === 0 ||
-                      (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT)
+                      (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT)
                         ? 'Enroute'
                         : `Check ${
                             taskEvents.length > 0 &&
-                            taskEvents[0].actionTaken === CHECKIN
+                            taskEvents[0].getActionTaken() === CHECKIN
                               ? 'Out'
                               : 'In'
                           }`
@@ -1035,15 +1035,15 @@ export const EditProject: FC<Props> = ({
                   {taskEvents.length > 0 && (
                     <Button
                       variant="outlined"
-                      label={`Delete ${taskEvents[0].actionTaken}`}
+                      label={`Delete ${taskEvents[0].getActionTaken()}`}
                       onClick={handleSetPendingCheckoutDelete(true)}
                       disabled={pendingCheckoutChange}
                     />
                   )}
                 </>
               )}
-              {editingTask.id > 0 &&
-                editingTask.creatorUserId === loggedUserId && (
+              {editingTask.getId() > 0 &&
+                editingTask.getCreatorUserId() === loggedUserId && (
                   <Button
                     variant="outlined"
                     label="Delete Task"
@@ -1058,7 +1058,7 @@ export const EditProject: FC<Props> = ({
         <ConfirmDelete
           open
           kind="Task"
-          name={pendingDeleteTask.briefDescription}
+          name={pendingDeleteTask.getBriefDescription()}
           onClose={handleSetPendingDeleteTask()}
           onConfirm={handleDeleteTask}
         />
@@ -1070,7 +1070,7 @@ export const EditProject: FC<Props> = ({
           name={''}
           onClose={handleSetPendingDeleteEvent()}
           onConfirm={() => {
-            handleDeleteEvent(pendingDeleteEvent.id);
+            handleDeleteEvent(pendingDeleteEvent.getId());
           }}
         />
       )}
@@ -1092,10 +1092,10 @@ export const EditProject: FC<Props> = ({
           open
           title={
             taskEvents.length === 0 ||
-            (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT)
+            (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT)
               ? 'Confirm Enroute'
               : `Confirm Check ${
-                  taskEvents.length > 0 && taskEvents[0].actionTaken === CHECKIN
+                  taskEvents.length > 0 && taskEvents[0].getActionTaken() === CHECKIN
                     ? 'Out'
                     : 'In'
                 }`
@@ -1104,11 +1104,11 @@ export const EditProject: FC<Props> = ({
           onConfirm={handleCheckout}
         >
           {taskEvents.length === 0 ||
-          (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT) ? (
+          (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT) ? (
             <div>
               Are you sure you want to Enroute and assign yourself to this task?
             </div>
-          ) : taskEvents.length > 0 && taskEvents[0].actionTaken === CHECKIN ? (
+          ) : taskEvents.length > 0 && taskEvents[0].getActionTaken() === CHECKIN ? (
             <div>Are you sure you want to Check Out from this task?</div>
           ) : (
             <div>
@@ -1122,7 +1122,7 @@ export const EditProject: FC<Props> = ({
         <ConfirmDelete
           open
           kind="action"
-          name={taskEvents[0].actionTaken}
+          name={taskEvents[0].getActionTaken()}
           onClose={handleSetPendingCheckoutDelete(false)}
           onConfirm={handleCheckoutDelete}
         />
