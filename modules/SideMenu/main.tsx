@@ -6,11 +6,7 @@ import List from '@material-ui/core/List';
 import Hidden from '@material-ui/core/Hidden';
 import IconButton from '@material-ui/core/IconButton';
 import MenuSharp from '@material-ui/icons/MenuSharp';
-import { forceHTTPS, customerCheck, UserClientService } from '../../helpers';
-import {
-  TimesheetDepartmentClient,
-  TimesheetDepartment,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { forceHTTPS, UserClientService } from '../../helpers';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
 import customTheme from '../Theme/main';
@@ -27,7 +23,6 @@ import {
 } from './constants';
 
 const userClient = new UserClient(ENDPOINT);
-const deptClient = new TimesheetDepartmentClient(ENDPOINT);
 
 export type Props = {
   userID: number;
