@@ -904,49 +904,31 @@ export const EditProject: FC<Props> = ({
             content: event ? (
               <GanttChart
                 events={filteredTasks.map(task => {
-                  // This one is in-progress
-                  if (
-                    task.getEndDate() == '2009-00-00 00:00:00' &&
-                    task.getStatusId() == 2
-                  ) {
-                  }
-                  const {
-                    id,
-                    briefDescription,
-                    startDate: dateStart,
-                    endDate: dateEnd,
-                    statusId,
-                    priorityId,
-                    ownerName,
-                    creatorUserId,
-                  } = task;
-                  const [startDate, startHour] = dateStart.split(' ');
-                  const [endDate, endHour] = dateEnd.split(' ');
+                  const [startDate, startHour] = task.getStartDate().split(' ');
+                  const [endDate, endHour] = task.getEndDate().split(' ');
                   return {
-                    id,
+                    id: task.getId(),
                     startDate,
                     endDate,
                     startHour,
                     endHour,
-                    notes: briefDescription,
+                    notes: task.getBriefDescription(),
                     status: statuses
-                      .find(({ id }) => id === statusId)
+                      .find(status => status.getId() === task.getStatusId())
                       ?.getDescription(),
-                    statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
+                    statusColor: PROJECT_TASK_STATUS_COLORS[task.getStatusId()],
                     priority: priorities
-                      .find(({ id }) => id === priorityId)
+                      .find(status => status.getId() === task.getPriorityId())
                       ?.getDescription(),
-                    priorityId,
-                    assignee: ownerName,
+                    priorityId: task.getPriorityId(),
+                    assignee: task.getOwnerName(),
                     onClick:
-                      creatorUserId === loggedUserId || hasEditRights
+                      task.getCreatorUserId() === loggedUserId || hasEditRights
                         ? handleSetEditing({
                             ...task,
-                            startDate,
-                            endDate,
                             startTime: startHour.substr(0, 5),
                             endTime: endHour.substr(0, 5),
-                          })
+                          } as ExtendedProjectTaskType)
                         : undefined,
                   };
                 })}
