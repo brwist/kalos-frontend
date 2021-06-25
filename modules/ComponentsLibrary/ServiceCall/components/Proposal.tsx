@@ -311,11 +311,12 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
           <PlainForm schema={SCHEMA_FILE} data={file} onChange={setFile} />
         </Modal>
       )}
+      {/* TODO Converting to object as a temporary thing til I figure out how to convert this */}
       {quickAddOpen && (
         <StoredQuotes
           open
           onClose={handleToggleQuickAdd}
-          onSelect={handleQuickAdd}
+          onSelect={out => handleQuickAdd(out.toObject())}
         />
       )}
     </>
