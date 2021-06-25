@@ -531,7 +531,7 @@ export const EditProject: FC<Props> = ({
   );
   const handleDeleteTask = useCallback(async () => {
     if (pendingDeleteTask) {
-      const { id } = pendingDeleteTask;
+      const id = pendingDeleteTask.getId();
       setPendingDeleteTask(undefined);
       setEditingTask(undefined);
       setLoading(true);
@@ -555,15 +555,16 @@ export const EditProject: FC<Props> = ({
         )
       )
         return;
+      let newPt = new ProjectTask();
+      newPt.setStartDate(startDate);
+      newPt.setEndDate(startDate);
+      newPt.setStatusId(1);
+      newPt.setPriorityId(2);
       setEditingTask({
-        ...new ProjectTask(),
-        startDate: startDate,
-        endDate: startDate,
         startTime: '09:00',
         endTime: '10:00',
-        statusId: 1,
-        priorityId: 2,
-      });
+        ...newPt,
+      } as ExtendedProjectTaskType);
     },
     [setEditingTask, loggedUser, event, isAnyManager],
   );
