@@ -724,28 +724,26 @@ export const EditProject: FC<Props> = ({
       },
     ],
   ];
-  const filteredTasks = tasks.filter(
-    (task) => {
-      if (search.statusId) {
-        if (task.getStatusId() !== search.statusId) return false;
-      }
-      if (search.priorityId) {
-        if (task.getPriorityId() !== search.priorityId) return false;
-      }
-      if (search.technicians) {
-        if (
-          task.getExternalCode() === 'project' ||
-          (task.getExternalCode() === 'user' &&
-            !search.technicians
-              .split(',')
-              .map(id => +id)
-              .includes(task.getExternalId()))
-        )
-          return false;
-      }
-      return true;
-    },
-  );
+  const filteredTasks = tasks.filter(task => {
+    if (search.statusId) {
+      if (task.getStatusId() !== search.statusId) return false;
+    }
+    if (search.priorityId) {
+      if (task.getPriorityId() !== search.priorityId) return false;
+    }
+    if (search.technicians) {
+      if (
+        task.getExternalCode() === 'project' ||
+        (task.getExternalCode() === 'user' &&
+          !search.technicians
+            .split(',')
+            .map(id => +id)
+            .includes(task.getExternalId()))
+      )
+        return false;
+    }
+    return true;
+  });
 
   return (
     <div>
@@ -776,15 +774,22 @@ export const EditProject: FC<Props> = ({
             : []),
           {
             label: 'Add Task',
-            onClick: handleSetEditing({
-              ...new ProjectTask().toObject(),
-              startDate: event ? event.getDateStarted().substr(0, 10) : '',
-              endDate: event ? event.getDateStarted().substr(0, 10) : '',
-              startTime: '09:00',
-              endTime: '10:00',
-              statusId: 1,
-              priorityId: 2,
-            }),
+            onClick: () => {
+              let newPt = new ProjectTask();
+              newPt.setStartDate(
+                event ? event.getDateStarted().substr(0, 10) : '',
+              );
+              newPt.setEndDate(
+                event ? event.getDateStarted().substr(0, 10) : '',
+              );
+              newPt.setStatusId(1);
+              newPt.setPriorityId(2);
+              handleSetEditing({
+                ...newPt,
+                startTime: '09:00',
+                endTime: '10:00',
+              } as ExtendedProjectTaskType);
+            },
             disabled:
               loading ||
               loadingEvent ||
@@ -876,10 +881,12 @@ export const EditProject: FC<Props> = ({
                     startHour,
                     endHour,
                     notes: briefDescription,
-                    status: statuses.find(({ id }) => id === statusId)
+                    status: statuses
+                      .find(({ id }) => id === statusId)
                       ?.getDescription(),
                     statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-                    priority: priorities.find(({ id }) => id === priorityId)
+                    priority: priorities
+                      .find(({ id }) => id === priorityId)
                       ?.getDescription(),
                     priorityId,
                     assignee: ownerName,
@@ -932,10 +939,12 @@ export const EditProject: FC<Props> = ({
                     startHour,
                     endHour,
                     notes: briefDescription,
-                    status: statuses.find(({ id }) => id === statusId)
+                    status: statuses
+                      .find(({ id }) => id === statusId)
                       ?.getDescription(),
                     statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-                    priority: priorities.find(({ id }) => id === priorityId)
+                    priority: priorities
+                      .find(({ id }) => id === priorityId)
                       ?.getDescription(),
                     priorityId,
                     assignee: ownerName,
@@ -991,10 +1000,9 @@ export const EditProject: FC<Props> = ({
                     };
                   })}
                   startDate={projects[0].getDateStarted().substr(0, 10)}
-                  endDate={projects[projects.length - 1].getDateEnded().substr(
-                    0,
-                    10,
-                  )}
+                  endDate={projects[projects.length - 1]
+                    .getDateEnded()
+                    .substr(0, 10)}
                   loading={loading || loadingEvent}
                 />
               ) : (
@@ -1020,7 +1028,8 @@ export const EditProject: FC<Props> = ({
                     variant="outlined"
                     label={
                       taskEvents.length === 0 ||
-                      (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT)
+                      (taskEvents[0] &&
+                        taskEvents[0].getActionTaken() === CHECKOUT)
                         ? 'Enroute'
                         : `Check ${
                             taskEvents.length > 0 &&
@@ -1095,7 +1104,8 @@ export const EditProject: FC<Props> = ({
             (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT)
               ? 'Confirm Enroute'
               : `Confirm Check ${
-                  taskEvents.length > 0 && taskEvents[0].getActionTaken() === CHECKIN
+                  taskEvents.length > 0 &&
+                  taskEvents[0].getActionTaken() === CHECKIN
                     ? 'Out'
                     : 'In'
                 }`
@@ -1108,7 +1118,8 @@ export const EditProject: FC<Props> = ({
             <div>
               Are you sure you want to Enroute and assign yourself to this task?
             </div>
-          ) : taskEvents.length > 0 && taskEvents[0].getActionTaken() === CHECKIN ? (
+          ) : taskEvents.length > 0 &&
+            taskEvents[0].getActionTaken() === CHECKIN ? (
             <div>Are you sure you want to Check Out from this task?</div>
           ) : (
             <div>
