@@ -60,7 +60,7 @@ const EditTimesheetModal: FC<Props> = ({
   const confirm = useConfirm();
   const [saving, setSaving] = useState<boolean>(false);
   const SCHEMA: Schema<EntryWithDate> = [
-    [{ label: 'Job Number', name: 'jobId', type: 'eventId' }],
+    [{ label: 'Job Number', name: 'getReferenceNumber', type: 'eventId' }],
     [{ label: 'Brief Description', name: 'getBriefDescription' }],
     [
       {
@@ -163,8 +163,9 @@ const EditTimesheetModal: FC<Props> = ({
       delete data.date;
       const req = new TimesheetLine();
       req.setId(id);
-      if (data.jobId) {
-        req.setReferenceNumber(data.jobId.toString());
+      if (data.getReferenceNumber()) {
+        console.log(data.getReferenceNumber());
+        req.setReferenceNumber(data.getReferenceNumber().toString());
       }
       req.setTimeStarted(data.getTimeStarted());
       req.setTimeFinished(data.getTimeFinished());

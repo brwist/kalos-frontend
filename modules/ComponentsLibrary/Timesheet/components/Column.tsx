@@ -124,7 +124,9 @@ const Column: FC<Props> = ({
                 />
               );
             }
-            return <TimesheetLineCard key={`tlc-${card.id}`} card={card} />;
+            return (
+              <TimesheetLineCard key={`tlc-${card.getId()}`} card={card} />
+            );
           })}
         </>
       )}
