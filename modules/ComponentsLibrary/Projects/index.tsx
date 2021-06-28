@@ -13,11 +13,11 @@ import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServic
 import {
   loadEventsByFilter,
   EventType,
-  getPropertyAddress,
   formatDate,
   UserType,
   UserClientService,
 } from '../../../helpers';
+import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 
 export interface Props {
   loggedUserId: number;
@@ -116,7 +116,7 @@ export const Projects: FC<Props> = ({
       setOpenedEvent(openedEvent);
       if (!openedEvent) load();
     },
-    [setOpenedEvent],
+    [setOpenedEvent, load],
   );
   const handleTogglePendingNew = useCallback(
     (pendingNew: boolean) => () => setPendingNew(pendingNew),

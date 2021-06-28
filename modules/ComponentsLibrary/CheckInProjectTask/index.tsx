@@ -117,7 +117,6 @@ export const CheckInProjectTask: FC<Props> = ({
         );
         formData.endTime = projectToUse.getTimeEnded();
       }
-
       let req = new ProjectTask();
       req.setId(formData.projectTask.getId());
       req.setEventId(formData.projectTask.getEventId());
@@ -241,8 +240,7 @@ export const CheckInProjectTask: FC<Props> = ({
       startTime: format(new Date(date), 'HH-mm'),
       endTime: format(addDays(new Date(date), 1), 'HH-mm'),
     } as ExtendedProjectTaskType;
-
-    handleSaveTask(taskNew);
+    handleSaveTask(taskNew, 'check-in');
   };
 
   return (

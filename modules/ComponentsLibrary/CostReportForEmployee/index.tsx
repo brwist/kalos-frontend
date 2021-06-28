@@ -28,39 +28,32 @@ import {
   PerDiemClientService,
   usd,
 } from '../../../helpers';
-
 interface Props {
   userId: number;
-  loggedUserId: number;
-  notReady: boolean;
-
-  onClose: (() => void) | null;
-  onNext?: (() => void) | null;
-  onPrevious?: (() => void) | null;
-  username: string;
+  week: string;
 }
 
 export const CostReportForEmployee: FC<Props> = ({ userId }) => {
   const [trips, setTrips] = useState<Trip[]>();
-  const [perDiems, setPerDiems] = useState<PerDiemList>();
+  const [perDiems, setPerDiems] = useState<PerDiem[]>();
   const [spiffs, setSpiffs] = useState<Task[]>();
-  const [hours, setHours] = useState<number>();
+  const [hours, setHours] = useState<{
+    processed: number;
+    approved: number;
+    submitted: number;
+    pending: number;
+  }>();
   const [loaded, setLoaded] = useState<boolean>(false);
-  const today = new Date();
-  const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
-  const endDay = addDays(startDay, 7);
+  const startDay = week;
+
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
+  const endDay = formatDateFns(addDays(new Date(startDay), 7));
   const getTrips = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
     trip.setIsActive(true);
     trip.setDateTargetList(['date', 'date']);
-    trip.setDateRangeList([
-      '>=',
-      formatDateFns(startDay),
-      '<',
-      formatDateFns(endDay),
-    ]);
+    trip.setDateRangeList(['>=', startDay, '<', endDay]);
     let tempTripList = (
       await PerDiemClientService.BatchGetTrips(trip)
     ).getResultsList();
@@ -71,13 +64,11 @@ export const CostReportForEmployee: FC<Props> = ({ userId }) => {
   const getPerDiems = useCallback(async () => {
     const req = new PerDiem();
     req.setUserId(userId);
-    req.setDateRangeList([
-      '>=',
-      formatDateFns(startDay),
-      '<',
-      formatDateFns(endDay),
-    ]);
-    const resultsList = await PerDiemClientService.BatchGet(req);
+    req.setDateRangeList(['>=', startDay, '<', endDay]);
+    req.setIsActive(true);
+    const resultsList = (
+      await PerDiemClientService.BatchGet(req)
+    ).getResultsList();
     //get PerDiems, set them
 
     return resultsList;
@@ -86,8 +77,9 @@ export const CostReportForEmployee: FC<Props> = ({ userId }) => {
   const getSpiffs = useCallback(async () => {
     const req = new Task();
     req.setExternalId(userId);
-    const startDate = format(startDay, 'yyyy-MM-dd');
-    const endDate = format(endDay, 'yyyy-MM-dd');
+    req.setIsActive(true);
+    const startDate = startDay;
+    const endDate = endDay;
     req.setDateRangeList(['>=', startDate, '<', endDate]);
     req.setBillableType('Spiff');
     req.setDateTargetList(['time_created', 'time_created']);
@@ -103,16 +95,17 @@ export const CostReportForEmployee: FC<Props> = ({ userId }) => {
     timesheetReq.setTechnicianUserId(userId);
     timesheetReq.setIsActive(1);
     timesheetReq.setWithoutLimit(true);
-    const startDate = format(startDay, 'yyyy-MM-dd');
-    const endDate = format(endDay, 'yyyy-MM-dd');
+    const startDate = startDay;
+    const endDate = endDay;
     timesheetReq.setDateRangeList(['>=', startDate, '<', endDate]);
-    console.log(endDay);
+    timesheetReq.setDateTargetList(['time_started', 'time_started']);
     const client = new TimesheetLineClient(ENDPOINT);
-    let results = new TimesheetLineList().getResultsList();
     timesheetReq.setOrderBy('time_started');
-    results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
-
-    let total = 0;
+    let results = (await client.BatchGetPayroll(timesheetReq)).getResultsList();
+    let processed = 0;
+    let approved = 0;
+    let submitted = 0;
+    let pending = 0;
     for (let i = 0; i < results.length; i++) {
       {
         const timeFinished = results[i].toObject().timeFinished;
@@ -122,10 +115,18 @@ export const CostReportForEmployee: FC<Props> = ({ userId }) => {
             60,
         );
 
-        total += subtotal;
+        if (results[i].getPayrollProcessed() === true) {
+          processed += subtotal;
+        } else if (results[i].getAdminApprovalUserId() !== 0) {
+          approved += subtotal;
+        } else if (results[i].getUserApprovalDatetime() != NULL_TIME_VALUE) {
+          submitted += subtotal;
+        } else {
+          pending += subtotal;
+        }
       }
     }
-    return total;
+    return { processed, approved, submitted, pending };
   }, [endDay, startDay, userId]);
 
   useEffect(() => {
@@ -193,52 +194,161 @@ export const CostReportForEmployee: FC<Props> = ({ userId }) => {
   }, [loaded, getPerDiems, getHours, getSpiffs, getTrips]);
   return loaded ? (
     <SectionBar title="Employee Report">
-      <InfoTable
-        columns={[
-          { name: 'Decision Date for Spiff' },
-          { name: 'Date that Spiff was Created' },
-          { name: 'Amount' },
-          { name: 'Job Number' },
-          { name: 'Processed' },
-        ]}
-        data={
-          spiffs
-            ? spiffs.map(spiff => {
-                return [
-                  {
-                    value: formatDate(
-                      spiff.getActionsList()[
-                        //eslint-disable-next-line
-                        spiff.getActionsList().length - 1
-                      ].getDecisionDate(),
-                    ),
-                  },
-                  {
-                    value: formatDate(spiff.toObject().timeCreated),
-                  },
-                  {
-                    value: usd(spiff.toObject().spiffAmount),
-                  },
-                  {
-                    value: spiff.toObject().spiffJobNumber,
-                  },
-                  {
-                    value:
-                      spiff.toObject().payrollProcessed === true
-                        ? 'Processed'
-                        : 'Not Processed',
-                  },
-                  {
-                    value:
-                      spiff.toObject().payrollProcessed === true
-                        ? 'Processed'
-                        : 'Not Processed',
-                  },
-                ];
-              })
-            : []
-        }
-      />
+      <SectionBar title="Hours">
+        <InfoTable
+          columns={[
+            { name: 'Processed Hours' },
+            { name: 'Approved Hours, Not Processed' },
+            { name: 'Submitted Hours, Not Approved' },
+            { name: 'Pending Hours, Not Submitted' },
+          ]}
+          data={
+            hours
+              ? [
+                  [
+                    {
+                      value: hours.processed,
+                    },
+                    {
+                      value: hours.approved,
+                    },
+                    {
+                      value: hours.submitted,
+                    },
+                    {
+                      value: hours.pending,
+                    },
+                  ],
+                ]
+              : []
+          }
+        />
+      </SectionBar>
+      <SectionBar title="Spiff/Bonus/Commission">
+        <InfoTable
+          columns={[
+            { name: 'Decision Date' },
+            { name: 'Date Created' },
+            { name: 'Amount' },
+            { name: 'Job Number' },
+            { name: 'Processed' },
+          ]}
+          data={
+            spiffs
+              ? spiffs.map(spiff => {
+                  return [
+                    {
+                      value:
+                        spiff.getActionsList().length > 0
+                          ? formatDate(
+                              spiff.getActionsList()[
+                                //eslint-disable-next-line
+                                spiff.getActionsList().length - 1
+                              ].getDecisionDate(),
+                            )
+                          : 'No Action Taken',
+                    },
+                    {
+                      value: formatDate(spiff.toObject().timeCreated),
+                    },
+                    {
+                      value: usd(spiff.toObject().spiffAmount),
+                    },
+                    {
+                      value: spiff.toObject().spiffJobNumber,
+                    },
+                    {
+                      value:
+                        spiff.toObject().payrollProcessed === true
+                          ? 'Processed'
+                          : 'Not Processed',
+                    },
+                  ];
+                })
+              : []
+          }
+        />
+      </SectionBar>
+      <SectionBar title="Per Diems">
+        <InfoTable
+          columns={[
+            { name: 'Date' },
+            { name: 'ZipCode' },
+            { name: 'Approved By' },
+            { name: 'Processed' },
+          ]}
+          data={
+            perDiems
+              ? perDiems.map(perDiem => {
+                  return [
+                    {
+                      value: formatDate(perDiem.getDateStarted()),
+                    },
+                    {
+                      value:
+                        perDiem.getRowsList().length > 0
+                          ? perDiem.getRowsList()[0].getZipCode()
+                          : 'No Days Found',
+                    },
+                    {
+                      value:
+                        perDiem.getApprovedById() != 0
+                          ? perDiem.getApprovedByName()
+                          : 'Not Approved',
+                    },
+                    {
+                      value:
+                        perDiem.getPayrollProcessed() === false
+                          ? 'Not Processed'
+                          : 'Processed',
+                    },
+                  ];
+                })
+              : []
+          }
+        />
+      </SectionBar>
+      <SectionBar title="Trips">
+        <InfoTable
+          columns={[
+            { name: 'Date' },
+            { name: 'Distance' },
+            { name: 'Start' },
+            { name: 'End' },
+            { name: 'Approved?' },
+            { name: 'Processed?' },
+          ]}
+          data={
+            trips
+              ? trips.map(trip => {
+                  return [
+                    {
+                      value: formatDate(trip.getDate()),
+                    },
+                    {
+                      value: trip.getDistanceInMiles(),
+                    },
+                    {
+                      value: trip.getOriginAddress(),
+                    },
+                    {
+                      value: trip.getDestinationAddress(),
+                    },
+                    {
+                      value: trip.getApproved() === true ? 'Yes' : 'No',
+                    },
+                    {
+                      value:
+                        trip.getPayrollProcessed() === false
+                          ? 'Not Processed'
+                          : 'Processed',
+                    },
+                  ];
+                })
+              : []
+          }
+        />
+      </SectionBar>
     </SectionBar>
   ) : (
     <Loader />

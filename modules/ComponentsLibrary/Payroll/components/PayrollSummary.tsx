@@ -65,6 +65,7 @@ export const PayrollSummary: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
+
     const getTimesheets = createTimesheetFetchFunction(filter);
     const result = await getTimesheets();
     const resultsList = result.getResultsList();

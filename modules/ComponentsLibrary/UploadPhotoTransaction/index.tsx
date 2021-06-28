@@ -5,28 +5,18 @@ import {
   Transaction,
   TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
-import {
-  TransactionAccount,
-  TransactionAccountList,
-  TransactionAccountClient,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import {
   uploadFileToS3Bucket,
   getFileExt,
   getMimeType,
-  SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
-  UserClientService,
   timestamp,
   TransactionDocumentClientService,
   FileClientService,
 } from '../../../helpers';
 import './styles.less';
 import { ENDPOINT } from '../../../constants';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { type } from 'os';
-import { AccountPicker } from '../Pickers';
-import { id } from 'date-fns/locale';
 import { RoleType } from '../Payroll';
 import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
 import { File } from '@kalos-core/kalos-rpc/File';
@@ -75,15 +65,12 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [load, setLoad] = useState<boolean>(false);
   let temp = costCenters.getResultsList().map(entry => {
     return {
       value: entry.toObject().id,
       label: entry.toObject().description,
     };
   });
-  const [costCenterList, setCostCenterList] = useState<CostCenter[]>(temp);
-  console.log({ costCenterList });
   const [formData, setFormData] = useState<Entry>({
     file: '',
     description: '',
@@ -175,13 +162,6 @@ export const UploadPhotoTransaction: FC<Props> = ({
     },
     [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId, onUpload],
   );
-  console.log({ costCenterList });
-
-  if (SUBJECT_TAGS_TRANSACTIONS === undefined) {
-    console.error(
-      'SUBJECT_TAGS_TRANSACTIONS is undefined. You should try manually deleting the .cache folder and compiling helpers.ts, then try again.',
-    );
-  }
 
   let conditionalSchema = [
     formData.tag == 'Subject=Receipt'

@@ -250,7 +250,7 @@ export class Gallery extends React.PureComponent<props, state> {
     ) : (
       <ButtonLib onClick={this.toggleOpen} disabled={disabled} label={text} />
     );
-    const mimeType = getMimeType(fileList[activeImage]?.key || '');
+    const mimeType = getMimeType(fileList[activeImage]?.key || 'image/jpeg');
     let top = 0;
     if ((rotation / 90) % 2 !== 0) {
       top = 150;

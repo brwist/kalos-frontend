@@ -97,9 +97,8 @@ export const Invoice: FC<Props> = ({
     data.setNotes(servicesRenderedNotes);
     onChange(data);
     setFormKey(formKey + 1);
-  }, [onChange, data, setFormKey, formKey]);
+  }, [onChange, data, setFormKey, formKey, servicesRendered]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const SCHEMA: Schema<Event> = [
     [
       {

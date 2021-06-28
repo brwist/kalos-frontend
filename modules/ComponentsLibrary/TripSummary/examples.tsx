@@ -30,6 +30,7 @@ export default () => (
     />
 
     <ExampleTitle>Viewing as Olbinski</ExampleTitle>
+
     <TripSummary
       perDiemRowIds={[rowIdToUse]}
       userId={101253}
@@ -54,8 +55,8 @@ export default () => (
 
     <ExampleTitle>Can Delete Trips (Viewing as Chernov)</ExampleTitle>
     <TripSummary
-      perDiemRowIds={[1]}
-      userId={101275}
+      perDiemRowIds={[501]}
+      userId={0}
       loggedUserId={101275}
       canDeleteTrips
     />

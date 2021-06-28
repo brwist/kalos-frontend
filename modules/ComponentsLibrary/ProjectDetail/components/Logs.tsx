@@ -3,40 +3,55 @@ import {
   ActivityLogList,
 } from '@kalos-core/kalos-rpc/ActivityLog';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import {
-  ActivityLogClientService,
-  EventClientService,
-  EventType,
-} from '../../../../helpers';
-import { Event, EventList } from '@kalos-core/kalos-rpc/Event';
+import { ActivityLogClientService, EventType } from '../../../../helpers';
 import { InfoTable, Row } from '../../InfoTable';
 import { Loader } from '../../../Loader/main';
 import { CheckInProjectTask } from '../../CheckInProjectTask';
+import { RoleType } from '../../Payroll';
+import { Modal } from '../../Modal';
+import { AddLog } from '../../AddLog';
+import { SectionBar } from '../../SectionBar';
+import { ceil } from 'lodash';
 
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
   project: EventType;
+  role: RoleType;
 }
 
 export const LogsTab: FC<Props> = ({
   serviceCallId,
   loggedUserId,
   project,
+  role,
 }) => {
-  const [projectLogs, setProjectLogs] = useState<ActivityLog[]>();
+  const [projectLogs, setProjectLogs] = useState<ActivityLogList>();
   const [loading, setLoading] = useState<boolean>();
+  const [addingLog, setAddingLog] = useState<boolean>();
+  const [pageNumber, setPageNumber] = useState<number>(0);
+
+  const handleSetAddingLog = useCallback(
+    (addingLog: boolean) => setAddingLog(addingLog),
+    [setAddingLog],
+  );
+
+  const handleSetPageNumber = useCallback(
+    (pageNumber: number) => setPageNumber(pageNumber),
+    [setPageNumber],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     let promises = []; // Doing promise array thing because these are pretty heavy calls and loading taking 30 seconds atm is killing me
     let logs: ActivityLogList;
-    let projectEvents: EventList;
     promises.push(
       new Promise<void>(async resolve => {
         try {
           let req: any = new ActivityLog();
-          req.setNotEqualsList(['EventId']);
+          req.setPageNumber(pageNumber);
+          req.setEventId(project.id);
+          if (role !== 'Manager') req.setUserId(loggedUserId);
           logs = await ActivityLogClientService.BatchGet(req);
           resolve();
         } catch (err) {
@@ -46,44 +61,11 @@ export const LogsTab: FC<Props> = ({
       }),
     );
 
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          let req = new Event();
-          req.setNotEqualsList(['DepartmentId']);
-          req.setDepartmentId(0);
-          projectEvents = await EventClientService.BatchGet(req);
-          resolve();
-        } catch (err) {
-          console.error(`An error occurred while getting projects: `, err);
-          resolve();
-        }
-      }),
-    );
-
     Promise.all(promises).then(() => {
-      // Would have done all of this with a protobuffer field and an @inject_tag in the backend,
-      // but the ActivityLog would have to import Event to display an event and that would cause a
-      // circular dependency
-
-      // As a result, I'm just grabbing all of the projects and checking each real fast and filtering the logs
-      // by that. This isn't the fastest solution but it works for now and it's not terrible, still ~O(n^2)
-
-      let newResList = logs.getResultsList().filter(log => {
-        let isInside = false;
-        projectEvents.getResultsList().forEach(projectEvent => {
-          if (projectEvent.getId() === log.getEventId()) {
-            isInside = true;
-          }
-        });
-
-        return isInside;
-      });
-      logs.setResultsList(newResList);
-      setProjectLogs(logs.getResultsList());
+      setProjectLogs(logs);
       setLoading(false);
     });
-  }, [setProjectLogs, setLoading]);
+  }, [pageNumber, project.id, role, loggedUserId]);
   useEffect(() => {
     load();
   }, [load]);
@@ -91,10 +73,31 @@ export const LogsTab: FC<Props> = ({
     <Loader />
   ) : (
     <>
+      {addingLog && (
+        <Modal open={true} onClose={() => handleSetAddingLog(false)}>
+          <AddLog
+            onClose={() => handleSetAddingLog(false)}
+            onSave={() => {
+              handleSetAddingLog(false);
+              load();
+            }}
+            loggedUserId={loggedUserId}
+            eventId={serviceCallId}
+          />
+        </Modal>
+      )}
       <CheckInProjectTask
         projectToUse={project!}
         loggedUserId={loggedUserId}
         serviceCallId={serviceCallId}
+      />
+      <SectionBar
+        title="Project Logs"
+        pagination={{
+          count: projectLogs ? ceil(projectLogs!.getTotalCount() / 25) : 0,
+          onChangePage: (page: number) => handleSetPageNumber(page),
+          page: pageNumber,
+        }}
       />
       <InfoTable
         key={projectLogs?.toString()}
@@ -103,9 +106,17 @@ export const LogsTab: FC<Props> = ({
           { name: 'User ID' },
           { name: 'Description' },
           { name: 'Date' },
-          { name: 'Property ID' },
+          {
+            name: 'Property ID',
+            actions: [
+              {
+                label: 'Add Log',
+                onClick: () => handleSetAddingLog(true),
+              },
+            ],
+          },
         ]}
-        data={projectLogs?.map(log => {
+        data={projectLogs?.getResultsList().map(log => {
           return [
             { value: log.getId() },
             { value: log.getUserId() },
