@@ -26,6 +26,9 @@ import {
 } from '../../ComponentsLibrary/SpiffToolLogEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { SpiffType, TaskEventData } from '@kalos-core/kalos-rpc/Task';
+
 import {
   getRPCFields,
   timestamp,
@@ -36,14 +39,10 @@ import {
   escapeText,
   formatDay,
   makeLast12MonthsOptions,
-  TaskType,
-  UserType,
-  SpiffTypeType,
-  SpiffToolAdminActionType,
-  TaskEventDataType,
   UserClientService,
   formatWeek,
   EventClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
@@ -126,58 +125,53 @@ export const SpiffTool: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [editing, setEditing] = useState<TaskType>();
-  const [extendedEditing, setExtendedEditing] = useState<TaskType>();
-  const [deleting, setDeleting] = useState<TaskType>();
-  const [loggedInUser, setLoggedInUser] = useState<UserType>();
-  const [entries, setEntries] = useState<TaskType[]>([]);
+  const [editing, setEditing] = useState<Task>();
+  const [extendedEditing, setExtendedEditing] = useState<Task>();
+  const [deleting, setDeleting] = useState<Task>();
+  const [loggedInUser, setLoggedInUser] = useState<User>();
+  const [entries, setEntries] = useState<Task[]>([]);
   const [count, setCount] = useState<number>(0);
-  const [departments, setDepartments] = useState<PermissionGroup.AsObject[]>();
+  const [departments, setDepartments] = useState<PermissionGroup[]>();
   const [page, setPage] = useState<number>(0);
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
-  const [technicians, setTechnicians] = useState<UserType[]>([]);
+  const [technicians, setTechnicians] = useState<User[]>([]);
   const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
-  const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
   const [payrollOpen, setPayrollOpen] = useState<boolean>(false);
   const [userRole, setUserRole] = useState<RoleType>();
-  const [pendingPayroll, setPendingPayroll] = useState<TaskType>();
-  const [pendingPayrollReject, setPendingPayrollReject] = useState<TaskType>();
-  const [pendingAudit, setPendingAudit] = useState<TaskType>();
+  const [pendingPayroll, setPendingPayroll] = useState<Task>();
+  const [pendingPayrollReject, setPendingPayrollReject] = useState<Task>();
+  const [pendingAudit, setPendingAudit] = useState<Task>();
 
-  const [
-    serviceCallEditing,
-    setServiceCallEditing,
-  ] = useState<TaskEventDataType>();
+  const [serviceCallEditing, setServiceCallEditing] = useState<TaskEventData>();
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
     '',
   );
-  const [
-    statusEditing,
-    setStatusEditing,
-  ] = useState<SpiffToolAdminActionType>();
-  const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(
-    ({ type, id: value }) => ({ label: escapeText(type), value }),
-  );
+  const [statusEditing, setStatusEditing] = useState<SpiffToolAdminAction>();
+  const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(type => ({
+    label: escapeText(type.getType()),
+    value: type.getId(),
+  }));
   const SPIFF_EXT: { [key: number]: string } = spiffTypes.reduce(
-    (aggr, { id, ext }) => ({ ...aggr, [id]: ext }),
+    (aggr, id) => ({ ...aggr, [id.getId()]: id.getExt() }),
     {},
   );
   const SPIFF_TYPE: { [key: number]: string } = spiffTypes.reduce(
-    (aggr, { id, type }) => ({ ...aggr, [id]: type }),
+    (aggr, id) => ({ ...aggr, [id.getId()]: id.getType() }),
     {},
   );
   const loadLoggedInUser = useCallback(async () => {
     console.log(loggedUserId);
     const userResult = await UserClientService.loadUserById(loggedUserId);
-    const tempRole = userResult.permissionGroupsList.find(
-      p => p.type === 'role',
-    );
-    const tempDepartments = userResult.permissionGroupsList.filter(
-      p => p.type === 'department',
-    );
+    const tempRole = userResult
+      .getPermissionGroupsList()
+      .find(p => p.getType() === 'role');
+    const tempDepartments = userResult
+      .getPermissionGroupsList()
+      .filter(p => p.getType() === 'department');
     if (tempRole != undefined) {
-      setUserRole(tempRole.name as RoleType);
+      setUserRole(tempRole.getName() as RoleType);
     }
     if (tempDepartments) {
       setDepartments(tempDepartments);
@@ -196,9 +190,9 @@ export const SpiffTool: FC<Props> = ({
     setLoading(true);
     try {
       if (type === 'Spiff' && spiffTypes.length === 0) {
-        const { resultsList: spiffTypes } = (
+        const spiffTypes = (
           await TaskClientService.GetSpiffTypes()
-        ).toObject();
+        ).getResultsList();
         setSpiffTypes(spiffTypes);
       }
 
@@ -209,7 +203,8 @@ export const SpiffTool: FC<Props> = ({
       req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
       req.setOrderDir('DESC');
       if (needsManagerAction) {
-        req.setFieldMaskList(['AdminActionId']);
+        //req.setAdminActionId(0);
+        req.addFieldMask('AdminActionId');
       }
       if (needsPayrollAction && toggle == false) {
         console.log('we want to see things that are not processed');
@@ -255,9 +250,9 @@ export const SpiffTool: FC<Props> = ({
         )}-${trailingZero(n.getDate())}`;
         req.setDateRangeList(['>=', month, '<', ltDate]);
       }
-      console.log(req);
+      console.log('req', req);
       const res = await TaskClientService.BatchGet(req);
-      const resultsList = res.getResultsList().map(el => el.toObject());
+      const resultsList = res.getResultsList();
       const count = res.getTotalCount();
       setCount(count);
       setEntries(resultsList);
@@ -296,35 +291,35 @@ export const SpiffTool: FC<Props> = ({
     [setPage, setLoaded],
   );
   const handlePendingPayrollToggle = useCallback(
-    (task?: TaskType) => () => setPendingPayroll(task),
+    (task?: Task) => () => setPendingPayroll(task),
     [setPendingPayroll],
   );
   const handlePendingPayrollToggleReject = useCallback(
-    (task?: TaskType) => () => setPendingPayrollReject(task),
+    (task?: Task) => () => setPendingPayrollReject(task),
     [setPendingPayrollReject],
   );
   const handlePendingAuditToggle = useCallback(
-    (task?: TaskType) => () => setPendingAudit(task),
+    (task?: Task) => () => setPendingAudit(task),
     [setPendingAudit],
   );
   const handleSetExtendedEditing = useCallback(
-    (extendedEditing?: TaskType) => async () => {
+    (extendedEditing?: Task) => async () => {
       setExtendedEditing(extendedEditing);
       setStatusEditing(undefined);
     },
     [setExtendedEditing, setStatusEditing],
   );
   const handleSetEditing = useCallback(
-    (editing?: TaskType) => () => setEditing(editing),
+    (editing?: Task) => () => setEditing(editing),
     [setEditing],
   );
   const handleSetDeleting = useCallback(
-    (deleting?: TaskType) => () => setDeleting(deleting),
+    (deleting?: Task) => () => setDeleting(deleting),
     [setDeleting],
   );
   const handlePayroll = useCallback(async () => {
     if (pendingPayroll) {
-      const { id } = pendingPayroll;
+      const id = pendingPayroll.getId();
       setLoading(true);
       setPendingPayroll(undefined);
       const t = new Task();
@@ -337,7 +332,7 @@ export const SpiffTool: FC<Props> = ({
   }, [load, pendingPayroll]);
   const handlePayrollReject = useCallback(async () => {
     if (pendingPayrollReject) {
-      const { id } = pendingPayrollReject;
+      const id = pendingPayrollReject?.getId();
       setLoading(true);
       setPendingPayroll(undefined);
       const t = new Task();
@@ -352,7 +347,7 @@ export const SpiffTool: FC<Props> = ({
   }, [load, pendingPayrollReject]);
   const handleAudit = useCallback(async () => {
     if (pendingAudit) {
-      const { id } = pendingAudit;
+      const id = pendingAudit.getId();
       setLoading(true);
       setPendingAudit(undefined);
       const t = new Task();
@@ -367,7 +362,7 @@ export const SpiffTool: FC<Props> = ({
     if (deleting) {
       setLoading(true);
       const req = new Task();
-      req.setId(deleting.id);
+      req.setId(deleting.getId());
       setDeleting(undefined);
       await TaskClientService.Delete(req);
       setLoading(false);
@@ -375,11 +370,12 @@ export const SpiffTool: FC<Props> = ({
     }
   }, [deleting, setLoading, setDeleting, load]);
   const handleSave = useCallback(
-    async (data: TaskType) => {
+    async (data: Task) => {
       if (editing) {
         setSaving(true);
+        const temp = makeSafeFormObject(data, new Task());
         const now = timestamp();
-        const isNew = !editing.id;
+        const isNew = !editing.getId();
         const req = new Task();
         const fieldMaskList = [];
         if (isNew) {
@@ -392,13 +388,15 @@ export const SpiffTool: FC<Props> = ({
           req.setStatusId(1);
           req.setAdminActionId(0);
           let tempEvent = await EventClientService.LoadEventByServiceCallID(
-            parseInt(data.spiffJobNumber),
+            parseInt(temp.getSpiffJobNumber()),
           );
           req.setSpiffAddress(
-            tempEvent.property ? tempEvent.property?.address : '',
+            tempEvent.getProperty() !== undefined
+              ? tempEvent.getProperty()!.getAddress()
+              : '',
           );
-          data.spiffJobNumber = tempEvent.logJobNumber;
-          req.setSpiffJobNumber(data.spiffJobNumber);
+          temp.setSpiffJobNumber(tempEvent.getLogJobNumber());
+          req.setSpiffJobNumber(temp.getSpiffJobNumber());
 
           fieldMaskList.push(
             'TimeCreated',
@@ -417,13 +415,6 @@ export const SpiffTool: FC<Props> = ({
             fieldMaskList.push('ToolpurchaseDate');
           }
         }
-        for (const fieldName in data) {
-          const { upperCaseProp, methodName } = getRPCFields(fieldName);
-          // @ts-ignore
-          req[methodName](data[fieldName]);
-          fieldMaskList.push(upperCaseProp);
-        }
-        req.setFieldMaskList(fieldMaskList);
         await TaskClientService[isNew ? 'Create' : 'Update'](req);
         setSaving(false);
         setEditing(undefined);
@@ -473,11 +464,15 @@ export const SpiffTool: FC<Props> = ({
   const reloadExtendedEditing = useCallback(async () => {
     if (extendedEditing) {
       const entries = await load();
-      setExtendedEditing(entries.find(({ id }) => id === extendedEditing.id));
+      if (entries) {
+        setExtendedEditing(
+          entries.find(entry => entry.getId() === extendedEditing.getId()),
+        );
+      }
     }
   }, [extendedEditing, load, setExtendedEditing]);
   const handleClickAddStatus = useCallback(
-    (entry: TaskType) => () => {
+    (entry: Task) => () => {
       handleSetExtendedEditing(entry)();
       setStatusEditing(getStatusFormInit(+STATUSES[0].value));
     },
@@ -501,11 +496,9 @@ export const SpiffTool: FC<Props> = ({
     ],
   );
   const handleOpenServiceCall = useCallback(
-    (entry: TaskType) => (
-      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
+    (entry: Task) => (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
       e.preventDefault();
-      const { event } = entry;
+      const event = entry.getEvent();
       if (!event) return;
       setServiceCallEditing(event);
     },
@@ -528,7 +521,7 @@ export const SpiffTool: FC<Props> = ({
     () => setUnlinkedSpiffJobNumber(''),
     [setUnlinkedSpiffJobNumber],
   );
-  const isAdmin = loggedInUser && !!loggedInUser.isAdmin; // FIXME isSpiffAdmin correct?
+  const isAdmin = loggedInUser && !!loggedInUser.getIsAdmin(); // FIXME isSpiffAdmin correct?
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -550,32 +543,32 @@ export const SpiffTool: FC<Props> = ({
     userRole,
     loadLoggedInUser,
   ]);
-  const SCHEMA: Schema<TaskType> =
+  const SCHEMA: Schema<Task> =
     type === 'Spiff'
       ? [
           [
             {
-              name: 'externalId',
+              name: 'getExternalId',
               label: 'Technician',
               type: 'technician',
               disabled: role != 'Manager' ? true : false,
             },
             {
-              name: 'timeDue',
+              name: 'getTimeDue',
               label: 'Claim Date',
               readOnly: true,
               type: 'date',
             },
             {
-              name: 'spiffAmount',
+              name: 'getSpiffAmount',
               label: 'Amount',
               startAdornment: '$',
               type: 'number',
               required: true,
             },
-            { name: 'spiffJobNumber', label: 'Job Number', required: true },
+            { name: 'getSpiffJobNumber', label: 'Job Number', required: true },
             {
-              name: 'datePerformed',
+              name: 'getDatePerformed',
               label: 'Date Performed',
               type: 'date',
               required: true,
@@ -583,24 +576,28 @@ export const SpiffTool: FC<Props> = ({
           ],
           [
             {
-              name: 'spiffTypeId',
+              name: 'getSpiffTypeId',
               label: 'Spiff Type',
               options: SPIFF_TYPES_OPTIONS,
               required: true,
             },
-            { name: 'briefDescription', label: 'Description', multiline: true },
+            {
+              name: 'getBriefDescription',
+              label: 'Description',
+              multiline: true,
+            },
           ],
         ]
       : [
           [
             {
-              name: 'timeDue',
+              name: 'getTimeDue',
               label: 'Claim Date',
               readOnly: true,
               type: 'date',
             },
             {
-              name: 'toolpurchaseCost',
+              name: 'getToolpurchaseCost',
               label: 'Tool Purchase Cost',
               startAdornment: '$',
               type: 'number',
@@ -608,15 +605,19 @@ export const SpiffTool: FC<Props> = ({
             },
 
             {
-              name: 'toolpurchaseDate',
+              name: 'getToolpurchaseDate',
               label: 'Purchase Date',
               type: 'date',
               required: true,
             },
           ],
           [
-            { name: 'referenceNumber', label: 'Reference #' },
-            { name: 'briefDescription', label: 'Description', multiline: true },
+            { name: 'getReferenceNumber', label: 'Reference #' },
+            {
+              name: 'getBriefDescription',
+              label: 'Description',
+              multiline: true,
+            },
           ],
         ];
   const COLUMNS: Columns = [
@@ -640,9 +641,13 @@ export const SpiffTool: FC<Props> = ({
       {STATUS_TXT[status].label}
     </div>
   );
-  const renderActionsList = (actionsList: SpiffToolAdminActionType[]) => {
+  const renderActionsList = (actionsList: SpiffToolAdminAction[]) => {
     if (actionsList.length === 0) return '';
-    const { status, reason, reviewedBy } = actionsList[0];
+    const status = actionsList[0].getStatus();
+    const reason = actionsList[0].getReason();
+    const reviewedBy = actionsList[0].getReviewedBy();
+
+    //const { status, reason, reviewedBy } = actionsList[0];
     return (
       <Tooltip
         content={
@@ -668,35 +673,20 @@ export const SpiffTool: FC<Props> = ({
     } else {
       newTask.setToolpurchaseDate(timestamp());
     }
-    return newTask.toObject();
+    return newTask;
   }, [type, SPIFF_TYPES_OPTIONS]);
 
   const data: Data = loading
     ? makeFakeRows(type === 'Spiff' ? 9 : 7, 3)
     : entries.map(entry => {
-        const {
-          spiffToolId,
-          spiffAmount,
-          spiffJobNumber,
-          datePerformed,
-          briefDescription,
-          timeDue,
-          externalId,
-          toolpurchaseCost,
-          spiffTypeId,
-          payrollProcessed,
-          referenceNumber,
-          actionsList,
-          event,
-          ownerName,
-          duplicatesList,
-          adminActionId,
-        } = entry;
         const isDuplicate =
-          duplicatesList.filter(({ actionsList }) => actionsList.length > 0)
-            .length > 0;
+          entry
+            .getDuplicatesList()
+            .filter(dupe => dupe.getActionsList().length > 0).length > 0;
         const technicianValue = (
-          <Link onClick={handleClickTechnician(+externalId)}>{ownerName}</Link>
+          <Link onClick={handleClickTechnician(+entry.getExternalId())}>
+            {entry.getOwnerName()}
+          </Link>
         );
         const actions = isAdmin
           ? [
@@ -705,7 +695,10 @@ export const SpiffTool: FC<Props> = ({
                   key={2}
                   size="small"
                   onClick={handleClickAddStatus(entry)}
-                  disabled={actionsList[0] && actionsList[0].status === 1}
+                  disabled={
+                    entry.getActionsList()[0] &&
+                    entry.getActionsList()[0].getStatus() === 1
+                  }
                 >
                   <ThumbsUpDownIcon />
                 </IconButton>
@@ -771,62 +764,75 @@ export const SpiffTool: FC<Props> = ({
             ];
         return [
           {
-            value: formatDate(timeDue),
+            value: formatDate(entry.getTimeDue()),
             onClick: handleSetExtendedEditing(entry),
           },
-          { value: spiffToolId, onClick: handleSetExtendedEditing(entry) },
+          {
+            value: entry.getSpiffToolId(),
+            onClick: handleSetExtendedEditing(entry),
+          },
           {
             value: `${
-              type === 'Spiff' ? `${SPIFF_EXT[spiffTypeId] || ''} ` : ''
-            }${briefDescription}`,
+              type === 'Spiff'
+                ? `${SPIFF_EXT[entry.getSpiffTypeId()] || ''} `
+                : ''
+            }${entry.getBriefDescription()}`,
             onClick: handleSetExtendedEditing(entry),
           },
           ...(type === 'Spiff'
             ? [
                 {
-                  value: formatDate(datePerformed),
+                  value: formatDate(entry.getDatePerformed()),
                   onClick: handleSetExtendedEditing(entry),
                 },
               ]
             : []),
           {
-            value: isAdmin ? technicianValue : ownerName,
+            value: isAdmin ? technicianValue : entry.getOwnerName(),
             onClick: handleSetExtendedEditing(entry),
           },
           {
             value:
               type === 'Spiff' ? (
-                event && event.id ? (
+                entry.getEvent() && entry.getEvent()!.getId() ? (
                   <Link onClick={handleOpenServiceCall(entry)}>
-                    {spiffJobNumber}
+                    {entry.getSpiffJobNumber()}
                   </Link>
                 ) : (
-                  <Link onClick={handleClickSpiffJobNumber(spiffJobNumber)}>
-                    {spiffJobNumber}
+                  <Link
+                    onClick={handleClickSpiffJobNumber(
+                      entry.getSpiffJobNumber(),
+                    )}
+                  >
+                    {entry.getSpiffJobNumber()}
                   </Link>
                 )
               ) : (
-                referenceNumber
+                entry.getReferenceNumber()
               ),
           },
           {
-            value: renderActionsList(actionsList),
+            value: renderActionsList(entry.getActionsList()),
             onClick: handleSetExtendedEditing(entry),
           },
           {
             value:
-              actionsList.length === 0
+              entry.getActionsList().length === 0
                 ? 'No Action Taken '
-                : formatDate(actionsList[0].dateProcessed) === '1/1/1' &&
-                  entry.payrollProcessed == true
+                : formatDate(entry.getActionsList()[0].getDateProcessed()) ===
+                    '1/1/1' && entry.getPayrollProcessed() == true
                 ? 'Processed, no Date'
-                : formatDate(actionsList[0].dateProcessed) === '1/1/1' &&
-                  entry.payrollProcessed == false
+                : formatDate(entry.getActionsList()[0].getDateProcessed()) ===
+                    '1/1/1' && entry.getPayrollProcessed() == false
                 ? 'Not Processed'
-                : formatDate(actionsList[0].dateProcessed),
+                : formatDate(entry.getActionsList()[0].getDateProcessed()),
           },
           {
-            value: '$' + (type === 'Spiff' ? spiffAmount : toolpurchaseCost),
+            value:
+              '$' +
+              (type === 'Spiff'
+                ? entry.getSpiffAmount()
+                : entry.getToolpurchaseCost()),
             onClick: handleSetExtendedEditing(entry),
             actions: type === 'Spiff' ? [] : actions,
           },
@@ -837,38 +843,37 @@ export const SpiffTool: FC<Props> = ({
                     <Tooltip
                       content={
                         <>
-                          {duplicatesList
-                            .filter(({ actionsList }) => actionsList.length > 0)
-                            .map(
-                              (
-                                {
-                                  id,
-                                  ownerName,
-                                  spiffTypeId,
-                                  timeDue,
-                                  actionsList,
-                                },
-                                idx,
-                              ) => (
-                                <div key={id}>
-                                  {idx !== 0 && <hr />}
-                                  <strong>Tech Name: </strong>
-                                  {ownerName}
-                                  <br />
-                                  <strong>Spiff: </strong>
-                                  {SPIFF_TYPE[spiffTypeId]}
-                                  <br />
-                                  <strong>Reviewed By: </strong>
-                                  {actionsList[0].reviewedBy.toUpperCase()}
-                                  <br />
-                                  <strong>Reason: </strong>
-                                  {actionsList[0].reason}
-                                  <br />
-                                  <strong>Date Claimed: </strong>
-                                  {formatDay(timeDue)} {formatDate(timeDue)}
-                                </div>
-                              ),
-                            )}
+                          {entry
+                            .getDuplicatesList()
+                            .filter(
+                              actions => actions.getActionsList().length > 0,
+                            )
+                            .map(idx => (
+                              <div key={idx.getId()}>
+                                {/*idx !== 0 && <hr />}*/}
+                                <strong>Tech Name: </strong>
+                                {idx.getOwnerName()}
+                                <br />
+                                <strong>Spiff: </strong>
+                                {SPIFF_TYPE[idx.getSpiffTypeId()]}
+                                <br />
+                                <strong>Reviewed By: </strong>
+                                {idx
+                                  .getActionsList()[0]
+                                  .getReviewedBy()
+                                  .toUpperCase()}
+                                <br />
+                                <strong>Reason: </strong>
+                                {idx.getActionsList()[0].getReason() ===
+                                undefined
+                                  ? 'No Reason'
+                                  : idx.getActionsList()[0].getReason()}
+                                <br />
+                                <strong>Date Claimed: </strong>
+                                {formatDay(idx.getTimeDue())}{' '}
+                                {formatDate(idx.getTimeDue())}
+                              </div>
+                            ))}
                         </>
                       }
                     >
@@ -900,9 +905,9 @@ export const SpiffTool: FC<Props> = ({
               name: 'technician' as const,
               label: 'Technician',
               options: [
-                ...technicians.map(({ id, firstname, lastname }) => ({
-                  label: `${firstname} ${lastname}`,
-                  value: id,
+                ...technicians.map(tech => ({
+                  label: `${tech.getFirstname()} ${tech.getLastname()}`,
+                  value: tech.getId(),
                 })),
                 { label: OPTION_ALL, value: 0 },
               ],
@@ -1002,7 +1007,7 @@ export const SpiffTool: FC<Props> = ({
       <InfoTable columns={COLUMNS} data={data} loading={loading} />
       {editing && (
         <Modal open onClose={handleSetEditing()}>
-          <Form<TaskType>
+          <Form<Task>
             title={`${type === 'Spiff' ? 'Spiff' : 'Tool Purchase'} Request`}
             schema={SCHEMA}
             onClose={handleSetEditing()}
@@ -1031,7 +1036,7 @@ export const SpiffTool: FC<Props> = ({
         <ConfirmDelete
           open
           kind={type === 'Spiff' ? 'Spiff' : 'Tool Request'}
-          name={deleting.briefDescription}
+          name={deleting.getBriefDescription()}
           onConfirm={handleDelete}
           onClose={handleSetDeleting()}
         />
@@ -1055,10 +1060,10 @@ export const SpiffTool: FC<Props> = ({
         <Modal open onClose={handleUnsetServiceCallEditing} fullScreen>
           <ServiceCall
             loggedUserId={loggedUserId}
-            serviceCallId={serviceCallEditing.id}
+            serviceCallId={serviceCallEditing.getId()}
             onClose={handleUnsetServiceCallEditing}
-            propertyId={serviceCallEditing.propertyId}
-            userID={serviceCallEditing.customerId}
+            propertyId={serviceCallEditing.getPropertyId()}
+            userID={serviceCallEditing.getCustomerId()}
           />
         </Modal>
       )}

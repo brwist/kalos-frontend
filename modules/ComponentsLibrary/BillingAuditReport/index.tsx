@@ -21,6 +21,8 @@ import {
   BillingAuditType,
 } from '../../../helpers';
 
+// TODO Errors left issues with search functionality
+
 interface Props {
   month: string;
   loggedUserId: number;
@@ -49,10 +51,8 @@ export const BillingAuditReport: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [entries, setEntries] = useState<BillingAuditType[]>([]);
-  const [
-    serviceCallEdited,
-    setServiceCallEdited,
-  ] = useState<BillingAuditType>();
+  const [serviceCallEdited, setServiceCallEdited] =
+    useState<BillingAuditType>();
   const startDate = format(new Date(month.replace('%', '01')), 'yyyy-MM-dd');
   const [form, setForm] = useState<FilterForm>({
     startDate,
@@ -63,7 +63,7 @@ export const BillingAuditReport: FC<Props> = ({
   });
   const load = useCallback(async () => {
     setLoading(true);
-    const entries = await loadBillingAuditReport(form.startDate, form.endDate);
+    const entries = await loadBillingAuditReport(form.startDate);
     setEntries(entries);
     setLoading(false);
   }, [setLoading, setEntries, form]);
@@ -73,7 +73,7 @@ export const BillingAuditReport: FC<Props> = ({
       load();
     }
   }, [loaded, setLoaded, load]);
-  const handleSearch = useCallback(() => setLoaded(false), [setForm]);
+  const handleSearch = useCallback(() => setLoaded(false), []);
   const handleSetServiceCallEdited = useCallback(
     (serviceCallEdited?: BillingAuditType) => () =>
       setServiceCallEdited(serviceCallEdited),

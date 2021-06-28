@@ -9,7 +9,7 @@ c.GetToken('test', 'test').then(() => {
   ReactDOM.render(
     // can also be 7051
     // 101275 is Pavel Chernov
-    <PerDiem loggedUserId={102412} withHeader />,
+    <PerDiem loggedUserId={7051} withHeader />,
     document.getElementById('root'),
   );
 });

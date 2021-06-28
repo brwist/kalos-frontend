@@ -13,5 +13,6 @@ export const Link: FC<Props> = ({ href = '', blank = false, ...props }) => (
     href={href}
     {...props}
     target={blank ? '_blank' : '_self'}
+    rel={'noreferrer'}
   />
 );

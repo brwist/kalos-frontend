@@ -1,33 +1,22 @@
 import React, { FC, useCallback, useState } from 'react';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
-import {
-  format,
-  roundToNearestMinutes,
-  parseISO,
-  isBefore,
-  addDays,
-} from 'date-fns';
+import { format, roundToNearestMinutes, parseISO, isBefore } from 'date-fns';
 import { Button } from '../../Button';
 import {
   TimesheetLine,
   TimesheetLineClient,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
-import {
-  ServicesRenderedClient,
-  ServicesRendered,
-} from '@kalos-core/kalos-rpc/ServicesRendered';
 import { Modal } from '../../Modal';
 import { Form, Schema } from '../../Form';
 import { useConfirm } from '../../ConfirmService';
 import { ENDPOINT } from '../../../../constants';
 import './editModal.less';
 import { NULL_TIME_VALUE } from '../constants';
-import { UserClientService } from '../../../../helpers';
+import { makeSafeFormObject } from '../../../../helpers';
 
-const srClient = new ServicesRenderedClient(ENDPOINT);
 const tslClient = new TimesheetLineClient(ENDPOINT);
 
-type Entry = TimesheetLine.AsObject;
+type Entry = TimesheetLine;
 
 interface EntryWithDate extends Entry {
   date?: string;
@@ -51,7 +40,7 @@ type Props = {
     | 'reject'
     | '';
   onSave: (
-    entry: TimesheetLine.AsObject,
+    entry: TimesheetLine,
     action?: 'delete' | 'approve' | 'reject',
   ) => void;
   onClose: () => void;
@@ -68,16 +57,15 @@ const EditTimesheetModal: FC<Props> = ({
   onSave,
   onClose,
 }): JSX.Element => {
-  console.log(defaultDepartment);
   const confirm = useConfirm();
   const [saving, setSaving] = useState<boolean>(false);
   const SCHEMA: Schema<EntryWithDate> = [
     [{ label: 'Job Number', name: 'jobId', type: 'eventId' }],
-    [{ label: 'Brief Description', name: 'briefDescription' }],
+    [{ label: 'Brief Description', name: 'getBriefDescription' }],
     [
       {
         label: 'Class Code',
-        name: 'classCodeId',
+        name: 'getClassCodeId',
         type: 'classCode',
         required: true,
       },
@@ -85,7 +73,7 @@ const EditTimesheetModal: FC<Props> = ({
     [
       {
         label: 'Department',
-        name: 'departmentCode',
+        name: 'getDepartmentCode',
         type: 'department',
         required: true,
       },
@@ -94,77 +82,96 @@ const EditTimesheetModal: FC<Props> = ({
       { label: 'Date', name: 'date', type: 'mui-date', required: true },
       {
         label: 'Started',
-        name: 'timeStarted',
+        name: 'getTimeStarted',
         type: 'mui-time',
         required: true,
       },
       {
         label: 'Finished',
-        name: 'timeFinished',
+        name: 'getTimeFinished',
         type: 'mui-time',
         required: true,
       },
     ],
-    [{ label: 'Notes', name: 'notes', multiline: true }],
+    [{ label: 'Notes', name: 'getNotes', multiline: true }],
   ];
-  const { id = 0 } = entry;
-  const data = { ...entry };
-
-  if (defaultDepartment && action === 'create')
-    data.departmentCode = defaultDepartment;
-  if (action != 'create' && data.referenceNumber)
-    data.jobId = parseInt(data.referenceNumber);
-  console.log(data.jobId);
-  if (data.timeStarted) {
-    data.date = format(parseISO(data.timeStarted), 'yyyy-MM-dd');
-    data.timeStarted = format(
-      roundToNearestMinutes(parseISO(data.timeStarted), { nearestTo: 15 }),
-      'yyyy-MM-dd HH:mm',
+  const data = entry;
+  const id = data.getId();
+  if (defaultDepartment && action === 'create') {
+    data.setDepartmentCode(defaultDepartment);
+  }
+  if (action != 'create' && data.getReferenceNumber()) {
+    data.jobId = parseInt(data.getReferenceNumber());
+  }
+  if (data.getTimeStarted()) {
+    data.date = format(parseISO(data.getTimeStarted()), 'yyyy-MM-dd');
+    data.setTimeStarted(
+      format(
+        roundToNearestMinutes(parseISO(data.getTimeStarted()), {
+          nearestTo: 15,
+        }),
+        'yyyy-MM-dd HH:mm',
+      ),
     );
-    data.timeFinished = format(
-      roundToNearestMinutes(parseISO(data.timeFinished), { nearestTo: 15 }),
-      'yyyy-MM-dd HH:mm',
+    data.setTimeFinished(
+      format(
+        roundToNearestMinutes(parseISO(data.getTimeFinished()), {
+          nearestTo: 15,
+        }),
+        'yyyy-MM-dd HH:mm',
+      ),
     );
   } else {
     data.date = format(new Date(), 'yyyy-MM-dd');
-    data.timeStarted = format(
-      roundToNearestMinutes(new Date(), { nearestTo: 15 }),
-      'yyyy-MM-dd HH:mm',
+    data.setTimeStarted(
+      format(
+        roundToNearestMinutes(new Date(), { nearestTo: 15 }),
+        'yyyy-MM-dd HH:mm',
+      ),
     );
-    data.timeFinished = format(
-      roundToNearestMinutes(new Date(), { nearestTo: 15 }),
-      'yyyy-MM-dd HH:mm',
+    data.setTimeFinished(
+      format(
+        roundToNearestMinutes(new Date(), { nearestTo: 15 }),
+        'yyyy-MM-dd HH:mm',
+      ),
     );
   }
-  console.log(data);
   const handleUpdate = useCallback(
     async (data: EntryWithDate) => {
       setSaving(true);
-      data.timeStarted = `${format(
-        data.date ? parseISO(data.date) : new Date(),
-        'yyyy-MM-dd',
-      )} ${format(parseISO(data.timeStarted), 'HH:mm')}`;
-      data.timeFinished = `${format(
-        data.date ? parseISO(data.date) : new Date(),
-        'yyyy-MM-dd',
-      )} ${format(parseISO(data.timeFinished), 'HH:mm')}`;
-      if (isBefore(parseISO(data.timeFinished), parseISO(data.timeStarted))) {
+      data = makeSafeFormObject(data, new TimesheetLine());
+      data.setTimeStarted(
+        `${format(
+          data.date ? parseISO(data.date) : new Date(),
+          'yyyy-MM-dd',
+        )} ${format(parseISO(data.getTimeStarted()), 'HH:mm')}`,
+      );
+      data.setTimeFinished(
+        `${format(
+          data.date ? parseISO(data.date) : new Date(),
+          'yyyy-MM-dd',
+        )} ${format(parseISO(data.getTimeFinished()), 'HH:mm')}`,
+      );
+      if (
+        isBefore(
+          parseISO(data.getTimeFinished()),
+          parseISO(data.getTimeStarted()),
+        )
+      ) {
         console.log('caught a negative time, lets do something about it here');
       }
       delete data.date;
       const req = new TimesheetLine();
       req.setId(id);
-      console.log(data);
-      console.log(entry);
-      //reference number,time started,timefinished,departmentcode, class code,brief desc, notes
-      if (data.jobId) req.setReferenceNumber(data.jobId.toString());
-      console.log(data.jobId);
-      req.setTimeStarted(data.timeStarted);
-      req.setTimeFinished(data.timeFinished);
-      req.setDepartmentCode(data.departmentCode);
-      req.setClassCodeId(data.classCodeId);
-      req.setBriefDescription(data.briefDescription);
-      req.setNotes(data.notes);
+      if (data.jobId) {
+        req.setReferenceNumber(data.jobId.toString());
+      }
+      req.setTimeStarted(data.getTimeStarted());
+      req.setTimeFinished(data.getTimeFinished());
+      req.setDepartmentCode(data.getDepartmentCode());
+      req.setClassCodeId(data.getClassCodeId());
+      req.setBriefDescription(data.getBriefDescription());
+      req.setNotes(data.getNotes());
 
       req.setFieldMaskList([
         'ReferenceNumber',
@@ -175,43 +182,37 @@ const EditTimesheetModal: FC<Props> = ({
         'BriefDescription',
         'Notes',
       ]);
+      console.log(req);
       const result = await tslClient.Update(req);
       setSaving(false);
       onSave(result);
     },
-    [setSaving, id, entry, onSave],
+    [setSaving, onSave],
   );
 
   const handleCreate = useCallback(
     async (data: EntryWithDate) => {
       setSaving(true);
-      data.timeStarted = `${format(
-        data.date ? parseISO(data.date) : new Date(),
-        'yyyy-MM-dd',
-      )} ${format(parseISO(data.timeStarted), 'HH:mm')}`;
-      data.timeFinished = `${format(
-        data.date ? parseISO(data.date) : new Date(),
-        'yyyy-MM-dd',
-      )} ${format(parseISO(data.timeFinished), 'HH:mm')}`;
+      data = makeSafeFormObject(data, new TimesheetLine());
+      data.setTimeStarted(
+        `${format(
+          data.date ? parseISO(data.date) : new Date(),
+          'yyyy-MM-dd',
+        )} ${format(parseISO(data.getTimeStarted()), 'HH:mm')}`,
+      );
+      data.setTimeFinished(
+        `${format(
+          data.date ? parseISO(data.date) : new Date(),
+          'yyyy-MM-dd',
+        )} ${format(parseISO(data.getTimeFinished()), 'HH:mm')}`,
+      );
       delete data.date;
-      console.log(data);
-      console.log(entry);
-      data.technicianUserId = timesheetOwnerId;
-      data.servicesRenderedId = entry.servicesRenderedId;
-      data.eventId = entry.eventId;
-      const req = new TimesheetLine();
-      if (data.jobId) req.setReferenceNumber(data.jobId.toString());
-      console.log(data.jobId);
-      req.setTimeStarted(data.timeStarted);
-      req.setTimeFinished(data.timeFinished);
-      req.setDepartmentCode(data.departmentCode);
-      req.setClassCodeId(data.classCodeId);
-      req.setBriefDescription(data.briefDescription);
-      req.setNotes(data.notes);
-      req.setTechnicianUserId(data.technicianUserId);
-      req.setServicesRenderedId(data.servicesRenderedId);
-      req.setEventId(data.eventId);
-      req.setFieldMaskList([
+      data.setTechnicianUserId(timesheetOwnerId);
+      if (data.jobId) {
+        data.setReferenceNumber(data.jobId.toString());
+      }
+
+      data.setFieldMaskList([
         'ReferenceNumber',
         'TimeStarted',
         'TimeFinished',
@@ -223,18 +224,11 @@ const EditTimesheetModal: FC<Props> = ({
         'EventId',
         'ServicesRenderedId',
       ]);
-      const result = await tslClient.Create(req);
-      if (action === 'convert' && result.servicesRenderedId) {
-        const reqSR = new ServicesRendered();
-        reqSR.setId(result.servicesRenderedId);
-        reqSR.setHideFromTimesheet(1);
-        reqSR.setFieldMaskList(['HideFromTimesheet']);
-        const srResult = await srClient.Update(reqSR);
-      }
+      const result = await tslClient.Create(data);
       setSaving(false);
       onSave(result);
     },
-    [setSaving, entry, onSave, timesheetOwnerId, action],
+    [setSaving, onSave, timesheetOwnerId],
   );
 
   const handleApprove = useCallback(async () => {
@@ -344,7 +338,7 @@ const EditTimesheetModal: FC<Props> = ({
         onClose={onClose}
         disabled={saving}
       >
-        {!!entry?.eventId && <span>Source: {entry?.eventId}</span>}
+        {!!entry?.getEventId() && <span>Source: {entry?.getEventId()}</span>}
         {action === 'update' && (
           <ButtonGroup
             className="TimesheetEditModalButtonGroup"
@@ -354,7 +348,7 @@ const EditTimesheetModal: FC<Props> = ({
               label={timesheetAdministration ? 'Approve' : 'Submit'}
               onClick={handleApprove}
               disabled={
-                (timesheetAdministration && !entry.userApprovalDatetime) ||
+                (timesheetAdministration && !entry.getUserApprovalDatetime()) ||
                 (role === 'Payroll' && timesheetOwnerId !== userId)
               }
             />
@@ -364,8 +358,8 @@ const EditTimesheetModal: FC<Props> = ({
                 label={'Process'}
                 onClick={handleProcess}
                 disabled={
-                  !entry.adminApprovalDatetime ||
-                  entry.adminApprovalUserId === 0
+                  !entry.getAdminApprovalDatetime() ||
+                  entry.getAdminApprovalUserId() === 0
                 }
               />
             )}
@@ -380,7 +374,9 @@ const EditTimesheetModal: FC<Props> = ({
                 label="Revoke"
                 onClick={handleRevoke}
                 className="TimesheetEditModalDelete"
-                disabled={role !== 'Payroll' && !entry.adminApprovalDatetime}
+                disabled={
+                  role !== 'Payroll' && !entry.getAdminApprovalDatetime()
+                }
               />
             )}
           </ButtonGroup>

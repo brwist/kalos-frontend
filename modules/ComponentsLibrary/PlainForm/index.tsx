@@ -102,31 +102,61 @@ export const PlainForm: <T>(
     const matches = useMediaQuery(theme.breakpoints.up('sm'));
 
     const [formData, setFormData] = useState(
-      schema.reduce(
-        (aggr, fields) => ({
+      schema.reduce((aggr, fields) => {
+        const fieldObj = fields.reduce((aggr, field) => {
+          if (field.name !== undefined) {
+            if (typeof data[field.name] === 'function') {
+              return {
+                ...aggr,
+                [field.name]:
+                  // @ts-ignore
+                  data[field.name]() || getDefaultValueByType(field.type!),
+              };
+            }
+            return {
+              ...aggr,
+              [field.name]:
+                // @ts-ignore
+                data[field.name] || getDefaultValueByType(field.type!),
+            };
+          } else {
+            return aggr;
+          }
+        }, {});
+        //console.log({ aggr });
+        return {
           ...aggr,
-          ...fields.reduce(
-            (aggr, { name, type = 'text' }) =>
-              name === undefined
-                ? aggr
-                : {
-                    ...aggr,
-                    [name]:
-                      data[name] !== undefined
-                        ? data[name]
-                        : getDefaultValueByType(type),
-                  },
-            {},
-          ),
-        }),
-        {} as typeof data,
-      ),
+          ...fieldObj,
+        };
+      }, {} as typeof data),
     );
+
+    /*
+      const [formData, setFormData] = useState(
+        schema.reduce((aggr, fields) => {
+          return {
+            ...aggr,
+            ...fields.reduce((aggr, field) => {
+              if (field.name === undefined) {
+                return aggr;
+              } else {
+                return {
+                  ...aggr,
+                  [field.name]:
+                    // @ts-ignore
+                    data[field.name]() || getDefaultValueByType(field.type!),
+                };
+              }
+            }),
+          };
+        }, {} as typeof data),
+      );*/
 
     const handleChange = useCallback(
       name => (value: Value) => {
         const data = { ...formData, [name]: value };
         setFormData(data);
+
         const field = schema
           .reduce((aggr, fields) => [...aggr, ...fields], [])
           .find(field => field.name === name);
@@ -135,7 +165,7 @@ export const PlainForm: <T>(
         }
         onChange(data);
       },
-      [formData, setFormData, onChange],
+      [formData, setFormData, onChange, schema],
     );
 
     let indexOfInputField = 0;

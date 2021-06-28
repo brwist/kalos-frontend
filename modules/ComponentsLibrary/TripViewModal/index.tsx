@@ -1,10 +1,8 @@
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { User } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState } from 'react';
 import { PerDiemClientService, UserClientService } from '../../../helpers';
-import { PerDiem } from '../../PerDiem/main';
 import { Button } from '../Button';
-import { Form, Schema } from '../Form';
+import { Schema } from '../Form';
 import { Modal } from '../Modal';
 import { PlainForm } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
@@ -73,7 +71,7 @@ export const TripViewModal: FC<Props> = ({
     let u = new User();
     u.setId(data.userId);
     UserClientService.Get(u).then(result => {
-      data.nameOfEmployee = result.firstname + ' ' + result.lastname;
+      data.nameOfEmployee = result.getFirstname() + ' ' + result.getLastname();
     });
   }
   return (

@@ -2,7 +2,6 @@ import * as jspb from 'google-protobuf';
 import { User } from '@kalos-core/kalos-rpc/User/index';
 import {
   TimesheetLine,
-  TimesheetReq,
   Timesheet,
 } from '@kalos-core/kalos-rpc/TimesheetLine/index';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered/index';
@@ -13,9 +12,9 @@ import {
   format,
   parseISO,
 } from 'date-fns';
-import { TimeoffRequestType, TimeoffRequestTypes } from '../../../helpers';
+import { TimeoffRequestTypes } from '../../../helpers';
 import { NULL_TIME_VALUE } from './constants';
-import { NULL_TIME } from '../../../constants';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 
 export type Payroll = {
   total: number | null;
@@ -24,29 +23,29 @@ export type Payroll = {
 };
 
 type RawDayData = {
-  servicesRenderedList: ServicesRendered.AsObject[];
-  timesheetLineList: TimesheetLine.AsObject[];
+  servicesRenderedList: ServicesRendered[];
+  timesheetLineList: TimesheetLine[];
   getServicesRenderedList: () => ServicesRendered[];
   getTimesheetLineList: () => TimesheetLine[];
 };
 
 type DayData = {
-  servicesRenderedList: ServicesRendered.AsObject[];
-  timesheetLineList: TimesheetLine.AsObject[];
+  servicesRenderedList: ServicesRendered[];
+  timesheetLineList: TimesheetLine[];
   payroll: Payroll;
-  timeoffs: TimeoffRequestType[];
+  timeoffs: TimeoffRequest[];
 };
 
 export type DataList = {
   [key: string]: DayData;
 };
 
-interface EditedEntry extends TimesheetLine.AsObject {
+interface EditedEntry extends TimesheetLine {
   action: string;
 }
 
 type EditingState = {
-  entry: TimesheetLine.AsObject;
+  entry: TimesheetLine;
   modalShown: boolean;
   action:
     | 'create'
@@ -57,13 +56,13 @@ type EditingState = {
     | 'reject'
     | '';
   editedEntries: EditedEntry[];
-  hiddenSR: ServicesRendered.AsObject[];
-  convertingSR?: ServicesRendered.AsObject;
+  hiddenSR: ServicesRendered[];
+  convertingSR?: ServicesRendered;
 };
 
 export type State = {
-  user?: User.AsObject;
-  owner?: User.AsObject;
+  user?: User;
+  owner?: User;
   fetchingTimesheetData: boolean;
   data: DataList;
   timeoffOpen: boolean;
@@ -95,8 +94,8 @@ export type Action =
   | {
       type: 'setUsers';
       data: {
-        user: User.AsObject;
-        owner: User.AsObject;
+        user: User;
+        owner: User;
         hasReceiptsIssue: boolean;
         receiptsIssueStr: string;
       };
@@ -105,13 +104,13 @@ export type Action =
   | {
       type: 'fetchedTimesheetData';
       data: Timesheet;
-      timeoffs: TimeoffRequestType[];
+      timeoffs: TimeoffRequest[];
     }
   | { type: 'changeDate'; value: Date }
   | { type: 'addNewTimesheet' }
-  | { type: 'editTimesheetCard'; data: TimesheetLine.AsObject }
-  | { type: 'editServicesRenderedCard'; data: ServicesRendered.AsObject }
-  | { type: 'saveTimecard'; data: TimesheetLine.AsObject; action: string }
+  | { type: 'editTimesheetCard'; data: TimesheetLine }
+  | { type: 'editServicesRenderedCard'; data: ServicesRendered }
+  | { type: 'saveTimecard'; data: TimesheetLine; action: string }
   | { type: 'closeEditingModal' }
   | { type: 'error'; text: string }
   | { type: 'submitTimesheet' }
@@ -173,33 +172,31 @@ export const reducer = (state: State, action: Action) => {
       const { data, totalPayroll } = state.shownDates.reduce(
         ({ data, totalPayroll }, date) => {
           const dayData = datesMap.get(date);
-          const srList =
-            dayData?.getServicesRenderedList().map(i => i.toObject()) || [];
+          const srList = dayData?.getServicesRenderedList() || [];
           const servicesRenderedList = srList.filter(
-            (item: ServicesRendered.AsObject) =>
-              !item.hideFromTimesheet &&
-              item.status !== 'Completed' &&
-              item.status !== 'Incomplete',
+            (item: ServicesRendered) =>
+              !item.getHideFromTimesheet() &&
+              item.getStatus() !== 'Completed' &&
+              item.getStatus() !== 'Incomplete',
           );
-          const timesheetLineList =
-            dayData?.getTimesheetLineList().map(i => i.toObject()) || [];
+          const timesheetLineList = dayData?.getTimesheetLineList() || [];
 
           const payroll = timesheetLineList.reduce(
             (acc, item) => {
-              if (item.userApprovalDatetime === NULL_TIME_VALUE) {
+              if (item.getUserApprovalDatetime() === NULL_TIME_VALUE) {
                 pendingEntries = true;
               }
               const payrollDiff =
                 differenceInMinutes(
-                  parseISO(item.timeFinished),
-                  parseISO(item.timeStarted),
+                  parseISO(item.getTimeFinished()),
+                  parseISO(item.getTimeStarted()),
                 ) / 60;
               return {
                 ...acc,
-                billable: item.classCode?.billable
+                billable: item.getClassCode()?.getBillable()
                   ? acc.billable + payrollDiff
                   : acc.billable,
-                unbillable: item.classCode?.billable
+                unbillable: item.getClassCode()?.getBillable()
                   ? acc.unbillable
                   : acc.unbillable + payrollDiff,
                 total: acc.total + payrollDiff,
@@ -212,8 +209,7 @@ export const reducer = (state: State, action: Action) => {
             timesheetLineList,
             payroll: payroll || {},
             timeoffs: timeoffs.filter(
-              ({ timeStarted, timeFinished }) =>
-                timeStarted.substr(0, 10) === date,
+              to => to.getTimeStarted().substr(0, 10) === date,
             ),
           };
           totalPayroll = {
@@ -252,7 +248,7 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         editing: {
           ...state.editing,
-          entry: new TimesheetLine().toObject(),
+          entry: new TimesheetLine(),
           modalShown: true,
           action: 'create' as 'create',
         },
@@ -269,16 +265,16 @@ export const reducer = (state: State, action: Action) => {
       };
     case 'editServicesRenderedCard': {
       const card = action.data;
-      const entry = new TimesheetLine().toObject();
+      const entry = new TimesheetLine();
       Object.keys(entry).forEach(key => {
         if (Object.prototype.hasOwnProperty.call(card, key)) {
           // @ts-ignore
           entry[key] = card[key];
         }
       });
-      entry.servicesRenderedId = card.id;
-      if (card.status === 'Enroute') {
-        entry.classCodeId = 37;
+      entry.setServicesRenderedId(card.getId());
+      if (card.getStatus() === 'Enroute') {
+        entry.setClassCodeId(37);
       }
 
       return {
@@ -296,16 +292,16 @@ export const reducer = (state: State, action: Action) => {
       const data = { ...state.data };
       const entry = state.editing.entry;
       const card = action.data;
-      const entryDate = entry?.timeStarted
-        ? format(parseISO(entry.timeStarted), 'yyyy-MM-dd')
+      const entryDate = entry?.getTimeStarted()
+        ? format(parseISO(entry.getTimeStarted()), 'yyyy-MM-dd')
         : '';
-      const cardDate = format(parseISO(card.timeStarted), 'yyyy-MM-dd');
+      const cardDate = format(parseISO(card.getTimeStarted()), 'yyyy-MM-dd');
       const datePresented = state.shownDates.indexOf(cardDate) >= 0;
       if (action.action === 'create' && datePresented) {
         data[cardDate].timesheetLineList.push(card);
       } else if (action.action === 'convert') {
         const sr = data[entryDate].servicesRenderedList.find(
-          item => item.id === entry.servicesRenderedId,
+          item => item.getId() === entry.getServicesRenderedId(),
         );
         // @ts-ignore
         sr.hideFromTimesheet = 1;
@@ -315,13 +311,18 @@ export const reducer = (state: State, action: Action) => {
       } else if (action.action === 'update') {
         if (entryDate === cardDate) {
           const list = data[entryDate].timesheetLineList;
-          const existingIndex = list.findIndex(item => item.id === card.id);
+          const existingIndex = list.findIndex(
+            item => item.getId() === card.getId(),
+          );
           if (existingIndex >= 0) {
-            list[existingIndex] = { ...list[existingIndex], ...card };
+            //list[existingIndex] = { ...list[existingIndex], ...card };
+            list[existingIndex] = card;
           }
         } else {
           const oldList = data[entryDate].timesheetLineList;
-          const oldIndex = oldList.findIndex(item => item.id === card.id);
+          const oldIndex = oldList.findIndex(
+            item => item.getId() === card.getId(),
+          );
           if (oldIndex >= 0) {
             oldList.splice(oldIndex, 1);
           }
@@ -331,7 +332,9 @@ export const reducer = (state: State, action: Action) => {
         }
       } else if (action.action === 'delete') {
         const list = data[entryDate].timesheetLineList;
-        const existingIndex = list.findIndex(item => item.id === card.id);
+        const existingIndex = list.findIndex(
+          item => item.getId() === card.getId(),
+        );
         if (existingIndex >= 0) {
           list.splice(existingIndex, 1);
         }
@@ -340,7 +343,7 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         data,
         editing: {
-          entry: new TimesheetLine().toObject(),
+          entry: new TimesheetLine(),
           modalShown: false,
           action: '' as '',
           editedEntries: [],
@@ -354,8 +357,8 @@ export const reducer = (state: State, action: Action) => {
       for (let i = 0; i < state.shownDates.length; i++) {
         let dayList = [...data[state.shownDates[i]].timesheetLineList];
         dayList.forEach(entry => {
-          if (entry.userApprovalDatetime === NULL_TIME_VALUE) {
-            entry.userApprovalDatetime = dateTime;
+          if (entry.getUserApprovalDatetime() === NULL_TIME_VALUE) {
+            entry.setUserApprovalDatetime(dateTime);
           }
         });
       }
@@ -371,9 +374,9 @@ export const reducer = (state: State, action: Action) => {
       for (let i = 0; i < state.shownDates.length; i++) {
         let dayList = [...data[state.shownDates[i]].timesheetLineList];
         dayList.forEach(entry => {
-          if (entry.adminApprovalDatetime === NULL_TIME_VALUE) {
-            entry.adminApprovalDatetime = dateTime;
-            entry.adminApprovalUserId = state.user!.id;
+          if (entry.getAdminApprovalDatetime() === NULL_TIME_VALUE) {
+            entry.setAdminApprovalDatetime(dateTime);
+            entry.setAdminApprovalUserId(state.user!.getId());
           }
         });
       }
@@ -388,8 +391,8 @@ export const reducer = (state: State, action: Action) => {
       for (let i = 0; i < state.shownDates.length; i++) {
         let dayList = [...data[state.shownDates[i]].timesheetLineList];
         dayList.forEach(entry => {
-          if (entry.adminApprovalDatetime !== NULL_TIME_VALUE) {
-            entry.payrollProcessed = true;
+          if (entry.getAdminApprovalDatetime() !== NULL_TIME_VALUE) {
+            entry.setPayrollProcessed(true);
           }
         });
       }
@@ -404,9 +407,9 @@ export const reducer = (state: State, action: Action) => {
       for (let i = 0; i < state.shownDates.length; i++) {
         let dayList = [...data[state.shownDates[i]].timesheetLineList];
         dayList.forEach(entry => {
-          if (entry.adminApprovalDatetime !== NULL_TIME_VALUE) {
-            entry.adminApprovalUserId = 0;
-            entry.adminApprovalDatetime = NULL_TIME_VALUE;
+          if (entry.getAdminApprovalDatetime() !== NULL_TIME_VALUE) {
+            entry.setAdminApprovalUserId(0);
+            entry.setAdminApprovalDatetime(NULL_TIME_VALUE);
           }
         });
       }
@@ -421,8 +424,8 @@ export const reducer = (state: State, action: Action) => {
       for (let i = 0; i < state.shownDates.length; i++) {
         let dayList = [...data[state.shownDates[i]].timesheetLineList];
         dayList.forEach(entry => {
-          if (entry.userApprovalDatetime !== NULL_TIME_VALUE) {
-            entry.userApprovalDatetime = NULL_TIME_VALUE;
+          if (entry.getUserApprovalDatetime() !== NULL_TIME_VALUE) {
+            entry.setUserApprovalDatetime(NULL_TIME_VALUE);
           }
         });
       }
@@ -435,7 +438,7 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         editing: {
-          entry: new TimesheetLine().toObject(),
+          entry: new TimesheetLine(),
           modalShown: false,
           action: '' as '',
           hiddenSR: [],

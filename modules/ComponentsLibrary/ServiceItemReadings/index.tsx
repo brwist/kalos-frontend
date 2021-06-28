@@ -20,6 +20,7 @@ import {
   formatDate,
   UserClientService,
   timestamp,
+  makeSafeFormObject,
 } from '../../../helpers';
 
 const ReadingClientService = new ReadingClient(ENDPOINT);
@@ -113,54 +114,54 @@ const SCHEMA_READING: Schema<Entry> = [
   [
     {
       label: 'Refrigerant Type',
-      name: 'refrigerantType',
+      name: 'getRefrigerantType',
       options: REFRIGERANT_TYPES,
     },
-    { label: 'Tstat brand', name: 'tstatBrand' },
-    { label: 'Blower Capacitor', name: 'blowerCapacitor' },
+    { label: 'Tstat brand', name: 'getTstatBrand' },
+    { label: 'Blower Capacitor', name: 'getBlowerCapacitor' },
   ],
   [
-    { label: 'Blower Amps', name: 'blowerAmps' },
-    { label: 'Return Temp DB', name: 'returnDb' },
-    { label: 'Supply Temp DB', name: 'supplyTemperature' },
+    { label: 'Blower Amps', name: 'getBlowerAmps' },
+    { label: 'Return Temp DB', name: 'getReturnDb' },
+    { label: 'Supply Temp DB', name: 'getSupplyTemperature' },
   ],
   [
-    { label: 'Compressor Amps', name: 'compressorAmps' },
-    { label: 'Pool supply temp', name: 'poolSupplyTemp' },
-    { label: 'Pool return temp', name: 'poolReturnTemp' },
+    { label: 'Compressor Amps', name: 'getCompressorAmps' },
+    { label: 'Pool supply temp', name: 'getPoolSupplyTemp' },
+    { label: 'Pool return temp', name: 'getPoolReturnTemp' },
   ],
   [
-    { label: 'Ambient air temp', name: 'ambientAirTemp' },
-    { label: 'Coil Static Drop', name: 'coilStaticDrop' },
-    { label: 'Return WB', name: 'returnWb' },
+    { label: 'Ambient air temp', name: 'getAmbientAirTemp' },
+    { label: 'Coil Static Drop', name: 'getCoilStaticDrop' },
+    { label: 'Return WB', name: 'getReturnWb' },
   ],
   [
-    { label: 'Evap TD', name: 'evapTd' },
-    { label: 'Tesp', name: 'tesp' },
+    { label: 'Evap TD', name: 'getEvapTd' },
+    { label: 'Tesp', name: 'getTesp' },
   ],
   [{ label: 'Compressor', headline: true }],
   [
-    { label: 'Condenser Fan Amps', name: 'condensingFanAmps' },
-    { label: 'Compressor Capacitor', name: 'compressorCapacitor' },
-    { label: 'Condenser Fan Capacitor', name: 'condenserFanCapacitor' },
+    { label: 'Condenser Fan Amps', name: 'getCondensingFanAmps' },
+    { label: 'Compressor Capacitor', name: 'getCompressorCapacitor' },
+    { label: 'Condenser Fan Capacitor', name: 'getCondenserFanCapacitor' },
   ],
   [
-    { label: 'Suction Pressure', name: 'suctionPressure' },
-    { label: 'Head Pressure', name: 'headPressure' },
-    { label: 'Discharge Temperature', name: 'dischargeTemperature' },
+    { label: 'Suction Pressure', name: 'getSuctionPressure' },
+    { label: 'Head Pressure', name: 'getHeadPressure' },
+    { label: 'Discharge Temperature', name: 'getDischargeTemperature' },
   ],
   [
-    { label: 'Subcool', name: 'subcool' },
-    { label: 'Superheat', name: 'superheat' },
-    { label: 'Gas Pressure In', name: 'gasPressureIn' },
+    { label: 'Subcool', name: 'getSubcool' },
+    { label: 'Superheat', name: 'getSuperheat' },
+    { label: 'Gas Pressure In', name: 'getGasPressureIn' },
   ],
   [
-    { label: 'Gas Pressure Out', name: 'gasPressureOut' },
-    { label: 'LL Temp Drop', name: 'llTempDrop' },
-    { label: 'SL Temp Drop', name: 'slTempDrop' },
+    { label: 'Gas Pressure Out', name: 'getGasPressureOut' },
+    { label: 'LL Temp Drop', name: 'getLlTempDrop' },
+    { label: 'SL Temp Drop', name: 'getSlTempDrop' },
   ],
   [{ label: 'Notes', headline: true }],
-  [{ label: 'Notes', name: 'notes', multiline: true }],
+  [{ label: 'Notes', name: 'getNotes', multiline: true }],
 ];
 
 const SCHEMA_MAINTENANCE: Schema<MaintenanceEntry> = [
@@ -168,77 +169,85 @@ const SCHEMA_MAINTENANCE: Schema<MaintenanceEntry> = [
   [
     {
       label: 'Condition',
-      name: 'conditionRating1',
+      name: 'getConditionRating1',
       options: MAINTENANCE_CONDITIONS,
       required: true,
     },
-    { label: 'Notes', name: 'conditionNotes1' },
+    { label: 'Notes', name: 'getConditionNotes1' },
   ],
   [{ label: '#2', headline: true }],
   [
     {
       label: 'Condition',
-      name: 'conditionRating2',
+      name: 'getConditionRating2',
       options: MAINTENANCE_CONDITIONS,
       required: true,
     },
-    { label: 'Notes', name: 'conditionNotes2' },
+    { label: 'Notes', name: 'getConditionNotes2' },
   ],
   [{ label: '#3', headline: true }],
   [
     {
       label: 'Condition',
-      name: 'conditionRating3',
+      name: 'getConditionRating3',
       options: MAINTENANCE_CONDITIONS,
       required: true,
     },
-    { label: 'Notes', name: 'conditionNotes3' },
+    { label: 'Notes', name: 'getConditionNotes3' },
   ],
   [{ label: 'Refrigerant', headline: true }],
   [
-    { label: 'Thermostat', name: 'thermostat', options: THERMOSTAT_OPTIONS },
-    { label: 'Plateform', name: 'plateform', options: PLATEFORM_OPTIONS },
+    { label: 'Thermostat', name: 'getThermostat', options: THERMOSTAT_OPTIONS },
+    { label: 'Plateform', name: 'getPlateform', options: PLATEFORM_OPTIONS },
   ],
   [
     {
       label: 'Float switch',
-      name: 'floatSwitch',
+      name: 'getFloatSwitch',
       options: FLOAT_SWITCH_OPTIONS,
     },
-    { label: 'Evaportor Coil', name: 'evaporatorCoil', options: COIL_OPTIONS },
+    {
+      label: 'Evaportor Coil',
+      name: 'getEvaporatorCoil',
+      options: COIL_OPTIONS,
+    },
   ],
   [{ label: 'Compressor', headline: true }],
   [
-    { label: 'Condenser Coil', name: 'condenserCoil', options: COIL_OPTIONS },
+    {
+      label: 'Condenser Coil',
+      name: 'getCondenserCoil',
+      options: COIL_OPTIONS,
+    },
     {
       label: 'Hurricane Pad',
-      name: 'hurricanePad',
+      name: 'getHurricanePad',
       options: HURRICANE_PAD_OPTIONS,
     },
   ],
   [
-    { label: 'Lineset', name: 'lineset', options: LINESET_OPTIONS },
-    { label: 'Drain Line', name: 'drainLine', options: DRAIN_LINE_OPTIONS },
+    { label: 'Lineset', name: 'getLineset', options: LINESET_OPTIONS },
+    { label: 'Drain Line', name: 'getDrainLine', options: DRAIN_LINE_OPTIONS },
   ],
   [
-    { label: 'Gas Type', name: 'gasType', options: GAS_TYPE_OPTIONS },
-    { label: 'Burner', name: 'burner', options: BURNER_OPTIONS },
+    { label: 'Gas Type', name: 'getGasType', options: GAS_TYPE_OPTIONS },
+    { label: 'Burner', name: 'getBurner', options: BURNER_OPTIONS },
     {
       label: 'Heat Exchanger',
-      name: 'heatExchanger',
+      name: 'getHeatExchanger',
       options: HEAT_EXCHANGE_OPTIONS,
     },
   ],
 ];
 
 const sort = (a: Entry, b: Entry) => {
-  if (a.date > b.date) return -1;
-  if (a.date < b.date) return 1;
+  if (a.getDate() > b.getDate()) return -1;
+  if (a.getDate() < b.getDate()) return 1;
   return 0;
 };
 
-type Entry = Reading.AsObject;
-type MaintenanceEntry = MaintenanceQuestion.AsObject;
+type Entry = Reading;
+type MaintenanceEntry = MaintenanceQuestion;
 
 interface Props {
   serviceItemId: number;
@@ -283,7 +292,7 @@ export const ServiceItemReadings: FC<Props> = ({
         ...(entry === null
           ? {}
           : {
-              [entry.readingId]: entry,
+              [entry.getReadingId()]: entry,
             }),
       }),
       {},
@@ -298,13 +307,14 @@ export const ServiceItemReadings: FC<Props> = ({
     entry.setServiceItemId(serviceItemId);
     try {
       const response = await ReadingClientService.BatchGet(entry);
-      const { resultsList } = response.toObject();
+      const resultsList = response.getResultsList();
       const users = await UserClientService.loadUsersByIds(
-        resultsList.map(({ userId }) => userId),
+        resultsList.map(user => user.getUserId()),
       );
+      console.log(users);
       const userArray = users.getResultsList();
       const maintenanceQuestions = await loadMaintenanceQuestions(
-        resultsList.map(({ id }) => id),
+        resultsList.map(id => id.getId()),
       );
       setEntries(resultsList.sort(sort));
       setMaintenanceQuestions(maintenanceQuestions);
@@ -332,6 +342,7 @@ export const ServiceItemReadings: FC<Props> = ({
 
   const setEditing = useCallback(
     (editedEntry?: Entry) => () => {
+      console.log(editedEntry);
       setEditedEntry(editedEntry);
       setError(false);
     },
@@ -354,23 +365,15 @@ export const ServiceItemReadings: FC<Props> = ({
   const handleSave = useCallback(
     async (data: Entry) => {
       if (editedEntry) {
-        const isNew = !editedEntry.id;
+        const isNew = !editedEntry.getId();
         setSaving(true);
-        const entry = new Reading();
+        const entry = makeSafeFormObject(data, new Reading());
         if (!isNew) {
-          entry.setId(editedEntry.id);
+          entry.setId(editedEntry.getId());
         }
         entry.setServiceItemId(serviceItemId);
         entry.setDate(timestamp(true));
         entry.setUserId(loggedUserId);
-        const fieldMaskList = ['ServiceItemId', 'Date', 'UserId'];
-        for (const fieldName in data) {
-          const { upperCaseProp, methodName } = getRPCFields(fieldName);
-          // @ts-ignore
-          entry[methodName](data[fieldName]);
-          fieldMaskList.push(upperCaseProp);
-        }
-        entry.setFieldMaskList(fieldMaskList);
         try {
           await ReadingClientService[isNew ? 'Create' : 'Update'](entry);
           setSaving(false);
@@ -388,21 +391,14 @@ export const ServiceItemReadings: FC<Props> = ({
   const handleSaveMaintenance = useCallback(
     async (data: MaintenanceEntry) => {
       if (editedMaintenanceEntry) {
-        const isNew = !editedMaintenanceEntry.id;
+        const isNew = !editedMaintenanceEntry.getId();
         setSaving(true);
-        const entry = new MaintenanceQuestion();
+
+        const entry = makeSafeFormObject(data, new MaintenanceQuestion());
         if (!isNew) {
-          entry.setId(editedMaintenanceEntry.id);
+          entry.setId(editedMaintenanceEntry.getId());
         }
-        entry.setReadingId(editedMaintenanceEntry.readingId);
-        const fieldMaskList = ['ReadingId'];
-        for (const fieldName in data) {
-          const { upperCaseProp, methodName } = getRPCFields(fieldName);
-          // @ts-ignore
-          entry[methodName](data[fieldName]);
-          fieldMaskList.push(upperCaseProp);
-        }
-        entry.setFieldMaskList(fieldMaskList);
+        entry.setReadingId(editedMaintenanceEntry.getReadingId());
         try {
           await MaintenanceQuestionClientService[isNew ? 'Create' : 'Update'](
             entry,
@@ -424,10 +420,10 @@ export const ServiceItemReadings: FC<Props> = ({
     if (deletingEntry) {
       setLoading(true);
       const maintenanceQuestion = new MaintenanceQuestion();
-      maintenanceQuestion.setReadingId(deletingEntry.id);
+      maintenanceQuestion.setReadingId(deletingEntry.getId());
       await MaintenanceQuestionClientService.Delete(maintenanceQuestion);
       const entry = new Reading();
-      entry.setId(deletingEntry.id);
+      entry.setId(deletingEntry.getId());
       await ReadingClientService.Delete(entry);
       await load();
     }
@@ -446,19 +442,20 @@ export const ServiceItemReadings: FC<Props> = ({
   const data: Data = loading
     ? makeFakeRows()
     : entries.map(entry => {
-        const { id, date, userId } = entry;
         const newMaintenanceQuestion = new MaintenanceQuestion();
-        newMaintenanceQuestion.setReadingId(id);
+        newMaintenanceQuestion.setReadingId(entry.getId());
         return [
           {
             value: [
-              formatDate(date),
+              formatDate(entry.getDate()),
               '-',
-              maintenanceQuestions[id] ? 'Maintenance' : 'Service',
-              userId === 0 && users != []
+              maintenanceQuestions[entry.getId()] ? 'Maintenance' : 'Service',
+              entry.getUserId() === 0 && users != []
                 ? ''
-                : ` - ${users[findUser(userId)].getFirstname()} ${users[
-                    findUser(userId)
+                : ` - ${users[
+                    findUser(entry.getUserId())
+                  ].getFirstname()} ${users[
+                    findUser(entry.getUserId())
                   ].getLastname()}`,
             ].join(' '),
             onClick: setEditing(entry),
@@ -468,7 +465,8 @@ export const ServiceItemReadings: FC<Props> = ({
                 style={{ marginLeft: 4 }}
                 size="small"
                 onClick={setEditingMaintenance(
-                  maintenanceQuestions[id] || newMaintenanceQuestion.toObject(),
+                  maintenanceQuestions[entry.getId()] ||
+                    newMaintenanceQuestion.toObject(),
                 )}
               >
                 <BuildIcon />
@@ -497,7 +495,9 @@ export const ServiceItemReadings: FC<Props> = ({
     <>
       {editedMaintenanceEntry !== undefined ? (
         <Form<MaintenanceEntry>
-          title={`${editedMaintenanceEntry.id ? 'Edit' : 'Add'} Maintenance`}
+          title={`${
+            editedMaintenanceEntry.getId() ? 'Edit' : 'Add'
+          } Maintenance`}
           schema={SCHEMA_MAINTENANCE}
           data={editedMaintenanceEntry}
           onSave={handleSaveMaintenance}
@@ -507,7 +507,7 @@ export const ServiceItemReadings: FC<Props> = ({
         />
       ) : editedEntry ? (
         <Form<Entry>
-          title={`${editedEntry.id ? 'Edit' : 'Add'} Reading`}
+          title={`${editedEntry.getId() ? 'Edit' : 'Add'} Reading`}
           schema={SCHEMA_READING}
           data={editedEntry}
           onSave={handleSave}
@@ -522,7 +522,7 @@ export const ServiceItemReadings: FC<Props> = ({
             actions={[
               {
                 label: 'Add',
-                onClick: setEditing({} as Entry),
+                onClick: setEditing(new Reading()),
               },
             ]}
             fixedActions
@@ -537,15 +537,17 @@ export const ServiceItemReadings: FC<Props> = ({
           onConfirm={handleDelete}
           kind="Reading"
           name={[
-            formatDate(deletingEntry.date),
+            formatDate(deletingEntry.getDate()),
             '-',
-            maintenanceQuestions[deletingEntry.id] ? 'Maintenance' : 'Service',
-            deletingEntry.userId === 0 && users != []
+            maintenanceQuestions[deletingEntry.getId()]
+              ? 'Maintenance'
+              : 'Service',
+            deletingEntry.getUserId() === 0 && users != []
               ? ''
               : ` - ${users[
-                  findUser(deletingEntry.userId)
+                  findUser(deletingEntry.getUserId())
                 ].getFirstname()} ${users[
-                  findUser(deletingEntry.userId)
+                  findUser(deletingEntry.getUserId())
                 ].getLastname()}`,
           ]
             .join(' ')

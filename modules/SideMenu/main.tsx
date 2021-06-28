@@ -6,11 +6,7 @@ import List from '@material-ui/core/List';
 import Hidden from '@material-ui/core/Hidden';
 import IconButton from '@material-ui/core/IconButton';
 import MenuSharp from '@material-ui/icons/MenuSharp';
-import { forceHTTPS, customerCheck, UserClientService } from '../../helpers';
-import {
-  TimesheetDepartmentClient,
-  TimesheetDepartment,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { forceHTTPS, UserClientService } from '../../helpers';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
 import customTheme from '../Theme/main';
@@ -27,7 +23,6 @@ import {
 } from './constants';
 
 const userClient = new UserClient(ENDPOINT);
-const deptClient = new TimesheetDepartmentClient(ENDPOINT);
 
 export type Props = {
   userID: number;
@@ -37,14 +32,14 @@ export type Props = {
 type State = {
   isManager: boolean;
   isOpen: boolean;
-  user: User.AsObject;
+  user: User;
   reportBugFormShown: boolean;
 };
 
 type Action =
   | { type: 'toggleMenu' }
   | { type: 'closeMenu' }
-  | { type: 'fetchedUser'; user: User.AsObject; isManager: boolean }
+  | { type: 'fetchedUser'; user: User; isManager: boolean }
   | { type: 'showReportBugForm' }
   | { type: 'hideReportBugForm' };
 
@@ -85,7 +80,7 @@ const SideMenu = ({
   imgURL = 'https://app.kalosflorida.com/app/assets/images/kalos-logo-new.png',
 }: Props) => {
   const [state, dispatch] = useReducer(reducer, {
-    user: new User().toObject(),
+    user: new User(),
     isManager: false,
     isOpen: false,
     reportBugFormShown: false,
@@ -111,11 +106,15 @@ const SideMenu = ({
       await userClient.GetToken('test', 'test');
       const userResult = await UserClientService.loadUserById(userID);
       //customerCheck(userResult);
-      if (userResult.isSu === 1) {
+      if (userResult.getIsSu() === 1) {
         dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
       } else {
         try {
-          if (userResult.permissionGroupsList.find(p => p.name === 'Manager')) {
+          if (
+            userResult
+              .getPermissionGroupsList()
+              .find(p => p.getName() === 'Manager')
+          ) {
             dispatch({
               type: 'fetchedUser',
               user: userResult,
@@ -135,7 +134,7 @@ const SideMenu = ({
     })();
   }, [userID]);
 
-  if (!user?.id) {
+  if (!user?.getId()) {
     return null;
   }
 
@@ -165,7 +164,7 @@ const SideMenu = ({
         style={{ width: 250, padding: 10 }}
       >
         <List style={{ width: 250 }}>
-          {user.isEmployee === 1 &&
+          {user.getIsEmployee() === 1 &&
             employeeItems({
               toggleUploadReceipt: toggleOpenUploadReceipt,
             }).map(item => (
@@ -175,7 +174,7 @@ const SideMenu = ({
                 userId={userID}
               />
             ))}
-          {user.isAdmin === 1 && (
+          {user.getIsAdmin() === 1 && (
             <>
               {adminItems.map(item => (
                 <KalosMenuItem
@@ -197,7 +196,7 @@ const SideMenu = ({
               ))}
             </>
           )}
-          {user.isEmployee === 0 &&
+          {user.getIsEmployee() === 0 &&
             customerItems(toggleMenu).map(item => (
               <KalosMenuItem
                 key={`customer_${item?.title || 'divider'}`}
@@ -205,7 +204,7 @@ const SideMenu = ({
                 userId={userID}
               />
             ))}
-          {user.isEmployee === 1 &&
+          {user.getIsEmployee() === 1 &&
             commonItems.map(item => {
               if (item.title === 'Report a Bug') {
                 return (

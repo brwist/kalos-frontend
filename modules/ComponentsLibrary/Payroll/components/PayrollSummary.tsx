@@ -6,11 +6,7 @@ import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
-import {
-  TimesheetLineType,
-  makeFakeRows,
-  TimesheetLineClientService,
-} from '../../../../helpers';
+import { makeFakeRows, TimesheetLineClientService } from '../../../../helpers';
 import { OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
@@ -45,12 +41,12 @@ export const PayrollSummary: FC<Props> = ({
   loggedUser,
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
-  const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLine[]>([]);
   const [idList, setIDList] = useState<number[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const toggle = false;
-  const [pendingView, setPendingView] = useState<TimesheetLineType>();
+  const [pendingView, setPendingView] = useState<TimesheetLine>();
   const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const load = useCallback(async () => {
@@ -71,10 +67,12 @@ export const PayrollSummary: FC<Props> = ({
     }
 
     const getTimesheets = createTimesheetFetchFunction(filter);
-    const { resultsList, totalCount } = (await getTimesheets()).toObject();
-    const compare = (a: TimesheetLine.AsObject, b: TimesheetLine.AsObject) => {
-      const splitA = a.technicianUserName.split(' ');
-      const splitB = b.technicianUserName.split(' ');
+    const result = await getTimesheets();
+    const resultsList = result.getResultsList();
+    const totalCount = result.getTotalCount();
+    const compare = (a: TimesheetLine, b: TimesheetLine) => {
+      const splitA = a.getTechnicianUserName().split(' ');
+      const splitB = b.getTechnicianUserName().split(' ');
       const lastA = splitA[splitA.length - 1].toLowerCase();
       const lastB = splitB[splitB.length - 1].toLowerCase();
       const firstA = splitA[0].toLowerCase();
@@ -94,7 +92,7 @@ export const PayrollSummary: FC<Props> = ({
     if (loading) load();
   }, [load, loading]);
   const handleTogglePendingView = useCallback(
-    (pendingView?: TimesheetLineType) => () => {
+    (pendingView?: TimesheetLine) => () => {
       setPendingView(pendingView);
       load();
     },
@@ -106,7 +104,8 @@ export const PayrollSummary: FC<Props> = ({
     if (tempPendingView != undefined) {
       for (let i = 0; i < timesheets.length; i++) {
         if (
-          timesheets[i].technicianUserId === tempPendingView.technicianUserId
+          timesheets[i].getTechnicianUserId() ===
+          tempPendingView.getTechnicianUserId()
         ) {
           tempPendingView = timesheets[i + 1];
           break;
@@ -124,7 +123,8 @@ export const PayrollSummary: FC<Props> = ({
     if (tempPendingView != undefined) {
       for (let i = 0; i < timesheets.length; i++) {
         if (
-          timesheets[i].technicianUserId === tempPendingView.technicianUserId
+          timesheets[i].getTechnicianUserId() ===
+          tempPendingView.getTechnicianUserId()
         ) {
           tempPendingView = timesheets[i - 1];
           break;
@@ -160,21 +160,21 @@ export const PayrollSummary: FC<Props> = ({
             : timesheets.map(e => {
                 return [
                   {
-                    value: e.technicianUserName,
+                    value: e.getTechnicianUserName(),
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: e.searchUser?.employeeDepartmentId
-                      ? e.searchUser.employeeDepartmentId
-                      : e.departmentName,
+                    value: e.getSearchUser()?.getEmployeeDepartmentId()
+                      ? e.getSearchUser()!.getEmployeeDepartmentId()
+                      : e.getDepartmentName(),
                     onClick: handleTogglePendingView(e),
                   },
 
                   {
                     value:
-                      e.adminApprovalDatetime === NULL_TIME_VALUE
+                      e.getAdminApprovalDatetime() === NULL_TIME_VALUE
                         ? 'Not Approved'
-                        : formatWeek(e.adminApprovalDatetime),
+                        : formatWeek(e.getAdminApprovalDatetime()),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
@@ -198,9 +198,9 @@ export const PayrollSummary: FC<Props> = ({
         >
           <CostSummary
             userId={
-              employeeId === 0 ? pendingView.technicianUserId : employeeId
+              employeeId === 0 ? pendingView.getTechnicianUserId() : employeeId
             }
-            username={pendingView.technicianUserName}
+            username={pendingView.getTechnicianUserName()}
             onClose={handleTogglePendingView(undefined)}
             loggedUserId={loggedUser}
             notReady={toggle}

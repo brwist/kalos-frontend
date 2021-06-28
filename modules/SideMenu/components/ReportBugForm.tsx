@@ -22,7 +22,7 @@ import ImageUploader from './ImageUploader';
 import './reportBugForm.less';
 
 type Props = {
-  user: User.AsObject;
+  user: User;
   onClose: () => void;
 };
 
@@ -71,7 +71,7 @@ const ReportBugForm: FC<Props> = ({ user, onClose }: Props): JSX.Element => {
     if (!isValid(content)) return;
     setLoading(true);
     try {
-      let body = `_Submitted by ${user.firstname} ${user.lastname}_\n`;
+      let body = `_Submitted by ${user.getFirstname()} ${user.getLastname()}_\n`;
       body += content;
       if (!ignoreImages) {
         const result = (await newBugReportImage(user, images)) || [];
