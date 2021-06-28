@@ -38,7 +38,6 @@ import { CustomerEdit } from '../ComponentsLibrary/CustomerEdit';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { TimeOff } from '../ComponentsLibrary/TimeOff';
 import {
-  UserType,
   TimeoffRequestClientService,
   TimeoffRequestTypes,
 } from '../../helpers';
@@ -115,7 +114,7 @@ type Filters = {
 };
 
 type State = {
-  user?: User.AsObject;
+  user?: User;
   fetchingCalendarData: boolean;
   datesMap?: jspb.Map<string, CalendarDay>;
   customersMap: MapList;
@@ -131,7 +130,7 @@ type State = {
 
 type Action =
   | { type: 'toggleAddCustomer'; value: boolean }
-  | { type: 'setUser'; value: User.AsObject }
+  | { type: 'setUser'; value: User }
   | { type: 'fetchingCalendarData' }
   | { type: 'fetchedCalendarData'; data: CalendarData }
   | { type: 'viewBy'; value: string }
@@ -146,7 +145,7 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         user: action.value,
-        defaultView: action.value.calendarPref,
+        defaultView: action.value.getCalendarPref(),
       };
     }
     case 'toggleAddCustomer': {
@@ -300,7 +299,7 @@ export const ServiceCalendar: FC<Props> = props => {
     },
     dispatch,
   ] = useReducer(reducer, initialState);
-  const [customerOpened, setCustomerOpened] = useState<UserType>();
+  const [customerOpened, setCustomerOpened] = useState<User>();
   const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   const [
     timeoffRequestTypes,
@@ -334,7 +333,7 @@ export const ServiceCalendar: FC<Props> = props => {
     const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
-        (aggr, item) => ({ ...aggr, [item.id]: item.requestType }),
+        (aggr, item) => ({ ...aggr, [item.getId()]: item.getRequestType() }),
         {},
       ),
     );
@@ -383,7 +382,7 @@ export const ServiceCalendar: FC<Props> = props => {
       req.setCalendarPref(viewBy);
       req.setFieldMaskList(['CalendarPref']);
       const result = await userClient.Update(req);
-      dispatch({ type: 'defaultView', value: result.calendarPref });
+      dispatch({ type: 'defaultView', value: result.getCalendarPref() });
     })();
   }, [viewBy, userId]);
   const addNewOptions = [
@@ -417,11 +416,12 @@ export const ServiceCalendar: FC<Props> = props => {
       url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.calls',
     },
   ];
-  const calendarPrivilege = user?.permissionGroupsList
-    .filter(pg => pg.type === PERMISSION_PRIVILEGE)
-    ?.find(privilege => privilege.name === 'FullCalendar');
+  const calendarPrivilege = user
+    ?.getPermissionGroupsList()
+    .filter(pg => pg.getType() === PERMISSION_PRIVILEGE)
+    ?.find(privilege => privilege.getName() === 'FullCalendar');
   const canSeeFullCalendar =
-    calendarPrivilege !== undefined || !!user?.isAdmin || false;
+    calendarPrivilege !== undefined || !!user?.getIsAdmin() || false;
 
   return (
     <PageWrapper {...props} userID={userId}>

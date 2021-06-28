@@ -7,7 +7,7 @@ import React, {
 import clsx from 'clsx';
 import compact from 'lodash/compact';
 import { format, parseISO } from 'date-fns';
-import { Event } from '@kalos-core/kalos-rpc/Event/index';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
@@ -38,11 +38,11 @@ type Props = {
 };
 
 type CallsList = {
-  [key: string]: Event.AsObject[] | TimeoffRequest.AsObject[];
-  completedServiceCallsList: Event.AsObject[];
-  remindersList: Event.AsObject[];
-  serviceCallsList: Event.AsObject[];
-  timeoffRequestsList: TimeoffRequest.AsObject[];
+  [key: string]: Event[] | TimeoffRequest[];
+  completedServiceCallsList: Event[];
+  remindersList: Event[];
+  serviceCallsList: Event[];
+  timeoffRequestsList: TimeoffRequest[];
 };
 
 const Column = ({
@@ -95,48 +95,57 @@ const Column = ({
         (acc: CallsList, key) => {
           // @ts-ignore
           let calls = calendarDay[key];
-          acc[key] = calls.filter((call: Event.AsObject) => {
+          acc[key] = calls.filter((call: Event) => {
             const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
               .map(Number)
               .filter(e => e !== 0);
             if (techIdsFilterArr.length > 0) {
               if (
-                !call.logTechnicianAssigned ||
-                call.logTechnicianAssigned === '0'
+                !call.getLogTechnicianAssigned() ||
+                call.getLogTechnicianAssigned() === '0'
               )
                 return false;
-              const techIds = call.logTechnicianAssigned.split(',').map(Number);
+              const techIds = call
+                .getLogTechnicianAssigned()
+                .split(',')
+                .map(Number);
               if (techIdsFilterArr.find(item => techIds.includes(item))) {
                 console.log('they got it');
                 return true;
               } else {
                 return false;
               }
-            } else if (!isAdmin && call.logTechnicianAssigned) {
-              const techIds = call.logTechnicianAssigned.split(',').map(Number);
+            } else if (!isAdmin && call.getLogTechnicianAssigned()) {
+              const techIds = call
+                .getLogTechnicianAssigned()
+                .split(',')
+                .map(Number);
               if (!techIds.includes(userId)) {
                 return false;
               }
             }
             if (
               customers.length &&
-              !customers.includes(`${call?.customer?.id}`)
+              !customers.includes(`${call?.getCustomer()?.getId()}`)
             ) {
               return false;
             }
-            if (zip.length && !zip.includes(call?.property?.zip || '')) {
+            if (
+              zip.length &&
+              !zip.includes(call?.getProperty()?.getZip() || '')
+            ) {
               return false;
             }
             if (
               propertyUse.length &&
-              !propertyUse.includes(`${call?.isResidential}`)
+              !propertyUse.includes(`${call?.getIsResidential()}`)
             ) {
               return false;
             }
-            if (jobType && jobType !== call?.jobTypeId) {
+            if (jobType && jobType !== call?.getJobTypeId()) {
               return false;
             }
-            if (jobSubType && jobSubType !== call?.jobSubtypeId) {
+            if (jobSubType && jobSubType !== call?.getJobSubtypeId()) {
               return false;
             }
             return true;
@@ -216,13 +225,19 @@ const Column = ({
   console.log(filters);
   // @ts-ignore
 
-  const calendarDay = datesMap?.get(date)?.toObject();
+  const calendarDay = datesMap?.get(date);
+  const completedServiceCallsList = calendarDay!.getCompletedServiceCallsList();
+  const remindersList = calendarDay!.getRemindersList();
+  const serviceCallsList = calendarDay!.getServiceCallsList();
+  const timeoffRequestsList = calendarDay!.getTimeoffRequestsList();
+  /*
   const {
     completedServiceCallsList,
     remindersList,
     serviceCallsList,
     timeoffRequestsList,
   } = filterCalls(calendarDay);
+*/
   return (
     <Box className={clsx(dayView && 'ServiceCalendarColumnDayView')}>
       <div className="ServiceCalendarColumnSticky">
@@ -270,7 +285,7 @@ const Column = ({
           )}
         </Box>
       </div>
-      {!!completedServiceCallsList.length && (
+      {completedServiceCallsList != undefined && (
         <Button
           className="ServiceCalendarColumnCompletedButton"
           onClick={() => setShowCompleted(!showCompleted)}
@@ -286,34 +301,34 @@ const Column = ({
       )}
       <Collapse in={showCompleted}>
         {completedServiceCallsList
-          .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+          .sort(
+            (a, b) =>
+              parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
+          )
           .map(call => (
-            <CallCard key={call.id} card={call} type="completed" />
+            <CallCard key={call.getId()} card={call} type="completed" />
           ))}
       </Collapse>
       {timeoffRequestsList
-        .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+        .sort(
+          (a, b) => parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
+        )
         .map(call => (
-          <TimeoffCard
-            key={call.id}
-            card={{
-              ...call,
-              requestTypeName: timeoffRequestTypes
-                ? timeoffRequestTypes[call.requestType]
-                : undefined,
-            }}
-            loggedUserId={userId}
-          />
+          <TimeoffCard key={call.getId()} card={call} loggedUserId={userId} />
         ))}
       {remindersList
-        .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+        .sort(
+          (a, b) => parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
+        )
         .map(call => (
-          <CallCard key={call.id} card={call} type="reminder" />
+          <CallCard key={call.getId()} card={call} type="reminder" />
         ))}
       {serviceCallsList
-        .sort((a, b) => parseInt(a.timeStarted) - parseInt(b.timeStarted))
+        .sort(
+          (a, b) => parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
+        )
         .map(call => (
-          <CallCard key={call.id} card={call} />
+          <CallCard key={call.getId()} card={call} />
         ))}
     </Box>
   );
