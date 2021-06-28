@@ -19,7 +19,9 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { TimeoffRequests } from './components/TimeoffRequests';
 import { TimesheetPendingApproval } from './components/TimesheetPendingApproval';
 import { Spiffs } from './components/Spiffs';
+import { Modal } from '../Modal';
 import { ToolLogs } from './components/ToolLogs';
+import { Button } from '../Button';
 import './styles.less';
 import { TripSummaryNew } from '../TripSummaryNew';
 import {
@@ -51,6 +53,8 @@ export type FilterData = {
 export const Payroll: FC<Props> = ({ userID }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
   const [initiatedRole, setInitiatedRole] = useState<boolean>(false);
+  const [openReport, setOpenReport] = useState<boolean>(false);
+
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
@@ -76,6 +80,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const [role, setRole] = useState<RoleType>('');
   const [employees, setEmployees] = useState<User[]>([]);
   const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
+  const [viewReport, setViewReport] = useState<boolean>(false);
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -218,14 +223,17 @@ export const Payroll: FC<Props> = ({ userID }) => {
         : []),
     ],
   ];
+
   let isTimesheet = true;
   let isTimeoffRequests = true;
   let isSpiffs = true;
+  let isEmployeeReport = false;
   let isToolLogs = true;
   let isPerDiem = true;
   let isTrips = true;
   let isPendingTimesheet = false;
   let isPayrollSummary = false;
+  let isJobSummary = true;
   if (role === 'Payroll') {
     isPayrollSummary = true;
     isPendingTimesheet = true;
@@ -234,7 +242,9 @@ export const Payroll: FC<Props> = ({ userID }) => {
     isTimesheet = false;
     isTimeoffRequests = false;
   }
-
+  if (role === 'Manager') {
+    isEmployeeReport = true;
+  }
   return (
     <div>
       <SectionBar title="Payroll" />
@@ -247,6 +257,12 @@ export const Payroll: FC<Props> = ({ userID }) => {
               schema={SCHEMA}
               className="PayrollFilter"
             />
+            {role === 'Manager' && (
+              <Button
+                label={'Open Job Report for Hours'}
+                onClick={() => setOpenReport(true)}
+              ></Button>
+            )}
             <Tabs
               tabs={[
                 ...(isTimesheet
@@ -386,8 +402,41 @@ export const Payroll: FC<Props> = ({ userID }) => {
                       },
                     ]
                   : []),
+                ...(isEmployeeReport
+                  ? [
+                      {
+                        label: 'Employee Report',
+                        content:
+                          filter.employeeId != 0 &&
+                          filter.week != OPTION_ALL ? (
+                            <div>
+                              <CostReportForEmployee
+                                key={filter.employeeId + filter.week}
+                                userId={filter.employeeId}
+                                week={filter.week}
+                              ></CostReportForEmployee>
+                            </div>
+                          ) : (
+                            <div>No Filter Detected</div>
+                          ),
+                      },
+                    ]
+                  : []),
               ]}
             />
+            {openReport && (
+              <Modal
+                open
+                fullScreen={true}
+                onClose={() => setOpenReport(false)}
+              >
+                <JobSummary
+                  employees={employees}
+                  departments={departments}
+                  onClose={() => setOpenReport(false)}
+                ></JobSummary>
+              </Modal>
+            )}
           </>
         ) : (
           <Alert severity="error">

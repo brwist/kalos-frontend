@@ -35,6 +35,9 @@ import { Confirm } from '../Confirm';
 import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
 import { Typography } from '@material-ui/core';
+import { Alert } from '../Alert';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { format } from 'date-fns';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -140,6 +143,12 @@ export const ServiceCall: FC<Props> = props => {
     },
     [setServicesRendered, serviceCallId],
   );
+
+  const handleSetError = useCallback(
+    (errorMessage: string) => setError(errorMessage),
+    [setError],
+  );
+
   const load = useCallback(async () => {
     setLoading(true);
     let newProjectData = projectData;
@@ -168,9 +177,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const propertyEvents = await EventClientService.loadEventsByPropertyId(
-            propertyId,
-          );
+          const propertyEvents =
+            await EventClientService.loadEventsByPropertyId(propertyId);
           setPropertyEvents(propertyEvents);
           resolve();
         }),
@@ -194,7 +202,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+          const jobTypeSubtypes =
+            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
           setJobTypeSubtypes(jobTypeSubtypes);
           resolve();
         }),
@@ -235,7 +244,9 @@ export const ServiceCall: FC<Props> = props => {
         setLoading(false);
       });
     } catch (e) {
-      setError(true);
+      handleSetError(e);
+      setLoaded(true);
+      setLoading(false);
     }
   }, [
     projectData,
@@ -336,7 +347,15 @@ export const ServiceCall: FC<Props> = props => {
         onClose();
       }
     },
-    [onSave, onClose, confirmedParentId],
+    [
+      onSave,
+      onClose,
+      confirmedParentId,
+      handleSetError,
+      asProject,
+      loggedUserId,
+      property.id,
+    ],
   );
   useEffect(() => {
     if (!loaded) {

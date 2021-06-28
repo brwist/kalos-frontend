@@ -361,7 +361,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
               page: this.state.page,
               departmentId: this.props.departmentId,
               payrollProcessed: undefined,
-              approved: undefined,
+              approved: false,
               role: this.props.role,
             },
         sort: tripSort as TripsSort,
@@ -518,6 +518,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
               perDiemTripMilesToUsd(Number(currentTrip.getDistanceInMiles())),
           },
           {
+            value: currentTrip.getDepartmentName(),
+          },
+          {
             value: currentTrip.getApproved() ? 'Yes' : 'No',
           },
           {
@@ -538,6 +541,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
                   <IconButton
                     key={currentTrip.getId() + 'delete' + idx}
                     size="small"
+                    disabled={currentTrip.getPayrollProcessed() === true}
                     onClick={() =>
                       this.setStateToNew({
                         pendingTripToDelete: currentTrip,
@@ -691,6 +695,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ tripToView: trip });
   };
   getColumns = () => {
+
     return (
       this.props.canDeleteTrips
         ? [

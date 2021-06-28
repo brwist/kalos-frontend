@@ -152,7 +152,7 @@ export const Request: FC<Props> = forwardRef(
         [
           {
             label: 'Payment Type',
-            name: 'getLogPaymentType',
+            name: 'getLogPaymentType',\
             required: true,
             options: PAYMENT_TYPE_LIST,
           },

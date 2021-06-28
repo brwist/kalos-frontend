@@ -27,6 +27,7 @@ import { TimeoffRequestTypes } from '../../../helpers';
 import { CalendarDay } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import './column.less';
+import { ContractServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/contract_pb_service';
 
 type Props = {
   date: string;
@@ -79,7 +80,6 @@ const Column = ({
       }
     }
   }, [date, autoScrollInitialized, datesMap, dayView, fetchingCalendarData]);
-
   const filterCalls = useCallback(
     (calendarDay: CalendarDay): CallsList => {
       const {
@@ -90,6 +90,7 @@ const Column = ({
         jobSubType,
         techIds: techIdsFilter,
       } = filters!;
+      console.log(filters);
       return Object.keys(calendarDay).reduce(
         (acc: CallsList, key) => {
           // @ts-ignore
@@ -105,12 +106,10 @@ const Column = ({
               )
                 return false;
               const techIds = call.logTechnicianAssigned.split(',').map(Number);
-              if (
-                !techIds.reduce(
-                  (aggr, item) => aggr || techIdsFilterArr.includes(item),
-                  true,
-                )
-              ) {
+              if (techIdsFilterArr.find(item => techIds.includes(item))) {
+                console.log('they got it');
+                return true;
+              } else {
                 return false;
               }
             } else if (!isAdmin && call.logTechnicianAssigned) {
@@ -214,8 +213,9 @@ const Column = ({
       </Box>
     );
   }
-
+  console.log(filters);
   // @ts-ignore
+
   const calendarDay = datesMap?.get(date)?.toObject();
   const {
     completedServiceCallsList,

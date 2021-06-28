@@ -1530,6 +1530,19 @@ function escapeText(encodedStr: string) {
   return dom.body.textContent || '';
 }
 
+// TODO probably shouldn't do it this way permanently, but creating a log image with the name itself specified is probably
+// the easiest way to do it until Kalos RPC 3 is ready and all the issues are fixed
+// I also made sure to set the tag as well so we can use that later on once we can modify the S3ClientService to actually use that
+// information to grab stuff from S3
+export const getS3LogImageFileName = (
+  fileName: string,
+  eventId: number | undefined,
+  logId: number,
+) => {
+  const split = fileName.split('.');
+  return `EventID-${eventId}-LogID-${logId}.${split[split.length - 1]}`;
+};
+
 /**
  * Upload file to S3 bucket
  * @param fileName string

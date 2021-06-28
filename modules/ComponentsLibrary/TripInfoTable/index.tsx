@@ -419,6 +419,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                     {
                       label: 'Delete All Trips',
                       compact: true,
+                      disabled: true,
                       variant: 'outlined',
                       onClick: () => {
                         this.setStateToNew({ pendingDeleteAllTrips: true });
@@ -456,6 +457,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                         <IconButton
                           key={currentTrip.getId() + 'edit'}
                           size="small"
+                          disabled={currentTrip.getPayrollProcessed() === true}
                           onClick={() =>
                             this.setStateToNew({
                               pendingTripToDelete: currentTrip,

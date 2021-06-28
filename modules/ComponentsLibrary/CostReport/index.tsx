@@ -1,7 +1,7 @@
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { MEALS_RATE } from '../../../constants';
+import { IRS_SUGGESTED_MILE_FACTOR, MEALS_RATE } from '../../../constants';
 import {
   formatDate,
   usd,
@@ -10,6 +10,7 @@ import {
   TimesheetLineClientService,
   TransactionClientService,
   TimesheetDepartmentClientService,
+  TaskClientService,
 } from '../../../helpers';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
@@ -31,18 +32,19 @@ export type SearchType = {
   priorityId: number;
 };
 
-export const CostReport: FC<Props> = ({
-  serviceCallId,
-  loggedUserId,
-  onClose,
-}) => {
+export const GetTotalTransactions = (transactions: Transaction.AsObject[]) => {
+  return transactions.reduce((aggr, { amount }) => aggr + amount, 0);
+};
+
+export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
+  let tripsRendered: Trip.AsObject[] = [];
+
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
 
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>([]);
-
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
 
@@ -51,6 +53,8 @@ export const CostReport: FC<Props> = ({
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [event, setEvent] = useState<Event>();
   const [loaded, setLoaded] = useState<boolean>(false);
+
+  const [trips, setTrips] = useState<Trip.AsObject[]>([]);
 
   const totalMeals =
     perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
@@ -84,7 +88,7 @@ export const CostReport: FC<Props> = ({
 
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
-    await loadPrintData();
+    await loadResources();
     setPrintStatus('loaded');
   }, [setPrintStatus, loadPrintData]);
   const handlePrinted = useCallback(
@@ -115,7 +119,7 @@ export const CostReport: FC<Props> = ({
 
     promises.push(
       new Promise<void>(async resolve => {
-        await loadPrintData();
+        await loadResources();
         resolve();
       }),
     );
@@ -140,8 +144,28 @@ export const CostReport: FC<Props> = ({
       }),
     );
 
+    promises.push(
+      new Promise<void>(async resolve => {
+        try {
+          let req = new Task();
+          req.setEventId(serviceCallId);
+
+          tasks = (await TaskClientService.BatchGet(req))
+            .getResultsList()
+            .map(task => task.toObject());
+
+          resolve();
+        } catch (err) {
+          console.error(
+            `Error occurred while loading the tasks for the cost report. Error: ${err}`,
+          );
+        }
+      }),
+    );
+
     Promise.all(promises).then(() => {
       setTimesheets(timesheets);
+      setTasks(tasks);
 
       let total = 0;
       timesheets.forEach(
@@ -167,7 +191,7 @@ export const CostReport: FC<Props> = ({
     <PrintPage
       buttonProps={{
         label: 'Print Cost Report',
-        disabled: loading || loadingEvent || printStatus === 'loading',
+        loading: loading || loadingEvent || printStatus === 'loading',
       }}
       downloadLabel="Download Cost Report"
       downloadPdfFilename="Cost-Report"
@@ -228,10 +252,18 @@ export const CostReport: FC<Props> = ({
           ['Transactions', usd(totalTransactions)],
           ['Meals', usd(totalMeals)],
           ['Lodging', usd(totalLodging)],
+          ['Tasks Billable', usd(totalTasksBillable)],
+          ['Trips Total', usd(tripsTotal)],
           [
             '',
             <strong key="stronk">
-              TOTAL: {usd(totalMeals + totalLodging + totalTransactions)}
+              TOTAL:{' '}
+              {usd(
+                totalMeals +
+                  totalLodging +
+                  totalTransactions +
+                  totalTasksBillable,
+              )}
             </strong>,
           ],
         ]}

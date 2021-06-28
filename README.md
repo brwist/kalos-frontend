@@ -101,6 +101,8 @@ async function getUserByID(ID: number): User.AsObject {
 }
 ```
 
+The code above creates a new user client, which can handle the request for us. It then creates a new user called `req`, standing for "request". The new user has the ID set on it using the `req.setId(ID);` line. Lastly, with the ID specified, the client we made is used to do a `Get` request. The get request returns a response - 'res' - which is the rest of that user's information as gotten from the database. 
+
 ### Fetching a list of users who are employees
 
 Fetching lists requires you to specify the page (the API is constrained to return arrays with 25 entities at a time to simplify API usage and server code). Unlike the other methods, the `BatchGet` method returns a protobuf. Simply call the `toObject` method available to all protobufs to convert it to an object and then access the `resultsList` property. Under the hood this type will always be called `XList` where `X` is the kind of entity the client works with (in this case `UserList`).
@@ -174,7 +176,7 @@ Or, more commonly, a list of `ServicesRendered` (note: `ServicesRendered` is a b
 
 ```javascript
 async function getServicesRenderedByUserID(
-  userID: number
+  userID: number,
 ): ServicesRenderedList.AsObject {
   const client = new ServicesRenderedClient();
   const req = new ServicesRendered();
@@ -189,3 +191,34 @@ async function getServicesRenderedByUserID(
 Folder `/ComponentsLibrary` contains reusable UI components.
 
 Run `yarn start --ComponentsLibrary` to view example use cases.
+
+## Best Practices
+
+### When you make a call to the backend, please wrap it inside of a Try-Catch block like so:
+
+```javascript
+try {
+  let req = new ActivityLog();
+  req.setActivityName('Example activity log');
+  await ActivityLogClientService.Create(req);
+} catch (err) {
+  console.error(
+    `An error occurred while attempting to create a new activity log: ${err}`,
+  );
+}
+```
+
+This allows us to diagnose any errors more effectively and allows us to track errors much easier.
+
+## Recommended extensions (VSCode)
+
+These aren't required, but they tend to make development easier:
+
+- CodeStream
+  - CodeStream is like an all-in-one issue tracking and communication tool
+  - We can invite you to our existing CodeStream team via email
+- ESLint
+  - It will display warnings for missing dependencies for useEffect, useMemo, etc.
+  - Offers a variety of other linting benefits over the standard linter
+- Better Comments by Aaron Bond
+  - This will highlight TODOs, allow for better comment clarity and generally improve comments overall

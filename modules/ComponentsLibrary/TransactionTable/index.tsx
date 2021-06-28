@@ -48,7 +48,6 @@ import { FilterData, RoleType } from '../Payroll';
 import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
-import { ActivityLogClientService, getRPCFields } from '../../../helpers';
 import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
@@ -108,7 +107,6 @@ export const TransactionTable: FC<Props> = ({
   onSelect,
   onDeselect,
   hasActions,
-  key,
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
@@ -172,10 +170,10 @@ export const TransactionTable: FC<Props> = ({
   </body>`;
   };
 
-  const getGalleryData = (txn: Transaction.AsObject): GalleryData[] => {
-    return txn.documentsList.map(d => {
+  const getGalleryData = (txn: Transaction): GalleryData[] => {
+    return txn.getDocumentsList().map(d => {
       return {
-        key: `${txn.id}-${d.reference}`,
+        key: `${txn.getId()}-${d.getReference()}`,
         bucket: 'kalos-transactions',
       };
     });
@@ -205,12 +203,12 @@ export const TransactionTable: FC<Props> = ({
     };
   };
 
-  const auditTxn = async (txn: Transaction.AsObject) => {
+  const auditTxn = async (txn: Transaction) => {
     const ok = confirm(
       'Are you sure you want to mark all the information on this transaction (including all attached photos) as correct? This action is irreversible.',
     );
     if (ok) {
-      await makeAuditTransaction(txn.id);
+      await makeAuditTransaction(txn.getId());
       await refresh();
     }
   };
@@ -276,7 +274,7 @@ export const TransactionTable: FC<Props> = ({
     await refresh();
   };
 
-  const updateStatus = async (txn: Transaction.AsObject) => {
+  const updateStatus = async (txn: Transaction) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as ${
         acceptOverride ? 'accepted' : 'recorded'
@@ -284,8 +282,8 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       const fn = acceptOverride
-        ? async () => makeUpdateStatus(txn.id, 3, 'accepted')
-        : async () => makeRecordTransaction(txn.id);
+        ? async () => makeUpdateStatus(txn.getId(), 3, 'accepted')
+        : async () => makeRecordTransaction(txn.getId());
       await fn();
       await refresh();
     }
@@ -305,12 +303,12 @@ export const TransactionTable: FC<Props> = ({
     await makeLog(`${description} ${reason || ''}`, id);
   };
 
-  const forceAccept = async (txn: Transaction.AsObject) => {
+  const forceAccept = async (txn: Transaction) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as accepted?`,
     );
     if (ok) {
-      await makeUpdateStatus(txn.id, 3, 'accepted');
+      await makeUpdateStatus(txn.getId(), 3, 'accepted');
       await refresh();
     }
   };
@@ -421,13 +419,13 @@ export const TransactionTable: FC<Props> = ({
   }, []);
 
   const handleFile = useCallback(
-    (txn: Transaction.AsObject) => {
+    (txn: Transaction) => {
       const fr = new FileReader();
       fr.onload = async () => {
         try {
           const u8 = new Uint8Array(fr.result as ArrayBuffer);
           await clients.docs.upload(
-            txn.id,
+            txn.getId(),
             FileInput.current!.files![0].name,
             u8,
           );
@@ -987,9 +985,7 @@ export const TransactionTable: FC<Props> = ({
                             <input
                               type="file"
                               ref={FileInput}
-                              onChange={() =>
-                                handleFile(selectorParam.txn.toObject())
-                              }
+                              onChange={() => handleFile(selectorParam.txn)}
                               style={{ display: 'none' }}
                             />
                           </IconButton>
@@ -1024,9 +1020,7 @@ export const TransactionTable: FC<Props> = ({
                         <AltGallery
                           key="receiptPhotos"
                           title="Transaction Photos"
-                          fileList={getGalleryData(
-                            selectorParam.txn.toObject(),
-                          )}
+                          fileList={getGalleryData(selectorParam.txn)}
                           transactionID={selectorParam.txn.getId()}
                           text="View photos"
                           iconButton
@@ -1058,12 +1052,8 @@ export const TransactionTable: FC<Props> = ({
                                   size="small"
                                   onClick={
                                     loggedUserId === 1734
-                                      ? () =>
-                                          forceAccept(
-                                            selectorParam.txn.toObject(),
-                                          )
-                                      : () =>
-                                          auditTxn(selectorParam.txn.toObject())
+                                      ? () => forceAccept(selectorParam.txn)
+                                      : () => auditTxn(selectorParam.txn)
                                   }
                                   disabled={
                                     selectorParam.txn.getIsAudited() &&
@@ -1085,9 +1075,7 @@ export const TransactionTable: FC<Props> = ({
                         >
                           <IconButton
                             size="small"
-                            onClick={() =>
-                              updateStatus(selectorParam.txn.toObject())
-                            }
+                            onClick={() => updateStatus(selectorParam.txn)}
                           >
                             <SubmitIcon />
                           </IconButton>

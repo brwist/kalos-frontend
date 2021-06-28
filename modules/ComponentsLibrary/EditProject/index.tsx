@@ -308,14 +308,13 @@ export const EditProject: FC<Props> = ({
       );
     }
   }, []);
-
+  
   const handleDeleteEvent = useCallback(
     async (eventId: number) => {
       setDeletingEvent(true);
       try {
         await EventClientService.deleteEventById(eventId);
         setDeletingEvent(false);
-
         let req = new ActivityLog();
         req.setActivityName(`Deleted event: ${eventId}`);
         req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
@@ -510,7 +509,6 @@ export const EditProject: FC<Props> = ({
       formData.setCheckedIn(formData.getCheckedIn());
       if (formData.getId()) formData.setCreatorUserId(loggedUserId);
       await TaskClientService.upsertEventTask(formData);
-
       setLoaded(false);
     },
     [
@@ -612,14 +610,7 @@ export const EditProject: FC<Props> = ({
         loadEvent();
       }
     },
-    [
-      event,
-      loadEvent,
-      setEditingProject,
-      setLoadingEvent,
-      tasks,
-      setErrorProject,
-    ],
+    [event, tasks, loadEvent, loggedUserId],
   );
 
   const SCHEMA_SEARCH: Schema<SearchType> = [
