@@ -110,15 +110,17 @@ const Column: FC<Props> = ({
                 <ServicesRenderedCard key={`src-${card.id}`} card={card} />
               );
             }
+            console.log(card);
             //eslint-disable-next-line
-            if (card.hasOwnProperty('allDayOff')) {
+            if (card.getAllDayOff != undefined) {
+              console.log('we are a timeoff');
               return (
                 <TimeoffCard
-                  key={`toc-${card.id}`}
+                  key={`toc-${card.getId()}`}
                   card={{
                     ...card,
                     requestTypeName: timeoffRequestTypes
-                      ? timeoffRequestTypes[card.requestType]
+                      ? timeoffRequestTypes[card.getRequestType()]
                       : undefined,
                   }}
                   loggedUserId={loggedUserId}
