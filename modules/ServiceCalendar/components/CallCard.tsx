@@ -13,7 +13,7 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { TimeOff } from '../../ComponentsLibrary/TimeOff';
@@ -23,7 +23,12 @@ import {
   repeatsMapping,
   requestTypeMappping,
 } from './constants';
-import { formatTime, roundNumber } from '../../../helpers';
+import {
+  formatTime,
+  makeSafeFormObject,
+  roundNumber,
+  TimeoffRequestClientService,
+} from '../../../helpers';
 import './callCard.less';
 
 type ColorIndicatorProps = {
@@ -56,7 +61,7 @@ const ColorIndicator = ({
 };
 
 interface TimeoffProps {
-  card: TimeoffRequest.AsObject & {
+  card: TimeoffRequest & {
     requestTypeName?: string;
   };
   loggedUserId: number;
@@ -66,6 +71,7 @@ export const TimeoffCard = ({
   card,
   loggedUserId,
 }: TimeoffProps): JSX.Element | null => {
+  /*
   const {
     id,
     requestType,
@@ -79,13 +85,31 @@ export const TimeoffCard = ({
     requestTypeName,
     requestClass,
   } = card;
+  */
+  console.log('we are a timeoff card');
+  console.log(makeSafeFormObject(card, new TimeoffRequest()));
+  console.log(card.getId());
+  const id = card.getId();
+
+  const requestType = card.getRequestType();
+  const adminApprovalUserId = card.getAdminApprovalUserId();
+  const requestStatus = card.getRequestStatus();
+  const timeStarted = card.getTimeStarted();
+  const timeFinished = card.getTimeFinished();
+  const userName = card.getUserName();
+  const userId = card.getUserId();
+  const allDayOff = card.getAllDayOff();
+  const requestClass = card.getRequestClass();
+  const requestTypeName = requestType;
   // if (adminApprovalUserId === 0) {
   //   return null;
   // }
   let subheader, dates, time;
   const [editId, setEditId] = useState<number>();
   try {
-    const { employees, employeesLoading } = useEmployees();
+    const employees = useEmployees().employees;
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const employeesLoading = useEmployees().employeesLoading;
     if (employeesLoading) {
       return <SkeletonCard />;
     }
@@ -194,11 +218,12 @@ export const TimeoffCard = ({
 };
 
 type CallProps = {
-  card: Event.AsObject;
+  card: Event;
   type?: string;
 };
 
 export const CallCard = ({ card, type }: CallProps): JSX.Element => {
+  /*
   let {
     id,
     propertyId,
@@ -216,7 +241,22 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
     timeStarted,
     isLmpc,
   } = card;
-
+*/
+  const id = card.getId();
+  const propertyId = card.getPropertyId();
+  const name = card.getName();
+  const customer = card.getCustomer();
+  const timeEnded = card.getTimeEnded();
+  const description = card.getDescription();
+  const logTechnicianAssigned = card.getLogTechnicianAssigned();
+  const logJobNumber = card.getLogJobNumber();
+  const logJobStatus = card.getLogJobStatus();
+  const color = card.getColor();
+  const isAllDay = card.getIsAllDay();
+  const repeatType = card.getRepeatType();
+  const dateEnded = card.getDateEnded();
+  const timeStarted = card.getTimeStarted();
+  const isLmpc = card.getIsLmpc();
   const { employees, employeesLoading } = useEmployees();
   const [contentTextCollapsed, setContentTextCollapsed] = useState(true);
   const technicianIds =
@@ -259,7 +299,7 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
         if (type === 'reminder') {
           url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editReminder&id=${id}`;
         } else {
-          url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${id}&property_id=${propertyId}&user_id=${customer?.id}`;
+          url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${id}&property_id=${propertyId}&user_id=${customer?.getId()}`;
         }
         const win = window.open(url, '_blank');
         if (win) {
@@ -311,8 +351,8 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
           {(!type || type === 'completed') && (
             <Typography variant="body1" component="p">
               <strong>
-                {customer?.businessname ||
-                  `${customer?.firstname} ${customer?.lastname}`}
+                {customer?.getBusinessname() ||
+                  `${customer?.getFirstname()} ${customer?.getLastname()}`}
               </strong>
             </Typography>
           )}
