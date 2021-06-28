@@ -35,7 +35,6 @@ export const reducer = (state: State, action: Action) => {
     case 'updateSpiff': {
       const data = action.data;
       const spiffs = state.spiffs;
-      console.log('doing action');
       for (let i = 0; i < spiffs!.length; i++) {
         if (spiffs![i].getId() == data.getId())
           spiffs![i].setPayrollProcessed(true);

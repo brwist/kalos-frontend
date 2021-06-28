@@ -9,6 +9,7 @@ import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
 import { ENDPOINT } from '../../../constants';
+import { NULL_TIME } from '../../../constants';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
@@ -120,7 +121,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
           processed += subtotal;
         } else if (results[i].getAdminApprovalUserId() !== 0) {
           approved += subtotal;
-        } else if (results[i].getUserApprovalDatetime() != NULL_TIME_VALUE) {
+        } else if (results[i].getUserApprovalDatetime() != NULL_TIME) {
           submitted += subtotal;
         } else {
           pending += subtotal;

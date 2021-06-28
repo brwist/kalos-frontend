@@ -23,6 +23,8 @@ import { Modal } from '../Modal';
 import { ToolLogs } from './components/ToolLogs';
 import { Button } from '../Button';
 import './styles.less';
+import { JobSummary } from './components/JobSummary';
+import { CostReportForEmployee } from '../CostReportForEmployee';
 import { TripSummaryNew } from '../TripSummaryNew';
 import {
   PerDiemList,
