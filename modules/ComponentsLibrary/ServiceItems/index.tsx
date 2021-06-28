@@ -333,7 +333,6 @@ export const ServiceItems: FC<Props> = props => {
     materialsIds: number[],
     serviceItemId: number,
   ) => {
-    console.log('we called handle material');
     const ids = materials.map(id => id.getId());
     await Promise.all(
       materialsIds
