@@ -196,7 +196,8 @@ export const Timesheet: FC<Props> = props => {
     {
       icon: <AddAlertIcon />,
       name: 'Reminder',
-      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+      url:
+        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
     },
     {
       icon: <AssignmentIndIcon />,
@@ -552,8 +553,7 @@ export const Timesheet: FC<Props> = props => {
   }, [timesheetOwnerId, userId]);
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes =
-      await TimeoffRequestClientService.getTimeoffRequestTypes();
+    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.getId()]: item.getRequestType() }),
@@ -613,8 +613,9 @@ export const Timesheet: FC<Props> = props => {
         ),
       ]);
       toReq.setDateTargetList(['time_started', 'time_started']);
-      const timeoffs =
-        await TimeoffRequestClientService.getTimeoffRequestByFilter(toReq);
+      const timeoffs = await TimeoffRequestClientService.getTimeoffRequestByFilter(
+        toReq,
+      );
       dispatch({
         type: 'fetchedTimesheetData',
         data: result,
@@ -709,21 +710,22 @@ export const Timesheet: FC<Props> = props => {
               </Alert>
             )}
           </Box>
-          {editing.modalShown && editing.entry.payrollProcessed != true && (
-            <EditTimesheetModal
-              entry={editing.entry}
-              timesheetOwnerId={timesheetOwnerId}
-              userId={userId}
-              timesheetAdministration={
-                !!user.getTimesheetAdministration() || isManager
-              }
-              role={role}
-              defaultDepartment={user.getEmployeeDepartmentId()}
-              onClose={handleCloseModal}
-              onSave={handleOnSave}
-              action={editing.action}
-            />
-          )}
+          {editing.modalShown &&
+            editing.entry.getPayrollProcessed() != true && (
+              <EditTimesheetModal
+                entry={editing.entry}
+                timesheetOwnerId={timesheetOwnerId}
+                userId={userId}
+                timesheetAdministration={
+                  !!user.getTimesheetAdministration() || isManager
+                }
+                role={role}
+                defaultDepartment={user.getEmployeeDepartmentId()}
+                onClose={handleCloseModal}
+                onSave={handleOnSave}
+                action={editing.action}
+              />
+            )}
           {hasAccess && <AddNewButton options={addNewOptions} />}
         </EditTimesheetContext.Provider>
       </ConfirmServiceProvider>
