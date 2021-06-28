@@ -644,8 +644,8 @@ export const PerDiemComponent: FC<Props> = ({
       })
     : perDiems;
   const allRowsList = filteredPerDiems.reduce(
-    (aggr: PerDiemRow[], pd) => [...aggr, ...pd.getRowsList()],
-    [],
+    (aggr, pd) => [...aggr, ...pd.getRowsList()],
+    [] as PerDiemRow[],
   );
   const totalMeals = allRowsList.reduce(
     (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
@@ -771,9 +771,11 @@ export const PerDiemComponent: FC<Props> = ({
           const totalLodging = entry
             .getRowsList()
             .reduce(
-              (aggr, pdr, mealsOnly) =>
+              (aggr, pdr) =>
                 aggr +
-                (mealsOnly ? 0 : govPerDiemByZipCode(pdr.getZipCode()).lodging),
+                (pdr.getMealsOnly()
+                  ? 0
+                  : govPerDiemByZipCode(pdr.getZipCode()).lodging),
               0,
             );
           return (
