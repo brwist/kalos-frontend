@@ -86,9 +86,6 @@ export const TimeoffCard = ({
     requestClass,
   } = card;
   */
-  console.log('we are a timeoff card');
-  console.log(makeSafeFormObject(card, new TimeoffRequest()));
-  console.log(card.getId());
   const id = card.getId();
 
   const requestType = card.getRequestType();

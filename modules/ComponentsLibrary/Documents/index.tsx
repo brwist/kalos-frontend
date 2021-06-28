@@ -102,7 +102,6 @@ export const Documents: FC<Props> = ({
         entry.setFieldMaskList(fieldMask);
       }
       if (userId && !ignoreUserId) {
-        console.log('setting userID');
         entry.setUserId(userId);
       }
       if (propertyId) {

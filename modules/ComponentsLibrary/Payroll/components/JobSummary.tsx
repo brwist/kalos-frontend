@@ -15,6 +15,8 @@ import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { Button } from '../../Button';
 import { SectionBar } from '../../SectionBar';
 import { InfoTable } from '../../InfoTable';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '@kalos-core/kalos-rpc/User';
 import Alert from '@material-ui/lab/Alert';
 import { PlainForm, Schema, Option } from '../../PlainForm';
 
@@ -32,8 +34,6 @@ import {
   roundNumber,
   makeFakeRows,
   getWeekOptions,
-  UserType,
-  TimesheetDepartmentType,
   UserClientService,
   downloadCSV,
   timestamp,
@@ -44,8 +44,8 @@ export type FilterData = {
   week: string;
 };
 interface Props {
-  employees: UserType[];
-  departments: TimesheetDepartmentType[];
+  employees: User[];
+  departments: TimesheetDepartment[];
   onClose: () => void;
 }
 export type Action = {
