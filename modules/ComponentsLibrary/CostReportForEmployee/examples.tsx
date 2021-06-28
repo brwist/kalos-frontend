@@ -5,21 +5,9 @@ import { ExampleTitle } from '../helpers';
 export default () => (
   <>
     <ExampleTitle>Ready</ExampleTitle>
-    <CostReportForEmployee
-      userId={101275}
-      loggedUserId={101275}
-      notReady={true}
-      onClose={() => alert('Closed')}
-      username="TestName"
-    />
+    <CostReportForEmployee userId={101275} week="2021-06-27" />
 
     <ExampleTitle>Not Ready</ExampleTitle>
-    <CostReportForEmployee
-      userId={101275}
-      loggedUserId={101275}
-      notReady={false}
-      onClose={() => alert('Closed')}
-      username="TestName"
-    />
+    <CostReportForEmployee userId={101275} week="2021-06-27" />
   </>
 );
