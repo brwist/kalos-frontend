@@ -64,18 +64,6 @@ export const CostSummary: FC<Props> = ({
   const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>(0);
   const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
   const [totalPTO, setTotalPTO] = useState<number>(0);
-  const [totalPerDiem, setTotalPerDiem] = useState<{
-    totalMeals: number;
-    totalLodging: number;
-    totalMileage: number;
-    processed: number;
-  }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
-  const [totalPerDiemProcessed, setTotalPerDiemProcessed] = useState<{
-    totalMeals: number;
-    totalLodging: number;
-    totalMileage: number;
-    processed: number;
-  }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
   const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
   const [trips, setTrips] = useState<Trip[]>();
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -176,10 +164,11 @@ export const CostSummary: FC<Props> = ({
     return { totalDistance: distanceSubtotal, processed };
   }, [userId]);
   const getPerDiemTotals = useCallback(async () => {
-    const pdRes = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
-      userId,
-      formatDateFns(endDay),
-    );
+    const pdRes =
+      await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
+        userId,
+        formatDateFns(endDay),
+      );
     //get PerDiems, set them
     const resultsList = pdRes.getResultsList();
     setPerDiems(resultsList);
@@ -388,7 +377,7 @@ export const CostSummary: FC<Props> = ({
         return toolTotal;
       }
     },
-    [notReady, userId, endDay],
+    [userId, notReady, startDay],
   );
   const getSpiffToolTotalsProcessed = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
