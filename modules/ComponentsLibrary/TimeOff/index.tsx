@@ -109,9 +109,8 @@ export const TimeOff: FC<Props> = ({
     },
     [userId],
   );
-  const setSafeData = () => {
-    const tempData = makeSafeFormObject(data, new TimeoffRequest());
-    setData(tempData);
+  const setSafeData = (data: TimeoffRequest) => {
+    setData(makeSafeFormObject(data, new TimeoffRequest()));
   };
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
   const init = useCallback(async () => {
@@ -180,16 +179,13 @@ export const TimeOff: FC<Props> = ({
     setDeleting,
   ]);
   const handleSubmit = useCallback(
-    async (data: TimeoffRequest) => {
+    async (formData: TimeoffRequest) => {
       setError('');
-      const temp = makeSafeFormObject(data, new TimeoffRequest());
-      const allDayOff = temp.getAllDayOff();
-      const departmentCode = temp.getDepartmentCode();
-      const notes = temp.getNotes();
-      const requestType = temp.getNotes();
+      const temp = makeSafeFormObject(formData, new TimeoffRequest());
+
+      const requestType = temp.getRequestType();
       const timeStarted = temp.getTimeStarted();
       const timeFinished = temp.getTimeFinished();
-
       const userId = user?.getId();
       if (timeFinished < timeStarted) {
         setError('End Time cannot be before Start Time');
@@ -197,10 +193,14 @@ export const TimeOff: FC<Props> = ({
       }
       setSaving(true);
       temp.setUserId(userId!);
+
       temp.setUserApprovalDatetime(timestamp());
-      const newData = await TimeoffRequestClientService.upsertTimeoffRequest(
-        temp,
-      );
+      let newData = new TimeoffRequest();
+      if (data.getId() === 0) {
+        newData = await TimeoffRequestClientService.Create(temp);
+      } else {
+        newData = await TimeoffRequestClientService.Update(temp);
+      }
       const typeName = typeOptions.find(
         //@ts-ignore
         (val: { label: string; value: number }) => {
@@ -268,10 +268,28 @@ export const TimeOff: FC<Props> = ({
   );
 
   const handleSubmitAdmin = useCallback(async () => {
-    data.setAdminApprovalUserId(loggedUserId);
-    const newData = await TimeoffRequestClientService.upsertTimeoffRequest(
-      data,
-    );
+    const req = new TimeoffRequest();
+
+    req.setAdminApprovalUserId(loggedUserId);
+    req.setAdminApprovalDatetime(data.getAdminApprovalDatetime());
+    req.setId(data.getId());
+    req.setReviewedBy(data.getReviewedBy());
+    req.setAdminComments(data.getAdminComments());
+    req.setRequestStatus(data.getRequestStatus());
+    req.setFieldMaskList([
+      'AdminApprovalUserId',
+      'ReviewedBy',
+      'AdminComments',
+      'RequestStatus',
+      'AdminApprovalDatetime',
+    ]);
+
+    let newData = new TimeoffRequest();
+    if (data.getId() === 0) {
+      newData = await TimeoffRequestClientService.Create(req);
+    } else {
+      await TimeoffRequestClientService.Update(req);
+    }
     setData(newData);
     if (onAdminSubmit) {
       onAdminSubmit(newData);
@@ -421,8 +439,8 @@ export const TimeOff: FC<Props> = ({
         key={formKey}
         data={data}
         onClose={onCancel}
-        onSave={data.getId() ? toggleDeleting : handleSubmit}
         onChange={setSafeData}
+        onSave={data.getId() ? toggleDeleting : handleSubmit}
         schema={schema}
         title={
           user?.getFirstname()
