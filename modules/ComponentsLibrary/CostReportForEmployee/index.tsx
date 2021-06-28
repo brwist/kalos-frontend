@@ -8,23 +8,32 @@ import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
-import { ENDPOINT, MEALS_RATE } from '../../../constants';
+import { ENDPOINT } from '../../../constants';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { differenceInMinutes, parseISO, addDays, format } from 'date-fns';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import {
+  differenceInMinutes,
+  parseISO,
+  subDays,
+  addDays,
+  startOfWeek,
+  format,
+} from 'date-fns';
+import {
+  Trip,
+  PerDiemList,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
   formatDate,
   PerDiemClientService,
   usd,
 } from '../../../helpers';
-import { NULL_TIME_VALUE } from '../Timesheet/constants';
-import { Button } from '@material-ui/core';
 interface Props {
   userId: number;
   week: string;
 }
-export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
+
+export const CostReportForEmployee: FC<Props> = ({ userId }) => {
   const [trips, setTrips] = useState<Trip[]>();
   const [perDiems, setPerDiems] = useState<PerDiem[]>();
   const [spiffs, setSpiffs] = useState<Task[]>();

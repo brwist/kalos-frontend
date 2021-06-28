@@ -6,35 +6,17 @@ import {
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
 } from '@kalos-core/kalos-rpc/S3File';
-import { File, FileClient } from '@kalos-core/kalos-rpc/File';
+import { FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
-import { UserClient, User, CardData } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
-import { JobTypeClient, JobType } from '@kalos-core/kalos-rpc/JobType';
-import {
-  TimeoffRequest,
-  TimeoffRequestClient,
-  PTO,
-} from '@kalos-core/kalos-rpc/TimeoffRequest';
-import {
-  Transaction,
-  TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
+import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import { JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
+import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
 import { TaskEvent, TaskEventClient } from '@kalos-core/kalos-rpc/TaskEvent';
-import {
-  SpiffType,
-  TaskClient,
-  Task,
-  TaskEventData,
-  ProjectTask,
-  TaskStatus,
-  TaskPriority,
-} from '@kalos-core/kalos-rpc/Task';
-import {
-  TaskAssignment,
-  TaskAssignmentClient,
-} from '@kalos-core/kalos-rpc/TaskAssignment';
+import { TaskClient } from '@kalos-core/kalos-rpc/Task';
+import { TaskAssignmentClient } from '@kalos-core/kalos-rpc/TaskAssignment';
 import {
   ActivityLog,
   ActivityLogClient,
@@ -44,54 +26,27 @@ import {
   PromptPaymentReportLine,
   SpiffReportLine,
 } from '@kalos-core/kalos-rpc/Report';
-import {
-  EmployeeFunctionClient,
-  EmployeeFunction,
-} from '@kalos-core/kalos-rpc/EmployeeFunction';
-import { JobSubtypeClient, JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { EmployeeFunctionClient } from '@kalos-core/kalos-rpc/EmployeeFunction';
+import { JobSubtypeClient } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtypeClient } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { ServicesRenderedClient } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { StoredQuoteClient } from '@kalos-core/kalos-rpc/StoredQuote';
 import { QuotePartClient } from '@kalos-core/kalos-rpc/QuotePart';
 import { QuoteLinePartClient } from '@kalos-core/kalos-rpc/QuoteLinePart';
-import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
-import {
-  PerDiemClient,
-  PerDiem,
-  PerDiemRow,
-} from '@kalos-core/kalos-rpc/PerDiem';
+import { PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
 import { MapClient } from '@kalos-core/kalos-rpc/Maps';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import {
-  TimesheetDepartmentClient,
-  TimesheetDepartment,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import {
-  TimesheetLineClient,
-  TimesheetLine,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
+import { TimesheetDepartmentClient } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetLineClient } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
-import {
-  SpiffToolAdminAction,
-  SpiffToolAdminActionClient,
-} from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { Group, GroupClient } from '@kalos-core/kalos-rpc/Group';
-import {
-  UserGroupLink,
-  UserGroupLinkClient,
-} from '@kalos-core/kalos-rpc/UserGroupLink';
-import {
-  TransactionDocumentClient,
-  TransactionDocument,
-} from '@kalos-core/kalos-rpc/TransactionDocument';
-import {
-  InternalDocument,
-  InternalDocumentClient,
-} from '@kalos-core/kalos-rpc/InternalDocument';
+import { SpiffToolAdminActionClient } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { GroupClient } from '@kalos-core/kalos-rpc/Group';
+import { UserGroupLinkClient } from '@kalos-core/kalos-rpc/UserGroupLink';
+import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { InternalDocumentClient } from '@kalos-core/kalos-rpc/InternalDocument';
 import { PDFClient } from '@kalos-core/kalos-rpc/PDF';
-import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
-import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
+import { DocumentClient } from '@kalos-core/kalos-rpc/Document';
 import {
   ENDPOINT,
   MONTHS,
@@ -111,46 +66,8 @@ import {
   randomize,
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
-
-export type UserType = User.AsObject;
-export type PropertyType = Property.AsObject;
-export type ContractType = Contract.AsObject;
-export type GroupType = Group.AsObject;
-export type UserGroupLinkType = UserGroupLink.AsObject;
-export type EventType = Event.AsObject;
-export type JobTypeType = JobType.AsObject;
-export type JobSubtypeType = JobSubtype.AsObject;
-export type InternalDocumentType = InternalDocument.AsObject;
-export type FileType = File.AsObject;
-export type DocumentKeyType = DocumentKey.AsObject;
-export type PerDiemType = PerDiem.AsObject;
-export type TripType = Trip.AsObject;
-export type PerDiemRowType = PerDiemRow.AsObject;
-export type KalosMapType = Trip.AsObject;
-export type TimesheetDepartmentType = TimesheetDepartment.AsObject;
-export type EmployeeFunctionType = EmployeeFunction.AsObject;
-export type ActivityLogType = ActivityLog.AsObject;
-export type SpiffTypeType = SpiffType.AsObject;
-export type SpiffReportLineType = SpiffReportLine.AsObject;
-export type PromptPaymentReportLineType = PromptPaymentReportLine.AsObject;
-export type TaskType = Task.AsObject;
-export type SpiffToolAdminActionType = SpiffToolAdminAction.AsObject;
-export type DocumentType = Document.AsObject;
-export type TaskEventDataType = TaskEventData.AsObject;
-export type QuotableReadType = QuotableRead.AsObject;
-export type QuotableType = Quotable.AsObject;
-export type ProjectTaskType = ProjectTask.AsObject;
-export type ProjectType = Event.AsObject;
-export type TaskStatusType = TaskStatus.AsObject;
-export type TaskPriorityType = TaskPriority.AsObject;
-export type TransactionType = Transaction.AsObject;
 export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
-export type TaskAssignmentType = TaskAssignment.AsObject;
-export type CardDataType = CardData.AsObject;
-export type TransactionDocumentType = TransactionDocument.AsObject;
-export type TimeoffRequestType = TimeoffRequest.AsObject;
-export type PTOType = PTO.AsObject;
-export type TimesheetLineType = TimesheetLine.AsObject;
+
 export type SimpleFile = {
   key: string;
   bucket: string;
@@ -274,7 +191,7 @@ function timestamp(dateOnly = false, date?: Date) {
 async function slackNotify(id: string, text: string) {
   const KALOS_BOT = await ApiKeyClientService.getKeyByKeyName('kalos_bot');
   await fetch(
-    `https://slack.com/api/chat.postMessage?token=${KALOS_BOT.apiKey}&channel=${id}&text=${text}`,
+    `https://slack.com/api/chat.postMessage?token=${KALOS_BOT}&channel=${id}&text=${text}`,
     {
       method: 'POST',
     },
@@ -294,7 +211,7 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
       }
     }
     const res = await fetch(
-      `https://slack.com/api/users.list?token=${KALOS_BOT.apiKey}`,
+      `https://slack.com/api/users.list?token=${KALOS_BOT}`,
     );
     const jsonRes = await res.json();
     try {
@@ -490,15 +407,17 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return ({
-    0: 'Sun',
-    1: 'Mon',
-    2: 'Tue',
-    3: 'Wed',
-    4: 'Thu',
-    5: 'Fri',
-    6: 'Sat',
-  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
+  return (
+    {
+      0: 'Sun',
+      1: 'Mon',
+      2: 'Tue',
+      3: 'Wed',
+      4: 'Thu',
+      5: 'Fri',
+      6: 'Sat',
+    } as { [key: number]: string }
+  )[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**
@@ -643,6 +562,7 @@ export type LoadMetricsByFilter = {
 export type LoadMetricsBySearchFilter = {
   page: number;
   filter: DateStartEndSearchFilter;
+  req: Event;
 };
 
 export const loadPerformanceMetricsByFilter = async ({
@@ -660,15 +580,15 @@ export const loadDeletedServiceCallsByFilter = async ({
   // FIXME move to event client
   page,
   filter: { dateStart, dateEnd, businessName, lastname },
+  req,
 }: LoadMetricsBySearchFilter) => {
-  const req = new Event();
   req.setFieldMaskList(['IsActive']);
   if (businessName && businessName != '') {
     const bReq = new Property();
     bReq.setBusinessname(businessName);
     const bResult = await PropertyClientService.Get(bReq);
     if (bReq) {
-      req.setPropertyId(bResult.id);
+      req.setPropertyId(bResult.getId());
       req.addFieldMask('PropertyId');
     }
   }
@@ -680,11 +600,8 @@ export const loadDeletedServiceCallsByFilter = async ({
   req.setDateRangeList(['>=', dateStart, '<=', dateEnd]);
   req.setDateTargetList(['date_started', 'date_started']);
   req.setWithoutLimit(true);
-  const results: EventType[] = [];
-  const { resultsList, totalCount } = (
-    await EventClientService.BatchGet(req)
-  ).toObject();
-  return { resultsList, totalCount };
+  const res = await EventClientService.BatchGet(req);
+  return { resultsList: res.getResultsList(), totalCount: res.getTotalCount() };
 };
 
 export const loadCallbackReportByFilter = async ({
@@ -834,7 +751,7 @@ export type PromptPaymentData = {
   payableTotal: number;
   paidOnTime: number;
   possibleAwardTotal: number;
-  entries: PromptPaymentReportLineType[];
+  entries: PromptPaymentReportLine[];
 };
 
 export const loadPromptPaymentData = async (month: string) => {
@@ -845,24 +762,20 @@ export const loadPromptPaymentData = async (month: string) => {
   const endDate = format(addMonths(new Date(date), 1), 'yyyy-MM-dd');
   req.setDateRangeList(['>', startDate, '<', endDate]);
   req.setDateTargetList(['log_billingDate', 'reportUntil']);
-  const { dataList } = (
-    await ReportClientService.GetPromptPaymentData(req)
-  ).toObject();
+  const res = await ReportClientService.GetPromptPaymentData(req);
   const data: {
     [key: string]: PromptPaymentData;
   } = {};
-  dataList.forEach(entry => {
-    const {
-      userId,
-      userBusinessName,
-      paymentTerms,
-      daysToPay,
-      payable,
-      payed,
-      dueDate,
-      paymentDate,
-      possibleAward,
-    } = entry;
+  res.getDataList().forEach(entry => {
+    const userId = entry.getUserId();
+    const userBusinessName = entry.getUserBusinessName();
+    const paymentTerms = entry.getPaymentTerms();
+    const daysToPay = entry.getDaysToPay();
+    const payable = entry.getPayable();
+    const payed = entry.getPayed();
+    const dueDate = entry.getDueDate();
+    const paymentDate = entry.getPaymentDate();
+    const possibleAward = entry.getPossibleAward();
     if (!data[userBusinessName]) {
       data[userBusinessName] = {
         customerId: userId,
@@ -954,17 +867,15 @@ export const loadSpiffReportByFilter = async ({
     req.setDateRangeList(['>=', startDate, '<', endDate]);
     req.setDateTargetList(['timestamp', 'timestamp']);
   }
-  const { dataList } = (
-    await ReportClientService.GetSpiffReportData(req)
-  ).toObject();
+  const res = await ReportClientService.GetSpiffReportData(req);
   const data: {
     [key: string]: {
       spiffBonusTotal: number;
-      items: SpiffReportLineType[];
+      items: SpiffReportLine[];
     };
   } = {};
-  dataList.forEach(item => {
-    const { employeeName } = item;
+  res.getDataList().forEach(item => {
+    const employeeName = item.getEmployeeName();
     if (!data[employeeName]) {
       data[employeeName] = {
         spiffBonusTotal: 0,
@@ -972,13 +883,13 @@ export const loadSpiffReportByFilter = async ({
       };
     }
     data[employeeName].items.push(item);
-    data[employeeName].spiffBonusTotal += item.amount;
+    data[employeeName].spiffBonusTotal += item.getAmount();
   });
   return data;
 };
 
 export type ActivityLogsSort = {
-  orderByField: keyof ActivityLogType | keyof UserType;
+  orderByField: keyof ActivityLog | keyof User;
   orderBy: string;
   orderDir: OrderDir;
 };
@@ -1010,7 +921,7 @@ export const loadActivityLogsByFilter = async ({
   const req = new ActivityLog();
   const u = new User();
   req.setUser(u);
-  req.setOrderBy(orderBy);
+  req.setOrderBy(cleanOrderByField(orderBy));
   req.setOrderDir(orderDir);
   req.setPageNumber(page === -1 ? 0 : page);
   if (activityDateStart && activityDateEnd) {
@@ -1022,22 +933,21 @@ export const loadActivityLogsByFilter = async ({
   if (withUser) {
     req.setWithUser(true);
   }
-  const results: ActivityLogType[] = [];
-  const { resultsList, totalCount } = (
-    await ActivityLogClientService.BatchGet(req)
-  ).toObject();
-  results.push(...resultsList);
-  if (page === -1 && totalCount > resultsList.length) {
+  const results: ActivityLog[] = [];
+  const res = await ActivityLogClientService.BatchGet(req);
+  results.push(...res.getResultsList());
+  const totalCount = res.getTotalCount();
+  const len = res.getResultsList().length;
+
+  if (page === -1 && totalCount > len) {
     const batchesAmount = Math.min(
       MAX_PAGES,
-      Math.ceil((totalCount - resultsList.length) / resultsList.length),
+      Math.ceil((totalCount - len) / len),
     );
     const batchResults = await Promise.all(
       Array.from(Array(batchesAmount)).map(async (_, idx) => {
         req.setPageNumber(idx + 1);
-        return (await ActivityLogClientService.BatchGet(req))
-          .getResultsList()
-          .map(item => item.toObject());
+        return (await ActivityLogClientService.BatchGet(req)).getResultsList();
       }),
     );
     results.push(
@@ -1048,17 +958,17 @@ export const loadActivityLogsByFilter = async ({
 };
 
 export type PropertiesSort = {
-  orderByField: keyof PropertyType;
+  orderByField: keyof Property;
   orderBy: string;
   orderDir: OrderDir;
 };
 export type ContractsSort = {
-  orderByField: keyof ContractType;
+  orderByField: keyof Contract;
   orderBy: string;
   orderDir: OrderDir;
 };
 export type TripsSort = {
-  orderByField: keyof TripType;
+  orderByField: keyof Trip;
   orderBy: string;
   orderDir: OrderDir;
 };
@@ -1066,16 +976,19 @@ export type LoadPropertiesByFilter = {
   page: number;
   filter: PropertiesFilter;
   sort: PropertiesSort;
+  req: Property;
 };
 export type LoadContractsByFilter = {
   page: number;
   filter: ContractsFilter;
   sort: ContractsSort;
+  req: Contract;
 };
 export type LoadTripsByFilter = {
   page: number;
   filter: TripsFilter;
   sort: TripsSort;
+  req: Trip;
 };
 export type PropertiesFilter = {
   subdivision?: string;
@@ -1091,6 +1004,7 @@ export type ContractsFilter = {
   businessName?: string;
   dateStarted?: string;
   dateEnded?: number;
+  userId?: number;
 };
 export type TripsFilter = {
   id?: number;
@@ -1119,10 +1033,10 @@ export const loadPropertiesByFilter = async ({
   page,
   filter,
   sort,
+  req,
 }: LoadPropertiesByFilter) => {
   // FIXME move to property client
   const { orderBy, orderDir, orderByField } = sort;
-  const req = new Property();
   req.setIsActive(1);
   req.setPageNumber(page);
   // req.setOrderBy(orderBy);
@@ -1137,16 +1051,13 @@ export const loadPropertiesByFilter = async ({
   }
   const response = await PropertyClientService.BatchGet(req);
   return {
-    results: response
-      .getResultsList()
-      .map(item => item.toObject())
-      .sort((a, b) => {
-        const A = (a[orderByField] || '').toString().toLowerCase();
-        const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'DESC' ? 1 : -1;
-        if (A > B) return orderDir === 'DESC' ? -1 : 1;
-        return 0;
-      }),
+    results: response.getResultsList().sort((a, b) => {
+      const A = (a[orderByField] || '').toString().toLowerCase();
+      const B = (b[orderByField] || '').toString().toLowerCase();
+      if (A < B) return orderDir === 'DESC' ? 1 : -1;
+      if (A > B) return orderDir === 'DESC' ? -1 : 1;
+      return 0;
+    }),
     totalCount: response.getTotalCount(),
   };
 };
@@ -1163,10 +1074,10 @@ export const loadContractsByFilter = async ({
   page,
   filter,
   sort,
+  req,
 }: LoadContractsByFilter) => {
   // FIXME, move to contract client
   const { orderBy, orderDir, orderByField } = sort;
-  const req = new Contract();
   req.setIsActive(1);
   req.setPageNumber(page);
   for (const fieldName in filter) {
@@ -1181,16 +1092,13 @@ export const loadContractsByFilter = async ({
   }
   const response = await ContractClientService.BatchGet(req);
   return {
-    results: response
-      .getResultsList()
-      .map(item => item.toObject())
-      .sort((a, b) => {
-        const A = (a[orderByField] || '').toString().toLowerCase();
-        const B = (b[orderByField] || '').toString().toLowerCase();
-        if (A < B) return orderDir === 'DESC' ? 1 : -1;
-        if (A > B) return orderDir === 'DESC' ? -1 : 1;
-        return 0;
-      }),
+    results: response.getResultsList().sort((a, b) => {
+      const A = (a[orderByField] || '').toString().toLowerCase();
+      const B = (b[orderByField] || '').toString().toLowerCase();
+      if (A < B) return orderDir === 'DESC' ? 1 : -1;
+      if (A > B) return orderDir === 'DESC' ? -1 : 1;
+      return 0;
+    }),
     totalCount: response.getTotalCount(),
   };
 };
@@ -1199,10 +1107,10 @@ export const loadTripsByFilter = async ({
   page,
   filter,
   sort,
+  req,
 }: LoadTripsByFilter) => {
   // FIXME move to trips client
-  const { orderBy, orderDir, orderByField } = sort;
-  const req = new Trip();
+  const { orderDir, orderByField } = sort;
   req.setPage(page);
   req.setIsActive(true);
   for (const fieldName in filter) {
@@ -1235,26 +1143,25 @@ export const loadTripsByFilter = async ({
     req.setApproved(false);
   }
 
-  const response = await PerDiemClientService.BatchGetTrips(req);
-  console.log(response.getResultsList());
-  console.log(response.getTotalCount());
-  return {
-    results: response
-      .getResultsList()
-      .map(item => item.toObject())
-      .sort((a, b) => {
+  try {
+    const response = await PerDiemClientService.BatchGetTrips(req);
+    return {
+      results: response.getResultsList().sort((a, b) => {
         const A = (a[orderByField] || '').toString().toLowerCase();
         const B = (b[orderByField] || '').toString().toLowerCase();
         if (A < B) return orderDir === 'DESC' ? 1 : -1;
         if (A > B) return orderDir === 'DESC' ? -1 : 1;
         return 0;
       }),
-    totalCount: response.getTotalCount(),
-  };
+      totalCount: response.getTotalCount(),
+    };
+  } catch (err) {
+    throw new Error(`An error occurred while batch-getting trips: ${err}`); // To be caught at a higher call
+  }
 };
 
 export type EventsSort = {
-  orderByField: keyof EventType | keyof PropertyType | keyof UserType;
+  orderByField: keyof Event | keyof Property | keyof User;
   orderBy: string;
   orderDir: OrderDir;
 };
@@ -1285,6 +1192,7 @@ export type EventsFilter = {
 export type LoadEventsByFilter = {
   page: number;
   filter: EventsFilter;
+  req: Event;
   sort: EventsSort;
   pendingBilling?: boolean;
 };
@@ -1301,6 +1209,7 @@ export const loadEventsByFilter = async ({
   filter,
   sort,
   pendingBilling = false,
+  req,
 }: LoadEventsByFilter) => {
   // FIXME, move to event client
   const {
@@ -1328,18 +1237,17 @@ export const loadEventsByFilter = async ({
     isActive,
   } = filter;
   const { orderBy, orderDir, orderByField } = sort;
-  const req = new Event();
   const p = new Property();
   const u = new User();
-  if (orderByField === 'lastname') {
-    u.setOrderBy(orderBy);
+  if (orderByField === 'getLastname') {
+    u.setOrderBy(cleanOrderByField(orderBy));
     u.setOrderDir(orderDir);
-  } else if (orderByField === 'address') {
+  } else if (orderByField === 'getAddress') {
     // FIXME - missing setOrderBy/setOrderDir in Property RPC
     // p.setOrderBy(orderBy);
     // p.setOrderDir(orderDir)
   } else {
-    req.setOrderBy(orderBy);
+    req.setOrderBy(cleanOrderByField(orderBy));
     req.setOrderDir(orderDir);
   }
   if (fieldMaskList) {
@@ -1440,7 +1348,7 @@ export const loadEventsByFilter = async ({
   const results = [];
   const response = await EventClientService.BatchGet(req);
   const totalCount = response.getTotalCount();
-  const resultsList = response.getResultsList().map(item => item.toObject());
+  const resultsList = response.getResultsList();
   return { resultsList, totalCount };
 };
 
@@ -1453,7 +1361,7 @@ export const loadProjects = async () => {
   req.setOrderDir('ASC');
   req.setWithoutLimit(true);
   const response = await EventClientService.BatchGet(req);
-  const resultsList = response.getResultsList().map(item => item.toObject());
+  const resultsList = response.getResultsList();
   return resultsList;
 };
 
@@ -1467,6 +1375,7 @@ export const loadEventsByFilterDeleted = async ({
   filter,
   sort,
   pendingBilling = false,
+  req,
 }: LoadEventsByFilter) => {
   // FIXME move to event client
   const {
@@ -1492,22 +1401,21 @@ export const loadEventsByFilterDeleted = async ({
     notEqualsList,
     fieldMaskList,
   } = filter;
-  console.log({ filter });
   const { orderBy, orderDir, orderByField } = sort;
-  const req = new Event();
   const p = new Property();
   const u = new User();
-  if (orderByField === 'lastname') {
-    u.setOrderBy(orderBy);
+  if (orderByField === 'getLastname') {
+    u.setOrderBy(cleanOrderByField(orderBy));
     u.setOrderDir(orderDir);
-  } else if (orderByField === 'address') {
+  } else if (orderByField === 'getAddress') {
     // FIXME - missing setOrderBy/setOrderDir in Property RPC
     // p.setOrderBy(orderBy);
     // p.setOrderDir(orderDir)
   } else {
-    req.setOrderBy(orderBy);
+    req.setOrderBy(cleanOrderByField(orderBy));
     req.setOrderDir(orderDir);
   }
+
   if (fieldMaskList) {
     req.setFieldMaskList(['IsActive']);
   }
@@ -1600,7 +1508,7 @@ export const loadEventsByFilterDeleted = async ({
   const results = [];
   const response = await EventClientService.BatchGet(req);
   const totalCount = response.getTotalCount();
-  const resultsList = response.getResultsList().map(item => item.toObject());
+  const resultsList = response.getResultsList();
   results.push(...resultsList);
   return {
     results,
@@ -1659,7 +1567,7 @@ export const uploadFileToS3Bucket = async (
       urlObj.setTagString(tagString);
     }
     const urlRes = await S3ClientService.GetUploadURL(urlObj);
-    const uploadRes = await fetch(urlRes.url, {
+    const uploadRes = await fetch(urlRes.getUrl(), {
       body: b64toBlob(fileData.split(';base64,')[1], fileName),
       method: 'PUT',
       headers: tagString
@@ -1774,7 +1682,7 @@ async function newBugReport(data: IBugReport) {
     req.setTextId('github_key');
     const key = await client.Get(req);
     data.labels = [BUG_REPORT_LABEL];
-    const authString = `token ${key.apiKey}`;
+    const authString = `token ${key.getApiKey()}`;
     const postData = {
       method: 'POST',
       headers: {
@@ -1783,7 +1691,7 @@ async function newBugReport(data: IBugReport) {
       },
       body: JSON.stringify(data),
     };
-    await fetch(key.apiEndpoint, postData);
+    await fetch(key.getApiEndpoint(), postData);
   } catch (err) {
     console.log('error generating bug report', err);
   }
@@ -1795,10 +1703,7 @@ export type BugReportImage = {
   url?: string;
 };
 
-async function newBugReportImage(
-  user: User.AsObject,
-  images: BugReportImage[],
-) {
+async function newBugReportImage(user: User, images: BugReportImage[]) {
   try {
     const timestamp = new Date().getTime();
     const client = new ApiKeyClient(ENDPOINT);
@@ -1808,11 +1713,11 @@ async function newBugReportImage(
     const common = {
       message: 'bug report image',
       committer: {
-        name: `${user.firstname} ${user.lastname}`,
-        email: user.email,
+        name: `${user.getFirstname()} ${user.getLastname()}`,
+        email: user.getEmail(),
       },
     };
-    const authString = `token ${key.apiKey}`;
+    const authString = `token ${key.getApiKey()}`;
     const result: { filename: string; url: string }[] = [];
     for (const img of images) {
       const data = { ...common, content: img.data };
@@ -1826,7 +1731,7 @@ async function newBugReportImage(
       };
       try {
         await fetch(
-          `${key.apiEndpoint}/images/${timestamp}/${img.label}`,
+          `${key.getApiEndpoint()}/images/${timestamp}/${img.label}`,
           putData,
         );
         result.push({
@@ -1886,8 +1791,8 @@ function forceHTTPS() {
  * A redundant hardening feature that redirects non-employees from admin views
  * @param user
  */
-function customerCheck(user: User.AsObject) {
-  if (window.location.href.includes('admin') && user.isEmployee === 0) {
+function customerCheck(user: User) {
+  if (window.location.href.includes('admin') && user.getIsEmployee() === 0) {
     window.location.href =
       'https://app.kalosflorida.com/index.cfm?action=customer:account.dashboard';
   }
@@ -1929,6 +1834,36 @@ function getDateTimeArgs(str: string): dateTimeRes {
   ];
 }
 
+const cleanOrderByField = (f: string) => {
+  const parts = f.replace('get', '').split(/(?=[A-Z])/g);
+  const lowerParts = parts.map(p => p.toLowerCase());
+  return lowerParts.join('_');
+};
+
+const cleanFieldMaskField = (f: string) => {
+  console.log(f.slice(3));
+  if (f.startsWith('get') || f.startsWith('set')) {
+    return f.slice(3);
+  }
+};
+
+const makeSafeFormObject = function makeSafeFormObject<T>(data: T, result: T) {
+  const keys = Object.keys(data);
+  for (const key of keys) {
+    if (key.startsWith('get')) {
+      try {
+        // @ts-ignore
+        result[key.replace('get', 'set')](data[key]);
+        // @ts-ignore
+        result.addFieldMask(key.slice(3));
+      } catch (err) {
+        console.log('failed to set value on request object', err);
+      }
+    }
+  }
+  return result;
+};
+
 export {
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
@@ -1960,4 +1895,7 @@ export {
   newBugReportImage,
   forceHTTPS,
   customerCheck,
+  cleanOrderByField,
+  cleanFieldMaskField,
+  makeSafeFormObject,
 };

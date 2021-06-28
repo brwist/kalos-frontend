@@ -1,5 +1,10 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
-import { Task } from '@kalos-core/kalos-rpc/Task';
+import {
+  SpiffType,
+  Task,
+  TaskPriority,
+  TaskStatus,
+} from '@kalos-core/kalos-rpc/Task';
 import kebabCase from 'lodash/kebabCase';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -15,22 +20,16 @@ import { PlainForm, SchemaProps, Option } from '../PlainForm';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { Documents } from '../Documents';
 import {
-  TaskType,
   makeFakeRows,
   timestamp,
   TaskClientService,
-  TaskPriorityType,
-  TaskStatusType,
   loadProjectTaskBillableTypes,
   formatDateTime,
-  SpiffTypeType,
   escapeText,
   UserClientService,
   TaskAssignmentClientService,
   uploadFileToS3Bucket,
-  DocumentType,
   DocumentClientService,
-  TaskEventType,
   TaskEventClientService,
 } from '../../../helpers';
 import {
@@ -40,6 +39,8 @@ import {
   OPTION_BLANK,
 } from '../../../constants';
 import './Tasks.less';
+import { Document } from '@kalos-core/kalos-rpc/Document';
+import { TaskEvent } from '@kalos-core/kalos-rpc/TaskEvent';
 
 type ExternalCode = 'customers' | 'employee' | 'properties';
 interface Props {
@@ -49,7 +50,7 @@ interface Props {
   onClose?: () => void;
 }
 
-type TaskEdit = Partial<TaskType> & {
+type TaskEdit = Task & {
   assignedTechnicians: string;
 };
 
@@ -68,34 +69,34 @@ type DocumentUplodad = {
   description: '';
 };
 
-const SCHEMA_DOCUMENT_EDIT: Schema<DocumentType> = [
+const SCHEMA_DOCUMENT_EDIT: Schema<Document> = [
   [
     {
-      name: 'filename',
+      name: 'getFilename',
       label: 'File',
       readOnly: true,
     },
   ],
   [
     {
-      name: 'description',
+      name: 'getDescription',
       label: 'Title/Description',
       helperText: 'Keep as short/descriptive as possible',
     },
   ],
 ];
 
-const SCHEMA_TASK_EVENT: Schema<TaskEventType> = [
+const SCHEMA_TASK_EVENT: Schema<TaskEvent> = [
   [
     {
-      name: 'actionTaken',
+      name: 'getActionTaken',
       label: 'Action Taken',
       multiline: true,
     },
   ],
   [
     {
-      name: 'actionNeeded',
+      name: 'getActionNeeded',
       label: 'Action Needed',
       multiline: true,
     },
@@ -109,40 +110,37 @@ export const Tasks: FC<Props> = ({
   onClose,
 }) => {
   const searchInit = useMemo(() => {
-    const req = new Task();
+    const req = new Task() as TaskEdit;
     req.setStatusId(0);
     req.setPriorityId(0);
-    return {
-      ...req.toObject(),
-      assignedTechnicians: '',
-    };
+    req.assignedTechnicians = '';
+    return req;
   }, []);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
   const [loadingInit, setLoadingInit] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
-  const [tasks, setTasks] = useState<TaskType[]>([]);
-  const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [priorities, setPriorities] = useState<TaskPriority[]>([]);
   const [search, setSearch] = useState<TaskEdit>(searchInit);
-  const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
-  const [spiffTypes, setSpiffTypes] = useState<SpiffTypeType[]>([]);
+  const [statuses, setStatuses] = useState<TaskStatus[]>([]);
+  const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
   const [billableTypes, setBillableTypes] = useState<string[]>([]);
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
   const [pendingEdit, setPendingEdit] = useState<TaskEdit>();
-  const [pendingDelete, setPendingDelete] = useState<TaskType>();
+  const [pendingDelete, setPendingDelete] = useState<Task>();
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadFailed, setUploadFailed] = useState<boolean>(false);
   const [documentFile, setDocumentFile] = useState<string>('');
   const [documentSaving, setDocumentSaving] = useState<boolean>(false);
-  const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
+  const [taskEvents, setTaskEvents] = useState<TaskEvent[]>([]);
   const [taskEventsLoading, setTaskEventsLoading] = useState<boolean>(false);
-  const [taskEventDeleting, setTaskEventDeleting] = useState<TaskEventType>();
-  const [taskEventEditing, setTaskEventEditing] = useState<TaskEventType>();
+  const [taskEventDeleting, setTaskEventDeleting] = useState<TaskEvent>();
+  const [taskEventEditing, setTaskEventEditing] = useState<TaskEvent>();
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
-    await UserClientService.refreshToken();
     const priorities = await TaskClientService.loadProjectTaskPriorities();
     const statuses = await TaskClientService.loadProjectTaskStatuses();
     const billableTypes = await loadProjectTaskBillableTypes();
@@ -163,18 +161,17 @@ export const Tasks: FC<Props> = ({
   ]);
   const load = useCallback(async () => {
     setLoading(true);
-    const { referenceNumber, priorityId, briefDescription, statusId } = search;
-    const { resultsList, totalCount } = await TaskClientService.loadTasks({
-      pageNumber: page,
-      externalCode,
-      externalId,
-      referenceNumber,
-      priorityId,
-      briefDescription,
-      statusId,
-    });
-    setTasks(resultsList);
-    setCount(totalCount);
+    const req = new Task();
+    req.setReferenceNumber(search.getReferenceNumber());
+    req.setPriorityId(search.getPriorityId());
+    req.setBriefDescription(search.getBriefDescription());
+    req.setStatusId(search.getStatusId());
+    req.setPageNumber(page);
+    req.setExternalCode(externalCode);
+    req.setExternalId(externalId);
+    const res = await TaskClientService.loadTasks(req);
+    setTasks(res.getResultsList());
+    setCount(res.getTotalCount());
     setLoading(false);
   }, [setLoading, setTasks, setCount, externalId, externalCode, page, search]);
   useEffect(() => {
@@ -264,58 +261,58 @@ export const Tasks: FC<Props> = ({
     return { ...req.toObject(), assignedTechnicians: '' };
   }, []);
   const handleDocumentUpload = useCallback(
-    (onClose, onReload) => async ({
-      filename,
-      description,
-    }: DocumentUplodad) => {
-      if (!pendingEdit || !pendingEdit.id) return;
-      setUploadFailed(false);
-      setUploading(true);
-      const ext = filename.split('.').pop();
-      const fileName =
-        kebabCase(
-          [
-            pendingEdit.id,
-            timestamp(true).split('-').reverse(),
-            description.trim() || filename.replace('.' + ext, ''),
-          ].join(' '),
-        ) +
-        '.' +
-        ext;
-      const status = await uploadFileToS3Bucket(
-        fileName,
-        documentFile,
-        'testbuckethelios', // FIXME is it correct bucket name for those docs?
-      );
-      if (status === 'ok') {
-        await DocumentClientService.createTaskDocument(
+    (onClose, onReload) =>
+      async ({ filename, description }: DocumentUplodad) => {
+        if (!pendingEdit || !pendingEdit.id) return;
+        setUploadFailed(false);
+        setUploading(true);
+        const ext = filename.split('.').pop();
+        const fileName =
+          kebabCase(
+            [
+              pendingEdit.id,
+              timestamp(true).split('-').reverse(),
+              description.trim() || filename.replace('.' + ext, ''),
+            ].join(' '),
+          ) +
+          '.' +
+          ext;
+        const status = await uploadFileToS3Bucket(
           fileName,
-          pendingEdit.id,
-          loggedUserId,
-          description,
+          documentFile,
+          'testbuckethelios', // FIXME is it correct bucket name for those docs?
         );
-        onClose();
-        onReload();
-        setUploading(false);
-      } else {
-        setUploadFailed(true);
-        setUploading(false);
-      }
-    },
+        if (status === 'ok') {
+          await DocumentClientService.createTaskDocument(
+            fileName,
+            pendingEdit.id,
+            loggedUserId,
+            description,
+          );
+          onClose();
+          onReload();
+          setUploading(false);
+        } else {
+          setUploadFailed(true);
+          setUploading(false);
+        }
+      },
     [documentFile, loggedUserId, pendingEdit, setUploadFailed, setUploading],
   );
-  const handleFileLoad = useCallback(file => setDocumentFile(file), [
-    setDocumentFile,
-  ]);
+  const handleFileLoad = useCallback(
+    file => setDocumentFile(file),
+    [setDocumentFile],
+  );
   const handleDocumentUpdate = useCallback(
-    (onClose, onReload, { id }) => async (form: DocumentType) => {
-      setDocumentSaving(true);
-      const { description } = form;
-      await DocumentClientService.updateDocumentDescription(id, description);
-      setDocumentSaving(false);
-      onClose();
-      onReload();
-    },
+    (onClose, onReload, { id }) =>
+      async (form: DocumentType) => {
+        setDocumentSaving(true);
+        const { description } = form;
+        await DocumentClientService.updateDocumentDescription(id, description);
+        setDocumentSaving(false);
+        onClose();
+        onReload();
+      },
     [setDocumentSaving],
   );
   const SPIFF_TYPES_OPTIONS: Option[] = useMemo(

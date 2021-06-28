@@ -15,16 +15,16 @@ type ProviderProps = {
   children: JSX.Element;
 };
 
-export const ConfirmServiceProvider = ({ children }: ProviderProps): JSX.Element => {
-  const [
-    ConfirmState,
-    setConfirmState
-  ] = useState<ConfirmOptions | null>(null);
+export const ConfirmServiceProvider = ({
+  children,
+}: ProviderProps): JSX.Element => {
+  const [ConfirmState, setConfirmState] = useState<ConfirmOptions | null>(null);
 
-  const awaitingPromiseRef = useRef<{
-    resolve: () => void;
-  reject: () => void;
-}>();
+  const awaitingPromiseRef =
+    useRef<{
+      resolve: () => void;
+      reject: () => void;
+    }>();
 
   const openConfirm = (options: ConfirmOptions) => {
     setConfirmState(options);
@@ -51,10 +51,7 @@ export const ConfirmServiceProvider = ({ children }: ProviderProps): JSX.Element
 
   return (
     <>
-      <ConfirmServiceContext.Provider
-        value={openConfirm}
-        children={children}
-      />
+      <ConfirmServiceContext.Provider value={openConfirm} children={children} />
 
       <Confirm
         open={Boolean(ConfirmState)}
@@ -68,5 +65,4 @@ export const ConfirmServiceProvider = ({ children }: ProviderProps): JSX.Element
   );
 };
 
-export const useConfirm = () =>
-  useContext(ConfirmServiceContext);
+export const useConfirm = () => useContext(ConfirmServiceContext);

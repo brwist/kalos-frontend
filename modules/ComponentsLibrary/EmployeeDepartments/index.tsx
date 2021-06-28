@@ -9,14 +9,12 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import {
-  EmployeeFunctionType,
   makeFakeRows,
   formatDate,
-  UserType,
   UserClientService,
   EmployeeFunctionClientService,
-  TimesheetDepartmentClientService,
 } from '../../../helpers';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 interface Props {
   loggedUserId: number;
@@ -30,13 +28,13 @@ const COLUMNS: Columns = [
   { name: 'Added Date' },
 ];
 
-const SCHEMA: Schema<EmployeeFunctionType> = [
-  [{ name: 'id', type: 'hidden' }],
-  [{ name: 'name', label: 'Name', required: true }],
-  [{ name: 'color', label: 'Color', type: 'color', required: true }],
+const SCHEMA: Schema<EmployeeFunction> = [
+  [{ name: 'getId', type: 'hidden' }],
+  [{ name: 'getName', label: 'Name', required: true }],
+  [{ name: 'getColor', label: 'Color', type: 'color', required: true }],
   [
     {
-      name: 'status',
+      name: 'getStatus',
       label: 'Status',
       required: true,
       options: [
@@ -53,10 +51,10 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [entries, setEntries] = useState<EmployeeFunctionType[]>([]);
-  const [pendingEdit, setPendingEdit] = useState<EmployeeFunctionType>();
-  const [pendingDelete, setPendingDelete] = useState<EmployeeFunctionType>();
-  const [user, setUser] = useState<UserType>();
+  const [entries, setEntries] = useState<EmployeeFunction[]>([]);
+  const [pendingEdit, setPendingEdit] = useState<EmployeeFunction>();
+  const [pendingDelete, setPendingDelete] = useState<EmployeeFunction>();
+  const [user, setUser] = useState<User>();
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const user = await UserClientService.loadUserById(loggedUserId);
@@ -80,7 +78,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
     }
   }, [loaded, setLoaded, load, loadedDicts, loadDicts]);
   const saveEntry = useCallback(
-    async (data: EmployeeFunctionType) => {
+    async (data: EmployeeFunction) => {
       setSaving(true);
       await EmployeeFunctionClientService.upsertEmployeeFunction(
         data,
@@ -94,7 +92,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
   );
   const deleteEntry = useCallback(async () => {
     if (pendingDelete) {
-      const { id } = pendingDelete;
+      const id = pendingDelete.getId();
       setPendingDelete(undefined);
       setLoading(true);
       await EmployeeFunctionClientService.deleteEmployeeFunctionById(id);
@@ -102,11 +100,11 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
     }
   }, [pendingDelete, setLoaded, setLoading]);
   const handlePendingEditToggle = useCallback(
-    (entry?: EmployeeFunctionType) => () => setPendingEdit(entry),
+    (entry?: EmployeeFunction) => () => setPendingEdit(entry),
     [setPendingEdit],
   );
   const handlePendingDeleteToggle = useCallback(
-    (entry?: EmployeeFunctionType) => () => setPendingDelete(entry),
+    (entry?: EmployeeFunction) => () => setPendingDelete(entry),
     [setPendingDelete],
   );
   const makeNewEntry = () => {
@@ -114,17 +112,20 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
     req.setIsdeleted(0);
     req.setStatus(0);
     req.setColor('#000000');
-    return req.toObject();
+    return req;
   };
   const data: Data =
     loading || loadingDicts || !user
       ? makeFakeRows(4, 3)
       : entries.map(entry => {
-          const { name, color, status, addeddate } = entry;
+          const name = entry.getName();
+          const color = entry.getName();
+          const status = entry.getStatus();
+          const addeddate = entry.getAddeddate();
           return [
             {
               value: name,
-              onClick: user.isAdmin
+              onClick: user.getIsAdmin()
                 ? handlePendingEditToggle(entry)
                 : undefined,
             },
@@ -138,22 +139,22 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
                   }}
                 />
               ),
-              onClick: user.isAdmin
+              onClick: user.getIsAdmin()
                 ? handlePendingEditToggle(entry)
                 : undefined,
             },
             {
               value: status ? 'Deactive' : 'Active',
-              onClick: user.isAdmin
+              onClick: user.getIsAdmin()
                 ? handlePendingEditToggle(entry)
                 : undefined,
             },
             {
               value: formatDate(addeddate),
-              onClick: user.isAdmin
+              onClick: user.getIsAdmin()
                 ? handlePendingEditToggle(entry)
                 : undefined,
-              actions: user.isAdmin
+              actions: user.getIsAdmin()
                 ? [
                     <IconButton
                       key="edit"
@@ -179,7 +180,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
       <SectionBar
         title="Employee Departments"
         actions={[
-          ...(user?.isAdmin
+          ...(user?.getIsAdmin()
             ? [
                 {
                   label: 'Add Department',
@@ -204,8 +205,10 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
       />
       {pendingEdit && (
         <Modal open onClose={handlePendingEditToggle(undefined)}>
-          <Form<EmployeeFunctionType>
-            title={`${pendingEdit.id ? 'Edit' : 'Add'} Employee Department`}
+          <Form<EmployeeFunction>
+            title={`${
+              pendingEdit.getId() ? 'Edit' : 'Add'
+            } Employee Department`}
             schema={SCHEMA}
             data={pendingEdit}
             onClose={handlePendingEditToggle(undefined)}
@@ -220,7 +223,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
           onClose={handlePendingDeleteToggle(undefined)}
           onConfirm={deleteEntry}
           kind="Employee Department"
-          name={pendingDelete.name}
+          name={pendingDelete.getName()}
         />
       )}
     </div>

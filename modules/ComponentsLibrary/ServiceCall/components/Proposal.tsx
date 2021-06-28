@@ -12,13 +12,13 @@ import { Modal } from '../../Modal';
 import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
-import { UserType, PropertyType } from '../../../../helpers';
 import './proposal.less';
-
+import { User } from '@kalos-core/kalos-rpc/User';
+import { Property } from '@kalos-core/kalos-rpc/Property';
 interface Props {
   serviceItem: EventType;
-  property: PropertyType;
-  customer: UserType;
+  property: Property;
+  customer: User;
 }
 
 type Form = {
@@ -72,20 +72,21 @@ const SCHEMA_FILE: Schema<File> = [
 ];
 
 export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
-  const { notes, logJobNumber } = serviceItem;
   const [editing, setEditing] = useState<Entry>();
   const [file, setFile] = useState<File>({
     localCopyName: '',
-    fileDescription: `${serviceItem.id}_pending_proposal_${customer?.id || ''}`,
+    fileDescription: `${serviceItem.getId()}_pending_proposal_${
+      customer?.getId() || ''
+    }`,
   });
   const [quickAddOpen, setQuickAddOpen] = useState<boolean>(false);
   const [preview, setPreview] = useState<boolean>(false);
   const [table, setTable] = useState<Entry[]>([]);
-  const customerName = `${customer?.firstname} ${customer?.lastname}`;
+  const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
   const [form, setForm] = useState<Form>({
     displayName: customerName,
     withJobNotes: 0,
-    notes,
+    notes: serviceItem.getNotes(),
   });
   const handleToggleQuickAdd = useCallback(
     () => setQuickAddOpen(!quickAddOpen),
@@ -175,7 +176,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
       {
         label: 'Display Name',
         name: 'displayName',
-        options: [customerName, customer?.businessname || ''],
+        options: [customerName, customer?.getBusinessname() || ''],
       },
       {
         name: 'withJobNotes',
@@ -240,7 +241,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
         asideContent={
           <ProposalPrint
             displayName={form.displayName}
-            logJobNumber={logJobNumber}
+            logJobNumber={serviceItem.getLogJobNumber()}
             property={property}
             notes={form.withJobNotes ? form.notes : undefined}
             entries={table.map(({ description, price }) => ({
@@ -310,11 +311,12 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
           <PlainForm schema={SCHEMA_FILE} data={file} onChange={setFile} />
         </Modal>
       )}
+      {/* TODO Converting to object as a temporary thing til I figure out how to convert this */}
       {quickAddOpen && (
         <StoredQuotes
           open
           onClose={handleToggleQuickAdd}
-          onSelect={handleQuickAdd}
+          onSelect={out => handleQuickAdd(out.toObject())}
         />
       )}
     </>

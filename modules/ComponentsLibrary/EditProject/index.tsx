@@ -1,11 +1,21 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
-import { ENROUTE, CHECKIN, CHECKOUT } from '@kalos-core/kalos-rpc/TaskEvent';
+import {
+  ENROUTE,
+  CHECKIN,
+  CHECKOUT,
+  TaskEvent,
+} from '@kalos-core/kalos-rpc/TaskEvent';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
 import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
 import LowIcon from '@material-ui/icons/Details';
-import { ProjectTask } from '@kalos-core/kalos-rpc/Task';
+import {
+  ProjectTask,
+  Task,
+  TaskPriority,
+  TaskStatus,
+} from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -17,16 +27,10 @@ import { CalendarEvents } from '../CalendarEvents';
 import { GanttChart } from '../GanttChart';
 import { Tabs } from '../Tabs';
 import {
-  EventType,
-  ProjectTaskType,
   formatDate,
-  TaskStatusType,
-  TaskPriorityType,
   TaskClientService,
-  TimesheetDepartmentType,
   TaskEventType,
   timestamp,
-  UserType,
   EventClientService,
   UserClientService,
   TaskEventClientService,
@@ -42,6 +46,9 @@ import { Loader } from '../../Loader/main';
 import { CheckInProjectTask } from '../CheckInProjectTask';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export interface Props {
   serviceCallId: number;
@@ -55,7 +62,7 @@ export type SearchType = {
   priorityId: number;
 };
 
-export type ExtendedProjectTaskType = ProjectTaskType & {
+export type ExtendedProjectTaskType = ProjectTask & {
   startTime: string;
   endTime: string;
 };
@@ -69,30 +76,30 @@ export const PROJECT_TASK_PRIORITY_ICONS: {
   4: HighestIcon,
 };
 
-export const SCHEMA_PROJECT: Schema<EventType> = [
+export const SCHEMA_PROJECT: Schema<Event> = [
   [
     {
-      name: 'dateStarted',
+      name: 'getDateStarted',
       label: 'Start Date',
       type: 'date',
     },
 
     {
-      name: 'dateEnded',
+      name: 'getDateEnded',
       label: 'End Date',
       type: 'date',
     },
   ],
   [
     {
-      name: 'departmentId',
+      name: 'getDepartmentId',
       label: 'Department',
       type: 'department',
     },
   ],
   [
     {
-      name: 'description',
+      name: 'getDescription',
       label: 'Description',
       type: 'text',
       multiline: true,
@@ -110,24 +117,24 @@ export const EditProject: FC<Props> = ({
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
+  const [loggedUser, setLoggedUser] = useState<User>();
   const [editingTask, setEditingTask] = useState<ExtendedProjectTaskType>();
   const [deletingEvent, setDeletingEvent] = useState<boolean>(false);
-  const [pendingDeleteEvent, setPendingDeleteEvent] = useState<EventType>();
+  const [pendingDeleteEvent, setPendingDeleteEvent] = useState<Event>();
   const [pendingDeleteTask, setPendingDeleteTask] =
     useState<ExtendedProjectTaskType>();
-  const [tasks, setTasks] = useState<ProjectTaskType[]>([]);
+  const [tasks, setTasks] = useState<ProjectTask[]>([]);
 
-  const [taskEvents, setTaskEvents] = useState<TaskEventType[]>([]);
+  const [taskEvents, setTaskEvents] = useState<TaskEvent[]>([]);
   const [taskEventsLoaded, setTaskEventsLoaded] = useState<boolean>(false);
   const [pendingCheckout, setPendingCheckout] = useState<boolean>(false);
   const [pendingCheckoutChange, setPendingCheckoutChange] =
     useState<boolean>(false);
   const [pendingCheckoutDelete, setPendingCheckoutDelete] =
     useState<boolean>(false);
-  const [statuses, setStatuses] = useState<TaskStatusType[]>([]);
-  const [priorities, setPriorities] = useState<TaskPriorityType[]>([]);
-  const [departments, setDepartments] = useState<TimesheetDepartmentType[]>([]);
+  const [statuses, setStatuses] = useState<TaskStatus[]>([]);
+  const [priorities, setPriorities] = useState<TaskPriority[]>([]);
+  const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [errorProject, setErrorProject] = useState<string>('');
   const [errorTask, setErrorTask] = useState<string>('');
 
@@ -136,8 +143,8 @@ export const EditProject: FC<Props> = ({
     statusId: 0,
     priorityId: 0,
   });
-  const [event, setEvent] = useState<EventType>();
-  const [projects, setProjects] = useState<EventType[]>([]);
+  const [event, setEvent] = useState<Event>();
+  const [projects, setProjects] = useState<Event[]>([]);
   const [editingProject, setEditingProject] = useState<boolean>(false);
 
   const loadEvent = useCallback(async () => {
@@ -285,31 +292,35 @@ export const EditProject: FC<Props> = ({
     (editingTask?: ExtendedProjectTaskType) => async () => {
       setErrorTask('');
       setEditingTask(editingTask);
-      if (editingTask && editingTask.id) {
-        await loadTaskEvents(editingTask.id);
+      if (editingTask && editingTask.getId()) {
+        await loadTaskEvents(editingTask.getId());
       }
     },
     [setEditingTask, loadTaskEvents],
   );
 
+  const handleUploadLog = useCallback(async (req: ActivityLog) => {
+    try {
+      let log = await ActivityLogClientService.Create(req);
+    } catch (err) {
+      console.error(
+        `An error occurred while attempting to create an activity log: ${err}`,
+      );
+    }
+  }, []);
+  
   const handleDeleteEvent = useCallback(
     async (eventId: number) => {
       setDeletingEvent(true);
       try {
         await EventClientService.deleteEventById(eventId);
         setDeletingEvent(false);
-
-        try {
-          let req = new ActivityLog();
-          req.setActivityName(`Deleted event: ${eventId}`);
-          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-          req.setUserId(loggedUserId);
-          req.setEventId(eventId);
-        } catch (err) {
-          console.error(
-            `An error occurred while attempting to create a log: ${err}`,
-          );
-        }
+        let req = new ActivityLog();
+        req.setActivityName(`Deleted event: ${eventId}`);
+        req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        req.setUserId(loggedUserId);
+        req.setEventId(eventId);
+        handleUploadLog(req);
       } catch (err) {
         console.error(
           `An error occurred while attempting to delete an event by ID: ${err}`,
@@ -319,12 +330,12 @@ export const EditProject: FC<Props> = ({
       setPendingDeleteEvent(undefined);
       if (onClose) onClose();
     },
-    [loggedUserId, onClose],
+    [handleUploadLog, loggedUserId, onClose],
   );
 
   // The function used to actually delete projects (projects are of event type)
   const handleSetPendingDeleteEvent = useCallback(
-    (pendingDelete?: EventType) => () => {
+    (pendingDelete?: Event) => () => {
       setPendingDeleteEvent(pendingDelete);
     },
     [setPendingDeleteEvent],
@@ -341,51 +352,36 @@ export const EditProject: FC<Props> = ({
     setPendingCheckoutChange(true);
     const isEnroute =
       taskEvents.length === 0 ||
-      (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT);
+      (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT);
     const isCheckIn =
-      taskEvents.length > 0 && taskEvents[0].actionTaken === ENROUTE;
+      taskEvents.length > 0 && taskEvents[0].getActionTaken() === ENROUTE;
     const timeStarted = timestamp();
+    const req = new TaskEvent();
+    req.setTaskId(editingTask.getId());
+    req.setTechnicianUserId(loggedUserId);
+    req.setTimeStarted(timeStarted);
+    req.setStatusId(1);
     if (isEnroute) {
-      await TaskEventClientService.upsertTaskEvent({
-        taskId: editingTask.id,
-        technicianUserId: loggedUserId,
-        timeStarted,
-        statusId: 1,
-        actionTaken: ENROUTE,
-      });
+      req.setActionTaken(ENROUTE);
+      await TaskEventClientService.upsertTaskEvent(req);
     } else if (isCheckIn) {
-      await TaskEventClientService.upsertTaskEvent({
-        taskId: editingTask.id,
-        technicianUserId: loggedUserId,
-        timeStarted,
-        statusId: 1,
-        actionTaken: CHECKIN,
-      });
+      req.setActionTaken(CHECKIN);
+      await TaskEventClientService.upsertTaskEvent(req);
     } else {
-      await TaskEventClientService.upsertTaskEvent({
-        taskId: editingTask.id,
-        technicianUserId: loggedUserId,
-        timeStarted,
-        timeFinished: timeStarted,
-        statusId: 1,
-        actionTaken: CHECKOUT,
-      });
+      req.setActionTaken(CHECKOUT);
+      await TaskEventClientService.upsertTaskEvent(req);
     }
     if (isEnroute || isCheckIn) {
-      await TaskClientService.upsertEventTask({
-        id: editingTask.id,
-        externalCode: 'user',
-        externalId: loggedUserId,
-      });
+      const pt = new ProjectTask();
+      pt.setId(editingTask.getId());
+      pt.setExternalCode('user');
+      pt.setExternalId(loggedUserId);
+      await TaskClientService.upsertEventTask(pt);
       setEditingTask(undefined);
-      setEditingTask({
-        ...editingTask,
-        externalCode: 'user',
-        externalId: loggedUserId,
-      });
+      setEditingTask({ ...pt } as ExtendedProjectTaskType);
       setLoaded(false);
     }
-    await loadTaskEvents(editingTask.id);
+    await loadTaskEvents(editingTask.getId());
     setPendingCheckoutChange(false);
   }, [
     editingTask,
@@ -402,14 +398,14 @@ export const EditProject: FC<Props> = ({
     setPendingCheckoutDelete(false);
     setPendingCheckoutChange(true);
     try {
-      await TaskEventClientService.deleteTaskEvent(taskEvents[0].id);
+      await TaskEventClientService.deleteTaskEvent(taskEvents[0].getId());
     } catch (err) {
       console.error(
         `An error occurred while trying to delete a task event: ${err}`,
       );
     }
     try {
-      await loadTaskEvents(editingTask.id);
+      await loadTaskEvents(editingTask.getId());
     } catch (err) {
       console.log({ err });
       if (!err.message.includes('failed to scan to struct')) {
@@ -434,15 +430,16 @@ export const EditProject: FC<Props> = ({
     [setPendingCheckoutDelete],
   );
 
+  //TODO change to permission groups check
   const isAnyManager = useMemo(
-    () => departments.map(({ managerId }) => managerId).includes(loggedUserId),
+    () => departments.map(dpt => dpt.getManagerId()).includes(loggedUserId),
     [departments, loggedUserId],
   );
   const isAssignedToAnyTask = useMemo(
     () =>
       tasks.some(
-        ({ externalCode, externalId }) =>
-          externalCode === 'user' && externalId === loggedUserId,
+        t =>
+          t.getExternalCode() === 'user' && t.getExternalId() === loggedUserId,
       ),
     [tasks, loggedUserId],
   );
@@ -450,15 +447,15 @@ export const EditProject: FC<Props> = ({
   const isOwner = useMemo(
     () =>
       editingTask &&
-      (editingTask.creatorUserId === loggedUserId || !editingTask.id),
+      (editingTask.getCreatorUserId() === loggedUserId || !editingTask.getId()),
     [editingTask, loggedUserId],
   );
   const statusOptions = useMemo(
     () =>
-      statuses.map(({ id, description }) => ({
-        value: id,
-        label: description,
-        color: PROJECT_TASK_STATUS_COLORS[id],
+      statuses.map(ts => ({
+        value: ts.getId(),
+        label: ts.getDescription(),
+        color: PROJECT_TASK_STATUS_COLORS[ts.getId()],
       })),
     [statuses],
   );
@@ -468,10 +465,10 @@ export const EditProject: FC<Props> = ({
   );
   const priorityOptions = useMemo(
     () =>
-      priorities.map(({ id, description }) => ({
-        value: id,
-        label: description,
-        icon: PROJECT_TASK_PRIORITY_ICONS[id],
+      priorities.map(tp => ({
+        value: tp.getId(),
+        label: tp.getDescription(),
+        icon: PROJECT_TASK_PRIORITY_ICONS[tp.getId()],
       })),
     [priorities],
   );
@@ -480,22 +477,17 @@ export const EditProject: FC<Props> = ({
     [priorityOptions],
   );
   const handleSaveTask = useCallback(
-    async ({
-      startDate,
-      startTime,
-      endDate,
-      endTime,
-      checkedIn,
-      id,
-      ...formData
-    }: ExtendedProjectTaskType) => {
+    async (startTime: string, endTime: string, formData: ProjectTask) => {
       if (!event) return;
-      if (startDate > endDate && endDate != '') {
+      if (
+        formData.getStartDate() > formData.getEndDate() &&
+        formData.getEndDate() != ''
+      ) {
         setErrorTask('Start Date cannot be after End Date.');
         console.error('Start Date cannot be after End Date.');
         return;
       }
-      if (event.dateStarted.substr(0, 10) > startDate) {
+      if (event.getDateStarted().substr(0, 10) > formData.getStartDate()) {
         setErrorTask(
           "Task's Start Date cannot be before Project's Start Date.",
         );
@@ -504,41 +496,19 @@ export const EditProject: FC<Props> = ({
         );
         return;
       }
-      if (event.dateEnded.substr(0, 10) < endDate) {
+      if (event.getDateEnded().substr(0, 10) < formData.getEndDate()) {
         setErrorTask("Task's End Date cannot be after Project's End Date.");
         console.error("Task's End Date cannot be after Project's End Date.");
         return;
       }
       setEditingTask(undefined);
       setLoading(true);
-      try {
-        await TaskClientService.upsertEventTask({
-          ...formData,
-          eventId: serviceCallId,
-          startDate: `${startDate} ${startTime}:00`,
-          endDate: `${endDate} ${endTime}:00`,
-          checkedIn: checkedIn,
-          ...(!formData.eventId ? { creatorUserId: loggedUserId } : {}), // There was a !formData.id here in the conditional part of the ternary, I'm guessing
-          // he wanted eventId instead
-        });
-        try {
-          let req = new ActivityLog();
-          req.setUserId(loggedUserId);
-          req.setActivityName(`Created task for project ${serviceCallId}`);
-          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-          req.setEventId(serviceCallId);
-          await ActivityLogClientService.Create(req);
-        } catch (err) {
-          console.error(
-            `An error occurred while trying to create a log: ${err}`,
-          );
-        }
-      } catch (err) {
-        console.error(
-          `An error occurred while trying to upsert an event task: ${err}`,
-        );
-      }
-
+      formData.setEventId(serviceCallId);
+      formData.setStartDate(`${formData.getStartDate()} ${startTime}:00`);
+      formData.setEndDate(`${formData.getEndDate()} ${endTime}:00`);
+      formData.setCheckedIn(formData.getCheckedIn());
+      if (formData.getId()) formData.setCreatorUserId(loggedUserId);
+      await TaskClientService.upsertEventTask(formData);
       setLoaded(false);
     },
     [
@@ -553,7 +523,7 @@ export const EditProject: FC<Props> = ({
   );
   const handleDeleteTask = useCallback(async () => {
     if (pendingDeleteTask) {
-      const { id } = pendingDeleteTask;
+      const id = pendingDeleteTask.getId();
       setPendingDeleteTask(undefined);
       setEditingTask(undefined);
       setLoading(true);
@@ -572,19 +542,21 @@ export const EditProject: FC<Props> = ({
       if (!loggedUser || !event) return;
       if (
         !(
-          isAnyManager || event.departmentId === loggedUser.employeeDepartmentId
+          isAnyManager ||
+          event.getDepartmentId() === loggedUser.getEmployeeDepartmentId()
         )
       )
         return;
+      let newPt = new ProjectTask();
+      newPt.setStartDate(startDate);
+      newPt.setEndDate(startDate);
+      newPt.setStatusId(1);
+      newPt.setPriorityId(2);
       setEditingTask({
-        ...new ProjectTask().toObject(),
-        startDate,
-        endDate: startDate,
         startTime: '09:00',
         endTime: '10:00',
-        statusId: 1,
-        priorityId: 2,
-      });
+        ...newPt,
+      } as ExtendedProjectTaskType);
     },
     [setEditingTask, loggedUser, event, isAnyManager],
   );
@@ -596,18 +568,20 @@ export const EditProject: FC<Props> = ({
     [setEditingProject],
   );
   const handleSaveProject = useCallback(
-    async (formData: EventType) => {
+    async (formData: Event) => {
       if (event) {
         if (
-          formData.dateEnded.substr(0, 10) < formData.dateStarted.substr(0, 10)
+          formData.getDateEnded().substr(0, 10) <
+          formData.getDateStarted().substr(0, 10)
         ) {
           setErrorProject('Start Date cannot be after End date.');
           return;
         }
         if (
           tasks.some(
-            ({ startDate }) =>
-              startDate.substr(0, 10) < formData.dateStarted.substr(0, 10),
+            task =>
+              task.getStartDate().substr(0, 10) <
+              formData.getDateStarted().substr(0, 10),
           )
         ) {
           setErrorProject(
@@ -617,8 +591,9 @@ export const EditProject: FC<Props> = ({
         }
         if (
           tasks.some(
-            ({ endDate }) =>
-              endDate.substr(0, 10) > formData.dateEnded.substr(0, 10),
+            task =>
+              task.getEndDate().substr(0, 10) >
+              formData.getDateEnded().substr(0, 10),
           )
         ) {
           setErrorProject(
@@ -628,26 +603,10 @@ export const EditProject: FC<Props> = ({
         }
         setEditingProject(false);
         setLoadingEvent(true);
-        try {
-          const createdEvent = await EventClientService.upsertEvent({
-            ...formData,
-            id: event.id,
-          });
-          try {
-            let req = new ActivityLog();
-            req.setUserId(loggedUserId);
-            req.setActivityName(
-              `Edited project: ${event.id} and re-saved it to id: ${createdEvent.id}`,
-            );
-            req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-            req.setEventId(event.id);
-            await ActivityLogClientService.Create(req);
-          } catch (err) {
-            console.error(`An error occurred while creating a log: ${err}`);
-          }
-        } catch (err) {
-          console.error(`An error occurred while upserting the event: ${err}`);
-        }
+        formData.setId(event.getId());
+        await EventClientService.upsertEvent({
+          ...formData,
+        } as Event);
         loadEvent();
       }
     },
@@ -677,13 +636,13 @@ export const EditProject: FC<Props> = ({
   const SCHEMA: Schema<ExtendedProjectTaskType> = [
     [
       {
-        name: 'id',
+        name: 'getId',
         type: 'hidden',
       },
     ],
     [
       {
-        name: 'externalId',
+        name: 'getExternalId',
         label: 'Assigned Employee',
         type: 'technician',
         disabled: !hasEditRights,
@@ -692,7 +651,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'briefDescription',
+        name: 'getBriefDescription',
         label: 'Brief Description',
         multiline: true,
         required: !hasEditRights,
@@ -701,7 +660,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'startDate',
+        name: 'getStartDate',
         label: 'Start Date',
         type: 'date',
         required: true,
@@ -717,7 +676,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'endDate',
+        name: 'getEndDate',
         label: 'End Date',
         type: 'date',
         required: true,
@@ -733,7 +692,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'statusId',
+        name: 'getStatusId',
         label: 'Status',
         required: true,
         options: statusOptions,
@@ -742,7 +701,7 @@ export const EditProject: FC<Props> = ({
     ],
     [
       {
-        name: 'priorityId',
+        name: 'getPriorityId',
         label: 'Priority',
         required: true,
         options: priorityOptions,
@@ -750,28 +709,26 @@ export const EditProject: FC<Props> = ({
       },
     ],
   ];
-  const filteredTasks = tasks.filter(
-    ({ statusId, priorityId, externalCode, externalId }) => {
-      if (search.statusId) {
-        if (statusId !== search.statusId) return false;
-      }
-      if (search.priorityId) {
-        if (priorityId !== search.priorityId) return false;
-      }
-      if (search.technicians) {
-        if (
-          externalCode === 'project' ||
-          (externalCode === 'user' &&
-            !search.technicians
-              .split(',')
-              .map(id => +id)
-              .includes(externalId))
-        )
-          return false;
-      }
-      return true;
-    },
-  );
+  const filteredTasks = tasks.filter(task => {
+    if (search.statusId) {
+      if (task.getStatusId() !== search.statusId) return false;
+    }
+    if (search.priorityId) {
+      if (task.getPriorityId() !== search.priorityId) return false;
+    }
+    if (search.technicians) {
+      if (
+        task.getExternalCode() === 'project' ||
+        (task.getExternalCode() === 'user' &&
+          !search.technicians
+            .split(',')
+            .map(id => +id)
+            .includes(task.getExternalId()))
+      )
+        return false;
+    }
+    return true;
+  });
 
   return (
     <div>
@@ -780,11 +737,11 @@ export const EditProject: FC<Props> = ({
         footer={
           event && !loadingEvent ? (
             <>
-              <div>Address: {getPropertyAddress(event.property)}</div>
-              <div>Start date: {formatDate(event.dateStarted)}</div>
-              <div>End date: {formatDate(event.dateEnded)}</div>
-              <div>Job Number: {event.logJobNumber}</div>
-              <div>Description: {event.description}</div>
+              <div>Address: {getPropertyAddress(event.getProperty())}</div>
+              <div>Start date: {formatDate(event.getDateStarted())}</div>
+              <div>End date: {formatDate(event.getDateEnded())}</div>
+              <div>Job Number: {event.getLogJobNumber()}</div>
+              <div>Description: {event.getDescription()}</div>
             </>
           ) : (
             'Loading...'
@@ -802,15 +759,22 @@ export const EditProject: FC<Props> = ({
             : []),
           {
             label: 'Add Task',
-            onClick: handleSetEditing({
-              ...new ProjectTask().toObject(),
-              startDate: event ? event.dateStarted.substr(0, 10) : '',
-              endDate: event ? event.dateStarted.substr(0, 10) : '',
-              startTime: '09:00',
-              endTime: '10:00',
-              statusId: 1,
-              priorityId: 2,
-            }),
+            onClick: () => {
+              let newPt = new ProjectTask();
+              newPt.setStartDate(
+                event ? event.getDateStarted().substr(0, 10) : '',
+              );
+              newPt.setEndDate(
+                event ? event.getDateStarted().substr(0, 10) : '',
+              );
+              newPt.setStatusId(1);
+              newPt.setPriorityId(2);
+              handleSetEditing({
+                ...newPt,
+                startTime: '09:00',
+                endTime: '10:00',
+              } as ExtendedProjectTaskType);
+            },
             disabled:
               loading ||
               loadingEvent ||
@@ -818,7 +782,7 @@ export const EditProject: FC<Props> = ({
               !loggedUser ||
               !(
                 isAnyManager ||
-                event.departmentId === loggedUser.employeeDepartmentId
+                event.getDepartmentId() === loggedUser.getEmployeeDepartmentId()
               ),
           },
           {
@@ -829,10 +793,10 @@ export const EditProject: FC<Props> = ({
               loadingEvent ||
               !event ||
               !loggedUser ||
-              !event.isActive ||
+              !event.getIsActive() ||
               !(
                 isAnyManager ||
-                event.departmentId === loggedUser.employeeDepartmentId
+                event.getDepartmentId() === loggedUser.getEmployeeDepartmentId()
               ),
           },
           ...(onClose
@@ -878,51 +842,43 @@ export const EditProject: FC<Props> = ({
             content: event ? (
               <CalendarEvents
                 events={filteredTasks.map(task => {
-                  if (task.endDate == '0000-00-00 00:00:00') {
+                  if (task.getEndDate() == '0000-00-00 00:00:00') {
                     let date = new Date();
                     date.setMinutes(date.getMinutes() + 1);
-                    task.endDate = format(date, 'yyyy-MM-dd hh-mm-ss');
+                    task.setEndDate(format(date, 'yyyy-MM-dd hh-mm-ss'));
                   }
-                  const {
-                    id,
-                    briefDescription,
-                    startDate: dateStart,
-                    endDate: dateEnd,
-                    statusId,
-                    priorityId,
-                    ownerName,
-                    creatorUserId,
-                  } = task;
-                  const [startDate, startHour] = dateStart.split(' ');
-                  const [endDate, endHour] = dateEnd.split(' ');
+                  const [startDate, startHour] = task.getStartDate().split(' ');
+                  const [endDate, endHour] = task.getEndDate().split(' ');
                   return {
-                    id,
-                    startDate,
-                    endDate,
-                    startHour,
-                    endHour,
-                    notes: briefDescription,
-                    status: statuses.find(({ id }) => id === statusId)
-                      ?.description,
-                    statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-                    priority: priorities.find(({ id }) => id === priorityId)
-                      ?.description,
-                    priorityId,
-                    assignee: ownerName,
+                    id: task.getId(),
+                    startDate: task.getStartDate(),
+                    endDate: task.getEndDate(),
+                    startHour: startHour,
+                    endHour: endHour,
+                    notes: task.getBriefDescription(),
+                    status: statuses
+                      .find(status => status.getId() === task.getStatusId())
+                      ?.getDescription(),
+                    statusColor: PROJECT_TASK_STATUS_COLORS[task.getStatusId()],
+                    priority: priorities
+                      .find(
+                        priority => priority.getId() === task.getPriorityId(),
+                      )
+                      ?.getDescription(),
+                    priorityId: task.getPriorityId(),
+                    assignee: task.getOwnerName(),
                     onClick:
-                      creatorUserId === loggedUserId || hasEditRights
+                      task.getCreatorUserId() === loggedUserId || hasEditRights
                         ? handleSetEditing({
                             ...task,
-                            startDate,
-                            endDate,
                             startTime: startHour.substr(0, 5),
                             endTime: endHour.substr(0, 5),
-                          })
+                          } as ExtendedProjectTaskType)
                         : undefined,
                   };
                 })}
-                startDate={event.dateStarted.substr(0, 10)}
-                endDate={event.dateEnded.substr(0, 10)}
+                startDate={event.getDateStarted().substr(0, 10)}
+                endDate={event.getDateEnded().substr(0, 10)}
                 loading={loading || loadingEvent}
                 onAdd={handleAddTask}
               />
@@ -933,46 +889,36 @@ export const EditProject: FC<Props> = ({
             content: event ? (
               <GanttChart
                 events={filteredTasks.map(task => {
-                  const {
-                    id,
-                    briefDescription,
-                    startDate: dateStart,
-                    endDate: dateEnd,
-                    statusId,
-                    priorityId,
-                    ownerName,
-                    creatorUserId,
-                  } = task;
-                  const [startDate, startHour] = dateStart.split(' ');
-                  const [endDate, endHour] = dateEnd.split(' ');
+                  const [startDate, startHour] = task.getStartDate().split(' ');
+                  const [endDate, endHour] = task.getEndDate().split(' ');
                   return {
-                    id,
+                    id: task.getId(),
                     startDate,
                     endDate,
                     startHour,
                     endHour,
-                    notes: briefDescription,
-                    status: statuses.find(({ id }) => id === statusId)
-                      ?.description,
-                    statusColor: PROJECT_TASK_STATUS_COLORS[statusId],
-                    priority: priorities.find(({ id }) => id === priorityId)
-                      ?.description,
-                    priorityId,
-                    assignee: ownerName,
+                    notes: task.getBriefDescription(),
+                    status: statuses
+                      .find(status => status.getId() === task.getStatusId())
+                      ?.getDescription(),
+                    statusColor: PROJECT_TASK_STATUS_COLORS[task.getStatusId()],
+                    priority: priorities
+                      .find(status => status.getId() === task.getPriorityId())
+                      ?.getDescription(),
+                    priorityId: task.getPriorityId(),
+                    assignee: task.getOwnerName(),
                     onClick:
-                      creatorUserId === loggedUserId || hasEditRights
+                      task.getCreatorUserId() === loggedUserId || hasEditRights
                         ? handleSetEditing({
                             ...task,
-                            startDate,
-                            endDate,
                             startTime: startHour.substr(0, 5),
                             endTime: endHour.substr(0, 5),
-                          })
+                          } as ExtendedProjectTaskType)
                         : undefined,
                   };
                 })}
-                startDate={event.dateStarted.substr(0, 10)}
-                endDate={event.dateEnded.substr(0, 10)}
+                startDate={event.getDateStarted().substr(0, 10)}
+                endDate={event.getDateEnded().substr(0, 10)}
                 loading={loading || loadingEvent}
                 onAdd={handleAddTask}
               />
@@ -984,37 +930,30 @@ export const EditProject: FC<Props> = ({
               projects.length > 0 ? (
                 <GanttChart
                   events={projects.map(task => {
-                    const {
-                      id,
-                      description,
-                      dateStarted: dateStart,
-                      dateEnded: dateEnd,
-                      logJobStatus,
-                      color,
-                    } = task;
-                    const [startDate, startHour] = dateStart.split(' ');
-                    const [endDate, endHour] = dateEnd.split(' ');
+                    const [startDate, startHour] = task
+                      .getDateStarted()
+                      .split(' ');
+                    const [endDate, endHour] = task.getDateEnded().split(' ');
                     return {
-                      id,
+                      id: task.getId(),
                       startDate,
                       endDate,
                       startHour,
                       endHour,
-                      notes: description,
-                      statusColor: '#' + color,
+                      notes: task.getDescription(),
+                      statusColor: '#' + task.getColor(),
                       onClick: () => {
-                        setServiceCallId(id);
+                        setServiceCallId(task.getId());
                         setLoaded(false);
                         setLoadedInit(false);
                         // load();
                       },
                     };
                   })}
-                  startDate={projects[0].dateStarted.substr(0, 10)}
-                  endDate={projects[projects.length - 1].dateEnded.substr(
-                    0,
-                    10,
-                  )}
+                  startDate={projects[0].getDateStarted().substr(0, 10)}
+                  endDate={projects[projects.length - 1]
+                    .getDateEnded()
+                    .substr(0, 10)}
                   loading={loading || loadingEvent}
                 />
               ) : (
@@ -1029,8 +968,10 @@ export const EditProject: FC<Props> = ({
             schema={SCHEMA}
             data={editingTask}
             onClose={handleSetEditing()}
-            onSave={handleSaveTask}
-            title={`${editingTask.id ? 'Edit' : 'Add'} Task`}
+            onSave={(task: ExtendedProjectTaskType) =>
+              handleSaveTask(task.startTime, task.endTime, task)
+            }
+            title={`${editingTask.getId() ? 'Edit' : 'Add'} Task`}
             error={errorTask}
           >
             <div className="EditProjectDelete">
@@ -1040,11 +981,12 @@ export const EditProject: FC<Props> = ({
                     variant="outlined"
                     label={
                       taskEvents.length === 0 ||
-                      (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT)
+                      (taskEvents[0] &&
+                        taskEvents[0].getActionTaken() === CHECKOUT)
                         ? 'Enroute'
                         : `Check ${
                             taskEvents.length > 0 &&
-                            taskEvents[0].actionTaken === CHECKIN
+                            taskEvents[0].getActionTaken() === CHECKIN
                               ? 'Out'
                               : 'In'
                           }`
@@ -1055,15 +997,15 @@ export const EditProject: FC<Props> = ({
                   {taskEvents.length > 0 && (
                     <Button
                       variant="outlined"
-                      label={`Delete ${taskEvents[0].actionTaken}`}
+                      label={`Delete ${taskEvents[0].getActionTaken()}`}
                       onClick={handleSetPendingCheckoutDelete(true)}
                       disabled={pendingCheckoutChange}
                     />
                   )}
                 </>
               )}
-              {editingTask.id > 0 &&
-                editingTask.creatorUserId === loggedUserId && (
+              {editingTask.getId() > 0 &&
+                editingTask.getCreatorUserId() === loggedUserId && (
                   <Button
                     variant="outlined"
                     label="Delete Task"
@@ -1078,7 +1020,7 @@ export const EditProject: FC<Props> = ({
         <ConfirmDelete
           open
           kind="Task"
-          name={pendingDeleteTask.briefDescription}
+          name={pendingDeleteTask.getBriefDescription()}
           onClose={handleSetPendingDeleteTask()}
           onConfirm={handleDeleteTask}
         />
@@ -1090,7 +1032,7 @@ export const EditProject: FC<Props> = ({
           name={''}
           onClose={handleSetPendingDeleteEvent()}
           onConfirm={() => {
-            handleDeleteEvent(pendingDeleteEvent.id);
+            handleDeleteEvent(pendingDeleteEvent.getId());
           }}
         />
       )}
@@ -1112,10 +1054,11 @@ export const EditProject: FC<Props> = ({
           open
           title={
             taskEvents.length === 0 ||
-            (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT)
+            (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT)
               ? 'Confirm Enroute'
               : `Confirm Check ${
-                  taskEvents.length > 0 && taskEvents[0].actionTaken === CHECKIN
+                  taskEvents.length > 0 &&
+                  taskEvents[0].getActionTaken() === CHECKIN
                     ? 'Out'
                     : 'In'
                 }`
@@ -1124,11 +1067,12 @@ export const EditProject: FC<Props> = ({
           onConfirm={handleCheckout}
         >
           {taskEvents.length === 0 ||
-          (taskEvents[0] && taskEvents[0].actionTaken === CHECKOUT) ? (
+          (taskEvents[0] && taskEvents[0].getActionTaken() === CHECKOUT) ? (
             <div>
               Are you sure you want to Enroute and assign yourself to this task?
             </div>
-          ) : taskEvents.length > 0 && taskEvents[0].actionTaken === CHECKIN ? (
+          ) : taskEvents.length > 0 &&
+            taskEvents[0].getActionTaken() === CHECKIN ? (
             <div>Are you sure you want to Check Out from this task?</div>
           ) : (
             <div>
@@ -1142,7 +1086,7 @@ export const EditProject: FC<Props> = ({
         <ConfirmDelete
           open
           kind="action"
-          name={taskEvents[0].actionTaken}
+          name={taskEvents[0].getActionTaken()}
           onClose={handleSetPendingCheckoutDelete(false)}
           onConfirm={handleCheckoutDelete}
         />

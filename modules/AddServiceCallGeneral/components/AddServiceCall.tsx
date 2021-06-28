@@ -1,12 +1,7 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
-import {
-  UserType,
-  makeFakeRows,
-  PropertyType,
-  UserClientService,
-} from '../../../helpers';
+import { makeFakeRows, UserClientService } from '../../../helpers';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { CustomerEdit } from '../../ComponentsLibrary/CustomerEdit';
 import { PropertyEdit } from '../../ComponentsLibrary/PropertyEdit';
@@ -16,7 +11,12 @@ import { SearchForm } from './SearchForm';
 import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 import './addServiceCall.less';
-import { LoadUsersByFilter, UsersFilter } from '@kalos-core/kalos-rpc/User';
+import {
+  LoadUsersByFilter,
+  User,
+  UsersFilter,
+} from '@kalos-core/kalos-rpc/User';
+import { Property } from '@kalos-core/kalos-rpc/Property';
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   onClose?: () => void;
   onSave?: () => void;
@@ -24,25 +24,27 @@ export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   projectParentId?: number;
 };
 
+// TODO do not release yet, still has issues with the Search capability.
+
 export const AddServiceCall: FC<Props> = props => {
   const { loggedUserId, onClose, onSave, asProject = false } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
-  const [customerOpened, setCustomerOpened] = useState<UserType>();
-  const [propertyOpened, setPropertyOpened] = useState<UserType>();
-  const [serviceCallOpened, setServiceCallOpened] = useState<PropertyType>();
+  const [customerOpened, setCustomerOpened] = useState<User>();
+  const [propertyOpened, setPropertyOpened] = useState<User>();
+  const [serviceCallOpened, setServiceCallOpened] = useState<Property>();
   const [loaded, setLoaded] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [search, setSearch] = useState<UsersFilter>({});
-  const [entries, setEntries] = useState<UserType[]>([]);
+  const [entries, setEntries] = useState<User[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
     const criteria: LoadUsersByFilter = {
       page,
       filter: search,
       sort: {
-        orderByField: 'firstname',
+        orderByField: 'getFirstname',
         orderBy: 'user_firstname',
         orderDir: 'ASC',
       },
@@ -54,7 +56,7 @@ export const AddServiceCall: FC<Props> = props => {
     setEntries(results);
     setCount(totalCount);
     setLoading(false);
-  }, [setEntries, setCount, setLoading, search, page]);
+  }, [page, search]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -91,7 +93,7 @@ export const AddServiceCall: FC<Props> = props => {
     [setServiceCallOpened],
   );
   const handleSetCustomerOpened = useCallback(
-    (customerOpened?: UserType) => setCustomerOpened(customerOpened),
+    (customerOpened?: User) => setCustomerOpened(customerOpened),
     [setCustomerOpened],
   );
   const handleCustomerClose = useCallback(
@@ -99,7 +101,7 @@ export const AddServiceCall: FC<Props> = props => {
     [setCustomerOpened],
   );
   const handleCustomerSave = useCallback(
-    (data: UserType) => {
+    (data: User) => {
       setAddCustomer(false);
       setCustomerOpened(data);
       setPropertyOpened(data);
@@ -107,7 +109,7 @@ export const AddServiceCall: FC<Props> = props => {
     [setCustomerOpened, setAddCustomer, setPropertyOpened],
   );
   const handlePropertySave = useCallback(
-    (data: PropertyType) => {
+    (data: Property) => {
       setPropertyOpened(undefined);
       setCustomerOpened(undefined);
       setServiceCallOpened(data);
@@ -115,7 +117,7 @@ export const AddServiceCall: FC<Props> = props => {
     [setPropertyOpened, setCustomerOpened, setServiceCallOpened],
   );
   const handleAddProperty = useCallback(
-    (customer: UserType) => {
+    (customer: User) => {
       setCustomerOpened(customer);
       setPropertyOpened(customer);
     },
@@ -145,7 +147,7 @@ export const AddServiceCall: FC<Props> = props => {
       ) : (
         entries.map(entry => (
           <CustomerItem
-            key={entry.id}
+            key={entry.getId()}
             customer={entry}
             {...props}
             onAddServiceCall={setServiceCallOpened}
@@ -166,7 +168,7 @@ export const AddServiceCall: FC<Props> = props => {
             </div>
             <div className="AddServiceCallContent">
               <CustomerDetails
-                userID={customerOpened.id}
+                userID={customerOpened.getId()}
                 loggedUserId={loggedUserId}
               />
             </div>
@@ -176,7 +178,7 @@ export const AddServiceCall: FC<Props> = props => {
       {propertyOpened && (
         <Modal open onClose={handlePropertyClose}>
           <PropertyEdit
-            userId={propertyOpened.id}
+            userId={propertyOpened.getId()}
             onClose={handlePropertyClose}
             onSave={handlePropertySave}
           />
@@ -194,8 +196,8 @@ export const AddServiceCall: FC<Props> = props => {
             </div>
             <div className="AddServiceCallContent">
               <ServiceCall
-                propertyId={serviceCallOpened.id}
-                userID={serviceCallOpened.userId}
+                propertyId={serviceCallOpened.getId()}
+                userID={serviceCallOpened.getUserId()}
                 loggedUserId={loggedUserId}
                 onSave={onSave}
                 asProject={asProject}

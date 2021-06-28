@@ -5,7 +5,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { getPropertyAddress, Property } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -22,15 +22,15 @@ import {
   usd,
   timestamp,
   trailingZero,
-  PropertyType,
   loadContractsByFilter,
   CustomEventsHandler,
   EventClientService,
+  ContractsFilter,
+  loadPropertiesByFilter,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
-
-type Entry = Event.AsObject;
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
 
 interface Props {
   className?: string;
@@ -44,18 +44,18 @@ type ServiceCallFilter = {
   briefDescription: string;
 };
 interface State {
-  entries: Entry[];
+  entries: Event[];
   loading: boolean;
   error: boolean;
-  deletingEntry?: Entry;
-  viewingEntry?: Entry;
-  addingCustomerEntry?: Entry;
-  orderByFields: (keyof Entry)[];
+  deletingEntry?: Event;
+  viewingEntry?: Event;
+  addingCustomerEntry?: Event;
+  orderByFields: (keyof Event)[];
   orderByDBField: string;
   dir: OrderDir;
   count: number;
   page: number;
-  customerProperties: PropertyType[];
+  customerProperties: Property[];
   saving: boolean;
   confirmingAdded: boolean;
   showText?: string;
@@ -75,7 +75,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       viewingEntry: undefined,
       addingCustomerEntry: undefined,
       dir: 'DESC',
-      orderByFields: ['dateStarted'],
+      orderByFields: ['getDateStarted'],
       orderByDBField: 'date_started',
       count: 0,
       page: 0,
@@ -113,44 +113,47 @@ export class ServiceCalls extends PureComponent<Props, State> {
     }
     try {
       const response = await this.EventClient.BatchGet(entry);
-      const { resultsList, totalCount: count } = response.toObject();
       this.setState({
-        entries: resultsList.sort(this.sort),
-        count,
+        entries: response.getResultsList().sort(this.sort),
+        count: response.getTotalCount(),
         loading: false,
       });
     } catch (e) {
       this.setState({ error: true, loading: false });
     }
+    let req = new Property();
     if (viewedAsCustomer) {
-      const { results } = await loadContractsByFilter({
+      const { results } = await loadPropertiesByFilter({
         page: 0,
         filter: { userId: userID },
-        sort: { orderBy: 'address', orderByField: 'address', orderDir: 'ASC' },
+        sort: {
+          orderBy: 'address',
+          orderByField: 'getDateCreated',
+          orderDir: 'ASC',
+        },
+        req: req, // TODO Is this order-by field correct?
       });
       this.setState({ customerProperties: results });
     }
   };
 
-  handleOrder = (
-    orderByDBField: string,
-    orderByFields: (keyof Entry)[],
-  ) => () => {
-    this.setState(
-      {
-        page: 0,
-        orderByFields,
-        orderByDBField,
-        dir:
-          orderByDBField !== this.state.orderByDBField
-            ? 'ASC'
-            : this.state.dir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      },
-      this.load,
-    );
-  };
+  handleOrder =
+    (orderByDBField: string, orderByFields: (keyof Event)[]) => () => {
+      this.setState(
+        {
+          page: 0,
+          orderByFields,
+          orderByDBField,
+          dir:
+            orderByDBField !== this.state.orderByDBField
+              ? 'ASC'
+              : this.state.dir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        },
+        this.load,
+      );
+    };
 
   handleDelete = async () => {
     // FIXME: service call is not actually deleted for some reason
@@ -159,7 +162,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
     if (deletingEntry) {
       this.setState({ loading: true });
       const entry = new Event();
-      entry.setId(deletingEntry.id);
+      entry.setId(deletingEntry.getId());
       await this.EventClient.Delete(entry);
       await this.load();
     }
@@ -173,15 +176,15 @@ export class ServiceCalls extends PureComponent<Props, State> {
     );
   }
 
-  sort = (a: Entry, b: Entry) => {
+  sort = (a: Event, b: Event) => {
     const { orderByFields, dir } = this.state;
     const A = orderByFields
-      .map(field => a[field] as string)
+      .map(field => a[field].toString() as string)
       .join(' ')
       .trim()
       .toUpperCase();
     const B = orderByFields
-      .map(field => b[field] as string)
+      .map(field => b[field].toString() as string)
       .join(' ')
       .trim()
       .toUpperCase();
@@ -190,12 +193,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
     return 0;
   };
 
-  setDeleting = (deletingEntry?: Entry) => () =>
+  setDeleting = (deletingEntry?: Event) => () =>
     this.setState({ deletingEntry });
 
-  setViewing = (viewingEntry?: Entry) => () => this.setState({ viewingEntry });
+  setViewing = (viewingEntry?: Event) => () => this.setState({ viewingEntry });
 
-  setAddingCustomerEntry = (addingCustomerEntry?: Entry) => () =>
+  setAddingCustomerEntry = (addingCustomerEntry?: Event) => () =>
     this.setState({ addingCustomerEntry });
 
   toggleConfirmingAdded = () =>
@@ -215,22 +218,24 @@ export class ServiceCalls extends PureComponent<Props, State> {
     ].join('&');
   };
 
-  handleCustomerAddEvent = async (formData: Entry) => {
-    const { dateStarted, timeStarted, description, notes } = formData;
+  handleCustomerAddEvent = async (formData: Event) => {
     const [dateEnded, timeEnded] = format(
-      addHours(new Date(`${dateStarted} ${timeStarted}`), 1),
+      addHours(
+        new Date(`${formData.getDateStarted()} ${formData.getTimeStarted()}`),
+        1,
+      ),
       'yyyy-MM-dd HH:mm',
     ).split(' ');
-    const data: Entry = {
-      ...formData,
-      dateEnded,
-      timeEnded,
-      name: 'Online Service Request',
-      logJobStatus: 'Requested',
-      color: 'efc281',
-      description: [description, notes].join(', '),
-      notes: '',
-    };
+    let data = new Event();
+    data.setTimeEnded(timeEnded);
+    data.setName('Online Service Request');
+    data.setLogJobStatus('Requested');
+    data.setColor('efc281');
+    data.setDescription(
+      [formData.getDescription(), formData.getNotes()].join(', '),
+    );
+    data.setNotes('');
+    data.setDateEnded(formData.getDateEnded());
     console.log(data);
     this.setState({ saving: true });
     await EventClientService.upsertEvent(data);
@@ -259,7 +264,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       minutes = 0;
     }
     req.setTimeStarted(`${valHour}:${trailingZero(minutes)}`);
-    return req.toObject();
+    return req;
   };
 
   render() {
@@ -299,14 +304,14 @@ export class ServiceCalls extends PureComponent<Props, State> {
             name: 'Date / Time',
             dir: orderByDBField === 'date_started' ? dir : undefined,
             onClick: handleOrder('date_started', [
-              'dateStarted',
-              'timeStarted',
+              'getDateStarted',
+              'getTimeStarted',
             ]),
           },
           {
             name: 'Job Status',
             dir: orderByDBField === 'log_jobStatus' ? dir : undefined,
-            onClick: handleOrder('log_jobStatus', ['logJobStatus']),
+            onClick: handleOrder('log_jobStatus', ['getLogJobStatus']),
           },
           {
             name: 'Job Type / Subtype',
@@ -315,55 +320,40 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 ? dir
                 : undefined,
             onClick: handleOrder('job_type_id, job_subtype_id', [
-              'jobType',
-              'jobSubtype',
+              'getJobType',
+              'getJobSubtype',
             ]),
           },
           {
             name: 'Job Number',
             dir: orderByDBField === 'log_jobNumber' ? dir : undefined,
-            onClick: handleOrder('log_jobNumber', ['logJobNumber']),
+            onClick: handleOrder('log_jobNumber', ['getLogJobNumber']),
           },
           {
             name: 'Name',
             dir: orderByDBField === 'name' ? dir : undefined,
-            onClick: handleOrder('name', ['name']),
+            onClick: handleOrder('name', ['getName']),
           },
           {
             name: 'Description',
             dir: orderByDBField === 'description' ? dir : undefined,
-            onClick: handleOrder('description', ['description']),
+            onClick: handleOrder('description', ['getDescription']),
           },
           {
             name: 'Contract Number',
             dir: orderByDBField === 'contract_number' ? dir : undefined,
-            onClick: handleOrder('contract_number', ['contractNumber']),
+            onClick: handleOrder('contract_number', ['getContractNumber']),
           },
         ];
     const data: Data = loading
       ? makeFakeRows(viewedAsCustomer ? 4 : 7)
       : entries.map(entry => {
-          const {
-            id,
-            dateStarted,
-            timeStarted,
-            timeEnded,
-            jobType,
-            jobSubtype,
-            logJobStatus,
-            logJobNumber,
-            contractNumber,
-            color,
-            property,
-            name,
-            description,
-          } = entry;
           const dateValue =
-            formatDate(dateStarted) +
+            formatDate(entry.getDateStarted()) +
             ' ' +
-            formatTime(timeStarted) +
+            formatTime(entry.getTimeStarted()) +
             ' - ' +
-            formatTime(timeEnded);
+            formatTime(entry.getTimeEnded());
           const statusValue = (
             <>
               <span
@@ -371,12 +361,12 @@ export class ServiceCalls extends PureComponent<Props, State> {
                   display: 'inline-block',
                   width: 10,
                   height: 10,
-                  backgroundColor: '#' + color,
+                  backgroundColor: '#' + entry.getColor(),
                   marginRight: 6,
                   borderRadius: '50%',
                 }}
               />
-              {logJobStatus}
+              {entry.getLogJobStatus()}
             </>
           );
           if (viewedAsCustomer)
@@ -386,11 +376,11 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 onClick: this.setViewing(entry),
               },
               {
-                value: getPropertyAddress(property),
+                value: getPropertyAddress(entry.getProperty()),
                 onClick: this.setViewing(entry),
               },
               {
-                value: name,
+                value: entry.getName(),
                 onClick: this.setViewing(entry),
               },
               {
@@ -410,33 +400,39 @@ export class ServiceCalls extends PureComponent<Props, State> {
           return [
             {
               value: dateValue,
-              onClick: handleRowClick(id),
+              onClick: handleRowClick(entry.getId()),
             },
             {
               value: statusValue,
-              onClick: handleRowClick(id),
-            },
-            {
-              value: jobType + (jobSubtype ? ' / ' + jobSubtype : ''),
-              onClick: handleRowClick(id),
-            },
-            {
-              value: logJobNumber,
-              onClick: handleRowClick(id),
-            },
-            {
-              value: name.length > 100 ? name.substr(0, 100) + '...' : name,
-              onClick: () => this.setState({ showText: name }),
+              onClick: handleRowClick(entry.getId()),
             },
             {
               value:
-                description.length > 100
-                  ? description.substr(0, 100) + '...'
-                  : description,
-              onClick: () => this.setState({ showText: description }),
+                entry.getJobType() +
+                (entry.getJobSubtype() ? ' / ' + entry.getJobSubtype() : ''),
+              onClick: handleRowClick(entry.getId()),
             },
             {
-              value: contractNumber,
+              value: entry.getLogJobNumber(),
+              onClick: handleRowClick(entry.getId()),
+            },
+            {
+              value:
+                entry.getName().length > 100
+                  ? entry.getName().substr(0, 100) + '...'
+                  : entry.getName(),
+              onClick: () => this.setState({ showText: entry.getName() }),
+            },
+            {
+              value:
+                entry.getDescription().length > 100
+                  ? entry.getDescription().substr(0, 100) + '...'
+                  : entry.getDescription(),
+              onClick: () =>
+                this.setState({ showText: entry.getDescription() }),
+            },
+            {
+              value: entry.getContractNumber(),
               actions: [
                 <IconButton
                   key={2}
@@ -447,20 +443,20 @@ export class ServiceCalls extends PureComponent<Props, State> {
                   <DeleteIcon />
                 </IconButton>,
               ],
-              onClick: handleRowClick(id),
+              onClick: handleRowClick(entry.getId()),
             },
           ];
         });
-    const SCHEMA_CUSTOMER_ENTRY: Schema<Entry> = [
+    const SCHEMA_CUSTOMER_ENTRY: Schema<Event> = [
       [
         {
-          name: 'propertyId',
+          name: 'getPropertyId',
           label: 'Property',
           required: true,
           options: [
             { value: '0', label: OPTION_BLANK },
             ...this.state.customerProperties.map(p => ({
-              value: p.id,
+              value: p.getId(),
               label: getPropertyAddress(p),
             })),
           ],
@@ -468,7 +464,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       ],
       [
         {
-          name: 'description',
+          name: 'getDescription',
           label: 'Service Requested',
           options: [
             { value: '0', label: OPTION_BLANK },
@@ -486,13 +482,13 @@ export class ServiceCalls extends PureComponent<Props, State> {
       ],
       [
         {
-          name: 'dateStarted',
+          name: 'getDateStarted',
           label: 'Date Requested',
           type: 'date',
           required: true,
         },
         {
-          name: 'timeStarted',
+          name: 'getTimeStarted',
           label: 'Time Requested',
           type: 'time',
           required: true,
@@ -500,7 +496,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       ],
       [
         {
-          name: 'notes',
+          name: 'getNotes',
           label: 'Notes',
           multiline: true,
         },
@@ -579,16 +575,16 @@ export class ServiceCalls extends PureComponent<Props, State> {
             onConfirm={handleDelete}
             kind="Service Call"
             name={
-              deletingEntry.jobType +
-              (deletingEntry.jobSubtype
-                ? ' / ' + deletingEntry.jobSubtype
+              deletingEntry.getJobType() +
+              (deletingEntry.getJobSubtype()
+                ? ' / ' + deletingEntry.getJobSubtype()
                 : '') +
               ' ' +
-              formatDate(deletingEntry.dateStarted) +
+              formatDate(deletingEntry.getDateStarted()) +
               ' ' +
-              formatTime(deletingEntry.timeStarted) +
+              formatTime(deletingEntry.getTimeStarted()) +
               ' - ' +
-              formatTime(deletingEntry.timeEnded)
+              formatTime(deletingEntry.getTimeEnded())
             }
           />
         )}
@@ -604,24 +600,24 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 [
                   {
                     label: 'Address',
-                    value: getPropertyAddress(viewingEntry.property),
+                    value: getPropertyAddress(viewingEntry.getProperty()),
                   },
                 ],
                 [
                   {
                     label: 'Date/Time',
                     value: `${formatDate(
-                      viewingEntry.dateStarted,
-                    )} ${formatTime(viewingEntry.timeStarted)} - ${formatTime(
-                      viewingEntry.timeEnded,
-                    )}`,
+                      viewingEntry.getDateStarted(),
+                    )} ${formatTime(
+                      viewingEntry.getTimeStarted(),
+                    )} - ${formatTime(viewingEntry.getTimeEnded())}`,
                   },
                 ],
                 [
                   {
                     label: 'Technician(s) Assigned',
                     value:
-                      viewingEntry.logTechnicianAssigned === '0'
+                      viewingEntry.getLogTechnicianAssigned() === '0'
                         ? 'Unnassigned'
                         : '...', // TODO
                   },
@@ -629,123 +625,123 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 [
                   {
                     label: 'Invoice Number',
-                    value: viewingEntry.logJobNumber,
+                    value: viewingEntry.getLogJobNumber(),
                   },
                 ],
                 [
                   {
                     label: 'PO',
-                    value: viewingEntry.logPo,
+                    value: viewingEntry.getLogPo(),
                   },
                 ],
                 [
                   {
                     label: 'Description of Service Needed',
-                    value: viewingEntry.description,
+                    value: viewingEntry.getDescription(),
                   },
                 ],
                 [
                   {
                     label: 'Services Rendered',
-                    value: viewingEntry.logServiceRendered, // TODO
+                    value: viewingEntry.getLogServiceRendered(), // TODO
                   },
                 ],
-                ...(!!viewingEntry.notes
+                ...(viewingEntry.getNotes()
                   ? [
                       [
                         {
                           label: 'Invoice Notes',
-                          value: viewingEntry.notes,
+                          value: viewingEntry.getNotes(),
                         },
                       ],
                     ]
                   : []),
-                ...(!!viewingEntry.servicesperformedrow1 ||
-                !!viewingEntry.totalamountrow1
+                ...(!!viewingEntry.getServicesperformedrow1() ||
+                !!viewingEntry.getTotalamountrow1()
                   ? [
                       [
                         {
                           label: 'Services Performed (1)',
-                          value: viewingEntry.servicesperformedrow1,
+                          value: viewingEntry.getServicesperformedrow1(),
                         },
                         {
                           label: 'Total Amount (1)',
-                          value: viewingEntry.totalamountrow1,
+                          value: viewingEntry.getTotalamountrow1(),
                         },
                       ],
                     ]
                   : []),
-                ...(!!viewingEntry.servicesperformedrow2 ||
-                !!viewingEntry.totalamountrow2
+                ...(!!viewingEntry.getServicesperformedrow2() ||
+                !!viewingEntry.getTotalamountrow2()
                   ? [
                       [
                         {
                           label: 'Services Performed (2)',
-                          value: viewingEntry.servicesperformedrow2,
+                          value: viewingEntry.getServicesperformedrow2(),
                         },
                         {
                           label: 'Total Amount (2)',
-                          value: viewingEntry.totalamountrow2,
+                          value: viewingEntry.getTotalamountrow2(),
                         },
                       ],
                     ]
                   : []),
-                ...(!!viewingEntry.servicesperformedrow3 ||
-                !!viewingEntry.totalamountrow3
+                ...(!!viewingEntry.getServicesperformedrow3() ||
+                !!viewingEntry.getTotalamountrow3()
                   ? [
                       [
                         {
                           label: 'Services Performed (3)',
-                          value: viewingEntry.servicesperformedrow3,
+                          value: viewingEntry.getServicesperformedrow3(),
                         },
                         {
                           label: 'Total Amount (3)',
-                          value: viewingEntry.totalamountrow3,
+                          value: viewingEntry.getTotalamountrow3(),
                         },
                       ],
                     ]
                   : []),
-                ...(!!viewingEntry.servicesperformedrow4 ||
-                !!viewingEntry.totalamountrow4
+                ...(!!viewingEntry.getServicesperformedrow4() ||
+                !!viewingEntry.getTotalamountrow4()
                   ? [
                       [
                         {
                           label: 'Services Performed (4)',
-                          value: viewingEntry.servicesperformedrow4,
+                          value: viewingEntry.getServicesperformedrow4(),
                         },
                         {
                           label: 'Total Amount (4)',
-                          value: viewingEntry.totalamountrow4,
+                          value: viewingEntry.getTotalamountrow4(),
                         },
                       ],
                     ]
                   : []),
-                ...(!!viewingEntry.materialUsed
+                ...(viewingEntry.getMaterialUsed()
                   ? [
                       [
                         {
                           label: 'Material Used',
-                          value: viewingEntry.materialUsed,
+                          value: viewingEntry.getMaterialUsed(),
                         },
                       ],
                     ]
                   : []),
-                ...(+viewingEntry.discountcost !== 0
+                ...(+viewingEntry.getDiscountcost() !== 0
                   ? [
                       [
                         {
                           label: 'Invoice Discount',
-                          value: usd(+viewingEntry.discountcost),
+                          value: usd(+viewingEntry.getDiscountcost()),
                         },
                       ],
                     ]
                   : []),
-                ...(+viewingEntry.logAmountCharged !== 0
+                ...(+viewingEntry.getLogAmountCharged() !== 0
                   ? [
                       [
                         {
                           label: 'Total Amount',
-                          value: usd(+viewingEntry.logAmountCharged),
+                          value: usd(+viewingEntry.getLogAmountCharged()),
                         },
                       ],
                     ]

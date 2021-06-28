@@ -21,27 +21,7 @@ export const EditTransaction: FC<Props> = ({
   // Would have not made it this way with the AsObject figuring we were phasing out of it, but atm Form
   // is difficult to use without AsObject because Transaction would just use getJobId for example, but
   // that isn't called so the form is blank with that.
-  const [transaction] = useState<Transaction.AsObject>({
-    jobId: transactionInput.getJobId(),
-    departmentId: transactionInput.getDepartmentId(),
-    ownerId: transactionInput.getOwnerId(),
-    vendor: transactionInput.getVendor(),
-    costCenterId: transactionInput.getCostCenterId(),
-    description: transactionInput.getDescription(),
-    amount: transactionInput.getAmount(),
-    timestamp: transactionInput.getTimestamp(),
-    notes: transactionInput.getNotes(),
-    isActive: transactionInput.getIsActive(),
-    statusId: transactionInput.getStatusId(),
-    status: transactionInput.getStatus(),
-    ownerName: transactionInput.getOwnerName(),
-    cardUsed: transactionInput.getCardUsed(),
-    isAudited: transactionInput.getIsAudited(),
-    isRecorded: transactionInput.getIsRecorded(),
-    vendorCategory: transactionInput.getVendorCategory(),
-    assignedEmployeeId: transactionInput.getAssignedEmployeeId(),
-    assignedEmployeeName: transactionInput.getAssignedEmployeeName(),
-  } as Transaction.AsObject);
+  const [transaction] = useState<Transaction>(transactionInput);
 
   const convertTransactionAsObjectToTransaction = (
     asObject: Transaction.AsObject,
@@ -90,111 +70,111 @@ export const EditTransaction: FC<Props> = ({
     return txn;
   };
 
-  const SCHEMA: Schema<Transaction.AsObject> = [
+  const SCHEMA: Schema<Transaction> = [
     [
       {
         label: 'Job ID',
-        name: 'jobId',
+        name: 'getJobId',
         type: 'number',
       },
       {
         label: 'Department ID',
-        name: 'departmentId',
+        name: 'getDepartmentId',
         type: 'number',
       },
     ],
     [
       {
         label: 'Owner ID',
-        name: 'ownerId',
+        name: 'getOwnerId',
         type: 'number',
       },
       {
         label: 'Cost Center ID',
-        name: 'costCenterId',
+        name: 'getCostCenterId',
         type: 'number',
       },
       {
         label: 'Amount',
-        name: 'amount',
+        name: 'getAmount',
         type: 'number',
       },
     ],
     [
       {
         label: 'Assigned Employee Id',
-        name: 'assignedEmployeeId',
+        name: 'getAssignedEmployeeId',
         type: 'number',
       },
       {
         label: 'Status ID',
-        name: 'statusId',
+        name: 'getStatusId',
         type: 'number',
       },
     ],
     [
       {
         label: 'Timestamp',
-        name: 'timestamp',
+        name: 'getTimestamp',
         type: 'mui-datetime',
       },
       {
         label: 'Notes',
-        name: 'notes',
+        name: 'getNotes',
         multiline: true,
       },
     ],
     [
       {
         label: 'Description',
-        name: 'description',
+        name: 'getDescription',
         multiline: true,
       },
       {
         label: 'Status',
-        name: 'status',
+        name: 'getStatus',
       },
     ],
     [
       {
         label: 'Vendor',
-        name: 'vendor',
+        name: 'getVendor',
       },
     ],
     [
       {
         label: 'Vendor Category',
-        name: 'vendorCategory',
+        name: 'getVendorCategory',
       },
     ],
     [
       {
         label: 'Is recorded?',
-        name: 'isRecorded',
+        name: 'getIsRecorded',
         type: 'checkbox',
       },
       {
         label: 'Is active?',
-        name: 'isActive',
+        name: 'getIsActive',
         type: 'checkbox',
       },
       {
         label: 'Is audited?',
-        name: 'isAudited',
+        name: 'getIsAudited',
         type: 'checkbox',
       },
     ],
   ];
   return (
     <>
-      <Form<Transaction.AsObject>
+      <Form<Transaction>
         schema={SCHEMA}
         data={transaction}
         onChange={() => {
           onChange;
         }}
         onSave={saved => {
-          onSave(convertTransactionAsObjectToTransaction(saved));
+          onSave(saved);
         }}
         onClose={onClose}
         submitLabel="Save"

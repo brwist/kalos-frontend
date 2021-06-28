@@ -171,7 +171,6 @@ export const PrintPage: FC<Props> = ({
               }
               label={downloadLabel}
             >
-              {' '}
               {(status === 'loading' || downloading) && (
                 <CircularProgress
                   style={{ color: '#FFF', marginRight: 8 }}
@@ -195,11 +194,7 @@ export const PrintPage: FC<Props> = ({
         ) : (
           <Button
             label="Print"
-            onClick={
-              buttonProps.loading
-                ? () => handleSetAlertOpen(true)
-                : onPrint || handlePrint!
-            }
+            onClick={onPrint || handlePrint!}
             {...buttonProps}
             disabled={status === 'loading' || buttonProps.disabled}
           >

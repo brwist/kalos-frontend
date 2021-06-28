@@ -6,15 +6,11 @@ import { InfoTable, Data, Columns } from '../InfoTable';
 import { Field, Value } from '../Field';
 import { Form, Schema } from '../Form';
 import { Filter } from './filter';
-import {
-  makeFakeRows,
-  QuotableType,
-  usd,
-  EventClientService,
-} from '../../../helpers';
+import { makeFakeRows, usd, EventClientService } from '../../../helpers';
+import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 
 export type SelectedQuote = {
-  quotePart: QuotableType;
+  quotePart: Quotable;
   billable: boolean;
   quantity: number;
 };
@@ -39,27 +35,27 @@ const COLUMNS_QUOTABLE: Columns = [
   { name: 'Amount' },
 ];
 
-const SCHEMA_NEW_QUOTABLE: Schema<QuotableType> = [
+const SCHEMA_NEW_QUOTABLE: Schema<Quotable> = [
   [
     {
-      name: 'description',
+      name: 'getDescription',
       label: 'Item/Labor Name',
     },
     {
-      name: 'isLmpc',
+      name: 'getIsLmpc',
       type: 'checkbox',
       label: 'LMPC',
     },
   ],
   [
     {
-      name: 'quotedPrice',
+      name: 'getQuotedPrice',
       type: 'number',
       label: 'Price',
       startAdornment: '$',
     },
     {
-      name: 'quantity',
+      name: 'getQuantity',
       type: 'number',
       label: 'QTY',
     },
@@ -76,12 +72,10 @@ export const QuoteSelector: FC<Props> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [newQuotable, setNewQuotable] = useState<boolean>(false);
   const [filter, setFilter] = useState<string>('');
-  const [quotable, setQuotable] = useState<QuotableType[]>([]);
-  const [quoteParts, setQuoteParts] = useState<QuotableType[]>([]);
-  const [pendingQuotable, setPendingQuotable] = useState<QuotableType[]>([]);
-  const [pendingNewQuotable, setPendingNewQuotable] = useState<QuotableType[]>(
-    [],
-  );
+  const [quotable, setQuotable] = useState<Quotable[]>([]);
+  const [quoteParts, setQuoteParts] = useState<Quotable[]>([]);
+  const [pendingQuotable, setPendingQuotable] = useState<Quotable[]>([]);
+  const [pendingNewQuotable, setPendingNewQuotable] = useState<Quotable[]>([]);
   const [selectedQuoteLineIds, setSelectedQuoteLineIds] = useState<number[]>(
     [],
   );
@@ -93,14 +87,11 @@ export const QuoteSelector: FC<Props> = ({
   }>({});
   const load = useCallback(async () => {
     setLoading(true);
+    const req = new QuotableRead();
+    req.setPageNumber(0);
+    req.setIsFlatrate(true);
     const [quoteParts, quotable] = await Promise.all([
-      EventClientService.loadQuoteParts(
-        {
-          pageNumber: 0,
-          isFlatrate: true,
-        },
-        ['QuoteUsedId'],
-      ),
+      EventClientService.loadQuoteParts(req),
       EventClientService.loadQuotable(serviceCallId),
     ]);
     setQuoteParts(quoteParts);
@@ -158,23 +149,32 @@ export const QuoteSelector: FC<Props> = ({
     [billable],
   );
   const handleAddQuotes = useCallback(() => {
-    setPendingQuotable(
-      Object.keys(billable).map(id => ({
-        ...quoteParts.find(q => q.quoteLineId === +id)!,
+    let tempPending = [];
+    for (let i = 0; i < quoteParts.length; i++) {
+      if (billable[quoteParts[i].getQuoteLineId()]) {
+        tempPending.push(quoteParts[i]);
+      }
+    }
+    setPendingQuotable(tempPending);
+    /*
+    setPendingQuotable([
+      ...Object.keys(billable).map(id => ({
+        quoteParts.find(q => q.quoteLineId === +id)!,
         quantity: billable[+id].quantity,
       })),
-    );
+    ]);
+    */
     if (onAddQuotes) {
       onAddQuotes([
         ...Object.keys(billable).map(id => ({
-          quotePart: quoteParts.find(q => q.quoteLineId === +id)!,
+          quotePart: quoteParts.find(q => q.getQuoteLineId() === +id)!,
           billable: billable[+id].billable,
           quantity: billable[+id].quantity,
         })),
         ...pendingNewQuotable.map(quotePart => ({
           quotePart,
           billable: true,
-          quantity: quotePart.quantity,
+          quantity: quotePart.getQuantity(),
         })),
       ]);
     }
@@ -185,8 +185,9 @@ export const QuoteSelector: FC<Props> = ({
     [newQuotable],
   );
   const handleSaveNewQuotable = useCallback(
-    ({ quantity, ...data }: QuotableType) => {
-      const quotePart = new Quotable().toObject();
+    (data: Quotable) => {
+      const quantity = data.getQuantity();
+      const quotePart = new Quotable();
       Object.assign(quotePart, {
         ...data,
         quantity,
@@ -197,67 +198,68 @@ export const QuoteSelector: FC<Props> = ({
       if (onAddQuotes) {
         onAddQuotes([
           ...Object.keys(billable).map(id => ({
-            quotePart: quoteParts.find(q => q.quoteLineId === +id)!,
+            quotePart: quoteParts.find(q => q.getQuoteLineId() === +id)!,
             billable: billable[+id].billable,
             quantity: billable[+id].quantity,
           })),
           ...newPendingNewQuotable.map(quotePart => ({
             quotePart,
             billable: true,
-            quantity: quotePart.quantity,
+            quantity: quotePart.getQuantity(),
           })),
         ]);
       }
       setNewQuotable(false);
       setOpen(false);
     },
-    [onAddQuotes, billable, pendingQuotable, pendingNewQuotable],
+    [pendingNewQuotable, onAddQuotes, billable, quoteParts],
   );
   // console.log({ quotable, quoteParts });
   const data: Data = loading
     ? makeFakeRows(6, 20)
     : quoteParts
-        .filter(({ description }) =>
-          !!filter
-            ? description
+        .filter(quote =>
+          filter
+            ? quote
+                .getDescription()
                 .toLocaleLowerCase()
                 .includes(filter.toLocaleLowerCase())
             : true,
         )
-        .map(({ quoteLineId, description, quotedPrice }) => [
+        .map(quote => [
           {
             value: (
               <Field
                 name="selected"
                 type="checkbox"
                 style={{ marginBottom: 0 }}
-                value={selectedQuoteLineIds.includes(quoteLineId)}
-                onChange={handleToggleQuoteLineSelect(quoteLineId)}
+                value={selectedQuoteLineIds.includes(quote.getQuoteLineId())}
+                onChange={handleToggleQuoteLineSelect(quote.getQuoteLineId())}
               />
             ),
           },
           {
-            value: selectedQuoteLineIds.includes(quoteLineId) ? (
+            value: selectedQuoteLineIds.includes(quote.getQuoteLineId()) ? (
               <Field
                 name="selectedBillable"
                 type="checkbox"
                 style={{ marginBottom: 0 }}
-                value={billable[quoteLineId].billable}
-                onChange={handleToggleBillable(quoteLineId)}
+                value={billable[quote.getQuoteLineId()].billable}
+                onChange={handleToggleBillable(quote.getQuoteLineId())}
               />
             ) : (
               ''
             ),
           },
-          { value: description },
+          { value: quote.getDescription() },
           {
-            value: selectedQuoteLineIds.includes(quoteLineId) ? (
+            value: selectedQuoteLineIds.includes(quote.getQuoteLineId()) ? (
               <Field
                 name="selected"
                 type="number"
                 style={{ marginBottom: 0 }}
-                value={billable[quoteLineId].quantity}
-                onChange={handleToggleBillableQuantity(quoteLineId)}
+                value={billable[quote.getQuoteLineId()].quantity}
+                onChange={handleToggleBillableQuantity(quote.getQuoteLineId())}
               />
             ) : (
               ''
@@ -265,32 +267,45 @@ export const QuoteSelector: FC<Props> = ({
           },
           {
             value: usd(
-              selectedQuoteLineIds.includes(quoteLineId)
-                ? billable[quoteLineId].quantity * quotedPrice
-                : quotedPrice,
+              selectedQuoteLineIds.includes(quote.getQuoteLineId())
+                ? billable[quote.getQuoteLineId()].quantity *
+                    quote.getQuotedPrice()
+                : quote.getQuotedPrice(),
             ),
           },
         ]);
   const dataQuotable: Data = loading
     ? makeFakeRows(4, 5)
     : [
-        ...pendingQuotable.map(({ description, quantity, quotedPrice }) => [
-          { value: <strong>{description}</strong> },
-          { value: <strong>{quantity}</strong> },
-          { value: <strong>{usd(quotedPrice)}</strong> },
-          { value: <strong>{usd(quantity * quotedPrice)}</strong> },
+        ...pendingQuotable.map(quote => [
+          { value: <strong>{quote.getDescription()}</strong> },
+          { value: <strong>{quote.getQuantity()}</strong> },
+          { value: <strong>{usd(quote.getQuotedPrice())}</strong> },
+          {
+            value: (
+              <strong>
+                {usd(quote.getQuantity() * quote.getQuotedPrice())}
+              </strong>
+            ),
+          },
         ]),
-        ...pendingNewQuotable.map(({ description, quantity, quotedPrice }) => [
-          { value: <strong>{description}</strong> },
-          { value: <strong>{quantity}</strong> },
-          { value: <strong>{usd(quotedPrice)}</strong> },
-          { value: <strong>{usd(quantity * quotedPrice)}</strong> },
+        ...pendingNewQuotable.map(quote => [
+          { value: <strong>{quote.getDescription()}</strong> },
+          { value: <strong>{quote.getQuantity()}</strong> },
+          { value: <strong>{usd(quote.getQuotedPrice())}</strong> },
+          {
+            value: (
+              <strong>
+                {usd(quote.getQuantity() * quote.getQuotedPrice())}
+              </strong>
+            ),
+          },
         ]),
-        ...quotable.map(({ description, quantity, quotedPrice }) => [
-          { value: description },
-          { value: quantity },
-          { value: usd(quotedPrice) },
-          { value: usd(quantity * quotedPrice) },
+        ...quotable.map(quote => [
+          { value: quote.getDescription() },
+          { value: quote.getQuantity() },
+          { value: usd(quote.getQuotedPrice()) },
+          { value: usd(quote.getQuantity() * quote.getQuotedPrice()) },
         ]),
       ];
   return (
@@ -343,12 +358,12 @@ export const QuoteSelector: FC<Props> = ({
       )}
       {newQuotable && (
         <Modal open onClose={handleToggleNewQuotable}>
-          <Form<QuotableType>
+          <Form<Quotable>
             title="Adding the following Part of Labor to Current Job Invoice"
             schema={SCHEMA_NEW_QUOTABLE}
             onClose={handleToggleNewQuotable}
             onSave={handleSaveNewQuotable}
-            data={new Quotable().toObject()}
+            data={new Quotable()}
           />
         </Modal>
       )}

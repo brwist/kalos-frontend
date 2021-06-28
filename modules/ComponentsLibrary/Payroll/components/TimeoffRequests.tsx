@@ -21,7 +21,6 @@ import { Confirm } from '../../Confirm';
 import { Button } from '../../Button';
 import { Timesheet as TimesheetComponent } from '../../../ComponentsLibrary/Timesheet';
 import {
-  TimeoffRequestType,
   makeFakeRows,
   formatWeek,
   TimeoffRequestClientService,
@@ -31,7 +30,6 @@ import {
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import { TimeoffRequestServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb_service';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { TramRounded } from '@material-ui/icons';
 
 interface Props {
   departmentId: number;
@@ -61,14 +59,14 @@ export const TimeoffRequests: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [count, setCount] = useState<number>(0);
-  const [pendingView, setPendingView] = useState<TimeoffRequestType>();
-  const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequestType>();
+  const [pendingView, setPendingView] = useState<TimeoffRequest>();
+  const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequest>();
   const [
     pendingPayrollReject,
     setPendingPayrollReject,
-  ] = useState<TimeoffRequestType>();
+  ] = useState<TimeoffRequest>();
   const [toggleButton, setToggleButton] = useState<boolean>(true);
-  const [pendingApproval, setPendingApproval] = useState<TimeoffRequestType>();
+  const [pendingApproval, setPendingApproval] = useState<TimeoffRequest>();
   const load = useCallback(async () => {
     setLoading(true);
     //Lets grab the Timeoff requests,
@@ -106,27 +104,27 @@ export const TimeoffRequests: FC<Props> = ({
     setPendingApproval(undefined);
   };
   const handleTogglePendingView = useCallback(
-    (pendingView?: TimeoffRequestType) => () => setPendingView(pendingView),
+    (pendingView?: TimeoffRequest) => () => setPendingView(pendingView),
     [],
   );
   const handlePendingPayrollToggle = useCallback(
-    (pendingPayroll?: TimeoffRequestType) => () =>
+    (pendingPayroll?: TimeoffRequest) => () =>
       setPendingPayroll(pendingPayroll),
     [setPendingPayroll],
   );
   const handlePendingPayrollToggleReject = useCallback(
-    (pendingPayrollReject?: TimeoffRequestType) => () =>
+    (pendingPayrollReject?: TimeoffRequest) => () =>
       setPendingPayrollReject(pendingPayrollReject),
     [setPendingPayrollReject],
   );
   const handlePendingApprovalToggle = useCallback(
-    (pendingApproval?: TimeoffRequestType) => () =>
+    (pendingApproval?: TimeoffRequest) => () =>
       setPendingApproval(pendingApproval),
     [setPendingApproval],
   );
   const handlePayroll = useCallback(async () => {
     if (pendingPayroll) {
-      const { id } = pendingPayroll;
+      const id = pendingPayroll.getId();
       setLoading(true);
       setPendingPayroll(undefined);
       const req = new TimeoffRequest();
@@ -140,13 +138,13 @@ export const TimeoffRequests: FC<Props> = ({
 
   const handlePayrollReject = useCallback(async () => {
     if (pendingPayrollReject) {
-      const { id } = pendingPayrollReject;
-      const slackID = await getSlackID(pendingPayrollReject.userName);
+      const id = pendingPayrollReject.getId();
+      const slackID = await getSlackID(pendingPayrollReject.getUserName());
       if (slackID != '0') {
         slackNotify(
           slackID,
           `Your PTO for ${formatWeek(
-            pendingPayrollReject.timeStarted,
+            pendingPayrollReject.getTimeStarted(),
           )} was rejected by Payroll for the following reason:` +
             rejectionMessage,
         );
@@ -208,23 +206,23 @@ export const TimeoffRequests: FC<Props> = ({
                 return [
                   {
                     value: e.getUserName(),
-                    onClick: handleTogglePendingView(e.toObject()),
+                    onClick: handleTogglePendingView(e),
                   },
                   {
                     value: e.getDepartmentName(),
-                    onClick: handleTogglePendingView(e.toObject()),
+                    onClick: handleTogglePendingView(e),
                   },
                   {
                     value: format(startDate, 'MMM do, YYY'),
-                    onClick: handleTogglePendingView(e.toObject()),
+                    onClick: handleTogglePendingView(e),
                   },
                   {
                     value: format(endDate, 'MMM do, YYY'),
-                    onClick: handleTogglePendingView(e.toObject()),
+                    onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
                         key="view"
-                        onClick={handleTogglePendingView(e.toObject())}
+                        onClick={handleTogglePendingView(e)}
                         size="small"
                       >
                         <Visibility />
@@ -238,7 +236,7 @@ export const TimeoffRequests: FC<Props> = ({
                           <span>
                             <IconButton
                               size="small"
-                              onClick={handlePendingPayrollToggle(e.toObject())}
+                              onClick={handlePendingPayrollToggle(e)}
                               disabled={
                                 e.getPayrollProcessed() ||
                                 e.getAdminApprovalUserId() === 0
@@ -258,9 +256,7 @@ export const TimeoffRequests: FC<Props> = ({
                           <span>
                             <IconButton
                               size="small"
-                              onClick={handlePendingPayrollToggleReject(
-                                e.toObject(),
-                              )}
+                              onClick={handlePendingPayrollToggleReject(e)}
                               disabled={
                                 e.getPayrollProcessed() ||
                                 e.getAdminApprovalUserId() === 0
@@ -280,9 +276,7 @@ export const TimeoffRequests: FC<Props> = ({
                           <span>
                             <IconButton
                               size="small"
-                              onClick={handlePendingApprovalToggle(
-                                e.toObject(),
-                              )}
+                              onClick={handlePendingApprovalToggle(e)}
                             >
                               <ThumbsUpDownIcon />
                             </IconButton>
@@ -298,9 +292,9 @@ export const TimeoffRequests: FC<Props> = ({
       {pendingView && (
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <TimesheetComponent
-            timesheetOwnerId={pendingView.userId}
+            timesheetOwnerId={pendingView.getUserId()}
             userId={loggedUserId}
-            week={pendingView.timeStarted}
+            week={pendingView.getTimeStarted()}
             startOnWeek={true}
             onClose={handleTogglePendingView(undefined)}
           />
@@ -342,12 +336,12 @@ export const TimeoffRequests: FC<Props> = ({
         <Modal open={!!pendingApproval} onClose={closeApproval}>
           <TimeOff
             loggedUserId={loggedUserId}
-            userId={pendingApproval.userId}
+            userId={pendingApproval.getUserId()}
             onCancel={closeApproval}
             onSaveOrDelete={closeApproval}
             onAdminSubmit={closeApproval}
             submitDisabled
-            requestOffId={pendingApproval.id}
+            requestOffId={pendingApproval.getId()}
           />
         </Modal>
       )}

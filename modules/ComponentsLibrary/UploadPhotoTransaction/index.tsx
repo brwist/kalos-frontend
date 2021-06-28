@@ -131,20 +131,21 @@ export const UploadPhotoTransaction: FC<Props> = ({
           data.tag,
         );
         if (status === 'ok') {
-          const f = new File();
-          f.setBucket(bucket);
-          f.setName(name);
-          f.setMimeType(getMimeType(data.file) || 'image/jpeg');
-          f.setOwnerId(loggedUserId);
+          const fReq = new File();
+          fReq.setBucket(bucket);
+          fReq.setName(name);
+          fReq.setMimeType(data.file);
+          fReq.setOwnerId(loggedUserId);
+          const uploadFile = await FileClientService.upsertFile(fReq);
 
-          const uploadFile = await FileClientService.upsertFile(f);
-
-          const td = new TransactionDocument();
-          td.setTransactionId(insert.getId());
-          td.setReference(nameWithoutId);
-          td.setFileId(uploadFile.getId());
-          td.setTypeId(1);
-          await TransactionDocumentClientService.upsertTransactionDocument(td);
+          const tDoc = new TransactionDocument();
+          tDoc.setTransactionId(insert.getId());
+          tDoc.setReference(nameWithoutId);
+          tDoc.setFileId(uploadFile.getId());
+          tDoc.setTypeId(1);
+          await TransactionDocumentClientService.upsertTransactionDocument(
+            tDoc,
+          );
           setSaving(false);
           setSaved(true);
           setFormKey(formKey + 1);
