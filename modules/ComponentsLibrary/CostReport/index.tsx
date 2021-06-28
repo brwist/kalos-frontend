@@ -20,6 +20,8 @@ import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Task } from '@kalos-core/kalos-rpc/Task';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -32,12 +34,12 @@ export type SearchType = {
   priorityId: number;
 };
 
-export const GetTotalTransactions = (transactions: Transaction.AsObject[]) => {
-  return transactions.reduce((aggr, { amount }) => aggr + amount, 0);
+export const GetTotalTransactions = (transactions: Transaction[]) => {
+  return transactions.reduce((aggr, txn) => aggr + txn.getAmount(), 0);
 };
 
-export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
-  let tripsRendered: Trip.AsObject[] = [];
+export const CostReport: FC<Props> = ({ serviceCallId }) => {
+  let tripsRendered: Trip[] = [];
 
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingEvent, setLoadingEvent] = useState<boolean>(true);
@@ -54,7 +56,68 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
   const [event, setEvent] = useState<Event>();
   const [loaded, setLoaded] = useState<boolean>(false);
 
-  const [trips, setTrips] = useState<Trip.AsObject[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [tripsTotal, setTripsTotal] = useState<number>(0);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  const totalTasksBillable = tasks.reduce(
+    (aggr, task) => aggr + task.getBillable(),
+    0,
+  );
+
+  const loadResources = useCallback(async () => {
+    const resultsList = (
+      await PerDiemClientService.loadPerDiemsByEventId(serviceCallId)
+    ).getResultsList();
+
+    let arr: PerDiem[] = [];
+
+    resultsList.forEach(result => {
+      let isIncluded = false;
+      arr.forEach(arrItem => {
+        if (arrItem.getId() == result.getId()) isIncluded = true;
+      });
+      if (!isIncluded) {
+        arr.push(result);
+      }
+    });
+
+    let allTrips: Trip[] = [];
+    arr.forEach(pd =>
+      pd.getRowsList().forEach(row => {
+        allTrips.push(...row.getTripsList());
+      }),
+    );
+
+    setTrips(allTrips);
+
+    const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
+    setLodgings(lodgings);
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
+    setTransactions(transactions);
+
+    let allTripsTotal = 0;
+    arr.forEach(perDiem => {
+      perDiem.getRowsList().forEach(row => {
+        row.getTripsList().forEach(trip => {
+          // Subtracting 30 miles flat from trip distance in accordance
+          // with reimbursement from home rule
+          allTripsTotal +=
+            trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+              ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
+              : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
+        });
+      });
+    });
+
+    setTripsTotal(allTripsTotal);
+
+    setPerDiems(arr);
+  }, [serviceCallId, setPerDiems, setLodgings, setTripsTotal]);
 
   const totalMeals =
     perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
@@ -90,7 +153,7 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
     setPrintStatus('loading');
     await loadResources();
     setPrintStatus('loaded');
-  }, [setPrintStatus, loadPrintData]);
+  }, [loadResources]);
   const handlePrinted = useCallback(
     () => setPrintStatus('idle'),
     [setPrintStatus],
@@ -150,9 +213,7 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
           let req = new Task();
           req.setEventId(serviceCallId);
 
-          tasks = (await TaskClientService.BatchGet(req))
-            .getResultsList()
-            .map(task => task.toObject());
+          setTasks((await TaskClientService.BatchGet(req)).getResultsList());
 
           resolve();
         } catch (err) {
@@ -175,7 +236,7 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
 
       setLoading(false);
     });
-  }, [setLoading, serviceCallId, loadPrintData]);
+  }, [loadResources, serviceCallId, tasks]);
 
   useEffect(() => {
     if (!loadedInit) {
@@ -533,6 +594,100 @@ export const CostReport: FC<Props> = ({ serviceCallId, onClose }) => {
                       : `${tsl.getHoursWorked()} hr`
                     : '-',
                   tsl.getNotes(),
+                ],
+              ]}
+            />
+          </div>
+        );
+      })}
+      <PrintParagraph tag="h2">Related Trips</PrintParagraph>
+      {trips.map(trip => {
+        let included = false;
+        tripsRendered.forEach(tripRendered => {
+          if (tripRendered.getId() == trip.getId()) included = true;
+        });
+        if (included) return <> </>;
+
+        tripsRendered.push(trip);
+        return (
+          <div
+            key={trip.getId()}
+            style={{
+              breakInside: 'avoid',
+              display: 'inline-block',
+              width: '100%',
+            }}
+          >
+            <PrintTable
+              columns={[
+                {
+                  title: 'Date',
+                  align: 'left',
+                },
+                {
+                  title: 'Origin Address',
+                  align: 'left',
+                  widthPercentage: 20,
+                },
+                {
+                  title: 'Destination Address',
+                  align: 'left',
+                  widthPercentage: 20,
+                },
+                {
+                  title: 'Distance (Miles)',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Notes',
+                  align: 'left',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Home Travel',
+                  align: 'right',
+                  widthPercentage: 10,
+                },
+                {
+                  title: `Cost (${usd(IRS_SUGGESTED_MILE_FACTOR)}/mi)`,
+                  align: 'right',
+                  widthPercentage: 10,
+                },
+                {
+                  title: 'Per Diem Row ID',
+                  align: 'right',
+                  widthPercentage: 10,
+                },
+              ]}
+              data={[
+                [
+                  formatDate(trip.getDate()),
+                  trip.getOriginAddress(),
+                  trip.getDestinationAddress(),
+                  trip.getDistanceInMiles().toFixed(2),
+                  trip.getNotes(),
+                  trip.getHomeTravel(),
+                  `${usd(
+                    trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+                      ? Number(
+                          (
+                            (trip.getDistanceInMiles() - 30) *
+                            IRS_SUGGESTED_MILE_FACTOR
+                          ).toFixed(2),
+                        )
+                      : Number(
+                          (
+                            trip.getDistanceInMiles() *
+                            IRS_SUGGESTED_MILE_FACTOR
+                          ).toFixed(2),
+                        ),
+                  )} ${
+                    trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+                      ? '(30 miles docked for home travel)'
+                      : ''
+                  }`,
+                  trip.getPerDiemRowId(),
                 ],
               ]}
             />
