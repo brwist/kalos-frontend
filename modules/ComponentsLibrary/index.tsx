@@ -25,6 +25,7 @@ import Confirm from './Confirm/examples';
 import ConfirmDelete from './ConfirmDelete/examples';
 import ConfirmService from './ConfirmService/examples';
 import CostReport from './CostReport/examples';
+import CostReportForEmployee from './CostReportForEmployee/examples';
 import CostSummary from './CostSummary/examples';
 import CustomControls from './CustomControls/examples';
 import CustomerAccountDashboard from './CustomerAccountDashboard/examples';
@@ -131,6 +132,7 @@ const COMPONENTS = {
   ConfirmDelete,
   ConfirmService,
   CostReport,
+  CostReportForEmployee,
   CostSummary,
   CustomControls,
   CustomerAccountDashboard,

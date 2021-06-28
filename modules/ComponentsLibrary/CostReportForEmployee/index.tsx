@@ -28,12 +28,13 @@ import {
   PerDiemClientService,
   usd,
 } from '../../../helpers';
+import { NULL_TIME_VALUE } from '../Timesheet/constants';
 interface Props {
   userId: number;
   week: string;
 }
 
-export const CostReportForEmployee: FC<Props> = ({ userId }) => {
+export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
   const [trips, setTrips] = useState<Trip[]>();
   const [perDiems, setPerDiems] = useState<PerDiem[]>();
   const [spiffs, setSpiffs] = useState<Task[]>();
