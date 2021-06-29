@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect } from 'react';
-
+import { UserList } from '@kalos-core/kalos-rpc/User';
 type State = {
   data: any[];
   totalCount: number;
@@ -17,7 +17,7 @@ const initialState = {
   fetchedCount: 0,
 };
 
-export const useFetchAll = (fetchFn: () => Promise<Response>) => {
+export const useFetchAll = (fetchFn: () => Promise<UserList>) => {
   const [state, setState] = useState<State>(initialState);
   const { data, totalCount, fetchedCount } = state;
   useEffect(() => {
@@ -25,9 +25,9 @@ export const useFetchAll = (fetchFn: () => Promise<Response>) => {
       (async () => {
         const res = await fetchFn();
         setState({
-          data: [...data, ...res.resultsList],
-          totalCount: res.totalCount,
-          fetchedCount: fetchedCount + res.resultsList.length,
+          data: res.getResultsList(),
+          totalCount: res.getTotalCount(),
+          fetchedCount: fetchedCount + res.getResultsList().length,
         });
       })();
     }
