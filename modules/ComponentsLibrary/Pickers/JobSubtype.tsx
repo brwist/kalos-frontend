@@ -20,7 +20,7 @@ interface props {
 }
 
 interface state {
-  list: JobSubtype.AsObject[];
+  list: JobSubtype[];
   allowed: number[];
 }
 
@@ -50,8 +50,8 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
     }
   }
 
-  addItem(item: JobSubtype.AsObject) {
-    if (this.state.allowed.includes(item.id)) {
+  addItem(item: JobSubtype) {
+    if (this.state.allowed.includes(item.getId())) {
       this.setState(prevState => ({
         list: prevState.list.concat(item),
       }));
@@ -62,8 +62,8 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
     return new Promise(async resolve => {
       const jtst = new JobTypeSubtype();
       jtst.setJobTypeId(this.props.jobTypeID);
-      const res = (await this.JobTypeSubtypeClient.BatchGet(jtst)).toObject();
-      const allowed = res.resultsList.map(st => st.jobSubtypeId);
+      const res = await this.JobTypeSubtypeClient.BatchGet(jtst);
+      const allowed = res.getResultsList().map(st => st.getJobSubtypeId());
       this.setState({ allowed }, () => resolve(true));
     });
   }
@@ -91,8 +91,11 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
         >
           <option value={0}>Select Job Type</option>
           {this.state.list.map(item => (
-            <option value={item.id} key={`${item.name}-${item.id}`}>
-              {item.name}
+            <option
+              value={item.getId()}
+              key={`${item.getName()}-${item.getId()}`}
+            >
+              {item.getName()}
             </option>
           ))}
         </NativeSelect>

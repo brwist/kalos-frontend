@@ -10,12 +10,12 @@ interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: JobType.AsObject): boolean;
+  test?(item: JobType): boolean;
   useDevClient?: boolean;
 }
 
 interface state {
-  list: JobType.AsObject[];
+  list: JobType[];
 }
 
 export class JobTypePicker extends React.PureComponent<props, state> {
@@ -42,7 +42,7 @@ export class JobTypePicker extends React.PureComponent<props, state> {
     }
   }
 
-  addItem(item: JobType.AsObject) {
+  addItem(item: JobType) {
     if (this.props.test) {
       if (this.props.test(item)) {
         this.setState(prevState => ({
@@ -78,8 +78,8 @@ export class JobTypePicker extends React.PureComponent<props, state> {
         >
           <option value={0}>Select Job Type</option>
           {this.state.list.map(acc => (
-            <option value={acc.id} key={`${acc.name}-${acc.id}`}>
-              {acc.name}
+            <option value={acc.getId()} key={`${acc.getName()}-${acc.getId()}`}>
+              {acc.getName()}
             </option>
           ))}
         </NativeSelect>
