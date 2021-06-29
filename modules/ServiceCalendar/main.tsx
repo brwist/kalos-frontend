@@ -235,7 +235,7 @@ const initialState: State = {
 };
 
 type EmployeesContext = {
-  employees: User.AsObject[];
+  employees: User[];
   employeesLoading: boolean;
 };
 
@@ -322,12 +322,14 @@ export const ServiceCalendar: FC<Props> = props => {
     user.setIsActive(1);
     user.setIsEmployee(1);
     user.setOverrideLimit(true);
-    return (await userClient.BatchGet(user)).toObject();
+    return await userClient.BatchGet(user);
   }, []);
-
-  const { data: employees, isLoading: employeesLoading } = useFetchAll(
-    fetchEmployees,
-  );
+  const resp = useFetchAll(fetchEmployees);
+  const employees = resp.data;
+  const employeesLoading = resp.isLoading;
+  // const { data: employees, isLoading: employeesLoading } = useFetchAll(
+  //   fetchEmployees,
+  // );
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
     const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();

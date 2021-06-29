@@ -44,7 +44,6 @@ type CallsList = {
   serviceCallsList: Event[];
   timeoffRequestsList: TimeoffRequest[];
 };
-
 const Column = ({
   date,
   viewBy,
@@ -81,6 +80,86 @@ const Column = ({
     }
   }, [date, autoScrollInitialized, datesMap, dayView, fetchingCalendarData]);
   const filterCalls = useCallback(
+    (calendarDay: CalendarDay) => {
+      const {
+        customers,
+        zip,
+        propertyUse,
+        jobType,
+        jobSubType,
+        techIds: techIdsFilter,
+      } = filters!;
+      const callList = [
+        calendarDay.getCompletedServiceCallsList(),
+        calendarDay.getRemindersList(),
+        calendarDay.getServiceCallsList(),
+      ];
+      for (let i = 0; i < callList.length; i++) {
+        //
+        callList[i] = callList[i].filter((call: Event) => {
+          const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
+            .map(Number)
+            .filter(e => e !== 0);
+          if (techIdsFilterArr.length > 0) {
+            if (
+              !call.getLogTechnicianAssigned() ||
+              call.getLogTechnicianAssigned() === '0'
+            )
+              return false;
+            const techIds = call
+              .getLogTechnicianAssigned()
+              .split(',')
+              .map(Number);
+            if (techIdsFilterArr.find(item => techIds.includes(item))) {
+              return true;
+            } else {
+              return false;
+            }
+          } else if (!isAdmin && call.getLogTechnicianAssigned()) {
+            const techIds = call
+              .getLogTechnicianAssigned()
+              .split(',')
+              .map(Number);
+            if (!techIds.includes(userId)) {
+              return false;
+            }
+          }
+          if (
+            customers.length &&
+            !customers.includes(`${call?.getCustomer()?.getId()}`)
+          ) {
+            return false;
+          }
+          if (
+            zip.length &&
+            !zip.includes(call?.getProperty()?.getZip() || '')
+          ) {
+            return false;
+          }
+          if (
+            propertyUse.length &&
+            !propertyUse.includes(`${call?.getIsResidential()}`)
+          ) {
+            return false;
+          }
+          if (jobType && jobType !== call?.getJobTypeId()) {
+            return false;
+          }
+          if (jobSubType && jobSubType !== call?.getJobSubtypeId()) {
+            return false;
+          }
+          return true;
+        });
+      }
+      return {
+        completedServiceCallsList: callList[0],
+        remindersList: callList[1],
+        serviceCallsList: callList[2],
+      };
+    },
+    [filters, isAdmin, userId],
+  ); /*
+  const filterCalls_old = useCallback(
     (calendarDay: CalendarDay): CallsList => {
       const {
         customers,
@@ -90,7 +169,7 @@ const Column = ({
         jobSubType,
         techIds: techIdsFilter,
       } = filters!;
-      console.log(filters);
+
       return Object.keys(calendarDay).reduce(
         (acc: CallsList, key) => {
           // @ts-ignore
@@ -110,7 +189,6 @@ const Column = ({
                 .split(',')
                 .map(Number);
               if (techIdsFilterArr.find(item => techIds.includes(item))) {
-                console.log('they got it');
                 return true;
               } else {
                 return false;
@@ -162,7 +240,7 @@ const Column = ({
     },
     [isAdmin, userId, filters],
   );
-
+*/
   if (fetchingCalendarData || !datesMap?.get(date)) {
     if (fetchingCalendarData)
       return (
@@ -222,13 +300,23 @@ const Column = ({
       </Box>
     );
   }
-  console.log(filters);
   // @ts-ignore
 
   const calendarDay = datesMap?.get(date);
-  const completedServiceCallsList = calendarDay!.getCompletedServiceCallsList();
-  const remindersList = calendarDay!.getRemindersList();
-  const serviceCallsList = calendarDay!.getServiceCallsList();
+  const filteredCalendarDay = new CalendarDay();
+  filteredCalendarDay.setRemindersList(calendarDay!.getRemindersList());
+  filteredCalendarDay.setTimeoffRequestsList(
+    calendarDay!.getTimeoffRequestsList(),
+  );
+  filteredCalendarDay.setServiceCallsList(calendarDay!.getServiceCallsList());
+  filteredCalendarDay.setCompletedServiceCallsList(
+    calendarDay!.getCompletedServiceCallsList(),
+  );
+  const {
+    completedServiceCallsList,
+    remindersList,
+    serviceCallsList,
+  } = filterCalls(filteredCalendarDay);
   const timeoffRequestsList = calendarDay!.getTimeoffRequestsList();
   /*
   const {

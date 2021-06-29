@@ -110,8 +110,9 @@ export const TimeoffCard = ({
     if (employeesLoading) {
       return <SkeletonCard />;
     }
-    const empl = employees.find(emp => emp.id === +userId);
-    subheader = empl ? `${empl?.firstname} ${empl?.lastname}` : '';
+    console.log({ employees });
+    const empl = employees.find(emp => emp.getId() === +userId);
+    subheader = empl ? `${empl?.getFirstname()} ${empl?.getLastname()}` : '';
   } catch (e) {
     console.log(e);
   }
@@ -271,8 +272,8 @@ export const CallCard = ({ card, type }: CallProps): JSX.Element => {
 
   const technicianNames = technicianIds
     .map((id: string) => {
-      const employee = employees.find(emp => emp.id === +id);
-      return `${employee?.firstname} ${employee?.lastname}`;
+      const employee = employees.find(emp => emp.getId() === +id);
+      return `${employee?.getFirstname()} ${employee?.getLastname()}`;
     })
     .join(', ');
   const isWhiteText = color === '000000';
