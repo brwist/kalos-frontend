@@ -48,9 +48,7 @@ interface Client<R, T> {
   Update(req: R): Promise<T>;
 }
 
-type BatchRes<T> = {
-  toObject(): { resultsList: T[]; totalCount: number };
-};
+type BatchRes<T> = { getResultsList(): T[]; getTotalCount(): number };
 
 interface state<T> {
   list: T[];
@@ -90,7 +88,7 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
   async fetchData() {
     const res = await this.Client?.BatchGet(this.req!);
     // console.log(res);
-    return res!.toObject().resultsList;
+    return res!.getResultsList();
   }
 
   componentDidMount() {
@@ -538,9 +536,9 @@ class Cache<T> {
 
 export class AccountPicker extends Picker<
   TransactionAccount,
-  TransactionAccount.AsObject
+  TransactionAccount
 > {
-  constructor(props: props<TransactionAccount, TransactionAccount.AsObject>) {
+  constructor(props: props<TransactionAccount, TransactionAccount>) {
     super(props, 'Purchase Type', 'COST_CENTER_LIST', VersionNumber);
     this.Client = new TransactionAccountClient(ENDPOINT);
     this.req = new TransactionAccount();
@@ -550,9 +548,9 @@ export class AccountPicker extends Picker<
 
 export class DepartmentPicker extends Picker<
   TimesheetDepartment,
-  TimesheetDepartment.AsObject
+  TimesheetDepartment
 > {
-  constructor(props: props<TimesheetDepartment, TimesheetDepartment.AsObject>) {
+  constructor(props: props<TimesheetDepartment, TimesheetDepartment>) {
     super(props, 'Department', 'DEPARTMENT_LIST', VersionNumber);
     this.Client = new TimesheetDepartmentClient(ENDPOINT);
     this.req = new TimesheetDepartment();
@@ -560,8 +558,8 @@ export class DepartmentPicker extends Picker<
   }
 }
 
-export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
-  constructor(props: props<ClassCode, ClassCode.AsObject>) {
+export class ClassCodePicker extends Picker<ClassCode, ClassCode> {
+  constructor(props: props<ClassCode, ClassCode>) {
     super(props, 'Class Code', 'CLASS_CODE_LIST', VersionNumber);
     this.Client = new ClassCodeClient(ENDPOINT);
     this.req = new ClassCode();
@@ -569,8 +567,8 @@ export class ClassCodePicker extends Picker<ClassCode, ClassCode.AsObject> {
   }
 }
 
-export class EmployeePicker extends Picker<User, User.AsObject> {
-  constructor(props: props<User, User.AsObject>) {
+export class EmployeePicker extends Picker<User, User> {
+  constructor(props: props<User, User>) {
     super(props, 'Employee', 'EMPLOYEE_LIST_X', VersionNumber);
     this.Client = new UserClient(ENDPOINT);
     this.req = new User();
