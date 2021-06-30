@@ -34,15 +34,16 @@ describe('helpers', () => {
 describe('rpc', () => {
   describe('#EventClientService.Get', () => {
     it('should work correctly for id 1', async () => {
+      let res;
+      // Can go into setup function
       const EventClientService = new EventClient(ENDPOINT);
       const u = new UserClient(ENDPOINT);
+      await u.GetToken('test', 'test');
 
-      let eventOut = new EventType();
-      eventOut.setId(1);
       try {
-        await u.GetToken('test', 'test');
-        const res = await EventClientService.Get(eventOut);
-        console.log('Got the event - ', res);
+        let req = new EventType();
+        req.setId(1);
+        res = await EventClientService.Get(req);
       } catch (err) {
         console.error(
           `The EventClientService ran into an issue while getting the event: ${err}`,
@@ -51,6 +52,7 @@ describe('rpc', () => {
           `The EventClientService ran into an issue while getting the event: ${err}`,
         );
       }
+      expectImport(res.getName()).to.equal('blank event');
     });
   });
 });
