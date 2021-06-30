@@ -5,7 +5,7 @@ import {
   URLObject,
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
-} from '@kalos-core/kalos-rpc/S3File';
+} from '@kalos-core/kalos-rpc/S3File/index';
 import { FileClient } from '@kalos-core/kalos-rpc/File';
 import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';

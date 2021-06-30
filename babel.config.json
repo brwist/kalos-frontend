@@ -1,5 +1,16 @@
 {
+    "presets": [
+        "@babel/preset-env"
+    ],
     "plugins": [
-        "transform-es2015-modules-commonjs"
-    ]
+        "@babel/transform-runtime"
+    ],
+    "env": {
+        "test": {
+            "presets": [
+                "es2015",
+                "react"
+            ]
+        }
+    }
 }
