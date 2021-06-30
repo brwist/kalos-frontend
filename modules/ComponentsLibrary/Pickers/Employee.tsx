@@ -9,15 +9,15 @@ interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: User.AsObject): boolean;
-  sort?(a: User.AsObject, b: User.AsObject): number;
+  test?(item: User): boolean;
+  sort?(a: User, b: User): number;
   showInactive?: boolean;
   label?: string;
   useDevClient?: boolean;
 }
 
 interface state {
-  list: User.AsObject[];
+  list: User[];
 }
 
 export class EmployeePicker extends React.PureComponent<props, state> {
@@ -44,7 +44,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     }
   }
 
-  addItem(item: User.AsObject) {
+  addItem(item: User) {
     if (this.props.test) {
       if (this.props.test(item)) {
         this.setState(prevState => ({
@@ -108,9 +108,9 @@ export class EmployeePicker extends React.PureComponent<props, state> {
 
   render() {
     const list = this.state.list.sort((a, b) =>
-      `${a.lastname} ${a.firstname}`
+      `${a.getLastname()} ${a.getFirstname()}`
         .toLowerCase()
-        .localeCompare(`${b.lastname} ${b.firstname}`.toLowerCase()),
+        .localeCompare(`${b.getLastname()} ${b.getFirstname()}`.toLowerCase()),
     );
     return (
       <FormControl style={{ marginBottom: 10 }}>
@@ -125,8 +125,11 @@ export class EmployeePicker extends React.PureComponent<props, state> {
         >
           <option value={0}>Select Employee</option>
           {list.map(item => (
-            <option value={item.id} key={`${item.lastname}-${item.id}`}>
-              {item.lastname}, {item.firstname}
+            <option
+              value={item.getId()}
+              key={`${item.getLastname()}-${item.getId()}`}
+            >
+              {item.getLastname()}, {item.getFirstname()}
             </option>
           ))}
         </NativeSelect>
